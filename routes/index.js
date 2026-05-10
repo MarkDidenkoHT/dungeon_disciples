@@ -3,6 +3,9 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
+const { UNITS } = require('../data/units');
+const { BUILDING_DEFS, BUILD_TIMES_MS, emptyStructures } = require('../data/buildings');
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -12,43 +15,37 @@ const HERO_DATA = {
     hp: 120, armor: 8, initiative: 4,
     resist_fire: 2, resist_ice: 2, resist_lightning: 2, resist_dark: 5, resist_holy: 2,
     action: { value: 14, range: 1, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
   hexblade: {
     hp: 70, armor: 2, initiative: 6,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 10, resist_holy: 2,
     action: { value: 18, range: 2, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
   shadowbow: {
     hp: 80, armor: 3, initiative: 10,
     resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 6, resist_holy: 2,
     action: { value: 16, range: 3, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
   paladin: {
     hp: 115, armor: 9, initiative: 4,
     resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 3, resist_holy: 10,
     action: { value: 12, range: 1, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
   inquisitor: {
     hp: 72, armor: 2, initiative: 7,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 4, resist_holy: 10,
     action: { value: 17, range: 2, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
   ranger: {
     hp: 82, armor: 3, initiative: 11,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 3, resist_holy: 4,
     action: { value: 15, range: 3, target_type: 'enemy', target_amount: 'single' },
-    passive_ability: null,
-    active_ability: null,
+    passive_ability: null, active_ability: null,
   },
 };
 
@@ -118,9 +115,7 @@ router.post('/login', async (req, res) => {
   const chat_id = String(telegramUser.id);
 
   try {
-    const existing = await supabase(
-      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
-    );
+    const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
 
     if (existing.length > 0) {
       return res.json({ player: existing[0], isNew: false });
@@ -183,6 +178,10 @@ router.post('/player/faction', async (req, res) => {
         method: 'POST',
         body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
       }),
+      supabase('/structures', {
+        method: 'POST',
+        body: JSON.stringify({ chat_id, buildings_data: emptyStructures() }),
+      }),
     ]);
 
     res.json({ player: updated[0] });
@@ -214,6 +213,91 @@ router.get('/roster', async (req, res) => {
     const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`);
     res.json(rows);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/structures', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/structures/build', async (req, res) => {
+  const { chat_id, faction, slot } = req.body;
+  if (!chat_id || !faction || !slot) {
+    return res.status(400).json({ error: 'chat_id, faction, and slot required' });
+  }
+
+  const def = BUILDING_DEFS[faction]?.[slot];
+  if (!def || def.id === 'empty') {
+    return res.status(400).json({ error: 'Invalid or empty slot' });
+  }
+
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+
+    const record = rows[0];
+    const buildings = record.buildings_data;
+    const current = buildings[slot];
+
+    if (current.ready_at && new Date(current.ready_at) > new Date()) {
+      return res.status(400).json({ error: 'Building already under construction' });
+    }
+
+    const nextLevel = (current.level || 0) + 1;
+    if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
+
+    const ready_at = new Date(Date.now() + BUILD_TIMES_MS[nextLevel]).toISOString();
+
+    buildings[slot] = { level: current.level, ready_at };
+
+    const updated = await supabase(`/structures?id=eq.${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ buildings_data: buildings }),
+    });
+
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('build error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/structures/complete', async (req, res) => {
+  const { chat_id, slot } = req.body;
+  if (!chat_id || !slot) return res.status(400).json({ error: 'chat_id and slot required' });
+
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+
+    const record = rows[0];
+    const buildings = record.buildings_data;
+    const current = buildings[slot];
+
+    if (!current.ready_at || new Date(current.ready_at) > new Date()) {
+      return res.status(400).json({ error: 'Building not ready yet' });
+    }
+
+    buildings[slot] = { level: (current.level || 0) + 1, ready_at: null };
+
+    const updated = await supabase(`/structures?id=eq.${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ buildings_data: buildings }),
+    });
+
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('complete error', err);
     res.status(500).json({ error: err.message });
   }
 });
