@@ -10,11 +10,11 @@ function timeLeft(ready_at) {
 }
 
 const CRYSTAL_TYPES = [
-  { key: 'Crystals_Life',   icon: '🟢', label: 'Life'   },
-  { key: 'Crystals_Fire',   icon: '🔴', label: 'Fire'   },
-  { key: 'Crystals_Death',  icon: '🟣', label: 'Death'  },
-  { key: 'Crystals_Nature', icon: '🟡', label: 'Nature' },
-  { key: 'Crystals_Frost',  icon: '🔵', label: 'Frost'  },
+  { key: 'Crystals_Life',   icon: '🟢' },
+  { key: 'Crystals_Fire',   icon: '🔴' },
+  { key: 'Crystals_Death',  icon: '🟣' },
+  { key: 'Crystals_Nature', icon: '🟡' },
+  { key: 'Crystals_Frost',  icon: '🔵' },
 ];
 
 export function renderCastle(root, { player }) {
@@ -53,15 +53,43 @@ export function renderCastle(root, { player }) {
         <button class="nav-btn disabled" data-screen="pvp">PvP</button>
       </nav>
     </div>
+
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <span id="modal-title"></span>
+          <button id="modal-close">✕</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
   `;
 
   let structuresRecord = null;
+  let buildingDefs     = null;
   let timerInterval    = null;
 
+  function openModal(title, bodyHtml) {
+    root.querySelector('#modal-title').textContent = title;
+    root.querySelector('#modal-body').innerHTML    = bodyHtml;
+    root.querySelector('#modal-overlay').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    root.querySelector('#modal-overlay').classList.add('hidden');
+    root.querySelector('#modal-body').innerHTML = '';
+  }
+
+  root.querySelector('#modal-close').addEventListener('click', closeModal);
+  root.querySelector('#modal-overlay').addEventListener('click', (e) => {
+    if (e.target === root.querySelector('#modal-overlay')) closeModal();
+  });
+
   async function load() {
-    const [inventory, structures] = await Promise.all([
+    const [inventory, structures, defs] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       api(`/structures?chat_id=${player.chat_id}`),
+      api('/buildings'),
     ]);
 
     const find = (name) => inventory.find(r => r.item === name);
@@ -77,6 +105,7 @@ export function renderCastle(root, { player }) {
       </div>
     `).join('');
 
+    buildingDefs     = defs;
     structuresRecord = structures;
     renderBuildings();
   }
@@ -88,31 +117,66 @@ export function renderCastle(root, { player }) {
     grid.innerHTML = Object.entries(data).map(([slot, state]) => {
       const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
       const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
+      const isEmpty    = state.level === 0 && !state.ready_at;
 
       return `
-        <div class="building-card" data-slot="${slot}">
+        <div class="building-card ${isEmpty ? 'building-empty' : ''}" data-slot="${slot}">
           <div class="building-top">
             <span class="building-label">${state.label ?? slot.replace('_', ' ')}</span>
-            <span class="building-level">${state.level > 0 ? `Lv ${state.level}` : 'Unbuilt'}</span>
+            <span class="building-level">${state.level > 0 ? `Lv ${state.level}` : 'Empty'}</span>
           </div>
           ${isBuilding ? `<div class="building-timer" data-ready="${state.ready_at}">⏳ ${timeLeft(state.ready_at)}</div>` : ''}
           ${isReady    ? `<button class="building-btn complete-btn" data-slot="${slot}">Complete</button>` : ''}
-          ${!isBuilding && !isReady && state.level < 4
-            ? `<button class="building-btn build-btn" data-slot="${slot}">${state.level === 0 ? 'Build' : 'Upgrade'}</button>`
+          ${isEmpty    ? `<button class="building-btn build-btn" data-slot="${slot}">Build</button>` : ''}
+          ${!isEmpty && !isBuilding && !isReady && state.level < 4
+            ? `<button class="building-btn build-btn" data-slot="${slot}">Upgrade</button>`
             : ''}
         </div>
       `;
     }).join('');
 
     grid.querySelectorAll('.build-btn').forEach(btn => {
-      btn.addEventListener('click', () => startBuild(btn.dataset.slot));
+      btn.addEventListener('click', () => {
+        const slot  = btn.dataset.slot;
+        const state = structuresRecord.buildings_data[slot];
+        if (state.level === 0) {
+          showBuildModal(slot);
+        } else {
+          startBuild(slot);
+        }
+      });
     });
+
     grid.querySelectorAll('.complete-btn').forEach(btn => {
       btn.addEventListener('click', () => completeBuild(btn.dataset.slot));
     });
 
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(tickTimers, 1000);
+  }
+
+  function showBuildModal(slot) {
+    const factionDefs = buildingDefs[player.faction];
+    const slotDef     = factionDefs?.[slot];
+
+    if (!slotDef || slotDef.id === 'empty') {
+      openModal('Build', `<p class="modal-empty">No buildings available for this slot.</p>`);
+      return;
+    }
+
+    openModal(`Build — ${slot.replace('_', ' ')}`, `
+      <div class="modal-building-option" data-slot="${slot}">
+        <div class="modal-building-name">${slotDef.label}</div>
+        <div class="modal-building-meta">${slotDef.category}</div>
+        ${slotDef.unit ? `<div class="modal-building-unit">Recruits: ${slotDef.unit}</div>` : ''}
+        <button class="building-btn confirm-build-btn" data-slot="${slot}">Build</button>
+      </div>
+    `);
+
+    root.querySelector('.confirm-build-btn').addEventListener('click', async () => {
+      closeModal();
+      await startBuild(slot);
+    });
   }
 
   function tickTimers() {
