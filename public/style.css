@@ -166,3 +166,86 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .error  { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .hidden { display: none !important; }
+.header-mana {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.mana-icon { font-size: 0.85rem; }
+
+.resources-section { width: 100%; }
+
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.resource-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+
+.resource-name { color: var(--text); }
+.resource-amount { color: var(--accent); font-weight: bold; }
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.unit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.unit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.unit-name { color: var(--accent); font-weight: bold; }
+.unit-xp   { color: var(--muted); font-size: 0.85rem; }
+
+.unit-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unit-stat {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.unit-stat em {
+  color: var(--muted);
+  font-style: normal;
+  margin-right: 4px;
+}
+
+.castle-main {
+  align-items: flex-start;
+  justify-content: flex-start;
+}

@@ -4,15 +4,15 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 function supabase(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
     ...options,
     headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
       'Content-Type': 'application/json',
       'Prefer': 'return=representation',
       ...(options.headers || {}),
@@ -91,6 +91,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/player', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/player/faction', async (req, res) => {
   const { player_id, faction, hero } = req.body;
   if (!player_id || !faction || !hero) {
@@ -108,6 +121,32 @@ router.post('/player/faction', async (req, res) => {
     res.json({ player: updated[0] });
   } catch (err) {
     console.error('faction error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/inventory', async (req, res) => {
+  const { chat_id, type } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    let url = `/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`;
+    if (type) url += `&item_type=eq.${encodeURIComponent(type)}`;
+    const rows = await supabase(url);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/roster', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    res.json(rows);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
