@@ -7,6 +7,21 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+const HERO_DATA = {
+  warlord:   { hp: 120, armor: 8,  attack: 14, initiative: 4, evasion: 2  },
+  hexblade:  { hp: 70,  armor: 3,  attack: 18, initiative: 6, evasion: 4  },
+  shadowbow: { hp: 80,  armor: 4,  attack: 16, initiative: 10, evasion: 8 },
+  paladin:   { hp: 115, armor: 9,  attack: 12, initiative: 4, evasion: 2  },
+  inquisitor:{ hp: 72,  armor: 3,  attack: 17, initiative: 7, evasion: 4  },
+  ranger:    { hp: 82,  armor: 4,  attack: 15, initiative: 11, evasion: 7 },
+};
+
+const STARTING_RESOURCES = [
+  { item_type: 'resource', item: 'Gold',   amount: 200 },
+  { item_type: 'resource', item: 'Wood',   amount: 100 },
+  { item_type: 'resource', item: 'Stone',  amount: 50  },
+];
+
 function supabase(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
     ...options,
@@ -105,19 +120,38 @@ router.get('/player', async (req, res) => {
 });
 
 router.post('/player/faction', async (req, res) => {
-  const { player_id, faction, hero } = req.body;
-  if (!player_id || !faction || !hero) {
-    return res.status(400).json({ error: 'player_id, faction, and hero required' });
+  const { player_id, chat_id, faction, hero } = req.body;
+  if (!player_id || !chat_id || !faction || !hero) {
+    return res.status(400).json({ error: 'player_id, chat_id, faction, and hero required' });
   }
 
+  const heroStats = HERO_DATA[hero];
+  if (!heroStats) return res.status(400).json({ error: 'Unknown hero' });
+
   try {
-    const updated = await supabase(
-      `/players?id=eq.${player_id}`,
-      {
+    const [updated] = await Promise.all([
+      supabase(`/players?id=eq.${player_id}`, {
         method: 'PATCH',
         body: JSON.stringify({ faction, hero }),
-      }
-    );
+      }),
+      supabase('/roster', {
+        method: 'POST',
+        body: JSON.stringify({
+          chat_id,
+          unit_name: hero.charAt(0).toUpperCase() + hero.slice(1),
+          unit_data: heroStats,
+          experience: 0,
+        }),
+      }),
+      supabase('/inventory_and_resources', {
+        method: 'POST',
+        body: JSON.stringify(
+          STARTING_RESOURCES.map(r => ({ ...r, chat_id }))
+        ),
+        headers: { 'Prefer': 'return=representation' },
+      }),
+    ]);
+
     res.json({ player: updated[0] });
   } catch (err) {
     console.error('faction error', err);

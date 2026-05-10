@@ -2,7 +2,6 @@ import { api }        from '../utils/api.js';
 import { setSession } from '../utils/session.js';
 import { navigate }   from '../main.js';
 
-
 const FACTIONS = [
   {
     id: 'dungeon',
@@ -99,6 +98,7 @@ export function renderFaction(root, { player }) {
     try {
       const { player: updated } = await api('/player/faction', {
         player_id: player.id,
+        chat_id:   player.chat_id,
         faction:   selectedFaction.id,
         hero:      selectedHero.id,
       });
