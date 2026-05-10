@@ -50,9 +50,14 @@ const HERO_DATA = {
 };
 
 const STARTING_RESOURCES = [
-  { item_type: 'resource', item: 'Gold',  amount: 200 },
-  { item_type: 'resource', item: 'Wood',  amount: 100 },
-  { item_type: 'resource', item: 'Stone', amount: 50  },
+  { item_type: 'resource', item: 'Gold',            amount: 200 },
+  { item_type: 'resource', item: 'Trophies',        amount: 0   },
+  { item_type: 'resource', item: 'Mana',            amount: 0   },
+  { item_type: 'resource', item: 'Crystals_Life',   amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Fire',   amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Death',  amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Nature', amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Frost',  amount: 20  },
 ];
 
 function supabase(path, options = {}) {

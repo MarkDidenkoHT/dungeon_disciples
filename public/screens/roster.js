@@ -27,8 +27,7 @@ export function renderRoster(root, { player }) {
       </header>
 
       <main class="castle-main">
-        <section class="resources-section">
-          <h2>Roster</h2>
+        <section class="buildings-section">
           <div id="roster-list" class="roster-list">
             <p class="placeholder">Loading…</p>
           </div>
@@ -46,7 +45,7 @@ export function renderRoster(root, { player }) {
 
   async function load() {
     const units = await api(`/roster?chat_id=${player.chat_id}`);
-    const list = root.querySelector('#roster-list');
+    const list  = root.querySelector('#roster-list');
 
     if (!units.length) {
       list.innerHTML = `<p class="placeholder">No units yet.</p>`;
@@ -54,8 +53,8 @@ export function renderRoster(root, { player }) {
     }
 
     list.innerHTML = units.map(u => {
-      const d = u.unit_data || {};
-      const action = d.action || {};
+      const d      = u.unit_data || {};
+      const action = d.action    || {};
 
       return `
         <div class="unit-card">
