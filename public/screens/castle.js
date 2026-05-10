@@ -24,15 +24,10 @@ const CATEGORY_ICONS = {
   any:        '✦',
 };
 
-const SLOT_LAYOUT = [
-  { slot: 'slot_1', pos: 0 },
-  { slot: 'slot_2', pos: 1 },
-  { slot: 'slot_3', pos: 2 },
-  { slot: 'slot_4', pos: 3 },
-  { slot: 'slot_5', pos: 4 },
-  { slot: 'slot_6', pos: 5 },
-  { slot: 'slot_7', pos: 6 },
-  { slot: 'slot_8', pos: 7 },
+const LAYOUT_ROWS = [
+  { label: 'Production', slots: ['slot_1', 'slot_2', 'slot_3'] },
+  { label: 'Throne',     slots: ['slot_7', 'slot_0', 'slot_8'] },
+  { label: 'Barracks',   slots: ['slot_4', 'slot_5', 'slot_6'] },
 ];
 
 export function renderCastle(root, { player }) {
@@ -53,10 +48,7 @@ export function renderCastle(root, { player }) {
       </header>
 
       <main class="castle-main">
-        <div class="castle-grounds">
-          <div class="outer-ring" id="outer-ring"></div>
-          <div class="center-slot" id="center-slot"></div>
-        </div>
+        <div class="castle-grid" id="castle-grid"></div>
       </main>
 
       <nav class="bottom-nav">
@@ -79,7 +71,7 @@ export function renderCastle(root, { player }) {
   `;
 
   let structuresRecord = null;
-  let buildingDefs     = null;
+  let buildingPools    = null;
   let slotCategories   = null;
   let timerInterval    = null;
 
@@ -119,57 +111,66 @@ export function renderCastle(root, { player }) {
       </div>
     `).join('');
 
-    buildingDefs     = buildingsResp.defs;
+    buildingPools    = buildingsResp.pools;
     slotCategories   = buildingsResp.slot_categories;
     structuresRecord = structures;
     renderBuildings();
   }
 
-  function slotLabel(slot, state) {
-    const def = buildingDefs?.[player.faction]?.[slot];
-    if (state.level > 0) return def?.label ?? slot;
-    if (def && def.id !== 'empty') return def.label;
-    return 'Empty';
+  function getSlotDef(slot, building_id) {
+    if (!building_id || !buildingPools) return null;
+    const faction = buildingPools[player.faction];
+    if (!faction) return null;
+    for (const pool of Object.values(faction)) {
+      const found = pool.find(b => b.id === building_id);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function renderSlotNode(slot) {
+    const data = structuresRecord.buildings_data;
+    const state = data[slot] ?? { level: 0, ready_at: null, building_id: null };
+    const cat   = slotCategories?.[slot] ?? 'any';
+    const isThrone = cat === 'throne';
+
+    const def        = getSlotDef(slot, state.building_id);
+    const isEmpty    = !state.building_id && state.level === 0;
+    const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
+    const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
+
+    let label = isThrone
+      ? (def?.label ?? 'Throne')
+      : (def?.label ?? (isEmpty ? 'Empty' : slot));
+
+    let classes = `castle-node castle-node--${cat}`;
+    if (isEmpty)    classes += ' castle-node--empty';
+    if (isBuilding) classes += ' castle-node--building';
+    if (isReady)    classes += ' castle-node--ready';
+    if (isThrone)   classes += ' castle-node--throne';
+
+    return `
+      <div class="${classes}" data-slot="${slot}">
+        <div class="castle-node-icon">${CATEGORY_ICONS[cat] ?? '·'}</div>
+        <div class="castle-node-label">${label}</div>
+        ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
+        ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
+        ${isReady    ? `<div class="castle-node-ready">✓</div>` : ''}
+      </div>
+    `;
   }
 
   function renderBuildings() {
-    const data = structuresRecord.buildings_data;
+    const grid = root.querySelector('#castle-grid');
 
-    const throneState = data['slot_0'];
-    const throneDef   = buildingDefs?.[player.faction]?.['slot_0'];
-    root.querySelector('#center-slot').innerHTML = `
-      <div class="castle-node castle-node--throne" data-slot="slot_0">
-        <div class="castle-node-icon">${CATEGORY_ICONS.throne}</div>
-        <div class="castle-node-label">${throneDef?.label ?? 'Throne'}</div>
-        ${throneState?.level > 0 ? `<div class="castle-node-level">Lv ${throneState.level}</div>` : ''}
+    grid.innerHTML = LAYOUT_ROWS.map(row => `
+      <div class="castle-row castle-row--${row.label.toLowerCase()}">
+        ${row.slots.map(slot => renderSlotNode(slot)).join('')}
       </div>
-    `;
+    `).join('');
 
-    root.querySelector('#outer-ring').innerHTML = SLOT_LAYOUT.map(({ slot }) => {
-      const state    = data[slot];
-      const cat      = slotCategories?.[slot] ?? 'any';
-      const isEmpty  = !state || (state.level === 0 && !state.ready_at);
-      const isBuilding = state?.ready_at && new Date(state.ready_at) > new Date();
-      const isReady    = state?.ready_at && new Date(state.ready_at) <= new Date();
-      const label    = slotLabel(slot, state ?? { level: 0 });
-
-      return `
-        <div class="castle-node castle-node--${cat} ${isEmpty ? 'castle-node--empty' : ''} ${isBuilding ? 'castle-node--building' : ''} ${isReady ? 'castle-node--ready' : ''}" data-slot="${slot}">
-          <div class="castle-node-icon">${CATEGORY_ICONS[cat] ?? '·'}</div>
-          <div class="castle-node-label">${label}</div>
-          ${state?.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
-          ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
-          ${isReady    ? `<div class="castle-node-ready">✓</div>` : ''}
-        </div>
-      `;
-    }).join('');
-
-    root.querySelector('#outer-ring').querySelectorAll('.castle-node').forEach(node => {
+    grid.querySelectorAll('.castle-node').forEach(node => {
       node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
-    });
-
-    root.querySelector('#center-slot').querySelector('.castle-node').addEventListener('click', () => {
-      handleSlotClick('slot_0');
     });
 
     if (timerInterval) clearInterval(timerInterval);
@@ -178,55 +179,82 @@ export function renderCastle(root, { player }) {
 
   function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
-    const def   = buildingDefs?.[player.faction]?.[slot];
     const cat   = slotCategories?.[slot] ?? 'any';
 
-    if (!state || (state.level === 0 && !state.ready_at)) {
-      if (cat === 'throne') return;
-      showBuildModal(slot);
+    if (cat === 'throne') {
+      showThroneModal(state);
       return;
     }
 
-    showDetailsModal(slot, state, def, cat);
+    const isEmpty = !state || (!state.building_id && state.level === 0);
+    if (isEmpty) {
+      showBuildChoiceModal(slot, cat);
+    } else {
+      const def = getSlotDef(slot, state.building_id);
+      showDetailsModal(slot, state, def, cat);
+    }
   }
 
-  function showBuildModal(slot) {
-    const def = buildingDefs?.[player.faction]?.[slot];
+  function showBuildChoiceModal(slot, cat) {
+    const factionPools = buildingPools?.[player.faction];
+    if (!factionPools) {
+      openModal('Error', '<p class="modal-empty">No building data available.</p>');
+      return;
+    }
+    let options = [];
+    if (cat === 'any') {
+      for (const [poolCat, pool] of Object.entries(factionPools)) {
+        if (poolCat !== 'throne') options = options.concat(pool);
+      }
+    } else {
+      options = factionPools[cat] ?? [];
+    }
 
-    if (!def || def.id === 'empty') {
-      openModal('Empty Slot', `<p class="modal-empty">No buildings available for this slot yet.</p>`);
+    if (!options.length) {
+      openModal('Empty Slot', '<p class="modal-empty">No buildings available for this slot yet.</p>');
       return;
     }
 
-    const cat = slotCategories?.[slot] ?? 'any';
+    const categoryLabel = cat === 'any' ? 'Special' : cat.charAt(0).toUpperCase() + cat.slice(1);
 
-    openModal(`Build — ${def.label}`, `
-      <div class="modal-building-option">
-        <div class="modal-building-meta">${CATEGORY_ICONS[cat]} ${def.category}</div>
-        ${def.unit ? `<div class="modal-building-unit">Recruits: <strong>${def.unit}</strong></div>` : ''}
-        <button class="building-btn confirm-build-btn" data-slot="${slot}">Build</button>
+    openModal(`Build — ${categoryLabel} Slot`, `
+      <p class="modal-subtitle">Choose a building to construct:</p>
+      <div class="modal-building-list">
+        ${options.map(b => `
+          <div class="modal-building-option modal-building-card" data-building-id="${b.id}" data-slot="${slot}">
+            <div class="modal-building-card-icon">${CATEGORY_ICONS[b.category] ?? '·'}</div>
+            <div class="modal-building-card-info">
+              <div class="modal-building-card-label">${b.label}</div>
+              ${b.unit ? `<div class="modal-building-card-unit">Recruits: <strong>${b.unit}</strong></div>` : ''}
+              <div class="modal-building-card-cat">${b.category}</div>
+            </div>
+            <button class="building-btn confirm-build-btn" data-building-id="${b.id}" data-slot="${slot}">Build</button>
+          </div>
+        `).join('')}
       </div>
     `);
 
-    root.querySelector('.confirm-build-btn').addEventListener('click', async () => {
-      closeModal();
-      await startBuild(slot);
+    root.querySelectorAll('.confirm-build-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const chosenSlot       = btn.dataset.slot;
+        const chosenBuildingId = btn.dataset.buildingId;
+        closeModal();
+        await startBuild(chosenSlot, chosenBuildingId);
+      });
     });
   }
 
   function showDetailsModal(slot, state, def, cat) {
     const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
     const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
-    const isThrone   = cat === 'throne';
-
-    const canUpgrade = !isThrone && !isBuilding && !isReady && state.level < 4;
+    const canUpgrade = !isBuilding && !isReady && state.level < 4;
 
     openModal(def?.label ?? slot, `
       <div class="modal-building-option">
         <div class="modal-building-meta">${CATEGORY_ICONS[cat]} ${def?.category ?? cat}</div>
         <div class="modal-building-level-row">
           <span class="modal-level-badge">Level ${state.level}</span>
-          ${state.level < 4 && !isThrone ? `<span class="modal-max-hint">max 4</span>` : ''}
+          ${state.level < 4 ? `<span class="modal-max-hint">max 4</span>` : ''}
         </div>
         ${def?.unit ? `<div class="modal-building-unit">Recruits: <strong>${def.unit}</strong></div>` : ''}
         ${isBuilding ? `<div class="modal-building-timer" data-ready="${state.ready_at}">⏳ Building… ${timeLeft(state.ready_at)}</div>` : ''}
@@ -237,14 +265,27 @@ export function renderCastle(root, { player }) {
 
     root.querySelectorAll('.confirm-build-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
+        const s = btn.dataset.slot;
         closeModal();
         if (btn.classList.contains('complete-mode')) {
-          await completeBuild(btn.dataset.slot);
+          await completeBuild(s);
         } else {
-          await startBuild(btn.dataset.slot);
+          await startBuild(s, state.building_id);
         }
       });
     });
+  }
+
+  function showThroneModal(state) {
+    openModal('Throne', `
+      <div class="modal-building-option">
+        <div class="modal-building-meta">${CATEGORY_ICONS.throne} throne</div>
+        <div class="modal-building-level-row">
+          <span class="modal-level-badge">Level ${state?.level ?? 1}</span>
+        </div>
+        <p class="modal-empty">The seat of your power. Cannot be moved or demolished.</p>
+      </div>
+    `);
   }
 
   function tickTimers() {
@@ -258,9 +299,14 @@ export function renderCastle(root, { player }) {
     });
   }
 
-  async function startBuild(slot) {
+  async function startBuild(slot, building_id) {
     try {
-      const updated = await api('/structures/build', { chat_id: player.chat_id, faction: player.faction, slot });
+      const updated = await api('/structures/build', {
+        chat_id: player.chat_id,
+        faction: player.faction,
+        slot,
+        building_id,
+      });
       structuresRecord = updated;
       renderBuildings();
     } catch (err) {

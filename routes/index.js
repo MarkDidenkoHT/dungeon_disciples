@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
-const { BUILDING_DEFS, BUILD_TIMES_MS, SLOT_CATEGORIES, emptyStructures } = require('../data/buildings');
+const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -223,7 +223,7 @@ router.get('/roster', async (req, res) => {
 });
 
 router.get('/buildings', (req, res) => {
-  res.json({ defs: BUILDING_DEFS, slot_categories: SLOT_CATEGORIES });
+  res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES });
 });
 
 router.get('/structures', async (req, res) => {
@@ -240,17 +240,18 @@ router.get('/structures', async (req, res) => {
 });
 
 router.post('/structures/build', async (req, res) => {
-  const { chat_id, faction, slot } = req.body;
-  if (!chat_id || !faction || !slot) {
-    return res.status(400).json({ error: 'chat_id, faction, and slot required' });
-  }
-
-  const def = BUILDING_DEFS[faction]?.[slot];
-  if (!def || def.id === 'empty') {
-    return res.status(400).json({ error: 'Invalid or empty slot' });
+  const { chat_id, faction, slot, building_id } = req.body;
+  if (!chat_id || !faction || !slot || !building_id) {
+    return res.status(400).json({ error: 'chat_id, faction, slot, and building_id required' });
   }
 
   const slotCategory = SLOT_CATEGORIES[slot];
+  if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
+  if (slotCategory === 'throne') return res.status(400).json({ error: 'Throne cannot be built' });
+
+  const def = getBuildingDef(faction, building_id);
+  if (!def) return res.status(400).json({ error: 'Unknown building_id for this faction' });
+
   if (slotCategory !== 'any' && def.category !== slotCategory) {
     return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
   }
@@ -263,6 +264,10 @@ router.post('/structures/build', async (req, res) => {
     const buildings = record.buildings_data;
     const current = buildings[slot];
 
+    if (current.building_id && current.building_id !== building_id && current.level > 0) {
+      return res.status(400).json({ error: 'Slot already has a building. Demolish it first.' });
+    }
+
     if (current.ready_at && new Date(current.ready_at) > new Date()) {
       return res.status(400).json({ error: 'Building already under construction' });
     }
@@ -272,7 +277,7 @@ router.post('/structures/build', async (req, res) => {
 
     const ready_at = new Date(Date.now() + BUILD_TIMES_MS[nextLevel]).toISOString();
 
-    buildings[slot] = { level: current.level, ready_at };
+    buildings[slot] = { level: current.level || 0, ready_at, building_id };
 
     const updated = await supabase(`/structures?id=eq.${record.id}`, {
       method: 'PATCH',
@@ -302,7 +307,11 @@ router.post('/structures/complete', async (req, res) => {
       return res.status(400).json({ error: 'Building not ready yet' });
     }
 
-    buildings[slot] = { level: (current.level || 0) + 1, ready_at: null };
+    buildings[slot] = {
+      level: (current.level || 0) + 1,
+      ready_at: null,
+      building_id: current.building_id,
+    };
 
     const updated = await supabase(`/structures?id=eq.${record.id}`, {
       method: 'PATCH',
