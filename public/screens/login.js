@@ -6,36 +6,26 @@ export function renderLogin(root) {
   root.innerHTML = `
     <div class="screen screen-login">
       <h1>Dungeon Disciples</h1>
-      <p class="subtitle">Enter your Telegram chat ID to begin</p>
-
-      <div class="form-group">
-        <input
-          id="chat-id-input"
-          type="text"
-          placeholder="Telegram chat ID"
-          autocomplete="off"
-        />
-        <button id="login-btn">Enter</button>
-      </div>
-
+      <p class="subtitle">Authenticating with Telegram…</p>
       <p id="login-error" class="error hidden"></p>
     </div>
   `;
 
-  const input = root.querySelector('#chat-id-input');
-  const btn   = root.querySelector('#login-btn');
   const error = root.querySelector('#login-error');
 
-  async function doLogin() {
-    const chat_id = input.value.trim();
-    if (!chat_id) return;
+  async function doTelegramLogin() {
+    const tg = window.Telegram?.WebApp;
 
-    btn.disabled = true;
-    btn.textContent = '...';
-    error.classList.add('hidden');
+    if (!tg || !tg.initData) {
+      error.textContent = 'Open this app inside Telegram.';
+      error.classList.remove('hidden');
+      return;
+    }
+
+    tg.ready();
 
     try {
-      const { player, isNew } = await api('/login', { chat_id });
+      const { player, isNew } = await api('/login', { initData: tg.initData });
       setSession(player);
 
       if (isNew || !player.faction || !player.hero) {
@@ -46,12 +36,8 @@ export function renderLogin(root) {
     } catch (err) {
       error.textContent = err.message;
       error.classList.remove('hidden');
-      btn.disabled = false;
-      btn.textContent = 'Enter';
     }
   }
 
-  btn.addEventListener('click', doLogin);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  input.focus();
+  doTelegramLogin();
 }

@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 function supabase(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
@@ -22,9 +24,47 @@ function supabase(path, options = {}) {
   });
 }
 
+function validateTelegramInitData(initData) {
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash) return null;
+
+  params.delete('hash');
+
+  const dataCheckString = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+
+  const secretKey = crypto
+    .createHmac('sha256', 'WebAppData')
+    .update(BOT_TOKEN)
+    .digest();
+
+  const expectedHash = crypto
+    .createHmac('sha256', secretKey)
+    .update(dataCheckString)
+    .digest('hex');
+
+  if (expectedHash !== hash) return null;
+
+  const authDate = parseInt(params.get('auth_date'), 10);
+  if (Date.now() / 1000 - authDate > 86400) return null;
+
+  const userRaw = params.get('user');
+  if (!userRaw) return null;
+
+  return JSON.parse(userRaw);
+}
+
 router.post('/login', async (req, res) => {
-  const { chat_id } = req.body;
-  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  const { initData } = req.body;
+  if (!initData) return res.status(400).json({ error: 'initData required' });
+
+  const telegramUser = validateTelegramInitData(initData);
+  if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
+
+  const chat_id = String(telegramUser.id);
 
   try {
     const existing = await supabase(
@@ -37,7 +77,11 @@ router.post('/login', async (req, res) => {
 
     const created = await supabase('/players', {
       method: 'POST',
-      body: JSON.stringify({ chat_id }),
+      body: JSON.stringify({
+        chat_id,
+        username: telegramUser.username || null,
+        first_name: telegramUser.first_name || null,
+      }),
     });
 
     res.json({ player: created[0], isNew: true });
