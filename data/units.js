@@ -1,4 +1,6 @@
 const UNITS = {
+  // ─── Player units ────────────────────────────────────────────────────────────
+
   protectors: {
     conscript: {
       name: 'Conscript',
@@ -28,6 +30,7 @@ const UNITS = {
       active_ability: null,
     },
   },
+
   dungeon: {
     heretic: {
       name: 'Heretic',
@@ -53,6 +56,200 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 50,
       resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
       action: { value: 15, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+  },
+
+  // ─── Enemy units (used by REGIONS in embark.js) ──────────────────────────────
+
+  enemies: {
+    // Life Grove
+    grove_warden: {
+      name: 'Grove Warden',
+      type: 'melee',
+      hp: 60, armor: 6, initiative: 35,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 10, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    sacred_beast: {
+      name: 'Sacred Beast',
+      type: 'melee',
+      hp: 45, armor: 2, initiative: 50,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 8, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    elder_druid: {
+      name: 'Elder Druid',
+      type: 'caster',
+      hp: 55, armor: 0, initiative: 60,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 16, range: 3, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    ancient_guardian: {
+      name: 'Ancient Guardian',
+      type: 'melee',
+      hp: 160, armor: 14, initiative: 20,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 24, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+
+    // Fire Wastes
+    fire_cultist: {
+      name: 'Fire Cultist',
+      type: 'ranged',
+      hp: 40, armor: 0, initiative: 55,
+      resist_fire: 10, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 12, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    ember_hound: {
+      name: 'Ember Hound',
+      type: 'melee',
+      hp: 55, armor: 3, initiative: 40,
+      resist_fire: 10, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 9, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    molten_elemental: {
+      name: 'Molten Elemental',
+      type: 'melee',
+      hp: 90, armor: 5, initiative: 25,
+      resist_fire: 20, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 18, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    inferno_lord: {
+      name: 'Inferno Lord',
+      type: 'melee',
+      hp: 175, armor: 12, initiative: 30,
+      resist_fire: 30, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 30, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+
+    // Death Crypts
+    skeleton: {
+      name: 'Skeleton',
+      type: 'melee',
+      hp: 35, armor: 2, initiative: 30,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 20, resist_holy: -10,
+      action: { value: 8, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    crypt_wraith: {
+      name: 'Crypt Wraith',
+      type: 'caster',
+      hp: 30, armor: 0, initiative: 65,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 20, resist_holy: -10,
+      action: { value: 11, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    bone_champion: {
+      name: 'Bone Champion',
+      type: 'melee',
+      hp: 85, armor: 8, initiative: 20,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 20, resist_holy: -10,
+      action: { value: 16, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    lich_sovereign: {
+      name: 'Lich Sovereign',
+      type: 'caster',
+      hp: 160, armor: 5, initiative: 45,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 30, resist_holy: -20,
+      action: { value: 28, range: 3, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+
+    // Frost Peaks
+    frost_wraith: {
+      name: 'Frost Wraith',
+      type: 'caster',
+      hp: 45, armor: 0, initiative: 60,
+      resist_fire: 0, resist_ice: 20, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 12, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    ice_golem: {
+      name: 'Ice Golem',
+      type: 'melee',
+      hp: 80, armor: 9, initiative: 15,
+      resist_fire: -10, resist_ice: 20, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 13, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    blizzard_hound: {
+      name: 'Blizzard Hound',
+      type: 'melee',
+      hp: 60, armor: 4, initiative: 45,
+      resist_fire: -10, resist_ice: 20, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 14, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    frost_sovereign: {
+      name: 'Frost Sovereign',
+      type: 'melee',
+      hp: 195, armor: 15, initiative: 30,
+      resist_fire: -10, resist_ice: 30, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 30, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+
+    // Nature Wilds
+    feral_hunter: {
+      name: 'Feral Hunter',
+      type: 'ranged',
+      hp: 50, armor: 2, initiative: 50,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 10, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    earth_sprite: {
+      name: 'Earth Sprite',
+      type: 'caster',
+      hp: 35, armor: 0, initiative: 55,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 8, range: 2, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    stone_titan: {
+      name: 'Stone Titan',
+      type: 'melee',
+      hp: 120, armor: 12, initiative: 10,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 20, range: 1, target_type: 'enemy', target_amount: 'single' },
+      passive_ability: null,
+      active_ability: null,
+    },
+    wild_colossus: {
+      name: 'Wild Colossus',
+      type: 'melee',
+      hp: 185, armor: 13, initiative: 20,
+      resist_fire: 0, resist_ice: 0, resist_lightning: 0, resist_dark: 0, resist_holy: 0,
+      action: { value: 28, range: 1, target_type: 'enemy', target_amount: 'single' },
       passive_ability: null,
       active_ability: null,
     },
