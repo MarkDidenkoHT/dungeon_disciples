@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
-const { BUILDING_DEFS, BUILD_TIMES_MS, emptyStructures } = require('../data/buildings');
+const { BUILDING_DEFS, BUILD_TIMES_MS, SLOT_CATEGORIES, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -222,6 +222,10 @@ router.get('/roster', async (req, res) => {
   }
 });
 
+router.get('/buildings', (req, res) => {
+  res.json({ defs: BUILDING_DEFS, slot_categories: SLOT_CATEGORIES });
+});
+
 router.get('/structures', async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
@@ -244,6 +248,11 @@ router.post('/structures/build', async (req, res) => {
   const def = BUILDING_DEFS[faction]?.[slot];
   if (!def || def.id === 'empty') {
     return res.status(400).json({ error: 'Invalid or empty slot' });
+  }
+
+  const slotCategory = SLOT_CATEGORIES[slot];
+  if (slotCategory !== 'any' && def.category !== slotCategory) {
+    return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
   }
 
   try {

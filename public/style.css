@@ -220,8 +220,31 @@ button:active:not(:disabled) { opacity: 0.75; }
 .buildings-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
+}
+
+.building-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.building-group-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 2px 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.building-group-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .building-card {
