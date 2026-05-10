@@ -6,6 +6,7 @@ const BUILD_TIMES_MS = {
 };
 
 const SLOT_CATEGORIES = {
+  slot_0: 'throne',
   slot_1: 'production',
   slot_2: 'production',
   slot_3: 'production',
@@ -18,6 +19,7 @@ const SLOT_CATEGORIES = {
 
 const BUILDING_DEFS = {
   protectors: {
+    slot_0: { id: 'throne',            label: 'Throne',             category: 'throne',     unit: null         },
     slot_1: { id: 'farm',              label: 'Farm',               category: 'production', unit: null         },
     slot_2: { id: 'empty',             label: 'Empty',              category: 'production', unit: null         },
     slot_3: { id: 'empty',             label: 'Empty',              category: 'production', unit: null         },
@@ -28,6 +30,7 @@ const BUILDING_DEFS = {
     slot_8: { id: 'empty',             label: 'Empty',              category: 'any',        unit: null         },
   },
   dungeon: {
+    slot_0: { id: 'dark_throne',       label: 'Dark Throne',        category: 'throne',     unit: null         },
     slot_1: { id: 'farm',              label: 'Farm',               category: 'production', unit: null         },
     slot_2: { id: 'empty',             label: 'Empty',              category: 'production', unit: null         },
     slot_3: { id: 'empty',             label: 'Empty',              category: 'production', unit: null         },
@@ -40,12 +43,11 @@ const BUILDING_DEFS = {
 };
 
 function emptyStructures() {
-  return Object.fromEntries(
-    Array.from({ length: 8 }, (_, i) => [
-      `slot_${i + 1}`,
-      { level: 0, ready_at: null },
-    ])
-  );
+  const slots = { slot_0: { level: 1, ready_at: null } };
+  for (let i = 1; i <= 8; i++) {
+    slots[`slot_${i}`] = { level: 0, ready_at: null };
+  }
+  return slots;
 }
 
 module.exports = { BUILDING_DEFS, BUILD_TIMES_MS, SLOT_CATEGORIES, emptyStructures };

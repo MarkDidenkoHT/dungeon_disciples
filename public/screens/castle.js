@@ -17,41 +17,46 @@ const CRYSTAL_TYPES = [
   { key: 'Crystals_Frost',  icon: '🔵' },
 ];
 
-const CATEGORY_LABELS = {
-  production: 'Production',
-  barracks:   'Barracks',
-  any:        'Special',
+const CATEGORY_ICONS = {
+  throne:     '♛',
+  production: '⚙',
+  barracks:   '⚔',
+  any:        '✦',
 };
 
-const CATEGORY_ORDER = ['production', 'barracks', 'any'];
+const SLOT_LAYOUT = [
+  { slot: 'slot_1', pos: 0 },
+  { slot: 'slot_2', pos: 1 },
+  { slot: 'slot_3', pos: 2 },
+  { slot: 'slot_4', pos: 3 },
+  { slot: 'slot_5', pos: 4 },
+  { slot: 'slot_6', pos: 5 },
+  { slot: 'slot_7', pos: 6 },
+  { slot: 'slot_8', pos: 7 },
+];
 
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
       <header class="castle-header">
-        <div class="player-info">
-          <span class="player-faction">${player.faction}</span>
-          <span class="player-hero">${player.hero}</span>
-        </div>
         <div class="header-resources">
-          <div class="res-col res-left">
+          <div class="res-row">
             <div class="res-item"><span class="res-icon">🪙</span><span id="res-gold">…</span></div>
             <div class="res-item"><span class="res-icon">🏆</span><span id="res-trophies">…</span></div>
+            <div class="res-item mana-item">
+              <div class="mana-orb" id="res-mana">…</div>
+              <span class="mana-label">mana</span>
+            </div>
           </div>
-          <div class="res-center">
-            <div class="mana-orb" id="res-mana">…</div>
-            <span class="mana-label">mana</span>
-          </div>
-          <div class="res-col res-right" id="res-crystals"></div>
+          <div class="res-row" id="res-crystals"></div>
         </div>
       </header>
 
       <main class="castle-main">
-        <section class="buildings-section">
-          <div id="buildings-grid" class="buildings-grid">
-            <p class="placeholder">Loading…</p>
-          </div>
-        </section>
+        <div class="castle-grounds">
+          <div class="outer-ring" id="outer-ring"></div>
+          <div class="center-slot" id="center-slot"></div>
+        </div>
       </main>
 
       <nav class="bottom-nav">
@@ -120,91 +125,85 @@ export function renderCastle(root, { player }) {
     renderBuildings();
   }
 
+  function slotLabel(slot, state) {
+    const def = buildingDefs?.[player.faction]?.[slot];
+    if (state.level > 0) return def?.label ?? slot;
+    if (def && def.id !== 'empty') return def.label;
+    return 'Empty';
+  }
+
   function renderBuildings() {
     const data = structuresRecord.buildings_data;
-    const grid = root.querySelector('#buildings-grid');
 
-    const grouped = {};
-    for (const [slot, state] of Object.entries(data)) {
-      const cat = slotCategories?.[slot] ?? 'any';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push({ slot, state });
-    }
+    const throneState = data['slot_0'];
+    const throneDef   = buildingDefs?.[player.faction]?.['slot_0'];
+    root.querySelector('#center-slot').innerHTML = `
+      <div class="castle-node castle-node--throne" data-slot="slot_0">
+        <div class="castle-node-icon">${CATEGORY_ICONS.throne}</div>
+        <div class="castle-node-label">${throneDef?.label ?? 'Throne'}</div>
+        ${throneState?.level > 0 ? `<div class="castle-node-level">Lv ${throneState.level}</div>` : ''}
+      </div>
+    `;
 
-    grid.innerHTML = CATEGORY_ORDER.map(cat => {
-      const entries = grouped[cat];
-      if (!entries || entries.length === 0) return '';
-
-      const cards = entries.map(({ slot, state }) => {
-        const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
-        const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
-        const isEmpty    = state.level === 0 && !state.ready_at;
-
-        const factionSlotDef = buildingDefs?.[player.faction]?.[slot];
-        const label = isEmpty
-          ? (factionSlotDef && factionSlotDef.id !== 'empty' ? factionSlotDef.label : 'Empty')
-          : (state.label ?? slot.replace('_', ' '));
-
-        return `
-          <div class="building-card ${isEmpty ? 'building-empty' : ''}" data-slot="${slot}">
-            <div class="building-top">
-              <span class="building-label">${label}</span>
-              <span class="building-level">${state.level > 0 ? `Lv ${state.level}` : 'Empty'}</span>
-            </div>
-            ${isBuilding ? `<div class="building-timer" data-ready="${state.ready_at}">⏳ ${timeLeft(state.ready_at)}</div>` : ''}
-            ${isReady    ? `<button class="building-btn complete-btn" data-slot="${slot}">Complete</button>` : ''}
-            ${isEmpty    ? `<button class="building-btn build-btn" data-slot="${slot}">Build</button>` : ''}
-            ${!isEmpty && !isBuilding && !isReady && state.level < 4
-              ? `<button class="building-btn build-btn" data-slot="${slot}">Upgrade</button>`
-              : ''}
-          </div>
-        `;
-      }).join('');
+    root.querySelector('#outer-ring').innerHTML = SLOT_LAYOUT.map(({ slot }) => {
+      const state    = data[slot];
+      const cat      = slotCategories?.[slot] ?? 'any';
+      const isEmpty  = !state || (state.level === 0 && !state.ready_at);
+      const isBuilding = state?.ready_at && new Date(state.ready_at) > new Date();
+      const isReady    = state?.ready_at && new Date(state.ready_at) <= new Date();
+      const label    = slotLabel(slot, state ?? { level: 0 });
 
       return `
-        <div class="building-group">
-          <div class="building-group-label">${CATEGORY_LABELS[cat] ?? cat}</div>
-          <div class="building-group-slots">${cards}</div>
+        <div class="castle-node castle-node--${cat} ${isEmpty ? 'castle-node--empty' : ''} ${isBuilding ? 'castle-node--building' : ''} ${isReady ? 'castle-node--ready' : ''}" data-slot="${slot}">
+          <div class="castle-node-icon">${CATEGORY_ICONS[cat] ?? '·'}</div>
+          <div class="castle-node-label">${label}</div>
+          ${state?.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
+          ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
+          ${isReady    ? `<div class="castle-node-ready">✓</div>` : ''}
         </div>
       `;
     }).join('');
 
-    grid.querySelectorAll('.build-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const slot  = btn.dataset.slot;
-        const state = structuresRecord.buildings_data[slot];
-        if (state.level === 0) {
-          showBuildModal(slot);
-        } else {
-          startBuild(slot);
-        }
-      });
+    root.querySelector('#outer-ring').querySelectorAll('.castle-node').forEach(node => {
+      node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
     });
 
-    grid.querySelectorAll('.complete-btn').forEach(btn => {
-      btn.addEventListener('click', () => completeBuild(btn.dataset.slot));
+    root.querySelector('#center-slot').querySelector('.castle-node').addEventListener('click', () => {
+      handleSlotClick('slot_0');
     });
 
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(tickTimers, 1000);
   }
 
-  function showBuildModal(slot) {
-    const factionDefs = buildingDefs[player.faction];
-    const slotDef     = factionDefs?.[slot];
+  function handleSlotClick(slot) {
+    const state = structuresRecord.buildings_data[slot];
+    const def   = buildingDefs?.[player.faction]?.[slot];
+    const cat   = slotCategories?.[slot] ?? 'any';
 
-    if (!slotDef || slotDef.id === 'empty') {
-      openModal('Build', `<p class="modal-empty">No buildings available for this slot.</p>`);
+    if (!state || (state.level === 0 && !state.ready_at)) {
+      if (cat === 'throne') return;
+      showBuildModal(slot);
+      return;
+    }
+
+    showDetailsModal(slot, state, def, cat);
+  }
+
+  function showBuildModal(slot) {
+    const def = buildingDefs?.[player.faction]?.[slot];
+
+    if (!def || def.id === 'empty') {
+      openModal('Empty Slot', `<p class="modal-empty">No buildings available for this slot yet.</p>`);
       return;
     }
 
     const cat = slotCategories?.[slot] ?? 'any';
 
-    openModal(`Build — ${CATEGORY_LABELS[cat] ?? cat} Slot`, `
-      <div class="modal-building-option" data-slot="${slot}">
-        <div class="modal-building-name">${slotDef.label}</div>
-        <div class="modal-building-meta">${slotDef.category}</div>
-        ${slotDef.unit ? `<div class="modal-building-unit">Recruits: ${slotDef.unit}</div>` : ''}
+    openModal(`Build — ${def.label}`, `
+      <div class="modal-building-option">
+        <div class="modal-building-meta">${CATEGORY_ICONS[cat]} ${def.category}</div>
+        ${def.unit ? `<div class="modal-building-unit">Recruits: <strong>${def.unit}</strong></div>` : ''}
         <button class="building-btn confirm-build-btn" data-slot="${slot}">Build</button>
       </div>
     `);
@@ -215,11 +214,47 @@ export function renderCastle(root, { player }) {
     });
   }
 
+  function showDetailsModal(slot, state, def, cat) {
+    const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
+    const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
+    const isThrone   = cat === 'throne';
+
+    const canUpgrade = !isThrone && !isBuilding && !isReady && state.level < 4;
+
+    openModal(def?.label ?? slot, `
+      <div class="modal-building-option">
+        <div class="modal-building-meta">${CATEGORY_ICONS[cat]} ${def?.category ?? cat}</div>
+        <div class="modal-building-level-row">
+          <span class="modal-level-badge">Level ${state.level}</span>
+          ${state.level < 4 && !isThrone ? `<span class="modal-max-hint">max 4</span>` : ''}
+        </div>
+        ${def?.unit ? `<div class="modal-building-unit">Recruits: <strong>${def.unit}</strong></div>` : ''}
+        ${isBuilding ? `<div class="modal-building-timer" data-ready="${state.ready_at}">⏳ Building… ${timeLeft(state.ready_at)}</div>` : ''}
+        ${isReady    ? `<button class="building-btn confirm-build-btn complete-mode" data-slot="${slot}">Complete</button>` : ''}
+        ${canUpgrade ? `<button class="building-btn confirm-build-btn upgrade-mode" data-slot="${slot}">Upgrade to Lv ${state.level + 1}</button>` : ''}
+      </div>
+    `);
+
+    root.querySelectorAll('.confirm-build-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        closeModal();
+        if (btn.classList.contains('complete-mode')) {
+          await completeBuild(btn.dataset.slot);
+        } else {
+          await startBuild(btn.dataset.slot);
+        }
+      });
+    });
+  }
+
   function tickTimers() {
-    root.querySelectorAll('.building-timer').forEach(el => {
+    root.querySelectorAll('.castle-node-timer').forEach(el => {
       const left = timeLeft(el.dataset.ready);
-      el.textContent = left === 'Ready' ? '' : `⏳ ${left}`;
       if (left === 'Ready') renderBuildings();
+    });
+    root.querySelectorAll('.modal-building-timer').forEach(el => {
+      const left = timeLeft(el.dataset.ready);
+      el.textContent = left === 'Ready' ? '✓ Ready to complete' : `⏳ Building… ${left}`;
     });
   }
 
