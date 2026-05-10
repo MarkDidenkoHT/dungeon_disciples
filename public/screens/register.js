@@ -1,36 +1,36 @@
-import { api }        from '../utils/api.js';
-import { setSession } from '../utils/session.js';
-import { navigate }   from '../main.js';
+import { api }      from '../main.js';
+import { navigate } from '../main.js';
 
 const FACTIONS = [
-  {
-    id: 'dungeon',
-    label: 'The Dungeon',
-    description: 'Creatures of darkness, bound by ambition.',
-  },
-  {
-    id: 'protectors',
-    label: 'The Protectors',
-    description: 'Defenders of the realm, forged in honor.',
-  },
+  { id: 'dungeon',    label: 'The Dungeon',    description: 'Creatures of darkness, bound by ambition.' },
+  { id: 'protectors', label: 'The Protectors', description: 'Defenders of the realm, forged in honor.'  },
 ];
 
 const HEROES = {
   dungeon: [
-    { id: 'warlord',   label: 'Warlord',   description: 'Melee brute. High HP, high armor.' },
-    { id: 'hexblade',  label: 'Hexblade',  description: 'Caster. Debuffs and dark magic.'   },
-    { id: 'shadowbow', label: 'Shadowbow', description: 'Ranged. High initiative, evasion.'  },
+    { id: 'warlord',   label: 'Warlord',    description: 'Melee brute. High HP, high armor.' },
+    { id: 'hexblade',  label: 'Hexblade',   description: 'Caster. Debuffs and dark magic.'   },
+    { id: 'shadowbow', label: 'Shadowbow',  description: 'Ranged. High initiative, evasion.'  },
   ],
   protectors: [
-    { id: 'paladin',   label: 'Paladin',   description: 'Melee tank. Heals allies.'          },
-    { id: 'inquisitor',label: 'Inquisitor',description: 'Caster. Purge and buffs.'           },
-    { id: 'ranger',    label: 'Ranger',    description: 'Ranged. Fast, precise strikes.'      },
+    { id: 'paladin',    label: 'Paladin',    description: 'Melee tank. Heals allies.'      },
+    { id: 'inquisitor', label: 'Inquisitor', description: 'Caster. Purge and buffs.'       },
+    { id: 'ranger',     label: 'Ranger',     description: 'Ranged. Fast, precise strikes.' },
   ],
 };
 
-export function renderFaction(root, { player }) {
+export function renderRegister(root, { player } = {}) {
+  if (!player) {
+    root.innerHTML = `
+      <div class="screen screen-faction">
+        <h1>Dungeon Disciples</h1>
+        <p class="subtitle">Open this app inside Telegram.</p>
+      </div>
+    `;
+    return;
+  }
+
   let selectedFaction = null;
-  let selectedHero    = null;
 
   showFactionStep();
 
@@ -48,7 +48,7 @@ export function renderFaction(root, { player }) {
           `).join('')}
         </div>
 
-        <p id="faction-error" class="error hidden"></p>
+        <p id="reg-error" class="error hidden"></p>
       </div>
     `;
 
@@ -78,7 +78,7 @@ export function renderFaction(root, { player }) {
           `).join('')}
         </div>
 
-        <p id="faction-error" class="error hidden"></p>
+        <p id="reg-error" class="error hidden"></p>
       </div>
     `;
 
@@ -86,24 +86,23 @@ export function renderFaction(root, { player }) {
 
     root.querySelectorAll('.card').forEach(card => {
       card.addEventListener('click', () => {
-        selectedHero = heroes.find(h => h.id === card.dataset.id);
-        confirmSelection();
+        const hero = heroes.find(h => h.id === card.dataset.id);
+        confirmSelection(hero);
       });
     });
   }
 
-  async function confirmSelection() {
-    const error = root.querySelector('#faction-error');
+  async function confirmSelection(hero) {
+    const error = root.querySelector('#reg-error');
 
     try {
       const { player: updated } = await api('/player/faction', {
         player_id: player.id,
         chat_id:   player.chat_id,
         faction:   selectedFaction.id,
-        hero:      selectedHero.id,
+        hero:      hero.id,
       });
 
-      setSession(updated);
       navigate('castle', { player: updated });
     } catch (err) {
       error.textContent = err.message;

@@ -1,4 +1,4 @@
-import { api }      from '../utils/api.js';
+import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
 export function renderRoster(root, { player }) {
