@@ -1,6 +1,21 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
+const RESIST_LABELS = {
+  resist_fire:      '🔥',
+  resist_ice:       '❄️',
+  resist_lightning: '⚡',
+  resist_dark:      '🌑',
+  resist_holy:      '✨',
+};
+
+const TARGET_LABELS = {
+  single: 'Single',
+  row:    'Row',
+  column: 'Column',
+  all:    'All',
+};
+
 export function renderRoster(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
@@ -38,21 +53,52 @@ export function renderRoster(root, { player }) {
       return;
     }
 
-    list.innerHTML = units.map(u => `
-      <div class="unit-card">
-        <div class="unit-header">
-          <span class="unit-name">${u.unit_name}</span>
-          <span class="unit-xp">XP ${u.experience ?? 0}</span>
-        </div>
-        ${u.unit_data ? `
-          <div class="unit-stats">
-            ${Object.entries(u.unit_data).map(([k, v]) => `
-              <span class="unit-stat"><em>${k}</em> ${v}</span>
+    list.innerHTML = units.map(u => {
+      const d = u.unit_data || {};
+      const action = d.action || {};
+
+      return `
+        <div class="unit-card">
+          <div class="unit-header">
+            <span class="unit-name">${u.unit_name}</span>
+            <span class="unit-xp">XP ${u.experience ?? 0}</span>
+          </div>
+
+          <div class="unit-core-stats">
+            <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
+            <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
+            <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
+          </div>
+
+          <div class="unit-resists">
+            ${Object.entries(RESIST_LABELS).map(([key, icon]) => `
+              <span class="unit-resist">${icon} ${d[key] ?? '—'}</span>
             `).join('')}
           </div>
-        ` : ''}
-      </div>
-    `).join('');
+
+          <div class="unit-action">
+            <span class="unit-action-label">Basic Action</span>
+            <div class="unit-action-stats">
+              <span class="unit-stat"><em>DMG</em> ${action.value ?? '—'}</span>
+              <span class="unit-stat"><em>Range</em> ${action.range ?? '—'}</span>
+              <span class="unit-stat"><em>Target</em> ${action.target_type ?? '—'}</span>
+              <span class="unit-stat"><em>Amount</em> ${TARGET_LABELS[action.target_amount] ?? '—'}</span>
+            </div>
+          </div>
+
+          <div class="unit-abilities">
+            <div class="unit-ability">
+              <span class="unit-ability-label">Passive</span>
+              <span class="unit-ability-value">${d.passive_ability ?? 'Coming soon'}</span>
+            </div>
+            <div class="unit-ability">
+              <span class="unit-ability-label">Active</span>
+              <span class="unit-ability-value">${d.active_ability ?? 'Coming soon'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   load();
