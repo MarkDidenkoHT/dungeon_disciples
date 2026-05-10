@@ -1,5 +1,4 @@
 import { api }          from '../main.js';
-import { clearSession } from '../utils/session.js';
 import { navigate }     from '../main.js';
 
 export function renderCastle(root, { player }) {
