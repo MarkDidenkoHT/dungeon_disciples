@@ -41,8 +41,10 @@ export function renderCastle(root, { player }) {
       <main class="castle-main">
         <div class="castle-grounds">
           <div class="res-col res-col--left" id="res-col-left"></div>
-          <div class="outer-ring" id="outer-ring"></div>
-          <div class="center-slot" id="center-slot"></div>
+          <div class="castle-grid-wrap">
+            <div class="outer-ring" id="outer-ring"></div>
+            <div class="center-slot" id="center-slot"></div>
+          </div>
           <div class="res-col res-col--right" id="res-col-right"></div>
         </div>
       </main>

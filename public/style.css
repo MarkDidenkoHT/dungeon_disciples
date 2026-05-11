@@ -100,19 +100,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-col {
-  position: absolute;
-  top: 0;
-  bottom: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
   align-items: center;
-  z-index: 10;
-  pointer-events: none;
+  width: 25px;
+  height: 320px;
+  flex-shrink: 0;
 }
-
-.res-col--left  { left: 0;  width: calc(100% / 3); }
-.res-col--right { right: 0; width: calc(100% / 3); }
 
 .res-item {
   display: flex;
@@ -121,11 +116,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 1px;
 }
 
-.res-icon { font-size: 1rem; line-height: 1; }
+.res-icon { font-size: 0.85rem; line-height: 1; }
 
 .res-amount {
-  font-size: 0.6rem;
-  color: var(--text);
+  font-size: 0.55rem;
+  color: var(--muted);
   line-height: 1;
 }
 
@@ -139,6 +134,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .castle-grounds {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.castle-grid-wrap {
   position: relative;
   width: 320px;
   height: 320px;
