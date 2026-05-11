@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
+const { REGIONS } = require('../data/embark');
 const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -365,3 +366,37 @@ router.post('/structures/complete', async (req, res) => {
 });
 
 module.exports = router;
+
+router.get('/regions', (req, res) => {
+  res.json(REGIONS);
+});
+
+router.get('/progress', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    res.json(rows[0].progress || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/progress/unlock', async (req, res) => {
+  const { chat_id, region_id, level } = req.body;
+  if (!chat_id || !region_id || level === undefined) return res.status(400).json({ error: 'chat_id, region_id, level required' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    const progress = rows[0].progress || {};
+    progress[region_id] = level;
+    const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ progress }),
+    });
+    res.json(updated[0].progress);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

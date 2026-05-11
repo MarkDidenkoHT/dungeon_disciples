@@ -1,6 +1,8 @@
-import { renderRegister } from './screens/register.js';
-import { renderCastle }   from './screens/castle.js';
-import { renderRoster }   from './screens/roster.js';
+import { renderRegister }   from './screens/register.js';
+import { renderCastle }     from './screens/castle.js';
+import { renderRoster }     from './screens/roster.js';
+import { renderEmbark }     from './screens/embark.js';
+import { renderBattlePrep } from './screens/battle-prep.js';
 
 const app = document.getElementById('app');
 
@@ -19,9 +21,11 @@ export async function api(path, body = null) {
 export function navigate(screen, params = {}) {
   app.innerHTML = '';
   switch (screen) {
-    case 'register': renderRegister(app, params); break;
-    case 'castle':   renderCastle(app, params);   break;
-    case 'roster':   renderRoster(app, params);   break;
+    case 'register':    renderRegister(app, params);   break;
+    case 'castle':      renderCastle(app, params);     break;
+    case 'roster':      renderRoster(app, params);     break;
+    case 'embark':      renderEmbark(app, params);     break;
+    case 'battle-prep': renderBattlePrep(app, params); break;
     default:
       app.innerHTML = `<p style="color:red">Unknown screen: ${screen}</p>`;
   }
