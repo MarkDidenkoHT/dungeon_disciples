@@ -155,6 +155,27 @@ router.get('/player', async (req, res) => {
   }
 });
 
+const HERO_STARTING_BARRACKS = {
+  paladin:    { building_id: 'acolyte_shrine',    unit_id: 'acolyte'    },
+  inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript'  },
+  ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript'  },
+  warlord:    { building_id: 'heretic_pit',        unit_id: 'heretic'    },
+  hexblade:   { building_id: 'heretic_pit',        unit_id: 'heretic'    },
+  shadowbow:  { building_id: 'heretic_pit',        unit_id: 'heretic'    },
+};
+
+const DUNGEON_RANDOM_BARRACKS = [
+  { building_id: 'heretic_pit',      unit_id: 'heretic'   },
+  { building_id: 'possession_altar', unit_id: 'possessed' },
+];
+
+function getStartingBarracks(hero) {
+  if (['warlord', 'hexblade', 'shadowbow'].includes(hero)) {
+    return DUNGEON_RANDOM_BARRACKS[Math.floor(Math.random() * DUNGEON_RANDOM_BARRACKS.length)];
+  }
+  return HERO_STARTING_BARRACKS[hero] ?? null;
+}
+
 router.post('/player/faction', async (req, res) => {
   const { player_id, chat_id, faction, hero } = req.body;
   if (!player_id || !chat_id || !faction || !hero) {
@@ -164,6 +185,16 @@ router.post('/player/faction', async (req, res) => {
   const heroStats = HERO_DATA[hero];
   if (!heroStats) return res.status(400).json({ error: 'Unknown hero' });
 
+  const startingBarracks = getStartingBarracks(hero);
+  const structures = emptyStructures();
+
+  if (startingBarracks) {
+    structures['slot_4'] = { level: 1, ready_at: null, building_id: startingBarracks.building_id };
+  }
+
+  const unitId = startingBarracks?.unit_id;
+  const unitData = unitId ? (UNITS.protectors?.[unitId] ?? UNITS.dungeon?.[unitId] ?? null) : null;
+
   try {
     const [updated] = await Promise.all([
       supabase(`/players?id=eq.${player_id}`, {
@@ -172,12 +203,20 @@ router.post('/player/faction', async (req, res) => {
       }),
       supabase('/roster', {
         method: 'POST',
-        body: JSON.stringify({
-          chat_id,
-          unit_name: hero.charAt(0).toUpperCase() + hero.slice(1),
-          unit_data: heroStats,
-          experience: 0,
-        }),
+        body: JSON.stringify([
+          {
+            chat_id,
+            unit_name: hero.charAt(0).toUpperCase() + hero.slice(1),
+            unit_data: heroStats,
+            experience: 0,
+          },
+          ...(unitData ? [{
+            chat_id,
+            unit_name: unitData.name,
+            unit_data: unitData,
+            experience: 0,
+          }] : []),
+        ]),
       }),
       supabase('/inventory_and_resources', {
         method: 'POST',
@@ -185,7 +224,7 @@ router.post('/player/faction', async (req, res) => {
       }),
       supabase('/structures', {
         method: 'POST',
-        body: JSON.stringify({ chat_id, buildings_data: emptyStructures() }),
+        body: JSON.stringify({ chat_id, buildings_data: structures }),
       }),
     ]);
 
