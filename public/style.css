@@ -102,11 +102,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 .res-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: flex-start;
   align-items: center;
+  gap: 6px;
   width: 25px;
   height: 320px;
   flex-shrink: 0;
+  padding-top: 4px;
 }
 
 .res-item {
@@ -127,10 +129,17 @@ button:active:not(:disabled) { opacity: 0.75; }
 .castle-main {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 12px;
+  gap: 6px;
   overflow: hidden;
+}
+
+.res-mana-top {
+  display: flex;
+  justify-content: center;
 }
 
 .castle-grounds {

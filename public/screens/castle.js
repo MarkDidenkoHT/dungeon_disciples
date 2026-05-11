@@ -39,6 +39,7 @@ export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
+        <div class="res-mana-top" id="res-mana"></div>
         <div class="castle-grounds">
           <div class="res-col res-col--left" id="res-col-left"></div>
           <div class="castle-grid-wrap">
@@ -98,10 +99,16 @@ export function renderCastle(root, { player }) {
 
     const find = (name) => inventory.find(r => r.item === name);
 
+    root.querySelector('#res-mana').innerHTML = `
+      <div class="res-item">
+        <span class="res-icon">🔮</span>
+        <span class="res-amount">${find('Mana')?.amount ?? 0}</span>
+      </div>
+    `;
+
     root.querySelector('#res-col-left').innerHTML = [
       { icon: '🪙', amount: find('Gold')?.amount ?? 0 },
       { icon: '🏆', amount: find('Trophies')?.amount ?? 0 },
-      { icon: '🔮', amount: find('Mana')?.amount ?? 0 },
     ].map(r => `
       <div class="res-item">
         <span class="res-icon">${r.icon}</span>
