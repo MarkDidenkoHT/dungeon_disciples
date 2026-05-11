@@ -53,7 +53,7 @@ export function renderCastle(root, { player }) {
       <nav class="bottom-nav">
         <button class="nav-btn active" data-screen="castle">Castle</button>
         <button class="nav-btn" data-screen="roster">Roster</button>
-        <button class="nav-btn disabled" data-screen="embark">Embark</button>
+        <button class="nav-btn" data-screen="embark">Embark</button>
         <button class="nav-btn disabled" data-screen="pvp">PvP</button>
       </nav>
     </div>
