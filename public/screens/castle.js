@@ -38,19 +38,16 @@ const SLOT_LAYOUT = [
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
-      <header class="castle-header">
-        <div class="header-resources">
-          <div class="res-row">
-            <div class="res-item"><span class="res-icon">🪙</span><span id="res-gold">…</span></div>
-            <div class="res-item"><span class="res-icon">🏆</span><span id="res-trophies">…</span></div>
-            <div class="res-item mana-item">
-              <div class="mana-orb" id="res-mana">…</div>
-              <span class="mana-label">mana</span>
-            </div>
+      <div class="res-bar">
+        <div class="res-col res-col--left" id="res-col-left"></div>
+        <div class="res-col res-col--center">
+          <div class="mana-orb" id="res-mana">
+            <span>…</span>
+            <span class="mana-orb-label">mana</span>
           </div>
-          <div class="res-row" id="res-crystals"></div>
         </div>
-      </header>
+        <div class="res-col res-col--right" id="res-col-right"></div>
+      </div>
 
       <main class="castle-main">
         <div class="castle-grounds">
@@ -108,14 +105,25 @@ export function renderCastle(root, { player }) {
 
     const find = (name) => inventory.find(r => r.item === name);
 
-    root.querySelector('#res-gold').textContent     = find('Gold')?.amount     ?? 0;
-    root.querySelector('#res-trophies').textContent = find('Trophies')?.amount ?? 0;
-    root.querySelector('#res-mana').textContent     = find('Mana')?.amount     ?? 0;
+    const leftItems = [
+      { icon: '🪙', amount: find('Gold')?.amount ?? 0 },
+      { icon: '🏆', amount: find('Trophies')?.amount ?? 0 },
+    ];
 
-    root.querySelector('#res-crystals').innerHTML = CRYSTAL_TYPES.map(c => `
+    root.querySelector('#res-col-left').innerHTML = leftItems.map(r => `
+      <div class="res-item">
+        <span class="res-icon">${r.icon}</span>
+        <span class="res-amount">${r.amount}</span>
+      </div>
+    `).join('');
+
+    const manaEl = root.querySelector('#res-mana');
+    manaEl.innerHTML = `<span>${find('Mana')?.amount ?? 0}</span><span class="mana-orb-label">mana</span>`;
+
+    root.querySelector('#res-col-right').innerHTML = CRYSTAL_TYPES.map(c => `
       <div class="res-item">
         <span class="res-icon">${c.icon}</span>
-        <span>${find(c.key)?.amount ?? 0}</span>
+        <span class="res-amount">${find(c.key)?.amount ?? 0}</span>
       </div>
     `).join('');
 

@@ -99,64 +99,63 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: space-between;
 }
 
-.castle-header {
-  display: flex;
+.res-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border);
   background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 10px;
+  gap: 8px;
 }
 
-.header-resources {
+.res-col {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
 }
 
-.res-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.res-col--left  { align-items: flex-start; }
+.res-col--right { align-items: flex-end; }
+.res-col--center { align-items: center; }
 
 .res-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  color: var(--text);
+  gap: 1px;
 }
 
-.res-icon { font-size: 0.85rem; line-height: 1; }
+.res-icon { font-size: 1rem; line-height: 1; }
 
-.mana-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.res-amount {
+  font-size: 0.62rem;
+  color: var(--text);
+  line-height: 1;
 }
 
 .mana-orb {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #4a6fa5, #1a2a4a);
   border: 2px solid #3a5a8a;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: bold;
   color: #a8c8f0;
+  gap: 1px;
 }
 
-.mana-label {
-  font-size: 0.65rem;
-  color: var(--muted);
+.mana-orb-label {
+  font-size: 0.5rem;
+  color: #6a9abf;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  line-height: 1;
 }
 
 .castle-main {
@@ -362,11 +361,83 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin-top: 4px;
 }
 
-.roster-list {
+.roster-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.roster-faction {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.roster-hero {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.roster-counter {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.roster-main {
+  padding: 0;
+  overflow: hidden;
+}
+
+.roster-slider-wrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.roster-track {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.roster-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.roster-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 6px;
+  flex-shrink: 0;
+}
+
+.roster-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.roster-dot--active {
+  background: var(--accent);
 }
 
 .unit-card {
