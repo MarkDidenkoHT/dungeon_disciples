@@ -291,12 +291,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     track.querySelectorAll('.portrait-card').forEach(card => {
       const u = roster.find(r => r.id === card.dataset.id);
+      if (!u) return;
 
       card.addEventListener('dragstart', e => {
         dragUnit = u;
         e.dataTransfer.effectAllowed = 'move';
         renderPlayerGrid();
-        renderPortraitTrack();
       });
 
       card.addEventListener('dragend', () => {
@@ -313,9 +313,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       });
 
       card.addEventListener('touchstart', () => {
+        if (!u) return;
         dragUnit = u;
         renderPlayerGrid();
-        renderPortraitTrack();
       }, { passive: true });
     });
   }
