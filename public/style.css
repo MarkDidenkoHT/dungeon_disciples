@@ -712,13 +712,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 .battle-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 72px);
   gap: 5px;
   width: 100%;
 }
 
 .battle-cell {
-  aspect-ratio: 1;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface);
