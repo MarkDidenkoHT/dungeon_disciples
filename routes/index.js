@@ -13,36 +13,42 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const HERO_DATA = {
   warlord: {
+    type: 'melee',
     hp: 120, armor: 8, initiative: 4,
     resist_fire: 2, resist_ice: 2, resist_lightning: 2, resist_dark: 5, resist_holy: 2,
     action: { value: 14, range: 1, target_type: 'enemy', target_amount: 'single' },
     passive_ability: null, active_ability: null,
   },
   hexblade: {
+    type: 'caster',
     hp: 70, armor: 2, initiative: 6,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 10, resist_holy: 2,
     action: { value: 18, range: 2, target_type: 'enemy', target_amount: 'single' },
     passive_ability: null, active_ability: null,
   },
   shadowbow: {
+    type: 'ranged',
     hp: 80, armor: 3, initiative: 10,
     resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 6, resist_holy: 2,
     action: { value: 16, range: 3, target_type: 'enemy', target_amount: 'single' },
     passive_ability: null, active_ability: null,
   },
   paladin: {
+    type: 'melee',
     hp: 115, armor: 9, initiative: 4,
     resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 3, resist_holy: 10,
     action: { value: 12, range: 1, target_type: 'enemy', target_amount: 'single' },
     passive_ability: null, active_ability: null,
   },
   inquisitor: {
+    type: 'ranged',
     hp: 72, armor: 2, initiative: 7,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 4, resist_holy: 10,
     action: { value: 17, range: 2, target_type: 'enemy', target_amount: 'single' },
     passive_ability: null, active_ability: null,
   },
   ranger: {
+    type: 'ranged',
     hp: 82, armor: 3, initiative: 11,
     resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 3, resist_holy: 4,
     action: { value: 15, range: 3, target_type: 'enemy', target_amount: 'single' },
@@ -255,7 +261,7 @@ router.get('/roster', async (req, res) => {
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
 
   try {
-    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=*`);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -365,8 +371,6 @@ router.post('/structures/complete', async (req, res) => {
   }
 });
 
-module.exports = router;
-
 router.get('/regions', (req, res) => {
   res.json(REGIONS);
 });
@@ -400,3 +404,5 @@ router.post('/progress/unlock', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+module.exports = router;

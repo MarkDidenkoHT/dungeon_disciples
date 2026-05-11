@@ -215,7 +215,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function checkReady() {
     const btn        = root.querySelector('#ready-btn');
-    const heroPlaced = placedUnitIds().has(heroId);
+    const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
     btn.disabled     = !heroPlaced;
     btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
   }
@@ -277,7 +277,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       placeUnit(dragUnit, i);
       dragUnit = null;
       renderPlayerGrid();
-      attachGridClicks();
       renderPortraitTrack();
       attachPortraitEvents();
       checkReady();
@@ -291,7 +290,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const occ    = occupied[anchor];
       if (occ) removeUnit(occ.unitId);
       renderPlayerGrid();
-      attachGridClicks();
       renderPortraitTrack();
       attachPortraitEvents();
       checkReady();
@@ -313,31 +311,30 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       placeUnit(dragUnit, i);
       dragUnit = null;
       renderPlayerGrid();
-      attachGridClicks();
       renderPortraitTrack();
       attachPortraitEvents();
       checkReady();
     }
   });
 
-  function attachGridClicks() {}
-
   function attachPortraitEvents() {
     root.querySelectorAll('.portrait-card').forEach(card => {
-      const u = roster.find(r => r.id === card.dataset.id);
+      const u = roster.find(r => String(r.id) === String(card.dataset.id));
       if (!u) return;
 
       card.addEventListener('dragstart', e => {
         dragUnit = u;
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', u.id);
+        e.dataTransfer.setData('text/plain', String(u.id));
       });
 
       card.addEventListener('dragend', () => {
-        dragUnit = null;
-        clearHover();
-        renderPortraitTrack();
-        attachPortraitEvents();
+        if (dragUnit) {
+          dragUnit = null;
+          clearHover();
+          renderPortraitTrack();
+          attachPortraitEvents();
+        }
       });
 
       card.addEventListener('click', () => {
@@ -364,8 +361,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       api('/regions'),
     ]);
 
-    roster = rosterData.map((u, i) => ({ ...u, id: u.id || String(i) }));
-    const heroUnit = roster.find(u => u.unit_name.toLowerCase() === player.hero?.toLowerCase());
+    roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
+
+    const heroName = player.hero ?? '';
+    const heroUnit = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
     heroId = heroUnit?.id ?? null;
 
     const regionDef = regionsData.find(r => r.id === region_id);
