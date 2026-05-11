@@ -46,6 +46,11 @@ function sizeLabel(size) {
   return { tile: '1×1', column: '1×2', row: '2×1' }[size] ?? '';
 }
 
+function unitTypeIcon(u) {
+  const t = u?.unit_data?.type ?? '';
+  return { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[t] ?? '·';
+}
+
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
 
@@ -55,28 +60,22 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <button class="back-btn" id="back-btn">←</button>
         <span class="embark-title">${meta.icon} ${meta.label} — Lv ${level}</span>
       </div>
-
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation</div>
           <div class="battle-grid" id="player-grid"></div>
         </div>
-
         <div class="battle-vs">⚔</div>
-
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label">Enemies</div>
           <div class="battle-grid" id="enemy-grid"></div>
         </div>
       </div>
-
       <div class="portrait-slider-wrap">
         <div class="portrait-track" id="portrait-track"></div>
       </div>
-
       <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
     </div>
-
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal">
         <div class="modal-header">
@@ -88,13 +87,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     </div>
   `;
 
-  let roster       = [];
-  let enemies      = [];
-  let heroId       = null;
-  let dragUnit     = null;
-  let hoverAnchor  = null;
-
-  const occupied   = {};
+  let roster      = [];
+  let enemies     = [];
+  let heroId      = null;
+  let dragUnit    = null;
+  let hoverCell   = null;
+  const occupied  = {};
 
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
@@ -121,142 +119,53 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  function canPlace(unit, anchor) {
+    const size  = getUnitSize(unit);
+    const cells = getCells(anchor, size);
+    if (!cells) return false;
+    return cells.every(c => !occupied[c]);
+  }
+
   function placeUnit(unit, anchor) {
     const size  = getUnitSize(unit);
     const cells = getCells(anchor, size);
     if (!cells) return false;
-    for (const c of cells) {
-      if (occupied[c]) return false;
-    }
-    for (const c of cells) {
-      occupied[c] = { unitId: unit.id, anchor: anchor, size };
-    }
+    if (!cells.every(c => !occupied[c])) return false;
+    cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor, size }; });
     return true;
-  }
-
-  function getAnchorForCell(cellIdx) {
-    return occupied[cellIdx]?.anchor ?? null;
-  }
-
-  function highlightDropTargets() {
-    const grid = root.querySelector('#player-grid');
-    if (!grid || !dragUnit) return;
-    const size    = getUnitSize(dragUnit);
-    const anchors = new Set(getValidAnchors(size));
-    grid.querySelectorAll('.battle-cell--empty').forEach(cell => {
-      const i = Number(cell.dataset.i);
-      if (anchors.has(i) && !occupied[i]) {
-        cell.classList.add('battle-cell--drop-target');
-      }
-    });
   }
 
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
-
-    const cellHtml = Array.from({ length: ROWS * COLS }, (_, i) => {
+    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const occ = occupied[i];
       if (occ && occ.anchor === i) {
-        const unit   = roster.find(u => u.id === occ.unitId);
-        const isHero = occ.unitId === heroId;
-        const size   = occ.size;
-        const rowSpan = size === 'column' ? 2 : 1;
-        const colSpan = size === 'row'    ? 2 : 1;
+        const unit    = roster.find(u => u.id === occ.unitId);
+        const isHero  = occ.unitId === heroId;
+        const rowSpan = occ.size === 'column' ? 2 : 1;
+        const colSpan = occ.size === 'row'    ? 2 : 1;
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
-                     data-i="${i}"
-                     style="grid-row: span ${rowSpan}; grid-column: span ${colSpan};">
+                     data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           <span class="battle-cell-name">${unit?.unit_name ?? '?'}</span>
-          <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(size)}</span>
-          <span class="battle-cell-remove" data-i="${i}">✕</span>
+          <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
+          <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;
       }
       if (occ && occ.anchor !== i) return '';
-
       return `<div class="battle-cell battle-cell--empty" data-i="${i}">
         <span class="battle-cell-row-hint">R${cellRow(i) + 1}</span>
       </div>`;
-    });
-
-    grid.innerHTML = cellHtml.join('');
-
-    grid.querySelectorAll('.battle-cell--empty').forEach(cell => {
-      const i = Number(cell.dataset.i);
-
-      cell.addEventListener('dragover', e => {
-        if (!dragUnit) return;
-        const size = getUnitSize(dragUnit);
-        if (!getValidAnchors(size).includes(i) || occupied[i]) return;
-        e.preventDefault();
-        if (hoverAnchor !== i) {
-          root.querySelector('#player-grid')?.querySelectorAll('.battle-cell--hover')
-            .forEach(c => c.classList.remove('battle-cell--hover'));
-          cell.classList.add('battle-cell--hover');
-          hoverAnchor = i;
-        }
-      });
-
-      cell.addEventListener('dragleave', () => {
-        if (hoverAnchor === i) {
-          cell.classList.remove('battle-cell--hover');
-          hoverAnchor = null;
-        }
-      });
-
-      cell.addEventListener('drop', e => {
-        e.preventDefault();
-        hoverAnchor = null;
-        if (!dragUnit) return;
-        placeUnit(dragUnit, i);
-        dragUnit = null;
-        renderPlayerGrid();
-        renderPortraitTrack();
-        checkReady();
-      });
-
-      cell.addEventListener('click', () => {
-        if (!dragUnit) return;
-        const size = getUnitSize(dragUnit);
-        if (!getValidAnchors(size).includes(i) || occupied[i]) return;
-        placeUnit(dragUnit, i);
-        dragUnit = null;
-        renderPlayerGrid();
-        renderPortraitTrack();
-        checkReady();
-      });
-    });
-
-    grid.querySelectorAll('.battle-cell--placed').forEach(cell => {
-      const i = Number(cell.dataset.i);
-
-      cell.querySelector('.battle-cell-remove')?.addEventListener('click', e => {
-        e.stopPropagation();
-        const anchor = getAnchorForCell(i);
-        if (anchor !== null) removeUnit(occupied[anchor].unitId);
-        renderPlayerGrid();
-        renderPortraitTrack();
-        checkReady();
-      });
-
-      cell.addEventListener('click', () => {
-        const occ  = occupied[i];
-        if (!occ) return;
-        const unit = roster.find(u => u.id === occ.unitId);
-        if (!unit) return;
-        openModal(unit.unit_name, unitStatHtml(unit));
-      });
-    });
+    }).join('');
   }
 
   function renderEnemyGrid() {
     const grid = root.querySelector('#enemy-grid');
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
-      const enemy = enemies[i];
-      if (enemy) {
-        return `<div class="battle-cell battle-cell--enemy" data-i="${i}">
-          <span class="battle-cell-name">${enemy.name}</span>
-          <span class="battle-cell-sub">❤ ${enemy.hp}</span>
-        </div>`;
-      }
+      const e = enemies[i];
+      if (e) return `<div class="battle-cell battle-cell--enemy" data-i="${i}">
+        <span class="battle-cell-name">${e.name}</span>
+        <span class="battle-cell-sub">❤ ${e.hp}</span>
+      </div>`;
       return `<div class="battle-cell battle-cell--fog">???</div>`;
     }).join('');
 
@@ -283,8 +192,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function renderPortraitTrack() {
-    const track   = root.querySelector('#portrait-track');
-    const placed  = placedUnitIds();
+    const track     = root.querySelector('#portrait-track');
+    const placed    = placedUnitIds();
     const available = roster.filter(u => !placed.has(u.id));
 
     if (!available.length) {
@@ -294,51 +203,21 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     track.innerHTML = available.map(u => {
       const isHero     = u.id === heroId;
-      const size       = getUnitSize(u);
       const isSelected = dragUnit?.id === u.id;
       return `<div class="portrait-card ${isHero ? 'portrait-card--hero' : ''} ${isSelected ? 'portrait-card--selected' : ''}"
                    draggable="true" data-id="${u.id}">
         <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
         <div class="portrait-name">${u.unit_name}</div>
-        <div class="portrait-size">${sizeLabel(size)}</div>
+        <div class="portrait-size">${sizeLabel(getUnitSize(u))}</div>
       </div>`;
     }).join('');
-
-    track.querySelectorAll('.portrait-card').forEach(card => {
-      const u = roster.find(r => r.id === card.dataset.id);
-      if (!u) return;
-
-      card.addEventListener('dragstart', e => {
-        dragUnit = u;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', u.id);
-        setTimeout(() => highlightDropTargets(), 0);
-      });
-
-      card.addEventListener('dragend', () => {
-        dragUnit    = null;
-        hoverAnchor = null;
-        renderPlayerGrid();
-        renderPortraitTrack();
-      });
-
-      card.addEventListener('click', () => {
-        dragUnit = dragUnit?.id === u.id ? null : u;
-        renderPlayerGrid();
-        renderPortraitTrack();
-      });
-
-      card.addEventListener('touchstart', () => {
-        if (!u) return;
-        dragUnit = u;
-        highlightDropTargets();
-      }, { passive: true });
-    });
   }
 
-  function unitTypeIcon(u) {
-    const t = u?.unit_data?.type ?? '';
-    return { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[t] ?? '·';
+  function checkReady() {
+    const btn        = root.querySelector('#ready-btn');
+    const heroPlaced = placedUnitIds().has(heroId);
+    btn.disabled     = !heroPlaced;
+    btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
   }
 
   function unitStatHtml(u) {
@@ -348,23 +227,125 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
         <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
         <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
-      </div>
-      <div class="unit-action">
-        <span class="unit-action-label">Basic Action</span>
-        <div class="unit-action-stats">
-          <span class="unit-stat"><em>DMG</em> ${d.action?.value ?? '—'}</span>
-          <span class="unit-stat"><em>Range</em> ${d.action?.range ?? '—'}</span>
-          <span class="unit-stat"><em>Target</em> ${d.action?.target_type ?? '—'}</span>
-        </div>
-      </div>
-    `;
+      </div>`;
   }
 
-  function checkReady() {
-    const btn        = root.querySelector('#ready-btn');
-    const heroPlaced = placedUnitIds().has(heroId);
-    btn.disabled     = !heroPlaced;
-    btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
+  function setHover(i) {
+    if (hoverCell === i) return;
+    clearHover();
+    hoverCell = i;
+    const cell = root.querySelector(`#player-grid [data-i="${i}"]`);
+    if (cell) cell.classList.add('battle-cell--hover');
+  }
+
+  function clearHover() {
+    if (hoverCell !== null) {
+      const prev = root.querySelector(`#player-grid [data-i="${hoverCell}"]`);
+      if (prev) prev.classList.remove('battle-cell--hover');
+      hoverCell = null;
+    }
+  }
+
+  const playerGrid = root.querySelector('#player-grid');
+
+  playerGrid.addEventListener('dragover', e => {
+    e.preventDefault();
+    const cell = e.target.closest('[data-i]');
+    if (!cell || !dragUnit) return;
+    const i = Number(cell.dataset.i);
+    if (!occupied[i] && canPlace(dragUnit, i)) {
+      setHover(i);
+      e.dataTransfer.dropEffect = 'move';
+    } else {
+      clearHover();
+      e.dataTransfer.dropEffect = 'none';
+    }
+  });
+
+  playerGrid.addEventListener('dragleave', e => {
+    if (!playerGrid.contains(e.relatedTarget)) clearHover();
+  });
+
+  playerGrid.addEventListener('drop', e => {
+    e.preventDefault();
+    clearHover();
+    if (!dragUnit) return;
+    const cell = e.target.closest('[data-i]');
+    if (!cell) return;
+    const i = Number(cell.dataset.i);
+    if (canPlace(dragUnit, i)) {
+      placeUnit(dragUnit, i);
+      dragUnit = null;
+      renderPlayerGrid();
+      attachGridClicks();
+      renderPortraitTrack();
+      attachPortraitEvents();
+      checkReady();
+    }
+  });
+
+  playerGrid.addEventListener('click', e => {
+    const removeBtn = e.target.closest('[data-remove]');
+    if (removeBtn) {
+      const anchor = Number(removeBtn.dataset.remove);
+      const occ    = occupied[anchor];
+      if (occ) removeUnit(occ.unitId);
+      renderPlayerGrid();
+      attachGridClicks();
+      renderPortraitTrack();
+      attachPortraitEvents();
+      checkReady();
+      return;
+    }
+
+    const cell = e.target.closest('[data-i]');
+    if (!cell) return;
+    const i   = Number(cell.dataset.i);
+    const occ = occupied[i];
+
+    if (occ) {
+      const unit = roster.find(u => u.id === occ.unitId);
+      if (unit) openModal(unit.unit_name, unitStatHtml(unit));
+      return;
+    }
+
+    if (dragUnit && canPlace(dragUnit, i)) {
+      placeUnit(dragUnit, i);
+      dragUnit = null;
+      renderPlayerGrid();
+      attachGridClicks();
+      renderPortraitTrack();
+      attachPortraitEvents();
+      checkReady();
+    }
+  });
+
+  function attachGridClicks() {}
+
+  function attachPortraitEvents() {
+    root.querySelectorAll('.portrait-card').forEach(card => {
+      const u = roster.find(r => r.id === card.dataset.id);
+      if (!u) return;
+
+      card.addEventListener('dragstart', e => {
+        dragUnit = u;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', u.id);
+      });
+
+      card.addEventListener('dragend', () => {
+        dragUnit = null;
+        clearHover();
+        renderPortraitTrack();
+        attachPortraitEvents();
+      });
+
+      card.addEventListener('click', () => {
+        dragUnit = dragUnit?.id === u.id ? null : u;
+        renderPortraitTrack();
+        attachPortraitEvents();
+      });
+    });
   }
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
@@ -394,6 +375,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     renderEnemyGrid();
     renderPlayerGrid();
     renderPortraitTrack();
+    attachPortraitEvents();
     checkReady();
   }
 
