@@ -138,6 +138,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return occupied[cellIdx]?.anchor ?? null;
   }
 
+  function highlightDropTargets() {
+    const grid = root.querySelector('#player-grid');
+    if (!grid || !dragUnit) return;
+    const size    = getUnitSize(dragUnit);
+    const anchors = new Set(getValidAnchors(size));
+    grid.querySelectorAll('.battle-cell--empty').forEach(cell => {
+      const i = Number(cell.dataset.i);
+      if (anchors.has(i) && !occupied[i]) {
+        cell.classList.add('battle-cell--drop-target');
+      }
+    });
+  }
+
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
 
@@ -159,12 +172,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
       if (occ && occ.anchor !== i) return '';
 
-      const isValidDrop = dragUnit && getValidAnchors(getUnitSize(dragUnit)).includes(i) && !occupied[i];
-      const isHover     = hoverAnchor === i;
-      let cls = 'battle-cell--empty';
-      if (isValidDrop) cls += ' battle-cell--drop-target';
-      if (isHover)     cls += ' battle-cell--hover';
-      return `<div class="battle-cell ${cls}" data-i="${i}">
+      return `<div class="battle-cell battle-cell--empty" data-i="${i}">
         <span class="battle-cell-row-hint">R${cellRow(i) + 1}</span>
       </div>`;
     });
@@ -179,12 +187,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const size = getUnitSize(dragUnit);
         if (!getValidAnchors(size).includes(i) || occupied[i]) return;
         e.preventDefault();
-        hoverAnchor = i;
-        renderPlayerGrid();
+        if (hoverAnchor !== i) {
+          root.querySelector('#player-grid')?.querySelectorAll('.battle-cell--hover')
+            .forEach(c => c.classList.remove('battle-cell--hover'));
+          cell.classList.add('battle-cell--hover');
+          hoverAnchor = i;
+        }
       });
 
       cell.addEventListener('dragleave', () => {
-        if (hoverAnchor === i) { hoverAnchor = null; renderPlayerGrid(); }
+        if (hoverAnchor === i) {
+          cell.classList.remove('battle-cell--hover');
+          hoverAnchor = null;
+        }
       });
 
       cell.addEventListener('drop', e => {
@@ -296,7 +311,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       card.addEventListener('dragstart', e => {
         dragUnit = u;
         e.dataTransfer.effectAllowed = 'move';
-        renderPlayerGrid();
+        e.dataTransfer.setData('text/plain', u.id);
+        setTimeout(() => highlightDropTargets(), 0);
       });
 
       card.addEventListener('dragend', () => {
@@ -315,7 +331,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       card.addEventListener('touchstart', () => {
         if (!u) return;
         dragUnit = u;
-        renderPlayerGrid();
+        highlightDropTargets();
       }, { passive: true });
     });
   }
