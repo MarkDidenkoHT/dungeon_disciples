@@ -38,21 +38,12 @@ const SLOT_LAYOUT = [
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
-      <div class="res-bar">
-        <div class="res-col res-col--left" id="res-col-left"></div>
-        <div class="res-col res-col--center">
-          <div class="mana-orb" id="res-mana">
-            <span>…</span>
-            <span class="mana-orb-label">mana</span>
-          </div>
-        </div>
-        <div class="res-col res-col--right" id="res-col-right"></div>
-      </div>
-
       <main class="castle-main">
         <div class="castle-grounds">
+          <div class="res-col res-col--left" id="res-col-left"></div>
           <div class="outer-ring" id="outer-ring"></div>
           <div class="center-slot" id="center-slot"></div>
+          <div class="res-col res-col--right" id="res-col-right"></div>
         </div>
       </main>
 
@@ -105,20 +96,16 @@ export function renderCastle(root, { player }) {
 
     const find = (name) => inventory.find(r => r.item === name);
 
-    const leftItems = [
+    root.querySelector('#res-col-left').innerHTML = [
       { icon: '🪙', amount: find('Gold')?.amount ?? 0 },
       { icon: '🏆', amount: find('Trophies')?.amount ?? 0 },
-    ];
-
-    root.querySelector('#res-col-left').innerHTML = leftItems.map(r => `
+      { icon: '🔮', amount: find('Mana')?.amount ?? 0 },
+    ].map(r => `
       <div class="res-item">
         <span class="res-icon">${r.icon}</span>
         <span class="res-amount">${r.amount}</span>
       </div>
     `).join('');
-
-    const manaEl = root.querySelector('#res-mana');
-    manaEl.innerHTML = `<span>${find('Mana')?.amount ?? 0}</span><span class="mana-orb-label">mana</span>`;
 
     root.querySelector('#res-col-right').innerHTML = CRYSTAL_TYPES.map(c => `
       <div class="res-item">
