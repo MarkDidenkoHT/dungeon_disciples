@@ -768,6 +768,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .battle-cell--drop-target:active { background: var(--bg); }
 
+.battle-cell--hover {
+  background: #1a2a1a;
+  border-color: var(--accent);
+  border-style: solid;
+}
+
 .battle-cell-name {
   font-size: 0.6rem;
   color: var(--text);
@@ -794,36 +800,68 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
 }
 
-.roster-chip--hero {
-  border-color: gold;
-  color: gold;
+.portrait-slider-wrap {
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
 }
 
-.battle-roster-strip {
+.portrait-track {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  padding: 6px 0;
-  max-width: 320px;
-  width: 100%;
+  flex-direction: row;
+  gap: 8px;
+  width: max-content;
+  align-items: flex-end;
 }
 
-.roster-chip {
-  background: var(--surface);
+.portrait-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 62px;
+  cursor: grab;
+  flex-shrink: 0;
   border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 0.7rem;
-  color: var(--text);
-  cursor: pointer;
-  transition: border-color 0.15s;
+  border-radius: 8px;
+  padding: 6px 4px 4px;
+  background: var(--surface);
+  user-select: none;
+  touch-action: none;
 }
 
-.roster-chip--selected {
-  border-color: var(--accent);
-  color: var(--accent);
+.portrait-card:active { border-color: var(--accent); }
+.portrait-card--hero  { border-color: gold; }
+.portrait-card--selected { border-color: var(--accent); background: #1a2a1a; }
+
+.portrait-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
 }
+
+.portrait-card--hero .portrait-art { background: #2a2510; color: gold; }
+
+.portrait-name {
+  font-size: 0.58rem;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.1;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portrait-size { font-size: 0.5rem; color: var(--muted); }
 
 .ready-btn {
   flex-shrink: 0;

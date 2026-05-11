@@ -11,7 +11,40 @@ const REGION_META = {
 
 const ROWS = 3;
 const COLS = 2;
-const TOTAL = ROWS * COLS;
+
+function cellIndex(row, col) { return row * COLS + col; }
+function cellRow(i)  { return Math.floor(i / COLS); }
+function cellCol(i)  { return i % COLS; }
+
+function getUnitSize(unit) {
+  const t = unit?.unit_data?.type ?? 'melee';
+  if (t === 'ranged') return 'row';
+  if (t === 'caster') return 'column';
+  return 'tile';
+}
+
+function getCells(anchor, size) {
+  const r = cellRow(anchor), c = cellCol(anchor);
+  if (size === 'tile')   return [anchor];
+  if (size === 'column') return r <= ROWS - 2 ? [anchor, cellIndex(r + 1, c)] : null;
+  if (size === 'row')    return c === 0        ? [anchor, cellIndex(r, 1)]     : null;
+  return null;
+}
+
+function getValidAnchors(size) {
+  const anchors = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const idx = cellIndex(r, c);
+      if (getCells(idx, size)) anchors.push(idx);
+    }
+  }
+  return anchors;
+}
+
+function sizeLabel(size) {
+  return { tile: '1×1', column: '1×2', row: '2×1' }[size] ?? '';
+}
 
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
@@ -26,21 +59,20 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation</div>
-          <div class="battle-row-labels">
-            <span>Row 1</span><span>Row 2</span><span>Row 3</span>
-          </div>
-          <div class="battle-grid battle-grid--player" id="player-grid"></div>
+          <div class="battle-grid" id="player-grid"></div>
         </div>
 
         <div class="battle-vs">⚔</div>
 
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label">Enemies</div>
-          <div class="battle-grid battle-grid--enemy" id="enemy-grid"></div>
+          <div class="battle-grid" id="enemy-grid"></div>
         </div>
       </div>
 
-      <div class="battle-roster-strip" id="roster-strip"></div>
+      <div class="portrait-slider-wrap">
+        <div class="portrait-track" id="portrait-track"></div>
+      </div>
 
       <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
     </div>
@@ -56,11 +88,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     </div>
   `;
 
-  const playerSlots = Array(TOTAL).fill(null);
-  let roster  = [];
-  let enemies = [];
-  let heroId  = null;
-  let selectedUnit = null;
+  let roster       = [];
+  let enemies      = [];
+  let heroId       = null;
+  let dragUnit     = null;
+  let hoverAnchor  = null;
+
+  const occupied   = {};
 
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
@@ -75,14 +109,132 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   root.querySelector('#modal-overlay').addEventListener('click', e => {
     if (e.target === root.querySelector('#modal-overlay')) closeModal();
   });
-
   root.querySelector('#back-btn').addEventListener('click', () => navigate('embark', { player }));
 
-  function slotRow(i) { return Math.floor(i / COLS); }
+  function placedUnitIds() {
+    return new Set(Object.values(occupied).map(p => p.unitId));
+  }
+
+  function removeUnit(unitId) {
+    for (const key of Object.keys(occupied)) {
+      if (occupied[key].unitId === unitId) delete occupied[key];
+    }
+  }
+
+  function placeUnit(unit, anchor) {
+    const size  = getUnitSize(unit);
+    const cells = getCells(anchor, size);
+    if (!cells) return false;
+    for (const c of cells) {
+      if (occupied[c]) return false;
+    }
+    for (const c of cells) {
+      occupied[c] = { unitId: unit.id, anchor: anchor, size };
+    }
+    return true;
+  }
+
+  function getAnchorForCell(cellIdx) {
+    return occupied[cellIdx]?.anchor ?? null;
+  }
+
+  function renderPlayerGrid() {
+    const grid = root.querySelector('#player-grid');
+
+    const cellHtml = Array.from({ length: ROWS * COLS }, (_, i) => {
+      const occ = occupied[i];
+      if (occ && occ.anchor === i) {
+        const unit   = roster.find(u => u.id === occ.unitId);
+        const isHero = occ.unitId === heroId;
+        const size   = occ.size;
+        const rowSpan = size === 'column' ? 2 : 1;
+        const colSpan = size === 'row'    ? 2 : 1;
+        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
+                     data-i="${i}"
+                     style="grid-row: span ${rowSpan}; grid-column: span ${colSpan};">
+          <span class="battle-cell-name">${unit?.unit_name ?? '?'}</span>
+          <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(size)}</span>
+          <span class="battle-cell-remove" data-i="${i}">✕</span>
+        </div>`;
+      }
+      if (occ && occ.anchor !== i) return '';
+
+      const isValidDrop = dragUnit && getValidAnchors(getUnitSize(dragUnit)).includes(i) && !occupied[i];
+      const isHover     = hoverAnchor === i;
+      let cls = 'battle-cell--empty';
+      if (isValidDrop) cls += ' battle-cell--drop-target';
+      if (isHover)     cls += ' battle-cell--hover';
+      return `<div class="battle-cell ${cls}" data-i="${i}">
+        <span class="battle-cell-row-hint">R${cellRow(i) + 1}</span>
+      </div>`;
+    });
+
+    grid.innerHTML = cellHtml.join('');
+
+    grid.querySelectorAll('.battle-cell--empty').forEach(cell => {
+      const i = Number(cell.dataset.i);
+
+      cell.addEventListener('dragover', e => {
+        if (!dragUnit) return;
+        const size = getUnitSize(dragUnit);
+        if (!getValidAnchors(size).includes(i) || occupied[i]) return;
+        e.preventDefault();
+        hoverAnchor = i;
+        renderPlayerGrid();
+      });
+
+      cell.addEventListener('dragleave', () => {
+        if (hoverAnchor === i) { hoverAnchor = null; renderPlayerGrid(); }
+      });
+
+      cell.addEventListener('drop', e => {
+        e.preventDefault();
+        hoverAnchor = null;
+        if (!dragUnit) return;
+        placeUnit(dragUnit, i);
+        dragUnit = null;
+        renderPlayerGrid();
+        renderPortraitTrack();
+        checkReady();
+      });
+
+      cell.addEventListener('click', () => {
+        if (!dragUnit) return;
+        const size = getUnitSize(dragUnit);
+        if (!getValidAnchors(size).includes(i) || occupied[i]) return;
+        placeUnit(dragUnit, i);
+        dragUnit = null;
+        renderPlayerGrid();
+        renderPortraitTrack();
+        checkReady();
+      });
+    });
+
+    grid.querySelectorAll('.battle-cell--placed').forEach(cell => {
+      const i = Number(cell.dataset.i);
+
+      cell.querySelector('.battle-cell-remove')?.addEventListener('click', e => {
+        e.stopPropagation();
+        const anchor = getAnchorForCell(i);
+        if (anchor !== null) removeUnit(occupied[anchor].unitId);
+        renderPlayerGrid();
+        renderPortraitTrack();
+        checkReady();
+      });
+
+      cell.addEventListener('click', () => {
+        const occ  = occupied[i];
+        if (!occ) return;
+        const unit = roster.find(u => u.id === occ.unitId);
+        if (!unit) return;
+        openModal(unit.unit_name, unitStatHtml(unit));
+      });
+    });
+  }
 
   function renderEnemyGrid() {
     const grid = root.querySelector('#enemy-grid');
-    grid.innerHTML = Array(TOTAL).fill(null).map((_, i) => {
+    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const enemy = enemies[i];
       if (enemy) {
         return `<div class="battle-cell battle-cell--enemy" data-i="${i}">
@@ -115,97 +267,94 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
-  function renderPlayerGrid() {
-    const grid = root.querySelector('#player-grid');
-    grid.innerHTML = playerSlots.map((unit, i) => {
-      const rowLabel = `R${slotRow(i) + 1}`;
-      if (unit) {
-        const isHero = unit.id === heroId;
-        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}" data-i="${i}">
-          <span class="battle-cell-name">${unit.unit_name}</span>
-          ${isHero ? '<span class="battle-cell-sub">hero</span>' : ''}
-          <span class="battle-cell-remove">✕</span>
-        </div>`;
-      }
-      const dropClass = selectedUnit ? 'battle-cell--drop-target' : '';
-      return `<div class="battle-cell battle-cell--empty ${dropClass}" data-i="${i}">
-        <span class="battle-cell-row-hint">${rowLabel}</span>
+  function renderPortraitTrack() {
+    const track   = root.querySelector('#portrait-track');
+    const placed  = placedUnitIds();
+    const available = roster.filter(u => !placed.has(u.id));
+
+    if (!available.length) {
+      track.innerHTML = `<span class="placeholder" style="padding:0 16px">All units placed</span>`;
+      return;
+    }
+
+    track.innerHTML = available.map(u => {
+      const isHero     = u.id === heroId;
+      const size       = getUnitSize(u);
+      const isSelected = dragUnit?.id === u.id;
+      return `<div class="portrait-card ${isHero ? 'portrait-card--hero' : ''} ${isSelected ? 'portrait-card--selected' : ''}"
+                   draggable="true" data-id="${u.id}">
+        <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
+        <div class="portrait-name">${u.unit_name}</div>
+        <div class="portrait-size">${sizeLabel(size)}</div>
       </div>`;
     }).join('');
 
-    grid.querySelectorAll('.battle-cell--empty').forEach(cell => {
-      cell.addEventListener('click', () => {
-        if (!selectedUnit) return;
-        playerSlots[Number(cell.dataset.i)] = selectedUnit;
-        selectedUnit = null;
-        renderPlayerGrid();
-        renderRosterStrip();
-        checkReady();
-      });
-    });
+    track.querySelectorAll('.portrait-card').forEach(card => {
+      const u = roster.find(r => r.id === card.dataset.id);
 
-    grid.querySelectorAll('.battle-cell--placed').forEach(cell => {
-      cell.querySelector('.battle-cell-remove').addEventListener('click', e => {
-        e.stopPropagation();
-        playerSlots[Number(cell.dataset.i)] = null;
+      card.addEventListener('dragstart', e => {
+        dragUnit = u;
+        e.dataTransfer.effectAllowed = 'move';
         renderPlayerGrid();
-        renderRosterStrip();
-        checkReady();
+        renderPortraitTrack();
       });
-      cell.addEventListener('click', () => {
-        const u = playerSlots[Number(cell.dataset.i)];
-        openModal(u.unit_name, `
-          <div class="unit-core-stats">
-            <span class="unit-stat"><em>HP</em> ${u.unit_data?.hp ?? '—'}</span>
-            <span class="unit-stat"><em>Armor</em> ${u.unit_data?.armor ?? '—'}</span>
-            <span class="unit-stat"><em>Initiative</em> ${u.unit_data?.initiative ?? '—'}</span>
-          </div>
-        `);
+
+      card.addEventListener('dragend', () => {
+        dragUnit    = null;
+        hoverAnchor = null;
+        renderPlayerGrid();
+        renderPortraitTrack();
       });
+
+      card.addEventListener('click', () => {
+        dragUnit = dragUnit?.id === u.id ? null : u;
+        renderPlayerGrid();
+        renderPortraitTrack();
+      });
+
+      card.addEventListener('touchstart', () => {
+        dragUnit = u;
+        renderPlayerGrid();
+        renderPortraitTrack();
+      }, { passive: true });
     });
   }
 
-  function renderRosterStrip() {
-    const strip = root.querySelector('#roster-strip');
-    const placedIds = new Set(playerSlots.filter(Boolean).map(u => u.id));
-    const available = roster.filter(u => !placedIds.has(u.id));
+  function unitTypeIcon(u) {
+    const t = u?.unit_data?.type ?? '';
+    return { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[t] ?? '·';
+  }
 
-    strip.innerHTML = available.length
-      ? available.map(u => {
-          const isHero    = u.id === heroId;
-          const isSelected = selectedUnit?.id === u.id;
-          return `<div class="roster-chip ${isHero ? 'roster-chip--hero' : ''} ${isSelected ? 'roster-chip--selected' : ''}" data-id="${u.id}">
-            ${u.unit_name}${isHero ? ' ★' : ''}
-          </div>`;
-        }).join('')
-      : `<span class="placeholder">All units placed</span>`;
-
-    strip.querySelectorAll('.roster-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const u = roster.find(r => r.id === chip.dataset.id);
-        selectedUnit = selectedUnit?.id === u.id ? null : u;
-        renderPlayerGrid();
-        renderRosterStrip();
-      });
-    });
+  function unitStatHtml(u) {
+    const d = u.unit_data || {};
+    return `
+      <div class="unit-core-stats">
+        <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
+        <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
+        <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
+      </div>
+      <div class="unit-action">
+        <span class="unit-action-label">Basic Action</span>
+        <div class="unit-action-stats">
+          <span class="unit-stat"><em>DMG</em> ${d.action?.value ?? '—'}</span>
+          <span class="unit-stat"><em>Range</em> ${d.action?.range ?? '—'}</span>
+          <span class="unit-stat"><em>Target</em> ${d.action?.target_type ?? '—'}</span>
+        </div>
+      </div>
+    `;
   }
 
   function checkReady() {
-    const btn         = root.querySelector('#ready-btn');
-    const heroPlaced  = playerSlots.some(u => u?.id === heroId);
-    if (heroPlaced) {
-      btn.disabled    = false;
-      btn.textContent = 'Ready';
-    } else {
-      btn.disabled    = true;
-      btn.textContent = 'Place your hero to ready up';
-    }
+    const btn        = root.querySelector('#ready-btn');
+    const heroPlaced = placedUnitIds().has(heroId);
+    btn.disabled     = !heroPlaced;
+    btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
   }
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
-    if (!playerSlots.some(u => u?.id === heroId)) return;
+    if (!placedUnitIds().has(heroId)) return;
     openModal('Battle', `
-      <div style="text-align:center; padding:24px 0;">
+      <div style="text-align:center;padding:24px 0;">
         <div style="font-size:2rem;margin-bottom:12px;">⚔️</div>
         <p>Battle coming next</p>
       </div>
@@ -219,7 +368,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     ]);
 
     roster = rosterData.map((u, i) => ({ ...u, id: u.id || String(i) }));
-
     const heroUnit = roster.find(u => u.unit_name.toLowerCase() === player.hero?.toLowerCase());
     heroId = heroUnit?.id ?? null;
 
@@ -229,7 +377,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     renderEnemyGrid();
     renderPlayerGrid();
-    renderRosterStrip();
+    renderPortraitTrack();
     checkReady();
   }
 
