@@ -9,7 +9,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   const battle = new BattleSystem(playerUnits, enemies, placement);
 
   let selectingTargetFor = null;
-  let selectedActionType = null; // 'attack' | 'ability'
+  let selectedActionType = null; // 'attack' or 'ability'
 
   const regionMeta = {
     life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -39,16 +39,16 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function getPassiveName(unit) {
-    const passive = unit?.unit_data?.passive;
-    if (!passive) return 'None';
-    const name = typeof passive === 'string' ? passive : (passive.name || passive.id || '');
+    const p = unit?.unit_data?.passive;
+    if (!p) return 'None';
+    const name = typeof p === 'string' ? p : (p.name || p.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
   function getAbilityName(unit) {
-    const ability = unit?.unit_data?.ability;
-    if (!ability) return 'None';
-    const name = typeof ability === 'string' ? ability : (ability.name || ability.id || '');
+    const a = unit?.unit_data?.ability;
+    if (!a) return 'None';
+    const name = typeof a === 'string' ? a : (a.name || a.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
@@ -172,11 +172,10 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function attachEvents() {
-    // Click on grid to select target
+    // Grid target selection
     root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
       cell.addEventListener('click', () => {
         if (!selectingTargetFor) return;
-
         const target = battle.combatants.find(c => c.id === cell.dataset.id);
         if (!target) return;
 
@@ -191,7 +190,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       });
     });
 
-    // Action Buttons
+    // Action buttons
     root.querySelector('#btn-main')?.addEventListener('click', () => startTargeting('attack'));
     root.querySelector('#btn-ability')?.addEventListener('click', () => startTargeting('ability'));
     
@@ -270,10 +269,10 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     });
   }
 
-  // Initial render
+  // Start battle
   render();
 
-  // If enemy goes first
+  // If enemy acts first
   if (battle.currentActor()?.side === 'enemy') {
     setTimeout(() => {
       battle.aiTurn();
