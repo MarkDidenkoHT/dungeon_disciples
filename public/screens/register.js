@@ -2,20 +2,20 @@ import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
 const FACTIONS = [
-  { id: 'dungeon',    label: 'The Dungeon',    description: 'Creatures of darkness, bound by ambition.' },
-  { id: 'protectors', label: 'The Protectors', description: 'Defenders of the realm, forged in honor.'  },
+  { id: 'empire',    label: 'The Empire',    description: 'Defenders of the realm, forged in honor.' },
+  { id: 'dungeon',   label: 'The Dungeon',   description: 'Creatures of darkness, bound by ambition.' },
 ];
 
 const HEROES = {
+  empire: [
+    { id: 'paladin',    label: 'Paladin',    description: 'Melee tank. Heals allies.'      },
+    { id: 'inquisitor', label: 'Inquisitor', description: 'Caster. Purge and buffs.'       },
+    { id: 'ranger',     label: 'Ranger',     description: 'Ranged. Fast, precise strikes.' },
+  ],
   dungeon: [
     { id: 'warlord',   label: 'Warlord',    description: 'Melee brute. High HP, high armor.' },
     { id: 'hexblade',  label: 'Hexblade',   description: 'Caster. Debuffs and dark magic.'   },
     { id: 'shadowbow', label: 'Shadowbow',  description: 'Ranged. High initiative, evasion.'  },
-  ],
-  protectors: [
-    { id: 'paladin',    label: 'Paladin',    description: 'Melee tank. Heals allies.'      },
-    { id: 'inquisitor', label: 'Inquisitor', description: 'Caster. Purge and buffs.'       },
-    { id: 'ranger',     label: 'Ranger',     description: 'Ranged. Fast, precise strikes.' },
   ],
 };
 
