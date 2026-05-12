@@ -14,7 +14,6 @@ export class BattleSystem {
     this.winner = null;
 
     console.log('[BattleSystem] === BATTLE INITIALIZED ===');
-    console.log('[BattleSystem] Raw playerUnits received:', JSON.stringify(playerUnits, null, 2));
     this.initCombatants(playerUnits, enemyUnits, placement);
   }
 
@@ -22,7 +21,6 @@ export class BattleSystem {
     console.log(`[BattleSystem] Player units: ${playerUnits.length} | Enemies: ${enemyUnits.length}`);
     
     playerUnits.forEach((u, idx) => {
-      console.log(`[BattleSystem] Player unit ${idx} full object:`, JSON.stringify(u, null, 2));
       const cellIdx = placement[u.id] ?? this.combatants.length;
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
     });
@@ -30,28 +28,21 @@ export class BattleSystem {
     enemyUnits.forEach((e, i) => {
       const col = i % COLS;
       const row = Math.min(Math.floor(i / COLS), ROWS - 1);
-      console.log(`[BattleSystem] Enemy ${i} full object:`, JSON.stringify(e, null, 2));
       this.combatants.push(this.createCombatant(e, 'enemy', cellIndex(row, col)));
     });
   }
 
   createCombatant(unit, side, cellIndex) {
-    console.log(`\n=== createCombatant ${side} ===`);
-    console.log('Raw unit:', JSON.stringify(unit, null, 2));
-
     let data = unit.unit_data || unit;
-    console.log('unit.unit_data exists?', !!unit.unit_data);
-    console.log('Using fallback to unit itself?', data === unit);
 
-    console.log('Final data object keys:', Object.keys(data));
-    console.log('name:', data.name);
-    console.log('type:', data.type);
-    console.log('action:', data.action);
-    console.log('target_type:', data.target_type);
-    console.log('action_power:', data.action_power);
-    console.log('hp:', data.hp);
-    console.log('initiative:', data.initiative);
-    console.log('range:', data.range);
+    // Normalize action object
+    if (data.action && typeof data.action === 'object') {
+      data.action_value = data.action.value;
+      data.action_range = data.action.range;
+      data.target_type = data.action.target_type;
+    }
+
+    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | type=${data.type} | target_type=${data.target_type} | action_value=${data.action_value || data.action_power}`);
 
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
@@ -75,12 +66,16 @@ export class BattleSystem {
 
   isHealer(unit) {
     const data = unit.unit_data || unit;
+    const targetType = data.target_type || (data.action && data.action.target_type);
+    const actionType = data.type;
+
     const result = Boolean(
-      data.type === 'healer' || 
-      data.action === 'heal' || 
-      data.target_type === 'ally'
+      actionType === 'healer' || 
+      targetType === 'ally' ||
+      (data.action && data.action.target_type === 'ally')
     );
-    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result} | type=${data.type} | action=${JSON.stringify(data.action)} | target_type=${data.target_type}`);
+
+    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result} | type=${actionType} | target_type=${targetType}`);
     return result;
   }
 
@@ -94,7 +89,7 @@ export class BattleSystem {
         return t.side === actor.side && t.id !== actor.id;
       } else {
         if (t.side === actor.side) return false;
-        const range = actor.unit_data?.range ?? 1;
+        const range = actor.unit_data?.action_range ?? actor.unit_data?.range ?? 1;
         if (range === 1) {
           return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
@@ -153,13 +148,15 @@ export class BattleSystem {
   }
 
   calcHeal(actor) {
-    const power = (actor.unit_data || actor).action_power ?? 15;
+    const data = actor.unit_data || actor;
+    const power = data.action_value ?? data.action?.value ?? data.action_power ?? 15;
     console.log(`[calcHeal] Using power: ${power}`);
     return Math.floor(power * 1.3);
   }
 
   calcDamage(attacker, target) {
-    const power = (attacker.unit_data || attacker).action_power ?? 12;
+    const data = attacker.unit_data || attacker;
+    const power = data.action_value ?? data.action?.value ?? data.action_power ?? 12;
     const armor = Math.max(0, target.armor + (target.defend_armor_bonus || 0));
     return Math.max(1, power - armor);
   }
