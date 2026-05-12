@@ -29,9 +29,13 @@ export function renderRoster(root, { player }) {
   function buildCard(u) {
     const d = u.unit_data || {};
     const gender = u.char_gender || 'f';
-    const unitId = d.id || ''; // e.g. "e2"
+    const unitId = d.id || '';
 
-    const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : '/assets/character_art/default.png';
+    // Better portrait handling
+    let portraitSrc = '';
+    if (unitId) {
+      portraitSrc = `/assets/character_art/${unitId}.${gender}.png`;
+    }
 
     const passive = d.passive || d.passive_ability || 'None';
     const active = d.ability || d.active_ability || 'None';
@@ -50,7 +54,11 @@ export function renderRoster(root, { player }) {
       <div class="roster-slide">
         <div class="unit-card">
           <div class="unit-portrait">
-            <img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.src='/assets/character_art/default.png'">
+            ${portraitSrc ? 
+              `<img src="${portraitSrc}" alt="${u.unit_name}" 
+                    onerror="this.style.display='none'; this.parentElement.classList.add('no-portrait');">` 
+              : ''}
+            <div class="portrait-fallback">👤</div>
           </div>
 
           <div class="unit-header">
