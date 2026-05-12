@@ -18,7 +18,6 @@ export class BattleSystem {
   }
 
   initCombatants(playerUnits, enemyUnits, placement) {
-    console.log('[BattleSystem] Initializing battle with', playerUnits.length, 'player units');
     playerUnits.forEach(u => {
       const cellIdx = placement[u.id] ?? this.combatants.length;
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
@@ -54,16 +53,15 @@ export class BattleSystem {
   }
 
   getValidTargets(actor) {
-    console.log(`[BattleSystem] getValidTargets for ${actor.unit_name}`);
     const data = actor.unit_data || {};
     let targetType = data.action?.target_type || data.target_type || data.action;
 
-    // Special fix for Acolyte and other healers
+    // Strong fix for healers like Acolyte
     if (data.action === 'heal' || data.type === 'healer') {
       targetType = 'ally';
     }
 
-    const targets = this.combatants.filter(t => {
+    return this.combatants.filter(t => {
       if (!t.alive) return false;
       if (targetType === 'ally') {
         return t.side === actor.side && t.id !== actor.id;
@@ -78,29 +76,19 @@ export class BattleSystem {
       }
       return false;
     });
-
-    console.log(`[BattleSystem] Found ${targets.length} valid targets`);
-    return targets;
   }
 
   executeAction(actor, target = null, actionType = 'attack') {
-    console.log(`[BattleSystem] executeAction: ${actionType} by ${actor.unit_name}`);
-
     if (actionType === 'defend') return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
 
-    if (!target) {
-      console.warn('[BattleSystem] No target provided');
-      return false;
-    }
+    if (!target) return false;
 
     const data = actor.unit_data || {};
     const isHeal = (data.action === 'heal' || 
                    data.target_type === 'ally' || 
                    data.action?.target_type === 'ally' ||
                    data.type === 'healer');
-
-    console.log(`[BattleSystem] Is this a heal action? ${isHeal} | Unit action:`, data.action);
 
     let value;
     if (isHeal) {
@@ -113,19 +101,16 @@ export class BattleSystem {
         value,
         heal: true
       });
-      console.log(`✅ HEAL SUCCESS: ${actor.unit_name} healed ${target.unit_name} for ${value}`);
     } else {
       value = this.calcDamage(actor, target);
       target.battle_hp = Math.max(0, target.battle_hp - value);
-      const killed = target.battle_hp <= 0;
-      if (killed) target.alive = false;
-
+      if (target.battle_hp <= 0) target.alive = false;
       this.log.push({
         type: 'action',
         actorName: actor.unit_name,
         targetName: target.unit_name,
         value,
-        killed
+        killed: !target.alive
       });
     }
 
@@ -134,7 +119,7 @@ export class BattleSystem {
   }
 
   calcHeal(actor) {
-    return (actor.unit_data?.action?.value ?? 15) + 5; // small bonus
+    return (actor.unit_data?.action?.value ?? 15) + 5;
   }
 
   calcDamage(attacker, target) {
@@ -209,7 +194,6 @@ export class BattleSystem {
     if (!actor || actor.side !== 'enemy') return null;
     const targets = this.getValidTargets(actor);
     if (!targets.length) return this.skipTurn(actor);
-
     const target = targets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
     this.executeAction(actor, target, 'attack');
   }
