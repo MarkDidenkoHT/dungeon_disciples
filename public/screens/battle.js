@@ -9,33 +9,46 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   const battle = new BattleSystem(playerUnits, enemies, placement);
 
   let selectingTargetFor = null;
-  let selectedActionType = null; // 'attack' or 'ability'
+  let selectedActionType = null; // 'attack' | 'ability'
 
-  const regionMeta = { /* ... same as before */ };
+  const regionMeta = {
+    life_grove:   { label: 'Life Grove',   icon: '🟢' },
+    fire_wastes:  { label: 'Fire Wastes',  icon: '🔴' },
+    death_crypts: { label: 'Death Crypts', icon: '🟣' },
+    frost_peaks:  { label: 'Frost Peaks',  icon: '🔵' },
+    nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
+  };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
 
-  function hpColor(pct) { /* ... same */ }
-  function unitTypeIcon(u) { /* ... same */ }
+  function hpColor(pct) {
+    if (pct > 0.6) return '#4a9a4a';
+    if (pct > 0.3) return '#c8973a';
+    return '#c84a3a';
+  }
+
+  function unitTypeIcon(u) {
+    const t = u?.unit_data?.type ?? 'melee';
+    const icons = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
+    return icons[t] ?? '·';
+  }
 
   function getActionLabel(unit) {
     const data = unit?.unit_data || unit;
-    if (data.action === 'heal' || data.target_type === 'ally' || data.action?.target_type === 'ally') {
-      return 'Heal';
-    }
-    return 'Attack';
+    const targetType = data.action?.target_type || data.target_type || data.action;
+    return (targetType === 'ally' || targetType === 'heal') ? 'Heal' : 'Attack';
   }
 
   function getPassiveName(unit) {
-    const p = unit?.unit_data?.passive;
-    if (!p) return 'None';
-    const name = typeof p === 'string' ? p : (p.name || p.id || '');
+    const passive = unit?.unit_data?.passive;
+    if (!passive) return 'None';
+    const name = typeof passive === 'string' ? passive : (passive.name || passive.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
   function getAbilityName(unit) {
-    const a = unit?.unit_data?.ability;
-    if (!a) return 'None';
-    const name = typeof a === 'string' ? a : (a.name || a.id || '');
+    const ability = unit?.unit_data?.ability;
+    if (!ability) return 'None';
+    const name = typeof ability === 'string' ? ability : (ability.name || ability.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
@@ -52,6 +65,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
         for (let c = 0; c < COLS; c++) {
           const idx = cellIndex(r, c);
           const occ = state.combatants.find(co => co.side === side && co.cellIndex === idx);
+          
           if (!occ) {
             html.push(`<div class="battle-cell battle-cell--empty"><span class="battle-cell-row-hint">R${r+1}</span></div>`);
             continue;
@@ -70,8 +84,12 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           html.push(`
             <div class="${cls}" data-id="${occ.id}">
               <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
-              ${occ.alive ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}</span>` : `<span class="battle-cell-sub">💀</span>`}
-              <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
+              ${occ.alive 
+                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}</span>` 
+                : `<span class="battle-cell-sub">💀</span>`}
+              <div class="bc-hp-bar">
+                <div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div>
+              </div>
             </div>
           `);
         }
@@ -86,7 +104,14 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           <span class="battle-round">Round ${state.round}</span>
         </div>
 
-        <div class="init-queue" id="init-queue">${/* ... same */}</div>
+        <div class="init-queue" id="init-queue">
+          ${battle.getActingOrder().slice(0, 4).map((c, i) => `
+            <div class="init-card ${i === 0 ? 'init-card--active' : ''}">
+              <span class="init-icon">${c.side === 'player' ? unitTypeIcon(c) : '💀'}</span>
+              <span class="init-name">${c.unit_name.split(' ')[0]}</span>
+            </div>
+          `).join('')}
+        </div>
 
         <div class="battle-arena">
           <div class="battle-half battle-half--player">
@@ -100,7 +125,20 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           </div>
         </div>
 
-        <div class="battle-log" id="battle-log">${/* ... same */}</div>
+        <div class="battle-log" id="battle-log">
+          ${state.log.slice(-7).map(entry => {
+            if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
+            if (entry.type === 'defend' || entry.type === 'ability' || entry.type === 'status') {
+              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> ${entry.message}</div>`;
+            }
+            if (entry.type === 'action') {
+              const verb = entry.heal ? 'healed' : 'attacked';
+              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> ${verb} <span class="log-target">${entry.targetName}</span> for <span class="log-val">${entry.value}</span>${entry.killed ? ' 💀' : ''}</div>`;
+            }
+            if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
+            return '';
+          }).join('')}
+        </div>
 
         ${renderActionPanel(actor)}
       </div>
@@ -111,7 +149,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
 
   function renderActionPanel(actor) {
     if (!actor || actor.side === 'enemy') {
-      return `<div class="action-panel action-panel--enemy">Enemy is acting...</div>`;
+      return `<div class="action-panel action-panel--enemy"><span class="action-panel-label">Enemy is acting...</span></div>`;
     }
 
     const actionLabel = getActionLabel(actor);
@@ -134,7 +172,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function attachEvents() {
-    // Grid targeting
+    // Click on grid to select target
     root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
       cell.addEventListener('click', () => {
         if (!selectingTargetFor) return;
@@ -153,9 +191,10 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       });
     });
 
-    // Buttons
+    // Action Buttons
     root.querySelector('#btn-main')?.addEventListener('click', () => startTargeting('attack'));
     root.querySelector('#btn-ability')?.addEventListener('click', () => startTargeting('ability'));
+    
     root.querySelector('#btn-defend')?.addEventListener('click', () => {
       const actor = battle.currentActor();
       if (actor) {
@@ -164,6 +203,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
         nextTurn();
       }
     });
+
     root.querySelector('#btn-skip')?.addEventListener('click', () => {
       const actor = battle.currentActor();
       if (actor) {
@@ -184,6 +224,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
 
   function nextTurn() {
     if (battle.done) return renderResult();
+
     const next = battle.currentActor();
     if (next?.side === 'enemy') {
       setTimeout(() => {
@@ -195,14 +236,49 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function renderResult() {
-    // ... your existing result screen
     const won = battle.winner === 'player';
-    root.innerHTML = `...`; // keep as is
-    // navigate back on button click
+    const rewards = won ? {
+      gold: 50 + level * 20,
+      xp: 20 + level * 10,
+      crystal: 10 + level * 5
+    } : { xp: 5 };
+
+    root.innerHTML = `
+      <div class="screen screen-battle-result">
+        <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}">
+          ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
+        </div>
+        <div class="result-body">
+          ${won ? `
+            <div class="result-rewards">
+              <div>🪙 +${rewards.gold} Gold</div>
+              <div>⭐ +${rewards.xp} XP</div>
+              <div>💎 +${rewards.crystal} Crystals</div>
+            </div>
+          ` : `
+            <div class="result-rewards">
+              <div>⭐ +${rewards.xp} XP</div>
+            </div>
+          `}
+        </div>
+        <button class="ready-btn" id="back-to-castle">Return to Castle</button>
+      </div>
+    `;
+
+    root.querySelector('#back-to-castle').addEventListener('click', () => {
+      navigate('castle', { player });
+    });
   }
 
+  // Initial render
   render();
+
+  // If enemy goes first
   if (battle.currentActor()?.side === 'enemy') {
-    setTimeout(() => { battle.aiTurn(); render(); nextTurn(); }, 800);
+    setTimeout(() => {
+      battle.aiTurn();
+      render();
+      nextTurn();
+    }, 800);
   }
 }
