@@ -1,5 +1,6 @@
-import { api }      from '../main.js';
-import { navigate } from '../main.js';
+import { api }        from '../main.js';
+import { navigate }   from '../main.js';
+import { UNIT_TYPES, UNIT_SIZES } from '../../data/units.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -9,20 +10,18 @@ const REGION_META = {
   nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
 };
 
-const TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
-
-const SIZE_META = {
-  tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
-  column: { label: '1×2', rowSpan: 2, colSpan: 1 },
-  row:    { label: '2×1', rowSpan: 1, colSpan: 2 },
-};
-
 const ROWS = 3;
 const COLS = 2;
 
 function cellIndex(row, col) { return row * COLS + col; }
-function cellRow(i) { return Math.floor(i / COLS); }
-function cellCol(i) { return i % COLS; }
+function cellRow(i)  { return Math.floor(i / COLS); }
+function cellCol(i)  { return i % COLS; }
+
+// Read size directly from unit_data — defined explicitly on every unit in units.js.
+// Falls back to UNIT_TYPES lookup if size is somehow absent (e.g. legacy DB rows).
+function getUnitSize(unit) {
+  return unit?.unit_data?.size ?? (UNIT_TYPES[unit?.unit_data?.type] ?? UNIT_TYPES.melee).size;
+}
 
 function getCells(anchor, size) {
   const r = cellRow(anchor), c = cellCol(anchor);
@@ -32,11 +31,34 @@ function getCells(anchor, size) {
   return null;
 }
 
-function getUnitSize(unit)   { return unit?.unit_data?.size ?? 'tile'; }
-function sizeLabel(size)     { return SIZE_META[size]?.label   ?? size; }
-function sizeRowSpan(size)   { return SIZE_META[size]?.rowSpan ?? 1; }
-function sizeColSpan(size)   { return SIZE_META[size]?.colSpan ?? 1; }
-function unitTypeIcon(u)     { return TYPE_ICONS[u?.unit_data?.type] ?? '·'; }
+function getValidAnchors(size) {
+  const anchors = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const idx = cellIndex(r, c);
+      if (getCells(idx, size)) anchors.push(idx);
+    }
+  }
+  return anchors;
+}
+
+// Use UNIT_SIZES for display labels and span values — no magic strings.
+function sizeLabel(size) {
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).label;
+}
+
+function sizeRowSpan(size) {
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).rowSpan;
+}
+
+function sizeColSpan(size) {
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).colSpan;
+}
+
+function unitTypeIcon(u) {
+  const t = u?.unit_data?.type ?? '';
+  return (UNIT_TYPES[t] ?? { icon: '·' }).icon;
+}
 
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
@@ -74,24 +96,22 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     </div>
   `;
 
-  let roster     = [];
-  let enemies    = [];
-  let heroId     = null;
-  let dragUnit   = null;
-  let hoverCell  = null;
-  const occupied = {};
+  let roster      = [];
+  let enemies     = [];
+  let heroId      = null;
+  let dragUnit    = null;
+  let hoverCell   = null;
+  const occupied  = {};
 
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
     root.querySelector('#modal-body').innerHTML    = body;
     root.querySelector('#modal-overlay').classList.remove('hidden');
   }
-
   function closeModal() {
     root.querySelector('#modal-overlay').classList.add('hidden');
     root.querySelector('#modal-body').innerHTML = '';
   }
-
   root.querySelector('#modal-close').addEventListener('click', closeModal);
   root.querySelector('#modal-overlay').addEventListener('click', e => {
     if (e.target === root.querySelector('#modal-overlay')) closeModal();
@@ -109,7 +129,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function canPlace(unit, anchor) {
-    const cells = getCells(anchor, getUnitSize(unit));
+    const size  = getUnitSize(unit);
+    const cells = getCells(anchor, size);
     if (!cells) return false;
     return cells.every(c => !occupied[c]);
   }
@@ -128,10 +149,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const occ = occupied[i];
       if (occ && occ.anchor === i) {
-        const unit   = roster.find(u => u.id === occ.unitId);
-        const isHero = occ.unitId === heroId;
+        const unit    = roster.find(u => u.id === occ.unitId);
+        const isHero  = occ.unitId === heroId;
+        const rowSpan = sizeRowSpan(occ.size);
+        const colSpan = sizeColSpan(occ.size);
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
-                     data-i="${i}" style="grid-row:span ${sizeRowSpan(occ.size)};grid-column:span ${sizeColSpan(occ.size)};">
+                     data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           <span class="battle-cell-name">${unit?.unit_name ?? '?'}</span>
           <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
@@ -333,22 +356,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
-
-    const placementMap = {};
-    for (const [cellIdx, occ] of Object.entries(occupied)) {
-      if (occ.anchor === Number(cellIdx)) {
-        placementMap[occ.unitId] = Number(cellIdx);
-      }
-    }
-
-    navigate('battle', {
-      player,
-      region_id,
-      level,
-      playerUnits: roster.filter(u => placedUnitIds().has(u.id)),
-      enemies,
-      placement: placementMap,
-    });
+    openModal('Battle', `
+      <div style="text-align:center;padding:24px 0;">
+        <div style="font-size:2rem;margin-bottom:12px;">⚔️</div>
+        <p>Battle coming next</p>
+      </div>
+    `);
   });
 
   async function load() {
@@ -360,10 +373,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
 
     const heroName = player.hero ?? '';
-    heroId = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase())?.id ?? null;
+    const heroUnit = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
+    heroId = heroUnit?.id ?? null;
 
     const regionDef = regionsData.find(r => r.id === region_id);
-    enemies = regionDef?.difficulties?.[`level_${level}`]?.enemies || [];
+    const levelDef  = regionDef?.difficulties?.[`level_${level}`];
+    enemies = levelDef?.enemies || [];
 
     renderEnemyGrid();
     renderPlayerGrid();

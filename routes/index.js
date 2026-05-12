@@ -3,7 +3,7 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-const { UNITS, HERO_DATA, UNIT_TYPES, UNIT_SIZES } = require('../data/units');
+const { UNITS, HERO_DATA } = require('../data/units');
 const { REGIONS } = require('../data/embark');
 const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures } = require('../data/buildings');
 
@@ -326,10 +326,6 @@ router.post('/structures/complete', async (req, res) => {
   }
 });
 
-router.get('/unit-meta', (req, res) => {
-  res.json({ UNIT_TYPES, UNIT_SIZES });
-});
-
 router.get('/regions', (req, res) => {
   res.json(REGIONS);
 });
@@ -360,41 +356,6 @@ router.post('/progress/unlock', async (req, res) => {
     });
     res.json(updated[0].progress);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/battle/reward', async (req, res) => {
-  const { chat_id, gold, xp, crystal_type, crystal_amount } = req.body;
-  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
-
-  try {
-    const resources = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-
-    const updates = [];
-
-    const goldRow = resources.find(r => r.item === 'Gold');
-    if (goldRow && gold) {
-      updates.push(supabase(`/inventory_and_resources?id=eq.${goldRow.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ amount: Math.min(9999, (goldRow.amount || 0) + gold) }),
-      }));
-    }
-
-    if (crystal_type && crystal_amount) {
-      const crystalRow = resources.find(r => r.item === crystal_type);
-      if (crystalRow) {
-        updates.push(supabase(`/inventory_and_resources?id=eq.${crystalRow.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ amount: Math.min(999, (crystalRow.amount || 0) + crystal_amount) }),
-        }));
-      }
-    }
-
-    await Promise.all(updates);
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('battle reward error', err);
     res.status(500).json({ error: err.message });
   }
 });
