@@ -367,12 +367,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
-    openModal('Battle', `
-      <div style="text-align:center;padding:24px 0;">
-        <div style="font-size:2rem;margin-bottom:12px;">⚔️</div>
-        <p>Battle coming next</p>
-      </div>
-    `);
+    const playerUnits = roster.filter(u => placedUnitIds().has(u.id));
+    navigate('battle', { player, region_id, level, playerUnits, enemies, placement: { ...occupied } });
   });
 
   async function load() {
