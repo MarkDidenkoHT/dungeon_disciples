@@ -16,6 +16,25 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
+function getCells(anchor, size) {
+  const r = cellRow(anchor), c = cellCol(anchor);
+  if (size === 'tile')   return [anchor];
+  if (size === 'column') return r <= ROWS - 2 ? [anchor, cellIndex(r + 1, c)] : null;
+  if (size === 'row')    return c === 0        ? [anchor, cellIndex(r, 1)]     : null;
+  return null;
+}
+
+function getValidAnchors(size) {
+  const anchors = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const idx = cellIndex(r, c);
+      if (getCells(idx, size)) anchors.push(idx);
+    }
+  }
+  return anchors;
+}
+
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
 
