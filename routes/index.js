@@ -3,7 +3,7 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-const { UNITS, HERO_DATA } = require('../data/units');
+const { UNITS, HERO_DATA, UNIT_TYPES, UNIT_SIZES } = require('../data/units');
 const { REGIONS } = require('../data/embark');
 const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures } = require('../data/buildings');
 
@@ -324,6 +324,10 @@ router.post('/structures/complete', async (req, res) => {
     console.error('complete error', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+router.get('/unit-meta', (req, res) => {
+  res.json({ UNIT_TYPES, UNIT_SIZES });
 });
 
 router.get('/regions', (req, res) => {

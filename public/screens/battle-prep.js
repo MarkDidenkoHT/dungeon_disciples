@@ -1,6 +1,5 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
-import { UNIT_TYPES, UNIT_SIZES } from '/data/units.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -17,51 +16,32 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-// Read size directly from unit_data — defined explicitly on every unit in units.js.
-// Falls back to UNIT_TYPES lookup if size is somehow absent (e.g. legacy DB rows).
-function getUnitSize(unit) {
-  return unit?.unit_data?.size ?? (UNIT_TYPES[unit?.unit_data?.type] ?? UNIT_TYPES.melee).size;
-}
-
-function getCells(anchor, size) {
-  const r = cellRow(anchor), c = cellCol(anchor);
-  if (size === 'tile')   return [anchor];
-  if (size === 'column') return r <= ROWS - 2 ? [anchor, cellIndex(r + 1, c)] : null;
-  if (size === 'row')    return c === 0        ? [anchor, cellIndex(r, 1)]     : null;
-  return null;
-}
-
-function getValidAnchors(size) {
-  const anchors = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const idx = cellIndex(r, c);
-      if (getCells(idx, size)) anchors.push(idx);
-    }
-  }
-  return anchors;
-}
-
-// Use UNIT_SIZES for display labels and span values — no magic strings.
-function sizeLabel(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).label;
-}
-
-function sizeRowSpan(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).rowSpan;
-}
-
-function sizeColSpan(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).colSpan;
-}
-
-function unitTypeIcon(u) {
-  const t = u?.unit_data?.type ?? '';
-  return (UNIT_TYPES[t] ?? { icon: '·' }).icon;
-}
-
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
+
+  let UNIT_TYPES = {};
+  let UNIT_SIZES = {};
+
+  function getUnitSize(unit) {
+    return unit?.unit_data?.size ?? (UNIT_TYPES[unit?.unit_data?.type] ?? UNIT_TYPES.melee ?? {}).size;
+  }
+
+  function sizeLabel(size) {
+    return (UNIT_SIZES[size] ?? UNIT_SIZES.tile ?? {}).label ?? size;
+  }
+
+  function sizeRowSpan(size) {
+    return (UNIT_SIZES[size] ?? UNIT_SIZES.tile ?? {}).rowSpan ?? 1;
+  }
+
+  function sizeColSpan(size) {
+    return (UNIT_SIZES[size] ?? UNIT_SIZES.tile ?? {}).colSpan ?? 1;
+  }
+
+  function unitTypeIcon(u) {
+    const t = u?.unit_data?.type ?? '';
+    return (UNIT_TYPES[t] ?? { icon: '·' }).icon;
+  }
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
@@ -365,10 +345,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   });
 
   async function load() {
-    const [rosterData, regionsData] = await Promise.all([
+    const [rosterData, regionsData, unitMeta] = await Promise.all([
       api(`/roster?chat_id=${player.chat_id}`),
       api('/regions'),
+      api('/unit-meta'),
     ]);
+
+    UNIT_TYPES = unitMeta.UNIT_TYPES;
+    UNIT_SIZES = unitMeta.UNIT_SIZES;
+
+
 
     roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
 
