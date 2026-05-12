@@ -79,27 +79,30 @@ export class BattleSystem {
     return result;
   }
 
-  getValidTargets(actor) {
-    console.log(`\n[BattleSystem] getValidTargets for ${actor.unit_name}`);
-    const isHeal = this.isHealer(actor);
+    getValidTargets(actor) {
+        console.log(`\n[BattleSystem] getValidTargets for ${actor.unit_name}`);
+        const isHeal = this.isHealer(actor);
 
-    const targets = this.combatants.filter(t => {
-      if (!t.alive) return false;
-      if (isHeal) {
-        return t.side === actor.side && t.id !== actor.id;
-      } else {
-        if (t.side === actor.side) return false;
-        const range = actor.unit_data?.range ?? 1;
-        if (range === 1) {
-          return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
+        const targets = this.combatants.filter(t => {
+        if (!t.alive) return false;
+
+        if (isHeal) {
+            // HEALERS CAN TARGET THEMSELVES + allies
+            return t.side === actor.side;
+        } else {
+            // Normal attacks cannot target allies
+            if (t.side === actor.side) return false;
+            const range = actor.unit_data?.range ?? 1;
+            if (range === 1) {
+            return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
+            }
+            return true;
         }
-        return true;
-      }
-    });
+        });
 
-    console.log(`[BattleSystem] Found ${targets.length} valid targets`);
-    return targets;
-  }
+        console.log(`[BattleSystem] Found ${targets.length} valid targets`);
+        return targets;
+    }
 
   executeAction(actor, target = null, actionType = 'attack') {
     console.log(`\n=== EXECUTE ACTION === ${actionType} by ${actor.unit_name} on ${target ? target.unit_name : 'null'}`);

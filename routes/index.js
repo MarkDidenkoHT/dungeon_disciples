@@ -131,11 +131,21 @@ const DUNGEON_RANDOM_BARRACKS = [
   { building_id: 'possession_altar', unit_id: 'possessed' },
 ];
 
-function getStartingBarracks(hero) {
-  if (['warlord', 'hexblade', 'shadowbow'].includes(hero)) {
-    return DUNGEON_RANDOM_BARRACKS[Math.floor(Math.random() * DUNGEON_RANDOM_BARRACKS.length)];
-  }
-  return HERO_STARTING_BARRACKS[hero] ?? null;
+function getStartingBarracks(faction, hero) {
+  const mapping = {
+    empire: {
+      paladin:    { building_id: 'acolyte_shrine',    unit_id: 'acolyte'    },
+      inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript'  },
+      ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript'  },
+    },
+    dungeon: {
+      warlord:    { building_id: 'heretic_pit',       unit_id: 'heretic'    },
+      hexblade:   { building_id: 'heretic_pit',       unit_id: 'heretic'    },
+      shadowbow:  { building_id: 'heretic_pit',       unit_id: 'heretic'    },
+    }
+  };
+
+  return mapping[faction]?.[hero] || null;
 }
 
 router.post('/player/faction', async (req, res) => {
@@ -147,7 +157,7 @@ router.post('/player/faction', async (req, res) => {
   const heroStats = HERO_DATA[hero];
   if (!heroStats) return res.status(400).json({ error: 'Unknown hero' });
 
-  const startingBarracks = getStartingBarracks(hero);
+  const startingBarracks = getStartingBarracks(faction, hero);
   const structures = emptyStructures();
 
   if (startingBarracks) {
@@ -155,7 +165,7 @@ router.post('/player/faction', async (req, res) => {
   }
 
   const unitId = startingBarracks?.unit_id;
-  const unitData = unitId ? (UNITS.empire?.[unitId] ?? UNITS.dungeon?.[unitId] ?? null) : null;
+  const unitData = unitId ? UNITS[faction]?.[unitId] : null;
 
   try {
     const [updated] = await Promise.all([
@@ -175,7 +185,7 @@ router.post('/player/faction', async (req, res) => {
           ...(unitData ? [{
             chat_id,
             unit_name: unitData.name,
-            unit_data: unitData,
+            unit_data: { ...unitData },
             experience: 0,
           }] : []),
         ]),

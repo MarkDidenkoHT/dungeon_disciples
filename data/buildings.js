@@ -18,7 +18,7 @@ const SLOT_CATEGORIES = {
 };
 
 const BUILDING_POOLS = {
-  protectors: {
+  empire: { 
     throne: [
       { id: 'throne', label: 'Throne', category: 'throne', unit: null },
     ],
