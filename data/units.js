@@ -91,7 +91,7 @@ const UNITS = {
     acolyte: {
       name: 'Acolyte',
       type: 'caster',
-      size: 'column',
+      size: 'tile',
       hp: 40, armor: 0, initiative: 20,
       resist_fire: 5, resist_ice: 5, resist_lightning: 5, resist_dark: 5, resist_holy: 5,
       action: { value: 15, range: 3, target_type: 'ally', target_amount: 'single' },
@@ -101,7 +101,7 @@ const UNITS = {
     apprentice: {
       name: 'Apprentice',
       type: 'caster',
-      size: 'column',
+      size: 'tile',
       hp: 40, armor: 0, initiative: 40,
       resist_fire: 5, resist_ice: 5, resist_lightning: 5, resist_dark: 5, resist_holy: 5,
       action: { value: 20, range: 3, target_type: 'enemy', target_amount: 'single' },
