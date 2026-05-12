@@ -368,7 +368,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
     const playerUnits = roster.filter(u => placedUnitIds().has(u.id));
-    navigate('battle', { player, region_id, level, playerUnits, enemies, placement: { ...occupied } });
+    const placement = {};
+    for (const [cellIdx, occ] of Object.entries(occupied)) {
+      if (occ.anchor === Number(cellIdx)) placement[occ.unitId] = Number(cellIdx);
+    }
+    navigate('battle', { player, region_id, level, playerUnits, enemies, placement });
   });
 
   async function load() {
