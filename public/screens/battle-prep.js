@@ -367,12 +367,30 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
-    const playerUnits = roster.filter(u => placedUnitIds().has(u.id));
+
+    const playerUnits = roster
+      .filter(u => placedUnitIds().has(u.id))
+      .map(u => ({
+        ...u,
+        unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
+        id: String(u.id)
+      }));
+
     const placement = {};
     for (const [cellIdx, occ] of Object.entries(occupied)) {
-      if (occ.anchor === Number(cellIdx)) placement[occ.unitId] = Number(cellIdx);
+      if (occ.anchor === Number(cellIdx)) {
+        placement[occ.unitId] = Number(cellIdx);
+      }
     }
-    navigate('battle', { player, region_id, level, playerUnits, enemies, placement });
+
+    navigate('battle', { 
+      player, 
+      region_id, 
+      level, 
+      playerUnits, 
+      enemies, 
+      placement 
+    });
   });
 
   async function load() {
