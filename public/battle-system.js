@@ -34,7 +34,7 @@ export class BattleSystem {
 
   createCombatant(unit, side, cellIndex) {
     const data = unit.unit_data || unit;
-    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | action="${data.action}" | target_type="${data.target_type}" | type="${data.type}"`);
+    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | action=`, data.action, `| target_type=${data.target_type} | type=${data.type}`);
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
       unit_name: unit.unit_name || data.name,
@@ -58,13 +58,19 @@ export class BattleSystem {
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const action = data.action;
-    const targetType = data.target_type;
 
-    const isHealer = action === 'heal' || 
-                     targetType === 'ally' || 
-                     data.type === 'healer';
+    // Handle both string and object formats
+    let targetType = data.target_type;
+    if (action && typeof action === 'object') {
+      targetType = action.target_type || targetType;
+    }
 
-    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${isHealer} (action=${action}, target_type=${targetType}, type=${data.type})`);
+    const isHealer = 
+      action === 'heal' || 
+      targetType === 'ally' || 
+      data.type === 'healer';
+
+    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${isHealer} (action=${typeof action === 'object' ? '[object]' : action}, target_type=${targetType}, type=${data.type})`);
     return isHealer;
   }
 
@@ -78,7 +84,7 @@ export class BattleSystem {
         return t.side === actor.side && t.id !== actor.id;
       } else {
         if (t.side === actor.side) return false;
-        const range = actor.unit_data?.range ?? 1;
+        const range = (actor.unit_data?.action?.range) ?? 1;
         if (range === 1) {
           return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
@@ -86,7 +92,7 @@ export class BattleSystem {
       }
     });
 
-    console.log(`[BattleSystem] Found ${targets.length} valid targets for ${actor.unit_name}`);
+    console.log(`[BattleSystem] Found ${targets.length} valid targets`);
     return targets;
   }
 
