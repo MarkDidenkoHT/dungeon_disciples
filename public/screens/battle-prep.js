@@ -1,6 +1,6 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
-import { UNIT_TYPES, UNIT_SIZES } from '../../data/units.js';
+import { UNIT_TYPES, UNIT_SIZES } from '/data/units.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },

@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(rateLimit({ windowMs: 60_000, max: 100 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 app.use('/api', routes);
 
