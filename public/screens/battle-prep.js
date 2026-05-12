@@ -1,6 +1,17 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
-import { UNIT_TYPES, UNIT_SIZES } from '../../data/units.js';
+const UNIT_TYPES = {
+  melee:  { size: 'tile', icon: '⚔',  label: 'Melee'  },
+  ranged: { size: 'row',  icon: '🏹',  label: 'Ranged' },
+  caster: { size: 'tile', icon: '✦',  label: 'Caster' },
+  healer: { size: 'tile', icon: '✚',  label: 'Healer' },
+};
+
+const UNIT_SIZES = {
+  tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
+  column: { label: '1×2', rowSpan: 2, colSpan: 1 },
+  row:    { label: '2×1', rowSpan: 1, colSpan: 2 },
+};
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
