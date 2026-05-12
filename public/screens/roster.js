@@ -22,6 +22,17 @@ function buildCard(u) {
   const passive = d.passive || d.passive_ability || 'None';
   const active = d.ability || d.active_ability || 'None';
 
+  // Full resistances support
+  const res = d.resistances || {};
+  const resistsHtml = `
+    <span class="unit-resist">🌬️ ${res.air ?? d.resist_lightning ?? 0}</span>
+    <span class="unit-resist">🔥 ${res.fire ?? d.resist_fire ?? 0}</span>
+    <span class="unit-resist">🌿 ${res.nature ?? 0}</span>
+    <span class="unit-resist">❄️ ${res.cold ?? d.resist_ice ?? 0}</span>
+    <span class="unit-resist">✨ ${res.life ?? d.resist_holy ?? 0}</span>
+    <span class="unit-resist">🌑 ${res.death ?? d.resist_dark ?? 0}</span>
+  `;
+
   return `
     <div class="roster-slide">
       <div class="unit-card">
@@ -34,6 +45,10 @@ function buildCard(u) {
           <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
           <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
           <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
+        </div>
+
+        <div class="unit-resists">
+          ${resistsHtml}
         </div>
 
         <div class="unit-abilities">

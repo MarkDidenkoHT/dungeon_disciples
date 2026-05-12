@@ -450,7 +450,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-resists {
   display: flex;
   gap: 6px;
-  margin-bottom: 10px;
+  margin: 8px 0;
   flex-wrap: wrap;
 }
 
@@ -458,9 +458,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 3px 7px;
-  font-size: 0.8rem;
+  padding: 3px 8px;
+  font-size: 0.78rem;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .unit-stat {
