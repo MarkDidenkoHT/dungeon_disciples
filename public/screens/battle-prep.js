@@ -355,12 +355,24 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
-    openModal('Battle', `
-      <div style="text-align:center;padding:24px 0;">
-        <div style="font-size:2rem;margin-bottom:12px;">⚔️</div>
-        <p>Battle coming next</p>
-      </div>
-    `);
+
+    const placementMap = {};
+    for (const [cellIdx, occ] of Object.entries(occupied)) {
+      if (occ.anchor === Number(cellIdx)) {
+        placementMap[occ.unitId] = Number(cellIdx);
+      }
+    }
+
+    const placedUnits = roster.filter(u => placedUnitIds().has(u.id));
+
+    navigate('battle', {
+      player,
+      region_id,
+      level,
+      playerUnits: placedUnits,
+      enemies,
+      placement: placementMap,
+    });
   });
 
   async function load() {

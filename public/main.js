@@ -3,6 +3,7 @@ import { renderCastle }     from './screens/castle.js';
 import { renderRoster }     from './screens/roster.js';
 import { renderEmbark }     from './screens/embark.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
+import { renderBattle }     from './screens/battle.js';
 
 const app = document.getElementById('app');
 
@@ -26,6 +27,7 @@ export function navigate(screen, params = {}) {
     case 'roster':      renderRoster(app, params);     break;
     case 'embark':      renderEmbark(app, params);     break;
     case 'battle-prep': renderBattlePrep(app, params); break;
+    case 'battle':      renderBattle(app, params);     break;
     default:
       app.innerHTML = `<p style="color:red">Unknown screen: ${screen}</p>`;
   }
