@@ -1,6 +1,76 @@
-const UNITS = {
-  // ─── Player units ────────────────────────────────────────────────────────────
+// ─── Unit type → grid size mapping ───────────────────────────────────────────
+//
+//  'tile'   → occupies 1×1  (one cell)
+//  'column' → occupies 1×2  (two cells in the same column, rows r and r+1)
+//  'row'    → occupies 2×1  (two cells in the same row, cols 0 and 1)
+//
+// This is the single source of truth consumed by both the server (routes/index.js)
+// and the client (public/screens/battle-prep.js).
 
+const UNIT_TYPES = {
+  melee:  { size: 'tile',   icon: '⚔',  label: 'Melee'  },
+  ranged: { size: 'row',    icon: '🏹',  label: 'Ranged' },
+  caster: { size: 'column', icon: '✦',  label: 'Caster' },
+  healer: { size: 'column', icon: '✚',  label: 'Healer' },
+};
+
+// Grid display helpers derived from UNIT_TYPES
+const UNIT_SIZES = {
+  tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
+  column: { label: '1×2', rowSpan: 2, colSpan: 1 },
+  row:    { label: '2×1', rowSpan: 1, colSpan: 2 },
+};
+
+// ─── Hero data ────────────────────────────────────────────────────────────────
+
+const HERO_DATA = {
+  warlord: {
+    type: 'melee',
+    hp: 120, armor: 8, initiative: 4,
+    resist_fire: 2, resist_ice: 2, resist_lightning: 2, resist_dark: 5, resist_holy: 2,
+    action: { value: 14, range: 1, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+  hexblade: {
+    type: 'caster',
+    hp: 70, armor: 2, initiative: 6,
+    resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 10, resist_holy: 2,
+    action: { value: 18, range: 2, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+  shadowbow: {
+    type: 'ranged',
+    hp: 80, armor: 3, initiative: 10,
+    resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 6, resist_holy: 2,
+    action: { value: 16, range: 3, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+  paladin: {
+    type: 'melee',
+    hp: 115, armor: 9, initiative: 4,
+    resist_fire: 3, resist_ice: 3, resist_lightning: 3, resist_dark: 3, resist_holy: 10,
+    action: { value: 12, range: 1, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+  inquisitor: {
+    type: 'ranged',
+    hp: 72, armor: 2, initiative: 7,
+    resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 4, resist_holy: 10,
+    action: { value: 17, range: 2, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+  ranger: {
+    type: 'ranged',
+    hp: 82, armor: 3, initiative: 11,
+    resist_fire: 4, resist_ice: 4, resist_lightning: 4, resist_dark: 3, resist_holy: 4,
+    action: { value: 15, range: 3, target_type: 'enemy', target_amount: 'single' },
+    passive_ability: null, active_ability: null,
+  },
+};
+
+// ─── Player units ─────────────────────────────────────────────────────────────
+
+const UNITS = {
   protectors: {
     conscript: {
       name: 'Conscript',
@@ -256,4 +326,4 @@ const UNITS = {
   },
 };
 
-module.exports = { UNITS };
+module.exports = { UNITS, HERO_DATA, UNIT_TYPES, UNIT_SIZES };

@@ -1,5 +1,6 @@
-import { api }      from '../main.js';
-import { navigate } from '../main.js';
+import { api }        from '../main.js';
+import { navigate }   from '../main.js';
+import { UNIT_TYPES, UNIT_SIZES } from '../../data/units.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -16,11 +17,11 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
+// Derive the grid size string ('tile' | 'column' | 'row') from a roster unit.
+// UNIT_TYPES is the single source of truth — no hardcoded mapping here.
 function getUnitSize(unit) {
   const t = unit?.unit_data?.type ?? 'melee';
-  if (t === 'ranged') return 'row';
-  if (t === 'caster') return 'column';
-  return 'tile';
+  return (UNIT_TYPES[t] ?? UNIT_TYPES.melee).size;
 }
 
 function getCells(anchor, size) {
@@ -42,13 +43,22 @@ function getValidAnchors(size) {
   return anchors;
 }
 
+// Use UNIT_SIZES for display labels and span values — no magic strings.
 function sizeLabel(size) {
-  return { tile: '1×1', column: '1×2', row: '2×1' }[size] ?? '';
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).label;
+}
+
+function sizeRowSpan(size) {
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).rowSpan;
+}
+
+function sizeColSpan(size) {
+  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).colSpan;
 }
 
 function unitTypeIcon(u) {
   const t = u?.unit_data?.type ?? '';
-  return { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[t] ?? '·';
+  return (UNIT_TYPES[t] ?? { icon: '·' }).icon;
 }
 
 export function renderBattlePrep(root, { player, region_id, level }) {
@@ -142,8 +152,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (occ && occ.anchor === i) {
         const unit    = roster.find(u => u.id === occ.unitId);
         const isHero  = occ.unitId === heroId;
-        const rowSpan = occ.size === 'column' ? 2 : 1;
-        const colSpan = occ.size === 'row'    ? 2 : 1;
+        const rowSpan = sizeRowSpan(occ.size);
+        const colSpan = sizeColSpan(occ.size);
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           <span class="battle-cell-name">${unit?.unit_name ?? '?'}</span>
