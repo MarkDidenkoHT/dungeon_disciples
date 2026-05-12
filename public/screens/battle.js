@@ -33,9 +33,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function getActionLabel(unit) {
-    const data = unit?.unit_data || unit;
-    const targetType = data.action?.target_type || data.target_type || data.action;
-    return (targetType === 'ally' || targetType === 'heal' || data.type === 'healer') ? 'Heal' : 'Attack';
+    return battle.isHealer(unit) ? 'Heal' : 'Attack';
   }
 
   function getPassiveName(unit) {
@@ -114,7 +112,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
         </div>
 
         <div class="battle-log" id="battle-log">
-          ${state.log.slice(-7).map(entry => {
+          ${state.log.slice(-8).map(entry => {
             if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
             if (entry.type === 'defend' || entry.type === 'ability') {
               return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> ${entry.message}</div>`;
@@ -158,26 +156,43 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function attachEvents() {
+    console.log('[UI] Attaching events');
+
     root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
       cell.addEventListener('click', () => {
-        if (!selectingTargetFor) return;
+        console.log(`[UI] Grid clicked: ${cell.dataset.id}`);
+
+        if (!selectingTargetFor) {
+          console.log('[UI] No actor selecting target');
+          return;
+        }
+
         const target = battle.combatants.find(c => c.id === cell.dataset.id);
         if (!target) return;
 
+        console.log(`[UI] Target selected: ${target.unit_name}`);
+
         const valid = battle.getValidTargets(selectingTargetFor);
         if (valid.some(t => t.id === target.id)) {
+          console.log(`[UI] Valid target → calling executeAction`);
           battle.executeAction(selectingTargetFor, target, selectedActionType || 'attack');
           selectingTargetFor = null;
           selectedActionType = null;
           render();
           nextTurn();
+        } else {
+          console.warn('[UI] Invalid target');
         }
       });
     });
 
-    root.querySelector('#btn-main')?.addEventListener('click', () => startTargeting('attack'));
-    root.querySelector('#btn-ability')?.addEventListener('click', () => startTargeting('ability'));
+    root.querySelector('#btn-main')?.addEventListener('click', () => {
+      console.log('[UI] Main button (Heal/Attack) clicked');
+      startTargeting('attack');
+    });
+
     root.querySelector('#btn-defend')?.addEventListener('click', () => {
+      console.log('[UI] Defend clicked');
       const actor = battle.currentActor();
       if (actor) {
         battle.executeAction(actor, null, 'defend');
@@ -188,6 +203,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function startTargeting(type) {
+    console.log(`[UI] Starting targeting mode: ${type}`);
     const actor = battle.currentActor();
     if (!actor) return;
     selectingTargetFor = actor;
@@ -199,7 +215,11 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     if (battle.done) return renderResult();
     const next = battle.currentActor();
     if (next?.side === 'enemy') {
-      setTimeout(() => { battle.aiTurn(); render(); nextTurn(); }, 700);
+      setTimeout(() => {
+        battle.aiTurn();
+        render();
+        nextTurn();
+      }, 700);
     }
   }
 
@@ -211,15 +231,6 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       <div class="screen screen-battle-result">
         <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}">
           ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
-        </div>
-        <div class="result-body">
-          ${won ? `
-            <div class="result-rewards">
-              <div>🪙 +${rewards.gold} Gold</div>
-              <div>⭐ +${rewards.xp} XP</div>
-              <div>💎 +${rewards.crystal} Crystals</div>
-            </div>
-          ` : `<div class="result-rewards"><div>⭐ +${rewards.xp} XP</div></div>`}
         </div>
         <button class="ready-btn" id="back-to-castle">Return to Castle</button>
       </div>

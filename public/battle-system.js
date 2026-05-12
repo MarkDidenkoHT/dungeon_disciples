@@ -14,7 +14,7 @@ export class BattleSystem {
     this.done = false;
     this.winner = null;
 
-    console.log('[BattleSystem] === NEW BATTLE STARTED ===');
+    console.log('[BattleSystem] === BATTLE INITIALIZED ===');
     this.initCombatants(playerUnits, enemyUnits, placement);
   }
 
@@ -34,7 +34,7 @@ export class BattleSystem {
 
   createCombatant(unit, side, cellIndex) {
     const data = unit.unit_data || unit;
-    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | action=`, data.action, `| target_type=${data.target_type} | type=${data.type}`);
+    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name} | action="${data.action}" | target_type="${data.target_type}" | type="${data.type}"`);
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
       unit_name: unit.unit_name || data.name,
@@ -58,20 +58,11 @@ export class BattleSystem {
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const action = data.action;
+    const targetType = data.target_type;
 
-    // Handle both string and object formats
-    let targetType = data.target_type;
-    if (action && typeof action === 'object') {
-      targetType = action.target_type || targetType;
-    }
-
-    const isHealer = 
-      action === 'heal' || 
-      targetType === 'ally' || 
-      data.type === 'healer';
-
-    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${isHealer} (action=${typeof action === 'object' ? '[object]' : action}, target_type=${targetType}, type=${data.type})`);
-    return isHealer;
+    const result = action === 'heal' || targetType === 'ally' || data.type === 'healer';
+    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result}`);
+    return result;
   }
 
   getValidTargets(actor) {
@@ -84,7 +75,7 @@ export class BattleSystem {
         return t.side === actor.side && t.id !== actor.id;
       } else {
         if (t.side === actor.side) return false;
-        const range = (actor.unit_data?.action?.range) ?? 1;
+        const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
           return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
@@ -97,25 +88,25 @@ export class BattleSystem {
   }
 
   executeAction(actor, target = null, actionType = 'attack') {
-    console.log(`\n[BattleSystem] executeAction(${actionType}) by ${actor.unit_name}`);
+    console.log(`\n=== EXECUTE ACTION === ${actionType} by ${actor.unit_name} on ${target ? target.unit_name : 'null'}`);
 
     if (actionType === 'defend') return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
 
     if (!target) {
-      console.error("[BattleSystem] No target provided!");
+      console.error("[BattleSystem] No target!");
       return false;
     }
 
     const isHeal = this.isHealer(actor);
-    console.log(`[BattleSystem] Executing as heal? ${isHeal}`);
+    console.log(`Is heal action? ${isHeal}`);
 
     let value;
     if (isHeal) {
       value = this.calcHeal(actor);
       target.battle_hp = Math.min(target.max_hp, target.battle_hp + value);
       this.log.push({ type: 'action', actorName: actor.unit_name, targetName: target.unit_name, value, heal: true });
-      console.log(`✅ HEAL SUCCESS: ${value} to ${target.unit_name}`);
+      console.log(`✅ HEAL SUCCESS: ${value} HP to ${target.unit_name}`);
     } else {
       value = this.calcDamage(actor, target);
       target.battle_hp = Math.max(0, target.battle_hp - value);
