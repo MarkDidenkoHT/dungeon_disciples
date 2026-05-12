@@ -155,7 +155,7 @@ router.post('/player/faction', async (req, res) => {
   }
 
   const unitId = startingBarracks?.unit_id;
-  const unitData = unitId ? (UNITS.protectors?.[unitId] ?? UNITS.dungeon?.[unitId] ?? null) : null;
+  const unitData = unitId ? (UNITS.empire?.[unitId] ?? UNITS.dungeon?.[unitId] ?? null) : null;
 
   try {
     const [updated] = await Promise.all([
