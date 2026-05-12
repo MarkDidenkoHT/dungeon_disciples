@@ -1,5 +1,4 @@
 // public/battle-system.js
-
 const ROWS = 3;
 const COLS = 2;
 
@@ -11,7 +10,6 @@ export class BattleSystem {
   constructor(playerUnits, enemyUnits, placement) {
     this.combatants = [];
     this.round = 1;
-    this.phase = 'player_turn';
     this.log = [];
     this.done = false;
     this.winner = null;
@@ -20,105 +18,104 @@ export class BattleSystem {
   }
 
   initCombatants(playerUnits, enemyUnits, placement) {
-    // Player units
     playerUnits.forEach(u => {
       const cellIdx = placement[u.id] ?? this.combatants.length;
-      this.combatants.push({
-        id: u.id,
-        unit_name: u.unit_name,
-        unit_data: u.unit_data || u,
-        side: 'player',
-        cellIndex: cellIdx,
-        battle_hp: u.unit_data?.hp ?? 50,
-        max_hp: u.unit_data?.hp ?? 50,
-        armor: u.unit_data?.armor ?? 0,
-        initiative: u.unit_data?.initiative ?? 40,
-        alive: true,
-        acted_this_round: false,
-        used_active: false,
-      });
+      this.combatants.push(this.createCombatant(u, 'player', cellIdx));
     });
 
-    // Enemy units
     enemyUnits.forEach((e, i) => {
       const col = i % COLS;
       const row = Math.min(Math.floor(i / COLS), ROWS - 1);
-      this.combatants.push({
-        id: `enemy_${i}`,
-        unit_name: e.name,
-        unit_data: { ...e, action: e.action || {} },
-        side: 'enemy',
-        cellIndex: cellIndex(row, col),
-        battle_hp: e.hp ?? 50,
-        max_hp: e.hp ?? 50,
-        armor: e.armor ?? 0,
-        initiative: e.initiative ?? 30,
-        alive: true,
-        acted_this_round: false,
-        used_active: false,
-      });
+      this.combatants.push(this.createCombatant(e, 'enemy', cellIndex(row, col)));
     });
   }
 
-  getActingOrder() {
-    return this.combatants
-      .filter(c => c.alive && !c.acted_this_round)
-      .sort((a, b) => b.initiative - a.initiative);
+  createCombatant(unit, side, cellIndex) {
+    const data = unit.unit_data || unit;
+    return {
+      id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
+      unit_name: unit.unit_name || data.name,
+      unit_data: data,
+      side,
+      cellIndex,
+      battle_hp: data.hp ?? 50,
+      max_hp: data.hp ?? 50,
+      armor: data.armor ?? 0,
+      initiative: data.initiative ?? 40,
+      alive: true,
+      acted_this_round: false,
+      used_active: false,
+
+      // Temporary buffs
+      defend_armor_bonus: 0,
+      defend_resist_bonus: 0,
+
+      // Status effects
+      burn: 0,      // damage on next turn
+      poison: 0,
+    };
   }
 
-  currentActor() {
-    return this.getActingOrder()[0] ?? null;
+  // ==================== CORE CALCULATIONS ====================
+
+  getEffectiveArmor(target) {
+    return Math.max(0, target.armor + (target.defend_armor_bonus || 0));
   }
 
-  checkWin() {
-    const playerAlive = this.combatants.some(c => c.side === 'player' && c.alive);
-    const enemyAlive = this.combatants.some(c => c.side === 'enemy' && c.alive);
+  calcDamage(attacker, target, multiplier = 1.0) {
+    const power = attacker.unit_data?.action?.value ?? 12;
+    const armor = this.getEffectiveArmor(target);
+    let damage = Math.max(1, Math.floor(power * multiplier - armor));
 
-    if (!playerAlive) return 'enemy';
-    if (!enemyAlive) return 'player';
-    return null;
+    // Simple resistance simulation (can be expanded)
+    const resist = target.unit_data?.resistances?.[attacker.unit_data?.damage_source] || 0;
+    damage = Math.max(1, Math.floor(damage * (1 - resist / 100)));
+
+    return damage;
   }
 
-  advanceRound() {
-    this.combatants.forEach(c => { c.acted_this_round = false; });
-    this.round++;
-    this.log.push({ type: 'round', round: this.round });
+  calcHeal(attacker, multiplier = 1.0) {
+    const power = attacker.unit_data?.action?.value ?? 15;
+    return Math.floor(power * multiplier);
   }
 
-  calcDamage(attacker, target) {
-    const power = attacker.unit_data?.action?.value ?? 10;
-    return Math.max(1, power - (target.armor ?? 0));
+  // ==================== ACTIONS ====================
+
+  executeAction(actor, target = null, actionType = 'attack') {
+    if (!actor || !actor.alive) return false;
+
+    switch (actionType) {
+      case 'defend':
+        return this.doDefend(actor);
+
+      case 'ability':
+        return this.doAbility(actor, target);
+
+      case 'attack':
+      default:
+        if (!target) return false;
+        return this.doBasicAttack(actor, target);
+    }
   }
 
-  getValidTargets(actor) {
-    const action = actor.unit_data?.action || {};
-    const range = action.range ?? 1;
-    const targetType = action.target_type ?? 'enemy';
+  doDefend(actor) {
+    actor.defend_armor_bonus = 25;
+    actor.defend_resist_bonus = 25;
+    actor.acted_this_round = true;
 
-    return this.combatants.filter(t => {
-      if (!t.alive) return false;
-      if (targetType === 'ally') {
-        return t.side === actor.side && t.id !== actor.id;
-      }
-      if (targetType === 'enemy') {
-        if (t.side === actor.side) return false;
-        if (range === 1) {
-          const actorRow = cellRow(actor.cellIndex);
-          const targetRow = cellRow(t.cellIndex);
-          return Math.abs(actorRow - targetRow) <= 1;
-        }
-        return true; // ranged
-      }
-      return false;
+    this.log.push({
+      type: 'defend',
+      actorName: actor.unit_name,
+      message: 'defended (+25 armor & resists this round)'
     });
+    return this.afterAction(actor);
   }
 
-  // Main action
-  executeAction(actor, target) {
-    if (!actor || !target || !actor.alive || !target.alive) return false;
-
+  doBasicAttack(actor, target) {
     const isHeal = actor.unit_data?.action?.target_type === 'ally';
-    const value = this.calcDamage(actor, target);
+    const value = isHeal 
+      ? this.calcHeal(actor) 
+      : this.calcDamage(actor, target);
 
     if (isHeal) {
       target.battle_hp = Math.min(target.max_hp, target.battle_hp + value);
@@ -141,28 +138,60 @@ export class BattleSystem {
         value,
         killed
       });
+
+      // Lifesteal example
+      if (actor.unit_data?.passive?.includes('lifesteal')) {
+        const heal = Math.floor(value * 0.25);
+        actor.battle_hp = Math.min(actor.max_hp, actor.battle_hp + heal);
+      }
     }
 
     actor.acted_this_round = true;
+    return this.afterAction(actor);
+  }
 
-    const win = this.checkWin();
-    if (win) {
-      this.done = true;
-      this.winner = win;
-      return true;
+  doAbility(actor, target) {
+    if (actor.used_active || !actor.unit_data?.ability) return false;
+
+    const abilityId = actor.unit_data.ability;
+    actor.used_active = true;
+    actor.acted_this_round = true;
+
+    this.log.push({
+      type: 'ability',
+      actorName: actor.unit_name,
+      message: `used ${abilityId.split(' ')[0]}`
+    });
+
+    // Basic ability effects (expandable)
+    if (abilityId.includes('purge')) {
+      if (target) {
+        target.burn = 0;
+        target.poison = 0;
+      }
+    } else if (abilityId.includes('raise_dead') && target) {
+      // Simple resurrection simulation
+      if (!target.alive && target.unit_data?.tags?.includes('Undead')) {
+        target.alive = true;
+        target.battle_hp = Math.floor(target.max_hp * 0.5);
+      }
+    } else if (abilityId.includes('mark_of_ash') && target) {
+      target.burn = Math.max(target.burn, 25);
     }
 
-    if (this.getActingOrder().length === 0) {
-      this.advanceRound();
-    }
-
-    return true;
+    return this.afterAction(actor);
   }
 
   skipTurn(actor) {
-    if (!actor) return false;
     this.log.push({ type: 'skip', actorName: actor.unit_name });
     actor.acted_this_round = true;
+    return this.afterAction(actor);
+  }
+
+  // ==================== TURN MANAGEMENT ====================
+
+  afterAction(actor) {
+    this.applyStatusEffects(actor);
 
     const win = this.checkWin();
     if (win) {
@@ -177,21 +206,98 @@ export class BattleSystem {
     return true;
   }
 
-  // AI simple turn
+  applyStatusEffects(unit) {
+    if (unit.burn > 0) {
+      const burnDmg = Math.floor(unit.max_hp * (unit.burn / 100));
+      unit.battle_hp = Math.max(0, unit.battle_hp - burnDmg);
+      this.log.push({ type: 'status', actorName: unit.unit_name, message: `burned for ${burnDmg}` });
+      unit.burn = 0;
+    }
+    if (unit.poison > 0) {
+      const poisonDmg = Math.floor(unit.max_hp * 0.08);
+      unit.battle_hp = Math.max(0, unit.battle_hp - poisonDmg);
+      this.log.push({ type: 'status', actorName: unit.unit_name, message: `poisoned for ${poisonDmg}` });
+    }
+    if (unit.battle_hp <= 0) unit.alive = false;
+  }
+
+  advanceRound() {
+    this.combatants.forEach(c => {
+      c.acted_this_round = false;
+      c.defend_armor_bonus = 0;
+      c.defend_resist_bonus = 0;
+    });
+    this.round++;
+    this.log.push({ type: 'round', round: this.round });
+  }
+
+  checkWin() {
+    const playerAlive = this.combatants.some(c => c.side === 'player' && c.alive);
+    const enemyAlive = this.combatants.some(c => c.side === 'enemy' && c.alive);
+    if (!playerAlive) return 'enemy';
+    if (!enemyAlive) return 'player';
+    return null;
+  }
+
+  // ==================== TARGETING & AI ====================
+
+  getValidTargets(actor) {
+    const action = actor.unit_data?.action || {};
+    const range = action.range ?? 1;
+    const targetType = action.target_type ?? 'enemy';
+
+    return this.combatants.filter(t => {
+      if (!t.alive) return false;
+      if (targetType === 'ally') return t.side === actor.side && t.id !== actor.id;
+      if (targetType === 'enemy') {
+        if (t.side === actor.side) return false;
+        if (range === 1) {
+          return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
+        }
+        return true;
+      }
+      return false;
+    });
+  }
+
+  getActingOrder() {
+    return this.combatants
+      .filter(c => c.alive && !c.acted_this_round)
+      .sort((a, b) => b.initiative - a.initiative);
+  }
+
+  currentActor() {
+    return this.getActingOrder()[0] ?? null;
+  }
+
   aiTurn() {
     const actor = this.currentActor();
     if (!actor || actor.side !== 'enemy') return null;
 
-    const targets = this.getValidTargets(actor);
-    if (!targets.length) {
-      this.skipTurn(actor);
-      return null;
+    const validTargets = this.getValidTargets(actor);
+
+    // Prioritize healer if low HP
+    if (actor.unit_data?.type === 'healer') {
+      const allyToHeal = validTargets.find(t => t.side === 'enemy' && t.battle_hp < t.max_hp * 0.5);
+      if (allyToHeal) {
+        this.executeAction(actor, allyToHeal, 'attack');
+        return;
+      }
     }
 
-    // Target lowest HP
-    const target = targets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
-    this.executeAction(actor, target);
-    return target;
+    // Use ability if available and good condition
+    if (!actor.used_active && actor.unit_data?.ability && validTargets.length > 0) {
+      this.executeAction(actor, validTargets[0], 'ability');
+      return;
+    }
+
+    // Normal attack
+    if (validTargets.length > 0) {
+      const target = validTargets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
+      this.executeAction(actor, target, 'attack');
+    } else {
+      this.skipTurn(actor);
+    }
   }
 
   getState() {
