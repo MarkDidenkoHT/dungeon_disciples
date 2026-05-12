@@ -14,10 +14,12 @@ export class BattleSystem {
     this.done = false;
     this.winner = null;
 
+    console.log('[BattleSystem] === NEW BATTLE STARTED ===');
     this.initCombatants(playerUnits, enemyUnits, placement);
   }
 
   initCombatants(playerUnits, enemyUnits, placement) {
+    console.log(`[BattleSystem] Player units: ${playerUnits.length} | Enemies: ${enemyUnits.length}`);
     playerUnits.forEach(u => {
       const cellIdx = placement[u.id] ?? this.combatants.length;
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
@@ -32,6 +34,7 @@ export class BattleSystem {
 
   createCombatant(unit, side, cellIndex) {
     const data = unit.unit_data || unit;
+    console.log(`[BattleSystem] Created ${side} unit: ${unit.unit_name || data.name} | action="${data.action}" | target_type="${data.target_type}" | type="${data.type}"`);
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
       unit_name: unit.unit_name || data.name,
@@ -52,63 +55,63 @@ export class BattleSystem {
     };
   }
 
-  // ==================== HEALER DETECTION ====================
   isHealer(unit) {
     const data = unit.unit_data || unit;
-    return data.action === 'heal' || 
-           data.target_type === 'ally' || 
-           data.type === 'healer';
+    const result = data.action === 'heal' || 
+                  data.target_type === 'ally' || 
+                  data.type === 'healer';
+    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result}`);
+    return result;
   }
 
   getValidTargets(actor) {
+    console.log(`\n[BattleSystem] getValidTargets for ${actor.unit_name}`);
     const isHeal = this.isHealer(actor);
-    const range = actor.unit_data?.action?.range ?? (isHeal ? 3 : 1);
+    console.log(`  → isHeal = ${isHeal}`);
 
-    return this.combatants.filter(t => {
+    const targets = this.combatants.filter(t => {
       if (!t.alive) return false;
-
       if (isHeal) {
-        return t.side === actor.side && t.id !== actor.id;   // allies only
+        return t.side === actor.side && t.id !== actor.id;
       } else {
-        if (t.side === actor.side) return false;             // enemies only
+        if (t.side === actor.side) return false;
+        const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
           return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
         return true;
       }
     });
+
+    console.log(`  → Found ${targets.length} valid targets`);
+    return targets;
   }
 
   executeAction(actor, target = null, actionType = 'attack') {
+    console.log(`\n[BattleSystem] executeAction(${actionType}) by ${actor.unit_name}`);
+
     if (actionType === 'defend') return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
 
-    if (!target) return false;
+    if (!target) {
+      console.error("[BattleSystem] ERROR: No target provided!");
+      return false;
+    }
 
     const isHeal = this.isHealer(actor);
+    console.log(`[BattleSystem] isHeal = ${isHeal}`);
 
     let value;
     if (isHeal) {
       value = this.calcHeal(actor);
       target.battle_hp = Math.min(target.max_hp, target.battle_hp + value);
-      this.log.push({
-        type: 'action',
-        actorName: actor.unit_name,
-        targetName: target.unit_name,
-        value,
-        heal: true
-      });
+      this.log.push({ type: 'action', actorName: actor.unit_name, targetName: target.unit_name, value, heal: true });
+      console.log(`✅ HEAL SUCCESS: ${value} HP restored to ${target.unit_name}`);
     } else {
       value = this.calcDamage(actor, target);
       target.battle_hp = Math.max(0, target.battle_hp - value);
       if (target.battle_hp <= 0) target.alive = false;
-      this.log.push({
-        type: 'action',
-        actorName: actor.unit_name,
-        targetName: target.unit_name,
-        value,
-        killed: !target.alive
-      });
+      this.log.push({ type: 'action', actorName: actor.unit_name, targetName: target.unit_name, value, killed: !target.alive });
     }
 
     actor.acted_this_round = true;
