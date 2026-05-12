@@ -31,59 +31,51 @@ export function renderRoster(root, { player }) {
     const gender = u.char_gender || 'f';
     const unitId = d.id || '';
 
-    // Better portrait handling
-    let portraitSrc = '';
-    if (unitId) {
-      portraitSrc = `/assets/character_art/${unitId}.${gender}.png`;
-    }
+    const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : '';
 
     const passive = d.passive || d.passive_ability || 'None';
     const active = d.ability || d.active_ability || 'None';
 
     const res = d.resistances || {};
-    const resistsHtml = `
-      <span class="unit-resist">🌬️ ${res.air ?? 0}</span>
-      <span class="unit-resist">🔥 ${res.fire ?? 0}</span>
-      <span class="unit-resist">🌿 ${res.nature ?? 0}</span>
-      <span class="unit-resist">❄️ ${res.cold ?? 0}</span>
-      <span class="unit-resist">✨ ${res.life ?? 0}</span>
-      <span class="unit-resist">🌑 ${res.death ?? 0}</span>
-    `;
 
     return `
       <div class="roster-slide">
         <div class="unit-card">
           <div class="unit-portrait">
-            ${portraitSrc ? 
-              `<img src="${portraitSrc}" alt="${u.unit_name}" 
-                    onerror="this.style.display='none'; this.parentElement.classList.add('no-portrait');">` 
-              : ''}
-            <div class="portrait-fallback">👤</div>
+            ${portraitSrc ? `<img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.style.display='none'">` : ''}
+            <div class="portrait-fallback">🛡️</div>
           </div>
 
-          <div class="unit-header">
-            <span class="unit-name">${u.unit_name}</span>
-            <span class="unit-xp">XP ${u.experience ?? 0}</span>
-          </div>
-
-          <div class="unit-core-stats">
-            <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
-            <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
-            <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
-          </div>
-
-          <div class="unit-resists">
-            ${resistsHtml}
-          </div>
-
-          <div class="unit-abilities">
-            <div class="unit-ability">
-              <span class="unit-ability-label">Passive</span>
-              <span class="unit-ability-value">${passive}</span>
+          <div class="unit-info">
+            <div class="unit-header">
+              <span class="unit-name">${u.unit_name}</span>
+              <span class="unit-xp">XP ${u.experience ?? 0}</span>
             </div>
-            <div class="unit-ability">
-              <span class="unit-ability-label">Active</span>
-              <span class="unit-ability-value">${active}</span>
+
+            <div class="unit-core-stats">
+              <div><strong>HP</strong> ${d.hp ?? '—'}</div>
+              <div><strong>Armor</strong> ${d.armor ?? '—'}</div>
+              <div><strong>Initiative</strong> ${d.initiative ?? '—'}</div>
+            </div>
+
+            <div class="unit-resists">
+              <span>🌬️ ${res.air ?? 0}</span>
+              <span>🔥 ${res.fire ?? 0}</span>
+              <span>🌿 ${res.nature ?? 0}</span>
+              <span>❄️ ${res.cold ?? 0}</span>
+              <span>✨ ${res.life ?? 0}</span>
+              <span>🌑 ${res.death ?? 0}</span>
+            </div>
+
+            <div class="unit-abilities">
+              <div class="ability-row">
+                <span class="ability-label">PASSIVE</span>
+                <span class="ability-value">${passive}</span>
+              </div>
+              <div class="ability-row">
+                <span class="ability-label">ACTIVE</span>
+                <span class="ability-value">${active}</span>
+              </div>
             </div>
           </div>
         </div>
