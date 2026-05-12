@@ -370,11 +370,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const playerUnits = roster
       .filter(u => placedUnitIds().has(u.id))
-      .map(u => ({
-        ...u,
-        unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
-        id: String(u.id)
-      }));
+      .map(u => {
+        console.log('[battle-prep] Passing to battle:', JSON.stringify({
+          id: u.id,
+          unit_name: u.unit_name,
+          unit_data: u.unit_data,
+          hasUnitData: !!u.unit_data
+        }, null, 2));
+        return {
+          id: String(u.id),
+          unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
+          unit_data: u.unit_data || u
+        };
+      });
 
     const placement = {};
     for (const [cellIdx, occ] of Object.entries(occupied)) {
@@ -383,14 +391,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
-    navigate('battle', { 
-      player, 
-      region_id, 
-      level, 
-      playerUnits, 
-      enemies, 
-      placement 
-    });
+    navigate('battle', { player, region_id, level, playerUnits, enemies, placement });
   });
 
   async function load() {
