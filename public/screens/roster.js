@@ -17,8 +17,10 @@ const TARGET_LABELS = {
 };
 
 function buildCard(u) {
-  const d      = u.unit_data || {};
-  const action = d.action    || {};
+  const d = u.unit_data || {};
+
+  const passive = d.passive || d.passive_ability || 'None';
+  const active = d.ability || d.active_ability || 'None';
 
   return `
     <div class="roster-slide">
@@ -34,30 +36,14 @@ function buildCard(u) {
           <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
         </div>
 
-        <div class="unit-resists">
-          ${Object.entries(RESIST_LABELS).map(([key, icon]) => `
-            <span class="unit-resist">${icon} ${d[key] ?? '—'}</span>
-          `).join('')}
-        </div>
-
-        <div class="unit-action">
-          <span class="unit-action-label">Basic Action</span>
-          <div class="unit-action-stats">
-            <span class="unit-stat"><em>DMG</em> ${action.value ?? '—'}</span>
-            <span class="unit-stat"><em>Range</em> ${action.range ?? '—'}</span>
-            <span class="unit-stat"><em>Target</em> ${action.target_type ?? '—'}</span>
-            <span class="unit-stat"><em>Amount</em> ${TARGET_LABELS[action.target_amount] ?? '—'}</span>
-          </div>
-        </div>
-
         <div class="unit-abilities">
           <div class="unit-ability">
             <span class="unit-ability-label">Passive</span>
-            <span class="unit-ability-value">${d.passive_ability ?? 'Coming soon'}</span>
+            <span class="unit-ability-value">${passive}</span>
           </div>
           <div class="unit-ability">
             <span class="unit-ability-label">Active</span>
-            <span class="unit-ability-value">${d.active_ability ?? 'Coming soon'}</span>
+            <span class="unit-ability-value">${active}</span>
           </div>
         </div>
       </div>

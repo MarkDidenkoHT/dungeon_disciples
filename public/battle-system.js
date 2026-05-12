@@ -35,11 +35,8 @@ export class BattleSystem {
 
   createCombatant(unit, side, cellIndex) {
     const rawData = unit.unit_data || unit;
-
-    // EXPLICIT handling for current roster format
     const data = { ...rawData };
 
-    // Normalize action object
     if (data.action && typeof data.action === 'object') {
       data.action_power = data.action.value;
       data.range = data.action.range;
@@ -71,38 +68,32 @@ export class BattleSystem {
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const targetType = data.target_type || (data.action && data.action.target_type);
-
-    // EXPLICIT: Acolyte and similar have target_type = "ally"
     const result = targetType === 'ally';
-
     console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result} | target_type=${targetType} | type=${data.type}`);
     return result;
   }
 
-    getValidTargets(actor) {
-        console.log(`\n[BattleSystem] getValidTargets for ${actor.unit_name}`);
-        const isHeal = this.isHealer(actor);
+  getValidTargets(actor) {
+    console.log(`\n[BattleSystem] getValidTargets for ${actor.unit_name}`);
+    const isHeal = this.isHealer(actor);
 
-        const targets = this.combatants.filter(t => {
-        if (!t.alive) return false;
-
-        if (isHeal) {
-            // HEALERS CAN TARGET THEMSELVES + allies
-            return t.side === actor.side;
-        } else {
-            // Normal attacks cannot target allies
-            if (t.side === actor.side) return false;
-            const range = actor.unit_data?.range ?? 1;
-            if (range === 1) {
-            return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
-            }
-            return true;
+    const targets = this.combatants.filter(t => {
+      if (!t.alive) return false;
+      if (isHeal) {
+        return t.side === actor.side;           // healers can target self + allies
+      } else {
+        if (t.side === actor.side) return false;
+        const range = actor.unit_data?.range ?? 1;
+        if (range === 1) {
+          return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
-        });
+        return true;
+      }
+    });
 
-        console.log(`[BattleSystem] Found ${targets.length} valid targets`);
-        return targets;
-    }
+    console.log(`[BattleSystem] Found ${targets.length} valid targets`);
+    return targets;
+  }
 
   executeAction(actor, target = null, actionType = 'attack') {
     console.log(`\n=== EXECUTE ACTION === ${actionType} by ${actor.unit_name} on ${target ? target.unit_name : 'null'}`);
@@ -135,8 +126,10 @@ export class BattleSystem {
       console.log(`✅ HEAL SUCCESS: +${actualHeal} HP to ${target.unit_name}`);
     } else {
       value = this.calcDamage(actor, target);
+      const oldHp = target.battle_hp;
       target.battle_hp = Math.max(0, target.battle_hp - value);
       if (target.battle_hp <= 0) target.alive = false;
+
       this.log.push({ 
         type: 'action', 
         actorName: actor.unit_name, 
@@ -144,10 +137,44 @@ export class BattleSystem {
         value, 
         killed: !target.alive 
       });
+      console.log(`✅ DAMAGE: ${value} to ${target.unit_name}`);
+
+      // Mithrail's Light Passive
+      if (actor.unit_data?.passive === 'mithrails_light 1' || 
+          actor.unit_data?.passive_ability === 'mithrails_light 1') {
+        this.applyMithrailsLight(actor, value);
+      }
     }
 
     actor.acted_this_round = true;
     return this.afterAction(actor);
+  }
+
+  applyMithrailsLight(actor, damageDealt) {
+    const healAmount = Math.floor(damageDealt * 0.25);
+    if (healAmount <= 0) return;
+
+    const allies = this.combatants.filter(c => 
+      c.side === actor.side && c.alive
+    );
+
+    if (allies.length === 0) return;
+
+    const lowest = allies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
+
+    const oldHp = lowest.battle_hp;
+    lowest.battle_hp = Math.min(lowest.max_hp, lowest.battle_hp + healAmount);
+    const actualHeal = lowest.battle_hp - oldHp;
+
+    this.log.push({
+      type: 'passive',
+      actorName: actor.unit_name,
+      targetName: lowest.unit_name,
+      value: actualHeal,
+      passive: "Mithrail's Light"
+    });
+
+    console.log(`✨ MITHRAIL'S LIGHT: +${actualHeal} HP to ${lowest.unit_name}`);
   }
 
   calcHeal(actor) {
