@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(rateLimit({ windowMs: 60_000, max: 100 }));
 
+app.use('/data', express.static(path.join(__dirname, 'data')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', routes);
