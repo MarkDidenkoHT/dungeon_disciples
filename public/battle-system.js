@@ -21,6 +21,7 @@ export class BattleSystem {
     console.log(`[BattleSystem] Player units: ${playerUnits.length} | Enemies: ${enemyUnits.length}`);
     
     playerUnits.forEach((u, idx) => {
+      console.log(`[BattleSystem] Player unit ${idx}:`, JSON.stringify(u, null, 2));
       const cellIdx = placement[u.id] ?? this.combatants.length;
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
     });
@@ -33,16 +34,19 @@ export class BattleSystem {
   }
 
   createCombatant(unit, side, cellIndex) {
-    let data = unit.unit_data || unit;
+    const rawData = unit.unit_data || unit;
+
+    // EXPLICIT handling for current roster format
+    const data = { ...rawData };
 
     // Normalize action object
     if (data.action && typeof data.action === 'object') {
-      data.action_value = data.action.value;
-      data.action_range = data.action.range;
+      data.action_power = data.action.value;
+      data.range = data.action.range;
       data.target_type = data.action.target_type;
     }
 
-    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | type=${data.type} | target_type=${data.target_type} | action_value=${data.action_value || data.action_power}`);
+    console.log(`[BattleSystem] Created ${side}: ${unit.unit_name || data.name} | type=${data.type} | target_type=${data.target_type} | power=${data.action_power}`);
 
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
@@ -67,15 +71,11 @@ export class BattleSystem {
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const targetType = data.target_type || (data.action && data.action.target_type);
-    const actionType = data.type;
 
-    const result = Boolean(
-      actionType === 'healer' || 
-      targetType === 'ally' ||
-      (data.action && data.action.target_type === 'ally')
-    );
+    // EXPLICIT: Acolyte and similar have target_type = "ally"
+    const result = targetType === 'ally';
 
-    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result} | type=${actionType} | target_type=${targetType}`);
+    console.log(`[BattleSystem] isHealer(${unit.unit_name}) = ${result} | target_type=${targetType} | type=${data.type}`);
     return result;
   }
 
@@ -89,7 +89,7 @@ export class BattleSystem {
         return t.side === actor.side && t.id !== actor.id;
       } else {
         if (t.side === actor.side) return false;
-        const range = actor.unit_data?.action_range ?? actor.unit_data?.range ?? 1;
+        const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
           return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
         }
@@ -149,14 +149,14 @@ export class BattleSystem {
 
   calcHeal(actor) {
     const data = actor.unit_data || actor;
-    const power = data.action_value ?? data.action?.value ?? data.action_power ?? 15;
-    console.log(`[calcHeal] Using power: ${power}`);
+    const power = data.action_power ?? (data.action && data.action.value) ?? 15;
+    console.log(`[calcHeal] Power: ${power}`);
     return Math.floor(power * 1.3);
   }
 
   calcDamage(attacker, target) {
     const data = attacker.unit_data || attacker;
-    const power = data.action_value ?? data.action?.value ?? data.action_power ?? 12;
+    const power = data.action_power ?? (data.action && data.action.value) ?? 12;
     const armor = Math.max(0, target.armor + (target.defend_armor_bonus || 0));
     return Math.max(1, power - armor);
   }
