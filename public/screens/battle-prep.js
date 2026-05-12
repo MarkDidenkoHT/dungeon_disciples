@@ -17,11 +17,10 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-// Derive the grid size string ('tile' | 'column' | 'row') from a roster unit.
-// UNIT_TYPES is the single source of truth — no hardcoded mapping here.
+// Read size directly from unit_data — defined explicitly on every unit in units.js.
+// Falls back to UNIT_TYPES lookup if size is somehow absent (e.g. legacy DB rows).
 function getUnitSize(unit) {
-  const t = unit?.unit_data?.type ?? 'melee';
-  return (UNIT_TYPES[t] ?? UNIT_TYPES.melee).size;
+  return unit?.unit_data?.size ?? (UNIT_TYPES[unit?.unit_data?.type] ?? UNIT_TYPES.melee).size;
 }
 
 function getCells(anchor, size) {
