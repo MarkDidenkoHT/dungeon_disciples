@@ -31,7 +31,7 @@ export function renderRoster(root, { player }) {
     const gender = u.char_gender || 'f';
     const unitId = d.id || '';
 
-    const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : '';
+    const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : null;
 
     const passive = d.passive || d.passive_ability || 'None';
     const active = d.ability || d.active_ability || 'None';
@@ -41,11 +41,11 @@ export function renderRoster(root, { player }) {
     return `
       <div class="roster-slide">
         <div class="unit-card">
+          ${portraitSrc ? `
           <div class="unit-portrait">
-            ${portraitSrc ? `<img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.style.display='none'">` : ''}
-            <div class="portrait-fallback">🛡️</div>
-          </div>
-
+            <img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.parentElement.style.display='none';">
+          </div>` : ''}
+          
           <div class="unit-info">
             <div class="unit-header">
               <span class="unit-name">${u.unit_name}</span>
