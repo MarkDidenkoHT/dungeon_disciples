@@ -370,4 +370,47 @@ router.post('/progress/unlock', async (req, res) => {
   }
 });
 
+router.post('/structures/upgrade', async (req, res) => {
+  const { chat_id, slot, new_building_id } = req.body;
+  if (!chat_id || !slot || !new_building_id) {
+    return res.status(400).json({ error: 'chat_id, slot, new_building_id required' });
+  }
+
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+
+    const record = rows[0];
+    const buildings = record.buildings_data;
+    const current = buildings[slot];
+
+    if (!current || !current.building_id) {
+      return res.status(400).json({ error: 'No building in this slot' });
+    }
+
+    const def = getBuildingDef(record.faction || 'empire', current.building_id);
+    if (!def || !def.upgrades || !def.upgrades.includes(new_building_id)) {
+      return res.status(400).json({ error: 'Invalid upgrade path' });
+    }
+
+    const ready_at = new Date(Date.now() + BUILD_TIMES_MS[current.level + 1] || BUILD_TIMES_MS[2]).toISOString();
+
+    buildings[slot] = {
+      level: current.level,
+      ready_at,
+      building_id: new_building_id
+    };
+
+    const updated = await supabase(`/structures?id=eq.${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ buildings_data: buildings }),
+    });
+
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('upgrade error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

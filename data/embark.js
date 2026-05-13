@@ -8,7 +8,6 @@ const REGIONS = [
     type: 'pve',
     difficulties: {
       level_1: {
-        food_cost: 10,
         rewards: { gold: 50, crystal: 10, xp: 20 },
         enemies: [
           { id: 'grove_warden',  name: 'Grove Warden',  hp: 60,  armor: 6,  initiative: 35, action: { value: 10, range: 1, target_type: 'enemy', target_amount: 'single' } },
@@ -16,7 +15,6 @@ const REGIONS = [
         ],
       },
       level_2: {
-        food_cost: 20,
         rewards: { gold: 80, crystal: 20, xp: 35 },
         enemies: [
           { id: 'grove_warden',   name: 'Grove Warden',   hp: 78,  armor: 8,  initiative: 35, action: { value: 13, range: 1, target_type: 'enemy', target_amount: 'single' } },
@@ -25,7 +23,6 @@ const REGIONS = [
         ],
       },
       level_3: {
-        food_cost: 40,
         rewards: { gold: 120, crystal: 35, xp: 60 },
         enemies: [
           { id: 'grove_warden',     name: 'Grove Warden',     hp: 102, armor: 10, initiative: 35, action: { value: 17, range: 1, target_type: 'enemy', target_amount: 'single' } },
@@ -44,7 +41,6 @@ const REGIONS = [
     type: 'pve',
     difficulties: {
       level_1: {
-        food_cost: 10,
         rewards: { gold: 50, crystal: 10, xp: 20 },
         enemies: [
           { id: 'fire_cultist',  name: 'Fire Cultist',  hp: 40,  armor: 0,  initiative: 55, action: { value: 12, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -52,7 +48,6 @@ const REGIONS = [
         ],
       },
       level_2: {
-        food_cost: 20,
         rewards: { gold: 80, crystal: 20, xp: 35 },
         enemies: [
           { id: 'fire_cultist',     name: 'Fire Cultist',     hp: 52,  armor: 0,  initiative: 55, action: { value: 16, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -61,7 +56,6 @@ const REGIONS = [
         ],
       },
       level_3: {
-        food_cost: 40,
         rewards: { gold: 120, crystal: 35, xp: 60 },
         enemies: [
           { id: 'fire_cultist',     name: 'Fire Cultist',     hp: 68,  armor: 0,  initiative: 55, action: { value: 21, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -80,7 +74,6 @@ const REGIONS = [
     type: 'pve',
     difficulties: {
       level_1: {
-        food_cost: 10,
         rewards: { gold: 50, crystal: 10, xp: 20 },
         enemies: [
           { id: 'skeleton',     name: 'Skeleton',     hp: 35,  armor: 2,  initiative: 30, action: { value: 8,  range: 1, target_type: 'enemy', target_amount: 'single' } },
@@ -88,7 +81,6 @@ const REGIONS = [
         ],
       },
       level_2: {
-        food_cost: 20,
         rewards: { gold: 80, crystal: 20, xp: 35 },
         enemies: [
           { id: 'skeleton',      name: 'Skeleton',      hp: 46,  armor: 3,  initiative: 30, action: { value: 10, range: 1, target_type: 'enemy', target_amount: 'single' } },
@@ -97,7 +89,6 @@ const REGIONS = [
         ],
       },
       level_3: {
-        food_cost: 40,
         rewards: { gold: 120, crystal: 35, xp: 60 },
         enemies: [
           { id: 'crypt_wraith',   name: 'Crypt Wraith',   hp: 51,  armor: 0,  initiative: 65, action: { value: 18, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -116,7 +107,6 @@ const REGIONS = [
     type: 'pve',
     difficulties: {
       level_1: {
-        food_cost: 10,
         rewards: { gold: 50, crystal: 10, xp: 20 },
         enemies: [
           { id: 'frost_wraith', name: 'Frost Wraith', hp: 45,  armor: 0,  initiative: 60, action: { value: 12, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -124,7 +114,6 @@ const REGIONS = [
         ],
       },
       level_2: {
-        food_cost: 20,
         rewards: { gold: 80, crystal: 20, xp: 35 },
         enemies: [
           { id: 'frost_wraith',   name: 'Frost Wraith',   hp: 59,  armor: 0,  initiative: 60, action: { value: 16, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -133,7 +122,6 @@ const REGIONS = [
         ],
       },
       level_3: {
-        food_cost: 40,
         rewards: { gold: 120, crystal: 35, xp: 60 },
         enemies: [
           { id: 'frost_wraith',    name: 'Frost Wraith',    hp: 77,  armor: 0,  initiative: 60, action: { value: 21, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -152,7 +140,6 @@ const REGIONS = [
     type: 'pve',
     difficulties: {
       level_1: {
-        food_cost: 10,
         rewards: { gold: 50, crystal: 10, xp: 20 },
         enemies: [
           { id: 'feral_hunter', name: 'Feral Hunter', hp: 50,  armor: 2,  initiative: 50, action: { value: 10, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -160,7 +147,6 @@ const REGIONS = [
         ],
       },
       level_2: {
-        food_cost: 20,
         rewards: { gold: 80, crystal: 20, xp: 35 },
         enemies: [
           { id: 'feral_hunter', name: 'Feral Hunter', hp: 65,  armor: 3,  initiative: 50, action: { value: 13, range: 2, target_type: 'enemy', target_amount: 'single' } },
@@ -169,7 +155,6 @@ const REGIONS = [
         ],
       },
       level_3: {
-        food_cost: 40,
         rewards: { gold: 120, crystal: 35, xp: 60 },
         enemies: [
           { id: 'feral_hunter',  name: 'Feral Hunter',  hp: 85,  armor: 4,  initiative: 50, action: { value: 17, range: 2, target_type: 'enemy', target_amount: 'single' } },

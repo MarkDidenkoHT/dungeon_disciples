@@ -1,5 +1,5 @@
 const BUILD_TIMES_MS = {
-  1: 5  * 60 * 1000,
+  1: 5 * 60 * 1000,
   2: 10 * 60 * 1000,
   3: 30 * 60 * 1000,
   4: 60 * 60 * 1000,
@@ -7,9 +7,9 @@ const BUILD_TIMES_MS = {
 
 const SLOT_CATEGORIES = {
   slot_0: 'throne',
-  slot_1: 'production',
-  slot_2: 'production',
-  slot_3: 'production',
+  slot_1: 'barracks',
+  slot_2: 'barracks',
+  slot_3: 'barracks',
   slot_4: 'barracks',
   slot_5: 'barracks',
   slot_6: 'barracks',
@@ -18,42 +18,68 @@ const SLOT_CATEGORIES = {
 };
 
 const BUILDING_POOLS = {
-  empire: { 
+  empire: {
     throne: [
       { id: 'throne', label: 'Throne', category: 'throne', unit: null },
     ],
-    production: [
-      { id: 'farm',        label: 'Farm',        category: 'production', unit: null },
-      { id: 'lumber_mill', label: 'Lumber Mill', category: 'production', unit: null },
-      { id: 'gold_mine',   label: 'Gold Mine',   category: 'production', unit: null },
-    ],
     barracks: [
-      { id: 'conscript_barracks', label: 'Conscript Barracks', category: 'barracks', unit: 'conscript'  },
-      { id: 'acolyte_shrine',     label: 'Acolyte Shrine',     category: 'barracks', unit: 'acolyte'    },
-      { id: 'mage_tower',         label: 'Mage Tower',         category: 'barracks', unit: 'apprentice' },
+      { 
+        id: 'conscript_barracks', 
+        label: 'Conscript Barracks', 
+        category: 'barracks', 
+        unit: 'conscript',
+        upgrades: ['infantry', 'horseman']
+      },
+      { 
+        id: 'acolyte_shrine', 
+        label: 'Acolyte Shrine', 
+        category: 'barracks', 
+        unit: 'acolyte',
+        upgrades: ['priest', 'purgator']
+      },
+      { 
+        id: 'mage_tower', 
+        label: 'Mage Tower', 
+        category: 'barracks', 
+        unit: 'apprentice',
+        upgrades: ['red_mage', 'wizard']
+      },
     ],
     any: [
-      { id: 'market',    label: 'Market',    category: 'any', unit: null },
-      { id: 'watchtower',label: 'Watchtower',category: 'any', unit: null },
+      { id: 'market', label: 'Market', category: 'any', unit: null },
+      { id: 'watchtower', label: 'Watchtower', category: 'any', unit: null },
     ],
   },
   dungeon: {
     throne: [
       { id: 'dark_throne', label: 'Dark Throne', category: 'throne', unit: null },
     ],
-    production: [
-      { id: 'bone_farm',      label: 'Bone Farm',      category: 'production', unit: null },
-      { id: 'soul_extractor', label: 'Soul Extractor', category: 'production', unit: null },
-      { id: 'dark_forge',     label: 'Dark Forge',     category: 'production', unit: null },
-    ],
     barracks: [
-      { id: 'heretic_pit',       label: 'Heretic Pit',       category: 'barracks', unit: 'heretic'   },
-      { id: 'imp_den',           label: 'Imp Den',           category: 'barracks', unit: 'imp'       },
-      { id: 'possession_altar',  label: 'Possession Altar',  category: 'barracks', unit: 'possessed' },
+      { 
+        id: 'heretic_pit', 
+        label: 'Heretic Pit', 
+        category: 'barracks', 
+        unit: 'heretic',
+        upgrades: ['possessed']
+      },
+      { 
+        id: 'imp_den', 
+        label: 'Imp Den', 
+        category: 'barracks', 
+        unit: 'imp',
+        upgrades: []
+      },
+      { 
+        id: 'possession_altar', 
+        label: 'Possession Altar', 
+        category: 'barracks', 
+        unit: 'possessed',
+        upgrades: []
+      },
     ],
     any: [
-      { id: 'cursed_vault', label: 'Cursed Vault',  category: 'any', unit: null },
-      { id: 'shadow_shrine',label: 'Shadow Shrine', category: 'any', unit: null },
+      { id: 'cursed_vault', label: 'Cursed Vault', category: 'any', unit: null },
+      { id: 'shadow_shrine', label: 'Shadow Shrine', category: 'any', unit: null },
     ],
   },
 };
