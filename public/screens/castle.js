@@ -4,24 +4,17 @@ import { navigate } from '../main.js';
 let UNITS = null;
 
 async function loadUnits() {
-  console.log("[Castle] === Loading units.js ===");
   try {
     const mod = await import('../../data/units.js');
-    console.log("[Castle] units.js imported successfully");
     UNITS = mod.UNITS || mod.default?.UNITS || mod;
-    console.log("[Castle] UNITS loaded - Empire:", Object.keys(UNITS?.empire || {}).length, 
-                "| Dungeon:", Object.keys(UNITS?.dungeon || {}).length,
-                "| Enemies:", Object.keys(UNITS?.enemies || {}).length);
     return UNITS;
   } catch (err) {
-    console.error("[Castle] FAILED to load units.js:", err);
+    console.error('[Castle] FAILED to load units.js:', err);
     return null;
   }
 }
 
 export function renderCastle(root, { player }) {
-  console.log("[Castle] renderCastle started for faction:", player?.faction);
-
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
@@ -57,9 +50,9 @@ export function renderCastle(root, { player }) {
 
   let structuresRecord = null;
   let buildingPools = null;
+  let upgradePaths = null;
 
   function openModal(title, bodyHtml) {
-    console.log("[Castle] Opening modal:", title);
     root.querySelector('#modal-title').textContent = title;
     root.querySelector('#modal-body').innerHTML = bodyHtml;
     root.querySelector('#modal-overlay').classList.remove('hidden');
@@ -75,14 +68,11 @@ export function renderCastle(root, { player }) {
   });
 
   async function load() {
-    console.log("[Castle] Starting data load...");
     const [inventory, structures, buildingsResp] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
     ]);
-
-    console.log("[Castle] Buildings pools received:", Object.keys(buildingsResp.pools || {}));
 
     const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
@@ -96,7 +86,8 @@ export function renderCastle(root, { player }) {
       <div class="res-item"><span class="res-icon">🔵</span><span class="res-amount">${find('Crystals_Frost').amount}</span></div>
     `;
 
-    buildingPools = buildingsResp.pools;
+    buildingPools  = buildingsResp.pools;
+    upgradePaths   = buildingsResp.upgrade_paths || {};
     structuresRecord = structures;
 
     await loadUnits();
@@ -112,10 +103,119 @@ export function renderCastle(root, { player }) {
     return null;
   }
 
-  function getUnitData(unitId) {
+  function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
     const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
-    return all[unitId] || null;
+    return Object.values(all).find(u => u.id === unitId) || null;
+  }
+
+  function getUpgradePathsForBuilding(faction, def) {
+    if (!def || !def.upgrades || def.upgrades.length === 0) return [];
+    const factionPaths = upgradePaths[faction] || {};
+    const paths = factionPaths[def.unit_id];
+    if (paths && paths.length > 0) return paths;
+    return def.upgrades.map(uid => ({ unit_id: uid, building_id: uid, label: uid }));
+  }
+
+  function statDiff(current, next, key) {
+    if (current == null || next == null) return '';
+    const diff = next[key] - current[key];
+    if (diff === 0) return '';
+    return diff > 0
+      ? `<span class="stat-diff stat-diff--up">+${diff}</span>`
+      : `<span class="stat-diff stat-diff--down">${diff}</span>`;
+  }
+
+  function renderUnitCard(unit, label) {
+    if (!unit) return `<div class="upgrade-unit-card upgrade-unit-card--empty"><div class="upgrade-unit-label">${label}</div><div class="upgrade-unit-unknown">Unknown Unit</div></div>`;
+
+    const typeIcon = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[unit.type] || '?';
+    const tags = (unit.tags || []).filter(Boolean).join(', ');
+
+    return `
+      <div class="upgrade-unit-card">
+        <div class="upgrade-unit-label">${label}</div>
+        <div class="upgrade-unit-name">${unit.name}</div>
+        <div class="upgrade-unit-type">${typeIcon} ${unit.type}${tags ? ' · ' + tags : ''}</div>
+        <div class="upgrade-unit-stats">
+          <div class="upgrade-stat"><span class="upgrade-stat-label">HP</span><span class="upgrade-stat-val">${unit.hp}</span></div>
+          <div class="upgrade-stat"><span class="upgrade-stat-label">Armor</span><span class="upgrade-stat-val">${unit.armor}</span></div>
+          <div class="upgrade-stat"><span class="upgrade-stat-label">Initiative</span><span class="upgrade-stat-val">${unit.initiative}</span></div>
+          <div class="upgrade-stat"><span class="upgrade-stat-label">Power</span><span class="upgrade-stat-val">${unit.action_power}</span></div>
+          <div class="upgrade-stat"><span class="upgrade-stat-label">Targets</span><span class="upgrade-stat-val">${unit.targets}</span></div>
+          <div class="upgrade-stat"><span class="upgrade-stat-label">Range</span><span class="upgrade-stat-val">${unit.range}</span></div>
+        </div>
+        <div class="upgrade-unit-res">
+          ${Object.entries(unit.resistances || {}).filter(([,v]) => v !== 0).map(([k,v]) => `<span class="res-badge ${v > 0 ? 'res-badge--pos' : 'res-badge--neg'}">${k} ${v > 0 ? '+' : ''}${v}%</span>`).join('')}
+        </div>
+        ${unit.passive ? `<div class="upgrade-unit-trait"><span class="trait-label">Passive</span> ${unit.passive}</div>` : ''}
+        ${unit.ability ? `<div class="upgrade-unit-trait"><span class="trait-label">Ability</span> ${unit.ability}</div>` : ''}
+      </div>
+    `;
+  }
+
+  function renderUnitComparison(currentUnit, nextUnit) {
+    if (!currentUnit || !nextUnit) {
+      return `
+        <div class="upgrade-comparison">
+          ${renderUnitCard(currentUnit, 'Current')}
+          <div class="upgrade-arrow">→</div>
+          ${renderUnitCard(nextUnit, 'After Upgrade')}
+        </div>
+      `;
+    }
+
+    const statKeys = ['hp', 'armor', 'initiative', 'action_power', 'targets', 'range'];
+    const statLabels = { hp: 'HP', armor: 'Armor', initiative: 'Initiative', action_power: 'Power', targets: 'Targets', range: 'Range' };
+    const typeIcon = (t) => ({ melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' }[t] || '?');
+
+    const buildStatRow = (unit, other, key) => {
+      const diff = other[key] - unit[key];
+      const diffHtml = diff === 0 ? ''
+        : diff > 0 ? `<span class="stat-diff stat-diff--up">▲${diff}</span>`
+        : `<span class="stat-diff stat-diff--down">▼${Math.abs(diff)}</span>`;
+      return `
+        <div class="cmp-stat-row">
+          <span class="cmp-stat-key">${statLabels[key]}</span>
+          <span class="cmp-stat-cur">${unit[key]}</span>
+          <span class="cmp-stat-arrow">→</span>
+          <span class="cmp-stat-nxt">${other[key]}${diffHtml}</span>
+        </div>
+      `;
+    };
+
+    const tagsA = (currentUnit.tags || []).filter(Boolean).join(', ');
+    const tagsB = (nextUnit.tags || []).filter(Boolean).join(', ');
+
+    return `
+      <div class="upgrade-comparison">
+        <div class="upgrade-unit-card">
+          <div class="upgrade-unit-label">Current</div>
+          <div class="upgrade-unit-name">${currentUnit.name}</div>
+          <div class="upgrade-unit-type">${typeIcon(currentUnit.type)} ${currentUnit.type}${tagsA ? ' · ' + tagsA : ''}</div>
+          <div class="upgrade-unit-res">
+            ${Object.entries(currentUnit.resistances || {}).filter(([,v]) => v !== 0).map(([k,v]) => `<span class="res-badge ${v > 0 ? 'res-badge--pos' : 'res-badge--neg'}">${k} ${v > 0 ? '+' : ''}${v}%</span>`).join('')}
+          </div>
+          ${currentUnit.passive ? `<div class="upgrade-unit-trait"><span class="trait-label">Passive</span> ${currentUnit.passive}</div>` : ''}
+          ${currentUnit.ability ? `<div class="upgrade-unit-trait"><span class="trait-label">Ability</span> ${currentUnit.ability}</div>` : ''}
+        </div>
+
+        <div class="upgrade-stats-col">
+          ${statKeys.map(k => buildStatRow(currentUnit, nextUnit, k)).join('')}
+        </div>
+
+        <div class="upgrade-unit-card">
+          <div class="upgrade-unit-label">After Upgrade</div>
+          <div class="upgrade-unit-name">${nextUnit.name}</div>
+          <div class="upgrade-unit-type">${typeIcon(nextUnit.type)} ${nextUnit.type}${tagsB ? ' · ' + tagsB : ''}</div>
+          <div class="upgrade-unit-res">
+            ${Object.entries(nextUnit.resistances || {}).filter(([,v]) => v !== 0).map(([k,v]) => `<span class="res-badge ${v > 0 ? 'res-badge--pos' : 'res-badge--neg'}">${k} ${v > 0 ? '+' : ''}${v}%</span>`).join('')}
+          </div>
+          ${nextUnit.passive ? `<div class="upgrade-unit-trait"><span class="trait-label">Passive</span> ${nextUnit.passive}</div>` : ''}
+          ${nextUnit.ability ? `<div class="upgrade-unit-trait"><span class="trait-label">Ability</span> ${nextUnit.ability}</div>` : ''}
+        </div>
+      </div>
+    `;
   }
 
   function renderBuildings() {
@@ -151,86 +251,78 @@ export function renderCastle(root, { player }) {
   }
 
   async function handleSlotClick(slot) {
-    console.log("[Castle] Slot clicked:", slot);
     const state = structuresRecord.buildings_data[slot];
     if (!state || !state.building_id) return;
 
     const def = getBuildingDef(player.faction, state.building_id);
     if (!def) {
-      openModal("Error", "<p>Building definition not found.</p>");
+      openModal('Error', '<p>Building definition not found.</p>');
       return;
     }
 
-    let html = `<h3>${def.label} — Level ${state.level}</h3>`;
+    const paths = getUpgradePathsForBuilding(player.faction, def);
 
-    if (def.upgrades && def.upgrades.length > 0) {
-      html += `<div class="upgrade-comparison">`;
-
-      const currentUnit = getUnitData(def.unit_id);
-      html += `
-        <div class="upgrade-side">
-          <h4>Current Unit</h4>
-          <div class="unit-preview">
-            <strong>${currentUnit ? currentUnit.name : def.unit}</strong><br>
-            HP ${currentUnit ? currentUnit.hp : '?'} | Armor ${currentUnit ? currentUnit.armor : '?'}<br>
-            Initiative ${currentUnit ? currentUnit.initiative : '?'}<br>
-            Power ${currentUnit ? currentUnit.action_power : '?'}
-          </div>
+    if (!paths || paths.length === 0) {
+      const currentUnit = getUnitByUnitId(def.unit_id);
+      openModal(def.label, `
+        <div class="upgrade-no-paths">
+          ${renderUnitCard(currentUnit, 'Current Unit')}
+          <p class="upgrade-maxed">No upgrades available for this building.</p>
         </div>
-      `;
-
-      const firstTargetId = def.upgrades[0];
-      const targetUnit = getUnitData(firstTargetId);
-      html += `
-        <div class="upgrade-side">
-          <h4>After Upgrade</h4>
-          <div class="unit-preview" id="target-preview">
-            <strong>${targetUnit ? targetUnit.name : firstTargetId}</strong><br>
-            HP ${targetUnit ? targetUnit.hp : '?'} | Armor ${targetUnit ? targetUnit.armor : '?'}<br>
-            Initiative ${targetUnit ? targetUnit.initiative : '?'}<br>
-            Power ${targetUnit ? targetUnit.action_power : '?'}
-          </div>
-        </div>
-      `;
-
-      html += `</div>`;
-
-      html += `<div class="upgrade-options">`;
-      def.upgrades.forEach(uid => {
-        const u = getUnitData(uid);
-        const unitName = u ? u.name : uid;
-        html += `<button class="path-btn" data-unit-id="${uid}">${unitName}</button>`;
-      });
-      html += `</div>`;
-
-      html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
-    } else {
-      html += `<p>No upgrades available for this building.</p>`;
+      `);
+      return;
     }
 
-    openModal(def.label, html);
+    openUpgradeModal(slot, def, paths);
+  }
 
-    setTimeout(() => {
-      document.querySelectorAll('.path-btn').forEach(btn => {
+  function openUpgradeModal(slot, def, paths) {
+    let selectedPathIndex = 0;
+
+    function buildModalHtml(selIdx) {
+      const tabsHtml = paths.length > 1 ? `
+        <div class="upgrade-tabs">
+          ${paths.map((p, i) => {
+            const u = getUnitByUnitId(p.unit_id);
+            return `<button class="upgrade-tab ${i === selIdx ? 'upgrade-tab--active' : ''}" data-path-index="${i}">${u ? u.name : p.label}</button>`;
+          }).join('')}
+        </div>
+      ` : '';
+
+      const selectedPath = paths[selIdx];
+      const currentUnit  = getUnitByUnitId(def.unit_id);
+      const nextUnit     = getUnitByUnitId(selectedPath.unit_id);
+
+      return `
+        ${tabsHtml}
+        <div class="upgrade-body">
+          ${renderUnitComparison(currentUnit, nextUnit)}
+        </div>
+        <button class="upgrade-confirm-btn" id="confirm-upgrade-btn">Upgrade Building</button>
+      `;
+    }
+
+    openModal(def.label, buildModalHtml(selectedPathIndex));
+
+    function attachListeners() {
+      root.querySelectorAll('.upgrade-tab').forEach(btn => {
         btn.addEventListener('click', () => {
-          const targetId = btn.dataset.unitId;
-          const targetUnit = getUnitData(targetId);
-          if (targetUnit) {
-            document.getElementById('target-preview').innerHTML = `
-              <strong>${targetUnit.name}</strong><br>
-              HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
-              Initiative ${targetUnit.initiative}<br>
-              Power ${targetUnit.action_power}
-            `;
-          }
+          selectedPathIndex = parseInt(btn.dataset.pathIndex, 10);
+          root.querySelector('#modal-body').innerHTML = buildModalHtml(selectedPathIndex);
+          attachListeners();
         });
       });
 
-      const confirmBtn = document.getElementById('confirm-upgrade-btn');
+      const confirmBtn = root.querySelector('#confirm-upgrade-btn');
       if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
+        confirmBtn.addEventListener('click', () => {
+          const selectedPath = paths[selectedPathIndex];
+          performBuildingUpgrade(slot, selectedPath.building_id);
+        });
       }
-    }, 50);
+    }
+
+    attachListeners();
   }
 
   async function performBuildingUpgrade(slot, building_id) {
@@ -244,7 +336,6 @@ export function renderCastle(root, { player }) {
       });
       structuresRecord = updated;
       renderBuildings();
-      alert('Building upgraded successfully!');
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');

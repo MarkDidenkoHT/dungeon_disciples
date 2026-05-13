@@ -50,7 +50,6 @@ const BUILDING_POOLS = {
         upgrades: ['e41', 'e42'],
         cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
-      // Upgraded buildings
       { 
         id: 'priest_shrine', 
         label: 'Priest Shrine', 
@@ -115,6 +114,28 @@ const BUILDING_POOLS = {
   },
 };
 
+const UNIT_UPGRADE_PATHS = {
+  empire: {
+    e1: [
+      { unit_id: 'e11', building_id: 'infantry_barracks', label: 'Infantry Barracks' },
+      { unit_id: 'e12', building_id: 'cavalry_stables',   label: 'Cavalry Stables'   },
+    ],
+    e2: [
+      { unit_id: 'e22', building_id: 'priest_shrine',     label: 'Priest Shrine'     },
+      { unit_id: 'e23', building_id: 'purgator_chapel',   label: 'Purgator Chapel'   },
+    ],
+    e4: [
+      { unit_id: 'e41', building_id: 'red_mage_tower',    label: 'Red Mage Tower'    },
+      { unit_id: 'e42', building_id: 'wizard_tower',      label: 'Wizard Tower'      },
+    ],
+  },
+  dungeon: {
+    d1: [
+      { unit_id: 'd3', building_id: 'possession_altar',   label: 'Possession Altar'  },
+    ],
+  },
+};
+
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
   if (!factionPools) return null;
@@ -133,4 +154,4 @@ function emptyStructures() {
   return slots;
 }
 
-module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures };
+module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, getBuildingDef, emptyStructures };
