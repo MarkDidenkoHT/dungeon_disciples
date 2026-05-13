@@ -343,4 +343,13 @@ export function renderCastle(root, { player }) {
   }
 
   load();
+
+  root.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('disabled')) return;
+      const screen = btn.dataset.screen;
+      if (screen === 'castle') return;
+      navigate(screen, { player });
+    });
+  });
 }
