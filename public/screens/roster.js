@@ -22,44 +22,46 @@ export function renderRoster(root, { player }) {
 
   let current = 0;
   let units = [];
-  let upgradePaths = {};
 
   const track = root.querySelector('#roster-track');
-  const dots = root.querySelector('#roster-dots');
+  const dots  = root.querySelector('#roster-dots');
 
   function buildCard(u) {
-    const d = u.unit_data || {};
+    const d      = u.unit_data || {};
     const gender = u.char_gender || 'f';
     const unitId = d.id || '';
 
     const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : null;
 
-    const passive = d.passive || d.passive_ability || 'None';
-    const active = d.ability || d.active_ability || 'None';
+    const passive = d.passive || 'None';
+    const active  = d.ability || 'None';
+    const res     = d.resistances || {};
 
-    const res = d.resistances || {};
+    const xpRequired = d.xp ?? null;
+    const currentXp  = u.experience ?? 0;
+    const isHero     = (d.t == null);
+    const isMaxTier  = (d.t >= 2);
+    const canLevelUp = !isHero && !isMaxTier && xpRequired !== null && currentXp >= xpRequired;
+    const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
-    const currentTier = d.t || 1;
-
-    let upgradeHtml = '';
-
-    if (currentTier < 2 && !u.unit_name.toLowerCase().includes('hero')) {
-      const faction = d.f === 'e' ? 'empire' : 'dungeon';
-      const paths = upgradePaths[faction] || {};
-      let options = [];
-      for (const [base, targets] of Object.entries(paths)) {
-        if (u.unit_name.toLowerCase().includes(base)) {
-          options = Object.keys(targets);
-          break;
-        }
-      }
-      if (options.length) {
-        const buttons = options.map(t => {
-          const label = t.charAt(0).toUpperCase() + t.slice(1);
-          return `<button class="upgrade-btn" data-unit-id="${u.id}" data-target="${t}">→ ${label}</button>`;
-        }).join('');
-        upgradeHtml = `<div class="upgrade-section"><div class="upgrade-label">UPGRADE</div><div class="upgrade-options">${buttons}</div></div>`;
-      }
+    let levelUpHtml = '';
+    if (hasPath) {
+      const xpLabel = canLevelUp
+        ? `${currentXp} / ${xpRequired} XP`
+        : `${currentXp} / ${xpRequired} XP`;
+      levelUpHtml = `
+        <div class="levelup-row">
+          <div class="levelup-xp-bar">
+            <div class="levelup-xp-fill" style="width: ${Math.min(100, Math.floor((currentXp / xpRequired) * 100))}%"></div>
+          </div>
+          <span class="levelup-xp-label">${xpLabel}</span>
+          <button
+            class="levelup-btn ${canLevelUp ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
+            data-roster-id="${u.id}"
+            ${canLevelUp ? '' : 'disabled'}
+          >Level Up</button>
+        </div>
+      `;
     }
 
     return `
@@ -69,11 +71,11 @@ export function renderRoster(root, { player }) {
           <div class="unit-portrait">
             <img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.parentElement.style.display='none';">
           </div>` : ''}
-          
+
           <div class="unit-info">
             <div class="unit-header">
-              <span class="unit-name">${u.unit_name} <span class="tier-badge">★${currentTier}</span></span>
-              <span class="unit-xp">XP ${u.experience ?? 0}</span>
+              <span class="unit-name">${u.unit_name}${d.t ? ` <span class="tier-badge">★${d.t}</span>` : ''}</span>
+              <span class="unit-xp">XP ${currentXp}</span>
             </div>
 
             <div class="unit-core-stats">
@@ -102,7 +104,7 @@ export function renderRoster(root, { player }) {
               </div>
             </div>
 
-            ${upgradeHtml}
+            ${levelUpHtml}
           </div>
         </div>
       </div>
@@ -119,13 +121,12 @@ export function renderRoster(root, { player }) {
 
   function initSlider() {
     track.innerHTML = units.map(u => buildCard(u)).join('');
-    dots.innerHTML = units.map((_, i) => `<span class="roster-dot" data-i="${i}"></span>`).join('');
+    dots.innerHTML  = units.map((_, i) => `<span class="roster-dot" data-i="${i}"></span>`).join('');
 
     dots.querySelectorAll('.roster-dot').forEach(dot => {
       dot.addEventListener('click', () => goTo(Number(dot.dataset.i)));
     });
 
-    // Touch swipe support
     let touchStartX = 0;
     track.addEventListener('touchstart', e => {
       touchStartX = e.touches[0].clientX;
@@ -142,36 +143,32 @@ export function renderRoster(root, { player }) {
   }
 
   track.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.upgrade-btn');
+    const btn = e.target.closest('.levelup-btn--ready');
     if (!btn) return;
 
-    const unitId = btn.dataset.unitId;
-    const targetTier = btn.dataset.target;
-
-    if (!confirm(`Upgrade to ${targetTier}?`)) return;
+    const rosterId = btn.dataset.rosterId;
+    btn.disabled = true;
+    btn.textContent = '...';
 
     try {
-      await api('/roster/upgrade', {
-        chat_id: player.chat_id,
-        unit_id: unitId,
-        target_tier: targetTier
+      await api('/roster/levelup', {
+        chat_id:   player.chat_id,
+        roster_id: rosterId,
       });
 
       units = await api(`/roster?chat_id=${player.chat_id}`);
+      const savedIdx = current;
       initSlider();
+      goTo(savedIdx);
     } catch (err) {
-      alert(err.message || 'Upgrade failed');
+      btn.disabled = false;
+      btn.textContent = 'Level Up';
+      alert(err.message || 'Level up failed');
     }
   });
 
   async function load() {
-    const [rosterData, buildingsData] = await Promise.all([
-      api(`/roster?chat_id=${player.chat_id}`),
-      api('/buildings')
-    ]);
-
-    units = rosterData;
-    upgradePaths = buildingsData.upgrade_paths || {};
+    units = await api(`/roster?chat_id=${player.chat_id}`);
 
     if (!units.length) {
       track.innerHTML = `<div class="roster-slide"><p class="placeholder">No units yet.</p></div>`;
@@ -183,7 +180,6 @@ export function renderRoster(root, { player }) {
 
   load();
 
-  // Navigation
   root.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.classList.contains('disabled')) return;

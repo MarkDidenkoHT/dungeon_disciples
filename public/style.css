@@ -596,6 +596,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: flex-end;
   justify-content: center;
   z-index: 200;
+  height: 100%;
 }
 
 .modal {
@@ -1447,4 +1448,61 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
   font-size: 0.85rem;
   text-align: center;
+}
+
+
+.levelup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.levelup-xp-bar {
+  flex: 1;
+  min-width: 80px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.levelup-xp-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.levelup-xp-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.levelup-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.levelup-btn--ready {
+  background: var(--accent);
+  color: #111;
+}
+
+.levelup-btn--ready:hover {
+  opacity: 0.85;
+}
+
+.levelup-btn--locked {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
 }

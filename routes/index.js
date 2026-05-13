@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS, HERO_DATA } = require('../data/units');
 const { REGIONS } = require('../data/embark');
-const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures, UNIT_UPGRADE_PATHS } = require('../data/buildings');
+const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, getBuildingDef, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -72,6 +72,18 @@ function validateTelegramInitData(initData) {
   return JSON.parse(userRaw);
 }
 
+function getUnitByDataId(faction, unitDataId) {
+  const pool = UNITS[faction] || {};
+  return Object.values(pool).find(u => u.id === unitDataId) || null;
+}
+
+function findUpgradeTarget(faction, currentUnitDataId, targetUnitDataId) {
+  const factionPaths = UNIT_UPGRADE_PATHS[faction] || {};
+  const paths = factionPaths[currentUnitDataId];
+  if (!paths) return null;
+  return paths.find(p => p.unit_id === targetUnitDataId) || null;
+}
+
 router.post('/login', async (req, res) => {
   const { initData } = req.body;
   if (!initData) return res.status(400).json({ error: 'initData required' });
@@ -116,27 +128,18 @@ router.get('/player', async (req, res) => {
   }
 });
 
-const HERO_STARTING_BARRACKS = {
-  paladin:    { building_id: 'acolyte_shrine',    unit_id: 'acolyte'    },
-  inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript'  },
-  ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript'  },
-  warlord:    { building_id: 'heretic_pit',        unit_id: 'heretic'    },
-  hexblade:   { building_id: 'heretic_pit',        unit_id: 'heretic'    },
-  shadowbow:  { building_id: 'heretic_pit',        unit_id: 'heretic'    },
-};
-
 function getStartingBarracks(faction, hero) {
   const mapping = {
     empire: {
-      paladin:    { building_id: 'acolyte_shrine',    unit_id: 'acolyte'    },
-      inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript'  },
-      ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript'  },
+      paladin:    { building_id: 'acolyte_shrine',     unit_id: 'acolyte',    slot: 'slot_4' },
+      inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript',  slot: 'slot_4' },
+      ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript',  slot: 'slot_4' },
     },
     dungeon: {
-      warlord:    { building_id: 'heretic_pit',       unit_id: 'heretic'    },
-      hexblade:   { building_id: 'heretic_pit',       unit_id: 'heretic'    },
-      shadowbow:  { building_id: 'heretic_pit',       unit_id: 'heretic'    },
-    }
+      warlord:    { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
+      hexblade:   { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
+      shadowbow:  { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
+    },
   };
 
   return mapping[faction]?.[hero] || null;
@@ -155,10 +158,11 @@ router.post('/player/faction', async (req, res) => {
   const structures = emptyStructures();
 
   if (startingBarracks) {
-    structures['slot_4'] = { level: 1, ready_at: null, building_id: startingBarracks.building_id };
+    structures[startingBarracks.slot] = { level: 1, ready_at: null, building_id: startingBarracks.building_id };
   }
 
-  const unitId = startingBarracks?.unit_id;
+  const unitId   = startingBarracks?.unit_id;
+  const unitSlot = startingBarracks?.slot;
   const unitData = unitId ? UNITS[faction]?.[unitId] : null;
 
   try {
@@ -179,7 +183,7 @@ router.post('/player/faction', async (req, res) => {
           ...(unitData ? [{
             chat_id,
             unit_name: unitData.name,
-            unit_data: { ...unitData },
+            unit_data: { ...unitData, building_slot: unitSlot },
             experience: 0,
           }] : []),
         ]),
@@ -226,11 +230,86 @@ router.get('/roster', async (req, res) => {
   }
 });
 
+router.post('/roster/levelup', async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) {
+    return res.status(400).json({ error: 'chat_id and roster_id required' });
+  }
+
+  try {
+    const rows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    if (!rows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    const entry    = rows[0];
+    const unitData = entry.unit_data || {};
+    const faction  = unitData.f === 'e' ? 'empire' : 'dungeon';
+    const currentId = unitData.id;
+
+    if (!currentId) return res.status(400).json({ error: 'Unit has no id in unit_data' });
+    if (unitData.t >= 2) return res.status(400).json({ error: 'Unit is already at max tier' });
+
+    const xpRequired = unitData.xp;
+    if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
+    if (entry.experience < xpRequired) {
+      return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${entry.experience}` });
+    }
+
+    const factionPaths = UNIT_UPGRADE_PATHS[faction] || {};
+    const paths = factionPaths[currentId];
+    if (!paths || paths.length === 0) {
+      return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
+    }
+
+    const path = paths[0];
+    const nextUnitDef = getUnitByDataId(faction, path.unit_id);
+    if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
+
+    const buildingSlot = unitData.building_slot || null;
+    const newUnitData  = { ...nextUnitDef, building_slot: buildingSlot };
+
+    const updatePromises = [
+      supabase(`/roster?id=eq.${roster_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          unit_name: nextUnitDef.name,
+          unit_data: newUnitData,
+        }),
+      }),
+    ];
+
+    if (buildingSlot) {
+      const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+      if (structRows.length) {
+        const structRecord = structRows[0];
+        const buildings    = structRecord.buildings_data;
+        const slotState    = buildings[buildingSlot];
+        if (slotState) {
+          const upgradedBuildingId = path.building_id;
+          buildings[buildingSlot] = { ...slotState, building_id: upgradedBuildingId };
+          updatePromises.push(
+            supabase(`/structures?id=eq.${structRecord.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ buildings_data: buildings }),
+            })
+          );
+        }
+      }
+    }
+
+    await Promise.all(updatePromises);
+
+    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/buildings', (req, res) => {
-  res.json({ 
-    pools: BUILDING_POOLS, 
+  res.json({
+    pools: BUILDING_POOLS,
     slot_categories: SLOT_CATEGORIES,
-    upgrade_paths: UNIT_UPGRADE_PATHS 
+    upgrade_paths: UNIT_UPGRADE_PATHS,
   });
 });
 
@@ -268,9 +347,9 @@ router.post('/structures/build', async (req, res) => {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
 
-    const record = rows[0];
+    const record   = rows[0];
     const buildings = record.buildings_data;
-    const current = buildings[slot] || { level: 0, building_id: null };
+    const current  = buildings[slot] || { level: 0, building_id: null };
 
     if (current.ready_at && new Date(current.ready_at) > new Date()) {
       return res.status(400).json({ error: 'Building already under construction' });
@@ -302,9 +381,9 @@ router.post('/structures/complete', async (req, res) => {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
 
-    const record = rows[0];
+    const record   = rows[0];
     const buildings = record.buildings_data;
-    const current = buildings[slot];
+    const current  = buildings[slot];
 
     if (!current.ready_at || new Date(current.ready_at) > new Date()) {
       return res.status(400).json({ error: 'Building not ready yet' });
