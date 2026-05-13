@@ -37,4 +37,4 @@ const ABILITIES = {
   },
 };
 
-module.exports = { ABILITIES };
+export { ABILITIES };

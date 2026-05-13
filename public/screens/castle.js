@@ -1,5 +1,6 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
+import { UNITS } from '../../data/units.js';
 
 export function renderCastle(root, { player }) {
   root.innerHTML = `

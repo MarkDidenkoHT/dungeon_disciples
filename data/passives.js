@@ -105,4 +105,4 @@ const PASSIVES = {
   },
 };
 
-module.exports = { PASSIVES };
+export { PASSIVES };
