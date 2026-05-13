@@ -1,15 +1,14 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
-// Direct import of the exported object (no default)
-import { UNITS } from '../../data/units.js';
+let UNITS = null;
 
-function timeLeft(ready_at) {
-  const diff = new Date(ready_at) - Date.now();
-  if (diff <= 0) return 'Ready';
-  const m = Math.floor(diff / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+// Load units data dynamically (works with CommonJS export)
+async function loadUnits() {
+  if (UNITS) return UNITS;
+  const module = await import('../../data/units.js');
+  UNITS = module.UNITS || module.default?.UNITS || module;
+  return UNITS;
 }
 
 export function renderCastle(root, { player }) {
@@ -86,6 +85,7 @@ export function renderCastle(root, { player }) {
     buildingPools = buildingsResp.pools;
     structuresRecord = structures;
 
+    await loadUnits();
     renderBuildings();
   }
 
@@ -131,7 +131,7 @@ export function renderCastle(root, { player }) {
   }
 
   function getUnitData(unitId) {
-    if (!unitId) return null;
+    if (!unitId || !UNITS) return null;
     const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
     return all[unitId] || null;
   }
@@ -191,13 +191,12 @@ export function renderCastle(root, { player }) {
 
     openModal(def.label, html);
 
-    // Event listeners after modal is rendered
     setTimeout(() => {
       document.querySelectorAll('.path-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const targetId = btn.dataset.unitId;
           const targetUnit = getUnitData(targetId);
-          if (targetUnit) {
+          if (targetUnit && document.getElementById('target-preview')) {
             document.getElementById('target-preview').innerHTML = `
               <strong>${targetUnit.name}</strong><br>
               HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
@@ -211,7 +210,7 @@ export function renderCastle(root, { player }) {
       if (confirmBtn) {
         confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
       }
-    }, 10);
+    }, 50);
   }
 
   async function performBuildingUpgrade(slot, building_id) {
@@ -232,13 +231,4 @@ export function renderCastle(root, { player }) {
   }
 
   load();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'castle') return;
-      navigate(screen, { player });
-    });
-  });
 }
