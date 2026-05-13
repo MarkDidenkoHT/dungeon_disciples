@@ -1,5 +1,6 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
+import { UNITS } from '../../data/units.js';
 
 function timeLeft(ready_at) {
   const diff = new Date(ready_at) - Date.now();
@@ -135,9 +136,12 @@ export function renderCastle(root, { player }) {
 
   function getUnitData(unitId) {
     if (!unitId) return null;
-    // Search in empire and dungeon units
-    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
-    return all[unitId] || null;
+    const allUnits = { 
+      ...UNITS.empire, 
+      ...UNITS.dungeon, 
+      ...UNITS.enemies 
+    };
+    return allUnits[unitId] || null;
   }
 
   async function handleSlotClick(slot) {
@@ -155,7 +159,6 @@ export function renderCastle(root, { player }) {
     if (def.upgrades && def.upgrades.length > 0) {
       html += `<div class="upgrade-comparison">`;
 
-      // Current unit
       const currentUnit = getUnitData(def.unit_id);
       html += `
         <div class="upgrade-side">
@@ -169,7 +172,6 @@ export function renderCastle(root, { player }) {
         </div>
       `;
 
-      // Target unit (first one by default)
       const firstTargetId = def.upgrades[0];
       const targetUnit = getUnitData(firstTargetId);
       html += `
@@ -186,7 +188,6 @@ export function renderCastle(root, { player }) {
 
       html += `</div>`;
 
-      // Upgrade path buttons
       html += `<div class="upgrade-options">`;
       def.upgrades.forEach(uid => {
         const u = getUnitData(uid);
@@ -202,7 +203,6 @@ export function renderCastle(root, { player }) {
 
     openModal(def.label, html);
 
-    // Handle path selection
     document.querySelectorAll('.path-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const targetId = btn.dataset.unitId;
