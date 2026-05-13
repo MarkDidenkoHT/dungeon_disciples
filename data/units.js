@@ -1,5 +1,5 @@
-const { PASSIVES } = require('./passives');
-const { ABILITIES } = require('./abilities');
+import { PASSIVES } from './passives.js';
+import { ABILITIES } from './abilities.js';
 
 const UNIT_TYPES = {
   melee:  { size: 'tile', icon: '⚔',  label: 'Melee'  },
