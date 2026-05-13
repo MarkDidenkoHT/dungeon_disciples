@@ -262,9 +262,55 @@ export function renderCastle(root, { player }) {
     });
   }
 
+  function openBuildModal(slot) {
+    const SLOT_CATEGORIES = { slot_0: 'throne', slot_1: 'barracks', slot_2: 'barracks', slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks', slot_6: 'barracks', slot_7: 'any', slot_8: 'any' };
+    const slotCategory = SLOT_CATEGORIES[slot] || 'any';
+    const factionPools = buildingPools[player.faction] || {};
+    const available = [];
+    for (const [cat, pool] of Object.entries(factionPools)) {
+      if (slotCategory === 'any' || cat === slotCategory) {
+        for (const b of pool) {
+          if (b.category !== 'throne') available.push(b);
+        }
+      }
+    }
+
+    if (!available.length) {
+      openModal('Empty Slot', '<p>No buildings available for this slot.</p>');
+      return;
+    }
+
+    const bodyHtml = `
+      <div class="build-options">
+        ${available.map(b => {
+          const unitDef = b.unit_id ? getUnitByUnitId(b.unit_id) : null;
+          return `
+            <div class="build-option">
+              <div class="build-option-name">${b.label}</div>
+              ${unitDef ? `<div class="build-option-unit">Unit: ${unitDef.name}</div>` : ''}
+              <button class="build-option-btn" data-building-id="${b.id}" data-slot="${slot}">Build</button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    openModal('Build', bodyHtml);
+
+    root.querySelectorAll('.build-option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        performBuildingUpgrade(btn.dataset.slot, btn.dataset.buildingId);
+      });
+    });
+  }
+
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
-    if (!state || !state.building_id) return;
+    if (!state || !state.building_id) {
+      if (slot === 'slot_0') return;
+      openBuildModal(slot);
+      return;
+    }
 
     const def = getBuildingDef(player.faction, state.building_id);
     if (!def) {

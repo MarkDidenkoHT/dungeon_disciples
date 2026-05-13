@@ -260,7 +260,18 @@ router.post('/roster/levelup', async (req, res) => {
       return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
     }
 
-    const path = paths[0];
+    let path = paths[0];
+
+    if (buildingSlot && paths.length > 1) {
+      const structRowsCheck = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+      if (structRowsCheck.length) {
+        const currentBuildingId = structRowsCheck[0].buildings_data[buildingSlot]?.building_id;
+        if (currentBuildingId) {
+          const matched = paths.find(p => p.building_id === currentBuildingId);
+          if (matched) path = matched;
+        }
+      }
+    }
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
 
