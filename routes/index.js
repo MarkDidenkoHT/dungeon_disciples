@@ -371,6 +371,7 @@ router.post('/structures/build', async (req, res) => {
     const record    = rows[0];
     const buildings = record.buildings_data;
     const current   = buildings[slot] || { level: 0, building_id: null };
+    const isNew     = !current.building_id;
     const nextLevel = (current.level || 0) + 1;
     if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
 
@@ -381,7 +382,7 @@ router.post('/structures/build', async (req, res) => {
       body: JSON.stringify({ buildings_data: buildings }),
     });
 
-    if (def.unit_id) {
+    if (isNew && def.unit_id) {
       const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
       const unitDef = Object.values(UNITS[factionKey] || {}).find(u => u.id === def.unit_id);
       if (unitDef) {
