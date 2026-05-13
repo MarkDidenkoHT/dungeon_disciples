@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS, HERO_DATA } = require('../data/units');
 const { REGIONS } = require('../data/embark');
-const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures } = require('../data/buildings');
+const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures, UNIT_UPGRADE_PATHS } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -234,7 +234,11 @@ router.get('/roster', async (req, res) => {
 });
 
 router.get('/buildings', (req, res) => {
-  res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES });
+  res.json({ 
+    pools: BUILDING_POOLS, 
+    slot_categories: SLOT_CATEGORIES,
+    upgrade_paths: UNIT_UPGRADE_PATHS 
+  });
 });
 
 router.get('/structures', async (req, res) => {
@@ -245,6 +249,37 @@ router.get('/structures', async (req, res) => {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/roster/upgrade', async (req, res) => {
+  const { chat_id, unit_id, target_tier } = req.body;
+  if (!chat_id || !unit_id || !target_tier) return res.status(400).json({ error: 'chat_id, unit_id, target_tier required' });
+  try {
+    const rosterRows = await supabase(`/roster?id=eq.${unit_id}&chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Unit not found' });
+    const unit = rosterRows[0];
+    const faction = unit.unit_data?.f === 'e' ? 'empire' : 'dungeon';
+    const structuresRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!structuresRows.length) return res.status(404).json({ error: 'Structures not found' });
+    const paths = UNIT_UPGRADE_PATHS[faction];
+    let possibleUpgrades = null;
+    for (const [base, targets] of Object.entries(paths)) {
+      if (unit.unit_name.toLowerCase().includes(base)) {
+        possibleUpgrades = targets;
+        break;
+      }
+    }
+    if (!possibleUpgrades || !possibleUpgrades[target_tier]) return res.status(400).json({ error: 'Invalid upgrade' });
+    const newUnitId = possibleUpgrades[target_tier];
+    const allUnits = { ...UNITS[faction], ...UNITS.enemies };
+    const newUnitData = Object.values(allUnits).find(u => u.id === newUnitId);
+    if (!newUnitData) return res.status(400).json({ error: 'Target unit not found' });
+    const updatedUnit = { ...unit, unit_name: newUnitData.name, unit_data: { ...newUnitData } };
+    const [result] = await supabase(`/roster?id=eq.${unit_id}`, { method: 'PATCH', body: JSON.stringify(updatedUnit) });
+    res.json({ success: true, unit: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

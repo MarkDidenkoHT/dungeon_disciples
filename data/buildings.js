@@ -84,6 +84,17 @@ const BUILDING_POOLS = {
   },
 };
 
+const UNIT_UPGRADE_PATHS = {
+  empire: {
+    conscript:   { infantry: 'e11', horseman: 'e12' },
+    acolyte:     { priest: 'e22', purgator: 'e23' },
+    apprentice:  { red_mage: 'e41', wizard: 'e42' },
+  },
+  dungeon: {
+    heretic:   { possessed: 'd3' },
+  }
+};
+
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
   if (!factionPools) return null;
@@ -102,4 +113,4 @@ function emptyStructures() {
   return slots;
 }
 
-module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures };
+module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures, UNIT_UPGRADE_PATHS };
