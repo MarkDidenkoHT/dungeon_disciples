@@ -76,14 +76,8 @@ export function renderCastle(root, { player }) {
 
     const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
-    root.querySelector('#res-mana').innerHTML = `
-      <div class="res-item"><span class="res-icon">🔮</span><span class="res-amount">${find('Mana').amount}</span></div>
-    `;
-
-    root.querySelector('#res-col-left').innerHTML = `
-      <div class="res-item"><span class="res-icon">🪙</span><span class="res-amount">${find('Gold').amount}</span></div>
-    `;
-
+    root.querySelector('#res-mana').innerHTML = `<div class="res-item"><span class="res-icon">🔮</span><span class="res-amount">${find('Mana').amount}</span></div>`;
+    root.querySelector('#res-col-left').innerHTML = `<div class="res-item"><span class="res-icon">🪙</span><span class="res-amount">${find('Gold').amount}</span></div>`;
     root.querySelector('#res-col-right').innerHTML = `
       <div class="res-item"><span class="res-icon">🟢</span><span class="res-amount">${find('Crystals_Life').amount}</span></div>
       <div class="res-item"><span class="res-icon">🔴</span><span class="res-amount">${find('Crystals_Fire').amount}</span></div>
@@ -94,24 +88,20 @@ export function renderCastle(root, { player }) {
 
     buildingPools = buildingsResp.pools;
     structuresRecord = structures;
-
     renderBuildings();
   }
 
   function renderBuildings() {
     const data = structuresRecord.buildings_data;
 
-    // Throne
-    const throneState = data['slot_0'];
     root.querySelector('#center-slot').innerHTML = `
       <div class="castle-node castle-node--throne" data-slot="slot_0">
         <div class="castle-node-icon">♛</div>
         <div class="castle-node-label">Throne</div>
-        <div class="castle-node-level">Lv ${throneState.level}</div>
+        <div class="castle-node-level">Lv ${data['slot_0'].level}</div>
       </div>
     `;
 
-    // Barracks & other slots
     root.querySelector('#outer-ring').innerHTML = Object.keys(data).filter(s => s !== 'slot_0').map(slot => {
       const state = data[slot] || { level: 0, building_id: null };
       const def = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
@@ -149,44 +139,65 @@ export function renderCastle(root, { player }) {
     const def = getBuildingDef(player.faction, state.building_id);
     if (!def) return;
 
-    let html = `<h3>${def.label} (Level ${state.level})</h3>`;
+    let html = `<h3>${def.label} — Level ${state.level}</h3>`;
 
     if (def.upgrades && def.upgrades.length > 0) {
-      html += `<p><strong>Upgrade paths:</strong></p><ul>`;
-      def.upgrades.forEach(uid => {
-        html += `<li>→ Unlocks unit <strong>${uid}</strong></li>`;
-      });
-      html += `</ul>`;
+      html += `<p><strong>Available Upgrades:</strong></p>`;
 
-      html += `<button id="upgrade-btn" data-slot="${slot}">Upgrade Building (50 Gold)</button>`;
+      def.upgrades.forEach(targetUnitId => {
+        html += `
+          <div class="upgrade-option">
+            <strong>${targetUnitId}</strong>
+            <button class="upgrade-select-btn" data-slot="${slot}" data-target-unit="${targetUnitId}">
+              Upgrade to this unit
+            </button>
+          </div>`;
+      });
     } else {
-      html += `<p>No further upgrades available.</p>`;
+      html += `<p>No upgrades available for this building.</p>`;
     }
 
     openModal(def.label, html);
 
-    const upgradeBtn = document.getElementById('upgrade-btn');
-    if (upgradeBtn) {
-      upgradeBtn.addEventListener('click', () => upgradeBuilding(slot, def));
-    }
+    document.querySelectorAll('.upgrade-select-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetUnit = btn.dataset.targetUnit;
+        showUpgradeConfirmation(slot, def, targetUnit);
+      });
+    });
   }
 
-  async function upgradeBuilding(slot, def) {
+  function showUpgradeConfirmation(slot, currentDef, targetUnitId) {
     closeModal();
+    const html = `
+      <h3>Confirm Building Upgrade</h3>
+      <p>Current: <strong>${currentDef.label}</strong></p>
+      <p>Will unlock: <strong>Unit ${targetUnitId}</strong></p>
+      <p>Cost: 50 Gold</p>
+      <button id="confirm-upgrade-btn" data-slot="${slot}" data-building-id="${currentDef.id}">Confirm Upgrade</button>
+    `;
 
+    openModal('Upgrade Confirmation', html);
+
+    document.getElementById('confirm-upgrade-btn').addEventListener('click', () => {
+      performBuildingUpgrade(slot, currentDef.id);
+    });
+  }
+
+  async function performBuildingUpgrade(slot, building_id) {
+    closeModal();
     try {
       const updated = await api('/structures/build', {
         chat_id: player.chat_id,
         faction: player.faction,
         slot: slot,
-        building_id: def.id   // current building id - backend will handle next level
+        building_id: building_id
       });
-
       structuresRecord = updated;
       renderBuildings();
-      alert(`Building upgraded successfully!`);
+      alert('Building upgraded successfully!');
     } catch (err) {
-      alert(err.message || 'Failed to upgrade building');
+      alert(err.message || 'Upgrade failed');
     }
   }
 
