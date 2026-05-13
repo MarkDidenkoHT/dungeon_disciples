@@ -51,6 +51,7 @@ export function renderCastle(root, { player }) {
 
   let structuresRecord = null;
   let buildingPools = null;
+  let currentUpgradeSelection = null;
 
   function openModal(title, bodyHtml) {
     root.querySelector('#modal-title').textContent = title;
@@ -137,51 +138,57 @@ export function renderCastle(root, { player }) {
     if (!state || !state.building_id) return;
 
     const def = getBuildingDef(player.faction, state.building_id);
-    if (!def) return;
-
-    let html = `<h3>${def.label} — Level ${state.level}</h3>`;
-
-    if (def.upgrades && def.upgrades.length > 0) {
-      html += `<p><strong>Available Upgrades:</strong></p>`;
-
-      def.upgrades.forEach(targetUnitId => {
-        html += `
-          <div class="upgrade-option">
-            <strong>${targetUnitId}</strong>
-            <button class="upgrade-select-btn" data-slot="${slot}" data-target-unit="${targetUnitId}">
-              Upgrade to this unit
-            </button>
-          </div>`;
-      });
-    } else {
-      html += `<p>No upgrades available for this building.</p>`;
+    if (!def || !def.upgrades || def.upgrades.length === 0) {
+      openModal(def ? def.label : slot, `<p>No upgrades available.</p>`);
+      return;
     }
+
+    currentUpgradeSelection = def.upgrades[0]; // default first option
+
+    let html = `
+      <h3>${def.label} — Level ${state.level}</h3>
+      <div class="upgrade-comparison">
+        <div class="upgrade-side">
+          <h4>Current</h4>
+          <div class="unit-preview" id="current-unit">Loading...</div>
+        </div>
+        <div class="upgrade-side">
+          <h4>After Upgrade</h4>
+          <div class="unit-preview" id="target-unit">Loading...</div>
+        </div>
+      </div>
+
+      <div class="upgrade-options">
+    `;
+
+    def.upgrades.forEach(uid => {
+      html += `<button class="path-btn" data-unit="${uid}">${def.label}<br>${uid}</button>`;
+    });
+
+    html += `</div><button id="confirm-upgrade" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
 
     openModal(def.label, html);
 
-    document.querySelectorAll('.upgrade-select-btn').forEach(btn => {
+    // Load previews
+    updateUpgradePreview(def, currentUpgradeSelection);
+
+    // Path buttons
+    document.querySelectorAll('.path-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const targetUnit = btn.dataset.targetUnit;
-        showUpgradeConfirmation(slot, def, targetUnit);
+        currentUpgradeSelection = btn.dataset.unit;
+        updateUpgradePreview(def, currentUpgradeSelection);
       });
+    });
+
+    document.getElementById('confirm-upgrade').addEventListener('click', () => {
+      performBuildingUpgrade(slot, def.id);
     });
   }
 
-  function showUpgradeConfirmation(slot, currentDef, targetUnitId) {
-    closeModal();
-    const html = `
-      <h3>Confirm Building Upgrade</h3>
-      <p>Current: <strong>${currentDef.label}</strong></p>
-      <p>Will unlock: <strong>Unit ${targetUnitId}</strong></p>
-      <p>Cost: 50 Gold</p>
-      <button id="confirm-upgrade-btn" data-slot="${slot}" data-building-id="${currentDef.id}">Confirm Upgrade</button>
-    `;
-
-    openModal('Upgrade Confirmation', html);
-
-    document.getElementById('confirm-upgrade-btn').addEventListener('click', () => {
-      performBuildingUpgrade(slot, currentDef.id);
-    });
+  function updateUpgradePreview(def, targetUnitId) {
+    // Simple placeholder for now
+    document.getElementById('current-unit').innerHTML = `<strong>${def.unit || 'Unit'}</strong><br>Current`;
+    document.getElementById('target-unit').innerHTML = `<strong>${targetUnitId}</strong><br>Next`;
   }
 
   async function performBuildingUpgrade(slot, building_id) {
