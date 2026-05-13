@@ -28,21 +28,46 @@ const BUILDING_POOLS = {
         label: 'Conscript Barracks', 
         category: 'barracks', 
         unit: 'conscript',
-        upgrades: ['infantry', 'horseman']
+        unit_id: 'e1',
+        upgrades: ['e11', 'e12'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'acolyte_shrine', 
         label: 'Acolyte Shrine', 
         category: 'barracks', 
         unit: 'acolyte',
-        upgrades: ['priest', 'purgator']
+        unit_id: 'e2',
+        upgrades: ['e22', 'e23'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'mage_tower', 
         label: 'Mage Tower', 
         category: 'barracks', 
         unit: 'apprentice',
-        upgrades: ['red_mage', 'wizard']
+        unit_id: 'e4',
+        upgrades: ['e41', 'e42'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      // Upgraded buildings
+      { 
+        id: 'priest_shrine', 
+        label: 'Priest Shrine', 
+        category: 'barracks', 
+        unit: 'priest',
+        unit_id: 'e22',
+        upgrades: [],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'purgator_chapel', 
+        label: 'Purgator Chapel', 
+        category: 'barracks', 
+        unit: 'purgator',
+        unit_id: 'e23',
+        upgrades: [],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
     ],
     any: [
@@ -60,21 +85,27 @@ const BUILDING_POOLS = {
         label: 'Heretic Pit', 
         category: 'barracks', 
         unit: 'heretic',
-        upgrades: ['possessed']
+        unit_id: 'd1',
+        upgrades: ['d3'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'imp_den', 
         label: 'Imp Den', 
         category: 'barracks', 
         unit: 'imp',
-        upgrades: []
+        unit_id: 'd2',
+        upgrades: [],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'possession_altar', 
         label: 'Possession Altar', 
         category: 'barracks', 
         unit: 'possessed',
-        upgrades: []
+        unit_id: 'd3',
+        upgrades: [],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
     ],
     any: [
@@ -82,17 +113,6 @@ const BUILDING_POOLS = {
       { id: 'shadow_shrine', label: 'Shadow Shrine', category: 'any', unit: null },
     ],
   },
-};
-
-const UNIT_UPGRADE_PATHS = {
-  empire: {
-    conscript:   { infantry: 'e11', horseman: 'e12' },
-    acolyte:     { priest: 'e22', purgator: 'e23' },
-    apprentice:  { red_mage: 'e41', wizard: 'e42' },
-  },
-  dungeon: {
-    heretic:   { possessed: 'd3' },
-  }
 };
 
 function getBuildingDef(faction, buildingId) {
@@ -113,4 +133,4 @@ function emptyStructures() {
   return slots;
 }
 
-module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures, UNIT_UPGRADE_PATHS };
+module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, getBuildingDef, emptyStructures };

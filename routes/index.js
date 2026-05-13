@@ -99,7 +99,6 @@ router.post('/login', async (req, res) => {
 
     res.json({ player: created[0], isNew: true });
   } catch (err) {
-    console.error('login error', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -125,11 +124,6 @@ const HERO_STARTING_BARRACKS = {
   hexblade:   { building_id: 'heretic_pit',        unit_id: 'heretic'    },
   shadowbow:  { building_id: 'heretic_pit',        unit_id: 'heretic'    },
 };
-
-const DUNGEON_RANDOM_BARRACKS = [
-  { building_id: 'heretic_pit',      unit_id: 'heretic'   },
-  { building_id: 'possession_altar', unit_id: 'possessed' },
-];
 
 function getStartingBarracks(faction, hero) {
   const mapping = {
@@ -202,7 +196,6 @@ router.post('/player/faction', async (req, res) => {
 
     res.json({ player: updated[0] });
   } catch (err) {
-    console.error('faction error', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -226,7 +219,7 @@ router.get('/roster', async (req, res) => {
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
 
   try {
-    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=*`);
+    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -249,37 +242,6 @@ router.get('/structures', async (req, res) => {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/roster/upgrade', async (req, res) => {
-  const { chat_id, unit_id, target_tier } = req.body;
-  if (!chat_id || !unit_id || !target_tier) return res.status(400).json({ error: 'chat_id, unit_id, target_tier required' });
-  try {
-    const rosterRows = await supabase(`/roster?id=eq.${unit_id}&chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rosterRows.length) return res.status(404).json({ error: 'Unit not found' });
-    const unit = rosterRows[0];
-    const faction = unit.unit_data?.f === 'e' ? 'empire' : 'dungeon';
-    const structuresRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!structuresRows.length) return res.status(404).json({ error: 'Structures not found' });
-    const paths = UNIT_UPGRADE_PATHS[faction];
-    let possibleUpgrades = null;
-    for (const [base, targets] of Object.entries(paths)) {
-      if (unit.unit_name.toLowerCase().includes(base)) {
-        possibleUpgrades = targets;
-        break;
-      }
-    }
-    if (!possibleUpgrades || !possibleUpgrades[target_tier]) return res.status(400).json({ error: 'Invalid upgrade' });
-    const newUnitId = possibleUpgrades[target_tier];
-    const allUnits = { ...UNITS[faction], ...UNITS.enemies };
-    const newUnitData = Object.values(allUnits).find(u => u.id === newUnitId);
-    if (!newUnitData) return res.status(400).json({ error: 'Target unit not found' });
-    const updatedUnit = { ...unit, unit_name: newUnitData.name, unit_data: { ...newUnitData } };
-    const [result] = await supabase(`/roster?id=eq.${unit_id}`, { method: 'PATCH', body: JSON.stringify(updatedUnit) });
-    res.json({ success: true, unit: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -308,11 +270,7 @@ router.post('/structures/build', async (req, res) => {
 
     const record = rows[0];
     const buildings = record.buildings_data;
-    const current = buildings[slot];
-
-    if (current.building_id && current.building_id !== building_id && current.level > 0) {
-      return res.status(400).json({ error: 'Slot already has a building. Demolish it first.' });
-    }
+    const current = buildings[slot] || { level: 0, building_id: null };
 
     if (current.ready_at && new Date(current.ready_at) > new Date()) {
       return res.status(400).json({ error: 'Building already under construction' });
@@ -332,7 +290,6 @@ router.post('/structures/build', async (req, res) => {
 
     res.json(updated[0]);
   } catch (err) {
-    console.error('build error', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -366,7 +323,6 @@ router.post('/structures/complete', async (req, res) => {
 
     res.json(updated[0]);
   } catch (err) {
-    console.error('complete error', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -401,49 +357,6 @@ router.post('/progress/unlock', async (req, res) => {
     });
     res.json(updated[0].progress);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/structures/upgrade', async (req, res) => {
-  const { chat_id, slot, new_building_id } = req.body;
-  if (!chat_id || !slot || !new_building_id) {
-    return res.status(400).json({ error: 'chat_id, slot, new_building_id required' });
-  }
-
-  try {
-    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
-
-    const record = rows[0];
-    const buildings = record.buildings_data;
-    const current = buildings[slot];
-
-    if (!current || !current.building_id) {
-      return res.status(400).json({ error: 'No building in this slot' });
-    }
-
-    const def = getBuildingDef(record.faction || 'empire', current.building_id);
-    if (!def || !def.upgrades || !def.upgrades.includes(new_building_id)) {
-      return res.status(400).json({ error: 'Invalid upgrade path' });
-    }
-
-    const ready_at = new Date(Date.now() + BUILD_TIMES_MS[current.level + 1] || BUILD_TIMES_MS[2]).toISOString();
-
-    buildings[slot] = {
-      level: current.level,
-      ready_at,
-      building_id: new_building_id
-    };
-
-    const updated = await supabase(`/structures?id=eq.${record.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ buildings_data: buildings }),
-    });
-
-    res.json(updated[0]);
-  } catch (err) {
-    console.error('upgrade error', err);
     res.status(500).json({ error: err.message });
   }
 });

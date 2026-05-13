@@ -9,31 +9,11 @@ function timeLeft(ready_at) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-const CRYSTAL_TYPES = [
-  { key: 'Crystals_Life',   icon: '🟢' },
-  { key: 'Crystals_Fire',   icon: '🔴' },
-  { key: 'Crystals_Death',  icon: '🟣' },
-  { key: 'Crystals_Nature', icon: '🟡' },
-  { key: 'Crystals_Frost',  icon: '🔵' },
-];
-
 const CATEGORY_ICONS = {
-  throne:     '♛',
-  production: '⚙',
-  barracks:   '⚔',
-  any:        '✦',
+  throne: '♛',
+  barracks: '⚔',
+  any: '✦',
 };
-
-const SLOT_LAYOUT = [
-  { slot: 'slot_1', pos: 0 },
-  { slot: 'slot_2', pos: 1 },
-  { slot: 'slot_3', pos: 2 },
-  { slot: 'slot_7', pos: 3 },
-  { slot: 'slot_8', pos: 4 },
-  { slot: 'slot_4', pos: 5 },
-  { slot: 'slot_5', pos: 6 },
-  { slot: 'slot_6', pos: 7 },
-];
 
 export function renderCastle(root, { player }) {
   root.innerHTML = `
@@ -70,19 +50,16 @@ export function renderCastle(root, { player }) {
   `;
 
   let structuresRecord = null;
-  let buildingPools    = null;
-  let slotCategories   = null;
-  let timerInterval    = null;
+  let buildingPools = null;
 
   function openModal(title, bodyHtml) {
     root.querySelector('#modal-title').textContent = title;
-    root.querySelector('#modal-body').innerHTML    = bodyHtml;
+    root.querySelector('#modal-body').innerHTML = bodyHtml;
     root.querySelector('#modal-overlay').classList.remove('hidden');
   }
 
   function closeModal() {
     root.querySelector('#modal-overlay').classList.add('hidden');
-    root.querySelector('#modal-body').innerHTML = '';
   }
 
   root.querySelector('#modal-close').addEventListener('click', closeModal);
@@ -97,234 +74,119 @@ export function renderCastle(root, { player }) {
       api('/buildings'),
     ]);
 
-    const find = (name) => inventory.find(r => r.item === name);
+    const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
     root.querySelector('#res-mana').innerHTML = `
-      <div class="res-item">
-        <span class="res-icon">🔮</span>
-        <span class="res-amount">${find('Mana')?.amount ?? 0}</span>
-      </div>
+      <div class="res-item"><span class="res-icon">🔮</span><span class="res-amount">${find('Mana').amount}</span></div>
     `;
 
-    root.querySelector('#res-col-left').innerHTML = [
-      { icon: '🪙', amount: find('Gold')?.amount ?? 0 },
-      { icon: '🏆', amount: find('Trophies')?.amount ?? 0 },
-    ].map(r => `
-      <div class="res-item">
-        <span class="res-icon">${r.icon}</span>
-        <span class="res-amount">${r.amount}</span>
-      </div>
-    `).join('');
+    root.querySelector('#res-col-left').innerHTML = `
+      <div class="res-item"><span class="res-icon">🪙</span><span class="res-amount">${find('Gold').amount}</span></div>
+    `;
 
-    root.querySelector('#res-col-right').innerHTML = CRYSTAL_TYPES.map(c => `
-      <div class="res-item">
-        <span class="res-icon">${c.icon}</span>
-        <span class="res-amount">${find(c.key)?.amount ?? 0}</span>
-      </div>
-    `).join('');
+    root.querySelector('#res-col-right').innerHTML = `
+      <div class="res-item"><span class="res-icon">🟢</span><span class="res-amount">${find('Crystals_Life').amount}</span></div>
+      <div class="res-item"><span class="res-icon">🔴</span><span class="res-amount">${find('Crystals_Fire').amount}</span></div>
+      <div class="res-item"><span class="res-icon">🟣</span><span class="res-amount">${find('Crystals_Death').amount}</span></div>
+      <div class="res-item"><span class="res-icon">🟡</span><span class="res-amount">${find('Crystals_Nature').amount}</span></div>
+      <div class="res-item"><span class="res-icon">🔵</span><span class="res-amount">${find('Crystals_Frost').amount}</span></div>
+    `;
 
-    buildingPools    = buildingsResp.pools;
-    slotCategories   = buildingsResp.slot_categories;
+    buildingPools = buildingsResp.pools;
     structuresRecord = structures;
-    renderBuildings();
-  }
 
-  function getSlotDef(building_id) {
-    if (!building_id || !buildingPools) return null;
-    const faction = buildingPools[player.faction];
-    if (!faction) return null;
-    for (const pool of Object.values(faction)) {
-      const found = pool.find(b => b.id === building_id);
-      if (found) return found;
-    }
-    return null;
+    renderBuildings();
   }
 
   function renderBuildings() {
     const data = structuresRecord.buildings_data;
 
+    // Throne
     const throneState = data['slot_0'];
-    const throneDef   = getSlotDef(throneState?.building_id);
     root.querySelector('#center-slot').innerHTML = `
       <div class="castle-node castle-node--throne" data-slot="slot_0">
-        <div class="castle-node-icon">${CATEGORY_ICONS.throne}</div>
-        <div class="castle-node-label">${throneDef?.label ?? 'Throne'}</div>
-        ${throneState?.level > 0 ? `<div class="castle-node-level">Lv ${throneState.level}</div>` : ''}
+        <div class="castle-node-icon">♛</div>
+        <div class="castle-node-label">Throne</div>
+        <div class="castle-node-level">Lv ${throneState.level}</div>
       </div>
     `;
 
-    root.querySelector('#outer-ring').innerHTML = SLOT_LAYOUT.map(({ slot }) => {
-      const state      = data[slot] ?? { level: 0, ready_at: null, building_id: null };
-      const cat        = slotCategories?.[slot] ?? 'any';
-      const def        = getSlotDef(state.building_id);
-      const isEmpty    = !state.building_id && state.level === 0;
-      const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
-      const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
-      const label      = def?.label ?? (isEmpty ? 'Empty' : slot);
+    // Barracks & other slots
+    root.querySelector('#outer-ring').innerHTML = Object.keys(data).filter(s => s !== 'slot_0').map(slot => {
+      const state = data[slot] || { level: 0, building_id: null };
+      const def = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
+      const isEmpty = !state.building_id;
+      const isBuilding = state.ready_at && new Date(state.ready_at) > Date.now();
 
       return `
-        <div class="castle-node castle-node--${cat} ${isEmpty ? 'castle-node--empty' : ''} ${isBuilding ? 'castle-node--building' : ''} ${isReady ? 'castle-node--ready' : ''}" data-slot="${slot}">
-          <div class="castle-node-icon">${CATEGORY_ICONS[cat] ?? '·'}</div>
-          <div class="castle-node-label">${label}</div>
+        <div class="castle-node ${isEmpty ? 'castle-node--empty' : ''} ${isBuilding ? 'castle-node--building' : ''}" data-slot="${slot}">
+          <div class="castle-node-icon">⚔</div>
+          <div class="castle-node-label">${def ? def.label : 'Empty'}</div>
           ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
           ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
-          ${isReady    ? `<div class="castle-node-ready">✓</div>` : ''}
         </div>
       `;
     }).join('');
 
-    root.querySelector('#outer-ring').querySelectorAll('.castle-node').forEach(node => {
+    root.querySelectorAll('.castle-node').forEach(node => {
       node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
     });
-
-    root.querySelector('#center-slot').querySelector('.castle-node').addEventListener('click', () => {
-      handleSlotClick('slot_0');
-    });
-
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(tickTimers, 1000);
   }
 
-  function handleSlotClick(slot) {
+  function getBuildingDef(faction, buildingId) {
+    if (!buildingPools || !faction) return null;
+    for (const pool of Object.values(buildingPools[faction])) {
+      const found = pool.find(b => b.id === buildingId);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
-    const cat   = slotCategories?.[slot] ?? 'any';
+    if (!state || !state.building_id) return;
 
-    if (cat === 'throne') {
-      showThroneModal(state);
-      return;
-    }
+    const def = getBuildingDef(player.faction, state.building_id);
+    if (!def) return;
 
-    const isEmpty = !state || (!state.building_id && state.level === 0);
-    if (isEmpty) {
-      showBuildChoiceModal(slot, cat);
-    } else {
-      showDetailsModal(slot, state, getSlotDef(state.building_id), cat);
-    }
-  }
+    let html = `<h3>${def.label} (Level ${state.level})</h3>`;
 
-  function showBuildChoiceModal(slot, cat) {
-    const factionPools = buildingPools?.[player.faction];
-    if (!factionPools) {
-      openModal('Error', '<p class="modal-empty">No building data available.</p>');
-      return;
-    }
-
-    let options = [];
-    if (cat === 'any') {
-      for (const [poolCat, pool] of Object.entries(factionPools)) {
-        if (poolCat !== 'throne') options = options.concat(pool);
-      }
-    } else {
-      options = factionPools[cat] ?? [];
-    }
-
-    if (!options.length) {
-      openModal('Empty Slot', '<p class="modal-empty">No buildings available for this slot yet.</p>');
-      return;
-    }
-
-    const categoryLabel = cat === 'any' ? 'Special' : cat.charAt(0).toUpperCase() + cat.slice(1);
-
-    openModal(`Build — ${categoryLabel} Slot`, `
-      <p class="modal-subtitle">Choose a building to construct:</p>
-      <div class="modal-building-list">
-        ${options.map(b => `
-          <div class="modal-building-card">
-            <div class="modal-building-card-icon">${CATEGORY_ICONS[b.category] ?? '·'}</div>
-            <div class="modal-building-card-info">
-              <div class="modal-building-card-label">${b.label}</div>
-              ${b.unit ? `<div class="modal-building-card-unit">Recruits: <strong>${b.unit}</strong></div>` : ''}
-              <div class="modal-building-card-cat">${b.category}</div>
-            </div>
-            <button class="building-btn confirm-build-btn" data-building-id="${b.id}" data-slot="${slot}">Build</button>
-          </div>
-        `).join('')}
-      </div>
-    `);
-
-    root.querySelectorAll('.confirm-build-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        closeModal();
-        await startBuild(btn.dataset.slot, btn.dataset.buildingId);
+    if (def.upgrades && def.upgrades.length > 0) {
+      html += `<p><strong>Upgrade paths:</strong></p><ul>`;
+      def.upgrades.forEach(uid => {
+        html += `<li>→ Unlocks unit <strong>${uid}</strong></li>`;
       });
-    });
+      html += `</ul>`;
+
+      html += `<button id="upgrade-btn" data-slot="${slot}">Upgrade Building (50 Gold)</button>`;
+    } else {
+      html += `<p>No further upgrades available.</p>`;
+    }
+
+    openModal(def.label, html);
+
+    const upgradeBtn = document.getElementById('upgrade-btn');
+    if (upgradeBtn) {
+      upgradeBtn.addEventListener('click', () => upgradeBuilding(slot, def));
+    }
   }
 
-  function showDetailsModal(slot, state, def, cat) {
-    const isBuilding = state.ready_at && new Date(state.ready_at) > new Date();
-    const isReady    = state.ready_at && new Date(state.ready_at) <= new Date();
-    const canUpgrade = !isBuilding && !isReady && state.level < 4;
+  async function upgradeBuilding(slot, def) {
+    closeModal();
 
-    openModal(def?.label ?? slot, `
-      <div class="modal-building-option">
-        <div class="modal-building-meta">${CATEGORY_ICONS[cat]} ${def?.category ?? cat}</div>
-        <div class="modal-building-level-row">
-          <span class="modal-level-badge">Level ${state.level}</span>
-          ${state.level < 4 ? `<span class="modal-max-hint">max 4</span>` : ''}
-        </div>
-        ${def?.unit ? `<div class="modal-building-unit">Recruits: <strong>${def.unit}</strong></div>` : ''}
-        ${isBuilding ? `<div class="modal-building-timer" data-ready="${state.ready_at}">⏳ Building… ${timeLeft(state.ready_at)}</div>` : ''}
-        ${isReady    ? `<button class="building-btn confirm-build-btn complete-mode" data-slot="${slot}">Complete</button>` : ''}
-        ${canUpgrade ? `<button class="building-btn confirm-build-btn upgrade-mode" data-slot="${slot}">Upgrade to Lv ${state.level + 1}</button>` : ''}
-      </div>
-    `);
-
-    root.querySelectorAll('.confirm-build-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        closeModal();
-        if (btn.classList.contains('complete-mode')) {
-          await completeBuild(btn.dataset.slot);
-        } else {
-          await startBuild(btn.dataset.slot, state.building_id);
-        }
-      });
-    });
-  }
-
-  function showThroneModal(state) {
-    openModal('Throne', `
-      <div class="modal-building-option">
-        <div class="modal-building-meta">${CATEGORY_ICONS.throne} throne</div>
-        <div class="modal-building-level-row">
-          <span class="modal-level-badge">Level ${state?.level ?? 1}</span>
-        </div>
-        <p class="modal-empty">The seat of your power. Cannot be moved or demolished.</p>
-      </div>
-    `);
-  }
-
-  function tickTimers() {
-    root.querySelectorAll('.castle-node-timer').forEach(el => {
-      if (timeLeft(el.dataset.ready) === 'Ready') renderBuildings();
-    });
-    root.querySelectorAll('.modal-building-timer').forEach(el => {
-      const left = timeLeft(el.dataset.ready);
-      el.textContent = left === 'Ready' ? '✓ Ready to complete' : `⏳ Building… ${left}`;
-    });
-  }
-
-  async function startBuild(slot, building_id) {
     try {
       const updated = await api('/structures/build', {
         chat_id: player.chat_id,
         faction: player.faction,
-        slot,
-        building_id,
+        slot: slot,
+        building_id: def.id   // current building id - backend will handle next level
       });
-      structuresRecord = updated;
-      renderBuildings();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
 
-  async function completeBuild(slot) {
-    try {
-      const updated = await api('/structures/complete', { chat_id: player.chat_id, slot });
       structuresRecord = updated;
       renderBuildings();
+      alert(`Building upgraded successfully!`);
     } catch (err) {
-      alert(err.message);
+      alert(err.message || 'Failed to upgrade building');
     }
   }
 
