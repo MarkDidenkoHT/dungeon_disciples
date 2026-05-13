@@ -99,6 +99,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: space-between;
 }
 
+.screen-roster {
+  height: 100%;
+  min-height: 0;
+}
+
 .res-col {
   display: flex;
   flex-direction: column;
@@ -372,15 +377,20 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .roster-main {
+  flex: 1;
+  min-height: 0;
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .roster-slider-wrap {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -388,7 +398,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: row;
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   transition: transform 0.3s ease;
   will-change: transform;
 }
@@ -396,7 +407,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .roster-slide {
   flex: 0 0 100%;
   width: 100%;
-  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
   box-sizing: border-box;
@@ -647,29 +658,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
-.embark-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0 4px;
-}
-
-.embark-title {
+.embark-header-title {
+  padding: 12px 14px 4px;
   font-size: 1rem;
   font-weight: bold;
   color: var(--text);

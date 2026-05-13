@@ -13,17 +13,18 @@ const REGIONS = [
 export function renderEmbark(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-embark">
-      <div class="embark-header">
-        <button class="back-btn" id="back-btn">←</button>
-        <span class="embark-title">Embark</span>
-      </div>
       <div class="embark-regions" id="embark-regions">
         <p class="placeholder">Loading…</p>
       </div>
+
+      <nav class="bottom-nav">
+        <button class="nav-btn" data-screen="castle">Castle</button>
+        <button class="nav-btn" data-screen="roster">Roster</button>
+        <button class="nav-btn active" data-screen="embark">Embark</button>
+        <button class="nav-btn disabled" data-screen="pvp">PvP</button>
+      </nav>
     </div>
   `;
-
-  root.querySelector('#back-btn').addEventListener('click', () => navigate('castle', { player }));
 
   async function load() {
     const progress = await api(`/progress?chat_id=${player.chat_id}`);
@@ -68,4 +69,13 @@ export function renderEmbark(root, { player }) {
   }
 
   load();
+
+  root.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('disabled')) return;
+      const screen = btn.dataset.screen;
+      if (screen === 'embark') return;
+      navigate(screen, { player });
+    });
+  });
 }
