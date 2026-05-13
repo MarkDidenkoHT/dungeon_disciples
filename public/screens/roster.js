@@ -26,6 +26,9 @@ export function renderRoster(root, { player }) {
   const track = root.querySelector('#roster-track');
   const dots  = root.querySelector('#roster-dots');
 
+  let buildingsData = {};   // slot → { building_id, level, ... }
+  let upgradePaths  = {};   // faction upgrade paths from /buildings
+
   function buildCard(u) {
     const d      = u.unit_data || {};
     const gender = u.char_gender || 'f';
@@ -41,26 +44,43 @@ export function renderRoster(root, { player }) {
     const currentXp  = u.experience ?? 0;
     const isHero     = (d.t == null);
     const isMaxTier  = (d.t >= 2);
-    const canLevelUp = !isHero && !isMaxTier && xpRequired !== null && currentXp >= xpRequired;
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
+
+    // Check upgrade building requirement when multiple paths exist
+    let upgradeReady = true;
+    let upgradeBuildingHint = '';
+    if (hasPath) {
+      const faction = d.f === 'e' ? 'empire' : 'dungeon';
+      const paths   = (upgradePaths[faction] || {})[unitId] || [];
+      if (paths.length > 1) {
+        const slot           = d.building_slot;
+        const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
+        const matched        = paths.find(p => p.building_id === slotBuildingId);
+        upgradeReady         = !!matched;
+        if (!upgradeReady) {
+          const labels = paths.map(p => p.label).join(' or ');
+          upgradeBuildingHint = `Requires: ${labels}`;
+        }
+      }
+    }
+
+    const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
     let levelUpHtml = '';
     if (hasPath) {
-      const xpLabel = canLevelUp
-        ? `${currentXp} / ${xpRequired} XP`
-        : `${currentXp} / ${xpRequired} XP`;
       levelUpHtml = `
         <div class="levelup-row">
           <div class="levelup-xp-bar">
             <div class="levelup-xp-fill" style="width: ${Math.min(100, Math.floor((currentXp / xpRequired) * 100))}%"></div>
           </div>
-          <span class="levelup-xp-label">${xpLabel}</span>
+          <span class="levelup-xp-label">${currentXp} / ${xpRequired} XP</span>
           <button
             class="levelup-btn ${canLevelUp ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
             data-roster-id="${u.id}"
             ${canLevelUp ? '' : 'disabled'}
           >Level Up</button>
         </div>
+        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}
       `;
     }
 
@@ -156,7 +176,12 @@ export function renderRoster(root, { player }) {
         roster_id: rosterId,
       });
 
-      units = await api(`/roster?chat_id=${player.chat_id}`);
+      const [freshUnits, freshStruct] = await Promise.all([
+        api(`/roster?chat_id=${player.chat_id}`),
+        api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
+      ]);
+      units = freshUnits;
+      buildingsData = freshStruct?.buildings_data || {};
       const savedIdx = current;
       initSlider();
       goTo(savedIdx);
@@ -168,7 +193,15 @@ export function renderRoster(root, { player }) {
   });
 
   async function load() {
-    units = await api(`/roster?chat_id=${player.chat_id}`);
+    const [fetchedUnits, structRes, buildingRes] = await Promise.all([
+      api(`/roster?chat_id=${player.chat_id}`),
+      api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
+      api('/buildings').catch(() => null),
+    ]);
+
+    units = fetchedUnits;
+    buildingsData = structRes?.buildings_data || {};
+    upgradePaths  = buildingRes?.upgrade_paths || {};
 
     if (!units.length) {
       track.innerHTML = `<div class="roster-slide"><p class="placeholder">No units yet.</p></div>`;

@@ -260,19 +260,29 @@ router.post('/roster/levelup', async (req, res) => {
       return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
     }
 
-    let path = paths[0];
+    let path = null;
 
     const buildingSlot = unitData.building_slot || null;
 
-    if (buildingSlot && paths.length > 1) {
-      const structRowsCheck = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-      if (structRowsCheck.length) {
-        const currentBuildingId = structRowsCheck[0].buildings_data[buildingSlot]?.building_id;
-        if (currentBuildingId) {
-          const matched = paths.find(p => p.building_id === currentBuildingId);
-          if (matched) path = matched;
-        }
+    if (paths.length === 1) {
+      // Single upgrade path — no building choice needed, always valid
+      path = paths[0];
+    } else {
+      // Multiple upgrade paths — must have the correct upgrade building already built in the slot
+      if (!buildingSlot) {
+        return res.status(400).json({ error: 'Unit has no building slot assigned; cannot determine upgrade path' });
       }
+      const structRowsCheck = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+      if (!structRowsCheck.length) {
+        return res.status(400).json({ error: 'No structures record found' });
+      }
+      const currentBuildingId = structRowsCheck[0].buildings_data[buildingSlot]?.building_id;
+      const matched = paths.find(p => p.building_id === currentBuildingId);
+      if (!matched) {
+        const required = paths.map(p => p.label).join(' or ');
+        return res.status(400).json({ error: `Build ${required} first to choose an upgrade path` });
+      }
+      path = matched;
     }
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
