@@ -4,13 +4,24 @@ import { navigate } from '../main.js';
 let UNITS = null;
 
 async function loadUnits() {
-  if (UNITS) return UNITS;
-  const mod = await import('../../data/units.js');
-  UNITS = mod.UNITS || mod.default?.UNITS || mod;
-  return UNITS;
+  console.log("[Castle] === Loading units.js ===");
+  try {
+    const mod = await import('../../data/units.js');
+    console.log("[Castle] units.js imported successfully");
+    UNITS = mod.UNITS || mod.default?.UNITS || mod;
+    console.log("[Castle] UNITS loaded - Empire:", Object.keys(UNITS?.empire || {}).length, 
+                "| Dungeon:", Object.keys(UNITS?.dungeon || {}).length,
+                "| Enemies:", Object.keys(UNITS?.enemies || {}).length);
+    return UNITS;
+  } catch (err) {
+    console.error("[Castle] FAILED to load units.js:", err);
+    return null;
+  }
 }
 
 export function renderCastle(root, { player }) {
+  console.log("[Castle] renderCastle started for faction:", player?.faction);
+
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
@@ -48,6 +59,7 @@ export function renderCastle(root, { player }) {
   let buildingPools = null;
 
   function openModal(title, bodyHtml) {
+    console.log("[Castle] Opening modal:", title);
     root.querySelector('#modal-title').textContent = title;
     root.querySelector('#modal-body').innerHTML = bodyHtml;
     root.querySelector('#modal-overlay').classList.remove('hidden');
@@ -63,11 +75,14 @@ export function renderCastle(root, { player }) {
   });
 
   async function load() {
+    console.log("[Castle] Starting data load...");
     const [inventory, structures, buildingsResp] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
     ]);
+
+    console.log("[Castle] Buildings pools received:", Object.keys(buildingsResp.pools || {}));
 
     const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
@@ -83,6 +98,7 @@ export function renderCastle(root, { player }) {
 
     buildingPools = buildingsResp.pools;
     structuresRecord = structures;
+
     await loadUnits();
     renderBuildings();
   }
@@ -135,59 +151,65 @@ export function renderCastle(root, { player }) {
   }
 
   async function handleSlotClick(slot) {
+    console.log("[Castle] Slot clicked:", slot);
     const state = structuresRecord.buildings_data[slot];
     if (!state || !state.building_id) return;
 
     const def = getBuildingDef(player.faction, state.building_id);
-    if (!def || !def.upgrades || def.upgrades.length === 0) {
-      openModal(def ? def.label : slot, `<p>No upgrades available.</p>`);
+    if (!def) {
+      openModal("Error", "<p>Building definition not found.</p>");
       return;
     }
 
     let html = `<h3>${def.label} — Level ${state.level}</h3>`;
 
-    html += `<div class="upgrade-comparison">`;
+    if (def.upgrades && def.upgrades.length > 0) {
+      html += `<div class="upgrade-comparison">`;
 
-    const currentUnit = getUnitData(def.unit_id);
-    html += `
-      <div class="upgrade-side">
-        <h4>Current Unit</h4>
-        <div class="unit-preview">
-          <strong>${currentUnit ? currentUnit.name : def.unit}</strong><br>
-          HP ${currentUnit ? currentUnit.hp : '?'} | Armor ${currentUnit ? currentUnit.armor : '?'}<br>
-          Initiative ${currentUnit ? currentUnit.initiative : '?'}<br>
+      const currentUnit = getUnitData(def.unit_id);
+      html += `
+        <div class="upgrade-side">
+          <h4>Current Unit</h4>
+          <div class="unit-preview">
+            <strong>${currentUnit ? currentUnit.name : def.unit}</strong><br>
+            HP ${currentUnit ? currentUnit.hp : '?'} | Armor ${currentUnit ? currentUnit.armor : '?'}<br>
+            Initiative ${currentUnit ? currentUnit.initiative : '?'}<br>
+            Power ${currentUnit ? currentUnit.action_power : '?'}
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    const firstTargetId = def.upgrades[0];
-    const targetUnit = getUnitData(firstTargetId);
-    html += `
-      <div class="upgrade-side">
-        <h4>After Upgrade</h4>
-        <div class="unit-preview" id="target-preview">
-          <strong>${targetUnit ? targetUnit.name : firstTargetId}</strong><br>
-          HP ${targetUnit ? targetUnit.hp : '?'} | Armor ${targetUnit ? targetUnit.armor : '?'}<br>
-          Initiative ${targetUnit ? targetUnit.initiative : '?'}<br>
+      const firstTargetId = def.upgrades[0];
+      const targetUnit = getUnitData(firstTargetId);
+      html += `
+        <div class="upgrade-side">
+          <h4>After Upgrade</h4>
+          <div class="unit-preview" id="target-preview">
+            <strong>${targetUnit ? targetUnit.name : firstTargetId}</strong><br>
+            HP ${targetUnit ? targetUnit.hp : '?'} | Armor ${targetUnit ? targetUnit.armor : '?'}<br>
+            Initiative ${targetUnit ? targetUnit.initiative : '?'}<br>
+            Power ${targetUnit ? targetUnit.action_power : '?'}
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    html += `</div>`;
+      html += `</div>`;
 
-    html += `<div class="upgrade-options">`;
-    def.upgrades.forEach(uid => {
-      const u = getUnitData(uid);
-      const unitName = u ? u.name : uid;
-      html += `<button class="path-btn" data-unit-id="${uid}">${unitName}</button>`;
-    });
-    html += `</div>`;
+      html += `<div class="upgrade-options">`;
+      def.upgrades.forEach(uid => {
+        const u = getUnitData(uid);
+        const unitName = u ? u.name : uid;
+        html += `<button class="path-btn" data-unit-id="${uid}">${unitName}</button>`;
+      });
+      html += `</div>`;
 
-    html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
+      html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
+    } else {
+      html += `<p>No upgrades available for this building.</p>`;
+    }
 
     openModal(def.label, html);
 
-    // Attach events after modal is in DOM
     setTimeout(() => {
       document.querySelectorAll('.path-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -198,6 +220,7 @@ export function renderCastle(root, { player }) {
               <strong>${targetUnit.name}</strong><br>
               HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
               Initiative ${targetUnit.initiative}<br>
+              Power ${targetUnit.action_power}
             `;
           }
         });
@@ -207,7 +230,7 @@ export function renderCastle(root, { player }) {
       if (confirmBtn) {
         confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
       }
-    }, 10);
+    }, 50);
   }
 
   async function performBuildingUpgrade(slot, building_id) {
@@ -223,18 +246,10 @@ export function renderCastle(root, { player }) {
       renderBuildings();
       alert('Building upgraded successfully!');
     } catch (err) {
+      console.error(err);
       alert(err.message || 'Upgrade failed');
     }
   }
 
   load();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'castle') return;
-      navigate(screen, { player });
-    });
-  });
 }
