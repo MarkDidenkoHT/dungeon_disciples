@@ -1,6 +1,8 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
-import { UNITS } from '../../data/units.js';
+import unitsModule from '../../data/units.js';
+
+const UNITS = unitsModule.UNITS;
 
 function timeLeft(ready_at) {
   const diff = new Date(ready_at) - Date.now();
@@ -9,12 +11,6 @@ function timeLeft(ready_at) {
   const s = Math.floor((diff % 60000) / 1000);
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
-
-const CATEGORY_ICONS = {
-  throne: '♛',
-  barracks: '⚔',
-  any: '✦',
-};
 
 export function renderCastle(root, { player }) {
   root.innerHTML = `
@@ -136,12 +132,8 @@ export function renderCastle(root, { player }) {
 
   function getUnitData(unitId) {
     if (!unitId) return null;
-    const allUnits = { 
-      ...UNITS.empire, 
-      ...UNITS.dungeon, 
-      ...UNITS.enemies 
-    };
-    return allUnits[unitId] || null;
+    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
+    return all[unitId] || null;
   }
 
   async function handleSlotClick(slot) {
@@ -197,8 +189,6 @@ export function renderCastle(root, { player }) {
       html += `</div>`;
 
       html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
-    } else {
-      html += `<p>No upgrades available.</p>`;
     }
 
     openModal(def.label, html);
@@ -218,9 +208,10 @@ export function renderCastle(root, { player }) {
       });
     });
 
-    document.getElementById('confirm-upgrade-btn').addEventListener('click', () => {
-      performBuildingUpgrade(slot, def.id);
-    });
+    const confirmBtn = document.getElementById('confirm-upgrade-btn');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
+    }
   }
 
   async function performBuildingUpgrade(slot, building_id) {
