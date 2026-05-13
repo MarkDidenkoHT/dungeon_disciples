@@ -1,5 +1,29 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
+import { PASSIVES }  from '../../data/passives.js';
+import { ABILITIES } from '../../data/abilities.js';
+
+const RESIST_ICONS = {
+  air:    { icon: '🌬️', label: 'Air'    },
+  fire:   { icon: '🔥', label: 'Fire'   },
+  nature: { icon: '🌿', label: 'Nature' },
+  cold:   { icon: '❄️', label: 'Cold'   },
+  life:   { icon: '✨', label: 'Life'   },
+  death:  { icon: '🌑', label: 'Death'  },
+};
+
+const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
+
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+
+function resolveAbility(key, type) {
+  if (!key || key === 'None') return null;
+  if (type === 'passive') return PASSIVES[key]  || null;
+  if (type === 'active')  return ABILITIES[key] || null;
+  return null;
+}
 
 export function renderRoster(root, { player }) {
   root.innerHTML = `
@@ -11,6 +35,15 @@ export function renderRoster(root, { player }) {
         </div>
       </main>
 
+      <div class="ability-tooltip" id="ability-tooltip" style="display:none;">
+        <div class="ability-tooltip-inner">
+          <button class="ability-tooltip-close" id="tooltip-close">✕</button>
+          <div class="ability-tooltip-type" id="tooltip-type"></div>
+          <div class="ability-tooltip-name" id="tooltip-name"></div>
+          <div class="ability-tooltip-desc" id="tooltip-desc"></div>
+        </div>
+      </div>
+
       <nav class="bottom-nav">
         <button class="nav-btn" data-screen="castle">Castle</button>
         <button class="nav-btn active" data-screen="roster">Roster</button>
@@ -21,13 +54,30 @@ export function renderRoster(root, { player }) {
   `;
 
   let current = 0;
-  let units = [];
+  let units   = [];
 
-  const track = root.querySelector('#roster-track');
-  const dots  = root.querySelector('#roster-dots');
+  const track   = root.querySelector('#roster-track');
+  const dots    = root.querySelector('#roster-dots');
+  const tooltip = root.querySelector('#ability-tooltip');
 
-  let buildingsData = {};   // slot → { building_id, level, ... }
-  let upgradePaths  = {};   // faction upgrade paths from /buildings
+  let buildingsData = {};
+  let upgradePaths  = {};
+
+  function showTooltip(abilityKey, abilityType) {
+    const def = resolveAbility(abilityKey, abilityType);
+    if (!def) return;
+    root.querySelector('#tooltip-type').textContent = abilityType === 'passive' ? 'PASSIVE' : 'ACTIVE';
+    root.querySelector('#tooltip-name').textContent = def.name + (def.rank ? ` — Rank ${def.rank}` : '');
+    root.querySelector('#tooltip-desc').textContent = def.description || '';
+    tooltip.style.display = 'flex';
+  }
+
+  root.querySelector('#tooltip-close').addEventListener('click', () => {
+    tooltip.style.display = 'none';
+  });
+  tooltip.addEventListener('click', (e) => {
+    if (e.target === tooltip) tooltip.style.display = 'none';
+  });
 
   function buildCard(u) {
     const d      = u.unit_data || {};
@@ -36,18 +86,23 @@ export function renderRoster(root, { player }) {
 
     const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : null;
 
-    const passive = d.passive || 'None';
-    const active  = d.ability || 'None';
-    const res     = d.resistances || {};
+    const passiveKey = d.passive || null;
+    const activeKey  = d.ability  || null;
+    const res        = d.resistances || {};
+
+    const tier    = d.t ?? null;
+    const isHero  = (tier == null);
+    const tierLabel = isHero ? 'Hero' : `Level ${tier}`;
+
+    const tags     = (d.tags || []).filter(Boolean);
+    const unitType = cap(d.type || '');
 
     const xpRequired = d.xp ?? null;
     const currentXp  = u.experience ?? 0;
-    const isHero     = (d.t == null);
-    const isMaxTier  = (d.t >= 2);
+    const isMaxTier  = (tier >= 2);
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
-    // Check upgrade building requirement when multiple paths exist
-    let upgradeReady = true;
+    let upgradeReady        = true;
     let upgradeBuildingHint = '';
     if (hasPath) {
       const faction = d.f === 'e' ? 'empire' : 'dungeon';
@@ -66,12 +121,62 @@ export function renderRoster(root, { player }) {
 
     const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
+    // Portrait — always shown, fallback to unit id text if image fails
+    const portraitHtml = `
+      <div class="unit-portrait">
+        <img
+          src="${portraitSrc || ''}"
+          alt="${u.unit_name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+        >
+        <div class="unit-portrait-fallback" style="display:none;">
+          <span>${unitId || u.unit_name}</span>
+        </div>
+      </div>`;
+
+    // Header
+    const headerHtml = `
+      <div class="unit-header">
+        <span class="unit-name">${u.unit_name}</span>
+        <span class="unit-xp">XP ${currentXp}</span>
+      </div>`;
+
+    // Sub-header: type chip + level chip + tag chips
+    const tagChips = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
+    const subHtml = `
+      <div class="unit-sub-header">
+        ${unitType ? `<span class="unit-type-chip">${unitType}</span>` : ''}
+        <span class="unit-level-chip">${tierLabel}</span>
+        ${tagChips}
+      </div>`;
+
+    // Core stats
+    const coreHtml = `
+      <div class="unit-core-stats">
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${d.hp ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${d.armor ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${d.initiative ?? '—'}</span></div>
+      </div>`;
+
+    // Resistances: icon + value stacked per cell, all in one row
+    const resistCells = RESIST_ORDER.map(r => {
+      const info = RESIST_ICONS[r];
+      return `<div class="resist-cell" title="${info.label}">
+        <span class="resist-icon">${info.icon}</span>
+        <span class="resist-val">${res[r] ?? 0}</span>
+      </div>`;
+    }).join('');
+
+    const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
+
+    // Level-up row
     let levelUpHtml = '';
     if (hasPath) {
+      const pct = Math.min(100, Math.floor((currentXp / xpRequired) * 100));
       levelUpHtml = `
         <div class="levelup-row">
           <div class="levelup-xp-bar">
-            <div class="levelup-xp-fill" style="width: ${Math.min(100, Math.floor((currentXp / xpRequired) * 100))}%"></div>
+            <div class="levelup-xp-fill" style="width: ${pct}%"></div>
           </div>
           <span class="levelup-xp-label">${currentXp} / ${xpRequired} XP</span>
           <button
@@ -84,47 +189,42 @@ export function renderRoster(root, { player }) {
       `;
     }
 
+    // Abilities: square icon buttons at the bottom
+    function abilityIconHtml(key, type) {
+      const def     = resolveAbility(key, type);
+      const label   = def ? def.name : '—';
+      const isEmpty = !def;
+      const symbol  = type === 'passive' ? '◈' : '⚡';
+      return `
+        <button
+          class="ability-icon ability-icon--${type} ${isEmpty ? 'ability-icon--empty' : ''}"
+          data-ability-key="${key || ''}"
+          data-ability-type="${type}"
+          ${isEmpty ? 'disabled' : ''}
+          title="${label}"
+        >
+          <span class="ability-icon-symbol">${symbol}</span>
+          <span class="ability-icon-label">${label}</span>
+        </button>`;
+    }
+
+    const abilitiesHtml = `
+      <div class="unit-abilities-row">
+        ${abilityIconHtml(passiveKey, 'passive')}
+        ${abilityIconHtml(activeKey,  'active')}
+      </div>`;
+
     return `
       <div class="roster-slide">
         <div class="unit-card">
-          ${portraitSrc ? `
-          <div class="unit-portrait">
-            <img src="${portraitSrc}" alt="${u.unit_name}" onerror="this.parentElement.style.display='none';">
-          </div>` : ''}
-
+          ${portraitHtml}
           <div class="unit-info">
-            <div class="unit-header">
-              <span class="unit-name">${u.unit_name}${d.t ? ` <span class="tier-badge">★${d.t}</span>` : ''}</span>
-              <span class="unit-xp">XP ${currentXp}</span>
-            </div>
-
-            <div class="unit-core-stats">
-              <div><strong>HP</strong> ${d.hp ?? '—'}</div>
-              <div><strong>Armor</strong> ${d.armor ?? '—'}</div>
-              <div><strong>Initiative</strong> ${d.initiative ?? '—'}</div>
-            </div>
-
-            <div class="unit-resists">
-              <span>🌬️ ${res.air ?? 0}</span>
-              <span>🔥 ${res.fire ?? 0}</span>
-              <span>🌿 ${res.nature ?? 0}</span>
-              <span>❄️ ${res.cold ?? 0}</span>
-              <span>✨ ${res.life ?? 0}</span>
-              <span>🌑 ${res.death ?? 0}</span>
-            </div>
-
-            <div class="unit-abilities">
-              <div class="ability-row">
-                <span class="ability-label">PASSIVE</span>
-                <span class="ability-value">${passive}</span>
-              </div>
-              <div class="ability-row">
-                <span class="ability-label">ACTIVE</span>
-                <span class="ability-value">${active}</span>
-              </div>
-            </div>
-
+            ${headerHtml}
+            ${subHtml}
+            ${coreHtml}
+            ${resistsHtml}
             ${levelUpHtml}
+            ${abilitiesHtml}
           </div>
         </div>
       </div>
@@ -156,39 +256,44 @@ export function renderRoster(root, { player }) {
       const dx = e.changedTouches[0].clientX - touchStartX;
       if (Math.abs(dx) < 40) return;
       if (dx < 0) goTo(current + 1);
-      else goTo(current - 1);
+      else        goTo(current - 1);
     }, { passive: true });
 
     goTo(0);
   }
 
   track.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.levelup-btn--ready');
-    if (!btn) return;
+    // Level up
+    const lvlBtn = e.target.closest('.levelup-btn--ready');
+    if (lvlBtn) {
+      const rosterId = lvlBtn.dataset.rosterId;
+      lvlBtn.disabled = true;
+      lvlBtn.textContent = '...';
+      try {
+        await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
+        const [freshUnits, freshStruct] = await Promise.all([
+          api(`/roster?chat_id=${player.chat_id}`),
+          api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
+        ]);
+        units = freshUnits;
+        buildingsData = freshStruct?.buildings_data || {};
+        const savedIdx = current;
+        initSlider();
+        goTo(savedIdx);
+      } catch (err) {
+        lvlBtn.disabled = false;
+        lvlBtn.textContent = 'Level Up';
+        alert(err.message || 'Level up failed');
+      }
+      return;
+    }
 
-    const rosterId = btn.dataset.rosterId;
-    btn.disabled = true;
-    btn.textContent = '...';
-
-    try {
-      await api('/roster/levelup', {
-        chat_id:   player.chat_id,
-        roster_id: rosterId,
-      });
-
-      const [freshUnits, freshStruct] = await Promise.all([
-        api(`/roster?chat_id=${player.chat_id}`),
-        api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
-      ]);
-      units = freshUnits;
-      buildingsData = freshStruct?.buildings_data || {};
-      const savedIdx = current;
-      initSlider();
-      goTo(savedIdx);
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Level Up';
-      alert(err.message || 'Level up failed');
+    // Ability icon
+    const abilityBtn = e.target.closest('.ability-icon:not([disabled])');
+    if (abilityBtn) {
+      const key  = abilityBtn.dataset.abilityKey;
+      const type = abilityBtn.dataset.abilityType;
+      if (key) showTooltip(key, type);
     }
   });
 
@@ -199,8 +304,8 @@ export function renderRoster(root, { player }) {
       api('/buildings').catch(() => null),
     ]);
 
-    units = fetchedUnits;
-    buildingsData = structRes?.buildings_data || {};
+    units         = fetchedUnits;
+    buildingsData = structRes?.buildings_data  || {};
     upgradePaths  = buildingRes?.upgrade_paths || {};
 
     if (!units.length) {
