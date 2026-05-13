@@ -450,7 +450,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Portrait */
 .unit-portrait {
-  height: 190px;
+  height: 280px;
   background: #0b0f18;
   position: relative;
   display: flex;
