@@ -91,6 +91,18 @@ export function renderCastle(root, { player }) {
     structuresRecord = structures;
 
     await loadUnits();
+
+    const readySlots = Object.entries(structures.buildings_data)
+      .filter(([, s]) => s.ready_at && new Date(s.ready_at) <= new Date())
+      .map(([slot]) => slot);
+
+    if (readySlots.length > 0) {
+      await Promise.all(readySlots.map(slot =>
+        api('/structures/complete', { chat_id: player.chat_id, slot, faction: player.faction })
+      ));
+      structuresRecord = await api(`/structures?chat_id=${player.chat_id}`);
+    }
+
     renderBuildings();
   }
 

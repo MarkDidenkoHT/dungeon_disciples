@@ -374,16 +374,16 @@ router.post('/structures/build', async (req, res) => {
 });
 
 router.post('/structures/complete', async (req, res) => {
-  const { chat_id, slot } = req.body;
+  const { chat_id, slot, faction } = req.body;
   if (!chat_id || !slot) return res.status(400).json({ error: 'chat_id and slot required' });
 
   try {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
 
-    const record   = rows[0];
+    const record    = rows[0];
     const buildings = record.buildings_data;
-    const current  = buildings[slot];
+    const current   = buildings[slot];
 
     if (!current.ready_at || new Date(current.ready_at) > new Date()) {
       return res.status(400).json({ error: 'Building not ready yet' });
@@ -399,6 +399,25 @@ router.post('/structures/complete', async (req, res) => {
       method: 'PATCH',
       body: JSON.stringify({ buildings_data: buildings }),
     });
+
+    if (faction && current.building_id) {
+      const def = getBuildingDef(faction, current.building_id);
+      if (def && def.unit_id) {
+        const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
+        const unitDef = Object.values(UNITS[factionKey] || {}).find(u => u.id === def.unit_id);
+        if (unitDef) {
+          await supabase('/roster', {
+            method: 'POST',
+            body: JSON.stringify([{
+              chat_id,
+              unit_name: unitDef.name,
+              unit_data: { ...unitDef, building_slot: slot },
+              experience: 0,
+            }]),
+          });
+        }
+      }
+    }
 
     res.json(updated[0]);
   } catch (err) {
