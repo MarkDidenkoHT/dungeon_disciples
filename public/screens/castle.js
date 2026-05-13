@@ -51,7 +51,7 @@ export function renderCastle(root, { player }) {
 
   let structuresRecord = null;
   let buildingPools = null;
-  let currentUpgradeSelection = null;
+  let allUnits = null;   // will hold unit data
 
   function openModal(title, bodyHtml) {
     root.querySelector('#modal-title').textContent = title;
@@ -89,6 +89,8 @@ export function renderCastle(root, { player }) {
 
     buildingPools = buildingsResp.pools;
     structuresRecord = structures;
+    allUnits = buildingsResp.units || {};   // we'll add this later if needed
+
     renderBuildings();
   }
 
@@ -138,74 +140,56 @@ export function renderCastle(root, { player }) {
     if (!state || !state.building_id) return;
 
     const def = getBuildingDef(player.faction, state.building_id);
-    if (!def || !def.upgrades || def.upgrades.length === 0) {
-      openModal(def ? def.label : slot, `<p>No upgrades available.</p>`);
-      return;
-    }
+    if (!def) return;
 
-    currentUpgradeSelection = def.upgrades[0]; // default first option
+    let html = `<h3>${def.label} — Level ${state.level}</h3>`;
 
-    let html = `
-      <h3>${def.label} — Level ${state.level}</h3>
-      <div class="upgrade-comparison">
+    if (def.upgrades && def.upgrades.length > 0) {
+      html += `<div class="upgrade-comparison">`;
+
+      // Current unit
+      html += `
         <div class="upgrade-side">
-          <h4>Current</h4>
-          <div class="unit-preview" id="current-unit">Loading...</div>
+          <h4>Current Unit</h4>
+          <div class="unit-preview" id="current-preview"></div>
         </div>
+      `;
+
+      // Target unit (default first upgrade)
+      html += `
         <div class="upgrade-side">
           <h4>After Upgrade</h4>
-          <div class="unit-preview" id="target-unit">Loading...</div>
+          <div class="unit-preview" id="target-preview"></div>
         </div>
-      </div>
+      `;
 
-      <div class="upgrade-options">
-    `;
+      html += `</div>`;
 
-    def.upgrades.forEach(uid => {
-      html += `<button class="path-btn" data-unit="${uid}">${def.label}<br>${uid}</button>`;
-    });
+      // Upgrade path buttons
+      html += `<div class="upgrade-options">`;
+      def.upgrades.forEach(uid => {
+        html += `<button class="path-btn" data-unit-id="${uid}">${def.label}<br>${uid}</button>`;
+      });
+      html += `</div>`;
 
-    html += `</div><button id="confirm-upgrade" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
+      html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
+    } else {
+      html += `<p>No upgrades available.</p>`;
+    }
 
     openModal(def.label, html);
 
-    // Load previews
-    updateUpgradePreview(def, currentUpgradeSelection);
-
-    // Path buttons
-    document.querySelectorAll('.path-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentUpgradeSelection = btn.dataset.unit;
-        updateUpgradePreview(def, currentUpgradeSelection);
-      });
-    });
-
-    document.getElementById('confirm-upgrade').addEventListener('click', () => {
-      performBuildingUpgrade(slot, def.id);
-    });
-  }
-
-  function updateUpgradePreview(def, targetUnitId) {
-    // Simple placeholder for now
-    document.getElementById('current-unit').innerHTML = `<strong>${def.unit || 'Unit'}</strong><br>Current`;
-    document.getElementById('target-unit').innerHTML = `<strong>${targetUnitId}</strong><br>Next`;
-  }
-
-  async function performBuildingUpgrade(slot, building_id) {
-    closeModal();
-    try {
-      const updated = await api('/structures/build', {
-        chat_id: player.chat_id,
-        faction: player.faction,
-        slot: slot,
-        building_id: building_id
-      });
-      structuresRecord = updated;
-      renderBuildings();
-      alert('Building upgraded successfully!');
-    } catch (err) {
-      alert(err.message || 'Upgrade failed');
+    // Load previews for first option
+    if (def.upgrades && def.upgrades.length > 0) {
+      loadUnitPreview(def.unit_id || def.unit, 'current-preview');
+      loadUnitPreview(def.upgrades[0], 'target-preview');
     }
+  }
+
+  function loadUnitPreview(unitId, elementId) {
+    // For now placeholder - we'll improve when we have full unit data available
+    const el = document.getElementById(elementId);
+    if (el) el.innerHTML = `<strong>${unitId}</strong><br>Stats loading...`;
   }
 
   load();
