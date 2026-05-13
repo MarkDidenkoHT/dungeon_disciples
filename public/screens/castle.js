@@ -1,8 +1,8 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
-import unitsModule from '../../data/units.js';
 
-const UNITS = unitsModule.UNITS;
+// Direct import of the exported object (no default)
+import { UNITS } from '../../data/units.js';
 
 function timeLeft(ready_at) {
   const diff = new Date(ready_at) - Date.now();
@@ -148,7 +148,7 @@ export function renderCastle(root, { player }) {
 
     let html = `<h3>${def.label} — Level ${state.level}</h3>`;
 
-    if (def.upgrades && def.upgrades.length > 0) {
+    if (def.upgrades?.length > 0) {
       html += `<div class="upgrade-comparison">`;
 
       const currentUnit = getUnitData(def.unit_id);
@@ -159,7 +159,6 @@ export function renderCastle(root, { player }) {
             <strong>${currentUnit ? currentUnit.name : def.unit}</strong><br>
             HP ${currentUnit ? currentUnit.hp : '?'} | Armor ${currentUnit ? currentUnit.armor : '?'}<br>
             Initiative ${currentUnit ? currentUnit.initiative : '?'}<br>
-            ${currentUnit && currentUnit.action_power ? `Damage ${currentUnit.action_power}` : ''}
           </div>
         </div>
       `;
@@ -173,7 +172,6 @@ export function renderCastle(root, { player }) {
             <strong>${targetUnit ? targetUnit.name : firstTargetId}</strong><br>
             HP ${targetUnit ? targetUnit.hp : '?'} | Armor ${targetUnit ? targetUnit.armor : '?'}<br>
             Initiative ${targetUnit ? targetUnit.initiative : '?'}<br>
-            ${targetUnit && targetUnit.action_power ? `Damage ${targetUnit.action_power}` : ''}
           </div>
         </div>
       `;
@@ -184,7 +182,7 @@ export function renderCastle(root, { player }) {
       def.upgrades.forEach(uid => {
         const u = getUnitData(uid);
         const unitName = u ? u.name : uid;
-        html += `<button class="path-btn" data-unit-id="${uid}">${def.label}<br>${unitName}</button>`;
+        html += `<button class="path-btn" data-unit-id="${uid}">${unitName}</button>`;
       });
       html += `</div>`;
 
@@ -193,25 +191,27 @@ export function renderCastle(root, { player }) {
 
     openModal(def.label, html);
 
-    document.querySelectorAll('.path-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.dataset.unitId;
-        const targetUnit = getUnitData(targetId);
-        if (targetUnit) {
-          document.getElementById('target-preview').innerHTML = `
-            <strong>${targetUnit.name}</strong><br>
-            HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
-            Initiative ${targetUnit.initiative}<br>
-            ${targetUnit.action_power ? `Power ${targetUnit.action_power}` : ''}
-          `;
-        }
+    // Event listeners after modal is rendered
+    setTimeout(() => {
+      document.querySelectorAll('.path-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.dataset.unitId;
+          const targetUnit = getUnitData(targetId);
+          if (targetUnit) {
+            document.getElementById('target-preview').innerHTML = `
+              <strong>${targetUnit.name}</strong><br>
+              HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
+              Initiative ${targetUnit.initiative}<br>
+            `;
+          }
+        });
       });
-    });
 
-    const confirmBtn = document.getElementById('confirm-upgrade-btn');
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
-    }
+      const confirmBtn = document.getElementById('confirm-upgrade-btn');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
+      }
+    }, 10);
   }
 
   async function performBuildingUpgrade(slot, building_id) {
