@@ -1,16 +1,6 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
-let UNITS = null;
-
-// Load units data dynamically (works with CommonJS export)
-async function loadUnits() {
-  if (UNITS) return UNITS;
-  const module = await import('../../data/units.js');
-  UNITS = module.UNITS || module.default?.UNITS || module;
-  return UNITS;
-}
-
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
@@ -47,6 +37,7 @@ export function renderCastle(root, { player }) {
 
   let structuresRecord = null;
   let buildingPools = null;
+  let UNITS = null;
 
   function openModal(title, bodyHtml) {
     root.querySelector('#modal-title').textContent = title;
@@ -59,9 +50,16 @@ export function renderCastle(root, { player }) {
   }
 
   root.querySelector('#modal-close').addEventListener('click', closeModal);
-  root.querySelector('#modal-overlay').addEventListener('click', (e) => {
+  root.querySelector('#modal-overlay').addEventListener('click', e => {
     if (e.target === root.querySelector('#modal-overlay')) closeModal();
   });
+
+  async function loadUnits() {
+    if (UNITS) return UNITS;
+    const mod = await import('../../data/units.js');
+    UNITS = mod.UNITS || mod.default?.UNITS || mod;
+    return UNITS;
+  }
 
   async function load() {
     const [inventory, structures, buildingsResp] = await Promise.all([
@@ -84,9 +82,23 @@ export function renderCastle(root, { player }) {
 
     buildingPools = buildingsResp.pools;
     structuresRecord = structures;
-
     await loadUnits();
     renderBuildings();
+  }
+
+  function getBuildingDef(faction, buildingId) {
+    if (!buildingPools || !faction) return null;
+    for (const pool of Object.values(buildingPools[faction])) {
+      const found = pool.find(b => b.id === buildingId);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function getUnitData(unitId) {
+    if (!unitId || !UNITS) return null;
+    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
+    return all[unitId] || null;
   }
 
   function renderBuildings() {
@@ -121,114 +133,27 @@ export function renderCastle(root, { player }) {
     });
   }
 
-  function getBuildingDef(faction, buildingId) {
-    if (!buildingPools || !faction) return null;
-    for (const pool of Object.values(buildingPools[faction])) {
-      const found = pool.find(b => b.id === buildingId);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  function getUnitData(unitId) {
-    if (!unitId || !UNITS) return null;
-    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
-    return all[unitId] || null;
-  }
-
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
     if (!state || !state.building_id) return;
 
     const def = getBuildingDef(player.faction, state.building_id);
-    if (!def || !def.upgrades || def.upgrades.length === 0) {
-      openModal(def ? def.label : slot, `<p>No upgrades available.</p>`);
+    if (!def) {
+      openModal("Building", `<p>No information available.</p>`);
       return;
     }
 
-    let html = `<h3>${def.label} — Level ${state.level}</h3>`;
-
-    if (def.upgrades?.length > 0) {
-      html += `<div class="upgrade-comparison">`;
-
-      const currentUnit = getUnitData(def.unit_id);
-      html += `
-        <div class="upgrade-side">
-          <h4>Current Unit</h4>
-          <div class="unit-preview">
-            <strong>${currentUnit ? currentUnit.name : def.unit}</strong><br>
-            HP ${currentUnit ? currentUnit.hp : '?'} | Armor ${currentUnit ? currentUnit.armor : '?'}<br>
-            Initiative ${currentUnit ? currentUnit.initiative : '?'}<br>
-          </div>
-        </div>
-      `;
-
-      const firstTargetId = def.upgrades[0];
-      const targetUnit = getUnitData(firstTargetId);
-      html += `
-        <div class="upgrade-side">
-          <h4>After Upgrade</h4>
-          <div class="unit-preview" id="target-preview">
-            <strong>${targetUnit ? targetUnit.name : firstTargetId}</strong><br>
-            HP ${targetUnit ? targetUnit.hp : '?'} | Armor ${targetUnit ? targetUnit.armor : '?'}<br>
-            Initiative ${targetUnit ? targetUnit.initiative : '?'}<br>
-          </div>
-        </div>
-      `;
-
-      html += `</div>`;
-
-      html += `<div class="upgrade-options">`;
-      def.upgrades.forEach(uid => {
-        const u = getUnitData(uid);
-        const unitName = u ? u.name : uid;
-        html += `<button class="path-btn" data-unit-id="${uid}">${unitName}</button>`;
-      });
-      html += `</div>`;
-
-      html += `<button id="confirm-upgrade-btn" class="confirm-upgrade-btn">Confirm Building Upgrade</button>`;
-    }
-
-    openModal(def.label, html);
-
-    setTimeout(() => {
-      document.querySelectorAll('.path-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const targetId = btn.dataset.unitId;
-          const targetUnit = getUnitData(targetId);
-          if (targetUnit && document.getElementById('target-preview')) {
-            document.getElementById('target-preview').innerHTML = `
-              <strong>${targetUnit.name}</strong><br>
-              HP ${targetUnit.hp} | Armor ${targetUnit.armor}<br>
-              Initiative ${targetUnit.initiative}<br>
-            `;
-          }
-        });
-      });
-
-      const confirmBtn = document.getElementById('confirm-upgrade-btn');
-      if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => performBuildingUpgrade(slot, def.id));
-      }
-    }, 50);
-  }
-
-  async function performBuildingUpgrade(slot, building_id) {
-    closeModal();
-    try {
-      const updated = await api('/structures/build', {
-        chat_id: player.chat_id,
-        faction: player.faction,
-        slot: slot,
-        building_id: building_id
-      });
-      structuresRecord = updated;
-      renderBuildings();
-      alert('Building upgraded successfully!');
-    } catch (err) {
-      alert(err.message || 'Upgrade failed');
-    }
+    openModal(def.label, `<p>Building clicked: ${def.label} (Level ${state.level})<br>Upgrades not fully implemented yet.</p>`);
   }
 
   load();
+
+  root.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('disabled')) return;
+      const screen = btn.dataset.screen;
+      if (screen === 'castle') return;
+      navigate(screen, { player });
+    });
+  });
 }
