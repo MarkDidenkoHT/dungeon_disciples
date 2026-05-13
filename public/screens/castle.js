@@ -270,7 +270,7 @@ export function renderCastle(root, { player }) {
     for (const [cat, pool] of Object.entries(factionPools)) {
       if (slotCategory === 'any' || cat === slotCategory) {
         for (const b of pool) {
-          if (b.category !== 'throne') available.push(b);
+          if (b.category !== 'throne' && b.tier === 1) available.push(b);
         }
       }
     }

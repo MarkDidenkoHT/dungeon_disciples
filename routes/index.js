@@ -262,6 +262,8 @@ router.post('/roster/levelup', async (req, res) => {
 
     let path = paths[0];
 
+    const buildingSlot = unitData.building_slot || null;
+
     if (buildingSlot && paths.length > 1) {
       const structRowsCheck = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
       if (structRowsCheck.length) {
@@ -274,8 +276,6 @@ router.post('/roster/levelup', async (req, res) => {
     }
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
-
-    const buildingSlot = unitData.building_slot || null;
     const newUnitData  = { ...nextUnitDef, building_slot: buildingSlot };
 
     const updatePromises = [
