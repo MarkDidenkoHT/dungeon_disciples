@@ -92,7 +92,7 @@ export function renderRoster(root, { player }) {
 
     const tier    = d.t ?? null;
     const isHero  = (tier == null);
-    const tierLabel = isHero ? 'Hero' : `Level ${tier}`;
+    const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Level ${tier}`;
 
     const tags     = (d.tags || []).filter(Boolean);
     const unitType = cap(d.type || '');
@@ -101,6 +101,12 @@ export function renderRoster(root, { player }) {
     const currentXp  = u.experience ?? 0;
     const isMaxTier  = (tier >= 2);
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
+
+    // Hero-specific level-up state
+    const heroLevel    = isHero ? (d.hero_level || 1) : null;
+    const throneLevel  = buildingsData['slot_0']?.level || 1;
+    const heroMaxed    = isHero && heroLevel >= 4;
+    const heroCanLevel = isHero && !heroMaxed && throneLevel > heroLevel;
 
     let upgradeReady        = true;
     let upgradeBuildingHint = '';
@@ -169,9 +175,28 @@ export function renderRoster(root, { player }) {
 
     const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
 
-    // Level-up row
+    // Level-up row — regular units use XP bar; heroes use throne-gated button
     let levelUpHtml = '';
-    if (hasPath) {
+    if (isHero) {
+      if (heroMaxed) {
+        levelUpHtml = `<div class="levelup-row"><span class="levelup-xp-label hero-level-label">Hero Level ${heroLevel} — Max</span></div>`;
+      } else {
+        const throneNeeded = heroLevel + 1;
+        const blocked      = !heroCanLevel;
+        levelUpHtml = `
+          <div class="levelup-row">
+            <span class="levelup-xp-label hero-level-label">Hero Level ${heroLevel}</span>
+            <button
+              class="levelup-btn ${heroCanLevel ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
+              data-roster-id="${u.id}"
+              data-is-hero="1"
+              ${blocked ? 'disabled' : ''}
+            >Level Up</button>
+          </div>
+          ${blocked ? `<div class="levelup-hint">Requires Throne level ${throneNeeded} (currently ${throneLevel})</div>` : ''}
+        `;
+      }
+    } else if (hasPath) {
       const pct = Math.min(100, Math.floor((currentXp / xpRequired) * 100));
       levelUpHtml = `
         <div class="levelup-row">
@@ -267,10 +292,12 @@ export function renderRoster(root, { player }) {
     const lvlBtn = e.target.closest('.levelup-btn--ready');
     if (lvlBtn) {
       const rosterId = lvlBtn.dataset.rosterId;
+      const isHeroBtn = lvlBtn.dataset.isHero === '1';
       lvlBtn.disabled = true;
       lvlBtn.textContent = '...';
       try {
-        await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
+        const endpoint = isHeroBtn ? '/roster/hero-levelup' : '/roster/levelup';
+        await api(endpoint, { chat_id: player.chat_id, roster_id: rosterId });
         const [freshUnits, freshStruct] = await Promise.all([
           api(`/roster?chat_id=${player.chat_id}`),
           api(`/structures?chat_id=${player.chat_id}`).catch(() => null),

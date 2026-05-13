@@ -1643,3 +1643,74 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
   cursor: not-allowed;
 }
+/* ── Throne node – clickable indicator ─────────────────────────── */
+.castle-node--clickable {
+  cursor: pointer;
+}
+
+.castle-node-hint {
+  font-size: 0.62rem;
+  color: var(--accent);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ── Throne upgrade modal ───────────────────────────────────────── */
+.throne-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.throne-level-display {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.03em;
+}
+
+.throne-level-num {
+  color: var(--accent);
+}
+
+.throne-level-next {
+  color: #a8e06a;
+}
+
+.throne-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.throne-cost {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.throne-cost-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.throne-maxed {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Hero level chip & level-up row ────────────────────────────── */
+.hero-level-label {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}

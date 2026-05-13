@@ -24,6 +24,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 1,
     damage_source: 'physical', action_power: 20,
     passive: null, ability: null,
+    hero_level: 1, building_slot: 'slot_0',
   },
   hexblade: {
     type: 'caster',
@@ -34,6 +35,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 3,
     damage_source: 'death', action_power: 18,
     passive: null, ability: null,
+    hero_level: 1, building_slot: 'slot_0',
   },
   shadowbow: {
     type: 'ranged',
@@ -44,6 +46,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 3,
     damage_source: 'physical', action_power: 16,
     passive: null, ability: null,
+    hero_level: 1, building_slot: 'slot_0',
   },
   paladin: {
     type: 'melee',
@@ -54,6 +57,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 1,
     damage_source: 'physical', action_power: 15,
     passive: 'mithrails_light 1', ability: null,
+    hero_level: 1, building_slot: 'slot_0',
   },
   inquisitor: {
     type: 'ranged',
@@ -64,6 +68,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 2,
     damage_source: 'life', action_power: 17,
     passive: 'vitality 1', ability: 'purge 1',
+    hero_level: 1, building_slot: 'slot_0',
   },
   ranger: {
     type: 'ranged',
@@ -74,6 +79,7 @@ const HERO_DATA = {
     action: 'attack', target_type: 'enemy', targets: 1, range: 3,
     damage_source: 'physical', action_power: 15,
     passive: 'pierce 1', ability: null,
+    hero_level: 1, building_slot: 'slot_0',
   },
 };
 

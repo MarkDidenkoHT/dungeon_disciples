@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS, HERO_DATA } = require('../data/units');
 const { REGIONS } = require('../data/embark');
-const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, getBuildingDef, emptyStructures } = require('../data/buildings');
+const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_LEVEL_DATA, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, computeHeroStats } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -326,11 +326,140 @@ router.post('/roster/levelup', async (req, res) => {
   }
 });
 
+// Upgrade the throne (slot_0) to the next level.
+// This does NOT auto-level the hero — it just unlocks the ability to do so.
+router.post('/structures/throne/upgrade', async (req, res) => {
+  const { chat_id } = req.body;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+
+    const record    = rows[0];
+    const buildings = record.buildings_data;
+    const throne    = buildings['slot_0'] || { level: 1, ready_at: null, building_id: null };
+    const nextLevel = (throne.level || 1) + 1;
+
+    if (nextLevel > HERO_MAX_LEVEL) {
+      return res.status(400).json({ error: 'Throne is already at max level' });
+    }
+
+    const cost = THRONE_UPGRADE_COSTS[nextLevel];
+    if (!cost) return res.status(400).json({ error: 'No cost defined for that level' });
+
+    // Deduct resources if cost > 0 (gold, mana)
+    if (cost.gold > 0 || cost.mana > 0) {
+      const inventory = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+      const goldRow   = inventory.find(r => r.item === 'Gold');
+      const manaRow   = inventory.find(r => r.item === 'Mana');
+
+      if (!goldRow || goldRow.amount < cost.gold) {
+        return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
+      }
+      if (!manaRow || manaRow.amount < cost.mana) {
+        return res.status(400).json({ error: `Not enough Mana. Need ${cost.mana}` });
+      }
+
+      const deductions = [];
+      if (cost.gold > 0) {
+        deductions.push(supabase(`/inventory_and_resources?id=eq.${goldRow.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ amount: goldRow.amount - cost.gold }),
+        }));
+      }
+      if (cost.mana > 0) {
+        deductions.push(supabase(`/inventory_and_resources?id=eq.${manaRow.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ amount: manaRow.amount - cost.mana }),
+        }));
+      }
+      await Promise.all(deductions);
+    }
+
+    buildings['slot_0'] = { ...throne, level: nextLevel };
+
+    const updated = await supabase(`/structures?id=eq.${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ buildings_data: buildings }),
+    });
+
+    res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Level up the hero. Requires:
+//   - The hero's current hero_level < throne level
+//   - hero_level < HERO_MAX_LEVEL
+// Applies cumulative stat deltas for the new level and saves to roster.
+router.post('/roster/hero-levelup', async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) {
+    return res.status(400).json({ error: 'chat_id and roster_id required' });
+  }
+
+  try {
+    const [rosterRows, structRows] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+    ]);
+
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+
+    const entry    = rosterRows[0];
+    const unitData = entry.unit_data || {};
+
+    // Confirm this is a hero (heroes have no 't' tier field)
+    if (unitData.t !== undefined && unitData.t !== null) {
+      return res.status(400).json({ error: 'This unit is not a hero' });
+    }
+
+    const heroKey     = entry.unit_name.toLowerCase();
+    const heroLevel   = unitData.hero_level || 1;
+    const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+
+    if (heroLevel >= HERO_MAX_LEVEL) {
+      return res.status(400).json({ error: 'Hero is already at max level' });
+    }
+    if (heroLevel >= throneLevel) {
+      return res.status(400).json({ error: `Upgrade your Throne to level ${heroLevel + 1} first` });
+    }
+
+    const nextLevel = heroLevel + 1;
+    const delta     = (HERO_LEVEL_DATA[heroKey] || {})[nextLevel];
+    if (!delta) {
+      return res.status(400).json({ error: `No level data for ${heroKey} level ${nextLevel}` });
+    }
+
+    // Apply the stat delta for the next level
+    const newUnitData = { ...unitData, hero_level: nextLevel };
+    for (const [stat, val] of Object.entries(delta)) {
+      if (newUnitData[stat] !== undefined) newUnitData[stat] += val;
+    }
+
+    const updated = await supabase(`/roster?id=eq.${roster_id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: newUnitData }),
+    });
+
+    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    res.json(fresh[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/buildings', (req, res) => {
   res.json({
     pools: BUILDING_POOLS,
     slot_categories: SLOT_CATEGORIES,
     upgrade_paths: UNIT_UPGRADE_PATHS,
+    hero_level_data: HERO_LEVEL_DATA,
+    hero_max_level: HERO_MAX_LEVEL,
+    throne_upgrade_costs: THRONE_UPGRADE_COSTS,
   });
 });
 

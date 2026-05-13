@@ -51,6 +51,8 @@ export function renderCastle(root, { player }) {
   let structuresRecord = null;
   let buildingPools = null;
   let upgradePaths = null;
+  let throneUpgradeCosts = {};
+  let heroMaxLevel = 4;
 
   function openModal(title, bodyHtml) {
     root.querySelector('#modal-title').textContent = title;
@@ -88,6 +90,8 @@ export function renderCastle(root, { player }) {
 
     buildingPools  = buildingsResp.pools;
     upgradePaths   = buildingsResp.upgrade_paths || {};
+    throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
+    heroMaxLevel   = buildingsResp.hero_max_level || 4;
     structuresRecord = structures;
 
     await loadUnits();
@@ -233,11 +237,17 @@ export function renderCastle(root, { player }) {
   function renderBuildings() {
     const data = structuresRecord.buildings_data;
 
+    const throneState    = data['slot_0'];
+    const throneLevel    = throneState?.level || 1;
+    const throneMaxed    = throneLevel >= heroMaxLevel;
+    const throneUpgrade  = !throneMaxed ? `<div class="castle-node-hint">Upgrade available</div>` : '';
+
     root.querySelector('#center-slot').innerHTML = `
-      <div class="castle-node castle-node--throne" data-slot="slot_0">
+      <div class="castle-node castle-node--throne castle-node--clickable" data-slot="slot_0">
         <div class="castle-node-icon">♛</div>
         <div class="castle-node-label">Throne</div>
-        <div class="castle-node-level">Lv ${data['slot_0'].level}</div>
+        <div class="castle-node-level">Lv ${throneLevel}</div>
+        ${throneUpgrade}
       </div>
     `;
 
@@ -304,10 +314,59 @@ export function renderCastle(root, { player }) {
     });
   }
 
+  async function handleThroneClick() {
+    const throneState = structuresRecord.buildings_data['slot_0'];
+    const throneLevel = throneState?.level || 1;
+    const nextLevel   = throneLevel + 1;
+    const cost        = throneUpgradeCosts[nextLevel];
+    const isMaxed     = throneLevel >= heroMaxLevel;
+
+    let bodyHtml;
+    if (isMaxed) {
+      bodyHtml = `
+        <div class="throne-modal">
+          <div class="throne-level-display">Throne Level <span class="throne-level-num">${throneLevel}</span></div>
+          <p class="throne-maxed">The Throne is fully upgraded. Your hero may reach their full potential.</p>
+        </div>
+      `;
+    } else {
+      bodyHtml = `
+        <div class="throne-modal">
+          <div class="throne-level-display">Throne Level <span class="throne-level-num">${throneLevel}</span> → <span class="throne-level-num throne-level-next">${nextLevel}</span></div>
+          <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
+          <div class="throne-cost">
+            ${cost.gold > 0 ? `<span class="throne-cost-item">🪙 ${cost.gold} Gold</span>` : ''}
+            ${cost.mana  > 0 ? `<span class="throne-cost-item">🔮 ${cost.mana} Mana</span>` : ''}
+          </div>
+          <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
+        </div>
+      `;
+    }
+
+    const throneLabel = player.faction === 'dungeon' ? 'Dark Throne' : 'Throne';
+    openModal(throneLabel, bodyHtml);
+
+    if (!isMaxed) {
+      root.querySelector('#confirm-throne-btn')?.addEventListener('click', async () => {
+        closeModal();
+        try {
+          const updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
+          structuresRecord = updated;
+          renderBuildings();
+        } catch (err) {
+          alert(err.message || 'Throne upgrade failed');
+        }
+      });
+    }
+  }
+
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
+    if (slot === 'slot_0') {
+      handleThroneClick();
+      return;
+    }
     if (!state || !state.building_id) {
-      if (slot === 'slot_0') return;
       openBuildModal(slot);
       return;
     }

@@ -144,6 +144,54 @@ const UNIT_UPGRADE_PATHS = {
   },
 };
 
+// Hero level-up stat progressions.
+// Each entry maps hero name -> level -> stat deltas applied on top of the previous level.
+// Level 1 = base stats from HERO_DATA (no entry needed).
+// Level N requires throne to be at level N.
+// Passives and actives will be added later; only core combat stats for now.
+const HERO_LEVEL_DATA = {
+  warlord: {
+    2: { hp: 20, armor: 2, initiative:  0, action_power: 5 },
+    3: { hp: 25, armor: 3, initiative:  5, action_power: 5 },
+    4: { hp: 30, armor: 4, initiative:  5, action_power: 8 },
+  },
+  hexblade: {
+    2: { hp: 15, armor: 1, initiative:  5, action_power: 6 },
+    3: { hp: 18, armor: 1, initiative:  5, action_power: 7 },
+    4: { hp: 22, armor: 2, initiative: 10, action_power: 9 },
+  },
+  shadowbow: {
+    2: { hp: 15, armor: 1, initiative: 10, action_power: 5 },
+    3: { hp: 18, armor: 1, initiative: 10, action_power: 6 },
+    4: { hp: 22, armor: 2, initiative: 15, action_power: 8 },
+  },
+  paladin: {
+    2: { hp: 18, armor: 2, initiative:  0, action_power: 4 },
+    3: { hp: 22, armor: 3, initiative:  5, action_power: 5 },
+    4: { hp: 28, armor: 4, initiative:  5, action_power: 7 },
+  },
+  inquisitor: {
+    2: { hp: 14, armor: 1, initiative:  5, action_power: 5 },
+    3: { hp: 18, armor: 1, initiative:  5, action_power: 7 },
+    4: { hp: 22, armor: 2, initiative: 10, action_power: 9 },
+  },
+  ranger: {
+    2: { hp: 15, armor: 1, initiative: 10, action_power: 5 },
+    3: { hp: 18, armor: 1, initiative: 15, action_power: 6 },
+    4: { hp: 22, armor: 2, initiative: 15, action_power: 8 },
+  },
+};
+
+// Maximum hero level (matches max throne level)
+const HERO_MAX_LEVEL = 4;
+
+// Throne upgrade costs per target level (cost to upgrade from level N-1 to N)
+const THRONE_UPGRADE_COSTS = {
+  2: { gold: 150, mana:   0 },
+  3: { gold: 300, mana:  50 },
+  4: { gold: 600, mana: 150 },
+};
+
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
   if (!factionPools) return null;
@@ -162,4 +210,29 @@ function emptyStructures() {
   return slots;
 }
 
-module.exports = { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, getBuildingDef, emptyStructures };
+// Compute a hero's current stats by stacking all level deltas up to heroLevel.
+function computeHeroStats(heroKey, baseStats, heroLevel) {
+  const levels = HERO_LEVEL_DATA[heroKey] || {};
+  const result = { ...baseStats };
+  for (let lvl = 2; lvl <= heroLevel; lvl++) {
+    const delta = levels[lvl];
+    if (!delta) continue;
+    for (const [stat, val] of Object.entries(delta)) {
+      if (result[stat] !== undefined) result[stat] += val;
+    }
+  }
+  return result;
+}
+
+module.exports = {
+  BUILDING_POOLS,
+  BUILD_TIMES_MS,
+  SLOT_CATEGORIES,
+  UNIT_UPGRADE_PATHS,
+  HERO_LEVEL_DATA,
+  HERO_MAX_LEVEL,
+  THRONE_UPGRADE_COSTS,
+  getBuildingDef,
+  emptyStructures,
+  computeHeroStats,
+};
