@@ -219,7 +219,12 @@ export function renderRoster(root, { player }) {
       const def     = resolveAbility(key, type);
       const label   = def ? def.name : '—';
       const isEmpty = !def;
-      const symbol  = type === 'passive' ? '◈' : '⚡';
+      const imgSrc  = key ? `/assets/icons/${key}.jpg` : null;
+      const fallback = type === 'passive' ? '◈' : '⚡';
+      const iconHtml = imgSrc
+        ? `<img class="ability-icon-img" src="${imgSrc}" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+          <span class="ability-icon-symbol" style="display:none">${fallback}</span>`
+        : `<span class="ability-icon-symbol">${fallback}</span>`;
       return `
         <button
           class="ability-icon ability-icon--${type} ${isEmpty ? 'ability-icon--empty' : ''}"
@@ -228,7 +233,7 @@ export function renderRoster(root, { player }) {
           ${isEmpty ? 'disabled' : ''}
           title="${label}"
         >
-          <span class="ability-icon-symbol">${symbol}</span>
+          ${iconHtml}
           <span class="ability-icon-label">${label}</span>
         </button>`;
     }
