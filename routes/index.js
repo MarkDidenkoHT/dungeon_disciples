@@ -223,7 +223,7 @@ router.get('/roster', async (req, res) => {
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
 
   try {
-    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -237,7 +237,7 @@ router.post('/roster/levelup', async (req, res) => {
   }
 
   try {
-    const rows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    const rows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`);
     if (!rows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const entry    = rows[0];
@@ -319,7 +319,7 @@ router.post('/roster/levelup', async (req, res) => {
 
     await Promise.all(updatePromises);
 
-    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience`);
     res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -402,7 +402,7 @@ router.post('/roster/hero-levelup', async (req, res) => {
 
   try {
     const [rosterRows, structRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,char_gender`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
     ]);
 
@@ -445,7 +445,7 @@ router.post('/roster/hero-levelup', async (req, res) => {
       body: JSON.stringify({ unit_data: newUnitData }),
     });
 
-    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,char_gender`);
+    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience`);
     res.json(fresh[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });

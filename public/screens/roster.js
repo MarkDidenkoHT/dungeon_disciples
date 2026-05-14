@@ -81,10 +81,9 @@ export function renderRoster(root, { player }) {
 
   function buildCard(u) {
     const d      = u.unit_data || {};
-    const gender = u.char_gender || 'f';
     const unitId = d.id || '';
 
-    const portraitSrc = unitId ? `/assets/character_art/${unitId}.${gender}.png` : null;
+    const portraitSrc = unitId ? `/assets/character_art/${unitId}.png` : null;
 
     const passiveKey = d.passive || null;
     const activeKey  = d.ability  || null;

@@ -73,6 +73,16 @@ const BUILDING_POOLS = {
         upgrades: [],
         cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
+      { 
+        id: 'purgator_chapel', 
+        label: 'Purgator Chapel', 
+        category: 'barracks', 
+        tier: 2,
+        unit: 'purgator',
+        unit_id: 'e21',
+        upgrades: [],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      }
     ],
     any: [
       { id: 'market', label: 'Market', category: 'any', unit: null },
@@ -200,7 +210,8 @@ const UNIT_UPGRADE_PATHS = {
       { unit_id: 'e12', building_id: 'cavalry_stables',   label: 'Cavalry Stables'   },
     ],
     e2: [
-      { unit_id: 'e22', building_id: 'priest_shrine',     label: 'Priest Shrine'     },
+      { unit_id: 'e21', building_id: 'priest_shrine',     label: 'Priest Shrine'     },
+      { unit_id: 'e22', building_id: 'paladin_shrine',   label: 'Paladin Chapel'   },
       { unit_id: 'e23', building_id: 'purgator_chapel',   label: 'Purgator Chapel'   },
     ],
     e4: [
