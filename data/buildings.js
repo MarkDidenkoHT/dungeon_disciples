@@ -120,6 +120,77 @@ const BUILDING_POOLS = {
       { id: 'shadow_shrine', label: 'Shadow Shrine', category: 'any', unit: null },
     ],
   },
+  grail_of_sorrow: {
+    throne: [
+      { id: 'sorrow_throne', label: 'Throne of Sorrow', category: 'throne', unit: null },
+    ],
+    barracks: [
+      { 
+        id: 'zombie_pit', 
+        label: 'Zombie Pit', 
+        category: 'barracks', 
+        tier: 1,
+        unit: 'zombie_risen',
+        unit_id: 'gs1',
+        upgrades: ['gs11', 'gs12', 'gs13'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'catapult_workshop', 
+        label: 'Catapult Workshop', 
+        category: 'barracks', 
+        tier: 2,
+        unit: 'catapult',
+        unit_id: 'gs2',
+        upgrades: ['gs21', 'gs22'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'adept_crypt', 
+        label: 'Adept Crypt', 
+        category: 'barracks', 
+        tier: 2,
+        unit: 'adept',
+        unit_id: 'gs3',
+        upgrades: ['gs31', 'gs32', 'gs33'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'dragon_barrow', 
+        label: 'Dragon Barrow', 
+        category: 'barracks', 
+        tier: 3,
+        unit: 'dragon_c',
+        unit_id: 'gs4',
+        upgrades: ['gs41', 'gs42'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'skeleton_crypt', 
+        label: 'Skeleton Crypt', 
+        category: 'barracks', 
+        tier: 2,
+        unit: 'skeleton_warrior',
+        unit_id: 'gs5',
+        upgrades: ['gs51', 'gs52'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+      { 
+        id: 'ghost_manor', 
+        label: 'Ghost Manor', 
+        category: 'barracks', 
+        tier: 2,
+        unit: 'ghost',
+        unit_id: 'gs6',
+        upgrades: ['gs61', 'gs62'],
+        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+      },
+    ],
+    any: [
+      { id: 'sorrow_altar', label: 'Altar of Sorrow', category: 'any', unit: null },
+      { id: 'soul_vault', label: 'Soul Vault', category: 'any', unit: null },
+    ],
+  },
 };
 
 const UNIT_UPGRADE_PATHS = {
@@ -140,6 +211,34 @@ const UNIT_UPGRADE_PATHS = {
   dungeon: {
     d1: [
       { unit_id: 'd3', building_id: 'possession_altar',   label: 'Possession Altar'  },
+    ],
+  },
+  grail_of_sorrow: {
+    gs1: [
+      { unit_id: 'gs11', building_id: 'poison_ghoul_pit',     label: 'Poison Ghoul Pit' },
+      { unit_id: 'gs12', building_id: 'cannibal_ghoul_pit',   label: 'Cannibal Ghoul Pit' },
+      { unit_id: 'gs13', building_id: 'cesswalker_mire',      label: 'Cesswalker Mire' },
+    ],
+    gs2: [
+      { unit_id: 'gs21', building_id: 'corpse_launcher_workshop', label: 'Corpse Launcher Workshop' },
+      { unit_id: 'gs22', building_id: 'meat_wagon_butchery',      label: 'Meat Wagon Butchery' },
+    ],
+    gs3: [
+      { unit_id: 'gs31', building_id: 'blood_adept_chamber', label: 'Blood Adept Chamber' },
+      { unit_id: 'gs32', building_id: 'necromancer_crypt',    label: 'Necromancer Crypt' },
+      { unit_id: 'gs33', building_id: 'plague_scholar_lab',   label: 'Plague Scholar Lab' },
+    ],
+    gs4: [
+      { unit_id: 'gs41', building_id: 'dragon_c_death_barrow', label: 'Death Dragon Barrow' },
+      { unit_id: 'gs42', building_id: 'dragon_c_aerem',        label: 'Aerem Dragon Shrine' },
+    ],
+    gs5: [
+      { unit_id: 'gs51', building_id: 'reformed_crypt',   label: 'Reformed Crypt' },
+      { unit_id: 'gs52', building_id: 'skeletal_mage_tower', label: 'Skeletal Mage Tower' },
+    ],
+    gs6: [
+      { unit_id: 'gs61', building_id: 'specter_hall',     label: 'Specter Hall' },
+      { unit_id: 'gs62', building_id: 'apparition_mist',  label: 'Apparition Mist' },
     ],
   },
 };
