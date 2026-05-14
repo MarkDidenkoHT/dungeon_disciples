@@ -86,7 +86,13 @@ export class BattleSystem {
         if (t.side === actor.side) return false;
         const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
-          return Math.abs(cellRow(actor.cellIndex) - cellRow(t.cellIndex)) <= 1;
+          // Range 1 = melee: can only target the nearest enemy column.
+          // Enemy col 0 is the front line (closest to player), col 1 is back.
+          // The actor may only target col 1 if no alive enemies remain in col 0.
+          const enemySide = this.combatants.filter(c => c.side === t.side && c.alive);
+          const frontColEnemies = enemySide.filter(c => cellCol(c.cellIndex) === 0);
+          const targetCol = frontColEnemies.length > 0 ? 0 : 1;
+          return cellCol(t.cellIndex) === targetCol;
         }
         return true;
       }
