@@ -1,9 +1,9 @@
-// public/screens/battle.js
 import { api, navigate } from '../main.js';
 import { BattleSystem, cellIndex } from '../battle-system.js';
 
 const ROWS = 3;
 const COLS = 2;
+const UNIT_TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
 
 export function renderBattle(root, { player, region_id, level, playerUnits, enemies, placement }) {
   const battle = new BattleSystem(playerUnits, enemies, placement);
@@ -27,9 +27,8 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function unitTypeIcon(u) {
-    const t = u?.unit_data?.type ?? 'melee';
-    const icons = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
-    return icons[t] ?? '·';
+    const t = u?.unit_data?.type ?? '';
+    return UNIT_TYPE_ICONS[t] ?? '·';
   }
 
   function getActionLabel(unit) {

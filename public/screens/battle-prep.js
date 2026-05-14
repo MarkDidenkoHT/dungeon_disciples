@@ -1,17 +1,5 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
-const UNIT_TYPES = {
-  melee:  { size: 'tile', icon: '⚔',  label: 'Melee'  },
-  ranged: { size: 'row',  icon: '🏹',  label: 'Ranged' },
-  caster: { size: 'tile', icon: '✦',  label: 'Caster' },
-  healer: { size: 'tile', icon: '✚',  label: 'Healer' },
-};
-
-const UNIT_SIZES = {
-  tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
-  column: { label: '1×2', rowSpan: 2, colSpan: 1 },
-  row:    { label: '2×1', rowSpan: 1, colSpan: 2 },
-};
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -23,15 +11,19 @@ const REGION_META = {
 
 const ROWS = 3;
 const COLS = 2;
+const UNIT_TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
+const SIZE_META = {
+  tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
+  column: { label: '1×2', rowSpan: 2, colSpan: 1 },
+  row:    { label: '2×1', rowSpan: 1, colSpan: 2 },
+};
 
 function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-// Read size directly from unit_data — defined explicitly on every unit in units.js.
-// Falls back to UNIT_TYPES lookup if size is somehow absent (e.g. legacy DB rows).
 function getUnitSize(unit) {
-  return unit?.unit_data?.size ?? (UNIT_TYPES[unit?.unit_data?.type] ?? UNIT_TYPES.melee).size;
+  return unit?.unit_data?.size;
 }
 
 function getCells(anchor, size) {
@@ -53,22 +45,21 @@ function getValidAnchors(size) {
   return anchors;
 }
 
-// Use UNIT_SIZES for display labels and span values — no magic strings.
 function sizeLabel(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).label;
+  return SIZE_META[size].label;
 }
 
 function sizeRowSpan(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).rowSpan;
+  return SIZE_META[size].rowSpan;
 }
 
 function sizeColSpan(size) {
-  return (UNIT_SIZES[size] ?? UNIT_SIZES.tile).colSpan;
+  return SIZE_META[size].colSpan;
 }
 
 function unitTypeIcon(u) {
   const t = u?.unit_data?.type ?? '';
-  return (UNIT_TYPES[t] ?? { icon: '·' }).icon;
+  return UNIT_TYPE_ICONS[t] ?? '·';
 }
 
 export function renderBattlePrep(root, { player, region_id, level }) {
