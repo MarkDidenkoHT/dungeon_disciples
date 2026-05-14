@@ -234,18 +234,54 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     }
   }
 
-  function renderResult() {
+  async function renderResult() {
     const won = battle.winner === 'player';
+
+    const survivors = won
+      ? battle.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId)
+      : [];
+    const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
+
     root.innerHTML = `
       <div class="screen screen-battle-result">
         <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}">
           ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
         </div>
-        <button class="ready-btn" id="back-to-castle">Return to Castle</button>
+        <div class="result-rewards" id="result-rewards">
+          <p style="color:var(--muted)">Calculating rewards…</p>
+        </div>
+        <button class="ready-btn" id="back-to-castle" disabled>Return to Castle</button>
       </div>
     `;
 
-    root.querySelector('#back-to-castle').addEventListener('click', () => navigate('castle', { player }));
+    try {
+      const result = await api('/battle/reward', {
+        chat_id:      player.chat_id,
+        region_id,
+        level,
+        won,
+        survivor_ids: survivorIds,
+      });
+
+      const rewardsEl = root.querySelector('#result-rewards');
+      if (won) {
+        rewardsEl.innerHTML = `
+          <div class="reward-row"><span>🪙 Gold</span><span>+${result.gold}</span></div>
+          <div class="reward-row"><span>💎 Crystals</span><span>+${result.crystal}</span></div>
+          <div class="reward-row"><span>⭐ XP</span><span>+${result.xp_granted} each (${survivorIds.length} survivors)</span></div>
+          ${result.progress_unlocked ? `<div class="reward-row reward-row--unlock"><span>🔓 Level ${result.next_level} unlocked!</span></div>` : ''}
+        `;
+      } else {
+        rewardsEl.innerHTML = `<p style="color:var(--muted)">No rewards on defeat.</p>`;
+      }
+    } catch (err) {
+      root.querySelector('#result-rewards').innerHTML =
+        `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`;
+    }
+
+    const btn = root.querySelector('#back-to-castle');
+    btn.disabled = false;
+    btn.addEventListener('click', () => navigate('castle', { player }));
   }
 
   render();

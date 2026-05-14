@@ -567,4 +567,84 @@ router.post('/progress/unlock', async (req, res) => {
   }
 });
 
+
+router.post('/battle/reward', async (req, res) => {
+  const { chat_id, region_id, level, won, survivor_ids } = req.body;
+  if (!chat_id || !region_id || level === undefined || won === undefined) {
+    return res.status(400).json({ error: 'chat_id, region_id, level, won required' });
+  }
+
+  try {
+    const region = REGIONS.find(r => r.id === region_id);
+    if (!region) return res.status(404).json({ error: 'Region not found' });
+
+    const levelDef = region.difficulties?.[`level_${level}`];
+    if (!levelDef) return res.status(404).json({ error: 'Level not found' });
+
+    const rewards = levelDef.rewards;
+    const result  = { xp_granted: 0, gold: 0, crystal: 0, progress_unlocked: false };
+
+    if (won) {
+      const inventoryRows = await supabase(
+        `/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`
+      );
+
+      const updateItem = async (itemName, amount) => {
+        const row = inventoryRows.find(r => r.item === itemName);
+        if (!row) return;
+        await supabase(`/inventory_and_resources?id=eq.${row.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ amount: Number(row.amount) + amount }),
+        });
+      };
+
+      await updateItem('Gold', rewards.gold);
+      await updateItem(region.crystal_type, rewards.crystal);
+
+      result.gold    = rewards.gold;
+      result.crystal = rewards.crystal;
+
+      if (survivor_ids && survivor_ids.length > 0) {
+        const xpEach = Math.floor(rewards.xp / survivor_ids.length);
+        result.xp_granted = xpEach;
+
+        await Promise.all(survivor_ids.map(async (rosterId) => {
+          const rows = await supabase(
+            `/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,experience`
+          );
+          if (!rows.length) return;
+          const current = rows[0];
+          await supabase(`/roster?id=eq.${current.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ experience: (current.experience ?? 0) + xpEach }),
+          });
+        }));
+      }
+
+      const playerRows = await supabase(
+        `/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
+      );
+      if (playerRows.length) {
+        const progress    = playerRows[0].progress || {};
+        const currentLevel = progress[region_id] ?? 1;
+        const maxLevel     = Object.keys(region.difficulties).length;
+        if (level >= currentLevel && level < maxLevel) {
+          progress[region_id] = level + 1;
+          await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ progress }),
+          });
+          result.progress_unlocked = true;
+          result.next_level        = level + 1;
+        }
+      }
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('battle/reward error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

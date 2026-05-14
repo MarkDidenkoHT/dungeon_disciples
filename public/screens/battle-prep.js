@@ -378,7 +378,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           hasUnitData: !!u.unit_data
         }, null, 2));
         return {
-          id: String(u.id),
+          id:        String(u.id),
+          _rosterId: String(u.id),
           unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
           unit_data: u.unit_data || u
         };

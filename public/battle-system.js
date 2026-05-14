@@ -47,6 +47,7 @@ export class BattleSystem {
 
     return {
       id: unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
+      _rosterId: side === 'player' ? (unit._rosterId || unit.id || null) : null,
       unit_name: unit.unit_name || data.name || 'Unknown',
       unit_data: data,
       side,
