@@ -86,13 +86,25 @@ export class BattleSystem {
         if (t.side === actor.side) return false;
         const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
-          // Range 1 = melee: can only target the nearest enemy column.
-          // Enemy col 0 is the front line (closest to player), col 1 is back.
-          // The actor may only target col 1 if no alive enemies remain in col 0.
-          const enemySide = this.combatants.filter(c => c.side === t.side && c.alive);
-          const frontColEnemies = enemySide.filter(c => cellCol(c.cellIndex) === 0);
-          const targetCol = frontColEnemies.length > 0 ? 0 : 1;
-          return cellCol(t.cellIndex) === targetCol;
+          // Range 1 = melee: can only target the nearest column of the opposing side.
+          //
+          // Grid layout (from left to right in the UI):
+          //   Player col 0 = back (far from enemies)
+          //   Player col 1 = front (closest to enemies)
+          //   Enemy  col 0 = front (closest to player)
+          //   Enemy  col 1 = back (far from player)
+          //
+          // So the "front" column index depends on which side is being targeted:
+          //   Targeting enemies  → front col = 0  (must clear col 0 before reaching col 1)
+          //   Targeting players  → front col = 1  (must clear col 1 before reaching col 0)
+          const targetSide = t.side;
+          const frontCol = targetSide === 'enemy' ? 0 : 1;
+          const backCol  = targetSide === 'enemy' ? 1 : 0;
+
+          const targetSideCombatants = this.combatants.filter(c => c.side === targetSide && c.alive);
+          const frontColAlive = targetSideCombatants.filter(c => cellCol(c.cellIndex) === frontCol);
+          const reachableCol = frontColAlive.length > 0 ? frontCol : backCol;
+          return cellCol(t.cellIndex) === reachableCol;
         }
         return true;
       }
