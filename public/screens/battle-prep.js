@@ -10,6 +10,14 @@ const REGION_META = {
   nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
 };
 
+const CRYSTAL_ICONS = {
+  Crystals_Life:   '🟢',
+  Crystals_Fire:   '🔴',
+  Crystals_Death:  '🟣',
+  Crystals_Frost:  '🔵',
+  Crystals_Nature: '🟡',
+};
+
 const ROWS = 3;
 const COLS = 2;
 const UNIT_TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
@@ -46,17 +54,9 @@ function getValidAnchors(size) {
   return anchors;
 }
 
-function sizeLabel(size) {
-  return SIZE_META[size].label;
-}
-
-function sizeRowSpan(size) {
-  return SIZE_META[size].rowSpan;
-}
-
-function sizeColSpan(size) {
-  return SIZE_META[size].colSpan;
-}
+function sizeLabel(size)   { return SIZE_META[size].label; }
+function sizeRowSpan(size) { return SIZE_META[size].rowSpan; }
+function sizeColSpan(size) { return SIZE_META[size].colSpan; }
 
 function unitTypeIcon(u) {
   const t = u?.unit_data?.type ?? '';
@@ -72,26 +72,50 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <button class="back-btn" id="back-btn">←</button>
         <span class="embark-title">${meta.icon} ${meta.label} — Lv ${level}</span>
       </div>
-      
-      <div class="spell-selection-panel" id="spell-panel">
-        <div class="spell-panel-label">Preparation Spells</div>
-        <div class="spell-selection-grid" id="spell-selection-grid"></div>
+
+      <div class="battle-prep-tabs">
+        <button class="battle-prep-tab-btn active" data-tab="formation">👥 Formation</button>
+        <button class="battle-prep-tab-btn" data-tab="spells">📖 Spells</button>
+        <button class="battle-prep-tab-btn disabled" data-tab="potions">🧪 Potions</button>
       </div>
 
-      <div class="battle-arena">
-        <div class="battle-half battle-half--player">
-          <div class="battle-half-label">Your Formation</div>
-          <div class="battle-grid" id="player-grid"></div>
+      <div class="battle-prep-tab-content active" id="tab-formation">
+        <div class="battle-arena">
+          <div class="battle-half battle-half--player">
+            <div class="battle-half-label">Your Formation</div>
+            <div class="battle-grid" id="player-grid"></div>
+          </div>
+          <div class="battle-vs">⚔</div>
+          <div class="battle-half battle-half--enemy">
+            <div class="battle-half-label">Enemies</div>
+            <div class="battle-grid" id="enemy-grid"></div>
+          </div>
         </div>
-        <div class="battle-vs">⚔</div>
-        <div class="battle-half battle-half--enemy">
-          <div class="battle-half-label">Enemies</div>
-          <div class="battle-grid" id="enemy-grid"></div>
+        <div class="portrait-slider-wrap">
+          <div class="portrait-track" id="portrait-track"></div>
         </div>
       </div>
-      <div class="portrait-slider-wrap">
-        <div class="portrait-track" id="portrait-track"></div>
+
+      <div class="battle-prep-tab-content" id="tab-spells">
+        <div class="embark-spells-header">
+          <div class="resource-display" id="resource-display">
+            <span class="resource-item">
+              <span class="resource-icon">🔮</span>
+              <span class="resource-amount" id="mana-amount">…</span>
+            </span>
+          </div>
+        </div>
+        <div class="embark-spells-grid" id="prep-spells">
+          <p class="placeholder">Loading spells…</p>
+        </div>
       </div>
+
+      <div class="battle-prep-tab-content" id="tab-potions">
+        <div class="potions-placeholder">
+          <p>🧪 Potions feature coming soon…</p>
+        </div>
+      </div>
+
       <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
     </div>
     <div id="modal-overlay" class="modal-overlay hidden">
@@ -105,14 +129,21 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     </div>
   `;
 
-  let roster      = [];
-  let enemies     = [];
-  let heroId      = null;
-  let dragUnit    = null;
-  let hoverCell   = null;
-  const occupied  = {};
+  // ── State ────────────────────────────────────────────────────────────────
+  let roster        = [];
+  let enemies       = [];
+  let heroId        = null;
+  let dragUnit      = null;
+  let hoverCell     = null;
+  const occupied    = {};
   const selectedSpells = [];
 
+  // spell/resource state
+  let playerMana     = 0;
+  let playerCrystals = {};
+  let learnedSpells  = [];
+
+  // ── Modal ────────────────────────────────────────────────────────────────
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
     root.querySelector('#modal-body').innerHTML    = body;
@@ -128,41 +159,141 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   });
   root.querySelector('#back-btn').addEventListener('click', () => navigate('embark', { player }));
 
-  function renderSpellSelection() {
+  // ── Tabs ─────────────────────────────────────────────────────────────────
+  root.querySelectorAll('.battle-prep-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('disabled')) return;
+      const tabName = btn.dataset.tab;
+      root.querySelectorAll('.battle-prep-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      root.querySelectorAll('.battle-prep-tab-content').forEach(c => c.classList.remove('active'));
+      root.querySelector(`#tab-${tabName}`).classList.add('active');
+    });
+  });
+
+  // ── Resources ────────────────────────────────────────────────────────────
+  async function loadResources() {
+    try {
+      const playerData = await api(`/player?chat_id=${player.chat_id}`);
+      playerMana = playerData.mana || 0;
+
+      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
+      if (Array.isArray(inventory)) {
+        for (const row of inventory) {
+          if (row.item in CRYSTAL_ICONS) {
+            playerCrystals[row.item] = row.amount;
+          }
+        }
+      }
+
+      const displayEl = root.querySelector('#resource-display');
+      let html = `
+        <span class="resource-item">
+          <span class="resource-icon">🔮</span>
+          <span class="resource-amount" id="mana-amount">${playerMana}</span>
+        </span>
+      `;
+      for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
+        const amt = playerCrystals[type] || 0;
+        html += `
+          <span class="resource-item">
+            <span class="resource-icon">${icon}</span>
+            <span class="resource-amount">${amt}</span>
+          </span>
+        `;
+      }
+      displayEl.innerHTML = html;
+    } catch (err) {
+      console.error('Failed to load resources:', err);
+      playerMana     = 0;
+      playerCrystals = {};
+    }
+  }
+
+  async function loadLearnedSpells() {
+    try {
+      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
+      if (!response || typeof response !== 'object') return;
+      learnedSpells = Array.isArray(response) ? response : (response.researched_spells || []);
+    } catch (err) {
+      console.error('Failed to load learned spells:', err);
+      learnedSpells = [];
+    }
+  }
+
+  // ── Spell helpers ────────────────────────────────────────────────────────
+  function canAffordSpell(spell) {
+    if (playerMana < spell.cost.mana) return false;
+    const crystalMap = spell.cost.crystals || {};
+    for (const [type, needed] of Object.entries(crystalMap)) {
+      if ((playerCrystals[type] || 0) < needed) return false;
+    }
+    return true;
+  }
+
+  function renderCrystalCosts(crystalMap) {
+    return Object.entries(crystalMap || {})
+      .filter(([, amt]) => amt > 0)
+      .map(([type, amt]) => `<span class="cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`)
+      .join('');
+  }
+
+  async function renderPrepSpells() {
     const factionSpells = SPELLS[player.faction] || [];
-    const grid = root.querySelector('#spell-selection-grid');
-    
-    grid.innerHTML = factionSpells.map(spell => {
-      const isSelected = selectedSpells.some(s => s.id === spell.id);
-      return `
-        <div class="spell-selection-card ${isSelected ? 'spell-selection-card--selected' : ''}" data-spell-id="${spell.id}">
-          <div class="spell-sel-icon">${spell.icon}</div>
-          <div class="spell-sel-name">${spell.name}</div>
-          <div class="spell-sel-cost">🔮 ${spell.cost.mana}</div>
-          ${isSelected ? '<div class="spell-sel-check">✓</div>' : ''}
+    const learned = factionSpells.filter(s => learnedSpells.includes(s.id));
+
+    if (learned.length === 0) {
+      root.querySelector('#prep-spells').innerHTML =
+        '<p class="placeholder">No learned spells. Visit the Spell Tome to research spells.</p>';
+      return;
+    }
+
+    let html = '<div class="embark-spells-list">';
+
+    for (const spell of learned) {
+      const affordable = canAffordSpell(spell);
+      const used       = selectedSpells.some(s => s.id === spell.id);
+
+      html += `
+        <div class="embark-spell-card ${affordable ? '' : 'embark-spell-card--disabled'} ${used ? 'embark-spell-card--used' : ''}"
+             data-spell-id="${spell.id}">
+          <div class="embark-spell-icon">${spell.icon}</div>
+          <div class="embark-spell-info">
+            <div class="embark-spell-name">${spell.name}</div>
+            <div class="embark-spell-desc">${spell.description}</div>
+            <div class="embark-spell-cost">
+              <span class="cost-item">🔮 ${spell.cost.mana}</span>
+              ${renderCrystalCosts(spell.cost.crystals)}
+            </div>
+          </div>
+          <button class="embark-spell-btn ${!affordable || used ? 'disabled' : ''}"
+                  ${!affordable || used ? 'disabled' : ''}>
+            ${used ? 'Used' : 'Use'}
+          </button>
         </div>
       `;
-    }).join('');
+    }
 
-    grid.querySelectorAll('.spell-selection-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const spellId = card.dataset.spellId;
-        const spell = factionSpells.find(s => s.id === spellId);
-        
-        const idx = selectedSpells.findIndex(s => s.id === spell.id);
-        if (idx >= 0) {
-          selectedSpells.splice(idx, 1);
-        } else {
-          selectedSpells.push(spell);
+    html += '</div>';
+    root.querySelector('#prep-spells').innerHTML = html;
+
+    root.querySelectorAll('#prep-spells .embark-spell-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const spellId = btn.closest('.embark-spell-card').dataset.spellId;
+        const spell   = factionSpells.find(s => s.id === spellId);
+        if (spell && canAffordSpell(spell)) {
+          await useSpell(spell, factionSpells);
         }
-        
-        renderSpellSelection();
       });
+    });
 
+    // Right-click detail modal
+    root.querySelectorAll('#prep-spells .embark-spell-card').forEach(card => {
       card.addEventListener('contextmenu', e => {
         e.preventDefault();
         const spellId = card.dataset.spellId;
-        const spell = factionSpells.find(s => s.id === spellId);
+        const spell   = factionSpells.find(s => s.id === spellId);
         if (spell) {
           openModal(spell.name, `
             <div class="spell-detail">
@@ -179,6 +310,36 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
+  async function useSpell(spell, factionSpells) {
+    try {
+      const result = await api('/spells/consume', {
+        chat_id:       player.chat_id,
+        spell_id:      spell.id,
+        mana_cost:     spell.cost.mana,
+        crystals_cost: spell.cost.crystals || {},
+      });
+
+      if (result.success) {
+        playerMana -= spell.cost.mana;
+        for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+          playerCrystals[type] = (playerCrystals[type] || 0) - amt;
+        }
+
+        const idx = selectedSpells.findIndex(s => s.id === spell.id);
+        if (idx < 0) selectedSpells.push(spell);
+
+        await loadResources();
+        await renderPrepSpells();
+      } else {
+        alert(result.message || 'Failed to use spell');
+      }
+    } catch (err) {
+      console.error('Failed to use spell:', err);
+      alert(err.message || 'Failed to use spell');
+    }
+  }
+
+  // ── Grid helpers ─────────────────────────────────────────────────────────
   function placedUnitIds() {
     return new Set(Object.values(occupied).map(p => p.unitId));
   }
@@ -316,6 +477,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  // ── Grid events ──────────────────────────────────────────────────────────
   const playerGrid = root.querySelector('#player-grid');
 
   playerGrid.addEventListener('dragover', e => {
@@ -415,6 +577,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
+  // ── Ready button ─────────────────────────────────────────────────────────
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
 
@@ -422,7 +585,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       .filter(u => placedUnitIds().has(u.id))
       .map(u => {
         console.log('[battle-prep] Passing to battle:', JSON.stringify({
-          id: u.id,
+          id:        u.id,
           unit_name: u.unit_name,
           unit_data: u.unit_data,
           hasUnitData: !!u.unit_data
@@ -445,6 +608,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
+  // ── Init ─────────────────────────────────────────────────────────────────
   async function load() {
     const [rosterData, regionsData] = await Promise.all([
       api(`/roster?chat_id=${player.chat_id}`),
@@ -461,12 +625,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const levelDef  = regionDef?.difficulties?.[`level_${level}`];
     enemies = levelDef?.enemies || [];
 
-    renderSpellSelection();
+    // Load spell resources in parallel with unit/enemy data already fetched
+    await Promise.all([loadResources(), loadLearnedSpells()]);
+
     renderEnemyGrid();
     renderPlayerGrid();
     renderPortraitTrack();
     attachPortraitEvents();
     checkReady();
+    await renderPrepSpells();
   }
 
   load();
