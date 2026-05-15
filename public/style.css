@@ -1990,3 +1990,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 600;
   letter-spacing: 0.03em;
 }
+
+.battle-prep-tab-content {
+  display: none;
+}
+
+.battle-prep-tab-content.active {
+  display: block;
+}

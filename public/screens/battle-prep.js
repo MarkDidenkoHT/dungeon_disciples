@@ -43,17 +43,6 @@ function getCells(anchor, size) {
   return null;
 }
 
-function getValidAnchors(size) {
-  const anchors = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const idx = cellIndex(r, c);
-      if (getCells(idx, size)) anchors.push(idx);
-    }
-  }
-  return anchors;
-}
-
 function sizeLabel(size)   { return SIZE_META[size].label; }
 function sizeRowSpan(size) { return SIZE_META[size].rowSpan; }
 function sizeColSpan(size) { return SIZE_META[size].colSpan; }
