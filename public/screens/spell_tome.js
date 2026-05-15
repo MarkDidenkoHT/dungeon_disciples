@@ -70,6 +70,83 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
+  async function getResearchedSpells() {
+    try {
+      const research = await api(`/spells/research?chat_id=${player.chat_id}`);
+      return research.researched_spells || [];
+    } catch (err) {
+      console.error('Failed to load researched spells:', err);
+      return [];
+    }
+  }
+
+  async function researchSpell(spell) {
+    try {
+      const result = await api('/spells/research', {
+        chat_id: player.chat_id,
+        spell_id: spell.id,
+        faction: player.faction
+      });
+      
+      if (result.success) {
+        playerMana -= spell.cost.mana;
+        await loadResources();
+        await loadSpells();
+        
+        openModal('Spell Researched!', `
+          <div class="spell-research-success">
+            <div class="success-icon">✨</div>
+            <h3>${spell.name} has been added to your spellbook!</h3>
+            <div class="spell-learned-desc">${spell.description}</div>
+            <button class="close-success-btn">Close</button>
+          </div>
+        `);
+        
+        root.querySelector('.close-success-btn')?.addEventListener('click', closeModal);
+      } else {
+        alert(result.message || 'Failed to research spell');
+      }
+    } catch (err) {
+      console.error('Research failed:', err);
+      alert(err.message || 'Failed to research spell');
+    }
+  }
+
+  function showSpellDetails(spell, isResearched) {
+    let bodyHtml = `
+      <div class="spell-detail-modal">
+        <div class="spell-detail-icon">${spell.icon}</div>
+        <div class="spell-detail-name">${spell.name}</div>
+        <div class="spell-detail-rank">Rank ${spell.rank} Spell</div>
+        <div class="spell-detail-desc">${spell.description}</div>
+        <div class="spell-detail-cost">
+          <strong>Cost:</strong> 🔮 ${spell.cost.mana} Mana
+        </div>
+    `;
+    
+    if (spell.params) {
+      bodyHtml += `<div class="spell-detail-params"><strong>Effects:</strong><br>`;
+      if (spell.params.damage) bodyHtml += `• Damage: ${spell.params.damage} ${spell.params.damage_type || ''}<br>`;
+      if (spell.params.heal) bodyHtml += `• Healing: ${spell.params.heal}<br>`;
+      if (spell.params.absorb) bodyHtml += `• Shield: ${spell.params.absorb} damage for ${spell.params.duration || 1} turns<br>`;
+      if (spell.params.splash) bodyHtml += `• Hits all enemies<br>`;
+      if (spell.params.status) bodyHtml += `• Applies: ${spell.params.status}<br>`;
+      bodyHtml += `</div>`;
+    }
+    
+    bodyHtml += `
+        <div class="spell-detail-status">
+          <strong>Status:</strong> ${isResearched ? '<span class="status-researched">✓ Researched</span>' : '<span class="status-locked">🔒 Not Researched</span>'}
+        </div>
+        <button class="spell-detail-close">Close</button>
+      </div>
+    `;
+    
+    openModal(spell.name, bodyHtml);
+    
+    root.querySelector('.spell-detail-close')?.addEventListener('click', closeModal);
+  }
+
   async function loadSpells() {
     const factionSpells = SPELLS[player.faction] || [];
     const researchedSpells = await getResearchedSpells();
@@ -138,86 +215,13 @@ export function renderSpellTome(root, { player }) {
       });
     });
   }
-  
-  async function getResearchedSpells() {
-    try {
-      const research = await api(`/spells/research?chat_id=${player.chat_id}`);
-      return research.researched_spells || [];
-    } catch (err) {
-      console.error('Failed to load researched spells:', err);
-      return [];
-    }
-  }
-  
-  async function researchSpell(spell) {
-    try {
-      const result = await api('/spells/research', {
-        chat_id: player.chat_id,
-        spell_id: spell.id,
-        faction: player.faction
-      });
-      
-      if (result.success) {
-        playerMana -= spell.cost.mana;
-        await loadResources();
-        await loadSpells();
-        
-        openModal('Spell Researched!', `
-          <div class="spell-research-success">
-            <div class="success-icon">✨</div>
-            <h3>${spell.name} has been added to your spellbook!</h3>
-            <div class="spell-learned-desc">${spell.description}</div>
-            <button class="close-success-btn">Close</button>
-          </div>
-        `);
-        
-        root.querySelector('.close-success-btn')?.addEventListener('click', closeModal);
-      } else {
-        alert(result.message || 'Failed to research spell');
-      }
-    } catch (err) {
-      console.error('Research failed:', err);
-      alert(err.message || 'Failed to research spell');
-    }
-  }
-  
-  function showSpellDetails(spell, isResearched) {
-    let bodyHtml = `
-      <div class="spell-detail-modal">
-        <div class="spell-detail-icon">${spell.icon}</div>
-        <div class="spell-detail-name">${spell.name}</div>
-        <div class="spell-detail-rank">Rank ${spell.rank} Spell</div>
-        <div class="spell-detail-desc">${spell.description}</div>
-        <div class="spell-detail-cost">
-          <strong>Cost:</strong> 🔮 ${spell.cost.mana} Mana
-        </div>
-    `;
-    
-    if (spell.params) {
-      bodyHtml += `<div class="spell-detail-params"><strong>Effects:</strong><br>`;
-      if (spell.params.damage) bodyHtml += `• Damage: ${spell.params.damage} ${spell.params.damage_type || ''}<br>`;
-      if (spell.params.heal) bodyHtml += `• Healing: ${spell.params.heal}<br>`;
-      if (spell.params.absorb) bodyHtml += `• Shield: ${spell.params.absorb} damage for ${spell.params.duration || 1} turns<br>`;
-      if (spell.params.splash) bodyHtml += `• Hits all enemies<br>`;
-      if (spell.params.status) bodyHtml += `• Applies: ${spell.params.status}<br>`;
-      bodyHtml += `</div>`;
-    }
-    
-    bodyHtml += `
-        <div class="spell-detail-status">
-          <strong>Status:</strong> ${isResearched ? '<span class="status-researched">✓ Researched</span>' : '<span class="status-locked">🔒 Not Researched</span>'}
-        </div>
-        <button class="spell-detail-close">Close</button>
-      </div>
-    `;
-    
-    openModal(spell.name, bodyHtml);
-    
-    root.querySelector('.spell-detail-close')?.addEventListener('click', closeModal);
+
+  async function init() {
+    await loadResources();
+    await loadSpells();
   }
 
-  await loadResources();
-  await loadSpells();
+  init();
 
   root.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
