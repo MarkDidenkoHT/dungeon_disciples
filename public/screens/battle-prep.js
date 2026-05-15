@@ -69,8 +69,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   root.innerHTML = `
     <div class="screen screen-battle-prep">
       <div class="embark-header">
-        <button class="back-btn" id="back-btn">←</button>
         <span class="embark-title">${meta.icon} ${meta.label} — Lv ${level}</span>
+      </div>
+
+      <div class="battle-arena">
+        <div class="battle-half battle-half--player">
+          <div class="battle-half-label">Your Formation</div>
+          <div class="battle-grid" id="player-grid"></div>
+        </div>
+        <div class="battle-vs">⚔</div>
+        <div class="battle-half battle-half--enemy">
+          <div class="battle-half-label">Enemies</div>
+          <div class="battle-grid" id="enemy-grid"></div>
+        </div>
       </div>
 
       <div class="battle-prep-tabs">
@@ -80,17 +91,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
-        <div class="battle-arena">
-          <div class="battle-half battle-half--player">
-            <div class="battle-half-label">Your Formation</div>
-            <div class="battle-grid" id="player-grid"></div>
-          </div>
-          <div class="battle-vs">⚔</div>
-          <div class="battle-half battle-half--enemy">
-            <div class="battle-half-label">Enemies</div>
-            <div class="battle-grid" id="enemy-grid"></div>
-          </div>
-        </div>
         <div class="portrait-slider-wrap">
           <div class="portrait-track" id="portrait-track"></div>
         </div>
@@ -129,7 +129,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     </div>
   `;
 
-  // ── State ────────────────────────────────────────────────────────────────
   let roster        = [];
   let enemies       = [];
   let heroId        = null;
@@ -138,12 +137,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   const occupied    = {};
   const selectedSpells = [];
 
-  // spell/resource state
   let playerMana     = 0;
   let playerCrystals = {};
   let learnedSpells  = [];
 
-  // ── Modal ────────────────────────────────────────────────────────────────
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
     root.querySelector('#modal-body').innerHTML    = body;
@@ -157,9 +154,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   root.querySelector('#modal-overlay').addEventListener('click', e => {
     if (e.target === root.querySelector('#modal-overlay')) closeModal();
   });
-  root.querySelector('#back-btn').addEventListener('click', () => navigate('embark', { player }));
 
-  // ── Tabs ─────────────────────────────────────────────────────────────────
   root.querySelectorAll('.battle-prep-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.classList.contains('disabled')) return;
@@ -171,7 +166,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   });
 
-  // ── Resources ────────────────────────────────────────────────────────────
   async function loadResources() {
     try {
       const playerData = await api(`/player?chat_id=${player.chat_id}`);
@@ -221,7 +215,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  // ── Spell helpers ────────────────────────────────────────────────────────
   function canAffordSpell(spell) {
     if (playerMana < spell.cost.mana) return false;
     const crystalMap = spell.cost.crystals || {};
@@ -288,7 +281,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       });
     });
 
-    // Right-click detail modal
     root.querySelectorAll('#prep-spells .embark-spell-card').forEach(card => {
       card.addEventListener('contextmenu', e => {
         e.preventDefault();
@@ -339,7 +331,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  // ── Grid helpers ─────────────────────────────────────────────────────────
   function placedUnitIds() {
     return new Set(Object.values(occupied).map(p => p.unitId));
   }
@@ -477,7 +468,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  // ── Grid events ──────────────────────────────────────────────────────────
   const playerGrid = root.querySelector('#player-grid');
 
   playerGrid.addEventListener('dragover', e => {
@@ -577,19 +567,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
-  // ── Ready button ─────────────────────────────────────────────────────────
   root.querySelector('#ready-btn').addEventListener('click', () => {
     if (!placedUnitIds().has(heroId)) return;
 
     const playerUnits = roster
       .filter(u => placedUnitIds().has(u.id))
       .map(u => {
-        console.log('[battle-prep] Passing to battle:', JSON.stringify({
-          id:        u.id,
-          unit_name: u.unit_name,
-          unit_data: u.unit_data,
-          hasUnitData: !!u.unit_data
-        }, null, 2));
         return {
           id:        String(u.id),
           _rosterId: String(u.id),
@@ -608,7 +591,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
-  // ── Init ─────────────────────────────────────────────────────────────────
   async function load() {
     const [rosterData, regionsData] = await Promise.all([
       api(`/roster?chat_id=${player.chat_id}`),
@@ -625,7 +607,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const levelDef  = regionDef?.difficulties?.[`level_${level}`];
     enemies = levelDef?.enemies || [];
 
-    // Load spell resources in parallel with unit/enemy data already fetched
     await Promise.all([loadResources(), loadLearnedSpells()]);
 
     renderEnemyGrid();
