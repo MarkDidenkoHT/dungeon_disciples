@@ -169,7 +169,7 @@ router.post('/player/faction', async (req, res) => {
     const [updated] = await Promise.all([
       supabase(`/players?id=eq.${player_id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ faction, hero }),
+        body: JSON.stringify({ faction, hero, learned_spells: FACTION_STARTING_SPELLS[faction] || [] }),
       }),
       supabase('/roster', {
         method: 'POST',
@@ -643,6 +643,127 @@ router.post('/battle/reward', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('battle/reward error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const FACTION_STARTING_SPELLS = {
+  empire:          ['e_spell_1', 'e_spell_2'],
+  dungeon:         ['d_spell_1', 'd_spell_2'],
+  grail_of_sorrow: ['g_spell_1', 'g_spell_2'],
+};
+
+const FACTION_CRYSTAL_MAP = {
+  empire:          'Crystals_Life',
+  dungeon:         'Crystals_Death',
+  grail_of_sorrow: 'Crystals_Fire',
+};
+
+router.get('/spells/research', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    const learned = rows[0].learned_spells || [];
+    res.json({ researched_spells: learned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/spells/research', async (req, res) => {
+  const { chat_id, spell_id, faction } = req.body;
+  if (!chat_id || !spell_id || !faction) return res.status(400).json({ error: 'chat_id, spell_id, faction required' });
+
+  const { SPELLS } = require('../data/spells');
+  const factionSpells = SPELLS[faction] || [];
+  const spell = factionSpells.find(s => s.id === spell_id);
+  if (!spell) return res.status(404).json({ error: 'Spell not found' });
+
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player = rows[0];
+    const currentMana = player.mana || 0;
+    const learned = player.learned_spells || [];
+
+    if (learned.includes(spell_id)) {
+      return res.status(400).json({ error: 'Spell already researched' });
+    }
+
+    if (currentMana < spell.cost.mana) {
+      return res.status(400).json({ error: `Not enough Mana. Need ${spell.cost.mana}` });
+    }
+
+    const newMana = currentMana - spell.cost.mana;
+    const newLearned = [...learned, spell_id];
+
+    await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ mana: newMana, learned_spells: newLearned }),
+    });
+
+    res.json({ success: true, mana_remaining: newMana, learned_spells: newLearned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/spells/consume', async (req, res) => {
+  const { chat_id, spell_id, mana_cost, crystals_cost } = req.body;
+  if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
+
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player = rows[0];
+    const learned = player.learned_spells || [];
+
+    if (!learned.includes(spell_id)) {
+      return res.status(400).json({ error: 'Spell not learned' });
+    }
+
+    const currentMana = player.mana || 0;
+    const manaCost = mana_cost || 0;
+
+    if (currentMana < manaCost) {
+      return res.status(400).json({ error: `Not enough Mana. Need ${manaCost}` });
+    }
+
+    const crystalMap = crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {};
+    const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
+
+    if (crystalEntries.length > 0) {
+      const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+
+      for (const [crystalType, needed] of crystalEntries) {
+        const row = inventoryRows.find(r => r.item === crystalType);
+        if (!row || row.amount < needed) {
+          return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
+        }
+      }
+
+      await Promise.all(crystalEntries.map(([crystalType, needed]) => {
+        const row = inventoryRows.find(r => r.item === crystalType);
+        return supabase(`/inventory_and_resources?id=eq.${row.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ amount: row.amount - needed }),
+        });
+      }));
+    }
+
+    const newMana = currentMana - manaCost;
+    await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ mana: newMana }),
+    });
+
+    res.json({ success: true, mana_remaining: newMana });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

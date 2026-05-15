@@ -882,6 +882,248 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: var(--muted);
 }
 
+.embark-card--selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.embark-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.embark-header {
+  padding: 10px 14px 4px;
+}
+
+.embark-header h2 {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.embark-regions-grid {
+  padding: 6px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 38vh;
+  flex-shrink: 0;
+}
+
+.embark-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.embark-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.embark-tab-btn {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.embark-tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.embark-tab-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.embark-tab-content {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+
+.embark-tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.embark-unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.embark-unit-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.embark-unit-item.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.embark-unit-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.embark-unit-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.embark-unit-level {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.embark-spells-header {
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.resource-display {
+  display: flex;
+  gap: 14px;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.resource-icon {
+  font-size: 1rem;
+}
+
+.embark-spells-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.embark-spell-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.embark-spell-card--disabled {
+  opacity: 0.5;
+}
+
+.embark-spell-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.embark-spell-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.embark-spell-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.embark-spell-desc {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.embark-spell-cost {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cost-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.embark-spell-btn {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.embark-spell-btn.disabled,
+.embark-spell-btn:disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.potions-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 24px 0;
+}
+
+.placeholder {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 20px 0;
+}
+
 .battle-arena {
   flex: 1;
   display: flex;

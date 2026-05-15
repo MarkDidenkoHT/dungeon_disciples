@@ -2,6 +2,21 @@ import { api } from '../main.js';
 import { navigate } from '../main.js';
 import { SPELLS } from '../../data/spells.js';
 
+const CRYSTAL_ICONS = {
+  Crystals_Life:   '🟢',
+  Crystals_Fire:   '🔴',
+  Crystals_Death:  '🟣',
+  Crystals_Frost:  '🔵',
+  Crystals_Nature: '🟡',
+};
+
+function renderCrystalCosts(crystalMap) {
+  return Object.entries(crystalMap || {})
+    .filter(([, amt]) => amt > 0)
+    .map(([type, amt]) => `<span class="cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`)
+    .join('');
+}
+
 export function renderSpellTome(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-spelltome">
@@ -55,17 +70,8 @@ export function renderSpellTome(root, { player }) {
 
   async function loadResources() {
     try {
-      const response = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      
-      // Validate response is an array (JSON, not HTML)
-      if (!Array.isArray(response)) {
-        console.error('Invalid inventory response:', response);
-        playerMana = 0;
-        return;
-      }
-      
-      const mana = response.find(r => r.item === 'Mana') || { amount: 0 };
-      playerMana = mana.amount;
+      const playerData = await api(`/player?chat_id=${player.chat_id}`);
+      playerMana = playerData.mana || 0;
       
       root.querySelector('#res-mana').innerHTML = `
         <div class="res-item">
@@ -149,7 +155,7 @@ export function renderSpellTome(root, { player }) {
         <div class="spell-detail-cost">
           <strong>Cost:</strong> 
           <span class="cost-item">🔮 ${spell.cost.mana} Mana</span>
-          <span class="cost-item">💎 ${spell.cost.crystals} Crystals</span>
+          ${renderCrystalCosts(spell.cost.crystals)}
         </div>
     `;
     
@@ -203,7 +209,7 @@ export function renderSpellTome(root, { player }) {
             <div class="spell-desc">${spell.description}</div>
             <div class="spell-cost">
               <span class="mana-icon">🔮</span> ${spell.cost.mana} Mana
-              <span class="crystals-icon">💎</span> ${spell.cost.crystals} Crystals
+              ${renderCrystalCosts(spell.cost.crystals)}
               ${!isResearched ? `<button class="research-btn ${!canAfford ? 'research-btn--disabled' : ''}" data-spell-id="${spell.id}" ${!canAfford ? 'disabled' : ''}>Research</button>` : ''}
             </div>
           </div>
