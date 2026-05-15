@@ -55,8 +55,16 @@ export function renderSpellTome(root, { player }) {
 
   async function loadResources() {
     try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      const mana = inventory.find(r => r.item === 'Mana') || { amount: 0 };
+      const response = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
+      
+      // Validate response is an array (JSON, not HTML)
+      if (!Array.isArray(response)) {
+        console.error('Invalid inventory response:', response);
+        playerMana = 0;
+        return;
+      }
+      
+      const mana = response.find(r => r.item === 'Mana') || { amount: 0 };
       playerMana = mana.amount;
       
       root.querySelector('#res-mana').innerHTML = `
@@ -67,13 +75,26 @@ export function renderSpellTome(root, { player }) {
       `;
     } catch (err) {
       console.error('Failed to load resources:', err);
+      playerMana = 0;
     }
   }
 
   async function getResearchedSpells() {
     try {
-      const research = await api(`/spells/research?chat_id=${player.chat_id}`);
-      return research.researched_spells || [];
+      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
+      
+      // Validate response is an object with researched_spells array
+      if (!response || typeof response !== 'object') {
+        console.error('Invalid researched spells response:', response);
+        return [];
+      }
+      
+      // Handle different response formats
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
+      return response.researched_spells || [];
     } catch (err) {
       console.error('Failed to load researched spells:', err);
       return [];
@@ -87,6 +108,12 @@ export function renderSpellTome(root, { player }) {
         spell_id: spell.id,
         faction: player.faction
       });
+      
+      // Validate response is an object
+      if (!result || typeof result !== 'object') {
+        alert('Invalid server response. Please try again.');
+        return;
+      }
       
       if (result.success) {
         playerMana -= spell.cost.mana;
