@@ -1,5 +1,6 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
+import { SPELLS }     from '../../data/spells.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -71,6 +72,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <button class="back-btn" id="back-btn">←</button>
         <span class="embark-title">${meta.icon} ${meta.label} — Lv ${level}</span>
       </div>
+      
+      <div class="spell-selection-panel" id="spell-panel">
+        <div class="spell-panel-label">Preparation Spells</div>
+        <div class="spell-selection-grid" id="spell-selection-grid"></div>
+      </div>
+
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation</div>
@@ -104,6 +111,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let dragUnit    = null;
   let hoverCell   = null;
   const occupied  = {};
+  const selectedSpells = [];
 
   function openModal(title, body) {
     root.querySelector('#modal-title').textContent = title;
@@ -119,6 +127,57 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (e.target === root.querySelector('#modal-overlay')) closeModal();
   });
   root.querySelector('#back-btn').addEventListener('click', () => navigate('embark', { player }));
+
+  function renderSpellSelection() {
+    const factionSpells = SPELLS[player.faction] || [];
+    const grid = root.querySelector('#spell-selection-grid');
+    
+    grid.innerHTML = factionSpells.map(spell => {
+      const isSelected = selectedSpells.some(s => s.id === spell.id);
+      return `
+        <div class="spell-selection-card ${isSelected ? 'spell-selection-card--selected' : ''}" data-spell-id="${spell.id}">
+          <div class="spell-sel-icon">${spell.icon}</div>
+          <div class="spell-sel-name">${spell.name}</div>
+          <div class="spell-sel-cost">🔮 ${spell.cost.mana}</div>
+          ${isSelected ? '<div class="spell-sel-check">✓</div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.spell-selection-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const spellId = card.dataset.spellId;
+        const spell = factionSpells.find(s => s.id === spellId);
+        
+        const idx = selectedSpells.findIndex(s => s.id === spell.id);
+        if (idx >= 0) {
+          selectedSpells.splice(idx, 1);
+        } else {
+          selectedSpells.push(spell);
+        }
+        
+        renderSpellSelection();
+      });
+
+      card.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        const spellId = card.dataset.spellId;
+        const spell = factionSpells.find(s => s.id === spellId);
+        if (spell) {
+          openModal(spell.name, `
+            <div class="spell-detail">
+              <div class="spell-detail-icon">${spell.icon}</div>
+              <div class="spell-detail-desc">${spell.description}</div>
+              <div class="spell-detail-cost">Cost: 🔮 ${spell.cost.mana} Mana</div>
+              <div class="spell-detail-type">Type: ${spell.effect_type}</div>
+              <button class="close-modal-btn">Close</button>
+            </div>
+          `);
+          root.querySelector('.close-modal-btn')?.addEventListener('click', closeModal);
+        }
+      });
+    });
+  }
 
   function placedUnitIds() {
     return new Set(Object.values(occupied).map(p => p.unitId));
@@ -383,7 +442,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
-    navigate('battle', { player, region_id, level, playerUnits, enemies, placement });
+    navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
   async function load() {
@@ -402,6 +461,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const levelDef  = regionDef?.difficulties?.[`level_${level}`];
     enemies = levelDef?.enemies || [];
 
+    renderSpellSelection();
     renderEnemyGrid();
     renderPlayerGrid();
     renderPortraitTrack();
