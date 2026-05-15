@@ -1,6 +1,6 @@
-import { api }      from '../main.js';
+import { api } from '../main.js';
 import { navigate } from '../main.js';
-import { SPELLS } from '../../data/spells.js';
+import { renderSpellTome } from './spell_tome.js';
 
 let UNITS = null;
 
@@ -119,42 +119,6 @@ export function renderCastle(root, { player }) {
     }
     return null;
   }
-
-      function renderSpells() {
-      const factionSpells = SPELLS[player.faction] || [];
-      
-      let html = `
-        <div class="spells-container">
-          <div class="spells-header">
-            <h2>🪄 ${player.faction.toUpperCase()} Spellbook</h2>
-            <p class="spells-subtitle">Powerful abilities unlocked through research</p>
-          </div>
-          
-          <div class="spells-grid">
-            ${factionSpells.map(spell => `
-              <div class="spell-card">
-                <div class="spell-icon">${spell.icon}</div>
-                <div class="spell-info">
-                  <div class="spell-name">${spell.name} <span class="spell-rank">R${spell.rank}</span></div>
-                  <div class="spell-desc">${spell.description}</div>
-                  <div class="spell-cost">
-                    <span class="mana-icon">🔮</span> ${spell.cost.mana} Mana
-                  </div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          
-          ${factionSpells.length === 0 ? `
-            <div class="empty-spells">
-              <p>No spells available yet for this faction.</p>
-            </div>
-          ` : ''}
-        </div>
-      `;
-
-      root.querySelector('#castle-content').innerHTML = html;
-    }
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
@@ -499,18 +463,18 @@ export function renderCastle(root, { player }) {
   load();
 
   root.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.classList.contains('disabled')) return;
-        
-        const screen = btn.dataset.screen;
-        
-        if (screen === 'spells') {
-          renderSpells();
-        } else if (screen === 'castle') {
-          renderBuildings();
-        } else {
-          navigate(screen, { player });
-        }
-      });
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('disabled')) return;
+      
+      const screen = btn.dataset.screen;
+      
+      if (screen === 'spells') {
+        renderSpellTome(root, { player });
+      } else if (screen === 'castle') {
+        renderBuildings();
+      } else {
+        navigate(screen, { player });
+      }
     });
+  });
 }
