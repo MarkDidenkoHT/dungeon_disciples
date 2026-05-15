@@ -29,6 +29,11 @@ export function renderEmbark(root, { player }) {
         <div class="embark-regions-grid" id="embark-regions"></div>
 
         <div class="embark-controls">
+          <div class="embark-march-row">
+            <button class="embark-march-btn" id="embark-march-btn" disabled>
+              Select a region to march
+            </button>
+          </div>
           <div class="embark-tabs">
             <button class="embark-tab-btn active" data-tab="units">
               👥 Assign Units
@@ -311,8 +316,14 @@ export function renderEmbark(root, { player }) {
       root.querySelectorAll('.embark-card[data-id]').forEach(card => {
         card.addEventListener('click', () => {
           selectedRegion = card.dataset.id;
+          const selectedLevel = parseInt(card.dataset.level) || 1;
           root.querySelectorAll('.embark-card[data-id]').forEach(c => c.classList.remove('embark-card--selected'));
           card.classList.add('embark-card--selected');
+
+          const marchBtn = root.querySelector('#embark-march-btn');
+          marchBtn.disabled = false;
+          marchBtn.textContent = `March to ${card.querySelector('.embark-card-label').textContent} — Lv ${selectedLevel}`;
+          marchBtn.onclick = () => navigate('battle-prep', { player, region_id: selectedRegion, level: selectedLevel });
         });
       });
     } catch (err) {

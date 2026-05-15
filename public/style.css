@@ -925,6 +925,31 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow: hidden;
 }
 
+.embark-march-row {
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+}
+
+.embark-march-btn {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.embark-march-btn:disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .embark-tabs {
   display: flex;
   border-bottom: 1px solid var(--border);
