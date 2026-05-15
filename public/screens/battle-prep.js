@@ -86,22 +86,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tab-content" id="tab-spells">
-        <div class="embark-spells-header">
-          <div class="resource-display" id="resource-display">
-            <span class="resource-item">
-              <span class="resource-icon">🔮</span>
-              <span class="resource-amount" id="mana-amount">…</span>
-            </span>
-          </div>
-        </div>
-        <div class="embark-spells-grid" id="prep-spells">
-          <p class="placeholder">Loading spells…</p>
+        <div class="spell-resources-bar" id="resource-display"></div>
+        <div class="spell-track-wrap">
+          <div class="spell-track" id="prep-spells"></div>
         </div>
       </div>
 
       <div class="battle-prep-tab-content" id="tab-potions">
         <div class="potions-placeholder">
-          <p>🧪 Potions feature coming soon…</p>
+          <p>🧪 Potions coming soon</p>
         </div>
       </div>
 
@@ -173,7 +166,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       let html = `
         <span class="resource-item">
           <span class="resource-icon">🔮</span>
-          <span class="resource-amount" id="mana-amount">${playerMana}</span>
+          <span class="resource-amount">${playerMana}</span>
         </span>
       `;
       for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
@@ -213,80 +206,71 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
-  function renderCrystalCosts(crystalMap) {
-    return Object.entries(crystalMap || {})
-      .filter(([, amt]) => amt > 0)
-      .map(([type, amt]) => `<span class="cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`)
-      .join('');
+  function spellCostLabel(spell) {
+    let parts = [`🔮${spell.cost.mana}`];
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) parts.push(`${CRYSTAL_ICONS[type] || '💎'}${amt}`);
+    }
+    return parts.join(' ');
   }
 
   async function renderPrepSpells() {
     const factionSpells = SPELLS[player.faction] || [];
     const learned = factionSpells.filter(s => learnedSpells.includes(s.id));
+    const track = root.querySelector('#prep-spells');
 
     if (learned.length === 0) {
-      root.querySelector('#prep-spells').innerHTML =
-        '<p class="placeholder">No learned spells. Visit the Spell Tome to research spells.</p>';
+      track.innerHTML = `<span class="portrait-name" style="padding:0 12px;color:var(--muted)">No spells learned</span>`;
       return;
     }
 
-    let html = '<div class="embark-spells-list">';
-
-    for (const spell of learned) {
+    track.innerHTML = learned.map(spell => {
       const affordable = canAffordSpell(spell);
       const used       = selectedSpells.some(s => s.id === spell.id);
-
-      html += `
-        <div class="embark-spell-card ${affordable ? '' : 'embark-spell-card--disabled'} ${used ? 'embark-spell-card--used' : ''}"
+      return `
+        <div class="spell-icon-card
+          ${!affordable ? 'spell-icon-card--disabled' : ''}
+          ${used ? 'spell-icon-card--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="embark-spell-icon">${spell.icon}</div>
-          <div class="embark-spell-info">
-            <div class="embark-spell-name">${spell.name}</div>
-            <div class="embark-spell-desc">${spell.description}</div>
-            <div class="embark-spell-cost">
-              <span class="cost-item">🔮 ${spell.cost.mana}</span>
-              ${renderCrystalCosts(spell.cost.crystals)}
-            </div>
-          </div>
-          <button class="embark-spell-btn ${!affordable || used ? 'disabled' : ''}"
-                  ${!affordable || used ? 'disabled' : ''}>
-            ${used ? 'Used' : 'Use'}
-          </button>
+          ${used ? '<span class="spell-icon-used-badge">✓</span>' : ''}
+          <div class="spell-icon-art">${spell.icon}</div>
+          <div class="spell-icon-name">${spell.name}</div>
+          <div class="spell-icon-cost">${spellCostLabel(spell)}</div>
         </div>
       `;
-    }
+    }).join('');
 
-    html += '</div>';
-    root.querySelector('#prep-spells').innerHTML = html;
+    track.querySelectorAll('.spell-icon-card').forEach(card => {
+      const spellId = card.dataset.spellId;
+      const spell   = factionSpells.find(s => s.id === spellId);
+      if (!spell) return;
 
-    root.querySelectorAll('#prep-spells .embark-spell-btn:not([disabled])').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const spellId = btn.closest('.embark-spell-card').dataset.spellId;
-        const spell   = factionSpells.find(s => s.id === spellId);
-        if (spell && canAffordSpell(spell)) {
-          await useSpell(spell, factionSpells);
-        }
-      });
-    });
-
-    root.querySelectorAll('#prep-spells .embark-spell-card').forEach(card => {
-      card.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        const spellId = card.dataset.spellId;
-        const spell   = factionSpells.find(s => s.id === spellId);
-        if (spell) {
+      card.addEventListener('click', async () => {
+        const used = selectedSpells.some(s => s.id === spell.id);
+        if (used || !canAffordSpell(spell)) {
           openModal(spell.name, `
             <div class="spell-detail">
               <div class="spell-detail-icon">${spell.icon}</div>
               <div class="spell-detail-desc">${spell.description}</div>
-              <div class="spell-detail-cost">Cost: 🔮 ${spell.cost.mana} Mana</div>
+              <div class="spell-detail-cost">Cost: ${spellCostLabel(spell)}</div>
               <div class="spell-detail-type">Type: ${spell.effect_type}</div>
-              <button class="close-modal-btn">Close</button>
             </div>
           `);
-          root.querySelector('.close-modal-btn')?.addEventListener('click', closeModal);
+          return;
         }
+        await useSpell(spell, factionSpells);
+      });
+
+      card.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        openModal(spell.name, `
+          <div class="spell-detail">
+            <div class="spell-detail-icon">${spell.icon}</div>
+            <div class="spell-detail-desc">${spell.description}</div>
+            <div class="spell-detail-cost">Cost: ${spellCostLabel(spell)}</div>
+            <div class="spell-detail-type">Type: ${spell.effect_type}</div>
+          </div>
+        `);
       });
     });
   }
@@ -408,7 +392,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const available = roster.filter(u => !placed.has(u.id));
 
     if (!available.length) {
-      track.innerHTML = `<span class="placeholder" style="padding:0 16px">All units placed</span>`;
+      track.innerHTML = `<span class="portrait-name" style="padding:0 12px">All units placed</span>`;
       return;
     }
 
