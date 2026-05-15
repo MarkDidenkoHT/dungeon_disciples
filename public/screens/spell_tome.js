@@ -147,7 +147,9 @@ export function renderSpellTome(root, { player }) {
         <div class="spell-detail-rank">Rank ${spell.rank} Spell</div>
         <div class="spell-detail-desc">${spell.description}</div>
         <div class="spell-detail-cost">
-          <strong>Cost:</strong> 🔮 ${spell.cost.mana} Mana
+          <strong>Cost:</strong> 
+          <span class="cost-item">🔮 ${spell.cost.mana} Mana</span>
+          <span class="cost-item">💎 ${spell.cost.crystals} Crystals</span>
         </div>
     `;
     
@@ -201,7 +203,8 @@ export function renderSpellTome(root, { player }) {
             <div class="spell-desc">${spell.description}</div>
             <div class="spell-cost">
               <span class="mana-icon">🔮</span> ${spell.cost.mana} Mana
-              ${!isResearched ? `<button class="research-btn ${!canAfford ? 'research-btn--disabled' : ''}" data-spell-id="${spell.id}" ${!canAfford ? 'disabled' : ''}>Research (${spell.cost.mana} 🔮)</button>` : ''}
+              <span class="crystals-icon">💎</span> ${spell.cost.crystals} Crystals
+              ${!isResearched ? `<button class="research-btn ${!canAfford ? 'research-btn--disabled' : ''}" data-spell-id="${spell.id}" ${!canAfford ? 'disabled' : ''}>Research</button>` : ''}
             </div>
           </div>
         </div>
