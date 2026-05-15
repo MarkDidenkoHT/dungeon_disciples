@@ -74,9 +74,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tabs">
-        <button class="battle-prep-tab-btn active" data-tab="formation">👥 Formation</button>
-        <button class="battle-prep-tab-btn" data-tab="spells">📖 Spells</button>
-        <button class="battle-prep-tab-btn disabled" data-tab="potions">🧪 Potions</button>
+        <button class="battle-prep-tab-btn active" data-tab="formation">Formation</button>
+        <button class="battle-prep-tab-btn" data-tab="spells">Spells</button>
+        <button class="battle-prep-tab-btn disabled" data-tab="potions">Potions</button>
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
