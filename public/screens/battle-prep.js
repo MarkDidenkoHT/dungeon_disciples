@@ -245,24 +245,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const spell   = factionSpells.find(s => s.id === spellId);
       if (!spell) return;
 
-      card.addEventListener('click', async () => {
-        const used = selectedSpells.some(s => s.id === spell.id);
-        if (used || !canAffordSpell(spell)) {
-          openModal(spell.name, `
-            <div class="spell-detail">
-              <div class="spell-detail-icon">${spell.icon}</div>
-              <div class="spell-detail-desc">${spell.description}</div>
-              <div class="spell-detail-cost">Cost: ${spellCostLabel(spell)}</div>
-              <div class="spell-detail-type">Type: ${spell.effect_type}</div>
-            </div>
-          `);
-          return;
-        }
-        await useSpell(spell, factionSpells);
-      });
+      let pressTimer  = null;
+      let didLongPress = false;
 
-      card.addEventListener('contextmenu', e => {
-        e.preventDefault();
+      function openSpellDetail() {
         openModal(spell.name, `
           <div class="spell-detail">
             <div class="spell-detail-icon">${spell.icon}</div>
@@ -271,6 +257,36 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <div class="spell-detail-type">Type: ${spell.effect_type}</div>
           </div>
         `);
+      }
+
+      card.addEventListener('pointerdown', () => {
+        didLongPress = false;
+        pressTimer = setTimeout(() => {
+          didLongPress = true;
+          openSpellDetail();
+        }, 500);
+      });
+
+      card.addEventListener('pointerup', () => {
+        clearTimeout(pressTimer);
+      });
+
+      card.addEventListener('pointermove', () => {
+        clearTimeout(pressTimer);
+      });
+
+      card.addEventListener('pointercancel', () => {
+        clearTimeout(pressTimer);
+      });
+
+      card.addEventListener('click', async () => {
+        if (didLongPress) return;
+        const used = selectedSpells.some(s => s.id === spell.id);
+        if (used || !canAffordSpell(spell)) {
+          openSpellDetail();
+          return;
+        }
+        await useSpell(spell, factionSpells);
       });
     });
   }
