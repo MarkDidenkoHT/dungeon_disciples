@@ -236,24 +236,23 @@ export function renderRoster(root, { player }) {
           data-ability-type="${type}"
         >
           <img class="ability-icon-img" src="${imgSrc}" alt="${def.name}"
-            onerror="this.closest('.ability-icon').style.display='none'">
+            onerror="this.style.visibility='hidden'">
         </button>`;
     }
 
     const passiveHtml = abilityIconHtml(passiveKey, 'passive');
     const activeHtml  = abilityIconHtml(activeKey, 'active');
-    const hasAnyAbility = passiveHtml || activeHtml;
 
-    const abilitiesHtml = hasAnyAbility ? `
+    const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
           ${passiveHtml}
           ${activeHtml}
         </div>
-        <div class="ability-detail-panel" id="ability-detail-${u.id}">
-          <div class="ability-detail-desc" id="ability-desc-${u.id}"></div>
+        <div class="ability-detail-panel">
+          <div class="ability-detail-desc"></div>
         </div>
-      </div>` : '';
+      </div>`;
 
     return `
       <div class="roster-slide">
@@ -325,6 +324,21 @@ export function renderRoster(root, { player }) {
     goTo(0);
   }
 
+  function showInPanel(slide, text, activeKey) {
+    const panel = slide.querySelector('.ability-detail-panel');
+    const desc  = slide.querySelector('.ability-detail-desc');
+    if (!panel || !desc) return;
+    if (panel.dataset.activeKey === activeKey) {
+      panel.dataset.activeKey = '';
+      desc.textContent = '';
+      slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+      return;
+    }
+    panel.dataset.activeKey = activeKey;
+    desc.textContent = text;
+    slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+  }
+
   track.addEventListener('click', async (e) => {
     const lvlBtn = e.target.closest('.levelup-btn--ready');
     if (lvlBtn) {
@@ -352,35 +366,62 @@ export function renderRoster(root, { player }) {
       return;
     }
 
-    const abilityBtn = e.target.closest('.ability-icon:not([disabled])');
+    const abilityBtn = e.target.closest('.ability-icon');
     if (abilityBtn) {
       const key  = abilityBtn.dataset.abilityKey;
       const type = abilityBtn.dataset.abilityType;
       const def  = resolveAbility(key, type);
       if (!def) return;
-
-      const slide  = abilityBtn.closest('.roster-slide');
-      const unitId = slide ? slide.querySelector('[id^="ability-detail-"]')?.id?.replace('ability-detail-', '') : null;
-      const panel  = unitId ? root.querySelector(`#ability-detail-${unitId}`) : null;
-      const desc   = unitId ? root.querySelector(`#ability-desc-${unitId}`) : null;
-      if (!panel || !desc) return;
-
-      const isOpen = panel.dataset.activeKey === key;
-      if (isOpen) {
-        panel.dataset.activeKey = '';
-        abilityBtn.classList.remove('ability-icon--selected');
-        desc.textContent = '';
-        slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
-        return;
-      }
-
-      slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
-      abilityBtn.classList.add('ability-icon--selected');
-      panel.dataset.activeKey = key;
-
-      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+      const slide = abilityBtn.closest('.roster-slide');
+      if (!slide) return;
+      const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
       const description = buildStatDescription(def, type);
-      desc.textContent = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
+      const text        = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
+      abilityBtn.classList.toggle('ability-icon--selected', slide.querySelector('.ability-detail-panel')?.dataset.activeKey !== key);
+      showInPanel(slide, text, key);
+      return;
+    }
+
+    const coreStat = e.target.closest('.core-stat');
+    if (coreStat) {
+      const slide = coreStat.closest('.roster-slide');
+      if (!slide) return;
+      const label = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
+      const val   = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
+      const u     = units[current];
+      const d     = u?.unit_data || {};
+      let text    = '';
+      if (label === 'HP')    text = `HP: ${val}\nMaximum hit points. Unit is defeated when HP reaches 0.`;
+      else if (label === 'Armor') {
+        const numVal = parseFloat(val);
+        const pct    = isNaN(numVal) ? 0 : dmgReduction(numVal);
+        text = `Armor: ${val}\nReduces physical damage taken by ${pct}%.`;
+      }
+      else if (label === 'Init')  text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
+      else if (label === 'XP')    text = `Experience: ${val}\nAccumulated XP toward next level.`;
+      else text = `${label}: ${val}`;
+      showInPanel(slide, text, `core-${label}`);
+      return;
+    }
+
+    const resistCell = e.target.closest('.resist-cell');
+    if (resistCell) {
+      const slide = resistCell.closest('.roster-slide');
+      if (!slide) return;
+      const label  = resistCell.getAttribute('title') || '';
+      const valEl  = resistCell.querySelector('.resist-val');
+      const numVal = parseInt(valEl?.textContent ?? '0', 10);
+      const pct    = dmgReduction(numVal);
+      let text     = '';
+      if (numVal === 0) {
+        text = `${label} Resistance: 0\nNo modifier to ${label.toLowerCase()} damage taken.`;
+      } else if (numVal > 0) {
+        text = `${label} Resistance: +${numVal}\nReduces ${label.toLowerCase()} damage taken by ${pct}%.`;
+      } else {
+        text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken by ${pct}%.`;
+      }
+      showInPanel(slide, text, `resist-${label}`);
+      return;
     }
   });
 

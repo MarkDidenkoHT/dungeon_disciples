@@ -233,6 +233,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.core-stat:active {
+  background: #1a2235;
 }
 
 .core-stat-label {
@@ -258,6 +265,13 @@
   align-items: center;
   gap: 1px;
   flex: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.resist-cell:active {
+  background: #1a2235;
 }
 
 .resist-icon {
