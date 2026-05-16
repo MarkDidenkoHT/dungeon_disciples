@@ -18,11 +18,44 @@ function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
 
+function dmgReduction(val) {
+  return Math.floor(Math.abs(val) * 100 / (100 + Math.abs(val)));
+}
+
 function resolveAbility(key, type) {
   if (!key || key === 'None') return null;
   if (type === 'passive') return PASSIVES[key]  || null;
   if (type === 'active')  return ABILITIES[key] || null;
   return null;
+}
+
+function buildStatDescription(def, type) {
+  let parts = [];
+
+  if (def.description) parts.push(def.description);
+
+  if (type === 'passive' && def.stats) {
+    const statLines = Object.entries(def.stats).map(([stat, val]) => {
+      const sign = val >= 0 ? '+' : '';
+      if (stat === 'hp') return `${sign}${val} HP`;
+      if (stat === 'hp_regen') return `${sign}${val} HP regen/turn`;
+      if (stat === 'initiative') return `${sign}${val} Initiative`;
+      if (stat === 'armor') {
+        const pct = dmgReduction(val);
+        return `${sign}${val} Armor (${pct}% dmg reduction)`;
+      }
+      if (stat === 'armor_reduction') return `${val} Armor reduction`;
+      if (stat.includes('resist')) {
+        const resistType = stat.replace('_resist', '');
+        const pct = dmgReduction(val);
+        return `${sign}${val} ${cap(resistType)} resist (${pct}% dmg reduction)`;
+      }
+      return `${sign}${val} ${cap(stat)}`;
+    });
+    if (statLines.length) parts.push(statLines.join(', '));
+  }
+
+  return parts.join('\n\n');
 }
 
 export function renderRoster(root, { player }) {
@@ -152,24 +185,20 @@ export function renderRoster(root, { player }) {
         levelUpHtml = `
           <div class="levelup-row">
             <span class="hero-level-label">Hero Level ${heroLevel} — Max</span>
-            <button class="levelup-btn levelup-btn--locked" disabled style="visibility: hidden;">Level Up</button>
           </div>
-          <div class="levelup-hint"></div>
         `;
       } else {
         const throneNeeded = heroLevel + 1;
         const blocked      = !heroCanLevel;
         levelUpHtml = `
           <div class="levelup-row">
-            <span class="hero-level-label">Hero Level ${heroLevel}</span>
-            <button
-              class="levelup-btn ${heroCanLevel ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
+            <span class="hero-level-label">Hero Level ${heroLevel}${blocked ? ` — Level Up Requires Throne Lv ${throneNeeded}` : ''}</span>
+            ${!blocked ? `<button
+              class="levelup-btn levelup-btn--ready"
               data-roster-id="${u.id}"
               data-is-hero="1"
-              ${blocked ? 'disabled' : ''}
-            >Level Up</button>
+            >Level Up</button>` : ''}
           </div>
-          <div class="levelup-hint">${blocked ? `Requires Throne Lv ${throneNeeded}` : ''}</div>
         `;
       }
     } else if (hasPath) {
@@ -186,50 +215,45 @@ export function renderRoster(root, { player }) {
             ${canLevelUp ? '' : 'disabled'}
           >Level Up</button>
         </div>
-        <div class="levelup-hint">${upgradeBuildingHint ? upgradeBuildingHint : ''}</div>
+        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}
       `;
     } else {
       levelUpHtml = `
         <div class="levelup-row">
-          ${isMaxTier ? '<span class="hero-level-label">Maximum Level Reached</span>' : '<span class="hero-level-label">Cannot Upgrade</span>'}
-          <button class="levelup-btn levelup-btn--locked" disabled style="visibility: hidden;">Level Up</button>
+          <span class="hero-level-label">${isMaxTier ? 'Maximum Level Reached' : 'Cannot Upgrade'}</span>
         </div>
-        <div class="levelup-hint"></div>
       `;
     }
 
     function abilityIconHtml(key, type) {
-      const def      = resolveAbility(key, type);
-      const label    = def ? def.name : (type === 'passive' ? 'No Passive' : 'No Active');
-      const isEmpty  = !def;
-      const imgSrc   = key && !isEmpty ? `/assets/icons/${key}.png` : null;
-      const fallback = type === 'passive' ? '◈' : '⚡';
-
-      const thumbHtml = imgSrc
-        ? `<div class="ability-icon-thumb">
-            <img class="ability-icon-img" src="${imgSrc}" alt="${label}"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-            <span class="ability-icon-symbol" style="display:none">${fallback}</span>
-          </div>`
-        : `<div class="ability-icon-thumb"><span class="ability-icon-symbol">${fallback}</span></div>`;
-
+      const def = resolveAbility(key, type);
+      if (!def) return '';
+      const imgSrc = `/assets/icons/${key}.png`;
       return `
         <button
-          class="ability-icon ability-icon--${type} ${isEmpty ? 'ability-icon--empty' : ''}"
-          data-ability-key="${key || ''}"
+          class="ability-icon ability-icon--${type}"
+          data-ability-key="${key}"
           data-ability-type="${type}"
-          ${isEmpty ? 'disabled' : ''}
         >
-          ${thumbHtml}
+          <img class="ability-icon-img" src="${imgSrc}" alt="${def.name}"
+            onerror="this.closest('.ability-icon').style.display='none'">
         </button>`;
     }
 
-    const abilitiesHtml = `
+    const passiveHtml = abilityIconHtml(passiveKey, 'passive');
+    const activeHtml  = abilityIconHtml(activeKey, 'active');
+    const hasAnyAbility = passiveHtml || activeHtml;
+
+    const abilitiesHtml = hasAnyAbility ? `
       <div class="unit-abilities-row">
-        ${abilityIconHtml(passiveKey, 'passive')}
-        ${abilityIconHtml(activeKey, 'active')}
-      </div>
-      <div class="ability-detail-panel" id="ability-detail-${u.id}" style="display:none;"></div>`;
+        <div class="unit-abilities-icons">
+          ${passiveHtml}
+          ${activeHtml}
+        </div>
+        <div class="ability-detail-panel" id="ability-detail-${u.id}">
+          <div class="ability-detail-desc" id="ability-desc-${u.id}"></div>
+        </div>
+      </div>` : '';
 
     return `
       <div class="roster-slide">
@@ -330,56 +354,33 @@ export function renderRoster(root, { player }) {
 
     const abilityBtn = e.target.closest('.ability-icon:not([disabled])');
     if (abilityBtn) {
-      const key      = abilityBtn.dataset.abilityKey;
-      const type     = abilityBtn.dataset.abilityType;
-      const def      = resolveAbility(key, type);
+      const key  = abilityBtn.dataset.abilityKey;
+      const type = abilityBtn.dataset.abilityType;
+      const def  = resolveAbility(key, type);
       if (!def) return;
 
-      const slide    = abilityBtn.closest('.roster-slide');
-      const unitId   = slide ? slide.querySelector('[id^="ability-detail-"]')?.id?.replace('ability-detail-', '') : null;
-      const panel    = unitId ? root.querySelector(`#ability-detail-${unitId}`) : null;
-      if (!panel) return;
+      const slide  = abilityBtn.closest('.roster-slide');
+      const unitId = slide ? slide.querySelector('[id^="ability-detail-"]')?.id?.replace('ability-detail-', '') : null;
+      const panel  = unitId ? root.querySelector(`#ability-detail-${unitId}`) : null;
+      const desc   = unitId ? root.querySelector(`#ability-desc-${unitId}`) : null;
+      if (!panel || !desc) return;
 
-      const isOpen   = panel.style.display !== 'none' &&
-                       panel.dataset.activeKey === key;
+      const isOpen = panel.dataset.activeKey === key;
       if (isOpen) {
-        panel.style.display = 'none';
         panel.dataset.activeKey = '';
+        abilityBtn.classList.remove('ability-icon--selected');
+        desc.textContent = '';
+        slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
         return;
       }
 
-      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
-      let description = def.description || '';
-      
-      if (type === 'passive' && def.stats) {
-        const statDesc = Object.entries(def.stats)
-          .map(([stat, val]) => {
-            if (stat === 'hp_regen') return `+${val} HP regen/turn`;
-            if (stat === 'initiative') return `+${val} Initiative`;
-            if (stat === 'armor') return `+${val} Armor (${Math.floor(val * 100 / (100 + val))}% dmg reduction)`;
-            if (stat === 'armor_reduction') return `${val} Armor reduction`;
-            if (stat.includes('resist')) {
-              const resistType = stat.replace('_resist', '');
-              return `+${val} ${cap(resistType)} resist (${Math.floor(val * 100 / (100 + Math.abs(val)))}% dmg reduction)`;
-            }
-            return `+${val} ${cap(stat)}`;
-          })
-          .join(', ');
-        if (statDesc) {
-          description = `${description}\n\nStats: ${statDesc}`;
-        }
-      }
-      
-      panel.innerHTML = `
-        <div class="ability-detail-type">${typeLabel}</div>
-        <div class="ability-detail-name">
-          ${def.name}
-          ${def.rank ? `<span class="ability-detail-rank">Rank ${def.rank}</span>` : ''}
-        </div>
-        <div class="ability-detail-desc">${description}</div>
-      `;
-      panel.style.display = 'flex';
+      slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+      abilityBtn.classList.add('ability-icon--selected');
       panel.dataset.activeKey = key;
+
+      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+      const description = buildStatDescription(def, type);
+      desc.textContent = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
     }
   });
 

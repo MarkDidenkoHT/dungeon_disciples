@@ -345,34 +345,32 @@
   cursor: not-allowed;
 }
 
-.levelup-hint {
-  font-size: 0.65rem;
-  color: var(--muted);
-  padding-left: 2px;
-  margin-top: -4px;
-  min-height: 16px;
-}
-
 .unit-abilities-row {
   display: flex;
   gap: 8px;
+  align-items: flex-start;
+}
+
+.unit-abilities-icons {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 25%;
+  flex-shrink: 0;
 }
 
 .ability-icon {
-  flex: 1;
   background: #0e1219;
   border: 1px solid #222d3e;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   cursor: pointer;
-  padding: 8px 10px;
+  padding: 4px;
   color: inherit;
-  text-align: left;
   transition: border-color 0.15s, background 0.15s;
-  min-width: 0;
+  width: 100%;
+  aspect-ratio: 1;
 }
 
 .ability-icon:not([disabled]):active {
@@ -395,49 +393,34 @@
   border-color: #c9922a;
 }
 
-.ability-icon--empty {
-  opacity: 0.28;
-  cursor: default;
+.ability-icon--active.ability-icon--selected {
+  border-color: #c9922a;
+  background: #141c2a;
 }
 
-.ability-icon-thumb {
-  width: 25px;
-  height: 25px;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #0b0f18;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ability-icon--passive.ability-icon--selected {
+  border-color: #4a80aa;
+  background: #141c2a;
 }
 
 .ability-icon-img {
-  width: 25px;
-  height: 25px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 4px;
   display: block;
 }
 
-.ability-icon-symbol {
-  font-size: 0.9rem;
-  line-height: 1;
-  color: var(--muted);
-}
-
-.ability-icon-text {
-  display: none;
-}
-
 .ability-detail-panel {
+  flex: 1;
+  min-width: 0;
   background: #0e1219;
   border: 1px solid #2e3a50;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
 }
 
 .ability-detail-type {
@@ -449,7 +432,7 @@
 }
 
 .ability-detail-name {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #d8dce8;
 }
@@ -461,65 +444,11 @@
 }
 
 .ability-detail-desc {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: #8a9bb0;
   line-height: 1.45;
   margin-top: 2px;
-}
-
-.ability-tooltip {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 24px;
-}
-
-.ability-tooltip-inner {
-  background: #1a2235;
-  border: 1px solid #3a4f6a;
-  border-radius: 14px;
-  padding: 20px 18px 18px;
-  max-width: 320px;
-  width: 100%;
-  position: relative;
-}
-
-.ability-tooltip-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: none;
-  border: none;
-  color: #8a9bb0;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  line-height: 1;
-}
-
-.ability-tooltip-type {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #7eb8f7;
-  margin-bottom: 4px;
-}
-
-.ability-tooltip-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #e8eaf0;
-  margin-bottom: 10px;
-}
-
-.ability-tooltip-desc {
-  font-size: 0.88rem;
-  color: #aab8cc;
-  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .placeholder {
