@@ -202,7 +202,7 @@ export function renderRoster(root, { player }) {
       const def      = resolveAbility(key, type);
       const label    = def ? def.name : (type === 'passive' ? 'No Passive' : 'No Active');
       const isEmpty  = !def;
-      const imgSrc   = key && !isEmpty ? `/assets/icons/${key}.jpg` : null;
+      const imgSrc   = key && !isEmpty ? `/assets/icons/${key}.png` : null;
       const fallback = type === 'passive' ? '◈' : '⚡';
       const typeLabel = type === 'passive' ? 'Passive' : 'Active';
 
