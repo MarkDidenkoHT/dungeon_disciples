@@ -216,25 +216,11 @@
   z-index: 1;
 }
 
-.unit-xp-badge {
-  display: none;
-}
-
 .unit-info {
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.unit-sub-header {
-  display: none;
-}
-
-.unit-type-chip,
-.unit-level-chip,
-.unit-tag {
-  display: none;
 }
 
 .unit-core-stats {
@@ -415,8 +401,8 @@
 }
 
 .ability-icon-thumb {
-  width: 32px;
-  height: 32px;
+  width: 25px;
+  height: 25px;
   border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
@@ -427,49 +413,21 @@
 }
 
 .ability-icon-img {
-  width: 32px;
-  height: 32px;
+  width: 25px;
+  height: 25px;
   object-fit: cover;
   border-radius: 6px;
   display: block;
 }
 
 .ability-icon-symbol {
-  font-size: 1rem;
+  font-size: 0.9rem;
   line-height: 1;
   color: var(--muted);
 }
 
 .ability-icon-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.ability-icon-type {
-  font-size: 0.54rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.ability-icon--passive:not([disabled]) .ability-icon-type {
-  color: #5a9acc;
-}
-
-.ability-icon--active:not([disabled]) .ability-icon-type {
-  color: #b8802a;
-}
-
-.ability-icon-label {
-  font-size: 0.72rem;
-  color: #c0c8d8;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .ability-detail-panel {
@@ -562,12 +520,6 @@
   font-size: 0.88rem;
   color: #aab8cc;
   line-height: 1.5;
-}
-
-.portrait-fallback {
-  font-size: 5rem;
-  opacity: 0.1;
-  pointer-events: none;
 }
 
 .placeholder {

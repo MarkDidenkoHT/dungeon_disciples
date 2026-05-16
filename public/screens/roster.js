@@ -169,7 +169,7 @@ export function renderRoster(root, { player }) {
               ${blocked ? 'disabled' : ''}
             >Level Up</button>
           </div>
-          <div class="levelup-hint">${blocked ? `Requires Throne Lv ${throneNeeded} (current: ${throneLevel})` : ''}</div>
+          <div class="levelup-hint">${blocked ? `Requires Throne Lv ${throneNeeded}` : ''}</div>
         `;
       }
     } else if (hasPath) {
@@ -204,7 +204,6 @@ export function renderRoster(root, { player }) {
       const isEmpty  = !def;
       const imgSrc   = key && !isEmpty ? `/assets/icons/${key}.png` : null;
       const fallback = type === 'passive' ? '◈' : '⚡';
-      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
 
       const thumbHtml = imgSrc
         ? `<div class="ability-icon-thumb">
@@ -222,10 +221,6 @@ export function renderRoster(root, { player }) {
           ${isEmpty ? 'disabled' : ''}
         >
           ${thumbHtml}
-          <div class="ability-icon-text">
-            <span class="ability-icon-type">${typeLabel}</span>
-            <span class="ability-icon-label">${label}</span>
-          </div>
         </button>`;
     }
 
@@ -354,13 +349,34 @@ export function renderRoster(root, { player }) {
       }
 
       const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+      let description = def.description || '';
+      
+      if (type === 'passive' && def.stats) {
+        const statDesc = Object.entries(def.stats)
+          .map(([stat, val]) => {
+            if (stat === 'hp_regen') return `+${val} HP regen/turn`;
+            if (stat === 'initiative') return `+${val} Initiative`;
+            if (stat === 'armor') return `+${val} Armor (${Math.floor(val * 100 / (100 + val))}% dmg reduction)`;
+            if (stat === 'armor_reduction') return `${val} Armor reduction`;
+            if (stat.includes('resist')) {
+              const resistType = stat.replace('_resist', '');
+              return `+${val} ${cap(resistType)} resist (${Math.floor(val * 100 / (100 + Math.abs(val)))}% dmg reduction)`;
+            }
+            return `+${val} ${cap(stat)}`;
+          })
+          .join(', ');
+        if (statDesc) {
+          description = `${description}\n\nStats: ${statDesc}`;
+        }
+      }
+      
       panel.innerHTML = `
         <div class="ability-detail-type">${typeLabel}</div>
         <div class="ability-detail-name">
           ${def.name}
           ${def.rank ? `<span class="ability-detail-rank">Rank ${def.rank}</span>` : ''}
         </div>
-        <div class="ability-detail-desc">${def.description || ''}</div>
+        <div class="ability-detail-desc">${description}</div>
       `;
       panel.style.display = 'flex';
       panel.dataset.activeKey = key;
