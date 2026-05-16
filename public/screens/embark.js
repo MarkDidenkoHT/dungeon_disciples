@@ -25,12 +25,6 @@ export function renderEmbark(root, { player }) {
               Select a region to march
             </button>
           </div>
-
-          <div class="embark-tab-content active" id="tab-units">
-            <div class="embark-roster" id="embark-roster">
-              <p class="placeholder">Loading roster...</p>
-            </div>
-          </div>
         </div>
       </main>
 
@@ -44,58 +38,6 @@ export function renderEmbark(root, { player }) {
   `;
 
   let selectedRegion = null;
-  let selectedUnits  = [];
-
-  async function loadUnits() {
-    try {
-      const units = await api(`/roster?chat_id=${player.chat_id}`);
-
-      if (!Array.isArray(units)) {
-        root.querySelector('#embark-roster').innerHTML = '<p class="placeholder">No units available</p>';
-        return;
-      }
-
-      let html = '<div class="embark-unit-list">';
-
-      for (const unit of units) {
-        const isSelected = selectedUnits.includes(unit.id);
-        html += `
-          <div class="embark-unit-item ${isSelected ? 'selected' : ''}" data-unit-id="${unit.id}">
-            <div class="embark-unit-checkbox">
-              <input type="checkbox" ${isSelected ? 'checked' : ''}>
-            </div>
-            <div class="embark-unit-info">
-              <div class="embark-unit-name">${unit.unit_name}</div>
-              <div class="embark-unit-level">XP ${unit.experience || 0}</div>
-            </div>
-          </div>
-        `;
-      }
-
-      html += '</div>';
-      root.querySelector('#embark-roster').innerHTML = html;
-
-      root.querySelectorAll('.embark-unit-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const unitId = item.dataset.unitId;
-          const checkbox = item.querySelector('input[type="checkbox"]');
-
-          if (selectedUnits.includes(unitId)) {
-            selectedUnits = selectedUnits.filter(id => id !== unitId);
-            checkbox.checked = false;
-            item.classList.remove('selected');
-          } else {
-            selectedUnits.push(unitId);
-            checkbox.checked = true;
-            item.classList.add('selected');
-          }
-        });
-      });
-    } catch (err) {
-      console.error('Failed to load units:', err);
-      root.querySelector('#embark-roster').innerHTML = '<p class="placeholder">Error loading units</p>';
-    }
-  }
 
   async function loadRegions() {
     try {
@@ -148,10 +90,7 @@ export function renderEmbark(root, { player }) {
   }
 
   async function init() {
-    await Promise.all([
-      loadRegions(),
-      loadUnits(),
-    ]);
+    await loadRegions();
   }
 
   init();
