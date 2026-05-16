@@ -31,9 +31,7 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-function getUnitSize(unit) {
-  return unit?.unit_data?.size;
-}
+function getUnitSize(unit) { return unit?.unit_data?.size; }
 
 function getCells(anchor, size) {
   const r = cellRow(anchor), c = cellCol(anchor);
@@ -80,14 +78,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
-        <div class="portrait-slider-wrap">
+        <div class="prep-track-wrap">
           <div class="portrait-track" id="portrait-track"></div>
         </div>
       </div>
 
       <div class="battle-prep-tab-content" id="tab-spells">
         <div class="spell-resources-bar" id="resource-display"></div>
-        <div class="spell-track-wrap">
+        <div class="prep-track-wrap">
           <div class="spell-track" id="prep-spells"></div>
         </div>
       </div>
@@ -98,44 +96,89 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
-    </div>
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <span id="modal-title"></span>
-          <button id="modal-close">✕</button>
-        </div>
-        <div id="modal-body" class="modal-body"></div>
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>
       </div>
+
+      <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
     </div>
   `;
 
-  let roster        = [];
-  let enemies       = [];
-  let heroId        = null;
-  let dragUnit      = null;
-  let hoverCell     = null;
-  const occupied    = {};
+  let roster           = [];
+  let enemies          = [];
+  let heroId           = null;
+  let dragUnit         = null;
+  let hoverCell        = null;
+  const occupied       = {};
   const selectedSpells = [];
 
   let playerMana     = 0;
   let playerCrystals = {};
   let learnedSpells  = [];
 
-  function openModal(title, body) {
-    root.querySelector('#modal-title').textContent = title;
-    root.querySelector('#modal-body').innerHTML    = body;
-    root.querySelector('#modal-overlay').classList.remove('hidden');
+  const detailPanel = root.querySelector('#detail-panel');
+
+  function showDetail(html) {
+    detailPanel.innerHTML = html;
   }
-  function closeModal() {
-    root.querySelector('#modal-overlay').classList.add('hidden');
-    root.querySelector('#modal-body').innerHTML = '';
+
+  function clearDetail() {
+    detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>';
   }
-  root.querySelector('#modal-close').addEventListener('click', closeModal);
-  root.querySelector('#modal-overlay').addEventListener('click', e => {
-    if (e.target === root.querySelector('#modal-overlay')) closeModal();
-  });
+
+  function unitDetailHtml(name, d, badge) {
+    return `
+      <div class="detail-header">
+        <span class="detail-name">${name}</span>
+        ${badge ? `<span class="detail-badge">${badge}</span>` : ''}
+      </div>
+      <div class="detail-stats-row">
+        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${d.hp ?? '—'}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${d.armor ?? '—'}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${d.initiative ?? '—'}</span></div>
+      </div>
+    `;
+  }
+
+  function enemyDetailHtml(e) {
+    return `
+      <div class="detail-header">
+        <span class="detail-name">${e.name}</span>
+        <span class="detail-badge detail-badge--enemy">Enemy</span>
+      </div>
+      <div class="detail-stats-row">
+        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${e.hp}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${e.armor ?? '—'}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${e.initiative ?? '—'}</span></div>
+      </div>
+      ${e.action ? `
+      <div class="detail-action">
+        <span class="detail-action-label">Basic Action</span>
+        <div class="detail-stats-row">
+          <div class="detail-stat"><span class="detail-stat-label">DMG</span><span class="detail-stat-val">${e.action.value ?? '—'}</span></div>
+          <div class="detail-stat"><span class="detail-stat-label">Range</span><span class="detail-stat-val">${e.action.range ?? '—'}</span></div>
+          <div class="detail-stat"><span class="detail-stat-label">Target</span><span class="detail-stat-val">${e.action.target_type ?? '—'}</span></div>
+        </div>
+      </div>` : ''}
+    `;
+  }
+
+  function spellDetailHtml(spell, canUse, used) {
+    return `
+      <div class="detail-header">
+        <span class="detail-spell-icon">${spell.icon}</span>
+        <span class="detail-name">${spell.name}</span>
+        ${used ? '<span class="detail-badge detail-badge--used">Used</span>' : ''}
+        ${!used && !canUse ? '<span class="detail-badge detail-badge--locked">Can\'t afford</span>' : ''}
+      </div>
+      <div class="detail-spell-desc">${spell.description}</div>
+      <div class="detail-spell-meta">
+        <span class="detail-spell-cost">${spellCostLabel(spell)}</span>
+        <span class="detail-spell-type">${spell.effect_type}</span>
+      </div>
+      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
+    `;
+  }
 
   root.querySelectorAll('.battle-prep-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -145,6 +188,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       btn.classList.add('active');
       root.querySelectorAll('.battle-prep-tab-content').forEach(c => c.classList.remove('active'));
       root.querySelector(`#tab-${tabName}`).classList.add('active');
+      clearDetail();
     });
   });
 
@@ -163,20 +207,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
 
       const displayEl = root.querySelector('#resource-display');
-      let html = `
-        <span class="resource-item">
-          <span class="resource-icon">🔮</span>
-          <span class="resource-amount">${playerMana}</span>
-        </span>
-      `;
+      let html = `<span class="resource-item"><span class="resource-icon">🔮</span><span class="resource-amount">${playerMana}</span></span>`;
       for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
         const amt = playerCrystals[type] || 0;
-        html += `
-          <span class="resource-item">
-            <span class="resource-icon">${icon}</span>
-            <span class="resource-amount">${amt}</span>
-          </span>
-        `;
+        html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
       }
       displayEl.innerHTML = html;
     } catch (err) {
@@ -216,11 +250,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   async function renderPrepSpells() {
     const factionSpells = SPELLS[player.faction] || [];
-    const learned = factionSpells.filter(s => learnedSpells.includes(s.id));
-    const track = root.querySelector('#prep-spells');
+    const learned       = factionSpells.filter(s => learnedSpells.includes(s.id));
+    const track         = root.querySelector('#prep-spells');
 
     if (learned.length === 0) {
-      track.innerHTML = `<span class="portrait-name" style="padding:0 12px;color:var(--muted)">No spells learned</span>`;
+      track.innerHTML = `<span class="track-empty-hint">No spells learned</span>`;
       return;
     }
 
@@ -228,9 +262,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const affordable = canAffordSpell(spell);
       const used       = selectedSpells.some(s => s.id === spell.id);
       return `
-        <div class="spell-icon-card
-          ${!affordable ? 'spell-icon-card--disabled' : ''}
-          ${used ? 'spell-icon-card--used' : ''}"
+        <div class="spell-icon-card ${!affordable ? 'spell-icon-card--disabled' : ''} ${used ? 'spell-icon-card--used' : ''}"
              data-spell-id="${spell.id}">
           ${used ? '<span class="spell-icon-used-badge">✓</span>' : ''}
           <div class="spell-icon-art">${spell.icon}</div>
@@ -245,48 +277,29 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const spell   = factionSpells.find(s => s.id === spellId);
       if (!spell) return;
 
-      let pressTimer  = null;
+      let pressTimer   = null;
       let didLongPress = false;
-
-      function openSpellDetail() {
-        openModal(spell.name, `
-          <div class="spell-detail">
-            <div class="spell-detail-icon">${spell.icon}</div>
-            <div class="spell-detail-desc">${spell.description}</div>
-            <div class="spell-detail-cost">Cost: ${spellCostLabel(spell)}</div>
-            <div class="spell-detail-type">Type: ${spell.effect_type}</div>
-          </div>
-        `);
-      }
 
       card.addEventListener('pointerdown', () => {
         didLongPress = false;
-        pressTimer = setTimeout(() => {
-          didLongPress = true;
-          openSpellDetail();
-        }, 500);
+        pressTimer = setTimeout(() => { didLongPress = true; }, 500);
       });
-
-      card.addEventListener('pointerup', () => {
-        clearTimeout(pressTimer);
-      });
-
-      card.addEventListener('pointermove', () => {
-        clearTimeout(pressTimer);
-      });
-
-      card.addEventListener('pointercancel', () => {
-        clearTimeout(pressTimer);
-      });
+      card.addEventListener('pointerup',     () => clearTimeout(pressTimer));
+      card.addEventListener('pointermove',   () => clearTimeout(pressTimer));
+      card.addEventListener('pointercancel', () => clearTimeout(pressTimer));
 
       card.addEventListener('click', async () => {
         if (didLongPress) return;
-        const used = selectedSpells.some(s => s.id === spell.id);
-        if (used || !canAffordSpell(spell)) {
-          openSpellDetail();
-          return;
+        const used   = selectedSpells.some(s => s.id === spell.id);
+        const canUse = canAffordSpell(spell);
+        showDetail(spellDetailHtml(spell, canUse, used));
+
+        const useBtn = root.querySelector('#detail-use-btn');
+        if (useBtn) {
+          useBtn.addEventListener('click', async () => {
+            await useSpell(spell, factionSpells);
+          });
         }
-        await useSpell(spell, factionSpells);
       });
     });
   }
@@ -305,12 +318,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
           playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
-
         const idx = selectedSpells.findIndex(s => s.id === spell.id);
         if (idx < 0) selectedSpells.push(spell);
 
         await loadResources();
         await renderPrepSpells();
+        clearDetail();
       } else {
         alert(result.message || 'Failed to use spell');
       }
@@ -383,21 +396,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
       cell.addEventListener('click', () => {
         const e = enemies[Number(cell.dataset.i)];
-        openModal(e.name, `
-          <div class="unit-core-stats">
-            <span class="unit-stat"><em>HP</em> ${e.hp}</span>
-            <span class="unit-stat"><em>Armor</em> ${e.armor}</span>
-            <span class="unit-stat"><em>Initiative</em> ${e.initiative}</span>
-          </div>
-          <div class="unit-action">
-            <span class="unit-action-label">Basic Action</span>
-            <div class="unit-action-stats">
-              <span class="unit-stat"><em>DMG</em> ${e.action?.value ?? '—'}</span>
-              <span class="unit-stat"><em>Range</em> ${e.action?.range ?? '—'}</span>
-              <span class="unit-stat"><em>Target</em> ${e.action?.target_type ?? '—'}</span>
-            </div>
-          </div>
-        `);
+        showDetail(enemyDetailHtml(e));
       });
     });
   }
@@ -408,7 +407,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const available = roster.filter(u => !placed.has(u.id));
 
     if (!available.length) {
-      track.innerHTML = `<span class="portrait-name" style="padding:0 12px">All units placed</span>`;
+      track.innerHTML = `<span class="track-empty-hint">All units placed</span>`;
       return;
     }
 
@@ -429,16 +428,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
     btn.disabled     = !heroPlaced;
     btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
-  }
-
-  function unitStatHtml(u) {
-    const d = u.unit_data || {};
-    return `
-      <div class="unit-core-stats">
-        <span class="unit-stat"><em>HP</em> ${d.hp ?? '—'}</span>
-        <span class="unit-stat"><em>Armor</em> ${d.armor ?? '—'}</span>
-        <span class="unit-stat"><em>Initiative</em> ${d.initiative ?? '—'}</span>
-      </div>`;
   }
 
   function setHover(i) {
@@ -504,6 +493,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       renderPortraitTrack();
       attachPortraitEvents();
       checkReady();
+      clearDetail();
       return;
     }
 
@@ -514,7 +504,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     if (occ) {
       const unit = roster.find(u => u.id === occ.unitId);
-      if (unit) openModal(unit.unit_name, unitStatHtml(unit));
+      if (unit) {
+        const d     = unit.unit_data || {};
+        const badge = occ.unitId === heroId ? '★ Hero' : sizeLabel(occ.size);
+        showDetail(unitDetailHtml(unit.unit_name, d, badge));
+      }
       return;
     }
 
@@ -549,9 +543,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       });
 
       card.addEventListener('click', () => {
-        dragUnit = dragUnit?.id === u.id ? null : u;
+        const wasSelected = dragUnit?.id === u.id;
+        dragUnit = wasSelected ? null : u;
         renderPortraitTrack();
         attachPortraitEvents();
+
+        const d     = u.unit_data || {};
+        const badge = u.id === heroId ? '★ Hero' : sizeLabel(getUnitSize(u));
+        showDetail(unitDetailHtml(u.unit_name, d, badge));
       });
     });
   }
@@ -561,14 +560,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const playerUnits = roster
       .filter(u => placedUnitIds().has(u.id))
-      .map(u => {
-        return {
-          id:        String(u.id),
-          _rosterId: String(u.id),
-          unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
-          unit_data: u.unit_data || u
-        };
-      });
+      .map(u => ({
+        id:        String(u.id),
+        _rosterId: String(u.id),
+        unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
+        unit_data: u.unit_data || u
+      }));
 
     const placement = {};
     for (const [cellIdx, occ] of Object.entries(occupied)) {
