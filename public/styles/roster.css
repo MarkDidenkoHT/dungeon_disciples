@@ -221,7 +221,7 @@
 }
 
 .unit-info {
-  padding: 10px 12px 12px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -244,14 +244,9 @@
 
 .core-stat {
   flex: 1;
-  background: #0e1219;
-  border: 1px solid #222d3e;
-  border-radius: 7px;
-  padding: 5px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
 }
 
 .core-stat-label {
@@ -269,12 +264,6 @@
 
 .unit-resists-grid {
   display: flex;
-  justify-content: space-between;
-  gap: 3px;
-  background: #0e1219;
-  border: 1px solid #222d3e;
-  border-radius: 7px;
-  padding: 5px 6px;
 }
 
 .resist-cell {
@@ -308,7 +297,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 48px;
 }
 
 .levelup-xp-bar {
