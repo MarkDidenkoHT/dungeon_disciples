@@ -1,5 +1,6 @@
 @import './styles/battle-prep.css';
 @import './styles/roster.css';
+@import './styles/spell-tome.css';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -470,7 +471,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
-  max-height: 38vh;
   flex-shrink: 0;
 }
 

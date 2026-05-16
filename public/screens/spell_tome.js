@@ -1,6 +1,6 @@
-import { api } from '../main.js';
+import { api }      from '../main.js';
 import { navigate } from '../main.js';
-import { SPELLS } from '../../data/spells.js';
+import { SPELLS }   from '../../data/spells.js';
 
 const CRYSTAL_ICONS = {
   Crystals_Life:   '🟢',
@@ -10,25 +10,24 @@ const CRYSTAL_ICONS = {
   Crystals_Nature: '🟡',
 };
 
-function renderCrystalCosts(crystalMap) {
-  return Object.entries(crystalMap || {})
-    .filter(([, amt]) => amt > 0)
-    .map(([type, amt]) => `<span class="cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`)
-    .join('');
-}
-
 export function renderSpellTome(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
         <div class="spelltome-header">
-          <div class="res-mana-top" id="res-mana"></div>
-          <h1 class="spelltome-title">📖 Spell Tome</h1>
-          <div class="spelltome-faction">${player.faction.toUpperCase()} Spells</div>
+          <span class="spelltome-title">📖 Spell Tome</span>
+          <span class="spelltome-faction">${player.faction}</span>
+          <span class="spelltome-mana" id="spelltome-mana">
+            <span class="spelltome-mana-icon">🔮</span>
+            <span id="mana-val">…</span>
+          </span>
         </div>
-        
-        <div class="spelltome-content">
-          <div class="spells-container" id="spells-container"></div>
+
+        <div class="spelltome-body">
+          <div id="spells-list-wrap" class="spells-list-wrap"></div>
+          <div class="spell-detail-panel" id="spell-detail-panel">
+            <div class="spell-detail-empty">Tap a spell to see details</div>
+          </div>
         </div>
       </main>
 
@@ -39,222 +38,266 @@ export function renderSpellTome(root, { player }) {
         <button class="nav-btn active" data-screen="spells">Spells</button>
       </nav>
     </div>
-
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal modal-spell">
-        <div class="modal-header">
-          <span id="modal-title"></span>
-          <button id="modal-close">✕</button>
-        </div>
-        <div id="modal-body" class="modal-body"></div>
-      </div>
-    </div>
   `;
 
-  let playerMana = 0;
+  let playerMana      = 0;
+  let learnedSpells   = [];
+  let activeSpellId   = null;
+  const factionSpells = SPELLS[player.faction] || [];
 
-  function openModal(title, bodyHtml) {
-    root.querySelector('#modal-title').textContent = title;
-    root.querySelector('#modal-body').innerHTML = bodyHtml;
-    root.querySelector('#modal-overlay').classList.remove('hidden');
+  const listWrap   = root.querySelector('#spells-list-wrap');
+  const detailPanel = root.querySelector('#spell-detail-panel');
+
+  function costHtml(spell) {
+    let parts = `<span class="spell-cost-item"><span>🔮</span>${spell.cost.mana}</span>`;
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) parts += `<span class="spell-cost-item"><span>${CRYSTAL_ICONS[type] || '💎'}</span>${amt}</span>`;
+    }
+    return parts;
   }
 
-  function closeModal() {
-    root.querySelector('#modal-overlay').classList.add('hidden');
+  function canAfford(spell) {
+    if (playerMana < spell.cost.mana) return false;
+    for (const [, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) return false;
+    }
+    return true;
   }
 
-  root.querySelector('#modal-close').addEventListener('click', closeModal);
-  root.querySelector('#modal-overlay').addEventListener('click', (e) => {
-    if (e.target === root.querySelector('#modal-overlay')) closeModal();
-  });
+  function updateManaDisplay() {
+    root.querySelector('#mana-val').textContent = playerMana;
+  }
 
-  async function loadResources() {
-    try {
-      const playerData = await api(`/player?chat_id=${player.chat_id}`);
-      playerMana = playerData.mana || 0;
-      
-      root.querySelector('#res-mana').innerHTML = `
-        <div class="res-item">
-          <span class="res-icon">🔮</span>
-          <span class="res-amount">${playerMana}</span>
+  function renderList() {
+    const learned     = factionSpells.filter(s => learnedSpells.includes(s.id));
+    const available   = factionSpells.filter(s => !learnedSpells.includes(s.id));
+
+    let html = '';
+
+    if (learned.length) {
+      html += `<div class="spells-section-label">Learned</div><div class="spells-list" id="section-learned">`;
+      for (const spell of learned) {
+        html += spellRowHtml(spell, true);
+      }
+      html += `</div>`;
+    }
+
+    if (available.length) {
+      html += `<div class="spells-section-label">Available to Research</div><div class="spells-list" id="section-available">`;
+      for (const spell of available) {
+        const affordable = canAfford(spell);
+        html += spellRowHtml(spell, false, affordable);
+      }
+      html += `</div>`;
+    }
+
+    if (!factionSpells.length) {
+      html = `<div class="spells-empty">No spells available for this faction.</div>`;
+    }
+
+    listWrap.innerHTML = html;
+    attachRowEvents();
+  }
+
+  function spellRowHtml(spell, isLearned, affordable) {
+    const isActive = activeSpellId === spell.id;
+    let cls = 'spell-row';
+    if (isLearned)         cls += ' spell-row--learned';
+    if (!isLearned && !affordable) cls += ' spell-row--unavailable';
+    if (isActive)          cls += ' spell-row--active';
+
+    return `
+      <div class="${cls}" data-spell-id="${spell.id}">
+        <div class="spell-row-icon">${spell.icon}</div>
+        <div class="spell-row-body">
+          <div class="spell-row-name">
+            ${spell.name}
+            <span class="spell-row-rank">R${spell.rank}</span>
+            ${isLearned ? '<span class="spell-row-learned-badge">✓ Learned</span>' : ''}
+          </div>
+          <div class="spell-row-cost">${costHtml(spell)}</div>
         </div>
-      `;
-    } catch (err) {
-      console.error('Failed to load resources:', err);
-      playerMana = 0;
+        ${!isLearned ? `
+        <div class="spell-row-action">
+          <button class="research-btn ${affordable ? '' : 'research-btn--disabled'}"
+                  data-spell-id="${spell.id}"
+                  ${affordable ? '' : 'disabled'}>
+            Research
+          </button>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  function showDetail(spell) {
+    const isLearned  = learnedSpells.includes(spell.id);
+    const affordable = canAfford(spell);
+
+    let paramsHtml = '';
+    if (spell.params && Object.keys(spell.params).length) {
+      const rows = [];
+      if (spell.params.damage)   rows.push(['Damage',   `${spell.params.damage}${spell.params.damage_type ? ' ' + spell.params.damage_type : ''}`]);
+      if (spell.params.heal)     rows.push(['Healing',  spell.params.heal]);
+      if (spell.params.absorb)   rows.push(['Shield',   `${spell.params.absorb} for ${spell.params.duration || 1} turns`]);
+      if (spell.params.splash)   rows.push(['Area',     'All enemies']);
+      if (spell.params.status)   rows.push(['Applies',  spell.params.status]);
+
+      if (rows.length) {
+        paramsHtml = `<div class="spell-detail-params">
+          ${rows.map(([label, val]) => `
+            <div class="spell-detail-param-row">
+              <span class="spell-detail-param-label">${label}</span>
+              <span class="spell-detail-param-val">${val}</span>
+            </div>`).join('')}
+        </div>`;
+      }
+    }
+
+    let costItemsHtml = `<span class="spell-detail-cost-item">🔮 ${spell.cost.mana} Mana</span>`;
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) costItemsHtml += `<span class="spell-detail-cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`;
+    }
+
+    detailPanel.innerHTML = `
+      <div class="spell-detail-inner">
+        <div class="spell-detail-header">
+          <div class="spell-detail-big-icon">${spell.icon}</div>
+          <div class="spell-detail-title">
+            <div class="spell-detail-name">${spell.name}</div>
+            <div class="spell-detail-meta">
+              <span class="spell-detail-rank-chip">Rank ${spell.rank}</span>
+              <span class="spell-detail-type-chip">${spell.effect_type || 'Spell'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spell-detail-desc">${spell.description}</div>
+
+        ${paramsHtml}
+
+        <div class="spell-detail-cost-row">
+          <span class="spell-detail-cost-label">Cost</span>
+          <div class="spell-detail-cost-items">${costItemsHtml}</div>
+        </div>
+
+        <div class="spell-detail-action">
+          ${isLearned
+            ? `<span class="spell-detail-status spell-detail-status--learned">✓ Already learned</span>`
+            : `<button class="research-btn-full" id="detail-research-btn" ${affordable ? '' : 'disabled'}>
+                 ${affordable ? 'Research Spell' : 'Not enough Mana'}
+               </button>`
+          }
+          <div class="research-feedback" id="research-feedback" style="display:none"></div>
+        </div>
+      </div>
+    `;
+
+    const detailBtn = root.querySelector('#detail-research-btn');
+    if (detailBtn) {
+      detailBtn.addEventListener('click', async () => {
+        detailBtn.disabled = true;
+        detailBtn.textContent = '…';
+        await doResearch(spell);
+      });
     }
   }
 
-  async function getResearchedSpells() {
-    try {
-      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
-      
-      // Validate response is an object with researched_spells array
-      if (!response || typeof response !== 'object') {
-        console.error('Invalid researched spells response:', response);
-        return [];
-      }
-      
-      // Handle different response formats
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      return response.researched_spells || [];
-    } catch (err) {
-      console.error('Failed to load researched spells:', err);
-      return [];
-    }
+  function clearDetail() {
+    activeSpellId = null;
+    detailPanel.innerHTML = '<div class="spell-detail-empty">Tap a spell to see details</div>';
   }
 
-  async function researchSpell(spell) {
+  function showFeedback(msg, isError) {
+    const el = root.querySelector('#research-feedback');
+    if (!el) return;
+    el.textContent = msg;
+    el.className   = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
+    el.style.display = 'inline-block';
+  }
+
+  async function doResearch(spell) {
     try {
       const result = await api('/spells/research', {
-        chat_id: player.chat_id,
+        chat_id:  player.chat_id,
         spell_id: spell.id,
-        faction: player.faction
+        faction:  player.faction,
       });
-      
-      // Validate response is an object
-      if (!result || typeof result !== 'object') {
-        alert('Invalid server response. Please try again.');
-        return;
-      }
-      
-      if (result.success) {
+
+      if (result?.success) {
         playerMana -= spell.cost.mana;
-        await loadResources();
-        await loadSpells();
-        
-        openModal('Spell Researched!', `
-          <div class="spell-research-success">
-            <div class="success-icon">✨</div>
-            <h3>${spell.name} has been added to your spellbook!</h3>
-            <div class="spell-learned-desc">${spell.description}</div>
-            <button class="close-success-btn">Close</button>
-          </div>
-        `);
-        
-        root.querySelector('.close-success-btn')?.addEventListener('click', closeModal);
+        learnedSpells.push(spell.id);
+        updateManaDisplay();
+        renderList();
+        showDetail(spell);
+        showFeedback('Spell learned!', false);
       } else {
-        alert(result.message || 'Failed to research spell');
+        showFeedback(result?.message || 'Research failed', true);
+        const btn = root.querySelector('#detail-research-btn');
+        if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
       }
     } catch (err) {
-      console.error('Research failed:', err);
-      alert(err.message || 'Failed to research spell');
+      showFeedback(err.message || 'Research failed', true);
+      const btn = root.querySelector('#detail-research-btn');
+      if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
     }
   }
 
-  function showSpellDetails(spell, isResearched) {
-    let bodyHtml = `
-      <div class="spell-detail-modal">
-        <div class="spell-detail-icon">${spell.icon}</div>
-        <div class="spell-detail-name">${spell.name}</div>
-        <div class="spell-detail-rank">Rank ${spell.rank} Spell</div>
-        <div class="spell-detail-desc">${spell.description}</div>
-        <div class="spell-detail-cost">
-          <strong>Cost:</strong> 
-          <span class="cost-item">🔮 ${spell.cost.mana} Mana</span>
-          ${renderCrystalCosts(spell.cost.crystals)}
-        </div>
-    `;
-    
-    if (spell.params) {
-      bodyHtml += `<div class="spell-detail-params"><strong>Effects:</strong><br>`;
-      if (spell.params.damage) bodyHtml += `• Damage: ${spell.params.damage} ${spell.params.damage_type || ''}<br>`;
-      if (spell.params.heal) bodyHtml += `• Healing: ${spell.params.heal}<br>`;
-      if (spell.params.absorb) bodyHtml += `• Shield: ${spell.params.absorb} damage for ${spell.params.duration || 1} turns<br>`;
-      if (spell.params.splash) bodyHtml += `• Hits all enemies<br>`;
-      if (spell.params.status) bodyHtml += `• Applies: ${spell.params.status}<br>`;
-      bodyHtml += `</div>`;
-    }
-    
-    bodyHtml += `
-        <div class="spell-detail-status">
-          <strong>Status:</strong> ${isResearched ? '<span class="status-researched">✓ Researched</span>' : '<span class="status-locked">🔒 Not Researched</span>'}
-        </div>
-        <button class="spell-detail-close">Close</button>
-      </div>
-    `;
-    
-    openModal(spell.name, bodyHtml);
-    
-    root.querySelector('.spell-detail-close')?.addEventListener('click', closeModal);
-  }
+  function attachRowEvents() {
+    listWrap.querySelectorAll('.spell-row').forEach(row => {
+      const spellId = row.dataset.spellId;
+      const spell   = factionSpells.find(s => s.id === spellId);
+      if (!spell) return;
 
-  async function loadSpells() {
-    const factionSpells = SPELLS[player.faction] || [];
-    const researchedSpells = await getResearchedSpells();
-    
-    let html = `
-      <div class="spells-header">
-        <p class="spells-subtitle">Powerful abilities unlocked through research</p>
-      </div>
-      <div class="spells-grid">
-    `;
-    
-    for (const spell of factionSpells) {
-      const isResearched = researchedSpells.includes(spell.id);
-      const canAfford = playerMana >= spell.cost.mana;
-      
-      html += `
-        <div class="spell-card ${isResearched ? 'spell-card--researched' : 'spell-card--locked'}" data-spell-id="${spell.id}">
-          <div class="spell-icon">${spell.icon}</div>
-          <div class="spell-info">
-            <div class="spell-name">
-              ${spell.name} 
-              <span class="spell-rank">R${spell.rank}</span>
-              ${isResearched ? '<span class="spell-badge">✓ Researched</span>' : ''}
-            </div>
-            <div class="spell-desc">${spell.description}</div>
-            <div class="spell-cost">
-              <span class="mana-icon">🔮</span> ${spell.cost.mana} Mana
-              ${renderCrystalCosts(spell.cost.crystals)}
-              ${!isResearched ? `<button class="research-btn ${!canAfford ? 'research-btn--disabled' : ''}" data-spell-id="${spell.id}" ${!canAfford ? 'disabled' : ''}>Research</button>` : ''}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    html += `
-      </div>
-      ${factionSpells.length === 0 ? `
-        <div class="empty-spells">
-          <p>No spells available yet for this faction.</p>
-        </div>
-      ` : ''}
-    `;
-    
-    root.querySelector('#spells-container').innerHTML = html;
-    
-    root.querySelectorAll('.research-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const spellId = btn.dataset.spellId;
-        const spell = factionSpells.find(s => s.id === spellId);
-        if (spell && playerMana >= spell.cost.mana) {
-          researchSpell(spell);
-        } else {
-          alert('Not enough mana to research this spell!');
+      row.addEventListener('click', e => {
+        if (e.target.closest('.research-btn')) return;
+
+        if (activeSpellId === spellId) {
+          clearDetail();
+          renderList();
+          return;
         }
+
+        activeSpellId = spellId;
+        renderList();
+        showDetail(spell);
       });
-    });
-    
-    root.querySelectorAll('.spell-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const spellId = card.dataset.spellId;
-        const spell = factionSpells.find(s => s.id === spellId);
-        if (spell) {
-          showSpellDetails(spell, researchedSpells.includes(spell.id));
-        }
-      });
+
+      const resBtn = row.querySelector('.research-btn');
+      if (resBtn) {
+        resBtn.addEventListener('click', async e => {
+          e.stopPropagation();
+          activeSpellId = spellId;
+          renderList();
+          showDetail(spell);
+          const detailBtn = root.querySelector('#detail-research-btn');
+          if (detailBtn && !detailBtn.disabled) {
+            detailBtn.disabled = true;
+            detailBtn.textContent = '…';
+            await doResearch(spell);
+          }
+        });
+      }
     });
   }
 
   async function init() {
-    await loadResources();
-    await loadSpells();
+    try {
+      const [playerData, researchData] = await Promise.all([
+        api(`/player?chat_id=${player.chat_id}`),
+        api(`/spells/research?chat_id=${player.chat_id}`),
+      ]);
+
+      playerMana    = playerData.mana || 0;
+      learnedSpells = Array.isArray(researchData)
+        ? researchData
+        : (researchData?.researched_spells || []);
+
+      updateManaDisplay();
+      renderList();
+    } catch (err) {
+      console.error('Spell tome init failed:', err);
+      listWrap.innerHTML = `<div class="spells-empty">Failed to load spells.</div>`;
+    }
   }
 
   init();
@@ -262,14 +305,9 @@ export function renderSpellTome(root, { player }) {
   root.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.classList.contains('disabled')) return;
-      
       const screen = btn.dataset.screen;
-      
-      if (screen === 'spells') {
-        return;
-      } else {
-        navigate(screen, { player });
-      }
+      if (screen === 'spells') return;
+      navigate(screen, { player });
     });
   });
 }
