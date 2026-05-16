@@ -24,8 +24,9 @@ function dmgReduction(val) {
 
 function resolveAbility(key, type) {
   if (!key || key === 'None') return null;
-  if (type === 'passive') return PASSIVES[key]  || null;
-  if (type === 'active')  return ABILITIES[key] || null;
+  const k = key.replace(/\s+/g, '_');
+  if (type === 'passive') return PASSIVES[k]  || PASSIVES[key]  || null;
+  if (type === 'active')  return ABILITIES[k] || ABILITIES[key] || null;
   return null;
 }
 
@@ -226,9 +227,10 @@ export function renderRoster(root, { player }) {
     }
 
     function abilityIconHtml(key, type) {
-      const def    = resolveAbility(key, type);
-      const isEmpty = !def;
-      const imgSrc  = def ? `/assets/icons/${key}.png` : null;
+      const def      = resolveAbility(key, type);
+      const isEmpty  = !def;
+      const fileKey  = key ? key.replace(/\s+/g, '_') : null;
+      const imgSrc   = def ? `/assets/icons/abilities/${fileKey}.png` : null;
       return `
         <button
           class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
