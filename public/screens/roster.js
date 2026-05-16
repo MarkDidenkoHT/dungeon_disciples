@@ -31,17 +31,14 @@ export function renderRoster(root, { player }) {
       <main class="roster-main">
         <div class="roster-slider-wrap">
           <div class="roster-track" id="roster-track"></div>
-          <div class="roster-dots" id="roster-dots"></div>
         </div>
       </main>
 
-      <div class="ability-tooltip" id="ability-tooltip" style="display:none;">
-        <div class="ability-tooltip-inner">
-          <button class="ability-tooltip-close" id="tooltip-close">✕</button>
-          <div class="ability-tooltip-type" id="tooltip-type"></div>
-          <div class="ability-tooltip-name" id="tooltip-name"></div>
-          <div class="ability-tooltip-desc" id="tooltip-desc"></div>
-        </div>
+      <div class="roster-nav" id="roster-nav">
+        <button class="roster-nav-arrow" id="nav-prev">‹</button>
+        <div class="roster-nav-dots" id="roster-dots"></div>
+        <span class="roster-nav-label" id="roster-nav-label"></span>
+        <button class="roster-nav-arrow" id="nav-next">›</button>
       </div>
 
       <nav class="bottom-nav">
@@ -56,28 +53,14 @@ export function renderRoster(root, { player }) {
   let current = 0;
   let units   = [];
 
-  const track   = root.querySelector('#roster-track');
-  const dots    = root.querySelector('#roster-dots');
-  const tooltip = root.querySelector('#ability-tooltip');
+  const track     = root.querySelector('#roster-track');
+  const dotsWrap  = root.querySelector('#roster-dots');
+  const navLabel  = root.querySelector('#roster-nav-label');
+  const prevBtn   = root.querySelector('#nav-prev');
+  const nextBtn   = root.querySelector('#nav-next');
 
   let buildingsData = {};
   let upgradePaths  = {};
-
-  function showTooltip(abilityKey, abilityType) {
-    const def = resolveAbility(abilityKey, abilityType);
-    if (!def) return;
-    root.querySelector('#tooltip-type').textContent = abilityType === 'passive' ? 'PASSIVE' : 'ACTIVE';
-    root.querySelector('#tooltip-name').textContent = def.name + (def.rank ? ` — Rank ${def.rank}` : '');
-    root.querySelector('#tooltip-desc').textContent = def.description || '';
-    tooltip.style.display = 'flex';
-  }
-
-  root.querySelector('#tooltip-close').addEventListener('click', () => {
-    tooltip.style.display = 'none';
-  });
-  tooltip.addEventListener('click', (e) => {
-    if (e.target === tooltip) tooltip.style.display = 'none';
-  });
 
   function buildCard(u) {
     const d      = u.unit_data || {};
@@ -89,8 +72,8 @@ export function renderRoster(root, { player }) {
     const activeKey  = d.ability  || null;
     const res        = d.resistances || {};
 
-    const tier    = d.t ?? null;
-    const isHero  = (tier == null);
+    const tier      = d.t ?? null;
+    const isHero    = tier == null;
     const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Level ${tier}`;
 
     const tags     = (d.tags || []).filter(Boolean);
@@ -98,10 +81,9 @@ export function renderRoster(root, { player }) {
 
     const xpRequired = d.xp ?? null;
     const currentXp  = u.experience ?? 0;
-    const isMaxTier  = (tier >= 2);
+    const isMaxTier  = tier >= 2;
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
-    // Hero-specific level-up state
     const heroLevel    = isHero ? (d.hero_level || 1) : null;
     const throneLevel  = buildingsData['slot_0']?.level || 1;
     const heroMaxed    = isHero && heroLevel >= 4;
@@ -118,15 +100,13 @@ export function renderRoster(root, { player }) {
         const matched        = paths.find(p => p.building_id === slotBuildingId);
         upgradeReady         = !!matched;
         if (!upgradeReady) {
-          const labels = paths.map(p => p.label).join(' or ');
-          upgradeBuildingHint = `Requires: ${labels}`;
+          upgradeBuildingHint = `Requires: ${paths.map(p => p.label).join(' or ')}`;
         }
       }
     }
 
     const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
-    // Portrait — always shown, fallback to unit id text if image fails
     const portraitHtml = `
       <div class="unit-portrait">
         <img
@@ -137,16 +117,12 @@ export function renderRoster(root, { player }) {
         <div class="unit-portrait-fallback" style="display:none;">
           <span>${unitId || u.unit_name}</span>
         </div>
+        <div class="unit-portrait-overlay">
+          <span class="unit-name">${u.unit_name}</span>
+          <span class="unit-xp-badge">XP ${currentXp}</span>
+        </div>
       </div>`;
 
-    // Header
-    const headerHtml = `
-      <div class="unit-header">
-        <span class="unit-name">${u.unit_name}</span>
-        <span class="unit-xp">XP ${currentXp}</span>
-      </div>`;
-
-    // Sub-header: type chip + level chip + tag chips
     const tagChips = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
     const subHtml = `
       <div class="unit-sub-header">
@@ -155,7 +131,6 @@ export function renderRoster(root, { player }) {
         ${tagChips}
       </div>`;
 
-    // Core stats
     const coreHtml = `
       <div class="unit-core-stats">
         <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${d.hp ?? '—'}</span></div>
@@ -163,28 +138,28 @@ export function renderRoster(root, { player }) {
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${d.initiative ?? '—'}</span></div>
       </div>`;
 
-    // Resistances: icon + value stacked per cell, all in one row
     const resistCells = RESIST_ORDER.map(r => {
       const info = RESIST_ICONS[r];
+      const val  = res[r] ?? 0;
+      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
       return `<div class="resist-cell" title="${info.label}">
         <span class="resist-icon">${info.icon}</span>
-        <span class="resist-val">${res[r] ?? 0}</span>
+        <span class="resist-val ${cls}">${val}</span>
       </div>`;
     }).join('');
 
     const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
 
-    // Level-up row — regular units use XP bar; heroes use throne-gated button
     let levelUpHtml = '';
     if (isHero) {
       if (heroMaxed) {
-        levelUpHtml = `<div class="levelup-row"><span class="levelup-xp-label hero-level-label">Hero Level ${heroLevel} — Max</span></div>`;
+        levelUpHtml = `<div class="levelup-row"><span class="hero-level-label">Hero Level ${heroLevel} — Max</span></div>`;
       } else {
         const throneNeeded = heroLevel + 1;
         const blocked      = !heroCanLevel;
         levelUpHtml = `
           <div class="levelup-row">
-            <span class="levelup-xp-label hero-level-label">Hero Level ${heroLevel}</span>
+            <span class="hero-level-label">Hero Level ${heroLevel}</span>
             <button
               class="levelup-btn ${heroCanLevel ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
               data-roster-id="${u.id}"
@@ -192,7 +167,7 @@ export function renderRoster(root, { player }) {
               ${blocked ? 'disabled' : ''}
             >Level Up</button>
           </div>
-          ${blocked ? `<div class="levelup-hint">Requires Throne level ${throneNeeded} (currently ${throneLevel})</div>` : ''}
+          ${blocked ? `<div class="levelup-hint">Requires Throne Lv ${throneNeeded} (current: ${throneLevel})</div>` : ''}
         `;
       }
     } else if (hasPath) {
@@ -200,9 +175,9 @@ export function renderRoster(root, { player }) {
       levelUpHtml = `
         <div class="levelup-row">
           <div class="levelup-xp-bar">
-            <div class="levelup-xp-fill" style="width: ${pct}%"></div>
+            <div class="levelup-xp-fill" style="width:${pct}%"></div>
           </div>
-          <span class="levelup-xp-label">${currentXp} / ${xpRequired} XP</span>
+          <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
           <button
             class="levelup-btn ${canLevelUp ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
             data-roster-id="${u.id}"
@@ -213,42 +188,49 @@ export function renderRoster(root, { player }) {
       `;
     }
 
-    // Abilities: square icon buttons at the bottom
     function abilityIconHtml(key, type) {
-      const def     = resolveAbility(key, type);
-      const label   = def ? def.name : '—';
-      const isEmpty = !def;
-      const imgSrc  = key ? `/assets/icons/${key}.jpg` : null;
+      const def      = resolveAbility(key, type);
+      const label    = def ? def.name : (type === 'passive' ? 'No Passive' : 'No Active');
+      const isEmpty  = !def;
+      const imgSrc   = key && !isEmpty ? `/assets/icons/${key}.jpg` : null;
       const fallback = type === 'passive' ? '◈' : '⚡';
-      const iconHtml = imgSrc
-        ? `<img class="ability-icon-img" src="${imgSrc}" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-          <span class="ability-icon-symbol" style="display:none">${fallback}</span>`
-        : `<span class="ability-icon-symbol">${fallback}</span>`;
+      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+
+      const thumbHtml = imgSrc
+        ? `<div class="ability-icon-thumb">
+            <img class="ability-icon-img" src="${imgSrc}" alt="${label}"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+            <span class="ability-icon-symbol" style="display:none">${fallback}</span>
+          </div>`
+        : `<div class="ability-icon-thumb"><span class="ability-icon-symbol">${fallback}</span></div>`;
+
       return `
         <button
           class="ability-icon ability-icon--${type} ${isEmpty ? 'ability-icon--empty' : ''}"
           data-ability-key="${key || ''}"
           data-ability-type="${type}"
           ${isEmpty ? 'disabled' : ''}
-          title="${label}"
         >
-          ${iconHtml}
-          <span class="ability-icon-label">${label}</span>
+          ${thumbHtml}
+          <div class="ability-icon-text">
+            <span class="ability-icon-type">${typeLabel}</span>
+            <span class="ability-icon-label">${label}</span>
+          </div>
         </button>`;
     }
 
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         ${abilityIconHtml(passiveKey, 'passive')}
-        ${abilityIconHtml(activeKey,  'active')}
-      </div>`;
+        ${abilityIconHtml(activeKey, 'active')}
+      </div>
+      <div class="ability-detail-panel" id="ability-detail-${u.id}" style="display:none;"></div>`;
 
     return `
       <div class="roster-slide">
         <div class="unit-card">
           ${portraitHtml}
           <div class="unit-info">
-            ${headerHtml}
             ${subHtml}
             ${coreHtml}
             ${resistsHtml}
@@ -260,45 +242,68 @@ export function renderRoster(root, { player }) {
     `;
   }
 
-  function goTo(idx) {
-    current = Math.max(0, Math.min(idx, units.length - 1));
-    track.style.transform = `translateX(-${current * 100}%)`;
-    dots.querySelectorAll('.roster-dot').forEach((d, i) => {
+  function updateNav() {
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === units.length - 1;
+    navLabel.textContent = units[current]?.unit_name ?? '';
+    dotsWrap.querySelectorAll('.roster-dot').forEach((d, i) => {
       d.classList.toggle('roster-dot--active', i === current);
     });
   }
 
+  function goTo(idx) {
+    current = Math.max(0, Math.min(idx, units.length - 1));
+    track.style.transform = `translateX(-${current * 100}%)`;
+    updateNav();
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+
   function initSlider() {
     track.innerHTML = units.map(u => buildCard(u)).join('');
-    dots.innerHTML  = units.map((_, i) => `<span class="roster-dot" data-i="${i}"></span>`).join('');
 
-    dots.querySelectorAll('.roster-dot').forEach(dot => {
+    dotsWrap.innerHTML = units.map((_, i) =>
+      `<span class="roster-dot" data-i="${i}"></span>`
+    ).join('');
+
+    dotsWrap.querySelectorAll('.roster-dot').forEach(dot => {
       dot.addEventListener('click', () => goTo(Number(dot.dataset.i)));
     });
 
     let touchStartX = 0;
+    let touchStartY = 0;
+    let didSwipe    = false;
+
     track.addEventListener('touchstart', e => {
       touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      didSwipe    = false;
+    }, { passive: true });
+
+    track.addEventListener('touchmove', e => {
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if (dx > dy && dx > 8) didSwipe = true;
     }, { passive: true });
 
     track.addEventListener('touchend', e => {
+      if (!didSwipe) return;
       const dx = e.changedTouches[0].clientX - touchStartX;
       if (Math.abs(dx) < 40) return;
-      if (dx < 0) goTo(current + 1);
-      else        goTo(current - 1);
+      goTo(dx < 0 ? current + 1 : current - 1);
     }, { passive: true });
 
     goTo(0);
   }
 
   track.addEventListener('click', async (e) => {
-    // Level up
     const lvlBtn = e.target.closest('.levelup-btn--ready');
     if (lvlBtn) {
-      const rosterId = lvlBtn.dataset.rosterId;
+      const rosterId  = lvlBtn.dataset.rosterId;
       const isHeroBtn = lvlBtn.dataset.isHero === '1';
       lvlBtn.disabled = true;
-      lvlBtn.textContent = '...';
+      lvlBtn.textContent = '…';
       try {
         const endpoint = isHeroBtn ? '/roster/hero-levelup' : '/roster/levelup';
         await api(endpoint, { chat_id: player.chat_id, roster_id: rosterId });
@@ -306,25 +311,50 @@ export function renderRoster(root, { player }) {
           api(`/roster?chat_id=${player.chat_id}`),
           api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
         ]);
-        units = freshUnits;
+        units         = freshUnits;
         buildingsData = freshStruct?.buildings_data || {};
         const savedIdx = current;
         initSlider();
         goTo(savedIdx);
       } catch (err) {
-        lvlBtn.disabled = false;
+        lvlBtn.disabled    = false;
         lvlBtn.textContent = 'Level Up';
         alert(err.message || 'Level up failed');
       }
       return;
     }
 
-    // Ability icon
     const abilityBtn = e.target.closest('.ability-icon:not([disabled])');
     if (abilityBtn) {
-      const key  = abilityBtn.dataset.abilityKey;
-      const type = abilityBtn.dataset.abilityType;
-      if (key) showTooltip(key, type);
+      const key      = abilityBtn.dataset.abilityKey;
+      const type     = abilityBtn.dataset.abilityType;
+      const def      = resolveAbility(key, type);
+      if (!def) return;
+
+      const slide    = abilityBtn.closest('.roster-slide');
+      const unitId   = slide ? slide.querySelector('[id^="ability-detail-"]')?.id?.replace('ability-detail-', '') : null;
+      const panel    = unitId ? root.querySelector(`#ability-detail-${unitId}`) : null;
+      if (!panel) return;
+
+      const isOpen   = panel.style.display !== 'none' &&
+                       panel.dataset.activeKey === key;
+      if (isOpen) {
+        panel.style.display = 'none';
+        panel.dataset.activeKey = '';
+        return;
+      }
+
+      const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+      panel.innerHTML = `
+        <div class="ability-detail-type">${typeLabel}</div>
+        <div class="ability-detail-name">
+          ${def.name}
+          ${def.rank ? `<span class="ability-detail-rank">Rank ${def.rank}</span>` : ''}
+        </div>
+        <div class="ability-detail-desc">${def.description || ''}</div>
+      `;
+      panel.style.display = 'flex';
+      panel.dataset.activeKey = key;
     }
   });
 
