@@ -74,7 +74,7 @@ export function renderRoster(root, { player }) {
 
     const tier      = d.t ?? null;
     const isHero    = tier == null;
-    const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Level ${tier}`;
+    const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Lv ${tier}`;
 
     const tags     = (d.tags || []).filter(Boolean);
     const tagLeft  = tags[0] || '';
@@ -122,7 +122,6 @@ export function renderRoster(root, { player }) {
           <span class="unit-name">${u.unit_name}</span>
           <span class="unit-level-text">${tierLabel}</span>
         </div>
-        <div class="unit-xp-badge">XP ${currentXp}</div>
         ${tagLeft ? `<div class="unit-tag-left">${tagLeft}</div>` : ''}
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
@@ -132,6 +131,7 @@ export function renderRoster(root, { player }) {
         <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${d.hp ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${d.armor ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${d.initiative ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${currentXp}</span></div>
       </div>`;
 
     const resistCells = RESIST_ORDER.map(r => {
@@ -149,7 +149,13 @@ export function renderRoster(root, { player }) {
     let levelUpHtml = '';
     if (isHero) {
       if (heroMaxed) {
-        levelUpHtml = `<div class="levelup-row"><span class="hero-level-label">Hero Level ${heroLevel} — Max</span></div>`;
+        levelUpHtml = `
+          <div class="levelup-row">
+            <span class="hero-level-label">Hero Level ${heroLevel} — Max</span>
+            <button class="levelup-btn levelup-btn--locked" disabled style="visibility: hidden;">Level Up</button>
+          </div>
+          <div class="levelup-hint"></div>
+        `;
       } else {
         const throneNeeded = heroLevel + 1;
         const blocked      = !heroCanLevel;
@@ -163,7 +169,7 @@ export function renderRoster(root, { player }) {
               ${blocked ? 'disabled' : ''}
             >Level Up</button>
           </div>
-          ${blocked ? `<div class="levelup-hint">Requires Throne Lv ${throneNeeded} (current: ${throneLevel})</div>` : ''}
+          <div class="levelup-hint">${blocked ? `Requires Throne Lv ${throneNeeded} (current: ${throneLevel})` : ''}</div>
         `;
       }
     } else if (hasPath) {
@@ -180,7 +186,15 @@ export function renderRoster(root, { player }) {
             ${canLevelUp ? '' : 'disabled'}
           >Level Up</button>
         </div>
-        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}
+        <div class="levelup-hint">${upgradeBuildingHint ? upgradeBuildingHint : ''}</div>
+      `;
+    } else {
+      levelUpHtml = `
+        <div class="levelup-row">
+          ${isMaxTier ? '<span class="hero-level-label">Maximum Level Reached</span>' : '<span class="hero-level-label">Cannot Upgrade</span>'}
+          <button class="levelup-btn levelup-btn--locked" disabled style="visibility: hidden;">Level Up</button>
+        </div>
+        <div class="levelup-hint"></div>
       `;
     }
 
