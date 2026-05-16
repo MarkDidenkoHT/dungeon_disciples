@@ -19,7 +19,7 @@ function cap(s) {
 }
 
 function dmgReduction(val) {
-  return Math.floor(Math.abs(val) * 100 / (100 + Math.abs(val)));
+  return Math.abs(val);
 }
 
 function resolveAbility(key, type) {
@@ -226,17 +226,17 @@ export function renderRoster(root, { player }) {
     }
 
     function abilityIconHtml(key, type) {
-      const def = resolveAbility(key, type);
-      if (!def) return '';
-      const imgSrc = `/assets/icons/${key}.png`;
+      const def    = resolveAbility(key, type);
+      const isEmpty = !def;
+      const imgSrc  = def ? `/assets/icons/${key}.png` : null;
       return `
         <button
-          class="ability-icon ability-icon--${type}"
-          data-ability-key="${key}"
+          class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
+          data-ability-key="${key || ''}"
           data-ability-type="${type}"
+          ${isEmpty ? 'disabled' : ''}
         >
-          <img class="ability-icon-img" src="${imgSrc}" alt="${def.name}"
-            onerror="this.style.visibility='hidden'">
+          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
         </button>`;
     }
 
