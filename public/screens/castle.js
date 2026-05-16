@@ -1,4 +1,3 @@
-import '@/styles/castle.css';          // ← extracted castle styles
 import { api } from '../main.js';
 import { navigate } from '../main.js';
 import { renderSpellTome } from './spell_tome.js';
