@@ -77,7 +77,8 @@ export function renderRoster(root, { player }) {
     const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Level ${tier}`;
 
     const tags     = (d.tags || []).filter(Boolean);
-    const unitType = cap(d.type || '');
+    const tagLeft  = tags[0] || '';
+    const tagRight = tags[1] || '';
 
     const xpRequired = d.xp ?? null;
     const currentXp  = u.experience ?? 0;
@@ -119,16 +120,11 @@ export function renderRoster(root, { player }) {
         </div>
         <div class="unit-portrait-overlay">
           <span class="unit-name">${u.unit_name}</span>
-          <span class="unit-xp-badge">XP ${currentXp}</span>
+          <span class="unit-level-text">${tierLabel}</span>
         </div>
-      </div>`;
-
-    const tagChips = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
-    const subHtml = `
-      <div class="unit-sub-header">
-        ${unitType ? `<span class="unit-type-chip">${unitType}</span>` : ''}
-        <span class="unit-level-chip">${tierLabel}</span>
-        ${tagChips}
+        <div class="unit-xp-badge">XP ${currentXp}</div>
+        ${tagLeft ? `<div class="unit-tag-left">${tagLeft}</div>` : ''}
+        ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
     const coreHtml = `
@@ -231,7 +227,6 @@ export function renderRoster(root, { player }) {
         <div class="unit-card">
           ${portraitHtml}
           <div class="unit-info">
-            ${subHtml}
             ${coreHtml}
             ${resistsHtml}
             ${levelUpHtml}
