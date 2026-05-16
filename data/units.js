@@ -191,6 +191,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 15,
       xp: 320,
       passive: 'mithrails_light 1', ability: null,
+      description: 'text'
     },
     priest: {
       id: 'e22',
