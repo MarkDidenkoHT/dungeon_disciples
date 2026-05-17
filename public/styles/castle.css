@@ -622,176 +622,31 @@
 }
 
 /* ============================================================
-   UNIT SLIDER  (building & upgrade modals)
+   CASTLE UNIT SLIDER  (matches roster card structure)
    ============================================================ */
 
-.unit-slider {
+.castle-unit-slider {
   position: relative;
   width: 100%;
-  overflow: hidden;
 }
 
-.unit-slider-track {
+.castle-slider-track {
   width: 100%;
-  /* swipe target — no clipping so content scrolls naturally */
-  cursor: grab;
+  touch-action: pan-y;
 }
 
-.unit-slider-track:active { cursor: grabbing; }
-
-/* ── Single slide ── */
-
-.unit-slide {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Portrait block */
-.unit-slide-portrait {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: linear-gradient(160deg, #1c1f28 0%, #111318 100%);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.unit-slide-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.unit-slide-portrait-fallback {
-  font-size: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: var(--border);
-}
-
-/* "New" badge top-right */
-.unit-slide-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.65rem;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-/* Building label bottom-left of portrait */
-.unit-slide-label {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24px 10px 8px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.75));
-  font-size: 0.7rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Info section */
-.unit-slide-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.unit-slide-name {
-  font-size: 1.15rem;
-  font-weight: bold;
-  color: var(--accent);
-  line-height: 1.2;
-}
-
-.unit-slide-type {
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-transform: capitalize;
-}
-
-.unit-slide-desc {
-  font-size: 0.82rem;
-  color: var(--text);
-  line-height: 1.5;
-  opacity: 0.85;
-  margin: 0;
-}
-
-/* Stat grid */
-.unit-slide-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-.unit-stat-row {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.unit-stat-label {
-  font-size: 0.6rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.unit-stat-val {
-  font-size: 0.88rem;
-  font-weight: bold;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.unit-slide-res {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.unit-trait {
-  font-size: 0.78rem;
-  color: var(--text);
-  line-height: 1.4;
-}
-
-/* ── Slider navigation arrows ── */
+/* ── Slider nav (arrows + dots) ── */
 
 .slider-arrow {
   position: absolute;
-  top: 90px; /* center of portrait */
+  /* vertically centred on the portrait — portrait height is ~42vw capped, arrow at ~21vw */
+  top: 21vw;
   transform: translateY(-50%);
   width: 32px;
   height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: rgba(17, 19, 24, 0.85);
+  background: rgba(17, 19, 24, 0.82);
   color: var(--text);
   font-size: 1.2rem;
   display: flex;
@@ -799,31 +654,21 @@
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  z-index: 2;
+  z-index: 4;
   transition: border-color 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
-.slider-arrow:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.slider-arrow:not(:disabled):active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
+.slider-arrow:disabled { opacity: 0.22; cursor: default; }
+.slider-arrow:not(:disabled):active { border-color: var(--accent); color: var(--accent); }
 .slider-arrow--prev { left: 6px; }
 .slider-arrow--next { right: 6px; }
-
-/* ── Dot indicators ── */
 
 .slider-dots {
   display: flex;
   justify-content: center;
   gap: 6px;
-  padding: 10px 0 2px;
+  padding: 10px 0 4px;
 }
 
 .slider-dot {
@@ -831,10 +676,80 @@
   height: 6px;
   border-radius: 50%;
   background: var(--border);
+  cursor: pointer;
   transition: background 0.2s, transform 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .slider-dot--active {
   background: var(--accent);
-  transform: scale(1.3);
+  transform: scale(1.35);
+}
+
+/* ── "New" badge on portrait ── */
+
+.unit-slide-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent);
+  color: #111;
+  font-size: 0.62rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 3;
+}
+
+.unit-slide-badge--tl {
+  top: 8px;
+  right: 8px;
+  left: auto;
+}
+
+/* ── 6-col stat grid for castle cards ── */
+
+.unit-core-stats--6 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+/* ── Stat diff chips (upgrade comparison) ── */
+
+.unit-stat-diffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stat-diff-chip {
+  font-size: 0.68rem;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.stat-diff-chip.stat-diff--up {
+  background: color-mix(in srgb, #6fcf97 15%, transparent);
+  color: #6fcf97;
+  border: 1px solid #6fcf9740;
+}
+
+.stat-diff-chip.stat-diff--down {
+  background: color-mix(in srgb, #eb5757 15%, transparent);
+  color: #eb5757;
+  border: 1px solid #eb575740;
+}
+
+/* ── Description ── */
+
+.unit-slide-desc {
+  font-size: 0.78rem;
+  color: #8a9bb0;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
 }

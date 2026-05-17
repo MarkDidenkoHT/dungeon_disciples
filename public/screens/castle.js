@@ -1,5 +1,7 @@
-import { api } from '../main.js';
-import { navigate } from '../main.js';
+import { api }       from '../main.js';
+import { navigate }  from '../main.js';
+import { PASSIVES }  from '../../data/passives.js';
+import { ABILITIES } from '../../data/abilities.js';
 import { renderSpellTome } from './spell_tome.js';
 
 let UNITS = null;
@@ -13,6 +15,24 @@ async function loadUnits() {
     console.error('[Castle] FAILED to load units.js:', err);
     return null;
   }
+}
+
+const RESIST_ICONS = {
+  air:    { icon: '🌬️', label: 'Air'    },
+  fire:   { icon: '🔥', label: 'Fire'   },
+  nature: { icon: '🌿', label: 'Nature' },
+  cold:   { icon: '❄️', label: 'Cold'   },
+  life:   { icon: '✨', label: 'Life'   },
+  death:  { icon: '🌑', label: 'Death'  },
+};
+const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
+
+function resolveAbility(key, type) {
+  if (!key || key === 'None') return null;
+  const k = key.replace(/\s+/g, '_');
+  if (type === 'passive') return PASSIVES[k]  || PASSIVES[key]  || null;
+  if (type === 'active')  return ABILITIES[k] || ABILITIES[key] || null;
+  return null;
 }
 
 export function renderCastle(root, { player }) {
@@ -79,27 +99,24 @@ export function renderCastle(root, { player }) {
   /* ── Data loading ── */
   async function load() {
     const [inventory, structures, buildingsResp] = await Promise.all([
-      api('/inventory?chat_id=' + player.chat_id + '&type=resource'),
-      api('/structures?chat_id=' + player.chat_id),
+      api(`/inventory?chat_id=${player.chat_id}&type=resource`),
+      api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
     ]);
 
     const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
     root.querySelector('#res-mana').innerHTML =
-      '<div class="res-item"><span class="res-icon">&#x1F52E;</span><span class="res-amount">' + find('Mana').amount + '</span></div>';
+      `<div class="res-item"><span class="res-icon">🔮</span><span class="res-amount">${find('Mana').amount}</span></div>`;
 
     root.querySelector('#res-col-left').innerHTML =
-      '<div class="res-item"><span class="res-icon">&#x1FA99;</span><span class="res-amount">' + find('Gold').amount + '</span></div>';
+      `<div class="res-item"><span class="res-icon">🪙</span><span class="res-amount">${find('Gold').amount}</span></div>`;
 
     root.querySelector('#res-col-right').innerHTML = [
-      ['&#x1F7E2;', 'Crystals_Life'],
-      ['&#x1F534;', 'Crystals_Fire'],
-      ['&#x1F7E3;', 'Crystals_Death'],
-      ['&#x1F7E1;', 'Crystals_Nature'],
-      ['&#x1F535;', 'Crystals_Frost'],
+      ['🟢', 'Crystals_Life'], ['🔴', 'Crystals_Fire'], ['🟣', 'Crystals_Death'],
+      ['🟡', 'Crystals_Nature'], ['🔵', 'Crystals_Frost'],
     ].map(([icon, key]) =>
-      '<div class="res-item"><span class="res-icon">' + icon + '</span><span class="res-amount">' + find(key).amount + '</span></div>'
+      `<div class="res-item"><span class="res-icon">${icon}</span><span class="res-amount">${find(key).amount}</span></div>`
     ).join('');
 
     buildingPools      = buildingsResp.pools;
@@ -118,7 +135,7 @@ export function renderCastle(root, { player }) {
       await Promise.all(readySlots.map(slot =>
         api('/structures/complete', { chat_id: player.chat_id, slot, faction: player.faction })
       ));
-      structuresRecord = await api('/structures?chat_id=' + player.chat_id);
+      structuresRecord = await api(`/structures?chat_id=${player.chat_id}`);
     }
 
     renderBuildings();
@@ -136,7 +153,7 @@ export function renderCastle(root, { player }) {
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
-    const all = Object.assign({}, UNITS.empire, UNITS.dungeon, UNITS.enemies);
+    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
     return Object.values(all).find(u => u.id === unitId) || null;
   }
 
@@ -148,199 +165,269 @@ export function renderCastle(root, { player }) {
     return def.upgrades.map(uid => ({ unit_id: uid, building_id: uid, label: uid }));
   }
 
-  /* ── Slider / unit card ── */
-  const TYPE_ICON   = { melee: '\u2694', ranged: '\uD83C\uDFF9', caster: '\u2736', healer: '\u271A' };
-  const STAT_KEYS   = ['hp', 'armor', 'initiative', 'action_power', 'targets', 'range'];
-  const STAT_LABELS = { hp: 'HP', armor: 'Armor', initiative: 'Init', action_power: 'Power', targets: 'Targets', range: 'Range' };
+  function buildUnitCard(unit, opts = {}) {
+    if (!unit) return `<div class="unit-card"><p class="placeholder">Unknown unit</p></div>`;
 
-  function unitPortraitSrc(unit) {
-    if (!unit) return null;
-    return '../assets/character_art/' + unit.id.toUpperCase() + '.png';
-  }
+    const { isNew = false, buildingLabel = '', compareUnit = null } = opts;
+    const tags     = (unit.tags || []).filter(Boolean);
+    const tagLeft  = tags[0] || '';
+    const tagRight = tags[1] || '';
+    const portrait = `/assets/character_art/${unit.id.toUpperCase()}.png`;
+    const res      = unit.resistances || {};
 
-  function renderSlide(unit, opts) {
-    opts = opts || {};
-    var label       = opts.label || '';
-    var compareUnit = opts.compareUnit || null;
-    var isNew       = opts.isNew || false;
+    const portraitHtml = `
+      <div class="unit-portrait">
+        <img src="${portrait}" alt="${unit.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="unit-portrait-fallback" style="display:none;">
+          <span>${unit.id}</span>
+        </div>
+        <div class="unit-portrait-overlay">
+          <span class="unit-name">${unit.name}</span>
+          <span class="unit-level-text">${buildingLabel || (unit.type ? unit.type : '')}</span>
+        </div>
+        ${isNew        ? `<div class="unit-slide-badge unit-slide-badge--tl">New</div>` : ''}
+        ${tagLeft      ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
+        ${tagRight     ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
+      </div>`;
 
-    if (!unit) return '<div class="unit-slide"><p class="modal-empty">Unknown unit</p></div>';
+    const coreStats = [
+      { label: 'HP',     val: unit.hp },
+      { label: 'Armor',  val: unit.armor },
+      { label: 'Init',   val: unit.initiative },
+      { label: 'Power',  val: unit.action_power },
+      { label: 'Targets',val: unit.targets },
+      { label: 'Range',  val: unit.range },
+    ];
 
-    var tags     = (unit.tags || []).filter(Boolean).join(' \u00B7 ');
-    var portrait = unitPortraitSrc(unit);
-    var icon     = TYPE_ICON[unit.type] || '?';
+    const coreHtml = `
+      <div class="unit-core-stats unit-core-stats--6">
+        ${coreStats.map(s => {
+          let diffHtml = '';
+          if (compareUnit) {
+            const diff = (unit[s.label.toLowerCase()] ?? unit.action_power) - (compareUnit[s.label.toLowerCase()] ?? compareUnit.action_power);
+          }
+          return `<div class="core-stat">
+            <span class="core-stat-label">${s.label}</span>
+            <span class="core-stat-val">${s.val ?? '—'}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
 
-    var statRows = STAT_KEYS.map(function(key) {
-      var diffHtml = '';
-      if (compareUnit) {
-        var diff = unit[key] - compareUnit[key];
-        if (diff > 0) diffHtml = '<span class="stat-diff stat-diff--up">+' + diff + '</span>';
-        else if (diff < 0) diffHtml = '<span class="stat-diff stat-diff--down">' + diff + '</span>';
+    let diffHtml = '';
+    if (compareUnit) {
+      const diffKeys = [
+        { label: 'HP',      a: compareUnit.hp,           b: unit.hp },
+        { label: 'Armor',   a: compareUnit.armor,        b: unit.armor },
+        { label: 'Init',    a: compareUnit.initiative,   b: unit.initiative },
+        { label: 'Power',   a: compareUnit.action_power, b: unit.action_power },
+        { label: 'Targets', a: compareUnit.targets,      b: unit.targets },
+        { label: 'Range',   a: compareUnit.range,        b: unit.range },
+      ].filter(d => d.b !== d.a);
+
+      if (diffKeys.length) {
+        diffHtml = `<div class="unit-stat-diffs">` +
+          diffKeys.map(d => {
+            const diff = d.b - d.a;
+            const cls  = diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
+            return `<span class="stat-diff-chip ${cls}">${d.label} ${diff > 0 ? '+' : ''}${diff}</span>`;
+          }).join('') +
+        `</div>`;
       }
-      return '<div class="unit-stat-row">' +
-        '<span class="unit-stat-label">' + STAT_LABELS[key] + '</span>' +
-        '<span class="unit-stat-val">' + unit[key] + diffHtml + '</span>' +
-        '</div>';
-    }).join('');
-
-    var resBadges = Object.entries(unit.resistances || {})
-      .filter(function(e) { return e[1] !== 0; })
-      .map(function(e) {
-        var k = e[0], v = e[1];
-        var cls = v > 0 ? 'res-badge--pos' : 'res-badge--neg';
-        return '<span class="res-badge ' + cls + '">' + k + ' ' + (v > 0 ? '+' : '') + v + '%</span>';
-      }).join('');
-
-    var portraitHtml = '';
-    if (portrait) {
-      portraitHtml = '<img src="' + portrait + '" alt="' + unit.name +
-        '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">';
     }
 
-    return '<div class="unit-slide">' +
-      '<div class="unit-slide-portrait">' +
-        portraitHtml +
-        '<div class="unit-slide-portrait-fallback"' + (portrait ? ' style="display:none"' : '') + '>' + icon + '</div>' +
-        (isNew ? '<div class="unit-slide-badge">New</div>' : '') +
-        (label ? '<div class="unit-slide-label">' + label + '</div>' : '') +
-      '</div>' +
-      '<div class="unit-slide-info">' +
-        '<div class="unit-slide-name">' + unit.name + '</div>' +
-        '<div class="unit-slide-type">' + icon + ' ' + unit.type + (tags ? ' \u00B7 ' + tags : '') + '</div>' +
-        (unit.description ? '<p class="unit-slide-desc">' + unit.description + '</p>' : '') +
-        '<div class="unit-slide-stats">' + statRows + '</div>' +
-        (resBadges ? '<div class="unit-slide-res">' + resBadges + '</div>' : '') +
-        (unit.passive ? '<div class="unit-trait"><span class="trait-label">Passive</span>' + unit.passive + '</div>' : '') +
-        (unit.ability ? '<div class="unit-trait"><span class="trait-label">Ability</span>' + unit.ability + '</div>' : '') +
-      '</div>' +
-    '</div>';
+    const resistCells = RESIST_ORDER.map(r => {
+      const info = RESIST_ICONS[r];
+      const val  = res[r] ?? 0;
+      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+      return `<div class="resist-cell" title="${info.label}">
+        <span class="resist-icon">${info.icon}</span>
+        <span class="resist-val ${cls}">${val}</span>
+      </div>`;
+    }).join('');
+
+    const resistHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
+
+    const descHtml = unit.description
+      ? `<p class="unit-slide-desc">${unit.description}</p>`
+      : '';
+
+    function abilityIconHtml(key, type) {
+      const def     = resolveAbility(key, type);
+      const isEmpty = !def;
+      const fileKey = key ? key.replace(/\s+/g, '_') : null;
+      const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.png` : null;
+      return `<button
+        class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
+        data-ability-key="${key || ''}"
+        data-ability-type="${type}"
+        ${isEmpty ? 'disabled' : ''}
+      >${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}</button>`;
+    }
+
+    const abilitiesHtml = `
+      <div class="unit-abilities-row">
+        <div class="unit-abilities-icons">
+          ${abilityIconHtml(unit.passive || null, 'passive')}
+          ${abilityIconHtml(unit.ability || null, 'active')}
+        </div>
+        <div class="ability-detail-panel">
+          <div class="ability-detail-desc"></div>
+        </div>
+      </div>`;
+
+    return `
+      <div class="unit-card">
+        ${portraitHtml}
+        <div class="unit-info">
+          ${coreHtml}
+          ${diffHtml}
+          ${resistHtml}
+          ${descHtml}
+          ${abilitiesHtml}
+        </div>
+      </div>`;
   }
 
   function openSliderModal(title, slides, onConfirm) {
-    var current = 0;
+    let current = 0;
 
-    function render(idx) {
-      var s    = slides[idx];
-      var dots = '';
-      if (slides.length > 1) {
-        dots = '<div class="slider-dots">' +
-          slides.map(function(_, i) {
-            return '<span class="slider-dot' + (i === idx ? ' slider-dot--active' : '') + '"></span>';
-          }).join('') +
-          '</div>';
-      }
-      var arrows = '';
-      if (slides.length > 1) {
-        arrows =
-          '<button class="slider-arrow slider-arrow--prev" id="slider-prev"' + (idx === 0 ? ' disabled' : '') + '>\u2039</button>' +
-          '<button class="slider-arrow slider-arrow--next" id="slider-next"' + (idx === slides.length - 1 ? ' disabled' : '') + '>\u203A</button>';
-      }
-      return '<div class="unit-slider">' +
-          '<div class="unit-slider-track" id="slider-track">' +
-            renderSlide(s.unit, { label: s.label, compareUnit: s.compareUnit, isNew: s.isNew }) +
-          '</div>' +
-          arrows +
-          dots +
-        '</div>' +
-        '<button class="upgrade-confirm-btn" id="slider-confirm">' + (s.confirmLabel || 'Confirm') + '</button>';
+    function renderSliderHtml(idx) {
+      const s    = slides[idx];
+      const dots = slides.length > 1
+        ? `<div class="slider-dots">${slides.map((_, i) =>
+            `<span class="slider-dot${i === idx ? ' slider-dot--active' : ''}"></span>`
+          ).join('')}</div>`
+        : '';
+      const arrows = slides.length > 1
+        ? `<button class="slider-arrow slider-arrow--prev" id="slider-prev"${idx === 0 ? ' disabled' : ''}>&#x2039;</button>
+           <button class="slider-arrow slider-arrow--next" id="slider-next"${idx === slides.length - 1 ? ' disabled' : ''}>&#x203A;</button>`
+        : '';
+
+      return `
+        <div class="castle-unit-slider">
+          <div class="castle-slider-track" id="slider-track">
+            ${buildUnitCard(s.unit, { isNew: s.isNew, buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
+          </div>
+          ${arrows}
+          ${dots}
+        </div>
+        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || 'Confirm'}</button>`;
     }
 
-    openModal(title, render(current));
+    openModal(title, renderSliderHtml(current));
+
+    function attachAbilityListeners() {
+      modalBody.querySelectorAll('.ability-icon:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key  = btn.dataset.abilityKey;
+          const type = btn.dataset.abilityType;
+          const def  = resolveAbility(key, type);
+          if (!def) return;
+          const panel = modalBody.querySelector('.ability-detail-panel');
+          const desc  = modalBody.querySelector('.ability-detail-desc');
+          if (!panel || !desc) return;
+          const isOpen = panel.dataset.activeKey === key;
+          panel.dataset.activeKey = isOpen ? '' : key;
+          desc.textContent = isOpen ? '' : `[${type === 'passive' ? 'Passive' : 'Active'}] ${def.name}${def.rank ? ` Rank ${def.rank}` : ''}\n${def.description || ''}`;
+          modalBody.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+          if (!isOpen) btn.classList.add('ability-icon--selected');
+        });
+      });
+    }
 
     function attach() {
-      var track      = modalBody.querySelector('#slider-track');
-      var touchStart = null;
+      const track = modalBody.querySelector('#slider-track');
+      let touchStartX = null;
+      let touchStartY = null;
 
-      if (track) {
-        track.addEventListener('touchstart', function(e) {
-          touchStart = e.touches[0].clientX;
-        }, { passive: true });
-        track.addEventListener('touchend', function(e) {
-          if (touchStart === null) return;
-          var dx = e.changedTouches[0].clientX - touchStart;
-          touchStart = null;
-          if (Math.abs(dx) < 40) return;
-          if (dx < 0 && current < slides.length - 1) { current++; modalBody.innerHTML = render(current); attach(); }
-          if (dx > 0 && current > 0)                  { current--; modalBody.innerHTML = render(current); attach(); }
-        });
-      }
+      track?.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
 
-      var prev = modalBody.querySelector('#slider-prev');
-      var next = modalBody.querySelector('#slider-next');
-      if (prev) prev.addEventListener('click', function() {
-        if (current > 0) { current--; modalBody.innerHTML = render(current); attach(); }
-      });
-      if (next) next.addEventListener('click', function() {
-        if (current < slides.length - 1) { current++; modalBody.innerHTML = render(current); attach(); }
+      track?.addEventListener('touchend', e => {
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        touchStartX = null;
+        if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 40) return;
+        if (dx < 0 && current < slides.length - 1) { current++; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+        if (dx > 0 && current > 0)                  { current--; modalBody.innerHTML = renderSliderHtml(current); attach(); }
       });
 
-      var confirm = modalBody.querySelector('#slider-confirm');
-      if (confirm) confirm.addEventListener('click', function() { onConfirm(slides[current]); });
+      modalBody.querySelector('#slider-prev')?.addEventListener('click', () => {
+        if (current > 0) { current--; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+      });
+      modalBody.querySelector('#slider-next')?.addEventListener('click', () => {
+        if (current < slides.length - 1) { current++; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+      });
+      modalBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
+
+      attachAbilityListeners();
     }
 
     attach();
   }
 
-  /* ── Castle grid ── */
   function renderBuildings() {
-    var data        = structuresRecord.buildings_data;
-    var throneState = data['slot_0'];
-    var throneLevel = (throneState && throneState.level) ? throneState.level : 1;
-    var throneMaxed = throneLevel >= heroMaxLevel;
+    const data        = structuresRecord.buildings_data;
+    const throneState = data['slot_0'];
+    const throneLevel = throneState?.level || 1;
+    const throneMaxed = throneLevel >= heroMaxLevel;
 
-    root.querySelector('#center-slot').innerHTML =
-      '<div class="castle-node castle-node--throne castle-node--clickable" data-slot="slot_0">' +
-        '<div class="castle-node-icon">\u265B</div>' +
-        '<div class="castle-node-label">Throne</div>' +
-        '<div class="castle-node-level">Lv ' + throneLevel + '</div>' +
-        (!throneMaxed ? '<div class="castle-node-hint">Upgrade</div>' : '') +
-      '</div>';
+    root.querySelector('#center-slot').innerHTML = `
+      <div class="castle-node castle-node--throne castle-node--clickable" data-slot="slot_0">
+        <div class="castle-node-icon">♛</div>
+        <div class="castle-node-label">Throne</div>
+        <div class="castle-node-level">Lv ${throneLevel}</div>
+        ${!throneMaxed ? `<div class="castle-node-hint">Upgrade</div>` : ''}
+      </div>`;
 
     root.querySelector('#outer-ring').innerHTML = Object.keys(data)
-      .filter(function(s) { return s !== 'slot_0'; })
-      .map(function(slot) {
-        var state      = data[slot] || { level: 0, building_id: null };
-        var def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
-        var isEmpty    = !state.building_id;
-        var isBuilding = state.ready_at && new Date(state.ready_at) > Date.now();
-        var hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
+      .filter(s => s !== 'slot_0')
+      .map(slot => {
+        const state      = data[slot] || { level: 0, building_id: null };
+        const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
+        const isEmpty    = !state.building_id;
+        const isBuilding = state.ready_at && new Date(state.ready_at) > Date.now();
+        const hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
 
-        var classes = 'castle-node' +
-          (isEmpty    ? ' castle-node--empty'    : '') +
-          (isBuilding ? ' castle-node--building' : '');
+        const classes = ['castle-node',
+          isEmpty    ? 'castle-node--empty'    : '',
+          isBuilding ? 'castle-node--building' : '',
+        ].filter(Boolean).join(' ');
 
-        return '<div class="' + classes + '" data-slot="' + slot + '">' +
-          '<div class="castle-node-icon">' + (isEmpty ? '\uFF0B' : '\u2694') + '</div>' +
-          '<div class="castle-node-label">' + (def ? def.label : (isEmpty ? 'Build' : 'Empty')) + '</div>' +
-          (state.level > 0 ? '<div class="castle-node-level">Lv ' + state.level + '</div>' : '') +
-          (isBuilding ? '<div class="castle-node-timer" data-ready="' + state.ready_at + '">\u23F3</div>' : '') +
-          (!isEmpty && !isBuilding && hasUpgrade ? '<div class="castle-node-hint">Upgrade</div>' : '') +
-        '</div>';
+        return `
+          <div class="${classes}" data-slot="${slot}">
+            <div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>
+            <div class="castle-node-label">${def ? def.label : (isEmpty ? 'Build' : 'Empty')}</div>
+            ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
+            ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
+            ${!isEmpty && !isBuilding && hasUpgrade ? `<div class="castle-node-hint">Upgrade</div>` : ''}
+          </div>`;
       }).join('');
 
-    root.querySelectorAll('.castle-node').forEach(function(node) {
-      node.addEventListener('click', function() { handleSlotClick(node.dataset.slot); });
+    root.querySelectorAll('.castle-node').forEach(node => {
+      node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
     });
   }
 
-  /* ── Slot handlers ── */
   async function handleSlotClick(slot) {
-    var state = structuresRecord.buildings_data[slot];
-
+    const state = structuresRecord.buildings_data[slot];
     if (slot === 'slot_0') { handleThroneClick(); return; }
     if (!state || !state.building_id) { openBuildModal(slot); return; }
 
-    var def = getBuildingDef(player.faction, state.building_id);
+    const def = getBuildingDef(player.faction, state.building_id);
     if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
 
-    var paths = getUpgradePathsForBuilding(player.faction, def);
+    const paths = getUpgradePathsForBuilding(player.faction, def);
 
     if (!paths || paths.length === 0) {
-      // maxed — show current unit as a single slide, no confirm action
-      var currentUnit = getUnitByUnitId(def.unit_id);
+      const currentUnit = getUnitByUnitId(def.unit_id);
       openSliderModal(def.label,
-        [{ unit: currentUnit, label: 'Current Unit', confirmLabel: 'Maxed — No Upgrades' }],
-        function() { closeModal(); }
+        [{ unit: currentUnit, buildingLabel: def.label, confirmLabel: 'Maxed — No Upgrades' }],
+        () => closeModal()
       );
       return;
     }
@@ -349,119 +436,109 @@ export function renderCastle(root, { player }) {
   }
 
   function openBuildModal(slot) {
-    var SLOT_CATEGORIES = {
+    const SLOT_CATEGORIES = {
       slot_0: 'throne', slot_1: 'barracks', slot_2: 'barracks',
       slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks',
       slot_6: 'barracks', slot_7: 'any',     slot_8: 'any',
     };
-    var slotCategory = SLOT_CATEGORIES[slot] || 'any';
-    var factionPools = buildingPools[player.faction] || {};
-    var available    = [];
+    const slotCategory = SLOT_CATEGORIES[slot] || 'any';
+    const factionPools = buildingPools[player.faction] || {};
+    const available    = [];
 
-    Object.entries(factionPools).forEach(function(entry) {
-      var cat = entry[0], pool = entry[1];
+    for (const [cat, pool] of Object.entries(factionPools)) {
       if (slotCategory === 'any' || cat === slotCategory) {
-        pool.forEach(function(b) {
+        for (const b of pool) {
           if (b.category !== 'throne' && b.tier === 1) available.push(b);
-        });
+        }
       }
-    });
+    }
 
     if (!available.length) {
       openModal('Build', '<p class="modal-empty">No buildings available for this slot.</p>');
       return;
     }
 
-    var slides = available.map(function(b) {
-      return {
-        unit:         getUnitByUnitId(b.unit_id),
-        label:        b.label,
-        confirmLabel: 'Build \u00B7 ' + b.label,
-        isNew:        true,
-        buildingId:   b.id,
-        slot:         slot,
-      };
-    });
+    const slides = available.map(b => ({
+      unit:         getUnitByUnitId(b.unit_id),
+      buildingLabel: b.label,
+      confirmLabel: `Build · ${b.label}`,
+      isNew:        true,
+      buildingId:   b.id,
+      slot,
+    }));
 
-    openSliderModal('Choose Building', slides, function(s) {
-      performBuildingUpgrade(s.slot, s.buildingId);
-    });
+    openSliderModal('Choose Building', slides, s => performBuildingUpgrade(s.slot, s.buildingId));
   }
 
   async function handleThroneClick() {
-    var throneState = structuresRecord.buildings_data['slot_0'];
-    var throneLevel = (throneState && throneState.level) ? throneState.level : 1;
-    var nextLevel   = throneLevel + 1;
-    var cost        = throneUpgradeCosts[nextLevel];
-    var isMaxed     = throneLevel >= heroMaxLevel;
-    var label       = player.faction === 'dungeon' ? 'Dark Throne' : 'Throne';
+    const throneState = structuresRecord.buildings_data['slot_0'];
+    const throneLevel = throneState?.level || 1;
+    const nextLevel   = throneLevel + 1;
+    const cost        = throneUpgradeCosts[nextLevel];
+    const isMaxed     = throneLevel >= heroMaxLevel;
+    const label       = player.faction === 'dungeon' ? 'Dark Throne' : 'Throne';
 
     if (isMaxed) {
-      openModal(label,
-        '<div class="throne-modal">' +
-          '<div class="throne-level-display">Level <span class="throne-level-num">' + throneLevel + '</span></div>' +
-          '<p class="throne-maxed">The Throne is fully upgraded. Your hero may reach their full potential.</p>' +
-        '</div>'
-      );
+      openModal(label, `
+        <div class="throne-modal">
+          <div class="throne-level-display">Level <span class="throne-level-num">${throneLevel}</span></div>
+          <p class="throne-maxed">The Throne is fully upgraded. Your hero may reach their full potential.</p>
+        </div>`);
       return;
     }
 
-    openModal(label,
-      '<div class="throne-modal">' +
-        '<div class="throne-level-display">Level <span class="throne-level-num">' + throneLevel + '</span>' +
-          ' \u2192 <span class="throne-level-num throne-level-next">' + nextLevel + '</span></div>' +
-        '<p class="throne-desc">Upgrading the Throne allows your hero to reach level ' + nextLevel + '.</p>' +
-        '<div class="throne-cost">' +
-          (cost && cost.gold > 0 ? '<span class="throne-cost-item">\uD83E\uDE99 ' + cost.gold + ' Gold</span>' : '') +
-          (cost && cost.mana  > 0 ? '<span class="throne-cost-item">\uD83D\uDD2E ' + cost.mana + ' Mana</span>'  : '') +
-        '</div>' +
-        '<button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>' +
-      '</div>'
-    );
+    openModal(label, `
+      <div class="throne-modal">
+        <div class="throne-level-display">
+          Level <span class="throne-level-num">${throneLevel}</span>
+          → <span class="throne-level-num throne-level-next">${nextLevel}</span>
+        </div>
+        <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
+        <div class="throne-cost">
+          ${cost?.gold > 0 ? `<span class="throne-cost-item">🪙 ${cost.gold} Gold</span>` : ''}
+          ${cost?.mana > 0  ? `<span class="throne-cost-item">🔮 ${cost.mana} Mana</span>`  : ''}
+        </div>
+        <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
+      </div>`);
 
-    var throneBtn = modalBody.querySelector('#confirm-throne-btn');
-    if (throneBtn) {
-      throneBtn.addEventListener('click', async function() {
-        closeModal();
-        try {
-          var updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
-          structuresRecord = updated;
-          renderBuildings();
-        } catch (err) {
-          alert(err.message || 'Throne upgrade failed');
-        }
-      });
-    }
+    modalBody.querySelector('#confirm-throne-btn')?.addEventListener('click', async () => {
+      closeModal();
+      try {
+        const updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
+        structuresRecord = updated;
+        renderBuildings();
+      } catch (err) {
+        alert(err.message || 'Throne upgrade failed');
+      }
+    });
   }
 
   function openUpgradeModal(slot, def, paths) {
-    var currentUnit = getUnitByUnitId(def.unit_id);
+    const currentUnit = getUnitByUnitId(def.unit_id);
 
-    var slides = paths.map(function(path) {
-      var nextUnit = getUnitByUnitId(path.unit_id);
+    const slides = paths.map(path => {
+      const nextUnit = getUnitByUnitId(path.unit_id);
       return {
         unit:         nextUnit,
-        label:        nextUnit ? nextUnit.name : path.label,
-        confirmLabel: 'Upgrade \u2192 ' + (nextUnit ? nextUnit.name : path.label),
+        buildingLabel: nextUnit?.name || path.label,
+        confirmLabel: `Upgrade → ${nextUnit?.name || path.label}`,
         compareUnit:  currentUnit,
         buildingId:   path.building_id,
-        slot:         slot,
+        slot,
       };
     });
 
-    openSliderModal(def.label, slides, function(s) {
-      performBuildingUpgrade(s.slot, s.buildingId);
-    });
+    openSliderModal(def.label, slides, s => performBuildingUpgrade(s.slot, s.buildingId));
   }
 
   async function performBuildingUpgrade(slot, building_id) {
     closeModal();
     try {
-      var updated = await api('/structures/build', {
-        chat_id:    player.chat_id,
-        faction:    player.faction,
-        slot:       slot,
-        building_id: building_id,
+      const updated = await api('/structures/build', {
+        chat_id: player.chat_id,
+        faction: player.faction,
+        slot,
+        building_id,
       });
       structuresRecord = updated;
       renderBuildings();
@@ -471,20 +548,15 @@ export function renderCastle(root, { player }) {
     }
   }
 
-  /* ── Boot ── */
   load();
 
-  root.querySelectorAll('.nav-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
+  root.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
       if (btn.classList.contains('disabled')) return;
-      var screen = btn.dataset.screen;
-      if (screen === 'spells') {
-        renderSpellTome(root, { player: player });
-      } else if (screen === 'castle') {
-        renderBuildings();
-      } else {
-        navigate(screen, { player: player });
-      }
+      const screen = btn.dataset.screen;
+      if (screen === 'spells') renderSpellTome(root, { player });
+      else if (screen === 'castle') renderBuildings();
+      else navigate(screen, { player });
     });
   });
 }
