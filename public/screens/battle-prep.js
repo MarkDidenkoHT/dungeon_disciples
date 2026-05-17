@@ -1,6 +1,7 @@
 import { api }        from '../main.js';
 import { navigate }   from '../main.js';
 import { SPELLS }     from '../../data/spells.js';
+import { getEncounter } from '../../data/embark.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -375,24 +376,49 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }).join('');
   }
 
-  function renderEnemyGrid() {
-    const grid = root.querySelector('#enemy-grid');
-    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
-      const e = enemies[i];
-      if (e) return `<div class="battle-cell battle-cell--enemy" data-i="${i}">
-        <span class="battle-cell-name">${e.name}</span>
-        <span class="battle-cell-sub">❤ ${e.hp}</span>
-      </div>`;
-      return `<div class="battle-cell battle-cell--fog">???</div>`;
-    }).join('');
-
-    grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const e = enemies[Number(cell.dataset.i)];
-        showDetail(enemyDetailHtml(e));
-      });
-    });
+function renderEnemyGrid(root, enemies) {
+  const COLS = 2;
+  const ROWS = 3;
+ 
+  function cellRow(i) { return Math.floor(i / COLS); }
+ 
+  const grid = root.querySelector('#enemy-grid');
+ 
+  const placed = new Set(enemies.map(e => e.cell));
+  const unitAtCell = {};
+  for (const e of enemies) {
+    if (e.size === 'row') {
+      unitAtCell[e.cell] = e;
+      unitAtCell[e.cell + 1] = { _shadow: true };
+    } else {
+      unitAtCell[e.cell] = e;
+    }
   }
+ 
+  grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
+    const e = unitAtCell[i];
+    if (!e) {
+      return `<div class="battle-cell battle-cell--fog">???</div>`;
+    }
+    if (e._shadow) return '';
+    const colSpan = e.size === 'row' ? 2 : 1;
+    const rowSpan = e.size === 'column' ? 2 : 1;
+    return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
+      <span class="battle-cell-name">${e.name}</span>
+      <span class="battle-cell-sub">❤ ${e.hp}</span>
+    </div>`;
+  }).join('');
+ 
+  const detailPanel = root.querySelector('#detail-panel');
+  grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const e = unitAtCell[Number(cell.dataset.i)];
+      if (e && !e._shadow) {
+        detailPanel.innerHTML = enemyDetailHtml(e);
+      }
+    });
+  });
+}
 
   function renderPortraitTrack() {
     const track     = root.querySelector('#portrait-track');
@@ -570,31 +596,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
-  async function load() {
-    const [rosterData, regionsData] = await Promise.all([
-      api(`/roster?chat_id=${player.chat_id}`),
-      api('/regions'),
-    ]);
-
-    roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
-
-    const heroName = player.hero ?? '';
-    const heroUnit = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
-    heroId = heroUnit?.id ?? null;
-
-    const regionDef = regionsData.find(r => r.id === region_id);
-    const levelDef  = regionDef?.difficulties?.[`level_${level}`];
-    enemies = levelDef?.enemies || [];
-
-    await Promise.all([loadResources(), loadLearnedSpells()]);
-
-    renderEnemyGrid();
-    renderPlayerGrid();
-    renderPortraitTrack();
-    attachPortraitEvents();
-    checkReady();
-    await renderPrepSpells();
-  }
+async function load(root, player, region_id, level, api, renderPlayerGrid, renderPortraitTrack, attachPortraitEvents, checkReady, renderPrepSpells, roster, heroId, occupied, placedUnitIds) {
+  const [rosterData] = await Promise.all([
+    api(`/roster?chat_id=${player.chat_id}`),
+  ]);
+ 
+  const loadedRoster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
+ 
+  const heroName = player.hero ?? '';
+  const heroUnit = loadedRoster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
+  const resolvedHeroId = heroUnit?.id ?? null;
+ 
+  const enemies = getEncounter(region_id, level);
+ 
+  return { roster: loadedRoster, heroId: resolvedHeroId, enemies };
+}
 
   load();
 }
+
+export { enemyDetailHtml, renderEnemyGrid, load };
