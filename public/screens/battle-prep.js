@@ -203,7 +203,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           }
         }
       }
-
       const displayEl = root.querySelector('#resource-display');
       let html = '';
       for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
@@ -376,49 +375,38 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }).join('');
   }
 
-function renderEnemyGrid(root, enemies) {
-  const COLS = 2;
-  const ROWS = 3;
- 
-  function cellRow(i) { return Math.floor(i / COLS); }
- 
-  const grid = root.querySelector('#enemy-grid');
- 
-  const placed = new Set(enemies.map(e => e.cell));
-  const unitAtCell = {};
-  for (const e of enemies) {
-    if (e.size === 'row') {
-      unitAtCell[e.cell] = e;
-      unitAtCell[e.cell + 1] = { _shadow: true };
-    } else {
-      unitAtCell[e.cell] = e;
-    }
-  }
- 
-  grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
-    const e = unitAtCell[i];
-    if (!e) {
-      return `<div class="battle-cell battle-cell--fog">???</div>`;
-    }
-    if (e._shadow) return '';
-    const colSpan = e.size === 'row' ? 2 : 1;
-    const rowSpan = e.size === 'column' ? 2 : 1;
-    return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
-      <span class="battle-cell-name">${e.name}</span>
-      <span class="battle-cell-sub">❤ ${e.hp}</span>
-    </div>`;
-  }).join('');
- 
-  const detailPanel = root.querySelector('#detail-panel');
-  grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const e = unitAtCell[Number(cell.dataset.i)];
-      if (e && !e._shadow) {
-        detailPanel.innerHTML = enemyDetailHtml(e);
+  function renderEnemyGrid() {
+    const grid = root.querySelector('#enemy-grid');
+
+    const unitAtCell = {};
+    for (const e of enemies) {
+      if (e.size === 'row') {
+        unitAtCell[e.cell] = e;
+        unitAtCell[e.cell + 1] = { _shadow: true };
+      } else {
+        unitAtCell[e.cell] = e;
       }
+    }
+
+    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
+      const e = unitAtCell[i];
+      if (!e) return `<div class="battle-cell battle-cell--fog">???</div>`;
+      if (e._shadow) return '';
+      const colSpan = e.size === 'row' ? 2 : 1;
+      const rowSpan = e.size === 'column' ? 2 : 1;
+      return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
+        <span class="battle-cell-name">${e.name}</span>
+        <span class="battle-cell-sub">❤ ${e.hp}</span>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const e = unitAtCell[Number(cell.dataset.i)];
+        if (e && !e._shadow) showDetail(enemyDetailHtml(e));
+      });
     });
-  });
-}
+  }
 
   function renderPortraitTrack() {
     const track     = root.querySelector('#portrait-track');
@@ -596,21 +584,30 @@ function renderEnemyGrid(root, enemies) {
     navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
-async function load(root, player, region_id, level, api, renderPlayerGrid, renderPortraitTrack, attachPortraitEvents, checkReady, renderPrepSpells, roster, heroId, occupied, placedUnitIds) {
-  const [rosterData] = await Promise.all([
-    api(`/roster?chat_id=${player.chat_id}`),
-  ]);
- 
-  const loadedRoster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
- 
-  const heroName = player.hero ?? '';
-  const heroUnit = loadedRoster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
-  const resolvedHeroId = heroUnit?.id ?? null;
- 
-  const enemies = getEncounter(region_id, level);
- 
-  return { roster: loadedRoster, heroId: resolvedHeroId, enemies };
-}
+  // Kick off async initialisation without making renderBattlePrep itself async
+  (async () => {
+    try {
+      const [rosterData] = await Promise.all([
+        api(`/roster?chat_id=${player.chat_id}`),
+      ]);
 
-  load();
+      roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
+
+      const heroName = player.hero ?? '';
+      const heroUnit = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
+      heroId  = heroUnit?.id ?? null;
+      enemies = getEncounter(region_id, level);
+
+      await Promise.all([loadResources(), loadLearnedSpells()]);
+
+      renderPlayerGrid();
+      renderEnemyGrid();
+      renderPortraitTrack();
+      attachPortraitEvents();
+      await renderPrepSpells();
+      checkReady();
+    } catch (err) {
+      console.error('Failed to initialise battle prep:', err);
+    }
+  })();
 }
