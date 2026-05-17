@@ -615,4 +615,4 @@ async function load(root, player, region_id, level, api, renderPlayerGrid, rende
   load();
 }
 
-export { enemyDetailHtml, renderEnemyGrid, load };
+export { renderBattlePrep };
