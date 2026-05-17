@@ -19,7 +19,7 @@ export class BattleSystem {
 
   initCombatants(playerUnits, enemyUnits, placement) {
     console.log(`[BattleSystem] Player units: ${playerUnits.length} | Enemies: ${enemyUnits.length}`);
-    
+
     playerUnits.forEach((u, idx) => {
       console.log(`[BattleSystem] Player unit ${idx}:`, JSON.stringify(u, null, 2));
       const cellIdx = placement[u.id] ?? this.combatants.length;
@@ -31,6 +31,9 @@ export class BattleSystem {
       const row = Math.min(Math.floor(i / COLS), ROWS - 1);
       this.combatants.push(this.createCombatant(e, 'enemy', cellIndex(row, col)));
     });
+
+    // Apply on_battle_start passives after all combatants exist
+    this.applyBattleStartPassives();
   }
 
   createCombatant(unit, side, cellIndex) {
@@ -61,10 +64,69 @@ export class BattleSystem {
       used_active: false,
       defend_armor_bonus: 0,
       defend_resist_bonus: 0,
+      shield: 0,
       burn: 0,
       poison: 0,
     };
   }
+
+  // ─── Battle-Start Passives ────────────────────────────────────────────────
+
+  applyBattleStartPassives() {
+    for (const c of this.combatants) {
+      const passive = c.unit_data?.passive || c.unit_data?.passive_ability;
+      if (!passive) continue;
+
+      // vitality: all allies gain HP
+      if (passive.startsWith('vitality')) {
+        const bonusMap = { 'vitality 1': 5, 'vitality 2': 15, 'vitality 3': 25 };
+        const bonus = bonusMap[passive] ?? 0;
+        if (!bonus) continue;
+        const allies = this.combatants.filter(a => a.side === c.side);
+        for (const ally of allies) {
+          ally.battle_hp += bonus;
+          ally.max_hp    += bonus;
+        }
+        console.log(`[Passive] ${c.unit_name} Vitality: +${bonus} HP to ${allies.length} allies`);
+        this.log.push({ type: 'passive', actorName: c.unit_name, targetName: 'all allies', value: bonus, passive: 'Vitality' });
+      }
+
+      // hardened: self gains bonus armor
+      if (passive.startsWith('hardened')) {
+        const bonusMap = { 'hardened 1': 3, 'hardened 2': 6 };
+        const bonus = bonusMap[passive] ?? 0;
+        if (!bonus) continue;
+        c.armor += bonus;
+        console.log(`[Passive] ${c.unit_name} Hardened: +${bonus} armor`);
+        this.log.push({ type: 'passive', actorName: c.unit_name, targetName: c.unit_name, value: bonus, passive: 'Hardened' });
+      }
+
+      // bone_shield: self starts with a damage-absorbing shield
+      if (passive.startsWith('bone_shield')) {
+        const bonusMap = { 'bone_shield 1': 30, 'bone_shield 2': 60 };
+        const bonus = bonusMap[passive] ?? 0;
+        if (!bonus) continue;
+        c.shield = bonus;
+        console.log(`[Passive] ${c.unit_name} Bone Shield: ${bonus} shield`);
+        this.log.push({ type: 'passive', actorName: c.unit_name, targetName: c.unit_name, value: bonus, passive: 'Bone Shield' });
+      }
+
+      // rooted: all enemies lose initiative
+      if (passive.startsWith('rooted')) {
+        const bonusMap = { 'rooted 1': 5, 'rooted 2': 12 };
+        const debuff = bonusMap[passive] ?? 0;
+        if (!debuff) continue;
+        const enemies = this.combatants.filter(e => e.side !== c.side);
+        for (const enemy of enemies) {
+          enemy.initiative = Math.max(0, enemy.initiative - debuff);
+        }
+        console.log(`[Passive] ${c.unit_name} Rooted: -${debuff} initiative to ${enemies.length} enemies`);
+        this.log.push({ type: 'passive', actorName: c.unit_name, targetName: 'all enemies', value: debuff, passive: 'Rooted' });
+      }
+    }
+  }
+
+  // ─── Targeting ───────────────────────────────────────────────────────────
 
   isHealer(unit) {
     const data = unit.unit_data || unit;
@@ -81,22 +143,11 @@ export class BattleSystem {
     const targets = this.combatants.filter(t => {
       if (!t.alive) return false;
       if (isHeal) {
-        return t.side === actor.side;           // healers can target self + allies
+        return t.side === actor.side;
       } else {
         if (t.side === actor.side) return false;
         const range = actor.unit_data?.range ?? 1;
         if (range === 1) {
-          // Range 1 = melee: can only target the nearest column of the opposing side.
-          //
-          // Grid layout (from left to right in the UI):
-          //   Player col 0 = back (far from enemies)
-          //   Player col 1 = front (closest to enemies)
-          //   Enemy  col 0 = front (closest to player)
-          //   Enemy  col 1 = back (far from player)
-          //
-          // So the "front" column index depends on which side is being targeted:
-          //   Targeting enemies  → front col = 0  (must clear col 0 before reaching col 1)
-          //   Targeting players  → front col = 1  (must clear col 1 before reaching col 0)
           const targetSide = t.side;
           const frontCol = targetSide === 'enemy' ? 0 : 1;
           const backCol  = targetSide === 'enemy' ? 1 : 0;
@@ -113,6 +164,8 @@ export class BattleSystem {
     console.log(`[BattleSystem] Found ${targets.length} valid targets`);
     return targets;
   }
+
+  // ─── Actions ─────────────────────────────────────────────────────────────
 
   executeAction(actor, target = null, actionType = 'attack') {
     console.log(`\n=== EXECUTE ACTION === ${actionType} by ${actor.unit_name} on ${target ? target.unit_name : 'null'}`);
@@ -135,31 +188,40 @@ export class BattleSystem {
       target.battle_hp = Math.min(target.max_hp, target.battle_hp + value);
       const actualHeal = target.battle_hp - oldHp;
 
-      this.log.push({ 
-        type: 'action', 
-        actorName: actor.unit_name, 
-        targetName: target.unit_name, 
-        value: actualHeal, 
-        heal: true 
+      this.log.push({
+        type: 'action',
+        actorName: actor.unit_name,
+        targetName: target.unit_name,
+        value: actualHeal,
+        heal: true
       });
       console.log(`✅ HEAL SUCCESS: +${actualHeal} HP to ${target.unit_name}`);
     } else {
       value = this.calcDamage(actor, target);
+
+      // Absorb damage with shield first
+      if (target.shield > 0) {
+        const absorbed = Math.min(target.shield, value);
+        target.shield -= absorbed;
+        value = Math.max(0, value - absorbed);
+        console.log(`[Shield] ${target.unit_name} absorbed ${absorbed} damage (shield left: ${target.shield})`);
+      }
+
       const oldHp = target.battle_hp;
       target.battle_hp = Math.max(0, target.battle_hp - value);
       if (target.battle_hp <= 0) target.alive = false;
 
-      this.log.push({ 
-        type: 'action', 
-        actorName: actor.unit_name, 
-        targetName: target.unit_name, 
-        value, 
-        killed: !target.alive 
+      this.log.push({
+        type: 'action',
+        actorName: actor.unit_name,
+        targetName: target.unit_name,
+        value,
+        killed: !target.alive
       });
       console.log(`✅ DAMAGE: ${value} to ${target.unit_name}`);
 
-      // Mithrail's Light Passive
-      if (actor.unit_data?.passive === 'mithrails_light 1' || 
+      // Mithrail's Light passive
+      if (actor.unit_data?.passive === 'mithrails_light 1' ||
           actor.unit_data?.passive_ability === 'mithrails_light 1') {
         this.applyMithrailsLight(actor, value);
       }
@@ -173,14 +235,10 @@ export class BattleSystem {
     const healAmount = Math.floor(damageDealt * 0.25);
     if (healAmount <= 0) return;
 
-    const allies = this.combatants.filter(c => 
-      c.side === actor.side && c.alive
-    );
-
+    const allies = this.combatants.filter(c => c.side === actor.side && c.alive);
     if (allies.length === 0) return;
 
     const lowest = allies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
-
     const oldHp = lowest.battle_hp;
     lowest.battle_hp = Math.min(lowest.max_hp, lowest.battle_hp + healAmount);
     const actualHeal = lowest.battle_hp - oldHp;
@@ -232,6 +290,8 @@ export class BattleSystem {
     return this.afterAction(actor);
   }
 
+  // ─── Round Management ─────────────────────────────────────────────────────
+
   afterAction(actor) {
     const win = this.checkWin();
     if (win) {
@@ -255,9 +315,9 @@ export class BattleSystem {
 
   checkWin() {
     const playerAlive = this.combatants.some(c => c.side === 'player' && c.alive);
-    const enemyAlive = this.combatants.some(c => c.side === 'enemy' && c.alive);
+    const enemyAlive  = this.combatants.some(c => c.side === 'enemy'  && c.alive);
     if (!playerAlive) return 'enemy';
-    if (!enemyAlive) return 'player';
+    if (!enemyAlive)  return 'player';
     return null;
   }
 
