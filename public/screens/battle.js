@@ -110,6 +110,8 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           </div>
         </div>
 
+        ${renderActionPanel(actor)}
+
         <div class="battle-log" id="battle-log">
           ${state.log.slice(-8).map(entry => {
             if (entry.type === 'round') {
@@ -138,8 +140,6 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
             return '';
           }).join('')}
         </div>
-
-        ${renderActionPanel(actor)}
       </div>
     `;
 
