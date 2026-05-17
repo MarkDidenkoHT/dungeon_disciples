@@ -132,6 +132,49 @@ button:active:not(:disabled) { opacity: 0.75; }
 .error  { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .hidden { display: none !important; }
 
+.resource-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.res-bar-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.res-bar-icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.res-bar-val {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  min-width: 14px;
+}
+
+.res-bar-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
 /* ── Embark screen ── */
 
 .screen-embark {
@@ -202,6 +245,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.embark-header {
+  padding: 10px 14px 6px;
+}
+
+.embark-header h2 {
+  font-size: 1rem;
+  margin-bottom: 0;
 }
 
 .embark-regions-grid {

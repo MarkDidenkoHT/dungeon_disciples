@@ -36,15 +36,13 @@ function resolveAbility(key, type) {
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
+      <div class="resource-bar" id="resource-bar"></div>
       <main class="castle-main">
-        <div class="res-mana-top" id="res-mana"></div>
         <div class="castle-grounds">
-          <div class="res-col res-col--left" id="res-col-left"></div>
           <div class="castle-grid-wrap">
             <div class="outer-ring" id="outer-ring"></div>
             <div class="center-slot" id="center-slot"></div>
           </div>
-          <div class="res-col res-col--right" id="res-col-right"></div>
         </div>
       </main>
       <nav class="bottom-nav">
@@ -99,18 +97,17 @@ export function renderCastle(root, { player }) {
 
     const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
 
-    root.querySelector('#res-mana').innerHTML =
-      `<div class="res-item"><span class="res-icon">🔮</span><span class="res-amount">${find('Mana').amount}</span></div>`;
-
-    root.querySelector('#res-col-left').innerHTML =
-      `<div class="res-item"><span class="res-icon">🪙</span><span class="res-amount">${find('Gold').amount}</span></div>`;
-
-    root.querySelector('#res-col-right').innerHTML = [
-      ['🟢', 'Crystals_Life'], ['🔴', 'Crystals_Fire'], ['🟣', 'Crystals_Death'],
-      ['🟡', 'Crystals_Nature'], ['🔵', 'Crystals_Frost'],
-    ].map(([icon, key]) =>
-      `<div class="res-item"><span class="res-icon">${icon}</span><span class="res-amount">${find(key).amount}</span></div>`
-    ).join('');
+    root.querySelector('#resource-bar').innerHTML = `
+      <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
+      <div class="res-bar-sep"></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🔮</span><span class="res-bar-val">${find('Mana').amount}</span></div>
+      <div class="res-bar-sep"></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
+      <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
+    `;
 
     buildingPools      = buildingsResp.pools;
     upgradePaths       = buildingsResp.upgrade_paths || {};
