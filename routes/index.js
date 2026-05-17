@@ -14,7 +14,6 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 200 },
   { item_type: 'resource', item: 'Trophies',        amount: 0   },
-  { item_type: 'resource', item: 'Mana',            amount: 0   },
   { item_type: 'resource', item: 'Crystals_Life',   amount: 20  },
   { item_type: 'resource', item: 'Crystals_Fire',   amount: 20  },
   { item_type: 'resource', item: 'Crystals_Death',  amount: 20  },
@@ -265,10 +264,8 @@ router.post('/roster/levelup', async (req, res) => {
     const buildingSlot = unitData.building_slot || null;
 
     if (paths.length === 1) {
-      // Single upgrade path — no building choice needed, always valid
       path = paths[0];
     } else {
-      // Multiple upgrade paths — must have the correct upgrade building already built in the slot
       if (!buildingSlot) {
         return res.status(400).json({ error: 'Unit has no building slot assigned; cannot determine upgrade path' });
       }
@@ -326,8 +323,6 @@ router.post('/roster/levelup', async (req, res) => {
   }
 });
 
-// Upgrade the throne (slot_0) to the next level.
-// This does NOT auto-level the hero — it just unlocks the ability to do so.
 router.post('/structures/throne/upgrade', async (req, res) => {
   const { chat_id } = req.body;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
@@ -348,33 +343,18 @@ router.post('/structures/throne/upgrade', async (req, res) => {
     const cost = THRONE_UPGRADE_COSTS[nextLevel];
     if (!cost) return res.status(400).json({ error: 'No cost defined for that level' });
 
-    // Deduct resources if cost > 0 (gold, mana)
-    if (cost.gold > 0 || cost.mana > 0) {
+    if (cost.gold > 0) {
       const inventory = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       const goldRow   = inventory.find(r => r.item === 'Gold');
-      const manaRow   = inventory.find(r => r.item === 'Mana');
 
       if (!goldRow || goldRow.amount < cost.gold) {
         return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
       }
-      if (!manaRow || manaRow.amount < cost.mana) {
-        return res.status(400).json({ error: `Not enough Mana. Need ${cost.mana}` });
-      }
 
-      const deductions = [];
-      if (cost.gold > 0) {
-        deductions.push(supabase(`/inventory_and_resources?id=eq.${goldRow.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ amount: goldRow.amount - cost.gold }),
-        }));
-      }
-      if (cost.mana > 0) {
-        deductions.push(supabase(`/inventory_and_resources?id=eq.${manaRow.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ amount: manaRow.amount - cost.mana }),
-        }));
-      }
-      await Promise.all(deductions);
+      await supabase(`/inventory_and_resources?id=eq.${goldRow.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ amount: goldRow.amount - cost.gold }),
+      });
     }
 
     buildings['slot_0'] = { ...throne, level: nextLevel };
@@ -390,10 +370,6 @@ router.post('/structures/throne/upgrade', async (req, res) => {
   }
 });
 
-// Level up the hero. Requires:
-//   - The hero's current hero_level < throne level
-//   - hero_level < HERO_MAX_LEVEL
-// Applies cumulative stat deltas for the new level and saves to roster.
 router.post('/roster/hero-levelup', async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) {
@@ -412,7 +388,6 @@ router.post('/roster/hero-levelup', async (req, res) => {
     const entry    = rosterRows[0];
     const unitData = entry.unit_data || {};
 
-    // Confirm this is a hero (heroes have no 't' tier field)
     if (unitData.t !== undefined && unitData.t !== null) {
       return res.status(400).json({ error: 'This unit is not a hero' });
     }
@@ -434,7 +409,6 @@ router.post('/roster/hero-levelup', async (req, res) => {
       return res.status(400).json({ error: `No level data for ${heroKey} level ${nextLevel}` });
     }
 
-    // Apply the stat delta for the next level
     const newUnitData = { ...unitData, hero_level: nextLevel };
     for (const [stat, val] of Object.entries(delta)) {
       if (newUnitData[stat] !== undefined) newUnitData[stat] += val;
@@ -567,7 +541,6 @@ router.post('/progress/unlock', async (req, res) => {
   }
 });
 
-
 router.post('/battle/reward', async (req, res) => {
   const { chat_id, region_id, level, won, survivor_ids } = req.body;
   if (!chat_id || !region_id || level === undefined || won === undefined) {
@@ -683,58 +656,28 @@ router.post('/spells/research', async (req, res) => {
   if (!spell) return res.status(404).json({ error: 'Spell not found' });
 
   try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    const [playerRows, structRows] = await Promise.all([
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+    ]);
 
-    const player = rows[0];
-    const currentMana = player.mana || 0;
-    const learned = player.learned_spells || [];
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+
+    const player      = playerRows[0];
+    const learned     = player.learned_spells || [];
+    const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+    const spellTier   = spell.tier || 1;
 
     if (learned.includes(spell_id)) {
       return res.status(400).json({ error: 'Spell already researched' });
     }
 
-    if (currentMana < spell.cost.mana) {
-      return res.status(400).json({ error: `Not enough Mana. Need ${spell.cost.mana}` });
+    if (throneLevel < spellTier) {
+      return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
     }
 
-    const newMana = currentMana - spell.cost.mana;
-    const newLearned = [...learned, spell_id];
-
-    await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ mana: newMana, learned_spells: newLearned }),
-    });
-
-    res.json({ success: true, mana_remaining: newMana, learned_spells: newLearned });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/spells/consume', async (req, res) => {
-  const { chat_id, spell_id, mana_cost, crystals_cost } = req.body;
-  if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
-
-  try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
-
-    const player = rows[0];
-    const learned = player.learned_spells || [];
-
-    if (!learned.includes(spell_id)) {
-      return res.status(400).json({ error: 'Spell not learned' });
-    }
-
-    const currentMana = player.mana || 0;
-    const manaCost = mana_cost || 0;
-
-    if (currentMana < manaCost) {
-      return res.status(400).json({ error: `Not enough Mana. Need ${manaCost}` });
-    }
-
-    const crystalMap = crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {};
+    const crystalMap = spell.cost.crystals || {};
     const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
 
     if (crystalEntries.length > 0) {
@@ -756,13 +699,56 @@ router.post('/spells/consume', async (req, res) => {
       }));
     }
 
-    const newMana = currentMana - manaCost;
+    const newLearned = [...learned, spell_id];
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
-      body: JSON.stringify({ mana: newMana }),
+      body: JSON.stringify({ learned_spells: newLearned }),
     });
 
-    res.json({ success: true, mana_remaining: newMana });
+    res.json({ success: true, learned_spells: newLearned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/spells/consume', async (req, res) => {
+  const { chat_id, spell_id, crystals_cost } = req.body;
+  if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
+
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player  = rows[0];
+    const learned = player.learned_spells || [];
+
+    if (!learned.includes(spell_id)) {
+      return res.status(400).json({ error: 'Spell not learned' });
+    }
+
+    const crystalMap     = crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {};
+    const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
+
+    if (crystalEntries.length > 0) {
+      const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+
+      for (const [crystalType, needed] of crystalEntries) {
+        const row = inventoryRows.find(r => r.item === crystalType);
+        if (!row || row.amount < needed) {
+          return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
+        }
+      }
+
+      await Promise.all(crystalEntries.map(([crystalType, needed]) => {
+        const row = inventoryRows.find(r => r.item === crystalType);
+        return supabase(`/inventory_and_resources?id=eq.${row.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ amount: row.amount - needed }),
+        });
+      }));
+    }
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

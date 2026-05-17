@@ -112,7 +112,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   const occupied       = {};
   const selectedSpells = [];
 
-  let playerMana     = 0;
   let playerCrystals = {};
   let learnedSpells  = [];
 
@@ -194,10 +193,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   async function loadResources() {
     try {
-      const playerData = await api(`/player?chat_id=${player.chat_id}`);
-      playerMana = playerData.mana || 0;
-
       const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
+      playerCrystals = {};
       if (Array.isArray(inventory)) {
         for (const row of inventory) {
           if (row.item in CRYSTAL_ICONS) {
@@ -207,7 +204,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
 
       const displayEl = root.querySelector('#resource-display');
-      let html = `<span class="resource-item"><span class="resource-icon">🔮</span><span class="resource-amount">${playerMana}</span></span>`;
+      let html = '';
       for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
         const amt = playerCrystals[type] || 0;
         html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
@@ -215,7 +212,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       displayEl.innerHTML = html;
     } catch (err) {
       console.error('Failed to load resources:', err);
-      playerMana     = 0;
       playerCrystals = {};
     }
   }
@@ -232,7 +228,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function canAffordSpell(spell) {
-    if (playerMana < spell.cost.mana) return false;
     const crystalMap = spell.cost.crystals || {};
     for (const [type, needed] of Object.entries(crystalMap)) {
       if ((playerCrystals[type] || 0) < needed) return false;
@@ -241,7 +236,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function spellCostLabel(spell) {
-    let parts = [`🔮${spell.cost.mana}`];
+    const parts = [];
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
       if (amt > 0) parts.push(`${CRYSTAL_ICONS[type] || '💎'}${amt}`);
     }
@@ -309,12 +304,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const result = await api('/spells/consume', {
         chat_id:       player.chat_id,
         spell_id:      spell.id,
-        mana_cost:     spell.cost.mana,
         crystals_cost: spell.cost.crystals || {},
       });
 
       if (result.success) {
-        playerMana -= spell.cost.mana;
         for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
           playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
