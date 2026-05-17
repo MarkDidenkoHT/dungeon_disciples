@@ -1,4 +1,4 @@
-import { UNITS } from '../../data/units.js';
+import { UNITS } from './units.js';
 
 const REGION_ENCOUNTERS = {
   life_grove: {
