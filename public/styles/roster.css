@@ -121,9 +121,7 @@
 }
 
 .unit-portrait {
-  height: 46vh;
-  min-height: 120px;
-  max-height: 52vw;
+  height: 55vh;
   background: #0b0f18;
   position: relative;
   display: flex;
