@@ -31,7 +31,7 @@ const BUILDING_POOLS = {
         unit: 'conscript',
         unit_id: 'e1',
         upgrades: ['e11', 'e12'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'acolyte_shrine', 
@@ -41,7 +41,7 @@ const BUILDING_POOLS = {
         unit: 'acolyte',
         unit_id: 'e2',
         upgrades: ['e22', 'e23'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'mage_tower', 
@@ -51,7 +51,7 @@ const BUILDING_POOLS = {
         unit: 'apprentice',
         unit_id: 'e4',
         upgrades: ['e41', 'e42'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'priest_shrine', 
@@ -61,7 +61,7 @@ const BUILDING_POOLS = {
         unit: 'priest',
         unit_id: 'e22',
         upgrades: [],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'purgator_chapel', 
@@ -71,7 +71,7 @@ const BUILDING_POOLS = {
         unit: 'purgator',
         unit_id: 'e23',
         upgrades: [],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'purgator_chapel', 
@@ -81,7 +81,7 @@ const BUILDING_POOLS = {
         unit: 'purgator',
         unit_id: 'e21',
         upgrades: [],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       }
     ],
     any: [
@@ -102,7 +102,7 @@ const BUILDING_POOLS = {
         unit: 'heretic',
         unit_id: 'd1',
         upgrades: ['d3'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'imp_den', 
@@ -112,7 +112,7 @@ const BUILDING_POOLS = {
         unit: 'imp',
         unit_id: 'd2',
         upgrades: [],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'possession_altar', 
@@ -122,7 +122,7 @@ const BUILDING_POOLS = {
         unit: 'possessed',
         unit_id: 'd3',
         upgrades: [],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
     ],
     any: [
@@ -143,7 +143,7 @@ const BUILDING_POOLS = {
         unit: 'zombie_risen',
         unit_id: 'gs1',
         upgrades: ['gs11', 'gs12', 'gs13'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'catapult_workshop', 
@@ -153,7 +153,7 @@ const BUILDING_POOLS = {
         unit: 'catapult',
         unit_id: 'gs2',
         upgrades: ['gs21', 'gs22'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'adept_crypt', 
@@ -163,7 +163,7 @@ const BUILDING_POOLS = {
         unit: 'adept',
         unit_id: 'gs3',
         upgrades: ['gs31', 'gs32', 'gs33'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'dragon_barrow', 
@@ -173,7 +173,7 @@ const BUILDING_POOLS = {
         unit: 'dragon_c',
         unit_id: 'gs4',
         upgrades: ['gs41', 'gs42'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'skeleton_crypt', 
@@ -183,7 +183,7 @@ const BUILDING_POOLS = {
         unit: 'skeleton_warrior',
         unit_id: 'gs5',
         upgrades: ['gs51', 'gs52'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, mcrystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
       { 
         id: 'ghost_manor', 
@@ -193,7 +193,7 @@ const BUILDING_POOLS = {
         unit: 'ghost',
         unit_id: 'gs6',
         upgrades: ['gs61', 'gs62'],
-        cost: { gold: 50, mana: 0, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
+        cost: { gold: 50, crystals_life: 0, crystals_fire: 0, crystals_death: 0, crystals_nature: 0, crystals_frost: 0 }
       },
     ],
     any: [
@@ -297,9 +297,9 @@ const HERO_MAX_LEVEL = 4;
 
 // Throne upgrade costs per target level (cost to upgrade from level N-1 to N)
 const THRONE_UPGRADE_COSTS = {
-  2: { gold: 150, mana:   0 },
-  3: { gold: 300, mana:  50 },
-  4: { gold: 600, mana: 150 },
+  2: { gold: 150},
+  3: { gold: 300 },
+  4: { gold: 600},
 };
 
 function getBuildingDef(faction, buildingId) {

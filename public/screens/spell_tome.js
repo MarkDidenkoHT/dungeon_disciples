@@ -18,10 +18,6 @@ export function renderSpellTome(root, { player }) {
         <div class="spelltome-header">
           <span class="spelltome-title">📖 Spell Tome</span>
           <span class="spelltome-faction">${player.faction}</span>
-          <span class="spelltome-mana" id="spelltome-mana">
-            <span class="spelltome-mana-icon">🔮</span>
-            <span id="mana-val">…</span>
-          </span>
         </div>
 
         <div class="spelltome-body">
@@ -41,12 +37,13 @@ export function renderSpellTome(root, { player }) {
     </div>
   `;
 
-  let playerMana      = 0;
-  let learnedSpells   = [];
-  let activeSpellId   = null;
+  let playerCrystals = {};
+  let throneLevel    = 1;
+  let learnedSpells  = [];
+  let activeSpellId  = null;
   const factionSpells = SPELLS[player.faction] || [];
 
-  const listWrap   = root.querySelector('#spells-list-wrap');
+  const listWrap    = root.querySelector('#spells-list-wrap');
   const detailPanel = root.querySelector('#spell-detail-panel');
 
   async function loadResourceBar() {
@@ -56,59 +53,68 @@ export function renderSpellTome(root, { player }) {
       root.querySelector('#resource-bar').innerHTML = `
         <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
         <div class="res-bar-sep"></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔮</span><span class="res-bar-val">${find('Mana').amount}</span></div>
-        <div class="res-bar-sep"></div>
         <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
       `;
+      playerCrystals = {
+        Crystals_Life:   find('Crystals_Life').amount,
+        Crystals_Fire:   find('Crystals_Fire').amount,
+        Crystals_Death:  find('Crystals_Death').amount,
+        Crystals_Nature: find('Crystals_Nature').amount,
+        Crystals_Frost:  find('Crystals_Frost').amount,
+      };
     } catch (err) {
       console.error('Failed to load resource bar:', err);
     }
   }
 
   function costHtml(spell) {
-    let parts = `<span class="spell-cost-item"><span>🔮</span>${spell.cost.mana}</span>`;
+    let parts = '';
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
       if (amt > 0) parts += `<span class="spell-cost-item"><span>${CRYSTAL_ICONS[type] || '💎'}</span>${amt}</span>`;
     }
-    return parts;
+    return parts || '—';
   }
 
   function canAfford(spell) {
-    if (playerMana < spell.cost.mana) return false;
-    for (const [, amt] of Object.entries(spell.cost.crystals || {})) {
-      if (amt > 0) return false;
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0 && (playerCrystals[type] || 0) < amt) return false;
     }
     return true;
   }
 
-  function updateManaDisplay() {
-    root.querySelector('#mana-val').textContent = playerMana;
+  function isTierUnlocked(spell) {
+    return throneLevel >= (spell.tier || 1);
   }
 
   function renderList() {
-    const learned     = factionSpells.filter(s => learnedSpells.includes(s.id));
-    const available   = factionSpells.filter(s => !learnedSpells.includes(s.id));
+    const byTier = { 1: [], 2: [], 3: [] };
+    for (const spell of factionSpells) {
+      const t = spell.tier || 1;
+      if (byTier[t]) byTier[t].push(spell);
+    }
 
     let html = '';
 
-    if (learned.length) {
-      html += `<div class="spells-section-label">Learned</div><div class="spells-list" id="section-learned">`;
-      for (const spell of learned) {
-        html += spellRowHtml(spell, true);
-      }
-      html += `</div>`;
-    }
+    for (const tier of [1, 2, 3]) {
+      const spells = byTier[tier];
+      if (!spells.length) continue;
 
-    if (available.length) {
-      html += `<div class="spells-section-label">Available to Research</div><div class="spells-list" id="section-available">`;
-      for (const spell of available) {
+      const unlocked = throneLevel >= tier;
+      html += `<div class="spells-section-label">
+        Tier ${tier} Spells
+        ${unlocked ? '' : `<span class="spells-tier-lock">🔒 Throne Lv${tier}</span>`}
+      </div><div class="spells-list">`;
+
+      for (const spell of spells) {
+        const isLearned  = learnedSpells.includes(spell.id);
         const affordable = canAfford(spell);
-        html += spellRowHtml(spell, false, affordable);
+        html += spellRowHtml(spell, isLearned, affordable, unlocked);
       }
+
       html += `</div>`;
     }
 
@@ -120,12 +126,15 @@ export function renderSpellTome(root, { player }) {
     attachRowEvents();
   }
 
-  function spellRowHtml(spell, isLearned, affordable) {
+  function spellRowHtml(spell, isLearned, affordable, tierUnlocked) {
     const isActive = activeSpellId === spell.id;
     let cls = 'spell-row';
-    if (isLearned)         cls += ' spell-row--learned';
-    if (!isLearned && !affordable) cls += ' spell-row--unavailable';
-    if (isActive)          cls += ' spell-row--active';
+    if (isLearned)                    cls += ' spell-row--learned';
+    if (!tierUnlocked)                cls += ' spell-row--locked';
+    if (tierUnlocked && !isLearned && !affordable) cls += ' spell-row--unavailable';
+    if (isActive)                     cls += ' spell-row--active';
+
+    const canResearch = tierUnlocked && !isLearned && affordable;
 
     return `
       <div class="${cls}" data-spell-id="${spell.id}">
@@ -133,16 +142,17 @@ export function renderSpellTome(root, { player }) {
         <div class="spell-row-body">
           <div class="spell-row-name">
             ${spell.name}
-            <span class="spell-row-rank">R${spell.rank}</span>
+            <span class="spell-row-rank">T${spell.tier}</span>
             ${isLearned ? '<span class="spell-row-learned-badge">✓ Learned</span>' : ''}
+            ${!tierUnlocked ? '<span class="spell-row-locked-badge">🔒</span>' : ''}
           </div>
           <div class="spell-row-cost">${costHtml(spell)}</div>
         </div>
-        ${!isLearned ? `
+        ${!isLearned && tierUnlocked ? `
         <div class="spell-row-action">
-          <button class="research-btn ${affordable ? '' : 'research-btn--disabled'}"
+          <button class="research-btn ${canResearch ? '' : 'research-btn--disabled'}"
                   data-spell-id="${spell.id}"
-                  ${affordable ? '' : 'disabled'}>
+                  ${canResearch ? '' : 'disabled'}>
             Research
           </button>
         </div>` : ''}
@@ -151,32 +161,28 @@ export function renderSpellTome(root, { player }) {
   }
 
   function showDetail(spell) {
-    const isLearned  = learnedSpells.includes(spell.id);
-    const affordable = canAfford(spell);
+    const isLearned    = learnedSpells.includes(spell.id);
+    const affordable   = canAfford(spell);
+    const tierUnlocked = isTierUnlocked(spell);
+    const canResearch  = tierUnlocked && !isLearned && affordable;
 
-    let paramsHtml = '';
-    if (spell.params && Object.keys(spell.params).length) {
-      const rows = [];
-      if (spell.params.damage)   rows.push(['Damage',   `${spell.params.damage}${spell.params.damage_type ? ' ' + spell.params.damage_type : ''}`]);
-      if (spell.params.heal)     rows.push(['Healing',  spell.params.heal]);
-      if (spell.params.absorb)   rows.push(['Shield',   `${spell.params.absorb} for ${spell.params.duration || 1} turns`]);
-      if (spell.params.splash)   rows.push(['Area',     'All enemies']);
-      if (spell.params.status)   rows.push(['Applies',  spell.params.status]);
-
-      if (rows.length) {
-        paramsHtml = `<div class="spell-detail-params">
-          ${rows.map(([label, val]) => `
-            <div class="spell-detail-param-row">
-              <span class="spell-detail-param-label">${label}</span>
-              <span class="spell-detail-param-val">${val}</span>
-            </div>`).join('')}
-        </div>`;
-      }
-    }
-
-    let costItemsHtml = `<span class="spell-detail-cost-item">🔮 ${spell.cost.mana} Mana</span>`;
+    let costItemsHtml = '';
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
       if (amt > 0) costItemsHtml += `<span class="spell-detail-cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`;
+    }
+    if (!costItemsHtml) costItemsHtml = '<span class="spell-detail-cost-item">Free</span>';
+
+    let actionHtml;
+    if (isLearned) {
+      actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Already learned</span>`;
+    } else if (!tierUnlocked) {
+      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Requires Throne level ${spell.tier}</span>`;
+    } else {
+      actionHtml = `
+        <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
+          ${canResearch ? 'Research Spell' : 'Not enough crystals'}
+        </button>
+      `;
     }
 
     detailPanel.innerHTML = `
@@ -186,7 +192,7 @@ export function renderSpellTome(root, { player }) {
           <div class="spell-detail-title">
             <div class="spell-detail-name">${spell.name}</div>
             <div class="spell-detail-meta">
-              <span class="spell-detail-rank-chip">Rank ${spell.rank}</span>
+              <span class="spell-detail-rank-chip">Tier ${spell.tier}</span>
               <span class="spell-detail-type-chip">${spell.effect_type || 'Spell'}</span>
             </div>
           </div>
@@ -194,20 +200,13 @@ export function renderSpellTome(root, { player }) {
 
         <div class="spell-detail-desc">${spell.description}</div>
 
-        ${paramsHtml}
-
         <div class="spell-detail-cost-row">
           <span class="spell-detail-cost-label">Cost</span>
           <div class="spell-detail-cost-items">${costItemsHtml}</div>
         </div>
 
         <div class="spell-detail-action">
-          ${isLearned
-            ? `<span class="spell-detail-status spell-detail-status--learned">✓ Already learned</span>`
-            : `<button class="research-btn-full" id="detail-research-btn" ${affordable ? '' : 'disabled'}>
-                 ${affordable ? 'Research Spell' : 'Not enough Mana'}
-               </button>`
-          }
+          ${actionHtml}
           <div class="research-feedback" id="research-feedback" style="display:none"></div>
         </div>
       </div>
@@ -245,9 +244,11 @@ export function renderSpellTome(root, { player }) {
       });
 
       if (result?.success) {
-        playerMana -= spell.cost.mana;
+        for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+          if (amt > 0) playerCrystals[type] = (playerCrystals[type] || 0) - amt;
+        }
         learnedSpells.push(spell.id);
-        updateManaDisplay();
+        await loadResourceBar();
         renderList();
         showDetail(spell);
         showFeedback('Spell learned!', false);
@@ -303,17 +304,17 @@ export function renderSpellTome(root, { player }) {
 
   async function init() {
     try {
-      const [playerData, researchData] = await Promise.all([
-        api(`/player?chat_id=${player.chat_id}`),
+      const [structData, researchData] = await Promise.all([
+        api(`/structures?chat_id=${player.chat_id}`),
         api(`/spells/research?chat_id=${player.chat_id}`),
       ]);
 
-      playerMana    = playerData.mana || 0;
+      throneLevel   = structData?.buildings_data?.slot_0?.level || 1;
       learnedSpells = Array.isArray(researchData)
         ? researchData
         : (researchData?.researched_spells || []);
 
-      updateManaDisplay();
+      await loadResourceBar();
       renderList();
     } catch (err) {
       console.error('Spell tome init failed:', err);
@@ -322,7 +323,6 @@ export function renderSpellTome(root, { player }) {
   }
 
   init();
-  loadResourceBar();
 
   root.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {

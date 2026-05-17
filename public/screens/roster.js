@@ -103,9 +103,6 @@ export function renderRoster(root, { player }) {
       const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
       root.querySelector('#resource-bar').innerHTML = `
         <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-        <div class="res-bar-sep"></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔮</span><span class="res-bar-val">${find('Mana').amount}</span></div>
-        <div class="res-bar-sep"></div>
         <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
         <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>

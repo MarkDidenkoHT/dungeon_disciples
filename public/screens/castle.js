@@ -99,9 +99,6 @@ export function renderCastle(root, { player }) {
 
     root.querySelector('#resource-bar').innerHTML = `
       <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-      <div class="res-bar-sep"></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🔮</span><span class="res-bar-val">${find('Mana').amount}</span></div>
-      <div class="res-bar-sep"></div>
       <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
       <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
       <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
@@ -462,7 +459,6 @@ export function renderCastle(root, { player }) {
         <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
         <div class="throne-cost">
           ${cost?.gold > 0 ? `<span class="throne-cost-item">🪙 ${cost.gold} Gold</span>` : ''}
-          ${cost?.mana  > 0 ? `<span class="throne-cost-item">🔮 ${cost.mana} Mana</span>`  : ''}
         </div>
         <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
       </div>`);
