@@ -1,7 +1,7 @@
-import { api }       from '../main.js';
-import { navigate }  from '../main.js';
-import { PASSIVES }  from '../../data/passives.js';
-import { ABILITIES } from '../../data/abilities.js';
+import { api }            from '../main.js';
+import { navigate }       from '../main.js';
+import { PASSIVES }       from '../../data/passives.js';
+import { ABILITIES }      from '../../data/abilities.js';
 import { renderSpellTome } from './spell_tome.js';
 
 let UNITS = null;
@@ -10,10 +10,8 @@ async function loadUnits() {
   try {
     const mod = await import('../../data/units.js');
     UNITS = mod.UNITS || mod.default?.UNITS || mod;
-    return UNITS;
   } catch (err) {
-    console.error('[Castle] FAILED to load units.js:', err);
-    return null;
+    console.error('[Castle] failed to load units.js:', err);
   }
 }
 
@@ -49,7 +47,6 @@ export function renderCastle(root, { player }) {
           <div class="res-col res-col--right" id="res-col-right"></div>
         </div>
       </main>
-
       <nav class="bottom-nav">
         <button class="nav-btn active" data-screen="castle">Castle</button>
         <button class="nav-btn" data-screen="roster">Roster</button>
@@ -57,7 +54,6 @@ export function renderCastle(root, { player }) {
         <button class="nav-btn" data-screen="spells">Spells</button>
       </nav>
     </div>
-
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal">
         <div class="modal-header">
@@ -69,14 +65,12 @@ export function renderCastle(root, { player }) {
     </div>
   `;
 
-  /* ── State ── */
   let structuresRecord   = null;
   let buildingPools      = null;
   let upgradePaths       = null;
   let throneUpgradeCosts = {};
   let heroMaxLevel       = 4;
 
-  /* ── Modal ── */
   const overlay    = root.querySelector('#modal-overlay');
   const modalBody  = root.querySelector('#modal-body');
   const modalTitle = root.querySelector('#modal-title');
@@ -96,7 +90,6 @@ export function renderCastle(root, { player }) {
   root.querySelector('#modal-close').addEventListener('click', closeModal);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 
-  /* ── Data loading ── */
   async function load() {
     const [inventory, structures, buildingsResp] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
@@ -141,7 +134,6 @@ export function renderCastle(root, { player }) {
     renderBuildings();
   }
 
-  /* ── Lookups ── */
   function getBuildingDef(faction, buildingId) {
     if (!buildingPools || !faction) return null;
     for (const pool of Object.values(buildingPools[faction])) {
@@ -168,85 +160,68 @@ export function renderCastle(root, { player }) {
   function buildUnitCard(unit, opts = {}) {
     if (!unit) return `<div class="unit-card"><p class="placeholder">Unknown unit</p></div>`;
 
-    const { isNew = false, buildingLabel = '', compareUnit = null } = opts;
+    const { buildingLabel = '', compareUnit = null } = opts;
     const tags     = (unit.tags || []).filter(Boolean);
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
-    const portrait = `/assets/character_art/${unit.id.toUpperCase()}.png`;
+    const portrait = `/assets/character_art/${unit.id}.png`;
     const res      = unit.resistances || {};
 
     const portraitHtml = `
       <div class="unit-portrait">
         <img src="${portrait}" alt="${unit.name}"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="unit-portrait-fallback" style="display:none;">
-          <span>${unit.id}</span>
-        </div>
+        <div class="unit-portrait-fallback" style="display:none;"><span>${unit.id}</span></div>
         <div class="unit-portrait-overlay">
           <span class="unit-name">${unit.name}</span>
-          <span class="unit-level-text">${buildingLabel || (unit.type ? unit.type : '')}</span>
+          <span class="unit-level-text">${buildingLabel || unit.type || ''}</span>
         </div>
-        ${isNew        ? `<div class="unit-slide-badge unit-slide-badge--tl">New</div>` : ''}
-        ${tagLeft      ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
-        ${tagRight     ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
+        ${tagLeft  ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
+        ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
-    const coreStats = [
-      { label: 'HP',     val: unit.hp },
-      { label: 'Armor',  val: unit.armor },
-      { label: 'Init',   val: unit.initiative },
-      { label: 'Power',  val: unit.action_power },
-      { label: 'Targets',val: unit.targets },
-      { label: 'Range',  val: unit.range },
+    const STAT_MAP = [
+      { label: 'HP',      key: 'hp'           },
+      { label: 'Armor',   key: 'armor'        },
+      { label: 'Init',    key: 'initiative'   },
+      { label: 'Power',   key: 'action_power' },
+      { label: 'Targets', key: 'targets'      },
+      { label: 'Range',   key: 'range'        },
     ];
 
     const coreHtml = `
       <div class="unit-core-stats unit-core-stats--6">
-        ${coreStats.map(s => {
-          let diffHtml = '';
-          if (compareUnit) {
-            const diff = (unit[s.label.toLowerCase()] ?? unit.action_power) - (compareUnit[s.label.toLowerCase()] ?? compareUnit.action_power);
-          }
-          return `<div class="core-stat">
+        ${STAT_MAP.map(s => `
+          <div class="core-stat">
             <span class="core-stat-label">${s.label}</span>
-            <span class="core-stat-val">${s.val ?? '—'}</span>
-          </div>`;
-        }).join('')}
+            <span class="core-stat-val">${unit[s.key] ?? '—'}</span>
+          </div>`).join('')}
       </div>`;
 
     let diffHtml = '';
     if (compareUnit) {
-      const diffKeys = [
-        { label: 'HP',      a: compareUnit.hp,           b: unit.hp },
-        { label: 'Armor',   a: compareUnit.armor,        b: unit.armor },
-        { label: 'Init',    a: compareUnit.initiative,   b: unit.initiative },
-        { label: 'Power',   a: compareUnit.action_power, b: unit.action_power },
-        { label: 'Targets', a: compareUnit.targets,      b: unit.targets },
-        { label: 'Range',   a: compareUnit.range,        b: unit.range },
-      ].filter(d => d.b !== d.a);
-
-      if (diffKeys.length) {
-        diffHtml = `<div class="unit-stat-diffs">` +
-          diffKeys.map(d => {
-            const diff = d.b - d.a;
-            const cls  = diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
-            return `<span class="stat-diff-chip ${cls}">${d.label} ${diff > 0 ? '+' : ''}${diff}</span>`;
-          }).join('') +
-        `</div>`;
-      }
+      const chips = STAT_MAP
+        .map(s => ({ label: s.label, diff: (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0) }))
+        .filter(d => d.diff !== 0)
+        .map(d => {
+          const cls = d.diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
+          return `<span class="stat-diff-chip ${cls}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
+        });
+      if (chips.length) diffHtml = `<div class="unit-stat-diffs">${chips.join('')}</div>`;
     }
 
-    const resistCells = RESIST_ORDER.map(r => {
-      const info = RESIST_ICONS[r];
-      const val  = res[r] ?? 0;
-      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
-      return `<div class="resist-cell" title="${info.label}">
-        <span class="resist-icon">${info.icon}</span>
-        <span class="resist-val ${cls}">${val}</span>
+    const resistHtml = `
+      <div class="unit-resists-grid">
+        ${RESIST_ORDER.map(r => {
+          const info = RESIST_ICONS[r];
+          const val  = res[r] ?? 0;
+          const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+          return `<div class="resist-cell" title="${info.label}">
+            <span class="resist-icon">${info.icon}</span>
+            <span class="resist-val ${cls}">${val}</span>
+          </div>`;
+        }).join('')}
       </div>`;
-    }).join('');
-
-    const resistHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
 
     const descHtml = unit.description
       ? `<p class="unit-slide-desc">${unit.description}</p>`
@@ -293,7 +268,7 @@ export function renderCastle(root, { player }) {
     let current = 0;
 
     function renderSliderHtml(idx) {
-      const s    = slides[idx];
+      const s = slides[idx];
       const dots = slides.length > 1
         ? `<div class="slider-dots">${slides.map((_, i) =>
             `<span class="slider-dot${i === idx ? ' slider-dot--active' : ''}"></span>`
@@ -303,11 +278,10 @@ export function renderCastle(root, { player }) {
         ? `<button class="slider-arrow slider-arrow--prev" id="slider-prev"${idx === 0 ? ' disabled' : ''}>&#x2039;</button>
            <button class="slider-arrow slider-arrow--next" id="slider-next"${idx === slides.length - 1 ? ' disabled' : ''}>&#x203A;</button>`
         : '';
-
       return `
         <div class="castle-unit-slider">
           <div class="castle-slider-track" id="slider-track">
-            ${buildUnitCard(s.unit, { isNew: s.isNew, buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
+            ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
           </div>
           ${arrows}
           ${dots}
@@ -392,11 +366,7 @@ export function renderCastle(root, { player }) {
         const isEmpty    = !state.building_id;
         const isBuilding = state.ready_at && new Date(state.ready_at) > Date.now();
         const hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
-
-        const classes = ['castle-node',
-          isEmpty    ? 'castle-node--empty'    : '',
-          isBuilding ? 'castle-node--building' : '',
-        ].filter(Boolean).join(' ');
+        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : '', isBuilding ? 'castle-node--building' : ''].filter(Boolean).join(' ');
 
         return `
           <div class="${classes}" data-slot="${slot}">
@@ -424,9 +394,8 @@ export function renderCastle(root, { player }) {
     const paths = getUpgradePathsForBuilding(player.faction, def);
 
     if (!paths || paths.length === 0) {
-      const currentUnit = getUnitByUnitId(def.unit_id);
       openSliderModal(def.label,
-        [{ unit: currentUnit, buildingLabel: def.label, confirmLabel: 'Maxed — No Upgrades' }],
+        [{ unit: getUnitByUnitId(def.unit_id), buildingLabel: def.label, confirmLabel: 'Maxed — No Upgrades' }],
         () => closeModal()
       );
       return;
@@ -439,7 +408,7 @@ export function renderCastle(root, { player }) {
     const SLOT_CATEGORIES = {
       slot_0: 'throne', slot_1: 'barracks', slot_2: 'barracks',
       slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks',
-      slot_6: 'barracks', slot_7: 'any',     slot_8: 'any',
+      slot_6: 'barracks', slot_7: 'any', slot_8: 'any',
     };
     const slotCategory = SLOT_CATEGORIES[slot] || 'any';
     const factionPools = buildingPools[player.faction] || {};
@@ -458,16 +427,16 @@ export function renderCastle(root, { player }) {
       return;
     }
 
-    const slides = available.map(b => ({
-      unit:         getUnitByUnitId(b.unit_id),
-      buildingLabel: b.label,
-      confirmLabel: `Build · ${b.label}`,
-      isNew:        true,
-      buildingId:   b.id,
-      slot,
-    }));
-
-    openSliderModal('Choose Building', slides, s => performBuildingUpgrade(s.slot, s.buildingId));
+    openSliderModal('Choose Building',
+      available.map(b => ({
+        unit:          getUnitByUnitId(b.unit_id),
+        buildingLabel: b.label,
+        confirmLabel:  `Build · ${b.label}`,
+        buildingId:    b.id,
+        slot,
+      })),
+      s => performBuildingUpgrade(s.slot, s.buildingId)
+    );
   }
 
   async function handleThroneClick() {
@@ -496,7 +465,7 @@ export function renderCastle(root, { player }) {
         <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
         <div class="throne-cost">
           ${cost?.gold > 0 ? `<span class="throne-cost-item">🪙 ${cost.gold} Gold</span>` : ''}
-          ${cost?.mana > 0  ? `<span class="throne-cost-item">🔮 ${cost.mana} Mana</span>`  : ''}
+          ${cost?.mana  > 0 ? `<span class="throne-cost-item">🔮 ${cost.mana} Mana</span>`  : ''}
         </div>
         <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
       </div>`);
@@ -516,19 +485,20 @@ export function renderCastle(root, { player }) {
   function openUpgradeModal(slot, def, paths) {
     const currentUnit = getUnitByUnitId(def.unit_id);
 
-    const slides = paths.map(path => {
-      const nextUnit = getUnitByUnitId(path.unit_id);
-      return {
-        unit:         nextUnit,
-        buildingLabel: nextUnit?.name || path.label,
-        confirmLabel: `Upgrade → ${nextUnit?.name || path.label}`,
-        compareUnit:  currentUnit,
-        buildingId:   path.building_id,
-        slot,
-      };
-    });
-
-    openSliderModal(def.label, slides, s => performBuildingUpgrade(s.slot, s.buildingId));
+    openSliderModal(def.label,
+      paths.map(path => {
+        const nextUnit = getUnitByUnitId(path.unit_id);
+        return {
+          unit:          nextUnit,
+          buildingLabel: nextUnit?.name || path.label,
+          confirmLabel:  `Upgrade → ${nextUnit?.name || path.label}`,
+          compareUnit:   currentUnit,
+          buildingId:    path.building_id,
+          slot,
+        };
+      }),
+      s => performBuildingUpgrade(s.slot, s.buildingId)
+    );
   }
 
   async function performBuildingUpgrade(slot, building_id) {

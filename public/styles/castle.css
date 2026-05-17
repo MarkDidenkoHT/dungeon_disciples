@@ -1,14 +1,8 @@
-/* ============================================================
-   CASTLE SCREEN
-   ============================================================ */
-
 .screen-castle {
   padding: 0;
   max-width: 100%;
   justify-content: space-between;
 }
-
-/* ── Resource columns ── */
 
 .res-col {
   display: flex;
@@ -37,8 +31,6 @@
   justify-content: center;
 }
 
-/* ── Castle layout ── */
-
 .castle-main {
   flex: 1;
   display: flex;
@@ -57,8 +49,6 @@
   gap: 6px;
   flex-shrink: 0;
 }
-
-/* ── Castle grid ── */
 
 .castle-grid-wrap {
   position: relative;
@@ -94,8 +84,6 @@
   height: 96px;
   z-index: 2;
 }
-
-/* ── Castle nodes ── */
 
 .castle-node {
   background: var(--surface);
@@ -176,17 +164,13 @@
 .castle-node--throne .castle-node-icon  { font-size: 1.5rem; color: var(--accent); }
 .castle-node--throne .castle-node-label { font-size: 0.62rem; color: var(--accent); }
 
-/* ============================================================
-   MODAL SYSTEM
-   ============================================================ */
-
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.72);
   z-index: 100;
   display: flex;
-  align-items: flex-end;      /* sheet slides up from bottom */
+  align-items: flex-end;      
   justify-content: center;
   padding: 0;
   backdrop-filter: blur(2px);
@@ -220,7 +204,6 @@
   to   { transform: translateY(0); }
 }
 
-/* Drag handle */
 .modal::before {
   content: '';
   display: block;
@@ -277,8 +260,6 @@
   gap: 12px;
 }
 
-/* ── Building / upgrade modal content ── */
-
 .modal-empty { color: var(--muted); font-size: 0.9rem; }
 
 .modal-level-badge {
@@ -318,8 +299,6 @@
 .modal-building-name { color: var(--text); font-weight: bold; }
 .modal-building-meta { color: var(--muted); font-size: 0.8rem; text-transform: capitalize; }
 .modal-building-unit { color: var(--accent); font-size: 0.8rem; }
-
-/* ── Build options ── */
 
 .build-options {
   display: flex;
@@ -363,8 +342,6 @@
 }
 
 .build-option-btn:active { opacity: 0.75; }
-
-/* ── Upgrade comparison ── */
 
 .upgrade-tabs {
   display: flex;
@@ -510,8 +487,6 @@
 .upgrade-no-paths  { display: flex; flex-direction: column; gap: 10px; }
 .upgrade-maxed     { color: var(--muted); font-size: 0.85rem; text-align: center; }
 
-/* ── Throne modal ── */
-
 .throne-modal {
   display: flex;
   flex-direction: column;
@@ -557,15 +532,11 @@
   margin: 0;
 }
 
-/* ── Building btn (legacy alias) ── */
-
 .building-btn {
   font-size: 0.82rem;
   padding: 6px 12px;
   margin-top: 4px;
 }
-
-/* ── Level-up row ── */
 
 .levelup-row {
   display: flex;
@@ -612,18 +583,12 @@
 .levelup-btn--ready:active { opacity: 0.85; }
 .levelup-btn--locked  { background: var(--border); color: var(--muted); cursor: not-allowed; }
 
-/* ── Misc ── */
-
 .hero-level-label {
   font-size: 0.78rem;
   color: var(--accent);
   font-weight: 600;
   letter-spacing: 0.03em;
 }
-
-/* ============================================================
-   CASTLE UNIT SLIDER  (matches roster card structure)
-   ============================================================ */
 
 .castle-unit-slider {
   position: relative;
@@ -635,11 +600,9 @@
   touch-action: pan-y;
 }
 
-/* ── Slider nav (arrows + dots) ── */
-
 .slider-arrow {
   position: absolute;
-  /* vertically centred on the portrait — portrait height is ~42vw capped, arrow at ~21vw */
+  
   top: 21vw;
   transform: translateY(-50%);
   width: 32px;
@@ -686,8 +649,6 @@
   transform: scale(1.35);
 }
 
-/* ── "New" badge on portrait ── */
-
 .unit-slide-badge {
   position: absolute;
   top: 8px;
@@ -709,15 +670,11 @@
   left: auto;
 }
 
-/* ── 6-col stat grid for castle cards ── */
-
 .unit-core-stats--6 {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 4px;
 }
-
-/* ── Stat diff chips (upgrade comparison) ── */
 
 .unit-stat-diffs {
   display: flex;
@@ -743,8 +700,6 @@
   color: #eb5757;
   border: 1px solid #eb575740;
 }
-
-/* ── Description ── */
 
 .unit-slide-desc {
   font-size: 0.78rem;
