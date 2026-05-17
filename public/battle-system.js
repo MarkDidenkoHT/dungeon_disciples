@@ -73,9 +73,20 @@ export class BattleSystem {
   // ─── Battle-Start Passives ────────────────────────────────────────────────
 
   applyBattleStartPassives() {
+    console.log('[Passives] === APPLYING BATTLE START PASSIVES ===');
+    console.log(`[Passives] Total combatants: ${this.combatants.length}`);
+
     for (const c of this.combatants) {
+      console.log(`[Passives] Checking ${c.unit_name} (${c.side})`);
+      console.log(`[Passives]   unit_data keys:`, Object.keys(c.unit_data || {}));
+      console.log(`[Passives]   unit_data.passive:`, c.unit_data?.passive);
+      console.log(`[Passives]   unit_data.passive_ability:`, c.unit_data?.passive_ability);
+      console.log(`[Passives]   full unit_data:`, JSON.stringify(c.unit_data));
+
       const passive = c.unit_data?.passive || c.unit_data?.passive_ability;
-      if (!passive) continue;
+      console.log(`[Passives]   resolved passive: "${passive}"`);
+      if (!passive) { console.log(`[Passives]   → SKIP (no passive)`); continue; }
+      console.log(`[Passives]   → passive="${passive}" startsWith vitality? ${String(passive).startsWith('vitality')}`);
 
       // vitality: all allies gain HP
       if (passive.startsWith('vitality')) {
