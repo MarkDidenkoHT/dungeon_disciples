@@ -26,11 +26,17 @@ function dmgReduction(val) {
 function resolveUnitDef(unit) {
   const uid = unit.unit_data?.unit_id;
   if (!uid) return null;
-  if (unit.is_hero) return Object.values(HERO_DATA).find(h => h.id === uid) || null;
-  for (const faction of Object.values(UNITS)) {
-    const def = Object.values(faction).find(u => u.id === uid);
-    if (def) return def;
+
+  const heroMatch = Object.values(HERO_DATA).find(h => h.id === uid);
+  if (heroMatch) return heroMatch;
+
+  for (const factionPool of Object.values(UNITS)) {
+    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
+    for (const entry of Object.values(factionPool)) {
+      if (entry?.id === uid) return entry;
+    }
   }
+
   return null;
 }
 
@@ -43,7 +49,7 @@ function resolveAbility(key, type) {
 }
 
 function buildStatDescription(def, type) {
-  let parts = [];
+  const parts = [];
 
   if (def.description) parts.push(def.description);
 
@@ -127,11 +133,11 @@ export function renderRoster(root, { player }) {
   }
 
   function buildCard(u) {
-    const stored     = u.unit_data || {};
-    const def        = resolveUnitDef(u);
-    const isHero     = u.is_hero === true;
-    const unitId     = stored.unit_id || '';
-    const unitName   = def?.name ?? unitId;
+    const stored   = u.unit_data || {};
+    const def      = resolveUnitDef(u);
+    const isHero   = u.is_hero === true;
+    const unitId   = stored.unit_id || '';
+    const unitName = def?.name ?? unitId;
 
     const portraitSrc = unitId ? `/assets/character_art/${unitId}.png` : null;
 
@@ -146,27 +152,38 @@ export function renderRoster(root, { player }) {
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
 
-    const xpRequired = def?.xp ?? null;
-    const currentXp  = stored.current_xp ?? 0;
-    const isMaxTier  = !isHero && tier >= 2;
-    const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
+    const currentXp = stored.current_xp ?? 0;
 
-    const throneLevel  = buildingsData['slot_0']?.level || 1;
-    const heroMaxed    = isHero && tier >= 4;
+    const throneLevel = buildingsData['slot_0']?.level || 1;
+
+    let heroPathsForUnit = [];
+    if (isHero) {
+      for (const factionPaths of Object.values(upgradePaths)) {
+        if (factionPaths[unitId]) { heroPathsForUnit = factionPaths[unitId]; break; }
+      }
+    }
+
+    const heroMaxed    = isHero && heroPathsForUnit.length === 0;
     const heroCanLevel = isHero && !heroMaxed && throneLevel > tier;
+
+    const xpRequired = def?.xp ?? null;
+    const isMaxTier  = !isHero && xpRequired === null && !Object.values(upgradePaths).some(fp => fp[unitId]);
+    const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
     let upgradeReady        = true;
     let upgradeBuildingHint = '';
     if (hasPath) {
-      const faction = def.f === 'e' ? 'empire' : 'dungeon';
-      const paths   = (upgradePaths[faction] || {})[unitId] || [];
-      if (paths.length > 1) {
+      let unitPaths = [];
+      for (const factionPaths of Object.values(upgradePaths)) {
+        if (factionPaths[unitId]) { unitPaths = factionPaths[unitId]; break; }
+      }
+      if (unitPaths.length > 1) {
         const slot           = stored.building_slot;
         const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
-        const matched        = paths.find(p => p.building_id === slotBuildingId);
+        const matched        = unitPaths.find(p => p.building_id === slotBuildingId);
         upgradeReady         = !!matched;
         if (!upgradeReady) {
-          upgradeBuildingHint = `Requires: ${paths.map(p => p.label).join(' or ')}`;
+          upgradeBuildingHint = `Requires: ${unitPaths.map(p => p.label).join(' or ')}`;
         }
       }
     }
@@ -230,7 +247,6 @@ export function renderRoster(root, { player }) {
             ${!blocked ? `<button
               class="levelup-btn levelup-btn--ready"
               data-roster-id="${u.id}"
-              data-is-hero="1"
             >Level Up</button>` : ''}
           </div>
         `;
@@ -304,7 +320,7 @@ export function renderRoster(root, { player }) {
   function updateNav() {
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === units.length - 1;
-    const u = units[current];
+    const u   = units[current];
     const def = u ? resolveUnitDef(u) : null;
     navLabel.textContent = def?.name ?? u?.unit_data?.unit_id ?? '';
     dotsWrap.querySelectorAll('.roster-dot').forEach((d, i) => {
@@ -376,13 +392,11 @@ export function renderRoster(root, { player }) {
   track.addEventListener('click', async (e) => {
     const lvlBtn = e.target.closest('.levelup-btn--ready');
     if (lvlBtn) {
-      const rosterId  = lvlBtn.dataset.rosterId;
-      const isHeroBtn = lvlBtn.dataset.isHero === '1';
-      lvlBtn.disabled = true;
+      const rosterId = lvlBtn.dataset.rosterId;
+      lvlBtn.disabled    = true;
       lvlBtn.textContent = '…';
       try {
-        const endpoint = isHeroBtn ? '/roster/hero-levelup' : '/roster/levelup';
-        await api(endpoint, { chat_id: player.chat_id, roster_id: rosterId });
+        await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
         const [freshUnits, freshStruct] = await Promise.all([
           api(`/roster?chat_id=${player.chat_id}`),
           api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
@@ -418,12 +432,10 @@ export function renderRoster(root, { player }) {
 
     const coreStat = e.target.closest('.core-stat');
     if (coreStat) {
-      const slide = coreStat.closest('.roster-slide');
+      const slide  = coreStat.closest('.roster-slide');
       if (!slide) return;
       const label  = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
       const val    = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
-      const u      = units[current];
-      const stored = u?.unit_data || {};
       let text = '';
       if (label === 'HP') {
         text = `HP: ${val}\nCurrent hit points. Unit is defeated when HP reaches 0.`;
@@ -444,7 +456,7 @@ export function renderRoster(root, { player }) {
 
     const resistCell = e.target.closest('.resist-cell');
     if (resistCell) {
-      const slide = resistCell.closest('.roster-slide');
+      const slide  = resistCell.closest('.roster-slide');
       if (!slide) return;
       const label  = resistCell.getAttribute('title') || '';
       const valEl  = resistCell.querySelector('.resist-val');

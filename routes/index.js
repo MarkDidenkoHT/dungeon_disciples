@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS, HERO_DATA } = require('../data/units');
 const { REGIONS } = require('../data/embark');
-const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_LEVEL_DATA, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, computeHeroStats } = require('../data/buildings');
+const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -71,9 +71,22 @@ function validateTelegramInitData(initData) {
   return JSON.parse(userRaw);
 }
 
-function getUnitByDataId(faction, unitDataId) {
-  const pool = UNITS[faction] || {};
-  return Object.values(pool).find(u => u.id === unitDataId) || null;
+function getUnitByDataId(unitDataId) {
+  for (const factionPool of Object.values(UNITS)) {
+    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
+    const found = Object.values(factionPool).find(u => u?.id === unitDataId);
+    if (found) return found;
+  }
+  const heroFound = Object.values(HERO_DATA).find(h => h.id === unitDataId);
+  if (heroFound) return heroFound;
+  return null;
+}
+
+function getFactionForUnit(unitDataId) {
+  for (const [fKey, factionPool] of Object.entries(UNIT_UPGRADE_PATHS)) {
+    if (factionPool[unitDataId]) return fKey;
+  }
+  return null;
 }
 
 function makeUnitData(unitId, buildingSlot, fullDef) {
@@ -134,14 +147,14 @@ router.get('/player', async (req, res) => {
 function getStartingBarracks(faction, hero) {
   const mapping = {
     empire: {
-      paladin:    { building_id: 'acolyte_shrine',     unit_id: 'acolyte',    slot: 'slot_4' },
-      inquisitor: { building_id: 'conscript_barracks', unit_id: 'conscript',  slot: 'slot_4' },
-      ranger:     { building_id: 'conscript_barracks', unit_id: 'conscript',  slot: 'slot_4' },
+      paladin:    { building_id: 'acolyte_shrine',     unit_id: 'e2', slot: 'slot_4' },
+      inquisitor: { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
+      ranger:     { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
     },
     dungeon: {
-      warlord:    { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
-      hexblade:   { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
-      shadowbow:  { building_id: 'heretic_pit',        unit_id: 'heretic',    slot: 'slot_4' },
+      warlord:   { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
+      hexblade:  { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
+      shadowbow: { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
     },
   };
 
@@ -166,8 +179,7 @@ router.post('/player/faction', async (req, res) => {
 
   const unitId   = startingBarracks?.unit_id;
   const unitSlot = startingBarracks?.slot;
-  const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
-  const unitDef  = unitId ? getUnitByDataId(factionKey, unitId) : null;
+  const unitDef  = unitId ? getUnitByDataId(unitId) : null;
 
   const rosterEntries = [
     {
@@ -243,38 +255,46 @@ router.post('/roster/levelup', async (req, res) => {
   }
 
   try {
-    const rows = await supabase(
-      `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`
-    );
-    if (!rows.length) return res.status(404).json({ error: 'Roster entry not found' });
+    const [rosterRows, structRows] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+    ]);
 
-    const entry    = rows[0];
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+
+    const entry    = rosterRows[0];
     const unitData = entry.unit_data || {};
     const currentUnitId = unitData.unit_id;
     if (!currentUnitId) return res.status(400).json({ error: 'Unit has no unit_id in unit_data' });
 
-    const faction = (() => {
-      for (const f of ['empire', 'dungeon']) {
-        if (getUnitByDataId(f, currentUnitId)) return f;
-      }
-      return null;
-    })();
-    if (!faction) return res.status(400).json({ error: 'Cannot determine unit faction' });
+    const faction = getFactionForUnit(currentUnitId);
+    if (!faction) return res.status(400).json({ error: `No upgrade path found for ${currentUnitId}` });
 
-    const fullDef = getUnitByDataId(faction, currentUnitId);
-    if (!fullDef) return res.status(400).json({ error: 'Unit definition not found' });
-    if (fullDef.t >= 2) return res.status(400).json({ error: 'Unit is already at max tier' });
-
-    const xpRequired = fullDef.xp;
-    if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
-    if (unitData.current_xp < xpRequired) {
-      return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
+    const paths = UNIT_UPGRADE_PATHS[faction][currentUnitId];
+    if (!paths || paths.length === 0) {
+      return res.status(400).json({ error: 'Unit is already at max tier or has no upgrade path' });
     }
 
-    const factionPaths = UNIT_UPGRADE_PATHS[faction] || {};
-    const paths = factionPaths[currentUnitId];
-    if (!paths || paths.length === 0) {
-      return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
+    const fullDef = getUnitByDataId(currentUnitId);
+    if (!fullDef) return res.status(400).json({ error: 'Unit definition not found' });
+
+    if (entry.is_hero) {
+      const currentTier = fullDef.t ?? 1;
+      const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+
+      if (currentTier >= HERO_MAX_LEVEL) {
+        return res.status(400).json({ error: 'Hero is already at max tier' });
+      }
+      if (currentTier >= throneLevel) {
+        return res.status(400).json({ error: `Upgrade your Throne to level ${currentTier + 1} first` });
+      }
+    } else {
+      const xpRequired = fullDef.xp;
+      if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
+      if (unitData.current_xp < xpRequired) {
+        return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
+      }
     }
 
     const buildingSlot = unitData.building_slot || null;
@@ -286,13 +306,7 @@ router.post('/roster/levelup', async (req, res) => {
       if (!buildingSlot) {
         return res.status(400).json({ error: 'Unit has no building slot assigned; cannot determine upgrade path' });
       }
-      const structRowsCheck = await supabase(
-        `/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
-      );
-      if (!structRowsCheck.length) {
-        return res.status(400).json({ error: 'No structures record found' });
-      }
-      const currentBuildingId = structRowsCheck[0].buildings_data[buildingSlot]?.building_id;
+      const currentBuildingId = structRows[0].buildings_data[buildingSlot]?.building_id;
       const matched = paths.find(p => p.building_id === currentBuildingId);
       if (!matched) {
         const required = paths.map(p => p.label).join(' or ');
@@ -301,10 +315,11 @@ router.post('/roster/levelup', async (req, res) => {
       path = matched;
     }
 
-    const nextUnitDef = getUnitByDataId(faction, path.unit_id);
-    if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
+    const nextDef = getUnitByDataId(path.unit_id);
+    if (!nextDef) return res.status(400).json({ error: `Definition for ${path.unit_id} not found` });
 
-    const newUnitData = makeUnitData(nextUnitDef.id, buildingSlot, nextUnitDef);
+    const newUnitData = makeUnitData(nextDef.id, buildingSlot, nextDef);
+    newUnitData.current_xp = unitData.current_xp ?? 0;
 
     const updatePromises = [
       supabase(`/roster?id=eq.${roster_id}`, {
@@ -313,31 +328,23 @@ router.post('/roster/levelup', async (req, res) => {
       }),
     ];
 
-    if (buildingSlot) {
-      const structRows = await supabase(
-        `/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
-      );
-      if (structRows.length) {
-        const structRecord = structRows[0];
-        const buildings    = structRecord.buildings_data;
-        const slotState    = buildings[buildingSlot];
-        if (slotState) {
-          buildings[buildingSlot] = { ...slotState, building_id: path.building_id };
-          updatePromises.push(
-            supabase(`/structures?id=eq.${structRecord.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ buildings_data: buildings }),
-            })
-          );
-        }
+    if (!entry.is_hero && buildingSlot) {
+      const buildings = structRows[0].buildings_data;
+      const slotState = buildings[buildingSlot];
+      if (slotState) {
+        buildings[buildingSlot] = { ...slotState, building_id: path.building_id };
+        updatePromises.push(
+          supabase(`/structures?id=eq.${structRows[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ buildings_data: buildings }),
+          })
+        );
       }
     }
 
     await Promise.all(updatePromises);
 
-    const updated = await supabase(
-      `/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`
-    );
+    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
     res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -391,70 +398,11 @@ router.post('/structures/throne/upgrade', async (req, res) => {
   }
 });
 
-router.post('/roster/hero-levelup', async (req, res) => {
-  const { chat_id, roster_id } = req.body;
-  if (!chat_id || !roster_id) {
-    return res.status(400).json({ error: 'chat_id and roster_id required' });
-  }
-
-  try {
-    const [rosterRows, structRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
-      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-    ]);
-
-    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
-    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
-
-    const entry    = rosterRows[0];
-    const unitData = entry.unit_data || {};
-
-    if (!entry.is_hero) return res.status(400).json({ error: 'This unit is not a hero' });
-
-    const heroId    = unitData.unit_id;
-    const heroStats = Object.values(HERO_DATA).find(h => h.id === heroId);
-    if (!heroStats) return res.status(400).json({ error: 'Hero definition not found' });
-
-    const heroKey     = Object.keys(HERO_DATA).find(k => HERO_DATA[k].id === heroId);
-    const currentTier = heroStats.t || 1;
-    const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
-
-    if (currentTier >= HERO_MAX_LEVEL) {
-      return res.status(400).json({ error: 'Hero is already at max tier' });
-    }
-    if (currentTier >= throneLevel) {
-      return res.status(400).json({ error: `Upgrade your Throne to level ${currentTier + 1} first` });
-    }
-
-    const nextTier = currentTier + 1;
-    const delta     = (HERO_LEVEL_DATA[heroKey] || {})[nextTier];
-    if (!delta) {
-      return res.status(400).json({ error: `No tier data for ${heroKey} tier ${nextTier}` });
-    }
-
-    const newUnitData = {
-      ...unitData,
-      current_hp: unitData.current_hp + (delta.hp || 0),
-    };
-
-    await supabase(`/roster?id=eq.${roster_id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ unit_data: newUnitData }),
-    });
-
-    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
-    res.json(fresh[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.get('/buildings', (req, res) => {
   res.json({
     pools: BUILDING_POOLS,
     slot_categories: SLOT_CATEGORIES,
     upgrade_paths: UNIT_UPGRADE_PATHS,
-    hero_level_data: HERO_LEVEL_DATA,
     hero_max_level: HERO_MAX_LEVEL,
     throne_upgrade_costs: THRONE_UPGRADE_COSTS,
   });
@@ -509,8 +457,7 @@ router.post('/structures/build', async (req, res) => {
     });
 
     if (isNew && def.unit_id) {
-      const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
-      const unitDef = getUnitByDataId(factionKey, def.unit_id);
+      const unitDef = getUnitByDataId(def.unit_id);
       if (unitDef) {
         await supabase('/roster', {
           method: 'POST',
@@ -624,7 +571,7 @@ router.post('/battle/reward', async (req, res) => {
         `/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
       );
       if (playerRows.length) {
-        const progress    = playerRows[0].progress || {};
+        const progress     = playerRows[0].progress || {};
         const currentLevel = progress[region_id] ?? 1;
         const maxLevel     = Object.keys(region.difficulties).length;
         if (level >= currentLevel && level < maxLevel) {
@@ -650,12 +597,6 @@ const FACTION_STARTING_SPELLS = {
   empire:          ['e_spell_1', 'e_spell_2'],
   dungeon:         ['d_spell_1', 'd_spell_2'],
   grail_of_sorrow: ['g_spell_1', 'g_spell_2'],
-};
-
-const FACTION_CRYSTAL_MAP = {
-  empire:          'Crystals_Life',
-  dungeon:         'Crystals_Death',
-  grail_of_sorrow: 'Crystals_Fire',
 };
 
 router.get('/spells/research', async (req, res) => {
@@ -703,7 +644,7 @@ router.post('/spells/research', async (req, res) => {
       return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
     }
 
-    const crystalMap = spell.cost.crystals || {};
+    const crystalMap     = spell.cost.crystals || {};
     const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
 
     if (crystalEntries.length > 0) {

@@ -139,7 +139,7 @@ export function renderCastle(root, { player }) {
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
-    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.enemies };
+    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.grail_of_sorrow, ...UNITS.enemies };
     return Object.values(all).find(u => u.id === unitId) || null;
   }
 
