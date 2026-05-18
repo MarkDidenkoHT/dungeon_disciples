@@ -26,7 +26,7 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
-  padding: 10px 8px;
+  padding: 10px 8px 4px;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -46,8 +46,13 @@
   letter-spacing: 0.07em;
 }
 
-.battle-half--player {
-  position: relative;
+.battle-loyalty-hint {
+  font-size: 0.58rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 1px 4px 2px;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
 }
 
 .battle-vs {
@@ -100,8 +105,12 @@
 .battle-cell--placed {
   border-color: var(--accent);
   background: #1a2a1a;
-  cursor: pointer;
+  cursor: grab;
   position: relative;
+}
+
+.battle-cell--placed:active {
+  cursor: grabbing;
 }
 
 .battle-cell--hero {
@@ -112,6 +121,10 @@
 .battle-cell--hover {
   background: #1a2a1a;
   border-color: var(--accent);
+}
+
+.battle-cell--dragging {
+  opacity: 0.4;
 }
 
 .battle-cell-name {
@@ -268,6 +281,11 @@
   color: var(--muted);
 }
 
+.portrait-card--locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .spell-resources-bar {
   display: flex;
   gap: 10px;
@@ -368,11 +386,11 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .detail-panel-empty {
@@ -385,97 +403,228 @@
   text-align: center;
 }
 
-.detail-header {
+.detail-unit-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
 }
 
-.detail-spell-icon {
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.detail-name {
-  font-size: 0.95rem;
+.detail-unit-name {
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
   flex: 1;
+  min-width: 0;
 }
 
-.detail-badge {
-  font-size: 0.62rem;
+.detail-unit-badge {
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--muted);
+  flex-shrink: 0;
 }
 
-.detail-badge--enemy {
+.detail-unit-badge--enemy {
   border-color: #7a3a3a;
   color: #c87070;
 }
 
-.detail-badge--used {
+.detail-unit-badge--used {
   border-color: #4a6a4a;
   color: #6aaa5a;
 }
 
-.detail-badge--locked {
+.detail-unit-badge--locked {
   border-color: var(--border);
   color: var(--muted);
 }
 
-.detail-stats-row {
-  display: flex;
-  gap: 6px;
+.detail-unit-tier {
+  font-size: 0.6rem;
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
-.detail-stat {
+.detail-spell-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.unit-core-stats {
+  display: flex;
+  gap: 4px;
+}
+
+.core-stat {
   flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-radius: 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 2px;
+}
+
+.core-stat-label {
+  font-size: 0.52rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.core-stat-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unit-resists-grid {
+  display: flex;
   gap: 2px;
 }
 
-.detail-stat-label {
-  font-size: 0.6rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.resist-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 3px 1px;
 }
 
-.detail-stat-val {
-  font-size: 0.9rem;
+.resist-icon {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.resist-val {
+  font-size: 0.6rem;
   font-weight: 700;
-  color: var(--text);
+  color: #7a8ea8;
+}
+
+.resist-val--pos {
+  color: #6ec87e;
+}
+
+.resist-val--neg {
+  color: #c86e6e;
+}
+
+.unit-abilities-row {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+}
+
+.unit-abilities-icons {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 38%;
+  flex-shrink: 0;
+}
+
+.ability-icon {
+  background: #0e1219;
+  border: 1px solid #222d3e;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0px;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.ability-icon:not([disabled]):active {
+  background: #141c2a;
+}
+
+.ability-icon--passive:not([disabled]) {
+  border-color: #2e4e6a;
+}
+
+.ability-icon--passive:not([disabled]):active {
+  border-color: #4a80aa;
+}
+
+.ability-icon--active:not([disabled]) {
+  border-color: #5a3e12;
+}
+
+.ability-icon--active:not([disabled]):active {
+  border-color: #c9922a;
+}
+
+.ability-icon--active.ability-icon--selected {
+  border-color: #c9922a;
+  background: #141c2a;
+}
+
+.ability-icon--passive.ability-icon--selected {
+  border-color: #4a80aa;
+  background: #141c2a;
+}
+
+.ability-icon--empty {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ability-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.ability-detail-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.ability-detail-desc {
+  font-size: 0.68rem;
+  color: #8a9bb0;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .detail-action {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .detail-action-label {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .detail-spell-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -533,10 +682,3 @@
   opacity: 0.38;
   cursor: default;
 }
-
-.loyalty-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
-.loyalty-pips { display: flex; gap: 4px; }
-.loyalty-pip { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--muted); }
-.loyalty-pip--filled { background: var(--accent); border-color: var(--accent); }
-.portrait-card--locked { opacity: 0.4; cursor: not-allowed; }
-.portrait-locked-hint { font-size: 10px; color: var(--muted); text-align: center; }

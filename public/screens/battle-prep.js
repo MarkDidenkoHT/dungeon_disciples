@@ -3,6 +3,8 @@ import { navigate }   from '../main.js';
 import { SPELLS }     from '../../data/spells.js';
 import { getEncounter } from '../../data/embark.js';
 import { UNITS, HERO_DATA } from '../../data/units.js';
+import { PASSIVES }  from '../../data/passives.js';
+import { ABILITIES } from '../../data/abilities.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -19,6 +21,17 @@ const CRYSTAL_ICONS = {
   Crystals_Frost:  '🔵',
   Crystals_Nature: '🟡',
 };
+
+const RESIST_ICONS = {
+  air:    { icon: '🌬️', label: 'Air'    },
+  fire:   { icon: '🔥', label: 'Fire'   },
+  nature: { icon: '🌿', label: 'Nature' },
+  cold:   { icon: '❄️', label: 'Cold'   },
+  life:   { icon: '✨', label: 'Life'   },
+  death:  { icon: '🌑', label: 'Death'  },
+};
+
+const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
 const ROWS = 3;
 const COLS = 2;
@@ -76,6 +89,48 @@ function getLoyalty(heroUnit) {
   return tier >= 4 ? 5 : tier + 1;
 }
 
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+
+function dmgReduction(val) {
+  return Math.abs(val);
+}
+
+function resolveAbility(key, type) {
+  if (!key || key === 'None') return null;
+  const k = key.replace(/\s+/g, '_');
+  if (type === 'passive') return PASSIVES[k]  || PASSIVES[key]  || null;
+  if (type === 'active')  return ABILITIES[k] || ABILITIES[key] || null;
+  return null;
+}
+
+function buildStatDescription(def, type) {
+  const parts = [];
+  if (def.description) parts.push(def.description);
+  if (type === 'passive' && def.stats) {
+    const statLines = Object.entries(def.stats).map(([stat, val]) => {
+      const sign = val >= 0 ? '+' : '';
+      if (stat === 'hp') return `${sign}${val} HP`;
+      if (stat === 'hp_regen') return `${sign}${val} HP regen/turn`;
+      if (stat === 'initiative') return `${sign}${val} Initiative`;
+      if (stat === 'armor') {
+        const pct = dmgReduction(val);
+        return `${sign}${val} Armor (${pct}% dmg reduction)`;
+      }
+      if (stat === 'armor_reduction') return `${val} Armor reduction`;
+      if (stat.includes('resist')) {
+        const resistType = stat.replace('_resist', '');
+        const pct = dmgReduction(val);
+        return `${sign}${val} ${cap(resistType)} resist (${pct}% dmg reduction)`;
+      }
+      return `${sign}${val} ${cap(stat)}`;
+    });
+    if (statLines.length) parts.push(statLines.join(', '));
+  }
+  return parts.join('\n\n');
+}
+
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
 
@@ -89,6 +144,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation</div>
           <div class="battle-grid" id="player-grid"></div>
+          <div class="battle-loyalty-hint" id="loyalty-hint"></div>
         </div>
         <div class="battle-vs">⚔</div>
         <div class="battle-half battle-half--enemy">
@@ -135,6 +191,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let heroId           = null;
   let maxNonHero       = 2;
   let dragUnit         = null;
+  let dragFromCell     = null;
   let hoverCell        = null;
   const occupied       = {};
   const selectedSpells = [];
@@ -152,41 +209,100 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>';
   }
 
-  function unitDetailHtml(unit, badge) {
-    const def  = resolveUnitDef(unit);
-    const name = def?.name ?? unit.unit_data?.unit_id ?? '?';
-    const hp   = unit.unit_data?.current_hp ?? def?.hp ?? '—';
+  function unitDetailHtml(unit) {
+    const def    = resolveUnitDef(unit);
+    const stored = unit.unit_data || {};
+    const isHero = unit.id === heroId;
+
+    const currentHp = stored.current_hp ?? def?.hp ?? '—';
+    const res        = def?.resistances || {};
+
+    const coreHtml = `
+      <div class="unit-core-stats">
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${stored.current_xp ?? 0}</span></div>
+      </div>
+    `;
+
+    const resistCells = RESIST_ORDER.map(r => {
+      const info = RESIST_ICONS[r];
+      const val  = res[r] ?? 0;
+      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+      return `<div class="resist-cell" title="${info.label}">
+        <span class="resist-icon">${info.icon}</span>
+        <span class="resist-val ${cls}">${val}</span>
+      </div>`;
+    }).join('');
+
+    const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
+
+    const passiveKey = def?.passive || null;
+    const activeKey  = def?.ability || null;
+
+    function abilityIconHtml(key, type) {
+      const aDef    = resolveAbility(key, type);
+      const isEmpty = !aDef;
+      const fileKey = key ? key.replace(/\s+/g, '_') : null;
+      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
+      return `
+        <button
+          class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
+          data-ability-key="${key || ''}"
+          data-ability-type="${type}"
+          ${isEmpty ? 'disabled' : ''}
+        >
+          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${aDef.name}" onerror="this.style.visibility='hidden'">` : ''}
+        </button>`;
+    }
+
+    const abilitiesHtml = `
+      <div class="unit-abilities-row">
+        <div class="unit-abilities-icons">
+          ${abilityIconHtml(passiveKey, 'passive')}
+          ${abilityIconHtml(activeKey, 'active')}
+        </div>
+        <div class="ability-detail-panel" id="ability-detail-panel">
+          <div class="ability-detail-desc"></div>
+        </div>
+      </div>
+    `;
+
+    const name  = def?.name ?? stored.unit_id ?? '?';
+    const tier  = def?.t ?? 1;
+    const badge = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
+
     return `
-      <div class="detail-header">
-        <span class="detail-name">${name}</span>
-        ${badge ? `<span class="detail-badge">${badge}</span>` : ''}
+      <div class="detail-unit-header">
+        <span class="detail-unit-name">${name}</span>
+        <span class="detail-unit-badge">${badge}</span>
+        ${isHero ? `<span class="detail-unit-tier">Lv ${tier}</span>` : `<span class="detail-unit-tier">Tier ${tier}</span>`}
       </div>
-      <div class="detail-stats-row">
-        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${hp}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${def?.armor ?? '—'}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${def?.initiative ?? '—'}</span></div>
-      </div>
+      ${coreHtml}
+      ${resistsHtml}
+      ${abilitiesHtml}
     `;
   }
 
   function enemyDetailHtml(e) {
     return `
-      <div class="detail-header">
-        <span class="detail-name">${e.name}</span>
-        <span class="detail-badge detail-badge--enemy">Enemy</span>
+      <div class="detail-unit-header">
+        <span class="detail-unit-name">${e.name}</span>
+        <span class="detail-unit-badge detail-unit-badge--enemy">Enemy</span>
       </div>
-      <div class="detail-stats-row">
-        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${e.hp}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${e.armor ?? '—'}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${e.initiative ?? '—'}</span></div>
+      <div class="unit-core-stats">
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${e.hp}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${e.armor ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${e.initiative ?? '—'}</span></div>
       </div>
       ${e.action ? `
       <div class="detail-action">
         <span class="detail-action-label">Basic Action</span>
-        <div class="detail-stats-row">
-          <div class="detail-stat"><span class="detail-stat-label">DMG</span><span class="detail-stat-val">${e.action.value ?? '—'}</span></div>
-          <div class="detail-stat"><span class="detail-stat-label">Range</span><span class="detail-stat-val">${e.action.range ?? '—'}</span></div>
-          <div class="detail-stat"><span class="detail-stat-label">Target</span><span class="detail-stat-val">${e.action.target_type ?? '—'}</span></div>
+        <div class="unit-core-stats">
+          <div class="core-stat"><span class="core-stat-label">DMG</span><span class="core-stat-val">${e.action.value ?? '—'}</span></div>
+          <div class="core-stat"><span class="core-stat-label">Range</span><span class="core-stat-val">${e.action.range ?? '—'}</span></div>
+          <div class="core-stat"><span class="core-stat-label">Target</span><span class="core-stat-val">${e.action.target_type ?? '—'}</span></div>
         </div>
       </div>` : ''}
     `;
@@ -194,11 +310,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function spellDetailHtml(spell, canUse, used) {
     return `
-      <div class="detail-header">
+      <div class="detail-unit-header">
         <span class="detail-spell-icon">${spell.icon}</span>
-        <span class="detail-name">${spell.name}</span>
-        ${used ? '<span class="detail-badge detail-badge--used">Used</span>' : ''}
-        ${!used && !canUse ? '<span class="detail-badge detail-badge--locked">Can\'t afford</span>' : ''}
+        <span class="detail-unit-name">${spell.name}</span>
+        ${used ? '<span class="detail-unit-badge detail-unit-badge--used">Used</span>' : ''}
+        ${!used && !canUse ? '<span class="detail-unit-badge detail-unit-badge--locked">Can\'t afford</span>' : ''}
       </div>
       <div class="detail-spell-desc">${spell.description}</div>
       <div class="detail-spell-meta">
@@ -369,29 +485,48 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  function canPlace(unit, anchor) {
+  function canPlace(unit, anchor, ignoredUnitId = null) {
     const size  = getUnitSize(unit);
     const cells = getCells(anchor, size);
     if (!cells) return false;
-    if (!cells.every(c => !occupied[c])) return false;
+    if (!cells.every(c => !occupied[c] || occupied[c].unitId === ignoredUnitId)) return false;
 
     const isHero = unit.id === heroId;
-    if (!isHero && placedNonHeroCount() >= maxNonHero) return false;
+    if (!isHero) {
+      const currentNonHero = placedNonHeroCount();
+      const alreadyPlaced  = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
+      const effectiveCount = alreadyPlaced ? currentNonHero : currentNonHero;
+      if (effectiveCount >= maxNonHero && !alreadyPlaced) return false;
+    }
 
     return true;
   }
 
-  function placeUnit(unit, anchor) {
+  function placeUnit(unit, anchor, ignoredUnitId = null) {
     const size  = getUnitSize(unit);
     const cells = getCells(anchor, size);
     if (!cells) return false;
-    if (!cells.every(c => !occupied[c])) return false;
+    if (!cells.every(c => !occupied[c] || occupied[c].unitId === ignoredUnitId)) return false;
 
     const isHero = unit.id === heroId;
-    if (!isHero && placedNonHeroCount() >= maxNonHero) return false;
+    if (!isHero) {
+      const alreadyPlaced = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
+      if (placedNonHeroCount() >= maxNonHero && !alreadyPlaced) return false;
+    }
 
     cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor, size }; });
     return true;
+  }
+
+  function updateLoyaltyHint() {
+    const hint = root.querySelector('#loyalty-hint');
+    if (!hint) return;
+    const nonHeroPlaced = placedNonHeroCount();
+    const heroPlaced    = heroId !== null && placedUnitIds().has(heroId);
+    const parts = [];
+    if (!heroPlaced) parts.push('Place your hero');
+    parts.push(`${nonHeroPlaced}/${maxNonHero} allies assigned`);
+    hint.textContent = parts.join(' · ');
   }
 
   function renderPlayerGrid() {
@@ -405,7 +540,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
-                     data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
+                     data-i="${i}" draggable="true" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           <span class="battle-cell-name">${name}</span>
           <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
@@ -458,23 +593,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const nonHeroPlaced = placedNonHeroCount();
     const slotsLeft     = maxNonHero - nonHeroPlaced;
 
-    const loyaltyBar = `
-      <div class="loyalty-bar">
-        <span class="loyalty-label">⚔ Loyalty ${nonHeroPlaced}/${maxNonHero}</span>
-        <div class="loyalty-pips">
-          ${Array.from({ length: maxNonHero }, (_, i) =>
-            `<span class="loyalty-pip ${i < nonHeroPlaced ? 'loyalty-pip--filled' : ''}"></span>`
-          ).join('')}
-        </div>
-      </div>
-    `;
-
     if (!available.length) {
-      track.innerHTML = loyaltyBar + `<span class="track-empty-hint">All units placed</span>`;
+      track.innerHTML = `<span class="track-empty-hint">All units placed</span>`;
       return;
     }
 
-    track.innerHTML = loyaltyBar + available.map(u => {
+    track.innerHTML = available.map(u => {
       const isHero     = u.id === heroId;
       const isSelected = dragUnit?.id === u.id;
       const locked     = !isHero && slotsLeft <= 0;
@@ -490,7 +614,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
           <div class="portrait-name">${name}</div>
           <div class="portrait-size">${sizeLabel(size)}</div>
-          ${locked ? '<div class="portrait-locked-hint">Loyalty full</div>' : ''}
         </div>
       `;
     }).join('');
@@ -519,14 +642,50 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  function fullRefresh() {
+    renderPlayerGrid();
+    renderPortraitTrack();
+    attachPortraitEvents();
+    attachGridDragEvents();
+    updateLoyaltyHint();
+    checkReady();
+  }
+
   const playerGrid = root.querySelector('#player-grid');
+
+  function attachGridDragEvents() {
+    playerGrid.querySelectorAll('.battle-cell--placed').forEach(cell => {
+      cell.addEventListener('dragstart', e => {
+        const anchor  = Number(cell.dataset.i);
+        const occ     = occupied[anchor];
+        if (!occ) return;
+        const unit = roster.find(u => u.id === occ.unitId);
+        if (!unit) return;
+        dragUnit     = unit;
+        dragFromCell = anchor;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(unit.id));
+        cell.classList.add('battle-cell--dragging');
+      });
+
+      cell.addEventListener('dragend', () => {
+        dragUnit     = null;
+        dragFromCell = null;
+        clearHover();
+        root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+      });
+    });
+  }
 
   playerGrid.addEventListener('dragover', e => {
     e.preventDefault();
     const cell = e.target.closest('[data-i]');
     if (!cell || !dragUnit) return;
-    const i = Number(cell.dataset.i);
-    if (!occupied[i] && canPlace(dragUnit, i)) {
+    const i          = Number(cell.dataset.i);
+    const ignoreId   = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
+    const targetOcc  = occupied[i];
+    const targetIsSelf = targetOcc && targetOcc.unitId === ignoreId;
+    if ((!targetOcc || targetIsSelf) && canPlace(dragUnit, i, ignoreId)) {
       setHover(i);
       e.dataTransfer.dropEffect = 'move';
     } else {
@@ -545,14 +704,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (!dragUnit) return;
     const cell = e.target.closest('[data-i]');
     if (!cell) return;
-    const i = Number(cell.dataset.i);
-    if (canPlace(dragUnit, i)) {
+    const i       = Number(cell.dataset.i);
+    const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
+
+    if (canPlace(dragUnit, i, ignoreId)) {
+      if (ignoreId) removeUnit(ignoreId);
       placeUnit(dragUnit, i);
-      dragUnit = null;
-      renderPlayerGrid();
-      renderPortraitTrack();
-      attachPortraitEvents();
-      checkReady();
+      dragUnit     = null;
+      dragFromCell = null;
+      fullRefresh();
     }
   });
 
@@ -562,10 +722,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const anchor = Number(removeBtn.dataset.remove);
       const occ    = occupied[anchor];
       if (occ) removeUnit(occ.unitId);
-      renderPlayerGrid();
-      renderPortraitTrack();
-      attachPortraitEvents();
-      checkReady();
+      fullRefresh();
       clearDetail();
       return;
     }
@@ -577,20 +734,41 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     if (occ) {
       const unit = roster.find(u => u.id === occ.unitId);
-      if (unit) {
-        const badge = occ.unitId === heroId ? '★ Hero' : sizeLabel(occ.size);
-        showDetail(unitDetailHtml(unit, badge));
-      }
+      if (unit) showDetail(unitDetailHtml(unit));
       return;
     }
 
     if (dragUnit && canPlace(dragUnit, i)) {
+      if (dragFromCell !== null) removeUnit(dragUnit.id);
       placeUnit(dragUnit, i);
-      dragUnit = null;
-      renderPlayerGrid();
-      renderPortraitTrack();
-      attachPortraitEvents();
-      checkReady();
+      dragUnit     = null;
+      dragFromCell = null;
+      fullRefresh();
+    }
+  });
+
+  detailPanel.addEventListener('click', e => {
+    const abilityBtn = e.target.closest('.ability-icon');
+    if (abilityBtn) {
+      const key  = abilityBtn.dataset.abilityKey;
+      const type = abilityBtn.dataset.abilityType;
+      const def  = resolveAbility(key, type);
+      if (!def) return;
+      const panel = detailPanel.querySelector('#ability-detail-panel');
+      const desc  = detailPanel.querySelector('.ability-detail-desc');
+      if (!panel || !desc) return;
+      if (panel.dataset.activeKey === key) {
+        panel.dataset.activeKey = '';
+        desc.textContent = '';
+        abilityBtn.classList.remove('ability-icon--selected');
+        return;
+      }
+      panel.dataset.activeKey = key;
+      const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
+      const description = buildStatDescription(def, type);
+      desc.textContent  = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
+      detailPanel.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+      abilityBtn.classList.add('ability-icon--selected');
     }
   });
 
@@ -602,14 +780,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (card.classList.contains('portrait-card--locked')) return;
 
       card.addEventListener('dragstart', e => {
-        dragUnit = u;
+        dragUnit     = u;
+        dragFromCell = null;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(u.id));
       });
 
       card.addEventListener('dragend', () => {
         if (dragUnit) {
-          dragUnit = null;
+          dragUnit     = null;
+          dragFromCell = null;
           clearHover();
           renderPortraitTrack();
           attachPortraitEvents();
@@ -618,12 +798,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       card.addEventListener('click', () => {
         const wasSelected = dragUnit?.id === u.id;
-        dragUnit = wasSelected ? null : u;
+        dragUnit     = wasSelected ? null : u;
+        dragFromCell = null;
         renderPortraitTrack();
         attachPortraitEvents();
-
-        const badge = u.id === heroId ? '★ Hero' : sizeLabel(getUnitSize(u));
-        showDetail(unitDetailHtml(u, badge));
+        showDetail(unitDetailHtml(u));
       });
     });
   }
@@ -673,6 +852,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       renderEnemyGrid();
       renderPortraitTrack();
       attachPortraitEvents();
+      attachGridDragEvents();
+      updateLoyaltyHint();
       await renderPrepSpells();
       checkReady();
     } catch (err) {
