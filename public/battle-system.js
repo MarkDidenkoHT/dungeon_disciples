@@ -66,8 +66,6 @@ export class BattleSystem {
     };
   }
 
-  // ─── on_battle_start ─────────────────────────────────────────────────────
-
   applyBattleStartPassives() {
     for (const c of this.combatants) {
       const passive = c.unit_data?.passive || c.unit_data?.passive_ability;
@@ -78,7 +76,7 @@ export class BattleSystem {
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
         for (const a of this.combatants.filter(x => x.side === c.side)) { a.battle_hp += bonus; a.max_hp += bonus; }
-        this.pushLog({ type: 'passive', passive: 'Vitality', actorName: c.unit_name, targetName: 'all allies', value: bonus });
+        this.pushLog({ type: 'passive', passive: 'Vitality', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all allies', value: bonus });
       }
 
       if (passive.startsWith('hardened')) {
@@ -86,7 +84,7 @@ export class BattleSystem {
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
         c.armor += bonus;
-        this.pushLog({ type: 'passive', passive: 'Hardened', actorName: c.unit_name, targetName: c.unit_name, value: bonus });
+        this.pushLog({ type: 'passive', passive: 'Hardened', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
       }
 
       if (passive.startsWith('bone_shield')) {
@@ -94,7 +92,7 @@ export class BattleSystem {
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
         c.shield = bonus;
-        this.pushLog({ type: 'passive', passive: 'Bone Shield', actorName: c.unit_name, targetName: c.unit_name, value: bonus });
+        this.pushLog({ type: 'passive', passive: 'Bone Shield', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
       }
 
       if (passive.startsWith('rooted')) {
@@ -104,12 +102,10 @@ export class BattleSystem {
         for (const e of this.combatants.filter(x => x.side !== c.side)) {
           e.initiative = Math.max(0, e.initiative - debuff);
         }
-        this.pushLog({ type: 'passive', passive: 'Rooted', actorName: c.unit_name, targetName: 'all enemies', value: debuff });
+        this.pushLog({ type: 'passive', passive: 'Rooted', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all enemies', value: debuff });
       }
     }
   }
-
-  // ─── on_turn_start ───────────────────────────────────────────────────────
 
   applyTurnStartPassives(actor) {
     const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
@@ -120,7 +116,7 @@ export class BattleSystem {
       const pct  = map[passive] ?? 0;
       const heal = Math.floor(actor.max_hp * pct / 100);
       actor.battle_hp = Math.min(actor.max_hp, actor.battle_hp + heal);
-      this.pushLog({ type: 'passive', passive: 'Regenerate', actorName: actor.unit_name, targetName: actor.unit_name, value: heal });
+      this.pushLog({ type: 'passive', passive: 'Regenerate', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: heal });
     }
 
     if (passive.startsWith('frost_aura')) {
@@ -131,7 +127,7 @@ export class BattleSystem {
           e.initiative = Math.max(0, e.initiative - debuff);
         }
         actor._flags.frost_aura_applied = true;
-        this.pushLog({ type: 'passive', passive: 'Frost Aura', actorName: actor.unit_name, targetName: 'all enemies', value: debuff });
+        this.pushLog({ type: 'passive', passive: 'Frost Aura', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all enemies', value: debuff });
       }
     }
 
@@ -141,12 +137,10 @@ export class BattleSystem {
           e._dmg_mult = Math.max(0.1, (e._dmg_mult ?? 1) - 0.10);
         }
         actor._flags.hex_aura_applied = true;
-        this.pushLog({ type: 'passive', passive: 'Hex Aura', actorName: actor.unit_name, targetName: 'all enemies', value: 10 });
+        this.pushLog({ type: 'passive', passive: 'Hex Aura', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all enemies', value: 10 });
       }
     }
   }
-
-  // ─── on_hit (attacker) ───────────────────────────────────────────────────
 
   applyOnHitPassives(actor, target, dmg) {
     const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
@@ -159,7 +153,7 @@ export class BattleSystem {
         .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, actor);
       const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
       lowest.battle_hp += actual;
-      if (actual > 0) this.pushLog({ type: 'passive', passive: "Mithrail's Light", actorName: actor.unit_name, targetName: lowest.unit_name, value: actual });
+      if (actual > 0) this.pushLog({ type: 'passive', passive: "Mithrail's Light", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
     }
 
     if (passive.startsWith('lifesteal')) {
@@ -167,33 +161,33 @@ export class BattleSystem {
       const heal   = Math.floor(dmg * (map[passive] ?? 0) / 100);
       const actual = Math.min(heal, actor.max_hp - actor.battle_hp);
       actor.battle_hp += actual;
-      if (actual > 0) this.pushLog({ type: 'passive', passive: 'Lifesteal', actorName: actor.unit_name, targetName: actor.unit_name, value: actual });
+      if (actual > 0) this.pushLog({ type: 'passive', passive: 'Lifesteal', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: actual });
     }
 
     if (passive.startsWith('burn')) {
       const map    = { 'burn 1': 25, 'burn 2': 40 };
       target.burn  = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      this.pushLog({ type: 'status', passive: 'Burn', actorName: actor.unit_name, targetName: target.unit_name, value: target.burn });
+      this.pushLog({ type: 'status', passive: 'Burn', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.burn });
     }
 
     if (passive.startsWith('poison')) {
       const map      = { 'poison 1': 25, 'poison 2': 40 };
       target.poison  = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      this.pushLog({ type: 'status', passive: 'Poison', actorName: actor.unit_name, targetName: target.unit_name, value: target.poison });
+      this.pushLog({ type: 'status', passive: 'Poison', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.poison });
     }
 
     if (passive.startsWith('shatter')) {
       const map  = { 'shatter 1': 3, 'shatter 2': 6 };
       const val  = map[passive] ?? 0;
       target.armor = Math.max(0, target.armor - val);
-      this.pushLog({ type: 'passive', passive: 'Shatter', actorName: actor.unit_name, targetName: target.unit_name, value: val });
+      this.pushLog({ type: 'passive', passive: 'Shatter', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
     }
 
     if (passive.startsWith('frostbite')) {
       const map = { 'frostbite 1': 8, 'frostbite 2': 15 };
       const val = map[passive] ?? 0;
       target.initiative = Math.max(0, target.initiative - val);
-      this.pushLog({ type: 'passive', passive: 'Frostbite', actorName: actor.unit_name, targetName: target.unit_name, value: val });
+      this.pushLog({ type: 'passive', passive: 'Frostbite', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
     }
 
     if (passive.startsWith('death_mark')) {
@@ -206,7 +200,7 @@ export class BattleSystem {
           const burst = Math.max(1, cfg.dmg - target.armor);
           target.battle_hp = Math.max(0, target.battle_hp - burst);
           if (target.battle_hp <= 0) { target.alive = false; this.applyOnDeathPassives(target); }
-          this.pushLog({ type: 'passive', passive: 'Death Mark', actorName: actor.unit_name, targetName: target.unit_name, value: burst });
+          this.pushLog({ type: 'passive', passive: 'Death Mark', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
         }
       }
     }
@@ -227,7 +221,7 @@ export class BattleSystem {
         const bonus = Math.max(1, 15 - target.armor);
         target.battle_hp = Math.max(0, target.battle_hp - bonus);
         if (target.battle_hp <= 0) { target.alive = false; this.applyOnDeathPassives(target); }
-        this.pushLog({ type: 'passive', passive: 'Smite', actorName: actor.unit_name, targetName: target.unit_name, value: bonus });
+        this.pushLog({ type: 'passive', passive: 'Smite', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: bonus, heal: false });
       }
     }
 
@@ -242,18 +236,16 @@ export class BattleSystem {
         const splash = Math.floor(dmg * 0.25);
         behind.battle_hp = Math.max(0, behind.battle_hp - splash);
         if (behind.battle_hp <= 0) { behind.alive = false; this.applyOnDeathPassives(behind); }
-        this.pushLog({ type: 'passive', passive: 'Impale', actorName: actor.unit_name, targetName: behind.unit_name, value: splash });
+        this.pushLog({ type: 'passive', passive: 'Impale', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
     }
 
     if (passive.startsWith('wither') && !target._flags.withered) {
       target._flags.withered    = true;
       target._healing_reduction = (target._healing_reduction ?? 0) + 10;
-      this.pushLog({ type: 'status', passive: 'Wither', actorName: actor.unit_name, targetName: target.unit_name, value: 10 });
+      this.pushLog({ type: 'status', passive: 'Wither', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 10 });
     }
   }
-
-  // ─── on_hit_received (defender) ──────────────────────────────────────────
 
   applyOnHitReceivedPassives(actor, target, dmg) {
     const passive = target.unit_data?.passive || target.unit_data?.passive_ability;
@@ -264,14 +256,14 @@ export class BattleSystem {
       const reflect = Math.floor(dmg * (map[passive] ?? 0) / 100);
       actor.battle_hp = Math.max(0, actor.battle_hp - reflect);
       if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Thorns', actorName: target.unit_name, targetName: actor.unit_name, value: reflect });
+      this.pushLog({ type: 'passive', passive: 'Thorns', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
 
     if (passive.startsWith('thorn_wall')) {
       const reflect = Math.floor(dmg * 0.15);
       actor.battle_hp = Math.max(0, actor.battle_hp - reflect);
       if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Thorn Wall', actorName: target.unit_name, targetName: actor.unit_name, value: reflect });
+      this.pushLog({ type: 'passive', passive: 'Thorn Wall', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
 
     if (passive.startsWith('spore_cloud')) {
@@ -284,7 +276,7 @@ export class BattleSystem {
       for (const adj of adjacent) {
         adj.battle_hp = Math.max(0, adj.battle_hp - aoe);
         if (adj.battle_hp <= 0) { adj.alive = false; this.applyOnDeathPassives(adj); }
-        this.pushLog({ type: 'passive', passive: 'Spore Cloud', actorName: target.unit_name, targetName: adj.unit_name, value: aoe });
+        this.pushLog({ type: 'passive', passive: 'Spore Cloud', actorName: target.unit_name, actorCell: target.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: aoe, heal: false });
       }
     }
 
@@ -292,7 +284,7 @@ export class BattleSystem {
       const val = 12;
       actor.battle_hp = Math.max(0, actor.battle_hp - val);
       if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Volcanic Skin', actorName: target.unit_name, targetName: actor.unit_name, value: val });
+      this.pushLog({ type: 'passive', passive: 'Volcanic Skin', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: val, heal: false });
     }
 
     if (passive.startsWith('glacial_armor')) {
@@ -300,12 +292,10 @@ export class BattleSystem {
       if (target._stacks.glacial_armor >= 3) {
         target._stacks.glacial_armor = 0;
         target.armor += 10;
-        this.pushLog({ type: 'passive', passive: 'Glacial Armor', actorName: target.unit_name, targetName: target.unit_name, value: 10 });
+        this.pushLog({ type: 'passive', passive: 'Glacial Armor', actorName: target.unit_name, actorCell: target.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 10 });
       }
     }
   }
-
-  // ─── on_kill ─────────────────────────────────────────────────────────────
 
   applyOnKillPassives(actor) {
     const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
@@ -316,16 +306,14 @@ export class BattleSystem {
       const heal   = map[passive] ?? 0;
       const actual = Math.min(heal, actor.max_hp - actor.battle_hp);
       actor.battle_hp += actual;
-      this.pushLog({ type: 'passive', passive: 'Soul Drain', actorName: actor.unit_name, targetName: actor.unit_name, value: actual });
+      this.pushLog({ type: 'passive', passive: 'Soul Drain', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: actual });
     }
 
     if (passive.startsWith('blood_frenzy')) {
       actor._dmg_mult = (actor._dmg_mult ?? 1) + 0.15;
-      this.pushLog({ type: 'passive', passive: 'Blood Frenzy', actorName: actor.unit_name, targetName: actor.unit_name, value: 15 });
+      this.pushLog({ type: 'passive', passive: 'Blood Frenzy', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: 15 });
     }
   }
-
-  // ─── on_death ────────────────────────────────────────────────────────────
 
   applyOnDeathPassives(dying) {
     const passive = dying.unit_data?.passive || dying.unit_data?.passive_ability;
@@ -337,7 +325,7 @@ export class BattleSystem {
       dying.battle_hp = passive === 'undying 2'
         ? 1 + Math.floor(dying.max_hp * 0.20)
         : 1;
-      this.pushLog({ type: 'passive', passive: 'Undying', actorName: dying.unit_name, targetName: dying.unit_name, value: dying.battle_hp });
+      this.pushLog({ type: 'passive', passive: 'Undying', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: dying.unit_name, targetCell: dying.cellIndex, value: dying.battle_hp });
     }
 
     if (passive.startsWith('noxious_death')) {
@@ -346,12 +334,10 @@ export class BattleSystem {
       for (const e of this.combatants.filter(c => c.side !== dying.side && c.alive)) {
         e.battle_hp = Math.max(0, e.battle_hp - dmg);
         if (e.battle_hp <= 0) e.alive = false;
-        this.pushLog({ type: 'passive', passive: 'Noxious Death', actorName: dying.unit_name, targetName: e.unit_name, value: dmg });
+        this.pushLog({ type: 'passive', passive: 'Noxious Death', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: dmg, heal: false });
       }
     }
   }
-
-  // ─── on_below_half_hp ────────────────────────────────────────────────────
 
   applyBelowHalfPassive(unit) {
     if (unit._flags.enrage_triggered) return;
@@ -362,10 +348,8 @@ export class BattleSystem {
     const mult = map[passive] ?? 1;
     unit._dmg_mult = (unit._dmg_mult ?? 1) * mult;
     unit._flags.enrage_triggered = true;
-    this.pushLog({ type: 'passive', passive: 'Enrage', actorName: unit.unit_name, targetName: unit.unit_name, value: Math.round((mult - 1) * 100) });
+    this.pushLog({ type: 'passive', passive: 'Enrage', actorName: unit.unit_name, actorCell: unit.cellIndex, targetName: unit.unit_name, targetCell: unit.cellIndex, value: Math.round((mult - 1) * 100) });
   }
-
-  // ─── Targeting ───────────────────────────────────────────────────────────
 
   isHealer(unit) {
     const data = unit.unit_data || unit;
@@ -402,8 +386,6 @@ export class BattleSystem {
     if (key.startsWith('lions_roar'))  return [actor];
     return this.combatants.filter(c => c.side !== actor.side && c.alive);
   }
-
-  // ─── Damage / Heal calc ───────────────────────────────────────────────────
 
   calcDamage(actor, target) {
     const data    = actor.unit_data || actor;
@@ -445,8 +427,6 @@ export class BattleSystem {
     return Math.floor(power * 1.3);
   }
 
-  // ─── Execute ─────────────────────────────────────────────────────────────
-
   executeAction(actor, target = null, actionType = 'attack') {
     this.applyTurnStartPassives(actor);
 
@@ -459,7 +439,7 @@ export class BattleSystem {
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
       const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
       target.battle_hp += heal;
-      this.pushLog({ type: 'action', actorName: actor.unit_name, targetName: target.unit_name, value: heal, heal: true });
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       let remaining = this.calcDamage(actor, target);
 
@@ -467,24 +447,29 @@ export class BattleSystem {
         const absorbed = Math.min(target.shield, remaining);
         target.shield -= absorbed;
         remaining     -= absorbed;
+        this.pushLog({ type: 'shield', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: absorbed, remaining });
       }
 
-      target.battle_hp = Math.max(0, target.battle_hp - remaining);
-      const dead       = target.battle_hp <= 0;
+      if (remaining > 0) {
+        target.battle_hp = Math.max(0, target.battle_hp - remaining);
+        const dead       = target.battle_hp <= 0;
 
-      if (dead) {
-        target.alive = false;
-        this.applyOnDeathPassives(target);
-      } else if (target.battle_hp < target.max_hp / 2) {
-        this.applyBelowHalfPassive(target);
+        if (dead) {
+          target.alive = false;
+          this.applyOnDeathPassives(target);
+        } else if (target.battle_hp < target.max_hp / 2) {
+          this.applyBelowHalfPassive(target);
+        }
+
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
+
+        this.applyOnHitPassives(actor, target, remaining);
+        this.applyOnHitReceivedPassives(actor, target, remaining);
+
+        if (dead && !target.alive) this.applyOnKillPassives(actor);
+      } else {
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
-
-      this.pushLog({ type: 'action', actorName: actor.unit_name, targetName: target.unit_name, value: remaining, killed: !target.alive });
-
-      this.applyOnHitPassives(actor, target, remaining);
-      this.applyOnHitReceivedPassives(actor, target, remaining);
-
-      if (dead && !target.alive) this.applyOnKillPassives(actor);
 
       this.applyDoTs(target);
     }
@@ -497,13 +482,13 @@ export class BattleSystem {
     if (!unit.alive) return;
     if (unit.burn > 0) {
       unit.battle_hp = Math.max(0, unit.battle_hp - unit.burn);
-      this.pushLog({ type: 'passive', passive: 'Burn', actorName: '🔥', targetName: unit.unit_name, value: unit.burn });
+      this.pushLog({ type: 'passive', passive: 'Burn', actorName: '🔥', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.burn, heal: false });
       if (!unit._flags.mark_of_ash) unit.burn = 0;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit.poison > 0) {
       unit.battle_hp = Math.max(0, unit.battle_hp - unit.poison);
-      this.pushLog({ type: 'passive', passive: 'Poison', actorName: '☠️', targetName: unit.unit_name, value: unit.poison });
+      this.pushLog({ type: 'passive', passive: 'Poison', actorName: '☠️', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.poison, heal: false });
       unit.poison = 0;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
@@ -512,7 +497,7 @@ export class BattleSystem {
   doDefend(actor) {
     actor.defend_armor_bonus = 25;
     actor.acted_this_round   = true;
-    this.pushLog({ type: 'defend', actorName: actor.unit_name, message: 'defended (+25 armor this round)' });
+    this.pushLog({ type: 'defend', actorName: actor.unit_name, actorCell: actor.cellIndex, message: 'defended (+25 armor this round)' });
     return this.afterAction(actor);
   }
 
@@ -530,7 +515,7 @@ export class BattleSystem {
       if (!target) return false;
       target.burn = 0; target.poison = 0; target._flags.withered = false;
       target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, targetName: target.unit_name, message: 'Purge — stripped all debuffs' });
+      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: 'Purge — stripped all debuffs' });
     }
 
     else if (key.startsWith('mark_of_ash')) {
@@ -538,14 +523,14 @@ export class BattleSystem {
       const dot = Math.floor((actor.unit_data?.action_power ?? 10) * 0.25);
       target.burn = dot;
       target._flags.mark_of_ash = true;
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, targetName: target.unit_name, message: `Mark of Ash — permanent burn (${dot}/turn)` });
+      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `Mark of Ash — permanent burn (${dot}/turn)` });
     }
 
     else if (key.startsWith('raise_dead')) {
       if (!target) return false;
       target.alive     = true;
       target.battle_hp = Math.floor(target.max_hp * 0.50);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, targetName: target.unit_name, message: `Raise Dead — resurrected at ${target.battle_hp} HP` });
+      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `Raise Dead — resurrected at ${target.battle_hp} HP` });
     }
 
     else if (key.startsWith('devour')) {
@@ -557,26 +542,24 @@ export class BattleSystem {
         drained    += d;
       }
       actor._dmg_mult = (actor._dmg_mult ?? 1) + (Math.floor(drained * 0.5) / 100);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, targetName: 'allies', message: `Devour — drained ${drained} HP, gained ${Math.floor(drained * 0.5)}% damage` });
+      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'allies', message: `Devour — drained ${drained} HP, gained ${Math.floor(drained * 0.5)}% damage` });
     }
 
     else if (key.startsWith('lions_roar')) {
       for (const a of this.combatants.filter(c => c.side === actor.side && c.alive)) {
         a.initiative += 20;
       }
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, targetName: 'all allies', message: "Lion's Roar — +20 initiative to all allies" });
+      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: "Lion's Roar — +20 initiative to all allies" });
     }
 
     return this.afterAction(actor);
   }
 
   skipTurn(actor) {
-    this.pushLog({ type: 'skip', actorName: actor.unit_name });
+    this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex });
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
-
-  // ─── Round management ─────────────────────────────────────────────────────
 
   afterAction(actor) {
     const win = this.checkWin();

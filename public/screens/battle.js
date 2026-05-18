@@ -42,10 +42,72 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
+  function cellLabel(cellIndex) {
+    const r = Math.floor(cellIndex / COLS);
+    const c = cellIndex % COLS;
+    return `R${r + 1}C${c + 1}`;
+  }
+
+  function formatLogEntry(entry) {
+    if (entry.type === 'round') {
+      return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
+    }
+
+    if (entry.type === 'defend' || entry.type === 'ability') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      const target = entry.targetName ? ` → <span class="log-target">${entry.targetName}</span>${targetLoc}` : '';
+      return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${actorLoc}${target} ${entry.message}</div>`;
+    }
+
+    if (entry.type === 'shield') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      return `<div class="log-entry log-entry--shield"><span class="log-actor">${entry.targetName}</span>${actorLoc} 🛡 shield absorbed <span class="log-val-shield">${entry.value}</span>${entry.remaining > 0 ? `, ${entry.remaining} passes through` : ', all blocked'}</div>`;
+    }
+
+    if (entry.type === 'status') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${actorLoc} applied <span class="log-passive">${entry.passive}</span> to <span class="log-target">${entry.targetName}</span>${targetLoc} <span class="log-dot">(${entry.value}/turn)</span></div>`;
+    }
+
+    if (entry.type === 'passive') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      const isHeal = entry.heal !== false;
+      return `<div class="log-entry log-entry--passive">
+        <span class="log-actor">${entry.actorName}</span>${actorLoc}
+        <span class="log-passive"> ${entry.passive}</span>
+        ${isHeal ? 'healed' : 'hit'}
+        <span class="log-target"> ${entry.targetName}</span>${targetLoc} for
+        <span class="${isHeal ? 'log-val-heal' : 'log-val'}">${entry.value}</span>
+      </div>`;
+    }
+
+    if (entry.type === 'action') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      const verb = entry.heal ? 'healed' : 'hit';
+      const valClass = entry.heal ? 'log-val-heal' : 'log-val';
+      return `<div class="log-entry">
+        <span class="log-actor">${entry.actorName}</span>${actorLoc} ${verb}
+        <span class="log-target"> ${entry.targetName}</span>${targetLoc} for
+        <span class="${valClass}">${entry.value}</span>
+        ${entry.killed ? ' 💀' : ''}
+      </div>`;
+    }
+
+    if (entry.type === 'skip') {
+      return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
+    }
+
+    return '';
+  }
+
   function render() {
     const actor = battle.currentActor();
     const state = battle.getState();
-    const validTargetIds = selectingTargetFor 
+    const validTargetIds = selectingTargetFor
       ? new Set(battle.getValidTargets(selectingTargetFor).map(t => t.id))
       : new Set();
 
@@ -73,7 +135,9 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           html.push(`
             <div class="${cls}" data-id="${occ.id}">
               <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
-              ${occ.alive ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}</span>` : `<span class="battle-cell-sub">💀</span>`}
+              ${occ.alive
+                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${occ.shield > 0 ? ` 🛡${occ.shield}` : ''}</span>`
+                : `<span class="battle-cell-sub">💀</span>`}
               <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
             </div>
           `);
@@ -81,6 +145,12 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       }
       return html.join('');
     }
+
+    const isEnemyTurn = !actor || actor.side === 'enemy';
+    const hasAbility = actor && (!!actor.unit_data?.ability || !!actor.unit_data?.active_ability);
+    const abilityName = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : '';
+    const actionLabel = actor ? getActionLabel(actor) : 'Attack';
+    const passiveName = actor ? getPassiveName(actor) : '';
 
     root.innerHTML = `
       <div class="screen screen-battle">
@@ -110,71 +180,33 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           </div>
         </div>
 
-        ${renderActionPanel(actor)}
+        <div class="action-panel">
+          <div class="action-panel-label">
+            ${isEnemyTurn
+              ? `<span style="color:var(--muted)">Enemy is acting…</span>`
+              : `<strong>${actor.unit_name}</strong> <small style="color:var(--muted)">· Passive: ${passiveName}</small>`
+            }
+          </div>
+          <div class="action-btns">
+            <button class="action-btn ${isEnemyTurn || selectingTargetFor ? 'action-btn--disabled' : ''}"
+                    id="btn-main" ${isEnemyTurn ? 'disabled' : ''}>${selectingTargetFor && selectedActionType === 'attack' ? '🎯 ' : ''}${actionLabel}</button>
+            <button class="action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn) ? 'action-btn--disabled' : ''}"
+                    id="btn-ability" ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn) ? 'disabled' : ''}>
+              ${actor && actor.used_active ? '(used) ' : ''}${abilityName || 'Ability'}
+            </button>
+            <button class="action-btn ${isEnemyTurn ? 'action-btn--disabled' : ''}"
+                    id="btn-defend" ${isEnemyTurn ? 'disabled' : ''}>Defend</button>
+            ${selectingTargetFor ? `<button class="action-btn action-btn--cancel" id="btn-cancel">✕</button>` : ''}
+          </div>
+        </div>
 
         <div class="battle-log" id="battle-log">
-          ${state.log.slice(-8).map(entry => {
-            if (entry.type === 'round') {
-              return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
-            }
-            if (entry.type === 'defend' || entry.type === 'ability') {
-              const target = entry.targetName ? ` → <span class="log-target">${entry.targetName}</span>` : '';
-              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${target} ${entry.message}</div>`;
-            }
-            if (entry.type === 'status') {
-              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> applied <span style="color:#c8973a">${entry.passive}</span> to <span class="log-target">${entry.targetName}</span> (${entry.value}/turn)</div>`;
-            }
-            if (entry.type === 'passive') {
-              return `<div class="log-entry">
-                <span class="log-actor">${entry.actorName}</span> 
-                <span style="color:#c8973a">${entry.passive}</span> healed 
-                <span class="log-target">${entry.targetName}</span> for 
-                <span class="log-val">${entry.value}</span>
-              </div>`;
-            }
-            if (entry.type === 'action') {
-              const verb = entry.heal ? 'healed' : 'attacked';
-              return `<div class="log-entry">
-                <span class="log-actor">${entry.actorName}</span> ${verb} 
-                <span class="log-target">${entry.targetName}</span> for 
-                <span class="log-val">${entry.value}</span>
-                ${entry.killed ? ' 💀' : ''}
-              </div>`;
-            }
-            return '';
-          }).join('')}
+          ${state.log.slice().reverse().map(formatLogEntry).join('')}
         </div>
       </div>
     `;
 
     attachEvents();
-  }
-
-  function renderActionPanel(actor) {
-    if (!actor || actor.side === 'enemy') {
-      return `<div class="action-panel action-panel--enemy">Enemy is acting...</div>`;
-    }
-
-    const actionLabel = getActionLabel(actor);
-    const passiveName = getPassiveName(actor);
-    const hasAbility = !!actor.unit_data?.ability || !!actor.unit_data?.active_ability;
-    const abilityName = actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability';
-
-    return `
-      <div class="action-panel">
-        <div class="action-panel-label">
-          <strong>${actor.unit_name}</strong><br>
-          <small>Passive: ${passiveName}</small>
-        </div>
-        <div class="action-btns">
-          <button class="action-btn" id="btn-main">${actionLabel}</button>
-          <button class="action-btn ${(!hasAbility || actor.used_active) ? 'action-btn--disabled' : ''}" 
-                  id="btn-ability" ${(!hasAbility || actor.used_active) ? 'disabled' : ''}>
-            ${actor.used_active ? '(used) ' : ''}${abilityName}
-          </button>
-          <button class="action-btn" id="btn-defend">Defend</button>
-        </div>
-      </div>`;
   }
 
   function attachEvents() {
@@ -197,12 +229,13 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     });
 
     root.querySelector('#btn-main')?.addEventListener('click', () => {
+      if (!battle.currentActor() || battle.currentActor().side === 'enemy') return;
       startTargeting('attack');
     });
 
     root.querySelector('#btn-ability')?.addEventListener('click', () => {
       const actor = battle.currentActor();
-      if (!actor) return;
+      if (!actor || actor.side === 'enemy') return;
       const abilityTargets = battle.getValidTargets(actor, true);
       if (abilityTargets.length === 0) {
         battle.doAbility(actor, null);
@@ -215,11 +248,16 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
 
     root.querySelector('#btn-defend')?.addEventListener('click', () => {
       const actor = battle.currentActor();
-      if (actor) {
-        battle.executeAction(actor, null, 'defend');
-        render();
-        nextTurn();
-      }
+      if (!actor || actor.side === 'enemy') return;
+      battle.executeAction(actor, null, 'defend');
+      render();
+      nextTurn();
+    });
+
+    root.querySelector('#btn-cancel')?.addEventListener('click', () => {
+      selectingTargetFor = null;
+      selectedActionType = null;
+      render();
     });
   }
 
