@@ -15,6 +15,7 @@ const HERO_DATA = {
     damage_source: 'physical', action_power: 20,
     passive: null, ability: null,
     hero_level: 1, building_slot: 'slot_0',
+    xp: 90
   },
   hexblade: {
     id: 'h_d_2',
@@ -29,6 +30,7 @@ const HERO_DATA = {
     damage_source: 'death', action_power: 18,
     passive: null, ability: null,
     hero_level: 1, building_slot: 'slot_0',
+    xp: 95
   },
   shadowbow: {
     id: 'h_d_3',
@@ -43,6 +45,7 @@ const HERO_DATA = {
     damage_source: 'physical', action_power: 16,
     passive: null, ability: null,
     hero_level: 1, building_slot: 'slot_0',
+    xp: 100
   },
   paladin: {
     id: 'h_e_1',
@@ -57,6 +60,7 @@ const HERO_DATA = {
     damage_source: 'physical', action_power: 15,
     passive: 'mithrails_light 1', ability: null,
     hero_level: 1, building_slot: 'slot_0',
+    xp: 105
   },
   inquisitor: {
     id: 'h_e_2',
@@ -71,6 +75,7 @@ const HERO_DATA = {
     damage_source: 'life', action_power: 17,
     passive: 'vitality 1', ability: 'purge 1',
     hero_level: 1, building_slot: 'slot_0',
+    xp: 110
   },
   ranger: {
     id: 'h_e_3',
@@ -85,6 +90,7 @@ const HERO_DATA = {
     damage_source: 'physical', action_power: 15,
     passive: 'pierce 1', ability: null,
     hero_level: 1, building_slot: 'slot_0',
+    xp: 115
   },
 };
 
