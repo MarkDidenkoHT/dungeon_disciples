@@ -533,3 +533,10 @@
   opacity: 0.38;
   cursor: default;
 }
+
+.loyalty-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.loyalty-pips { display: flex; gap: 4px; }
+.loyalty-pip { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--muted); }
+.loyalty-pip--filled { background: var(--accent); border-color: var(--accent); }
+.portrait-card--locked { opacity: 0.4; cursor: not-allowed; }
+.portrait-locked-hint { font-size: 10px; color: var(--muted); text-align: center; }

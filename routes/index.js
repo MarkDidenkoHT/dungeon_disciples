@@ -178,12 +178,14 @@ router.post('/player/faction', async (req, res) => {
             unit_name: hero.charAt(0).toUpperCase() + hero.slice(1),
             unit_data: heroStats,
             experience: 0,
+            is_hero: true,
           },
           ...(unitData ? [{
             chat_id,
             unit_name: unitData.name,
             unit_data: { ...unitData, building_slot: unitSlot },
             experience: 0,
+            is_hero: false,
           }] : []),
         ]),
       }),
@@ -222,8 +224,18 @@ router.get('/roster', async (req, res) => {
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
 
   try {
-    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`);
-    res.json(rows);
+    const rows = await supabase(
+      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+    );
+
+    const result = rows.map(r => {
+      if (!r.is_hero) return r;
+      const heroLevel = r.unit_data?.hero_level ?? 1;
+      const loyalty = heroLevel >= 4 ? 5 : heroLevel + 1;
+      return { ...r, loyalty };
+    });
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -236,7 +248,9 @@ router.post('/roster/levelup', async (req, res) => {
   }
 
   try {
-    const rows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`);
+    const rows = await supabase(
+      `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+    );
     if (!rows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const entry    = rows[0];
@@ -259,9 +273,8 @@ router.post('/roster/levelup', async (req, res) => {
       return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
     }
 
-    let path = null;
-
     const buildingSlot = unitData.building_slot || null;
+    let path = null;
 
     if (paths.length === 1) {
       path = paths[0];
@@ -269,7 +282,9 @@ router.post('/roster/levelup', async (req, res) => {
       if (!buildingSlot) {
         return res.status(400).json({ error: 'Unit has no building slot assigned; cannot determine upgrade path' });
       }
-      const structRowsCheck = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+      const structRowsCheck = await supabase(
+        `/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
+      );
       if (!structRowsCheck.length) {
         return res.status(400).json({ error: 'No structures record found' });
       }
@@ -281,9 +296,12 @@ router.post('/roster/levelup', async (req, res) => {
       }
       path = matched;
     }
+
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
-    const newUnitData  = { ...nextUnitDef, building_slot: buildingSlot };
+
+    // Preserve building_slot from the existing unit_data
+    const newUnitData = { ...nextUnitDef, building_slot: buildingSlot };
 
     const updatePromises = [
       supabase(`/roster?id=eq.${roster_id}`, {
@@ -291,19 +309,21 @@ router.post('/roster/levelup', async (req, res) => {
         body: JSON.stringify({
           unit_name: nextUnitDef.name,
           unit_data: newUnitData,
+          is_hero: false,
         }),
       }),
     ];
 
     if (buildingSlot) {
-      const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+      const structRows = await supabase(
+        `/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`
+      );
       if (structRows.length) {
         const structRecord = structRows[0];
         const buildings    = structRecord.buildings_data;
         const slotState    = buildings[buildingSlot];
         if (slotState) {
-          const upgradedBuildingId = path.building_id;
-          buildings[buildingSlot] = { ...slotState, building_id: upgradedBuildingId };
+          buildings[buildingSlot] = { ...slotState, building_id: path.building_id };
           updatePromises.push(
             supabase(`/structures?id=eq.${structRecord.id}`, {
               method: 'PATCH',
@@ -316,7 +336,9 @@ router.post('/roster/levelup', async (req, res) => {
 
     await Promise.all(updatePromises);
 
-    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience`);
+    const updated = await supabase(
+      `/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+    );
     res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -496,6 +518,7 @@ router.post('/structures/build', async (req, res) => {
             unit_name: unitDef.name,
             unit_data: { ...unitDef, building_slot: slot },
             experience: 0,
+            is_hero: false,
           }]),
         });
       }

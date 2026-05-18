@@ -51,6 +51,13 @@ function unitTypeIcon(u) {
   return UNIT_TYPE_ICONS[t] ?? '·';
 }
 
+function getLoyalty(heroUnit) {
+  if (!heroUnit) return 2;
+  if (heroUnit.loyalty != null) return heroUnit.loyalty;
+  const heroLevel = heroUnit.unit_data?.hero_level ?? 1;
+  return heroLevel >= 4 ? 5 : heroLevel + 1;
+}
+
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
 
@@ -108,6 +115,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let roster           = [];
   let enemies          = [];
   let heroId           = null;
+  let maxNonHero       = 2;
   let dragUnit         = null;
   let hoverCell        = null;
   const occupied       = {};
@@ -330,6 +338,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return new Set(Object.values(occupied).map(p => p.unitId));
   }
 
+  function placedNonHeroCount() {
+    return [...placedUnitIds()].filter(id => id !== heroId).length;
+  }
+
   function removeUnit(unitId) {
     for (const key of Object.keys(occupied)) {
       if (occupied[key].unitId === unitId) delete occupied[key];
@@ -340,7 +352,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const size  = getUnitSize(unit);
     const cells = getCells(anchor, size);
     if (!cells) return false;
-    return cells.every(c => !occupied[c]);
+    if (!cells.every(c => !occupied[c])) return false;
+
+    const isHero = unit.id === heroId;
+    if (!isHero && placedNonHeroCount() >= maxNonHero) return false;
+
+    return true;
   }
 
   function placeUnit(unit, anchor) {
@@ -348,6 +365,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const cells = getCells(anchor, size);
     if (!cells) return false;
     if (!cells.every(c => !occupied[c])) return false;
+
+    const isHero = unit.id === heroId;
+    if (!isHero && placedNonHeroCount() >= maxNonHero) return false;
+
     cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor, size }; });
     return true;
   }
@@ -412,22 +433,77 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const track     = root.querySelector('#portrait-track');
     const placed    = placedUnitIds();
     const available = roster.filter(u => !placed.has(u.id));
+    const nonHeroPlaced = placedNonHeroCount();
+    const slotsLeft     = maxNonHero - nonHeroPlaced;
+
+    const loyaltyBar = `
+      <div class="loyalty-bar">
+        <span class="loyalty-label">⚔ Loyalty ${nonHeroPlaced}/${maxNonHero}</span>
+        <div class="loyalty-pips">
+          ${Array.from({ length: maxNonHero }, (_, i) =>
+            `<span class="loyalty-pip ${i < nonHeroPlaced ? 'loyalty-pip--filled' : ''}"></span>`
+          ).join('')}
+        </div>
+      </div>
+    `;
 
     if (!available.length) {
-      track.innerHTML = `<span class="track-empty-hint">All units placed</span>`;
+      track.innerHTML = loyaltyBar + `<span class="track-empty-hint">All units placed</span>`;
       return;
     }
 
-    track.innerHTML = available.map(u => {
+    track.innerHTML = loyaltyBar + available.map(u => {
       const isHero     = u.id === heroId;
       const isSelected = dragUnit?.id === u.id;
-      return `<div class="portrait-card ${isHero ? 'portrait-card--hero' : ''} ${isSelected ? 'portrait-card--selected' : ''}"
-                   draggable="true" data-id="${u.id}">
-        <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
-        <div class="portrait-name">${u.unit_name}</div>
-        <div class="portrait-size">${sizeLabel(getUnitSize(u))}</div>
+
+      const locked     = !isHero && slotsLeft <= 0;
+      return `
+        <div class="portrait-card
+                    ${isHero     ? 'portrait-card--hero'     : ''}
+                    ${isSelected ? 'portrait-card--selected' : ''}
+                    ${locked     ? 'portrait-card--locked'   : ''}"
+             draggable="${locked ? 'false' : 'true'}"
+             data-id="${u.id}">
+          <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
+          <div class="portrait-name">${u.unit_name}</div>
+          <div class="portrait-size">${sizeLabel(getUnitSize(u))}</div>
+          ${locked ? '<div class="portrait-locked-hint">Loyalty full</div>' : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderEnemyGrid() {
+    const grid = root.querySelector('#enemy-grid');
+
+    const unitAtCell = {};
+    for (const e of enemies) {
+      if (e.size === 'row') {
+        unitAtCell[e.cell] = e;
+        unitAtCell[e.cell + 1] = { _shadow: true };
+      } else {
+        unitAtCell[e.cell] = e;
+      }
+    }
+
+    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
+      const e = unitAtCell[i];
+      if (!e) return `<div class="battle-cell battle-cell--fog">???</div>`;
+      if (e._shadow) return '';
+      const colSpan = e.size === 'row' ? 2 : 1;
+      const rowSpan = e.size === 'column' ? 2 : 1;
+      return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
+        <span class="battle-cell-name">${e.name}</span>
+        <span class="battle-cell-sub">❤ ${e.hp}</span>
       </div>`;
     }).join('');
+
+    grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const e = unitAtCell[Number(cell.dataset.i)];
+        if (e && !e._shadow) showDetail(enemyDetailHtml(e));
+      });
+    });
   }
 
   function checkReady() {
@@ -534,6 +610,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const u = roster.find(r => String(r.id) === String(card.dataset.id));
       if (!u) return;
 
+      if (card.classList.contains('portrait-card--locked')) return;
+
       card.addEventListener('dragstart', e => {
         dragUnit = u;
         e.dataTransfer.effectAllowed = 'move';
@@ -584,7 +662,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
   });
 
-  // Kick off async initialisation without making renderBattlePrep itself async
   (async () => {
     try {
       const [rosterData] = await Promise.all([
@@ -592,10 +669,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       ]);
 
       roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
+      
+      const heroUnit = roster.find(u => u.is_hero === true);
+      heroId     = heroUnit?.id ?? null;
+      maxNonHero = getLoyalty(heroUnit);
 
-      const heroName = player.hero ?? '';
-      const heroUnit = roster.find(u => u.unit_name.toLowerCase() === heroName.toLowerCase());
-      heroId  = heroUnit?.id ?? null;
       enemies = getEncounter(region_id, level);
 
       await Promise.all([loadResources(), loadLearnedSpells()]);
