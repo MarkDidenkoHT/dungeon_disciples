@@ -118,7 +118,11 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
               return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
             }
             if (entry.type === 'defend' || entry.type === 'ability') {
-              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> ${entry.message}</div>`;
+              const target = entry.targetName ? ` → <span class="log-target">${entry.targetName}</span>` : '';
+              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${target} ${entry.message}</div>`;
+            }
+            if (entry.type === 'status') {
+              return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span> applied <span style="color:#c8973a">${entry.passive}</span> to <span class="log-target">${entry.targetName}</span> (${entry.value}/turn)</div>`;
             }
             if (entry.type === 'passive') {
               return `<div class="log-entry">
@@ -164,9 +168,9 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
         </div>
         <div class="action-btns">
           <button class="action-btn" id="btn-main">${actionLabel}</button>
-          <button class="action-btn ${hasAbility ? '' : 'action-btn--disabled'}" 
-                  id="btn-ability" ${hasAbility ? '' : 'disabled'}>
-            ${abilityName}
+          <button class="action-btn ${(!hasAbility || actor.used_active) ? 'action-btn--disabled' : ''}" 
+                  id="btn-ability" ${(!hasAbility || actor.used_active) ? 'disabled' : ''}>
+            ${actor.used_active ? '(used) ' : ''}${abilityName}
           </button>
           <button class="action-btn" id="btn-defend">Defend</button>
         </div>
@@ -198,7 +202,13 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
 
     root.querySelector('#btn-ability')?.addEventListener('click', () => {
       const actor = battle.currentActor();
-      if (actor) {
+      if (!actor) return;
+      const abilityTargets = battle.getValidTargets(actor, true);
+      if (abilityTargets.length === 0) {
+        battle.doAbility(actor, null);
+        render();
+        nextTurn();
+      } else {
         startTargeting('ability');
       }
     });
