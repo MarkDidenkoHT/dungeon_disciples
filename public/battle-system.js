@@ -126,17 +126,23 @@ export class BattleSystem {
     if (passive.startsWith('frost_aura')) {
       const map    = { 'frost_aura 1': 5, 'frost_aura 2': 10 };
       const debuff = map[passive] ?? 0;
-      for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
-        e.initiative = Math.max(0, e.initiative - debuff);
+      if (!actor._flags.frost_aura_applied) {
+        for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
+          e.initiative = Math.max(0, e.initiative - debuff);
+        }
+        actor._flags.frost_aura_applied = true;
+        this.pushLog({ type: 'passive', passive: 'Frost Aura', actorName: actor.unit_name, targetName: 'all enemies', value: debuff });
       }
-      this.pushLog({ type: 'passive', passive: 'Frost Aura', actorName: actor.unit_name, targetName: 'all enemies', value: debuff });
     }
 
     if (passive.startsWith('hex_aura')) {
-      for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
-        e._dmg_mult = Math.max(0, (e._dmg_mult ?? 1) - 0.10);
+      if (!actor._flags.hex_aura_applied) {
+        for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
+          e._dmg_mult = Math.max(0.1, (e._dmg_mult ?? 1) - 0.10);
+        }
+        actor._flags.hex_aura_applied = true;
+        this.pushLog({ type: 'passive', passive: 'Hex Aura', actorName: actor.unit_name, targetName: 'all enemies', value: 10 });
       }
-      this.pushLog({ type: 'passive', passive: 'Hex Aura', actorName: actor.unit_name, targetName: 'all enemies', value: 10 });
     }
   }
 
@@ -496,9 +502,11 @@ export class BattleSystem {
   }
 
   doAbility(actor, target) {
-    if (actor.used_active) return false;
     const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
-    if (!key) return false;
+    if (actor.used_active || !key) {
+      actor.acted_this_round = true;
+      return this.afterAction(actor);
+    }
 
     actor.used_active      = true;
     actor.acted_this_round = true;
@@ -567,6 +575,8 @@ export class BattleSystem {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
       if (!c._flags.mark_of_ash) c.burn = 0;
+      c._flags.frost_aura_applied = false;
+      c._flags.hex_aura_applied   = false;
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
