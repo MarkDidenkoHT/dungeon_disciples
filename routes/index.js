@@ -230,9 +230,16 @@ router.get('/roster', async (req, res) => {
 
     const result = rows.map(r => {
       if (!r.is_hero) return r;
-      const heroLevel = r.unit_data?.hero_level ?? 1;
-      const loyalty = heroLevel >= 4 ? 5 : heroLevel + 1;
-      return { ...r, loyalty };
+      const heroTier = r.unit_data?.t ?? 1;
+      const loyalty = heroTier >= 4 ? 5 : heroTier + 1;
+      
+      return { 
+        ...r, 
+        loyalty,
+        hero_id: r.unit_data?.id,
+        hero_faction: r.unit_data?.f,
+        hero_tier: heroTier
+      };
     });
 
     res.json(result);
@@ -300,7 +307,6 @@ router.post('/roster/levelup', async (req, res) => {
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
 
-    // Preserve building_slot from the existing unit_data
     const newUnitData = { ...nextUnitDef, building_slot: buildingSlot };
 
     const updatePromises = [
@@ -410,39 +416,51 @@ router.post('/roster/hero-levelup', async (req, res) => {
     const entry    = rosterRows[0];
     const unitData = entry.unit_data || {};
 
-    if (unitData.t !== undefined && unitData.t !== null) {
+    if (unitData.t === undefined || unitData.t === null) {
       return res.status(400).json({ error: 'This unit is not a hero' });
     }
 
     const heroKey     = entry.unit_name.toLowerCase();
-    const heroLevel   = unitData.hero_level || 1;
+    const currentTier = unitData.t || 1;
     const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
 
-    if (heroLevel >= HERO_MAX_LEVEL) {
-      return res.status(400).json({ error: 'Hero is already at max level' });
+    if (currentTier >= HERO_MAX_LEVEL) {
+      return res.status(400).json({ error: 'Hero is already at max tier' });
     }
-    if (heroLevel >= throneLevel) {
-      return res.status(400).json({ error: `Upgrade your Throne to level ${heroLevel + 1} first` });
+    if (currentTier >= throneLevel) {
+      return res.status(400).json({ error: `Upgrade your Throne to level ${currentTier + 1} first` });
     }
 
-    const nextLevel = heroLevel + 1;
-    const delta     = (HERO_LEVEL_DATA[heroKey] || {})[nextLevel];
+    const nextTier = currentTier + 1;
+    const delta     = (HERO_LEVEL_DATA[heroKey] || {})[nextTier];
     if (!delta) {
-      return res.status(400).json({ error: `No level data for ${heroKey} level ${nextLevel}` });
+      return res.status(400).json({ error: `No tier data for ${heroKey} tier ${nextTier}` });
     }
 
-    const newUnitData = { ...unitData, hero_level: nextLevel };
+    const newUnitData = { 
+      ...unitData, 
+      t: nextTier
+    };
+    
     for (const [stat, val] of Object.entries(delta)) {
       if (newUnitData[stat] !== undefined) newUnitData[stat] += val;
     }
 
-    const updated = await supabase(`/roster?id=eq.${roster_id}`, {
+    await supabase(`/roster?id=eq.${roster_id}`, {
       method: 'PATCH',
       body: JSON.stringify({ unit_data: newUnitData }),
     });
 
     const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience`);
-    res.json(fresh[0]);
+    
+    const responseData = {
+      ...fresh[0],
+      hero_id: fresh[0].unit_data?.id,
+      hero_faction: fresh[0].unit_data?.f,
+      hero_tier: fresh[0].unit_data?.t
+    };
+    
+    res.json(responseData);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

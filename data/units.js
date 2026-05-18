@@ -4,6 +4,8 @@ import { ABILITIES } from './abilities.js';
 const HERO_DATA = {
   warlord: {
     id: 'h_d_1',
+    f: 'd',
+    t: 1,
     type: 'melee',
     size: 'tile',
     tags: ['Knight', null],
@@ -16,6 +18,8 @@ const HERO_DATA = {
   },
   hexblade: {
     id: 'h_d_2',
+    f: 'd',
+    t: 1,
     type: 'caster',
     size: 'tile',
     tags: ['Caster', null],
@@ -28,8 +32,10 @@ const HERO_DATA = {
   },
   shadowbow: {
     id: 'h_d_3',
+    f: 'd',
+    t: 1,
     type: 'ranged',
-    size: 'row',
+    size: 'tile',
     tags: ['Archer', null],
     hp: 80, armor: 3, initiative: 100,
     resistances: { air: 0, fire: 0, life: 0, death: 5, cold: 0, nature: 0 },
@@ -40,6 +46,8 @@ const HERO_DATA = {
   },
   paladin: {
     id: 'h_e_1',
+    f: 'e',
+    t: 1,
     type: 'melee',
     size: 'tile',
     tags: ['Knight', 'Holy'],
@@ -52,8 +60,10 @@ const HERO_DATA = {
   },
   inquisitor: {
     id: 'h_e_2',
+    f: 'e',
+    t: 1,
     type: 'ranged',
-    size: 'row',
+    size: 'tile',
     tags: ['Caster', 'Holy'],
     hp: 72, armor: 2, initiative: 70,
     resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
@@ -64,8 +74,10 @@ const HERO_DATA = {
   },
   ranger: {
     id: 'h_e_3',
+    f: 'e',
+    t: 1,
     type: 'ranged',
-    size: 'row',
+    size: 'tile',
     tags: ['Archer', null],
     hp: 82, armor: 3, initiative: 110,
     resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 10 },
