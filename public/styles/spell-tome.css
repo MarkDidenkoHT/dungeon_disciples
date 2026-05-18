@@ -44,20 +44,6 @@
   padding: 2px 7px;
 }
 
-.spelltome-mana {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text);
-  flex-shrink: 0;
-}
-
-.spelltome-mana-icon {
-  font-size: 0.9rem;
-}
-
 .spelltome-body {
   flex: 1;
   min-height: 0;
