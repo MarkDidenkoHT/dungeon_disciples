@@ -408,20 +408,35 @@ export class BattleSystem {
   calcDamage(actor, target) {
     const data    = actor.unit_data || actor;
     let   power   = data.action_power ?? data.action?.value ?? 12;
-    const armor   = Math.max(0, target.armor + (target.defend_armor_bonus || 0));
     const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
 
     if (passive?.startsWith('predator') && target.battle_hp / target.max_hp < 0.5) {
       power = Math.floor(power * 1.20);
     }
 
-    if (passive?.startsWith('pierce')) {
-      const map            = { 'pierce 1': 0.25, 'pierce 2': 0.50 };
-      const effectiveArmor = Math.floor(armor * (1 - (map[passive] ?? 0)));
-      return Math.max(1, Math.floor(power * (actor._dmg_mult ?? 1)) - effectiveArmor);
+    const rawDmg     = Math.floor(power * (actor._dmg_mult ?? 1));
+    const damageSource = data.damage_source ?? 'physical';
+    const resistances  = target.unit_data?.resistances ?? target.resistances ?? {};
+
+    let dmg = rawDmg;
+
+    if (damageSource === 'physical') {
+      const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
+      const armorRed = armor / 100;
+
+      if (passive?.startsWith('pierce')) {
+        const map = { 'pierce 1': 0.25, 'pierce 2': 0.50 };
+        const effectiveArmorRed = armorRed * (1 - (map[passive] ?? 0));
+        dmg = Math.floor(rawDmg * (1 - effectiveArmorRed));
+      } else {
+        dmg = Math.floor(rawDmg * (1 - armorRed));
+      }
+    } else {
+      const resistance = resistances[damageSource] ?? 0;
+      dmg = Math.floor(rawDmg * (1 - resistance / 100));
     }
 
-    return Math.max(1, Math.floor(power * (actor._dmg_mult ?? 1)) - armor);
+    return Math.max(1, dmg);
   }
 
   calcHeal(actor) {
