@@ -602,7 +602,9 @@ export class BattleSystem {
     const actor = this.currentActor();
     if (!actor || actor.side !== 'enemy') return null;
 
-    if (!actor.used_active) {
+    const hasAbility = !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
+
+    if (hasAbility && !actor.used_active) {
       const targets = this.getValidTargets(actor, true);
       if (targets.length > 0) return this.doAbility(actor, targets[0]);
     }
