@@ -2,6 +2,7 @@ import { api }        from '../main.js';
 import { navigate }   from '../main.js';
 import { SPELLS }     from '../../data/spells.js';
 import { getEncounter } from '../../data/embark.js';
+import { UNITS, HERO_DATA } from '../../data/units.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -32,7 +33,20 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-function getUnitSize(unit) { return unit?.unit_data?.size; }
+function resolveUnitDef(unit) {
+  const uid = unit.unit_data?.unit_id;
+  if (!uid) return null;
+  if (unit.is_hero) return Object.values(HERO_DATA).find(h => h.id === uid) || null;
+  for (const faction of Object.values(UNITS)) {
+    const def = Object.values(faction).find(u => u.id === uid);
+    if (def) return def;
+  }
+  return null;
+}
+
+function getUnitSize(unit) {
+  return resolveUnitDef(unit)?.size ?? 'tile';
+}
 
 function getCells(anchor, size) {
   const r = cellRow(anchor), c = cellCol(anchor);
@@ -42,20 +56,24 @@ function getCells(anchor, size) {
   return null;
 }
 
-function sizeLabel(size)   { return SIZE_META[size].label; }
-function sizeRowSpan(size) { return SIZE_META[size].rowSpan; }
-function sizeColSpan(size) { return SIZE_META[size].colSpan; }
+function sizeLabel(size)   { return SIZE_META[size]?.label ?? '1×1'; }
+function sizeRowSpan(size) { return SIZE_META[size]?.rowSpan ?? 1; }
+function sizeColSpan(size) { return SIZE_META[size]?.colSpan ?? 1; }
 
-function unitTypeIcon(u) {
-  const t = u?.unit_data?.type ?? '';
+function unitTypeIcon(unit) {
+  const t = resolveUnitDef(unit)?.type ?? '';
   return UNIT_TYPE_ICONS[t] ?? '·';
+}
+
+function getUnitName(unit) {
+  return resolveUnitDef(unit)?.name ?? unit.unit_data?.unit_id ?? '?';
 }
 
 function getLoyalty(heroUnit) {
   if (!heroUnit) return 2;
-  if (heroUnit.loyalty != null) return heroUnit.loyalty;
-  const heroLevel = heroUnit.unit_data?.hero_level ?? 1;
-  return heroLevel >= 4 ? 5 : heroLevel + 1;
+  const def = resolveUnitDef(heroUnit);
+  const tier = def?.t ?? 1;
+  return tier >= 4 ? 5 : tier + 1;
 }
 
 export function renderBattlePrep(root, { player, region_id, level }) {
@@ -134,16 +152,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>';
   }
 
-  function unitDetailHtml(name, d, badge) {
+  function unitDetailHtml(unit, badge) {
+    const def  = resolveUnitDef(unit);
+    const name = def?.name ?? unit.unit_data?.unit_id ?? '?';
+    const hp   = unit.unit_data?.current_hp ?? def?.hp ?? '—';
     return `
       <div class="detail-header">
         <span class="detail-name">${name}</span>
         ${badge ? `<span class="detail-badge">${badge}</span>` : ''}
       </div>
       <div class="detail-stats-row">
-        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${d.hp ?? '—'}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${d.armor ?? '—'}</span></div>
-        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${d.initiative ?? '—'}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">HP</span><span class="detail-stat-val">${hp}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Armor</span><span class="detail-stat-val">${def?.armor ?? '—'}</span></div>
+        <div class="detail-stat"><span class="detail-stat-label">Init</span><span class="detail-stat-val">${def?.initiative ?? '—'}</span></div>
       </div>
     `;
   }
@@ -382,9 +403,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const isHero  = occ.unitId === heroId;
         const rowSpan = sizeRowSpan(occ.size);
         const colSpan = sizeColSpan(occ.size);
+        const name    = unit ? getUnitName(unit) : '?';
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
-          <span class="battle-cell-name">${unit?.unit_name ?? '?'}</span>
+          <span class="battle-cell-name">${name}</span>
           <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;
@@ -455,8 +477,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     track.innerHTML = loyaltyBar + available.map(u => {
       const isHero     = u.id === heroId;
       const isSelected = dragUnit?.id === u.id;
-
       const locked     = !isHero && slotsLeft <= 0;
+      const name       = getUnitName(u);
+      const size       = getUnitSize(u);
       return `
         <div class="portrait-card
                     ${isHero     ? 'portrait-card--hero'     : ''}
@@ -465,45 +488,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
              draggable="${locked ? 'false' : 'true'}"
              data-id="${u.id}">
           <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
-          <div class="portrait-name">${u.unit_name}</div>
-          <div class="portrait-size">${sizeLabel(getUnitSize(u))}</div>
+          <div class="portrait-name">${name}</div>
+          <div class="portrait-size">${sizeLabel(size)}</div>
           ${locked ? '<div class="portrait-locked-hint">Loyalty full</div>' : ''}
         </div>
       `;
     }).join('');
-  }
-
-  function renderEnemyGrid() {
-    const grid = root.querySelector('#enemy-grid');
-
-    const unitAtCell = {};
-    for (const e of enemies) {
-      if (e.size === 'row') {
-        unitAtCell[e.cell] = e;
-        unitAtCell[e.cell + 1] = { _shadow: true };
-      } else {
-        unitAtCell[e.cell] = e;
-      }
-    }
-
-    grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
-      const e = unitAtCell[i];
-      if (!e) return `<div class="battle-cell battle-cell--fog">???</div>`;
-      if (e._shadow) return '';
-      const colSpan = e.size === 'row' ? 2 : 1;
-      const rowSpan = e.size === 'column' ? 2 : 1;
-      return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
-        <span class="battle-cell-name">${e.name}</span>
-        <span class="battle-cell-sub">❤ ${e.hp}</span>
-      </div>`;
-    }).join('');
-
-    grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const e = unitAtCell[Number(cell.dataset.i)];
-        if (e && !e._shadow) showDetail(enemyDetailHtml(e));
-      });
-    });
   }
 
   function checkReady() {
@@ -588,9 +578,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (occ) {
       const unit = roster.find(u => u.id === occ.unitId);
       if (unit) {
-        const d     = unit.unit_data || {};
         const badge = occ.unitId === heroId ? '★ Hero' : sizeLabel(occ.size);
-        showDetail(unitDetailHtml(unit.unit_name, d, badge));
+        showDetail(unitDetailHtml(unit, badge));
       }
       return;
     }
@@ -633,9 +622,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         renderPortraitTrack();
         attachPortraitEvents();
 
-        const d     = u.unit_data || {};
         const badge = u.id === heroId ? '★ Hero' : sizeLabel(getUnitSize(u));
-        showDetail(unitDetailHtml(u.unit_name, d, badge));
+        showDetail(unitDetailHtml(u, badge));
       });
     });
   }
@@ -645,12 +633,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const playerUnits = roster
       .filter(u => placedUnitIds().has(u.id))
-      .map(u => ({
-        id:        String(u.id),
-        _rosterId: String(u.id),
-        unit_name: u.unit_name || (u.unit_data?.name || 'Unit'),
-        unit_data: u.unit_data || u
-      }));
+      .map(u => {
+        const def = resolveUnitDef(u);
+        return {
+          id:        String(u.id),
+          _rosterId: String(u.id),
+          unit_name: def?.name ?? u.unit_data?.unit_id ?? 'Unit',
+          unit_data: { ...def, ...u.unit_data },
+        };
+      });
 
     const placement = {};
     for (const [cellIdx, occ] of Object.entries(occupied)) {
@@ -669,7 +660,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       ]);
 
       roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
-      
+
       const heroUnit = roster.find(u => u.is_hero === true);
       heroId     = heroUnit?.id ?? null;
       maxNonHero = getLoyalty(heroUnit);

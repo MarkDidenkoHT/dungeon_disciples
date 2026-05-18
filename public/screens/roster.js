@@ -2,6 +2,7 @@ import { api }      from '../main.js';
 import { navigate } from '../main.js';
 import { PASSIVES }  from '../../data/passives.js';
 import { ABILITIES } from '../../data/abilities.js';
+import { UNITS, HERO_DATA } from '../../data/units.js';
 
 const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
@@ -20,6 +21,17 @@ function cap(s) {
 
 function dmgReduction(val) {
   return Math.abs(val);
+}
+
+function resolveUnitDef(unit) {
+  const uid = unit.unit_data?.unit_id;
+  if (!uid) return null;
+  if (unit.is_hero) return Object.values(HERO_DATA).find(h => h.id === uid) || null;
+  for (const faction of Object.values(UNITS)) {
+    const def = Object.values(faction).find(u => u.id === uid);
+    if (def) return def;
+  }
+  return null;
 }
 
 function resolveAbility(key, type) {
@@ -115,40 +127,41 @@ export function renderRoster(root, { player }) {
   }
 
   function buildCard(u) {
-    const d      = u.unit_data || {};
-    const unitId = d.id || '';
+    const stored     = u.unit_data || {};
+    const def        = resolveUnitDef(u);
+    const isHero     = u.is_hero === true;
+    const unitId     = stored.unit_id || '';
+    const unitName   = def?.name ?? unitId;
 
     const portraitSrc = unitId ? `/assets/character_art/${unitId}.png` : null;
 
-    const passiveKey = d.passive || null;
-    const activeKey  = d.ability  || null;
-    const res        = d.resistances || {};
+    const passiveKey = def?.passive || null;
+    const activeKey  = def?.ability || null;
+    const res        = def?.resistances || {};
 
-    const tier      = d.t ?? null;
-    const isHero    = tier == null;
-    const tierLabel = isHero ? `Hero Lv ${d.hero_level || 1}` : `Lv ${tier}`;
+    const tier      = def?.t ?? 1;
+    const tierLabel = isHero ? `Hero Lv ${tier}` : `Lv ${tier}`;
 
-    const tags     = (d.tags || []).filter(Boolean);
+    const tags     = (def?.tags || []).filter(Boolean);
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
 
-    const xpRequired = d.xp ?? null;
-    const currentXp  = u.experience ?? 0;
-    const isMaxTier  = tier >= 2;
+    const xpRequired = def?.xp ?? null;
+    const currentXp  = stored.current_xp ?? 0;
+    const isMaxTier  = !isHero && tier >= 2;
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
-    const heroLevel    = isHero ? (d.hero_level || 1) : null;
     const throneLevel  = buildingsData['slot_0']?.level || 1;
-    const heroMaxed    = isHero && heroLevel >= 4;
-    const heroCanLevel = isHero && !heroMaxed && throneLevel > heroLevel;
+    const heroMaxed    = isHero && tier >= 4;
+    const heroCanLevel = isHero && !heroMaxed && throneLevel > tier;
 
     let upgradeReady        = true;
     let upgradeBuildingHint = '';
     if (hasPath) {
-      const faction = d.f === 'e' ? 'empire' : 'dungeon';
+      const faction = def.f === 'e' ? 'empire' : 'dungeon';
       const paths   = (upgradePaths[faction] || {})[unitId] || [];
       if (paths.length > 1) {
-        const slot           = d.building_slot;
+        const slot           = stored.building_slot;
         const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
         const matched        = paths.find(p => p.building_id === slotBuildingId);
         upgradeReady         = !!matched;
@@ -164,25 +177,27 @@ export function renderRoster(root, { player }) {
       <div class="unit-portrait">
         <img
           src="${portraitSrc || ''}"
-          alt="${u.unit_name}"
+          alt="${unitName}"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
         >
         <div class="unit-portrait-fallback" style="display:none;">
-          <span>${unitId || u.unit_name}</span>
+          <span>${unitId || unitName}</span>
         </div>
         <div class="unit-portrait-overlay">
-          <span class="unit-name">${u.unit_name}</span>
+          <span class="unit-name">${unitName}</span>
           <span class="unit-level-text">${tierLabel}</span>
         </div>
-        ${tagLeft ? `<div class="unit-tag-left">${tagLeft}</div>` : ''}
+        ${tagLeft  ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
+    const currentHp = stored.current_hp ?? def?.hp ?? '—';
+
     const coreHtml = `
       <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${d.hp ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${d.armor ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${d.initiative ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${currentXp}</span></div>
       </div>`;
 
@@ -203,15 +218,15 @@ export function renderRoster(root, { player }) {
       if (heroMaxed) {
         levelUpHtml = `
           <div class="levelup-row">
-            <span class="hero-level-label">Hero Level ${heroLevel} — Max</span>
+            <span class="hero-level-label">Hero Level ${tier} — Max</span>
           </div>
         `;
       } else {
-        const throneNeeded = heroLevel + 1;
+        const throneNeeded = tier + 1;
         const blocked      = !heroCanLevel;
         levelUpHtml = `
           <div class="levelup-row">
-            <span class="hero-level-label">Hero Level ${heroLevel}${blocked ? ` — Level Up Requires Throne Lv ${throneNeeded}` : ''}</span>
+            <span class="hero-level-label">Hero Level ${tier}${blocked ? ` — Level Up Requires Throne Lv ${throneNeeded}` : ''}</span>
             ${!blocked ? `<button
               class="levelup-btn levelup-btn--ready"
               data-roster-id="${u.id}"
@@ -245,10 +260,10 @@ export function renderRoster(root, { player }) {
     }
 
     function abilityIconHtml(key, type) {
-      const def      = resolveAbility(key, type);
-      const isEmpty  = !def;
-      const fileKey  = key ? key.replace(/\s+/g, '_') : null;
-      const imgSrc   = def ? `/assets/icons/abilities/${fileKey}.png` : null;
+      const aDef    = resolveAbility(key, type);
+      const isEmpty = !aDef;
+      const fileKey = key ? key.replace(/\s+/g, '_') : null;
+      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
       return `
         <button
           class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
@@ -256,18 +271,15 @@ export function renderRoster(root, { player }) {
           data-ability-type="${type}"
           ${isEmpty ? 'disabled' : ''}
         >
-          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
+          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${aDef.name}" onerror="this.style.visibility='hidden'">` : ''}
         </button>`;
     }
-
-    const passiveHtml = abilityIconHtml(passiveKey, 'passive');
-    const activeHtml  = abilityIconHtml(activeKey, 'active');
 
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
-          ${passiveHtml}
-          ${activeHtml}
+          ${abilityIconHtml(passiveKey, 'passive')}
+          ${abilityIconHtml(activeKey, 'active')}
         </div>
         <div class="ability-detail-panel">
           <div class="ability-detail-desc"></div>
@@ -292,7 +304,9 @@ export function renderRoster(root, { player }) {
   function updateNav() {
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === units.length - 1;
-    navLabel.textContent = units[current]?.unit_name ?? '';
+    const u = units[current];
+    const def = u ? resolveUnitDef(u) : null;
+    navLabel.textContent = def?.name ?? u?.unit_data?.unit_id ?? '';
     dotsWrap.querySelectorAll('.roster-dot').forEach((d, i) => {
       d.classList.toggle('roster-dot--active', i === current);
     });
@@ -406,20 +420,24 @@ export function renderRoster(root, { player }) {
     if (coreStat) {
       const slide = coreStat.closest('.roster-slide');
       if (!slide) return;
-      const label = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
-      const val   = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
-      const u     = units[current];
-      const d     = u?.unit_data || {};
-      let text    = '';
-      if (label === 'HP')    text = `HP: ${val}\nMaximum hit points. Unit is defeated when HP reaches 0.`;
-      else if (label === 'Armor') {
+      const label  = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
+      const val    = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
+      const u      = units[current];
+      const stored = u?.unit_data || {};
+      let text = '';
+      if (label === 'HP') {
+        text = `HP: ${val}\nCurrent hit points. Unit is defeated when HP reaches 0.`;
+      } else if (label === 'Armor') {
         const numVal = parseFloat(val);
         const pct    = isNaN(numVal) ? 0 : dmgReduction(numVal);
         text = `Armor: ${val}\nReduces physical damage taken by ${pct}%.`;
+      } else if (label === 'Init') {
+        text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
+      } else if (label === 'XP') {
+        text = `Experience: ${val}\nAccumulated XP toward next level.`;
+      } else {
+        text = `${label}: ${val}`;
       }
-      else if (label === 'Init')  text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
-      else if (label === 'XP')    text = `Experience: ${val}\nAccumulated XP toward next level.`;
-      else text = `${label}: ${val}`;
       showInPanel(slide, text, `core-${label}`);
       return;
     }
@@ -432,7 +450,7 @@ export function renderRoster(root, { player }) {
       const valEl  = resistCell.querySelector('.resist-val');
       const numVal = parseInt(valEl?.textContent ?? '0', 10);
       const pct    = dmgReduction(numVal);
-      let text     = '';
+      let text = '';
       if (numVal === 0) {
         text = `${label} Resistance: 0\nNo modifier to ${label.toLowerCase()} damage taken.`;
       } else if (numVal > 0) {

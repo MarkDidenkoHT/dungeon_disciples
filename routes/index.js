@@ -76,11 +76,15 @@ function getUnitByDataId(faction, unitDataId) {
   return Object.values(pool).find(u => u.id === unitDataId) || null;
 }
 
-function findUpgradeTarget(faction, currentUnitDataId, targetUnitDataId) {
-  const factionPaths = UNIT_UPGRADE_PATHS[faction] || {};
-  const paths = factionPaths[currentUnitDataId];
-  if (!paths) return null;
-  return paths.find(p => p.unit_id === targetUnitDataId) || null;
+function makeUnitData(unitId, buildingSlot, fullDef) {
+  return {
+    unit_id: unitId,
+    building_slot: buildingSlot || null,
+    current_hp: fullDef.hp,
+    current_xp: 0,
+    buffs: [],
+    debuffs: [],
+  };
 }
 
 router.post('/login', async (req, res) => {
@@ -162,7 +166,21 @@ router.post('/player/faction', async (req, res) => {
 
   const unitId   = startingBarracks?.unit_id;
   const unitSlot = startingBarracks?.slot;
-  const unitData = unitId ? UNITS[faction]?.[unitId] : null;
+  const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
+  const unitDef  = unitId ? getUnitByDataId(factionKey, unitId) : null;
+
+  const rosterEntries = [
+    {
+      chat_id,
+      unit_data: makeUnitData(heroStats.id, null, heroStats),
+      is_hero: true,
+    },
+    ...(unitDef ? [{
+      chat_id,
+      unit_data: makeUnitData(unitDef.id, unitSlot, unitDef),
+      is_hero: false,
+    }] : []),
+  ];
 
   try {
     const [updated] = await Promise.all([
@@ -172,22 +190,7 @@ router.post('/player/faction', async (req, res) => {
       }),
       supabase('/roster', {
         method: 'POST',
-        body: JSON.stringify([
-          {
-            chat_id,
-            unit_name: hero.charAt(0).toUpperCase() + hero.slice(1),
-            unit_data: heroStats,
-            experience: 0,
-            is_hero: true,
-          },
-          ...(unitData ? [{
-            chat_id,
-            unit_name: unitData.name,
-            unit_data: { ...unitData, building_slot: unitSlot },
-            experience: 0,
-            is_hero: false,
-          }] : []),
-        ]),
+        body: JSON.stringify(rosterEntries),
       }),
       supabase('/inventory_and_resources', {
         method: 'POST',
@@ -225,24 +228,9 @@ router.get('/roster', async (req, res) => {
 
   try {
     const rows = await supabase(
-      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`
     );
-
-    const result = rows.map(r => {
-      if (!r.is_hero) return r;
-      const heroTier = r.unit_data?.t ?? 1;
-      const loyalty = heroTier >= 4 ? 5 : heroTier + 1;
-      
-      return { 
-        ...r, 
-        loyalty,
-        hero_id: r.unit_data?.id,
-        hero_faction: r.unit_data?.f,
-        hero_tier: heroTier
-      };
-    });
-
-    res.json(result);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -256,26 +244,35 @@ router.post('/roster/levelup', async (req, res) => {
 
   try {
     const rows = await supabase(
-      `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+      `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`
     );
     if (!rows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const entry    = rows[0];
     const unitData = entry.unit_data || {};
-    const faction  = unitData.f === 'e' ? 'empire' : 'dungeon';
-    const currentId = unitData.id;
+    const currentUnitId = unitData.unit_id;
+    if (!currentUnitId) return res.status(400).json({ error: 'Unit has no unit_id in unit_data' });
 
-    if (!currentId) return res.status(400).json({ error: 'Unit has no id in unit_data' });
-    if (unitData.t >= 2) return res.status(400).json({ error: 'Unit is already at max tier' });
+    const faction = (() => {
+      for (const f of ['empire', 'dungeon']) {
+        if (getUnitByDataId(f, currentUnitId)) return f;
+      }
+      return null;
+    })();
+    if (!faction) return res.status(400).json({ error: 'Cannot determine unit faction' });
 
-    const xpRequired = unitData.xp;
+    const fullDef = getUnitByDataId(faction, currentUnitId);
+    if (!fullDef) return res.status(400).json({ error: 'Unit definition not found' });
+    if (fullDef.t >= 2) return res.status(400).json({ error: 'Unit is already at max tier' });
+
+    const xpRequired = fullDef.xp;
     if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
-    if (entry.experience < xpRequired) {
-      return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${entry.experience}` });
+    if (unitData.current_xp < xpRequired) {
+      return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
     }
 
     const factionPaths = UNIT_UPGRADE_PATHS[faction] || {};
-    const paths = factionPaths[currentId];
+    const paths = factionPaths[currentUnitId];
     if (!paths || paths.length === 0) {
       return res.status(400).json({ error: 'No upgrade paths defined for this unit' });
     }
@@ -307,16 +304,12 @@ router.post('/roster/levelup', async (req, res) => {
     const nextUnitDef = getUnitByDataId(faction, path.unit_id);
     if (!nextUnitDef) return res.status(400).json({ error: `Target unit ${path.unit_id} not found` });
 
-    const newUnitData = { ...nextUnitDef, building_slot: buildingSlot };
+    const newUnitData = makeUnitData(nextUnitDef.id, buildingSlot, nextUnitDef);
 
     const updatePromises = [
       supabase(`/roster?id=eq.${roster_id}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          unit_name: nextUnitDef.name,
-          unit_data: newUnitData,
-          is_hero: false,
-        }),
+        body: JSON.stringify({ unit_data: newUnitData }),
       }),
     ];
 
@@ -343,7 +336,7 @@ router.post('/roster/levelup', async (req, res) => {
     await Promise.all(updatePromises);
 
     const updated = await supabase(
-      `/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience,is_hero`
+      `/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`
     );
     res.json(updated[0]);
   } catch (err) {
@@ -406,7 +399,7 @@ router.post('/roster/hero-levelup', async (req, res) => {
 
   try {
     const [rosterRows, structRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_name,unit_data,experience`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
     ]);
 
@@ -416,12 +409,14 @@ router.post('/roster/hero-levelup', async (req, res) => {
     const entry    = rosterRows[0];
     const unitData = entry.unit_data || {};
 
-    if (unitData.t === undefined || unitData.t === null) {
-      return res.status(400).json({ error: 'This unit is not a hero' });
-    }
+    if (!entry.is_hero) return res.status(400).json({ error: 'This unit is not a hero' });
 
-    const heroKey     = entry.unit_name.toLowerCase();
-    const currentTier = unitData.t || 1;
+    const heroId    = unitData.unit_id;
+    const heroStats = Object.values(HERO_DATA).find(h => h.id === heroId);
+    if (!heroStats) return res.status(400).json({ error: 'Hero definition not found' });
+
+    const heroKey     = Object.keys(HERO_DATA).find(k => HERO_DATA[k].id === heroId);
+    const currentTier = heroStats.t || 1;
     const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
 
     if (currentTier >= HERO_MAX_LEVEL) {
@@ -437,30 +432,18 @@ router.post('/roster/hero-levelup', async (req, res) => {
       return res.status(400).json({ error: `No tier data for ${heroKey} tier ${nextTier}` });
     }
 
-    const newUnitData = { 
-      ...unitData, 
-      t: nextTier
+    const newUnitData = {
+      ...unitData,
+      current_hp: unitData.current_hp + (delta.hp || 0),
     };
-    
-    for (const [stat, val] of Object.entries(delta)) {
-      if (newUnitData[stat] !== undefined) newUnitData[stat] += val;
-    }
 
     await supabase(`/roster?id=eq.${roster_id}`, {
       method: 'PATCH',
       body: JSON.stringify({ unit_data: newUnitData }),
     });
 
-    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_name,unit_data,experience`);
-    
-    const responseData = {
-      ...fresh[0],
-      hero_id: fresh[0].unit_data?.id,
-      hero_faction: fresh[0].unit_data?.f,
-      hero_tier: fresh[0].unit_data?.t
-    };
-    
-    res.json(responseData);
+    const fresh = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
+    res.json(fresh[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -527,15 +510,13 @@ router.post('/structures/build', async (req, res) => {
 
     if (isNew && def.unit_id) {
       const factionKey = faction === 'empire' ? 'empire' : 'dungeon';
-      const unitDef = Object.values(UNITS[factionKey] || {}).find(u => u.id === def.unit_id);
+      const unitDef = getUnitByDataId(factionKey, def.unit_id);
       if (unitDef) {
         await supabase('/roster', {
           method: 'POST',
           body: JSON.stringify([{
             chat_id,
-            unit_name: unitDef.name,
-            unit_data: { ...unitDef, building_slot: slot },
-            experience: 0,
+            unit_data: makeUnitData(unitDef.id, slot, unitDef),
             is_hero: false,
           }]),
         });
@@ -624,13 +605,17 @@ router.post('/battle/reward', async (req, res) => {
 
         await Promise.all(survivor_ids.map(async (rosterId) => {
           const rows = await supabase(
-            `/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,experience`
+            `/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`
           );
           if (!rows.length) return;
           const current = rows[0];
+          const updatedUnitData = {
+            ...current.unit_data,
+            current_xp: (current.unit_data?.current_xp ?? 0) + xpEach,
+          };
           await supabase(`/roster?id=eq.${current.id}`, {
             method: 'PATCH',
-            body: JSON.stringify({ experience: (current.experience ?? 0) + xpEach }),
+            body: JSON.stringify({ unit_data: updatedUnitData }),
           });
         }));
       }
