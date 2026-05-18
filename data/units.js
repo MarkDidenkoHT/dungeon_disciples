@@ -3,6 +3,7 @@ import { ABILITIES } from './abilities.js';
 
 const HERO_DATA = {
   warlord: {
+    id: 'h_d_1',
     type: 'melee',
     size: 'tile',
     tags: ['Knight', null],
@@ -14,6 +15,7 @@ const HERO_DATA = {
     hero_level: 1, building_slot: 'slot_0',
   },
   hexblade: {
+    id: 'h_d_2',
     type: 'caster',
     size: 'tile',
     tags: ['Caster', null],
@@ -25,6 +27,7 @@ const HERO_DATA = {
     hero_level: 1, building_slot: 'slot_0',
   },
   shadowbow: {
+    id: 'h_d_3',
     type: 'ranged',
     size: 'row',
     tags: ['Archer', null],
@@ -36,6 +39,7 @@ const HERO_DATA = {
     hero_level: 1, building_slot: 'slot_0',
   },
   paladin: {
+    id: 'h_e_1',
     type: 'melee',
     size: 'tile',
     tags: ['Knight', 'Holy'],
@@ -47,6 +51,7 @@ const HERO_DATA = {
     hero_level: 1, building_slot: 'slot_0',
   },
   inquisitor: {
+    id: 'h_e_2',
     type: 'ranged',
     size: 'row',
     tags: ['Caster', 'Holy'],
@@ -58,6 +63,7 @@ const HERO_DATA = {
     hero_level: 1, building_slot: 'slot_0',
   },
   ranger: {
+    id: 'h_e_3',
     type: 'ranged',
     size: 'row',
     tags: ['Archer', null],
