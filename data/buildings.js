@@ -38,8 +38,11 @@ const BUILDING_POOLS = {
       { id: 'conscript_barracks', label: 'Conscript Barracks', category: 'barracks', tier: 1, unit: 'conscript', unit_id: 'e1', upgrades: ['e11', 'e12'], cost: { gold: 50 } },
       { id: 'acolyte_shrine',     label: 'Acolyte Shrine',     category: 'barracks', tier: 1, unit: 'acolyte',   unit_id: 'e2', upgrades: ['e21','e22', 'e23'], cost: { gold: 50 } },
       { id: 'mage_tower',         label: 'Mage Tower',         category: 'barracks', tier: 1, unit: 'apprentice', unit_id: 'e4', upgrades: ['e41', 'e42'], cost: { gold: 50 } },
+      { id: 'scout_post',         label: 'Scout Post',         category: 'barracks', tier: 1, unit: 'scout',      unit_id: 'e8', upgrades: ['e81', 'e82'], cost: { gold: 50 } },
+      { id: 'archer_range',       label: 'Archer Range',       category: 'barracks', tier: 2, unit: 'archer',     unit_id: 'e81', upgrades: [], cost: { gold: 50 } },
+      { id: 'sniper_nest',        label: 'Sniper Nest',        category: 'barracks', tier: 2, unit: 'sniper',     unit_id: 'e82', upgrades: [], cost: { gold: 50 } },
       { id: 'priest_shrine',      label: 'Priest Shrine',      category: 'barracks', tier: 2, unit: 'priest',    unit_id: 'e21', upgrades: [], cost: { gold: 50 } },
-      { id: 'paladin_shrine',    label: 'Paladin Shrine',    category: 'barracks', tier: 2, unit: 'paladin',  unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
+      { id: 'paladin_shrine',     label: 'Paladin Shrine',     category: 'barracks', tier: 2, unit: 'paladin',   unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
       { id: 'purgator_chapel',    label: 'Purgator Chapel',    category: 'barracks', tier: 2, unit: 'purgator',  unit_id: 'e23', upgrades: [], cost: { gold: 50 } },
     ],
     any: [
@@ -106,6 +109,10 @@ const UNIT_UPGRADE_PATHS = {
     e4: [
       { unit_id: 'e41', building_id: 'red_mage_tower', label: 'Red Mage Tower' },
       { unit_id: 'e42', building_id: 'wizard_tower',   label: 'Wizard Tower'   },
+    ],
+    e8: [
+      { unit_id: 'e81', building_id: 'archer_range', label: 'Archer Range' },
+      { unit_id: 'e82', building_id: 'sniper_nest',  label: 'Sniper Nest'  },
     ],
     h_e_1: [
       { unit_id: 'h_e_1_t2', building_id: 'paladin_cathedral_2', label: 'Paladin Cathedral II' },
@@ -205,42 +212,6 @@ const THRONE_UPGRADE_COSTS = {
   4: { gold: 600 },
 };
 
-const UNITS = {
-  scout: {
-    id: 'e8', f: 'e', t: 1,
-    name: 'Scout',
-    tags: ['Archer', null],
-    type: 'ranged', size: 'tile',
-    hp: 40, armor: 0, initiative: 50,
-    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
-    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-    damage_source: 'physical', action_power: 15,
-    xp: 75, passive: null, ability: null,
-  },
-  archer: {
-    id: 'e81', f: 'e', t: 2,
-    name: 'Archer',
-    tags: ['Archer', null],
-    type: 'ranged', size: 'tile',
-    hp: 50, armor: 0, initiative: 50,
-    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
-    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-    damage_source: 'physical', action_power: 20,
-    xp: 275, passive: null, ability: null,
-  },
-  sniper: {
-    id: 'e82', f: 'e', t: 2,
-    name: 'Sniper',
-    tags: ['Archer', null],
-    type: 'ranged', size: 'tile',
-    hp: 50, armor: 0, initiative: 45,
-    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
-    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-    damage_source: 'physical', action_power: 25,
-    xp: 320, passive: 'pierce 1', ability: null,
-  },
-};
-
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
   if (!factionPools) return null;
@@ -274,7 +245,6 @@ module.exports = {
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
-  UNITS,
   getBuildingDef,
   getHeroStartingBuildingId,
   emptyStructures,
