@@ -17,8 +17,8 @@ export class BattleSystem {
   }
 
   initCombatants(playerUnits, enemyUnits, placement) {
-    playerUnits.forEach(u => {
-      const cellIdx = placement[u.id] ?? this.combatants.length;
+    playerUnits.forEach((u, i) => {
+      const cellIdx = placement[u.id] ?? i;
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
     });
 
@@ -41,9 +41,16 @@ export class BattleSystem {
       data.target_type  = data.action.target_type;
     }
 
+    // Generate a unique internal id based on side + cell position.
+    // This guarantees no two combatants ever share an id, regardless of
+    // what the source data contains. The original source id is preserved
+    // in _rosterId (players) and _sourceId (both) for external references.
+    const uniqueId = `${side}:${cellIdx}`;
+
     return {
-      id:         unit.id || `enemy_${Math.random().toString(36).slice(2)}`,
+      id:         uniqueId,
       _rosterId:  side === 'player' ? (unit._rosterId || unit.id || null) : null,
+      _sourceId:  unit.id || null,
       unit_name:  unit.unit_name || data.name || 'Unknown',
       unit_data:  data,
       side,

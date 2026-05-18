@@ -42,9 +42,9 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     return name.split(' ')[0].replace(/_/g, ' ');
   }
 
-  function cellLabel(cellIndex) {
-    const r = Math.floor(cellIndex / COLS);
-    const c = cellIndex % COLS;
+  function cellLabel(cellIdx) {
+    const r = Math.floor(cellIdx / COLS);
+    const c = cellIdx % COLS;
     return `R${r + 1}C${c + 1}`;
   }
 
@@ -107,9 +107,14 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   function render() {
     const actor = battle.currentActor();
     const state = battle.getState();
-    const validTargetIds = selectingTargetFor
-      ? new Set(battle.getValidTargets(selectingTargetFor).map(t => t.id))
-      : new Set();
+
+    // Build valid target set keyed by side+cellIndex — immune to duplicate ids
+    const validTargetKeys = new Set();
+    if (selectingTargetFor) {
+      for (const t of battle.getValidTargets(selectingTargetFor)) {
+        validTargetKeys.add(`${t.side}:${t.cellIndex}`);
+      }
+    }
 
     function renderSide(side) {
       const html = [];
@@ -122,8 +127,9 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
             continue;
           }
 
-          const isActor = actor?.id === occ.id;
-          const isTarget = validTargetIds.has(occ.id);
+          const isActor = actor?.side === occ.side && actor?.cellIndex === occ.cellIndex;
+          const targetKey = `${occ.side}:${occ.cellIndex}`;
+          const isTarget = validTargetKeys.has(targetKey);
           const hpPct = occ.battle_hp / occ.max_hp;
 
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
@@ -132,8 +138,9 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
           else if (side === 'player') cls += ' battle-cell--placed';
           else cls += ' battle-cell--enemy';
 
+          // Encode side and cellIndex into the DOM — the unambiguous locator
           html.push(`
-            <div class="${cls}" data-id="${occ.id}">
+            <div class="${cls}" data-side="${occ.side}" data-cell="${occ.cellIndex}">
               <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
               ${occ.alive
                 ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${occ.shield > 0 ? ` 🛡${occ.shield}` : ''}</span>`
@@ -210,15 +217,21 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function attachEvents() {
-    root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
+    root.querySelectorAll('.battle-cell[data-side][data-cell]').forEach(cell => {
       cell.addEventListener('click', () => {
         if (!selectingTargetFor) return;
 
-        const target = battle.combatants.find(c => c.id === cell.dataset.id);
+        const side      = cell.dataset.side;
+        const cellIdx   = parseInt(cell.dataset.cell, 10);
+
+        // Look up by side + cellIndex — guaranteed unique, no id collision possible
+        const target = battle.combatants.find(
+          c => c.side === side && c.cellIndex === cellIdx
+        );
         if (!target) return;
 
         const valid = battle.getValidTargets(selectingTargetFor);
-        if (valid.some(t => t.id === target.id)) {
+        if (valid.some(t => t.side === target.side && t.cellIndex === target.cellIndex)) {
           battle.executeAction(selectingTargetFor, target, selectedActionType || 'attack');
           selectingTargetFor = null;
           selectedActionType = null;
