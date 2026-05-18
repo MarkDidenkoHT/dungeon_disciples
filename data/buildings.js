@@ -205,6 +205,42 @@ const THRONE_UPGRADE_COSTS = {
   4: { gold: 600 },
 };
 
+const UNITS = {
+  scout: {
+    id: 'e8', f: 'e', t: 1,
+    name: 'Scout',
+    tags: ['Archer', null],
+    type: 'ranged', size: 'tile',
+    hp: 40, armor: 0, initiative: 50,
+    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+    damage_source: 'physical', action_power: 15,
+    xp: 75, passive: null, ability: null,
+  },
+  archer: {
+    id: 'e81', f: 'e', t: 2,
+    name: 'Archer',
+    tags: ['Archer', null],
+    type: 'ranged', size: 'tile',
+    hp: 50, armor: 0, initiative: 50,
+    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+    damage_source: 'physical', action_power: 20,
+    xp: 275, passive: null, ability: null,
+  },
+  sniper: {
+    id: 'e82', f: 'e', t: 2,
+    name: 'Sniper',
+    tags: ['Archer', null],
+    type: 'ranged', size: 'tile',
+    hp: 50, armor: 0, initiative: 45,
+    resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+    action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+    damage_source: 'physical', action_power: 25,
+    xp: 320, passive: 'pierce 1', ability: null,
+  },
+};
+
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
   if (!factionPools) return null;
@@ -238,6 +274,7 @@ module.exports = {
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
+  UNITS,
   getBuildingDef,
   getHeroStartingBuildingId,
   emptyStructures,
