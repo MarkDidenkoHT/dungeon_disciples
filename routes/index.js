@@ -282,12 +282,16 @@ router.post('/roster/levelup', async (req, res) => {
     if (entry.is_hero) {
       const currentTier = fullDef.t ?? 1;
       const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+      const xpRequired = fullDef.xp;
 
       if (currentTier >= HERO_MAX_LEVEL) {
         return res.status(400).json({ error: 'Hero is already at max tier' });
       }
       if (currentTier >= throneLevel) {
         return res.status(400).json({ error: `Upgrade your Throne to level ${currentTier + 1} first` });
+      }
+      if (xpRequired != null && unitData.current_xp < xpRequired) {
+        return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
       }
     } else {
       const xpRequired = fullDef.xp;
