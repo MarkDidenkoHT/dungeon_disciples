@@ -28,33 +28,6 @@ const SPELLS = {
     },
     {
       id: 'e_spell_3',
-      name: 'Blessed Vigor',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Infuse allies with holy vitality. Grant all allies +20 max HP for the battle.',
-      cost: { crystals: { Crystals_Life: 20 } },
-      icon: '💛',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { max_hp_boost: 20 }
-    },
-    {
-      id: 'e_spell_4',
-      name: 'Expose',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Mark enemies for divine retribution. All foes take 20% increased Life damage for the battle.',
-      cost: { crystals: { Crystals_Life: 20 } },
-      icon: '🔦',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { damage_taken_increase: { life: 0.20 } }
-    },
-
-    {
-      id: 'e_spell_5',
       name: 'Radiant Ward',
       rank: 2,
       tier: 2,
@@ -67,7 +40,7 @@ const SPELLS = {
       params: { armor_boost: 15, resistances: { life: 15 } }
     },
     {
-      id: 'e_spell_6',
+      id: 'e_spell_4',
       name: 'Divine Wrath',
       rank: 2,
       tier: 2,
@@ -80,47 +53,7 @@ const SPELLS = {
       params: { armor_reduction: 0.15, initiative_reduction: 0.20 }
     },
     {
-      id: 'e_spell_7',
-      name: 'Holy Fervor',
-      rank: 2,
-      tier: 2,
-      type: 'preparation',
-      description: 'Inspire allies to fight faster. Grant all allies +20% action speed for the battle.',
-      cost: { crystals: { Crystals_Life: 30 } },
-      icon: '⚜️',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { action_speed_boost: 0.20 }
-    },
-
-    {
-      id: 'e_spell_8',
-      name: 'Consecration',
-      rank: 3,
-      tier: 3,
-      type: 'preparation',
-      description: 'Consecrate your forces. Grant all allies +20 armor and +25 Life resistance for the battle.',
-      cost: { crystals: { Crystals_Life: 40, Crystals_Frost: 15 } },
-      icon: '👼',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 20, resistances: { life: 25 } }
-    },
-    {
-      id: 'e_spell_9',
-      name: 'Judgement',
-      rank: 3,
-      tier: 3,
-      type: 'preparation',
-      description: 'Pass divine judgement on all foes. Enemies lose 25% max HP and 20% armor for the battle.',
-      cost: { crystals: { Crystals_Life: 35, Crystals_Fire: 15 } },
-      icon: '⚖️',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.25, armor_reduction: 0.20 }
-    },
-    {
-      id: 'e_spell_10',
+      id: 'e_spell_5',
       name: 'Martyrdom',
       rank: 3,
       tier: 3,
@@ -131,6 +64,19 @@ const SPELLS = {
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20, lifesteal: 0.15 }
+    },
+    {
+      id: 'e_spell_6',
+      name: 'Judgement',
+      rank: 3,
+      tier: 3,
+      type: 'preparation',
+      description: 'Pass divine judgement on all foes. Enemies lose 25% max HP and 20% armor for the battle.',
+      cost: { crystals: { Crystals_Life: 35, Crystals_Fire: 15 } },
+      icon: '⚖️',
+      effect_type: 'debuff',
+      target_scope: 'all_enemies',
+      params: { max_hp_reduction: 0.25, armor_reduction: 0.20 }
     },
   ],
 
@@ -163,33 +109,6 @@ const SPELLS = {
     },
     {
       id: 'd_spell_3',
-      name: 'Shadow Pact',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Bind allies in a dark covenant. Grant all allies +20 max HP for the battle.',
-      cost: { crystals: { Crystals_Death: 20 } },
-      icon: '🖤',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { max_hp_boost: 20 }
-    },
-    {
-      id: 'd_spell_4',
-      name: 'Corrode',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Rot enemy armor with dark magic. All foes lose 10% armor for the battle.',
-      cost: { crystals: { Crystals_Death: 20 } },
-      icon: '🧪',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { armor_reduction: 0.10 }
-    },
-
-    {
-      id: 'd_spell_5',
       name: 'Unholy Pact',
       rank: 2,
       tier: 2,
@@ -202,7 +121,7 @@ const SPELLS = {
       params: { lifesteal: 0.15, resistances: { death: 15 } }
     },
     {
-      id: 'd_spell_6',
+      id: 'd_spell_4',
       name: 'Wither',
       rank: 2,
       tier: 2,
@@ -215,47 +134,7 @@ const SPELLS = {
       params: { max_hp_reduction: 0.15, initiative_reduction: 0.20 }
     },
     {
-      id: 'd_spell_7',
-      name: 'Death Mark',
-      rank: 2,
-      tier: 2,
-      type: 'preparation',
-      description: 'Mark enemies for death. All foes take 20% increased Death damage for the battle.',
-      cost: { crystals: { Crystals_Death: 30 } },
-      icon: '💢',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { damage_taken_increase: { death: 0.20 } }
-    },
-
-    {
-      id: 'd_spell_8',
-      name: 'Lich Blessing',
-      rank: 3,
-      tier: 3,
-      type: 'preparation',
-      description: 'Bestow undying power. Grant all allies +20 armor and +25 Death resistance for the battle.',
-      cost: { crystals: { Crystals_Death: 40, Crystals_Nature: 15 } },
-      icon: '💠',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 20, resistances: { death: 25 } }
-    },
-    {
-      id: 'd_spell_9',
-      name: 'Soul Rend',
-      rank: 3,
-      tier: 3,
-      type: 'preparation',
-      description: 'Tear at the souls of enemies. All foes lose 25% max HP and 20% action speed for the battle.',
-      cost: { crystals: { Crystals_Death: 35, Crystals_Frost: 15 } },
-      icon: '👻',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.25, action_speed_reduction: 0.20 }
-    },
-    {
-      id: 'd_spell_10',
+      id: 'd_spell_5',
       name: 'Blood Frenzy',
       rank: 3,
       tier: 3,
@@ -266,6 +145,19 @@ const SPELLS = {
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20, action_speed_boost: 0.25 }
+    },
+    {
+      id: 'd_spell_6',
+      name: 'Soul Rend',
+      rank: 3,
+      tier: 3,
+      type: 'preparation',
+      description: 'Tear at the souls of enemies. All foes lose 25% max HP and 20% action speed for the battle.',
+      cost: { crystals: { Crystals_Death: 35, Crystals_Frost: 15 } },
+      icon: '👻',
+      effect_type: 'debuff',
+      target_scope: 'all_enemies',
+      params: { max_hp_reduction: 0.25, action_speed_reduction: 0.20 }
     },
   ],
 
@@ -298,33 +190,6 @@ const SPELLS = {
     },
     {
       id: 'g_spell_3',
-      name: 'Grave Vitality',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Fuel allies with necrotic energy. Grant all allies +20 max HP for the battle.',
-      cost: { crystals: { Crystals_Fire: 20 } },
-      icon: '💪',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { max_hp_boost: 20 }
-    },
-    {
-      id: 'g_spell_4',
-      name: 'Crumble',
-      rank: 1,
-      tier: 1,
-      type: 'preparation',
-      description: 'Erode enemy defenses. All foes lose 10% armor for the battle.',
-      cost: { crystals: { Crystals_Fire: 20 } },
-      icon: '💥',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { armor_reduction: 0.10 }
-    },
-
-    {
-      id: 'g_spell_5',
       name: 'Blood Surge',
       rank: 2,
       tier: 2,
@@ -337,7 +202,7 @@ const SPELLS = {
       params: { damage_boost: 0.15, action_speed_boost: 0.20 }
     },
     {
-      id: 'g_spell_6',
+      id: 'g_spell_4',
       name: 'Chronal Bind',
       rank: 2,
       tier: 2,
@@ -350,26 +215,12 @@ const SPELLS = {
       params: { initiative_reduction: 0.25, action_speed_reduction: 0.15 }
     },
     {
-      id: 'g_spell_7',
-      name: 'Grave Armor',
-      rank: 2,
-      tier: 2,
-      type: 'preparation',
-      description: 'Reinforce allies with bones of the fallen. Grant all allies +15 armor and +15 Death resistance for the battle.',
-      cost: { crystals: { Crystals_Fire: 30 } },
-      icon: '🦴',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 15, resistances: { death: 15 } }
-    },
-
-    {
-      id: 'g_spell_8',
+      id: 'g_spell_5',
       name: 'Grail\'s Fury',
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Unleash the grail\'s full power. Grant all allies +20% damage, +20 armor for the battle.',
+      description: 'Unleash the grail\'s full power. Grant all allies +20% damage and +20 armor for the battle.',
       cost: { crystals: { Crystals_Fire: 40, Crystals_Life: 15 } },
       icon: '🏆',
       effect_type: 'buff',
@@ -377,7 +228,7 @@ const SPELLS = {
       params: { damage_boost: 0.20, armor_boost: 20 }
     },
     {
-      id: 'g_spell_9',
+      id: 'g_spell_6',
       name: 'Time Collapse',
       rank: 3,
       tier: 3,
@@ -388,19 +239,6 @@ const SPELLS = {
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { initiative_reduction: 0.35, max_hp_reduction: 0.20 }
-    },
-    {
-      id: 'g_spell_10',
-      name: 'Sorrow\'s Feast',
-      rank: 3,
-      tier: 3,
-      type: 'preparation',
-      description: 'Feed on sorrow to heal. Grant all allies +25% lifesteal and +30 max HP for the battle.',
-      cost: { crystals: { Crystals_Fire: 45 } },
-      icon: '🫀',
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { lifesteal: 0.25, max_hp_boost: 30 }
     },
   ]
 };

@@ -20,10 +20,19 @@ export function renderSpellTome(root, { player }) {
           <span class="spelltome-faction">${player.faction}</span>
         </div>
 
+        <div class="tier-tabs" id="tier-tabs">
+          <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
+          <button class="tier-tab" data-tier="2">Tier II</button>
+          <button class="tier-tab" data-tier="3">Tier III</button>
+        </div>
+
         <div class="spelltome-body">
-          <div id="spells-list-wrap" class="spells-list-wrap"></div>
+          <div class="spells-slider-wrap" id="spells-slider-wrap">
+            <div class="spells-slider" id="spells-slider"></div>
+          </div>
+
           <div class="spell-detail-panel" id="spell-detail-panel">
-            <div class="spell-detail-empty">Tap a spell to see details</div>
+            <div class="spell-detail-empty">Select a spell to see details</div>
           </div>
         </div>
       </main>
@@ -41,10 +50,12 @@ export function renderSpellTome(root, { player }) {
   let throneLevel    = 1;
   let learnedSpells  = [];
   let activeSpellId  = null;
+  let activeTier     = 1;
   const factionSpells = SPELLS[player.faction] || [];
 
-  const listWrap    = root.querySelector('#spells-list-wrap');
+  const slider      = root.querySelector('#spells-slider');
   const detailPanel = root.querySelector('#spell-detail-panel');
+  const tierTabs    = root.querySelector('#tier-tabs');
 
   async function loadResourceBar() {
     try {
@@ -86,84 +97,64 @@ export function renderSpellTome(root, { player }) {
     return true;
   }
 
-  function isTierUnlocked(spell) {
-    return throneLevel >= (spell.tier || 1);
-  }
+  function renderSlider() {
+    const tierSpells = factionSpells.filter(s => s.tier === activeTier);
+    const tierUnlocked = throneLevel >= activeTier;
 
-  function renderList() {
-    const byTier = { 1: [], 2: [], 3: [] };
-    for (const spell of factionSpells) {
-      const t = spell.tier || 1;
-      if (byTier[t]) byTier[t].push(spell);
+    if (!tierSpells.length) {
+      slider.innerHTML = `<div class="spells-empty">No spells for this tier.</div>`;
+      return;
     }
 
-    let html = '';
+    slider.innerHTML = tierSpells.map(spell => {
+      const isLearned  = learnedSpells.includes(spell.id);
+      const affordable = canAfford(spell);
+      const isActive   = activeSpellId === spell.id;
 
-    for (const tier of [1, 2, 3]) {
-      const spells = byTier[tier];
-      if (!spells.length) continue;
+      let cardCls = 'spell-card';
+      if (isLearned)              cardCls += ' spell-card--learned';
+      if (!tierUnlocked)          cardCls += ' spell-card--locked';
+      if (isActive)               cardCls += ' spell-card--active';
+      if (tierUnlocked && !isLearned && !affordable) cardCls += ' spell-card--unaffordable';
 
-      const unlocked = throneLevel >= tier;
-      html += `<div class="spells-section-label">
-        Tier ${tier} Spells
-        ${unlocked ? '' : `<span class="spells-tier-lock">🔒 Throne Lv${tier}</span>`}
-      </div><div class="spells-list">`;
+      const typeColor = spell.effect_type === 'buff' ? 'spell-card-type--buff' : 'spell-card-type--debuff';
 
-      for (const spell of spells) {
-        const isLearned  = learnedSpells.includes(spell.id);
-        const affordable = canAfford(spell);
-        html += spellRowHtml(spell, isLearned, affordable, unlocked);
-      }
-
-      html += `</div>`;
-    }
-
-    if (!factionSpells.length) {
-      html = `<div class="spells-empty">No spells available for this faction.</div>`;
-    }
-
-    listWrap.innerHTML = html;
-    attachRowEvents();
-  }
-
-  function spellRowHtml(spell, isLearned, affordable, tierUnlocked) {
-    const isActive = activeSpellId === spell.id;
-    let cls = 'spell-row';
-    if (isLearned)                    cls += ' spell-row--learned';
-    if (!tierUnlocked)                cls += ' spell-row--locked';
-    if (tierUnlocked && !isLearned && !affordable) cls += ' spell-row--unavailable';
-    if (isActive)                     cls += ' spell-row--active';
-
-    const canResearch = tierUnlocked && !isLearned && affordable;
-
-    return `
-      <div class="${cls}" data-spell-id="${spell.id}">
-        <div class="spell-row-icon">${spell.icon}</div>
-        <div class="spell-row-body">
-          <div class="spell-row-name">
-            ${spell.name}
-            <span class="spell-row-rank">T${spell.tier}</span>
-            ${isLearned ? '<span class="spell-row-learned-badge">✓ Learned</span>' : ''}
-            ${!tierUnlocked ? '<span class="spell-row-locked-badge">🔒</span>' : ''}
-          </div>
-          <div class="spell-row-cost">${costHtml(spell)}</div>
+      return `
+        <div class="${cardCls}" data-spell-id="${spell.id}">
+          ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
+          ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><span>🔒</span></div>' : ''}
+          <div class="spell-card-icon">${spell.icon}</div>
+          <div class="spell-card-name">${spell.name}</div>
+          <div class="spell-card-type ${typeColor}">${spell.effect_type}</div>
+          <div class="spell-card-cost">${costHtml(spell)}</div>
+          ${isLearned ? '<div class="spell-card-check">✓</div>' : ''}
         </div>
-        ${!isLearned && tierUnlocked ? `
-        <div class="spell-row-action">
-          <button class="research-btn ${canResearch ? '' : 'research-btn--disabled'}"
-                  data-spell-id="${spell.id}"
-                  ${canResearch ? '' : 'disabled'}>
-            Research
-          </button>
-        </div>` : ''}
-      </div>
-    `;
+      `;
+    }).join('');
+
+    slider.querySelectorAll('.spell-card').forEach(card => {
+      const spellId = card.dataset.spellId;
+      const spell   = factionSpells.find(s => s.id === spellId);
+      if (!spell) return;
+
+      card.addEventListener('click', () => {
+        if (activeSpellId === spellId) {
+          activeSpellId = null;
+          renderSlider();
+          clearDetail();
+          return;
+        }
+        activeSpellId = spellId;
+        renderSlider();
+        showDetail(spell);
+      });
+    });
   }
 
   function showDetail(spell) {
     const isLearned    = learnedSpells.includes(spell.id);
     const affordable   = canAfford(spell);
-    const tierUnlocked = isTierUnlocked(spell);
+    const tierUnlocked = throneLevel >= spell.tier;
     const canResearch  = tierUnlocked && !isLearned && affordable;
 
     let costItemsHtml = '';
@@ -174,9 +165,9 @@ export function renderSpellTome(root, { player }) {
 
     let actionHtml;
     if (isLearned) {
-      actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Already learned</span>`;
+      actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Learned</span>`;
     } else if (!tierUnlocked) {
-      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Requires Throne level ${spell.tier}</span>`;
+      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Throne level ${spell.tier} required</span>`;
     } else {
       actionHtml = `
         <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
@@ -184,6 +175,8 @@ export function renderSpellTome(root, { player }) {
         </button>
       `;
     }
+
+    const typeColor = spell.effect_type === 'buff' ? 'spell-detail-type-chip--buff' : 'spell-detail-type-chip--debuff';
 
     detailPanel.innerHTML = `
       <div class="spell-detail-inner">
@@ -193,18 +186,15 @@ export function renderSpellTome(root, { player }) {
             <div class="spell-detail-name">${spell.name}</div>
             <div class="spell-detail-meta">
               <span class="spell-detail-rank-chip">Tier ${spell.tier}</span>
-              <span class="spell-detail-type-chip">${spell.effect_type || 'Spell'}</span>
+              <span class="spell-detail-type-chip ${typeColor}">${spell.effect_type}</span>
             </div>
           </div>
+          <div class="spell-detail-cost-col">
+            <div class="spell-detail-cost-label">Cost</div>
+            <div class="spell-detail-cost-items">${costItemsHtml}</div>
+          </div>
         </div>
-
         <div class="spell-detail-desc">${spell.description}</div>
-
-        <div class="spell-detail-cost-row">
-          <span class="spell-detail-cost-label">Cost</span>
-          <div class="spell-detail-cost-items">${costItemsHtml}</div>
-        </div>
-
         <div class="spell-detail-action">
           ${actionHtml}
           <div class="research-feedback" id="research-feedback" style="display:none"></div>
@@ -223,8 +213,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function clearDetail() {
-    activeSpellId = null;
-    detailPanel.innerHTML = '<div class="spell-detail-empty">Tap a spell to see details</div>';
+    detailPanel.innerHTML = '<div class="spell-detail-empty">Select a spell to see details</div>';
   }
 
   function showFeedback(msg, isError) {
@@ -249,7 +238,7 @@ export function renderSpellTome(root, { player }) {
         }
         learnedSpells.push(spell.id);
         await loadResourceBar();
-        renderList();
+        renderSlider();
         showDetail(spell);
         showFeedback('Spell learned!', false);
       } else {
@@ -264,43 +253,16 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
-  function attachRowEvents() {
-    listWrap.querySelectorAll('.spell-row').forEach(row => {
-      const spellId = row.dataset.spellId;
-      const spell   = factionSpells.find(s => s.id === spellId);
-      if (!spell) return;
-
-      row.addEventListener('click', e => {
-        if (e.target.closest('.research-btn')) return;
-
-        if (activeSpellId === spellId) {
-          clearDetail();
-          renderList();
-          return;
-        }
-
-        activeSpellId = spellId;
-        renderList();
-        showDetail(spell);
-      });
-
-      const resBtn = row.querySelector('.research-btn');
-      if (resBtn) {
-        resBtn.addEventListener('click', async e => {
-          e.stopPropagation();
-          activeSpellId = spellId;
-          renderList();
-          showDetail(spell);
-          const detailBtn = root.querySelector('#detail-research-btn');
-          if (detailBtn && !detailBtn.disabled) {
-            detailBtn.disabled = true;
-            detailBtn.textContent = '…';
-            await doResearch(spell);
-          }
-        });
-      }
+  tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTier    = parseInt(tab.dataset.tier);
+      activeSpellId = null;
+      tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
+      tab.classList.add('tier-tab--active');
+      renderSlider();
+      clearDetail();
     });
-  }
+  });
 
   async function init() {
     try {
@@ -315,10 +277,10 @@ export function renderSpellTome(root, { player }) {
         : (researchData?.researched_spells || []);
 
       await loadResourceBar();
-      renderList();
+      renderSlider();
     } catch (err) {
       console.error('Spell tome init failed:', err);
-      listWrap.innerHTML = `<div class="spells-empty">Failed to load spells.</div>`;
+      slider.innerHTML = `<div class="spells-empty">Failed to load spells.</div>`;
     }
   }
 
