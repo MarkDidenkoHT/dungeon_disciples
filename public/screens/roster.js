@@ -163,10 +163,11 @@ export function renderRoster(root, { player }) {
       }
     }
 
-    const heroMaxed    = isHero && heroPathsForUnit.length === 0;
-    const heroCanLevel = isHero && !heroMaxed && throneLevel > tier;
-
+    const heroMaxed  = isHero && heroPathsForUnit.length === 0;
     const xpRequired = def?.xp ?? null;
+    const heroXpMet  = xpRequired == null || currentXp >= xpRequired;
+    const heroCanLevel = isHero && !heroMaxed && throneLevel > tier && heroXpMet;
+
     const isMaxTier  = !isHero && xpRequired === null && !Object.values(upgradePaths).some(fp => fp[unitId]);
     const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
 
@@ -239,11 +240,25 @@ export function renderRoster(root, { player }) {
           </div>
         `;
       } else {
-        const throneNeeded = tier + 1;
-        const blocked      = !heroCanLevel;
+        const throneBlocked = throneLevel <= tier;
+        const xpBlocked     = xpRequired != null && currentXp < xpRequired;
+        const blocked       = throneBlocked || xpBlocked;
+
+        let blockedMsg = '';
+        if (throneBlocked) blockedMsg = ` — Level Up Requires Throne Lv ${tier + 1}`;
+        else if (xpBlocked) blockedMsg = ` — Need ${xpRequired} XP`;
+
+        const pct = xpRequired != null ? Math.min(100, Math.floor((currentXp / xpRequired) * 100)) : 100;
+
         levelUpHtml = `
           <div class="levelup-row">
-            <span class="hero-level-label">Hero Level ${tier}${blocked ? ` — Level Up Requires Throne Lv ${throneNeeded}` : ''}</span>
+            ${xpRequired != null ? `
+              <div class="levelup-xp-bar">
+                <div class="levelup-xp-fill" style="width:${pct}%"></div>
+              </div>
+              <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
+            ` : ''}
+            <span class="hero-level-label">Hero Level ${tier}${blockedMsg}</span>
             ${!blocked ? `<button
               class="levelup-btn levelup-btn--ready"
               data-roster-id="${u.id}"
