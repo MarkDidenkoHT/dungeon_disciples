@@ -1,5 +1,3 @@
-import { UNITS } from './units.js';
-
 const REGION_ENCOUNTERS = {
   life_grove: {
     level_1:  [
@@ -101,25 +99,25 @@ const REGION_ENCOUNTERS = {
       { key: 'fire_wastes.lava_hound',    cell: 1 },
     ],
     level_6:  [
-      { key: 'fire_wastes.magma_brute',   cell: 0 },
+      { key: 'fire_wastes.magma_brute',    cell: 0 },
       { key: 'fire_wastes.hellfire_witch', cell: 2 },
-      { key: 'fire_wastes.cinder_knight', cell: 4 },
-      { key: 'fire_wastes.pyroclast',     cell: 1 },
-      { key: 'fire_wastes.lava_hound',    cell: 3 },
+      { key: 'fire_wastes.cinder_knight',  cell: 4 },
+      { key: 'fire_wastes.pyroclast',      cell: 1 },
+      { key: 'fire_wastes.lava_hound',     cell: 3 },
     ],
     level_7:  [
-      { key: 'fire_wastes.inferno_titan', cell: 0 },
+      { key: 'fire_wastes.inferno_titan',  cell: 0 },
       { key: 'fire_wastes.hellfire_witch', cell: 2 },
-      { key: 'fire_wastes.magma_brute',   cell: 4 },
-      { key: 'fire_wastes.pyroclast',     cell: 1 },
-      { key: 'fire_wastes.cinder_knight', cell: 3 },
+      { key: 'fire_wastes.magma_brute',    cell: 4 },
+      { key: 'fire_wastes.pyroclast',      cell: 1 },
+      { key: 'fire_wastes.cinder_knight',  cell: 3 },
     ],
     level_8:  [
-      { key: 'fire_wastes.inferno_titan', cell: 0 },
-      { key: 'fire_wastes.flame_oracle',  cell: 2 },
+      { key: 'fire_wastes.inferno_titan',  cell: 0 },
+      { key: 'fire_wastes.flame_oracle',   cell: 2 },
       { key: 'fire_wastes.hellfire_witch', cell: 4 },
-      { key: 'fire_wastes.magma_brute',   cell: 1 },
-      { key: 'fire_wastes.cinder_knight', cell: 3 },
+      { key: 'fire_wastes.magma_brute',    cell: 1 },
+      { key: 'fire_wastes.cinder_knight',  cell: 3 },
     ],
     level_9:  [
       { key: 'fire_wastes.lord_of_cinders', cell: 0 },
@@ -139,9 +137,9 @@ const REGION_ENCOUNTERS = {
 
   death_crypts: {
     level_1:  [
-      { key: 'death_crypts.grave_rat',    cell: 0 },
+      { key: 'death_crypts.grave_rat',     cell: 0 },
       { key: 'death_crypts.risen_soldier', cell: 2 },
-      { key: 'death_crypts.grave_rat',    cell: 4 },
+      { key: 'death_crypts.grave_rat',     cell: 4 },
     ],
     level_2:  [
       { key: 'death_crypts.risen_soldier', cell: 0 },
@@ -212,10 +210,10 @@ const REGION_ENCOUNTERS = {
       { key: 'frost_peaks.ice_shard',  cell: 4 },
     ],
     level_2:  [
-      { key: 'frost_peaks.frost_imp',  cell: 0 },
+      { key: 'frost_peaks.frost_imp',   cell: 0 },
       { key: 'frost_peaks.tundra_wolf', cell: 2 },
-      { key: 'frost_peaks.ice_shard',  cell: 1 },
-      { key: 'frost_peaks.frost_imp',  cell: 4 },
+      { key: 'frost_peaks.ice_shard',   cell: 1 },
+      { key: 'frost_peaks.frost_imp',   cell: 4 },
     ],
     level_3:  [
       { key: 'frost_peaks.tundra_wolf',    cell: 0 },
@@ -342,9 +340,58 @@ const REGION_ENCOUNTERS = {
   },
 };
 
+const REGION_REWARDS = {
+  life_grove:   { crystal_type: 'Crystals_Life',   base: { gold: 15, crystal: 6,  xp: 30  } },
+  fire_wastes:  { crystal_type: 'Crystals_Fire',   base: { gold: 15, crystal: 6,  xp: 30  } },
+  death_crypts: { crystal_type: 'Crystals_Death',  base: { gold: 15, crystal: 6,  xp: 30  } },
+  frost_peaks:  { crystal_type: 'Crystals_Frost',  base: { gold: 15, crystal: 6,  xp: 30  } },
+  nature_wilds: { crystal_type: 'Crystals_Nature', base: { gold: 15, crystal: 6,  xp: 30  } },
+};
+
+function buildDifficulties(regionId) {
+  const region = REGION_ENCOUNTERS[regionId];
+  if (!region) return {};
+  const base = REGION_REWARDS[regionId]?.base ?? { gold: 15, crystal: 6, xp: 30 };
+  const out  = {};
+  for (const levelKey of Object.keys(region)) {
+    const num     = parseInt(levelKey.replace('level_', ''), 10);
+    const scale   = 1 + (num - 1) * 0.3;
+    out[levelKey] = {
+      rewards: {
+        gold:    Math.round(base.gold    * scale),
+        crystal: Math.round(base.crystal * scale),
+        xp:      Math.round(base.xp      * scale),
+      },
+    };
+  }
+  return out;
+}
+
+const REGIONS = [
+  { id: 'life_grove',   crystal_type: 'Crystals_Life',   difficulties: buildDifficulties('life_grove')   },
+  { id: 'fire_wastes',  crystal_type: 'Crystals_Fire',   difficulties: buildDifficulties('fire_wastes')  },
+  { id: 'death_crypts', crystal_type: 'Crystals_Death',  difficulties: buildDifficulties('death_crypts') },
+  { id: 'frost_peaks',  crystal_type: 'Crystals_Frost',  difficulties: buildDifficulties('frost_peaks')  },
+  { id: 'nature_wilds', crystal_type: 'Crystals_Nature', difficulties: buildDifficulties('nature_wilds') },
+];
+
+function getUnitByKey(regionId, unitKey) {
+  try {
+    const { UNITS } = require('./units');
+    return UNITS.enemies?.[regionId]?.[unitKey] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
-  return UNITS.enemies[region]?.[unitId] ?? null;
+  try {
+    const { UNITS } = require('./units');
+    return UNITS.enemies?.[region]?.[unitId] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function getEncounter(region_id, level) {
@@ -362,4 +409,4 @@ function getEncounter(region_id, level) {
     .filter(Boolean);
 }
 
-export { REGION_ENCOUNTERS, getEncounter };
+module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter };
