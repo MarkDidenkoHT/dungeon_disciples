@@ -2,7 +2,7 @@ import { api }        from '../main.js';
 import { navigate }   from '../main.js';
 import { SPELLS }     from '../../data/spells.js';
 import { getEncounter } from '../../data/embark.js';
-import { UNITS, HERO_DATA } from '../../data/units.js';
+import { UNITS } from '../../data/units.js';
 import { PASSIVES }  from '../../data/passives.js';
 import { ABILITIES } from '../../data/abilities.js';
 
@@ -49,11 +49,18 @@ function cellCol(i)  { return i % COLS; }
 function resolveUnitDef(unit) {
   const uid = unit.unit_data?.unit_id;
   if (!uid) return null;
-  if (unit.is_hero) return Object.values(HERO_DATA).find(h => h.id === uid) || null;
-  for (const faction of Object.values(UNITS)) {
-    const def = Object.values(faction).find(u => u.id === uid);
-    if (def) return def;
+
+  for (const factionPool of Object.values(UNITS)) {
+    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
+    for (const entry of Object.values(factionPool)) {
+      if (entry?.id === uid) return entry;
+      if (typeof entry === 'object' && !entry.id) {
+        const nested = Object.values(entry).find(u => u?.id === uid);
+        if (nested) return nested;
+      }
+    }
   }
+
   return null;
 }
 
