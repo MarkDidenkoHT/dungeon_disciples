@@ -1,3 +1,5 @@
+import { UNITS } from './units.js';
+
 const REGION_ENCOUNTERS = {
   life_grove: {
     level_1:  [
@@ -341,11 +343,11 @@ const REGION_ENCOUNTERS = {
 };
 
 const REGION_REWARDS = {
-  life_grove:   { crystal_type: 'Crystals_Life',   base: { gold: 15, crystal: 6,  xp: 30  } },
-  fire_wastes:  { crystal_type: 'Crystals_Fire',   base: { gold: 15, crystal: 6,  xp: 30  } },
-  death_crypts: { crystal_type: 'Crystals_Death',  base: { gold: 15, crystal: 6,  xp: 30  } },
-  frost_peaks:  { crystal_type: 'Crystals_Frost',  base: { gold: 15, crystal: 6,  xp: 30  } },
-  nature_wilds: { crystal_type: 'Crystals_Nature', base: { gold: 15, crystal: 6,  xp: 30  } },
+  life_grove:   { crystal_type: 'Crystals_Life',   base: { gold: 15, crystal: 6, xp: 30 } },
+  fire_wastes:  { crystal_type: 'Crystals_Fire',   base: { gold: 15, crystal: 6, xp: 30 } },
+  death_crypts: { crystal_type: 'Crystals_Death',  base: { gold: 15, crystal: 6, xp: 30 } },
+  frost_peaks:  { crystal_type: 'Crystals_Frost',  base: { gold: 15, crystal: 6, xp: 30 } },
+  nature_wilds: { crystal_type: 'Crystals_Nature', base: { gold: 15, crystal: 6, xp: 30 } },
 };
 
 function buildDifficulties(regionId) {
@@ -367,7 +369,7 @@ function buildDifficulties(regionId) {
   return out;
 }
 
-const REGIONS = [
+export const REGIONS = [
   { id: 'life_grove',   crystal_type: 'Crystals_Life',   difficulties: buildDifficulties('life_grove')   },
   { id: 'fire_wastes',  crystal_type: 'Crystals_Fire',   difficulties: buildDifficulties('fire_wastes')  },
   { id: 'death_crypts', crystal_type: 'Crystals_Death',  difficulties: buildDifficulties('death_crypts') },
@@ -375,26 +377,18 @@ const REGIONS = [
   { id: 'nature_wilds', crystal_type: 'Crystals_Nature', difficulties: buildDifficulties('nature_wilds') },
 ];
 
-function getUnitByKey(regionId, unitKey) {
-  try {
-    const { UNITS } = require('./units');
-    return UNITS.enemies?.[regionId]?.[unitKey] ?? null;
-  } catch {
-    return null;
-  }
+export const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
+
+export function getUnitByKey(regionId, unitKey) {
+  return UNITS.enemies?.[regionId]?.[unitKey] ?? null;
 }
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
-  try {
-    const { UNITS } = require('./units');
-    return UNITS.enemies?.[region]?.[unitId] ?? null;
-  } catch {
-    return null;
-  }
+  return UNITS.enemies?.[region]?.[unitId] ?? null;
 }
 
-function getEncounter(region_id, level) {
+export function getEncounter(region_id, level) {
   const regionKey = region_id.replace(' ', '_');
   const levelKey  = `level_${level}`;
   const slots     = REGION_ENCOUNTERS[regionKey]?.[levelKey];
@@ -408,5 +402,3 @@ function getEncounter(region_id, level) {
     })
     .filter(Boolean);
 }
-
-module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter };
