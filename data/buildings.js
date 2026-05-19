@@ -38,7 +38,7 @@ const BUILDING_POOLS = {
       { id: 'archer_range',       label: 'Archer Range',       category: 'barracks', tier: 2, unit: 'archer',    unit_id: 'e81', upgrades: [], cost: { gold: 50 } },
       { id: 'sniper_nest',        label: 'Sniper Nest',        category: 'barracks', tier: 2, unit: 'sniper',    unit_id: 'e82', upgrades: [], cost: { gold: 50 } },
       { id: 'priest_shrine',      label: 'Priest Shrine',      category: 'barracks', tier: 2, unit: 'priest',    unit_id: 'e21', upgrades: [], cost: { gold: 50 } },
-      { id: 'sun_temple',     label: 'Sun temple',     category: 'barracks', tier: 2, unit: 'templar',   unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
+      { id: 'sun_temple',         label: 'Sun temple',         category: 'barracks', tier: 2, unit: 'templar',   unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
       { id: 'purgator_chapel',    label: 'Purgator Chapel',    category: 'barracks', tier: 2, unit: 'purgator',  unit_id: 'e23', upgrades: [], cost: { gold: 50 } },
     ],
     any: [
@@ -218,14 +218,6 @@ function getBuildingDef(faction, buildingId) {
   return null;
 }
 
-function getHeroStartingBuildingId(faction, heroUnitId) {
-  const factionPools = BUILDING_POOLS[faction];
-  if (!factionPools) return null;
-  const thronePool = factionPools.throne || [];
-  const found = thronePool.find(b => b.unit_id === heroUnitId && b.tier === 1);
-  return found ? found.id : null;
-}
-
 function emptyStructures() {
   const slots = { slot_0: { level: 1, building_id: null } };
   for (let i = 1; i <= 8; i++) {
@@ -241,6 +233,5 @@ module.exports = {
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
   getBuildingDef,
-  getHeroStartingBuildingId,
   emptyStructures,
 };
