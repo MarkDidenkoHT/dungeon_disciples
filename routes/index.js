@@ -31,7 +31,7 @@ const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3'];
 
 const HERO_STARTING_UNITS = {
   h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
-  h_e_2: { building_id: 'conscript_barracks', unit_id: 'e8',  slot: 'slot_4' },
+  h_e_2: { building_id: 'scout_post', unit_id: 'e8',  slot: 'slot_4' },
   h_e_3: { building_id: 'conscript_barracks', unit_id: 'e1',  slot: 'slot_4' },
   h_d_1: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
   h_d_2: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
