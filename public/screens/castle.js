@@ -96,18 +96,6 @@ export function renderCastle(root, { player }) {
     structuresRecord   = structures;
 
     await loadUnits();
-
-    const readySlots = Object.entries(structures.buildings_data)
-      .filter(([, s]) => s.ready_at && new Date(s.ready_at) <= new Date())
-      .map(([slot]) => slot);
-
-    if (readySlots.length > 0) {
-      await Promise.all(readySlots.map(slot =>
-        api('/structures/complete', { chat_id: player.chat_id, slot, faction: player.faction })
-      ));
-      structuresRecord = await api(`/structures?chat_id=${player.chat_id}`);
-    }
-
     renderBuildings();
   }
 
@@ -341,17 +329,15 @@ export function renderCastle(root, { player }) {
         const state      = data[slot] || { level: 0, building_id: null };
         const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
         const isEmpty    = !state.building_id;
-        const isBuilding = state.ready_at && new Date(state.ready_at) > Date.now();
         const hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
-        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : '', isBuilding ? 'castle-node--building' : ''].filter(Boolean).join(' ');
+        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : ''].filter(Boolean).join(' ');
 
         return `
           <div class="${classes}" data-slot="${slot}">
             <div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>
             <div class="castle-node-label">${def ? def.label : (isEmpty ? 'Build' : 'Empty')}</div>
             ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
-            ${isBuilding ? `<div class="castle-node-timer" data-ready="${state.ready_at}">⏳</div>` : ''}
-            ${!isEmpty && !isBuilding && hasUpgrade ? `<div class="castle-node-hint">Upgrade</div>` : ''}
+            ${!isEmpty && hasUpgrade ? `<div class="castle-node-hint">Upgrade</div>` : ''}
           </div>`;
       }).join('');
 

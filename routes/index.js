@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
 const { REGIONS } = require('../data/embark');
-const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -177,7 +177,7 @@ router.post('/player/faction', async (req, res) => {
   const structures   = emptyStructures();
 
   if (startingUnit) {
-    structures[startingUnit.slot] = { level: 1, ready_at: null, building_id: startingUnit.building_id };
+    structures[startingUnit.slot] = { level: 1, building_id: startingUnit.building_id };
   }
 
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
@@ -366,7 +366,7 @@ router.post('/structures/throne/upgrade', async (req, res) => {
 
     const record    = rows[0];
     const buildings = record.buildings_data;
-    const throne    = buildings['slot_0'] || { level: 1, ready_at: null, building_id: null };
+    const throne    = buildings['slot_0'] || { level: 1, building_id: null };
     const nextLevel = (throne.level || 1) + 1;
 
     if (nextLevel > HERO_MAX_LEVEL) {
@@ -454,7 +454,7 @@ router.post('/structures/build', async (req, res) => {
     const nextLevel = (current.level || 0) + 1;
     if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
 
-    buildings[slot] = { level: nextLevel, ready_at: null, building_id };
+    buildings[slot] = { level: nextLevel, building_id };
 
     const updated = await supabase(`/structures?id=eq.${record.id}`, {
       method: 'PATCH',

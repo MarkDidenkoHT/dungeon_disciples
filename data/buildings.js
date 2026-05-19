@@ -1,10 +1,3 @@
-const BUILD_TIMES_MS = {
-  1: 5 * 60 * 1000,
-  2: 10 * 60 * 1000,
-  3: 30 * 60 * 1000,
-  4: 60 * 60 * 1000,
-};
-
 const SLOT_CATEGORIES = {
   slot_0: 'throne',
   slot_1: 'barracks',
@@ -45,7 +38,7 @@ const BUILDING_POOLS = {
       { id: 'archer_range',       label: 'Archer Range',       category: 'barracks', tier: 2, unit: 'archer',    unit_id: 'e81', upgrades: [], cost: { gold: 50 } },
       { id: 'sniper_nest',        label: 'Sniper Nest',        category: 'barracks', tier: 2, unit: 'sniper',    unit_id: 'e82', upgrades: [], cost: { gold: 50 } },
       { id: 'priest_shrine',      label: 'Priest Shrine',      category: 'barracks', tier: 2, unit: 'priest',    unit_id: 'e21', upgrades: [], cost: { gold: 50 } },
-      { id: 'paladin_shrine',     label: 'Paladin Shrine',     category: 'barracks', tier: 2, unit: 'paladin',   unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
+      { id: 'sun_temple',     label: 'Sun temple',     category: 'barracks', tier: 2, unit: 'templar',   unit_id: 'e22', upgrades: [], cost: { gold: 50 } },
       { id: 'purgator_chapel',    label: 'Purgator Chapel',    category: 'barracks', tier: 2, unit: 'purgator',  unit_id: 'e23', upgrades: [], cost: { gold: 50 } },
     ],
     any: [
@@ -106,7 +99,7 @@ const UNIT_UPGRADE_PATHS = {
     ],
     e2: [
       { unit_id: 'e21', building_id: 'priest_shrine',   label: 'Priest Shrine'   },
-      { unit_id: 'e22', building_id: 'paladin_shrine',  label: 'Paladin Chapel'  },
+      { unit_id: 'e22', building_id: 'sun_temple',      label: 'Sun Temple'  },
       { unit_id: 'e23', building_id: 'purgator_chapel', label: 'Purgator Chapel' },
     ],
     e4: [
@@ -234,16 +227,15 @@ function getHeroStartingBuildingId(faction, heroUnitId) {
 }
 
 function emptyStructures() {
-  const slots = { slot_0: { level: 1, ready_at: null, building_id: null } };
+  const slots = { slot_0: { level: 1, building_id: null } };
   for (let i = 1; i <= 8; i++) {
-    slots[`slot_${i}`] = { level: 0, ready_at: null, building_id: null };
+    slots[`slot_${i}`] = { level: 0, building_id: null };
   }
   return slots;
 }
 
 module.exports = {
   BUILDING_POOLS,
-  BUILD_TIMES_MS,
   SLOT_CATEGORIES,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,

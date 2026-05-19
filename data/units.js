@@ -552,9 +552,9 @@ const UNITS = {
       damage_source: null, action_power: 15,
       xp: 60, passive: null, ability: null,
     },
-    paladin_unit: {
+    templar: {
       id: 'e21', f: 'e', t: 2,
-      name: 'Paladin',
+      name: 'Templar',
       tags: ['Knight', 'Holy'],
       type: 'melee', size: 'tile',
       hp: 60, armor: 15, initiative: 30,
