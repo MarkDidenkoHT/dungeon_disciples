@@ -64,11 +64,37 @@ export class BattleSystem {
       shield:   0,
       burn:     0,
       poison:   0,
-      _stacks:  {},
-      _flags:   {},
+      _stacks:       {},
+      _flags:        {},
       _dmg_mult:          1,
       _healing_reduction: 0,
+      _granted_buffs: [],
     };
+  }
+
+  recordGrantedBuff(source, type, targets, value) {
+    source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
+  }
+
+  revokeGrantedBuffs(dying) {
+    for (const buff of dying._granted_buffs) {
+      for (const targetId of buff.targetIds) {
+        const target = this.combatants.find(c => c.id === targetId);
+        if (!target) continue;
+
+        if (buff.type === 'max_hp') {
+          target.max_hp    = Math.max(1, target.max_hp - buff.value);
+          target.battle_hp = Math.min(target.battle_hp, target.max_hp);
+        } else if (buff.type === 'armor') {
+          target.armor = Math.max(0, target.armor - buff.value);
+        } else if (buff.type === 'initiative') {
+          target.initiative = Math.max(0, target.initiative + buff.value);
+        } else if (buff.type === 'shield') {
+          target.shield = Math.max(0, target.shield - buff.value);
+        }
+      }
+    }
+    dying._granted_buffs = [];
   }
 
   applyBattleStartPassives() {
@@ -80,7 +106,9 @@ export class BattleSystem {
         const map   = { 'vitality 1': 5, 'vitality 2': 15, 'vitality 3': 25 };
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
-        for (const a of this.combatants.filter(x => x.side === c.side)) { a.battle_hp += bonus; a.max_hp += bonus; }
+        const allies = this.combatants.filter(x => x.side === c.side);
+        for (const a of allies) { a.battle_hp += bonus; a.max_hp += bonus; }
+        this.recordGrantedBuff(c, 'max_hp', allies, bonus);
         this.pushLog({ type: 'passive', passive: 'Vitality', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all allies', value: bonus });
       }
 
@@ -89,6 +117,7 @@ export class BattleSystem {
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
         c.armor += bonus;
+        this.recordGrantedBuff(c, 'armor', [c], bonus);
         this.pushLog({ type: 'passive', passive: 'Hardened', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
       }
 
@@ -97,6 +126,7 @@ export class BattleSystem {
         const bonus = map[passive] ?? 0;
         if (!bonus) continue;
         c.shield = bonus;
+        this.recordGrantedBuff(c, 'shield', [c], bonus);
         this.pushLog({ type: 'passive', passive: 'Bone Shield', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
       }
 
@@ -104,9 +134,11 @@ export class BattleSystem {
         const map    = { 'rooted 1': 5, 'rooted 2': 12 };
         const debuff = map[passive] ?? 0;
         if (!debuff) continue;
-        for (const e of this.combatants.filter(x => x.side !== c.side)) {
+        const enemies = this.combatants.filter(x => x.side !== c.side);
+        for (const e of enemies) {
           e.initiative = Math.max(0, e.initiative - debuff);
         }
+        this.recordGrantedBuff(c, 'initiative', enemies, -debuff);
         this.pushLog({ type: 'passive', passive: 'Rooted', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all enemies', value: debuff });
       }
     }
@@ -128,7 +160,8 @@ export class BattleSystem {
       const map    = { 'frost_aura 1': 5, 'frost_aura 2': 10 };
       const debuff = map[passive] ?? 0;
       if (!actor._flags.frost_aura_applied) {
-        for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
+        const enemies = this.combatants.filter(x => x.side !== actor.side && x.alive);
+        for (const e of enemies) {
           e.initiative = Math.max(0, e.initiative - debuff);
         }
         actor._flags.frost_aura_applied = true;
@@ -321,6 +354,8 @@ export class BattleSystem {
   }
 
   applyOnDeathPassives(dying) {
+    this.revokeGrantedBuffs(dying);
+
     const passive = dying.unit_data?.passive || dying.unit_data?.passive_ability;
     if (!passive) return;
 
