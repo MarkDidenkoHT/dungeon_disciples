@@ -22,9 +22,9 @@ const STARTING_RESOURCES = [
 ];
 
 const FACTION_STARTING_SPELLS = {
-  empire:          ['e_spell_1', 'e_spell_2'],
-  dungeon:         ['d_spell_1', 'd_spell_2'],
-  grail_of_sorrow: ['g_spell_1', 'g_spell_2'],
+  empire:          ['e_spell_1'],
+  dungeon:         ['d_spell_1'],
+  grail_of_sorrow: ['g_spell_1'],
 };
 
 const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3'];
