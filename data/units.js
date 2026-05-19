@@ -488,7 +488,7 @@ const UNITS = {
     },
       mechanic: {
       id: 'e61', f: 'e', t: 2,
-      name: 'Smith',
+      name: 'Mechanic',
       tags: ['Engineer', null],
       type: 'ranged', size: 'tile',
       hp: 50, armor: 5, initiative: 35,
@@ -499,7 +499,7 @@ const UNITS = {
     }, 
       rifleman: {
       id: 'e62', f: 'e', t: 2,
-      name: 'Smith',
+      name: 'Rifleman',
       tags: ['Engineer', null],
       type: 'ranged', size: 'tile',
       hp: 50, armor: 5, initiative: 35,
