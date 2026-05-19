@@ -48,19 +48,19 @@ function mountShell(player) {
       <div id="content-root"></div>
       <nav class="bottom-nav" id="bottom-nav">
         <button class="nav-btn" data-screen="castle">
-          <img class="nav-btn-icon" src="/assets/ui/castle.png" alt="">
+          <img class="nav-btn-icon" src="/assets/icons/ui/castle.png" alt="">
           <span class="nav-btn-label">Castle</span>
         </button>
         <button class="nav-btn" data-screen="roster">
-          <img class="nav-btn-icon" src="/assets/ui/roster.png" alt="">
+          <img class="nav-btn-icon" src="/assets/icons/ui/roster.png" alt="">
           <span class="nav-btn-label">Roster</span>
         </button>
         <button class="nav-btn" data-screen="embark">
-          <img class="nav-btn-icon" src="/assets/ui/embark.png" alt="">
+          <img class="nav-btn-icon" src="/assets/icons/ui/embark.png" alt="">
           <span class="nav-btn-label">Embark</span>
         </button>
         <button class="nav-btn" data-screen="spells">
-          <img class="nav-btn-icon" src="/assets/ui/spellbook.png" alt="">
+          <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
           <span class="nav-btn-label">Spells</span>
         </button>
       </nav>
