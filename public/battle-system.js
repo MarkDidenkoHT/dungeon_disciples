@@ -1,3 +1,5 @@
+import { filterByTagRules } from './tag-rules.js';
+
 const ROWS = 3;
 const COLS = 2;
 
@@ -41,10 +43,6 @@ export class BattleSystem {
       data.target_type  = data.action.target_type;
     }
 
-    // Generate a unique internal id based on side + cell position.
-    // This guarantees no two combatants ever share an id, regardless of
-    // what the source data contains. The original source id is preserved
-    // in _rosterId (players) and _sourceId (both) for external references.
     const uniqueId = `${side}:${cellIdx}`;
 
     return {
@@ -358,6 +356,15 @@ export class BattleSystem {
     this.pushLog({ type: 'passive', passive: 'Enrage', actorName: unit.unit_name, actorCell: unit.cellIndex, targetName: unit.unit_name, targetCell: unit.cellIndex, value: Math.round((mult - 1) * 100) });
   }
 
+  getActionKey(unit) {
+    const data = unit.unit_data || unit;
+    const raw  = data.action;
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw.toLowerCase();
+    if (typeof raw === 'object' && raw.id) return raw.id.toLowerCase();
+    return null;
+  }
+
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const tt   = data.target_type || data.action?.target_type;
@@ -367,11 +374,20 @@ export class BattleSystem {
   getValidTargets(actor, forAbility = false) {
     if (forAbility) return this.getAbilityTargets(actor);
 
-    const isHeal = this.isHealer(actor);
+    const isHeal     = this.isHealer(actor);
+    const actionKey  = this.getActionKey(actor);
+
     return this.combatants.filter(t => {
       if (!t.alive) return false;
-      if (isHeal) return t.side === actor.side;
+
+      if (isHeal) {
+        if (t.side !== actor.side) return false;
+        const candidates = filterByTagRules([t], actionKey);
+        return candidates.length > 0;
+      }
+
       if (t.side === actor.side) return false;
+
       const range = actor.unit_data?.range ?? 1;
       if (range === 1) {
         const frontCol   = t.side === 'enemy' ? 0 : 1;
@@ -380,6 +396,7 @@ export class BattleSystem {
         const reachable  = frontAlive.length > 0 ? frontCol : backCol;
         return cellCol(t.cellIndex) === reachable;
       }
+
       return true;
     });
   }
