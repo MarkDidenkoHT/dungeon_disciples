@@ -328,7 +328,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      hero_level: 2, building_slot: 'slot_0', xp: 300
     },
     paladin_t3: {
       id: 'h_e_1_t3',
@@ -342,7 +342,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      hero_level: 3, building_slot: 'slot_0', xp: 560
     },
     paladin_t4: {
       id: 'h_e_1_t4',
@@ -356,7 +356,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      hero_level: 4, building_slot: 'slot_0', xp: 700
     },
     inquisitor_t2: {
       id: 'h_e_2_t2',
