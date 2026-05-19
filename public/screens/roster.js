@@ -209,7 +209,7 @@ export function renderRoster(root, { player }) {
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
-    const currentHp = stored.current_hp ?? def?.hp ?? '—';
+    const currentHp = def?.hp ?? '—';
 
     const coreHtml = `
       <div class="unit-core-stats">

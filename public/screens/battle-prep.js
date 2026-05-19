@@ -214,7 +214,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
 
-    const currentHp = stored.current_hp ?? def?.hp ?? '—';
+    const currentHp = def?.hp ?? '—';
     const res        = def?.resistances || {};
 
     const coreHtml = `
@@ -818,7 +818,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           id:        String(u.id),
           _rosterId: String(u.id),
           unit_name: def?.name ?? u.unit_data?.unit_id ?? 'Unit',
-          unit_data: { ...def, ...u.unit_data },
+          unit_data: { ...def},
         };
       });
 

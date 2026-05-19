@@ -93,7 +93,6 @@ function makeUnitData(unitId, buildingSlot, fullDef) {
   return {
     unit_id: unitId,
     building_slot: buildingSlot || null,
-    current_hp: fullDef.hp,
     current_xp: 0,
     buffs: [],
     debuffs: [],
