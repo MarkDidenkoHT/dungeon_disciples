@@ -121,7 +121,7 @@
 }
 
 .unit-portrait {
-  height: 55vh;
+  height: 50vh;
   background: #0b0f18;
   position: relative;
   display: flex;
@@ -129,7 +129,6 @@
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  width: 80%;
   align-self: center;
   border-radius: 10px 10px 0 0;
 }
