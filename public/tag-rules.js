@@ -5,7 +5,10 @@ export const TAG_RULES = {
   repair: {
     targetRequireTags: ['Construct'],
   },
-};
+  'mend flesh': {
+   targetRequireTags: ['Zombie'],
+  },
+}
 
 export function unitHasTag(unit, tag) {
   const tags = unit?.unit_data?.tags ?? unit?.tags ?? [];
