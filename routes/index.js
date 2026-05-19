@@ -3,7 +3,7 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-const { UNITS, HERO_DATA } = require('../data/units');
+const { UNITS } = require('../data/units');
 const { REGIONS } = require('../data/embark');
 const { BUILDING_POOLS, BUILD_TIMES_MS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
 
@@ -20,6 +20,19 @@ const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Crystals_Nature', amount: 20  },
   { item_type: 'resource', item: 'Crystals_Frost',  amount: 20  },
 ];
+
+const FACTION_STARTING_SPELLS = {
+  empire:          ['e_spell_1', 'e_spell_2'],
+  dungeon:         ['d_spell_1', 'd_spell_2'],
+  grail_of_sorrow: ['g_spell_1', 'g_spell_2'],
+};
+
+const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3'];
+
+const FACTION_STARTING_UNITS = {
+  empire: { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
+  dungeon: { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
+};
 
 function supabase(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
@@ -77,8 +90,6 @@ function getUnitByDataId(unitDataId) {
     const found = Object.values(factionPool).find(u => u?.id === unitDataId);
     if (found) return found;
   }
-  const heroFound = Object.values(HERO_DATA).find(h => h.id === unitDataId);
-  if (heroFound) return heroFound;
   return null;
 }
 
@@ -89,7 +100,7 @@ function getFactionForUnit(unitDataId) {
   return null;
 }
 
-function makeUnitData(unitId, buildingSlot, fullDef) {
+function makeUnitData(unitId, buildingSlot) {
   return {
     unit_id: unitId,
     building_slot: buildingSlot || null,
@@ -110,10 +121,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-
-    if (existing.length > 0) {
-      return res.json({ player: existing[0], isNew: false });
-    }
+    if (existing.length > 0) return res.json({ player: existing[0], isNew: false });
 
     const created = await supabase('/players', {
       method: 'POST',
@@ -143,52 +151,42 @@ router.get('/player', async (req, res) => {
   }
 });
 
-function getStartingBarracks(faction, hero) {
-  const mapping = {
-    empire: {
-      paladin:    { building_id: 'acolyte_shrine',     unit_id: 'e2', slot: 'slot_4' },
-      inquisitor: { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
-      ranger:     { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
-    },
-    dungeon: {
-      warlord:   { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
-      hexblade:  { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
-      shadowbow: { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
-    },
-  };
-
-  return mapping[faction]?.[hero] || null;
-}
+router.get('/heroes', (req, res) => {
+  const heroes = HERO_IDS.map(id => getUnitByDataId(id)).filter(Boolean);
+  res.json(heroes);
+});
 
 router.post('/player/faction', async (req, res) => {
-  const { player_id, chat_id, faction, hero } = req.body;
-  if (!player_id || !chat_id || !faction || !hero) {
-    return res.status(400).json({ error: 'player_id, chat_id, faction, and hero required' });
+  const { player_id, chat_id, faction, hero_id } = req.body;
+  if (!player_id || !chat_id || !faction || !hero_id) {
+    return res.status(400).json({ error: 'player_id, chat_id, faction, and hero_id required' });
   }
 
-  const heroStats = HERO_DATA[hero];
-  if (!heroStats) return res.status(400).json({ error: 'Unknown hero' });
-
-  const startingBarracks = getStartingBarracks(faction, hero);
-  const structures = emptyStructures();
-
-  if (startingBarracks) {
-    structures[startingBarracks.slot] = { level: 1, ready_at: null, building_id: startingBarracks.building_id };
+  if (!HERO_IDS.includes(hero_id)) {
+    return res.status(400).json({ error: 'Invalid hero_id' });
   }
 
-  const unitId   = startingBarracks?.unit_id;
-  const unitSlot = startingBarracks?.slot;
-  const unitDef  = unitId ? getUnitByDataId(unitId) : null;
+  const heroDef = getUnitByDataId(hero_id);
+  if (!heroDef) return res.status(400).json({ error: 'Hero not found in unit data' });
+
+  const startingUnit = FACTION_STARTING_UNITS[faction];
+  const structures   = emptyStructures();
+
+  if (startingUnit) {
+    structures[startingUnit.slot] = { level: 1, ready_at: null, building_id: startingUnit.building_id };
+  }
+
+  const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
 
   const rosterEntries = [
     {
       chat_id,
-      unit_data: makeUnitData(heroStats.id, null, heroStats),
+      unit_data: makeUnitData(heroDef.id, null),
       is_hero: true,
     },
     ...(unitDef ? [{
       chat_id,
-      unit_data: makeUnitData(unitDef.id, unitSlot, unitDef),
+      unit_data: makeUnitData(unitDef.id, startingUnit.slot),
       is_hero: false,
     }] : []),
   ];
@@ -197,7 +195,7 @@ router.post('/player/faction', async (req, res) => {
     const [updated] = await Promise.all([
       supabase(`/players?id=eq.${player_id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ faction, hero, learned_spells: FACTION_STARTING_SPELLS[faction] || [] }),
+        body: JSON.stringify({ faction, hero: hero_id, learned_spells: FACTION_STARTING_SPELLS[faction] || [] }),
       }),
       supabase('/roster', {
         method: 'POST',
@@ -278,10 +276,11 @@ router.post('/roster/levelup', async (req, res) => {
     const fullDef = getUnitByDataId(currentUnitId);
     if (!fullDef) return res.status(400).json({ error: 'Unit definition not found' });
 
+    const xpRequired = fullDef.xp;
+
     if (entry.is_hero) {
       const currentTier = fullDef.t ?? 1;
       const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
-      const xpRequired = fullDef.xp;
 
       if (currentTier >= HERO_MAX_LEVEL) {
         return res.status(400).json({ error: 'Hero is already at max tier' });
@@ -293,7 +292,6 @@ router.post('/roster/levelup', async (req, res) => {
         return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
       }
     } else {
-      const xpRequired = fullDef.xp;
       if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
       if (unitData.current_xp < xpRequired) {
         return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
@@ -321,7 +319,7 @@ router.post('/roster/levelup', async (req, res) => {
     const nextDef = getUnitByDataId(path.unit_id);
     if (!nextDef) return res.status(400).json({ error: `Definition for ${path.unit_id} not found` });
 
-    const newUnitData = makeUnitData(nextDef.id, buildingSlot, nextDef);
+    const newUnitData = makeUnitData(nextDef.id, buildingSlot);
     newUnitData.current_xp = unitData.current_xp ?? 0;
 
     const updatePromises = [
@@ -466,7 +464,7 @@ router.post('/structures/build', async (req, res) => {
           method: 'POST',
           body: JSON.stringify([{
             chat_id,
-            unit_data: makeUnitData(unitDef.id, slot, unitDef),
+            unit_data: makeUnitData(unitDef.id, slot),
             is_hero: false,
           }]),
         });
@@ -596,12 +594,6 @@ router.post('/battle/reward', async (req, res) => {
   }
 });
 
-const FACTION_STARTING_SPELLS = {
-  empire:          ['e_spell_1', 'e_spell_2'],
-  dungeon:         ['d_spell_1', 'd_spell_2'],
-  grail_of_sorrow: ['g_spell_1', 'g_spell_2'],
-};
-
 router.get('/spells/research', async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
@@ -609,8 +601,7 @@ router.get('/spells/research', async (req, res) => {
   try {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
-    const learned = rows[0].learned_spells || [];
-    res.json({ researched_spells: learned });
+    res.json({ researched_spells: rows[0].learned_spells || [] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -634,30 +625,21 @@ router.post('/spells/research', async (req, res) => {
     if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
     if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
 
-    const player      = playerRows[0];
-    const learned     = player.learned_spells || [];
+    const learned     = playerRows[0].learned_spells || [];
     const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
     const spellTier   = spell.tier || 1;
 
-    if (learned.includes(spell_id)) {
-      return res.status(400).json({ error: 'Spell already researched' });
-    }
+    if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
+    if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
 
-    if (throneLevel < spellTier) {
-      return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
-    }
-
-    const crystalMap     = spell.cost.crystals || {};
-    const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
+    const crystalEntries = Object.entries(spell.cost.crystals || {}).filter(([, amt]) => amt > 0);
 
     if (crystalEntries.length > 0) {
       const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
 
       for (const [crystalType, needed] of crystalEntries) {
         const row = inventoryRows.find(r => r.item === crystalType);
-        if (!row || row.amount < needed) {
-          return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
-        }
+        if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
       }
 
       await Promise.all(crystalEntries.map(([crystalType, needed]) => {
@@ -689,24 +671,19 @@ router.post('/spells/consume', async (req, res) => {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
 
-    const player  = rows[0];
-    const learned = player.learned_spells || [];
+    const learned = rows[0].learned_spells || [];
+    if (!learned.includes(spell_id)) return res.status(400).json({ error: 'Spell not learned' });
 
-    if (!learned.includes(spell_id)) {
-      return res.status(400).json({ error: 'Spell not learned' });
-    }
-
-    const crystalMap     = crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {};
-    const crystalEntries = Object.entries(crystalMap).filter(([, amt]) => amt > 0);
+    const crystalEntries = Object.entries(
+      crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {}
+    ).filter(([, amt]) => amt > 0);
 
     if (crystalEntries.length > 0) {
       const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
 
       for (const [crystalType, needed] of crystalEntries) {
         const row = inventoryRows.find(r => r.item === crystalType);
-        if (!row || row.amount < needed) {
-          return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
-        }
+        if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
       }
 
       await Promise.all(crystalEntries.map(([crystalType, needed]) => {

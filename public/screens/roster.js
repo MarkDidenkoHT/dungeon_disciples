@@ -2,7 +2,7 @@ import { api }      from '../main.js';
 import { navigate } from '../main.js';
 import { PASSIVES }  from '../../data/passives.js';
 import { ABILITIES } from '../../data/abilities.js';
-import { UNITS, HERO_DATA } from '../../data/units.js';
+import { UNITS } from '../../data/units.js';
 
 const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
@@ -27,13 +27,14 @@ function resolveUnitDef(unit) {
   const uid = unit.unit_data?.unit_id;
   if (!uid) return null;
 
-  const heroMatch = Object.values(HERO_DATA).find(h => h.id === uid);
-  if (heroMatch) return heroMatch;
-
   for (const factionPool of Object.values(UNITS)) {
     if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
     for (const entry of Object.values(factionPool)) {
       if (entry?.id === uid) return entry;
+      if (typeof entry === 'object' && !entry.id) {
+        const nested = Object.values(entry).find(u => u?.id === uid);
+        if (nested) return nested;
+      }
     }
   }
 
