@@ -29,9 +29,13 @@ const FACTION_STARTING_SPELLS = {
 
 const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3'];
 
-const FACTION_STARTING_UNITS = {
-  empire: { building_id: 'conscript_barracks', unit_id: 'e1', slot: 'slot_4' },
-  dungeon: { building_id: 'heretic_pit', unit_id: 'd1', slot: 'slot_4' },
+const HERO_STARTING_UNITS = {
+  h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
+  h_e_2: { building_id: 'conscript_barracks', unit_id: 'e8',  slot: 'slot_4' },
+  h_e_3: { building_id: 'conscript_barracks', unit_id: 'e1',  slot: 'slot_4' },
+  h_d_1: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
+  h_d_2: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
+  h_d_3: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
 };
 
 function supabase(path, options = {}) {
@@ -169,7 +173,7 @@ router.post('/player/faction', async (req, res) => {
   const heroDef = getUnitByDataId(hero_id);
   if (!heroDef) return res.status(400).json({ error: 'Hero not found in unit data' });
 
-  const startingUnit = FACTION_STARTING_UNITS[faction];
+  const startingUnit = HERO_STARTING_UNITS[hero_id];
   const structures   = emptyStructures();
 
   if (startingUnit) {
