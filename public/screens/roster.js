@@ -1,8 +1,9 @@
-import { api }      from '../main.js';
-import { navigate } from '../main.js';
-import { PASSIVES }  from '../../data/passives.js';
-import { ABILITIES } from '../../data/abilities.js';
-import { UNITS } from '../../data/units.js';
+import { api }              from '../main.js';
+import { navigate }          from '../main.js';
+import { refreshResourceBar } from '../main.js';
+import { PASSIVES }          from '../../data/passives.js';
+import { ABILITIES }         from '../../data/abilities.js';
+import { UNITS }             from '../../data/units.js';
 
 const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
@@ -81,7 +82,6 @@ function buildStatDescription(def, type) {
 export function renderRoster(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-roster">
-      <div class="resource-bar" id="resource-bar"></div>
       <main class="roster-main">
         <div class="roster-slider-wrap">
           <div class="roster-track" id="roster-track"></div>
@@ -94,13 +94,6 @@ export function renderRoster(root, { player }) {
         <span class="roster-nav-label" id="roster-nav-label"></span>
         <button class="roster-nav-arrow" id="nav-next">›</button>
       </div>
-
-      <nav class="bottom-nav">
-        <button class="nav-btn" data-screen="castle">Castle</button>
-        <button class="nav-btn active" data-screen="roster">Roster</button>
-        <button class="nav-btn" data-screen="embark">Embark</button>
-        <button class="nav-btn" data-screen="spells">Spells</button>
-      </nav>
     </div>
   `;
 
@@ -115,23 +108,6 @@ export function renderRoster(root, { player }) {
 
   let buildingsData = {};
   let upgradePaths  = {};
-
-  async function loadResourceBar() {
-    try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
-      root.querySelector('#resource-bar').innerHTML = `
-        <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
-      `;
-    } catch (err) {
-      console.error('Failed to load resource bar:', err);
-    }
-  }
 
   function buildCard(u) {
     const stored   = u.unit_data || {};
@@ -419,6 +395,8 @@ export function renderRoster(root, { player }) {
         ]);
         units         = freshUnits;
         buildingsData = freshStruct?.buildings_data || {};
+        // Level up doesn't cost resources but good practice to keep bar fresh
+        refreshResourceBar(player).catch(() => {});
         const savedIdx = current;
         initSlider();
         goTo(savedIdx);
@@ -511,14 +489,4 @@ export function renderRoster(root, { player }) {
   }
 
   load();
-  loadResourceBar();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'roster') return;
-      navigate(screen, { player });
-    });
-  });
 }

@@ -1,6 +1,7 @@
-import { api }      from '../main.js';
-import { navigate } from '../main.js';
-import { SPELLS }   from '../../data/spells.js';
+import { api }              from '../main.js';
+import { navigate }          from '../main.js';
+import { refreshResourceBar } from '../main.js';
+import { SPELLS }            from '../../data/spells.js';
 
 const CRYSTAL_ICONS = {
   Crystals_Life:   '🟢',
@@ -13,7 +14,6 @@ const CRYSTAL_ICONS = {
 export function renderSpellTome(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-spelltome">
-      <div class="resource-bar" id="resource-bar"></div>
       <main class="spelltome-main">
         <div class="spelltome-header">
           <span class="spelltome-title">📖 Spell Tome</span>
@@ -36,13 +36,6 @@ export function renderSpellTome(root, { player }) {
           </div>
         </div>
       </main>
-
-      <nav class="bottom-nav">
-        <button class="nav-btn" data-screen="castle">Castle</button>
-        <button class="nav-btn" data-screen="roster">Roster</button>
-        <button class="nav-btn" data-screen="embark">Embark</button>
-        <button class="nav-btn active" data-screen="spells">Spells</button>
-      </nav>
     </div>
   `;
 
@@ -56,31 +49,6 @@ export function renderSpellTome(root, { player }) {
   const slider      = root.querySelector('#spells-slider');
   const detailPanel = root.querySelector('#spell-detail-panel');
   const tierTabs    = root.querySelector('#tier-tabs');
-
-  async function loadResourceBar() {
-    try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
-      root.querySelector('#resource-bar').innerHTML = `
-        <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-        <div class="res-bar-sep"></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
-      `;
-      playerCrystals = {
-        Crystals_Life:   find('Crystals_Life').amount,
-        Crystals_Fire:   find('Crystals_Fire').amount,
-        Crystals_Death:  find('Crystals_Death').amount,
-        Crystals_Nature: find('Crystals_Nature').amount,
-        Crystals_Frost:  find('Crystals_Frost').amount,
-      };
-    } catch (err) {
-      console.error('Failed to load resource bar:', err);
-    }
-  }
 
   function costHtml(spell) {
     let parts = '';
@@ -237,7 +205,8 @@ export function renderSpellTome(root, { player }) {
           if (amt > 0) playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
         learnedSpells.push(spell.id);
-        await loadResourceBar();
+        // Crystals were spent — refresh the shared resource bar
+        refreshResourceBar(player).catch(() => {});
         renderSlider();
         showDetail(spell);
         showFeedback('Spell learned!', false);
@@ -266,9 +235,10 @@ export function renderSpellTome(root, { player }) {
 
   async function init() {
     try {
-      const [structData, researchData] = await Promise.all([
+      const [structData, researchData, inventory] = await Promise.all([
         api(`/structures?chat_id=${player.chat_id}`),
         api(`/spells/research?chat_id=${player.chat_id}`),
+        api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       ]);
 
       throneLevel   = structData?.buildings_data?.slot_0?.level || 1;
@@ -276,7 +246,15 @@ export function renderSpellTome(root, { player }) {
         ? researchData
         : (researchData?.researched_spells || []);
 
-      await loadResourceBar();
+      const find = name => inventory.find(r => r.item === name) || { amount: 0 };
+      playerCrystals = {
+        Crystals_Life:   find('Crystals_Life').amount,
+        Crystals_Fire:   find('Crystals_Fire').amount,
+        Crystals_Death:  find('Crystals_Death').amount,
+        Crystals_Nature: find('Crystals_Nature').amount,
+        Crystals_Frost:  find('Crystals_Frost').amount,
+      };
+
       renderSlider();
     } catch (err) {
       console.error('Spell tome init failed:', err);
@@ -285,13 +263,4 @@ export function renderSpellTome(root, { player }) {
   }
 
   init();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'spells') return;
-      navigate(screen, { player });
-    });
-  });
 }

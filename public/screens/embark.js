@@ -13,7 +13,6 @@ const REGIONS = [
 export function renderEmbark(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-embark">
-      <div class="resource-bar" id="resource-bar"></div>
       <main class="embark-main">
         <div class="embark-header">
           <h2>Select Region</h2>
@@ -28,34 +27,10 @@ export function renderEmbark(root, { player }) {
           </div>
         </div>
       </main>
-
-      <nav class="bottom-nav">
-        <button class="nav-btn" data-screen="castle">Castle</button>
-        <button class="nav-btn" data-screen="roster">Roster</button>
-        <button class="nav-btn active" data-screen="embark">Embark</button>
-        <button class="nav-btn" data-screen="spells">Spells</button>
-      </nav>
     </div>
   `;
 
   let selectedRegion = null;
-
-  async function loadResourceBar() {
-    try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
-      root.querySelector('#resource-bar').innerHTML = `
-        <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
-        <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
-      `;
-    } catch (err) {
-      console.error('Failed to load resource bar:', err);
-    }
-  }
 
   async function loadRegions() {
     try {
@@ -107,18 +82,5 @@ export function renderEmbark(root, { player }) {
     }
   }
 
-  async function init() {
-    await Promise.all([loadResourceBar(), loadRegions()]);
-  }
-
-  init();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'embark') return;
-      navigate(screen, { player });
-    });
-  });
+  loadRegions();
 }

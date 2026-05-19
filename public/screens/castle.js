@@ -1,8 +1,9 @@
-import { api }            from '../main.js';
-import { navigate }       from '../main.js';
-import { PASSIVES }       from '../../data/passives.js';
-import { ABILITIES }      from '../../data/abilities.js';
-import { renderSpellTome } from './spell_tome.js';
+import { api }              from '../main.js';
+import { navigate }          from '../main.js';
+import { refreshResourceBar } from '../main.js';
+import { PASSIVES }          from '../../data/passives.js';
+import { ABILITIES }         from '../../data/abilities.js';
+import { renderSpellTome }   from './spell_tome.js';
 
 let UNITS = null;
 
@@ -36,7 +37,6 @@ function resolveAbility(key, type) {
 export function renderCastle(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-castle">
-      <div class="resource-bar" id="resource-bar"></div>
       <main class="castle-main">
         <div class="castle-grounds">
           <div class="castle-grid-wrap">
@@ -45,12 +45,6 @@ export function renderCastle(root, { player }) {
           </div>
         </div>
       </main>
-      <nav class="bottom-nav">
-        <button class="nav-btn active" data-screen="castle">Castle</button>
-        <button class="nav-btn" data-screen="roster">Roster</button>
-        <button class="nav-btn" data-screen="embark">Embark</button>
-        <button class="nav-btn" data-screen="spells">Spells</button>
-      </nav>
     </div>
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal">
@@ -94,17 +88,6 @@ export function renderCastle(root, { player }) {
       api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
     ]);
-
-    const find = (name) => inventory.find(r => r.item === name) || { amount: 0 };
-
-    root.querySelector('#resource-bar').innerHTML = `
-      <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
-      <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
-    `;
 
     buildingPools      = buildingsResp.pools;
     upgradePaths       = buildingsResp.upgrade_paths || {};
@@ -469,6 +452,7 @@ export function renderCastle(root, { player }) {
         const updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
         structuresRecord = updated;
         renderBuildings();
+        refreshResourceBar(player).catch(() => {});
       } catch (err) {
         alert(err.message || 'Throne upgrade failed');
       }
@@ -505,6 +489,7 @@ export function renderCastle(root, { player }) {
       });
       structuresRecord = updated;
       renderBuildings();
+      refreshResourceBar(player).catch(() => {});
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');
@@ -512,14 +497,4 @@ export function renderCastle(root, { player }) {
   }
 
   load();
-
-  root.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const screen = btn.dataset.screen;
-      if (screen === 'spells') renderSpellTome(root, { player });
-      else if (screen === 'castle') renderBuildings();
-      else navigate(screen, { player });
-    });
-  });
 }
