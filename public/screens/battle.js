@@ -1,5 +1,5 @@
 import { api, navigate } from '../main.js';
-import { subscribeToBattle, disconnectRealtime } from '../battle-realtime.js';
+import { BattleSystem, cellIndex } from '../battle-system.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -15,14 +15,12 @@ const RESIST_ICONS = {
 };
 const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
-export function renderBattle(root, { player, region_id, level, resumeBattleId }) {
-  let battleId        = resumeBattleId || null;
-  let battleData      = null;
-  let selectedCombatant = null;
+export function renderBattle(root, { player, region_id, level, playerUnits, enemies, placement }) {
+  const battle = new BattleSystem(playerUnits, enemies, placement);
+
   let selectingTargetFor = null;
   let selectedActionType = null;
-  let pendingAction   = false;
-  let unsubscribe     = null;
+  let selectedCombatant  = null;
 
   const regionMeta = {
     life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -33,75 +31,32 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
 
-  function cellIndex(r, c) { return r * COLS + c; }
-  function cellRow(i)  { return Math.floor(i / COLS); }
-  function cellCol(i)  { return i % COLS; }
-
   function hpColor(pct) {
     if (pct > 0.6) return '#4a9a4a';
     if (pct > 0.3) return '#c8973a';
     return '#c84a3a';
   }
 
-  function unitTypeIcon(c) {
-    const t = c?.unit_data?.type ?? '';
+  function unitTypeIcon(u) {
+    const t = u?.unit_data?.type ?? '';
     return UNIT_TYPE_ICONS[t] ?? '·';
   }
 
-  function isHealer(c) {
-    const tt = c?.unit_data?.target_type || c?.unit_data?.action?.target_type;
-    return tt === 'ally';
+  function getActionLabel(unit) {
+    return battle.isHealer(unit) ? 'Heal' : 'Attack';
   }
 
-  function getActionLabel(c) {
-    return isHealer(c) ? 'Heal' : 'Attack';
-  }
-
-  function getPassiveName(c) {
-    const p = c?.unit_data?.passive || c?.unit_data?.passive_ability;
+  function getPassiveName(unit) {
+    const p = unit?.unit_data?.passive || unit?.unit_data?.passive_ability;
     if (!p) return 'None';
-    return (typeof p === 'string' ? p : (p.name || p.id || '')).split(' ')[0].replace(/_/g, ' ');
+    const name = typeof p === 'string' ? p : (p.name || p.id || '');
+    return name.split(' ')[0].replace(/_/g, ' ');
   }
 
-  function cellLabel(idx) {
-    return `R${cellRow(idx) + 1}C${cellCol(idx) + 1}`;
-  }
-
-  function currentActor() {
-    if (!battleData) return null;
-    return battleData.combatants
-      .filter(c => c.alive && !c.acted_this_round)
-      .sort((a, b) => b.initiative - a.initiative)[0] ?? null;
-  }
-
-  function getValidTargets(actor) {
-    if (!battleData || !actor) return [];
-    const healer = isHealer(actor);
-    return battleData.combatants.filter(t => {
-      if (!t.alive) return false;
-      if (healer) return t.side === actor.side;
-      if (t.side === actor.side) return false;
-      const range = actor.unit_data?.range ?? 1;
-      if (range === 1) {
-        const frontCol   = t.side === 'enemy' ? 0 : 1;
-        const backCol    = t.side === 'enemy' ? 1 : 0;
-        const frontAlive = battleData.combatants.filter(c => c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol);
-        const reachable  = frontAlive.length > 0 ? frontCol : backCol;
-        return cellCol(t.cellIndex) === reachable;
-      }
-      return true;
-    });
-  }
-
-  function getAbilityTargets(actor) {
-    if (!battleData || !actor) return [];
-    const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
-    if (key.startsWith('purge'))       return battleData.combatants.filter(c => c.side !== actor.side && c.alive);
-    if (key.startsWith('mark_of_ash')) return battleData.combatants.filter(c => c.side !== actor.side && c.alive);
-    if (key.startsWith('raise_dead'))  return battleData.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
-    if (key.startsWith('devour'))      return battleData.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-    if (key.startsWith('lions_roar'))  return [actor];
-    return battleData.combatants.filter(c => c.side !== actor.side && c.alive);
+  function cellLabel(cellIdx) {
+    const r = Math.floor(cellIdx / COLS);
+    const c = cellIdx % COLS;
+    return `R${r + 1}C${c + 1}`;
   }
 
   function unitStatsHtml(c) {
@@ -197,28 +152,15 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     return '';
   }
 
-  function getActingOrder() {
-    if (!battleData) return [];
-    return battleData.combatants
-      .filter(c => c.alive && !c.acted_this_round)
-      .sort((a, b) => b.initiative - a.initiative);
-  }
-
   function render() {
-    if (!battleData) {
-      root.innerHTML = `<div class="screen screen-battle"><div style="padding:2rem;text-align:center;color:var(--muted)">Loading battle…</div></div>`;
-      return;
-    }
+    const actor = battle.currentActor();
+    const state = battle.getState();
 
-    const actor = currentActor();
-    const isPlayerTurn = actor?.side === 'player' && !pendingAction;
-
-    const validTargetIds = new Set();
+    const validTargetKeys = new Set();
     if (selectingTargetFor) {
-      const targets = selectedActionType === 'ability'
-        ? getAbilityTargets(selectingTargetFor)
-        : getValidTargets(selectingTargetFor);
-      for (const t of targets) validTargetIds.add(t.id);
+      for (const t of battle.getValidTargets(selectingTargetFor)) {
+        validTargetKeys.add(`${t.side}:${t.cellIndex}`);
+      }
     }
 
     function renderSide(side) {
@@ -226,15 +168,16 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const idx = cellIndex(r, c);
-          const occ = battleData.combatants.find(co => co.side === side && co.cellIndex === idx);
+          const occ = state.combatants.find(co => co.side === side && co.cellIndex === idx);
           if (!occ) {
             html.push(`<div class="battle-cell battle-cell--empty"><span class="battle-cell-row-hint">R${r+1}</span></div>`);
             continue;
           }
 
-          const isActor    = actor?.id === occ.id;
-          const isTarget   = validTargetIds.has(occ.id);
-          const isSelected = selectedCombatant?.id === occ.id;
+          const isActor    = actor?.side === occ.side && actor?.cellIndex === occ.cellIndex;
+          const targetKey  = `${occ.side}:${occ.cellIndex}`;
+          const isTarget   = validTargetKeys.has(targetKey);
+          const isSelected = selectedCombatant?.side === occ.side && selectedCombatant?.cellIndex === occ.cellIndex;
           const hpPct      = occ.battle_hp / occ.max_hp;
 
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
@@ -245,7 +188,7 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
           else                 cls += ' battle-cell--enemy';
 
           html.push(`
-            <div class="${cls}" data-id="${occ.id}">
+            <div class="${cls}" data-side="${occ.side}" data-cell="${occ.cellIndex}">
               <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
               ${occ.alive
                 ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${occ.shield > 0 ? ` 🛡${occ.shield}` : ''}</span>`
@@ -258,21 +201,21 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
       return html.join('');
     }
 
+    const isEnemyTurn = !actor || actor.side === 'enemy';
     const hasAbility  = actor && (!!actor.unit_data?.ability || !!actor.unit_data?.active_ability);
     const abilityName = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : 'Ability';
     const actionLabel = actor ? getActionLabel(actor) : 'Attack';
     const passiveName = actor ? getPassiveName(actor) : '';
-    const isEnemyTurn = !actor || actor.side === 'enemy' || pendingAction;
 
     root.innerHTML = `
       <div class="screen screen-battle">
         <div class="battle-header">
           <span class="battle-title">${meta.icon} ${meta.label} — Lv ${level}</span>
-          <span class="battle-round">Round ${battleData.round}</span>
+          <span class="battle-round">Round ${state.round}</span>
         </div>
 
         <div class="init-queue" id="init-queue">
-          ${getActingOrder().slice(0, 4).map((c, i) => `
+          ${battle.getActingOrder().slice(0, 4).map((c, i) => `
             <div class="init-card ${i === 0 ? 'init-card--active' : ''}">
               <span class="init-icon">${c.side === 'player' ? unitTypeIcon(c) : '💀'}</span>
               <span class="init-name">${c.unit_name.split(' ')[0]}</span>
@@ -294,9 +237,7 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
 
         <div class="action-panel">
           <div class="action-panel-label">
-            ${isEnemyTurn && pendingAction
-              ? `<span style="color:var(--muted)">Processing…</span>`
-              : isEnemyTurn
+            ${isEnemyTurn
               ? `<span style="color:var(--muted)">Enemy is acting…</span>`
               : `<strong>${actor.unit_name}</strong> <small style="color:var(--muted)">· Passive: ${passiveName}</small>`
             }
@@ -316,7 +257,7 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
         </div>
 
         <div class="battle-log" id="battle-log">
-          ${(battleData.log || []).slice().reverse().map(formatLogEntry).join('')}
+          ${state.log.slice().reverse().map(formatLogEntry).join('')}
         </div>
 
         <div class="battle-unit-detail-wrap" id="unit-detail-panel">
@@ -328,46 +269,22 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     attachEvents();
   }
 
-  async function sendAction(action_type, target_id = null) {
-    if (pendingAction) return;
-    pendingAction = true;
-    selectingTargetFor = null;
-    selectedActionType = null;
-    render();
-
-    try {
-      const result = await api('/battle/action', {
-        chat_id:     player.chat_id,
-        battle_id:   battleId,
-        action_type,
-        target_id,
-      });
-      battleData = result.battle_data;
-      if (battleData.done) {
-        pendingAction = false;
-        return renderResult();
-      }
-    } catch (err) {
-      console.error('battle/action error:', err);
-    }
-
-    pendingAction = false;
-    render();
-  }
-
   function attachEvents() {
-    root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
+    root.querySelectorAll('.battle-cell[data-side][data-cell]').forEach(cell => {
       cell.addEventListener('click', () => {
-        const id = cell.dataset.id;
-        const combatant = battleData.combatants.find(c => c.id === id);
+        const side    = cell.dataset.side;
+        const cellIdx = parseInt(cell.dataset.cell, 10);
+        const combatant = battle.combatants.find(c => c.side === side && c.cellIndex === cellIdx);
         if (!combatant) return;
 
         if (selectingTargetFor) {
-          const targets = selectedActionType === 'ability'
-            ? getAbilityTargets(selectingTargetFor)
-            : getValidTargets(selectingTargetFor);
-          if (targets.some(t => t.id === combatant.id)) {
-            sendAction(selectedActionType === 'ability' ? 'ability' : 'attack', combatant.id);
+          const valid = battle.getValidTargets(selectingTargetFor);
+          if (valid.some(t => t.side === combatant.side && t.cellIndex === combatant.cellIndex)) {
+            battle.executeAction(selectingTargetFor, combatant, selectedActionType || 'attack');
+            selectingTargetFor = null;
+            selectedActionType = null;
+            render();
+            nextTurn();
             return;
           }
         }
@@ -382,30 +299,29 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     });
 
     root.querySelector('#btn-main')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side !== 'player' || pendingAction) return;
-      selectingTargetFor = actor;
-      selectedActionType = 'attack';
-      render();
+      if (!battle.currentActor() || battle.currentActor().side === 'enemy') return;
+      startTargeting('attack');
     });
 
     root.querySelector('#btn-ability')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side !== 'player' || pendingAction || actor.used_active) return;
-      const targets = getAbilityTargets(actor);
-      if (targets.length === 0 || (targets.length === 1 && targets[0].id === actor.id)) {
-        sendAction('ability', targets[0]?.id ?? null);
-      } else {
-        selectingTargetFor = actor;
-        selectedActionType = 'ability';
+      const actor = battle.currentActor();
+      if (!actor || actor.side === 'enemy') return;
+      const abilityTargets = battle.getValidTargets(actor, true);
+      if (abilityTargets.length === 0) {
+        battle.doAbility(actor, null);
         render();
+        nextTurn();
+      } else {
+        startTargeting('ability');
       }
     });
 
     root.querySelector('#btn-defend')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side !== 'player' || pendingAction) return;
-      sendAction('defend');
+      const actor = battle.currentActor();
+      if (!actor || actor.side === 'enemy') return;
+      battle.executeAction(actor, null, 'defend');
+      render();
+      nextTurn();
     });
 
     root.querySelector('#btn-cancel')?.addEventListener('click', () => {
@@ -416,18 +332,30 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     });
   }
 
-  async function renderResult() {
-    cleanup();
+  function startTargeting(type) {
+    const actor = battle.currentActor();
+    if (!actor) return;
+    selectingTargetFor = actor;
+    selectedActionType = type;
+    render();
+  }
 
-    const won = battleData.winner === 'player';
-
-    try {
-      await api('/battle/end', { chat_id: player.chat_id, battle_id: battleId });
-    } catch (err) {
-      console.error('Failed to end battle:', err);
+  function nextTurn() {
+    if (battle.done) return renderResult();
+    const next = battle.currentActor();
+    if (next?.side === 'enemy') {
+      setTimeout(() => {
+        battle.aiTurn();
+        render();
+        nextTurn();
+      }, 700);
     }
+  }
 
-    const survivors   = won ? battleData.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
+  async function renderResult() {
+    const won = battle.winner === 'player';
+
+    const survivors   = won ? battle.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
 
     root.innerHTML = `
@@ -472,47 +400,9 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     btn.addEventListener('click', () => navigate('castle', { player }));
   }
 
-  function cleanup() {
-    if (unsubscribe) {
-      unsubscribe();
-      unsubscribe = null;
-    }
+  render();
+
+  if (battle.currentActor()?.side === 'enemy') {
+    setTimeout(() => { battle.aiTurn(); render(); nextTurn(); }, 800);
   }
-
-  async function init() {
-    if (!battleId) {
-      root.innerHTML = `<div class="screen screen-battle"><div style="padding:2rem;text-align:center;color:var(--danger)">No battle ID provided.</div></div>`;
-      return;
-    }
-
-    try {
-      const result = await api(`/battle/state?chat_id=${player.chat_id}&battle_id=${battleId}`);
-      battleData = result.battle_data;
-    } catch (err) {
-      console.error('Failed to load battle state:', err);
-      root.innerHTML = `<div class="screen screen-battle"><div style="padding:2rem;text-align:center;color:var(--danger)">Failed to load battle.</div></div>`;
-      return;
-    }
-
-    if (battleData.done) {
-      return renderResult();
-    }
-
-    unsubscribe = subscribeToBattle(player.chat_id, battleId, (event, record) => {
-      if (pendingAction) return;
-      if (event === 'UPDATE' && record?.battle_data) {
-        battleData = record.battle_data;
-        if (battleData.done) {
-          cleanup();
-          renderResult();
-        } else {
-          render();
-        }
-      }
-    });
-
-    render();
-  }
-
-  init();
 }
