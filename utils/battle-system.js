@@ -665,6 +665,8 @@ class BattleSystem {
     }
   }
 
+  pushLog(entry) { this.log.push(entry); }
+
   toState() {
     return {
       combatants: this.combatants,
