@@ -20,7 +20,16 @@ app.use('/api', routes);
 
 app.get('*', (req, res, next) => {
   if (path.extname(req.path)) return next();
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const fs = require('fs');
+  const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  const injected = html.replace(
+    '<head>',
+    `<head><script>
+      window.__SUPABASE_URL__ = "${process.env.SUPABASE_URL}";
+      window.__SUPABASE_ANON_KEY__ = "${process.env.SUPABASE_ANON_KEY}";
+    </script>`
+  );
+  res.send(injected);
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
