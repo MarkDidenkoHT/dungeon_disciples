@@ -15,12 +15,38 @@ const RESIST_ICONS = {
 };
 const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
+function generateBattleId(chatId) {
+  return `${chatId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function snapshotCombatants(combatants) {
+  return combatants.map(c => ({
+    id:          c.id,
+    side:        c.side,
+    cellIndex:   c.cellIndex,
+    battle_hp:   c.battle_hp,
+    max_hp:      c.max_hp,
+    alive:       c.alive,
+    used_active: c.used_active,
+    buffs: [
+      ...(c.shield  > 0       ? [{ type: 'shield',   value: c.shield   }] : []),
+      ...(c._dmg_mult !== 1   ? [{ type: 'dmg_mult', value: c._dmg_mult }] : []),
+    ],
+    debuffs: [
+      ...(c.burn   > 0 ? [{ type: 'burn',   value: c.burn   }] : []),
+      ...(c.poison > 0 ? [{ type: 'poison', value: c.poison }] : []),
+    ],
+  }));
+}
+
 export function renderBattle(root, { player, region_id, level, playerUnits, enemies, placement }) {
-  const battle = new BattleSystem(playerUnits, enemies, placement);
+  const battle    = new BattleSystem(playerUnits, enemies, placement);
+  const battleId  = generateBattleId(player.chat_id);
 
   let selectingTargetFor = null;
   let selectedActionType = null;
   let selectedCombatant  = null;
+  let battleStarted      = false;
 
   const regionMeta = {
     life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -30,6 +56,36 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
+
+  async function initBattleState() {
+    try {
+      await api('/battle/state/start', {
+        chat_id:    player.chat_id,
+        battle_id:  battleId,
+        combatants: snapshotCombatants(battle.combatants),
+      });
+      battleStarted = true;
+    } catch (_) {
+      battleStarted = true;
+    }
+  }
+
+  async function syncBattleState() {
+    if (!battleStarted) return;
+    try {
+      await api('/battle/state/sync', {
+        battle_id:  battleId,
+        round:      battle.round,
+        combatants: snapshotCombatants(battle.combatants),
+      });
+    } catch (_) {}
+  }
+
+  async function endBattleState() {
+    try {
+      await api('/battle/state/end', { battle_id: battleId });
+    } catch (_) {}
+  }
 
   function hpColor(pct) {
     if (pct > 0.6) return '#4a9a4a';
@@ -284,6 +340,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
             selectingTargetFor = null;
             selectedActionType = null;
             render();
+            syncBattleState().catch(() => {});
             nextTurn();
             return;
           }
@@ -310,6 +367,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       if (abilityTargets.length === 0) {
         battle.doAbility(actor, null);
         render();
+        syncBattleState().catch(() => {});
         nextTurn();
       } else {
         startTargeting('ability');
@@ -321,6 +379,7 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
       if (!actor || actor.side === 'enemy') return;
       battle.executeAction(actor, null, 'defend');
       render();
+      syncBattleState().catch(() => {});
       nextTurn();
     });
 
@@ -341,12 +400,16 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   function nextTurn() {
-    if (battle.done) return renderResult();
+    if (battle.done) {
+      endBattleState().catch(() => {});
+      return renderResult();
+    }
     const next = battle.currentActor();
     if (next?.side === 'enemy') {
       setTimeout(() => {
         battle.aiTurn();
         render();
+        syncBattleState().catch(() => {});
         nextTurn();
       }, 700);
     }
@@ -400,9 +463,10 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
     btn.addEventListener('click', () => navigate('castle', { player }));
   }
 
-  render();
-
-  if (battle.currentActor()?.side === 'enemy') {
-    setTimeout(() => { battle.aiTurn(); render(); nextTurn(); }, 800);
-  }
+  initBattleState().then(() => {
+    render();
+    if (battle.currentActor()?.side === 'enemy') {
+      setTimeout(() => { battle.aiTurn(); render(); syncBattleState().catch(() => {}); nextTurn(); }, 800);
+    }
+  });
 }

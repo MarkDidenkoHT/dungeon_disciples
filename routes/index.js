@@ -705,4 +705,91 @@ router.post('/spells/consume', async (req, res) => {
   }
 });
 
+const { getBattleState, upsertBattleState, closeBattleState } = require('../utils/realtime');
+
+function buildBattleSnapshot(combatants) {
+  return combatants.map(c => ({
+    id:        c.id,
+    side:      c.side,
+    cellIndex: c.cellIndex,
+    battle_hp: c.battle_hp,
+    max_hp:    c.max_hp,
+    alive:     c.alive,
+    used_active: c.used_active,
+    buffs: [
+      ...(c.shield  > 0 ? [{ type: 'shield',  value: c.shield  }] : []),
+      ...(c._dmg_mult !== 1 ? [{ type: 'dmg_mult', value: c._dmg_mult }] : []),
+    ],
+    debuffs: [
+      ...(c.burn   > 0 ? [{ type: 'burn',   value: c.burn   }] : []),
+      ...(c.poison > 0 ? [{ type: 'poison', value: c.poison }] : []),
+    ],
+  }));
+}
+
+router.post('/battle/state/start', async (req, res) => {
+  const { chat_id, battle_id, combatants } = req.body;
+  if (!chat_id || !battle_id || !combatants) {
+    return res.status(400).json({ error: 'chat_id, battle_id, combatants required' });
+  }
+  try {
+    const battle_data = {
+      round: 1,
+      units: buildBattleSnapshot(combatants),
+    };
+    const record = await upsertBattleState({ chat_id, battle_id, battle_data, battle_active: true });
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/state/sync', async (req, res) => {
+  const { battle_id, round, combatants } = req.body;
+  if (!battle_id || round === undefined || !combatants) {
+    return res.status(400).json({ error: 'battle_id, round, combatants required' });
+  }
+  try {
+    const existing = await getBattleState(battle_id);
+    if (!existing) return res.status(404).json({ error: 'Battle not found or already closed' });
+
+    const battle_data = {
+      round,
+      units: buildBattleSnapshot(combatants),
+    };
+    const record = await upsertBattleState({
+      chat_id: existing.chat_id,
+      battle_id,
+      battle_data,
+      battle_active: true,
+    });
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/state/end', async (req, res) => {
+  const { battle_id } = req.body;
+  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  try {
+    const record = await closeBattleState(battle_id);
+    res.json({ success: true, record });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/battle/state', async (req, res) => {
+  const { battle_id } = req.query;
+  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No active battle found' });
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
