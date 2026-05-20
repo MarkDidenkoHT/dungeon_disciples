@@ -166,7 +166,6 @@
   border-radius: 16px 16px 0 0;
   width: 100%;
   max-width: 480px;
-  max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
