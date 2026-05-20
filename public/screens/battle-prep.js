@@ -814,7 +814,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
-  root.querySelector('#ready-btn').addEventListener('click', () => {
+  root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
     const playerUnits = roster
@@ -836,7 +836,21 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
-    navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
+    try {
+      const battle = await api('/battle/create', {
+        chat_id: player.chat_id,
+        region_id,
+        level,
+        playerUnits,
+        enemies,
+        placement,
+        selectedSpells,
+      });
+      navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells, resumeBattleId: battle.battle_id });
+    } catch (err) {
+      console.error('Failed to create battle:', err);
+      navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
+    }
   });
 
   (async () => {
