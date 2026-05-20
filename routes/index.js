@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { UNITS } = require('../data/units');
 const { REGIONS } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
+const { BattleSystem } = require('../utils/battle-system');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -731,67 +732,121 @@ router.post('/battle/create', async (req, res) => {
       { method: 'PATCH', body: JSON.stringify({ battle_active: false }) }
     );
 
-    const characters = {};
+    const sys = BattleSystem.fromCreatePayload(
+      playerUnits || [],
+      enemies     || [],
+      placement   || {}
+    );
 
-    if (Array.isArray(playerUnits)) {
-      for (const u of playerUnits) {
-        characters[u.id] = {
-          id: u.id,
-          side: 'player',
-          unit_name: u.unit_name,
-          unit_data: u.unit_data || {},
-          current_hp: u.unit_data?.hp ?? null,
-          max_hp: u.unit_data?.hp ?? null,
-          cell: placement?.[u.id] ?? null,
-          alive: true,
-          buffs: [],
-          debuffs: [],
-          status_effects: [],
-        };
-      }
-    }
-
-    if (Array.isArray(enemies)) {
-      for (const e of enemies) {
-        const enemyId = `enemy_${e.cell ?? e.name}`;
-        characters[enemyId] = {
-          id: enemyId,
-          side: 'enemy',
-          unit_name: e.name,
-          unit_data: e,
-          current_hp: e.hp ?? null,
-          max_hp: e.hp ?? null,
-          cell: e.cell ?? null,
-          alive: true,
-          buffs: [],
-          debuffs: [],
-          status_effects: [],
-        };
-      }
-    }
-
-    const battleData = {
+    const battle_data = {
       region_id,
       level,
-      turn: 1,
-      phase: 'player_turn',
-      characters,
-      placement: placement || {},
       selected_spells: selectedSpells || [],
-      log: [],
+      ...sys.toState(),
     };
 
     const created = await supabase('/battle_state', {
       method: 'POST',
       body: JSON.stringify({
         chat_id,
-        battle_id: crypto.randomUUID(),
+        battle_id:     crypto.randomUUID(),
         battle_active: true,
-        battle_data: battleData,
+        battle_data,
       }),
     });
 
     res.json(created[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/action', async (req, res) => {
+  const { chat_id, battle_id, action_type, target_id } = req.body;
+  if (!chat_id || !battle_id || !action_type) {
+    return res.status(400).json({ error: 'chat_id, battle_id, action_type required' });
+  }
+
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_id=eq.${encodeURIComponent(battle_id)}&limit=1`
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Battle not found' });
+
+    const record = rows[0];
+    if (!record.battle_active) return res.status(400).json({ error: 'Battle is not active' });
+
+    const bd  = record.battle_data;
+    const sys = new BattleSystem(bd);
+
+    if (sys.done) return res.status(400).json({ error: 'Battle is already over' });
+
+    const actor = sys.currentActor();
+    if (!actor) return res.status(400).json({ error: 'No current actor' });
+    if (actor.side !== 'player') return res.status(400).json({ error: 'Not player turn' });
+
+    let target = null;
+    if (target_id) {
+      target = sys.combatants.find(c => c.id === target_id);
+      if (!target) return res.status(400).json({ error: 'Target not found' });
+    }
+
+    if (action_type === 'attack' || action_type === 'heal') {
+      if (!target) return res.status(400).json({ error: 'target_id required for attack/heal' });
+      const valid = sys.getValidTargets(actor);
+      if (!valid.some(t => t.id === target.id)) {
+        return res.status(400).json({ error: 'Invalid target' });
+      }
+      sys.executeAction(actor, target, 'attack');
+    } else if (action_type === 'ability') {
+      if (!sys.done) {
+        const abilityTargets = sys.getValidTargets(actor, true);
+        if (abilityTargets.length > 0 && !target) {
+          return res.status(400).json({ error: 'target_id required for this ability' });
+        }
+        sys.executeAction(actor, target, 'ability');
+      }
+    } else if (action_type === 'defend') {
+      sys.executeAction(actor, null, 'defend');
+    } else {
+      return res.status(400).json({ error: 'Unknown action_type' });
+    }
+
+    if (!sys.done) {
+      sys.runEnemyTurns();
+    }
+
+    const newBattleData = { ...bd, ...sys.toState() };
+
+    if (sys.done) {
+      await supabase(`/battle_state?id=eq.${record.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ battle_active: false, battle_data: newBattleData }),
+      });
+    } else {
+      await supabase(`/battle_state?id=eq.${record.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ battle_data: newBattleData }),
+      });
+    }
+
+    res.json({ battle_data: newBattleData });
+  } catch (err) {
+    console.error('battle/action error', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/battle/state', async (req, res) => {
+  const { chat_id, battle_id } = req.query;
+  if (!chat_id || !battle_id) return res.status(400).json({ error: 'chat_id and battle_id required' });
+
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_id=eq.${encodeURIComponent(battle_id)}&limit=1`
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Battle not found' });
+    res.json({ battle_data: rows[0].battle_data, battle_active: rows[0].battle_active });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
