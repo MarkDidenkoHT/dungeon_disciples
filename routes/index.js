@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
 
 const { UNITS } = require('../data/units');
 const { REGIONS } = require('../data/embark');
@@ -786,7 +785,7 @@ router.post('/battle/create', async (req, res) => {
       method: 'POST',
       body: JSON.stringify({
         chat_id,
-        battle_id: uuidv4(),
+        battle_id: crypto.randomUUID(),
         battle_active: true,
         battle_data: battleData,
       }),
