@@ -499,6 +499,7 @@ export function renderBattle(root, { player, region_id, level, resumeBattleId })
     }
 
     unsubscribe = subscribeToBattle(player.chat_id, battleId, (event, record) => {
+      if (pendingAction) return;
       if (event === 'UPDATE' && record?.battle_data) {
         battleData = record.battle_data;
         if (battleData.done) {
