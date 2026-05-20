@@ -777,11 +777,17 @@ router.post('/battle/action', async (req, res) => {
     if (!record.battle_active) return res.status(400).json({ error: 'Battle is not active' });
 
     const bd  = record.battle_data;
+    console.log('[battle/action] bd keys:', Object.keys(bd || {}));
+    console.log('[battle/action] combatants count:', bd?.combatants?.length);
+
     const sys = new BattleSystem(bd);
+    console.log('[battle/action] sys.combatants count:', sys.combatants?.length);
+    console.log('[battle/action] sys.done:', sys.done);
 
     if (sys.done) return res.status(400).json({ error: 'Battle is already over' });
 
     const actor = sys.currentActor();
+    console.log('[battle/action] currentActor:', actor ? `${actor.unit_name} (${actor.side})` : 'null');
     if (!actor) return res.status(400).json({ error: 'No current actor' });
     if (actor.side !== 'player') return res.status(400).json({ error: 'Not player turn' });
 
@@ -790,6 +796,8 @@ router.post('/battle/action', async (req, res) => {
       target = sys.combatants.find(c => c.id === target_id);
       if (!target) return res.status(400).json({ error: 'Target not found' });
     }
+
+    console.log('[battle/action] action_type:', action_type, '| target:', target?.unit_name ?? 'none');
 
     if (action_type === 'attack' || action_type === 'heal') {
       if (!target) return res.status(400).json({ error: 'target_id required for attack/heal' });
@@ -812,8 +820,21 @@ router.post('/battle/action', async (req, res) => {
       return res.status(400).json({ error: 'Unknown action_type' });
     }
 
+    console.log('[battle/action] player action done | sys.done:', sys.done);
+    console.log('[battle/action] nextActor after player:', sys.currentActor() ? sys.currentActor().unit_name + ' (' + sys.currentActor().side + ')' : 'null');
+
     if (!sys.done) {
-      sys.runEnemyTurns();
+      console.log('[battle/action] running enemy turns...');
+      const enemiesBefore = sys.combatants.filter(c => c.side === 'enemy' && c.alive).map(c => c.unit_name + '(acted:' + c.acted_this_round + ')');
+      console.log('[battle/action] enemies before:', enemiesBefore);
+      try {
+        sys.runEnemyTurns();
+      } catch (aiErr) {
+        console.error('[battle/action] runEnemyTurns threw:', aiErr);
+      }
+      const enemiesAfter = sys.combatants.filter(c => c.side === 'enemy' && c.alive).map(c => c.unit_name + '(acted:' + c.acted_this_round + ')');
+      console.log('[battle/action] enemies after:', enemiesAfter);
+      console.log('[battle/action] total log entries:', sys.log.length);
     }
 
     const newBattleData = { ...bd, ...sys.toState() };
