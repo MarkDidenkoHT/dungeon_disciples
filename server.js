@@ -18,6 +18,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api', routes);
 
+app.get('/debug-env', (req, res) => {
+  res.json({
+    supabase_url: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+    supabase_anon_key: process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+  });
+});
+
 app.get('*', (req, res, next) => {
   if (path.extname(req.path)) return next();
   const fs = require('fs');
