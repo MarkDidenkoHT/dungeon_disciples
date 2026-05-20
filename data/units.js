@@ -2,7 +2,7 @@ import { PASSIVES } from './passives.js';
 import { ABILITIES } from './abilities.js';
 
 const UNITS = {
-  dungeon: {
+  choir_of_the_cursed: {
     warlord: {
       id: 'h_d_1',
       f: 'd',

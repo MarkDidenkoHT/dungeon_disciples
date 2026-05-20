@@ -80,7 +80,7 @@ const SPELLS = {
     },
   ],
 
-  dungeon: [
+  choir_of_the_cursed: [
     {
       id: 'd_spell_1',
       name: 'Dark Shroud',

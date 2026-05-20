@@ -3,7 +3,7 @@ import { navigate } from '../main.js';
 
 const FACTIONS = [
   { id: 'empire',  label: 'The Empire',  description: 'Defenders of the realm, forged in honor.' },
-  { id: 'dungeon', label: 'The Dungeon', description: 'Creatures of darkness, bound by ambition.' },
+  { id: 'choir_of_the_cursed', label: 'Choir of the Cursed', description: 'Creatures of darkness, bound by ambition.' },
 ];
 
 export function renderRegister(root, { player } = {}) {

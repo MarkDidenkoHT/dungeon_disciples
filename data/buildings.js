@@ -57,7 +57,7 @@ const BUILDING_POOLS = {
       { id: 'watchtower', label: 'Watchtower', category: 'any', unit_id: null },
     ],
   },
-  dungeon: {
+  choir_of_the_cursed: {
     throne: [
       { id: 'dark_throne', label: 'Dark Throne', category: 'throne', unit_id: null },
       { id: 'warlord_keep_1', label: 'Warlord Keep', category: 'throne', unit_id: 'h_d_1', tier: 1, upgrades: ['h_d_1_t2', 'h_d_1_t3', 'h_d_1_t4'] },
@@ -168,7 +168,7 @@ const UNIT_UPGRADE_PATHS = {
       { unit_id: 'h_e_3_t4', building_id: 'ranger_outpost_4', label: 'Ranger Outpost IV' },
     ],
   },
-  dungeon: {
+  choir_of_the_cursed: {
     d1: [
       { unit_id: 'd3', building_id: 'possession_altar', label: 'Possession Altar' },
     ],

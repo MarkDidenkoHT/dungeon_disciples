@@ -110,7 +110,7 @@ export function renderCastle(root, { player }) {
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
-    const all = { ...UNITS.empire, ...UNITS.dungeon, ...UNITS.grail_of_sorrow, ...UNITS.enemies };
+    const all = { ...UNITS.empire, ...UNITS.choir_of_the_cursed, ...UNITS.grail_of_sorrow, ...UNITS.enemies };
     return Object.values(all).find(u => u.id === unitId) || null;
   }
 
@@ -408,7 +408,7 @@ export function renderCastle(root, { player }) {
     const nextLevel   = throneLevel + 1;
     const cost        = throneUpgradeCosts[nextLevel];
     const isMaxed     = throneLevel >= heroMaxLevel;
-    const label       = player.faction === 'dungeon' ? 'Dark Throne' : 'Throne';
+    const label       = player.faction === 'choir_of_the_cursed' ? 'Dark Throne' : 'Throne';
 
     if (isMaxed) {
       openModal(label, `
