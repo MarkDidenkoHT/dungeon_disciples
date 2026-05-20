@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 
 const { UNITS } = require('../data/units');
 const { REGIONS } = require('../data/embark');
@@ -700,6 +701,144 @@ router.post('/spells/consume', async (req, res) => {
     }
 
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/battle/active', async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_active=eq.true&order=created_at.desc&limit=1`
+    );
+    res.json(rows.length ? rows[0] : null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/create', async (req, res) => {
+  const { chat_id, region_id, level, playerUnits, enemies, placement, selectedSpells } = req.body;
+  if (!chat_id || !region_id || level === undefined) {
+    return res.status(400).json({ error: 'chat_id, region_id, level required' });
+  }
+
+  try {
+    await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_active=eq.true`,
+      { method: 'PATCH', body: JSON.stringify({ battle_active: false }) }
+    );
+
+    const characters = {};
+
+    if (Array.isArray(playerUnits)) {
+      for (const u of playerUnits) {
+        characters[u.id] = {
+          id: u.id,
+          side: 'player',
+          unit_name: u.unit_name,
+          unit_data: u.unit_data || {},
+          current_hp: u.unit_data?.hp ?? null,
+          max_hp: u.unit_data?.hp ?? null,
+          cell: placement?.[u.id] ?? null,
+          alive: true,
+          buffs: [],
+          debuffs: [],
+          status_effects: [],
+        };
+      }
+    }
+
+    if (Array.isArray(enemies)) {
+      for (const e of enemies) {
+        const enemyId = `enemy_${e.cell ?? e.name}`;
+        characters[enemyId] = {
+          id: enemyId,
+          side: 'enemy',
+          unit_name: e.name,
+          unit_data: e,
+          current_hp: e.hp ?? null,
+          max_hp: e.hp ?? null,
+          cell: e.cell ?? null,
+          alive: true,
+          buffs: [],
+          debuffs: [],
+          status_effects: [],
+        };
+      }
+    }
+
+    const battleData = {
+      region_id,
+      level,
+      turn: 1,
+      phase: 'player_turn',
+      characters,
+      placement: placement || {},
+      selected_spells: selectedSpells || [],
+      log: [],
+    };
+
+    const created = await supabase('/battle_state', {
+      method: 'POST',
+      body: JSON.stringify({
+        chat_id,
+        battle_id: uuidv4(),
+        battle_active: true,
+        battle_data: battleData,
+      }),
+    });
+
+    res.json(created[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/update', async (req, res) => {
+  const { chat_id, battle_id, battle_data } = req.body;
+  if (!chat_id || !battle_id || !battle_data) {
+    return res.status(400).json({ error: 'chat_id, battle_id, battle_data required' });
+  }
+
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_id=eq.${encodeURIComponent(battle_id)}&limit=1`
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Battle not found' });
+
+    const updated = await supabase(`/battle_state?id=eq.${rows[0].id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ battle_data }),
+    });
+
+    res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/end', async (req, res) => {
+  const { chat_id, battle_id } = req.body;
+  if (!chat_id || !battle_id) {
+    return res.status(400).json({ error: 'chat_id, battle_id required' });
+  }
+
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_id=eq.${encodeURIComponent(battle_id)}&limit=1`
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Battle not found' });
+
+    const updated = await supabase(`/battle_state?id=eq.${rows[0].id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ battle_active: false }),
+    });
+
+    res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

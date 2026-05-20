@@ -1,5 +1,6 @@
 import { api, navigate } from '../main.js';
 import { BattleSystem, cellIndex } from '../battle-system.js';
+import { subscribeToBattle, disconnectRealtime } from '../battle-realtime.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -15,12 +16,33 @@ const RESIST_ICONS = {
 };
 const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
-export function renderBattle(root, { player, region_id, level, playerUnits, enemies, placement }) {
+export function renderBattle(root, { player, region_id, level, playerUnits, enemies, placement, selectedSpells, resumeBattleId }) {
   const battle = new BattleSystem(playerUnits, enemies, placement);
 
   let selectingTargetFor = null;
   let selectedActionType = null;
   let selectedCombatant  = null;
+  let unsubscribe        = null;
+
+  const activeBattleId = resumeBattleId || null;
+
+  if (activeBattleId) {
+    unsubscribe = subscribeToBattle(player.chat_id, activeBattleId, (event, record) => {
+      if (event === 'UPDATE' && record?.battle_data) {
+        const bd = record.battle_data;
+        if (bd.phase === 'ended') {
+          cleanup();
+        }
+      }
+    });
+  }
+
+  function cleanup() {
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+  }
 
   const regionMeta = {
     life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -353,7 +375,17 @@ export function renderBattle(root, { player, region_id, level, playerUnits, enem
   }
 
   async function renderResult() {
+    cleanup();
+
     const won = battle.winner === 'player';
+
+    if (activeBattleId) {
+      try {
+        await api('/battle/end', { chat_id: player.chat_id, battle_id: activeBattleId });
+      } catch (err) {
+        console.error('Failed to end battle:', err);
+      }
+    }
 
     const survivors   = won ? battle.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);

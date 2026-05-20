@@ -17,8 +17,9 @@ export function renderEmbark(root, { player }) {
         <div class="embark-header">
           <h2>Select Region</h2>
         </div>
-        <div class="embark-regions-grid" id="embark-regions"></div>
-
+        <div class="embark-regions-grid" id="embark-regions">
+          <div class="embark-loading">Checking battle status…</div>
+        </div>
         <div class="embark-controls">
           <div class="embark-march-row">
             <button class="embark-march-btn" id="embark-march-btn" disabled>
@@ -32,9 +33,73 @@ export function renderEmbark(root, { player }) {
 
   let selectedRegion = null;
 
+  function renderActiveBattle(battle) {
+    const bd = battle.battle_data || {};
+    const regionId = bd.region_id || '—';
+    const level    = bd.level ?? '—';
+    const regionMeta = REGIONS.find(r => r.id === regionId);
+    const label  = regionMeta ? regionMeta.label : regionId;
+    const icon   = regionMeta ? regionMeta.icon  : '⚔';
+
+    root.querySelector('#embark-regions').innerHTML = `
+      <div class="embark-active-battle">
+        <div class="embark-active-battle-title">Active Battle</div>
+        <div class="embark-active-battle-info">
+          <span class="embark-active-battle-region">${icon} ${label} — Lv ${level}</span>
+        </div>
+        <button class="embark-resume-btn" id="embark-resume-btn">Resume Battle</button>
+        <button class="embark-abandon-btn" id="embark-abandon-btn">Abandon &amp; Start New</button>
+      </div>
+    `;
+
+    root.querySelector('#embark-march-btn').style.display = 'none';
+
+    root.querySelector('#embark-resume-btn').addEventListener('click', () => {
+      const playerUnits = Object.values(bd.characters || {})
+        .filter(c => c.side === 'player')
+        .map(c => ({
+          id: c.id,
+          unit_name: c.unit_name,
+          unit_data: c.unit_data || {},
+        }));
+
+      const enemies = Object.values(bd.characters || {})
+        .filter(c => c.side === 'enemy')
+        .map(c => ({ ...c.unit_data, name: c.unit_name, cell: c.cell }));
+
+      navigate('battle', {
+        player,
+        region_id: bd.region_id,
+        level: bd.level,
+        playerUnits,
+        enemies,
+        placement: bd.placement || {},
+        selectedSpells: bd.selected_spells || [],
+        resumeBattleId: battle.battle_id,
+      });
+    });
+
+    root.querySelector('#embark-abandon-btn').addEventListener('click', async () => {
+      try {
+        await api('/battle/end', { chat_id: player.chat_id, battle_id: battle.battle_id });
+      } catch {}
+      loadRegions();
+    });
+  }
+
   async function loadRegions() {
     try {
-      const progress = await api(`/progress?chat_id=${player.chat_id}`);
+      const [progress, activeBattle] = await Promise.all([
+        api(`/progress?chat_id=${player.chat_id}`),
+        api(`/battle/active?chat_id=${player.chat_id}`),
+      ]);
+
+      if (activeBattle) {
+        renderActiveBattle(activeBattle);
+        return;
+      }
+
+      root.querySelector('#embark-march-btn').style.display = '';
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
         if (r.type === 'pvp') {
