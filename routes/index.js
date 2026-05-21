@@ -391,7 +391,7 @@ router.get('/battle/state', async (req, res) => {
     const chat_id = record.chat_id;
 
     const [rosterRows, enemies] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,unit_name,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
       Promise.resolve(getEncounter(bd.region_id, bd.level)),
     ]);
 
@@ -401,7 +401,9 @@ router.get('/battle/state', async (req, res) => {
     const playerUnits = playerUnitIds.map(entry => {
       const r = rosterById[String(entry._rosterId || entry.id)];
       if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: r.unit_data, unit_name: r.unit_name };
+      const def = getUnitByDataId(r.unit_data?.unit_id);
+      if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
+      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
     });
 
     const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
@@ -449,7 +451,7 @@ router.post('/battle/action', async (req, res) => {
     const chat_id = record.chat_id;
 
     const [rosterRows, enemies] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,unit_name,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
       Promise.resolve(getEncounter(bd.region_id, bd.level)),
     ]);
 
@@ -459,7 +461,9 @@ router.post('/battle/action', async (req, res) => {
     const playerUnits = playerUnitIds.map(entry => {
       const r = rosterById[String(entry._rosterId || entry.id)];
       if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: r.unit_data, unit_name: r.unit_name };
+      const def = getUnitByDataId(r.unit_data?.unit_id);
+      if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
+      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
     });
 
     const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
