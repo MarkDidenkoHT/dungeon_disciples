@@ -70,12 +70,6 @@ export class SpellSystem {
         unit.spell_effects.hp_boosted = true;
       }
 
-      if (params.action_speed_boost) {
-        unit.action_speed = (unit.action_speed || 0) + params.action_speed_boost;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.action_speed_boosted = true;
-      }
-
       if (params.damage_boost) {
         unit.spell_damage_multiplier = (unit.spell_damage_multiplier || 1) + params.damage_boost;
         unit.spell_effects = unit.spell_effects || {};
@@ -123,12 +117,6 @@ export class SpellSystem {
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.slowed = true;
       }
-
-      if (params.action_speed_reduction) {
-        unit.action_speed_reduction = (unit.action_speed_reduction || 0) + params.action_speed_reduction;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.action_speed_reduced = true;
-      }
     }
   }
 
@@ -157,10 +145,6 @@ export class SpellSystem {
       changes.push(`+${params.max_hp_boost} Max HP`);
     }
 
-    if (params.action_speed_boost) {
-      changes.push(`+${Math.round(params.action_speed_boost * 100)}% Action Speed`);
-    }
-
     if (params.damage_boost) {
       changes.push(`+${Math.round(params.damage_boost * 100)}% Damage`);
     }
@@ -179,10 +163,6 @@ export class SpellSystem {
 
     if (params.initiative_reduction) {
       changes.push(`-${Math.round(params.initiative_reduction * 100)}% Initiative`);
-    }
-
-    if (params.action_speed_reduction) {
-      changes.push(`-${Math.round(params.action_speed_reduction * 100)}% Action Speed`);
     }
 
     return changes;

@@ -139,12 +139,12 @@ const SPELLS = {
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Drive allies into a killing frenzy. Grant all allies +20% damage and +25% action speed for the battle.',
+      description: 'Drive allies into a killing frenzy. Grant all allies +20% damage.',
       cost: { crystals: { Crystals_Death: 45 } },
       icon: '🩸',
       effect_type: 'buff',
       target_scope: 'all_allies',
-      params: { damage_boost: 0.20, action_speed_boost: 0.25 }
+      params: { damage_boost: 0.20}
     },
     {
       id: 'd_spell_6',
@@ -152,12 +152,12 @@ const SPELLS = {
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Tear at the souls of enemies. All foes lose 25% max HP and 20% action speed for the battle.',
+      description: 'Tear at the souls of enemies. All foes lose 25% max HP.',
       cost: { crystals: { Crystals_Death: 35, Crystals_Frost: 15 } },
       icon: '👻',
       effect_type: 'debuff',
       target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.25, action_speed_reduction: 0.20 }
+      params: { max_hp_reduction: 0.25}
     },
   ],
 
@@ -194,12 +194,12 @@ const SPELLS = {
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Surge with grave power. Grant all allies +15% damage and +20% action speed for the battle.',
+      description: 'Surge with grave power. Grant all allies +15% damage.',
       cost: { crystals: { Crystals_Fire: 25, Crystals_Life: 10 } },
       icon: '🔴',
       effect_type: 'buff',
       target_scope: 'all_allies',
-      params: { damage_boost: 0.15, action_speed_boost: 0.20 }
+      params: { damage_boost: 0.15 }
     },
     {
       id: 'g_spell_4',
@@ -207,12 +207,12 @@ const SPELLS = {
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Bind enemies in temporal stasis. All foes lose 25% initiative and 15% action speed for the battle.',
+      description: 'Bind enemies in temporal stasis. All foes lose 25% initiative.',
       cost: { crystals: { Crystals_Fire: 20, Crystals_Death: 10 } },
       icon: '⌛',
       effect_type: 'debuff',
       target_scope: 'all_enemies',
-      params: { initiative_reduction: 0.25, action_speed_reduction: 0.15 }
+      params: { initiative_reduction: 0.25 }
     },
     {
       id: 'g_spell_5',
