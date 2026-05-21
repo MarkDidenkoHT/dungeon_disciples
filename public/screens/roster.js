@@ -322,11 +322,30 @@ export function renderRoster(root, { player }) {
         </button>`;
     }
 
+    // Prepare up to 4 icon slots: passives first (array or single), then active ability
+    const slots = [];
+    if (def?.passive) {
+      if (Array.isArray(def.passive)) {
+        for (const p of def.passive) slots.push(p);
+      } else {
+        slots.push(def.passive);
+      }
+    }
+    if (def?.ability) slots.push(def.ability);
+    // Keep only up to 4, fill with null placeholders
+    const visible = slots.filter(Boolean).slice(0, 4);
+    while (visible.length < 4) visible.push(null);
+
+    const iconsHtml = visible.map(k => {
+      if (!k) return abilityIconHtml('', 'empty');
+      const t = (def?.ability && def.ability === k) ? 'active' : 'passive';
+      return abilityIconHtml(k, t);
+    }).join('');
+
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
-          ${abilityIconHtml(passiveKey, 'passive')}
-          ${abilityIconHtml(activeKey, 'active')}
+          ${iconsHtml}
         </div>
       </div>`;
 

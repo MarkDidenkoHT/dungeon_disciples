@@ -189,6 +189,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
     </div>
+
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <span id="modal-title"></span>
+          <button id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
   `;
 
   let roster           = [];
@@ -205,6 +215,43 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let learnedSpells  = [];
 
   const detailPanel = root.querySelector('#detail-panel');
+
+  const overlay = (() => root.querySelector('#modal-overlay'))();
+  const modalBody = (() => root.querySelector('#modal-body'))();
+  const modalTitle = (() => root.querySelector('#modal-title'))();
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderModalContent(text) {
+    return `<div style="white-space: pre-wrap; line-height: 1.5;">${escapeHtml(text)}</div>`;
+  }
+
+  function openModal(title, bodyHtml) {
+    if (!modalTitle || !modalBody || !overlay) return;
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  // attach modal close handlers if present
+  if (root.querySelector('#modal-close')) {
+    root.querySelector('#modal-close').addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  }
 
   function showDetail(html) {
     detailPanel.innerHTML = html;
@@ -262,14 +309,29 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </button>`;
     }
 
+    // Prepare up to 4 icon slots: passives first (array or single), then active ability
+    const slots = [];
+    if (def?.passive) {
+      if (Array.isArray(def.passive)) {
+        for (const p of def.passive) slots.push(p);
+      } else {
+        slots.push(def.passive);
+      }
+    }
+    if (def?.ability) slots.push(def.ability);
+    const visible = slots.filter(Boolean).slice(0, 4);
+    while (visible.length < 4) visible.push(null);
+
+    const iconsHtml = visible.map(k => {
+      if (!k) return abilityIconHtml('', 'empty');
+      const t = (def?.ability && def.ability === k) ? 'active' : 'passive';
+      return abilityIconHtml(k, t);
+    }).join('');
+
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
-          ${abilityIconHtml(passiveKey, 'passive')}
-          ${abilityIconHtml(activeKey, 'active')}
-        </div>
-        <div class="ability-detail-panel" id="ability-detail-panel">
-          <div class="ability-detail-desc"></div>
+          ${iconsHtml}
         </div>
       </div>
     `;
@@ -769,21 +831,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const type = abilityBtn.dataset.abilityType;
       const def  = resolveAbility(key, type);
       if (!def) return;
-      const panel = detailPanel.querySelector('#ability-detail-panel');
-      const desc  = detailPanel.querySelector('.ability-detail-desc');
-      if (!panel || !desc) return;
-      if (panel.dataset.activeKey === key) {
-        panel.dataset.activeKey = '';
-        desc.textContent = '';
-        abilityBtn.classList.remove('ability-icon--selected');
-        return;
-      }
-      panel.dataset.activeKey = key;
       const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
-      const description = buildStatDescription(def, type);
-      desc.textContent  = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
-      detailPanel.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
-      abilityBtn.classList.add('ability-icon--selected');
+      const description = buildStatDescription(def, type) || 'No details available.';
+      const text = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
+      openModal(`${typeLabel} Ability`, renderModalContent(text));
     }
   });
 
