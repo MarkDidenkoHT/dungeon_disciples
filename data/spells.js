@@ -24,7 +24,7 @@ const SPELLS = {
       icon: '⚡',
       effect_type: 'buff',
       target_scope: 'tag_allies',
-      params: { tag: 'Knight', armor_boost: 10 }
+      params: { tag: 'Knight', armor_boost: 10, scale_by_tag_count: true }
     },
     {
       id: 'e_spell_3',
@@ -105,7 +105,7 @@ const SPELLS = {
       icon: '🕸️',
       effect_type: 'buff',
       target_scope: 'tag_allies',
-      params: { tag: 'Knight', armor_boost: 10 }
+      params: { tag: 'Knight', armor_boost: 10, scale_by_tag_count: true }
     },
     {
       id: 'd_spell_3',
@@ -186,7 +186,7 @@ const SPELLS = {
       icon: '⏳',
       effect_type: 'buff',
       target_scope: 'tag_allies',
-      params: { tag: 'Knight', armor_boost: 10 }
+      params: { tag: 'Knight', armor_boost: 10, scale_by_tag_count: true }
     },
     {
       id: 'g_spell_3',

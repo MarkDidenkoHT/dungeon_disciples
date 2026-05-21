@@ -15,13 +15,14 @@ export class SpellSystem {
     };
 
     const targets = this.getSpellTargets(spell, combatants, caster_side);
+    const scale   = this.getTagScale(spell, targets);
 
     for (const target of targets) {
-      this.applySpellToUnit(spell, target);
+      this.applySpellToUnit(spell, target, scale);
       spell_effect.targets.push({
         unit_id: target.id,
         unit_name: target.unit_name,
-        changes: this.describeSpellChanges(spell, target)
+        changes: this.describeSpellChanges(spell, target, scale)
       });
     }
 
@@ -54,12 +55,24 @@ export class SpellSystem {
     return [];
   }
 
-  applySpellToUnit(spell, unit) {
+  applySpellToUnit(spell, unit, scale = 1) {
     const params = spell.params || {};
+    const effective = {
+      armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
+      resistances: params.resistances,
+      lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
+      max_hp_boost: params.max_hp_boost != null ? params.max_hp_boost * scale : undefined,
+      damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
+      damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
+      armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
+      max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
+      damage_taken_increase: params.damage_taken_increase,
+      initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
+    };
 
     if (spell.effect_type === 'buff') {
-      if (params.armor_boost) {
-        unit.armor = Math.round(unit.armor * (1 + params.armor_boost));
+      if (effective.armor_boost) {
+        unit.armor = Math.round(unit.armor + effective.armor_boost);
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.armor_boost = true;
       }
@@ -73,77 +86,88 @@ export class SpellSystem {
         unit.spell_effects.resistances_modified = true;
       }
 
-      if (params.lifesteal) {
-        unit.lifesteal = (unit.lifesteal || 0) + params.lifesteal;
+      if (effective.lifesteal) {
+        unit.lifesteal = (unit.lifesteal || 0) + effective.lifesteal;
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.lifesteal_granted = true;
       }
 
-      if (params.max_hp_boost) {
-        unit.max_hp = (unit.max_hp || unit.battle_hp) + params.max_hp_boost;
+      if (effective.max_hp_boost) {
+        unit.max_hp = (unit.max_hp || unit.battle_hp) + effective.max_hp_boost;
         unit.battle_hp = unit.max_hp;
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.hp_boosted = true;
       }
 
-      if (params.damage_boost) {
-        unit.spell_damage_multiplier = (unit.spell_damage_multiplier || 1) + params.damage_boost;
+      if (effective.damage_boost) {
+        unit.spell_damage_multiplier = (unit.spell_damage_multiplier || 1) + effective.damage_boost;
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.damage_boosted = true;
-      }
-
-      if (params.armor_boost && !params.armor_boost.toString().includes('%')) {
-        unit.armor = (unit.armor || 0) + params.armor_boost;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.armor_boosted = true;
       }
     }
 
     if (spell.effect_type === 'debuff') {
-      if (params.damage_reduction) {
-        unit.damage_reduction = (unit.damage_reduction || 0) + params.damage_reduction;
+      if (effective.damage_reduction) {
+        unit.damage_reduction = (unit.damage_reduction || 0) + effective.damage_reduction;
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.weakened = true;
       }
 
-      if (params.armor_reduction) {
-        unit.armor = Math.round(unit.armor * (1 - params.armor_reduction));
+      if (effective.armor_reduction) {
+        unit.armor = Math.round(unit.armor * (1 - effective.armor_reduction));
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.armor_reduced = true;
       }
 
-      if (params.max_hp_reduction) {
-        unit.max_hp = Math.round(unit.max_hp * (1 - params.max_hp_reduction));
+      if (effective.max_hp_reduction) {
+        unit.max_hp = Math.round(unit.max_hp * (1 - effective.max_hp_reduction));
         unit.battle_hp = Math.min(unit.battle_hp, unit.max_hp);
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.hp_reduced = true;
       }
 
-      if (params.damage_taken_increase) {
+      if (effective.damage_taken_increase) {
         unit.damage_type_vulnerabilities = unit.damage_type_vulnerabilities || {};
-        Object.entries(params.damage_taken_increase).forEach(([dmg_type, multiplier]) => {
+        Object.entries(effective.damage_taken_increase).forEach(([dmg_type, multiplier]) => {
           unit.damage_type_vulnerabilities[dmg_type] = (unit.damage_type_vulnerabilities[dmg_type] || 1) + multiplier;
         });
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.vulnerable = true;
       }
 
-      if (params.initiative_reduction) {
-        unit.initiative = Math.round(unit.initiative * (1 - params.initiative_reduction));
+      if (effective.initiative_reduction) {
+        unit.initiative = Math.round(unit.initiative * (1 - effective.initiative_reduction));
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.slowed = true;
       }
     }
   }
 
-  describeSpellChanges(spell, unit) {
+  getTagScale(spell, targets) {
+    const params = spell.params || {};
+    if (params.tag && params.scale_by_tag_count) {
+      return Math.max(1, targets.length);
+    }
+    return 1;
+  }
+
+  describeSpellChanges(spell, unit, scale = 1) {
     const changes = [];
     const params = spell.params || {};
+    const actual = {
+      armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
+      lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
+      damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
+      damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
+      armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
+      max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
+      initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
+    };
 
-    if (params.armor_boost && typeof params.armor_boost === 'number' && params.armor_boost > 0.1) {
-      changes.push(`+${Math.round(params.armor_boost * 100)}% Armor`);
-    } else if (params.armor_boost && typeof params.armor_boost === 'number') {
-      changes.push(`+${params.armor_boost} Armor`);
+    if (actual.armor_boost != null && typeof actual.armor_boost === 'number' && actual.armor_boost <= 1) {
+      changes.push(`+${Math.round(actual.armor_boost * 100)}% Armor`);
+    } else if (actual.armor_boost != null && typeof actual.armor_boost === 'number') {
+      changes.push(`+${actual.armor_boost} Armor`);
     }
 
     if (params.resistances) {
@@ -153,32 +177,32 @@ export class SpellSystem {
       });
     }
 
-    if (params.lifesteal) {
-      changes.push(`+${Math.round(params.lifesteal * 100)}% Lifesteal`);
+    if (actual.lifesteal) {
+      changes.push(`+${Math.round(actual.lifesteal * 100)}% Lifesteal`);
     }
 
-    if (params.max_hp_boost) {
-      changes.push(`+${params.max_hp_boost} Max HP`);
+    if (actual.max_hp_boost) {
+      changes.push(`+${actual.max_hp_boost} Max HP`);
     }
 
-    if (params.damage_boost) {
-      changes.push(`+${Math.round(params.damage_boost * 100)}% Damage`);
+    if (actual.damage_boost) {
+      changes.push(`+${Math.round(actual.damage_boost * 100)}% Damage`);
     }
 
-    if (params.damage_reduction) {
-      changes.push(`-${Math.round(params.damage_reduction * 100)}% Damage`);
+    if (actual.damage_reduction) {
+      changes.push(`-${Math.round(actual.damage_reduction * 100)}% Damage`);
     }
 
-    if (params.armor_reduction) {
-      changes.push(`-${Math.round(params.armor_reduction * 100)}% Armor`);
+    if (actual.armor_reduction) {
+      changes.push(`-${Math.round(actual.armor_reduction * 100)}% Armor`);
     }
 
-    if (params.max_hp_reduction) {
-      changes.push(`-${Math.round(params.max_hp_reduction * 100)}% Max HP`);
+    if (actual.max_hp_reduction) {
+      changes.push(`-${Math.round(actual.max_hp_reduction * 100)}% Max HP`);
     }
 
-    if (params.initiative_reduction) {
-      changes.push(`-${Math.round(params.initiative_reduction * 100)}% Initiative`);
+    if (actual.initiative_reduction) {
+      changes.push(`-${Math.round(actual.initiative_reduction * 100)}% Initiative`);
     }
 
     return changes;
