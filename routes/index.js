@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
-const { REGIONS } = require('../data/embark');
+const { REGIONS, getEncounter } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
@@ -390,7 +390,10 @@ router.post('/battle/create', async (req, res) => {
       ...engine.getBattleData(),
       region_id,
       level,
-      setup: { playerUnits, enemies, placement },
+      setup: {
+        playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId || u.id })),
+        placement,
+      },
     };
     const record = await createBattleState({ chat_id, battle_id, battle_data });
     res.json({ record, state: engine.getSnapshot() });
@@ -406,10 +409,27 @@ router.post('/battle/action', async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
 
-    const bd     = record.battle_data;
+    const bd = record.battle_data;
     if (!bd.setup) return res.status(400).json({ error: 'Battle setup missing' });
 
-    const engine = BattleEngine.rehydrate(bd.setup, bd);
+    const { playerUnitIds, placement } = bd.setup;
+    const chat_id = record.chat_id;
+
+    const [rosterRows, enemies] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,unit_name,is_hero`),
+      Promise.resolve(getEncounter(bd.region_id, bd.level)),
+    ]);
+
+    const rosterById = {};
+    for (const r of rosterRows) rosterById[String(r.id)] = r;
+
+    const playerUnits = playerUnitIds.map(entry => {
+      const r = rosterById[String(entry._rosterId || entry.id)];
+      if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
+      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: r.unit_data, unit_name: r.unit_name };
+    });
+
+    const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
     if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
 
     const actor = engine.combatants.find(c => c.id === actor_id);
