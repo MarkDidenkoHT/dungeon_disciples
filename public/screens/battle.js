@@ -76,7 +76,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     if (forAbility) {
       let cands = [];
-      if (key.startsWith('purge') || key.startsWith('mark_of_ash')) cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      if (key.startsWith('purge')) cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
       else if (key.startsWith('raise_dead')) cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
       else if (key.startsWith('devour')) cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
       else if (key.startsWith('lions_roar')) cands = [actor];

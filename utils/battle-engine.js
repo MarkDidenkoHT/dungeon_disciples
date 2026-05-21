@@ -337,7 +337,6 @@ class BattleEngine {
   getAbilityTargets(actor) {
     const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
     if (key.startsWith('purge'))       return this.combatants.filter(c => c.side !== actor.side && c.alive);
-    if (key.startsWith('mark_of_ash')) return this.combatants.filter(c => c.side !== actor.side && c.alive);
     if (key.startsWith('raise_dead'))  return this.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
     if (key.startsWith('devour'))      return this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
     if (key.startsWith('lions_roar'))  return [actor];
@@ -419,7 +418,7 @@ class BattleEngine {
     if (unit.burn > 0) {
       unit.battle_hp = Math.max(0, unit.battle_hp - unit.burn);
       this.pushLog({ type: 'passive', passive: 'Burn', actorName: '🔥', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.burn, heal: false });
-      if (!unit._flags.mark_of_ash) unit.burn = 0;
+      unit.burn = 0;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit.poison > 0) {
@@ -450,12 +449,6 @@ class BattleEngine {
       target.burn = 0; target.poison = 0; target._flags.withered = false;
       target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
       this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: 'Purge — stripped all debuffs' });
-    } else if (key.startsWith('mark_of_ash')) {
-      if (!target) return false;
-      const dot = Math.floor((actor.unit_data?.action_power ?? 10) * 0.25);
-      target.burn = dot;
-      target._flags.mark_of_ash = true;
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `Mark of Ash — permanent burn (${dot}/turn)` });
     } else if (key.startsWith('raise_dead')) {
       if (!target) return false;
       target.alive     = true;
@@ -497,7 +490,7 @@ class BattleEngine {
     for (const c of this.combatants) {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
-      if (!c._flags.mark_of_ash) c.burn = 0;
+      c.burn = 0;
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });

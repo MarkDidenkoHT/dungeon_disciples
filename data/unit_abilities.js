@@ -8,15 +8,6 @@ const UNIT_ABILITIES = {
     description: 'Removes all buffs from target.',
     params: {},
   },
-  'mark_of_ash 1': {
-    id: 'mark_of_ash 1',
-    name: 'Mark of Ash',
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    description: 'Makes Burn 1 last on the target until end of battle.',
-    params: { applies: 'burn 1', duration: 'permanent' },
-  },
   'raise_dead 1': {
     id: 'raise_dead 1',
     name: 'Raise Dead',
