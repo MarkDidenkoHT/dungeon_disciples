@@ -437,38 +437,6 @@
   display: block;
 }
 
-.ability-detail-type {
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #5a9acc;
-  font-weight: 700;
-}
-
-.ability-detail-name {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #d8dce8;
-}
-
-.ability-detail-rank {
-  font-size: 0.6rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.ability-detail-desc {
-  font-size: 0.7rem;
-  color: #8a9bb0;
-  line-height: 1.4;
-  margin-top: 2px;
-  white-space: pre-wrap;
-}
-
-.ability-detail-panel {
-  flex: 1;
-  min-width: 0;
-}
 
 .placeholder {
   text-align: center;

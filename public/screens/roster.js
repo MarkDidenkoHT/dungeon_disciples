@@ -93,6 +93,16 @@ export function renderRoster(root, { player }) {
         <button class="roster-nav-arrow" id="nav-next">›</button>
       </div>
     </div>
+
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <span id="modal-title"></span>
+          <button id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
   `;
 
   let current = 0;
@@ -103,9 +113,40 @@ export function renderRoster(root, { player }) {
   const navLabel  = root.querySelector('#roster-nav-label');
   const prevBtn   = root.querySelector('#nav-prev');
   const nextBtn   = root.querySelector('#nav-next');
+  const overlay   = root.querySelector('#modal-overlay');
+  const modalBody = root.querySelector('#modal-body');
+  const modalTitle= root.querySelector('#modal-title');
 
   let buildingsData = {};
   let upgradePaths  = {};
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderModalContent(text) {
+    return `<div style="white-space: pre-wrap; line-height: 1.5;">${escapeHtml(text)}</div>`;
+  }
+
+  function openModal(title, bodyHtml) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  root.querySelector('#modal-close').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 
   function buildCard(u) {
     const stored   = u.unit_data || {};
@@ -287,9 +328,6 @@ export function renderRoster(root, { player }) {
           ${abilityIconHtml(passiveKey, 'passive')}
           ${abilityIconHtml(activeKey, 'active')}
         </div>
-        <div class="ability-detail-panel">
-          <div class="ability-detail-desc"></div>
-        </div>
       </div>`;
 
     return `
@@ -364,19 +402,8 @@ export function renderRoster(root, { player }) {
     goTo(0);
   }
 
-  function showInPanel(slide, text, activeKey) {
-    const panel = slide.querySelector('.ability-detail-panel');
-    const desc  = slide.querySelector('.ability-detail-desc');
-    if (!panel || !desc) return;
-    if (panel.dataset.activeKey === activeKey) {
-      panel.dataset.activeKey = '';
-      desc.textContent = '';
-      slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
-      return;
-    }
-    panel.dataset.activeKey = activeKey;
-    desc.textContent = text;
-    slide.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
+  function openDetailModal(title, text) {
+    openModal(title, renderModalContent(text));
   }
 
   track.addEventListener('click', async (e) => {
@@ -412,13 +439,10 @@ export function renderRoster(root, { player }) {
       const type = abilityBtn.dataset.abilityType;
       const def  = resolveAbility(key, type);
       if (!def) return;
-      const slide = abilityBtn.closest('.roster-slide');
-      if (!slide) return;
       const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
-      const description = buildStatDescription(def, type);
-      const text        = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n${description}`;
-      abilityBtn.classList.toggle('ability-icon--selected', slide.querySelector('.ability-detail-panel')?.dataset.activeKey !== key);
-      showInPanel(slide, text, key);
+      const description = buildStatDescription(def, type) || 'No details available.';
+      const text        = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
+      openDetailModal(`${typeLabel} Ability`, text);
       return;
     }
 
@@ -442,14 +466,12 @@ export function renderRoster(root, { player }) {
       } else {
         text = `${label}: ${val}`;
       }
-      showInPanel(slide, text, `core-${label}`);
+      openDetailModal(label, text);
       return;
     }
 
     const resistCell = e.target.closest('.resist-cell');
     if (resistCell) {
-      const slide  = resistCell.closest('.roster-slide');
-      if (!slide) return;
       const label  = resistCell.getAttribute('title') || '';
       const valEl  = resistCell.querySelector('.resist-val');
       const numVal = parseInt(valEl?.textContent ?? '0', 10);
@@ -462,7 +484,7 @@ export function renderRoster(root, { player }) {
       } else {
         text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken by ${pct}%.`;
       }
-      showInPanel(slide, text, `resist-${label}`);
+      openDetailModal(label, text);
       return;
     }
   });
