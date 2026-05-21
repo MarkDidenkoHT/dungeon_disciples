@@ -647,17 +647,12 @@ class BattleEngine {
         id:               c.id,
         side:             c.side,
         cellIndex:        c.cellIndex,
-        battle_hp:        c.battle_hp,
-        max_hp:           c.max_hp,
         alive:            c.alive,
+        battle_hp:        c.battle_hp,
         acted_this_round: c.acted_this_round,
         shield:           c.shield,
         burn:             c.burn,
         poison:           c.poison,
-        armor:            c.armor,
-        defend_armor_bonus: c.defend_armor_bonus,
-        _dmg_mult:        c._dmg_mult,
-        _healing_reduction: c._healing_reduction,
         _stacks:          c._stacks,
         _flags:           c._flags,
         _granted_buffs:   c._granted_buffs,
@@ -672,17 +667,13 @@ class BattleEngine {
     for (const c of engine.combatants) {
       const s = stateById[c.id];
       if (!s) continue;
-      c.battle_hp          = s.battle_hp;
-      c.max_hp             = s.max_hp;
       c.alive              = s.alive;
+      c.battle_hp          = s.battle_hp;
+      c.cellIndex          = s.cellIndex;
       c.acted_this_round   = s.acted_this_round;
       c.shield             = s.shield;
       c.burn               = s.burn;
       c.poison             = s.poison;
-      c.armor              = s.armor;
-      c.defend_armor_bonus = s.defend_armor_bonus;
-      c._dmg_mult          = s._dmg_mult;
-      c._healing_reduction = s._healing_reduction;
       c._stacks            = s._stacks || {};
       c._flags             = s._flags  || {};
       c._granted_buffs     = s._granted_buffs || [];
