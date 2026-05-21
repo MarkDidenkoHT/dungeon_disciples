@@ -144,31 +144,6 @@ class BattleEngine {
         this.recordGrantedBuff(c, 'max_hp', allies, bonus);
         this.pushLog({ type: 'passive', passive: 'Vitality', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all allies', value: bonus });
       }
-      if (passive.startsWith('hardened')) {
-        const map   = { 'hardened 1': 3, 'hardened 2': 6 };
-        const bonus = map[passive] ?? 0;
-        if (!bonus) continue;
-        c.armor += bonus;
-        this.recordGrantedBuff(c, 'armor', [c], bonus);
-        this.pushLog({ type: 'passive', passive: 'Hardened', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
-      }
-      if (passive.startsWith('bone_shield')) {
-        const map   = { 'bone_shield 1': 30, 'bone_shield 2': 60 };
-        const bonus = map[passive] ?? 0;
-        if (!bonus) continue;
-        c.shield = bonus;
-        this.recordGrantedBuff(c, 'shield', [c], bonus);
-        this.pushLog({ type: 'passive', passive: 'Bone Shield', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: bonus });
-      }
-      if (passive.startsWith('rooted')) {
-        const map    = { 'rooted 1': 5, 'rooted 2': 12 };
-        const debuff = map[passive] ?? 0;
-        if (!debuff) continue;
-        const enemies = this.combatants.filter(x => x.side !== c.side);
-        for (const e of enemies) { e.initiative = Math.max(0, e.initiative - debuff); }
-        this.recordGrantedBuff(c, 'initiative', enemies, -debuff);
-        this.pushLog({ type: 'passive', passive: 'Rooted', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all enemies', value: debuff });
-      }
     }
   }
 
@@ -181,25 +156,6 @@ class BattleEngine {
       const heal = Math.floor(actor.max_hp * pct / 100);
       actor.battle_hp = Math.min(actor.max_hp, actor.battle_hp + heal);
       this.pushLog({ type: 'passive', passive: 'Regenerate', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: heal });
-    }
-    if (passive.startsWith('frost_aura')) {
-      const map    = { 'frost_aura 1': 5, 'frost_aura 2': 10 };
-      const debuff = map[passive] ?? 0;
-      if (!actor._flags.frost_aura_applied) {
-        const enemies = this.combatants.filter(x => x.side !== actor.side && x.alive);
-        for (const e of enemies) { e.initiative = Math.max(0, e.initiative - debuff); }
-        actor._flags.frost_aura_applied = true;
-        this.pushLog({ type: 'passive', passive: 'Frost Aura', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all enemies', value: debuff });
-      }
-    }
-    if (passive.startsWith('hex_aura')) {
-      if (!actor._flags.hex_aura_applied) {
-        for (const e of this.combatants.filter(x => x.side !== actor.side && x.alive)) {
-          e._dmg_mult = Math.max(0.1, (e._dmg_mult ?? 1) - 0.10);
-        }
-        actor._flags.hex_aura_applied = true;
-        this.pushLog({ type: 'passive', passive: 'Hex Aura', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all enemies', value: 10 });
-      }
     }
   }
 
@@ -236,11 +192,11 @@ class BattleEngine {
       target.armor = Math.max(0, target.armor - val);
       this.pushLog({ type: 'passive', passive: 'Shatter', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
     }
-    if (passive.startsWith('frostbite')) {
-      const map = { 'frostbite 1': 8, 'frostbite 2': 15 };
+    if (passive.startsWith('slow')) {
+      const map = { 'slow 1': 8, 'slow 2': 15 };
       const val = map[passive] ?? 0;
       target.initiative = Math.max(0, target.initiative - val);
-      this.pushLog({ type: 'passive', passive: 'Frostbite', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
+      this.pushLog({ type: 'passive', passive: 'Slow', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
     }
     if (passive.startsWith('death_mark')) {
       const map = { 'death_mark 1': { stacks: 3, dmg: 25 }, 'death_mark 2': { stacks: 3, dmg: 45 } };
@@ -302,12 +258,6 @@ class BattleEngine {
       if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
       this.pushLog({ type: 'passive', passive: 'Thorns', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
-    if (passive.startsWith('thorn_wall')) {
-      const reflect = Math.floor(dmg * 0.15);
-      actor.battle_hp = Math.max(0, actor.battle_hp - reflect);
-      if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Thorn Wall', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
-    }
     if (passive.startsWith('spore_cloud')) {
       const map      = { 'spore_cloud 1': 8, 'spore_cloud 2': 16 };
       const aoe      = map[passive] ?? 0;
@@ -323,14 +273,6 @@ class BattleEngine {
       actor.battle_hp = Math.max(0, actor.battle_hp - val);
       if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
       this.pushLog({ type: 'passive', passive: 'Volcanic Skin', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: val, heal: false });
-    }
-    if (passive.startsWith('glacial_armor')) {
-      target._stacks.glacial_armor = (target._stacks.glacial_armor ?? 0) + 1;
-      if (target._stacks.glacial_armor >= 3) {
-        target._stacks.glacial_armor = 0;
-        target.armor += 10;
-        this.pushLog({ type: 'passive', passive: 'Glacial Armor', actorName: target.unit_name, actorCell: target.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 10 });
-      }
     }
   }
 
@@ -372,14 +314,7 @@ class BattleEngine {
   }
 
   applyBelowHalfPassive(unit) {
-    if (unit._flags.enrage_triggered) return;
-    const passive = unit.unit_data?.passive || unit.unit_data?.passive_ability;
-    if (!passive?.startsWith('enrage')) return;
-    const map  = { 'enrage 1': 1.30, 'enrage 2': 1.50 };
-    const mult = map[passive] ?? 1;
-    unit._dmg_mult = (unit._dmg_mult ?? 1) * mult;
-    unit._flags.enrage_triggered = true;
-    this.pushLog({ type: 'passive', passive: 'Enrage', actorName: unit.unit_name, actorCell: unit.cellIndex, targetName: unit.unit_name, targetCell: unit.cellIndex, value: Math.round((mult - 1) * 100) });
+  //
   }
 
   getActionKey(unit) {
@@ -584,8 +519,6 @@ class BattleEngine {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
       if (!c._flags.mark_of_ash) c.burn = 0;
-      c._flags.frost_aura_applied = false;
-      c._flags.hex_aura_applied   = false;
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });

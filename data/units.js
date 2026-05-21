@@ -1122,7 +1122,7 @@ const UNITS = {
         resistances: { air: 0, fire: 45, life: 0, death: 0, cold: -30, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'fire', action_power: 42,
-        xp: 700, passive: 'enrage 1', ability: null,
+        xp: 700, passive: null, ability: null,
       },
       flame_oracle: {
         id: 'fw_e9', f: 'fw', t: 4,
@@ -1191,7 +1191,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: -10, death: 40, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 25,
-        xp: 300, passive: 'bone_shield 1', ability: null,
+        xp: 300, passive: null, ability: null,
       },
       death_herald: {
         id: 'dc_e5', f: 'dc', t: 2,
@@ -1246,7 +1246,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: -20, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 44,
-        xp: 800, passive: 'bone_shield 2', ability: null,
+        xp: 800, passive: null, ability: null,
       },
       lich_king: {
         id: 'dc_e10', f: 'dc', t: 5,
@@ -1271,7 +1271,7 @@ const UNITS = {
         resistances: { air: 0, fire: -15, life: 0, death: 0, cold: 30, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 11,
-        xp: 60, passive: 'frostbite 1', ability: null,
+        xp: 60, passive: 'slow 1', ability: null,
       },
       frost_imp: {
         id: 'fp_e2', f: 'fp', t: 1,
@@ -1304,7 +1304,7 @@ const UNITS = {
         resistances: { air: 0, fire: -20, life: 0, death: 0, cold: 35, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 26,
-        xp: 300, passive: 'glacial_armor 1', ability: null,
+        xp: 300, passive: null, ability: null,
       },
       blizzard_caster: {
         id: 'fp_e5', f: 'fp', t: 2,
@@ -1315,7 +1315,7 @@ const UNITS = {
         resistances: { air: 0, fire: -20, life: 0, death: 0, cold: 35, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 3, range: 3,
         damage_source: 'cold', action_power: 24,
-        xp: 280, passive: 'frostbite 1', ability: null,
+        xp: 280, passive: 'slow 1', ability: null,
       },
       permafrost_giant: {
         id: 'fp_e6', f: 'fp', t: 3,
@@ -1326,7 +1326,7 @@ const UNITS = {
         resistances: { air: 0, fire: -25, life: 0, death: 0, cold: 40, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 35,
-        xp: 500, passive: 'frost_aura 1', ability: null,
+        xp: 500, passive: null, ability: null,
       },
       ice_empress: {
         id: 'fp_e7', f: 'fp', t: 3,
@@ -1337,7 +1337,7 @@ const UNITS = {
         resistances: { air: 0, fire: -25, life: 0, death: 0, cold: 45, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 3, range: 3,
         damage_source: 'cold', action_power: 32,
-        xp: 450, passive: 'frostbite 2', ability: null,
+        xp: 450, passive: 'slow 2', ability: null,
       },
       avalanche_colossus: {
         id: 'fp_e8', f: 'fp', t: 4,
@@ -1348,7 +1348,7 @@ const UNITS = {
         resistances: { air: 0, fire: -30, life: 0, death: 0, cold: 50, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 45,
-        xp: 750, passive: 'frost_aura 2', ability: null,
+        xp: 750, passive: null, ability: null,
       },
       winter_oracle: {
         id: 'fp_e9', f: 'fp', t: 4,
@@ -1359,7 +1359,7 @@ const UNITS = {
         resistances: { air: 0, fire: -30, life: 0, death: 0, cold: 50, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 3, range: 3,
         damage_source: 'cold', action_power: 42,
-        xp: 800, passive: 'rooted 2', ability: null,
+        xp: 800, passive: null, ability: null,
       },
       the_endless_frost: {
         id: 'fp_e10', f: 'fp', t: 5,
@@ -1370,7 +1370,7 @@ const UNITS = {
         resistances: { air: 0, fire: -30, life: 0, death: 0, cold: 50, nature: -10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 70,
-        xp: 1600, passive: 'frost_aura 2', ability: null,
+        xp: 1600, passive: null, ability: null,
       },
     },
 
@@ -1461,7 +1461,7 @@ const UNITS = {
         resistances: { air: 0, fire: -10, life: 30, death: 0, cold: 0, nature: 40 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 45,
-        xp: 730, passive: 'enrage 2', ability: null,
+        xp: 730, passive: null, ability: null,
       },
       grove_sovereign: {
         id: 'nw_e9', f: 'nw', t: 4,
