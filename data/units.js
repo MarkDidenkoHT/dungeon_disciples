@@ -1235,7 +1235,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: -20, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 3, range: 3,
         damage_source: 'death', action_power: 40,
-        xp: 720, passive: 'soul_drain 2', ability: null,
+        xp: 720, passive: null, ability: null,
       },
       dread_knight: {
         id: 'dc_e9', f: 'dc', t: 4,

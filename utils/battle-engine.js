@@ -221,15 +221,6 @@ class BattleEngine {
       }
       actor._dmg_mult = 1 + (actor._stacks.overpower * 0.10);
     }
-    if (passive.startsWith('smite')) {
-      const tags = target.unit_data?.tags ?? [];
-      if (tags.includes('Undead') || tags.includes('Demon')) {
-        const bonus = Math.max(1, 15 - target.armor);
-        target.battle_hp = Math.max(0, target.battle_hp - bonus);
-        if (target.battle_hp <= 0) { target.alive = false; this.applyOnDeathPassives(target); }
-        this.pushLog({ type: 'passive', passive: 'Smite', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: bonus, heal: false });
-      }
-    }
     if (passive.startsWith('impale')) {
       const row    = cellRow(target.cellIndex);
       const col    = cellCol(target.cellIndex);
@@ -277,19 +268,7 @@ class BattleEngine {
   }
 
   applyOnKillPassives(actor) {
-    const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
-    if (!passive) return;
-    if (passive.startsWith('soul_drain')) {
-      const map    = { 'soul_drain 1': 30, 'soul_drain 2': 55 };
-      const heal   = map[passive] ?? 0;
-      const actual = Math.min(heal, actor.max_hp - actor.battle_hp);
-      actor.battle_hp += actual;
-      this.pushLog({ type: 'passive', passive: 'Soul Drain', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: actual });
-    }
-    if (passive.startsWith('blood_frenzy')) {
-      actor._dmg_mult = (actor._dmg_mult ?? 1) + 0.15;
-      this.pushLog({ type: 'passive', passive: 'Blood Frenzy', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: 15 });
-    }
+//
   }
 
   applyOnDeathPassives(dying) {
