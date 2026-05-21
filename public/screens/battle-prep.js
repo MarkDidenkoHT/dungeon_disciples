@@ -313,6 +313,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     `;
   }
 
+  function spellTargetLabel(spell) {
+    const scope = spell.target_scope || 'unknown';
+    if (scope === 'all_allies') return 'All allies';
+    if (scope === 'all_enemies') return 'All enemies';
+    if (scope === 'single_ally') return 'Single ally';
+    if (scope === 'single_enemy') return 'Single enemy';
+    if (scope === 'tag_allies' && spell.params?.tag) return `All allied ${spell.params.tag}s`;
+    if (scope === 'tag_enemies' && spell.params?.tag) return `All enemy ${spell.params.tag}s`;
+    return scope.replace(/_/g, ' ');
+  }
+
   function spellDetailHtml(spell, canUse, used) {
     return `
       <div class="detail-unit-header">
@@ -325,8 +336,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="detail-spell-meta">
         <span class="detail-spell-cost">${spellCostLabel(spell)}</span>
         <span class="detail-spell-type">${spell.effect_type}</span>
-      </div>
-      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
+      </div>      <div class="detail-spell-target">Target: ${spellTargetLabel(spell)}</div>      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
     `;
   }
 
@@ -848,6 +858,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         placement,
         region_id,
         level,
+        selected_spells: selectedSpells.map(s => s.id),
       });
       navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
     } catch (err) {

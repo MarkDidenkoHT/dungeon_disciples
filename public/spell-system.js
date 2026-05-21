@@ -59,14 +59,14 @@ export class SpellSystem {
     const params = spell.params || {};
     const effective = {
       armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
-      resistances: params.resistances,
+      resistances: params.resistances ? Object.fromEntries(Object.entries(params.resistances).map(([key, value]) => [key, value * scale])) : undefined,
       lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
       max_hp_boost: params.max_hp_boost != null ? params.max_hp_boost * scale : undefined,
       damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
       damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
       armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
       max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
-      damage_taken_increase: params.damage_taken_increase,
+      damage_taken_increase: params.damage_taken_increase ? Object.fromEntries(Object.entries(params.damage_taken_increase).map(([key, value]) => [key, value * scale])) : undefined,
       initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
     };
 
@@ -156,11 +156,13 @@ export class SpellSystem {
     const params = spell.params || {};
     const actual = {
       armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
+      resistances: params.resistances ? Object.fromEntries(Object.entries(params.resistances).map(([key, value]) => [key, value * scale])) : undefined,
       lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
       damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
       damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
       armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
       max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
+      damage_taken_increase: params.damage_taken_increase ? Object.fromEntries(Object.entries(params.damage_taken_increase).map(([key, value]) => [key, value * scale])) : undefined,
       initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
     };
 
@@ -170,8 +172,8 @@ export class SpellSystem {
       changes.push(`+${actual.armor_boost} Armor`);
     }
 
-    if (params.resistances) {
-      Object.entries(params.resistances).forEach(([type, val]) => {
+    if (actual.resistances) {
+      Object.entries(actual.resistances).forEach(([type, val]) => {
         if (val > 0) changes.push(`+${val} ${type} Resist`);
         if (val < 0) changes.push(`${val} ${type} Resist`);
       });
@@ -183,6 +185,13 @@ export class SpellSystem {
 
     if (actual.max_hp_boost) {
       changes.push(`+${actual.max_hp_boost} Max HP`);
+    }
+
+    if (actual.damage_taken_increase) {
+      Object.entries(actual.damage_taken_increase).forEach(([type, val]) => {
+        if (val > 0) changes.push(`+${Math.round(val * 100)}% ${type} Damage Taken`);
+        if (val < 0) changes.push(`${Math.round(val * 100)}% ${type} Damage Taken`);
+      });
     }
 
     if (actual.damage_boost) {
