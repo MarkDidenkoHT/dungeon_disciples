@@ -6,7 +6,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'enemy',
     description: 'Removes all buffs from target.',
-    params: {},
+    params: {range: 3},
   },
   'raise_dead 1': {
     id: 'raise_dead 1',
@@ -43,15 +43,6 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
     params: { dot_pct: 40, duration: 1 },
-  },
-  'concentration 1': {
-    id: 'concentration 1',
-    name: 'Concentration',
-    rank: 1,
-    type: 'passive',
-    trigger: 'on_status_applied',
-    description: 'Ignores the first instance of Silence applied.',
-    params: { ignore_silence_count: 1 },
   },
   'death_mark 2': {
     id: 'death_mark 2',

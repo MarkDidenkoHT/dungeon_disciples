@@ -1,3 +1,5 @@
+import { unitHasTag } from './tag-rules.js';
+
 export class SpellSystem {
   constructor() {
     this.active_spells = new Map();
@@ -28,12 +30,26 @@ export class SpellSystem {
   }
 
   getSpellTargets(spell, combatants, caster_side) {
+    const params    = spell.params || {};
+    const enemy_side = caster_side === 'player' ? 'enemy' : 'player';
+
     if (spell.target_scope === 'all_allies') {
       return combatants.filter(c => c.alive && c.side === caster_side);
     }
     if (spell.target_scope === 'all_enemies') {
-      const enemy_side = caster_side === 'player' ? 'enemy' : 'player';
       return combatants.filter(c => c.alive && c.side === enemy_side);
+    }
+    if (spell.target_scope === 'single_ally') {
+      return combatants.filter(c => c.alive && c.side === caster_side).slice(0, 1);
+    }
+    if (spell.target_scope === 'single_enemy') {
+      return combatants.filter(c => c.alive && c.side === enemy_side).slice(0, 1);
+    }
+    if (spell.target_scope === 'tag_allies' && params.tag) {
+      return combatants.filter(c => c.alive && c.side === caster_side && unitHasTag(c, params.tag));
+    }
+    if (spell.target_scope === 'tag_enemies' && params.tag) {
+      return combatants.filter(c => c.alive && c.side === enemy_side && unitHasTag(c, params.tag));
     }
     return [];
   }

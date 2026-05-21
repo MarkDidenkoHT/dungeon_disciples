@@ -6,25 +6,25 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Bless all allies with divine protection. Grant +10 armor for the battle.',
+      description: 'Bless one ally with divine protection. Grant +10 armor for the battle.',
       cost: { crystals: { Crystals_Life: 15 } },
       icon: '✨',
       effect_type: 'buff',
-      target_scope: 'all_allies',
+      target_scope: 'single_ally',
       params: { armor_boost: 10 }
     },
     {
       id: 'e_spell_2',
-      name: 'Smite',
+      name: 'Knight’s Oath',
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Weaken enemy armor with divine judgment. All foes lose 10% armor for the battle.',
+      description: 'Bless all allied Knights. Knights gain +10 armor for the battle.',
       cost: { crystals: { Crystals_Life: 15 } },
       icon: '⚡',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { armor_reduction: 0.10 }
+      effect_type: 'buff',
+      target_scope: 'tag_allies',
+      params: { tag: 'Knight', armor_boost: 10 }
     },
     {
       id: 'e_spell_3',
@@ -83,29 +83,29 @@ const SPELLS = {
   choir_of_the_cursed: [
     {
       id: 'd_spell_1',
-      name: 'Dark Shroud',
+      name: 'Shadow Cloak',
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Cloak allies in shadow. Grant all allies +10 armor for the battle.',
+      description: 'Cloak one ally in shadow. Grant +10 armor for the battle.',
       cost: { crystals: { Crystals_Death: 15 } },
       icon: '🌑',
       effect_type: 'buff',
-      target_scope: 'all_allies',
+      target_scope: 'single_ally',
       params: { armor_boost: 10 }
     },
     {
       id: 'd_spell_2',
-      name: 'Enfeeble',
+      name: 'Knight’s Ward',
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Drain enemy strength. All foes deal 15% less damage for the battle.',
+      description: 'Empower allied Knights. Knights gain +10 armor for the battle.',
       cost: { crystals: { Crystals_Death: 15 } },
       icon: '🕸️',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { damage_reduction: 0.15 }
+      effect_type: 'buff',
+      target_scope: 'tag_allies',
+      params: { tag: 'Knight', armor_boost: 10 }
     },
     {
       id: 'd_spell_3',
@@ -164,29 +164,29 @@ const SPELLS = {
   grail_of_sorrow: [
     {
       id: 'g_spell_1',
-      name: 'Sorrow\'s Touch',
+      name: 'Sorrow’s Grace',
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Bolster allies with sorrow\'s power. Grant all allies +10 armor for the battle.',
+      description: 'Bless one ally with sorrowful grace. Grant +10 armor for the battle.',
       cost: { crystals: { Crystals_Fire: 15 } },
       icon: '🩸',
       effect_type: 'buff',
-      target_scope: 'all_allies',
+      target_scope: 'single_ally',
       params: { armor_boost: 10 }
     },
     {
       id: 'g_spell_2',
-      name: 'Chronal Snare',
+      name: 'Knight’s Valor',
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Slow enemies with temporal distortion. All foes lose 20% initiative for the battle.',
+      description: 'Strengthen allied Knights. Knights gain +10 armor for the battle.',
       cost: { crystals: { Crystals_Fire: 15 } },
       icon: '⏳',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { initiative_reduction: 0.20 }
+      effect_type: 'buff',
+      target_scope: 'tag_allies',
+      params: { tag: 'Knight', armor_boost: 10 }
     },
     {
       id: 'g_spell_3',
