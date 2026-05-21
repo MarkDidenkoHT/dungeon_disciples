@@ -386,32 +386,31 @@ router.post('/battle/create', async (req, res) => {
   }
   try {
     const engine = BattleEngine.fromSetup(playerUnits, enemies, placement);
-    const snap   = engine.getSnapshot();
     const battle_data = {
       ...engine.getBattleData(),
       region_id,
       level,
-      log:        snap.log,
-      _snapshot:  snap,
+      log:   engine.log,
+      setup: { playerUnits, enemies, placement },
     };
     const record = await createBattleState({ chat_id, battle_id, battle_data });
-    res.json({ record, state: snap });
+    res.json({ record, state: engine.getSnapshot() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 router.post('/battle/action', async (req, res) => {
-  const { battle_id, action, actor_id, target_id, action_type } = req.body;
+  const { battle_id, action, actor_id, target_id } = req.body;
   if (!battle_id || !action || !actor_id) return res.status(400).json({ error: 'battle_id, action, actor_id required' });
   try {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
 
-    const snap   = record.battle_data._snapshot;
-    if (!snap)   return res.status(400).json({ error: 'Battle snapshot missing' });
+    const bd     = record.battle_data;
+    if (!bd.setup) return res.status(400).json({ error: 'Battle setup missing' });
 
-    const engine = BattleEngine.fromSnapshot(snap);
+    const engine = BattleEngine.rehydrate(bd.setup, bd);
     if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
 
     const actor = engine.combatants.find(c => c.id === actor_id);
@@ -439,13 +438,12 @@ router.post('/battle/action', async (req, res) => {
       engine.runAiTurns();
     }
 
-    const newSnap = engine.getSnapshot();
     const battle_data = {
       ...engine.getBattleData(),
-      region_id: record.battle_data.region_id,
-      level:     record.battle_data.level,
-      log:       newSnap.log,
-      _snapshot: newSnap,
+      region_id: bd.region_id,
+      level:     bd.level,
+      log:       engine.log,
+      setup:     bd.setup,
     };
 
     await updateBattleState(battle_id, battle_data);
@@ -454,7 +452,7 @@ router.post('/battle/action', async (req, res) => {
       await closeBattleState(battle_id);
     }
 
-    res.json({ state: newSnap, done: engine.done, winner: engine.winner });
+    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

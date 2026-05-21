@@ -47,11 +47,10 @@ export function renderEmbark(root, { player }) {
     root.querySelector('#embark-regions').before(banner);
 
     banner.querySelector('#reconnect-btn').addEventListener('click', () => {
-      const snap      = battle_data._snapshot;
       const region_id = battle_data.region_id;
       const level     = battle_data.level;
-      if (!snap || !region_id) return;
-      navigate('battle', { player, battle_id, reconnect: true, snapshot: snap, region_id, level });
+      if (!region_id) return;
+      navigate('battle', { player, battle_id, reconnect: true, snapshot: { combatants: battle_data.units, round: battle_data.round, log: battle_data.log || [], done: battle_data.done, winner: battle_data.winner }, region_id, level });
     });
 
     banner.querySelector('#abandon-btn').addEventListener('click', async () => {
