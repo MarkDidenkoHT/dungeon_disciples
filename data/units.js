@@ -1,5 +1,4 @@
-import { PASSIVES } from './passives.js';
-import { ABILITIES } from './abilities.js';
+import { UNIT_ABILITIES } from './unit_abilities.js';
 
 const UNITS = {
   choir_of_the_cursed: {
@@ -1489,4 +1488,4 @@ const UNITS = {
   },
 };
 
-export { UNITS, PASSIVES, ABILITIES };
+export { UNITS, UNIT_ABILITIES };

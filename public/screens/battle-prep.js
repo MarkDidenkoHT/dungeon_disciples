@@ -3,8 +3,8 @@ import { navigate }   from '../main.js';
 import { SPELLS }     from '../../data/spells.js';
 import { getEncounter } from '../../data/embark.js';
 import { UNITS } from '../../data/units.js';
-import { PASSIVES }  from '../../data/passives.js';
-import { ABILITIES } from '../../data/abilities.js';
+
+import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 
 const REGION_META = {
   life_grove:   { label: 'Life Grove',   icon: '🟢' },
@@ -107,9 +107,7 @@ function dmgReduction(val) {
 function resolveAbility(key, type) {
   if (!key || key === 'None') return null;
   const k = key.replace(/\s+/g, '_');
-  if (type === 'passive') return PASSIVES[k]  || PASSIVES[key]  || null;
-  if (type === 'active')  return ABILITIES[k] || ABILITIES[key] || null;
-  return null;
+  return UNIT_ABILITIES[k] || UNIT_ABILITIES[key] || null;
 }
 
 function buildStatDescription(def, type) {

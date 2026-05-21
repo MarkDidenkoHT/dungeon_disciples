@@ -1,8 +1,8 @@
 import { api }              from '../main.js';
 import { navigate }          from '../main.js';
 import { refreshResourceBar } from '../main.js';
-import { PASSIVES }          from '../../data/passives.js';
-import { ABILITIES }         from '../../data/abilities.js';
+
+import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 
 const RESIST_ICONS = {
@@ -45,9 +45,7 @@ function resolveUnitDef(unit) {
 function resolveAbility(key, type) {
   if (!key || key === 'None') return null;
   const k = key.replace(/\s+/g, '_');
-  if (type === 'passive') return PASSIVES[k]  || PASSIVES[key]  || null;
-  if (type === 'active')  return ABILITIES[k] || ABILITIES[key] || null;
-  return null;
+  return UNIT_ABILITIES[k] || UNIT_ABILITIES[key] || null;
 }
 
 function buildStatDescription(def, type) {
