@@ -379,7 +379,39 @@ router.get('/battle/active', async (req, res) => {
   }
 });
 
-router.post('/battle/create', async (req, res) => {
+router.get('/battle/state', async (req, res) => {
+  const { battle_id } = req.query;
+  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No active battle found' });
+
+    const bd = record.battle_data;
+    const { playerUnitIds, placement } = bd.setup;
+    const chat_id = record.chat_id;
+
+    const [rosterRows, enemies] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,unit_name,is_hero`),
+      Promise.resolve(getEncounter(bd.region_id, bd.level)),
+    ]);
+
+    const rosterById = {};
+    for (const r of rosterRows) rosterById[String(r.id)] = r;
+
+    const playerUnits = playerUnitIds.map(entry => {
+      const r = rosterById[String(entry._rosterId || entry.id)];
+      if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
+      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: r.unit_data, unit_name: r.unit_name };
+    });
+
+    const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
+    res.json({ state: engine.getSnapshot(), region_id: bd.region_id, level: bd.level });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
   const { chat_id, battle_id, playerUnits, enemies, placement, region_id, level } = req.body;
   if (!chat_id || !battle_id || !playerUnits || !enemies || !placement) {
     return res.status(400).json({ error: 'chat_id, battle_id, playerUnits, enemies, placement required' });

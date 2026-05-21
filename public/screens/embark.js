@@ -46,11 +46,16 @@ export function renderEmbark(root, { player }) {
     `;
     root.querySelector('#embark-regions').before(banner);
 
-    banner.querySelector('#reconnect-btn').addEventListener('click', () => {
+    banner.querySelector('#reconnect-btn').addEventListener('click', async () => {
       const region_id = battle_data.region_id;
       const level     = battle_data.level;
       if (!region_id) return;
-      navigate('battle', { player, battle_id, reconnect: true, snapshot: { combatants: battle_data.units, round: battle_data.round, log: battle_data.log || [], done: battle_data.done, winner: battle_data.winner }, region_id, level });
+      try {
+        const { state } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}`);
+        navigate('battle', { player, battle_id, reconnect: true, snapshot: state, region_id, level });
+      } catch (err) {
+        console.error('Failed to reconnect:', err);
+      }
     });
 
     banner.querySelector('#abandon-btn').addEventListener('click', async () => {

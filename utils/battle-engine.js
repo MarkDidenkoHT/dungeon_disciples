@@ -651,14 +651,12 @@ class BattleEngine {
         battle_hp:        c.battle_hp,
         acted_this_round: c.acted_this_round,
         buffs: {
-          shield:             c.shield,
-          burn:               c.burn,
-          poison:             c.poison,
-          _dmg_mult:          c._dmg_mult,
-          _healing_reduction: c._healing_reduction,
-          _stacks:            c._stacks,
-          _flags:             c._flags,
-          _granted_buffs:     c._granted_buffs,
+          shield:         c.shield,
+          burn:           c.burn,
+          poison:         c.poison,
+          _stacks:        c._stacks,
+          _flags:         c._flags,
+          _granted_buffs: c._granted_buffs,
         },
       })),
     };
@@ -676,14 +674,12 @@ class BattleEngine {
       c.cellIndex          = s.cellIndex;
       c.acted_this_round   = s.acted_this_round;
       const b              = s.buffs || {};
-      c.shield             = b.shield             ?? 0;
-      c.burn               = b.burn               ?? 0;
-      c.poison             = b.poison             ?? 0;
-      c._dmg_mult          = b._dmg_mult          ?? 1;
-      c._healing_reduction = b._healing_reduction ?? 0;
-      c._stacks            = b._stacks            || {};
-      c._flags             = b._flags             || {};
-      c._granted_buffs     = b._granted_buffs     || [];
+      c.shield             = b.shield         ?? 0;
+      c.burn               = b.burn           ?? 0;
+      c.poison             = b.poison         ?? 0;
+      c._stacks            = b._stacks        || {};
+      c._flags             = b._flags         || {};
+      c._granted_buffs     = b._granted_buffs || [];
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;
