@@ -390,7 +390,6 @@ router.post('/battle/create', async (req, res) => {
       ...engine.getBattleData(),
       region_id,
       level,
-      log:   engine.log,
       setup: { playerUnits, enemies, placement },
     };
     const record = await createBattleState({ chat_id, battle_id, battle_data });
@@ -442,7 +441,6 @@ router.post('/battle/action', async (req, res) => {
       ...engine.getBattleData(),
       region_id: bd.region_id,
       level:     bd.level,
-      log:       engine.log,
       setup:     bd.setup,
     };
 

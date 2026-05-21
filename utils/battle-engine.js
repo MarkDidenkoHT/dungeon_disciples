@@ -644,25 +644,23 @@ class BattleEngine {
       done:   this.done,
       winner: this.winner,
       units:  this.combatants.map(c => ({
-        id:           c.id,
-        side:         c.side,
-        cellIndex:    c.cellIndex,
-        battle_hp:    c.battle_hp,
-        max_hp:       c.max_hp,
-        alive:        c.alive,
+        id:               c.id,
+        side:             c.side,
+        cellIndex:        c.cellIndex,
+        battle_hp:        c.battle_hp,
+        max_hp:           c.max_hp,
+        alive:            c.alive,
         acted_this_round: c.acted_this_round,
-        used_active:  c.used_active,
-        shield:       c.shield,
-        burn:         c.burn,
-        poison:       c.poison,
-        armor:        c.armor,
-        initiative:   c.initiative,
+        shield:           c.shield,
+        burn:             c.burn,
+        poison:           c.poison,
+        armor:            c.armor,
         defend_armor_bonus: c.defend_armor_bonus,
-        _dmg_mult:    c._dmg_mult,
+        _dmg_mult:        c._dmg_mult,
         _healing_reduction: c._healing_reduction,
-        _stacks:      c._stacks,
-        _flags:       c._flags,
-        _granted_buffs: c._granted_buffs,
+        _stacks:          c._stacks,
+        _flags:           c._flags,
+        _granted_buffs:   c._granted_buffs,
       })),
     };
   }
@@ -678,12 +676,10 @@ class BattleEngine {
       c.max_hp             = s.max_hp;
       c.alive              = s.alive;
       c.acted_this_round   = s.acted_this_round;
-      c.used_active        = s.used_active;
       c.shield             = s.shield;
       c.burn               = s.burn;
       c.poison             = s.poison;
       c.armor              = s.armor;
-      c.initiative         = s.initiative;
       c.defend_armor_bonus = s.defend_armor_bonus;
       c._dmg_mult          = s._dmg_mult;
       c._healing_reduction = s._healing_reduction;
