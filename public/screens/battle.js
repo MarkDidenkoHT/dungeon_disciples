@@ -305,6 +305,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     attachEvents();
   }
 
+  async function advanceEnemyTurns() {
+    const actor = currentActor();
+    if (!actor || actor.side !== 'enemy' || processing) return;
+    processing = true;
+    render();
+    try {
+      const result = await api('/battle/advance', { battle_id });
+      state = result.state;
+      if (result.done) return renderResult(result.winner);
+    } catch (err) {
+      console.error('Advance failed:', err);
+    } finally {
+      processing = false;
+    }
+    render();
+  }
+
   async function sendAction(action, actor_id, target_id = null) {
     processing = true;
     render();
@@ -322,6 +339,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       processing = false;
     }
     render();
+    advanceEnemyTurns();
   }
 
   function attachEvents() {
@@ -431,5 +449,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     renderResult(state.winner);
   } else {
     render();
+    advanceEnemyTurns();
   }
 }

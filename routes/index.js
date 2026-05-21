@@ -85,6 +85,39 @@ function getUnitByDataId(unitDataId) {
   return null;
 }
 
+async function rehydrateEngine(record) {
+  const bd = record.battle_data;
+  const { playerUnitIds, placement } = bd.setup;
+  const chat_id = record.chat_id;
+
+  const [rosterRows, enemies] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+    Promise.resolve(getEncounter(bd.region_id, bd.level)),
+  ]);
+
+  const rosterById = {};
+  for (const r of rosterRows) rosterById[String(r.id)] = r;
+
+  const playerUnits = playerUnitIds.map(entry => {
+    const r = rosterById[String(entry._rosterId || entry.id)];
+    if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
+    const def = getUnitByDataId(r.unit_data?.unit_id);
+    if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
+    return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
+  });
+
+  return BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
+}
+
+function buildBattleData(engine, bd) {
+  return {
+    ...engine.getBattleData(),
+    region_id: bd.region_id,
+    level:     bd.level,
+    setup:     bd.setup,
+  };
+}
+
 function getFactionForUnit(unitDataId) {
   for (const [fKey, factionPool] of Object.entries(UNIT_UPGRADE_PATHS)) {
     if (factionPool[unitDataId]) return fKey;
@@ -386,28 +419,8 @@ router.get('/battle/state', async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
 
-    const bd = record.battle_data;
-    const { playerUnitIds, placement } = bd.setup;
-    const chat_id = record.chat_id;
-
-    const [rosterRows, enemies] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
-      Promise.resolve(getEncounter(bd.region_id, bd.level)),
-    ]);
-
-    const rosterById = {};
-    for (const r of rosterRows) rosterById[String(r.id)] = r;
-
-    const playerUnits = playerUnitIds.map(entry => {
-      const r = rosterById[String(entry._rosterId || entry.id)];
-      if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-      const def = getUnitByDataId(r.unit_data?.unit_id);
-      if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
-      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
-    });
-
-    const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
-    res.json({ state: engine.getSnapshot(), region_id: bd.region_id, level: bd.level });
+    const engine = await rehydrateEngine(record);
+    res.json({ state: engine.getSnapshot(), region_id: record.battle_data.region_id, level: record.battle_data.level });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -421,15 +434,13 @@ router.post('/battle/create', async (req, res) => {
   }
   try {
     const engine = BattleEngine.fromSetup(playerUnits, enemies, placement);
-    const battle_data = {
-      ...engine.getBattleData(),
-      region_id,
-      level,
-      setup: {
-        playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId || u.id })),
-        placement,
-      },
-    };
+
+    if (!engine.done) engine.runAiTurns();
+
+    const battle_data = buildBattleData(engine, { region_id, level, setup: {
+      playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId || u.id })),
+      placement,
+    } });
     const record = await createBattleState({ chat_id, battle_id, battle_data });
     res.json({ record, state: engine.getSnapshot() });
   } catch (err) {
@@ -444,29 +455,7 @@ router.post('/battle/action', async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
 
-    const bd = record.battle_data;
-    if (!bd.setup) return res.status(400).json({ error: 'Battle setup missing' });
-
-    const { playerUnitIds, placement } = bd.setup;
-    const chat_id = record.chat_id;
-
-    const [rosterRows, enemies] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
-      Promise.resolve(getEncounter(bd.region_id, bd.level)),
-    ]);
-
-    const rosterById = {};
-    for (const r of rosterRows) rosterById[String(r.id)] = r;
-
-    const playerUnits = playerUnitIds.map(entry => {
-      const r = rosterById[String(entry._rosterId || entry.id)];
-      if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-      const def = getUnitByDataId(r.unit_data?.unit_id);
-      if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
-      return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
-    });
-
-    const engine = BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
+    const engine = await rehydrateEngine(record);
     if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
 
     const actor = engine.combatants.find(c => c.id === actor_id);
@@ -494,18 +483,41 @@ router.post('/battle/action', async (req, res) => {
       engine.runAiTurns();
     }
 
-    const battle_data = {
-      ...engine.getBattleData(),
-      region_id: bd.region_id,
-      level:     bd.level,
-      setup:     bd.setup,
-    };
+    const battle_data = buildBattleData(engine, record.battle_data);
 
     await updateBattleState(battle_id, battle_data);
 
     if (engine.done) {
       await closeBattleState(battle_id);
     }
+
+    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/battle/advance', async (req, res) => {
+  const { battle_id } = req.body;
+  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No active battle found' });
+
+    const engine = await rehydrateEngine(record);
+    if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
+
+    const actor = engine.currentActor();
+    if (!actor || actor.side !== 'enemy') {
+      return res.status(400).json({ error: 'No enemy turn to advance' });
+    }
+
+    engine.runAiTurns();
+
+    const battle_data = buildBattleData(engine, record.battle_data);
+    await updateBattleState(battle_id, battle_data);
+
+    if (engine.done) await closeBattleState(battle_id);
 
     res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
   } catch (err) {
