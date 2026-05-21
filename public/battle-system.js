@@ -481,9 +481,6 @@ export class BattleSystem {
       target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
       this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: 'Purge — stripped all debuffs' });
     }
-
-    }
-
     else if (key.startsWith('raise_dead')) {
       if (!target) return false;
       target.alive     = true;
