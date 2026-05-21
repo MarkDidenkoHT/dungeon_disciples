@@ -412,6 +412,7 @@ router.get('/battle/state', async (req, res) => {
 });
 
 
+router.post('/battle/create', async (req, res) => {
   const { chat_id, battle_id, playerUnits, enemies, placement, region_id, level } = req.body;
   if (!chat_id || !battle_id || !playerUnits || !enemies || !placement) {
     return res.status(400).json({ error: 'chat_id, battle_id, playerUnits, enemies, placement required' });
