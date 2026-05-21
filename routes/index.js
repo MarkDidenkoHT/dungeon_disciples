@@ -41,7 +41,7 @@ const HERO_STARTING_UNITS = {
 };
 
 function supabase(path, options = {}) {
-  return fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+  return fetch(`${SUPABASE_URL}${path}`, {
     ...options,
     headers: {
       'apikey': SUPABASE_SERVICE_KEY,

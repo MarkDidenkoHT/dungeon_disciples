@@ -133,7 +133,7 @@ async function boot() {
   const tg = window.Telegram?.WebApp;
 
   if (!tg || !tg.initData) {
-    navigate('register');
+    app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#888;font-family:sans-serif;text-align:center;padding:2rem">Open this app inside Telegram.</div>`;
     return;
   }
 
@@ -147,7 +147,7 @@ async function boot() {
       navigate('castle', { player });
     }
   } catch (err) {
-    navigate('register');
+    app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#e74c3c;font-family:sans-serif;text-align:center;padding:2rem">Login failed: ${err.message}</div>`;
   }
 }
 

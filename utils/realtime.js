@@ -4,7 +4,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 function supabaseAnon(path, options = {}) {
-  return fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+  return fetch(`${SUPABASE_URL}${path}`, {
     ...options,
     headers: {
       'apikey': SUPABASE_ANON_KEY,
