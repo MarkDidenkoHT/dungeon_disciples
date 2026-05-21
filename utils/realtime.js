@@ -4,7 +4,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 function supabaseAnon(path, options = {}) {
-  return fetch(`${SUPABASE_URL}${path}`, {
+  return fetch(`${SUPABASE_URL}/rest/v1${path}`, {
     ...options,
     headers: {
       'apikey': SUPABASE_ANON_KEY,
@@ -20,6 +20,13 @@ function supabaseAnon(path, options = {}) {
   });
 }
 
+async function getActiveBattle(chat_id) {
+  const rows = await supabaseAnon(
+    `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_active=eq.true&order=created_at.desc&limit=1`
+  );
+  return rows[0] || null;
+}
+
 async function getBattleState(battle_id) {
   const rows = await supabaseAnon(
     `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&battle_active=eq.true&limit=1`
@@ -27,27 +34,23 @@ async function getBattleState(battle_id) {
   return rows[0] || null;
 }
 
-async function upsertBattleState({ chat_id, battle_id, battle_data, battle_active = true }) {
-  const existing = await supabaseAnon(
-    `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&limit=1`
-  );
-
-  if (existing.length > 0) {
-    const updated = await supabaseAnon(
-      `/battle_state?id=eq.${existing[0].id}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ battle_data, battle_active }),
-      }
-    );
-    return updated[0];
-  }
-
+async function createBattleState({ chat_id, battle_id, battle_data }) {
   const created = await supabaseAnon('/battle_state', {
     method: 'POST',
-    body: JSON.stringify({ chat_id, battle_id, battle_data, battle_active }),
+    body: JSON.stringify({ chat_id, battle_id, battle_data, battle_active: true }),
   });
   return created[0];
+}
+
+async function updateBattleState(battle_id, battle_data) {
+  const updated = await supabaseAnon(
+    `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&battle_active=eq.true`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ battle_data }),
+    }
+  );
+  return updated[0] || null;
 }
 
 async function closeBattleState(battle_id) {
@@ -61,4 +64,4 @@ async function closeBattleState(battle_id) {
   return updated[0] || null;
 }
 
-module.exports = { getBattleState, upsertBattleState, closeBattleState };
+module.exports = { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState };

@@ -814,8 +814,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
-  root.querySelector('#ready-btn').addEventListener('click', () => {
+  root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
+
+    const btn = root.querySelector('#ready-btn');
+    btn.disabled = true;
+    btn.textContent = 'Preparing…';
 
     const playerUnits = roster
       .filter(u => placedUnitIds().has(u.id))
@@ -825,7 +829,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           id:        String(u.id),
           _rosterId: String(u.id),
           unit_name: def?.name ?? u.unit_data?.unit_id ?? 'Unit',
-          unit_data: { ...def},
+          unit_data: { ...def },
         };
       });
 
@@ -836,7 +840,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
-    navigate('battle', { player, region_id, level, playerUnits, enemies, placement, selectedSpells });
+    try {
+      const battle_id = `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const result = await api('/battle/create', {
+        chat_id: player.chat_id,
+        battle_id,
+        playerUnits,
+        enemies,
+        placement,
+        region_id,
+        level,
+      });
+      navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Ready Up';
+      console.error('Failed to create battle:', err);
+    }
   });
 
   (async () => {

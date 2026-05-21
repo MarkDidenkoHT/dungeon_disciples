@@ -17,8 +17,9 @@ export function renderEmbark(root, { player }) {
         <div class="embark-header">
           <h2>Select Region</h2>
         </div>
-        <div class="embark-regions-grid" id="embark-regions"></div>
-
+        <div class="embark-regions-grid" id="embark-regions">
+          <div style="color:var(--muted);text-align:center;padding:2rem">Checking active battles…</div>
+        </div>
         <div class="embark-controls">
           <div class="embark-march-row">
             <button class="embark-march-btn" id="embark-march-btn" disabled>
@@ -32,9 +33,45 @@ export function renderEmbark(root, { player }) {
 
   let selectedRegion = null;
 
+  function showReconnectBanner(battle_id, battle_data) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:1rem;margin-bottom:1rem;text-align:center;';
+    banner.innerHTML = `
+      <div style="font-weight:bold;margin-bottom:.5rem">⚔ Active Battle Found</div>
+      <div style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem">You have an unfinished battle. Reconnect or abandon it.</div>
+      <div style="display:flex;gap:.5rem;justify-content:center;">
+        <button id="reconnect-btn" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:.5rem 1.2rem;cursor:pointer;font-size:.9rem">Reconnect</button>
+        <button id="abandon-btn" style="background:transparent;color:var(--muted);border:1px solid var(--muted);border-radius:6px;padding:.5rem 1.2rem;cursor:pointer;font-size:.9rem">Abandon</button>
+      </div>
+    `;
+    root.querySelector('#embark-regions').before(banner);
+
+    banner.querySelector('#reconnect-btn').addEventListener('click', () => {
+      const snap      = battle_data._snapshot;
+      const region_id = battle_data.region_id;
+      const level     = battle_data.level;
+      if (!snap || !region_id) return;
+      navigate('battle', { player, battle_id, reconnect: true, snapshot: snap, region_id, level });
+    });
+
+    banner.querySelector('#abandon-btn').addEventListener('click', async () => {
+      try {
+        await api('/battle/end', { battle_id });
+      } catch (_) {}
+      banner.remove();
+    });
+  }
+
   async function loadRegions() {
     try {
-      const progress = await api(`/progress?chat_id=${player.chat_id}`);
+      const [progress, activeCheck] = await Promise.all([
+        api(`/progress?chat_id=${player.chat_id}`),
+        api(`/battle/active?chat_id=${player.chat_id}`),
+      ]);
+
+      if (activeCheck.active) {
+        showReconnectBanner(activeCheck.battle_id, activeCheck.battle_data);
+      }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
         if (r.type === 'pvp') {
@@ -49,9 +86,7 @@ export function renderEmbark(root, { player }) {
             </div>
           `;
         }
-
         const level = progress[r.id] ?? 1;
-
         return `
           <div class="embark-card" data-id="${r.id}" data-level="${level}">
             <span class="embark-card-icon">${r.icon}</span>
@@ -70,7 +105,6 @@ export function renderEmbark(root, { player }) {
           const selectedLevel = parseInt(card.dataset.level) || 1;
           root.querySelectorAll('.embark-card[data-id]').forEach(c => c.classList.remove('embark-card--selected'));
           card.classList.add('embark-card--selected');
-
           const marchBtn = root.querySelector('#embark-march-btn');
           marchBtn.disabled = false;
           marchBtn.textContent = `March to ${card.querySelector('.embark-card-label').textContent} — Lv ${selectedLevel}`;
