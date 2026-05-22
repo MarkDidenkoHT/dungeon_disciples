@@ -1,4 +1,6 @@
 import { filterByTagRules } from './tag-rules.js';
+import { UNIT_ABILITIES } from '../data/unit_abilities.js';
+import { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } from './passive-processor.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -30,7 +32,7 @@ export class BattleSystem {
       this.combatants.push(this.createCombatant(e, 'enemy', cellIndex(row, col)));
     });
 
-    this.applyBattleStartPassives();
+    this.fireTrigger('on_battle_start', {});
   }
 
   createCombatant(unit, side, cellIdx) {
@@ -64,12 +66,17 @@ export class BattleSystem {
       shield:   0,
       burn:     0,
       poison:   0,
+      _hot:          0,
       _stacks:       {},
       _flags:        {},
       _dmg_mult:          1,
       _healing_reduction: 0,
       _granted_buffs: [],
     };
+  }
+
+  fireTrigger(trigger, ctx) {
+    runTrigger(trigger, { engine: this, UNIT_ABILITIES, ...ctx });
   }
 
   recordGrantedBuff(source, type, targets, value) {
@@ -97,204 +104,9 @@ export class BattleSystem {
     dying._granted_buffs = [];
   }
 
-  applyBattleStartPassives() {
-    for (const c of this.combatants) {
-      const passive = c.unit_data?.passive || c.unit_data?.passive_ability;
-      if (!passive) continue;
-
-      if (passive.startsWith('vitality')) {
-        const map   = { 'vitality 1': 5, 'vitality 2': 15, 'vitality 3': 25 };
-        const bonus = map[passive] ?? 0;
-        if (!bonus) continue;
-        const allies = this.combatants.filter(x => x.side === c.side);
-        for (const a of allies) { a.battle_hp += bonus; a.max_hp += bonus; }
-        this.recordGrantedBuff(c, 'max_hp', allies, bonus);
-        this.pushLog({ type: 'passive', passive: 'Vitality', actorName: c.unit_name, actorCell: c.cellIndex, targetName: 'all allies', value: bonus });
-      }
-    }
-  }
-
-  applyTurnStartPassives(actor) {
-    const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
-    if (!passive) return;
-
-    if (passive.startsWith('regenerate')) {
-      const map  = { 'regenerate 1': 10, 'regenerate 2': 18 };
-      const pct  = map[passive] ?? 0;
-      const heal = Math.floor(actor.max_hp * pct / 100);
-      actor.battle_hp = Math.min(actor.max_hp, actor.battle_hp + heal);
-      this.pushLog({ type: 'passive', passive: 'Regenerate', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: heal });
-    }
-  }
-
-  applyOnHitPassives(actor, target, dmg) {
-    const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
-    if (!passive || dmg <= 0) return;
-
-    if (passive.startsWith('mithrails_light')) {
-      const heal   = Math.floor(dmg * 0.25);
-      const lowest = this.combatants
-        .filter(c => c.side === actor.side && c.alive)
-        .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, actor);
-      const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
-      lowest.battle_hp += actual;
-      if (actual > 0) this.pushLog({ type: 'passive', passive: "Mithrail's Light", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
-    }
-
-    if (passive.startsWith('lifesteal')) {
-      const map    = { 'lifesteal 1': 25, 'lifesteal 2': 40 };
-      const heal   = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      const actual = Math.min(heal, actor.max_hp - actor.battle_hp);
-      actor.battle_hp += actual;
-      if (actual > 0) this.pushLog({ type: 'passive', passive: 'Lifesteal', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: actual });
-    }
-
-    if (passive.startsWith('burn')) {
-      const map    = { 'burn 1': 25, 'burn 2': 40 };
-      target.burn  = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      this.pushLog({ type: 'status', passive: 'Burn', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.burn });
-    }
-
-    if (passive.startsWith('poison')) {
-      const map      = { 'poison 1': 25, 'poison 2': 40 };
-      target.poison  = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      this.pushLog({ type: 'status', passive: 'Poison', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.poison });
-    }
-
-    if (passive.startsWith('shatter')) {
-      const map  = { 'shatter 1': 3, 'shatter 2': 6 };
-      const val  = map[passive] ?? 0;
-      target.armor = Math.max(0, target.armor - val);
-      this.pushLog({ type: 'passive', passive: 'Shatter', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
-    }
-
-    if (passive.startsWith('slow')) {
-      const map = { 'slow 1': 8, 'slow 2': 15 };
-      const val = map[passive] ?? 0;
-      target.initiative = Math.max(0, target.initiative - val);
-      this.pushLog({ type: 'passive', passive: 'Slow', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: val, heal: false });
-    }
-
-    if (passive.startsWith('death_mark')) {
-      const map = { 'death_mark 1': { stacks: 3, dmg: 25 }, 'death_mark 2': { stacks: 3, dmg: 45 } };
-      const cfg = map[passive];
-      if (cfg) {
-        target._stacks.death_mark = (target._stacks.death_mark ?? 0) + 1;
-        if (target._stacks.death_mark >= cfg.stacks) {
-          target._stacks.death_mark = 0;
-          const burst = Math.max(1, cfg.dmg - target.armor);
-          target.battle_hp = Math.max(0, target.battle_hp - burst);
-          if (target.battle_hp <= 0) { target.alive = false; this.applyOnDeathPassives(target); }
-          this.pushLog({ type: 'passive', passive: 'Death Mark', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
-        }
-      }
-    }
-
-    if (passive.startsWith('overpower')) {
-      if (actor._stacks.overpower_target !== target.id) {
-        actor._stacks.overpower        = 1;
-        actor._stacks.overpower_target = target.id;
-      } else if ((actor._stacks.overpower ?? 0) < 3) {
-        actor._stacks.overpower++;
-      }
-      actor._dmg_mult = 1 + (actor._stacks.overpower * 0.10);
-    }
-
-    if (passive.startsWith('impale')) {
-      const row    = cellRow(target.cellIndex);
-      const col    = cellCol(target.cellIndex);
-      const behind = this.combatants.find(c =>
-        c.side === target.side && c.alive && c.id !== target.id &&
-        cellRow(c.cellIndex) === row && cellCol(c.cellIndex) !== col
-      );
-      if (behind) {
-        const splash = Math.floor(dmg * 0.25);
-        behind.battle_hp = Math.max(0, behind.battle_hp - splash);
-        if (behind.battle_hp <= 0) { behind.alive = false; this.applyOnDeathPassives(behind); }
-        this.pushLog({ type: 'passive', passive: 'Impale', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
-      }
-    }
-
-    if (passive.startsWith('wither') && !target._flags.withered) {
-      target._flags.withered    = true;
-      target._healing_reduction = (target._healing_reduction ?? 0) + 10;
-      this.pushLog({ type: 'status', passive: 'Wither', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 10 });
-    }
-  }
-
-  applyOnHitReceivedPassives(actor, target, dmg) {
-    const passive = target.unit_data?.passive || target.unit_data?.passive_ability;
-    if (!passive || dmg <= 0) return;
-
-    if (passive.startsWith('thorns')) {
-      const map     = { 'thorns 1': 20, 'thorns 2': 35 };
-      const reflect = Math.floor(dmg * (map[passive] ?? 0) / 100);
-      actor.battle_hp = Math.max(0, actor.battle_hp - reflect);
-      if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Thorns', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
-    }
-
-    if (passive.startsWith('spore_cloud')) {
-      const map      = { 'spore_cloud 1': 8, 'spore_cloud 2': 16 };
-      const aoe      = map[passive] ?? 0;
-      const adjacent = this.combatants.filter(c =>
-        c.side === actor.side && c.alive && c.id !== actor.id &&
-        Math.abs(cellRow(c.cellIndex) - cellRow(target.cellIndex)) <= 1
-      );
-      for (const adj of adjacent) {
-        adj.battle_hp = Math.max(0, adj.battle_hp - aoe);
-        if (adj.battle_hp <= 0) { adj.alive = false; this.applyOnDeathPassives(adj); }
-        this.pushLog({ type: 'passive', passive: 'Spore Cloud', actorName: target.unit_name, actorCell: target.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: aoe, heal: false });
-      }
-    }
-
-    if (passive.startsWith('volcanic_skin')) {
-      const val = 12;
-      actor.battle_hp = Math.max(0, actor.battle_hp - val);
-      if (actor.battle_hp <= 0) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Volcanic Skin', actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: val, heal: false });
-    }
-
-  }
-
-  applyOnKillPassives(actor) {
-    const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
-    if (!passive) return;
-
-    if (passive.startsWith('blood_frenzy')) {
-      actor._dmg_mult = (actor._dmg_mult ?? 1) + 0.15;
-      this.pushLog({ type: 'passive', passive: 'Blood Frenzy', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: 15 });
-    }
-  }
-
   applyOnDeathPassives(dying) {
     this.revokeGrantedBuffs(dying);
-
-    const passive = dying.unit_data?.passive || dying.unit_data?.passive_ability;
-    if (!passive) return;
-
-    if (passive.startsWith('undying') && !dying._flags.undying_used) {
-      dying._flags.undying_used = true;
-      dying.alive     = true;
-      dying.battle_hp = passive === 'undying 2'
-        ? 1 + Math.floor(dying.max_hp * 0.20)
-        : 1;
-      this.pushLog({ type: 'passive', passive: 'Undying', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: dying.unit_name, targetCell: dying.cellIndex, value: dying.battle_hp });
-    }
-
-    if (passive.startsWith('noxious_death')) {
-      const map = { 'noxious_death 1': 20, 'noxious_death 2': 40 };
-      const dmg = map[passive] ?? 0;
-      for (const e of this.combatants.filter(c => c.side !== dying.side && c.alive)) {
-        e.battle_hp = Math.max(0, e.battle_hp - dmg);
-        if (e.battle_hp <= 0) e.alive = false;
-        this.pushLog({ type: 'passive', passive: 'Noxious Death', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: dmg, heal: false });
-      }
-    }
-  }
-
-  applyBelowHalfPassive(unit) {
-//
+    this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
   }
 
   getActionKey(unit) {
@@ -313,7 +125,9 @@ export class BattleSystem {
   }
 
   getValidTargets(actor, forAbility = false) {
-    if (forAbility) return this.getAbilityTargets(actor);
+    if (forAbility) {
+      return getAbilityTargets(actor, this.combatants, UNIT_ABILITIES);
+    }
 
     const isHeal     = this.isHealer(actor);
     const actionKey  = this.getActionKey(actor);
@@ -342,47 +156,8 @@ export class BattleSystem {
     });
   }
 
-  getAbilityTargets(actor) {
-    const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
-    if (key.startsWith('purge'))       return this.combatants.filter(c => c.side !== actor.side && c.alive);
-    if (key.startsWith('raise_dead'))  return this.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
-    if (key.startsWith('devour'))      return this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-    if (key.startsWith('lions_roar'))  return [actor];
-    return this.combatants.filter(c => c.side !== actor.side && c.alive);
-  }
-
   calcDamage(actor, target) {
-    const data    = actor.unit_data || actor;
-    let   power   = data.action_power ?? data.action?.value ?? 12;
-    const passive = actor.unit_data?.passive || actor.unit_data?.passive_ability;
-
-    if (passive?.startsWith('predator') && target.battle_hp / target.max_hp < 0.5) {
-      power = Math.floor(power * 1.20);
-    }
-
-    const rawDmg     = Math.floor(power * (actor._dmg_mult ?? 1));
-    const damageSource = data.damage_source ?? 'physical';
-    const resistances  = target.unit_data?.resistances ?? target.resistances ?? {};
-
-    let dmg = rawDmg;
-
-    if (damageSource === 'physical') {
-      const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
-      const armorRed = armor / 100;
-
-      if (passive?.startsWith('pierce')) {
-        const map = { 'pierce 1': 0.25, 'pierce 2': 0.50 };
-        const effectiveArmorRed = armorRed * (1 - (map[passive] ?? 0));
-        dmg = Math.floor(rawDmg * (1 - effectiveArmorRed));
-      } else {
-        dmg = Math.floor(rawDmg * (1 - armorRed));
-      }
-    } else {
-      const resistance = resistances[damageSource] ?? 0;
-      dmg = Math.floor(rawDmg * (1 - resistance / 100));
-    }
-
-    return Math.max(1, dmg);
+    return calcDamageWithPassives(actor, target, UNIT_ABILITIES);
   }
 
   calcHeal(actor) {
@@ -392,7 +167,7 @@ export class BattleSystem {
   }
 
   executeAction(actor, target = null, actionType = 'attack') {
-    this.applyTurnStartPassives(actor);
+    this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
 
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
@@ -403,6 +178,7 @@ export class BattleSystem {
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
       const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
       target.battle_hp += heal;
+      this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       let remaining = this.calcDamage(actor, target);
@@ -421,16 +197,14 @@ export class BattleSystem {
         if (dead) {
           target.alive = false;
           this.applyOnDeathPassives(target);
-        } else if (target.battle_hp < target.max_hp / 2) {
-          this.applyBelowHalfPassive(target);
         }
 
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
 
-        this.applyOnHitPassives(actor, target, remaining);
-        this.applyOnHitReceivedPassives(actor, target, remaining);
+        this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
+        this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
 
-        if (dead && !target.alive) this.applyOnKillPassives(actor);
+        if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
       } else {
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
@@ -456,6 +230,12 @@ export class BattleSystem {
       unit.poison = 0;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
+    if (unit._hot > 0) {
+      const actual = Math.min(unit._hot, unit.max_hp - unit.battle_hp);
+      unit.battle_hp += actual;
+      this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
+      unit._hot = 0;
+    }
   }
 
   doDefend(actor) {
@@ -466,7 +246,7 @@ export class BattleSystem {
   }
 
   doAbility(actor, target) {
-    const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
+    const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
     if (actor.used_active || !key) {
       actor.acted_this_round = true;
       return this.afterAction(actor);
@@ -475,37 +255,7 @@ export class BattleSystem {
     actor.used_active      = true;
     actor.acted_this_round = true;
 
-    if (key.startsWith('purge')) {
-      if (!target) return false;
-      target.burn = 0; target.poison = 0; target._flags.withered = false;
-      target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: 'Purge — stripped all debuffs' });
-    }
-    else if (key.startsWith('raise_dead')) {
-      if (!target) return false;
-      target.alive     = true;
-      target.battle_hp = Math.floor(target.max_hp * 0.50);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `Raise Dead — resurrected at ${target.battle_hp} HP` });
-    }
-
-    else if (key.startsWith('devour')) {
-      const allies = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-      let drained  = 0;
-      for (const a of allies) {
-        const d = Math.floor(a.max_hp * 0.25);
-        a.battle_hp = Math.max(1, a.battle_hp - d);
-        drained    += d;
-      }
-      actor._dmg_mult = (actor._dmg_mult ?? 1) + (Math.floor(drained * 0.5) / 100);
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'allies', message: `Devour — drained ${drained} HP, gained ${Math.floor(drained * 0.5)}% damage` });
-    }
-
-    else if (key.startsWith('lions_roar')) {
-      for (const a of this.combatants.filter(c => c.side === actor.side && c.alive)) {
-        a.initiative += 20;
-      }
-      this.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: "Lion's Roar — +20 initiative to all allies" });
-    }
+    executeActiveAbility(actor, target, this.combatants, UNIT_ABILITIES, this);
 
     return this.afterAction(actor);
   }

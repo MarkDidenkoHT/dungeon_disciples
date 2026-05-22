@@ -6,7 +6,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'enemy',
     description: 'Removes all buffs from target.',
-    params: {range: 3},
+    params: { cleanse_debuffs: true },
   },
   'raise_dead 1': {
     id: 'raise_dead 1',
@@ -15,7 +15,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'ally_dead',
     description: 'Resurrects a friendly undead unit with 50% HP.',
-    params: { hp_pct: 50, tag_required: 'Undead' },
+    params: { resurrect_hp_pct: 50, tag_required: 'Undead' },
   },
   'blood_frenzy 1': {
     id: 'blood_frenzy 1',
@@ -24,25 +24,43 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_kill',
     description: 'On killing a unit, gains +15% damage until end of battle.',
-    params: { damage_bonus_pct: 15 },
+    params: { kill_damage_bonus_pct: 15 },
   },
   'fortify 1': {
     id: 'fortify 1',
     name: 'Fortify',
     rank: 1,
     type: 'passive',
-    trigger: 'constant',
-    description: 'Increases armor on allies.',
-    params: { effect_bonus_pct: 10 },
+    trigger: 'on_battle_start',
+    description: 'All allies gain +10 armor.',
+    params: { ally_armor_bonus: 10 },
   },
   'beacon of hope 1': {
     id: 'beacon of hope 1',
     name: 'Beacon of Hope',
     rank: 1,
     type: 'passive',
-    trigger: 'constant',
-    description: 'Increases effect of buffs on allies.',
-    params: { effect_bonus_pct: 20 },
+    trigger: 'on_battle_start',
+    description: 'Increases effect of buffs on allies by 20%.',
+    params: { buff_effect_bonus_pct: 20 },
+  },
+  'lions_roar 1': {
+    id: 'lions_roar 1',
+    name: "Lion's Roar",
+    rank: 1,
+    type: 'active',
+    target: 'self',
+    description: 'All allies gain +20 initiative.',
+    params: { ally_initiative_bonus: 20 },
+  },
+  'devour 1': {
+    id: 'devour 1',
+    name: 'Devour',
+    rank: 1,
+    type: 'active',
+    target: 'ally',
+    description: 'Drain 25% HP from all allies. Convert drained HP into bonus damage.',
+    params: { ally_drain_pct: 25, drain_to_damage_ratio: 0.5 },
   },
   'burn 1': {
     id: 'burn 1',
@@ -51,7 +69,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
-    params: { dot_pct: 25, duration: 1 },
+    params: { burn_dot_pct: 25 },
   },
   'burn 2': {
     id: 'burn 2',
@@ -60,7 +78,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
-    params: { dot_pct: 40, duration: 1 },
+    params: { burn_dot_pct: 40 },
   },
   'death_mark 2': {
     id: 'death_mark 2',
@@ -69,7 +87,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 45 bonus death damage.',
-    params: { stacks_needed: 3, bonus_damage: 45, damage_type: 'death' },
+    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 45, damage_type: 'death' },
   },
   'impale 1': {
     id: 'impale 1',
@@ -77,8 +95,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Deals 25% of damage to target that is behind. Deals 25% increased damage to R-size characters.',
-    params: { splash_pct: 25, bonus_vs_row: 25 },
+    description: 'Deals 25% of damage to the unit behind the target.',
+    params: { behind_splash_pct: 25 },
   },
   'infect 1': {
     id: 'infect 1',
@@ -104,8 +122,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Heals for 25% of damage dealt.',
-    params: { lifesteal_pct: 25 },
+    description: 'Heals self for 25% of damage dealt.',
+    params: { self_heal_pct: 25 },
   },
   'lifesteal 2': {
     id: 'lifesteal 2',
@@ -113,8 +131,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Heals for 40% of damage dealt.',
-    params: { lifesteal_pct: 40 },
+    description: 'Heals self for 40% of damage dealt.',
+    params: { self_heal_pct: 40 },
   },
   'mithrails_light 1': {
     id: 'mithrails_light 1',
@@ -122,8 +140,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt, rounded down.',
-    params: { heal_pct: 25 },
+    description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt.',
+    params: { lowest_ally_heal_pct: 25 },
   },
   'noxious_death 1': {
     id: 'noxious_death 1',
@@ -132,7 +150,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_death',
     description: 'On death, deals 10 nature damage to all enemies.',
-    params: { damage: 10, damage_type: 'nature' },
+    params: { death_aoe_damage: 10, damage_type: 'nature' },
   },
   'noxious_death 2': {
     id: 'noxious_death 2',
@@ -141,7 +159,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_death',
     description: 'On death, deals 20 nature damage to all enemies.',
-    params: { damage: 20, damage_type: 'nature' },
+    params: { death_aoe_damage: 20, damage_type: 'nature' },
   },
   'overpower 1': {
     id: 'overpower 1',
@@ -150,7 +168,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Each attack against the same target stacks +10% damage, up to 3 stacks.',
-    params: { stack_bonus_pct: 10, max_stacks: 3 },
+    params: { stack_key: 'overpower', stack_bonus_pct: 10, max_stacks: 3 },
   },
   'pierce 1': {
     id: 'pierce 1',
@@ -177,7 +195,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
-    params: { dot_pct: 25, duration: 1 },
+    params: { poison_dot_pct: 25 },
   },
   'poison 2': {
     id: 'poison 2',
@@ -186,7 +204,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
-    params: { dot_pct: 40, duration: 1 },
+    params: { poison_dot_pct: 40 },
   },
   'predator 1': {
     id: 'predator 1',
@@ -195,7 +213,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 20% bonus damage to targets below 50% HP.',
-    params: { bonus_pct: 20, threshold_pct: 50 },
+    params: { execute_bonus_pct: 20, execute_threshold_pct: 50 },
   },
   'regenerate 1': {
     id: 'regenerate 1',
@@ -204,7 +222,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'Heals 10% of max HP at the start of own turn.',
-    params: { heal_pct: 10 },
+    params: { regen_pct: 10 },
   },
   'regenerate 2': {
     id: 'regenerate 2',
@@ -213,7 +231,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'Heals 15% of max HP at the start of own turn.',
-    params: { heal_pct: 15 },
+    params: { regen_pct: 15 },
   },
   'renew 1': {
     id: 'renew 1',
@@ -222,7 +240,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_heal',
     description: 'Heals for 25% of health restored to the target on their next turn.',
-    params: { hot_pct: 25, duration: 1 },
+    params: { hot_pct: 25 },
   },
   'shatter 1': {
     id: 'shatter 1',
@@ -231,7 +249,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Reduces target armor by 3 until end of battle.',
-    params: { armor_reduction: 3 },
+    params: { armor_shred: 3 },
   },
   'shatter 2': {
     id: 'shatter 2',
@@ -240,7 +258,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Reduces target armor by 6 until end of battle.',
-    params: { armor_reduction: 6 },
+    params: { armor_shred: 6 },
   },
   'slow 1': {
     id: 'slow 1',
@@ -249,7 +267,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target loses 8 initiative until end of their next turn.',
-    params: { initiative_reduction: 8, duration: 1 },
+    params: { initiative_shred: 8 },
   },
   'slow 2': {
     id: 'slow 2',
@@ -258,7 +276,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target loses 15 initiative until end of their next turn.',
-    params: { initiative_reduction: 15, duration: 1 },
+    params: { initiative_shred: 15 },
   },
   'spore_cloud 1': {
     id: 'spore_cloud 1',
@@ -267,7 +285,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit_received',
     description: 'When hit, releases spores. Adjacent enemies take 8 nature damage.',
-    params: { aoe_damage: 8, damage_type: 'nature', range: 1 },
+    params: { adjacent_aoe_damage: 8, damage_type: 'nature', range: 1 },
   },
   'spore_cloud 2': {
     id: 'spore_cloud 2',
@@ -276,7 +294,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit_received',
     description: 'When hit, releases spores. Adjacent enemies take 16 nature damage.',
-    params: { aoe_damage: 16, damage_type: 'nature', range: 1 },
+    params: { adjacent_aoe_damage: 16, damage_type: 'nature', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',
@@ -303,7 +321,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_death',
     description: 'Once per battle, survives a killing blow with 1 HP.',
-    params: { uses: 1 },
+    params: { survive_uses: 1 },
   },
   'undying 2': {
     id: 'undying 2',
@@ -312,7 +330,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_death',
     description: 'Once per battle, survives a killing blow with 1 HP and heals 20% max HP.',
-    params: { uses: 1, heal_pct: 20 },
+    params: { survive_uses: 1, survive_heal_pct: 20 },
   },
   'vitality 1': {
     id: 'vitality 1',
@@ -321,7 +339,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'All allies gain 5 HP.',
-    params: { hp_bonus: 5 },
+    params: { ally_max_hp_bonus: 5 },
   },
   'vitality 2': {
     id: 'vitality 2',
@@ -330,7 +348,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'All allies gain 15 HP.',
-    params: { hp_bonus: 15 },
+    params: { ally_max_hp_bonus: 15 },
   },
   'vitality 3': {
     id: 'vitality 3',
@@ -339,7 +357,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'All allies gain 25 HP.',
-    params: { hp_bonus: 25 },
+    params: { ally_max_hp_bonus: 25 },
   },
   'volcanic_skin 1': {
     id: 'volcanic_skin 1',
@@ -357,7 +375,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target loses 10% of all resistances until end of battle.',
-    params: { resistance_reduction_pct: 10 },
+    params: { resistance_shred_pct: 10 },
   },
 };
 
