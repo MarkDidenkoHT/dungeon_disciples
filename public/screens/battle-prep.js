@@ -171,7 +171,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tab-content" id="tab-spells">
-        <div class="spell-resources-bar" id="resource-display"></div>
         <div class="prep-track-wrap">
           <div class="spell-track" id="prep-spells"></div>
         </div>
@@ -426,12 +425,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         }
       }
       const displayEl = root.querySelector('#resource-display');
-      let html = '';
-      for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
-        const amt = playerCrystals[type] || 0;
-        html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
+      if (displayEl) {
+        let html = '';
+        for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
+          const amt = playerCrystals[type] || 0;
+          html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
+        }
+        displayEl.innerHTML = html;
       }
-      displayEl.innerHTML = html;
     } catch (err) {
       console.error('Failed to load resources:', err);
       playerCrystals = {};
