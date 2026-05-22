@@ -15,11 +15,6 @@ export function renderSpellTome(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
-        <div class="spelltome-header">
-          <span class="spelltome-title">📖 Spell Tome</span>
-          <span class="spelltome-faction">${player.faction}</span>
-        </div>
-
         <div class="tier-tabs" id="tier-tabs">
           <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
           <button class="tier-tab" data-tier="2">Tier II</button>

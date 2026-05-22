@@ -372,14 +372,15 @@
 }
 
 .unit-abilities-icons {
-  --ability-size: 44px;
+  /* adaptive size: around 20vw but constrained for very small/large screens */
+  --ability-size: clamp(36px, 20vw, 96px);
   display: grid;
   grid-template-columns: repeat(4, var(--ability-size));
-  gap: 6px;
+  gap: 8px;
   width: auto;
   flex: 0 0 auto;
   flex-shrink: 0;
-  justify-content: start;
+  justify-content: center;
 }
 
 .ability-icon {

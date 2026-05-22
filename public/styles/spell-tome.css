@@ -14,35 +14,6 @@
   overflow: hidden;
 }
 
-.spelltome-header {
-  flex-shrink: 0;
-  padding: 10px 14px 8px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.spelltome-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text);
-  flex: 1;
-}
-
-.spelltome-faction {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  border-radius: 4px;
-  padding: 2px 7px;
-}
-
 .tier-tabs {
   flex-shrink: 0;
   display: flex;
