@@ -433,7 +433,7 @@ router.post('/battle/create', async (req, res) => {
     return res.status(400).json({ error: 'chat_id, battle_id, playerUnits, enemies, placement required' });
   }
   try {
-    const engine = BattleEngine.fromSetup(playerUnits, enemies, placement);
+    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
 
     if (!engine.done) engine.runAiTurns();
 
