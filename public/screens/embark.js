@@ -42,29 +42,36 @@ export function renderEmbark(root, { player }) {
   `;
 
   let selectedRegion = null;
+  let modalClosable = true;
 
   const overlay = root.querySelector('#modal-overlay');
   const modalBody = root.querySelector('#modal-body');
   const modalTitle = root.querySelector('#modal-title');
+  const modalCloseBtn = root.querySelector('#modal-close');
 
-  function openModal(title, bodyHtml) {
+  function openModal(title, bodyHtml, { closable = true } = {}) {
     if (!overlay || !modalBody || !modalTitle) return;
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
+    modalClosable = closable;
+    if (modalCloseBtn) {
+      modalCloseBtn.style.display = closable ? '' : 'none';
+      modalCloseBtn.setAttribute('aria-hidden', String(!closable));
+    }
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
   function closeModal() {
-    if (!overlay) return;
+    if (!overlay || !modalClosable) return;
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
   }
 
-  if (root.querySelector('#modal-close')) {
-    root.querySelector('#modal-close').addEventListener('click', closeModal);
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', closeModal);
     if (overlay) overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal();
+      if (modalClosable && e.target === overlay) closeModal();
     });
   }
 
@@ -79,7 +86,7 @@ export function renderEmbark(root, { player }) {
           <button id="modal-reconnect-btn" class="action-btn" type="button">Reconnect</button>
         </div>
       </div>
-    `);
+    `, { closable: false });
 
     root.querySelector('#modal-reconnect-btn')?.addEventListener('click', async () => {
       const region_id = battle_data.region_id;
