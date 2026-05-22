@@ -28,25 +28,60 @@ export function renderEmbark(root, { player }) {
           </div>
         </div>
       </main>
+
+      <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+          <div class="modal-header">
+            <span id="modal-title"></span>
+            <button id="modal-close" aria-label="Close">✕</button>
+          </div>
+          <div id="modal-body" class="modal-body"></div>
+        </div>
+      </div>
     </div>
   `;
 
   let selectedRegion = null;
 
-  function showReconnectBanner(battle_id, battle_data) {
-    const banner = document.createElement('div');
-    banner.style.cssText = 'background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:1rem;margin-bottom:1rem;text-align:center;';
-    banner.innerHTML = `
-      <div style="font-weight:bold;margin-bottom:.5rem">⚔ Active Battle Found</div>
-      <div style="color:var(--muted);font-size:.85rem;margin-bottom:.75rem">You have an unfinished battle. Reconnect or abandon it.</div>
-      <div style="display:flex;gap:.5rem;justify-content:center;">
-        <button id="reconnect-btn" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:.5rem 1.2rem;cursor:pointer;font-size:.9rem">Reconnect</button>
-        <button id="abandon-btn" style="background:transparent;color:var(--muted);border:1px solid var(--muted);border-radius:6px;padding:.5rem 1.2rem;cursor:pointer;font-size:.9rem">Abandon</button>
-      </div>
-    `;
-    root.querySelector('#embark-regions').before(banner);
+  const overlay = root.querySelector('#modal-overlay');
+  const modalBody = root.querySelector('#modal-body');
+  const modalTitle = root.querySelector('#modal-title');
 
-    banner.querySelector('#reconnect-btn').addEventListener('click', async () => {
+  function openModal(title, bodyHtml) {
+    if (!overlay || !modalBody || !modalTitle) return;
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  if (root.querySelector('#modal-close')) {
+    root.querySelector('#modal-close').addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+  }
+
+  function showReconnectModal(battle_id, battle_data) {
+    openModal('Reconnect to Battle', `
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
+          You have an unfinished battle in progress. Reconnect to continue where you left off, or abandon it and start a new fight.
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
+          <button id="modal-abandon-btn" class="action-btn action-btn--cancel" type="button">Abandon</button>
+          <button id="modal-reconnect-btn" class="action-btn" type="button">Reconnect</button>
+        </div>
+      </div>
+    `);
+
+    root.querySelector('#modal-reconnect-btn')?.addEventListener('click', async () => {
       const region_id = battle_data.region_id;
       const level     = battle_data.level;
       if (!region_id) return;
@@ -58,11 +93,11 @@ export function renderEmbark(root, { player }) {
       }
     });
 
-    banner.querySelector('#abandon-btn').addEventListener('click', async () => {
+    root.querySelector('#modal-abandon-btn')?.addEventListener('click', async () => {
       try {
         await api('/battle/end', { battle_id });
       } catch (_) {}
-      banner.remove();
+      closeModal();
     });
   }
 
@@ -74,7 +109,7 @@ export function renderEmbark(root, { player }) {
       ]);
 
       if (activeCheck.active) {
-        showReconnectBanner(activeCheck.battle_id, activeCheck.battle_data);
+        showReconnectModal(activeCheck.battle_id, activeCheck.battle_data);
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
