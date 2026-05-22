@@ -372,12 +372,14 @@
 }
 
 .unit-abilities-icons {
+  --ability-size: 44px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, var(--ability-size));
   gap: 6px;
-  width: 100%;
-  flex: 0 0 38%;
+  width: auto;
+  flex: 0 0 auto;
   flex-shrink: 0;
+  justify-content: start;
 }
 
 .ability-icon {
@@ -391,8 +393,8 @@
   padding: 0px;
   color: inherit;
   transition: border-color 0.15s, background 0.15s;
-  width: 100%;
-  aspect-ratio: 1;
+  width: var(--ability-size);
+  height: var(--ability-size);
   min-width: 0;
   min-height: 0;
 }
