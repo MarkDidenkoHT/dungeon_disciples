@@ -373,8 +373,9 @@
 
 .unit-abilities-icons {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
+  width: 100%;
   flex: 0 0 38%;
   flex-shrink: 0;
 }
@@ -392,6 +393,8 @@
   transition: border-color 0.15s, background 0.15s;
   width: 100%;
   aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
 }
 
 .ability-icon:not([disabled]):active {

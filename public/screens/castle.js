@@ -203,11 +203,31 @@ export function renderCastle(root, { player }) {
       >${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}</button>`;
     }
 
+    const slots = [];
+    if (unit.passive) {
+      if (Array.isArray(unit.passive)) {
+        slots.push(...unit.passive);
+      } else {
+        slots.push(unit.passive);
+      }
+    }
+    if (unit.ability) {
+      slots.push(unit.ability);
+    }
+
+    const visible = slots.filter(Boolean).slice(0, 4);
+    while (visible.length < 4) visible.push(null);
+
+    const iconsHtml = visible.map(k => {
+      if (!k) return abilityIconHtml('', 'empty');
+      const t = (unit.ability && unit.ability === k) ? 'active' : 'passive';
+      return abilityIconHtml(k, t);
+    }).join('');
+
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
-          ${abilityIconHtml(unit.passive || null, 'passive')}
-          ${abilityIconHtml(unit.ability || null, 'active')}
+          ${iconsHtml}
         </div>
         <div class="ability-detail-panel">
           <div class="ability-detail-desc"></div>

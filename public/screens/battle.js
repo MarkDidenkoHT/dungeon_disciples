@@ -280,7 +280,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           </div>
           <div class="action-btns">
             <button class="action-btn ${isEnemyTurn || processing || selectingTarget ? 'action-btn--disabled' : ''}"
-                    id="btn-main" ${isEnemyTurn || processing ? 'disabled' : ''}>${selectingTarget && pendingAction === 'attack' ? '🎯 ' : ''}${actionLabel}</button>
+                    id="btn-main" ${isEnemyTurn || processing ? 'disabled' : ''}>${actionLabel}</button>
             <button class="action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}"
                     id="btn-ability" ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'disabled' : ''}>
               ${actor && actor.used_active ? '(used) ' : ''}${abilityName}
