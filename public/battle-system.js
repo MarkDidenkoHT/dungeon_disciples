@@ -63,9 +63,7 @@ export class BattleSystem {
       acted_this_round:   false,
       used_active:        false,
       defend_armor_bonus: 0,
-      shield:   0,
-      burn:     0,
-      poison:   0,
+      dot_dmg:       0,
       _hot:          0,
       _stacks:       {},
       _flags:        {},
@@ -96,8 +94,6 @@ export class BattleSystem {
           target.armor = Math.max(0, target.armor - buff.value);
         } else if (buff.type === 'initiative') {
           target.initiative = Math.max(0, target.initiative + buff.value);
-        } else if (buff.type === 'shield') {
-          target.shield = Math.max(0, target.shield - buff.value);
         }
       }
     }
@@ -181,17 +177,10 @@ export class BattleSystem {
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
-      let remaining = this.calcDamage(actor, target);
+      const dmg = this.calcDamage(actor, target);
 
-      if (target.shield > 0) {
-        const absorbed = Math.min(target.shield, remaining);
-        target.shield -= absorbed;
-        remaining     -= absorbed;
-        this.pushLog({ type: 'shield', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: absorbed, remaining });
-      }
-
-      if (remaining > 0) {
-        target.battle_hp = Math.max(0, target.battle_hp - remaining);
+      if (dmg > 0) {
+        target.battle_hp = Math.max(0, target.battle_hp - dmg);
         const dead       = target.battle_hp <= 0;
 
         if (dead) {
@@ -199,12 +188,12 @@ export class BattleSystem {
           this.applyOnDeathPassives(target);
         }
 
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: dmg, killed: !target.alive });
 
-        this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
-        this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
+        this.fireTrigger('on_hit', { actor, target, dmg, dying: null });
+        this.fireTrigger('on_hit_received', { actor, target, dmg, dying: null });
 
-        if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+        if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg, dying: null });
       } else {
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
@@ -218,16 +207,10 @@ export class BattleSystem {
 
   applyDoTs(unit) {
     if (!unit.alive) return;
-    if (unit.burn > 0) {
-      unit.battle_hp = Math.max(0, unit.battle_hp - unit.burn);
-      this.pushLog({ type: 'passive', passive: 'Burn', actorName: '🔥', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.burn, heal: false });
-      unit.burn = 0;
-      if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
-    }
-    if (unit.poison > 0) {
-      unit.battle_hp = Math.max(0, unit.battle_hp - unit.poison);
-      this.pushLog({ type: 'passive', passive: 'Poison', actorName: '☠️', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.poison, heal: false });
-      unit.poison = 0;
+    if (unit.dot_dmg > 0) {
+      unit.battle_hp = Math.max(0, unit.battle_hp - unit.dot_dmg);
+      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false });
+      unit.dot_dmg = 0;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
@@ -277,7 +260,7 @@ export class BattleSystem {
     for (const c of this.combatants) {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
-      c.burn = 0;
+      c.dot_dmg = 0;
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
