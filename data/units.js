@@ -182,6 +182,17 @@ const UNITS = {
       hero_level: 4, building_slot: 'slot_0',
       xp: 780
     },
+      imp: {
+      id: 'd1', f: 'd', t: 1,
+      name: 'Imp',
+      tags: ['Demon', null],
+      type: 'melee', size: 'row',
+      hp: 90, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 10, life: 0, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      xp: 170, passive: null, ability: null,
+    },
   },
 
   empire: {
@@ -535,7 +546,7 @@ const UNITS = {
       name: 'Conscript',
       tags: ['Knight', null],
       type: 'melee', size: 'tile',
-      hp: 60, armor: 10, initiative: 30,
+      hp: 60, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
