@@ -215,6 +215,17 @@ const UNITS = {
       damage_source: 'physical', action_power: 35,
       xp: 170, passive: null, ability: null,
     },
+      hellblade: {
+      id: 'd12', f: 'd', t: 2,
+      name: 'Hellblade',
+      tags: ['Demon', 'Knight'],
+      type: 'melee', size: 'row',
+      hp: 130, armor: 15, initiative: 35,
+      resistances: { air: 0, fire: 10, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
+      xp: 170, passive: null, ability: null,
+    },
   },
 
   empire: {
