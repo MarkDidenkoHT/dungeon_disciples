@@ -62,8 +62,7 @@ export function renderEmbark(root, { player }) {
     document.body.style.overflow = 'hidden';
   }
 
-  function closeModal() {
-    function closeModal(force = false) {
+  function closeModal(force = false) {
     if (!overlay || (!modalClosable && !force)) return;
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
