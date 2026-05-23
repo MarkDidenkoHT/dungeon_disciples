@@ -63,9 +63,11 @@ export function renderEmbark(root, { player }) {
   }
 
   function closeModal() {
-    if (!overlay || !modalClosable) return;
+    function closeModal(force = false) {
+    if (!overlay || (!modalClosable && !force)) return;
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
+    modalClosable = true;
   }
 
   if (modalCloseBtn) {
@@ -104,7 +106,7 @@ export function renderEmbark(root, { player }) {
       try {
         await api('/battle/end', { battle_id });
       } catch (_) {}
-      closeModal();
+      closeModal(true);
     });
   }
 
