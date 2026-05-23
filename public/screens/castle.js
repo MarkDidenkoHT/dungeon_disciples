@@ -83,11 +83,13 @@ export function renderCastle(root, { player }) {
     document.body.style.overflow = '';
   }
 
-  const grounds = root.querySelector('.castle-grounds');
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
   if (backgroundUrl) {
-    grounds.style.backgroundImage = `url('${backgroundUrl}')`;
-    grounds.classList.add('castle-grounds--has-bg');
+    root.style.backgroundImage = `url('${backgroundUrl}')`;
+    root.style.backgroundSize = 'cover';
+    root.style.backgroundPosition = 'center';
+    root.style.backgroundRepeat = 'no-repeat';
+    root.style.backgroundColor = 'rgba(17, 19, 24, 0.75)';
   }
 
   root.querySelector('#modal-close').addEventListener('click', closeModal);
