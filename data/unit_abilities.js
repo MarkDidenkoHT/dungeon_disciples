@@ -69,7 +69,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
-    params: { burn_dot_pct: 25 },
+    params: { dot_dmg_pct: 25 },
   },
   'burn 2': {
     id: 'burn 2',
@@ -78,7 +78,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
-    params: { burn_dot_pct: 40 },
+    params: { dot_dmg_pct: 40 },
   },
   'death_mark 2': {
     id: 'death_mark 2',
@@ -195,7 +195,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
-    params: { poison_dot_pct: 25 },
+    params: { dot_dmg_pct: 25 },
   },
   'poison 2': {
     id: 'poison 2',
@@ -204,7 +204,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
-    params: { poison_dot_pct: 40 },
+    params: { dot_dmg_pct: 40 },
   },
   'predator 1': {
     id: 'predator 1',

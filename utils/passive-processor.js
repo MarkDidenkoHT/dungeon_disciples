@@ -76,14 +76,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: actual });
     }
 
-    if (p.burn_dot_pct != null) {
-      target.burn = Math.floor(dmg * p.burn_dot_pct / 100);
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.burn });
-    }
-
-    if (p.poison_dot_pct != null) {
-      target.poison = Math.floor(dmg * p.poison_dot_pct / 100);
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.poison });
+    if (p.dot_dmg_pct != null) {
+      target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
     }
 
     if (p.armor_shred != null) {
@@ -276,8 +271,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   const p = def.params || {};
 
   if (p.cleanse_debuffs && target) {
-    target.burn = 0;
-    target.poison = 0;
+    target.dot_dmg = 0;
     target._hot = 0;
     target._healing_reduction = 0;
     target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
