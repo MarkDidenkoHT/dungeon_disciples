@@ -26,6 +26,12 @@ const RESIST_ICONS = {
 };
 const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
+const CASTLE_BACKGROUNDS = {
+  empire: '/assets/screens/empire.jpg',
+  choir_of_the_cursed: '/assets/screens/choir.jpg',
+  grail_of_sorrow: '/assets/screens/grail.jpg',
+};
+
 function resolveAbility(key, type) {
   if (!key || key === 'None') return null;
   const k = key.replace(/\s+/g, '_');
@@ -75,6 +81,13 @@ export function renderCastle(root, { player }) {
   function closeModal() {
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
+  }
+
+  const grounds = root.querySelector('.castle-grounds');
+  const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
+  if (backgroundUrl) {
+    grounds.style.backgroundImage = `url('${backgroundUrl}')`;
+    grounds.classList.add('castle-grounds--has-bg');
   }
 
   root.querySelector('#modal-close').addEventListener('click', closeModal);

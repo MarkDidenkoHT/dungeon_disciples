@@ -22,6 +22,21 @@
   justify-content: center;
   gap: 0;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(17, 19, 24, 0.75);
+}
+
+.castle-grounds::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(17, 19, 24, 0.15), rgba(17, 19, 24, 0.85));
+  pointer-events: none;
 }
 
 .castle-grid-wrap {
