@@ -193,6 +193,28 @@ const UNITS = {
       damage_source: 'physical', action_power: 25,
       xp: 170, passive: null, ability: null,
     },
+      tormentor: {
+      id: 'd11', f: 'd', t: 2,
+      name: 'Tormentor',
+      tags: ['Demon', null],
+      type: 'ranged', size: 'row',
+      hp: 110, armor: 5, initiative: 30,
+      resistances: { air: 5, fire: 20, life: 0, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 170, passive: 'burn 1', ability: null,
+    },
+      hellblade: {
+      id: 'd12', f: 'd', t: 2,
+      name: 'Hellblade',
+      tags: ['Demon', 'Knight'],
+      type: 'melee', size: 'row',
+      hp: 130, armor: 15, initiative: 35,
+      resistances: { air: 0, fire: 10, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
+      xp: 170, passive: null, ability: null,
+    },
   },
 
   empire: {
