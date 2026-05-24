@@ -144,6 +144,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   function formatLogEntry(entry) {
     if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
+    if (entry.type === 'intercept') {
+      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      return `<div class="log-entry log-entry--intercept">🛡 <span class="log-actor">${entry.actorName}</span>${actorLoc} intercepts the attack on <span class="log-target">${entry.targetName}</span>${targetLoc}!</div>`;
+    }
     if (entry.type === 'defend' || entry.type === 'ability') {
       const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
       const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';

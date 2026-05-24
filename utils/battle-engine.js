@@ -270,7 +270,7 @@ class BattleEngine {
       const def = this.resolvePassiveDef(protector);
       const chance = (def.params.intercept_chance_pct ?? 0) / 100;
       if (Math.random() < chance) {
-        this.pushLog({ type: 'passive', passive: def.name, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, heal: false });
+        this.pushLog({ type: 'intercept', passive: def.name, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
         return protector;
       }
     }
