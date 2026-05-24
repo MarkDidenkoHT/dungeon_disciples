@@ -110,6 +110,7 @@ export function renderRoster(root, { player }) {
   const dotsWrap  = root.querySelector('#roster-dots');
   const prevBtn   = root.querySelector('#nav-prev');
   const nextBtn   = root.querySelector('#nav-next');
+  const overlay   = root.querySelector('#modal-overlay');
   const modalBody = root.querySelector('#modal-body');
   const modalTitle= root.querySelector('#modal-title');
 
