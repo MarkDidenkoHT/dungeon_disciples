@@ -197,7 +197,7 @@ router.post('/player/faction', async (req, res) => {
         body: JSON.stringify({ faction, hero: hero_id, learned_spells: FACTION_STARTING_SPELLS[faction] || [] }),
       }),
       supabase('/roster', { method: 'POST', body: JSON.stringify(rosterEntries) }),
-      supabase('/inventory_and_resources', { method: 'POST', body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))) }),
+      supabase('/resources', { method: 'POST', body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))) }),
       supabase('/structures', { method: 'POST', body: JSON.stringify({ chat_id, buildings_data: structures }) }),
     ]);
     res.json({ player: updated[0] });
@@ -210,7 +210,7 @@ router.get('/inventory', async (req, res) => {
   const { chat_id, type } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    let url = `/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`;
+    let url = `/resources?chat_id=eq.${encodeURIComponent(chat_id)}`;
     if (type) url += `&item_type=eq.${encodeURIComponent(type)}`;
     const rows = await supabase(url);
     res.json(rows);
@@ -309,10 +309,10 @@ router.post('/structures/throne/upgrade', async (req, res) => {
     const cost = THRONE_UPGRADE_COSTS[nextLevel];
     if (!cost) return res.status(400).json({ error: 'No cost defined for that level' });
     if (cost.gold > 0) {
-      const inventory = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+      const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       const goldRow   = inventory.find(r => r.item === 'Gold');
       if (!goldRow || goldRow.amount < cost.gold) return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
-      await supabase(`/inventory_and_resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
+      await supabase(`/resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
     }
     buildings['slot_0'] = { ...throne, level: nextLevel };
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
@@ -550,11 +550,11 @@ router.post('/battle/reward', async (req, res) => {
     const rewards = levelDef.rewards;
     const result  = { xp_granted: 0, gold: 0, crystal: 0, crystal_bonus: 0, crystal_bonus_type: null, progress_unlocked: false };
     if (won) {
-      const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       const updateItem = async (itemName, amount) => {
         const row = inventoryRows.find(r => r.item === itemName);
         if (!row) return;
-        await supabase(`/inventory_and_resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
+        await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
       };
       const crystalAmount = Math.round(6 * (1 + (level - 1) * 0.3));
       const guaranteedType = region.crystal_guaranteed;
@@ -632,14 +632,14 @@ router.post('/spells/research', async (req, res) => {
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
     const crystalEntries = Object.entries(spell.cost.crystals || {}).filter(([, amt]) => amt > 0);
     if (crystalEntries.length > 0) {
-      const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       for (const [crystalType, needed] of crystalEntries) {
         const row = inventoryRows.find(r => r.item === crystalType);
         if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
       }
       await Promise.all(crystalEntries.map(([crystalType, needed]) => {
         const row = inventoryRows.find(r => r.item === crystalType);
-        return supabase(`/inventory_and_resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
+        return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
       }));
     }
     const newLearned = [...learned, spell_id];
@@ -660,14 +660,14 @@ router.post('/spells/consume', async (req, res) => {
     if (!learned.includes(spell_id)) return res.status(400).json({ error: 'Spell not learned' });
     const crystalEntries = Object.entries(crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {}).filter(([, amt]) => amt > 0);
     if (crystalEntries.length > 0) {
-      const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       for (const [crystalType, needed] of crystalEntries) {
         const row = inventoryRows.find(r => r.item === crystalType);
         if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
       }
       await Promise.all(crystalEntries.map(([crystalType, needed]) => {
         const row = inventoryRows.find(r => r.item === crystalType);
-        return supabase(`/inventory_and_resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
+        return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
       }));
     }
     res.json({ success: true });
