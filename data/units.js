@@ -1316,3 +1316,5 @@ const UNITS = {
     },
   },
 };
+
+export { UNITS, UNIT_ABILITIES };
