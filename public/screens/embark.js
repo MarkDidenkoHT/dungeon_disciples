@@ -2,12 +2,44 @@ import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
 const REGIONS = [
-  { id: 'life_grove',   label: 'Life Grove',   icon: '🟢', description: 'Ancient forests teeming with wardens and sacred beasts.',      type: 'pve' },
-  { id: 'fire_wastes',  label: 'Fire Wastes',  icon: '🔴', description: 'Scorched badlands ruled by fire cults and molten elementals.', type: 'pve' },
-  { id: 'death_crypts', label: 'Death Crypts', icon: '🟣', description: 'Sunken tombs crawling with undead and cursed wraiths.',        type: 'pve' },
-  { id: 'frost_peaks',  label: 'Frost Peaks',  icon: '🔵', description: 'Frozen summits haunted by ice spirits and glacial beasts.',    type: 'pve' },
-  { id: 'nature_wilds', label: 'Nature Wilds', icon: '🟡', description: 'Untamed wilderness thick with feral hunters and earth titans.', type: 'pve' },
-  { id: 'pvp_arena',    label: 'PvP Arena',    icon: '🏆', description: 'Face other players. Win trophies, gold, and glory.',           type: 'pvp' },
+  {
+    id: 'forests_of_ashenveil',
+    label: 'Forests of Ashenveil',
+    icon: '🌲',
+    description: 'Ancient woodland teeming with feral beasts, overgrown guardians, and things that should not breathe.',
+    crystal: 'Nature',
+    type: 'pve',
+  },
+  {
+    id: 'mountains_of_valdrek',
+    label: 'Mountains of Valdrek',
+    icon: '⛰️',
+    description: 'Wind-scoured peaks ruled by stone colossi, frost shamans, and a king that does not die.',
+    crystal: 'Air',
+    type: 'pve',
+  },
+  {
+    id: 'dungeons_of_malgrath',
+    label: 'Dungeons of Malgrath',
+    icon: '💀',
+    description: 'Sunken halls choked with undead, cursed knights, and Malgrath himself — who has already died once.',
+    crystal: 'Death',
+    type: 'pve',
+  },
+  {
+    id: 'pvp_arena',
+    label: 'PvP Arena',
+    icon: '🏆',
+    description: 'Challenge other players. Coming soon.',
+    type: 'disabled',
+  },
+  {
+    id: 'trials',
+    label: 'Trials',
+    icon: '⚗️',
+    description: 'Special challenges with unique rules and rewards. Coming soon.',
+    type: 'disabled',
+  },
 ];
 
 export function renderEmbark(root, { player }) {
@@ -44,9 +76,9 @@ export function renderEmbark(root, { player }) {
   let selectedRegion = null;
   let modalClosable = true;
 
-  const overlay = root.querySelector('#modal-overlay');
-  const modalBody = root.querySelector('#modal-body');
-  const modalTitle = root.querySelector('#modal-title');
+  const overlay       = root.querySelector('#modal-overlay');
+  const modalBody     = root.querySelector('#modal-body');
+  const modalTitle    = root.querySelector('#modal-title');
   const modalCloseBtn = root.querySelector('#modal-close');
 
   function openModal(title, bodyHtml, { closable = true } = {}) {
@@ -102,9 +134,7 @@ export function renderEmbark(root, { player }) {
     });
 
     root.querySelector('#modal-abandon-btn')?.addEventListener('click', async () => {
-      try {
-        await api('/battle/end', { battle_id });
-      } catch (_) {}
+      try { await api('/battle/end', { battle_id }); } catch (_) {}
       closeModal(true);
     });
   }
@@ -121,9 +151,9 @@ export function renderEmbark(root, { player }) {
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
-        if (r.type === 'pvp') {
+        if (r.type === 'disabled') {
           return `
-            <div class="embark-card embark-card--pvp">
+            <div class="embark-card embark-card--disabled">
               <span class="embark-card-icon">${r.icon}</span>
               <div class="embark-card-info">
                 <span class="embark-card-label">${r.label}</span>
@@ -140,6 +170,7 @@ export function renderEmbark(root, { player }) {
             <div class="embark-card-info">
               <span class="embark-card-label">${r.label}</span>
               <span class="embark-card-desc">${r.description}</span>
+              <span class="embark-card-crystal">Guaranteed: ${r.crystal} Crystals + 1 random</span>
             </div>
             <span class="embark-card-badge">Lv ${level}</span>
           </div>

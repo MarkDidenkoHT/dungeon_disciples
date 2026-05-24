@@ -24,11 +24,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let processing       = false;
 
   const regionMeta = {
-    life_grove:   { label: 'Life Grove',   icon: '🟢' },
-    fire_wastes:  { label: 'Fire Wastes',  icon: '🔴' },
-    death_crypts: { label: 'Death Crypts', icon: '🟣' },
-    frost_peaks:  { label: 'Frost Peaks',  icon: '🔵' },
-    nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
+    forests_of_ashenveil: { label: 'Forests of Ashenveil', icon: '🌲' },
+    mountains_of_valdrek: { label: 'Mountains of Valdrek', icon: '⛰️' },
+    dungeons_of_malgrath: { label: 'Dungeons of Malgrath', icon: '💀' },
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
 
@@ -114,30 +112,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <span class="resist-val ${cls}">${val}</span>
       </div>`;
     }).join('');
-    const passive  = c.unit_data?.passive || c.unit_data?.passive_ability;
-    const passiveKeys = Array.isArray(passive) ? passive.filter(Boolean) : (passive ? [passive] : []);
-    const abilityKey  = c.unit_data?.ability || c.unit_data?.active_ability || null;
-
-    function abilitySlotHtml(key, type) {
-      const isEmpty = !key;
-      const label   = isEmpty ? '' : String(key).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      const title   = isEmpty ? (type === 'item' ? 'Item — coming soon' : 'Empty') : label;
-      return `<div class="ability-slot ability-slot--${type}${isEmpty ? ' ability-slot--empty' : ''}" title="${title}">
-        ${isEmpty ? '' : `<span class="ability-slot-label">${label}</span>`}
-      </div>`;
-    }
-
-    const abilityRowHtml = `
-      <div class="unit-ability-slots">
-        ${abilitySlotHtml(abilityKey, 'active')}
-        ${abilitySlotHtml(passiveKeys[0] || null, 'passive')}
-        ${abilitySlotHtml(passiveKeys[1] || null, 'passive')}
-        ${abilitySlotHtml(null, 'item')}
-      </div>`;
+    const passive  = c.unit_data?.passive || c.unit_data?.passive_ability || '—';
+    const ability  = c.unit_data?.ability || c.unit_data?.active_ability  || '—';
     const sideBadge = c.side === 'player'
       ? `<span class="detail-unit-badge">Ally</span>`
       : `<span class="detail-unit-badge detail-unit-badge--enemy">Enemy</span>`;
-    const dotVal = c.dot_dmg ?? (c.buffs && (c.buffs.dot_dmg ?? 0));
     return `
       <div class="battle-unit-detail">
         <div class="detail-unit-header">
@@ -149,26 +128,30 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${c.battle_hp}/${c.max_hp}</span></div>
           <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${c.armor ?? '—'}</span></div>
           <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${c.initiative ?? '—'}</span></div>
-          ${dotVal > 0 ? `<div class="core-stat"><span class="core-stat-label">💀 DoT</span><span class="core-stat-val">${dotVal}</span></div>` : ''}
+          ${(c.buffs||[]).find(b=>b.type==='shield') ? `<div class="core-stat"><span class="core-stat-label">Shield</span><span class="core-stat-val">${(c.buffs||[]).find(b=>b.type==='shield').value}</span></div>` : ''}
+          ${(c.debuffs||[]).find(b=>b.type==='burn')   ? `<div class="core-stat"><span class="core-stat-label">🔥 Burn</span><span class="core-stat-val">${(c.debuffs||[]).find(b=>b.type==='burn').value}</span></div>`   : ''}
+          ${(c.debuffs||[]).find(b=>b.type==='poison') ? `<div class="core-stat"><span class="core-stat-label">☠️ Poison</span><span class="core-stat-val">${(c.debuffs||[]).find(b=>b.type==='poison').value}</span></div>` : ''}
         </div>
         <div class="unit-resists-grid">${resistCells}</div>
-        ${abilityRowHtml}
+        <div class="unit-core-stats">
+          <div class="core-stat"><span class="core-stat-label">Passive</span><span class="core-stat-val">${passive}</span></div>
+          <div class="core-stat"><span class="core-stat-label">Ability</span><span class="core-stat-val">${ability}</span></div>
+        </div>
       </div>
     `;
   }
 
   function formatLogEntry(entry) {
     if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
-    if (entry.type === 'intercept') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
-      return `<div class="log-entry log-entry--intercept">🛡 <span class="log-actor">${entry.actorName}</span>${actorLoc} intercepts the attack on <span class="log-target">${entry.targetName}</span>${targetLoc}!</div>`;
-    }
     if (entry.type === 'defend' || entry.type === 'ability') {
       const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
       const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
       const target    = entry.targetName ? ` → <span class="log-target">${entry.targetName}</span>${targetLoc}` : '';
       return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${actorLoc}${target} ${entry.message}</div>`;
+    }
+    if (entry.type === 'shield') {
+      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
+      return `<div class="log-entry log-entry--shield"><span class="log-actor">${entry.targetName}</span>${actorLoc} 🛡 shield absorbed <span class="log-val-shield">${entry.value}</span>${entry.remaining > 0 ? `, ${entry.remaining} passes through` : ', all blocked'}</div>`;
     }
     if (entry.type === 'status') {
       const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
@@ -242,7 +225,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <div class="${cls}" data-id="${occ.id}">
               <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
               ${occ.alive
-                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}</span>`
+                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
                 : `<span class="battle-cell-sub">💀</span>`}
               <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
             </div>
@@ -444,6 +427,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         rewardsEl.innerHTML = `
           <div class="reward-row"><span>🪙 Gold</span><span>+${result.gold}</span></div>
           <div class="reward-row"><span>💎 Crystals</span><span>+${result.crystal}</span></div>
+          ${result.crystal_bonus > 0 ? `<div class="reward-row"><span>✨ ${result.crystal_bonus_type?.replace('Crystals_', '')} Crystal (bonus)</span><span>+${result.crystal_bonus}</span></div>` : ''}
           <div class="reward-row"><span>⭐ XP</span><span>+${result.xp_granted} each (${survivorIds.length} survivors)</span></div>
           ${result.progress_unlocked ? `<div class="reward-row reward-row--unlock"><span>🔓 Level ${result.next_level} unlocked!</span></div>` : ''}
         `;

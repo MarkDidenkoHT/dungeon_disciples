@@ -21,6 +21,7 @@ const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Crystals_Death',  amount: 20  },
   { item_type: 'resource', item: 'Crystals_Nature', amount: 20  },
   { item_type: 'resource', item: 'Crystals_Frost',  amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Air',    amount: 20  },
 ];
 
 const FACTION_STARTING_SPELLS = {
@@ -547,7 +548,7 @@ router.post('/battle/reward', async (req, res) => {
     const levelDef = region.difficulties?.[`level_${level}`];
     if (!levelDef) return res.status(404).json({ error: 'Level not found' });
     const rewards = levelDef.rewards;
-    const result  = { xp_granted: 0, gold: 0, crystal: 0, progress_unlocked: false };
+    const result  = { xp_granted: 0, gold: 0, crystal: 0, crystal_bonus: 0, crystal_bonus_type: null, progress_unlocked: false };
     if (won) {
       const inventoryRows = await supabase(`/inventory_and_resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       const updateItem = async (itemName, amount) => {
@@ -555,10 +556,19 @@ router.post('/battle/reward', async (req, res) => {
         if (!row) return;
         await supabase(`/inventory_and_resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
       };
+      const crystalAmount = Math.round(6 * (1 + (level - 1) * 0.3));
+      const guaranteedType = region.crystal_guaranteed;
+      const pool = region.crystal_pool || [guaranteedType];
+      const randomType = pool[Math.floor(Math.random() * pool.length)];
       await updateItem('Gold', rewards.gold);
-      await updateItem(region.crystal_type, rewards.crystal);
+      await updateItem(guaranteedType, crystalAmount);
+      if (randomType !== guaranteedType) {
+        await updateItem(randomType, 1);
+        result.crystal_bonus = 1;
+        result.crystal_bonus_type = randomType;
+      }
       result.gold    = rewards.gold;
-      result.crystal = rewards.crystal;
+      result.crystal = crystalAmount;
       if (survivor_ids && survivor_ids.length > 0) {
         const xpEach = Math.floor(rewards.xp / survivor_ids.length);
         result.xp_granted = xpEach;

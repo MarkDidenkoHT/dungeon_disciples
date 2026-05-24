@@ -1,368 +1,243 @@
 import { UNITS } from './units.js';
 
+const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
+
 const REGION_ENCOUNTERS = {
-  life_grove: {
+  forests_of_ashenveil: {
     level_1:  [
-      { key: 'life_grove.grove_sprite',  cell: 0 },
-      { key: 'life_grove.thornback',     cell: 2 },
-      { key: 'life_grove.grove_sprite',  cell: 4 },
+      { key: 'forests_of_ashenveil.bramble_hound', cell: 0 },
+      { key: 'forests_of_ashenveil.thorn_archer',  cell: 2 },
+      { key: 'forests_of_ashenveil.bramble_hound', cell: 4 },
     ],
     level_2:  [
-      { key: 'life_grove.thornback',     cell: 0 },
-      { key: 'life_grove.vine_lurker',   cell: 2 },
-      { key: 'life_grove.grove_sprite',  cell: 1 },
-      { key: 'life_grove.grove_sprite',  cell: 4 },
+      { key: 'forests_of_ashenveil.thorn_archer',  cell: 0 },
+      { key: 'forests_of_ashenveil.forest_troll',  cell: 2 },
+      { key: 'forests_of_ashenveil.bramble_hound', cell: 1 },
+      { key: 'forests_of_ashenveil.thorn_archer',  cell: 4 },
     ],
     level_3:  [
-      { key: 'life_grove.vine_lurker',   cell: 0 },
-      { key: 'life_grove.root_golem',    cell: 2 },
-      { key: 'life_grove.thornback',     cell: 1 },
-      { key: 'life_grove.grove_sprite',  cell: 4 },
+      { key: 'forests_of_ashenveil.forest_troll',  cell: 0 },
+      { key: 'forests_of_ashenveil.vine_witch',     cell: 2 },
+      { key: 'forests_of_ashenveil.thorn_archer',  cell: 1 },
+      { key: 'forests_of_ashenveil.bramble_hound', cell: 4 },
     ],
     level_4:  [
-      { key: 'life_grove.root_golem',    cell: 0 },
-      { key: 'life_grove.vine_lurker',   cell: 2 },
-      { key: 'life_grove.dryad_healer',  cell: 4 },
-      { key: 'life_grove.thornback',     cell: 1 },
-      { key: 'life_grove.grove_sprite',  cell: 3 },
+      { key: 'forests_of_ashenveil.forest_troll',  cell: 0 },
+      { key: 'forests_of_ashenveil.vine_witch',     cell: 2 },
+      { key: 'forests_of_ashenveil.grove_warden',  cell: 4 },
+      { key: 'forests_of_ashenveil.thorn_archer',  cell: 1 },
+      { key: 'forests_of_ashenveil.bramble_hound', cell: 3 },
     ],
     level_5:  [
-      { key: 'life_grove.overgrown_stalker', cell: 0 },
-      { key: 'life_grove.dryad_healer',      cell: 2 },
-      { key: 'life_grove.vine_lurker',       cell: 1 },
-      { key: 'life_grove.root_golem',        cell: 4 },
+      { key: 'forests_of_ashenveil.thornback_colossus', cell: 0 },
+      { key: 'forests_of_ashenveil.vine_witch',          cell: 2 },
+      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
+      { key: 'forests_of_ashenveil.forest_troll',       cell: 1 },
     ],
     level_6:  [
-      { key: 'life_grove.overgrown_stalker', cell: 0 },
-      { key: 'life_grove.spore_shaman',      cell: 2 },
-      { key: 'life_grove.dryad_healer',      cell: 4 },
-      { key: 'life_grove.vine_lurker',       cell: 1 },
-      { key: 'life_grove.root_golem',        cell: 3 },
+      { key: 'forests_of_ashenveil.thornback_colossus', cell: 0 },
+      { key: 'forests_of_ashenveil.spore_shaman',        cell: 2 },
+      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
+      { key: 'forests_of_ashenveil.vine_witch',          cell: 1 },
+      { key: 'forests_of_ashenveil.forest_troll',       cell: 3 },
     ],
     level_7:  [
-      { key: 'life_grove.ancient_treant',    cell: 2 },
-      { key: 'life_grove.spore_shaman',      cell: 0 },
-      { key: 'life_grove.dryad_healer',      cell: 4 },
-      { key: 'life_grove.overgrown_stalker', cell: 1 },
-      { key: 'life_grove.vine_lurker',       cell: 3 },
+      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
+      { key: 'forests_of_ashenveil.spore_shaman',        cell: 0 },
+      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
+      { key: 'forests_of_ashenveil.thornback_colossus', cell: 1 },
+      { key: 'forests_of_ashenveil.vine_witch',          cell: 3 },
     ],
     level_8:  [
-      { key: 'life_grove.ancient_treant',    cell: 2 },
-      { key: 'life_grove.lifebringer',       cell: 0 },
-      { key: 'life_grove.spore_shaman',      cell: 4 },
-      { key: 'life_grove.overgrown_stalker', cell: 1 },
-      { key: 'life_grove.root_golem',        cell: 3 },
+      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
+      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 0 },
+      { key: 'forests_of_ashenveil.spore_shaman',        cell: 4 },
+      { key: 'forests_of_ashenveil.thornback_colossus', cell: 1 },
+      { key: 'forests_of_ashenveil.forest_troll',       cell: 3 },
     ],
     level_9:  [
-      { key: 'life_grove.world_serpent',     cell: 0 },
-      { key: 'life_grove.lifebringer',       cell: 2 },
-      { key: 'life_grove.ancient_treant',    cell: 4 },
-      { key: 'life_grove.spore_shaman',      cell: 1 },
-      { key: 'life_grove.dryad_healer',      cell: 3 },
+      { key: 'forests_of_ashenveil.the_devouring_wood', cell: 0 },
+      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 2 },
+      { key: 'forests_of_ashenveil.ancient_treant',     cell: 4 },
+      { key: 'forests_of_ashenveil.spore_shaman',        cell: 1 },
+      { key: 'forests_of_ashenveil.grove_warden',       cell: 3 },
     ],
     level_10: [
-      { key: 'life_grove.world_serpent',     cell: 0 },
-      { key: 'life_grove.ancient_treant',    cell: 2 },
-      { key: 'life_grove.lifebringer',       cell: 4 },
-      { key: 'life_grove.spore_shaman',      cell: 1 },
-      { key: 'life_grove.overgrown_stalker', cell: 3 },
+      { key: 'forests_of_ashenveil.the_devouring_wood', cell: 0 },
+      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
+      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 4 },
+      { key: 'forests_of_ashenveil.spore_shaman',        cell: 1 },
+      { key: 'forests_of_ashenveil.thornback_colossus', cell: 3 },
     ],
   },
 
-  fire_wastes: {
+  mountains_of_valdrek: {
     level_1:  [
-      { key: 'fire_wastes.ash_crawler',  cell: 0 },
-      { key: 'fire_wastes.flame_imp',    cell: 2 },
-      { key: 'fire_wastes.ash_crawler',  cell: 4 },
+      { key: 'mountains_of_valdrek.rockjaw',     cell: 0 },
+      { key: 'mountains_of_valdrek.peak_harpy',  cell: 2 },
+      { key: 'mountains_of_valdrek.rockjaw',     cell: 4 },
     ],
     level_2:  [
-      { key: 'fire_wastes.flame_imp',    cell: 0 },
-      { key: 'fire_wastes.lava_hound',   cell: 2 },
-      { key: 'fire_wastes.ash_crawler',  cell: 1 },
-      { key: 'fire_wastes.flame_imp',    cell: 4 },
+      { key: 'mountains_of_valdrek.peak_harpy',  cell: 0 },
+      { key: 'mountains_of_valdrek.stone_golem', cell: 2 },
+      { key: 'mountains_of_valdrek.rockjaw',     cell: 1 },
+      { key: 'mountains_of_valdrek.peak_harpy',  cell: 4 },
     ],
     level_3:  [
-      { key: 'fire_wastes.lava_hound',   cell: 0 },
-      { key: 'fire_wastes.pyroclast',    cell: 2 },
-      { key: 'fire_wastes.ash_crawler',  cell: 1 },
-      { key: 'fire_wastes.flame_imp',    cell: 4 },
+      { key: 'mountains_of_valdrek.stone_golem', cell: 0 },
+      { key: 'mountains_of_valdrek.frost_shaman', cell: 2 },
+      { key: 'mountains_of_valdrek.rockjaw',     cell: 1 },
+      { key: 'mountains_of_valdrek.peak_harpy',  cell: 4 },
     ],
     level_4:  [
-      { key: 'fire_wastes.cinder_knight', cell: 0 },
-      { key: 'fire_wastes.pyroclast',     cell: 2 },
-      { key: 'fire_wastes.lava_hound',    cell: 4 },
-      { key: 'fire_wastes.flame_imp',     cell: 1 },
-      { key: 'fire_wastes.ash_crawler',   cell: 3 },
+      { key: 'mountains_of_valdrek.stone_golem',      cell: 0 },
+      { key: 'mountains_of_valdrek.frost_shaman',      cell: 2 },
+      { key: 'mountains_of_valdrek.mountain_warden',  cell: 4 },
+      { key: 'mountains_of_valdrek.peak_harpy',        cell: 1 },
+      { key: 'mountains_of_valdrek.rockjaw',           cell: 3 },
     ],
     level_5:  [
-      { key: 'fire_wastes.magma_brute',   cell: 0 },
-      { key: 'fire_wastes.pyroclast',     cell: 2 },
-      { key: 'fire_wastes.cinder_knight', cell: 4 },
-      { key: 'fire_wastes.lava_hound',    cell: 1 },
+      { key: 'mountains_of_valdrek.glacier_brute',    cell: 0 },
+      { key: 'mountains_of_valdrek.frost_shaman',      cell: 2 },
+      { key: 'mountains_of_valdrek.mountain_warden',  cell: 4 },
+      { key: 'mountains_of_valdrek.stone_golem',      cell: 1 },
     ],
     level_6:  [
-      { key: 'fire_wastes.magma_brute',    cell: 0 },
-      { key: 'fire_wastes.hellfire_witch', cell: 2 },
-      { key: 'fire_wastes.cinder_knight',  cell: 4 },
-      { key: 'fire_wastes.pyroclast',      cell: 1 },
-      { key: 'fire_wastes.lava_hound',     cell: 3 },
+      { key: 'mountains_of_valdrek.glacier_brute',    cell: 0 },
+      { key: 'mountains_of_valdrek.rune_caster',      cell: 2 },
+      { key: 'mountains_of_valdrek.mountain_warden',  cell: 4 },
+      { key: 'mountains_of_valdrek.frost_shaman',      cell: 1 },
+      { key: 'mountains_of_valdrek.stone_golem',      cell: 3 },
     ],
     level_7:  [
-      { key: 'fire_wastes.inferno_titan',  cell: 0 },
-      { key: 'fire_wastes.hellfire_witch', cell: 2 },
-      { key: 'fire_wastes.magma_brute',    cell: 4 },
-      { key: 'fire_wastes.pyroclast',      cell: 1 },
-      { key: 'fire_wastes.cinder_knight',  cell: 3 },
+      { key: 'mountains_of_valdrek.peak_titan',       cell: 0 },
+      { key: 'mountains_of_valdrek.rune_caster',      cell: 2 },
+      { key: 'mountains_of_valdrek.glacier_brute',    cell: 4 },
+      { key: 'mountains_of_valdrek.frost_shaman',      cell: 1 },
+      { key: 'mountains_of_valdrek.mountain_warden',  cell: 3 },
     ],
     level_8:  [
-      { key: 'fire_wastes.inferno_titan',  cell: 0 },
-      { key: 'fire_wastes.flame_oracle',   cell: 2 },
-      { key: 'fire_wastes.hellfire_witch', cell: 4 },
-      { key: 'fire_wastes.magma_brute',    cell: 1 },
-      { key: 'fire_wastes.cinder_knight',  cell: 3 },
+      { key: 'mountains_of_valdrek.peak_titan',       cell: 0 },
+      { key: 'mountains_of_valdrek.storm_witch',      cell: 2 },
+      { key: 'mountains_of_valdrek.rune_caster',      cell: 4 },
+      { key: 'mountains_of_valdrek.glacier_brute',    cell: 1 },
+      { key: 'mountains_of_valdrek.mountain_warden',  cell: 3 },
     ],
     level_9:  [
-      { key: 'fire_wastes.lord_of_cinders', cell: 0 },
-      { key: 'fire_wastes.flame_oracle',    cell: 2 },
-      { key: 'fire_wastes.inferno_titan',   cell: 4 },
-      { key: 'fire_wastes.hellfire_witch',  cell: 1 },
-      { key: 'fire_wastes.pyroclast',       cell: 3 },
+      { key: 'mountains_of_valdrek.the_mountain_king', cell: 0 },
+      { key: 'mountains_of_valdrek.storm_witch',       cell: 2 },
+      { key: 'mountains_of_valdrek.peak_titan',        cell: 4 },
+      { key: 'mountains_of_valdrek.rune_caster',       cell: 1 },
+      { key: 'mountains_of_valdrek.glacier_brute',     cell: 3 },
     ],
     level_10: [
-      { key: 'fire_wastes.lord_of_cinders', cell: 0 },
-      { key: 'fire_wastes.inferno_titan',   cell: 2 },
-      { key: 'fire_wastes.flame_oracle',    cell: 4 },
-      { key: 'fire_wastes.hellfire_witch',  cell: 1 },
-      { key: 'fire_wastes.magma_brute',     cell: 3 },
+      { key: 'mountains_of_valdrek.the_mountain_king', cell: 0 },
+      { key: 'mountains_of_valdrek.peak_titan',        cell: 2 },
+      { key: 'mountains_of_valdrek.storm_witch',       cell: 4 },
+      { key: 'mountains_of_valdrek.rune_caster',       cell: 1 },
+      { key: 'mountains_of_valdrek.glacier_brute',     cell: 3 },
     ],
   },
 
-  death_crypts: {
+  dungeons_of_malgrath: {
     level_1:  [
-      { key: 'death_crypts.grave_rat',     cell: 0 },
-      { key: 'death_crypts.risen_soldier', cell: 2 },
-      { key: 'death_crypts.grave_rat',     cell: 4 },
+      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 0 },
+      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 2 },
+      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
     ],
     level_2:  [
-      { key: 'death_crypts.risen_soldier', cell: 0 },
-      { key: 'death_crypts.wailing_ghost', cell: 2 },
-      { key: 'death_crypts.grave_rat',     cell: 1 },
-      { key: 'death_crypts.risen_soldier', cell: 4 },
+      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 0 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 2 },
+      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 1 },
+      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 4 },
     ],
     level_3:  [
-      { key: 'death_crypts.wailing_ghost',  cell: 0 },
-      { key: 'death_crypts.crypt_guardian', cell: 2 },
-      { key: 'death_crypts.risen_soldier',  cell: 1 },
-      { key: 'death_crypts.grave_rat',      cell: 4 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 0 },
+      { key: 'dungeons_of_malgrath.bone_knight',    cell: 2 },
+      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
+      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
     ],
     level_4:  [
-      { key: 'death_crypts.crypt_guardian', cell: 0 },
-      { key: 'death_crypts.death_herald',   cell: 2 },
-      { key: 'death_crypts.wailing_ghost',  cell: 4 },
-      { key: 'death_crypts.risen_soldier',  cell: 1 },
-      { key: 'death_crypts.grave_rat',      cell: 3 },
+      { key: 'dungeons_of_malgrath.bone_knight',    cell: 0 },
+      { key: 'dungeons_of_malgrath.death_cultist',  cell: 2 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 4 },
+      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
+      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 3 },
     ],
     level_5:  [
-      { key: 'death_crypts.tomb_colossus',  cell: 0 },
-      { key: 'death_crypts.death_herald',   cell: 2 },
-      { key: 'death_crypts.wailing_ghost',  cell: 4 },
-      { key: 'death_crypts.crypt_guardian', cell: 1 },
+      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 0 },
+      { key: 'dungeons_of_malgrath.death_cultist',  cell: 2 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 4 },
+      { key: 'dungeons_of_malgrath.bone_knight',    cell: 1 },
     ],
     level_6:  [
-      { key: 'death_crypts.tomb_colossus',  cell: 0 },
-      { key: 'death_crypts.revenant',       cell: 2 },
-      { key: 'death_crypts.death_herald',   cell: 4 },
-      { key: 'death_crypts.crypt_guardian', cell: 1 },
-      { key: 'death_crypts.wailing_ghost',  cell: 3 },
+      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 0 },
+      { key: 'dungeons_of_malgrath.revenant',       cell: 2 },
+      { key: 'dungeons_of_malgrath.death_cultist',  cell: 4 },
+      { key: 'dungeons_of_malgrath.bone_knight',    cell: 1 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 3 },
     ],
     level_7:  [
-      { key: 'death_crypts.dread_knight',   cell: 0 },
-      { key: 'death_crypts.soul_harvester', cell: 2 },
-      { key: 'death_crypts.tomb_colossus',  cell: 4 },
-      { key: 'death_crypts.revenant',       cell: 1 },
-      { key: 'death_crypts.death_herald',   cell: 3 },
+      { key: 'dungeons_of_malgrath.soul_harvester', cell: 0 },
+      { key: 'dungeons_of_malgrath.revenant',       cell: 2 },
+      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 4 },
+      { key: 'dungeons_of_malgrath.death_cultist',  cell: 1 },
+      { key: 'dungeons_of_malgrath.bone_knight',    cell: 3 },
     ],
     level_8:  [
-      { key: 'death_crypts.dread_knight',   cell: 0 },
-      { key: 'death_crypts.soul_harvester', cell: 2 },
-      { key: 'death_crypts.revenant',       cell: 4 },
-      { key: 'death_crypts.tomb_colossus',  cell: 1 },
-      { key: 'death_crypts.death_herald',   cell: 3 },
+      { key: 'dungeons_of_malgrath.dread_knight',   cell: 0 },
+      { key: 'dungeons_of_malgrath.soul_harvester', cell: 2 },
+      { key: 'dungeons_of_malgrath.revenant',       cell: 4 },
+      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 1 },
+      { key: 'dungeons_of_malgrath.death_cultist',  cell: 3 },
     ],
     level_9:  [
-      { key: 'death_crypts.lich_king',      cell: 0 },
-      { key: 'death_crypts.dread_knight',   cell: 2 },
-      { key: 'death_crypts.soul_harvester', cell: 4 },
-      { key: 'death_crypts.revenant',       cell: 1 },
-      { key: 'death_crypts.wailing_ghost',  cell: 3 },
+      { key: 'dungeons_of_malgrath.malgrath_the_undying', cell: 0 },
+      { key: 'dungeons_of_malgrath.dread_knight',         cell: 2 },
+      { key: 'dungeons_of_malgrath.soul_harvester',       cell: 4 },
+      { key: 'dungeons_of_malgrath.revenant',             cell: 1 },
+      { key: 'dungeons_of_malgrath.wailing_ghost',        cell: 3 },
     ],
     level_10: [
-      { key: 'death_crypts.lich_king',      cell: 0 },
-      { key: 'death_crypts.dread_knight',   cell: 2 },
-      { key: 'death_crypts.soul_harvester', cell: 4 },
-      { key: 'death_crypts.tomb_colossus',  cell: 1 },
-      { key: 'death_crypts.revenant',       cell: 3 },
-    ],
-  },
-
-  frost_peaks: {
-    level_1:  [
-      { key: 'frost_peaks.ice_shard',  cell: 0 },
-      { key: 'frost_peaks.frost_imp',  cell: 2 },
-      { key: 'frost_peaks.ice_shard',  cell: 4 },
-    ],
-    level_2:  [
-      { key: 'frost_peaks.frost_imp',   cell: 0 },
-      { key: 'frost_peaks.tundra_wolf', cell: 2 },
-      { key: 'frost_peaks.ice_shard',   cell: 1 },
-      { key: 'frost_peaks.frost_imp',   cell: 4 },
-    ],
-    level_3:  [
-      { key: 'frost_peaks.tundra_wolf',    cell: 0 },
-      { key: 'frost_peaks.glacial_knight', cell: 2 },
-      { key: 'frost_peaks.ice_shard',      cell: 1 },
-      { key: 'frost_peaks.frost_imp',      cell: 4 },
-    ],
-    level_4:  [
-      { key: 'frost_peaks.glacial_knight',  cell: 0 },
-      { key: 'frost_peaks.blizzard_caster', cell: 2 },
-      { key: 'frost_peaks.tundra_wolf',     cell: 4 },
-      { key: 'frost_peaks.frost_imp',       cell: 1 },
-      { key: 'frost_peaks.ice_shard',       cell: 3 },
-    ],
-    level_5:  [
-      { key: 'frost_peaks.permafrost_giant', cell: 0 },
-      { key: 'frost_peaks.blizzard_caster',  cell: 2 },
-      { key: 'frost_peaks.glacial_knight',   cell: 4 },
-      { key: 'frost_peaks.tundra_wolf',      cell: 1 },
-    ],
-    level_6:  [
-      { key: 'frost_peaks.permafrost_giant', cell: 0 },
-      { key: 'frost_peaks.ice_empress',      cell: 2 },
-      { key: 'frost_peaks.glacial_knight',   cell: 4 },
-      { key: 'frost_peaks.blizzard_caster',  cell: 1 },
-      { key: 'frost_peaks.tundra_wolf',      cell: 3 },
-    ],
-    level_7:  [
-      { key: 'frost_peaks.avalanche_colossus', cell: 0 },
-      { key: 'frost_peaks.ice_empress',        cell: 2 },
-      { key: 'frost_peaks.permafrost_giant',   cell: 4 },
-      { key: 'frost_peaks.blizzard_caster',    cell: 1 },
-      { key: 'frost_peaks.glacial_knight',     cell: 3 },
-    ],
-    level_8:  [
-      { key: 'frost_peaks.avalanche_colossus', cell: 0 },
-      { key: 'frost_peaks.winter_oracle',      cell: 2 },
-      { key: 'frost_peaks.ice_empress',        cell: 4 },
-      { key: 'frost_peaks.permafrost_giant',   cell: 1 },
-      { key: 'frost_peaks.glacial_knight',     cell: 3 },
-    ],
-    level_9:  [
-      { key: 'frost_peaks.the_endless_frost',  cell: 0 },
-      { key: 'frost_peaks.winter_oracle',      cell: 2 },
-      { key: 'frost_peaks.avalanche_colossus', cell: 4 },
-      { key: 'frost_peaks.ice_empress',        cell: 1 },
-      { key: 'frost_peaks.blizzard_caster',    cell: 3 },
-    ],
-    level_10: [
-      { key: 'frost_peaks.the_endless_frost',  cell: 0 },
-      { key: 'frost_peaks.avalanche_colossus', cell: 2 },
-      { key: 'frost_peaks.winter_oracle',      cell: 4 },
-      { key: 'frost_peaks.ice_empress',        cell: 1 },
-      { key: 'frost_peaks.permafrost_giant',   cell: 3 },
-    ],
-  },
-
-  nature_wilds: {
-    level_1:  [
-      { key: 'nature_wilds.bog_creeper', cell: 0 },
-      { key: 'nature_wilds.venomfang',   cell: 2 },
-      { key: 'nature_wilds.bog_creeper', cell: 4 },
-    ],
-    level_2:  [
-      { key: 'nature_wilds.venomfang',   cell: 0 },
-      { key: 'nature_wilds.moss_troll',  cell: 2 },
-      { key: 'nature_wilds.bog_creeper', cell: 1 },
-      { key: 'nature_wilds.venomfang',   cell: 4 },
-    ],
-    level_3:  [
-      { key: 'nature_wilds.moss_troll',  cell: 0 },
-      { key: 'nature_wilds.briar_witch', cell: 2 },
-      { key: 'nature_wilds.venomfang',   cell: 1 },
-      { key: 'nature_wilds.bog_creeper', cell: 4 },
-    ],
-    level_4:  [
-      { key: 'nature_wilds.alpha_predator', cell: 0 },
-      { key: 'nature_wilds.briar_witch',    cell: 2 },
-      { key: 'nature_wilds.moss_troll',     cell: 4 },
-      { key: 'nature_wilds.venomfang',      cell: 1 },
-      { key: 'nature_wilds.bog_creeper',    cell: 3 },
-    ],
-    level_5:  [
-      { key: 'nature_wilds.swamp_colossus', cell: 0 },
-      { key: 'nature_wilds.briar_witch',    cell: 2 },
-      { key: 'nature_wilds.alpha_predator', cell: 4 },
-      { key: 'nature_wilds.moss_troll',     cell: 1 },
-    ],
-    level_6:  [
-      { key: 'nature_wilds.swamp_colossus',  cell: 0 },
-      { key: 'nature_wilds.spiderweb_queen', cell: 2 },
-      { key: 'nature_wilds.alpha_predator',  cell: 4 },
-      { key: 'nature_wilds.briar_witch',     cell: 1 },
-      { key: 'nature_wilds.moss_troll',      cell: 3 },
-    ],
-    level_7:  [
-      { key: 'nature_wilds.primordial_beast', cell: 0 },
-      { key: 'nature_wilds.spiderweb_queen',  cell: 2 },
-      { key: 'nature_wilds.swamp_colossus',   cell: 4 },
-      { key: 'nature_wilds.briar_witch',      cell: 1 },
-      { key: 'nature_wilds.alpha_predator',   cell: 3 },
-    ],
-    level_8:  [
-      { key: 'nature_wilds.primordial_beast', cell: 0 },
-      { key: 'nature_wilds.grove_sovereign',  cell: 2 },
-      { key: 'nature_wilds.spiderweb_queen',  cell: 4 },
-      { key: 'nature_wilds.swamp_colossus',   cell: 1 },
-      { key: 'nature_wilds.alpha_predator',   cell: 3 },
-    ],
-    level_9:  [
-      { key: 'nature_wilds.the_devouring_root', cell: 0 },
-      { key: 'nature_wilds.grove_sovereign',    cell: 2 },
-      { key: 'nature_wilds.primordial_beast',   cell: 4 },
-      { key: 'nature_wilds.spiderweb_queen',    cell: 1 },
-      { key: 'nature_wilds.briar_witch',        cell: 3 },
-    ],
-    level_10: [
-      { key: 'nature_wilds.the_devouring_root', cell: 0 },
-      { key: 'nature_wilds.primordial_beast',   cell: 2 },
-      { key: 'nature_wilds.grove_sovereign',    cell: 4 },
-      { key: 'nature_wilds.spiderweb_queen',    cell: 1 },
-      { key: 'nature_wilds.swamp_colossus',     cell: 3 },
+      { key: 'dungeons_of_malgrath.malgrath_the_undying', cell: 0 },
+      { key: 'dungeons_of_malgrath.dread_knight',         cell: 2 },
+      { key: 'dungeons_of_malgrath.soul_harvester',       cell: 4 },
+      { key: 'dungeons_of_malgrath.tomb_colossus',        cell: 1 },
+      { key: 'dungeons_of_malgrath.revenant',             cell: 3 },
     ],
   },
 };
 
 const REGION_REWARDS = {
-  life_grove:   { crystal_type: 'Crystals_Life',   base: { gold: 15, crystal: 6, xp: 30 } },
-  fire_wastes:  { crystal_type: 'Crystals_Fire',   base: { gold: 15, crystal: 6, xp: 30 } },
-  death_crypts: { crystal_type: 'Crystals_Death',  base: { gold: 15, crystal: 6, xp: 30 } },
-  frost_peaks:  { crystal_type: 'Crystals_Frost',  base: { gold: 15, crystal: 6, xp: 30 } },
-  nature_wilds: { crystal_type: 'Crystals_Nature', base: { gold: 15, crystal: 6, xp: 30 } },
+  forests_of_ashenveil: {
+    crystal_guaranteed: 'Crystals_Nature',
+    crystal_pool: ALL_CRYSTALS,
+    base: { gold: 15, xp: 30 },
+  },
+  mountains_of_valdrek: {
+    crystal_guaranteed: 'Crystals_Air',
+    crystal_pool: ALL_CRYSTALS,
+    base: { gold: 15, xp: 30 },
+  },
+  dungeons_of_malgrath: {
+    crystal_guaranteed: 'Crystals_Death',
+    crystal_pool: ALL_CRYSTALS,
+    base: { gold: 15, xp: 30 },
+  },
 };
 
 function buildDifficulties(regionId) {
   const region = REGION_ENCOUNTERS[regionId];
   if (!region) return {};
-  const base = REGION_REWARDS[regionId]?.base ?? { gold: 15, crystal: 6, xp: 30 };
+  const base = REGION_REWARDS[regionId]?.base ?? { gold: 15, xp: 30 };
   const out  = {};
   for (const levelKey of Object.keys(region)) {
     const num     = parseInt(levelKey.replace('level_', ''), 10);
     const scale   = 1 + (num - 1) * 0.3;
     out[levelKey] = {
       rewards: {
-        gold:    Math.round(base.gold    * scale),
-        crystal: Math.round(base.crystal * scale),
-        xp:      Math.round(base.xp      * scale),
+        gold: Math.round(base.gold * scale),
+        xp:   Math.round(base.xp   * scale),
       },
     };
   }
@@ -370,18 +245,27 @@ function buildDifficulties(regionId) {
 }
 
 export const REGIONS = [
-  { id: 'life_grove',   crystal_type: 'Crystals_Life',   difficulties: buildDifficulties('life_grove')   },
-  { id: 'fire_wastes',  crystal_type: 'Crystals_Fire',   difficulties: buildDifficulties('fire_wastes')  },
-  { id: 'death_crypts', crystal_type: 'Crystals_Death',  difficulties: buildDifficulties('death_crypts') },
-  { id: 'frost_peaks',  crystal_type: 'Crystals_Frost',  difficulties: buildDifficulties('frost_peaks')  },
-  { id: 'nature_wilds', crystal_type: 'Crystals_Nature', difficulties: buildDifficulties('nature_wilds') },
+  {
+    id: 'forests_of_ashenveil',
+    crystal_guaranteed: 'Crystals_Nature',
+    crystal_pool: ALL_CRYSTALS,
+    difficulties: buildDifficulties('forests_of_ashenveil'),
+  },
+  {
+    id: 'mountains_of_valdrek',
+    crystal_guaranteed: 'Crystals_Air',
+    crystal_pool: ALL_CRYSTALS,
+    difficulties: buildDifficulties('mountains_of_valdrek'),
+  },
+  {
+    id: 'dungeons_of_malgrath',
+    crystal_guaranteed: 'Crystals_Death',
+    crystal_pool: ALL_CRYSTALS,
+    difficulties: buildDifficulties('dungeons_of_malgrath'),
+  },
 ];
 
 export const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
-
-export function getUnitByKey(regionId, unitKey) {
-  return UNITS.enemies?.[regionId]?.[unitKey] ?? null;
-}
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
@@ -389,11 +273,9 @@ function resolveUnitKey(key) {
 }
 
 export function getEncounter(region_id, level) {
-  const regionKey = region_id.replace(' ', '_');
-  const levelKey  = `level_${level}`;
-  const slots     = REGION_ENCOUNTERS[regionKey]?.[levelKey];
+  const levelKey = `level_${level}`;
+  const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey];
   if (!slots) return [];
-
   return slots
     .map(slot => {
       const unitData = resolveUnitKey(slot.key);
