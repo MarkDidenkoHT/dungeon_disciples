@@ -42,10 +42,9 @@ function resolveUnitDef(unit) {
   return null;
 }
 
-function resolveAbility(key, type) {
+function resolveAbility(key) {
   if (!key || key === 'None') return null;
-  const k = key.replace(/\s+/g, '_');
-  return UNIT_ABILITIES[k] || UNIT_ABILITIES[key] || null;
+  return UNIT_ABILITIES[key] || UNIT_ABILITIES[key.replace(/\s+/g, '_')] || UNIT_ABILITIES[key.replace(/_/g, ' ')] || null;
 }
 
 function buildStatDescription(def, type) {
@@ -89,7 +88,6 @@ export function renderRoster(root, { player }) {
       <div class="roster-nav" id="roster-nav">
         <button class="roster-nav-arrow" id="nav-prev">‹</button>
         <div class="roster-nav-dots" id="roster-dots"></div>
-        <span class="roster-nav-label" id="roster-nav-label"></span>
         <button class="roster-nav-arrow" id="nav-next">›</button>
       </div>
     </div>
@@ -110,10 +108,8 @@ export function renderRoster(root, { player }) {
 
   const track     = root.querySelector('#roster-track');
   const dotsWrap  = root.querySelector('#roster-dots');
-  const navLabel  = root.querySelector('#roster-nav-label');
   const prevBtn   = root.querySelector('#nav-prev');
   const nextBtn   = root.querySelector('#nav-next');
-  const overlay   = root.querySelector('#modal-overlay');
   const modalBody = root.querySelector('#modal-body');
   const modalTitle= root.querySelector('#modal-title');
 
@@ -307,7 +303,7 @@ export function renderRoster(root, { player }) {
     }
 
     function abilityIconHtml(key, type) {
-      const aDef    = resolveAbility(key, type);
+      const aDef    = resolveAbility(key);
       const isEmpty = !aDef;
       const fileKey = key ? key.replace(/\s+/g, '_') : null;
       const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
@@ -362,9 +358,6 @@ export function renderRoster(root, { player }) {
   function updateNav() {
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === units.length - 1;
-    const u   = units[current];
-    const def = u ? resolveUnitDef(u) : null;
-    navLabel.textContent = def?.name ?? u?.unit_data?.unit_id ?? '';
     dotsWrap.querySelectorAll('.roster-dot').forEach((d, i) => {
       d.classList.toggle('roster-dot--active', i === current);
     });
@@ -451,7 +444,7 @@ export function renderRoster(root, { player }) {
     if (abilityBtn) {
       const key  = abilityBtn.dataset.abilityKey;
       const type = abilityBtn.dataset.abilityType;
-      const def  = resolveAbility(key, type);
+      const def  = resolveAbility(key);
       if (!def) return;
       const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
       const description = buildStatDescription(def, type) || 'No details available.';

@@ -32,10 +32,9 @@ const CASTLE_BACKGROUNDS = {
   grail_of_sorrow: '/assets/screens/grail.jpg',
 };
 
-function resolveAbility(key, type) {
+function resolveAbility(key) {
   if (!key || key === 'None') return null;
-  const k = key.replace(/\s+/g, '_');
-  return UNIT_ABILITIES[k] || UNIT_ABILITIES[key] || null;
+  return UNIT_ABILITIES[key] || UNIT_ABILITIES[key.replace(/\s+/g, '_')] || UNIT_ABILITIES[key.replace(/_/g, ' ')] || null;
 }
 
 export function renderCastle(root, { player }) {
@@ -206,7 +205,7 @@ export function renderCastle(root, { player }) {
       : '';
 
     function abilityIconHtml(key, type) {
-      const def     = resolveAbility(key, type);
+      const def     = resolveAbility(key);
       const isEmpty = !def;
       const fileKey = key ? key.replace(/\s+/g, '_') : null;
       const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.png` : null;
@@ -218,26 +217,16 @@ export function renderCastle(root, { player }) {
       >${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}</button>`;
     }
 
-    const slots = [];
-    if (unit.passive) {
-      if (Array.isArray(unit.passive)) {
-        slots.push(...unit.passive);
-      } else {
-        slots.push(unit.passive);
-      }
-    }
-    if (unit.ability) {
-      slots.push(unit.ability);
-    }
+    const passiveKeys = Array.isArray(unit.passive)
+      ? unit.passive.filter(Boolean)
+      : (unit.passive ? [unit.passive] : []);
 
-    const visible = slots.filter(Boolean).slice(0, 4);
-    while (visible.length < 4) visible.push(null);
-
-    const iconsHtml = visible.map(k => {
-      if (!k) return abilityIconHtml('', 'empty');
-      const t = (unit.ability && unit.ability === k) ? 'active' : 'passive';
-      return abilityIconHtml(k, t);
-    }).join('');
+    const iconsHtml = [
+      unit.ability ? abilityIconHtml(unit.ability, 'active')   : abilityIconHtml('', 'empty'),
+      passiveKeys[0] ? abilityIconHtml(passiveKeys[0], 'passive') : abilityIconHtml('', 'empty'),
+      passiveKeys[1] ? abilityIconHtml(passiveKeys[1], 'passive') : abilityIconHtml('', 'empty'),
+      `<button class="ability-icon ability-icon--item ability-icon--empty" disabled title="Item slot — coming soon"></button>`,
+    ].join('');
 
     const abilitiesHtml = `
       <div class="unit-abilities-row">
@@ -294,7 +283,7 @@ export function renderCastle(root, { player }) {
         btn.addEventListener('click', () => {
           const key  = btn.dataset.abilityKey;
           const type = btn.dataset.abilityType;
-          const def  = resolveAbility(key, type);
+          const def  = resolveAbility(key);
           if (!def) return;
           const panel = modalBody.querySelector('.ability-detail-panel');
           const desc  = modalBody.querySelector('.ability-detail-desc');
