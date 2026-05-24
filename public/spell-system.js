@@ -104,6 +104,12 @@ export class SpellSystem {
         unit.spell_effects = unit.spell_effects || {};
         unit.spell_effects.damage_boosted = true;
       }
+
+      if (params.martyrdom_redirect_pct != null) {
+        unit.martyrdom_pct = (unit.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
+        unit.spell_effects = unit.spell_effects || {};
+        unit.spell_effects.martyrdom = true;
+      }
     }
 
     if (spell.effect_type === 'debuff') {
@@ -196,6 +202,10 @@ export class SpellSystem {
 
     if (actual.damage_boost) {
       changes.push(`+${Math.round(actual.damage_boost * 100)}% Damage`);
+    }
+
+    if (params.martyrdom_redirect_pct != null) {
+      changes.push(`${params.martyrdom_redirect_pct}% dmg from adjacent allies redirected to this unit`);
     }
 
     if (actual.damage_reduction) {

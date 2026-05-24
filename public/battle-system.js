@@ -177,23 +177,33 @@ export class BattleSystem {
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
+      target = this.resolveProtectorIntercept(actor, target);
+
       const dmg = this.calcDamage(actor, target);
 
       if (dmg > 0) {
-        target.battle_hp = Math.max(0, target.battle_hp - dmg);
-        const dead       = target.battle_hp <= 0;
+        let remaining = dmg;
 
-        if (dead) {
-          target.alive = false;
-          this.applyOnDeathPassives(target);
+        remaining = this.applyMartyrdomRedirect(actor, target, remaining);
+
+        if (remaining > 0) {
+          target.battle_hp = Math.max(0, target.battle_hp - remaining);
+          const dead = target.battle_hp <= 0;
+
+          if (dead) {
+            target.alive = false;
+            this.applyOnDeathPassives(target);
+          }
+
+          this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
+
+          this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
+          this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
+
+          if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+        } else {
+          this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
         }
-
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: dmg, killed: !target.alive });
-
-        this.fireTrigger('on_hit', { actor, target, dmg, dying: null });
-        this.fireTrigger('on_hit_received', { actor, target, dmg, dying: null });
-
-        if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg, dying: null });
       } else {
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
@@ -203,6 +213,72 @@ export class BattleSystem {
 
     actor.acted_this_round = true;
     return this.afterAction(actor);
+  }
+
+  resolveProtectorIntercept(actor, target) {
+    const targetCol = cellCol(target.cellIndex);
+    const targetRow = cellRow(target.cellIndex);
+    const frontCol  = target.side === 'enemy' ? 0 : 1;
+    const backCol   = target.side === 'enemy' ? 1 : 0;
+
+    if (targetCol !== backCol) return target;
+
+    const protectors = this.combatants.filter(c => {
+      if (!c.alive || c.side !== target.side || c.id === target.id) return false;
+      const def = this.resolvePassiveDef(c);
+      if (!def || def.trigger !== 'intercept') return false;
+      if (cellCol(c.cellIndex) !== frontCol) return false;
+      if (cellRow(c.cellIndex) !== targetRow) return false;
+      const p = def.params || {};
+      return p.intercept_chance_pct != null;
+    });
+
+    for (const protector of protectors) {
+      const def = this.resolvePassiveDef(protector);
+      const chance = (def.params.intercept_chance_pct ?? 0) / 100;
+      if (Math.random() < chance) {
+        this.pushLog({ type: 'passive', passive: def.name, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, heal: false, message: 'intercepts the attack!' });
+        return protector;
+      }
+    }
+
+    return target;
+  }
+
+  applyMartyrdomRedirect(actor, target, dmg) {
+    const COLS = 2;
+    const targetRow = cellRow(target.cellIndex);
+    const targetCol = cellCol(target.cellIndex);
+
+    const martyrs = this.combatants.filter(c => {
+      if (!c.alive || c.side !== target.side || c.id === target.id) return false;
+      if (!(c.martyrdom_pct > 0)) return false;
+      const mr = cellRow(c.cellIndex);
+      const mc = cellCol(c.cellIndex);
+      return (Math.abs(mr - targetRow) <= 1 && mc === targetCol) ||
+             (mr === targetRow && Math.abs(mc - targetCol) === 1);
+    });
+
+    if (martyrs.length === 0) return dmg;
+
+    let remaining = dmg;
+    for (const martyr of martyrs) {
+      const redirected = Math.floor(dmg * martyr.martyrdom_pct / 100);
+      if (redirected <= 0) continue;
+      remaining -= redirected;
+      martyr.battle_hp = Math.max(0, martyr.battle_hp - redirected);
+      const dead = martyr.battle_hp <= 0;
+      if (dead) { martyr.alive = false; this.applyOnDeathPassives(martyr); }
+      this.pushLog({ type: 'passive', passive: 'Martyrdom', actorName: martyr.unit_name, actorCell: martyr.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: redirected, heal: false });
+    }
+
+    return Math.max(0, remaining);
+  }
+
+  resolvePassiveDef(unit) {
+    const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
+    if (!key || !UNIT_ABILITIES) return null;
+    return UNIT_ABILITIES[key] ?? null;
   }
 
   applyDoTs(unit) {

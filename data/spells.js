@@ -58,12 +58,12 @@ const SPELLS = {
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Sacrifice life force for power. Grant all allies +20% damage and +15% lifesteal for the battle.',
+      description: 'Anoint one ally as a martyr. 10% of non-DoT damage taken by adjacent allies is redirected to the martyr instead.',
       cost: { crystals: { Crystals_Life: 45 } },
       icon: '✝️',
       effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { damage_boost: 0.20, lifesteal: 0.15 }
+      target_scope: 'single_ally',
+      params: { martyrdom_redirect_pct: 10 }
     },
     {
       id: 'e_spell_6',

@@ -206,6 +206,15 @@ const UNIT_ABILITIES = {
     description: 'Deals 40% of damage to target on their next turn.',
     params: { dot_dmg_pct: 40 },
   },
+  'protector 1': {
+    id: 'protector 1',
+    name: 'Protector',
+    rank: 1,
+    type: 'passive',
+    trigger: 'intercept',
+    description: '25% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
+    params: { intercept_chance_pct: 25 },
+  },
   'predator 1': {
     id: 'predator 1',
     name: 'Predator',
