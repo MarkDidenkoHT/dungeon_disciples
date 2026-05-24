@@ -225,16 +225,16 @@ export class BattleSystem {
 
     const protectors = this.combatants.filter(c => {
       if (!c.alive || c.side !== target.side || c.id === target.id) return false;
-      const def = this.resolvePassiveDef(c);
-      if (!def || def.trigger !== 'intercept') return false;
+      const defs = this.resolveAllPassiveDefs(c);
+      const interceptDef = defs.find(d => d.trigger === 'intercept');
+      if (!interceptDef) return false;
       if (cellCol(c.cellIndex) !== frontCol) return false;
       if (cellRow(c.cellIndex) !== targetRow) return false;
-      const p = def.params || {};
-      return p.intercept_chance_pct != null;
+      return interceptDef.params?.intercept_chance_pct != null;
     });
 
     for (const protector of protectors) {
-      const def = this.resolvePassiveDef(protector);
+      const def = this.resolveAllPassiveDefs(protector).find(d => d.trigger === 'intercept');
       const chance = (def.params.intercept_chance_pct ?? 0) / 100;
       if (Math.random() < chance) {
         this.pushLog({ type: 'intercept', passive: def.name, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
@@ -278,7 +278,19 @@ export class BattleSystem {
   resolvePassiveDef(unit) {
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !UNIT_ABILITIES) return null;
-    return UNIT_ABILITIES[key] ?? null;
+    const keys = Array.isArray(key) ? key : [key];
+    for (const k of keys) {
+      const def = UNIT_ABILITIES[k];
+      if (def) return def;
+    }
+    return null;
+  }
+
+  resolveAllPassiveDefs(unit) {
+    const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
+    if (!key || !UNIT_ABILITIES) return [];
+    const keys = Array.isArray(key) ? key : [key];
+    return keys.map(k => UNIT_ABILITIES[k]).filter(Boolean);
   }
 
   applyDoTs(unit) {

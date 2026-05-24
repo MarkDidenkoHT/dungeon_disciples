@@ -9,6 +9,14 @@ function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   return UNIT_ABILITIES[key] ?? null;
 }
 
+function resolvePassiveDefs(unit, UNIT_ABILITIES) {
+  if (!UNIT_ABILITIES) return [];
+  const raw = unit.unit_data?.passive || unit.unit_data?.passive_ability;
+  if (!raw) return [];
+  const keys = Array.isArray(raw) ? raw : [raw];
+  return keys.map(k => UNIT_ABILITIES[k] ?? null).filter(Boolean);
+}
+
 function runTrigger(trigger, ctx) {
   const { engine, UNIT_ABILITIES } = ctx;
 
@@ -25,9 +33,11 @@ function runTrigger(trigger, ctx) {
   const pool = (sideMap[trigger] ?? (() => []))();
 
   for (const unit of pool) {
-    const def = resolveAbilityDef(unit, UNIT_ABILITIES, 'passive');
-    if (!def || def.trigger !== trigger) continue;
-    dispatchPassive(trigger, unit, def, ctx);
+    const defs = resolvePassiveDefs(unit, UNIT_ABILITIES);
+    for (const def of defs) {
+      if (def.trigger !== trigger) continue;
+      dispatchPassive(trigger, unit, def, ctx);
+    }
   }
 }
 
@@ -207,8 +217,8 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   const data = actor.unit_data || actor;
   let power = data.action_power ?? data.action?.value ?? 12;
 
-  const def = resolveAbilityDef(actor, UNIT_ABILITIES, 'passive');
-  const p = def?.params || {};
+  const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
+  const p = Object.assign({}, ...defs.map(d => d.params || {}));
 
   if (p.execute_bonus_pct != null && p.execute_threshold_pct != null) {
     if (target.battle_hp / target.max_hp < p.execute_threshold_pct / 100) {
@@ -311,7 +321,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef };
+  module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };
 }
 
-export { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef };
+export { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };

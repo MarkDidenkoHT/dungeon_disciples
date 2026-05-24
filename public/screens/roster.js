@@ -322,25 +322,20 @@ export function renderRoster(root, { player }) {
         </button>`;
     }
 
-    // Prepare up to 4 icon slots: passives first (array or single), then active ability
-    const slots = [];
-    if (def?.passive) {
-      if (Array.isArray(def.passive)) {
-        for (const p of def.passive) slots.push(p);
-      } else {
-        slots.push(def.passive);
-      }
-    }
-    if (def?.ability) slots.push(def.ability);
-    // Keep only up to 4, fill with null placeholders
-    const visible = slots.filter(Boolean).slice(0, 4);
-    while (visible.length < 4) visible.push(null);
+    const passiveKeys = Array.isArray(def?.passive)
+      ? def.passive.filter(Boolean)
+      : (def?.passive ? [def.passive] : []);
 
-    const iconsHtml = visible.map(k => {
-      if (!k) return abilityIconHtml('', 'empty');
-      const t = (def?.ability && def.ability === k) ? 'active' : 'passive';
-      return abilityIconHtml(k, t);
-    }).join('');
+    const slot1 = def?.ability || null;
+    const slot2 = passiveKeys[0] || null;
+    const slot3 = passiveKeys[1] || null;
+
+    const iconsHtml = [
+      slot1 ? abilityIconHtml(slot1, 'active')  : abilityIconHtml('', 'empty'),
+      slot2 ? abilityIconHtml(slot2, 'passive') : abilityIconHtml('', 'empty'),
+      slot3 ? abilityIconHtml(slot3, 'passive') : abilityIconHtml('', 'empty'),
+      `<button class="ability-icon ability-icon--item ability-icon--empty" disabled title="Item slot — coming soon"></button>`,
+    ].join('');
 
     const abilitiesHtml = `
       <div class="unit-abilities-row">
