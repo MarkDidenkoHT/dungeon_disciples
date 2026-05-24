@@ -368,11 +368,10 @@
 .unit-abilities-row {
   display: flex;
   gap: 7px;
-  align-items: flex-start;
+  justify-content: center;
 }
 
 .unit-abilities-icons {
-  /* adaptive size: around 20vw but constrained for very small/large screens */
   --ability-size: clamp(36px, 20vw, 96px);
   display: grid;
   grid-template-columns: repeat(4, var(--ability-size));
