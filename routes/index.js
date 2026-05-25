@@ -429,19 +429,48 @@ router.get('/battle/state', async (req, res) => {
 
 
 router.post('/battle/create', async (req, res) => {
-  const { chat_id, battle_id, playerUnits, enemies, placement, region_id, level } = req.body;
-  if (!chat_id || !battle_id || !playerUnits || !enemies || !placement) {
-    return res.status(400).json({ error: 'chat_id, battle_id, playerUnits, enemies, placement required' });
+  const { chat_id, battle_id, playerUnitIds, placement, region_id, level } = req.body;
+  if (!chat_id || !battle_id || !playerUnitIds || !placement || !region_id || level === undefined) {
+    return res.status(400).json({ error: 'chat_id, battle_id, playerUnitIds, placement, region_id, level required' });
   }
+  if (!Array.isArray(playerUnitIds) || playerUnitIds.length === 0 || playerUnitIds.length > 6) {
+    return res.status(400).json({ error: 'playerUnitIds must be a non-empty array of up to 6 entries' });
+  }
+  const region = REGIONS.find(r => r.id === region_id);
+  if (!region) return res.status(400).json({ error: 'Invalid region_id' });
+  if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
   try {
-    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
+    const rosterRows = await supabase(
+      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
+    );
+    const rosterById = {};
+    for (const r of rosterRows) rosterById[String(r.id)] = r;
 
+    const playerUnits = [];
+    for (const entry of playerUnitIds) {
+      const rosterId = String(entry._rosterId || entry.id);
+      const r = rosterById[rosterId];
+      if (!r) return res.status(400).json({ error: `Roster unit ${rosterId} not found or does not belong to this player` });
+      const def = getUnitByDataId(r.unit_data?.unit_id);
+      if (!def) return res.status(400).json({ error: `Unit definition for ${r.unit_data?.unit_id} not found` });
+      playerUnits.push({
+        id: String(entry.id),
+        _rosterId: rosterId,
+        unit_data: def,
+        unit_name: def.name || def.id,
+      });
+    }
+
+    const enemies = getEncounter(region_id, level);
+    if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
+
+    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
     if (!engine.done) engine.runAiTurns();
 
     const battle_data = buildBattleData(engine, { region_id, level, setup: {
-      playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId || u.id })),
+      playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })),
       placement,
-    } });
+    }});
     const record = await createBattleState({ chat_id, battle_id, battle_data });
     res.json({ record, state: engine.getSnapshot() });
   } catch (err) {
@@ -538,11 +567,17 @@ router.post('/battle/end', async (req, res) => {
 });
 
 router.post('/battle/reward', async (req, res) => {
-  const { chat_id, region_id, level, won, survivor_ids } = req.body;
-  if (!chat_id || !region_id || level === undefined || won === undefined) {
-    return res.status(400).json({ error: 'chat_id, region_id, level, won required' });
+  const { chat_id, battle_id, survivor_ids } = req.body;
+  if (!chat_id || !battle_id) {
+    return res.status(400).json({ error: 'chat_id and battle_id required' });
   }
   try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'Battle not found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player' });
+    if (!record.done) return res.status(400).json({ error: 'Battle is not finished yet' });
+    const { region_id, level } = record.battle_data;
+    const won = record.winner === 'player';
     const region = REGIONS.find(r => r.id === region_id);
     if (!region) return res.status(404).json({ error: 'Region not found' });
     const levelDef = region.difficulties?.[`level_${level}`];
@@ -556,26 +591,27 @@ router.post('/battle/reward', async (req, res) => {
         if (!row) return;
         await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
       };
-      const crystalAmount = Math.round(6 * (1 + (level - 1) * 0.3));
+      const crystalAmount  = Math.round(6 * (1 + (level - 1) * 0.3));
       const guaranteedType = region.crystal_guaranteed;
-      const pool = region.crystal_pool || [guaranteedType];
-      const randomType = pool[Math.floor(Math.random() * pool.length)];
+      const pool           = region.crystal_pool || [guaranteedType];
+      const randomType     = pool[Math.floor(Math.random() * pool.length)];
       await updateItem('Gold', rewards.gold);
       await updateItem(guaranteedType, crystalAmount);
       if (randomType !== guaranteedType) {
         await updateItem(randomType, 1);
-        result.crystal_bonus = 1;
+        result.crystal_bonus      = 1;
         result.crystal_bonus_type = randomType;
       }
       result.gold    = rewards.gold;
       result.crystal = crystalAmount;
-      if (survivor_ids && survivor_ids.length > 0) {
-        const xpEach = Math.floor(rewards.xp / survivor_ids.length);
+      const validSurvivorIds = Array.isArray(survivor_ids) ? survivor_ids : [];
+      if (validSurvivorIds.length > 0) {
+        const xpEach = Math.floor(rewards.xp / validSurvivorIds.length);
         result.xp_granted = xpEach;
-        await Promise.all(survivor_ids.map(async (rosterId) => {
+        await Promise.all(validSurvivorIds.map(async (rosterId) => {
           const rows = await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`);
           if (!rows.length) return;
-          const current = rows[0];
+          const current        = rows[0];
           const updatedUnitData = { ...current.unit_data, current_xp: (current.unit_data?.current_xp ?? 0) + xpEach };
           await supabase(`/roster?id=eq.${current.id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: updatedUnitData }) });
         }));
@@ -593,6 +629,7 @@ router.post('/battle/reward', async (req, res) => {
         }
       }
     }
+    await closeBattleState(battle_id);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

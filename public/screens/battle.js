@@ -417,9 +417,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     try {
       const result = await api('/battle/reward', {
         chat_id:      player.chat_id,
-        region_id,
-        level,
-        won,
+        battle_id,
         survivor_ids: survivorIds,
       });
       const rewardsEl = root.querySelector('#result-rewards');

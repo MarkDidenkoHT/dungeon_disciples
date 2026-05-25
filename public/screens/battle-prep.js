@@ -881,17 +881,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     btn.disabled = true;
     btn.textContent = 'Preparing…';
 
-    const playerUnits = roster
+    const playerUnitIds = roster
       .filter(u => placedUnitIds().has(u.id))
-      .map(u => {
-        const def = resolveUnitDef(u);
-        return {
-          id:        String(u.id),
-          _rosterId: String(u.id),
-          unit_name: def?.name ?? u.unit_data?.unit_id ?? 'Unit',
-          unit_data: { ...def },
-        };
-      });
+      .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));
 
     const placement = {};
     for (const [cellIdx, occ] of Object.entries(occupied)) {
@@ -905,8 +897,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const result = await api('/battle/create', {
         chat_id: player.chat_id,
         battle_id,
-        playerUnits,
-        enemies,
+        playerUnitIds,
         placement,
         region_id,
         level,
