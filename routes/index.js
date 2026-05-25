@@ -517,10 +517,6 @@ router.post('/battle/action', async (req, res) => {
 
     await updateBattleState(battle_id, battle_data);
 
-    if (engine.done) {
-      await closeBattleState(battle_id);
-    }
-
     res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -546,8 +542,6 @@ router.post('/battle/advance', async (req, res) => {
 
     const battle_data = buildBattleData(engine, record.battle_data);
     await updateBattleState(battle_id, battle_data);
-
-    if (engine.done) await closeBattleState(battle_id);
 
     res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
   } catch (err) {
@@ -575,7 +569,8 @@ router.post('/battle/reward', async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'Battle not found' });
     if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player' });
-    if (!record.done) return res.status(400).json({ error: 'Battle is not finished yet' });
+    if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
+    if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
     const { region_id, level } = record.battle_data;
     const won = record.winner === 'player';
     const region = REGIONS.find(r => r.id === region_id);

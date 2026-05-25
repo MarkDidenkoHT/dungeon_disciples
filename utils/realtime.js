@@ -29,7 +29,7 @@ async function getActiveBattle(chat_id) {
 
 async function getBattleState(battle_id) {
   const rows = await supabaseService(
-    `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&battle_active=eq.true&limit=1`
+    `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&order=created_at.desc&limit=1`
   );
   return rows[0] || null;
 }
