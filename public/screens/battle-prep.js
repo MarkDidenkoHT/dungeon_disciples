@@ -745,6 +745,62 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     checkReady();
   }
 
+
+  // ── Drag ghost ─────────────────────────────────────────────────
+  // Creates a properly-sized ghost element that matches the unit's
+  // tile footprint (1×1 tile, 2×1 row, 1×2 column).
+  function makeDragGhost(unit) {
+    const size     = getUnitSize(unit);
+    const name     = getUnitName(unit);
+    const portrait = getPortraitUrl(unit);
+    const isHero   = unit.id === heroId;
+
+    // Measure one real cell from the grid for pixel-perfect sizing
+    const sampleCell = playerGrid.querySelector('.battle-cell') ||
+                       root.querySelector('.battle-cell');
+    const cellW = sampleCell ? sampleCell.offsetWidth  : 80;
+    const cellH = sampleCell ? sampleCell.offsetHeight : 110;
+
+    const w = size === 'row'    ? cellW * 2 : cellW;
+    const h = size === 'column' ? cellH * 2 : cellH;
+
+    const ghost = document.createElement('div');
+    ghost.style.cssText = [
+      `width:${w}px`, `height:${h}px`,
+      'position:fixed', 'top:-9999px', 'left:-9999px',
+      'pointer-events:none', 'z-index:9999',
+      'border-radius:0', 'overflow:hidden',
+      `outline:2px solid ${isHero ? 'gold' : 'var(--accent)'}`,
+      `background:${isHero ? '#2a2a10' : '#1a2a1a'}`,
+      'display:flex', 'flex-direction:column',
+      'align-items:stretch', 'justify-content:flex-end',
+    ].join(';');
+
+    if (portrait) {
+      const img = document.createElement('img');
+      img.src = portrait;
+      img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;';
+      ghost.appendChild(img);
+    }
+
+    const info = document.createElement('div');
+    info.style.cssText = [
+      'position:absolute', 'bottom:0', 'left:0', 'right:0',
+      'display:flex', 'flex-direction:column', 'align-items:center', 'gap:2px',
+      'padding:10px 4px 4px',
+      'background:linear-gradient(to top,rgba(0,0,0,0.80) 0%,transparent 100%)',
+    ].join(';');
+
+    const nameEl = document.createElement('span');
+    nameEl.textContent = name;
+    nameEl.style.cssText = 'font-size:0.52rem;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;';
+    info.appendChild(nameEl);
+    ghost.appendChild(info);
+
+    document.body.appendChild(ghost);
+    return { ghost, w, h };
+  }
+
   const playerGrid = root.querySelector('#player-grid');
 
   function attachGridDragEvents() {
@@ -760,6 +816,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(unit.id));
         cell.classList.add('battle-cell--dragging');
+        const { ghost, w, h } = makeDragGhost(unit);
+        e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
+        requestAnimationFrame(() => ghost.remove());
       });
 
       cell.addEventListener('dragend', () => {
@@ -867,6 +926,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         dragFromCell = null;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(u.id));
+        const { ghost, w, h } = makeDragGhost(u);
+        e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
+        requestAnimationFrame(() => ghost.remove());
       });
 
       card.addEventListener('dragend', () => {
