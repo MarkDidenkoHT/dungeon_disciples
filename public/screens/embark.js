@@ -55,7 +55,7 @@ export function renderEmbark(root, { player }) {
         <div class="embark-controls">
           <div class="embark-march-row">
             <button class="embark-march-btn" id="embark-march-btn" disabled>
-              Select a region to march
+              Select a level to march
             </button>
           </div>
         </div>
@@ -74,7 +74,8 @@ export function renderEmbark(root, { player }) {
   `;
 
   let selectedRegion = null;
-  let modalClosable = true;
+  let selectedLevel  = null;
+  let modalClosable  = true;
 
   const overlay       = root.querySelector('#modal-overlay');
   const modalBody     = root.querySelector('#modal-body');
@@ -139,6 +140,24 @@ export function renderEmbark(root, { player }) {
     });
   }
 
+  function selectLevel(regionId, level, regionLabel) {
+    selectedRegion = regionId;
+    selectedLevel  = level;
+
+    root.querySelectorAll('.embark-level-pip').forEach(p => p.classList.remove('embark-level-pip--selected'));
+    const pip = root.querySelector(`.embark-level-pip[data-region="${regionId}"][data-level="${level}"]`);
+    if (pip) pip.classList.add('embark-level-pip--selected');
+
+    root.querySelectorAll('.embark-card[data-id]').forEach(c => c.classList.remove('embark-card--active-region'));
+    const card = root.querySelector(`.embark-card[data-id="${regionId}"]`);
+    if (card) card.classList.add('embark-card--active-region');
+
+    const marchBtn = root.querySelector('#embark-march-btn');
+    marchBtn.disabled = false;
+    marchBtn.textContent = `March to ${regionLabel} — Lv ${level}`;
+    marchBtn.onclick = () => navigate('battle-prep', { player, region_id: selectedRegion, level: selectedLevel });
+  }
+
   async function loadRegions() {
     try {
       const [progress, activeCheck] = await Promise.all([
@@ -163,30 +182,36 @@ export function renderEmbark(root, { player }) {
             </div>
           `;
         }
-        const level = progress[r.id] ?? 1;
+        const maxLevel = progress[r.id] ?? 1;
+        const levels = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
-          <div class="embark-card" data-id="${r.id}" data-level="${level}">
-            <span class="embark-card-icon">${r.icon}</span>
-            <div class="embark-card-info">
-              <span class="embark-card-label">${r.label}</span>
-              <span class="embark-card-desc">${r.description}</span>
-              <span class="embark-card-crystal">Guaranteed: ${r.crystal} Crystals + 1 random</span>
+          <div class="embark-region-block">
+            <div class="embark-card" data-id="${r.id}">
+              <span class="embark-card-icon">${r.icon}</span>
+              <div class="embark-card-info">
+                <span class="embark-card-label">${r.label}</span>
+                <span class="embark-card-desc">${r.description}</span>
+                <span class="embark-card-crystal">Guaranteed: ${r.crystal} Crystals + 1 random</span>
+              </div>
             </div>
-            <span class="embark-card-badge">Lv ${level}</span>
+            <div class="embark-level-row">
+              ${levels.map(lv => `
+                <button
+                  class="embark-level-pip"
+                  data-region="${r.id}"
+                  data-level="${lv}"
+                  data-label="${r.label}"
+                  aria-label="Level ${lv}"
+                >${lv}</button>
+              `).join('')}
+            </div>
           </div>
         `;
       }).join('');
 
-      root.querySelectorAll('.embark-card[data-id]').forEach(card => {
-        card.addEventListener('click', () => {
-          selectedRegion = card.dataset.id;
-          const selectedLevel = parseInt(card.dataset.level) || 1;
-          root.querySelectorAll('.embark-card[data-id]').forEach(c => c.classList.remove('embark-card--selected'));
-          card.classList.add('embark-card--selected');
-          const marchBtn = root.querySelector('#embark-march-btn');
-          marchBtn.disabled = false;
-          marchBtn.textContent = `March to ${card.querySelector('.embark-card-label').textContent} — Lv ${selectedLevel}`;
-          marchBtn.onclick = () => navigate('battle-prep', { player, region_id: selectedRegion, level: selectedLevel });
+      root.querySelectorAll('.embark-level-pip').forEach(pip => {
+        pip.addEventListener('click', () => {
+          selectLevel(pip.dataset.region, parseInt(pip.dataset.level), pip.dataset.label);
         });
       });
     } catch (err) {
