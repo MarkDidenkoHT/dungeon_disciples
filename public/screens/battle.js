@@ -1,4 +1,5 @@
 import { api, navigate } from '../main.js';
+import { UNITS } from '../../data/units.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -16,7 +17,8 @@ const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 function cellIndex(row, col) { return row * COLS + col; }
 
 function resolveUnitDef(unit) {
-  const uid = unit.unit_data?.unit_id;
+  // unit_data may be the raw DB record (unit_id field) or the full def (id field)
+  const uid = unit.unit_data?.unit_id ?? unit.unit_data?.id;
   if (!uid) return null;
 
   for (const factionPool of Object.values(UNITS)) {
