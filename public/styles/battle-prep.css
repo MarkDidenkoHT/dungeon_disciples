@@ -260,6 +260,17 @@
   font-size: 1.1rem;
 }
 
+/* Portrait image replacing the emoji placeholder in the track */
+.portrait-art-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  flex-shrink: 0;
+}
+
 .portrait-card--hero .portrait-art {
   background: #2a2510;
   color: gold;
