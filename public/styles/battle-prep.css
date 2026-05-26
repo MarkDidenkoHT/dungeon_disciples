@@ -76,15 +76,15 @@
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  gap: 2px;
   font-size: 0.6rem;
   text-align: center;
-  padding: 4px;
   box-sizing: border-box;
   cursor: default;
   position: relative;
+  overflow: hidden;
+  padding: 0;
 }
 
 .battle-cell--fog {
@@ -128,33 +128,45 @@
 }
 
 .battle-cell-name {
-  font-size: 0.55rem;
-  color: var(--text);
+  font-size: 0.52rem;
+  color: #fff;
   line-height: 1.1;
   text-align: center;
   width: 100%;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Info block (name + hp bar) always at the bottom of the cell */
+/* Overlay pinned to the bottom of the cell, sits on top of the portrait */
 .battle-cell-info {
-  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 2px 2px 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
-  border-radius: 0 0 4px 4px;
+  padding: 10px 4px 4px;
+  background: linear-gradient(to top, rgba(0,0,0,0.80) 0%, transparent 100%);
+  z-index: 1;
 }
 
 .battle-cell-sub {
-  font-size: 0.5rem;
-  color: var(--muted);
+  font-size: 0.48rem;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
 }
 
 .battle-cell-row-hint {
   font-size: 0.5rem;
   color: var(--muted);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .battle-cell-remove {

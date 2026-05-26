@@ -705,3 +705,29 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .battle-stats-modal-close:active { color: var(--text); }
+
+/* ── Portrait images (shared: battle-prep + battle) ── */
+
+/* Fills the entire cell — sits behind the info overlay */
+.battle-cell-portrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 4px;
+  display: block;
+  z-index: 0;
+}
+
+/* Larger portrait in the detail / stat panel header */
+.detail-unit-portrait {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  object-position: top center;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
