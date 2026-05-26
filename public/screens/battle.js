@@ -15,6 +15,30 @@ const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
 function cellIndex(row, col) { return row * COLS + col; }
 
+function resolveUnitDef(unit) {
+  const uid = unit.unit_data?.unit_id;
+  if (!uid) return null;
+
+  for (const factionPool of Object.values(UNITS)) {
+    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
+    for (const entry of Object.values(factionPool)) {
+      if (entry?.id === uid) return entry;
+      if (typeof entry === 'object' && !entry.id) {
+        const nested = Object.values(entry).find(u => u?.id === uid);
+        if (nested) return nested;
+      }
+    }
+  }
+  return null;
+}
+
+function getPortraitUrl(unit) {
+  const unitDef = resolveUnitDef(unit);
+  const unitId = unitDef?.id;
+  if (!unitId) return null;
+  return `/assets/character_portraits/p_${unitId}.png`;
+}
+
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells }) {
   let state            = snapshot;
   let selectingTarget  = null;
@@ -28,11 +52,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     dungeons_of_malgrath: { label: 'Dungeons of Malgrath', icon: '💀' },
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
-
-  function getPortraitUrl(unitId) {
-    if (!unitId) return null;
-    return `/assets/character_portraits/p_${unitId}.png`;
-  }
 
   function hpColor(pct) {
     if (pct > 0.6) return '#4a9a4a';
@@ -116,7 +135,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const sideBadge = c.side === 'player'
       ? `<span class="detail-unit-badge">Ally</span>`
       : `<span class="detail-unit-badge detail-unit-badge--enemy">Enemy</span>`;
-    const portraitUrl = getPortraitUrl(c.unit_id);
+    const portraitUrl = getPortraitUrl(c);
     return `
       <div class="battle-unit-detail">
         <div class="detail-unit-header">
@@ -218,7 +237,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const isTarget   = validTargetKeys.has(occ.id);
           const isSelected = selectedCombatant?.id === occ.id;
           const hpPct      = occ.battle_hp / occ.max_hp;
-          const portraitUrl = getPortraitUrl(occ.unit_id);
+          const portraitUrl = getPortraitUrl(occ);
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
           if (isActor)         cls += ' battle-cell--acting';
           else if (isTarget)   cls += ' battle-cell--targetable';

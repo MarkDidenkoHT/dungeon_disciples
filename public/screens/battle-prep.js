@@ -46,7 +46,9 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-function getPortraitUrl(unitId) {
+function getPortraitUrl(unit) {
+  const unitDef = resolveUnitDef(unit);
+  const unitId = unitDef?.id;
   if (!unitId) return null;
   return `/assets/character_portraits/p_${unitId}.png`;
 }
@@ -269,7 +271,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const def    = resolveUnitDef(unit);
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
-    const portraitUrl = getPortraitUrl(unit.id);
+    const portraitUrl = getPortraitUrl(unit);
 
     const currentHp = def?.hp ?? '—';
     const res        = def?.resistances || {};
@@ -625,7 +627,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const rowSpan = sizeRowSpan(occ.size);
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
-        const portraitUrl = getPortraitUrl(occ.unitId);
+        const portraitUrl = getPortraitUrl(unit);
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" draggable="true" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
@@ -694,7 +696,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const locked     = !isHero && slotsLeft <= 0;
       const name       = getUnitName(u);
       const size       = getUnitSize(u);
-      const portraitUrl = getPortraitUrl(u.id);
+      const portraitUrl = getPortraitUrl(u);
       return `
         <div class="portrait-card
                     ${isHero     ? 'portrait-card--hero'     : ''}
