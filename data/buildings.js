@@ -40,6 +40,7 @@ const BUILDING_POOLS = {
     ],
     barracks: [
       { id: 'conscript_barracks', label: 'Conscript Barracks', category: 'barracks', tier: 1, unit: 'conscript', unit_id: 'e1', upgrades: ['e11', 'e12'], cost: { gold: 50 } },
+      { id: 'cavalry_stables', label: 'Cavalry Stables', category: 'barracks', tier: 2, unit: 'horseman', unit_id: 'e12', upgrades: ['e11', 'e12'], cost: { gold: 50 } },
       { id: 'acolyte_shrine', label: 'Acolyte Shrine', category: 'barracks', tier: 1, unit: 'acolyte', unit_id: 'e2', upgrades: ['e21', 'e22', 'e23'], cost: { gold: 50 } },
       { id: 'mage_tower', label: 'Mage Tower', category: 'barracks', tier: 1, unit: 'apprentice', unit_id: 'e4', upgrades: ['e41', 'e42'], cost: { gold: 50 } },
       { id: 'scout_post', label: 'Scout Post', category: 'barracks', tier: 1, unit: 'scout', unit_id: 'e8', upgrades: ['e81', 'e82'], cost: { gold: 50 } },
