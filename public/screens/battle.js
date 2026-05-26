@@ -29,6 +29,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
 
+  function getPortraitUrl(unitId) {
+    if (!unitId) return null;
+    return `/assets/character_portraits/p_${unitId}.png`;
+  }
+
   function hpColor(pct) {
     if (pct > 0.6) return '#4a9a4a';
     if (pct > 0.3) return '#c8973a';
@@ -111,12 +116,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const sideBadge = c.side === 'player'
       ? `<span class="detail-unit-badge">Ally</span>`
       : `<span class="detail-unit-badge detail-unit-badge--enemy">Enemy</span>`;
+    const portraitUrl = getPortraitUrl(c.unit_id);
     return `
       <div class="battle-unit-detail">
         <div class="detail-unit-header">
-          <span class="detail-unit-name">${c.unit_name}</span>
-          ${sideBadge}
-          ${!c.alive ? '<span class="detail-unit-badge detail-unit-badge--used">💀 Dead</span>' : ''}
+          ${portraitUrl ? `<img class="detail-unit-portrait" src="${portraitUrl}" alt="${c.unit_name}" onerror="this.style.display='none'">` : ''}
+          <div class="detail-unit-info">
+            <span class="detail-unit-name">${c.unit_name}</span>
+            ${sideBadge}
+            ${!c.alive ? '<span class="detail-unit-badge detail-unit-badge--used">💀 Dead</span>' : ''}
+          </div>
         </div>
         <div class="unit-core-stats">
           <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${c.battle_hp}/${c.max_hp}</span></div>
@@ -209,6 +218,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const isTarget   = validTargetKeys.has(occ.id);
           const isSelected = selectedCombatant?.id === occ.id;
           const hpPct      = occ.battle_hp / occ.max_hp;
+          const portraitUrl = getPortraitUrl(occ.unit_id);
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
           if (isActor)         cls += ' battle-cell--acting';
           else if (isTarget)   cls += ' battle-cell--targetable';
@@ -217,11 +227,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           else                 cls += ' battle-cell--enemy';
           html.push(`
             <div class="${cls}" data-id="${occ.id}">
-              <span class="battle-cell-name">${occ.unit_name}</span>
-              ${occ.alive
-                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
-                : `<span class="battle-cell-sub">💀</span>`}
-              <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
+              ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
+              <div class="battle-cell-info">
+                <span class="battle-cell-name">${occ.unit_name}</span>
+                ${occ.alive
+                  ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
+                  : `<span class="battle-cell-sub">💀</span>`}
+                <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
+              </div>
             </div>
           `);
         }
