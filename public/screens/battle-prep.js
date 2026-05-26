@@ -46,6 +46,17 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
+function getPortraitUrl(unitId) {
+  if (!unitId) return null;
+  return `/assets/character_portraits/p_${unitId}.png`;
+}
+
+function unitTypeIcon(unit) {
+  const t = unit?.unit_data?.type ?? '';
+  const icons = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
+  return icons[t] ?? '·';
+}
+
 function resolveUnitDef(unit) {
   const uid = unit.unit_data?.unit_id;
   if (!uid) return null;
@@ -241,7 +252,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     document.body.style.overflow = '';
   }
 
-  // attach modal close handlers if present
   if (root.querySelector('#modal-close')) {
     root.querySelector('#modal-close').addEventListener('click', closeModal);
     if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
@@ -259,6 +269,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const def    = resolveUnitDef(unit);
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
+    const portraitUrl = getPortraitUrl(unit.id);
 
     const currentHp = def?.hp ?? '—';
     const res        = def?.resistances || {};
@@ -303,7 +314,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </button>`;
     }
 
-    // Prepare up to 4 icon slots: passives first (array or single), then active ability
     const slots = [];
     if (def?.passive) {
       if (Array.isArray(def.passive)) {
@@ -336,9 +346,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     return `
       <div class="detail-unit-header">
-        <span class="detail-unit-name">${name}</span>
-        <span class="detail-unit-badge">${badge}</span>
-        ${isHero ? `<span class="detail-unit-tier">Lv ${tier}</span>` : `<span class="detail-unit-tier">Tier ${tier}</span>`}
+        ${portraitUrl ? `<img class="detail-unit-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
+        <div class="detail-unit-info">
+          <span class="detail-unit-name">${name}</span>
+          <span class="detail-unit-badge">${badge}</span>
+          ${isHero ? `<span class="detail-unit-tier">Lv ${tier}</span>` : `<span class="detail-unit-tier">Tier ${tier}</span>`}
+        </div>
       </div>
       ${coreHtml}
       ${resistsHtml}
@@ -612,10 +625,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const rowSpan = sizeRowSpan(occ.size);
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
+        const portraitUrl = getPortraitUrl(occ.unitId);
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" draggable="true" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
-          <span class="battle-cell-name">${name}</span>
-          <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
+          ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
+          <div class="battle-cell-info">
+            <span class="battle-cell-name">${name}</span>
+            <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
+          </div>
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;
       }
@@ -677,6 +694,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const locked     = !isHero && slotsLeft <= 0;
       const name       = getUnitName(u);
       const size       = getUnitSize(u);
+      const portraitUrl = getPortraitUrl(u.id);
       return `
         <div class="portrait-card
                     ${isHero     ? 'portrait-card--hero'     : ''}
@@ -684,7 +702,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
                     ${locked     ? 'portrait-card--locked'   : ''}"
              draggable="${locked ? 'false' : 'true'}"
              data-id="${u.id}">
-          <div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>
+          ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
           <div class="portrait-name">${name}</div>
           <div class="portrait-size">${sizeLabel(size)}</div>
         </div>
