@@ -572,7 +572,7 @@ router.post('/battle/reward', async (req, res) => {
     if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
     if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
     const { region_id, level } = record.battle_data;
-    const won = record.winner === 'player';
+    const won = record.battle_data?.winner === 'player';
     const region = REGIONS.find(r => r.id === region_id);
     if (!region) return res.status(404).json({ error: 'Region not found' });
     const levelDef = region.difficulties?.[`level_${level}`];
