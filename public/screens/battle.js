@@ -17,7 +17,6 @@ const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 function cellIndex(row, col) { return row * COLS + col; }
 
 function resolveUnitDef(unit) {
-  // unit_data may be the raw DB record (unit_id field) or the full def (id field)
   const uid = unit.unit_data?.unit_id ?? unit.unit_data?.id;
   if (!uid) return null;
 
@@ -47,6 +46,28 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let pendingAction    = null;
   let selectedCombatant = null;
   let processing       = false;
+  let statsModal       = null;
+
+  // ── modal helpers ──────────────────────────────────────────────
+  function openStatsModal(c) {
+    selectedCombatant = c;
+    if (statsModal) statsModal.remove();
+    statsModal = document.createElement('div');
+    statsModal.className = 'battle-stats-modal-overlay';
+    statsModal.innerHTML = `
+      <div class="battle-stats-modal">
+        <button class="battle-stats-modal-close" aria-label="Close">✕</button>
+        ${unitStatsHtml(c)}
+      </div>
+    `;
+    statsModal.querySelector('.battle-stats-modal-close').addEventListener('click', closeStatsModal);
+    statsModal.addEventListener('click', e => { if (e.target === statsModal) closeStatsModal(); });
+    root.appendChild(statsModal);
+  }
+
+  function closeStatsModal() {
+    if (statsModal) { statsModal.remove(); statsModal = null; }
+  }
 
   const regionMeta = {
     forests_of_ashenveil: { label: 'Forests of Ashenveil', icon: '🌲' },
@@ -269,11 +290,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     root.innerHTML = `
       <div class="screen screen-battle">
-        <div class="battle-header">
-          <span class="battle-title">${meta.icon} ${meta.label} — Lv ${level}</span>
-          <span class="battle-round">Round ${state.round}</span>
-        </div>
-
         <div class="init-queue" id="init-queue">
           ${actingOrder.slice(0, 4).map((c, i) => `
             <div class="init-card ${i === 0 ? 'init-card--active' : ''}">
@@ -285,12 +301,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
         <div class="battle-arena">
           <div class="battle-half battle-half--player">
-            <div class="battle-half-label">Your Side</div>
             <div class="battle-grid">${renderSide('player')}</div>
           </div>
           <div class="battle-vs">⚔</div>
           <div class="battle-half battle-half--enemy">
-            <div class="battle-half-label">Enemies</div>
             <div class="battle-grid">${renderSide('enemy')}</div>
           </div>
         </div>
@@ -320,10 +334,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
         <div class="battle-log" id="battle-log">
           ${(state.log || []).slice().reverse().map(formatLogEntry).join('')}
-        </div>
-
-        <div class="battle-unit-detail-wrap" id="unit-detail-panel">
-          ${unitStatsHtml(selectedCombatant)}
         </div>
       </div>
     `;
@@ -383,9 +393,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           }
         }
 
-        selectedCombatant = combatant;
-        const panel = root.querySelector('#unit-detail-panel');
-        if (panel) panel.innerHTML = unitStatsHtml(combatant);
+        openStatsModal(combatant);
         root.querySelectorAll('.battle-cell--selected').forEach(c => c.classList.remove('battle-cell--selected'));
         cell.classList.add('battle-cell--selected');
       });
@@ -394,6 +402,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.querySelector('#btn-main')?.addEventListener('click', () => {
       const actor = currentActor();
       if (!actor || actor.side === 'enemy' || processing) return;
+      closeStatsModal();
       selectingTarget = actor;
       pendingAction   = 'attack';
       render();
@@ -402,6 +411,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.querySelector('#btn-ability')?.addEventListener('click', () => {
       const actor = currentActor();
       if (!actor || actor.side === 'enemy' || processing || actor.used_active) return;
+      closeStatsModal();
       const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
       if (key.startsWith('lions_roar') || key.startsWith('devour')) {
         sendAction('ability', actor.id, actor.id);
@@ -415,6 +425,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.querySelector('#btn-defend')?.addEventListener('click', () => {
       const actor = currentActor();
       if (!actor || actor.side === 'enemy' || processing) return;
+      closeStatsModal();
       sendAction('defend', actor.id);
     });
 
