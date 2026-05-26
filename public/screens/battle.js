@@ -247,28 +247,55 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     function renderSide(side) {
+      // Map anchor cell -> combatant; track shadow cells consumed by multi-tile spans
+      const cellMap = {};
+      const shadow  = new Set();
+
+      for (const co of state.combatants) {
+        if (co.side !== side) continue;
+        const anchor = co.cellIndex;
+        const size   = co.size ?? 'tile';
+        const r      = Math.floor(anchor / COLS);
+        const c      = anchor % COLS;
+        cellMap[anchor] = co;
+        if (size === 'row'    && c === 0)        shadow.add(anchor + 1);
+        if (size === 'column' && r <= ROWS - 2)  shadow.add(anchor + COLS);
+      }
+
       const html = [];
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const idx = r * COLS + c;
-          const occ = state.combatants.find(co => co.side === side && co.cellIndex === idx);
+          if (shadow.has(idx)) continue; // consumed by a spanning unit
+
+          const occ = cellMap[idx];
           if (!occ) {
             html.push(`<div class="battle-cell battle-cell--empty"><span class="battle-cell-row-hint">R${r+1}</span></div>`);
             continue;
           }
+
+          const size      = occ.size ?? 'tile';
+          const colSpan   = size === 'row'    ? 2 : 1;
+          const rowSpan   = size === 'column' ? 2 : 1;
+          const spanStyle = (colSpan > 1 || rowSpan > 1)
+            ? `grid-column:span ${colSpan};grid-row:span ${rowSpan};`
+            : '';
+
           const isActor    = actor?.id === occ.id;
           const isTarget   = validTargetKeys.has(occ.id);
           const isSelected = selectedCombatant?.id === occ.id;
           const hpPct      = occ.battle_hp / occ.max_hp;
           const portraitUrl = getPortraitUrl(occ);
+
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
-          if (isActor)         cls += ' battle-cell--acting';
-          else if (isTarget)   cls += ' battle-cell--targetable';
-          else if (isSelected) cls += ' battle-cell--selected';
+          if (isActor)              cls += ' battle-cell--acting';
+          else if (isTarget)        cls += ' battle-cell--targetable';
+          else if (isSelected)      cls += ' battle-cell--selected';
           else if (side === 'player') cls += ' battle-cell--placed';
-          else                 cls += ' battle-cell--enemy';
+          else                      cls += ' battle-cell--enemy';
+
           html.push(`
-            <div class="${cls}" data-id="${occ.id}">
+            <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
               ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
               <div class="battle-cell-info">
                 <span class="battle-cell-name">${occ.unit_name}</span>

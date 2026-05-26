@@ -66,13 +66,14 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(3, 110px);
-  gap: 4px;
   width: 100%;
 }
 
 .battle-cell {
-  border-radius: 5px;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: none;
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
   background: var(--surface);
   display: flex;
   flex-direction: column;
@@ -93,17 +94,17 @@
 }
 
 .battle-cell--enemy {
-  border-color: #7a3a3a;
+  outline-color: #7a3a3a;
   background: #2a1a1a;
   cursor: pointer;
 }
 
 .battle-cell--enemy:active {
-  border-color: #aa5a5a;
+  outline-color: #aa5a5a;
 }
 
 .battle-cell--placed {
-  border-color: var(--accent);
+  outline-color: var(--accent);
   background: #1a2a1a;
   cursor: grab;
   position: relative;
@@ -114,13 +115,13 @@
 }
 
 .battle-cell--hero {
-  border-color: gold;
+  outline-color: gold;
   background: #2a2a10;
 }
 
 .battle-cell--hover {
   background: #1a2a1a;
-  border-color: var(--accent);
+  outline-color: var(--accent);
 }
 
 .battle-cell--dragging {

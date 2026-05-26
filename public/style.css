@@ -559,7 +559,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .action-btn--disabled    { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
 
 .battle-cell--acting {
-  border-color: var(--accent) !important;
+  outline: 2px solid var(--accent) !important;
   background: #2a200a !important;
   box-shadow: 0 0 0 2px var(--accent);
   animation: pulse-acting 1.2s ease-in-out infinite;
@@ -571,8 +571,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .battle-cell--targetable {
-  border-color: #c84a3a !important;
-  border-style: dashed !important;
+  outline: 2px dashed #c84a3a !important;
   background: #2a1010 !important;
   cursor: pointer;
 }

@@ -55,6 +55,7 @@ export class BattleSystem {
       unit_data:  data,
       side,
       cellIndex:  cellIdx,
+      size:       data.size ?? 'tile',
       battle_hp:  data.hp ?? 50,
       max_hp:     data.hp ?? 50,
       armor:      data.armor ?? 0,
