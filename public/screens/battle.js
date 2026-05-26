@@ -2,7 +2,6 @@ import { api, navigate } from '../main.js';
 
 const ROWS = 3;
 const COLS = 2;
-const UNIT_TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
 
 const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
@@ -34,11 +33,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (pct > 0.6) return '#4a9a4a';
     if (pct > 0.3) return '#c8973a';
     return '#c84a3a';
-  }
-
-  function unitTypeIcon(u) {
-    const t = u?.unit_data?.type ?? '';
-    return UNIT_TYPE_ICONS[t] ?? '·';
   }
 
   function getActionLabel(unit) {
@@ -223,7 +217,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           else                 cls += ' battle-cell--enemy';
           html.push(`
             <div class="${cls}" data-id="${occ.id}">
-              <span class="battle-cell-name">${unitTypeIcon(occ)} ${occ.unit_name}</span>
+              <span class="battle-cell-name">${occ.unit_name}</span>
               ${occ.alive
                 ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
                 : `<span class="battle-cell-sub">💀</span>`}
@@ -249,7 +243,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <div class="init-queue" id="init-queue">
           ${actingOrder.slice(0, 4).map((c, i) => `
             <div class="init-card ${i === 0 ? 'init-card--active' : ''}">
-              <span class="init-icon">${c.side === 'player' ? unitTypeIcon(c) : '💀'}</span>
+              <span class="init-icon">${c.side === 'player' ? '⚔' : '💀'}</span>
               <span class="init-name">${c.unit_name.split(' ')[0]}</span>
             </div>
           `).join('')}

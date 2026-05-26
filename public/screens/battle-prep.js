@@ -35,7 +35,7 @@ const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
 const ROWS = 3;
 const COLS = 2;
-const UNIT_TYPE_ICONS = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
+
 const SIZE_META = {
   tile:   { label: '1×1', rowSpan: 1, colSpan: 1 },
   column: { label: '1×2', rowSpan: 2, colSpan: 1 },
@@ -79,11 +79,6 @@ function getCells(anchor, size) {
 function sizeLabel(size)   { return SIZE_META[size]?.label ?? '1×1'; }
 function sizeRowSpan(size) { return SIZE_META[size]?.rowSpan ?? 1; }
 function sizeColSpan(size) { return SIZE_META[size]?.colSpan ?? 1; }
-
-function unitTypeIcon(unit) {
-  const t = resolveUnitDef(unit)?.type ?? '';
-  return UNIT_TYPE_ICONS[t] ?? '·';
-}
 
 function getUnitName(unit) {
   return resolveUnitDef(unit)?.name ?? unit.unit_data?.unit_id ?? '?';
