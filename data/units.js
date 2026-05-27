@@ -214,7 +214,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 25,
       xp: 170, passive: null, ability: null,
     },
-      clay_gargoyle: {
+      stone_gargoyle: {
       id: 'd31', f: 'd', t: 3,
       name: 'Stone Gargoyle',
       tags: ['Demon', 'Construct'],
@@ -225,7 +225,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 35,
       xp: 470, passive: 'shatter 1', ability: null,
     },
-      clay_gargoyle: {
+      quartz_gargoyle: {
       id: 'd32', f: 'd', t: 3,
       name: 'Quartz Gargoyle',
       tags: ['Demon', 'Construct'],
