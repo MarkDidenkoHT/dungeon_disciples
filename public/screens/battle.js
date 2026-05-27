@@ -318,12 +318,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.innerHTML = `
       <div class="screen screen-battle">
         <div class="init-queue" id="init-queue">
-          ${actingOrder.slice(0, 4).map((c, i) => `
-            <div class="init-card ${i === 0 ? 'init-card--active' : ''}">
-              <span class="init-icon">${c.side === 'player' ? '⚔' : '💀'}</span>
-              <span class="init-name">${c.unit_name.split(' ')[0]}</span>
-            </div>
-          `).join('')}
+          ${actingOrder.map((c, i) => {
+            const portrait = getPortraitUrl(c);
+            const isActive = i === 0;
+            const side     = c.side;
+            return `
+              <div class="init-card ${isActive ? 'init-card--active' : ''} init-card--${side}">
+                <div class="init-portrait">
+                  ${portrait
+                    ? `<img class="init-portrait-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
+                    : `<span class="init-portrait-fallback">${side === 'player' ? '⚔' : '💀'}</span>`
+                  }
+                </div>
+                <span class="init-name">${c.unit_name.split(' ')[0]}</span>
+                <div class="init-side-strip"></div>
+              </div>
+            `;
+          }).join('')}
         </div>
 
         <div class="battle-arena">

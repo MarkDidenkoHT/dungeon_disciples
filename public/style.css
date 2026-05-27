@@ -212,8 +212,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0 2px;
 }
 
-/* ── Embark screen ── */
-
 .screen-embark {
   padding: 0;
   display: flex;
@@ -436,7 +434,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .embark-unit-name  { font-size: 0.85rem; font-weight: 600; color: var(--text); }
 .embark-unit-level { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
-/* ── Roster screen ── */
 
 .screen-roster { height: 100%; min-height: 0; }
 
@@ -452,8 +449,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .roster-faction { font-size: 0.75rem; color: var(--muted); text-transform: capitalize; }
 .roster-hero    { font-size: 0.85rem; color: var(--accent); font-weight: bold; text-transform: capitalize; }
 .roster-counter { font-size: 0.75rem; color: var(--muted); }
-
-/* ── Battle screen ── */
 
 .screen-battle {
   padding: 0;
@@ -476,32 +471,89 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--bg);
 }
 
+.init-queue {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: var(--bg);
+  scrollbar-width: none;
+}
+.init-queue::-webkit-scrollbar { display: none; }
+
 .init-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  min-width: 44px;
-  padding: 4px 6px;
+  align-items: stretch;
+  flex-shrink: 0;
+  width: 44px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface);
+  overflow: hidden;
+  position: relative;
+  cursor: default;
+}
+
+.init-card--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.init-portrait {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.init-card--active { border-color: var(--accent); background: #2a200a; }
+.init-portrait-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
 
-.init-icon { font-size: 0.85rem; }
+.init-portrait-fallback {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .init-name {
-  font-size: 0.5rem;
+  font-size: 0.46rem;
   color: var(--muted);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
-  max-width: 42px;
   text-overflow: ellipsis;
+  padding: 2px 3px 1px;
 }
-.init-val { font-size: 0.5rem; color: var(--accent); }
+
+.init-side-strip {
+  height: 3px;
+  background: var(--border);
+}
+.init-card--player .init-side-strip { background: var(--accent); }
+.init-card--enemy  .init-side-strip { background: #c84a3a; }
+
+.init-card--active .init-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 2px var(--accent);
+  border-radius: 0;
+  pointer-events: none;
+}
 
 .battle-log {
   flex-shrink: 0;
@@ -594,8 +646,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: width 0.3s ease;
 }
 
-/* ── Battle result ── */
-
 .screen-battle-result {
   display: flex;
   flex-direction: column;
@@ -663,7 +713,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   min-height: 0;
 }
-/* ── Battle unit-stats modal ── */
+
 .battle-stats-modal-overlay {
   position: absolute;
   inset: 0;
@@ -705,9 +755,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .battle-stats-modal-close:active { color: var(--text); }
 
-/* ── Portrait images (shared: battle-prep + battle) ── */
-
-/* Fills the entire cell — sits behind the info overlay */
 .battle-cell-portrait {
   position: absolute;
   inset: 0;
@@ -720,7 +767,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 0;
 }
 
-/* Larger portrait in the detail / stat panel header */
 .detail-unit-portrait {
   width: 48px;
   height: 48px;
