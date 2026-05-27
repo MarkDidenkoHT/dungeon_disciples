@@ -84,9 +84,20 @@ function getUnitSize(unit) {
 
 function getCells(anchor, size) {
   const r = cellRow(anchor), c = cellCol(anchor);
-  if (size === 'tile')   return [anchor];
-  if (size === 'column') return r <= ROWS - 2 ? [anchor, cellIndex(r + 1, c)] : null;
-  if (size === 'row')    return c === 0        ? [anchor, cellIndex(r, 1)]     : null;
+  if (size === 'tile') return [anchor];
+
+  if (size === 'row') {
+    // Normalise: always anchor at col 0 of this row
+    const anchorNorm = cellIndex(r, 0);
+    return [anchorNorm, cellIndex(r, 1)];
+  }
+
+  if (size === 'column') {
+    // Normalise: always anchor at the topmost of the two rows
+    const anchorNorm = r <= ROWS - 2 ? cellIndex(r, c) : cellIndex(r - 1, c);
+    return [anchorNorm, cellIndex(cellRow(anchorNorm) + 1, c)];
+  }
+
   return null;
 }
 
@@ -603,7 +614,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (placedNonHeroCount() >= maxNonHero && !alreadyPlaced) return false;
     }
 
-    cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor, size }; });
+    const normAnchor = cells[0];
+    cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor: normAnchor, size }; });
     return true;
   }
 
@@ -816,9 +828,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(unit.id));
         cell.classList.add('battle-cell--dragging');
-        const { ghost, w, h } = makeDragGhost(unit);
-        e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
-        requestAnimationFrame(() => ghost.remove());
+        if (getUnitSize(unit) !== 'tile') {
+          const { ghost, w, h } = makeDragGhost(unit);
+          e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
+          requestAnimationFrame(() => ghost.remove());
+        }
       });
 
       cell.addEventListener('dragend', () => {
@@ -926,9 +940,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         dragFromCell = null;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(u.id));
-        const { ghost, w, h } = makeDragGhost(u);
-        e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
-        requestAnimationFrame(() => ghost.remove());
+        if (getUnitSize(u) !== 'tile') {
+          const { ghost, w, h } = makeDragGhost(u);
+          e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
+          requestAnimationFrame(() => ghost.remove());
+        }
       });
 
       card.addEventListener('dragend', () => {
