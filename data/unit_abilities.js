@@ -275,8 +275,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Target loses 8 initiative until end of their next turn.',
-    params: { initiative_shred: 8 },
+    description: 'Target loses 3 initiative until end of their next turn.',
+    params: { initiative_shred: 3 },
   },
   'slow 2': {
     id: 'slow 2',
@@ -284,8 +284,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Target loses 15 initiative until end of their next turn.',
-    params: { initiative_shred: 15 },
+    description: 'Target loses 5 initiative until end of their next turn.',
+    params: { initiative_shred: 5 },
   },
   'spore_cloud 1': {
     id: 'spore_cloud 1',
