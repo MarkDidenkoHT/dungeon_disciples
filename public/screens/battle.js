@@ -33,11 +33,13 @@ function resolveUnitDef(unit) {
   return null;
 }
 
-function getPortraitUrl(unit) {
+function getPortraitUrl(unit, variant = 'default') {
   const unitDef = resolveUnitDef(unit);
   const unitId = unitDef?.id;
   if (!unitId) return null;
-  return `/assets/character_portraits/p_${unitId}.png`;
+  const size = unitDef?.size ?? 'tile';
+  const prefix = (variant === 'grid' && (size === 'row' || size === 'column')) ? 'p2' : 'p';
+  return `/assets/character_portraits/${prefix}_${unitId}.png`;
 }
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells }) {
@@ -285,7 +287,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const isTarget   = validTargetKeys.has(occ.id);
           const isSelected = selectedCombatant?.id === occ.id;
           const hpPct      = occ.battle_hp / occ.max_hp;
-          const portraitUrl = getPortraitUrl(occ);
+          const portraitUrl = getPortraitUrl(occ, 'grid');
 
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
           if (isActor)              cls += ' battle-cell--acting';

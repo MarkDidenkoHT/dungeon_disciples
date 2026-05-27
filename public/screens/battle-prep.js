@@ -46,11 +46,13 @@ function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i)  { return Math.floor(i / COLS); }
 function cellCol(i)  { return i % COLS; }
 
-function getPortraitUrl(unit) {
+function getPortraitUrl(unit, variant = 'default') {
   const unitDef = resolveUnitDef(unit);
   const unitId = unitDef?.id;
   if (!unitId) return null;
-  return `/assets/character_portraits/p_${unitId}.png`;
+  const size = unitDef?.size ?? 'tile';
+  const prefix = (variant === 'grid' && (size === 'row' || size === 'column')) ? 'p2' : 'p';
+  return `/assets/character_portraits/${prefix}_${unitId}.png`;
 }
 
 function unitTypeIcon(unit) {
@@ -648,7 +650,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const rowSpan = sizeRowSpan(occ.size);
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
-        const portraitUrl = getPortraitUrl(unit);
+        const portraitUrl = getPortraitUrl(unit, 'grid');
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" draggable="true" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
