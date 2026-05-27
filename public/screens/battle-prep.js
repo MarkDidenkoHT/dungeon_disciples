@@ -60,8 +60,7 @@ function unitTypeIcon(unit) {
 }
 
 function resolveUnitDef(unit) {
-  // unit_data may be the raw DB record (unit_id field) or the full def (id field)
-  const uid = unit.unit_data?.unit_id ?? unit.unit_data?.id;
+  const uid = unit.unit_data?.unit_id;
   if (!uid) return null;
 
   for (const factionPool of Object.values(UNITS)) {
@@ -85,19 +84,14 @@ function getUnitSize(unit) {
 function getCells(anchor, size) {
   const r = cellRow(anchor), c = cellCol(anchor);
   if (size === 'tile') return [anchor];
-
   if (size === 'row') {
-    // Normalise: always anchor at col 0 of this row
     const anchorNorm = cellIndex(r, 0);
     return [anchorNorm, cellIndex(r, 1)];
   }
-
   if (size === 'column') {
-    // Normalise: always anchor at the topmost of the two rows
     const anchorNorm = r <= ROWS - 2 ? cellIndex(r, c) : cellIndex(r - 1, c);
     return [anchorNorm, cellIndex(cellRow(anchorNorm) + 1, c)];
   }
-
   return null;
 }
 
@@ -575,9 +569,18 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return new Set(Object.values(occupied).map(p => p.unitId));
   }
 
-  function placedNonHeroCount() {
-    return [...placedUnitIds()].filter(id => id !== heroId).length;
+  function placedLoyaltyUsed() {
+    // Each non-hero tile unit costs 1 loyalty; row/column units cost 2
+    return [...placedUnitIds()]
+      .filter(id => id !== heroId)
+      .reduce((sum, id) => {
+        const unit = roster.find(u => String(u.id) === String(id));
+        const size = getUnitSize(unit);
+        return sum + ((size === 'row' || size === 'column') ? 2 : 1);
+      }, 0);
   }
+  // Keep alias for any remaining references
+  function placedNonHeroCount() { return placedLoyaltyUsed(); }
 
   function removeUnit(unitId) {
     for (const key of Object.keys(occupied)) {
@@ -593,10 +596,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const isHero = unit.id === heroId;
     if (!isHero) {
-      const currentNonHero = placedNonHeroCount();
-      const alreadyPlaced  = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
-      const effectiveCount = alreadyPlaced ? currentNonHero : currentNonHero;
-      if (effectiveCount >= maxNonHero && !alreadyPlaced) return false;
+      const thisCost      = (size === 'row' || size === 'column') ? 2 : 1;
+      const alreadyPlaced = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
+      const ignoredUnit   = alreadyPlaced ? roster.find(u => String(u.id) === String(ignoredUnitId)) : null;
+      const ignoredCost   = ignoredUnit ? ((getUnitSize(ignoredUnit) === 'row' || getUnitSize(ignoredUnit) === 'column') ? 2 : 1) : 0;
+      const effectiveCost = placedLoyaltyUsed() - (alreadyPlaced ? ignoredCost : 0) + thisCost;
+      if (effectiveCost > maxNonHero) return false;
     }
 
     return true;
@@ -610,8 +615,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const isHero = unit.id === heroId;
     if (!isHero) {
-      const alreadyPlaced = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
-      if (placedNonHeroCount() >= maxNonHero && !alreadyPlaced) return false;
+      const alreadyPlaced2 = ignoredUnitId && ignoredUnitId !== heroId && placedUnitIds().has(ignoredUnitId);
+      const ignoredUnit2   = alreadyPlaced2 ? roster.find(u => String(u.id) === String(ignoredUnitId)) : null;
+      const ignoredCost2   = ignoredUnit2 ? ((getUnitSize(ignoredUnit2) === 'row' || getUnitSize(ignoredUnit2) === 'column') ? 2 : 1) : 0;
+      const thisCost2      = (size === 'row' || size === 'column') ? 2 : 1;
+      if (placedLoyaltyUsed() - (alreadyPlaced2 ? ignoredCost2 : 0) + thisCost2 > maxNonHero) return false;
     }
 
     const normAnchor = cells[0];
@@ -626,7 +634,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const heroPlaced    = heroId !== null && placedUnitIds().has(heroId);
     const parts = [];
     if (!heroPlaced) parts.push('Place your hero');
-    parts.push(`${nonHeroPlaced}/${maxNonHero} allies assigned`);
+    parts.push(`${placedLoyaltyUsed()}/${maxNonHero} loyalty used`);
     hint.textContent = parts.join(' · ');
   }
 
@@ -696,7 +704,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const placed    = placedUnitIds();
     const available = roster.filter(u => !placed.has(u.id));
     const nonHeroPlaced = placedNonHeroCount();
-    const slotsLeft     = maxNonHero - nonHeroPlaced;
+    const loyaltyLeft   = maxNonHero - placedLoyaltyUsed();
+    const slotsLeft     = loyaltyLeft; // kept for locked check below
 
     if (!available.length) {
       track.innerHTML = `<span class="track-empty-hint">All units placed</span>`;
@@ -706,7 +715,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     track.innerHTML = available.map(u => {
       const isHero     = u.id === heroId;
       const isSelected = dragUnit?.id === u.id;
-      const locked     = !isHero && slotsLeft <= 0;
+      const unitCost   = (getUnitSize(u) === 'row' || getUnitSize(u) === 'column') ? 2 : 1;
+      const locked     = !isHero && loyaltyLeft < unitCost;
       const name       = getUnitName(u);
       const size       = getUnitSize(u);
       const portraitUrl = getPortraitUrl(u);
@@ -758,16 +768,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
 
-  // ── Drag ghost ─────────────────────────────────────────────────
-  // Creates a properly-sized ghost element that matches the unit's
-  // tile footprint (1×1 tile, 2×1 row, 1×2 column).
   function makeDragGhost(unit) {
     const size     = getUnitSize(unit);
     const name     = getUnitName(unit);
     const portrait = getPortraitUrl(unit);
     const isHero   = unit.id === heroId;
 
-    // Measure one real cell from the grid for pixel-perfect sizing
     const sampleCell = playerGrid.querySelector('.battle-cell') ||
                        root.querySelector('.battle-cell');
     const cellW = sampleCell ? sampleCell.offsetWidth  : 80;

@@ -15,8 +15,15 @@ export async function api(path, body = null) {
   };
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(`/api${path}`, options);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    // Server returned non-JSON (rate limiter, proxy error, etc.)
+    throw new Error(text.trim() || `HTTP ${res.status}`);
+  }
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
 

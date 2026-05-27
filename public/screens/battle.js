@@ -409,6 +409,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
     } catch (err) {
       console.error('Action failed:', err);
+      const log = root.querySelector('#battle-log');
+      if (log) {
+        const el = document.createElement('div');
+        el.className = 'log-entry log-entry--error';
+        el.textContent = `⚠ ${err.message}`;
+        log.prepend(el);
+      }
     } finally {
       processing = false;
     }

@@ -447,19 +447,43 @@ router.post('/battle/create', async (req, res) => {
     for (const r of rosterRows) rosterById[String(r.id)] = r;
 
     const playerUnits = [];
+    let   heroRosterId = null;
     for (const entry of playerUnitIds) {
       const rosterId = String(entry._rosterId || entry.id);
       const r = rosterById[rosterId];
       if (!r) return res.status(400).json({ error: `Roster unit ${rosterId} not found or does not belong to this player` });
       const def = getUnitByDataId(r.unit_data?.unit_id);
       if (!def) return res.status(400).json({ error: `Unit definition for ${r.unit_data?.unit_id} not found` });
+      if (r.is_hero) heroRosterId = rosterId;
       playerUnits.push({
         id: String(entry.id),
         _rosterId: rosterId,
         unit_data: def,
         unit_name: def.name || def.id,
+        is_hero:   !!r.is_hero,
       });
     }
+
+    // ── Server-side loyalty enforcement ──────────────────────────
+    // Hero tier determines max loyalty (same formula as client getLoyalty)
+    const heroDef    = playerUnits.find(u => u.is_hero);
+    if (!heroDef) return res.status(400).json({ error: 'Squad must include a hero' });
+    const heroTier   = heroDef.unit_data?.t ?? 1;
+    const maxLoyalty = heroTier >= 4 ? 5 : heroTier + 1;
+
+    // Each non-hero unit costs 1 loyalty; 2-tile units (row/column) cost 2
+    let loyaltyUsed = 0;
+    for (const u of playerUnits) {
+      if (u.is_hero) continue;
+      const size = u.unit_data?.size ?? 'tile';
+      loyaltyUsed += (size === 'row' || size === 'column') ? 2 : 1;
+    }
+    if (loyaltyUsed > maxLoyalty) {
+      return res.status(400).json({
+        error: `Squad exceeds loyalty cap (used ${loyaltyUsed}, max ${maxLoyalty} for a tier-${heroTier} hero)`,
+      });
+    }
+    // ─────────────────────────────────────────────────────────────
 
     const enemies = getEncounter(region_id, level);
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
