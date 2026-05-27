@@ -110,6 +110,7 @@ class BattleEngine {
       unit_data:  data,
       side,
       cellIndex:  cellIdx,
+      size:       data.size ?? 'tile',
       battle_hp:  data.hp ?? 50,
       max_hp:     data.hp ?? 50,
       armor:      data.armor ?? 0,
@@ -440,6 +441,7 @@ class BattleEngine {
         id:               c.id,
         side:             c.side,
         cellIndex:        c.cellIndex,
+        size:             c.size,
         alive:            c.alive,
         battle_hp:        c.battle_hp,
         acted_this_round: c.acted_this_round,
@@ -464,6 +466,7 @@ class BattleEngine {
       c.alive              = s.alive;
       c.battle_hp          = s.battle_hp;
       c.cellIndex          = s.cellIndex;
+      c.size               = s.size ?? c.size;
       c.acted_this_round   = s.acted_this_round;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg        ?? 0;
