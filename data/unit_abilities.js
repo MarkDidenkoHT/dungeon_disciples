@@ -35,6 +35,15 @@ const UNIT_ABILITIES = {
     description: 'All allies gain +5 armor.',
     params: { ally_armor_bonus: 5 },
   },
+    'fortify 2': {
+    id: 'fortify 2',
+    name: 'Fortify',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'All allies gain +8 armor.',
+    params: { ally_armor_bonus: 8 },
+  },
   'beacon of hope 1': {
     id: 'beacon of hope 1',
     name: 'Beacon of Hope',
@@ -142,6 +151,15 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt.',
     params: { lowest_ally_heal_pct: 25 },
+  },
+    'mithrails_light 1': {
+    id: 'mithrails_light 2',
+    name: "Mithrail's Light",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'After dealing damage, heals the lowest HP ally for 40% of damage dealt.',
+    params: { lowest_ally_heal_pct: 40 },
   },
   'noxious_death 1': {
     id: 'noxious_death 1',
