@@ -374,8 +374,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'All allies gain 15 HP.',
-    params: { ally_max_hp_bonus: 15 },
+    description: 'All allies gain 10 HP.',
+    params: { ally_max_hp_bonus: 10 },
   },
   'vitality 3': {
     id: 'vitality 3',
@@ -383,8 +383,8 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'All allies gain 25 HP.',
-    params: { ally_max_hp_bonus: 25 },
+    description: 'All allies gain 15 HP.',
+    params: { ally_max_hp_bonus: 15 },
   },
   'volcanic_skin 1': {
     id: 'volcanic_skin 1',
