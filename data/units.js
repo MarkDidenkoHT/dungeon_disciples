@@ -7,13 +7,13 @@ const UNITS = {
       f: 'd',
       t: 1,
       size: 'tile',
-      tags: ['Knight', null],
-      hp: 120, armor: 8, initiative: 40,
-      resistances: { air: 0, fire: 0, life: 0, death: 5, cold: 0, nature: 0 },
+      tags: ['Knight', 'Demon'],
+      hp: 90, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 0, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
       passive: null, ability: null,
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 90
     },
     warlord_t2: {
@@ -27,7 +27,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24,
       passive: null, ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 270
     },
     warlord_t3: {
@@ -41,7 +41,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 29,
       passive: null, ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 540
     },
     warlord_t4: {
@@ -55,7 +55,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
       passive: null, ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     hexblade: {
@@ -69,7 +69,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 18,
       passive: null, ability: null,
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 95
     },
     hexblade_t2: {
@@ -83,7 +83,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 22,
       passive: null, ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 285
     },
     hexblade_t3: {
@@ -97,7 +97,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 26,
       passive: null, ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 570
     },
     hexblade_t4: {
@@ -111,7 +111,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 31,
       passive: null, ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 740
     },
     shadowbow: {
@@ -125,7 +125,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 16,
       passive: null, ability: null,
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 100
     },
     shadowbow_t2: {
@@ -139,7 +139,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 19,
       passive: null, ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 300
     },
     shadowbow_t3: {
@@ -153,7 +153,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 23,
       passive: null, ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 600
     },
     shadowbow_t4: {
@@ -167,7 +167,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 28,
       passive: null, ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 780
     },
       imp: {
@@ -283,7 +283,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 105
     },
     paladin_path_a_t2: {
@@ -297,7 +297,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 300
     },
     paladin_path_b_t2: {
@@ -311,7 +311,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 300
     },
     paladin_path_a_t3: {
@@ -325,7 +325,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 560
     },
     paladin_path_a_t3_alt: {
@@ -339,7 +339,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 560
     },
     paladin_path_b_t3: {
@@ -353,7 +353,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 560
     },
     paladin_path_b_t3_alt: {
@@ -367,7 +367,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 560
     },
     paladin_path_a_t4: {
@@ -381,7 +381,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_a_t4_alt: {
@@ -395,7 +395,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_a_t4_alt2: {
@@ -409,7 +409,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_a_t4_alt3: {
@@ -423,7 +423,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_b_t4: {
@@ -437,7 +437,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_b_t4_alt: {
@@ -451,7 +451,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_b_t4_alt2: {
@@ -465,7 +465,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     paladin_path_b_t4_alt3: {
@@ -479,7 +479,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
       passive: 'mithrails_light 1', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 700
     },
     inquisitor: {
@@ -493,7 +493,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 2,
       damage_source: 'life', action_power: 17,
       passive: 'vitality 1', ability: 'purge 1',
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 110
     },
     inquisitor_t2: {
@@ -507,7 +507,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 2,
       damage_source: 'life', action_power: 20,
       passive: 'vitality 2', ability: 'purge 1',
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 330
     },
     inquisitor_t3: {
@@ -521,7 +521,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 2,
       damage_source: 'life', action_power: 24,
       passive: 'vitality 3', ability: 'purge 1',
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 660
     },
     inquisitor_t4: {
@@ -535,7 +535,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 2,
       damage_source: 'life', action_power: 29,
       passive: 'vitality 3', ability: 'purge 1',
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 770
     },
     ranger: {
@@ -549,7 +549,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 15,
       passive: 'pierce 1', ability: null,
-      hero_level: 1, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 115
     },
     ranger_t2: {
@@ -563,7 +563,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 18,
       passive: 'pierce 1', ability: null,
-      hero_level: 2, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 345
     },
     ranger_t3: {
@@ -577,7 +577,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 22,
       passive: 'pierce 2', ability: null,
-      hero_level: 3, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 690
     },
     ranger_t4: {
@@ -591,7 +591,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 26,
       passive: 'pierce 2', ability: null,
-      hero_level: 4, building_slot: 'slot_0',
+      building_slot: 'slot_0',
       xp: 805
     },
     conscript: {
