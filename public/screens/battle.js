@@ -92,6 +92,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function getPassiveName(unit) {
     const p = unit?.unit_data?.passive || unit?.unit_data?.passive_ability;
     if (!p) return 'None';
+    if (Array.isArray(p)) {
+      return p.filter(Boolean).map(k => k.split(' ')[0].replace(/_/g, ' ')).join(', ') || 'None';
+    }
     const name = typeof p === 'string' ? p : (p.name || p.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
   }
@@ -155,7 +158,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <span class="resist-val ${cls}">${val}</span>
       </div>`;
     }).join('');
-    const passive  = c.unit_data?.passive || c.unit_data?.passive_ability || '—';
+    const passiveRaw = c.unit_data?.passive || c.unit_data?.passive_ability;
+    const passiveKeys = Array.isArray(passiveRaw) ? passiveRaw.filter(Boolean) : (passiveRaw ? [passiveRaw] : []);
+    const passiveDisplay = passiveKeys.length ? passiveKeys.join(', ') : '—';
     const ability  = c.unit_data?.ability || c.unit_data?.active_ability  || '—';
     const sideBadge = c.side === 'player'
       ? `<span class="detail-unit-badge">Ally</span>`
@@ -181,7 +186,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
         <div class="unit-resists-grid">${resistCells}</div>
         <div class="unit-core-stats">
-          <div class="core-stat"><span class="core-stat-label">Passive</span><span class="core-stat-val">${passive}</span></div>
+          <div class="core-stat"><span class="core-stat-label">Passive</span><span class="core-stat-val">${passiveDisplay}</span></div>
           <div class="core-stat"><span class="core-stat-label">Ability</span><span class="core-stat-val">${ability}</span></div>
         </div>
       </div>

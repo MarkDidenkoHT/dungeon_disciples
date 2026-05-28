@@ -324,21 +324,25 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </button>`;
     }
 
-    const slots = [];
+    const passiveSlots = [];
     if (def?.passive) {
       if (Array.isArray(def.passive)) {
-        for (const p of def.passive) slots.push(p);
+        for (const p of def.passive) passiveSlots.push(p);
       } else {
-        slots.push(def.passive);
+        passiveSlots.push(def.passive);
       }
     }
-    if (def?.ability) slots.push(def.ability);
-    const visible = slots.filter(Boolean).slice(0, 4);
-    while (visible.length < 4) visible.push(null);
+    const activeSlot = def?.ability || null;
+    const visible = [
+      activeSlot,
+      passiveSlots[0] || null,
+      passiveSlots[1] || null,
+      passiveSlots[2] || null,
+    ];
 
-    const iconsHtml = visible.map(k => {
+    const iconsHtml = visible.map((k, i) => {
       if (!k) return abilityIconHtml('', 'empty');
-      const t = (def?.ability && def.ability === k) ? 'active' : 'passive';
+      const t = i === 0 ? 'active' : 'passive';
       return abilityIconHtml(k, t);
     }).join('');
 

@@ -326,12 +326,13 @@ export function renderRoster(root, { player }) {
     const slot1 = def?.ability || null;
     const slot2 = passiveKeys[0] || null;
     const slot3 = passiveKeys[1] || null;
+    const slot4 = passiveKeys[2] || null;
 
     const iconsHtml = [
       slot1 ? abilityIconHtml(slot1, 'active')  : abilityIconHtml('', 'empty'),
       slot2 ? abilityIconHtml(slot2, 'passive') : abilityIconHtml('', 'empty'),
       slot3 ? abilityIconHtml(slot3, 'passive') : abilityIconHtml('', 'empty'),
-      `<button class="ability-icon ability-icon--item ability-icon--empty" disabled title="Item slot — coming soon"></button>`,
+      slot4 ? abilityIconHtml(slot4, 'passive') : abilityIconHtml('', 'empty'),
     ].join('');
 
     const abilitiesHtml = `
