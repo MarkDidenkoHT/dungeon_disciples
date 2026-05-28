@@ -32,8 +32,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'All allies gain +10 armor.',
-    params: { ally_armor_bonus: 10 },
+    description: 'All allies gain +5 armor.',
+    params: { ally_armor_bonus: 5 },
   },
   'beacon of hope 1': {
     id: 'beacon of hope 1',
