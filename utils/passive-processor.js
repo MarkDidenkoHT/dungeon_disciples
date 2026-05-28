@@ -1,6 +1,5 @@
 function cellRow(i) { return Math.floor(i / 2); }
 function cellCol(i) { return i % 2; }
-
 function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   const key = type === 'active'
     ? (unit.unit_data?.ability || unit.unit_data?.active_ability)
@@ -8,7 +7,6 @@ function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   if (!key || !UNIT_ABILITIES) return null;
   return UNIT_ABILITIES[key] ?? null;
 }
-
 function resolvePassiveDefs(unit, UNIT_ABILITIES) {
   if (!UNIT_ABILITIES) return [];
   const raw = unit.unit_data?.passive || unit.unit_data?.passive_ability;
@@ -16,10 +14,8 @@ function resolvePassiveDefs(unit, UNIT_ABILITIES) {
   const keys = Array.isArray(raw) ? raw : [raw];
   return keys.map(k => UNIT_ABILITIES[k] ?? null).filter(Boolean);
 }
-
 function runTrigger(trigger, ctx) {
   const { engine, UNIT_ABILITIES } = ctx;
-
   const sideMap = {
     on_hit:          () => engine.combatants.filter(c => c.side === ctx.actor?.side),
     on_kill:         () => engine.combatants.filter(c => c.side === ctx.actor?.side),
@@ -29,9 +25,7 @@ function runTrigger(trigger, ctx) {
     on_turn_start:   () => [ctx.actor],
     on_heal:         () => engine.combatants.filter(c => c.side === ctx.actor?.side),
   };
-
   const pool = (sideMap[trigger] ?? (() => []))();
-
   for (const unit of pool) {
     const defs = resolvePassiveDefs(unit, UNIT_ABILITIES);
     for (const def of defs) {
@@ -40,11 +34,9 @@ function runTrigger(trigger, ctx) {
     }
   }
 }
-
 function dispatchPassive(trigger, owner, def, ctx) {
   const { engine, actor, target, dmg, dying } = ctx;
   const p = def.params || {};
-
   if (trigger === 'on_battle_start') {
     if (p.ally_max_hp_bonus != null) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
@@ -59,15 +51,20 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus });
     }
   }
-
   if (trigger === 'on_turn_start' && owner === actor) {
     if (p.regen_pct != null) {
       const heal = Math.floor(owner.max_hp * p.regen_pct / 100);
       owner.battle_hp = Math.min(owner.max_hp, owner.battle_hp + heal);
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: heal });
     }
+    if (owner._deferred_dmg > 0) {
+      const deferred = owner._deferred_dmg;
+      owner._deferred_dmg = 0;
+      owner.battle_hp = Math.max(0, owner.battle_hp - deferred);
+      engine.pushLog({ type: 'passive', passive: 'Recuperate (deferred)', actorName: '⏳', targetName: owner.unit_name, targetCell: owner.cellIndex, value: deferred, heal: false });
+      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
+    }
   }
-
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
     if (p.lowest_ally_heal_pct != null) {
       const heal = Math.floor(dmg * p.lowest_ally_heal_pct / 100);
@@ -78,29 +75,26 @@ function dispatchPassive(trigger, owner, def, ctx) {
       lowest.battle_hp += actual;
       if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
     }
-
     if (p.self_heal_pct != null) {
       const heal = Math.floor(dmg * p.self_heal_pct / 100);
       const actual = Math.min(heal, owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: actual });
     }
-
     if (p.dot_dmg_pct != null) {
       target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
     }
-
     if (p.armor_shred != null) {
-      target.armor = Math.max(0, target.armor - p.armor_shred);
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.armor_shred, heal: false });
+      const reduction = target._debuff_reduction ?? 0;
+      const effective = Math.max(1, Math.floor(p.armor_shred * (1 - reduction / 100)));
+      target.armor = Math.max(0, target.armor - effective);
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: effective, heal: false });
     }
-
     if (p.initiative_shred != null) {
       target.initiative = Math.max(0, target.initiative - p.initiative_shred);
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.initiative_shred, heal: false });
     }
-
     if (p.stacks_needed != null && p.stack_burst_damage != null) {
       const key = p.stack_key || 'generic_stack';
       target._stacks[key] = (target._stacks[key] ?? 0) + 1;
@@ -112,7 +106,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
       }
     }
-
     if (p.stack_bonus_pct != null && p.max_stacks != null) {
       const key = p.stack_key || 'generic_stack';
       if (owner._stacks[key + '_target'] !== target.id) {
@@ -123,7 +116,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
       owner._dmg_mult = 1 + (owner._stacks[key] * p.stack_bonus_pct / 100);
     }
-
     if (p.behind_splash_pct != null) {
       const row = cellRow(target.cellIndex);
       const col = cellCol(target.cellIndex);
@@ -138,20 +130,43 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
     }
-
-    if (p.resistance_shred_pct != null && !target._flags[def.id + '_applied']) {
-      target._flags[def.id + '_applied'] = true;
-      target._healing_reduction = (target._healing_reduction ?? 0) + p.resistance_shred_pct;
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.resistance_shred_pct });
-    }
-
     if (p.healing_reduction_pct != null && !target._flags[def.id + '_applied']) {
       target._flags[def.id + '_applied'] = true;
       target._healing_reduction = Math.min(100, (target._healing_reduction ?? 0) + p.healing_reduction_pct);
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.healing_reduction_pct });
     }
+    if (p.chain_targets != null && !ctx._is_chain_hit) {
+      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && c.id !== target.id);
+      const count = Math.min(p.chain_targets, enemies.length);
+      const shuffled = enemies.sort(() => Math.random() - 0.5);
+      for (let i = 0; i < count; i++) {
+        const chainTarget = shuffled[i];
+        const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
+        chainTarget.battle_hp = Math.max(0, chainTarget.battle_hp - chainDmg);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
+        if (chainTarget.battle_hp <= 0) { chainTarget.alive = false; engine.applyOnDeathPassives(chainTarget); }
+        engine.fireTrigger('on_hit', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
+        engine.fireTrigger('on_hit_received', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
+      }
+    }
+    if (p.dissipate_resistance_pct != null) {
+      const flagKey = def.id + '_applied_' + target.id;
+      if (!owner._flags[flagKey]) {
+        owner._flags[flagKey] = true;
+        const damageSource = owner.unit_data?.damage_source ?? 'physical';
+        if (damageSource !== 'physical') {
+          const resistances = target.unit_data?.resistances ?? target.resistances;
+          if (resistances) {
+            const current = resistances[damageSource] ?? 0;
+            const reduction = target._debuff_reduction ?? 0;
+            const effective = Math.floor(p.dissipate_resistance_pct * (1 - reduction / 100));
+            resistances[damageSource] = Math.max(0, current - effective);
+            engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: effective });
+          }
+        }
+      }
+    }
   }
-
   if (trigger === 'on_hit_received' && owner === target && dmg > 0) {
     if (p.reflect_pct != null) {
       const reflect = Math.floor(dmg * p.reflect_pct / 100);
@@ -159,7 +174,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
-
     if (p.adjacent_aoe_damage != null) {
       const adjacent = engine.combatants.filter(c =>
         c.side === actor.side && c.alive && c.id !== actor.id &&
@@ -171,21 +185,21 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: p.adjacent_aoe_damage, heal: false });
       }
     }
-
     if (p.retaliation_damage != null) {
       actor.battle_hp = Math.max(0, actor.battle_hp - p.retaliation_damage);
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: p.retaliation_damage, heal: false });
     }
+    if (p.debuff_reduction_pct != null && owner._debuff_reduction == null) {
+      owner._debuff_reduction = p.debuff_reduction_pct;
+    }
   }
-
   if (trigger === 'on_kill' && owner === actor) {
     if (p.kill_damage_bonus_pct != null) {
       owner._dmg_mult = (owner._dmg_mult ?? 1) + p.kill_damage_bonus_pct / 100;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.kill_damage_bonus_pct });
     }
   }
-
   if (trigger === 'on_death' && owner === dying) {
     if (p.survive_uses != null && !owner._flags[def.id + '_used']) {
       owner._flags[def.id + '_used'] = true;
@@ -195,7 +209,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
         : 1;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: owner.battle_hp });
     }
-
     if (p.death_aoe_damage != null) {
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
         e.battle_hp = Math.max(0, e.battle_hp - p.death_aoe_damage);
@@ -204,7 +217,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
   }
-
   if (trigger === 'on_heal' && owner === actor) {
     if (p.hot_pct != null && target) {
       target._hot = (target._hot ?? 0) + Math.floor(dmg * p.hot_pct / 100);
@@ -212,26 +224,20 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
 }
-
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   const data = actor.unit_data || actor;
   let power = data.action_power ?? data.action?.value ?? 12;
-
   const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
   const p = Object.assign({}, ...defs.map(d => d.params || {}));
-
   if (p.execute_bonus_pct != null && p.execute_threshold_pct != null) {
     if (target.battle_hp / target.max_hp < p.execute_threshold_pct / 100) {
       power = Math.floor(power * (1 + p.execute_bonus_pct / 100));
     }
   }
-
   const rawDmg = Math.floor(power * (actor._dmg_mult ?? 1));
   const damageSource = data.damage_source ?? 'physical';
   const resistances = target.unit_data?.resistances ?? target.resistances ?? {};
-
   let dmg = rawDmg;
-
   if (damageSource === 'physical') {
     const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
     const armorRed = armor / 100;
@@ -244,19 +250,14 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
     const resistance = resistances[damageSource] ?? 0;
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
   }
-
   return Math.max(1, dmg);
 }
-
 function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
   const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
   if (!abilityKey || !UNIT_ABILITIES) return combatants.filter(c => c.side !== actor.side && c.alive);
-
   const def = UNIT_ABILITIES[abilityKey];
   if (!def) return combatants.filter(c => c.side !== actor.side && c.alive);
-
   const p = def.params || {};
-
   if (def.target === 'enemy')    return combatants.filter(c => c.side !== actor.side && c.alive);
   if (def.target === 'self')     return [actor];
   if (def.target === 'ally')     return combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
@@ -267,19 +268,20 @@ function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
       (!p.tag_required || (c.unit_data?.tags ?? []).includes(p.tag_required))
     );
   }
-
+  if (def.target === 'ally_tagged') {
+    return combatants.filter(c =>
+      c.side === actor.side && c.alive && c.id !== actor.id &&
+      (!p.tag_required || (c.unit_data?.tags ?? []).includes(p.tag_required))
+    );
+  }
   return combatants.filter(c => c.side !== actor.side && c.alive);
 }
-
 function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine) {
   const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
   if (!abilityKey || !UNIT_ABILITIES) return false;
-
   const def = UNIT_ABILITIES[abilityKey];
   if (!def) return false;
-
   const p = def.params || {};
-
   if (p.cleanse_debuffs && target) {
     target.dot_dmg = 0;
     target._hot = 0;
@@ -290,38 +292,27 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — stripped all debuffs` });
   }
-
   if (p.resurrect_hp_pct != null && target) {
     target.alive = true;
     target.battle_hp = Math.floor(target.max_hp * p.resurrect_hp_pct / 100);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
   }
-
-  if (p.ally_drain_pct != null) {
-    const allies = combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-    let drained = 0;
-    for (const a of allies) {
-      const d = Math.floor(a.max_hp * p.ally_drain_pct / 100);
-      a.battle_hp = Math.max(1, a.battle_hp - d);
-      drained += d;
-    }
-    const ratio = p.drain_to_damage_ratio ?? 0.5;
-    actor._dmg_mult = (actor._dmg_mult ?? 1) + (Math.floor(drained * ratio) / 100);
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'allies', message: `${def.name} — drained ${drained} HP, gained ${Math.floor(drained * ratio)}% damage` });
+  if (p.ally_drain_pct != null && target) {
+    const drained = Math.floor(target.max_hp * p.ally_drain_pct / 100);
+    target.battle_hp = Math.max(1, target.battle_hp - drained);
+    const healed = Math.min(drained, actor.max_hp - actor.battle_hp);
+    actor.battle_hp += healed;
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}` });
   }
-
   if (p.ally_initiative_bonus != null) {
     for (const a of combatants.filter(c => c.side === actor.side && c.alive)) {
       a.initiative += p.ally_initiative_bonus;
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: `${def.name} — +${p.ally_initiative_bonus} initiative to all allies` });
   }
-
   return true;
 }
-
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };
 }
-
 export { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };

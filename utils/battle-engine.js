@@ -1,4 +1,5 @@
 const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } = require('./passive-processor');
+const { filterByTagRules } = require('./tag-rules.js');
 
 let _UNIT_ABILITIES = null;
 async function getAbilities() {
@@ -11,40 +12,11 @@ async function getAbilities() {
   }
   return _UNIT_ABILITIES;
 }
-
-const TAG_RULES = {
-  heal: { targetExcludeTags: ['Construct'] },
-  repair: { targetRequireTags: ['Construct'] },
-  'mend flesh': { targetRequireTags: ['Zombie'] },
-};
-
-function unitHasTag(unit, tag) {
-  const tags = unit?.unit_data?.tags ?? unit?.tags ?? [];
-  return tags.includes(tag);
-}
-
-function unitHasAnyTag(unit, tags) {
-  return tags.some(tag => unitHasTag(unit, tag));
-}
-
-function filterByTagRules(units, actionKey) {
-  if (!actionKey) return units;
-  const rules = TAG_RULES[String(actionKey).toLowerCase()];
-  if (!rules) return units;
-  return units.filter(unit => {
-    if (rules.targetRequireTags && !unitHasAnyTag(unit, rules.targetRequireTags)) return false;
-    if (rules.targetExcludeTags && unitHasAnyTag(unit, rules.targetExcludeTags)) return false;
-    return true;
-  });
-}
-
 const ROWS = 3;
 const COLS = 2;
-
 function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i) { return Math.floor(i / COLS); }
 function cellCol(i) { return i % COLS; }
-
 class BattleEngine {
   constructor(state) {
     this.ABILITIES = null;
@@ -62,24 +34,20 @@ class BattleEngine {
       this.winner     = null;
     }
   }
-
   async init() {
     this.ABILITIES = await getAbilities();
   }
-
   static async fromSetup(playerUnits, enemyUnits, placement) {
     const engine = new BattleEngine(null);
     await engine.init();
     engine.initCombatants(playerUnits, enemyUnits, placement);
     return engine;
   }
-
   static async fromSnapshot(snap) {
     const engine = new BattleEngine(snap);
     await engine.init();
     return engine;
   }
-
   initCombatants(playerUnits, enemyUnits, placement) {
     playerUnits.forEach((u, i) => {
       const cellIdx = placement[u.id] ?? i;
@@ -92,7 +60,6 @@ class BattleEngine {
     });
     this.fireTrigger('on_battle_start', {});
   }
-
   createCombatant(unit, side, cellIdx) {
     const rawData = unit.unit_data || unit;
     const data    = { ...rawData };
@@ -119,24 +86,23 @@ class BattleEngine {
       acted_this_round:   false,
       used_active:        false,
       defend_armor_bonus: 0,
-      dot_dmg:       0,
-      _hot:          0,
-      _stacks:       {},
-      _flags:        {},
+      dot_dmg:            0,
+      _hot:               0,
+      _stacks:            {},
+      _flags:             {},
       _dmg_mult:          1,
       _healing_reduction: 0,
-      _granted_buffs: [],
+      _deferred_dmg:      0,
+      _debuff_reduction:  0,
+      _granted_buffs:     [],
     };
   }
-
   fireTrigger(trigger, ctx) {
     runTrigger(trigger, { engine: this, UNIT_ABILITIES: this.ABILITIES, ...ctx });
   }
-
   recordGrantedBuff(source, type, targets, value) {
     source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
   }
-
   revokeGrantedBuffs(dying) {
     for (const buff of dying._granted_buffs) {
       for (const targetId of buff.targetIds) {
@@ -154,12 +120,10 @@ class BattleEngine {
     }
     dying._granted_buffs = [];
   }
-
   applyOnDeathPassives(dying) {
     this.revokeGrantedBuffs(dying);
     this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
   }
-
   getActionKey(unit) {
     const data = unit.unit_data || unit;
     const raw  = data.action;
@@ -168,13 +132,11 @@ class BattleEngine {
     if (typeof raw === 'object' && raw.id) return raw.id.toLowerCase();
     return null;
   }
-
   isHealer(unit) {
     const data = unit.unit_data || unit;
     const tt   = data.target_type || data.action?.target_type;
     return tt === 'ally';
   }
-
   getValidTargets(actor, forAbility = false) {
     if (forAbility) {
       return getAbilityTargets(actor, this.combatants, this.ABILITIES);
@@ -199,24 +161,40 @@ class BattleEngine {
       return true;
     });
   }
-
   calcDamage(actor, target) {
     return calcDamageWithPassives(actor, target, this.ABILITIES);
   }
-
   calcHeal(actor) {
     const data  = actor.unit_data || actor;
     const power = data.action_power ?? data.action?.value ?? 15;
     return Math.floor(power * 1.3);
   }
-
+  applyRecuperate(target, rawDmg) {
+    const defs = this.resolveAllPassiveDefs(target);
+    const recuperateDef = defs.find(d => d.params?.recuperate_prevent_pct != null);
+    if (!recuperateDef) return rawDmg;
+    const p = recuperateDef.params;
+    const prevented   = Math.floor(rawDmg * p.recuperate_prevent_pct / 100);
+    const afterPrevent = rawDmg - prevented;
+    const deferred    = Math.floor(afterPrevent * p.recuperate_defer_pct / 100);
+    const immediate   = afterPrevent - deferred;
+    target._deferred_dmg = (target._deferred_dmg ?? 0) + deferred;
+    if (prevented > 0 || deferred > 0) {
+      this.pushLog({
+        type: 'passive', passive: recuperateDef.name,
+        actorName: target.unit_name, actorCell: target.cellIndex,
+        targetName: target.unit_name, targetCell: target.cellIndex,
+        message: `Recuperate — ${prevented} prevented, ${deferred} deferred, ${immediate} taken now`,
+        value: immediate,
+      });
+    }
+    return immediate;
+  }
   executeAction(actor, target = null, actionType = 'attack') {
     this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
-
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
     if (!target) return false;
-
     if (this.isHealer(actor)) {
       const raw    = this.calcHeal(actor);
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
@@ -226,18 +204,22 @@ class BattleEngine {
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
-
       const dmg = this.calcDamage(actor, target);
       if (dmg > 0) {
         let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
         if (remaining > 0) {
-          target.battle_hp = Math.max(0, target.battle_hp - remaining);
-          const dead = target.battle_hp <= 0;
-          if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-          this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
-          this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
-          this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
-          if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+          remaining = this.applyRecuperate(target, remaining);
+          if (remaining > 0) {
+            target.battle_hp = Math.max(0, target.battle_hp - remaining);
+            const dead = target.battle_hp <= 0;
+            if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
+            this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
+            this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
+            if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+          } else {
+            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+          }
         } else {
           this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
         }
@@ -249,15 +231,12 @@ class BattleEngine {
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
-
   resolveProtectorIntercept(actor, target) {
     const targetCol = cellCol(target.cellIndex);
     const targetRow = cellRow(target.cellIndex);
     const frontCol  = target.side === 'enemy' ? 0 : 1;
     const backCol   = target.side === 'enemy' ? 1 : 0;
-
     if (targetCol !== backCol) return target;
-
     const protectors = this.combatants.filter(c => {
       if (!c.alive || c.side !== target.side || c.id === target.id) return false;
       const defs = this.resolveAllPassiveDefs(c);
@@ -267,7 +246,6 @@ class BattleEngine {
       if (cellRow(c.cellIndex) !== targetRow) return false;
       return interceptDef.params?.intercept_chance_pct != null;
     });
-
     for (const protector of protectors) {
       const def = this.resolveAllPassiveDefs(protector).find(d => d.trigger === 'intercept');
       const chance = (def.params.intercept_chance_pct ?? 0) / 100;
@@ -276,14 +254,11 @@ class BattleEngine {
         return protector;
       }
     }
-
     return target;
   }
-
   applyMartyrdomRedirect(actor, target, dmg) {
     const targetRow = cellRow(target.cellIndex);
     const targetCol = cellCol(target.cellIndex);
-
     const martyrs = this.combatants.filter(c => {
       if (!c.alive || c.side !== target.side || c.id === target.id) return false;
       if (!(c.martyrdom_pct > 0)) return false;
@@ -292,9 +267,7 @@ class BattleEngine {
       return (Math.abs(mr - targetRow) <= 1 && mc === targetCol) ||
              (mr === targetRow && Math.abs(mc - targetCol) === 1);
     });
-
     if (martyrs.length === 0) return dmg;
-
     let remaining = dmg;
     for (const martyr of martyrs) {
       const redirected = Math.floor(dmg * martyr.martyrdom_pct / 100);
@@ -305,10 +278,8 @@ class BattleEngine {
       if (dead) { martyr.alive = false; this.applyOnDeathPassives(martyr); }
       this.pushLog({ type: 'passive', passive: 'Martyrdom', actorName: martyr.unit_name, actorCell: martyr.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: redirected, heal: false });
     }
-
     return Math.max(0, remaining);
   }
-
   resolvePassiveDef(unit) {
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !this.ABILITIES) return null;
@@ -319,14 +290,12 @@ class BattleEngine {
     }
     return null;
   }
-
   resolveAllPassiveDefs(unit) {
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !this.ABILITIES) return [];
     const keys = Array.isArray(key) ? key : [key];
     return keys.map(k => this.ABILITIES[k]).filter(Boolean);
   }
-
   applyDoTs(unit) {
     if (!unit.alive) return;
     if (unit.dot_dmg > 0) {
@@ -342,14 +311,12 @@ class BattleEngine {
       unit._hot = 0;
     }
   }
-
   doDefend(actor) {
     actor.defend_armor_bonus = 25;
     actor.acted_this_round   = true;
     this.pushLog({ type: 'defend', actorName: actor.unit_name, actorCell: actor.cellIndex, message: 'defended (+25 armor this round)' });
     return this.afterAction(actor);
   }
-
   doAbility(actor, target) {
     const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
     if (actor.used_active || !key) {
@@ -361,20 +328,17 @@ class BattleEngine {
     executeActiveAbility(actor, target, this.combatants, this.ABILITIES, this);
     return this.afterAction(actor);
   }
-
   skipTurn(actor) {
     this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex });
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
-
   afterAction(actor) {
     const win = this.checkWin();
     if (win) { this.done = true; this.winner = win; return true; }
     if (this.getActingOrder().length === 0) this.advanceRound();
     return true;
   }
-
   advanceRound() {
     for (const c of this.combatants) {
       c.acted_this_round   = false;
@@ -384,7 +348,6 @@ class BattleEngine {
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
   }
-
   checkWin() {
     const pa = this.combatants.some(c => c.side === 'player' && c.alive);
     const ea = this.combatants.some(c => c.side === 'enemy'  && c.alive);
@@ -392,15 +355,12 @@ class BattleEngine {
     if (!ea) return 'player';
     return null;
   }
-
   getActingOrder() {
     return this.combatants
       .filter(c => c.alive && !c.acted_this_round)
       .sort((a, b) => b.initiative - a.initiative);
   }
-
   currentActor() { return this.getActingOrder()[0] ?? null; }
-
   runAiTurns() {
     const newLog = [];
     while (!this.done) {
@@ -421,7 +381,6 @@ class BattleEngine {
     }
     return newLog;
   }
-
   getSnapshot() {
     return {
       combatants: this.combatants,
@@ -431,7 +390,6 @@ class BattleEngine {
       winner:     this.winner,
     };
   }
-
   getBattleData() {
     return {
       round:  this.round,
@@ -446,16 +404,19 @@ class BattleEngine {
         battle_hp:        c.battle_hp,
         acted_this_round: c.acted_this_round,
         buffs: {
-          dot_dmg:        c.dot_dmg,
-          _hot:           c._hot,
-          _stacks:        c._stacks,
-          _flags:         c._flags,
-          _granted_buffs: c._granted_buffs,
+          dot_dmg:          c.dot_dmg,
+          _hot:             c._hot,
+          _stacks:          c._stacks,
+          _flags:           c._flags,
+          _granted_buffs:   c._granted_buffs,
+          _deferred_dmg:    c._deferred_dmg,
+          _debuff_reduction: c._debuff_reduction,
+          _healing_reduction: c._healing_reduction,
+          _dmg_mult:        c._dmg_mult,
         },
       })),
     };
   }
-
   static async rehydrate(setup, battleData) {
     const engine = await BattleEngine.fromSetup(setup.playerUnits, setup.enemies, setup.placement);
     const stateById = {};
@@ -469,11 +430,15 @@ class BattleEngine {
       c.size               = s.size ?? c.size;
       c.acted_this_round   = s.acted_this_round;
       const b              = s.buffs || {};
-      c.dot_dmg            = b.dot_dmg        ?? 0;
-      c._hot               = b._hot           ?? 0;
-      c._stacks            = b._stacks        || {};
-      c._flags             = b._flags         || {};
-      c._granted_buffs     = b._granted_buffs || [];
+      c.dot_dmg            = b.dot_dmg            ?? 0;
+      c._hot               = b._hot               ?? 0;
+      c._stacks            = b._stacks            || {};
+      c._flags             = b._flags             || {};
+      c._granted_buffs     = b._granted_buffs     || [];
+      c._deferred_dmg      = b._deferred_dmg      ?? 0;
+      c._debuff_reduction  = b._debuff_reduction  ?? 0;
+      c._healing_reduction = b._healing_reduction ?? 0;
+      c._dmg_mult          = b._dmg_mult          ?? 1;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;
@@ -481,8 +446,6 @@ class BattleEngine {
     engine.log    = [];
     return engine;
   }
-
   pushLog(entry) { this.log.push(entry); }
 }
-
 module.exports = { BattleEngine };

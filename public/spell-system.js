@@ -1,4 +1,4 @@
-import { unitHasTag } from './tag-rules.js';
+import { unitHasTag } from '../utils/tag-rules.js';
 
 export class SpellSystem {
   constructor() {
