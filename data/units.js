@@ -248,7 +248,7 @@ const UNITS = {
       xp: 70, passive: null, ability: null,
     },
       posessed: {
-      id: 'd4', f: 'd', t: 1,
+      id: 'd4', f: 'd', t: 2,
       name: 'Posessed',
       tags: ['Warrior', null],
       size: 'tile',
@@ -256,7 +256,18 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 70, passive: null, ability: null,
+      xp: 270, passive: null, ability: null,
+    },
+      vessel: {
+      id: 'd4', f: 'd', t: 3,
+      name: 'Vessel',
+      tags: ['Warrior', null],
+      size: 'tile',
+      hp: 90, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 25, life: 20, death: 25, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 470, passive: 'predator 1', ability: null,
     },
   },
 
