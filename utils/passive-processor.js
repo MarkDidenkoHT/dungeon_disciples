@@ -355,4 +355,3 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };
 }
-export { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };

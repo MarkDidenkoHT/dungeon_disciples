@@ -244,7 +244,7 @@ function buildDifficulties(regionId) {
   return out;
 }
 
-export const REGIONS = [
+const REGIONS = [
   {
     id: 'forests_of_ashenveil',
     crystal_guaranteed: 'Crystals_Nature',
@@ -265,14 +265,14 @@ export const REGIONS = [
   },
 ];
 
-export const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
+const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
   return UNITS.enemies?.[region]?.[unitId] ?? null;
 }
 
-export function getEncounter(region_id, level) {
+function getEncounter(region_id, level) {
   const levelKey = `level_${level}`;
   const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey];
   if (!slots) return [];
@@ -284,3 +284,4 @@ export function getEncounter(region_id, level) {
     })
     .filter(Boolean);
 }
+module.exports = { REGIONS, REGION_ENCOUNTERS_EXPORT, getEncounter };

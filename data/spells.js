@@ -230,7 +230,6 @@ const SPELLS = {
   ]
 };
 
-export { SPELLS };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { SPELLS };
