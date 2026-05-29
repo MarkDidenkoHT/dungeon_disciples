@@ -231,9 +231,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   const detailPanel = root.querySelector('#detail-panel');
 
-  const overlay = (() => root.querySelector('#modal-overlay'))();
-  const modalBody = (() => root.querySelector('#modal-body'))();
-  const modalTitle = (() => root.querySelector('#modal-title'))();
+  const overlay    = root.querySelector('#modal-overlay');
+  const modalBody  = root.querySelector('#modal-body');
+  const modalTitle = root.querySelector('#modal-title');
 
   function escapeHtml(value) {
     return String(value)
@@ -304,9 +304,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }).join('');
 
     const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
-
-    const passiveKey = def?.passive || null;
-    const activeKey  = def?.ability || null;
 
     function abilityIconHtml(key, type) {
       const aDef    = resolveAbility(key, type);
@@ -576,7 +573,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function placedLoyaltyUsed() {
-    // Each non-hero tile unit costs 1 loyalty; row/column units cost 2
     return [...placedUnitIds()]
       .filter(id => id !== heroId)
       .reduce((sum, id) => {
@@ -585,7 +581,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         return sum + ((size === 'row' || size === 'column') ? 2 : 1);
       }, 0);
   }
-  // Keep alias for any remaining references
+
   function placedNonHeroCount() { return placedLoyaltyUsed(); }
 
   function removeUnit(unitId) {
@@ -636,8 +632,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function updateLoyaltyHint() {
     const hint = root.querySelector('#loyalty-hint');
     if (!hint) return;
-    const nonHeroPlaced = placedNonHeroCount();
-    const heroPlaced    = heroId !== null && placedUnitIds().has(heroId);
+    const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
     const parts = [];
     if (!heroPlaced) parts.push('Place your hero');
     parts.push(`${placedLoyaltyUsed()}/${maxNonHero} loyalty used`);
@@ -656,7 +651,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const name    = unit ? getUnitName(unit) : '?';
         const portraitUrl = getPortraitUrl(unit, 'grid');
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
-                     data-i="${i}" draggable="true" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
+                     data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
           <div class="battle-cell-info">
             <span class="battle-cell-name">${name}</span>
@@ -709,9 +704,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const track     = root.querySelector('#portrait-track');
     const placed    = placedUnitIds();
     const available = roster.filter(u => !placed.has(u.id));
-    const nonHeroPlaced = placedNonHeroCount();
-    const loyaltyLeft   = maxNonHero - placedLoyaltyUsed();
-    const slotsLeft     = loyaltyLeft; // kept for locked check below
+    const loyaltyLeft = maxNonHero - placedLoyaltyUsed();
 
     if (!available.length) {
       track.innerHTML = `<span class="track-empty-hint">All units placed</span>`;
@@ -731,7 +724,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
                     ${isHero     ? 'portrait-card--hero'     : ''}
                     ${isSelected ? 'portrait-card--selected' : ''}
                     ${locked     ? 'portrait-card--locked'   : ''}"
-             draggable="${locked ? 'false' : 'true'}"
              data-id="${u.id}">
           ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
           <div class="portrait-name">${name}</div>
@@ -773,6 +765,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     checkReady();
   }
 
+  let activeGhost    = null;
+  let pointerDragging = false;
 
   function makeDragGhost(unit) {
     const size     = getUnitSize(unit);
@@ -798,6 +792,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       `background:${isHero ? '#2a2a10' : '#1a2a1a'}`,
       'display:flex', 'flex-direction:column',
       'align-items:stretch', 'justify-content:flex-end',
+      'opacity:0.85',
     ].join(';');
 
     if (portrait) {
@@ -825,75 +820,119 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return { ghost, w, h };
   }
 
+  function moveGhost(clientX, clientY) {
+    if (!activeGhost) return;
+    const { ghost, w, h } = activeGhost;
+    ghost.style.left = `${clientX - w / 2}px`;
+    ghost.style.top  = `${clientY - h / 2}px`;
+  }
+
+  function removeGhost() {
+    if (activeGhost) { activeGhost.ghost.remove(); activeGhost = null; }
+  }
+
+  function cellFromPoint(clientX, clientY) {
+    const els = document.elementsFromPoint(clientX, clientY);
+    for (const el of els) {
+      const cell = el.closest('#player-grid [data-i]');
+      if (cell) return cell;
+    }
+    return null;
+  }
+
+  function startPointerDrag(unit, fromCell, clientX, clientY) {
+    dragUnit        = unit;
+    dragFromCell    = fromCell;
+    pointerDragging = true;
+    activeGhost     = makeDragGhost(unit);
+    moveGhost(clientX, clientY);
+    root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+    if (fromCell !== null) {
+      const el = playerGrid.querySelector(`[data-i="${fromCell}"]`);
+      if (el) el.classList.add('battle-cell--dragging');
+    }
+  }
+
+  function finishPointerDrag(clientX, clientY) {
+    clearHover();
+    removeGhost();
+    pointerDragging = false;
+
+    const cell     = cellFromPoint(clientX, clientY);
+    const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
+
+    if (cell && dragUnit) {
+      const i = Number(cell.dataset.i);
+      if (canPlace(dragUnit, i, ignoreId)) {
+        if (ignoreId) removeUnit(ignoreId);
+        placeUnit(dragUnit, i);
+        dragUnit     = null;
+        dragFromCell = null;
+        fullRefresh();
+        return;
+      }
+    }
+
+    dragUnit     = null;
+    dragFromCell = null;
+    root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+    fullRefresh();
+  }
+
+  function cancelPointerDrag() {
+    clearHover();
+    removeGhost();
+    pointerDragging = false;
+    dragUnit        = null;
+    dragFromCell    = null;
+    root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+  }
+
+  document.addEventListener('pointermove', e => {
+    if (!pointerDragging) return;
+    e.preventDefault();
+    moveGhost(e.clientX, e.clientY);
+
+    const cell     = cellFromPoint(e.clientX, e.clientY);
+    const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
+    if (cell) {
+      const i         = Number(cell.dataset.i);
+      const targetOcc = occupied[i];
+      const isSelf    = targetOcc && targetOcc.unitId === ignoreId;
+      if ((!targetOcc || isSelf) && canPlace(dragUnit, i, ignoreId)) {
+        setHover(i);
+        return;
+      }
+    }
+    clearHover();
+  }, { passive: false });
+
+  document.addEventListener('pointerup', e => {
+    if (!pointerDragging) return;
+    finishPointerDrag(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('pointercancel', () => {
+    if (pointerDragging) cancelPointerDrag();
+  });
+
   const playerGrid = root.querySelector('#player-grid');
 
   function attachGridDragEvents() {
     playerGrid.querySelectorAll('.battle-cell--placed').forEach(cell => {
-      cell.addEventListener('dragstart', e => {
-        const anchor  = Number(cell.dataset.i);
-        const occ     = occupied[anchor];
+      cell.addEventListener('pointerdown', e => {
+        if (e.target.closest('[data-remove]')) return;
+        e.preventDefault();
+        const anchor = Number(cell.dataset.i);
+        const occ    = occupied[anchor];
         if (!occ) return;
         const unit = roster.find(u => u.id === occ.unitId);
         if (!unit) return;
-        dragUnit     = unit;
-        dragFromCell = anchor;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(unit.id));
-        cell.classList.add('battle-cell--dragging');
-        if (getUnitSize(unit) !== 'tile') {
-          const { ghost, w, h } = makeDragGhost(unit);
-          e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
-          requestAnimationFrame(() => ghost.remove());
-        }
-      });
-
-      cell.addEventListener('dragend', () => {
-        dragUnit     = null;
-        dragFromCell = null;
-        clearHover();
-        root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+        cell.setPointerCapture(e.pointerId);
+        startPointerDrag(unit, anchor, e.clientX, e.clientY);
       });
     });
   }
-
-  playerGrid.addEventListener('dragover', e => {
-    e.preventDefault();
-    const cell = e.target.closest('[data-i]');
-    if (!cell || !dragUnit) return;
-    const i          = Number(cell.dataset.i);
-    const ignoreId   = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
-    const targetOcc  = occupied[i];
-    const targetIsSelf = targetOcc && targetOcc.unitId === ignoreId;
-    if ((!targetOcc || targetIsSelf) && canPlace(dragUnit, i, ignoreId)) {
-      setHover(i);
-      e.dataTransfer.dropEffect = 'move';
-    } else {
-      clearHover();
-      e.dataTransfer.dropEffect = 'none';
-    }
-  });
-
-  playerGrid.addEventListener('dragleave', e => {
-    if (!playerGrid.contains(e.relatedTarget)) clearHover();
-  });
-
-  playerGrid.addEventListener('drop', e => {
-    e.preventDefault();
-    clearHover();
-    if (!dragUnit) return;
-    const cell = e.target.closest('[data-i]');
-    if (!cell) return;
-    const i       = Number(cell.dataset.i);
-    const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
-
-    if (canPlace(dragUnit, i, ignoreId)) {
-      if (ignoreId) removeUnit(ignoreId);
-      placeUnit(dragUnit, i);
-      dragUnit     = null;
-      dragFromCell = null;
-      fullRefresh();
-    }
-  });
 
   playerGrid.addEventListener('click', e => {
     const removeBtn = e.target.closest('[data-remove]');
@@ -906,6 +945,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return;
     }
 
+    if (pointerDragging) return;
+
     const cell = e.target.closest('[data-i]');
     if (!cell) return;
     const i   = Number(cell.dataset.i);
@@ -917,7 +958,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return;
     }
 
-    if (dragUnit && canPlace(dragUnit, i)) {
+    if (dragUnit && !pointerDragging && canPlace(dragUnit, i)) {
       if (dragFromCell !== null) removeUnit(dragUnit.id);
       placeUnit(dragUnit, i);
       dragUnit     = null;
@@ -947,29 +988,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       if (card.classList.contains('portrait-card--locked')) return;
 
-      card.addEventListener('dragstart', e => {
-        dragUnit     = u;
-        dragFromCell = null;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(u.id));
-        if (getUnitSize(u) !== 'tile') {
-          const { ghost, w, h } = makeDragGhost(u);
-          e.dataTransfer.setDragImage(ghost, w / 2, h / 2);
-          requestAnimationFrame(() => ghost.remove());
-        }
+      card.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        card.setPointerCapture(e.pointerId);
+        startPointerDrag(u, null, e.clientX, e.clientY);
       });
 
-      card.addEventListener('dragend', () => {
-        if (dragUnit) {
-          dragUnit     = null;
-          dragFromCell = null;
-          clearHover();
-          renderPortraitTrack();
-          attachPortraitEvents();
-        }
-      });
-
-      card.addEventListener('click', () => {
+      card.addEventListener('click', e => {
+        if (pointerDragging) return;
         const wasSelected = dragUnit?.id === u.id;
         dragUnit     = wasSelected ? null : u;
         dragFromCell = null;
