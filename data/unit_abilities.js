@@ -179,9 +179,9 @@ const UNIT_ABILITIES = {
     description: 'On death, deals 20 nature damage to all enemies.',
     params: { death_aoe_damage: 20, damage_type: 'nature' },
   },
-  'overpower 1': {
-    id: 'overpower 1',
-    name: 'Overpower',
+  'find_weakness 1': {
+    id: 'find_weakness 1',
+    name: 'Find Weakness',
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -392,8 +392,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit by physical damage, deals 12 fire damage back to attacker.',
-    params: { retaliation_damage: 12, damage_type: 'fire' },
+    description: 'When hit by physical damage, deals 8 fire damage back to attacker.',
+    params: { retaliation_damage: 8, damage_type: 'fire' },
   },
   'wither 1': {
     id: 'wither 1',
