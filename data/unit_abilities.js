@@ -458,7 +458,6 @@ const UNIT_ABILITIES = {
     description: "Reduces target's resistance to the attacker's damage type by 15%.",
     params: { dissipate_resistance_pct: 15 },
   },
-};
   'rage 1': {
     id: 'rage 1',
     name: 'Rage',
@@ -531,4 +530,6 @@ const UNIT_ABILITIES = {
     description: 'Command a Demon ally to strike a random enemy for 50% of their normal damage.',
     params: { bonus_attack: 50, tag_required: 'Demon' },
   },
+};
+
 export { UNIT_ABILITIES };
