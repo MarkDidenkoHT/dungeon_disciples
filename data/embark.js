@@ -1,4 +1,4 @@
-import { UNITS } from './units.js';
+const { UNITS } = require('./units.js');
 
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 

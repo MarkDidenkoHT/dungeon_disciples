@@ -532,4 +532,4 @@ const UNIT_ABILITIES = {
   },
 };
 
-export { UNIT_ABILITIES };
+module.exports = { UNIT_ABILITIES };
