@@ -170,7 +170,7 @@ const UNITS = {
       building_slot: 'slot_0',
       xp: 780
     },
-      imp: {
+    imp: {
       id: 'd1', f: 'd', t: 1,
       name: 'Imp',
       tags: ['Demon', 'Beast'],
@@ -181,7 +181,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 25,
       xp: 170, passive: null, ability: null,
     },
-      tormentor: {
+    tormentor: {
       id: 'd11', f: 'd', t: 2,
       name: 'Tormentor',
       tags: ['Demon', 'Beast'],
@@ -192,18 +192,18 @@ const UNITS = {
       damage_source: 'fire', action_power: 20,
       xp: 170, passive: 'burn 1', ability: null,
     },
-      hellblade: {
+    hellblade: {
       id: 'd12', f: 'd', t: 2,
       name: 'Hellblade',
       tags: ['Demon', 'Knight'],
       size: 'row',
       hp: 130, armor: 15, initiative: 35,
-      resistances: { air: 0, fire: 10, life: 0, death: 10, cold: 0, nature: 0 },
+      resistances: { air: 0, fire: 20, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
       xp: 170, passive: null, ability: null,
     },
-      clay_gargoyle: {
+    clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
       tags: ['Demon', 'Construct'],
@@ -212,9 +212,9 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 25,
-      xp: 170, passive: null, ability: null,
+      xp: 170, passive: 'regenerate 1', ability: null,
     },
-      stone_gargoyle: {
+    stone_gargoyle: {
       id: 'd31', f: 'd', t: 2,
       name: 'Stone Gargoyle',
       tags: ['Demon', 'Construct'],
@@ -223,9 +223,9 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 35,
-      xp: 470, passive: 'shatter 1', ability: null,
+      xp: 470, passive: ['shatter 1', 'regenerate 1'], ability: null,
     },
-      quartz_gargoyle: {
+    quartz_gargoyle: {
       id: 'd32', f: 'd', t: 2,
       name: 'Quartz Gargoyle',
       tags: ['Demon', 'Construct'],
@@ -234,9 +234,9 @@ const UNITS = {
       resistances: { air: 10, fire: 20, life: 10, death: 10, cold: 10, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'physical', action_power: 20,
-      xp: 470, passive: 'slow 1', ability: null,
+      xp: 470, passive: ['slow 1', 'regenerate 1'], ability: null,
     },
-      heretic: {
+    heretic: {
       id: 'd4', f: 'd', t: 1,
       name: 'Heretic',
       tags: ['Warrior', null],
@@ -247,7 +247,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 15,
       xp: 70, passive: null, ability: null,
     },
-      posessed: {
+    posessed: {
       id: 'd4', f: 'd', t: 2,
       name: 'Posessed',
       tags: ['Warrior', null],
@@ -256,19 +256,52 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 270, passive: null, ability: null,
+      xp: 270, passive: ['rage 1', 'blood_frenzy 1'], ability: null,
     },
-      vessel: {
+    vessel: {
       id: 'd4', f: 'd', t: 3,
       name: 'Vessel',
       tags: ['Warrior', null],
       size: 'tile',
       hp: 90, armor: 10, initiative: 50,
-      resistances: { air: 0, fire: 25, life: 20, death: 25, cold: 0, nature: 0 },
+      resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 470, passive: 'predator 1', ability: null,
+      xp: 470, passive: ['rage 1','blood_frenzy 1', 'predator 1'], ability: null,
     },
+    peer: {
+      id: 'd6', f: 'd', t: 1,
+      name: 'Peer',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 15,
+      xp: 470, passive: null, ability: 'infernal_mandate 1',
+    },
+    nether_baron: {
+      id: 'd61', f: 'd', t: 2,
+      name: 'Nether Baron',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 20, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 470, passive: 'vitality 1', ability: 'infernal_mandate 1',
+    },
+    lord_of_torment: {
+      id: 'd62', f: 'd', t: 2,
+      name: 'Lord Of Torment',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 20, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 470, passive: null, ability: 'infernal_mandate 1',
+    }
   },
 
   empire: {
