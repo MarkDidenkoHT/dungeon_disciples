@@ -1,4 +1,4 @@
-const SPELLS = {
+export const SPELLS = {
   empire: [
     {
       id: 'e_spell_1',
@@ -15,7 +15,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_2',
-      name: 'Knight’s Oath',
+      name: 'Knight\u2019s Oath',
       rank: 1,
       tier: 1,
       type: 'preparation',
@@ -96,7 +96,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_2',
-      name: 'Knight’s Ward',
+      name: 'Knight\u2019s Ward',
       rank: 1,
       tier: 1,
       type: 'preparation',
@@ -131,7 +131,7 @@ const SPELLS = {
       icon: '🩸',
       effect_type: 'buff',
       target_scope: 'all_allies',
-      params: { damage_boost: 0.20}
+      params: { damage_boost: 0.20 }
     },
     {
       id: 'd_spell_6',
@@ -144,14 +144,14 @@ const SPELLS = {
       icon: '👻',
       effect_type: 'debuff',
       target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.25}
+      params: { max_hp_reduction: 0.25 }
     },
   ],
 
   grail_of_sorrow: [
     {
       id: 'g_spell_1',
-      name: 'Sorrow’s Grace',
+      name: 'Sorrow\u2019s Grace',
       rank: 1,
       tier: 1,
       type: 'preparation',
@@ -164,7 +164,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_2',
-      name: 'Knight’s Valor',
+      name: 'Knight\u2019s Valor',
       rank: 1,
       tier: 1,
       type: 'preparation',
@@ -229,7 +229,6 @@ const SPELLS = {
     },
   ]
 };
-
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { SPELLS };
