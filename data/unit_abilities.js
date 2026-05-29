@@ -482,7 +482,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Deals 20% of physical damage as bleed on the target's next turn.',
+    description: 'Deals 20% of physical damage as bleed on the targets next turn.',
     params: { bleed_dmg_pct: 20 },
   },
   'bleed 2': {
@@ -491,7 +491,7 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Deals 35% of physical damage as bleed on the target's next turn.',
+    description: 'Deals 35% of physical damage as bleed on the targets next turn.',
     params: { bleed_dmg_pct: 35 },
   },
   'chill 1': {
@@ -500,7 +500,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Deals 20% of cold damage as chill on the target's next turn.',
+    description: 'Deals 20% of cold damage as chill on the targets next turn.',
     params: { chill_dmg_pct: 20 },
   },
   'chill 2': {
@@ -509,7 +509,7 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Deals 35% of cold damage as chill on the target's next turn.',
+    description: 'Deals 35% of cold damage as chill on the targets next turn.',
     params: { chill_dmg_pct: 35 },
   },
   'blood_craze 1': {
