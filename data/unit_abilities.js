@@ -1,4 +1,4 @@
-const UNIT_ABILITIES = {
+export const UNIT_ABILITIES = {
   'purge 1': {
     id: 'purge 1',
     name: 'Purge',
@@ -532,4 +532,6 @@ const UNIT_ABILITIES = {
   },
 };
 
-module.exports = { UNIT_ABILITIES };
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { UNIT_ABILITIES };
+}
