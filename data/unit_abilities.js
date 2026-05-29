@@ -311,8 +311,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 8 nature damage.',
-    params: { adjacent_aoe_damage: 8, damage_type: 'nature', range: 1 },
+    description: 'When hit, releases spores. Adjacent enemies take 4 nature damage.',
+    params: { adjacent_aoe_damage: 4, damage_type: 'nature', range: 1 },
   },
   'spore_cloud 2': {
     id: 'spore_cloud 2',
@@ -320,8 +320,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 16 nature damage.',
-    params: { adjacent_aoe_damage: 16, damage_type: 'nature', range: 1 },
+    description: 'When hit, releases spores. Adjacent enemies take 8 nature damage.',
+    params: { adjacent_aoe_damage: 8, damage_type: 'nature', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',

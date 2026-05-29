@@ -77,7 +77,7 @@ const BUILDING_POOLS = {
     barracks: [
       { id: 'heretic_pit', label: 'Heretic Pit', category: 'barracks', tier: 1, unit: 'heretic', unit_id: 'd1', upgrades: ['d3'], cost: { gold: 50 } },
       { id: 'imp_den', label: 'Imp Den', category: 'barracks', tier: 1, unit: 'imp', unit_id: 'd2', upgrades: [], cost: { gold: 50 } },
-      { id: 'possession_altar', label: 'Possession Altar', category: 'barracks', tier: 2, unit: 'possessed', unit_id: 'd3', upgrades: [], cost: { gold: 50 } },
+      { id: 'possession_altar', label: 'Possession Altar', category: 'barracks', tier: 1, unit: 'possessed', unit_id: 'd3', upgrades: [], cost: { gold: 50 } },
     ],
     any: [
       { id: 'cursed_vault', label: 'Cursed Vault', category: 'any', unit_id: null },
@@ -90,11 +90,11 @@ const BUILDING_POOLS = {
     ],
     barracks: [
       { id: 'zombie_pit', label: 'Zombie Pit', category: 'barracks', tier: 1, unit: 'zombie_risen', unit_id: 'gs1', upgrades: ['gs11', 'gs12', 'gs13'], cost: { gold: 50 } },
-      { id: 'catapult_workshop', label: 'Catapult Workshop', category: 'barracks', tier: 2, unit: 'catapult', unit_id: 'gs2', upgrades: ['gs21', 'gs22'], cost: { gold: 50 } },
-      { id: 'adept_crypt', label: 'Adept Crypt', category: 'barracks', tier: 2, unit: 'adept', unit_id: 'gs3', upgrades: ['gs31', 'gs32', 'gs33'], cost: { gold: 50 } },
-      { id: 'dragon_barrow', label: 'Dragon Barrow', category: 'barracks', tier: 3, unit: 'dragon_c', unit_id: 'gs4', upgrades: ['gs41', 'gs42'], cost: { gold: 50 } },
-      { id: 'skeleton_crypt', label: 'Skeleton Crypt', category: 'barracks', tier: 2, unit: 'skeleton_warrior', unit_id: 'gs5', upgrades: ['gs51', 'gs52'], cost: { gold: 50 } },
-      { id: 'ghost_manor', label: 'Ghost Manor', category: 'barracks', tier: 2, unit: 'ghost', unit_id: 'gs6', upgrades: ['gs61', 'gs62'], cost: { gold: 50 } },
+      { id: 'catapult_workshop', label: 'Catapult Workshop', category: 'barracks', tier: 1, unit: 'catapult', unit_id: 'gs2', upgrades: ['gs21', 'gs22'], cost: { gold: 50 } },
+      { id: 'adept_crypt', label: 'Adept Crypt', category: 'barracks', tier: 1, unit: 'adept', unit_id: 'gs3', upgrades: ['gs31', 'gs32', 'gs33'], cost: { gold: 50 } },
+      { id: 'dragon_barrow', label: 'Dragon Barrow', category: 'barracks', tier: 1, unit: 'dragon_c', unit_id: 'gs4', upgrades: ['gs41', 'gs42'], cost: { gold: 50 } },
+      { id: 'skeleton_crypt', label: 'Skeleton Crypt', category: 'barracks', tier: 1, unit: 'skeleton', unit_id: 'gs5', upgrades: ['gs51', 'gs52'], cost: { gold: 50 } },
+      { id: 'ghost_manor', label: 'Ghost Manor', category: 'barracks', tier: 1, unit: 'ghost', unit_id: 'gs6', upgrades: ['gs61', 'gs62'], cost: { gold: 50 } },
     ],
     any: [
       { id: 'sorrow_altar', label: 'Altar of Sorrow', category: 'any', unit_id: null },
