@@ -64,6 +64,20 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: 'Recuperate (deferred)', actorName: '⏳', targetName: owner.unit_name, targetCell: owner.cellIndex, value: deferred, heal: false });
       if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
     }
+    if (owner._bleed_dmg > 0) {
+      const bleed = owner._bleed_dmg;
+      owner._bleed_dmg = 0;
+      owner.battle_hp = Math.max(0, owner.battle_hp - bleed);
+      engine.pushLog({ type: 'passive', passive: 'Bleed', actorName: '🦸', targetName: owner.unit_name, targetCell: owner.cellIndex, value: bleed, heal: false });
+      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
+    }
+    if (owner._chill_dmg > 0) {
+      const chill = owner._chill_dmg;
+      owner._chill_dmg = 0;
+      owner.battle_hp = Math.max(0, owner.battle_hp - chill);
+      engine.pushLog({ type: 'passive', passive: 'Chill', actorName: '❄️', targetName: owner.unit_name, targetCell: owner.cellIndex, value: chill, heal: false });
+      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
+    }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
     if (p.lowest_ally_heal_pct != null) {
@@ -84,6 +98,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.dot_dmg_pct != null) {
       target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
+    }
+    if (p.bleed_dmg_pct != null) {
+      target._bleed_dmg = Math.floor(dmg * p.bleed_dmg_pct / 100);
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._bleed_dmg });
+    }
+    if (p.chill_dmg_pct != null) {
+      target._chill_dmg = Math.floor(dmg * p.chill_dmg_pct / 100);
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._chill_dmg });
     }
     if (p.armor_shred != null) {
       const reduction = target._debuff_reduction ?? 0;
@@ -192,6 +214,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.debuff_reduction_pct != null && owner._debuff_reduction == null) {
       owner._debuff_reduction = p.debuff_reduction_pct;
+    }
+    if (p.rage_atk_bonus != null) {
+      owner._dmg_mult = (owner._dmg_mult ?? 1) + p.rage_atk_bonus / 100;
+      owner.initiative = (owner.initiative ?? 0) + (p.rage_init_bonus ?? 0);
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.rage_atk_bonus });
     }
   }
   if (trigger === 'on_kill' && owner === actor) {
@@ -309,6 +336,19 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       a.initiative += p.ally_initiative_bonus;
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: `${def.name} — +${p.ally_initiative_bonus} initiative to all allies` });
+  }
+  if (p.bonus_attack != null && target) {
+    const enemies = combatants.filter(c => c.side !== actor.side && c.alive);
+    if (enemies.length > 0) {
+      const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+      const basePower = target.unit_data?.action_power ?? target.unit_data?.action?.value ?? 12;
+      const attackPower = Math.floor(basePower * p.bonus_attack / 100);
+      const armor = Math.max(0, randomEnemy.armor ?? 0);
+      const dmg = Math.max(1, Math.floor(attackPower * (1 - armor / 100)));
+      randomEnemy.battle_hp = Math.max(0, randomEnemy.battle_hp - dmg);
+      if (randomEnemy.battle_hp <= 0) { randomEnemy.alive = false; engine.applyOnDeathPassives(randomEnemy); }
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: randomEnemy.unit_name, targetCell: randomEnemy.cellIndex, message: `${def.name} — ${target.unit_name} strikes ${randomEnemy.unit_name} for ${dmg}`, value: dmg });
+    }
   }
   return true;
 }

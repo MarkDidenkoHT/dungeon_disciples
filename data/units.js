@@ -775,7 +775,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      xp: 300, passive: ['lifesteal 2'. 'recuperate 1'], ability: null,
+      xp: 300, passive: ['lifesteal 2', 'blood_frenzy 1'], ability: null,
     },
     cesswalker: {
       id: 'gs13', f: 'g', t: 2,
