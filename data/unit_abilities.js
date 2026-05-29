@@ -410,7 +410,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'Prevents 30% of incoming damage. Of the remaining 70%, 75% is deferred to next turn.',
+    description: 'Prevents 30% of incoming damage. 75% of that prevented damage is dealt again next turn.',
     params: { recuperate_prevent_pct: 30, recuperate_defer_pct: 75 },
   },
   'unbreakable 1': {

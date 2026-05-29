@@ -175,11 +175,10 @@ class BattleEngine {
     if (!recuperateDef) return rawDmg;
     const p = recuperateDef.params;
     const prevented   = Math.floor(rawDmg * p.recuperate_prevent_pct / 100);
-    const afterPrevent = rawDmg - prevented;
-    const deferred    = Math.floor(afterPrevent * p.recuperate_defer_pct / 100);
-    const immediate   = afterPrevent - deferred;
+    const deferred    = Math.floor(prevented * p.recuperate_defer_pct / 100);
+    const immediate   = rawDmg - prevented;
     target._deferred_dmg = (target._deferred_dmg ?? 0) + deferred;
-    if (prevented > 0 || deferred > 0) {
+    if (prevented > 0) {
       this.pushLog({
         type: 'passive', passive: recuperateDef.name,
         actorName: target.unit_name, actorCell: target.cellIndex,
