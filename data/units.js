@@ -1,4 +1,4 @@
-const { UNIT_ABILITIES } = require('./unit_abilities.js');
+import { UNIT_ABILITIES } from './unit_abilities.js';
 
 const UNITS = {
   choir_of_the_cursed: {
@@ -1429,4 +1429,4 @@ const UNITS = {
   },
 };
 
-module.exports = { UNITS, UNIT_ABILITIES };
+export { UNITS, UNIT_ABILITIES };

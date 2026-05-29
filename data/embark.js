@@ -1,4 +1,4 @@
-const { UNITS } = require('./units.js');
+import { UNITS } from './units.js';
 
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 
@@ -265,14 +265,14 @@ const REGIONS = [
   },
 ];
 
-const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
+export const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
   return UNITS.enemies?.[region]?.[unitId] ?? null;
 }
 
-function getEncounter(region_id, level) {
+export function getEncounter(region_id, level) {
   const levelKey = `level_${level}`;
   const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey];
   if (!slots) return [];
@@ -284,4 +284,3 @@ function getEncounter(region_id, level) {
     })
     .filter(Boolean);
 }
-module.exports = { REGIONS, REGION_ENCOUNTERS_EXPORT, getEncounter };

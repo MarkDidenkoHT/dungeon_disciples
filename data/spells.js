@@ -1,4 +1,4 @@
-export const SPELLS = {
+const SPELLS = {
   empire: [
     {
       id: 'e_spell_1',
@@ -229,6 +229,8 @@ export const SPELLS = {
     },
   ]
 };
+
+export { SPELLS };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { SPELLS };
