@@ -121,19 +121,6 @@ const SPELLS = {
       params: { lifesteal: 0.15, resistances: { death: 15 } }
     },
     {
-      id: 'd_spell_4',
-      name: 'Wither',
-      rank: 2,
-      tier: 2,
-      type: 'preparation',
-      description: 'Wither enemy vitality. All foes lose 15% max HP and 20% initiative for the battle.',
-      cost: { crystals: { Crystals_Death: 20, Crystals_Frost: 10 } },
-      icon: '💀',
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.15, initiative_reduction: 0.20 }
-    },
-    {
       id: 'd_spell_5',
       name: 'Blood Frenzy',
       rank: 3,

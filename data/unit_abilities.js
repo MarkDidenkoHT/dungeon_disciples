@@ -395,15 +395,6 @@ const UNIT_ABILITIES = {
     description: 'When hit by physical damage, deals 12 fire damage back to attacker.',
     params: { retaliation_damage: 12, damage_type: 'fire' },
   },
-  'wither 1': {
-    id: 'wither 1',
-    name: 'Wither',
-    rank: 1,
-    type: 'passive',
-    trigger: 'on_hit',
-    description: 'Target receives 10% less healing until end of battle.',
-    params: { healing_reduction_pct: 10 },
-  },
   'recuperate 1': {
     id: 'recuperate 1',
     name: 'Recuperate',
