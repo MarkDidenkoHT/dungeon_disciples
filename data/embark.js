@@ -265,7 +265,8 @@ const REGIONS = [
   },
 ];
 
-export const REGION_ENCOUNTERS_EXPORT = REGION_ENCOUNTERS;
+export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');

@@ -231,7 +231,4 @@ const SPELLS = {
 };
 
 export { SPELLS };
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { SPELLS };
-}
+if (typeof module !== 'undefined') module.exports = { SPELLS };

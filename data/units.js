@@ -1430,3 +1430,4 @@ const UNITS = {
 };
 
 export { UNITS, UNIT_ABILITIES };
+if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
