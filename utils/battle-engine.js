@@ -211,6 +211,7 @@ class BattleEngine {
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
+
       const actorRange = actor.unit_data?.range ?? 1;
       if (actorRange <= 1 && target._parry_available) {
         const parryDef = this.resolveAllPassiveDefs(target).find(d => d.params?.block_first_melee);
@@ -365,10 +366,12 @@ class BattleEngine {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
       c.dot_dmg = 0;
+
       if (c._terror_rounds > 0) {
         c._terror_rounds--;
         if (c._terror_rounds === 0) c._terror_reduction = 0;
       }
+
       if (c._sanctuary_rounds > 0) {
         c._sanctuary_rounds--;
         if (c._sanctuary_rounds === 0 && c._sanctuary_resist != null) {
@@ -380,6 +383,7 @@ class BattleEngine {
           c._sanctuary_resist = null;
         }
       }
+
       if (c._aegis_armor) { c.armor = Math.max(0, c.armor - c._aegis_armor); c._aegis_armor = 0; }
       if (c._aegis_resists) {
         const res = c.unit_data?.resistances ?? c.resistances;

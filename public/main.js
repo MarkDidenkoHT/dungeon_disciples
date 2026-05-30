@@ -20,15 +20,13 @@ export async function api(path, body = null) {
   try {
     data = JSON.parse(text);
   } catch {
-    // Server returned non-JSON (rate limiter, proxy error, etc.)
+
     throw new Error(text.trim() || `HTTP ${res.status}`);
   }
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
 
-// Resource bar cache — screens call refreshResourceBar() after spending resources.
-// All other navigation reuses the cached data unless dirty.
 export const resourceCache = {
   data: null,
   dirty: true,
@@ -107,7 +105,7 @@ export async function refreshResourceBar(player) {
 export function navigate(screen, params = {}) {
   const { player } = params;
 
-  // Pre-login screens bypass the shell entirely
+
   if (screen === 'register') {
     shellMounted = false;
     app.innerHTML = '';
@@ -118,8 +116,15 @@ export function navigate(screen, params = {}) {
   mountShell(player);
   setActiveNav(screen);
 
-  // Refresh resource bar in the background — non-blocking so navigation feels instant
-  if (player) refreshResourceBar(player).catch(() => {});
+
+  const isBattle = screen === 'battle';
+  const navEl     = document.getElementById('bottom-nav');
+  const resBarEl  = document.getElementById('resource-bar');
+  if (navEl)    navEl.style.display    = isBattle ? 'none' : '';
+  if (resBarEl) resBarEl.style.display = isBattle ? 'none' : '';
+
+
+  if (player && !isBattle) refreshResourceBar(player).catch(() => {});
 
   const root = document.getElementById('content-root');
   root.innerHTML = '';

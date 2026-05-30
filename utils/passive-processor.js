@@ -55,6 +55,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus });
     }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
+
       const enemies = engine.combatants.filter(c => c.side !== owner.side);
       const fearRange = p.range ?? 1;
       for (const e of enemies) {
@@ -266,6 +267,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   if (trigger === 'on_take_damage' && owner === target && dmg > 0) {
     if (p.resist_gain != null && p.match_damage_type) {
+
       const damageSource = actor?.unit_data?.damage_source ?? 'physical';
       if (damageSource === 'physical') {
         owner._aegis_armor = (owner._aegis_armor ?? 0) + p.resist_gain;
@@ -296,6 +298,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   if (trigger === 'on_round_start') {
     if (p.block_first_melee === true) {
+
       owner._parry_available = true;
     }
   }
@@ -322,9 +325,11 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
     } else {
       dmg = Math.floor(rawDmg * (1 - armorRed));
     }
+
     if (actor._fear_dmg_reduction) {
       dmg = Math.floor(dmg * (1 - actor._fear_dmg_reduction / 100));
     }
+
     if (actor._terror_reduction && (actor._terror_rounds ?? 0) > 0) {
       dmg = Math.floor(dmg * (1 - actor._terror_reduction / 100));
     }
@@ -406,6 +411,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: randomEnemy.unit_name, targetCell: randomEnemy.cellIndex, message: `${def.name} — ${target.unit_name} strikes ${randomEnemy.unit_name} for ${dmg}`, value: dmg });
     }
   }
+
   if (p.heal_flat != null && def.target === 'all_allies') {
     const allies = combatants.filter(c => c.side === actor.side && c.alive);
     for (const a of allies) {
@@ -415,10 +421,12 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
         engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, message: `${def.name} — healed ${a.unit_name} for ${healed}`, value: healed, heal: true });
       }
     }
+
     for (const a of allies) {
       engine.fireTrigger('on_receive_ally_buff', { actor, target: a, dmg: 0, dying: null });
     }
   }
+
   if (p.all_resist_bonus != null && target && def.target === 'ally') {
     const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
     const res = target.unit_data?.resistances ?? target.resistances;
@@ -431,6 +439,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — +${p.all_resist_bonus} all resists for ${p.duration_rounds} rounds` });
     engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
   }
+
   if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {
     const armor = Math.max(0, target.armor ?? 0);
     const dmg = Math.max(1, Math.floor(p.damage_flat * (1 - armor / 100)));
@@ -448,6 +457,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, message: `${def.name} — healed ${lowest.unit_name} for ${actual}`, value: actual, heal: true });
     }
   }
+
   if (p.physical_dmg_reduction_pct != null && target && def.target === 'enemy') {
     target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
     target._terror_rounds = p.duration_rounds ?? 2;

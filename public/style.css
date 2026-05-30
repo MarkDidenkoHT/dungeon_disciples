@@ -212,8 +212,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0 2px;
 }
 
-/* ── Embark screen ── */
-
 .screen-embark {
   padding: 0;
   display: flex;
@@ -436,8 +434,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .embark-unit-name  { font-size: 0.85rem; font-weight: 600; color: var(--text); }
 .embark-unit-level { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
-/* ── Roster screen ── */
-
 .screen-roster { height: 100%; min-height: 0; }
 
 .roster-topbar {
@@ -452,8 +448,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .roster-faction { font-size: 0.75rem; color: var(--muted); text-transform: capitalize; }
 .roster-hero    { font-size: 0.85rem; color: var(--accent); font-weight: bold; text-transform: capitalize; }
 .roster-counter { font-size: 0.75rem; color: var(--muted); }
-
-/* ── Battle screen ── */
 
 .screen-battle {
   padding: 0;
@@ -508,7 +502,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-/* Portrait area */
 .init-portrait {
   width: 44px;
   height: 44px;
@@ -535,7 +528,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
 }
 
-/* Name label */
 .init-name {
   font-size: 0.46rem;
   color: var(--muted);
@@ -546,7 +538,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 2px 3px 1px;
 }
 
-/* Coloured strip at the bottom — player=accent, enemy=red */
 .init-side-strip {
   height: 3px;
   background: var(--border);
@@ -554,7 +545,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .init-card--player .init-side-strip { background: var(--accent); }
 .init-card--enemy  .init-side-strip { background: #c84a3a; }
 
-/* Active card glow on portrait */
 .init-card--active .init-portrait::after {
   content: '';
   position: absolute;
@@ -568,7 +558,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   padding: 6px 10px;
   min-height: 68px;
-  max-height: 25vh;
+  max-height: 35vh;
   overflow-y: auto;
   background: var(--bg);
   border-top: 1px solid var(--border);
@@ -577,8 +567,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 2px;
 }
 
-.log-entry        { font-size: 0.6rem; color: var(--muted); line-height: 1.3; }
-.log-entry--round { color: var(--accent); text-align: center; font-size: 0.55rem; }
+.log-entry        { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
+.log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
 .log-entry--skip  { color: #444; }
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: var(--text); }
@@ -656,8 +646,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: width 0.3s ease;
 }
 
-/* ── Battle result ── */
-
 .screen-battle-result {
   display: flex;
   flex-direction: column;
@@ -725,7 +713,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   min-height: 0;
 }
-/* ── Battle unit-stats modal ── */
+
 .battle-stats-modal-overlay {
   position: absolute;
   inset: 0;
@@ -767,9 +755,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .battle-stats-modal-close:active { color: var(--text); }
 
-/* ── Portrait images (shared: battle-prep + battle) ── */
-
-/* Fills the entire cell — sits behind the info overlay */
 .battle-cell-portrait {
   position: absolute;
   inset: 0;
@@ -782,7 +767,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 0;
 }
 
-/* Larger portrait in the detail / stat panel header */
 .detail-unit-portrait {
   width: 48px;
   height: 48px;

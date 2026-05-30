@@ -50,6 +50,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let processing       = false;
   let statsModal       = null;
 
+
   function openStatsModal(c) {
     selectedCombatant = c;
     if (statsModal) statsModal.remove();
@@ -262,6 +263,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     function renderSide(side) {
+
       const cellMap = {};
       const shadow  = new Set();
 
