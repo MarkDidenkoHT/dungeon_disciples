@@ -539,6 +539,15 @@ const UNIT_ABILITIES = {
     description: 'Heal all allies for 25 HP.',
     params: { heal_flat: 25 },
   },
+  'prayer_of_healing 2': {
+    id: 'prayer_of_healing 2',
+    name: 'Prayer of Healing',
+    rank: 1,
+    type: 'active',
+    target: 'all_allies',
+    description: 'Heal all allies for 40 HP.',
+    params: { heal_flat: 40 },
+  },
   'fanaticism 1': {
     id: 'fanaticism 1',
     name: 'Fanaticism',

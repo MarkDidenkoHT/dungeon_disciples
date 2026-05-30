@@ -727,7 +727,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15,
+      damage_source: null, action_power: 20,
       xp: 60, passive: null, ability: null,
     },
     templar: {
@@ -739,7 +739,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      xp: 320, passive: ['mithrails_light 1', 'fortify 1'], ability: null,
+      xp: 320, passive: 'aegis 1', ability: 'sanctuary 1',
     },
     priest: {
       id: 'e22', f: 'e', t: 2,
@@ -750,7 +750,18 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
-      xp: 250, passive: ['renew 1', 'vitality 1'], ability: null,
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 1',
+    },
+    ardent_priest: {
+      id: 'e221', f: 'e', t: 3,
+      name: 'Ardent Priest',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 35,
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 2',
     },
     purgator: {
       id: 'e23', f: 'e', t: 2,
@@ -785,7 +796,7 @@ const UNITS = {
       damage_source: 'fire', action_power: 25,
       xp: 250, passive: 'burn 1', ability: null,
     },
-    red_mage: {
+    ash_priest: {
       id: 'e411', f: 'e', t: 3,
       name: 'Ash Priest',
       tags: ['Caster', null],
@@ -796,7 +807,7 @@ const UNITS = {
       damage_source: 'fire', action_power: 25,
       xp: 250, passive: 'burn 2', ability: null,
     },
-    red_mage: {
+    cinder_knight: {
       id: 'e412', f: 'e', t: 3,
       name: 'Cinder Knight',
       tags: ['Caster', 'Knight'],
