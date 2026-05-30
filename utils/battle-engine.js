@@ -95,6 +95,14 @@ class BattleEngine {
       _deferred_dmg:      0,
       _debuff_reduction:  0,
       _granted_buffs:     [],
+      _fear_dmg_reduction: 0,
+      _terror_reduction:  0,
+      _terror_rounds:     0,
+      _sanctuary_rounds:  0,
+      _sanctuary_resist:  null,
+      _parry_available:   false,
+      _aegis_armor:       0,
+      _aegis_resists:     {},
     };
   }
   fireTrigger(trigger, ctx) {
@@ -203,6 +211,16 @@ class BattleEngine {
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
+      const actorRange = actor.unit_data?.range ?? 1;
+      if (actorRange <= 1 && target._parry_available) {
+        const parryDef = this.resolveAllPassiveDefs(target).find(d => d.params?.block_first_melee);
+        if (parryDef) {
+          target._parry_available = false;
+          this.pushLog({ type: 'passive', passive: parryDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0 });
+          actor.acted_this_round = true;
+          return this.afterAction(actor);
+        }
+      }
       const dmg = this.calcDamage(actor, target);
       if (dmg > 0) {
         let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
@@ -215,7 +233,11 @@ class BattleEngine {
             this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
-            if (dead && !target.alive) this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+            this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
+            if (dead && !target.alive) {
+              this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+              this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
+            }
           } else {
             this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
           }
@@ -343,7 +365,33 @@ class BattleEngine {
       c.acted_this_round   = false;
       c.defend_armor_bonus = 0;
       c.dot_dmg = 0;
+      if (c._terror_rounds > 0) {
+        c._terror_rounds--;
+        if (c._terror_rounds === 0) c._terror_reduction = 0;
+      }
+      if (c._sanctuary_rounds > 0) {
+        c._sanctuary_rounds--;
+        if (c._sanctuary_rounds === 0 && c._sanctuary_resist != null) {
+          const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
+          const res = c.unit_data?.resistances ?? c.resistances;
+          if (res) {
+            for (const type of resistTypes) res[type] = Math.max(0, (res[type] ?? 0) - c._sanctuary_resist);
+          }
+          c._sanctuary_resist = null;
+        }
+      }
+      if (c._aegis_armor) { c.armor = Math.max(0, c.armor - c._aegis_armor); c._aegis_armor = 0; }
+      if (c._aegis_resists) {
+        const res = c.unit_data?.resistances ?? c.resistances;
+        if (res) {
+          for (const [type, val] of Object.entries(c._aegis_resists)) {
+            res[type] = Math.max(0, (res[type] ?? 0) - val);
+          }
+        }
+        c._aegis_resists = {};
+      }
     }
+    this.fireTrigger('on_round_start', { actor: null, target: null, dmg: 0, dying: null });
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
   }
@@ -403,15 +451,23 @@ class BattleEngine {
         battle_hp:        c.battle_hp,
         acted_this_round: c.acted_this_round,
         buffs: {
-          dot_dmg:          c.dot_dmg,
-          _hot:             c._hot,
-          _stacks:          c._stacks,
-          _flags:           c._flags,
-          _granted_buffs:   c._granted_buffs,
-          _deferred_dmg:    c._deferred_dmg,
-          _debuff_reduction: c._debuff_reduction,
-          _healing_reduction: c._healing_reduction,
-          _dmg_mult:        c._dmg_mult,
+          dot_dmg:             c.dot_dmg,
+          _hot:                c._hot,
+          _stacks:             c._stacks,
+          _flags:              c._flags,
+          _granted_buffs:      c._granted_buffs,
+          _deferred_dmg:       c._deferred_dmg,
+          _debuff_reduction:   c._debuff_reduction,
+          _healing_reduction:  c._healing_reduction,
+          _dmg_mult:           c._dmg_mult,
+          _fear_dmg_reduction: c._fear_dmg_reduction,
+          _terror_reduction:   c._terror_reduction,
+          _terror_rounds:      c._terror_rounds,
+          _sanctuary_rounds:   c._sanctuary_rounds,
+          _sanctuary_resist:   c._sanctuary_resist,
+          _parry_available:    c._parry_available,
+          _aegis_armor:        c._aegis_armor,
+          _aegis_resists:      c._aegis_resists,
         },
       })),
     };
@@ -438,6 +494,14 @@ class BattleEngine {
       c._debuff_reduction  = b._debuff_reduction  ?? 0;
       c._healing_reduction = b._healing_reduction ?? 0;
       c._dmg_mult          = b._dmg_mult          ?? 1;
+      c._fear_dmg_reduction = b._fear_dmg_reduction ?? 0;
+      c._terror_reduction  = b._terror_reduction  ?? 0;
+      c._terror_rounds     = b._terror_rounds     ?? 0;
+      c._sanctuary_rounds  = b._sanctuary_rounds  ?? 0;
+      c._sanctuary_resist  = b._sanctuary_resist  ?? null;
+      c._parry_available   = b._parry_available   ?? false;
+      c._aegis_armor       = b._aegis_armor       ?? 0;
+      c._aegis_resists     = b._aegis_resists     || {};
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

@@ -17,13 +17,17 @@ function resolvePassiveDefs(unit, UNIT_ABILITIES) {
 function runTrigger(trigger, ctx) {
   const { engine, UNIT_ABILITIES } = ctx;
   const sideMap = {
-    on_hit:          () => engine.combatants.filter(c => c.side === ctx.actor?.side),
-    on_kill:         () => engine.combatants.filter(c => c.side === ctx.actor?.side),
-    on_hit_received: () => engine.combatants.filter(c => c.side === ctx.target?.side),
-    on_death:        () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
-    on_battle_start: () => engine.combatants,
-    on_turn_start:   () => [ctx.actor],
-    on_heal:         () => engine.combatants.filter(c => c.side === ctx.actor?.side),
+    on_hit:                () => engine.combatants.filter(c => c.side === ctx.actor?.side),
+    on_kill:               () => engine.combatants.filter(c => c.side === ctx.actor?.side),
+    on_hit_received:       () => engine.combatants.filter(c => c.side === ctx.target?.side),
+    on_death:              () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
+    on_battle_start:       () => engine.combatants,
+    on_turn_start:         () => [ctx.actor],
+    on_heal:               () => engine.combatants.filter(c => c.side === ctx.actor?.side),
+    on_take_damage:        () => engine.combatants.filter(c => c.side === ctx.target?.side),
+    on_receive_ally_buff:  () => engine.combatants.filter(c => c.side === ctx.target?.side),
+    on_ally_death:         () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
+    on_round_start:        () => engine.combatants,
   };
   const pool = (sideMap[trigger] ?? (() => []))();
   for (const unit of pool) {
@@ -49,6 +53,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
       for (const a of allies) { a.armor += p.ally_armor_bonus; }
       engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus });
+    }
+    if (p.adjacent_physical_dmg_reduction_pct != null) {
+      const enemies = engine.combatants.filter(c => c.side !== owner.side);
+      const fearRange = p.range ?? 1;
+      for (const e of enemies) {
+        if (Math.abs(Math.floor(e.cellIndex / 2) - Math.floor(owner.cellIndex / 2)) <= fearRange) {
+          e._fear_dmg_reduction = Math.min(100, (e._fear_dmg_reduction ?? 0) + p.adjacent_physical_dmg_reduction_pct);
+        }
+      }
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'adjacent enemies', value: p.adjacent_physical_dmg_reduction_pct });
     }
   }
   if (trigger === 'on_turn_start' && owner === actor) {
@@ -250,6 +264,41 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._hot });
     }
   }
+  if (trigger === 'on_take_damage' && owner === target && dmg > 0) {
+    if (p.resist_gain != null && p.match_damage_type) {
+      const damageSource = actor?.unit_data?.damage_source ?? 'physical';
+      if (damageSource === 'physical') {
+        owner._aegis_armor = (owner._aegis_armor ?? 0) + p.resist_gain;
+        owner.armor += p.resist_gain;
+        engine.recordGrantedBuff(owner, 'armor', [owner], p.resist_gain);
+      } else {
+        const res = owner.unit_data?.resistances ?? owner.resistances;
+        if (res) {
+          res[damageSource] = (res[damageSource] ?? 0) + p.resist_gain;
+          owner._aegis_resists = owner._aegis_resists ?? {};
+          owner._aegis_resists[damageSource] = (owner._aegis_resists[damageSource] ?? 0) + p.resist_gain;
+        }
+      }
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.resist_gain });
+    }
+  }
+  if (trigger === 'on_receive_ally_buff' && owner === target) {
+    if (p.dmg_bonus_pct != null) {
+      owner._dmg_mult = (owner._dmg_mult ?? 1) + p.dmg_bonus_pct / 100;
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.dmg_bonus_pct });
+    }
+  }
+  if (trigger === 'on_ally_death' && owner !== dying && owner.side === dying?.side && owner.alive) {
+    if (p.dmg_bonus_pct != null) {
+      owner._dmg_mult = (owner._dmg_mult ?? 1) + p.dmg_bonus_pct / 100;
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.dmg_bonus_pct });
+    }
+  }
+  if (trigger === 'on_round_start') {
+    if (p.block_first_melee === true) {
+      owner._parry_available = true;
+    }
+  }
 }
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   const data = actor.unit_data || actor;
@@ -273,6 +322,12 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
     } else {
       dmg = Math.floor(rawDmg * (1 - armorRed));
     }
+    if (actor._fear_dmg_reduction) {
+      dmg = Math.floor(dmg * (1 - actor._fear_dmg_reduction / 100));
+    }
+    if (actor._terror_reduction && (actor._terror_rounds ?? 0) > 0) {
+      dmg = Math.floor(dmg * (1 - actor._terror_reduction / 100));
+    }
   } else {
     const resistance = resistances[damageSource] ?? 0;
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
@@ -289,6 +344,7 @@ function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
   if (def.target === 'self')     return [actor];
   if (def.target === 'ally')     return combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
   if (def.target === 'ally_any') return combatants.filter(c => c.side === actor.side && c.alive);
+  if (def.target === 'all_allies') return combatants.filter(c => c.side === actor.side && c.alive);
   if (def.target === 'ally_dead') {
     return combatants.filter(c =>
       c.side === actor.side && !c.alive &&
@@ -349,6 +405,53 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       if (randomEnemy.battle_hp <= 0) { randomEnemy.alive = false; engine.applyOnDeathPassives(randomEnemy); }
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: randomEnemy.unit_name, targetCell: randomEnemy.cellIndex, message: `${def.name} — ${target.unit_name} strikes ${randomEnemy.unit_name} for ${dmg}`, value: dmg });
     }
+  }
+  if (p.heal_flat != null && def.target === 'all_allies') {
+    const allies = combatants.filter(c => c.side === actor.side && c.alive);
+    for (const a of allies) {
+      const healed = Math.min(p.heal_flat, a.max_hp - a.battle_hp);
+      if (healed > 0) {
+        a.battle_hp += healed;
+        engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, message: `${def.name} — healed ${a.unit_name} for ${healed}`, value: healed, heal: true });
+      }
+    }
+    for (const a of allies) {
+      engine.fireTrigger('on_receive_ally_buff', { actor, target: a, dmg: 0, dying: null });
+    }
+  }
+  if (p.all_resist_bonus != null && target && def.target === 'ally') {
+    const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
+    const res = target.unit_data?.resistances ?? target.resistances;
+    if (res) {
+      for (const type of resistTypes) res[type] = (res[type] ?? 0) + p.all_resist_bonus;
+    }
+    target._sanctuary_rounds = p.duration_rounds ?? 2;
+    target._sanctuary_resist = p.all_resist_bonus;
+    engine.recordGrantedBuff(actor, 'all_resist', [target], p.all_resist_bonus);
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — +${p.all_resist_bonus} all resists for ${p.duration_rounds} rounds` });
+    engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
+  }
+  if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {
+    const armor = Math.max(0, target.armor ?? 0);
+    const dmg = Math.max(1, Math.floor(p.damage_flat * (1 - armor / 100)));
+    target.battle_hp = Math.max(0, target.battle_hp - dmg);
+    const dead = target.battle_hp <= 0;
+    if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — smote ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
+    const heal = Math.floor(dmg * p.lowest_ally_heal_pct / 100);
+    const lowest = combatants
+      .filter(c => c.side === actor.side && c.alive)
+      .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, actor);
+    const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
+    if (actual > 0) {
+      lowest.battle_hp += actual;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, message: `${def.name} — healed ${lowest.unit_name} for ${actual}`, value: actual, heal: true });
+    }
+  }
+  if (p.physical_dmg_reduction_pct != null && target && def.target === 'enemy') {
+    target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
+    target._terror_rounds = p.duration_rounds ?? 2;
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — -${p.physical_dmg_reduction_pct}% physical dmg for ${p.duration_rounds} rounds` });
   }
   return true;
 }

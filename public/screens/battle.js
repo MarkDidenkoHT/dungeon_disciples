@@ -50,7 +50,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let processing       = false;
   let statsModal       = null;
 
-  // ── modal helpers ──────────────────────────────────────────────
   function openStatsModal(c) {
     selectedCombatant = c;
     if (statsModal) statsModal.remove();
@@ -120,10 +119,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     if (forAbility) {
       let cands = [];
-      if (key.startsWith('purge')) cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
-      else if (key.startsWith('raise_dead')) cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
-      else if (key.startsWith('devour')) cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-      else if (key.startsWith('lions_roar')) cands = [actor];
+      if (key.startsWith('purge'))            cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      else if (key.startsWith('raise_dead'))  cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
+      else if (key.startsWith('devour'))      cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+      else if (key.startsWith('lions_roar'))  cands = [actor];
+      else if (key.startsWith('prayer_of_healing')) cands = state.combatants.filter(c => c.side === actor.side && c.alive);
+      else if (key.startsWith('sanctuary'))   cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+      else if (key.startsWith('smite'))       cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      else if (key.startsWith('terror'))      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
       else cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
       cands.forEach(c => targets.add(c.id));
       return targets;
@@ -195,6 +198,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   function formatLogEntry(entry) {
     if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
+    if (entry.type === 'intercept') {
+      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
+      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      return `<div class="log-entry log-entry--passive"><span class="log-actor">${entry.actorName}</span>${actorLoc} <span class="log-passive">intercepted</span> attack on <span class="log-target">${entry.targetName}</span>${targetLoc}</div>`;
+    }
     if (entry.type === 'defend' || entry.type === 'ability') {
       const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
       const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
@@ -254,7 +262,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     function renderSide(side) {
-      // Map anchor cell -> combatant; track shadow cells consumed by multi-tile spans
       const cellMap = {};
       const shadow  = new Set();
 
@@ -273,7 +280,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const idx = r * COLS + c;
-          if (shadow.has(idx)) continue; // consumed by a spanning unit
+          if (shadow.has(idx)) continue;
 
           const occ = cellMap[idx];
           if (!occ) {
@@ -465,7 +472,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (!actor || actor.side === 'enemy' || processing || actor.used_active) return;
       closeStatsModal();
       const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
-      if (key.startsWith('lions_roar') || key.startsWith('devour')) {
+      if (key.startsWith('lions_roar') || key.startsWith('devour') || key.startsWith('prayer_of_healing')) {
         sendAction('ability', actor.id, actor.id);
         return;
       }

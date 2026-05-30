@@ -596,7 +596,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 5, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 550, passive: 'impale 2', ability: null,
+      xp: 550, passive: 'impale 1', ability: null,
     },
     sentinel: {
       id: 'e3', f: 'e', t: 1,
