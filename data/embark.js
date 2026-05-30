@@ -265,15 +265,13 @@ const REGIONS = [
   },
 ];
 
-export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
 
 function resolveUnitKey(key) {
   const [region, unitId] = key.split('.');
   return UNITS.enemies?.[region]?.[unitId] ?? null;
 }
 
-export function getEncounter(region_id, level) {
+function getEncounter(region_id, level) {
   const levelKey = `level_${level}`;
   const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey];
   if (!slots) return [];
@@ -285,3 +283,6 @@ export function getEncounter(region_id, level) {
     })
     .filter(Boolean);
 }
+
+export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
