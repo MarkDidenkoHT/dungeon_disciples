@@ -1,41 +1,19 @@
 import { api }              from '../main.js';
 import { navigate }          from '../main.js';
 import { refreshResourceBar } from '../main.js';
-
-import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
+import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
+import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
-
-let UNITS = null;
-
-async function loadUnits() {
-  try {
-    const mod = await import('../../data/units.js');
-    UNITS = mod.UNITS || mod.default?.UNITS || mod;
-  } catch (err) {
-    console.error('[Castle] failed to load units.js:', err);
-  }
-}
-
-const RESIST_ICONS = {
-  air:    { icon: '🌬️', label: 'Air'    },
-  fire:   { icon: '🔥', label: 'Fire'   },
-  nature: { icon: '🌿', label: 'Nature' },
-  cold:   { icon: '❄️', label: 'Cold'   },
-  life:   { icon: '✨', label: 'Life'   },
-  death:  { icon: '🌑', label: 'Death'  },
-};
-const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
+import {
+  RESIST_ICONS, RESIST_ORDER,
+  resolveAbility, mountModal,
+} from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
-  empire: '/assets/screens/empire.jpg',
+  empire:              '/assets/screens/empire.jpg',
   choir_of_the_cursed: '/assets/screens/choir.jpg',
-  grail_of_sorrow: '/assets/screens/grail.jpg',
+  grail_of_sorrow:     '/assets/screens/grail.jpg',
 };
-
-function resolveAbility(key) {
-  if (!key || key === 'None') return null;
-  return UNIT_ABILITIES[key] || UNIT_ABILITIES[key.replace(/\s+/g, '_')] || UNIT_ABILITIES[key.replace(/_/g, ' ')] || null;
-}
 
 export function renderCastle(root, { player }) {
   root.innerHTML = `
@@ -66,21 +44,10 @@ export function renderCastle(root, { player }) {
   let throneUpgradeCosts = {};
   let heroMaxLevel       = 4;
 
-  const overlay    = root.querySelector('#modal-overlay');
+  const _modal     = mountModal(root);
   const modalBody  = root.querySelector('#modal-body');
-  const modalTitle = root.querySelector('#modal-title');
-
-  function openModal(title, bodyHtml) {
-    modalTitle.textContent = title;
-    modalBody.innerHTML = bodyHtml;
-    overlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal() {
-    overlay.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
+  function openModal(title, bodyHtml) { _modal.open(title, bodyHtml); }
+  function closeModal() { _modal.close(); }
 
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
   if (backgroundUrl) {
@@ -90,9 +57,6 @@ export function renderCastle(root, { player }) {
     root.style.backgroundRepeat = 'no-repeat';
     root.style.backgroundColor = 'rgba(17, 19, 24, 0.75)';
   }
-
-  root.querySelector('#modal-close').addEventListener('click', closeModal);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 
   async function load() {
     const [inventory, structures, buildingsResp] = await Promise.all([
@@ -107,7 +71,6 @@ export function renderCastle(root, { player }) {
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
     structuresRecord   = structures;
 
-    await loadUnits();
     renderBuildings();
   }
 
@@ -122,8 +85,13 @@ export function renderCastle(root, { player }) {
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
-    const all = { ...UNITS.empire, ...UNITS.choir_of_the_cursed, ...UNITS.grail_of_sorrow, ...UNITS.enemies };
-    return Object.values(all).find(u => u.id === unitId) || null;
+    const factions = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow', 'enemies'];
+    for (const f of factions) {
+      if (!UNITS[f]) continue;
+      const found = Object.values(UNITS[f]).find(u => u?.id === unitId);
+      if (found) return found;
+    }
+    return null;
   }
 
   function getUpgradePathsForBuilding(faction, def) {

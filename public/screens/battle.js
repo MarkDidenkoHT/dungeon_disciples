@@ -1,38 +1,11 @@
 import { api, navigate } from '../main.js';
-import { UNITS } from '../../data/units.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
+import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef } from '../utils.js';
 
 const ROWS = 3;
 const COLS = 2;
 
-const RESIST_ICONS = {
-  air:    { icon: '🌬️', label: 'Air'    },
-  fire:   { icon: '🔥', label: 'Fire'   },
-  nature: { icon: '🌿', label: 'Nature' },
-  cold:   { icon: '❄️', label: 'Cold'   },
-  life:   { icon: '✨', label: 'Life'   },
-  death:  { icon: '🌑', label: 'Death'  },
-};
-const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
-
 function cellIndex(row, col) { return row * COLS + col; }
-
-function resolveUnitDef(unit) {
-  const uid = unit.unit_data?.unit_id ?? unit.unit_data?.id;
-  if (!uid) return null;
-
-  for (const factionPool of Object.values(UNITS)) {
-    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
-    for (const entry of Object.values(factionPool)) {
-      if (entry?.id === uid) return entry;
-      if (typeof entry === 'object' && !entry.id) {
-        const nested = Object.values(entry).find(u => u?.id === uid);
-        if (nested) return nested;
-      }
-    }
-  }
-  return null;
-}
 
 function getPortraitUrl(unit, variant = 'default') {
   const unitDef = resolveUnitDef(unit);
