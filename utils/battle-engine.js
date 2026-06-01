@@ -417,10 +417,11 @@ class BattleEngine {
     while (!this.done) {
       const actor = this.currentActor();
       if (!actor || actor.side !== 'enemy') break;
+      const before = this.log.length;
       const hasAbility = !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
       if (hasAbility && !actor.used_active) {
         const targets = this.getValidTargets(actor, true);
-        if (targets.length > 0) { this.doAbility(actor, targets[0]); newLog.push(...this.log.slice(-1)); continue; }
+        if (targets.length > 0) { this.doAbility(actor, targets[0]); newLog.push(...this.log.slice(before)); continue; }
       }
       const targets = this.getValidTargets(actor);
       if (!targets.length) { this.skipTurn(actor); }
@@ -428,7 +429,7 @@ class BattleEngine {
         const target = targets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
         this.executeAction(actor, target, 'attack');
       }
-      newLog.push(...this.log.slice(-(this.log.length)));
+      newLog.push(...this.log.slice(before));
     }
     return newLog;
   }
@@ -472,6 +473,8 @@ class BattleEngine {
           _parry_available:    c._parry_available,
           _aegis_armor:        c._aegis_armor,
           _aegis_resists:      c._aegis_resists,
+          _bleed_dmg:          c._bleed_dmg ?? 0,
+          _chill_dmg:          c._chill_dmg ?? 0,
         },
       })),
     };
@@ -506,6 +509,8 @@ class BattleEngine {
       c._parry_available   = b._parry_available   ?? false;
       c._aegis_armor       = b._aegis_armor       ?? 0;
       c._aegis_resists     = b._aegis_resists     || {};
+      c._bleed_dmg         = b._bleed_dmg         ?? 0;
+      c._chill_dmg         = b._chill_dmg         ?? 0;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

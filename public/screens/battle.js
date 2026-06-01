@@ -1,5 +1,6 @@
 import { api, navigate } from '../main.js';
 import { UNITS } from '../../data/units.js';
+import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -116,18 +117,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!actor || !state) return new Set();
     const targets = new Set();
     const isHeal  = actor.unit_data?.target_type === 'ally' || actor.unit_data?.action?.target_type === 'ally';
-    const key     = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
 
     if (forAbility) {
+      const key    = actor.unit_data?.ability || actor.unit_data?.active_ability;
+      const def    = key ? UNIT_ABILITIES[key] : null;
+      const ttype  = def?.target ?? 'enemy';
+      const tagReq = def?.params?.tag_required ?? null;
       let cands = [];
-      if (key.startsWith('purge'))            cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
-      else if (key.startsWith('raise_dead'))  cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (c.unit_data?.tags ?? []).includes('Undead'));
-      else if (key.startsWith('devour'))      cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-      else if (key.startsWith('lions_roar'))  cands = [actor];
-      else if (key.startsWith('prayer_of_healing')) cands = state.combatants.filter(c => c.side === actor.side && c.alive);
-      else if (key.startsWith('sanctuary'))   cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-      else if (key.startsWith('smite'))       cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
-      else if (key.startsWith('terror'))      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      if      (ttype === 'self')       cands = [actor];
+      else if (ttype === 'enemy')      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      else if (ttype === 'ally')       cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+      else if (ttype === 'ally_any')   cands = state.combatants.filter(c => c.side === actor.side && c.alive);
+      else if (ttype === 'all_allies') cands = state.combatants.filter(c => c.side === actor.side && c.alive);
+      else if (ttype === 'ally_dead')  cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
+      else if (ttype === 'ally_tagged') cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
       else cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
       cands.forEach(c => targets.add(c.id));
       return targets;
@@ -473,8 +476,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actor = currentActor();
       if (!actor || actor.side === 'enemy' || processing || actor.used_active) return;
       closeStatsModal();
-      const key = String(actor.unit_data?.ability || actor.unit_data?.active_ability || '').toLowerCase();
-      if (key.startsWith('lions_roar') || key.startsWith('devour') || key.startsWith('prayer_of_healing')) {
+      const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
+      const def        = abilityKey ? UNIT_ABILITIES[abilityKey] : null;
+      const ttype      = def?.target ?? 'enemy';
+      // Abilities targeting self or all allies fire immediately without target selection
+      if (ttype === 'self' || ttype === 'all_allies' || ttype === 'ally_any') {
         sendAction('ability', actor.id, actor.id);
         return;
       }

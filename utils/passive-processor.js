@@ -181,7 +181,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
         chainTarget.battle_hp = Math.max(0, chainTarget.battle_hp - chainDmg);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
-        if (chainTarget.battle_hp <= 0) { chainTarget.alive = false; engine.applyOnDeathPassives(chainTarget); }
+        if (chainTarget.battle_hp <= 0) {
+          chainTarget.alive = false;
+          engine.applyOnDeathPassives(chainTarget);
+          engine.fireTrigger('on_kill', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null });
+          engine.fireTrigger('on_ally_death', { actor: owner, target: chainTarget, dmg: chainDmg, dying: chainTarget });
+        }
         engine.fireTrigger('on_hit', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
         engine.fireTrigger('on_hit_received', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
       }
@@ -373,6 +378,8 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.cleanse_debuffs && target) {
     target.dot_dmg = 0;
     target._hot = 0;
+    target._bleed_dmg = 0;
+    target._chill_dmg = 0;
     target._healing_reduction = 0;
     target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
     for (const key of Object.keys(target._flags)) {
