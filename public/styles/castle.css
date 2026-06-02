@@ -41,8 +41,8 @@
 
 .castle-grid-wrap {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 310px;
+  height: 400px;
   flex-shrink: 0;
 }
 
@@ -53,6 +53,14 @@
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 5px;
+}
+
+.outer-ring .castle-node {
+  width: 100px;
+  height: 130px;
+  background-image: url('/assets/icons/ui/building_slot_bg.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
