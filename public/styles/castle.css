@@ -56,8 +56,8 @@
   background-image: url('/assets/icons/ui/building_slot_bg.png');
   background-size: cover;
   background-position: center;
-  min-height: 150px;
-  min-width: 100px;
+  min-height: 160px;
+  min-width: 110px;
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -81,9 +81,6 @@
 }
 
 .castle-node {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -102,8 +99,6 @@
 .castle-node--throne {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius);
-  border: 2px solid var(--accent);
   background-image: url('/assets/icons/ui/building_slot_bg.png');
   background-size: cover;
   background-position: center;
@@ -118,10 +113,6 @@
 
 .castle-node--any { border-color: #3a5a7a; }
 .castle-node--any:active { border-color: #5a8aaa; }
-
-.castle-node--empty {
-  border-style: dashed;
-}
 
 .castle-node--building {
   border-color: var(--accent);
