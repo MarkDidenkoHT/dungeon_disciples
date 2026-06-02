@@ -216,6 +216,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+.screen-embark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.60);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-embark > * {
+  position: relative;
+  z-index: 1;
 }
 
 .embark-header-title {
@@ -434,7 +447,23 @@ button:active:not(:disabled) { opacity: 0.75; }
 .embark-unit-name  { font-size: 0.85rem; font-weight: 600; color: var(--text); }
 .embark-unit-level { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
-.screen-roster { height: 100%; min-height: 0; }
+.screen-roster {
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+.screen-roster::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.55);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-roster > * {
+  position: relative;
+  z-index: 1;
+}
 
 .roster-topbar {
   display: flex;

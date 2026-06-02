@@ -3,6 +3,19 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+.screen-roster::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.55);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-roster > * {
+  position: relative;
+  z-index: 1;
 }
 
 .roster-main {

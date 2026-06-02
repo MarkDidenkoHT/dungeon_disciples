@@ -9,7 +9,24 @@ import {
   renderModalContent, mountModal,
 } from '../utils.js';
 
+const ROSTER_BACKGROUNDS = {
+  empire:              '/assets/screens/empire_roster.jpg',
+  choir_of_the_cursed: '/assets/screens/choir_roster.jpg',
+  grail_of_sorrow:     '/assets/screens/grail_roster.jpg',
+};
+
+function applyBackground(root, faction, map) {
+  const url = map[faction];
+  if (!url) return;
+  root.style.backgroundImage    = `url('${url}')`;
+  root.style.backgroundSize     = 'cover';
+  root.style.backgroundPosition = 'center';
+  root.style.backgroundRepeat   = 'no-repeat';
+}
+
 export function renderRoster(root, { player }) {
+  applyBackground(root, player.faction, ROSTER_BACKGROUNDS);
+
   root.innerHTML = `
     <div class="screen screen-roster">
       <main class="roster-main">

@@ -3,6 +3,21 @@ import { navigate }          from '../main.js';
 import { refreshResourceBar } from '../main.js';
 import { SPELLS }            from '../../data/spells.js';
 
+const SPELLTOME_BACKGROUNDS = {
+  empire:              '/assets/screens/empire_spells.jpg',
+  choir_of_the_cursed: '/assets/screens/choir_spells.jpg',
+  grail_of_sorrow:     '/assets/screens/grail_spells.jpg',
+};
+
+function applyBackground(root, faction, map) {
+  const url = map[faction];
+  if (!url) return;
+  root.style.backgroundImage    = `url('${url}')`;
+  root.style.backgroundSize     = 'cover';
+  root.style.backgroundPosition = 'center';
+  root.style.backgroundRepeat   = 'no-repeat';
+}
+
 const CRYSTAL_ICONS = {
   Crystals_Life:   '🟢',
   Crystals_Fire:   '🔴',
@@ -12,6 +27,8 @@ const CRYSTAL_ICONS = {
 };
 
 export function renderSpellTome(root, { player }) {
+  applyBackground(root, player.faction, SPELLTOME_BACKGROUNDS);
+
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">

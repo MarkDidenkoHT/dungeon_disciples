@@ -385,7 +385,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: 'mithrails_light 2', ability: null,
+      passive: ['mithrails_light 2','protector 2'], ability: null,
       building_slot: 'slot_0',
       xp: 700
     },
@@ -399,7 +399,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: 'mithrails_light 2', ability: null,
+      passive: ['mithrails_light 2','protector 2'], ability: null,
       building_slot: 'slot_0',
       xp: 700
     },
@@ -413,7 +413,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: 'mithrails_light 2', ability: null,
+      passive: ['mithrails_light 2','chain 2'], ability: null,
       building_slot: 'slot_0',
       xp: 700
     },
@@ -427,7 +427,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: 'mithrails_light 2', ability: null,
+      passive: ['mithrails_light 2','chain 2'], ability: null,
       building_slot: 'slot_0',
       xp: 700
     },

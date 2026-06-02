@@ -1,6 +1,21 @@
 import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
+const EMBARK_BACKGROUNDS = {
+  empire:              '/assets/screens/empire_embark.jpg',
+  choir_of_the_cursed: '/assets/screens/choir_embark.jpg',
+  grail_of_sorrow:     '/assets/screens/grail_embark.jpg',
+};
+
+function applyBackground(root, faction, map) {
+  const url = map[faction];
+  if (!url) return;
+  root.style.backgroundImage    = `url('${url}')`;
+  root.style.backgroundSize     = 'cover';
+  root.style.backgroundPosition = 'center';
+  root.style.backgroundRepeat   = 'no-repeat';
+}
+
 const REGIONS = [
   {
     id: 'forests_of_ashenveil',
@@ -43,6 +58,8 @@ const REGIONS = [
 ];
 
 export function renderEmbark(root, { player }) {
+  applyBackground(root, player.faction, EMBARK_BACKGROUNDS);
+
   root.innerHTML = `
     <div class="screen screen-embark">
       <main class="embark-main">

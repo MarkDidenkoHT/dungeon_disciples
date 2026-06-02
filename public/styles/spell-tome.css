@@ -4,6 +4,19 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  position: relative;
+}
+.screen-spelltome::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.60);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-spelltome > * {
+  position: relative;
+  z-index: 1;
 }
 
 .spelltome-main {

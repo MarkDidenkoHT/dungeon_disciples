@@ -128,6 +128,11 @@ export function navigate(screen, params = {}) {
 
   const root = document.getElementById('content-root');
   root.innerHTML = '';
+  root.style.backgroundImage    = '';
+  root.style.backgroundSize     = '';
+  root.style.backgroundPosition = '';
+  root.style.backgroundRepeat   = '';
+  root.style.backgroundColor    = '';
 
   switch (screen) {
     case 'castle':      renderCastle(root, params);     break;
