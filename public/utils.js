@@ -12,6 +12,41 @@ export const RESIST_ICONS = {
 
 export const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
+export const CRYSTAL_ICONS = {
+  Crystals_Life:   '🟢',
+  Crystals_Fire:   '🔴',
+  Crystals_Death:  '🟣',
+  Crystals_Frost:  '🔵',
+  Crystals_Nature: '🟡',
+};
+
+export const SCREEN_BACKGROUNDS = {
+  roster: {
+    empire:              '/assets/screens/empire_roster.jpg',
+    choir_of_the_cursed: '/assets/screens/choir_roster.jpg',
+    grail_of_sorrow:     '/assets/screens/grail_roster.jpg',
+  },
+  embark: {
+    empire:              '/assets/screens/empire_embark.jpg',
+    choir_of_the_cursed: '/assets/screens/choir_embark.jpg',
+    grail_of_sorrow:     '/assets/screens/grail_embark.jpg',
+  },
+  spells: {
+    empire:              '/assets/screens/empire_spells.jpg',
+    choir_of_the_cursed: '/assets/screens/choir_spells.jpg',
+    grail_of_sorrow:     '/assets/screens/grail_spells.jpg',
+  },
+};
+
+export function applyBackground(root, faction, screen) {
+  const url = SCREEN_BACKGROUNDS[screen]?.[faction];
+  if (!url) return;
+  root.style.backgroundImage    = `url('${url}')`;
+  root.style.backgroundSize     = 'cover';
+  root.style.backgroundPosition = 'center';
+  root.style.backgroundRepeat   = 'no-repeat';
+}
+
 export function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
@@ -50,18 +85,14 @@ export function buildStatDescription(def, type) {
   if (type === 'passive' && def.stats) {
     const statLines = Object.entries(def.stats).map(([stat, val]) => {
       const sign = val >= 0 ? '+' : '';
-      if (stat === 'hp')             return `${sign}${val} HP`;
-      if (stat === 'hp_regen')       return `${sign}${val} HP regen/turn`;
-      if (stat === 'initiative')     return `${sign}${val} Initiative`;
-      if (stat === 'armor') {
-        const pct = dmgReduction(val);
-        return `${sign}${val} Armor (${pct}% dmg reduction)`;
-      }
+      if (stat === 'hp')              return `${sign}${val} HP`;
+      if (stat === 'hp_regen')        return `${sign}${val} HP regen/turn`;
+      if (stat === 'initiative')      return `${sign}${val} Initiative`;
+      if (stat === 'armor')           return `${sign}${val} Armor`;
       if (stat === 'armor_reduction') return `${val} Armor reduction`;
       if (stat.includes('resist')) {
         const resistType = stat.replace('_resist', '');
-        const pct = dmgReduction(val);
-        return `${sign}${val} ${cap(resistType)} resist (${pct}% dmg reduction)`;
+        return `${sign}${val} ${cap(resistType)} resist`;
       }
       return `${sign}${val} ${cap(stat)}`;
     });

@@ -1,31 +1,14 @@
 import { api }              from '../main.js';
-import { navigate }          from '../main.js';
 import { refreshResourceBar } from '../main.js';
-import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, mountModal,
+  renderModalContent, mountModal, applyBackground,
 } from '../utils.js';
 
-const ROSTER_BACKGROUNDS = {
-  empire:              '/assets/screens/empire_roster.jpg',
-  choir_of_the_cursed: '/assets/screens/choir_roster.jpg',
-  grail_of_sorrow:     '/assets/screens/grail_roster.jpg',
-};
-
-function applyBackground(root, faction, map) {
-  const url = map[faction];
-  if (!url) return;
-  root.style.backgroundImage    = `url('${url}')`;
-  root.style.backgroundSize     = 'cover';
-  root.style.backgroundPosition = 'center';
-  root.style.backgroundRepeat   = 'no-repeat';
-}
-
 export function renderRoster(root, { player }) {
-  applyBackground(root, player.faction, ROSTER_BACKGROUNDS);
+  applyBackground(root, player.faction, 'roster');
 
   root.innerHTML = `
     <div class="screen screen-roster">
@@ -56,20 +39,16 @@ export function renderRoster(root, { player }) {
   let current = 0;
   let units   = [];
 
-  const track     = root.querySelector('#roster-track');
-  const dotsWrap  = root.querySelector('#roster-dots');
-  const prevBtn   = root.querySelector('#nav-prev');
-  const nextBtn   = root.querySelector('#nav-next');
-  const overlay   = root.querySelector('#modal-overlay');
-  const modalBody = root.querySelector('#modal-body');
-  const modalTitle= root.querySelector('#modal-title');
+  const track    = root.querySelector('#roster-track');
+  const dotsWrap = root.querySelector('#roster-dots');
+  const prevBtn  = root.querySelector('#nav-prev');
+  const nextBtn  = root.querySelector('#nav-next');
 
   let buildingsData = {};
   let upgradePaths  = {};
 
   const modal = mountModal(root);
   function openModal(title, bodyHtml) { modal.open(title, bodyHtml); }
-  function closeModal() { modal.close(); }
 
   function buildCard(u) {
     const stored   = u.unit_data || {};
@@ -80,10 +59,7 @@ export function renderRoster(root, { player }) {
 
     const portraitSrc = unitId ? `/assets/character_art/${unitId}.png` : null;
 
-    const passiveKey = def?.passive || null;
-    const activeKey  = def?.ability || null;
-    const res        = def?.resistances || {};
-
+    const res       = def?.resistances || {};
     const tier      = def?.t ?? 1;
     const tierLabel = isHero ? `Hero Lv ${tier}` : `Lv ${tier}`;
 
@@ -91,8 +67,7 @@ export function renderRoster(root, { player }) {
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
 
-    const currentXp = stored.current_xp ?? 0;
-
+    const currentXp  = stored.current_xp ?? 0;
     const throneLevel = buildingsData['slot_0']?.level || 1;
 
     let heroPathsForUnit = [];
@@ -102,13 +77,13 @@ export function renderRoster(root, { player }) {
       }
     }
 
-    const heroMaxed  = isHero && heroPathsForUnit.length === 0;
-    const xpRequired = def?.xp ?? null;
-    const heroXpMet  = xpRequired == null || currentXp >= xpRequired;
+    const heroMaxed    = isHero && heroPathsForUnit.length === 0;
+    const xpRequired   = def?.xp ?? null;
+    const heroXpMet    = xpRequired == null || currentXp >= xpRequired;
     const heroCanLevel = isHero && !heroMaxed && throneLevel > tier && heroXpMet;
 
-    const isMaxTier  = !isHero && xpRequired === null && !Object.values(upgradePaths).some(fp => fp[unitId]);
-    const hasPath    = !isHero && !isMaxTier && xpRequired !== null;
+    const isMaxTier = !isHero && xpRequired === null && !Object.values(upgradePaths).some(fp => fp[unitId]);
+    const hasPath   = !isHero && !isMaxTier && xpRequired !== null;
 
     let upgradeReady        = true;
     let upgradeBuildingHint = '';
@@ -122,9 +97,7 @@ export function renderRoster(root, { player }) {
         const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
         const matched        = unitPaths.find(p => p.building_id === slotBuildingId);
         upgradeReady         = !!matched;
-        if (!upgradeReady) {
-          upgradeBuildingHint = `Requires: ${unitPaths.map(p => p.label).join(' or ')}`;
-        }
+        if (!upgradeReady) upgradeBuildingHint = `Requires: ${unitPaths.map(p => p.label).join(' or ')}`;
       }
     }
 
@@ -148,11 +121,9 @@ export function renderRoster(root, { player }) {
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
-    const currentHp = def?.hp ?? '—';
-
     const coreHtml = `
       <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}</span></div>
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${def?.hp ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${currentXp}</span></div>
@@ -176,16 +147,15 @@ export function renderRoster(root, { player }) {
         levelUpHtml = `
           <div class="levelup-row">
             <span class="hero-level-label">Hero Level ${tier} — Max</span>
-          </div>
-        `;
+          </div>`;
       } else {
         const throneBlocked = throneLevel <= tier;
         const xpBlocked     = xpRequired != null && currentXp < xpRequired;
         const blocked       = throneBlocked || xpBlocked;
 
         let blockedMsg = '';
-        if (throneBlocked) blockedMsg = ` — Level Up Requires Throne Lv ${tier + 1}`;
-        else if (xpBlocked) blockedMsg = ` — Need ${xpRequired} XP`;
+        if (throneBlocked)     blockedMsg = ` — Level Up Requires Throne Lv ${tier + 1}`;
+        else if (xpBlocked)    blockedMsg = ` — Need ${xpRequired} XP`;
 
         const pct = xpRequired != null ? Math.min(100, Math.floor((currentXp / xpRequired) * 100)) : 100;
 
@@ -198,12 +168,8 @@ export function renderRoster(root, { player }) {
               <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
             ` : ''}
             <span class="hero-level-label">Hero Level ${tier}${blockedMsg}</span>
-            ${!blocked ? `<button
-              class="levelup-btn levelup-btn--ready"
-              data-roster-id="${u.id}"
-            >Level Up</button>` : ''}
-          </div>
-        `;
+            ${!blocked ? `<button class="levelup-btn levelup-btn--ready" data-roster-id="${u.id}">Level Up</button>` : ''}
+          </div>`;
       }
     } else if (hasPath) {
       const pct = Math.min(100, Math.floor((currentXp / xpRequired) * 100));
@@ -219,14 +185,12 @@ export function renderRoster(root, { player }) {
             ${canLevelUp ? '' : 'disabled'}
           >Level Up</button>
         </div>
-        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}
-      `;
+        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}`;
     } else {
       levelUpHtml = `
         <div class="levelup-row">
           <span class="hero-level-label">${isMaxTier ? 'Maximum Level Reached' : 'Cannot Upgrade'}</span>
-        </div>
-      `;
+        </div>`;
     }
 
     function abilityIconHtml(key, type) {
@@ -249,16 +213,11 @@ export function renderRoster(root, { player }) {
       ? def.passive.filter(Boolean)
       : (def?.passive ? [def.passive] : []);
 
-    const slot1 = def?.ability || null;
-    const slot2 = passiveKeys[0] || null;
-    const slot3 = passiveKeys[1] || null;
-    const slot4 = passiveKeys[2] || null;
-
     const iconsHtml = [
-      slot1 ? abilityIconHtml(slot1, 'active')  : abilityIconHtml('', 'empty'),
-      slot2 ? abilityIconHtml(slot2, 'passive') : abilityIconHtml('', 'empty'),
-      slot3 ? abilityIconHtml(slot3, 'passive') : abilityIconHtml('', 'empty'),
-      slot4 ? abilityIconHtml(slot4, 'passive') : abilityIconHtml('', 'empty'),
+      def?.ability     ? abilityIconHtml(def.ability,     'active')  : abilityIconHtml('', 'empty'),
+      passiveKeys[0]   ? abilityIconHtml(passiveKeys[0],  'passive') : abilityIconHtml('', 'empty'),
+      passiveKeys[1]   ? abilityIconHtml(passiveKeys[1],  'passive') : abilityIconHtml('', 'empty'),
+      passiveKeys[2]   ? abilityIconHtml(passiveKeys[2],  'passive') : abilityIconHtml('', 'empty'),
     ].join('');
 
     const abilitiesHtml = `
@@ -279,8 +238,7 @@ export function renderRoster(root, { player }) {
             ${abilitiesHtml}
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   function updateNav() {
@@ -355,7 +313,6 @@ export function renderRoster(root, { player }) {
         ]);
         units         = freshUnits;
         buildingsData = freshStruct?.buildings_data || {};
-        // Level up doesn't cost resources but good practice to keep bar fresh
         refreshResourceBar(player).catch(() => {});
         const savedIdx = current;
         initSlider();
@@ -383,17 +340,13 @@ export function renderRoster(root, { player }) {
 
     const coreStat = e.target.closest('.core-stat');
     if (coreStat) {
-      const slide  = coreStat.closest('.roster-slide');
-      if (!slide) return;
       const label  = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
       const val    = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
       let text = '';
       if (label === 'HP') {
         text = `HP: ${val}\nCurrent hit points. Unit is defeated when HP reaches 0.`;
       } else if (label === 'Armor') {
-        const numVal = parseFloat(val);
-        const pct    = isNaN(numVal) ? 0 : dmgReduction(numVal);
-        text = `Armor: ${val}\nReduces physical damage taken by ${pct}%.`;
+        text = `Armor: ${val}\nReduces physical damage taken.`;
       } else if (label === 'Init') {
         text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
       } else if (label === 'XP') {
@@ -410,14 +363,13 @@ export function renderRoster(root, { player }) {
       const label  = resistCell.getAttribute('title') || '';
       const valEl  = resistCell.querySelector('.resist-val');
       const numVal = parseInt(valEl?.textContent ?? '0', 10);
-      const pct    = dmgReduction(numVal);
       let text = '';
       if (numVal === 0) {
         text = `${label} Resistance: 0\nNo modifier to ${label.toLowerCase()} damage taken.`;
       } else if (numVal > 0) {
-        text = `${label} Resistance: +${numVal}\nReduces ${label.toLowerCase()} damage taken by ${pct}%.`;
+        text = `${label} Resistance: +${numVal}\nReduces ${label.toLowerCase()} damage taken.`;
       } else {
-        text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken by ${pct}%.`;
+        text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken.`;
       }
       openDetailModal(label, text);
       return;

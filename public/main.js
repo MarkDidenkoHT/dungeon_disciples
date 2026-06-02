@@ -20,7 +20,6 @@ export async function api(path, body = null) {
   try {
     data = JSON.parse(text);
   } catch {
-
     throw new Error(text.trim() || `HTTP ${res.status}`);
   }
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -105,6 +104,7 @@ export async function refreshResourceBar(player) {
 export function navigate(screen, params = {}) {
   const { player } = params;
 
+  document.body.style.overflow = '';
 
   if (screen === 'register') {
     shellMounted = false;
@@ -116,13 +116,11 @@ export function navigate(screen, params = {}) {
   mountShell(player);
   setActiveNav(screen);
 
-
   const isBattle = screen === 'battle';
-  const navEl     = document.getElementById('bottom-nav');
-  const resBarEl  = document.getElementById('resource-bar');
+  const navEl    = document.getElementById('bottom-nav');
+  const resBarEl = document.getElementById('resource-bar');
   if (navEl)    navEl.style.display    = isBattle ? 'none' : '';
   if (resBarEl) resBarEl.style.display = isBattle ? 'none' : '';
-
 
   if (player && !isBattle) refreshResourceBar(player).catch(() => {});
 

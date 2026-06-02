@@ -1,29 +1,18 @@
-import { api }          from '../main.js';
-import { navigate }     from '../main.js';
-import { SPELLS }       from '../../data/spells.js';
-import { getEncounter } from '../../data/embark.js';
-import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
+import { api, navigate }  from '../main.js';
+import { SPELLS }          from '../../data/spells.js';
+import { getEncounter }    from '../../data/embark.js';
+import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  cap, dmgReduction,
+  cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, mountModal,
 } from '../utils.js';
 
 const REGION_META = {
-  life_grove:   { label: 'Life Grove',   icon: '🟢' },
-  fire_wastes:  { label: 'Fire Wastes',  icon: '🔴' },
-  death_crypts: { label: 'Death Crypts', icon: '🟣' },
-  frost_peaks:  { label: 'Frost Peaks',  icon: '🔵' },
-  nature_wilds: { label: 'Nature Wilds', icon: '🟡' },
-};
-
-const CRYSTAL_ICONS = {
-  Crystals_Life:   '🟢',
-  Crystals_Fire:   '🔴',
-  Crystals_Death:  '🟣',
-  Crystals_Frost:  '🔵',
-  Crystals_Nature: '🟡',
+  forests_of_ashenveil: { label: 'Forests of Ashenveil', icon: '🌲' },
+  mountains_of_valdrek: { label: 'Mountains of Valdrek',  icon: '⛰️' },
+  dungeons_of_malgrath: { label: 'Dungeons of Malgrath',  icon: '💀' },
 };
 
 const ROWS = 3;
@@ -209,7 +198,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
 
     function abilityIconHtml(key, type) {
-      const aDef    = resolveAbility(key, type);
+      const aDef    = resolveAbility(key);
       const isEmpty = !aDef;
       const fileKey = key ? key.replace(/\s+/g, '_') : null;
       const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
@@ -319,7 +308,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="detail-spell-meta">
         <span class="detail-spell-cost">${spellCostLabel(spell)}</span>
         <span class="detail-spell-type">${spell.effect_type}</span>
-      </div>      <div class="detail-spell-target">Target: ${spellTargetLabel(spell)}</div>      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
+      </div>
+      <div class="detail-spell-target">Target: ${spellTargetLabel(spell)}</div>
+      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
     `;
   }
 
@@ -875,7 +866,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (abilityBtn) {
       const key  = abilityBtn.dataset.abilityKey;
       const type = abilityBtn.dataset.abilityType;
-      const def  = resolveAbility(key, type);
+      const def  = resolveAbility(key);
       if (!def) return;
       const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
       const description = buildStatDescription(def, type) || 'No details available.';

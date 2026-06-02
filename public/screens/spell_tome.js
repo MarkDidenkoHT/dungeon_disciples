@@ -1,33 +1,9 @@
-import { api }              from '../main.js';
-import { navigate }          from '../main.js';
-import { refreshResourceBar } from '../main.js';
-import { SPELLS }            from '../../data/spells.js';
-
-const SPELLTOME_BACKGROUNDS = {
-  empire:              '/assets/screens/empire_spells.jpg',
-  choir_of_the_cursed: '/assets/screens/choir_spells.jpg',
-  grail_of_sorrow:     '/assets/screens/grail_spells.jpg',
-};
-
-function applyBackground(root, faction, map) {
-  const url = map[faction];
-  if (!url) return;
-  root.style.backgroundImage    = `url('${url}')`;
-  root.style.backgroundSize     = 'cover';
-  root.style.backgroundPosition = 'center';
-  root.style.backgroundRepeat   = 'no-repeat';
-}
-
-const CRYSTAL_ICONS = {
-  Crystals_Life:   '🟢',
-  Crystals_Fire:   '🔴',
-  Crystals_Death:  '🟣',
-  Crystals_Frost:  '🔵',
-  Crystals_Nature: '🟡',
-};
+import { api, refreshResourceBar } from '../main.js';
+import { SPELLS }                  from '../../data/spells.js';
+import { CRYSTAL_ICONS, applyBackground } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
-  applyBackground(root, player.faction, SPELLTOME_BACKGROUNDS);
+  applyBackground(root, player.faction, 'spells');
 
   root.innerHTML = `
     <div class="screen screen-spelltome">
@@ -51,11 +27,11 @@ export function renderSpellTome(root, { player }) {
     </div>
   `;
 
-  let playerCrystals = {};
-  let throneLevel    = 1;
-  let learnedSpells  = [];
-  let activeSpellId  = null;
-  let activeTier     = 1;
+  let playerCrystals  = {};
+  let throneLevel     = 1;
+  let learnedSpells   = [];
+  let activeSpellId   = null;
+  let activeTier      = 1;
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
@@ -78,7 +54,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function renderSlider() {
-    const tierSpells = factionSpells.filter(s => s.tier === activeTier);
+    const tierSpells   = factionSpells.filter(s => s.tier === activeTier);
     const tierUnlocked = throneLevel >= activeTier;
 
     if (!tierSpells.length) {
@@ -92,16 +68,16 @@ export function renderSpellTome(root, { player }) {
       const isActive   = activeSpellId === spell.id;
 
       let cardCls = 'spell-card';
-      if (isLearned)              cardCls += ' spell-card--learned';
-      if (!tierUnlocked)          cardCls += ' spell-card--locked';
-      if (isActive)               cardCls += ' spell-card--active';
-      if (tierUnlocked && !isLearned && !affordable) cardCls += ' spell-card--unaffordable';
+      if (isLearned)                                  cardCls += ' spell-card--learned';
+      if (!tierUnlocked)                              cardCls += ' spell-card--locked';
+      if (isActive)                                   cardCls += ' spell-card--active';
+      if (tierUnlocked && !isLearned && !affordable)  cardCls += ' spell-card--unaffordable';
 
       const typeColor = spell.effect_type === 'buff' ? 'spell-card-type--buff' : 'spell-card-type--debuff';
 
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
-          ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
+          ${isLearned    ? '<div class="spell-card-learned-ring"></div>'          : ''}
           ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><span>🔒</span></div>' : ''}
           <div class="spell-card-icon">${spell.icon}</div>
           <div class="spell-card-name">${spell.name}</div>
@@ -185,7 +161,7 @@ export function renderSpellTome(root, { player }) {
     const detailBtn = root.querySelector('#detail-research-btn');
     if (detailBtn) {
       detailBtn.addEventListener('click', async () => {
-        detailBtn.disabled = true;
+        detailBtn.disabled    = true;
         detailBtn.textContent = '…';
         await doResearch(spell);
       });
@@ -199,8 +175,8 @@ export function renderSpellTome(root, { player }) {
   function showFeedback(msg, isError) {
     const el = root.querySelector('#research-feedback');
     if (!el) return;
-    el.textContent = msg;
-    el.className   = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
+    el.textContent   = msg;
+    el.className     = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
     el.style.display = 'inline-block';
   }
 
@@ -217,7 +193,6 @@ export function renderSpellTome(root, { player }) {
           if (amt > 0) playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
         learnedSpells.push(spell.id);
-        // Crystals were spent — refresh the shared resource bar
         refreshResourceBar(player).catch(() => {});
         renderSlider();
         showDetail(spell);
