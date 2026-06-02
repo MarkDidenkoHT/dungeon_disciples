@@ -805,3 +805,70 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   border: 1px solid var(--border);
 }
+.screen-pvp {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.screen-pvp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.62);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-pvp > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pvp-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.pvp-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  max-width: 280px;
+}
+
+.pvp-placeholder-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.pvp-placeholder-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+
+.pvp-placeholder-desc {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.nav-btn-icon--pvp-fallback {
+  font-size: 1.6rem;
+  width: 64px;
+  height: 64px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  filter: brightness(0.65);
+  transition: filter 0.15s;
+}
+.nav-btn.active .nav-btn-icon--pvp-fallback {
+  filter: brightness(1);
+}

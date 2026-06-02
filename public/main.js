@@ -5,6 +5,7 @@ import { renderEmbark }     from './screens/embark.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
+import { renderPvp }        from './screens/pvp.js';
 
 const app = document.getElementById('app');
 
@@ -66,6 +67,11 @@ function mountShell(player) {
         <button class="nav-btn" data-screen="spells">
           <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
           <span class="nav-btn-label">Spells</span>
+        </button>
+        <button class="nav-btn" data-screen="pvp">
+          <img class="nav-btn-icon nav-btn-icon--pvp" src="/assets/icons/ui/pvp.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="nav-btn-icon nav-btn-icon--pvp-fallback" style="display:none;">⚔</span>
+          <span class="nav-btn-label">PvP</span>
         </button>
       </nav>
     </div>
@@ -139,6 +145,7 @@ export function navigate(screen, params = {}) {
     case 'battle-prep': renderBattlePrep(root, params); break;
     case 'battle':      renderBattle(root, params);     break;
     case 'spells':      renderSpellTome(root, params);  break;
+    case 'pvp':         renderPvp(root, params);        break;
     default:
       root.innerHTML = `<p style="color:red">Unknown screen: ${screen}</p>`;
   }

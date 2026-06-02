@@ -8,7 +8,6 @@ const REGIONS = [
     icon: '🌲',
     description: 'Ancient woodland teeming with feral beasts, overgrown guardians, and things that should not breathe.',
     crystal: 'Nature',
-    type: 'pve',
   },
   {
     id: 'mountains_of_valdrek',
@@ -16,7 +15,6 @@ const REGIONS = [
     icon: '⛰️',
     description: 'Wind-scoured peaks ruled by stone colossi, frost shamans, and a king that does not die.',
     crystal: 'Air',
-    type: 'pve',
   },
   {
     id: 'dungeons_of_malgrath',
@@ -24,21 +22,6 @@ const REGIONS = [
     icon: '💀',
     description: 'Sunken halls choked with undead, cursed knights, and Malgrath himself — who has already died once.',
     crystal: 'Death',
-    type: 'pve',
-  },
-  {
-    id: 'pvp_arena',
-    label: 'PvP Arena',
-    icon: '🏆',
-    description: 'Challenge other players. Coming soon.',
-    type: 'disabled',
-  },
-  {
-    id: 'trials',
-    label: 'Trials',
-    icon: '⚗️',
-    description: 'Special challenges with unique rules and rewards. Coming soon.',
-    type: 'disabled',
   },
 ];
 
@@ -172,18 +155,6 @@ export function renderEmbark(root, { player }) {
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
-        if (r.type === 'disabled') {
-          return `
-            <div class="embark-card embark-card--disabled">
-              <span class="embark-card-icon">${r.icon}</span>
-              <div class="embark-card-info">
-                <span class="embark-card-label">${r.label}</span>
-                <span class="embark-card-desc">${r.description}</span>
-              </div>
-              <span class="embark-card-badge embark-card-badge--soon">Soon</span>
-            </div>
-          `;
-        }
         const maxLevel = progress[r.id] ?? 1;
         const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
