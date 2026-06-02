@@ -24,11 +24,6 @@
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
-  background: var(--surface);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: rgba(17, 19, 24, 0.75);
 }
 
 .castle-grounds::after {
@@ -61,7 +56,8 @@
   background-image: url('/assets/icons/ui/building_slot_bg.png');
   background-size: cover;
   background-position: center;
-  min-height: 130px;
+  min-height: 150px;
+  min-width: 100px;
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -124,7 +120,6 @@
 .castle-node--any:active { border-color: #5a8aaa; }
 
 .castle-node--empty {
-  opacity: 0.55;
   border-style: dashed;
 }
 
