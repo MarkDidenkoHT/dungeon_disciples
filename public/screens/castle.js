@@ -6,7 +6,7 @@ import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  resolveAbility, mountModal,
+  resolveAbility, mountModal, GOLD_ICON,
 } from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
@@ -417,7 +417,7 @@ export function renderCastle(root, { player }) {
         </div>
         <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
         <div class="throne-cost">
-          ${cost?.gold > 0 ? `<span class="throne-cost-item">🪙 ${cost.gold} Gold</span>` : ''}
+          ${cost?.gold > 0 ? `<span class="throne-cost-item">${GOLD_ICON} ${cost.gold} Gold</span>` : ''}
         </div>
         <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
       </div>`);

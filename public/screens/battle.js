@@ -1,6 +1,6 @@
 import { api, navigate } from '../main.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef } from '../utils.js';
+import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from '../utils.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -502,9 +502,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const rewardsEl = root.querySelector('#result-rewards');
       if (won) {
         rewardsEl.innerHTML = `
-          <div class="reward-row"><span>🪙 Gold</span><span>+${result.gold}</span></div>
+          <div class="reward-row"><span>${GOLD_ICON} Gold</span><span>+${result.gold}</span></div>
           <div class="reward-row"><span>💎 Crystals</span><span>+${result.crystal}</span></div>
-          ${result.crystal_bonus > 0 ? `<div class="reward-row"><span>✨ ${result.crystal_bonus_type?.replace('Crystals_', '')} Crystal (bonus)</span><span>+${result.crystal_bonus}</span></div>` : ''}
+          ${result.crystal_bonus > 0 ? `<div class="reward-row"><span>${CRYSTAL_ICONS[result.crystal_bonus_type] || '💎'} ${result.crystal_bonus_type?.replace('Crystals_', '')} Crystal (bonus)</span><span>+${result.crystal_bonus}</span></div>` : ''}
           <div class="reward-row"><span>⭐ XP</span><span>+${result.xp_granted} each (${survivorIds.length} survivors)</span></div>
           ${result.progress_unlocked ? `<div class="reward-row reward-row--unlock"><span>🔓 Level ${result.next_level} unlocked!</span></div>` : ''}
         `;

@@ -205,6 +205,12 @@
   color: var(--accent);
 }
 
+.spell-cost-item .res-icon-img,
+.spell-detail-cost-item .res-icon-img {
+  width: 12px;
+  height: 12px;
+}
+
 .spell-detail-panel {
   flex: 1;
   min-height: 0;

@@ -6,6 +6,7 @@ import { renderBattlePrep } from './screens/battle-prep.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { renderPvp }        from './screens/pvp.js';
+import { GOLD_ICON }        from './utils.js';
 
 const app = document.getElementById('app');
 
@@ -98,12 +99,12 @@ export async function refreshResourceBar(player) {
   const inventory = await resourceCache.get(player.chat_id);
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
   bar.innerHTML = `
-    <div class="res-bar-item"><span class="res-bar-icon">🪙</span><span class="res-bar-val">${find('Gold').amount}</span></div>
-    <div class="res-bar-item"><span class="res-bar-icon">🟢</span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
-    <div class="res-bar-item"><span class="res-bar-icon">🔴</span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
-    <div class="res-bar-item"><span class="res-bar-icon">🟣</span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
-    <div class="res-bar-item"><span class="res-bar-icon">🟡</span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
-    <div class="res-bar-item"><span class="res-bar-icon">🔵</span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon">${GOLD_ICON}</span><span class="res-bar-val">${find('Gold').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/life.png"   class="res-icon-img" alt="Life"></span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/fire.png"   class="res-icon-img" alt="Fire"></span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death"></span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature"></span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost"></span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
   `;
 }
 

@@ -194,6 +194,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 .res-bar-icon {
   font-size: 0.82rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.res-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display: block;
 }
 
 .res-bar-val {

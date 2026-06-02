@@ -13,12 +13,14 @@ export const RESIST_ICONS = {
 export const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
 export const CRYSTAL_ICONS = {
-  Crystals_Life:   '🟢',
-  Crystals_Fire:   '🔴',
-  Crystals_Death:  '🟣',
-  Crystals_Frost:  '🔵',
-  Crystals_Nature: '🟡',
+  Crystals_Life:   '<img src="/assets/icons/recources/life.png"   class="res-icon-img" alt="Life">',
+  Crystals_Fire:   '<img src="/assets/icons/recources/fire.png"   class="res-icon-img" alt="Fire">',
+  Crystals_Death:  '<img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death">',
+  Crystals_Frost:  '<img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost">',
+  Crystals_Nature: '<img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature">',
 };
+
+export const GOLD_ICON = '<img src="/assets/icons/recources/gold.png" class="res-icon-img" alt="Gold">';
 
 export const SCREEN_BACKGROUNDS = {
   roster: {
