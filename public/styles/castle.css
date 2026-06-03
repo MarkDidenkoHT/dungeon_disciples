@@ -109,7 +109,6 @@
   background-image: url('/assets/icons/ui/building_slot_bg.png');
   background-size: cover;
   background-position: center;
-  box-shadow: 0 0 18px rgba(200, 151, 58, 0.25);
 }
 
 .castle-node--production { border-color: #4a7a3a; }
