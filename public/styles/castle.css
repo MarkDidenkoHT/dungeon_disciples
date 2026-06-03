@@ -53,11 +53,19 @@
 .outer-ring .castle-node {
   width: 100%;
   height: 100%;
-  background-image: url('/assets/icons/ui/building_slot_bg.png');
+  background-image: url('/assets/icons/ui/building_slot_bg_highlight.png');
   background-size: cover;
   background-position: center;
   min-height: 160px;
   min-width: 110px;
+}
+
+.outer-ring .castle-node.castle-node--empty {
+  background-image: url('/assets/icons/ui/building_slot_bg.png');
+}
+
+.outer-ring .castle-node.castle-node--empty:active {
+  background-image: url('/assets/icons/ui/building_slot_bg_highlight.png');
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
