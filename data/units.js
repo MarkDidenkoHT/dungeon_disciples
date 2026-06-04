@@ -1,614 +1,1455 @@
-.screen-roster {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-.screen-roster::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 14, 20, 0.55);
-  pointer-events: none;
-  z-index: 0;
-}
-.screen-roster > * {
-  position: relative;
-  z-index: 1;
-}
-
-.roster-main {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.roster-slider-wrap {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.roster-track {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-.roster-slide {
-  flex: 0 0 100%;
-  width: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 6px;
-  box-sizing: border-box;
-}
-
-.roster-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 14px 5px;
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.roster-nav-arrow {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.roster-nav-arrow:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.roster-nav-arrow:not(:disabled):active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.roster-nav-dots {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  flex: 1;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.roster-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.roster-dot--active {
-  background: var(--accent);
-  transform: scale(1.35);
-}
-
-.roster-nav-label {
-  font-size: 0.68rem;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 110px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.unit-card {
-  background: linear-gradient(180deg, #1c2130 0%, #13171e 100%);
-  border: 1px solid #2e3a50;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  display: flex;
-  flex-direction: column;
-}
-
-.unit-portrait {
-  height: 50vh;
-  background: #0b0f18;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  align-self: center;
-  border-radius: 10px 10px 0 0;
-}
-
-.unit-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.unit-portrait-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0b0f18;
-  color: #2e3a50;
-  font-size: 0.75rem;
-  font-family: monospace;
-  text-align: center;
-  padding: 8px;
-  word-break: break-all;
-}
-
-.unit-portrait-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 14px 10px 8px;
-  gap: 3px;
-}
-
-.unit-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #eaecf2;
-  line-height: 1.1;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  text-align: center;
-}
-
-.unit-level-text {
-  font-size: 0.68rem;
-  color: rgba(234, 236, 242, 0.8);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-.unit-tag-left {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  font-size: 0.6rem;
-  padding: 2px 6px;
-  border-radius: 20px;
-  background: #26200f;
-  border: 1px solid #54421a;
-  color: #c49a4a;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  z-index: 1;
-}
-
-.unit-tag-right {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  font-size: 0.6rem;
-  padding: 2px 6px;
-  border-radius: 20px;
-  background: #26200f;
-  border: 1px solid #54421a;
-  color: #c49a4a;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  z-index: 1;
-}
-
-.unit-info {
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.unit-core-stats {
-  display: flex;
-  gap: 4px;
-}
-
-.core-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background 0.15s;
-}
-
-.core-stat:active {
-  background: #1a2235;
-}
-
-.core-stat-label {
-  font-size: 0.52rem;
-  color: #6a7e96;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.core-stat-val {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #d0d4de;
-}
-
-.core-stat-val--action {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: capitalize;
-  text-align: center;
-}
-
-.unit-resists-grid {
-  display: flex;
-}
-
-.resist-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: 1;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background 0.15s;
-}
-
-.resist-cell:active {
-  background: #1a2235;
-}
-
-.resist-icon {
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
-.resist-val {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #7a8ea8;
-}
-
-.resist-val--pos {
-  color: #6ec87e;
-}
-
-.resist-val--neg {
-  color: #c86e6e;
-}
-
-.levelup-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.levelup-xp-bar {
-  flex: 1;
-  min-width: 0;
-  height: 4px;
-  background: #1a2235;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.levelup-xp-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.levelup-xp-label {
-  font-size: 0.62rem;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.hero-level-label {
-  font-size: 0.68rem;
-  color: var(--accent);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-}
-
-.levelup-btn {
-  padding: 4px 11px;
-  border-radius: 5px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-  font-family: inherit;
-}
-
-.levelup-btn--ready {
-  background: var(--accent);
-  color: #111;
-}
-
-.levelup-btn--ready:active {
-  opacity: 0.8;
-}
-
-.levelup-btn--locked {
-  background: #1a2235;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.levelup-hint {
-  font-size: 0.62rem;
-  color: var(--muted);
-  margin-top: -2px;
-}
-
-.unit-abilities-row {
-  display: flex;
-  gap: 7px;
-  justify-content: center;
-}
-
-.unit-abilities-icons {
-  --ability-size: clamp(36px, 20vw, 96px);
-  display: grid;
-  grid-template-columns: repeat(4, var(--ability-size));
-  gap: 8px;
-  width: auto;
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  justify-content: center;
-}
-
-.ability-icon {
-  background: #0e1219;
-  border: 1px solid #222d3e;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0px;
-  color: inherit;
-  transition: border-color 0.15s, background 0.15s;
-  width: var(--ability-size);
-  height: var(--ability-size);
-  min-width: 0;
-  min-height: 0;
-}
-
-.ability-icon:not([disabled]):active {
-  background: #141c2a;
-}
-
-.ability-icon--passive:not([disabled]) {
-  border-color: #2e4e6a;
-}
-
-.ability-icon--passive:not([disabled]):active {
-  border-color: #4a80aa;
-}
-
-.ability-icon--active:not([disabled]) {
-  border-color: #5a3e12;
-}
-
-.ability-icon--active:not([disabled]):active {
-  border-color: #c9922a;
-}
-
-.ability-icon--active.ability-icon--selected {
-  border-color: #c9922a;
-  background: #141c2a;
-}
-
-.ability-icon--passive.ability-icon--selected {
-  border-color: #4a80aa;
-  background: #141c2a;
-}
-
-.ability-icon--empty {
-  opacity: 0.2;
-  cursor: default;
-  pointer-events: none;
-}
-
-.ability-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-}
-
-.placeholder {
-  text-align: center;
-  color: var(--muted);
-  padding: 20px;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.72);
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  animation: overlay-in 0.18s ease;
-}
-
-.modal-overlay.hidden { display: none !important; }
-
-@keyframes overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.modal::before {
-  content: '';
-  display: block;
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  margin: 10px auto 0;
-  flex-shrink: 0;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.modal-header span {
-  font-size: 1rem;
-  font-weight: bold;
-  color: var(--accent);
-}
-
-#modal-close {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: bold;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-#modal-close:active { color: var(--text); border-color: var(--muted); }
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ability-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ability-modal-type {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 2px 8px;
-  border-radius: 20px;
-  align-self: flex-start;
-}
-
-.ability-modal-type--active {
-  background: #2e1f06;
-  border: 1px solid #5a3e12;
-  color: #c9922a;
-}
-
-.ability-modal-type--passive {
-  background: #0c1e2e;
-  border: 1px solid #2e4e6a;
-  color: #5a9ec8;
-}
-
-.ability-modal-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.ability-modal-rank {
-  font-size: 0.75rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.ability-modal-desc {
-  font-size: 0.85rem;
-  color: var(--muted);
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
+import { UNIT_ABILITIES } from './unit_abilities.js';
+
+const UNITS = {
+  choir_of_the_cursed: {
+    warlord: {
+      id: 'h_d_1',
+      f: 'd',
+      t: 1,
+      size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 90, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 0, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 90
+    },
+    warlord_t2: {
+      id: 'h_d_1_t2',
+      f: 'd',
+      t: 2,
+      size: 'tile',
+      tags: ['Knight', null],
+      hp: 144, armor: 10, initiative: 48,
+      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 24,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 270
+    },
+    warlord_t3: {
+      id: 'h_d_1_t3',
+      f: 'd',
+      t: 3,
+      size: 'tile',
+      tags: ['Knight', null],
+      hp: 173, armor: 12, initiative: 58,
+      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 29,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 540
+    },
+    warlord_t4: {
+      id: 'h_d_1_t4',
+      f: 'd',
+      t: 4,
+      size: 'tile',
+      tags: ['Knight', null],
+      hp: 208, armor: 14, initiative: 70,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 700
+    },
+    hexblade: {
+      id: 'h_d_2',
+      f: 'd',
+      t: 1,
+      size: 'tile',
+      tags: ['Caster', null],
+      hp: 70, armor: 2, initiative: 60,
+      resistances: { air: 0, fire: 0, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 18,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 95
+    },
+    hexblade_t2: {
+      id: 'h_d_2_t2',
+      f: 'd',
+      t: 2,
+      size: 'tile',
+      tags: ['Caster', null],
+      hp: 84, armor: 2, initiative: 72,
+      resistances: { air: 0, fire: 0, life: 0, death: 12, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 22,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 285
+    },
+    hexblade_t3: {
+      id: 'h_d_2_t3',
+      f: 'd',
+      t: 3,
+      size: 'tile',
+      tags: ['Caster', null],
+      hp: 101, armor: 3, initiative: 86,
+      resistances: { air: 0, fire: 0, life: 0, death: 14, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 26,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 570
+    },
+    hexblade_t4: {
+      id: 'h_d_2_t4',
+      f: 'd',
+      t: 4,
+      size: 'tile',
+      tags: ['Caster', null],
+      hp: 121, armor: 4, initiative: 103,
+      resistances: { air: 0, fire: 0, life: 0, death: 17, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 31,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 740
+    },
+    shadowbow: {
+      id: 'h_d_3',
+      f: 'd',
+      t: 1,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 80, armor: 3, initiative: 100,
+      resistances: { air: 0, fire: 0, life: 0, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 16,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 100
+    },
+    shadowbow_t2: {
+      id: 'h_d_3_t2',
+      f: 'd',
+      t: 2,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 96, armor: 4, initiative: 120,
+      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 19,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 300
+    },
+    shadowbow_t3: {
+      id: 'h_d_3_t3',
+      f: 'd',
+      t: 3,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 115, armor: 4, initiative: 144,
+      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 23,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 600
+    },
+    shadowbow_t4: {
+      id: 'h_d_3_t4',
+      f: 'd',
+      t: 4,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 138, armor: 5, initiative: 173,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 28,
+      passive: null, ability: null,
+      building_slot: 'slot_0',
+      xp: 780
+    },
+    imp: {
+      id: 'd1', f: 'd', t: 1,
+      name: 'Imp',
+      tags: ['Demon', 'Beast'],
+      size: 'row',
+      hp: 90, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 10, life: 0, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      xp: 170, passive: null, ability: null,
+    },
+    tormentor: {
+      id: 'd11', f: 'd', t: 2,
+      name: 'Tormentor',
+      tags: ['Demon', 'Beast'],
+      size: 'row',
+      hp: 120, armor: 5, initiative: 30,
+      resistances: { air: 5, fire: 20, life: 0, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 170, passive: 'burn 1', ability: null,
+    },
+    hellblade: {
+      id: 'd12', f: 'd', t: 2,
+      name: 'Hellblade',
+      tags: ['Demon', 'Knight'],
+      size: 'row',
+      hp: 130, armor: 15, initiative: 35,
+      resistances: { air: 0, fire: 20, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
+      xp: 170, passive: null, ability: 'Devour 1',
+    },
+    clay_gargoyle: {
+      id: 'd3', f: 'd', t: 1,
+      name: 'Clay Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'column',
+      hp: 60, armor: 25, initiative: 50,
+      resistances: { air: 0, fire: 10, life: 0, death: 0, cold: 0, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 25,
+      xp: 170, passive: 'regenerate 1', ability: null,
+    },
+    stone_gargoyle: {
+      id: 'd31', f: 'd', t: 2,
+      name: 'Stone Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'column',
+      hp: 80, armor: 35, initiative: 50,
+      resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 35,
+      xp: 470, passive: ['shatter 1', 'regenerate 1'], ability: null,
+    },
+    quartz_gargoyle: {
+      id: 'd32', f: 'd', t: 2,
+      name: 'Quartz Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'column',
+      hp: 80, armor: 25, initiative: 50,
+      resistances: { air: 10, fire: 20, life: 10, death: 10, cold: 10, nature: 20 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 20,
+      xp: 470, passive: ['slow 1', 'regenerate 1'], ability: null,
+    },
+    heretic: {
+      id: 'd4', f: 'd', t: 1,
+      name: 'Heretic',
+      tags: ['Warrior', 'Puppet'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      xp: 70, passive: null, ability: null,
+    },
+    posessed: {
+      id: 'd4', f: 'd', t: 2,
+      name: 'Posessed',
+      tags: ['Warrior', 'Puppet'],
+      size: 'tile',
+      hp: 80, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      xp: 270, passive: ['rage 1', 'blood_frenzy 1'], ability: null,
+    },
+    vessel: {
+      id: 'd4', f: 'd', t: 3,
+      name: 'Vessel',
+      tags: ['Warrior', 'Demon'],
+      size: 'tile',
+      hp: 90, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 470, passive: ['rage 1','blood_frenzy 1', 'predator 1'], ability: null,
+    },
+    pain_projector: {
+      id: 'd4', f: 'd', t: 3,
+      name: 'Pain Projector',
+      tags: ['Puppet', 'Demon'],
+      size: 'tile',
+      hp: 120, armor: 10, initiative: 10,
+      resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 470, passive: ['regenerate 1','recuperate 1', 'volcanic_skin 1'], ability: null,
+    },
+    peer: {
+      id: 'd6', f: 'd', t: 1,
+      name: 'Peer',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 15,
+      xp: 470, passive: null, ability: 'infernal_mandate 1',
+    },
+    nether_baron: {
+      id: 'd61', f: 'd', t: 2,
+      name: 'Nether Baron',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 20, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 470, passive: 'vitality 1', ability: 'infernal_mandate 1',
+    },
+    lord_of_torment: {
+      id: 'd62', f: 'd', t: 2,
+      name: 'Lord Of Torment',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 20, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 470, passive: 'dissipate 1', ability: 'infernal_mandate 1',
+    }
+  },
+
+  empire: {
+    paladin: {
+      id: 'h_e_1',
+      f: 'e',
+      t: 1,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 80, armor: 20, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      passive: 'mithrails_light 1', ability: null,
+      building_slot: 'slot_0',
+      xp: 105
+    },
+    paladin_path_a_t2: {
+      id: 'h_e_11',
+      f: 'e',
+      t: 2,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 95, armor: 25, initiative: 45,
+      resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      passive: ['mithrails_light 1','protector 1'], ability: null,
+      building_slot: 'slot_0',
+      xp: 300
+    },
+    paladin_path_b_t2: {
+      id: 'h_e_12',
+      f: 'e',
+      t: 2,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 90, armor: 20, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'life', action_power: 20,
+      passive: ['mithrails_light 1','chain 1'], ability: null,
+      building_slot: 'slot_0',
+      xp: 300
+    },
+    paladin_path_a_t3: {
+      id: 'h_e_111',
+      f: 'e',
+      t: 3,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 120, armor: 25, initiative: 45,
+      resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      passive: ['mithrails_light 2','protector 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 560
+    },
+    paladin_path_b_t3: {
+      id: 'h_e_121',
+      f: 'e',
+      t: 3,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 105, armor: 20, initiative: 50,
+      resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'life', action_power: 25,
+      passive: ['mithrails_light 2','chain 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 560
+    },
+    paladin_path_a_t4: {
+      id: 'h_e_1111',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 199, armor: 16, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 26,
+      passive: ['mithrails_light 2','protector 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 700
+    },
+    paladin_path_a_t4_alt: {
+      id: 'h_e_1112',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 199, armor: 16, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 26,
+      passive: ['mithrails_light 2','protector 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 700
+    },
+    paladin_path_b_t4: {
+      id: 'h_e_1211',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 199, armor: 16, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 26,
+      passive: ['mithrails_light 2','chain 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 700
+    },
+    paladin_path_b_t4_alt: {
+      id: 'h_e_1212',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 199, armor: 16, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 26,
+      passive: ['mithrails_light 2','chain 2'], ability: null,
+      building_slot: 'slot_0',
+      xp: 700
+    },
+    inquisitor: {
+      id: 'h_e_2',
+      f: 'e',
+      t: 1,
+      size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 70, armor: 5, initiative: 40,
+      resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 15,
+      passive: 'vitality 1', ability: null,
+      building_slot: 'slot_0',
+      xp: 110
+    },
+    inquisitor_t2: {
+      id: 'h_e_2_t2',
+      f: 'e',
+      t: 2,
+      size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 80, armor: 8, initiative: 40,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 20,
+      passive: 'vitality 2', ability: null,
+      building_slot: 'slot_0',
+      xp: 330
+    },
+    inquisitor_t3: {
+      id: 'h_e_2_t3',
+      f: 'e',
+      t: 3,
+      size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 90, armor: 10, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 25,
+      passive: 'vitality 3', ability: null,
+      building_slot: 'slot_0',
+      xp: 660
+    },
+    inquisitor_t4: {
+      id: 'h_e_2_t4',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 100, armor: 12, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 30,
+      passive: 'vitality 3', ability: null,
+      building_slot: 'slot_0',
+      xp: 770
+    },
+    ranger: {
+      id: 'h_e_3',
+      f: 'e',
+      t: 1,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 82, armor: 3, initiative: 110,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 15,
+      passive: 'pierce 1', ability: null,
+      building_slot: 'slot_0',
+      xp: 115
+    },
+    ranger_t2: {
+      id: 'h_e_3_t2',
+      f: 'e',
+      t: 2,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 98, armor: 4, initiative: 132,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 12 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 18,
+      passive: 'pierce 1', ability: null,
+      building_slot: 'slot_0',
+      xp: 345
+    },
+    ranger_t3: {
+      id: 'h_e_3_t3',
+      f: 'e',
+      t: 3,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 118, armor: 4, initiative: 158,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 14 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 22,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0',
+      xp: 690
+    },
+    ranger_t4: {
+      id: 'h_e_3_t4',
+      f: 'e',
+      t: 4,
+      size: 'tile',
+      tags: ['Archer', null],
+      hp: 142, armor: 5, initiative: 190,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 17 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 26,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0',
+      xp: 805
+    },
+    conscript: {
+      id: 'e1', f: 'e', t: 1,
+      name: 'Conscript',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 50, armor: 10, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      xp: 90, passive: null, ability: null,
+    },
+    infantry: {
+      id: 'e11', f: 'e', t: 2,
+      name: 'Infantry',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 70, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      xp: 300, passive: 'recuperate 1', ability: null,
+    },
+    crossbowman: {
+      id: 'e111', f: 'e', t: 3,
+      name: 'Crossbowman',
+      tags: ['Knight', 'Archer'],
+      size: 'tile',
+      hp: 70, armor: 10, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20,
+      xp: 300, passive: ['recuperate 1', 'pierce 1'], ability: null,
+    },
+    heavy_infantry: {
+      id: 'e112', f: 'e', t: 3,
+      name: 'Heavy Infantry',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 90, armor: 25, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 300, passive: ['recuperate 1', 'protector 1'], ability: null,
+    },
+    horseman: {
+      id: 'e12', f: 'e', t: 2,
+      name: 'Horseman',
+      tags: ['Knight', null],
+      size: 'row',
+      hp: 110, armor: 20, initiative: 45,
+      resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 5, nature: 15 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 550, passive: 'impale 1', ability: null,
+    },
+    sentinel: {
+      id: 'e3', f: 'e', t: 1,
+      name: 'Sentinel',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 90, armor: 15, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 250, passive: null, ability: null,
+    },
+    iron_automaton: {
+      id: 'e31', f: 'e', t: 2,
+      name: 'Iron Automaton',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 100, armor: 25, initiative: 50,
+      resistances: { air: 10, fire: 0, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 40,
+      xp: 250, passive: ['protector 1', 'unbreakable 1'], ability: null,
+    },
+    siege_engine: {
+      id: 'e32', f: 'e', t: 2,
+      name: 'Siege Engine',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 100, armor: 20, initiative: 40,
+      resistances: { air: 0, fire: 20, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 25,
+      xp: 250, passive: 'shatter 2', ability: null,
+    },
+    smith: {
+      id: 'e6', f: 'e', t: 1,
+      name: 'Smith',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 50, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15,
+      xp: 75, passive: null, ability: null,
+    },
+    mechanic: {
+      id: 'e61', f: 'e', t: 2,
+      name: 'Mechanic',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 60, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25,
+      xp: 75, passive: 'fortify 1', ability: null,
+    },
+    rifleman: {
+      id: 'e62', f: 'e', t: 2,
+      name: 'Rifleman',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 60, armor: 10, initiative: 35,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20,
+      xp: 275, passive: 'shatter 1', ability: null,
+    },
+      devastator: {
+      id: 'e621', f: 'e', t: 3,
+      name: 'Devastator',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 75, armor: 25, initiative: 35,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30,
+      xp: 575, passive: 'shatter 2', ability: null,
+    },
+      flamefrower: {
+      id: 'e622', f: 'e', t: 3,
+      name: 'Flamefrower',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 65, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 20,
+      xp: 475, passive: ['burn 2','dissipate 1'], ability: null,
+    },
+    scout: {
+      id: 'e8', f: 'e', t: 1,
+      name: 'Scout',
+      tags: ['Archer', null],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 15,
+      xp: 75, passive: null, ability: null,
+    },
+    archer: {
+      id: 'e81', f: 'e', t: 2,
+      name: 'Archer',
+      tags: ['Archer', null],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20,
+      xp: 275, passive: 'find_weakness 1', ability: null,
+    },
+    sniper: {
+      id: 'e82', f: 'e', t: 2,
+      name: 'Sniper',
+      tags: ['Archer', null],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 25,
+      xp: 320, passive: 'pierce 1', ability: null,
+    },
+    acolyte: {
+      id: 'e2', f: 'e', t: 1,
+      name: 'Acolyte',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20,
+      xp: 60, passive: null, ability: null,
+    },
+    templar: {
+      id: 'e21', f: 'e', t: 2,
+      name: 'Templar',
+      tags: ['Knight', 'Holy'],
+      size: 'tile',
+      hp: 60, armor: 20, initiative: 30,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      xp: 320, passive: 'aegis 1', ability: 'sanctuary 1',
+    },
+    priest: {
+      id: 'e22', f: 'e', t: 2,
+      name: 'Priest',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25,
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 1',
+    },
+    ardent_priest: {
+      id: 'e221', f: 'e', t: 3,
+      name: 'Ardent Priest',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 35,
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 2',
+    },
+    purgator: {
+      id: 'e23', f: 'e', t: 2,
+      name: 'Purgator',
+      tags: ['Knight', 'Holy'],
+      size: 'tile',
+      hp: 60, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 15, life: 50, death: 5, cold: 5, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 2,
+      damage_source: 'life', action_power: 20,
+      xp: 280, passive: ['burn 1','dissipate 1'], ability: 'purge 1',
+    },
+    apprentice: {
+      id: 'e4', f: 'e', t: 1,
+      name: 'Apprentice',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 30,
+      resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'air', action_power: 20,
+      xp: 110, passive: null, ability: null,
+    },
+    red_mage: {
+      id: 'e41', f: 'e', t: 2,
+      name: 'Red Mage',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 50,
+      resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 25,
+      xp: 250, passive: 'burn 1', ability: null,
+    },
+    ash_priest: {
+      id: 'e411', f: 'e', t: 3,
+      name: 'Ash Priest',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 50,
+      resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 6,
+      damage_source: 'fire', action_power: 25,
+      xp: 250, passive: 'burn 2', ability: null,
+    },
+    cinder_knight: {
+      id: 'e412', f: 'e', t: 3,
+      name: 'Cinder Knight',
+      tags: ['Caster', 'Knight'],
+      size: 'tile',
+      hp: 90, armor: 15, initiative: 50,
+      resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'fire', action_power: 35,
+      xp: 250, passive: ['burn 2','volcanic_skin 1'], ability: null,
+    }
+  },
+
+  grail_of_sorrow: {
+    zombie_risen: {
+      id: 'gs1', f: 'g', t: 1,
+      name: 'Risen',
+      tags: ['Zombie'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 25,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      xp: 200, passive: null, ability: null,
+    },
+    poisonous_ghoul: {
+      id: 'gs11', f: 'g', t: 2,
+      name: 'Poisonous Ghoul',
+      tags: ['Zombie'],
+      size: 'tile',
+      hp: 90, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 15,
+      xp: 200, passive: 'poison 1', ability: null,
+    },
+    plague_knight: {
+      id: 'gs111', f: 'g', t: 3,
+      name: 'Plague Knight',
+      tags: ['Zombie', 'Knight'],
+      size: 'tile',
+      hp: 95, armor: 20, initiative: 20,
+      resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 20,
+      xp: 200, passive: ['poison 2','regenerate 1'], ability: null,
+    },
+    cannibal_ghoul: {
+      id: 'gs12', f: 'g', t: 2,
+      name: 'Cannibal Ghoul',
+      tags: ['Vampire', 'Zombie'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 35,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      xp: 300, passive: ['lifesteal 1', 'rage 1'], ability: null,
+    }, 
+    abominate: {
+      id: 'gs121', f: 'g', t: 3,
+      name: 'Abominate',
+      tags: ['Vampire', 'Zombie'],
+      size: 'tile',
+      hp: 75, armor: 0, initiative: 40,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
+      xp: 300, passive: ['lifesteal 2', 'rage 2'], ability: null,
+    },
+    cesswalker: {
+      id: 'gs13', f: 'g', t: 2,
+      name: 'Cesswalker',
+      tags: ['Caster', 'Zombie'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
+      action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25,
+      xp: 205, passive: 'regenerate 1', ability: null,
+    },
+    blightwalker: {
+      id: 'gs131', f: 'g', t: 3,
+      name: 'Blightwalker',
+      tags: ['Caster', 'Zombie'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
+      action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 40,
+      xp: 205, passive: ['undying 1', 'regenerate 1'], ability: null,
+    },
+    catapult: {
+      id: 'gs2', f: 'g', t: 1,
+      name: 'Catapult',
+      tags: ['Zombie', 'Construct'],
+      size: 'row',
+      hp: 60, armor: 30, initiative: 10,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 25,
+      xp: 200, passive: null, ability: null,
+    },
+    corpse_launcher: {
+      id: 'gs21', f: 'g', t: 2,
+      name: 'Corpse Launcher',
+      tags: ['Zombie', 'Construct'],
+      size: 'row',
+      hp: 80, armor: 30, initiative: 10,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25,
+      xp: 201, passive: null, ability: null,
+    },
+    meat_wagon: {
+      id: 'gs22', f: 'g', t: 2,
+      name: 'Meat Wagon',
+      tags: ['Feast', 'Construct'],
+      size: 'row',
+      hp: 100, armor: 40, initiative: 10,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 1,
+      damage_source: null, action_power: 30,
+      xp: 202, passive: 'vitality 1', ability: null,
+    },
+    adept: {
+      id: 'gs3', f: 'g', t: 1,
+      name: 'Adept',
+      tags: ['Caster'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 30, death: 20, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20,
+      xp: 300, passive: null, ability: null,
+    },
+    blood_adept: {
+      id: 'gs31', f: 'g', t: 2,
+      name: 'Blood Adept',
+      tags: ['Vampire', 'Caster'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 20, death: 30, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25,
+      xp: 305, passive: 'lifesteal 1', ability: null,
+    },
+    crimson_mage: {
+      id: 'gs311', f: 'g', t: 3,
+      name: 'Blood Adept',
+      tags: ['Vampire', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25,
+      xp: 305, passive: ['lifesteal 1', 'vitality 1'], ability: 'blood_craze 1',
+    },
+    blood_knight: {
+      id: 'gs312', f: 'g', t: 3,
+      name: 'Blood Knight',
+      tags: ['Vampire', 'Knight'],
+      size: 'tile',
+      hp: 75, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 25,
+      xp: 305, passive: ['lifesteal 2', 'bleed 1'], ability: null,
+    },
+    necromancer: {
+      id: 'gs32', f: 'g', t: 2,
+      name: 'Necromancer',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 20, death: 30, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 6,
+      damage_source: null, action_power: 25,
+      xp: 520, passive: 'vitality 1', ability: null,
+    },
+    plague_scholar: {
+      id: 'gs33', f: 'g', t: 2,
+      name: 'Plague Scholar',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 20, death: 30, cold: 0, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25,
+      xp: 505, passive: 'infect 1', ability: null,
+    },
+    dragon_c: {
+      id: 'gs4', f: 'g', t: 1,
+      name: 'Dragon C',
+      tags: ['Zombie'],
+      size: 'row',
+      hp: 110, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      xp: 300, passive: null, ability: null,
+    },
+    dragon_c_death: {
+      id: 'gs41', f: 'g', t: 2,
+      name: 'Dragon C',
+      tags: ['Zombie'],
+      size: 'row',
+      hp: 130, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 5,
+      xp: 301, passive: 'impale 1', ability: null,
+    },
+    dragon_c_aoe: {
+      id: 'gs42', f: 'g', t: 2,
+      name: 'Dragon C',
+      tags: ['Zombie'],
+      size: 'row',
+      hp: 130, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 6,
+      damage_source: 'death', action_power: 25,
+      xp: 301, passive: null, ability: null,
+    },
+    skeleton: {
+      id: 'gs5', f: 'g', t: 1,
+      name: 'Skeleton',
+      tags: ['Skeleton', 'Knight'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15,
+      xp: 75, passive: null, ability: null,
+    },
+    reformed_skeleton: {
+      id: 'gs51', f: 'g', t: 2,
+      name: 'Reformed',
+      tags: ['Skeleton', 'Knight'],
+      size: 'tile',
+      hp: 80, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      xp: 401, passive: null, ability: null,
+    },
+    skeletal_mage: {
+      id: 'gs52', f: 'g', t: 2,
+      name: 'Skeletal Mage',
+      tags: ['Skeleton', 'Caster'],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 15,
+      xp: 400, passive: null, ability: null,
+    },
+    ghost: {
+      id: 'gs6', f: 'g', t: 1,
+      name: 'Ghost',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15,
+      xp: 500, passive: null, ability: null,
+    },
+    specter: {
+      id: 'gs61', f: 'g', t: 2,
+      name: 'Specter',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15,
+      xp: 500, passive: 'slow 1', ability: null,
+    },
+    apparition: {
+      id: 'gs62', f: 'g', t: 2,
+      name: 'Apparition',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15,
+      xp: 500, passive: null, ability: null,
+    },
+  },
+
+  enemies: {
+    forests_of_ashenveil: {
+      bramble_hound: {
+        id: 'fa_e1', f: 'fa', t: 1,
+        name: 'Bramble Hound',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 55, armor: 3, initiative: 50,
+        resistances: { air: 0, fire: 0, life: 10, death: 0, cold: 0, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 12,
+        xp: 60, passive: null, ability: null,
+      },
+      thorn_archer: {
+        id: 'fa_e2', f: 'fa', t: 1,
+        name: 'Thorn Archer',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 42, armor: 0, initiative: 65,
+        resistances: { air: 0, fire: 0, life: 10, death: 0, cold: 0, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'nature', action_power: 13,
+        xp: 65, passive: 'poison 1', ability: null,
+      },
+      forest_troll: {
+        id: 'fa_e3', f: 'fa', t: 2,
+        name: 'Forest Troll',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 130, armor: 8, initiative: 25,
+        resistances: { air: 0, fire: 0, life: 15, death: 0, cold: 0, nature: 20 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 22,
+        xp: 230, passive: 'regenerate 1', ability: null,
+      },
+      vine_witch: {
+        id: 'fa_e4', f: 'fa', t: 2,
+        name: 'Vine Witch',
+        tags: ['Caster', null],
+        size: 'tile',
+        hp: 85, armor: 0, initiative: 60,
+        resistances: { air: 0, fire: 0, life: 15, death: 0, cold: 0, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'nature', action_power: 20,
+        xp: 240, passive: 'poison 1', ability: null,
+      },
+      grove_warden: {
+        id: 'fa_e5', f: 'fa', t: 2,
+        name: 'Grove Warden',
+        tags: ['Beast', 'Caster'],
+        size: 'tile',
+        hp: 95, armor: 2, initiative: 50,
+        resistances: { air: 0, fire: 0, life: 20, death: 0, cold: 0, nature: 20 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 28,
+        xp: 260, passive: 'renew 1', ability: null,
+      },
+      thornback_colossus: {
+        id: 'fa_e6', f: 'fa', t: 3,
+        name: 'Thornback Colossus',
+        tags: ['Beast', null],
+        size: 'row',
+        hp: 210, armor: 14, initiative: 20,
+        resistances: { air: 0, fire: 0, life: 25, death: 0, cold: 0, nature: 30 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 34,
+        xp: 470, passive: 'thorns 2', ability: null,
+      },
+      spore_shaman: {
+        id: 'fa_e7', f: 'fa', t: 3,
+        name: 'Spore Shaman',
+        tags: ['Caster', null],
+        size: 'tile',
+        hp: 115, armor: 0, initiative: 65,
+        resistances: { air: 0, fire: 0, life: 20, death: 0, cold: 0, nature: 35 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'nature', action_power: 27,
+        xp: 400, passive: 'spore_cloud 1', ability: null,
+      },
+      ancient_treant: {
+        id: 'fa_e8', f: 'fa', t: 4,
+        name: 'Ancient Treant',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 260, armor: 20, initiative: 10,
+        resistances: { air: 0, fire: 0, life: 35, death: 0, cold: 0, nature: 40 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 38,
+        xp: 580, passive: 'thorns 2', ability: null,
+      },
+      forest_sovereign: {
+        id: 'fa_e9', f: 'fa', t: 4,
+        name: 'Forest Sovereign',
+        tags: ['Beast', 'Caster'],
+        size: 'tile',
+        hp: 190, armor: 5, initiative: 45,
+        resistances: { air: 0, fire: 0, life: 45, death: 0, cold: 0, nature: 45 },
+        action: 'heal', target_type: 'ally', targets: 3, range: 6,
+        damage_source: null, action_power: 48,
+        xp: 620, passive: 'vitality 3', ability: null,
+      },
+      the_devouring_wood: {
+        id: 'fa_e10', f: 'fa', t: 5,
+        name: 'The Devouring Wood',
+        tags: ['Beast', null],
+        size: 'row',
+        hp: 400, armor: 22, initiative: 30,
+        resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 50 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'nature', action_power: 58,
+        xp: 1250, passive: 'regenerate 2', ability: null,
+      },
+    },
+
+    mountains_of_valdrek: {
+      rockjaw: {
+        id: 'mv_e1', f: 'mv', t: 1,
+        name: 'Rockjaw',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 65, armor: 6, initiative: 35,
+        resistances: { air: 10, fire: 0, life: 0, death: 0, cold: 5, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 13,
+        xp: 65, passive: null, ability: null,
+      },
+      peak_harpy: {
+        id: 'mv_e2', f: 'mv', t: 1,
+        name: 'Peak Harpy',
+        tags: ['Beast', null],
+        size: 'tile',
+        hp: 46, armor: 0, initiative: 75,
+        resistances: { air: 20, fire: 0, life: 0, death: 0, cold: 5, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'air', action_power: 14,
+        xp: 70, passive: 'slow 1', ability: null,
+      },
+      stone_golem: {
+        id: 'mv_e3', f: 'mv', t: 2,
+        name: 'Stone Golem',
+        tags: ['Construct', null],
+        size: 'tile',
+        hp: 145, armor: 16, initiative: 15,
+        resistances: { air: 10, fire: 5, life: 0, death: 10, cold: 5, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 25,
+        xp: 260, passive: null, ability: null,
+      },
+      frost_shaman: {
+        id: 'mv_e4', f: 'mv', t: 2,
+        name: 'Frost Shaman',
+        tags: ['Caster', null],
+        size: 'tile',
+        hp: 88, armor: 0, initiative: 60,
+        resistances: { air: 10, fire: 0, life: 0, death: 0, cold: 30, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'cold', action_power: 21,
+        xp: 250, passive: 'slow 1', ability: null,
+      },
+      mountain_warden: {
+        id: 'mv_e5', f: 'mv', t: 2,
+        name: 'Mountain Warden',
+        tags: ['Knight', null],
+        size: 'tile',
+        hp: 115, armor: 14, initiative: 30,
+        resistances: { air: 10, fire: 0, life: 0, death: 0, cold: 10, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 24,
+        xp: 280, passive: 'shatter 1', ability: null,
+      },
+      glacier_brute: {
+        id: 'mv_e6', f: 'mv', t: 3,
+        name: 'Glacier Brute',
+        tags: ['Beast', null],
+        size: 'row',
+        hp: 225, armor: 12, initiative: 20,
+        resistances: { air: 10, fire: 0, life: 0, death: 0, cold: 35, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'cold', action_power: 35,
+        xp: 490, passive: 'slow 2', ability: null,
+      },
+      rune_caster: {
+        id: 'mv_e7', f: 'mv', t: 3,
+        name: 'Rune Caster',
+        tags: ['Caster', null],
+        size: 'tile',
+        hp: 125, armor: 0, initiative: 65,
+        resistances: { air: 15, fire: 0, life: 0, death: 0, cold: 25, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'air', action_power: 29,
+        xp: 430, passive: 'slow 1', ability: null,
+      },
+      peak_titan: {
+        id: 'mv_e8', f: 'mv', t: 4,
+        name: 'Peak Titan',
+        tags: ['Beast', null],
+        size: 'row',
+        hp: 305, armor: 20, initiative: 15,
+        resistances: { air: 15, fire: 0, life: 0, death: 0, cold: 30, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 44,
+        xp: 720, passive: 'pierce 1', ability: null,
+      },
+      storm_witch: {
+        id: 'mv_e9', f: 'mv', t: 4,
+        name: 'Storm Witch',
+        tags: ['Caster', null],
+        size: 'tile',
+        hp: 195, armor: 5, initiative: 60,
+        resistances: { air: 30, fire: 0, life: 0, death: 0, cold: 25, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'air', action_power: 40,
+        xp: 760, passive: 'slow 2', ability: null,
+      },
+      the_mountain_king: {
+        id: 'mv_e10', f: 'mv', t: 5,
+        name: 'The Mountain King',
+        tags: ['Knight', null],
+        size: 'row',
+        hp: 440, armor: 28, initiative: 30,
+        resistances: { air: 20, fire: 0, life: 0, death: 0, cold: 30, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 62,
+        xp: 1350, passive: 'shatter 2', ability: null,
+      },
+    },
+
+    dungeons_of_malgrath: {
+      dungeon_rat: {
+        id: 'dm_e1', f: 'dm', t: 1,
+        name: 'Dungeon Rat',
+        tags: ['Beast', 'Undead'],
+        size: 'tile',
+        hp: 40, armor: 0, initiative: 80,
+        resistances: { air: 0, fire: 0, life: 0, death: 30, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 10,
+        xp: 55, passive: 'infect 1', ability: null,
+      },
+      crypt_shambler: {
+        id: 'dm_e2', f: 'dm', t: 1,
+        name: 'Crypt Shambler',
+        tags: ['Undead', null],
+        size: 'tile',
+        hp: 65, armor: 5, initiative: 28,
+        resistances: { air: 0, fire: 0, life: 0, death: 35, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 11,
+        xp: 60, passive: null, ability: null,
+      },
+      wailing_ghost: {
+        id: 'dm_e3', f: 'dm', t: 2,
+        name: 'Wailing Ghost',
+        tags: ['Undead', null],
+        size: 'tile',
+        hp: 78, armor: 0, initiative: 70,
+        resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'death', action_power: 18,
+        xp: 200, passive: 'infect 1', ability: null,
+      },
+      bone_knight: {
+        id: 'dm_e4', f: 'dm', t: 2,
+        name: 'Bone Knight',
+        tags: ['Undead', 'Knight'],
+        size: 'tile',
+        hp: 110, armor: 10, initiative: 30,
+        resistances: { air: 0, fire: 0, life: 0, death: 45, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 23,
+        xp: 260, passive: 'shatter 1', ability: null,
+      },
+      death_cultist: {
+        id: 'dm_e5', f: 'dm', t: 2,
+        name: 'Death Cultist',
+        tags: ['Undead', 'Caster'],
+        size: 'tile',
+        hp: 88, armor: 0, initiative: 55,
+        resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 26,
+        xp: 250, passive: 'noxious_death 1', ability: null,
+      },
+      tomb_colossus: {
+        id: 'dm_e6', f: 'dm', t: 3,
+        name: 'Tomb Colossus',
+        tags: ['Undead', null],
+        size: 'row',
+        hp: 230, armor: 15, initiative: 18,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 36,
+        xp: 500, passive: 'noxious_death 1', ability: null,
+      },
+      revenant: {
+        id: 'dm_e7', f: 'dm', t: 3,
+        name: 'Revenant',
+        tags: ['Undead', null],
+        size: 'tile',
+        hp: 155, armor: 8, initiative: 50,
+        resistances: { air: 0, fire: 0, life: 0, death: 45, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 30,
+        xp: 440, passive: 'lifesteal 1', ability: null,
+      },
+      soul_harvester: {
+        id: 'dm_e8', f: 'dm', t: 4,
+        name: 'Soul Harvester',
+        tags: ['Undead', 'Caster'],
+        size: 'tile',
+        hp: 185, armor: 5, initiative: 60,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+        damage_source: 'death', action_power: 38,
+        xp: 740, passive: 'infect 2', ability: null,
+      },
+      dread_knight: {
+        id: 'dm_e9', f: 'dm', t: 4,
+        name: 'Dread Knight',
+        tags: ['Undead', 'Knight'],
+        size: 'row',
+        hp: 285, armor: 22, initiative: 25,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 44,
+        xp: 780, passive: 'lifesteal 2', ability: null,
+      },
+      malgrath_the_undying: {
+        id: 'dm_e10', f: 'dm', t: 5,
+        name: 'Malgrath the Undying',
+        tags: ['Undead', null],
+        size: 'row',
+        hp: 460, armor: 25, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 65,
+        xp: 1400, passive: ['lifesteal 2', 'noxious_death 2'], ability: null,
+      },
+    },
+  },
+};
+
+export { UNITS, UNIT_ABILITIES };
+if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
