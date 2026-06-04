@@ -530,7 +530,6 @@ router.post('/battle/action', async (req, res) => {
       const valid = engine.getValidTargets(actor, action === 'ability');
       if (!valid.some(t => t.id === target_id)) return res.status(400).json({ error: 'Invalid target' });
     }
-    }
 
     engine.executeAction(actor, target, action);
 
