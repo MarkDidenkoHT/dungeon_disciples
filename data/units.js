@@ -926,8 +926,8 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 10,
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
-      xp: 60, passive: null, ability: null,
+      damage_source: null, action_power: 10,
+      xp: 60, passive: ['unity', 'beacon_of_hope 1'], ability: null,
     },
     mithrails_light: {
       id: 'e2', f: 'e', t: 2,
@@ -937,7 +937,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 10,
       resistances: { air: 16, fire: 16, life: 16, death: 16, cold: 16, nature: 16 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 16,
       xp: 60, passive: null, ability: null,
     },
     mithrails_will: {
