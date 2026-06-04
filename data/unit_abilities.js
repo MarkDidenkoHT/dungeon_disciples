@@ -68,8 +68,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Drain 25% HP from a Puppet ally. Heal self for the drained amount.',
-    params: { ally_drain_pct: 25, tag_required: 'Puppet' },
+    description: 'Drain 25% HP from a Puppet ally. Heal self for the drained amount and gain +15% damage until end of battle.',
+    params: { ally_drain_pct: 25, tag_required: 'Puppet', devour_dmg_bonus_pct: 15 },
   },
   'burn 1': {
     id: 'burn 1',

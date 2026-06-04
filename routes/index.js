@@ -525,10 +525,11 @@ router.post('/battle/action', async (req, res) => {
       if (!target) return res.status(400).json({ error: 'Target not found' });
     }
 
-    if (action === 'attack' || action === 'ability') {
-      if (!target) return res.status(400).json({ error: 'target_id required for attack/ability' });
+    if (action === 'attack' || action === 'ability' || action === 'sacrifice') {
+      if (!target) return res.status(400).json({ error: 'target_id required for attack/ability/sacrifice' });
       const valid = engine.getValidTargets(actor, action === 'ability');
       if (!valid.some(t => t.id === target_id)) return res.status(400).json({ error: 'Invalid target' });
+    }
     }
 
     engine.executeAction(actor, target, action);

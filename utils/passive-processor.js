@@ -397,7 +397,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     target.battle_hp = Math.max(1, target.battle_hp - drained);
     const healed = Math.min(drained, actor.max_hp - actor.battle_hp);
     actor.battle_hp += healed;
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}` });
+    if (p.devour_dmg_bonus_pct != null) {
+      actor._dmg_mult = (actor._dmg_mult ?? 1) + p.devour_dmg_bonus_pct / 100;
+    }
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}${p.devour_dmg_bonus_pct != null ? `, +${p.devour_dmg_bonus_pct}% damage` : ''}` });
   }
   if (p.ally_initiative_bonus != null) {
     for (const a of combatants.filter(c => c.side === actor.side && c.alive)) {

@@ -129,6 +129,10 @@ export class BattleSystem {
     const isHeal     = this.isHealer(actor);
     const actionKey  = this.getActionKey(actor);
 
+    if (actionKey === 'sacrifice') {
+      return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
+    }
+
     return this.combatants.filter(t => {
       if (!t.alive) return false;
 
@@ -168,6 +172,7 @@ export class BattleSystem {
 
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
+    if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
     if (!target) return false;
 
     if (this.isHealer(actor)) {
@@ -308,6 +313,28 @@ export class BattleSystem {
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
     }
+  }
+
+  doSacrifice(actor, target) {
+    if (!target || target.id === actor.id) {
+      actor.acted_this_round = true;
+      return this.afterAction(actor);
+    }
+    const raw    = this.calcHeal(actor);
+    const factor = 1 - (target._healing_reduction ?? 0) / 100;
+    const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
+    target.battle_hp += heal;
+    this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
+    this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
+    const selfDmg = Math.floor(heal / 2);
+    if (selfDmg > 0) {
+      actor.battle_hp = Math.max(0, actor.battle_hp - selfDmg);
+      const dead = actor.battle_hp <= 0;
+      if (dead) { actor.alive = false; this.applyOnDeathPassives(actor); }
+      this.pushLog({ type: 'passive', passive: 'Sacrifice', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: selfDmg, heal: false });
+    }
+    actor.acted_this_round = true;
+    return this.afterAction(actor);
   }
 
   doDefend(actor) {

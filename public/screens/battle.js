@@ -59,6 +59,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   function getActionLabel(unit) {
+    const actionKey = unit?.unit_data?.action;
+    const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
+    if (key === 'sacrifice') return 'Sacrifice';
     const tt = unit?.unit_data?.target_type || unit?.unit_data?.action?.target_type;
     return tt === 'ally' ? 'Heal' : 'Attack';
   }
@@ -90,6 +93,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!actor || !state) return new Set();
     const targets = new Set();
     const isHeal  = actor.unit_data?.target_type === 'ally' || actor.unit_data?.action?.target_type === 'ally';
+    const actionRaw = actor.unit_data?.action;
+    const actionKey = typeof actionRaw === 'string' ? actionRaw : actionRaw?.id;
+
+    if (actionKey === 'sacrifice') {
+      state.combatants.filter(c => c.alive && c.side === actor.side && c.id !== actor.id).forEach(c => targets.add(c.id));
+      return targets;
+    }
 
     if (forAbility) {
       const key    = actor.unit_data?.ability || actor.unit_data?.active_ability;
