@@ -1024,22 +1024,22 @@ const UNITS = {
       id: 'h_g_1',
       f: 'g', t: 1, size: 'tile',
       tags: ['Caster', null],
-      hp: 55, armor: 0, initiative: 30,
+      hp: 55, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 18,
-      passive: 'vitality 1', ability: null,
+      passive: null, ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 100
     },
     mourning_prophet_path_a_t2: {
       id: 'h_g_1_a2',
       f: 'g', t: 2, size: 'tile',
       tags: ['Caster', 'Zombie'],
-      hp: 75, armor: 0, initiative: 30,
+      hp: 80, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 22,
-      passive: ['vitality 1', 'infect 1'], ability: null,
+      passive: ['vitality 1', 'infect 1'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 300
     },
     mourning_prophet_path_b_t2: {
@@ -1050,7 +1050,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
-      passive: ['vitality 1', 'regenerate 1'], ability: null,
+      passive: ['vitality 1', 'regenerate 1'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 300
     },
     mourning_prophet_path_a_t3: {
@@ -1061,7 +1061,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
       damage_source: 'death', action_power: 26,
-      passive: ['vitality 2', 'infect 1'], ability: null,
+      passive: ['vitality 2', 'infect 1'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 570
     },
     mourning_prophet_path_b_t3: {
@@ -1072,7 +1072,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 35,
-      passive: ['vitality 2', 'regenerate 1'], ability: null,
+      passive: ['vitality 2', 'regenerate 1'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 570
     },
     mourning_prophet_path_a_t4: {
@@ -1083,7 +1083,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
       damage_source: 'death', action_power: 32,
-      passive: ['vitality 2', 'infect 2'], ability: null,
+      passive: ['vitality 2', 'infect 2'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 740
     },
     mourning_prophet_path_a_t4_alt: {
@@ -1094,7 +1094,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
       damage_source: 'death', action_power: 32,
-      passive: ['vitality 2', 'infect 2'], ability: null,
+      passive: ['vitality 2', 'infect 2'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 740
     },
     mourning_prophet_path_b_t4: {
@@ -1105,7 +1105,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
       damage_source: null, action_power: 42,
-      passive: ['vitality 2', 'regenerate 2'], ability: null,
+      passive: ['vitality 2', 'regenerate 2'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 740
     },
     mourning_prophet_path_b_t4_alt: {
@@ -1116,7 +1116,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
       damage_source: null, action_power: 42,
-      passive: ['vitality 2', 'regenerate 2'], ability: null,
+      passive: ['vitality 2', 'regenerate 2'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 740
     },
     grail_warden: {
