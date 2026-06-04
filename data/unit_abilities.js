@@ -521,6 +521,15 @@ const UNIT_ABILITIES = {
     description: 'Command a Vampire ally to strike a random enemy for 50% of their normal damage.',
     params: { bonus_attack: 50, tag_required: 'Vampire' },
   },
+  'blood_craze 2': {
+    id: 'blood_craze 2',
+    name: 'Blood Craze',
+    rank: 2,
+    type: 'active',
+    target: 'ally_tagged',
+    description: 'Command a Vampire ally to strike a random enemy for 75% of their normal damage.',
+    params: { bonus_attack: 75, tag_required: 'Vampire' },
+  },
   'infernal_mandate 1': {
     id: 'infernal_mandate 1',
     name: 'Infernal Mandate',
@@ -542,7 +551,7 @@ const UNIT_ABILITIES = {
   'prayer_of_healing 2': {
     id: 'prayer_of_healing 2',
     name: 'Prayer of Healing',
-    rank: 1,
+    rank: 2,
     type: 'active',
     target: 'all_allies',
     description: 'Heal all allies for 40 HP.',

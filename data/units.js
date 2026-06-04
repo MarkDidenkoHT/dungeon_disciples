@@ -1027,8 +1027,8 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 18,
-      passive: null, ability: 'raise_dead 1',
+      damage_source: 'death', action_power: 20,
+      passive: 'vitality 1', ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 100
     },
     mourning_prophet_path_a_t2: {
@@ -1038,7 +1038,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 22,
+      damage_source: 'death', action_power: 25,
       passive: ['vitality 1', 'infect 1'], ability: 'raise_dead 1',
       building_slot: 'slot_0', xp: 300
     },
@@ -1050,7 +1050,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
-      passive: ['vitality 1', 'regenerate 1'], ability: 'raise_dead 1',
+      passive: ['vitality 1', 'life_steal 1'], ability: 'blood_craze 1',
       building_slot: 'slot_0', xp: 300
     },
     mourning_prophet_path_a_t3: {
@@ -1072,7 +1072,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 35,
-      passive: ['vitality 2', 'regenerate 1'], ability: 'raise_dead 1',
+      passive: ['vitality 2', 'life_steal 1'], ability: 'blood_craze 2',
       building_slot: 'slot_0', xp: 570
     },
     mourning_prophet_path_a_t4: {
@@ -1105,7 +1105,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
       damage_source: null, action_power: 42,
-      passive: ['vitality 2', 'regenerate 2'], ability: 'raise_dead 1',
+      passive: ['vitality 1', 'life_steal 1'], ability: 'blood_craze 1',
       building_slot: 'slot_0', xp: 740
     },
     mourning_prophet_path_b_t4_alt: {
@@ -1116,7 +1116,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
       damage_source: null, action_power: 42,
-      passive: ['vitality 2', 'regenerate 2'], ability: 'raise_dead 1',
+      passive: ['vitality 1', 'life_steal 1'], ability: 'blood_craze 1',
       building_slot: 'slot_0', xp: 740
     },
     grail_warden: {
@@ -1127,7 +1127,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: null, ability: null,
+      passive: 'regenerate 1', ability: null,
       building_slot: 'slot_0', xp: 105
     },
     grail_warden_path_a_t2: {
@@ -1166,7 +1166,7 @@ const UNITS = {
     grail_warden_path_b_t3: {
       id: 'h_g_2_b3',
       f: 'g', t: 3, size: 'tile',
-      tags: ['Knight', 'Zombie'],
+      tags: ['Knight', 'Vampire'],
       hp: 118, armor: 16, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
@@ -1199,7 +1199,7 @@ const UNITS = {
     grail_warden_path_b_t4: {
       id: 'h_g_2_b41',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Knight', 'Zombie'],
+      tags: ['Knight', 'Vampire'],
       hp: 150, armor: 18, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
@@ -1210,7 +1210,7 @@ const UNITS = {
     grail_warden_path_b_t4_alt: {
       id: 'h_g_2_b42',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Knight', 'Zombie'],
+      tags: ['Knight', 'Vampire'],
       hp: 150, armor: 18, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
@@ -1225,7 +1225,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25,
+      damage_source: null, action_power: 20,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 95
     },
@@ -1236,8 +1236,8 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: 'slow 1', ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 285
     },
     mothers_voice_path_b_t2: {
@@ -1247,8 +1247,8 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: 'chain 1', ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 285
     },
     mothers_voice_path_a_t3: {
@@ -1258,8 +1258,8 @@ const UNITS = {
       hp: 78, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['slow 1', 'dissipate 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 560
     },
     mothers_voice_path_b_t3: {
@@ -1269,8 +1269,8 @@ const UNITS = {
       hp: 72, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['chain 1', 'vitality 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 560
     },
     mothers_voice_path_a_t4: {
@@ -1280,8 +1280,8 @@ const UNITS = {
       hp: 96, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['slow 2', 'dissipate 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
     },
     mothers_voice_path_a_t4_alt: {
@@ -1291,8 +1291,8 @@ const UNITS = {
       hp: 96, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['slow 2', 'dissipate 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
     },
     mothers_voice_path_b_t4: {
@@ -1302,8 +1302,8 @@ const UNITS = {
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['chain 2', 'vitality 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
     },
     mothers_voice_path_b_t4_alt: {
@@ -1313,8 +1313,8 @@ const UNITS = {
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'heal', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 25
-      passive: ['chain 2', 'vitality 1'], ability: null,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
     },
     zombie_risen: {
@@ -1337,7 +1337,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 15,
-      xp: 200, passive: 'poison 1', ability: null,
+      xp: 200, passive: ['poison 1', 'infect 1'], ability: null,
     },
     plague_knight: {
       id: 'gs111', f: 'g', t: 3,
@@ -1348,7 +1348,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 20,
-      xp: 200, passive: ['poison 2', 'regenerate 1'], ability: null,
+      xp: 200, passive: ['poison 2', 'infect 1', 'regenerate 1'], ability: null,
     },
     cannibal_ghoul: {
       id: 'gs12', f: 'g', t: 2,
