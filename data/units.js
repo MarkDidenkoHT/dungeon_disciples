@@ -2,173 +2,302 @@ import { UNIT_ABILITIES } from './unit_abilities.js';
 
 const UNITS = {
   choir_of_the_cursed: {
-    warlord: {
+    black_castellan: {
       id: 'h_d_1',
-      f: 'd',
-      t: 1,
-      size: 'tile',
+      f: 'd', t: 1, size: 'tile',
       tags: ['Knight', 'Demon'],
-      hp: 90, armor: 10, initiative: 55,
-      resistances: { air: 0, fire: 10, life: 0, death: 5, cold: 0, nature: 0 },
+      hp: 90, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 90
+      passive: null, ability: 'devour 1',
+      building_slot: 'slot_0', xp: 90
     },
-    warlord_t2: {
-      id: 'h_d_1_t2',
-      f: 'd',
-      t: 2,
-      size: 'tile',
-      tags: ['Knight', null],
-      hp: 144, armor: 10, initiative: 48,
+    black_castellan_path_a_t2: {
+      id: 'h_d_1_a2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 144, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 270
+      building_slot: 'slot_0', xp: 270
     },
-    warlord_t3: {
-      id: 'h_d_1_t3',
-      f: 'd',
-      t: 3,
-      size: 'tile',
-      tags: ['Knight', null],
-      hp: 173, armor: 12, initiative: 58,
+    black_castellan_path_b_t2: {
+      id: 'h_d_1_b2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 130, armor: 12, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 22,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 270
+    },
+    black_castellan_path_a_t3: {
+      id: 'h_d_1_a3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 173, armor: 12, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 29,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 540
+      building_slot: 'slot_0', xp: 540
     },
-    warlord_t4: {
-      id: 'h_d_1_t4',
-      f: 'd',
-      t: 4,
-      size: 'tile',
-      tags: ['Knight', null],
-      hp: 208, armor: 14, initiative: 70,
+    black_castellan_path_b_t3: {
+      id: 'h_d_1_b3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 160, armor: 14, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 27,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 540
+    },
+    black_castellan_path_a_t4: {
+      id: 'h_d_1_a41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 208, armor: 14, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 700
+      building_slot: 'slot_0', xp: 700
     },
-    hexblade: {
-      id: 'h_d_2',
-      f: 'd',
-      t: 1,
-      size: 'tile',
-      tags: ['Caster', null],
-      hp: 70, armor: 2, initiative: 60,
-      resistances: { air: 0, fire: 0, life: 0, death: 10, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 18,
+    black_castellan_path_a_t4_alt: {
+      id: 'h_d_1_a42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 208, armor: 14, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 95
+      building_slot: 'slot_0', xp: 700
     },
-    hexblade_t2: {
-      id: 'h_d_2_t2',
-      f: 'd',
-      t: 2,
-      size: 'tile',
-      tags: ['Caster', null],
-      hp: 84, armor: 2, initiative: 72,
+    black_castellan_path_b_t4: {
+      id: 'h_d_1_b41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 195, armor: 16, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 33,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 700
+    },
+    black_castellan_path_b_t4_alt: {
+      id: 'h_d_1_b42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 195, armor: 16, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 33,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 700
+    },
+    choir_regent: {
+      id: 'h_d_2',
+      f: 'd', t: 1, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 50, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 95
+    },
+    choir_regent_path_a_t2: {
+      id: 'h_d_2_a2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 84, armor: 2, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 12, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 22,
-      passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 285
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 285
     },
-    hexblade_t3: {
-      id: 'h_d_2_t3',
-      f: 'd',
-      t: 3,
-      size: 'tile',
-      tags: ['Caster', null],
-      hp: 101, armor: 3, initiative: 86,
+    choir_regent_path_b_t2: {
+      id: 'h_d_2_b2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 75, armor: 2, initiative: 35,
+      resistances: { air: 0, fire: 10, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 22,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 285
+    },
+    choir_regent_path_a_t3: {
+      id: 'h_d_2_a3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 101, armor: 3, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 14, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 26,
-      passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 570
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 570
     },
-    hexblade_t4: {
-      id: 'h_d_2_t4',
-      f: 'd',
-      t: 4,
-      size: 'tile',
-      tags: ['Caster', null],
-      hp: 121, armor: 4, initiative: 103,
+    choir_regent_path_b_t3: {
+      id: 'h_d_2_b3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 90, armor: 3, initiative: 40,
+      resistances: { air: 0, fire: 12, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 570
+    },
+    choir_regent_path_a_t4: {
+      id: 'h_d_2_a41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 121, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 17, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 31,
-      passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 740
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 740
     },
-    shadowbow: {
-      id: 'h_d_3',
-      f: 'd',
-      t: 1,
-      size: 'tile',
-      tags: ['Archer', null],
-      hp: 80, armor: 3, initiative: 100,
-      resistances: { air: 0, fire: 0, life: 0, death: 5, cold: 0, nature: 0 },
+    choir_regent_path_a_t4_alt: {
+      id: 'h_d_2_a42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 121, armor: 4, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 17, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 16,
-      passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 100
+      damage_source: 'death', action_power: 31,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 740
     },
-    shadowbow_t2: {
-      id: 'h_d_3_t2',
-      f: 'd',
-      t: 2,
-      size: 'tile',
-      tags: ['Archer', null],
+    choir_regent_path_b_t4: {
+      id: 'h_d_2_b41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 110, armor: 4, initiative: 45,
+      resistances: { air: 0, fire: 15, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 29,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 740
+    },
+    choir_regent_path_b_t4_alt: {
+      id: 'h_d_2_b42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 110, armor: 4, initiative: 45,
+      resistances: { air: 0, fire: 15, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 29,
+      passive: null, ability: 'infernal_mandate 1',
+      building_slot: 'slot_0', xp: 740
+    },
+    infernal_ascendant: {
+      id: 'h_d_3',
+      f: 'd', t: 1, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 50, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 15,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 100
+    },
+    infernal_ascendant_path_a_t2: {
+      id: 'h_d_3_a2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Caster', 'Demon'],
       hp: 96, armor: 4, initiative: 120,
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 19,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 300
+      building_slot: 'slot_0', xp: 300
     },
-    shadowbow_t3: {
-      id: 'h_d_3_t3',
-      f: 'd',
-      t: 3,
-      size: 'tile',
-      tags: ['Archer', null],
+    infernal_ascendant_path_b_t2: {
+      id: 'h_d_3_b2',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 85, armor: 2, initiative: 100,
+      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'physical', action_power: 17,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 300
+    },
+    infernal_ascendant_path_a_t3: {
+      id: 'h_d_3_a3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Caster', 'Demon'],
       hp: 115, armor: 4, initiative: 144,
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 23,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 600
+      building_slot: 'slot_0', xp: 600
     },
-    shadowbow_t4: {
-      id: 'h_d_3_t4',
-      f: 'd',
-      t: 4,
-      size: 'tile',
-      tags: ['Archer', null],
+    infernal_ascendant_path_b_t3: {
+      id: 'h_d_3_b3',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 102, armor: 3, initiative: 120,
+      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'physical', action_power: 20,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 600
+    },
+    infernal_ascendant_path_a_t4: {
+      id: 'h_d_3_a41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
       hp: 138, armor: 5, initiative: 173,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 28,
       passive: null, ability: null,
-      building_slot: 'slot_0',
-      xp: 780
+      building_slot: 'slot_0', xp: 780
+    },
+    infernal_ascendant_path_a_t4_alt: {
+      id: 'h_d_3_a42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 138, armor: 5, initiative: 173,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 28,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 780
+    },
+    infernal_ascendant_path_b_t4: {
+      id: 'h_d_3_b41',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 122, armor: 4, initiative: 145,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'physical', action_power: 24,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 780
+    },
+    infernal_ascendant_path_b_t4_alt: {
+      id: 'h_d_3_b42',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 122, armor: 4, initiative: 145,
+      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'physical', action_power: 24,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 780
     },
     imp: {
       id: 'd1', f: 'd', t: 1,
@@ -267,7 +396,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 470, passive: ['rage 1','blood_frenzy 1', 'predator 1'], ability: null,
+      xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'predator 1'], ability: null,
     },
     pain_projector: {
       id: 'd4', f: 'd', t: 3,
@@ -278,7 +407,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
       damage_source: 'physical', action_power: 30,
-      xp: 470, passive: ['regenerate 1','recuperate 1', 'volcanic_skin 1'], ability: null,
+      xp: 470, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
       id: 'd6', f: 'd', t: 1,
@@ -312,247 +441,306 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20,
       xp: 470, passive: 'dissipate 1', ability: 'infernal_mandate 1',
-    }
+    },
   },
 
   empire: {
     paladin: {
       id: 'h_e_1',
-      f: 'e',
-      t: 1,
-      size: 'tile',
+      f: 'e', t: 1, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 80, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
       passive: 'mithrails_light 1', ability: null,
-      building_slot: 'slot_0',
-      xp: 105
+      building_slot: 'slot_0', xp: 105
     },
     paladin_path_a_t2: {
       id: 'h_e_11',
-      f: 'e',
-      t: 2,
-      size: 'tile',
+      f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 95, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: ['mithrails_light 1','protector 1'], ability: null,
-      building_slot: 'slot_0',
-      xp: 300
+      passive: ['mithrails_light 1', 'protector 1'], ability: null,
+      building_slot: 'slot_0', xp: 300
     },
     paladin_path_b_t2: {
       id: 'h_e_12',
-      f: 'e',
-      t: 2,
-      size: 'tile',
+      f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 90, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 20,
-      passive: ['mithrails_light 1','chain 1'], ability: null,
-      building_slot: 'slot_0',
-      xp: 300
+      passive: ['mithrails_light 1', 'chain 1'], ability: null,
+      building_slot: 'slot_0', xp: 300
     },
     paladin_path_a_t3: {
       id: 'h_e_111',
-      f: 'e',
-      t: 3,
-      size: 'tile',
+      f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 25, initiative: 45,
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
-      passive: ['mithrails_light 2','protector 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 560
+      passive: ['mithrails_light 2', 'protector 2'], ability: null,
+      building_slot: 'slot_0', xp: 560
     },
     paladin_path_b_t3: {
       id: 'h_e_121',
-      f: 'e',
-      t: 3,
-      size: 'tile',
+      f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25,
-      passive: ['mithrails_light 2','chain 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 560
+      passive: ['mithrails_light 2', 'chain 2'], ability: null,
+      building_slot: 'slot_0', xp: 560
     },
     paladin_path_a_t4: {
       id: 'h_e_1111',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: ['mithrails_light 2','protector 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 700
+      passive: ['mithrails_light 2', 'protector 2'], ability: null,
+      building_slot: 'slot_0', xp: 700
     },
     paladin_path_a_t4_alt: {
       id: 'h_e_1112',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: ['mithrails_light 2','protector 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 700
+      passive: ['mithrails_light 2', 'protector 2'], ability: null,
+      building_slot: 'slot_0', xp: 700
     },
     paladin_path_b_t4: {
       id: 'h_e_1211',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: ['mithrails_light 2','chain 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 700
+      passive: ['mithrails_light 2', 'chain 2'], ability: null,
+      building_slot: 'slot_0', xp: 700
     },
     paladin_path_b_t4_alt: {
       id: 'h_e_1212',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 26,
-      passive: ['mithrails_light 2','chain 2'], ability: null,
-      building_slot: 'slot_0',
-      xp: 700
+      passive: ['mithrails_light 2', 'chain 2'], ability: null,
+      building_slot: 'slot_0', xp: 700
     },
     inquisitor: {
       id: 'h_e_2',
-      f: 'e',
-      t: 1,
-      size: 'tile',
+      f: 'e', t: 1, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 70, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 15,
       passive: 'vitality 1', ability: null,
-      building_slot: 'slot_0',
-      xp: 110
+      building_slot: 'slot_0', xp: 110
     },
-    inquisitor_t2: {
-      id: 'h_e_2_t2',
-      f: 'e',
-      t: 2,
-      size: 'tile',
+    inquisitor_path_a_t2: {
+      id: 'h_e_2_a2',
+      f: 'e', t: 2, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 80, armor: 8, initiative: 40,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 20,
       passive: 'vitality 2', ability: null,
-      building_slot: 'slot_0',
-      xp: 330
+      building_slot: 'slot_0', xp: 330
     },
-    inquisitor_t3: {
-      id: 'h_e_2_t3',
-      f: 'e',
-      t: 3,
-      size: 'tile',
+    inquisitor_path_b_t2: {
+      id: 'h_e_2_b2',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 75, armor: 6, initiative: 45,
+      resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 22,
+      passive: 'vitality 1', ability: null,
+      building_slot: 'slot_0', xp: 330
+    },
+    inquisitor_path_a_t3: {
+      id: 'h_e_2_a3',
+      f: 'e', t: 3, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 90, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 25,
       passive: 'vitality 3', ability: null,
-      building_slot: 'slot_0',
-      xp: 660
+      building_slot: 'slot_0', xp: 660
     },
-    inquisitor_t4: {
-      id: 'h_e_2_t4',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+    inquisitor_path_b_t3: {
+      id: 'h_e_2_b3',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 85, armor: 8, initiative: 50,
+      resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 27,
+      passive: 'vitality 2', ability: null,
+      building_slot: 'slot_0', xp: 660
+    },
+    inquisitor_path_a_t4: {
+      id: 'h_e_2_a41',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 100, armor: 12, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 30,
       passive: 'vitality 3', ability: null,
-      building_slot: 'slot_0',
-      xp: 770
+      building_slot: 'slot_0', xp: 770
+    },
+    inquisitor_path_a_t4_alt: {
+      id: 'h_e_2_a42',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 100, armor: 12, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 30,
+      passive: 'vitality 3', ability: null,
+      building_slot: 'slot_0', xp: 770
+    },
+    inquisitor_path_b_t4: {
+      id: 'h_e_2_b41',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 95, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 32,
+      passive: 'vitality 2', ability: null,
+      building_slot: 'slot_0', xp: 770
+    },
+    inquisitor_path_b_t4_alt: {
+      id: 'h_e_2_b42',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 95, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 32,
+      passive: 'vitality 2', ability: null,
+      building_slot: 'slot_0', xp: 770
     },
     ranger: {
       id: 'h_e_3',
-      f: 'e',
-      t: 1,
-      size: 'tile',
+      f: 'e', t: 1, size: 'tile',
       tags: ['Archer', null],
       hp: 82, armor: 3, initiative: 110,
       resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 15,
       passive: 'pierce 1', ability: null,
-      building_slot: 'slot_0',
-      xp: 115
+      building_slot: 'slot_0', xp: 115
     },
-    ranger_t2: {
-      id: 'h_e_3_t2',
-      f: 'e',
-      t: 2,
-      size: 'tile',
+    ranger_path_a_t2: {
+      id: 'h_e_3_a2',
+      f: 'e', t: 2, size: 'tile',
       tags: ['Archer', null],
       hp: 98, armor: 4, initiative: 132,
       resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 12 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 18,
       passive: 'pierce 1', ability: null,
-      building_slot: 'slot_0',
-      xp: 345
+      building_slot: 'slot_0', xp: 345
     },
-    ranger_t3: {
-      id: 'h_e_3_t3',
-      f: 'e',
-      t: 3,
-      size: 'tile',
+    ranger_path_b_t2: {
+      id: 'h_e_3_b2',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Archer', null],
+      hp: 90, armor: 3, initiative: 125,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 12 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 17,
+      passive: 'pierce 1', ability: null,
+      building_slot: 'slot_0', xp: 345
+    },
+    ranger_path_a_t3: {
+      id: 'h_e_3_a3',
+      f: 'e', t: 3, size: 'tile',
       tags: ['Archer', null],
       hp: 118, armor: 4, initiative: 158,
       resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 14 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 22,
       passive: 'pierce 2', ability: null,
-      building_slot: 'slot_0',
-      xp: 690
+      building_slot: 'slot_0', xp: 690
     },
-    ranger_t4: {
-      id: 'h_e_3_t4',
-      f: 'e',
-      t: 4,
-      size: 'tile',
+    ranger_path_b_t3: {
+      id: 'h_e_3_b3',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Archer', null],
+      hp: 108, armor: 4, initiative: 148,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 14 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0', xp: 690
+    },
+    ranger_path_a_t4: {
+      id: 'h_e_3_a41',
+      f: 'e', t: 4, size: 'tile',
       tags: ['Archer', null],
       hp: 142, armor: 5, initiative: 190,
       resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 17 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 26,
       passive: 'pierce 2', ability: null,
-      building_slot: 'slot_0',
-      xp: 805
+      building_slot: 'slot_0', xp: 805
+    },
+    ranger_path_a_t4_alt: {
+      id: 'h_e_3_a42',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Archer', null],
+      hp: 142, armor: 5, initiative: 190,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 17 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 26,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0', xp: 805
+    },
+    ranger_path_b_t4: {
+      id: 'h_e_3_b41',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Archer', null],
+      hp: 128, armor: 5, initiative: 178,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 17 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 24,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0', xp: 805
+    },
+    ranger_path_b_t4_alt: {
+      id: 'h_e_3_b42',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Archer', null],
+      hp: 128, armor: 5, initiative: 178,
+      resistances: { air: 0, fire: 0, life: 0, death: 0, cold: 0, nature: 17 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 24,
+      passive: 'pierce 2', ability: null,
+      building_slot: 'slot_0', xp: 805
     },
     conscript: {
       id: 'e1', f: 'e', t: 1,
@@ -675,7 +863,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 20,
       xp: 275, passive: 'shatter 1', ability: null,
     },
-      devastator: {
+    devastator: {
       id: 'e621', f: 'e', t: 3,
       name: 'Devastator',
       tags: ['Engineer', null],
@@ -686,7 +874,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 30,
       xp: 575, passive: 'shatter 2', ability: null,
     },
-      flamefrower: {
+    flamefrower: {
       id: 'e622', f: 'e', t: 3,
       name: 'Flamefrower',
       tags: ['Engineer', null],
@@ -695,7 +883,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'fire', action_power: 20,
-      xp: 475, passive: ['burn 2','dissipate 1'], ability: null,
+      xp: 475, passive: ['burn 2', 'dissipate 1'], ability: null,
     },
     scout: {
       id: 'e8', f: 'e', t: 1,
@@ -783,7 +971,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 2,
       damage_source: 'life', action_power: 20,
-      xp: 280, passive: ['burn 1','dissipate 1'], ability: 'purge 1',
+      xp: 280, passive: ['burn 1', 'dissipate 1'], ability: 'purge 1',
     },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
@@ -827,11 +1015,308 @@ const UNITS = {
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 35,
-      xp: 250, passive: ['burn 2','volcanic_skin 1'], ability: null,
-    }
+      xp: 250, passive: ['burn 2', 'volcanic_skin 1'], ability: null,
+    },
   },
 
   grail_of_sorrow: {
+    mourning_prophet: {
+      id: 'h_g_1',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Caster', null],
+      hp: 55, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 18,
+      passive: 'vitality 1', ability: null,
+      building_slot: 'slot_0', xp: 100
+    },
+    mourning_prophet_path_a_t2: {
+      id: 'h_g_1_a2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Caster', 'Zombie'],
+      hp: 75, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 22,
+      passive: ['vitality 1', 'infect 1'], ability: null,
+      building_slot: 'slot_0', xp: 300
+    },
+    mourning_prophet_path_b_t2: {
+      id: 'h_g_1_b2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Caster', 'Vampire'],
+      hp: 70, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25,
+      passive: ['vitality 1', 'regenerate 1'], ability: null,
+      building_slot: 'slot_0', xp: 300
+    },
+    mourning_prophet_path_a_t3: {
+      id: 'h_g_1_a3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Caster', 'Zombie'],
+      hp: 95, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'death', action_power: 26,
+      passive: ['vitality 2', 'infect 1'], ability: null,
+      building_slot: 'slot_0', xp: 570
+    },
+    mourning_prophet_path_b_t3: {
+      id: 'h_g_1_b3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Caster', 'Vampire'],  
+      hp: 88, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 35,
+      passive: ['vitality 2', 'regenerate 1'], ability: null,
+      building_slot: 'slot_0', xp: 570
+    },
+    mourning_prophet_path_a_t4: {
+      id: 'h_g_1_a41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Zombie', 'Caster'],
+      hp: 115, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'death', action_power: 32,
+      passive: ['vitality 2', 'infect 2'], ability: null,
+      building_slot: 'slot_0', xp: 740
+    },
+    mourning_prophet_path_a_t4_alt: {
+      id: 'h_g_1_a42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Zombie', 'Caster'],
+      hp: 115, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
+      damage_source: 'death', action_power: 32,
+      passive: ['vitality 2', 'infect 2'], ability: null,
+      building_slot: 'slot_0', xp: 740
+    },
+    mourning_prophet_path_b_t4: {
+      id: 'h_g_1_b41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Zombie', 'Caster'],
+      hp: 108, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 6,
+      damage_source: null, action_power: 42,
+      passive: ['vitality 2', 'regenerate 2'], ability: null,
+      building_slot: 'slot_0', xp: 740
+    },
+    mourning_prophet_path_b_t4_alt: {
+      id: 'h_g_1_b42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Zombie', 'Caster'],
+      hp: 108, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 6,
+      damage_source: null, action_power: 42,
+      passive: ['vitality 2', 'regenerate 2'], ability: null,
+      building_slot: 'slot_0', xp: 740
+    },
+    grail_warden: {
+      id: 'h_g_2',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Knight', null],
+      hp: 80, armor: 20, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 105
+    },
+    grail_warden_path_a_t2: {
+      id: 'h_g_2_a2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 95, armor: 25, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      passive: 'protector 1', ability: null,
+      building_slot: 'slot_0', xp: 315
+    },
+    grail_warden_path_b_t2: {
+      id: 'h_g_2_b2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Knight', 'Vampire'],
+      hp: 85, armor: 20, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25,
+      passive: 'lifesteal 1', ability: null,
+      building_slot: 'slot_0', xp: 315
+    },
+    grail_warden_path_a_t3: {
+      id: 'h_g_2_a3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 130, armor: 22, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30,
+      passive: ['protector 1', 'unbreakable 1'], ability: null,
+      building_slot: 'slot_0', xp: 580
+    },
+    grail_warden_path_b_t3: {
+      id: 'h_g_2_b3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 118, armor: 16, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 29,
+      passive: ['lifesteal 1', 'rage 1'], ability: null,
+      building_slot: 'slot_0', xp: 580
+    },
+    grail_warden_path_a_t4: {
+      id: 'h_g_2_a41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 165, armor: 26, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 36,
+      passive: ['protector 2', 'unbreakable 1'], ability: null,
+      building_slot: 'slot_0', xp: 750
+    },
+    grail_warden_path_a_t4_alt: {
+      id: 'h_g_2_a42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 165, armor: 26, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 36,
+      passive: ['protector 2', 'unbreakable 1'], ability: null,
+      building_slot: 'slot_0', xp: 750
+    },
+    grail_warden_path_b_t4: {
+      id: 'h_g_2_b41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 150, armor: 18, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 35,
+      passive: ['lifesteal 2', 'rage 1'], ability: null,
+      building_slot: 'slot_0', xp: 750
+    },
+    grail_warden_path_b_t4_alt: {
+      id: 'h_g_2_b42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 150, armor: 18, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 35,
+      passive: ['lifesteal 2', 'rage 1'], ability: null,
+      building_slot: 'slot_0', xp: 750
+    },
+    mothers_voice: {
+      id: 'h_g_3',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 50, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25,
+      passive: null, ability: null,
+      building_slot: 'slot_0', xp: 95
+    },
+    mothers_voice_path_a_t2: {
+      id: 'h_g_3_a2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 60, armor: 0, initiative: 60,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: 'slow 1', ability: null,
+      building_slot: 'slot_0', xp: 285
+    },
+    mothers_voice_path_b_t2: {
+      id: 'h_g_3_b2',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 55, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: 'chain 1', ability: null,
+      building_slot: 'slot_0', xp: 285
+    },
+    mothers_voice_path_a_t3: {
+      id: 'h_g_3_a3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 78, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['slow 1', 'dissipate 1'], ability: null,
+      building_slot: 'slot_0', xp: 560
+    },
+    mothers_voice_path_b_t3: {
+      id: 'h_g_3_b3',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 72, armor: 0, initiative: 60,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['chain 1', 'vitality 1'], ability: null,
+      building_slot: 'slot_0', xp: 560
+    },
+    mothers_voice_path_a_t4: {
+      id: 'h_g_3_a41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 96, armor: 0, initiative: 70,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['slow 2', 'dissipate 1'], ability: null,
+      building_slot: 'slot_0', xp: 730
+    },
+    mothers_voice_path_a_t4_alt: {
+      id: 'h_g_3_a42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 96, armor: 0, initiative: 70,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['slow 2', 'dissipate 1'], ability: null,
+      building_slot: 'slot_0', xp: 730
+    },
+    mothers_voice_path_b_t4: {
+      id: 'h_g_3_b41',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 90, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['chain 2', 'vitality 1'], ability: null,
+      building_slot: 'slot_0', xp: 730
+    },
+    mothers_voice_path_b_t4_alt: {
+      id: 'h_g_3_b42',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 90, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 25
+      passive: ['chain 2', 'vitality 1'], ability: null,
+      building_slot: 'slot_0', xp: 730
+    },
     zombie_risen: {
       id: 'gs1', f: 'g', t: 1,
       name: 'Risen',
@@ -863,7 +1348,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 20,
-      xp: 200, passive: ['poison 2','regenerate 1'], ability: null,
+      xp: 200, passive: ['poison 2', 'regenerate 1'], ability: null,
     },
     cannibal_ghoul: {
       id: 'gs12', f: 'g', t: 2,
@@ -875,7 +1360,7 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
       xp: 300, passive: ['lifesteal 1', 'rage 1'], ability: null,
-    }, 
+    },
     abominate: {
       id: 'gs121', f: 'g', t: 3,
       name: 'Abominate',
@@ -966,7 +1451,7 @@ const UNITS = {
     },
     crimson_mage: {
       id: 'gs311', f: 'g', t: 3,
-      name: 'Blood Adept',
+      name: 'Crimson Mage',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 40,
@@ -1006,7 +1491,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20,
-      xp: 505, passive: ['infect 1','regenerate 1'], ability: null,
+      xp: 505, passive: ['infect 1', 'regenerate 1'], ability: null,
     },
     dragon_c: {
       id: 'gs4', f: 'g', t: 1,
