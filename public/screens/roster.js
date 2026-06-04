@@ -50,6 +50,19 @@ export function renderRoster(root, { player }) {
   const modal = mountModal(root);
   function openModal(title, bodyHtml) { modal.open(title, bodyHtml); }
 
+  function getActionLabel(actionKey) {
+    if (!actionKey) return '—';
+    const k = typeof actionKey === 'string' ? actionKey : (actionKey.id || '');
+    const map = {
+      attack:     'Attack',
+      heal:       'Heal',
+      repair:     'Repair',
+      'mend flesh': 'Mend Flesh',
+      sacrifice:  'Sacrifice',
+    };
+    return map[k.toLowerCase()] || cap(k);
+  }
+
   function buildCard(u) {
     const stored   = u.unit_data || {};
     const def      = resolveUnitDef(u);
@@ -121,12 +134,25 @@ export function renderRoster(root, { player }) {
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
 
+    const actionRaw   = def?.action;
+    const actionLabel = getActionLabel(actionRaw);
+    const power       = def?.action_power ?? def?.action?.value ?? '—';
+
     const coreHtml = `
       <div class="unit-core-stats">
         <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${def?.hp ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
         <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${currentXp}</span></div>
+      </div>`;
+
+    const armorVal = def?.armor ?? 0;
+    const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
+    const armorCell = `
+      <div class="resist-cell" title="Armor" data-armor="${armorVal}">
+        <span class="resist-icon">🛡</span>
+        <span class="resist-val ${armorCls}">${armorVal}</span>
       </div>`;
 
     const resistCells = RESIST_ORDER.map(r => {
@@ -139,7 +165,7 @@ export function renderRoster(root, { player }) {
       </div>`;
     }).join('');
 
-    const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
+    const resistsHtml = `<div class="unit-resists-grid">${armorCell}${resistCells}</div>`;
 
     let levelUpHtml = '';
     if (isHero) {
@@ -295,8 +321,8 @@ export function renderRoster(root, { player }) {
     goTo(0);
   }
 
-  function openDetailModal(title, text) {
-    openModal(title, renderModalContent(text));
+  function openDetailModal(title, bodyHtml) {
+    openModal(title, bodyHtml);
   }
 
   track.addEventListener('click', async (e) => {
@@ -333,8 +359,21 @@ export function renderRoster(root, { player }) {
       if (!def) return;
       const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
       const description = buildStatDescription(def, type) || 'No details available.';
-      const text        = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
-      openDetailModal(`${typeLabel} Ability`, text);
+      const bodyHtml = `
+        <div class="ability-modal-content">
+          <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
+          <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
+          <div class="ability-modal-desc">${description}</div>
+        </div>`;
+      openDetailModal(`${typeLabel} Ability`, bodyHtml);
+      return;
+    }
+
+    const armorCell = e.target.closest('[data-armor]');
+    if (armorCell) {
+      const val = parseInt(armorCell.dataset.armor ?? '0', 10);
+      const bodyHtml = renderModalContent(`Armor: ${val}\nReduces physical damage taken. Each point of armor reduces damage by 1%.`);
+      openDetailModal('Armor', bodyHtml);
       return;
     }
 
@@ -345,21 +384,24 @@ export function renderRoster(root, { player }) {
       let text = '';
       if (label === 'HP') {
         text = `HP: ${val}\nCurrent hit points. Unit is defeated when HP reaches 0.`;
-      } else if (label === 'Armor') {
-        text = `Armor: ${val}\nReduces physical damage taken.`;
       } else if (label === 'Init') {
         text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
+      } else if (label === 'Power') {
+        text = `Power: ${val}\nBase damage or healing output of the unit's action.`;
+      } else if (label === 'Action') {
+        text = `Action: ${val}\nThe type of action this unit performs each turn.`;
       } else if (label === 'XP') {
         text = `Experience: ${val}\nAccumulated XP toward next level.`;
       } else {
         text = `${label}: ${val}`;
       }
-      openDetailModal(label, text);
+      openDetailModal(label, renderModalContent(text));
       return;
     }
 
     const resistCell = e.target.closest('.resist-cell');
     if (resistCell) {
+      if (resistCell.dataset.armor !== undefined) return;
       const label  = resistCell.getAttribute('title') || '';
       const valEl  = resistCell.querySelector('.resist-val');
       const numVal = parseInt(valEl?.textContent ?? '0', 10);
@@ -371,7 +413,7 @@ export function renderRoster(root, { player }) {
       } else {
         text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken.`;
       }
-      openDetailModal(label, text);
+      openDetailModal(label, renderModalContent(text));
       return;
     }
   });
