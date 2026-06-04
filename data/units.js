@@ -761,7 +761,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
-      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 1',
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
       id: 'e221', f: 'e', t: 3,
@@ -772,7 +772,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 35,
-      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer of healing 2',
+      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 2',
     },
     purgator: {
       id: 'e23', f: 'e', t: 2,
