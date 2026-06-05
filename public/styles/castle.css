@@ -30,7 +30,6 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(17, 19, 24, 0.15), rgba(17, 19, 24, 0.85));
   pointer-events: none;
 }
 
