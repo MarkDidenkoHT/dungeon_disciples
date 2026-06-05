@@ -103,6 +103,12 @@ class BattleEngine {
       _parry_available:   false,
       _aegis_armor:       0,
       _aegis_resists:     {},
+      _invulnerable:      false,
+      _untargetable:      false,
+      _unity_host_id:     null,
+      _unity_bonded_id:   null,
+      _mothers_kiss:      false,
+      _sorrow_source_ids: [],
     };
   }
   fireTrigger(trigger, ctx) {
@@ -122,7 +128,7 @@ class BattleEngine {
         } else if (buff.type === 'armor') {
           target.armor = Math.max(0, target.armor - buff.value);
         } else if (buff.type === 'initiative') {
-          target.initiative = Math.max(0, target.initiative + buff.value);
+          target.initiative = Math.max(0, target.initiative - buff.value);
         }
       }
     }
@@ -131,6 +137,24 @@ class BattleEngine {
   applyOnDeathPassives(dying) {
     this.revokeGrantedBuffs(dying);
     this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
+    const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
+    if (bonded) {
+      bonded.alive = false;
+      this.pushLog({ type: 'passive', passive: 'Unity', actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetName: bonded.unit_name, targetCell: bonded.cellIndex, message: `${bonded.unit_name} perishes with their host.` });
+      this.revokeGrantedBuffs(bonded);
+      this.fireTrigger('on_death', { dying: bonded, actor: bonded, target: null, dmg: 0 });
+    }
+    const dyingTags = dying.unit_data?.tags ?? [];
+    if (dyingTags.includes('Specter')) {
+      for (const e of this.combatants.filter(c => c.side !== dying.side && c.alive)) {
+        const sorrowIdx = e._sorrow_source_ids.indexOf(dying.id);
+        if (sorrowIdx !== -1) {
+          e._sorrow_source_ids.splice(sorrowIdx, 1);
+          e.initiative = Math.max(0, e.initiative + 2);
+          this.pushLog({ type: 'passive', passive: 'Sorrow', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, message: `Sorrow fades — ${e.unit_name} regains 2 initiative.`, value: 2 });
+        }
+      }
+    }
   }
   getActionKey(unit) {
     const data = unit.unit_data || unit;
@@ -156,6 +180,7 @@ class BattleEngine {
     }
     return this.combatants.filter(t => {
       if (!t.alive) return false;
+      if (t._untargetable) return false;
       if (isHeal) {
         if (t.side !== actor.side) return false;
         return filterByTagRules([t], actionKey).length > 0;
@@ -202,16 +227,21 @@ class BattleEngine {
   }
   executeAction(actor, target = null, actionType = 'attack') {
     this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
+    if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
     if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
     if (!target) return false;
     if (this.isHealer(actor)) {
+      if (actor._mothers_kiss) {
+        return this.doMothersKiss(actor);
+      }
       const raw    = this.calcHeal(actor);
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
       const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
       target.battle_hp += heal;
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
+      this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
@@ -227,6 +257,11 @@ class BattleEngine {
         }
       }
       const dmg = this.calcDamage(actor, target);
+      if (target._invulnerable) {
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
+        actor.acted_this_round = true;
+        return this.afterAction(actor);
+      }
       if (dmg > 0) {
         let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
         if (remaining > 0) {
@@ -347,6 +382,7 @@ class BattleEngine {
     const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
     target.battle_hp += heal;
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
+    this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
     this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
     const selfDmg = Math.floor(heal / 2);
     if (selfDmg > 0) {
@@ -357,6 +393,37 @@ class BattleEngine {
     }
     actor.acted_this_round = true;
     return this.afterAction(actor);
+  }
+  doNone(actor) {
+    this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex, message: `${actor.unit_name} stands ready.` });
+    actor.acted_this_round = true;
+    return this.afterAction(actor);
+  }
+  doMothersKiss(actor) {
+    const allies = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+    const sacrificePerAlly = Math.max(1, Math.floor(actor.battle_hp * 0.05));
+    const totalCost = sacrificePerAlly * allies.length;
+    if (actor.battle_hp <= totalCost) {
+      this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${actor.unit_name} is too weak to channel Mother's Kiss.`, value: 0 });
+      actor.acted_this_round = true;
+      return this.afterAction(actor);
+    }
+    actor.battle_hp = Math.max(1, actor.battle_hp - totalCost);
+    this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: totalCost, heal: false });
+    for (const a of allies) {
+      const healAmt = Math.min(sacrificePerAlly, a.max_hp - a.battle_hp);
+      if (healAmt > 0) {
+        a.battle_hp += healAmt;
+        this.fireHealTriggers(actor, a, healAmt);
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, value: healAmt, heal: true });
+      }
+    }
+    actor.acted_this_round = true;
+    return this.afterAction(actor);
+  }
+  fireHealTriggers(healer, target, amount) {
+    this.fireTrigger('on_heal', { actor: healer, target, dmg: amount, dying: null });
+    this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
   }
   doDefend(actor) {
     actor.defend_armor_bonus = 25;
@@ -443,6 +510,18 @@ class BattleEngine {
       const actor = this.currentActor();
       if (!actor || actor.side !== 'enemy') break;
       const before = this.log.length;
+      if (actor._unity_host_id != null || actor._invulnerable) {
+        this.doNone(actor);
+        newLog.push(...this.log.slice(before));
+        continue;
+      }
+      const actionDef = actor.unit_data?.action;
+      const actionType = typeof actionDef === 'object' ? actionDef?.action_type : null;
+      if (actionType === 'none') {
+        this.doNone(actor);
+        newLog.push(...this.log.slice(before));
+        continue;
+      }
       const hasAbility = !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
       if (hasAbility && !actor.used_active) {
         const targets = this.getValidTargets(actor, true);
@@ -500,6 +579,12 @@ class BattleEngine {
           _aegis_resists:      c._aegis_resists,
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
+          _invulnerable:       c._invulnerable,
+          _untargetable:       c._untargetable,
+          _unity_host_id:      c._unity_host_id,
+          _unity_bonded_id:    c._unity_bonded_id,
+          _mothers_kiss:       c._mothers_kiss,
+          _sorrow_source_ids:  c._sorrow_source_ids,
         },
       })),
     };
@@ -536,6 +621,12 @@ class BattleEngine {
       c._aegis_resists     = b._aegis_resists     || {};
       c._bleed_dmg         = b._bleed_dmg         ?? 0;
       c._chill_dmg         = b._chill_dmg         ?? 0;
+      c._invulnerable      = b._invulnerable      ?? false;
+      c._untargetable      = b._untargetable      ?? false;
+      c._unity_host_id     = b._unity_host_id     ?? null;
+      c._unity_bonded_id   = b._unity_bonded_id   ?? null;
+      c._mothers_kiss      = b._mothers_kiss      ?? false;
+      c._sorrow_source_ids = b._sorrow_source_ids ?? [];
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

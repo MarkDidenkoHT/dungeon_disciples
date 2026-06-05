@@ -62,6 +62,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const actionKey = unit?.unit_data?.action;
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
     if (key === 'sacrifice') return 'Sacrifice';
+    const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
+    if (actionType === 'none') return 'Passive';
+    if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return "Mother's Kiss";
     const tt = unit?.unit_data?.target_type || unit?.unit_data?.action?.target_type;
     return tt === 'ally' ? 'Heal' : 'Attack';
   }
@@ -242,6 +245,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const abilityName  = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : 'Ability';
     const actionLabel  = actor ? getActionLabel(actor) : 'Attack';
     const passiveName  = actor ? getPassiveName(actor) : '';
+    const isNoneAction = actor && (typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type === 'none' : false);
 
     const validTargetKeys = new Set();
     if (selectingTarget && pendingAction) {
@@ -359,8 +363,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             }
           </div>
           <div class="action-btns">
-            <button class="action-btn ${isEnemyTurn || processing || selectingTarget ? 'action-btn--disabled' : ''}"
-                    id="btn-main" ${isEnemyTurn || processing ? 'disabled' : ''}>${actionLabel}</button>
+            <button class="action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}"
+                    id="btn-main" ${isEnemyTurn || processing || isNoneAction ? 'disabled' : ''}>${actionLabel}</button>
             <button class="action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}"
                     id="btn-ability" ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'disabled' : ''}>
               ${actor && actor.used_active ? '(used) ' : ''}${abilityName}
@@ -450,6 +454,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actor = currentActor();
       if (!actor || actor.side === 'enemy' || processing) return;
       closeStatsModal();
+      const actionType = typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type : null;
+      if (actionType === 'none') return;
+      if (actor.buffs?._mothers_kiss) {
+        sendAction('attack', actor.id, actor.id);
+        return;
+      }
       selectingTarget = actor;
       pendingAction   = 'attack';
       render();
@@ -462,8 +472,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
       const def        = abilityKey ? UNIT_ABILITIES[abilityKey] : null;
       const ttype      = def?.target ?? 'enemy';
-      // Abilities targeting self or all allies fire immediately without target selection
-      if (ttype === 'self' || ttype === 'all_allies' || ttype === 'ally_any') {
+      if (ttype === 'self' || ttype === 'all_allies' || ttype === 'ally_any' || def?.params?.mothers_kiss) {
         sendAction('ability', actor.id, actor.id);
         return;
       }

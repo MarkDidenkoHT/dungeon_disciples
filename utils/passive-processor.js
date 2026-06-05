@@ -24,6 +24,7 @@ function runTrigger(trigger, ctx) {
     on_battle_start:       () => engine.combatants,
     on_turn_start:         () => [ctx.actor],
     on_heal:               () => engine.combatants.filter(c => c.side === ctx.actor?.side),
+    on_healed:             () => engine.combatants.filter(c => c.side === ctx.target?.side),
     on_take_damage:        () => engine.combatants.filter(c => c.side === ctx.target?.side),
     on_receive_ally_buff:  () => engine.combatants.filter(c => c.side === ctx.target?.side),
     on_ally_death:         () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
@@ -65,6 +66,44 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'adjacent enemies', value: p.adjacent_physical_dmg_reduction_pct });
     }
+    if (p.sorrow_initiative_drain === true) {
+      const specter_count = engine.combatants.filter(c => c.side === owner.side && c.alive && (c.unit_data?.tags ?? []).includes('Specter')).length;
+      if (specter_count > 0) {
+        const drain = 2 * specter_count;
+        const enemies = engine.combatants.filter(c => c.side !== owner.side);
+        for (const e of enemies) {
+          e.initiative = Math.max(0, e.initiative - drain);
+          e._sorrow_source_ids = e._sorrow_source_ids ?? [];
+          e._sorrow_source_ids.push(owner.id);
+        }
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all enemies', value: drain });
+      }
+    }
+    if (p.unity_bond === true && !owner._flags[def.id + '_bonded']) {
+      owner._flags[def.id + '_bonded'] = true;
+      const ownerRow = cellRow(owner.cellIndex);
+      const ownerCol = cellCol(owner.cellIndex);
+      const hostCol = ownerCol === 1 ? 0 : 1;
+      const host = engine.combatants.find(c =>
+        c.side === owner.side && c.alive && c.id !== owner.id &&
+        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === hostCol
+      );
+      if (host) {
+        owner._unity_host_id = host.id;
+        host._unity_bonded_id = owner.id;
+        owner._invulnerable = true;
+        owner._untargetable = true;
+        const stats = ['battle_hp', 'max_hp', 'armor', 'initiative'];
+        for (const stat of stats) {
+          const bonus = Math.floor((owner.unit_data?.[stat] ?? owner[stat] ?? 0) * 0.5);
+          if (stat === 'battle_hp') { host.battle_hp += bonus; host.max_hp += bonus; engine.recordGrantedBuff(owner, 'max_hp', [host], bonus); }
+          else if (stat === 'max_hp') { }
+          else if (stat === 'armor') { host.armor += bonus; engine.recordGrantedBuff(owner, 'armor', [host], bonus); }
+          else if (stat === 'initiative') { host.initiative += bonus; engine.recordGrantedBuff(owner, 'initiative', [host], bonus); }
+        }
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, Unity guardian is invulnerable.` });
+      }
+    }
   }
   if (trigger === 'on_turn_start' && owner === actor) {
     if (p.regen_pct != null) {
@@ -92,6 +131,34 @@ function dispatchPassive(trigger, owner, def, ctx) {
       owner.battle_hp = Math.max(0, owner.battle_hp - chill);
       engine.pushLog({ type: 'passive', passive: 'Chill', actorName: '❄️', targetName: owner.unit_name, targetCell: owner.cellIndex, value: chill, heal: false });
       if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
+    }
+    if (p.light_of_dawn === true) {
+      const ownerRow = cellRow(owner.cellIndex);
+      const ownerCol = cellCol(owner.cellIndex);
+      const frontAllyCol = ownerCol === 1 ? 0 : 1;
+      const frontAlly = engine.combatants.find(c =>
+        c.side === owner.side && c.alive && c.id !== owner.id &&
+        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === frontAllyCol
+      );
+      if (frontAlly) {
+        const healAmt = Math.min(p.light_of_dawn_heal ?? 15, frontAlly.max_hp - frontAlly.battle_hp);
+        if (healAmt > 0) {
+          frontAlly.battle_hp += healAmt;
+          engine.fireHealTriggers(owner, frontAlly, healAmt);
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontAlly.unit_name, targetCell: frontAlly.cellIndex, value: healAmt, heal: true });
+        }
+      }
+      const frontEnemyCol = ownerCol === 0 ? 0 : 1;
+      const frontEnemy = engine.combatants.find(c =>
+        c.side !== owner.side && c.alive &&
+        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === frontEnemyCol
+      );
+      if (frontEnemy) {
+        const dmgAmt = p.light_of_dawn_dmg ?? 15;
+        frontEnemy.battle_hp = Math.max(0, frontEnemy.battle_hp - dmgAmt);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
+        if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
+      }
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
@@ -270,6 +337,23 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._hot });
     }
   }
+  if (trigger === 'on_healed' && owner === target && dmg > 0) {
+    if (p.radiance_pct != null) {
+      const radDmg = Math.floor(dmg * p.radiance_pct / 100);
+      if (radDmg > 0) {
+        const ownerRow = cellRow(owner.cellIndex);
+        const adjEnemies = engine.combatants.filter(c =>
+          c.side !== owner.side && c.alive &&
+          Math.abs(cellRow(c.cellIndex) - ownerRow) <= 1
+        );
+        for (const e of adjEnemies) {
+          e.battle_hp = Math.max(0, e.battle_hp - radDmg);
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: radDmg, heal: false });
+          if (e.battle_hp <= 0) { e.alive = false; engine.applyOnDeathPassives(e); }
+        }
+      }
+    }
+  }
   if (trigger === 'on_take_damage' && owner === target && dmg > 0) {
     if (p.resist_gain != null && p.match_damage_type) {
 
@@ -375,6 +459,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   const def = UNIT_ABILITIES[abilityKey];
   if (!def) return false;
   const p = def.params || {};
+  if (p.mothers_kiss === true && !actor._mothers_kiss) {
+    actor._mothers_kiss = true;
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'self', message: `${def.name} — ${actor.unit_name} begins channeling Mother's Kiss each turn.` });
+  }
   if (p.cleanse_debuffs && target) {
     target.dot_dmg = 0;
     target._hot = 0;

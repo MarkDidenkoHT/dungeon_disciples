@@ -531,7 +531,11 @@ router.post('/battle/action', async (req, res) => {
       if (!valid.some(t => t.id === target_id)) return res.status(400).json({ error: 'Invalid target' });
     }
 
-    engine.executeAction(actor, target, action);
+    if (action === 'none') {
+      engine.executeAction(actor, null, 'none');
+    } else {
+      engine.executeAction(actor, target, action);
+    }
 
     if (!engine.done) {
       engine.runAiTurns();
