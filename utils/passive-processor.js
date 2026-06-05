@@ -66,8 +66,19 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'adjacent enemies', value: p.adjacent_physical_dmg_reduction_pct });
     }
-    if (p.sorrow_initiative_drain === true) {
-      const specter_count = engine.combatants.filter(c => c.side === owner.side && c.alive && (c.unit_data?.tags ?? []).includes('Specter')).length;
+    if (p.command_initiative_bonus != null) {
+      const ownerRow = cellRow(owner.cellIndex);
+      const rowAlly = engine.combatants.find(c =>
+        c.side === owner.side && c.alive && c.id !== owner.id &&
+        cellRow(c.cellIndex) === ownerRow
+      );
+      if (rowAlly) {
+        rowAlly.initiative += p.command_initiative_bonus;
+        engine.recordGrantedBuff(owner, 'initiative', [rowAlly], p.command_initiative_bonus);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: rowAlly.unit_name, targetCell: rowAlly.cellIndex, value: p.command_initiative_bonus });
+      }
+    }
+    if (p.sorrow_initiative_drain === true) {      const specter_count = engine.combatants.filter(c => c.side === owner.side && c.alive && (c.unit_data?.tags ?? []).includes('Specter')).length;
       if (specter_count > 0) {
         const drain = 2 * specter_count;
         const enemies = engine.combatants.filter(c => c.side !== owner.side);
@@ -590,6 +601,17 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
     target._terror_rounds = p.duration_rounds ?? 2;
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — -${p.physical_dmg_reduction_pct}% physical dmg for ${p.duration_rounds} rounds` });
+  }
+  if (p.stun_initiative_reduction_pct != null && target && def.target === 'enemy') {
+    const actorRange = actor.unit_data?.range ?? actor.unit_data?.action?.range ?? 1;
+    const abilityRange = def.range ?? 1;
+    if (actorRange <= abilityRange) {
+      const reduction = Math.floor(target.initiative * p.stun_initiative_reduction_pct / 100);
+      target.initiative = Math.max(0, target.initiative - reduction);
+      target._stun_rounds = p.duration_rounds ?? 2;
+      target._stun_initiative_lost = (target._stun_initiative_lost ?? 0) + reduction;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} loses ${reduction} initiative for ${p.duration_rounds} rounds`, value: reduction });
+    }
   }
   return true;
 }

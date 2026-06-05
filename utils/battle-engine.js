@@ -110,6 +110,8 @@ class BattleEngine {
       _mothers_kiss:      false,
       _sorrow_source_ids: [],
       _reanimate_pending: null,
+      _stun_rounds: 0,
+      _stun_initiative_lost: 0,
     };
   }
   fireTrigger(trigger, ctx) {
@@ -465,6 +467,14 @@ class BattleEngine {
         if (c._terror_rounds === 0) c._terror_reduction = 0;
       }
 
+      if (c._stun_rounds > 0) {
+        c._stun_rounds--;
+        if (c._stun_rounds === 0 && c._stun_initiative_lost > 0) {
+          c.initiative += c._stun_initiative_lost;
+          c._stun_initiative_lost = 0;
+        }
+      }
+
       if (c._sanctuary_rounds > 0) {
         c._sanctuary_rounds--;
         if (c._sanctuary_rounds === 0 && c._sanctuary_resist != null) {
@@ -596,6 +606,8 @@ class BattleEngine {
           _mothers_kiss:       c._mothers_kiss,
           _sorrow_source_ids:  c._sorrow_source_ids,
           _reanimate_pending:  c._reanimate_pending ?? null,
+          _stun_rounds:        c._stun_rounds ?? 0,
+          _stun_initiative_lost: c._stun_initiative_lost ?? 0,
         },
       })),
     };
@@ -639,6 +651,8 @@ class BattleEngine {
       c._mothers_kiss      = b._mothers_kiss      ?? false;
       c._sorrow_source_ids = b._sorrow_source_ids ?? [];
       c._reanimate_pending = b._reanimate_pending ?? null;
+      c._stun_rounds       = b._stun_rounds       ?? 0;
+      c._stun_initiative_lost = b._stun_initiative_lost ?? 0;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;
