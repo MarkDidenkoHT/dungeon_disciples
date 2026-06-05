@@ -128,7 +128,6 @@ export function navigate(screen, params = {}) {
   const resBarEl = document.getElementById('resource-bar');
   if (navEl) {
     navEl.style.display = isBattle ? 'none' : '';
-    navEl.classList.toggle('active-background', ['castle', 'roster', 'embark', 'spells'].includes(screen));
   }
   if (resBarEl) resBarEl.style.display = isBattle ? 'none' : '';
 
