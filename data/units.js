@@ -418,7 +418,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 15,
-      xp: 470, passive: null, ability: 'infernal_mandate 1',
+      xp: 470, passive: 'undying 1', ability: 'infernal_mandate 1',
     },
     nether_baron: {
       id: 'd61', f: 'd', t: 2,
@@ -773,7 +773,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 300, passive: ['protector 2'], ability: null,
+      xp: 300, passive: ['protector 2', 'stun 1'], ability: null,
     },
     horseman: {
       id: 'e12', f: 'e', t: 2,
@@ -784,7 +784,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 5, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 550, passive: 'impale 1', ability: null,
+      xp: 550, passive: ['impale 1', 'recuperate 1'], ability: null,
     },
     sentinel: {
       id: 'e3', f: 'e', t: 1,
@@ -795,7 +795,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 250, passive: null, ability: null,
+      xp: 250, passive: 'protector 1', ability: null,
     },
     iron_automaton: {
       id: 'e31', f: 'e', t: 2,
@@ -817,7 +817,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 20, death: 20, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'physical', action_power: 25,
-      xp: 250, passive: 'shatter 2', ability: null,
+      xp: 250, passive: ['protector 1', 'shatter 2'] , ability: null,
     },
     smith: {
       id: 'e6', f: 'e', t: 1,

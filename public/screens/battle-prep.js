@@ -101,7 +101,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="battle-prep-tabs">
         <button class="battle-prep-tab-btn active" data-tab="formation">Formation</button>
         <button class="battle-prep-tab-btn" data-tab="spells">Spells</button>
-        <button class="battle-prep-tab-btn disabled" data-tab="potions">Potions</button>
+
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
@@ -116,11 +116,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <div class="battle-prep-tab-content" id="tab-potions">
-        <div class="potions-placeholder">
-          <p>🧪 Potions coming soon</p>
-        </div>
-      </div>
+
 
       <div class="detail-panel" id="detail-panel">
         <div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>

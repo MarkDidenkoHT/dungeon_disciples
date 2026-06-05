@@ -681,8 +681,8 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'enemy',
     range: 1,
-    description: 'Reduce target enemy initiative by 50% for 2 rounds.',
-    params: { stun_initiative_reduction_pct: 50, duration_rounds: 2 },
+    description: 'Reduce target enemy initiative by 75% for 2 rounds.',
+    params: { stun_initiative_reduction_pct: 75, duration_rounds: 2 },
   },
   'command 1': {
     id: 'command 1',

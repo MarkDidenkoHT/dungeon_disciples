@@ -412,15 +412,6 @@
   line-height: 1;
 }
 
-.potions-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
 .detail-panel {
   flex: 1;
   min-height: 0;
