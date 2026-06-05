@@ -15,7 +15,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'ally_dead',
     description: 'Resurrects a friendly undead unit with 50% HP.',
-    params: { resurrect_hp_pct: 50, tag_required: 'Undead' },
+    params: { resurrect_hp_pct: 50, tag_required: 'Zombie' },
   },
   'blood_frenzy 1': {
     id: 'blood_frenzy 1',
@@ -203,8 +203,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Ignores 50% of armor.',
-    params: { armor_ignore_pct: 50 },
+    description: 'Ignores 40% of armor.',
+    params: { armor_ignore_pct: 40 },
   },
   'poison 1': {
     id: 'poison 1',

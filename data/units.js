@@ -740,7 +740,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      xp: 90, passive: null, ability: null,
+      xp: 90, passive: 'protector 1', ability: null,
     },
     infantry: {
       id: 'e11', f: 'e', t: 2,
@@ -751,7 +751,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 300, passive: 'recuperate 1', ability: null,
+      xp: 300, passive: 'protector 2', ability: null,
     },
     crossbowman: {
       id: 'e111', f: 'e', t: 3,
@@ -762,7 +762,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 20,
-      xp: 300, passive: ['recuperate 1', 'pierce 1'], ability: null,
+      xp: 300, passive: ['pierce 2', 'find_weakness 1'], ability: null,
     },
     heavy_infantry: {
       id: 'e112', f: 'e', t: 3,
@@ -773,7 +773,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 300, passive: ['recuperate 1', 'protector 1'], ability: null,
+      xp: 300, passive: ['protector 2'], ability: null,
     },
     horseman: {
       id: 'e12', f: 'e', t: 2,
