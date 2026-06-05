@@ -324,6 +324,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
         : 1;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: owner.battle_hp });
     }
+    if (p.reanimate === true && !owner._flags[def.id + '_used']) {
+      owner._flags[def.id + '_used'] = true;
+      // Count Zombie-tagged units on this side (including self — already dead but still combatant)
+      const zombieCount = engine.combatants.filter(c => c.side === owner.side && (c.unit_data?.tags ?? []).includes('Zombie')).length;
+      const reviveHpPct = zombieCount * (p.reanimate_hp_pct_per_zombie ?? 10);
+      const reviveHp = Math.max(1, Math.floor(owner.max_hp * reviveHpPct / 100));
+      // Mark for revival next round instead of immediately restoring alive
+      owner._reanimate_pending = reviveHp;
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — ${owner.unit_name} will reanimate next turn with ${reviveHp} HP (${zombieCount} Zombie tag${zombieCount !== 1 ? 's' : ''})` });
+    }
     if (p.death_aoe_damage != null) {
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
         e.battle_hp = Math.max(0, e.battle_hp - p.death_aoe_damage);
@@ -384,6 +394,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.dmg_bonus_pct != null) {
       owner._dmg_mult = (owner._dmg_mult ?? 1) + p.dmg_bonus_pct / 100;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.dmg_bonus_pct });
+    }
+    if (p.eternal_grief_sacrifice_pct != null) {
+      const sacrifice = Math.floor(owner.max_hp * p.eternal_grief_sacrifice_pct / 100);
+      // Cannot die from this — clamp to leave 1 HP
+      const actualSacrifice = Math.min(sacrifice, owner.battle_hp - 1);
+      if (actualSacrifice > 0) {
+        owner.battle_hp -= actualSacrifice;
+        // Heal lowest HP ally that is not self
+        const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.id !== owner.id);
+        if (candidates.length > 0) {
+          const lowest = candidates.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
+          const healed = Math.min(actualSacrifice, lowest.max_hp - lowest.battle_hp);
+          if (healed > 0) {
+            lowest.battle_hp += healed;
+            engine.fireHealTriggers(owner, lowest, healed);
+          }
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: healed, heal: true, message: `${def.name} — ${owner.unit_name} sacrifices ${actualSacrifice} HP to heal ${lowest.unit_name} for ${healed}` });
+        }
+      }
     }
   }
   if (trigger === 'on_round_start') {

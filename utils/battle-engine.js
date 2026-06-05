@@ -109,6 +109,7 @@ class BattleEngine {
       _unity_bonded_id:   null,
       _mothers_kiss:      false,
       _sorrow_source_ids: [],
+      _reanimate_pending: null,
     };
   }
   fireTrigger(trigger, ctx) {
@@ -488,6 +489,15 @@ class BattleEngine {
       }
     }
     this.fireTrigger('on_round_start', { actor: null, target: null, dmg: 0, dying: null });
+    // Reanimate: revive units that were marked for revival last round
+    for (const c of this.combatants) {
+      if (c._reanimate_pending != null && !c.alive) {
+        c.alive = true;
+        c.battle_hp = c._reanimate_pending;
+        c._reanimate_pending = null;
+        this.pushLog({ type: 'passive', passive: 'Reanimate', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: c.battle_hp, message: `Reanimate — ${c.unit_name} rises from the dead with ${c.battle_hp} HP!` });
+      }
+    }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
   }
@@ -585,6 +595,7 @@ class BattleEngine {
           _unity_bonded_id:    c._unity_bonded_id,
           _mothers_kiss:       c._mothers_kiss,
           _sorrow_source_ids:  c._sorrow_source_ids,
+          _reanimate_pending:  c._reanimate_pending ?? null,
         },
       })),
     };
@@ -627,6 +638,7 @@ class BattleEngine {
       c._unity_bonded_id   = b._unity_bonded_id   ?? null;
       c._mothers_kiss      = b._mothers_kiss      ?? false;
       c._sorrow_source_ids = b._sorrow_source_ids ?? [];
+      c._reanimate_pending = b._reanimate_pending ?? null;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

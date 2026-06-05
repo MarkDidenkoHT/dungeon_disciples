@@ -395,15 +395,6 @@ const UNIT_ABILITIES = {
     description: 'When hit by physical damage, deals 8 fire damage back to attacker.',
     params: { retaliation_damage: 8, damage_type: 'fire' },
   },
-  'wither 1': {
-    id: 'wither 1',
-    name: 'Wither',
-    rank: 1,
-    type: 'passive',
-    trigger: 'on_hit',
-    description: 'Target receives 10% less healing until end of battle.',
-    params: { healing_reduction_pct: 10 },
-  },
   'recuperate 1': {
     id: 'recuperate 1',
     name: 'Recuperate',
@@ -673,6 +664,24 @@ const UNIT_ABILITIES = {
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     params: { light_of_dawn: true, light_of_dawn_heal: 15, light_of_dawn_dmg: 15 },
+  },
+  'eternal_grief 1': {
+    id: 'eternal_grief 1',
+    name: 'Eternal Grief',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_ally_death',
+    description: 'When an ally dies, sacrifice 10% of own max HP (cannot die from this) to heal the ally with the lowest HP. Does not heal self.',
+    params: { eternal_grief_sacrifice_pct: 10 },
+  },
+  'reanimate 1': {
+    id: 'reanimate 1',
+    name: 'Reanimate',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_death',
+    description: 'Once per battle, this unit returns to life at the start of the next turn with 10% HP per Zombie tag among allies (including self).',
+    params: { reanimate: true, reanimate_hp_pct_per_zombie: 10 },
   },
 };
 
