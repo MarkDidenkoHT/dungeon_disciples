@@ -36,6 +36,15 @@ export function renderCastle(root, { player }) {
         <div id="modal-body" class="modal-body"></div>
       </div>
     </div>
+    <div id="ability-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <span id="ability-modal-title"></span>
+          <button id="ability-modal-close" aria-label="Close">&#x2715;</button>
+        </div>
+        <div id="ability-modal-body" class="modal-body"></div>
+      </div>
+    </div>
   `;
 
   let structuresRecord   = null;
@@ -44,10 +53,41 @@ export function renderCastle(root, { player }) {
   let throneUpgradeCosts = {};
   let heroMaxLevel       = 4;
 
-  const _modal     = mountModal(root);
-  const modalBody  = root.querySelector('#modal-body');
+  const _modal            = mountModal(root);
+  const modalBody         = root.querySelector('#modal-body');
+  const modalOverlay      = root.querySelector('#modal-overlay');
+  const abilityOverlay    = root.querySelector('#ability-overlay');
+  const abilityModalBody  = root.querySelector('#ability-modal-body');
+  const abilityModalTitle = root.querySelector('#ability-modal-title');
+
   function openModal(title, bodyHtml) { _modal.open(title, bodyHtml); }
-  function closeModal() { _modal.close(); }
+  function closeModal() {
+    _modal.close();
+    if (abilityOverlay && !abilityOverlay.classList.contains('hidden')) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function openAbilityModal(title, bodyHtml) {
+    abilityModalTitle.textContent = title;
+    abilityModalBody.innerHTML   = bodyHtml;
+    abilityOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAbilityModal() {
+    abilityOverlay.classList.add('hidden');
+    if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  abilityOverlay?.querySelector('#ability-modal-close')?.addEventListener('click', closeAbilityModal);
+  abilityOverlay?.addEventListener('click', e => { if (e.target === abilityOverlay) closeAbilityModal(); });
 
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
   if (backgroundUrl) {
@@ -262,7 +302,7 @@ export function renderCastle(root, { player }) {
               ${renderModalContent(def.description || '')}
             </div>`;
 
-          openModal(`${typeLabel} Ability`, bodyHtml);
+          openAbilityModal(`${typeLabel} Ability`, bodyHtml);
         });
       });
     }
