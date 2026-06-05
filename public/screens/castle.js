@@ -6,7 +6,7 @@ import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  resolveAbility, mountModal, GOLD_ICON,
+  resolveAbility, mountModal, renderModalContent, GOLD_ICON,
 } from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
@@ -253,14 +253,16 @@ export function renderCastle(root, { player }) {
           const type = btn.dataset.abilityType;
           const def  = resolveAbility(key);
           if (!def) return;
-          const panel = modalBody.querySelector('.ability-detail-panel');
-          const desc  = modalBody.querySelector('.ability-detail-desc');
-          if (!panel || !desc) return;
-          const isOpen = panel.dataset.activeKey === key;
-          panel.dataset.activeKey = isOpen ? '' : key;
-          desc.textContent = isOpen ? '' : `[${type === 'passive' ? 'Passive' : 'Active'}] ${def.name}${def.rank ? ` Rank ${def.rank}` : ''}\n${def.description || ''}`;
-          modalBody.querySelectorAll('.ability-icon').forEach(b => b.classList.remove('ability-icon--selected'));
-          if (!isOpen) btn.classList.add('ability-icon--selected');
+
+          const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+          const bodyHtml = `
+            <div class="ability-modal-content">
+              <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
+              <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
+              ${renderModalContent(def.description || '')}
+            </div>`;
+
+          openModal(`${typeLabel} Ability`, bodyHtml);
         });
       });
     }
