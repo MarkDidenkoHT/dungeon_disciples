@@ -93,7 +93,6 @@ const BUILDING_POOLS = {
       { id: 'catapult_workshop', label: 'Catapult Workshop', category: 'barracks', tier: 1, unit: 'catapult', unit_id: 'gs2', upgrades: ['gs21', 'gs22'], cost: { gold: 50 } },
       { id: 'adept_crypt', label: 'Adept Crypt', category: 'barracks', tier: 1, unit: 'adept', unit_id: 'gs3', upgrades: ['gs31', 'gs32', 'gs33'], cost: { gold: 50 } },
       { id: 'dragon_barrow', label: 'Dragon Barrow', category: 'barracks', tier: 1, unit: 'dragon_c', unit_id: 'gs4', upgrades: ['gs41', 'gs42'], cost: { gold: 50 } },
-      { id: 'skeleton_crypt', label: 'Skeleton Crypt', category: 'barracks', tier: 1, unit: 'skeleton', unit_id: 'gs5', upgrades: ['gs51', 'gs52'], cost: { gold: 50 } },
       { id: 'ghost_manor', label: 'Ghost Manor', category: 'barracks', tier: 1, unit: 'ghost', unit_id: 'gs6', upgrades: ['gs61', 'gs62'], cost: { gold: 50 } },
     ],
     any: [
@@ -222,7 +221,6 @@ const UNIT_UPGRADE_PATHS = {
     ],
     gs5: [
       { unit_id: 'gs51', building_id: 'reformed_crypt', label: 'Reformed Crypt' },
-      { unit_id: 'gs52', building_id: 'skeletal_mage_tower', label: 'Skeletal Mage Tower' },
     ],
     gs6: [
       { unit_id: 'gs61', building_id: 'specter_hall', label: 'Specter Hall' },

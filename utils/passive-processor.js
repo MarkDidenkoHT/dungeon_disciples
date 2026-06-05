@@ -86,7 +86,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const hostCol = ownerCol === 1 ? 0 : 1;
       const host = engine.combatants.find(c =>
         c.side === owner.side && c.alive && c.id !== owner.id &&
-        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === hostCol
+        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === hostCol &&
+        (c.unit_data?.tags ?? []).includes('Holy')
       );
       if (host) {
         owner._unity_host_id = host.id;

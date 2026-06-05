@@ -644,7 +644,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'none',
     trigger: 'on_battle_start',
-    description: 'At battle start, bonds to the allied unit directly in front. That unit gains 50% of this unit\'s stats. This unit becomes invulnerable, cannot be targeted, does not act, and dies when its host dies. Passives still trigger.',
+    description: 'At battle start, bonds to the allied Holy unit directly in front. That unit gains 50% of this unit\'s stats. This unit becomes invulnerable, cannot be targeted, does not act, and dies when its host dies. Passives still trigger.',
     params: { unity_bond: true },
   },
   'mothers_kiss 1': {
