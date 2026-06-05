@@ -98,7 +98,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-shrink: 0;
   border-top: none;
-  height: 72px;
+  height: 11vh;
 }
 
 .nav-btn {
@@ -124,8 +124,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .nav-btn-icon {
-  width: 64px;
-  height: 64px;
+  width: auto;
+  height: 7vh;
   object-fit: contain;
   display: block;
   filter: brightness(0.65) sepia(0.3);
