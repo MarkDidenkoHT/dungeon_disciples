@@ -490,6 +490,9 @@ router.post('/battle/create', async (req, res) => {
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
 
+    if (Array.isArray(selected_spells) && selected_spells.length > 1) {
+      return res.status(400).json({ error: 'Only one spell may be cast per battle' });
+    }
     if (Array.isArray(selected_spells) && selected_spells.length > 0) {
       for (const spell of selected_spells) {
         const scope      = spell.target_scope || '';

@@ -554,10 +554,13 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.heal_flat != null && def.target === 'all_allies') {
     const allies = combatants.filter(c => c.side === actor.side && c.alive);
     for (const a of allies) {
-      const healed = Math.min(p.heal_flat, a.max_hp - a.battle_hp);
+      const factor = 1 - ((a._healing_reduction ?? 0) / 100);
+      const healed = Math.min(Math.floor(p.heal_flat * factor), a.max_hp - a.battle_hp);
       if (healed > 0) {
         a.battle_hp += healed;
         engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, message: `${def.name} — healed ${a.unit_name} for ${healed}`, value: healed, heal: true });
+        engine.fireTrigger('on_heal',   { actor, target: a, dmg: healed, dying: null });
+        engine.fireTrigger('on_healed', { actor, target: a, dmg: healed, dying: null });
       }
     }
 

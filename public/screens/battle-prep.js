@@ -387,6 +387,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const affordable = canAffordSpell(spell);
       const usedEntry  = selectedSpells.find(s => s.id === spell.id);
       const used       = !!usedEntry;
+      const spellSlotFull = selectedSpells.length > 0 && !used;
       const targetLabel = used && usedEntry.target_name ? `→ ${usedEntry.target_name}` : spellTargetLabel(spell);
 
       return `
@@ -404,9 +405,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <div class="spell-list-action">
             ${used
               ? `<button class="spell-list-undo-btn" data-undo-id="${spell.id}">Undo</button>`
-              : affordable
-                ? `<button class="spell-list-use-btn" data-use-id="${spell.id}">Use</button>`
-                : `<span class="spell-list-locked">✕</span>`
+              : spellSlotFull
+                ? `<span class="spell-list-locked">Undo active spell first</span>`
+                : affordable
+                  ? `<button class="spell-list-use-btn" data-use-id="${spell.id}">Use</button>`
+                  : `<span class="spell-list-locked">✕</span>`
             }
           </div>
         </div>
