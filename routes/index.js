@@ -519,10 +519,21 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Only one spell may be cast per battle' });
     }
     if (Array.isArray(selected_spells) && selected_spells.length > 0) {
-      for (const spell of selected_spells) {
-        const scope      = spell.target_scope || '';
-        const params     = spell.params || {};
-        const targetId   = spell.target_id ?? null;
+      const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
+      if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+      const learnedSpells = playerRows[0].learned_spells || [];
+
+      for (const clientSpell of selected_spells) {
+        const spellId = clientSpell.spell_id;
+        if (!spellId) return res.status(400).json({ error: 'selected_spells entries must include spell_id' });
+        if (!learnedSpells.includes(spellId)) return res.status(403).json({ error: `Spell ${spellId} is not learned` });
+
+        const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
+        if (!spellDef) return res.status(400).json({ error: `Spell definition not found for ${spellId}` });
+
+        const scope    = spellDef.target_scope || '';
+        const params   = spellDef.params || {};
+        const targetId = clientSpell.target_id ?? null;
 
         function getTargets() {
           if (scope === 'all_allies')    return engine.combatants.filter(c => c.side === 'player' && c.alive);
@@ -574,11 +585,12 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 });
 
 router.post('/battle/action', requireAuth, async (req, res) => {
-  const { battle_id, action, actor_id, target_id } = req.body;
-  if (!battle_id || !action || !actor_id) return res.status(400).json({ error: 'battle_id, action, actor_id required' });
+  const { chat_id, battle_id, action, actor_id, target_id } = req.body;
+  if (!chat_id || !battle_id || !action || !actor_id) return res.status(400).json({ error: 'chat_id, battle_id, action, actor_id required' });
   try {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
 
     const engine = await rehydrateEngine(record);
     if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
@@ -623,11 +635,12 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 });
 
 router.post('/battle/advance', requireAuth, async (req, res) => {
-  const { battle_id } = req.body;
-  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  const { chat_id, battle_id } = req.body;
+  if (!chat_id || !battle_id) return res.status(400).json({ error: 'chat_id and battle_id required' });
   try {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
 
     const engine = await rehydrateEngine(record);
     if (engine.done) return res.status(400).json({ error: 'Battle is already over' });

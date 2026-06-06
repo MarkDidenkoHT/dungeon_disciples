@@ -391,7 +391,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     processing = true;
     render();
     try {
-      const result = await api('/battle/advance', { battle_id });
+      const result = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
       state = result.state;
       if (result.done) return renderResult(result.winner);
     } catch (err) {
@@ -406,7 +406,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     processing = true;
     render();
     try {
-      const result = await api('/battle/action', { battle_id, action, actor_id, target_id });
+      const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
       state = result.state;
       selectingTarget = null;
       pendingAction   = null;

@@ -1076,11 +1076,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         region_id,
         level,
         selected_spells: selectedSpells.map(s => ({
-          id:        s.id,
+          spell_id:  s.id,
           target_id: s.target_id ?? null,
-          target_scope: s.target_scope,
-          params:    s.params ?? {},
-          effect_type: s.effect_type,
         })),
       });
       navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
