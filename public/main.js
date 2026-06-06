@@ -10,11 +10,18 @@ import { GOLD_ICON }        from './utils.js';
 
 const app = document.getElementById('app');
 
+let _sessionToken = null;
+
+export function setSessionToken(token) {
+  _sessionToken = token;
+}
+
 export async function api(path, body = null) {
   const options = {
     method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' },
   };
+  if (_sessionToken) options.headers['X-Session-Token'] = _sessionToken;
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(`/api${path}`, options);
   const text = await res.text();
@@ -165,7 +172,8 @@ async function boot() {
   tg.ready();
 
   try {
-    const { player, isNew } = await api('/login', { initData: tg.initData });
+    const { player, session_token, isNew } = await api('/login', { initData: tg.initData });
+    setSessionToken(session_token);
     if (isNew || !player.faction || !player.hero) {
       navigate('register', { player });
     } else {

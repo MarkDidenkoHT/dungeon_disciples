@@ -8,6 +8,24 @@ const { REGIONS, getEncounter } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
+const { SPELLS } = require('../data/spells');
+
+function generateSessionToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function requireAuth(req, res, next) {
+  const token = req.headers['x-session-token'];
+  const chatId = (req.body && req.body.chat_id) || req.query.chat_id;
+  if (!token || !chatId) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chatId)}&select=session_token&limit=1`);
+    if (!rows.length || rows[0].session_token !== token) return res.status(401).json({ error: 'Unauthorized' });
+    next();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -142,20 +160,27 @@ router.post('/login', async (req, res) => {
   const telegramUser = validateTelegramInitData(initData);
   if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
   const chat_id = String(telegramUser.id);
+  const session_token = generateSessionToken();
   try {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (existing.length > 0) return res.json({ player: existing[0], isNew: false });
+    if (existing.length > 0) {
+      const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ session_token }),
+      });
+      return res.json({ player: updated[0], session_token, isNew: false });
+    }
     const created = await supabase('/players', {
       method: 'POST',
-      body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null }),
+      body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null, session_token }),
     });
-    res.json({ player: created[0], isNew: true });
+    res.json({ player: created[0], session_token, isNew: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/player', async (req, res) => {
+router.get('/player', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -172,7 +197,7 @@ router.get('/heroes', (req, res) => {
   res.json(heroes);
 });
 
-router.post('/player/faction', async (req, res) => {
+router.post('/player/faction', requireAuth, async (req, res) => {
   const { player_id, chat_id, faction, hero_id } = req.body;
   if (!player_id || !chat_id || !faction || !hero_id) {
     return res.status(400).json({ error: 'player_id, chat_id, faction, and hero_id required' });
@@ -206,7 +231,7 @@ router.post('/player/faction', async (req, res) => {
   }
 });
 
-router.get('/inventory', async (req, res) => {
+router.get('/inventory', requireAuth, async (req, res) => {
   const { chat_id, type } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -219,7 +244,7 @@ router.get('/inventory', async (req, res) => {
   }
 });
 
-router.get('/roster', async (req, res) => {
+router.get('/roster', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -230,7 +255,7 @@ router.get('/roster', async (req, res) => {
   }
 });
 
-router.post('/roster/levelup', async (req, res) => {
+router.post('/roster/levelup', requireAuth, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
@@ -295,7 +320,7 @@ router.post('/roster/levelup', async (req, res) => {
   }
 });
 
-router.post('/structures/throne/upgrade', async (req, res) => {
+router.post('/structures/throne/upgrade', requireAuth, async (req, res) => {
   const { chat_id } = req.body;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -326,7 +351,7 @@ router.get('/buildings', (req, res) => {
   res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES, upgrade_paths: UNIT_UPGRADE_PATHS, hero_max_level: HERO_MAX_LEVEL, throne_upgrade_costs: THRONE_UPGRADE_COSTS });
 });
 
-router.get('/structures', async (req, res) => {
+router.get('/structures', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -338,7 +363,7 @@ router.get('/structures', async (req, res) => {
   }
 });
 
-router.post('/structures/build', async (req, res) => {
+router.post('/structures/build', requireAuth, async (req, res) => {
   const { chat_id, faction, slot, building_id } = req.body;
   if (!chat_id || !faction || !slot || !building_id) return res.status(400).json({ error: 'chat_id, faction, slot, and building_id required' });
   const slotCategory = SLOT_CATEGORIES[slot];
@@ -374,7 +399,7 @@ router.get('/regions', (req, res) => {
   res.json(REGIONS);
 });
 
-router.get('/progress', async (req, res) => {
+router.get('/progress', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -386,7 +411,7 @@ router.get('/progress', async (req, res) => {
   }
 });
 
-router.post('/progress/unlock', async (req, res) => {
+router.post('/progress/unlock', requireAuth, async (req, res) => {
   const { chat_id, region_id, level } = req.body;
   if (!chat_id || !region_id || level === undefined) return res.status(400).json({ error: 'chat_id, region_id, level required' });
   try {
@@ -401,7 +426,7 @@ router.post('/progress/unlock', async (req, res) => {
   }
 });
 
-router.get('/battle/active', async (req, res) => {
+router.get('/battle/active', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -413,7 +438,7 @@ router.get('/battle/active', async (req, res) => {
   }
 });
 
-router.get('/battle/state', async (req, res) => {
+router.get('/battle/state', requireAuth, async (req, res) => {
   const { battle_id } = req.query;
   if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
   try {
@@ -428,7 +453,7 @@ router.get('/battle/state', async (req, res) => {
 });
 
 
-router.post('/battle/create', async (req, res) => {
+router.post('/battle/create', requireAuth, async (req, res) => {
   const { chat_id, battle_id, playerUnitIds, placement, region_id, level, selected_spells } = req.body;
   if (!chat_id || !battle_id || !playerUnitIds || !placement || !region_id || level === undefined) {
     return res.status(400).json({ error: 'chat_id, battle_id, playerUnitIds, placement, region_id, level required' });
@@ -548,7 +573,7 @@ router.post('/battle/create', async (req, res) => {
   }
 });
 
-router.post('/battle/action', async (req, res) => {
+router.post('/battle/action', requireAuth, async (req, res) => {
   const { battle_id, action, actor_id, target_id } = req.body;
   if (!battle_id || !action || !actor_id) return res.status(400).json({ error: 'battle_id, action, actor_id required' });
   try {
@@ -597,7 +622,7 @@ router.post('/battle/action', async (req, res) => {
   }
 });
 
-router.post('/battle/advance', async (req, res) => {
+router.post('/battle/advance', requireAuth, async (req, res) => {
   const { battle_id } = req.body;
   if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
   try {
@@ -623,10 +648,13 @@ router.post('/battle/advance', async (req, res) => {
   }
 });
 
-router.post('/battle/end', async (req, res) => {
-  const { battle_id } = req.body;
-  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+router.post('/battle/end', requireAuth, async (req, res) => {
+  const { chat_id, battle_id } = req.body;
+  if (!chat_id || !battle_id) return res.status(400).json({ error: 'chat_id and battle_id required' });
   try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'Battle not found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
     await closeBattleState(battle_id);
     res.json({ success: true });
   } catch (err) {
@@ -634,7 +662,7 @@ router.post('/battle/end', async (req, res) => {
   }
 });
 
-router.post('/battle/reward', async (req, res) => {
+router.post('/battle/reward', requireAuth, async (req, res) => {
   const { chat_id, battle_id, survivor_ids } = req.body;
   if (!chat_id || !battle_id) {
     return res.status(400).json({ error: 'chat_id and battle_id required' });
@@ -705,7 +733,7 @@ router.post('/battle/reward', async (req, res) => {
   }
 });
 
-router.get('/spells/research', async (req, res) => {
+router.get('/spells/research', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
@@ -717,10 +745,9 @@ router.get('/spells/research', async (req, res) => {
   }
 });
 
-router.post('/spells/research', async (req, res) => {
+router.post('/spells/research', requireAuth, async (req, res) => {
   const { chat_id, spell_id, faction } = req.body;
   if (!chat_id || !spell_id || !faction) return res.status(400).json({ error: 'chat_id, spell_id, faction required' });
-  const { SPELLS } = require('../data/spells');
   const factionSpells = SPELLS[faction] || [];
   const spell = factionSpells.find(s => s.id === spell_id);
   if (!spell) return res.status(404).json({ error: 'Spell not found' });
@@ -756,15 +783,17 @@ router.post('/spells/research', async (req, res) => {
   }
 });
 
-router.post('/spells/consume', async (req, res) => {
-  const { chat_id, spell_id, crystals_cost } = req.body;
+router.post('/spells/consume', requireAuth, async (req, res) => {
+  const { chat_id, spell_id } = req.body;
   if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
   try {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     const learned = rows[0].learned_spells || [];
     if (!learned.includes(spell_id)) return res.status(400).json({ error: 'Spell not learned' });
-    const crystalEntries = Object.entries(crystals_cost && typeof crystals_cost === 'object' ? crystals_cost : {}).filter(([, amt]) => amt > 0);
+    const spell = Object.values(SPELLS).flat().find(s => s.id === spell_id);
+    if (!spell) return res.status(404).json({ error: 'Spell definition not found' });
+    const crystalEntries = Object.entries(spell.cost?.crystals || {}).filter(([, amt]) => amt > 0);
     if (crystalEntries.length > 0) {
       const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       for (const [crystalType, needed] of crystalEntries) {

@@ -120,7 +120,7 @@ export function renderEmbark(root, { player }) {
     });
 
     root.querySelector('#modal-abandon-btn')?.addEventListener('click', async () => {
-      try { await api('/battle/end', { battle_id }); } catch (_) {}
+      try { await api('/battle/end', { battle_id, chat_id: player.chat_id }); } catch (_) {}
       closeModal(true);
     });
   }
