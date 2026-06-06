@@ -197,14 +197,24 @@ router.get('/heroes', (req, res) => {
   res.json(heroes);
 });
 
+const VALID_FACTIONS = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow'];
+
 router.post('/player/faction', requireAuth, async (req, res) => {
   const { player_id, chat_id, faction, hero_id } = req.body;
   if (!player_id || !chat_id || !faction || !hero_id) {
     return res.status(400).json({ error: 'player_id, chat_id, faction, and hero_id required' });
   }
+  if (!VALID_FACTIONS.includes(faction)) return res.status(400).json({ error: 'Invalid faction' });
   if (!HERO_IDS.includes(hero_id)) return res.status(400).json({ error: 'Invalid hero_id' });
   const heroDef = getUnitByDataId(hero_id);
   if (!heroDef) return res.status(400).json({ error: 'Hero not found in unit data' });
+  try {
+    const existing = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`);
+    if (!existing.length) return res.status(404).json({ error: 'Player not found' });
+    if (existing[0].faction) return res.status(400).json({ error: 'Faction already chosen' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
   const startingUnit = HERO_STARTING_UNITS[hero_id];
   const structures   = emptyStructures();
   if (startingUnit) {
@@ -411,21 +421,6 @@ router.get('/progress', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/progress/unlock', requireAuth, async (req, res) => {
-  const { chat_id, region_id, level } = req.body;
-  if (!chat_id || !region_id || level === undefined) return res.status(400).json({ error: 'chat_id, region_id, level required' });
-  try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
-    const progress = rows[0].progress || {};
-    progress[region_id] = level;
-    const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
-    res.json(updated[0].progress);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.get('/battle/active', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
@@ -465,6 +460,8 @@ router.post('/battle/create', requireAuth, async (req, res) => {
   if (!region) return res.status(400).json({ error: 'Invalid region_id' });
   if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
   try {
+    const existing = await getActiveBattle(chat_id);
+    if (existing) return res.status(400).json({ error: 'A battle is already in progress' });
     const rosterRows = await supabase(
       `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
     );
@@ -686,6 +683,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player' });
     if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
     if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
+    await closeBattleState(battle_id);
     const { region_id, level } = record.battle_data;
     const won = record.battle_data?.winner === 'player';
     const region = REGIONS.find(r => r.id === region_id);
@@ -739,7 +737,6 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         }
       }
     }
-    await closeBattleState(battle_id);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -761,6 +758,7 @@ router.get('/spells/research', requireAuth, async (req, res) => {
 router.post('/spells/research', requireAuth, async (req, res) => {
   const { chat_id, spell_id, faction } = req.body;
   if (!chat_id || !spell_id || !faction) return res.status(400).json({ error: 'chat_id, spell_id, faction required' });
+  if (!VALID_FACTIONS.includes(faction)) return res.status(400).json({ error: 'Invalid faction' });
   const factionSpells = SPELLS[faction] || [];
   const spell = factionSpells.find(s => s.id === spell_id);
   if (!spell) return res.status(404).json({ error: 'Spell not found' });
