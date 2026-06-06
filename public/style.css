@@ -2960,3 +2960,350 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
   line-height: 1.5;
 }
+
+.prep-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 12px;
+  flex-shrink: 0;
+}
+
+.spells-fab {
+  flex-shrink: 0;
+  padding: 11px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.spells-fab:active {
+  background: #1a2a1a;
+  border-color: var(--accent);
+}
+
+.spells-fab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--accent);
+  color: #111;
+  font-size: 0.6rem;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prep-bottom-bar .ready-btn {
+  flex: 1;
+  margin: 0;
+}
+
+.spell-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: overlay-in 0.18s ease;
+}
+
+.spell-sheet-overlay.hidden {
+  display: none !important;
+}
+
+.spell-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.spell-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+.spell-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.spell-sheet-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--accent);
+  flex: 1;
+}
+
+.spell-sheet-resources {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.spell-sheet-close {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spell-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.spell-sheet-empty {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.spell-list-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+
+.spell-list-row:last-child {
+  border-bottom: none;
+}
+
+.spell-list-row--disabled {
+  opacity: 0.4;
+}
+
+.spell-list-row--used {
+  background: #121f12;
+}
+
+.spell-list-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+  padding-top: 2px;
+}
+
+.spell-list-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.spell-list-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.spell-list-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.spell-list-cost {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.spell-list-target {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.spell-list-desc {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.spell-list-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.spell-list-use-btn {
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #111;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.spell-list-use-btn:active {
+  opacity: 0.75;
+}
+
+.spell-list-undo-btn {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid #4a6a4a;
+  background: transparent;
+  color: #6aaa5a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.spell-list-locked {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 4px 8px;
+}
+
+.spell-target-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.4;
+  padding: 8px 16px 4px;
+}
+
+.spell-target-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.spell-target-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.spell-target-card:active {
+  border-color: var(--accent);
+  background: #1a2a1a;
+}
+
+.spell-target-portrait {
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.spell-target-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.spell-target-name {
+  font-size: 0.56rem;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spell-target-sub {
+  font-size: 0.48rem;
+  color: var(--muted);
+}
+
+.spell-cast-cancel-btn {
+  margin: 4px 16px 12px;
+  padding: 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.battle-cell-spell-dot {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 0.48rem;
+  color: var(--accent);
+  line-height: 1;
+  z-index: 2;
+}

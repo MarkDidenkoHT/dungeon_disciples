@@ -100,8 +100,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <div class="battle-prep-tabs">
         <button class="battle-prep-tab-btn active" data-tab="formation">Formation</button>
-        <button class="battle-prep-tab-btn" data-tab="spells">Spells</button>
-
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
@@ -110,19 +108,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <div class="battle-prep-tab-content" id="tab-spells">
-        <div class="prep-track-wrap">
-          <div class="spell-track" id="prep-spells"></div>
-        </div>
-      </div>
-
-
-
       <div class="detail-panel" id="detail-panel">
-        <div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>
+        <div class="detail-panel-empty">Tap a unit or enemy to see details</div>
       </div>
 
-      <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
+      <div class="prep-bottom-bar">
+        <button class="spells-fab" id="spells-fab">✦ Spells <span class="spells-fab-badge" id="spells-fab-badge" style="display:none"></span></button>
+        <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
+      </div>
     </div>
 
     <div id="modal-overlay" class="modal-overlay hidden">
@@ -132,6 +125,29 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <button id="modal-close" aria-label="Close">✕</button>
         </div>
         <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <div id="spell-sheet-overlay" class="spell-sheet-overlay hidden">
+      <div class="spell-sheet" id="spell-sheet">
+        <div class="spell-sheet-handle"></div>
+        <div class="spell-sheet-header">
+          <span class="spell-sheet-title">Spells</span>
+          <div class="spell-sheet-resources" id="spell-sheet-resources"></div>
+          <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
+        </div>
+        <div class="spell-sheet-body" id="spell-sheet-body"></div>
+      </div>
+    </div>
+
+    <div id="spell-target-overlay" class="spell-sheet-overlay hidden">
+      <div class="spell-sheet" id="spell-target-sheet">
+        <div class="spell-sheet-handle"></div>
+        <div class="spell-sheet-header">
+          <span class="spell-sheet-title" id="spell-target-title">Choose Target</span>
+          <button class="spell-sheet-close" id="spell-target-close" aria-label="Close">✕</button>
+        </div>
+        <div class="spell-sheet-body" id="spell-target-body"></div>
       </div>
     </div>
   `;
@@ -155,12 +171,53 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function openModal(title, bodyHtml) { _modal?.open(title, bodyHtml); }
   function closeModal() { _modal?.close(); }
 
+  const spellSheetOverlay = root.querySelector('#spell-sheet-overlay');
+  const spellSheetBody    = root.querySelector('#spell-sheet-body');
+  const spellSheetResources = root.querySelector('#spell-sheet-resources');
+
+  const targetOverlay   = root.querySelector('#spell-target-overlay');
+  const targetBody      = root.querySelector('#spell-target-body');
+  const targetTitle     = root.querySelector('#spell-target-title');
+
+  function openSpellSheet() {
+    renderSpellSheetResources();
+    renderSpellSheetList();
+    spellSheetOverlay.classList.remove('hidden');
+  }
+
+  function closeSpellSheet() {
+    spellSheetOverlay.classList.add('hidden');
+  }
+
+  root.querySelector('#spell-sheet-close').addEventListener('click', closeSpellSheet);
+  spellSheetOverlay.addEventListener('click', e => { if (e.target === spellSheetOverlay) closeSpellSheet(); });
+
+  root.querySelector('#spell-target-close').addEventListener('click', closeTargetSheet);
+  targetOverlay.addEventListener('click', e => { if (e.target === targetOverlay) closeTargetSheet(); });
+
+  function closeTargetSheet() {
+    targetOverlay.classList.add('hidden');
+  }
+
+  root.querySelector('#spells-fab').addEventListener('click', openSpellSheet);
+
+  function updateSpellsBadge() {
+    const badge = root.querySelector('#spells-fab-badge');
+    if (!badge) return;
+    if (selectedSpells.length > 0) {
+      badge.textContent = selectedSpells.length;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   function showDetail(html) {
     detailPanel.innerHTML = html;
   }
 
   function clearDetail() {
-    detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit, spell, or enemy to see details</div>';
+    detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit or enemy to see details</div>';
   }
 
   function unitDetailHtml(unit) {
@@ -292,71 +349,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return scope.replace(/_/g, ' ');
   }
 
-  function spellDetailHtml(spell, canUse, used) {
-    return `
-      <div class="detail-unit-header">
-        <span class="detail-spell-icon">${spell.icon}</span>
-        <span class="detail-unit-name">${spell.name}</span>
-        ${used ? '<span class="detail-unit-badge detail-unit-badge--used">Used</span>' : ''}
-        ${!used && !canUse ? '<span class="detail-unit-badge detail-unit-badge--locked">Can\'t afford</span>' : ''}
-      </div>
-      <div class="detail-spell-desc">${spell.description}</div>
-      <div class="detail-spell-meta">
-        <span class="detail-spell-cost">${spellCostLabel(spell)}</span>
-        <span class="detail-spell-type">${spell.effect_type}</span>
-      </div>
-      <div class="detail-spell-target">Target: ${spellTargetLabel(spell)}</div>
-      ${!used && canUse ? `<button class="detail-use-btn" id="detail-use-btn">Use Spell</button>` : ''}
-    `;
-  }
-
-  root.querySelectorAll('.battle-prep-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
-      const tabName = btn.dataset.tab;
-      root.querySelectorAll('.battle-prep-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      root.querySelectorAll('.battle-prep-tab-content').forEach(c => c.classList.remove('active'));
-      root.querySelector(`#tab-${tabName}`).classList.add('active');
-      clearDetail();
-    });
-  });
-
-  async function loadResources() {
-    try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
-      playerCrystals = {};
-      if (Array.isArray(inventory)) {
-        for (const row of inventory) {
-          if (row.item in CRYSTAL_ICONS) {
-            playerCrystals[row.item] = row.amount;
-          }
-        }
-      }
-      const displayEl = root.querySelector('#resource-display');
-      if (displayEl) {
-        let html = '';
-        for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
-          const amt = playerCrystals[type] || 0;
-          html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
-        }
-        displayEl.innerHTML = html;
-      }
-    } catch (err) {
-      console.error('Failed to load resources:', err);
-      playerCrystals = {};
+  function spellCostLabel(spell) {
+    const parts = [];
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) parts.push(`${CRYSTAL_ICONS[type] || '💎'}${amt}`);
     }
-  }
-
-  async function loadLearnedSpells() {
-    try {
-      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
-      if (!response || typeof response !== 'object') return;
-      learnedSpells = Array.isArray(response) ? response : (response.researched_spells || []);
-    } catch (err) {
-      console.error('Failed to load learned spells:', err);
-      learnedSpells = [];
-    }
+    return parts.join(' ');
   }
 
   function canAffordSpell(spell) {
@@ -367,71 +365,166 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
-  function spellCostLabel(spell) {
-    const parts = [];
-    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
-      if (amt > 0) parts.push(`${CRYSTAL_ICONS[type] || '💎'}${amt}`);
+  function renderSpellSheetResources() {
+    let html = '';
+    for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
+      const amt = playerCrystals[type] || 0;
+      html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
     }
-    return parts.join(' ');
+    spellSheetResources.innerHTML = html;
   }
 
-  async function renderPrepSpells() {
+  function renderSpellSheetList() {
     const factionSpells = SPELLS[player.faction] || [];
     const learned       = factionSpells.filter(s => learnedSpells.includes(s.id));
-    const track         = root.querySelector('#prep-spells');
 
     if (learned.length === 0) {
-      track.innerHTML = `<span class="track-empty-hint">No spells learned</span>`;
+      spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No spells learned yet</div>`;
       return;
     }
 
-    track.innerHTML = learned.map(spell => {
+    spellSheetBody.innerHTML = learned.map(spell => {
       const affordable = canAffordSpell(spell);
-      const used       = selectedSpells.some(s => s.id === spell.id);
+      const usedEntry  = selectedSpells.find(s => s.id === spell.id);
+      const used       = !!usedEntry;
+      const targetLabel = used && usedEntry.target_name ? `→ ${usedEntry.target_name}` : spellTargetLabel(spell);
+
       return `
-        <div class="spell-icon-card ${!affordable ? 'spell-icon-card--disabled' : ''} ${used ? 'spell-icon-card--used' : ''}"
+        <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          ${used ? '<span class="spell-icon-used-badge">✓</span>' : ''}
-          <div class="spell-icon-art">${spell.icon}</div>
-          <div class="spell-icon-name">${spell.name}</div>
-          <div class="spell-icon-cost">${spellCostLabel(spell)}</div>
+          <div class="spell-list-icon">${spell.icon}</div>
+          <div class="spell-list-info">
+            <div class="spell-list-name">${spell.name}</div>
+            <div class="spell-list-meta">
+              <span class="spell-list-cost">${spellCostLabel(spell)}</span>
+              <span class="spell-list-target">${targetLabel}</span>
+            </div>
+            <div class="spell-list-desc">${spell.description}</div>
+          </div>
+          <div class="spell-list-action">
+            ${used
+              ? `<button class="spell-list-undo-btn" data-undo-id="${spell.id}">Undo</button>`
+              : affordable
+                ? `<button class="spell-list-use-btn" data-use-id="${spell.id}">Use</button>`
+                : `<span class="spell-list-locked">✕</span>`
+            }
+          </div>
         </div>
       `;
     }).join('');
 
-    track.querySelectorAll('.spell-icon-card').forEach(card => {
-      const spellId = card.dataset.spellId;
-      const spell   = factionSpells.find(s => s.id === spellId);
-      if (!spell) return;
-
-      let pressTimer   = null;
-      let didLongPress = false;
-
-      card.addEventListener('pointerdown', () => {
-        didLongPress = false;
-        pressTimer = setTimeout(() => { didLongPress = true; }, 500);
+    spellSheetBody.querySelectorAll('.spell-list-use-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const spellId = btn.dataset.useId;
+        const spell   = factionSpells.find(s => s.id === spellId);
+        if (!spell) return;
+        initiateSpellUse(spell, factionSpells);
       });
-      card.addEventListener('pointerup',     () => clearTimeout(pressTimer));
-      card.addEventListener('pointermove',   () => clearTimeout(pressTimer));
-      card.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+    });
 
-      card.addEventListener('click', async () => {
-        if (didLongPress) return;
-        const used   = selectedSpells.some(s => s.id === spell.id);
-        const canUse = canAffordSpell(spell);
-        showDetail(spellDetailHtml(spell, canUse, used));
-
-        const useBtn = root.querySelector('#detail-use-btn');
-        if (useBtn) {
-          useBtn.addEventListener('click', async () => {
-            await useSpell(spell, factionSpells);
-          });
-        }
+    spellSheetBody.querySelectorAll('.spell-list-undo-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const spellId = btn.dataset.undoId;
+        await undoSpell(spellId);
+        renderSpellSheetResources();
+        renderSpellSheetList();
+        updateSpellsBadge();
       });
     });
   }
 
-  async function useSpell(spell, factionSpells) {
+  function needsTargetSelection(spell) {
+    return spell.target_scope === 'single_ally' || spell.target_scope === 'single_enemy';
+  }
+
+  function getEligibleTargets(spell) {
+    if (spell.target_scope === 'single_ally') {
+      return roster.filter(u => placedUnitIds().has(u.id));
+    }
+    if (spell.target_scope === 'single_enemy') {
+      return enemies.map((e, i) => ({ id: `enemy_${i}`, name: e.name, _enemyData: e }));
+    }
+    if (spell.target_scope === 'tag_allies' && spell.params?.tag) {
+      const tag = spell.params.tag;
+      return roster.filter(u => {
+        const def = resolveUnitDef(u);
+        return (def?.tags ?? []).includes(tag);
+      });
+    }
+    return [];
+  }
+
+  function initiateSpellUse(spell, factionSpells) {
+    if (needsTargetSelection(spell)) {
+      const targets = getEligibleTargets(spell);
+      if (targets.length === 0) {
+        showTargetSheet(spell, [], factionSpells);
+        return;
+      }
+      closeSpellSheet();
+      showTargetSheet(spell, targets, factionSpells);
+    } else if (spell.target_scope === 'tag_allies' && spell.params?.tag) {
+      const targets = getEligibleTargets(spell);
+      if (targets.length === 0) {
+        closeSpellSheet();
+        showTargetSheet(spell, [], factionSpells);
+        return;
+      }
+      confirmAndUseSpell(spell, null, factionSpells);
+    } else {
+      confirmAndUseSpell(spell, null, factionSpells);
+    }
+  }
+
+  function showTargetSheet(spell, targets, factionSpells) {
+    targetTitle.textContent = `${spell.icon} ${spell.name} — Choose Target`;
+
+    if (targets.length === 0) {
+      targetBody.innerHTML = `<div class="spell-sheet-empty">No eligible targets${spell.params?.tag ? ` (no ${spell.params.tag}s placed)` : ''}</div>`;
+      targetOverlay.classList.remove('hidden');
+      return;
+    }
+
+    targetBody.innerHTML = `
+      <div class="spell-target-hint">${spell.description}</div>
+      <div class="spell-target-grid" id="spell-target-grid">
+        ${targets.map(u => {
+          const isEnemy = !!u._enemyData;
+          const name    = isEnemy ? u.name : getUnitName(u);
+          const portraitUrl = isEnemy ? null : getPortraitUrl(u);
+          return `
+            <button class="spell-target-card" data-target-id="${u.id}" data-target-name="${name}">
+              ${portraitUrl
+                ? `<img class="spell-target-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">`
+                : `<div class="spell-target-icon">${isEnemy ? '💀' : unitTypeIcon(u)}</div>`
+              }
+              <div class="spell-target-name">${name}</div>
+              ${!isEnemy ? `<div class="spell-target-sub">${sizeLabel(getUnitSize(u))}</div>` : ''}
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <button class="spell-cast-cancel-btn" id="spell-cast-cancel">Cancel</button>
+    `;
+
+    targetBody.querySelector('#spell-cast-cancel').addEventListener('click', () => {
+      closeTargetSheet();
+      openSpellSheet();
+    });
+
+    targetBody.querySelectorAll('.spell-target-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const targetId   = card.dataset.targetId;
+        const targetName = card.dataset.targetName;
+        closeTargetSheet();
+        await confirmAndUseSpell(spell, { id: targetId, name: targetName }, factionSpells);
+      });
+    });
+
+    targetOverlay.classList.remove('hidden');
+  }
+
+  async function confirmAndUseSpell(spell, target, factionSpells) {
     try {
       const result = await api('/spells/consume', {
         chat_id:       player.chat_id,
@@ -443,19 +536,49 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
           playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
+        const entry = { ...spell };
+        if (target) {
+          entry.target_id   = target.id;
+          entry.target_name = target.name;
+        }
         const idx = selectedSpells.findIndex(s => s.id === spell.id);
-        if (idx < 0) selectedSpells.push(spell);
+        if (idx < 0) selectedSpells.push(entry);
+        else selectedSpells[idx] = entry;
 
+        updateSpellsBadge();
         await loadResources();
-        await renderPrepSpells();
-        clearDetail();
+        renderSpellSheetResources();
+        renderSpellSheetList();
+        openSpellSheet();
       } else {
         alert(result.message || 'Failed to use spell');
+        openSpellSheet();
       }
     } catch (err) {
       console.error('Failed to use spell:', err);
       alert(err.message || 'Failed to use spell');
+      openSpellSheet();
     }
+  }
+
+  async function undoSpell(spellId) {
+    const idx = selectedSpells.findIndex(s => s.id === spellId);
+    if (idx < 0) return;
+    const spell = selectedSpells[idx];
+
+    try {
+      await api('/spells/refund', {
+        chat_id:  player.chat_id,
+        spell_id: spellId,
+        crystals: spell.cost.crystals || {},
+      });
+    } catch (_) {}
+
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      playerCrystals[type] = (playerCrystals[type] || 0) + amt;
+    }
+    selectedSpells.splice(idx, 1);
+    await loadResources();
   }
 
   function placedUnitIds() {
@@ -540,6 +663,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
         const portraitUrl = getPortraitUrl(unit, 'grid');
+        const spellBuffs = selectedSpells.filter(s => {
+          if (s.target_scope === 'all_allies') return true;
+          if (s.target_scope === 'all_enemies') return false;
+          if (s.target_id && unit && String(s.target_id) === String(unit.id)) return true;
+          if (s.target_scope === 'tag_allies' && s.params?.tag) {
+            const def = resolveUnitDef(unit);
+            return (def?.tags ?? []).includes(s.params.tag);
+          }
+          return false;
+        });
+        const spellDot = spellBuffs.length > 0 ? `<span class="battle-cell-spell-dot">✦</span>` : '';
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
@@ -547,6 +681,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <span class="battle-cell-name">${name}</span>
             <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
           </div>
+          ${spellDot}
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;
       }
@@ -896,6 +1031,34 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   }
 
+  async function loadResources() {
+    try {
+      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
+      playerCrystals = {};
+      if (Array.isArray(inventory)) {
+        for (const row of inventory) {
+          if (row.item in CRYSTAL_ICONS) {
+            playerCrystals[row.item] = row.amount;
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load resources:', err);
+      playerCrystals = {};
+    }
+  }
+
+  async function loadLearnedSpells() {
+    try {
+      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
+      if (!response || typeof response !== 'object') return;
+      learnedSpells = Array.isArray(response) ? response : (response.researched_spells || []);
+    } catch (err) {
+      console.error('Failed to load learned spells:', err);
+      learnedSpells = [];
+    }
+  }
+
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
@@ -923,7 +1086,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         placement,
         region_id,
         level,
-        selected_spells: selectedSpells.map(s => s.id),
+        selected_spells: selectedSpells.map(s => ({
+          id:        s.id,
+          target_id: s.target_id ?? null,
+          target_scope: s.target_scope,
+          params:    s.params ?? {},
+          effect_type: s.effect_type,
+        })),
       });
       navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
     } catch (err) {
@@ -955,7 +1124,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       attachPortraitEvents();
       attachGridDragEvents();
       updateLoyaltyHint();
-      await renderPrepSpells();
       checkReady();
     } catch (err) {
       console.error('Failed to initialise battle prep:', err);

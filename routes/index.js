@@ -429,7 +429,7 @@ router.get('/battle/state', async (req, res) => {
 
 
 router.post('/battle/create', async (req, res) => {
-  const { chat_id, battle_id, playerUnitIds, placement, region_id, level } = req.body;
+  const { chat_id, battle_id, playerUnitIds, placement, region_id, level, selected_spells } = req.body;
   if (!chat_id || !battle_id || !playerUnitIds || !placement || !region_id || level === undefined) {
     return res.status(400).json({ error: 'chat_id, battle_id, playerUnitIds, placement, region_id, level required' });
   }
@@ -489,6 +489,49 @@ router.post('/battle/create', async (req, res) => {
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
+
+    if (Array.isArray(selected_spells) && selected_spells.length > 0) {
+      for (const spell of selected_spells) {
+        const scope      = spell.target_scope || '';
+        const params     = spell.params || {};
+        const targetId   = spell.target_id ?? null;
+
+        function getTargets() {
+          if (scope === 'all_allies')    return engine.combatants.filter(c => c.side === 'player' && c.alive);
+          if (scope === 'all_enemies')   return engine.combatants.filter(c => c.side === 'enemy'  && c.alive);
+          if (scope === 'single_ally')   return engine.combatants.filter(c => c.side === 'player' && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
+          if (scope === 'single_enemy')  return engine.combatants.filter(c => c.side === 'enemy'  && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
+          if (scope === 'tag_allies') {
+            const tag = params.tag;
+            return engine.combatants.filter(c => c.side === 'player' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+          }
+          if (scope === 'tag_enemies') {
+            const tag = params.tag;
+            return engine.combatants.filter(c => c.side === 'enemy' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+          }
+          return [];
+        }
+
+        const targets = getTargets();
+
+        for (const c of targets) {
+          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
+          if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
+          if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
+          if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
+          if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
+          if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
+          if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
+          if (params.resistances) {
+            for (const [rType, rVal] of Object.entries(params.resistances)) {
+              if (!c.unit_data.resistances) c.unit_data.resistances = {};
+              c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) + rVal;
+            }
+          }
+        }
+      }
+    }
+
     if (!engine.done) engine.runAiTurns();
 
     const battle_data = buildBattleData(engine, { region_id, level, setup: {
