@@ -203,17 +203,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 4px 12px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: nowrap;
   overflow: hidden;
+  position: relative;
+  z-index: 300;
 }
 
 .res-bar-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
@@ -227,10 +229,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-icon-img {
-  width: 42px;
-  height: 49px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   display: block;
+  image-rendering: pixelated;
 }
 
 .res-bar-val {

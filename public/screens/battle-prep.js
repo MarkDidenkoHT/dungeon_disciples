@@ -133,7 +133,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <div class="spell-sheet-handle"></div>
         <div class="spell-sheet-header">
           <span class="spell-sheet-title">Spells</span>
-          <div class="spell-sheet-resources" id="spell-sheet-resources"></div>
           <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
         </div>
         <div class="spell-sheet-body" id="spell-sheet-body"></div>
@@ -173,14 +172,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   const spellSheetOverlay = root.querySelector('#spell-sheet-overlay');
   const spellSheetBody    = root.querySelector('#spell-sheet-body');
-  const spellSheetResources = root.querySelector('#spell-sheet-resources');
 
   const targetOverlay   = root.querySelector('#spell-target-overlay');
   const targetBody      = root.querySelector('#spell-target-body');
   const targetTitle     = root.querySelector('#spell-target-title');
 
   function openSpellSheet() {
-    renderSpellSheetResources();
     renderSpellSheetList();
     spellSheetOverlay.classList.remove('hidden');
   }
@@ -365,15 +362,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
-  function renderSpellSheetResources() {
-    let html = '';
-    for (const [type, icon] of Object.entries(CRYSTAL_ICONS)) {
-      const amt = playerCrystals[type] || 0;
-      html += `<span class="resource-item"><span class="resource-icon">${icon}</span><span class="resource-amount">${amt}</span></span>`;
-    }
-    spellSheetResources.innerHTML = html;
-  }
-
   function renderSpellSheetList() {
     const factionSpells = SPELLS[player.faction] || [];
     const learned       = factionSpells.filter(s => learnedSpells.includes(s.id));
@@ -429,7 +417,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       btn.addEventListener('click', async () => {
         const spellId = btn.dataset.undoId;
         await undoSpell(spellId);
-        renderSpellSheetResources();
         renderSpellSheetList();
         updateSpellsBadge();
       });
@@ -550,7 +537,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
         updateSpellsBadge();
         await loadResources();
-        renderSpellSheetResources();
         renderSpellSheetList();
         openSpellSheet();
       } else {
