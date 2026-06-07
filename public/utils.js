@@ -18,25 +18,26 @@ export const CRYSTAL_ICONS = {
   Crystals_Death:  '<img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death">',
   Crystals_Frost:  '<img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost">',
   Crystals_Nature: '<img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature">',
+  Crystals_Air:    '<span class="res-icon-emoji" title="Air">🌬️</span>',
 };
 
 export const GOLD_ICON = '<img src="/assets/icons/recources/gold.png" class="res-icon-img" alt="Gold">';
 
 export const SCREEN_BACKGROUNDS = {
   roster: {
-    empire:              '/assets/screens/empire_roster.jpg',
-    choir_of_the_cursed: '/assets/screens/choir_roster.jpg',
-    grail_of_sorrow:     '/assets/screens/grail_roster.jpg',
+    empire:              '/assets/screens/empire.jpg',
+    choir_of_the_cursed: '/assets/screens/choir.jpg',
+    grail_of_sorrow:     '/assets/screens/grail.jpg',
   },
   embark: {
-    empire:              '/assets/screens/empire_embark.jpg',
-    choir_of_the_cursed: '/assets/screens/choir_embark.jpg',
-    grail_of_sorrow:     '/assets/screens/grail_embark.jpg',
+    empire:              '/assets/screens/empire.jpg',
+    choir_of_the_cursed: '/assets/screens/choir.jpg',
+    grail_of_sorrow:     '/assets/screens/grail.jpg',
   },
   spells: {
-    empire:              '/assets/screens/empire_spells.jpg',
-    choir_of_the_cursed: '/assets/screens/choir_spells.jpg',
-    grail_of_sorrow:     '/assets/screens/grail_spells.jpg',
+    empire:              '/assets/screens/empire.jpg',
+    choir_of_the_cursed: '/assets/screens/choir.jpg',
+    grail_of_sorrow:     '/assets/screens/grail.jpg',
   },
 };
 

@@ -48,7 +48,7 @@ const FACTION_STARTING_SPELLS = {
   grail_of_sorrow:     ['g_spell_1'],
 };
 
-const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3'];
+const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1', 'h_g_2', 'h_g_3'];
 
 const HERO_STARTING_UNITS = {
   h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
@@ -57,6 +57,9 @@ const HERO_STARTING_UNITS = {
   h_d_1: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
   h_d_2: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
   h_d_3: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
+  h_g_1: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
+  h_g_2: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
+  h_g_3: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
 };
 
 function supabase(path, options = {}) {

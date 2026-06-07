@@ -2,8 +2,9 @@ import { api }      from '../main.js';
 import { navigate } from '../main.js';
 
 const FACTIONS = [
-  { id: 'empire',  label: 'The Empire',  description: 'Defenders of the realm, forged in honor.' },
+  { id: 'empire',              label: 'The Empire',          description: 'Defenders of the realm, forged in honor.' },
   { id: 'choir_of_the_cursed', label: 'Choir of the Cursed', description: 'Creatures of darkness, bound by ambition.' },
+  { id: 'grail_of_sorrow',     label: 'Grail of Sorrow',     description: 'The undying faithful, bound to the sacred grail.' },
 ];
 
 export function renderRegister(root, { player } = {}) {
@@ -55,7 +56,8 @@ export function renderRegister(root, { player } = {}) {
 
     try {
       const all = await api('/heroes');
-      const factionPrefix = selectedFaction.id === 'empire' ? 'h_e_' : 'h_d_';
+      const prefixMap = { empire: 'h_e_', choir_of_the_cursed: 'h_d_', grail_of_sorrow: 'h_g_' };
+      const factionPrefix = prefixMap[selectedFaction.id] ?? 'h_e_';
       heroes = all.filter(h => h.id.startsWith(factionPrefix) && h.t === 1);
       showHeroStep();
     } catch (err) {
