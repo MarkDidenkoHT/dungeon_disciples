@@ -222,7 +222,7 @@ export function renderRoster(root, { player }) {
     function abilityIconHtml(key, type) {
       const aDef    = resolveAbility(key);
       const isEmpty = !aDef;
-      const fileKey = key ? key.replace(/\s+/g, '_') : null;
+      const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
       const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
       return `
         <button

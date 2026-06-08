@@ -215,7 +215,7 @@ export function renderCastle(root, { player }) {
     function abilityIconHtml(key, type) {
       const def     = resolveAbility(key);
       const isEmpty = !def;
-      const fileKey = key ? key.replace(/\s+/g, '_') : null;
+      const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
       const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.png` : null;
       return `<button
         class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
