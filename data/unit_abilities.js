@@ -32,7 +32,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'All allies gain +5 armor.',
+    description: 'All allies gain +3 armor.',
     params: { ally_armor_bonus: 5 },
   },
   'fortify 2': {
@@ -41,7 +41,7 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'All allies gain +8 armor.',
+    description: 'All allies gain +5 armor.',
     params: { ally_armor_bonus: 8 },
   },
   'beacon_of_hope 1': {
@@ -59,8 +59,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'self',
-    description: 'All allies gain +20 initiative.',
-    params: { ally_initiative_bonus: 20 },
+    description: 'All allies gain +10 initiative.',
+    params: { ally_initiative_bonus: 10 },
   },
   'devour 1': {
     id: 'devour 1',
