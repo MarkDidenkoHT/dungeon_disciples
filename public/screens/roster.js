@@ -223,7 +223,7 @@ export function renderRoster(root, { player }) {
       const aDef    = resolveAbility(key);
       const isEmpty = !aDef;
       const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.png` : null;
+      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.jpg` : null;
       return `
         <button
           class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
