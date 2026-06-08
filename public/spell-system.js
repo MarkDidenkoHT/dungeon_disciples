@@ -1,247 +1,253 @@
-import { unitHasTag } from '../utils/tag-rules.js';
+import { api, refreshResourceBar } from '../main.js';
+import { SPELLS }                  from '../../data/spells.js';
+import { CRYSTAL_ICONS, applyBackground } from '../utils.js';
 
-export class SpellSystem {
-  constructor() {
-    this.active_spells = new Map();
+export function renderSpellTome(root, { player }) {
+  applyBackground(root, player.faction, 'spells');
+
+  root.innerHTML = `
+    <div class="screen screen-spelltome">
+      <main class="spelltome-main">
+        <div class="tier-tabs" id="tier-tabs">
+          <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
+          <button class="tier-tab" data-tier="2">Tier II</button>
+          <button class="tier-tab" data-tier="3">Tier III</button>
+        </div>
+
+        <div class="spelltome-body">
+          <div class="spells-slider-wrap" id="spells-slider-wrap">
+            <div class="spells-slider" id="spells-slider"></div>
+          </div>
+
+          <div class="spell-detail-panel" id="spell-detail-panel">
+            <div class="spell-detail-empty">Select a spell to see details</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  `;
+
+  let playerCrystals  = {};
+  let throneLevel     = 1;
+  let learnedSpells   = [];
+  let activeSpellId   = null;
+  let activeTier      = 1;
+  const factionSpells = SPELLS[player.faction] || [];
+
+  const slider      = root.querySelector('#spells-slider');
+  const detailPanel = root.querySelector('#spell-detail-panel');
+  const tierTabs    = root.querySelector('#tier-tabs');
+
+  function costHtml(spell) {
+    let parts = '';
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) parts += `<span class="spell-cost-item"><span>${CRYSTAL_ICONS[type] || '💎'}</span>${amt}</span>`;
+    }
+    return parts || '—';
   }
 
-  applyPreparationSpell(spell, combatants, caster_side) {
-    const spell_effect = {
-      spell_id: spell.id,
-      spell_name: spell.name,
-      effect_type: spell.effect_type,
-      applied_at: Date.now(),
-      targets: []
-    };
+  function canAfford(spell) {
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0 && (playerCrystals[type] || 0) < amt) return false;
+    }
+    return true;
+  }
 
-    const targets = this.getSpellTargets(spell, combatants, caster_side);
-    const scale   = this.getTagScale(spell, targets);
+  function renderSlider() {
+    const tierSpells   = factionSpells.filter(s => s.tier === activeTier);
+    const tierUnlocked = throneLevel >= activeTier;
 
-    for (const target of targets) {
-      this.applySpellToUnit(spell, target, scale);
-      spell_effect.targets.push({
-        unit_id: target.id,
-        unit_name: target.unit_name,
-        changes: this.describeSpellChanges(spell, target, scale)
+    if (!tierSpells.length) {
+      slider.innerHTML = `<div class="spells-empty">No spells for this tier.</div>`;
+      return;
+    }
+
+    slider.innerHTML = tierSpells.map(spell => {
+      const isLearned  = learnedSpells.includes(spell.id);
+      const affordable = canAfford(spell);
+      const isActive   = activeSpellId === spell.id;
+
+      let cardCls = 'spell-card';
+      if (isLearned)                                  cardCls += ' spell-card--learned';
+      if (!tierUnlocked)                              cardCls += ' spell-card--locked';
+      if (isActive)                                   cardCls += ' spell-card--active';
+      if (tierUnlocked && !isLearned && !affordable)  cardCls += ' spell-card--unaffordable';
+
+      const typeColor = spell.effect_type === 'buff' ? 'spell-card-type--buff' : 'spell-card-type--debuff';
+
+      return `
+        <div class="${cardCls}" data-spell-id="${spell.id}">
+          ${isLearned    ? '<div class="spell-card-learned-ring"></div>'          : ''}
+          ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><span>🔒</span></div>' : ''}
+          <div class="spell-card-icon">${spell.icon}</div>
+          <div class="spell-card-name">${spell.name}</div>
+          <div class="spell-card-type ${typeColor}">${spell.effect_type}</div>
+          <div class="spell-card-cost">${costHtml(spell)}</div>
+          ${isLearned ? '<div class="spell-card-check">✓</div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    slider.querySelectorAll('.spell-card').forEach(card => {
+      const spellId = card.dataset.spellId;
+      const spell   = factionSpells.find(s => s.id === spellId);
+      if (!spell) return;
+
+      card.addEventListener('click', () => {
+        if (activeSpellId === spellId) {
+          activeSpellId = null;
+          renderSlider();
+          clearDetail();
+          return;
+        }
+        activeSpellId = spellId;
+        renderSlider();
+        showDetail(spell);
       });
-    }
-
-    this.active_spells.set(spell.id, spell_effect);
-    return spell_effect;
-  }
-
-  getSpellTargets(spell, combatants, caster_side) {
-    const params    = spell.params || {};
-    const enemy_side = caster_side === 'player' ? 'enemy' : 'player';
-
-    if (spell.target_scope === 'all_allies') {
-      return combatants.filter(c => c.alive && c.side === caster_side);
-    }
-    if (spell.target_scope === 'all_enemies') {
-      return combatants.filter(c => c.alive && c.side === enemy_side);
-    }
-    if (spell.target_scope === 'single_ally') {
-      return combatants.filter(c => c.alive && c.side === caster_side).slice(0, 1);
-    }
-    if (spell.target_scope === 'single_enemy') {
-      return combatants.filter(c => c.alive && c.side === enemy_side).slice(0, 1);
-    }
-    if (spell.target_scope === 'tag_allies' && params.tag) {
-      return combatants.filter(c => c.alive && c.side === caster_side && unitHasTag(c, params.tag));
-    }
-    if (spell.target_scope === 'tag_enemies' && params.tag) {
-      return combatants.filter(c => c.alive && c.side === enemy_side && unitHasTag(c, params.tag));
-    }
-    return [];
-  }
-
-  applySpellToUnit(spell, unit, scale = 1) {
-    const params = spell.params || {};
-    const effective = {
-      armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
-      resistances: params.resistances ? Object.fromEntries(Object.entries(params.resistances).map(([key, value]) => [key, value * scale])) : undefined,
-      lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
-      max_hp_boost: params.max_hp_boost != null ? params.max_hp_boost * scale : undefined,
-      damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
-      damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
-      armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
-      max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
-      damage_taken_increase: params.damage_taken_increase ? Object.fromEntries(Object.entries(params.damage_taken_increase).map(([key, value]) => [key, value * scale])) : undefined,
-      initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
-    };
-
-    if (spell.effect_type === 'buff') {
-      if (effective.armor_boost) {
-        unit.armor = Math.round(unit.armor + effective.armor_boost);
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.armor_boost = true;
-      }
-
-      if (params.resistances) {
-        unit.resistances = unit.resistances || {};
-        Object.entries(params.resistances).forEach(([res_type, value]) => {
-          unit.resistances[res_type] = (unit.resistances[res_type] || 0) + value;
-        });
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.resistances_modified = true;
-      }
-
-      if (effective.lifesteal) {
-        unit.lifesteal = (unit.lifesteal || 0) + effective.lifesteal;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.lifesteal_granted = true;
-      }
-
-      if (effective.max_hp_boost) {
-        unit.max_hp = (unit.max_hp || unit.battle_hp) + effective.max_hp_boost;
-        unit.battle_hp = unit.max_hp;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.hp_boosted = true;
-      }
-
-      if (effective.damage_boost) {
-        unit.spell_damage_multiplier = (unit.spell_damage_multiplier || 1) + effective.damage_boost;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.damage_boosted = true;
-      }
-
-      if (params.martyrdom_redirect_pct != null) {
-        unit.martyrdom_pct = (unit.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.martyrdom = true;
-      }
-    }
-
-    if (spell.effect_type === 'debuff') {
-      if (effective.damage_reduction) {
-        unit.damage_reduction = (unit.damage_reduction || 0) + effective.damage_reduction;
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.weakened = true;
-      }
-
-      if (effective.armor_reduction) {
-        unit.armor = Math.round(unit.armor * (1 - effective.armor_reduction));
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.armor_reduced = true;
-      }
-
-      if (effective.max_hp_reduction) {
-        unit.max_hp = Math.round(unit.max_hp * (1 - effective.max_hp_reduction));
-        unit.battle_hp = Math.min(unit.battle_hp, unit.max_hp);
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.hp_reduced = true;
-      }
-
-      if (effective.damage_taken_increase) {
-        unit.damage_type_vulnerabilities = unit.damage_type_vulnerabilities || {};
-        Object.entries(effective.damage_taken_increase).forEach(([dmg_type, multiplier]) => {
-          unit.damage_type_vulnerabilities[dmg_type] = (unit.damage_type_vulnerabilities[dmg_type] || 1) + multiplier;
-        });
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.vulnerable = true;
-      }
-
-      if (effective.initiative_reduction) {
-        unit.initiative = Math.round(unit.initiative * (1 - effective.initiative_reduction));
-        unit.spell_effects = unit.spell_effects || {};
-        unit.spell_effects.slowed = true;
-      }
-    }
-  }
-
-  getTagScale(spell, targets) {
-    const params = spell.params || {};
-    if (params.tag && params.scale_by_tag_count) {
-      return Math.max(1, targets.length);
-    }
-    return 1;
-  }
-
-  describeSpellChanges(spell, unit, scale = 1) {
-    const changes = [];
-    const params = spell.params || {};
-    const actual = {
-      armor_boost: params.armor_boost != null ? params.armor_boost * scale : undefined,
-      resistances: params.resistances ? Object.fromEntries(Object.entries(params.resistances).map(([key, value]) => [key, value * scale])) : undefined,
-      lifesteal: params.lifesteal != null ? params.lifesteal * scale : undefined,
-      damage_boost: params.damage_boost != null ? params.damage_boost * scale : undefined,
-      damage_reduction: params.damage_reduction != null ? params.damage_reduction * scale : undefined,
-      armor_reduction: params.armor_reduction != null ? params.armor_reduction * scale : undefined,
-      max_hp_reduction: params.max_hp_reduction != null ? params.max_hp_reduction * scale : undefined,
-      damage_taken_increase: params.damage_taken_increase ? Object.fromEntries(Object.entries(params.damage_taken_increase).map(([key, value]) => [key, value * scale])) : undefined,
-      initiative_reduction: params.initiative_reduction != null ? params.initiative_reduction * scale : undefined,
-    };
-
-    if (actual.armor_boost != null && typeof actual.armor_boost === 'number' && actual.armor_boost <= 1) {
-      changes.push(`+${Math.round(actual.armor_boost * 100)}% Armor`);
-    } else if (actual.armor_boost != null && typeof actual.armor_boost === 'number') {
-      changes.push(`+${actual.armor_boost} Armor`);
-    }
-
-    if (actual.resistances) {
-      Object.entries(actual.resistances).forEach(([type, val]) => {
-        if (val > 0) changes.push(`+${val} ${type} Resist`);
-        if (val < 0) changes.push(`${val} ${type} Resist`);
-      });
-    }
-
-    if (actual.lifesteal) {
-      changes.push(`+${Math.round(actual.lifesteal * 100)}% Lifesteal`);
-    }
-
-    if (actual.max_hp_boost) {
-      changes.push(`+${actual.max_hp_boost} Max HP`);
-    }
-
-    if (actual.damage_taken_increase) {
-      Object.entries(actual.damage_taken_increase).forEach(([type, val]) => {
-        if (val > 0) changes.push(`+${Math.round(val * 100)}% ${type} Damage Taken`);
-        if (val < 0) changes.push(`${Math.round(val * 100)}% ${type} Damage Taken`);
-      });
-    }
-
-    if (actual.damage_boost) {
-      changes.push(`+${Math.round(actual.damage_boost * 100)}% Damage`);
-    }
-
-    if (params.martyrdom_redirect_pct != null) {
-      changes.push(`${params.martyrdom_redirect_pct}% dmg from adjacent allies redirected to this unit`);
-    }
-
-    if (actual.damage_reduction) {
-      changes.push(`-${Math.round(actual.damage_reduction * 100)}% Damage`);
-    }
-
-    if (actual.armor_reduction) {
-      changes.push(`-${Math.round(actual.armor_reduction * 100)}% Armor`);
-    }
-
-    if (actual.max_hp_reduction) {
-      changes.push(`-${Math.round(actual.max_hp_reduction * 100)}% Max HP`);
-    }
-
-    if (actual.initiative_reduction) {
-      changes.push(`-${Math.round(actual.initiative_reduction * 100)}% Initiative`);
-    }
-
-    return changes;
-  }
-
-  getActiveSpellsForUnit(unit) {
-    const spells = [];
-    this.active_spells.forEach((effect, spell_id) => {
-      if (effect.targets.some(t => t.unit_id === unit.id)) {
-        spells.push({
-          spell_id,
-          spell_name: effect.spell_name,
-          effect_type: effect.effect_type
-        });
-      }
     });
-    return spells;
   }
 
-  clear() {
-    this.active_spells.clear();
+  function showDetail(spell) {
+    const isLearned    = learnedSpells.includes(spell.id);
+    const affordable   = canAfford(spell);
+    const tierUnlocked = throneLevel >= spell.tier;
+    const canResearch  = tierUnlocked && !isLearned && affordable;
+
+    let costItemsHtml = '';
+    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+      if (amt > 0) costItemsHtml += `<span class="spell-detail-cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`;
+    }
+    if (!costItemsHtml) costItemsHtml = '<span class="spell-detail-cost-item">Free</span>';
+
+    let actionHtml;
+    if (isLearned) {
+      actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Learned</span>`;
+    } else if (!tierUnlocked) {
+      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Throne level ${spell.tier} required</span>`;
+    } else {
+      actionHtml = `
+        <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
+          ${canResearch ? 'Research Spell' : 'Not enough crystals'}
+        </button>
+      `;
+    }
+
+    const typeColor = spell.effect_type === 'buff' ? 'spell-detail-type-chip--buff' : 'spell-detail-type-chip--debuff';
+
+    detailPanel.innerHTML = `
+      <div class="spell-detail-inner">
+        <div class="spell-detail-header">
+          <div class="spell-detail-big-icon">${spell.icon}</div>
+          <div class="spell-detail-title">
+            <div class="spell-detail-name">${spell.name}</div>
+            <div class="spell-detail-meta">
+              <span class="spell-detail-rank-chip">Tier ${spell.tier}</span>
+              <span class="spell-detail-type-chip ${typeColor}">${spell.effect_type}</span>
+            </div>
+          </div>
+          <div class="spell-detail-cost-col">
+            <div class="spell-detail-cost-label">Cost</div>
+            <div class="spell-detail-cost-items">${costItemsHtml}</div>
+          </div>
+        </div>
+        <div class="spell-detail-desc">${spell.description}</div>
+        <div class="spell-detail-action">
+          ${actionHtml}
+          <div class="research-feedback" id="research-feedback" style="display:none"></div>
+        </div>
+      </div>
+    `;
+
+    const detailBtn = root.querySelector('#detail-research-btn');
+    if (detailBtn) {
+      detailBtn.addEventListener('click', async () => {
+        detailBtn.disabled    = true;
+        detailBtn.textContent = '…';
+        await doResearch(spell);
+      });
+    }
   }
+
+  function clearDetail() {
+    detailPanel.innerHTML = '<div class="spell-detail-empty">Select a spell to see details</div>';
+  }
+
+  function showFeedback(msg, isError) {
+    const el = root.querySelector('#research-feedback');
+    if (!el) return;
+    el.textContent   = msg;
+    el.className     = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
+    el.style.display = 'inline-block';
+  }
+
+  async function doResearch(spell) {
+    try {
+      const result = await api('/spells/research', {
+        chat_id:  player.chat_id,
+        spell_id: spell.id,
+
+      });
+
+      if (result?.success) {
+        for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
+          if (amt > 0) playerCrystals[type] = (playerCrystals[type] || 0) - amt;
+        }
+        learnedSpells.push(spell.id);
+        refreshResourceBar(player).catch(() => {});
+        renderSlider();
+        showDetail(spell);
+        showFeedback('Spell learned!', false);
+      } else {
+        showFeedback(result?.message || 'Research failed', true);
+        const btn = root.querySelector('#detail-research-btn');
+        if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
+      }
+    } catch (err) {
+      showFeedback(err.message || 'Research failed', true);
+      const btn = root.querySelector('#detail-research-btn');
+      if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
+    }
+  }
+
+  tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTier    = parseInt(tab.dataset.tier);
+      activeSpellId = null;
+      tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
+      tab.classList.add('tier-tab--active');
+      renderSlider();
+      clearDetail();
+    });
+  });
+
+  async function init() {
+    try {
+      const [structData, researchData, inventory] = await Promise.all([
+        api(`/structures?chat_id=${player.chat_id}`),
+        api(`/spells/research?chat_id=${player.chat_id}`),
+        api(`/inventory?chat_id=${player.chat_id}&type=resource`),
+      ]);
+
+      throneLevel   = structData?.buildings_data?.slot_0?.level || 1;
+      learnedSpells = Array.isArray(researchData)
+        ? researchData
+        : (researchData?.researched_spells || []);
+
+      const find = name => inventory.find(r => r.item === name) || { amount: 0 };
+      playerCrystals = {
+        Crystals_Life:   find('Crystals_Life').amount,
+        Crystals_Fire:   find('Crystals_Fire').amount,
+        Crystals_Death:  find('Crystals_Death').amount,
+        Crystals_Nature: find('Crystals_Nature').amount,
+        Crystals_Frost:  find('Crystals_Frost').amount,
+      };
+
+      renderSlider();
+    } catch (err) {
+      console.error('Spell tome init failed:', err);
+      slider.innerHTML = `<div class="spells-empty">Failed to load spells.</div>`;
+    }
+  }
+
+  init();
 }
