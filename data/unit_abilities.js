@@ -638,14 +638,14 @@ const UNIT_ABILITIES = {
     description: 'At battle start, bonds to the allied Holy unit directly in front. That unit gains 50% of this unit\'s stats. This unit becomes invulnerable, cannot be targeted, does not act, and dies when its host dies. Passives still trigger.',
     params: { unity_bond: true },
   },
-  'mothers_kiss 1': {
-    id: 'mothers_kiss 1',
-    name: "Mother's Kiss",
+  'mothers_blessing 1': {
+    id: 'mothers_blessing 1',
+    name: "Mother's BLessing",
     rank: 1,
     type: 'active',
     target: 'self',
     description: 'Each turn, sacrifice HP to heal all allies. Lasts until end of battle.',
-    params: { mothers_kiss: true },
+    params: { mothers_blessing: true },
   },
   'radiance 1': {
     id: 'radiance 1',
