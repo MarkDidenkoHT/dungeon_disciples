@@ -501,7 +501,6 @@ export function renderCastle(root, { player }) {
     try {
       const updated = await api('/structures/build', {
         chat_id: player.chat_id,
-        faction: player.faction,
         slot,
         building_id,
       });

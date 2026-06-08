@@ -377,16 +377,22 @@ router.get('/structures', requireAuth, async (req, res) => {
 });
 
 router.post('/structures/build', requireAuth, async (req, res) => {
-  const { chat_id, faction, slot, building_id } = req.body;
-  if (!chat_id || !faction || !slot || !building_id) return res.status(400).json({ error: 'chat_id, faction, slot, and building_id required' });
+  const { chat_id, slot, building_id } = req.body;
+  if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
   if (slotCategory === 'throne') return res.status(400).json({ error: 'Throne cannot be built' });
-  const def = getBuildingDef(faction, building_id);
-  if (!def) return res.status(400).json({ error: 'Unknown building_id for this faction' });
-  if (slotCategory !== 'any' && def.category !== slotCategory) return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
   try {
-    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    const [rows, playerRows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
+    ]);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+    const faction = playerRows[0].faction;
+    if (!faction) return res.status(400).json({ error: 'Player has no faction' });
+    const def = getBuildingDef(faction, building_id);
+    if (!def) return res.status(400).json({ error: 'Unknown building_id for this faction' });
+    if (slotCategory !== 'any' && def.category !== slotCategory) return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     const record    = rows[0];
     const buildings = record.buildings_data;
