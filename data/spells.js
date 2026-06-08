@@ -19,12 +19,12 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'preparation',
-      description: 'Bless all allied Knights. Knights gain +10 armor for the battle.',
+      description: 'Bless all allied Knights. Each Knight gains +2 armor per Knight on the field.',
       cost: { crystals: { Crystals_Life: 15 } },
       icon: '⚡',
       effect_type: 'buff',
       target_scope: 'tag_allies',
-      params: { tag: 'Knight', armor_boost: 10, scale_by_tag_count: true }
+      params: { tag: 'Knight', armor_boost: 2, scale_by_tag_count: true }
     },
     {
       id: 'e_spell_3',

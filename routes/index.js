@@ -552,9 +552,10 @@ router.post('/battle/create', requireAuth, async (req, res) => {
         }
 
         const targets = getTargets();
+        const tag_scale = (params.scale_by_tag_count && targets.length > 0) ? targets.length : 1;
 
         for (const c of targets) {
-          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
+          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost * tag_scale;
           if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
           if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
           if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
