@@ -552,10 +552,9 @@ router.post('/battle/create', requireAuth, async (req, res) => {
         }
 
         const targets = getTargets();
-        const tag_scale = (params.scale_by_tag_count && targets.length > 0) ? targets.length : 1;
 
         for (const c of targets) {
-          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost * tag_scale;
+          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
           if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
           if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
           if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
@@ -760,12 +759,8 @@ router.get('/spells/research', requireAuth, async (req, res) => {
 });
 
 router.post('/spells/research', requireAuth, async (req, res) => {
-  const { chat_id, spell_id, faction } = req.body;
-  if (!chat_id || !spell_id || !faction) return res.status(400).json({ error: 'chat_id, spell_id, faction required' });
-  if (!VALID_FACTIONS.includes(faction)) return res.status(400).json({ error: 'Invalid faction' });
-  const factionSpells = SPELLS[faction] || [];
-  const spell = factionSpells.find(s => s.id === spell_id);
-  if (!spell) return res.status(404).json({ error: 'Spell not found' });
+  const { chat_id, spell_id } = req.body;
+  if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
   try {
     const [playerRows, structRows] = await Promise.all([
       supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
@@ -773,6 +768,11 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     ]);
     if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
     if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+    const faction = playerRows[0].faction;
+    if (!faction) return res.status(400).json({ error: 'Player has no faction' });
+    const factionSpells = SPELLS[faction] || [];
+    const spell = factionSpells.find(s => s.id === spell_id);
+    if (!spell) return res.status(404).json({ error: 'Spell not found for your faction' });
     const learned     = playerRows[0].learned_spells || [];
     const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
     const spellTier   = spell.tier || 1;
