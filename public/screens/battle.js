@@ -1,6 +1,6 @@
 import { api, navigate } from '../main.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from '../utils.js';
+import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet } from '../utils.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -22,27 +22,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let pendingAction    = null;
   let selectedCombatant = null;
   let processing       = false;
-  let statsModal       = null;
-
 
   function openStatsModal(c) {
     selectedCombatant = c;
-    if (statsModal) statsModal.remove();
-    statsModal = document.createElement('div');
-    statsModal.className = 'battle-stats-modal-overlay';
-    statsModal.innerHTML = `
-      <div class="battle-stats-modal">
-        <button class="battle-stats-modal-close" aria-label="Close">✕</button>
-        ${unitStatsHtml(c)}
-      </div>
-    `;
-    statsModal.querySelector('.battle-stats-modal-close').addEventListener('click', closeStatsModal);
-    statsModal.addEventListener('click', e => { if (e.target === statsModal) closeStatsModal(); });
-    root.appendChild(statsModal);
+    const name = c.name ?? c.unit_data?.unit_id ?? 'Unit';
+    openSheet(name, unitStatsHtml(c));
   }
 
   function closeStatsModal() {
-    if (statsModal) { statsModal.remove(); statsModal = null; }
+    closeSheet();
   }
 
   const regionMeta = {

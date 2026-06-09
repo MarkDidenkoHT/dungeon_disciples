@@ -117,26 +117,52 @@ export function renderModalContent(text) {
   return `<div style="white-space:pre-wrap;line-height:1.5;">${escapeHtml(text)}</div>`;
 }
 
+let _sheetEl = null;
+
+function ensureSheet() {
+  if (_sheetEl) return _sheetEl;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay hidden';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title-text"></span>
+        <button class="modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body"></div>
+    </div>
+  `;
+
+  overlay.querySelector('.modal-close-btn').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
+
+  document.body.appendChild(overlay);
+  _sheetEl = overlay;
+  return overlay;
+}
+
+export function openSheet(title, bodyHtml) {
+  const overlay = ensureSheet();
+  overlay.querySelector('.modal-title-text').textContent = title;
+  overlay.querySelector('.modal-body').innerHTML = bodyHtml;
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+export function closeSheet() {
+  if (!_sheetEl) return;
+  _sheetEl.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+export function getSheetBody() {
+  return ensureSheet().querySelector('.modal-body');
+}
+
 export function mountModal(root) {
-  const overlay    = root.querySelector('.modal-overlay');
-  const modalBody  = root.querySelector('#modal-body');
-  const modalTitle = root.querySelector('#modal-title');
-  if (!overlay) return null;
-
-  function open(title, bodyHtml) {
-    modalTitle.textContent = title;
-    modalBody.innerHTML    = bodyHtml;
-    overlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function close() {
-    overlay.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  root.querySelector('#modal-close')?.addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-
-  return { open, close };
+  return {
+    open:  (title, bodyHtml) => openSheet(title, bodyHtml),
+    close: () => closeSheet(),
+  };
 }

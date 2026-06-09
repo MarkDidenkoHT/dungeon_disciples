@@ -311,13 +311,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
-.modal-header span {
+.modal-title-text {
   font-size: 1rem;
   font-weight: bold;
   color: var(--accent);
 }
 
-#modal-close {
+.modal-close-btn {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -335,7 +335,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: color 0.15s, border-color 0.15s;
 }
 
-#modal-close:active { color: var(--text); border-color: var(--muted); }
+.modal-close-btn:active { color: var(--text); border-color: var(--muted); }
 
 .modal-body {
   flex: 1;
@@ -1452,46 +1452,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .result-reward-row span { color: var(--accent); font-weight: bold; }
 .result-log { font-size: 0.75rem; color: var(--muted); }
 
-.battle-stats-modal-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.72);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 200;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-.battle-stats-modal {
-  position: relative;
-  width: 100%;
-  max-width: 480px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-radius: 14px 14px 0 0;
-  padding: 16px 14px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.battle-stats-modal-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  font-size: 1rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px 4px;
-}
-
-.battle-stats-modal-close:active { color: var(--text); }
 
 .battle-cell-portrait {
   position: absolute;

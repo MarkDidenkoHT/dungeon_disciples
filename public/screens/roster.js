@@ -4,7 +4,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, mountModal, applyBackground,
+  renderModalContent, openSheet, closeSheet, applyBackground,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -24,16 +24,6 @@ export function renderRoster(root, { player }) {
         <button class="roster-nav-arrow" id="nav-next">›</button>
       </div>
     </div>
-
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <span id="modal-title"></span>
-          <button id="modal-close" aria-label="Close">✕</button>
-        </div>
-        <div id="modal-body" class="modal-body"></div>
-      </div>
-    </div>
   `;
 
   let current = 0;
@@ -47,8 +37,7 @@ export function renderRoster(root, { player }) {
   let buildingsData = {};
   let upgradePaths  = {};
 
-  const modal = mountModal(root);
-  function openModal(title, bodyHtml) { modal.open(title, bodyHtml); }
+  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
 
   function getActionLabel(actionKey) {
     if (!actionKey) return '—';

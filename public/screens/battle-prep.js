@@ -6,7 +6,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, mountModal,
+  renderModalContent, openSheet, closeSheet, getSheetBody,
 } from '../utils.js';
 
 const REGION_META = {
@@ -108,23 +108,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <div class="detail-panel" id="detail-panel">
-        <div class="detail-panel-empty">Tap a unit or enemy to see details</div>
-      </div>
-
       <div class="prep-bottom-bar">
         <button class="spells-fab" id="spells-fab">✦ Spells <span class="spells-fab-badge" id="spells-fab-badge" style="display:none"></span></button>
         <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
-      </div>
-    </div>
-
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <span id="modal-title"></span>
-          <button id="modal-close" aria-label="Close">✕</button>
-        </div>
-        <div id="modal-body" class="modal-body"></div>
       </div>
     </div>
 
@@ -164,11 +150,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let playerCrystals = {};
   let learnedSpells  = [];
 
-  const detailPanel = root.querySelector('#detail-panel');
-
-  const _modal = mountModal(root);
-  function openModal(title, bodyHtml) { _modal?.open(title, bodyHtml); }
-  function closeModal() { _modal?.close(); }
+  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
+  function closeModal() { closeSheet(); }
 
   const spellSheetOverlay = root.querySelector('#spell-sheet-overlay');
   const spellSheetBody    = root.querySelector('#spell-sheet-body');
@@ -209,12 +192,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  function showDetail(html) {
-    detailPanel.innerHTML = html;
+  function showDetail(title, html) {
+    openSheet(title, html);
   }
 
   function clearDetail() {
-    detailPanel.innerHTML = '<div class="detail-panel-empty">Tap a unit or enemy to see details</div>';
+    closeSheet();
   }
 
   function unitDetailHtml(unit) {
@@ -709,7 +692,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
       cell.addEventListener('click', () => {
         const e = unitAtCell[Number(cell.dataset.i)];
-        if (e && !e._shadow) showDetail(enemyDetailHtml(e));
+        if (e && !e._shadow) showDetail(e.name, enemyDetailHtml(e));
       });
     });
   }
@@ -968,7 +951,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     if (occ) {
       const unit = roster.find(u => u.id === occ.unitId);
-      if (unit) showDetail(unitDetailHtml(unit));
+      if (unit) {
+        const def  = resolveUnitDef(unit);
+        const name = def?.name ?? unit.unit_data?.unit_id ?? 'Unit';
+        showDetail(name, unitDetailHtml(unit));
+      }
       return;
     }
 
@@ -981,18 +968,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   });
 
-  detailPanel.addEventListener('click', e => {
+  document.addEventListener('click', e => {
     const abilityBtn = e.target.closest('.ability-icon');
-    if (abilityBtn) {
-      const key  = abilityBtn.dataset.abilityKey;
-      const type = abilityBtn.dataset.abilityType;
-      const def  = resolveAbility(key);
-      if (!def) return;
-      const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
-      const description = buildStatDescription(def, type) || 'No details available.';
-      const text = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
-      openModal(`${typeLabel} Ability`, renderModalContent(text));
-    }
+    if (!abilityBtn) return;
+    const key  = abilityBtn.dataset.abilityKey;
+    const type = abilityBtn.dataset.abilityType;
+    const def  = resolveAbility(key);
+    if (!def) return;
+    const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
+    const description = buildStatDescription(def, type) || 'No details available.';
+    const text = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
+    openModal(`${typeLabel} Ability`, renderModalContent(text));
   });
 
   function attachPortraitEvents() {
@@ -1015,7 +1001,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         dragFromCell = null;
         renderPortraitTrack();
         attachPortraitEvents();
-        showDetail(unitDetailHtml(u));
+        const uDef  = resolveUnitDef(u);
+        const uName = uDef?.name ?? u.unit_data?.unit_id ?? 'Unit';
+        showDetail(uName, unitDetailHtml(u));
       });
     });
   }

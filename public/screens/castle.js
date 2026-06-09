@@ -6,7 +6,7 @@ import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  resolveAbility, mountModal, renderModalContent, GOLD_ICON,
+  resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
 } from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
@@ -27,24 +27,6 @@ export function renderCastle(root, { player }) {
         </div>
       </main>
     </div>
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <span id="modal-title"></span>
-          <button id="modal-close" aria-label="Close">&#x2715;</button>
-        </div>
-        <div id="modal-body" class="modal-body"></div>
-      </div>
-    </div>
-    <div id="ability-overlay" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <span id="ability-modal-title"></span>
-          <button id="ability-modal-close" aria-label="Close">&#x2715;</button>
-        </div>
-        <div id="ability-modal-body" class="modal-body"></div>
-      </div>
-    </div>
   `;
 
   let structuresRecord   = null;
@@ -53,41 +35,14 @@ export function renderCastle(root, { player }) {
   let throneUpgradeCosts = {};
   let heroMaxLevel       = 4;
 
-  const _modal            = mountModal(root);
-  const modalBody         = root.querySelector('#modal-body');
-  const modalOverlay      = root.querySelector('#modal-overlay');
-  const abilityOverlay    = root.querySelector('#ability-overlay');
-  const abilityModalBody  = root.querySelector('#ability-modal-body');
-  const abilityModalTitle = root.querySelector('#ability-modal-title');
-
-  function openModal(title, bodyHtml) { _modal.open(title, bodyHtml); }
-  function closeModal() {
-    _modal.close();
-    if (abilityOverlay && !abilityOverlay.classList.contains('hidden')) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  }
+  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
+  function closeModal() { closeSheet(); }
 
   function openAbilityModal(title, bodyHtml) {
-    abilityModalTitle.textContent = title;
-    abilityModalBody.innerHTML   = bodyHtml;
-    abilityOverlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openSheet(title, bodyHtml);
   }
 
-  function closeAbilityModal() {
-    abilityOverlay.classList.add('hidden');
-    if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  }
-
-  abilityOverlay?.querySelector('#ability-modal-close')?.addEventListener('click', closeAbilityModal);
-  abilityOverlay?.addEventListener('click', e => { if (e.target === abilityOverlay) closeAbilityModal(); });
+  function closeAbilityModal() { closeSheet(); }
 
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
   if (backgroundUrl) {
@@ -287,7 +242,7 @@ export function renderCastle(root, { player }) {
     openModal(title, renderSliderHtml(current));
 
     function attachAbilityListeners() {
-      modalBody.querySelectorAll('.ability-icon:not([disabled])').forEach(btn => {
+      getSheetBody().querySelectorAll('.ability-icon:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
           const key  = btn.dataset.abilityKey;
           const type = btn.dataset.abilityType;
@@ -308,7 +263,8 @@ export function renderCastle(root, { player }) {
     }
 
     function attach() {
-      const track = modalBody.querySelector('#slider-track');
+      const sheetBody = getSheetBody();
+      const track = sheetBody.querySelector('#slider-track');
       let touchStartX = null;
       let touchStartY = null;
 
@@ -323,17 +279,17 @@ export function renderCastle(root, { player }) {
         const dy = e.changedTouches[0].clientY - touchStartY;
         touchStartX = null;
         if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 40) return;
-        if (dx < 0 && current < slides.length - 1) { current++; modalBody.innerHTML = renderSliderHtml(current); attach(); }
-        if (dx > 0 && current > 0)                  { current--; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+        if (dx < 0 && current < slides.length - 1) { current++; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
+        if (dx > 0 && current > 0)                  { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
 
-      modalBody.querySelector('#slider-prev')?.addEventListener('click', () => {
-        if (current > 0) { current--; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+      sheetBody.querySelector('#slider-prev')?.addEventListener('click', () => {
+        if (current > 0) { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
-      modalBody.querySelector('#slider-next')?.addEventListener('click', () => {
-        if (current < slides.length - 1) { current++; modalBody.innerHTML = renderSliderHtml(current); attach(); }
+      sheetBody.querySelector('#slider-next')?.addEventListener('click', () => {
+        if (current < slides.length - 1) { current++; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
-      modalBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
+      sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
 
       attachAbilityListeners();
     }
@@ -464,7 +420,7 @@ export function renderCastle(root, { player }) {
         <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
       </div>`);
 
-    modalBody.querySelector('#confirm-throne-btn')?.addEventListener('click', async () => {
+    getSheetBody().querySelector('#confirm-throne-btn')?.addEventListener('click', async () => {
       closeModal();
       try {
         const updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
