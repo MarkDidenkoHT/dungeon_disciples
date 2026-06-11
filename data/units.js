@@ -908,7 +908,7 @@ const UNITS = {
       xp: 320, passive: 'pierce 1', ability: null,
     },
     blessed_soul: {
-      id: 'e2', f: 'e', t: 1,
+      id: 'e7', f: 'e', t: 1,
       name: 'Blessed Soul',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
@@ -919,7 +919,7 @@ const UNITS = {
       xp: 60, passive: 'unity 1', ability: null,
     },
     mithrails_light: {
-      id: 'e2', f: 'e', t: 2,
+      id: 'e71', f: 'e', t: 2,
       name: 'Mithrails Light',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
@@ -930,7 +930,7 @@ const UNITS = {
       xp: 60, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
     },
     mithrails_will: {
-      id: 'e2', f: 'e', t: 3,
+      id: 'e72', f: 'e', t: 3,
       name: 'Mithrails Will',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
