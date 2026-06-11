@@ -171,12 +171,22 @@ router.post('/login', async (req, res) => {
         method: 'PATCH',
         body: JSON.stringify({ session_token }),
       });
+      try {
+        await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+      } catch (e) {
+        console.error('Failed to invoke daily-crystals function:', e.message || e);
+      }
       return res.json({ player: updated[0], session_token, isNew: false });
     }
     const created = await supabase('/players', {
       method: 'POST',
       body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null, session_token }),
     });
+    try {
+      await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+    } catch (e) {
+      console.error('Failed to invoke daily-crystals function:', e.message || e);
+    }
     res.json({ player: created[0], session_token, isNew: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
