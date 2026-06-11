@@ -773,7 +773,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 300, passive: ['protector 2', 'stun 1'], ability: null,
+      xp: 300, passive: ['protector 2'], ability: 'stun 1',
     },
     horseman: {
       id: 'e12', f: 'e', t: 2,
