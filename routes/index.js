@@ -176,7 +176,20 @@ router.post('/login', async (req, res) => {
       } catch (e) {
         console.error('Failed to invoke daily-crystals function:', e.message || e);
       }
-      return res.json({ player: updated[0], session_token, isNew: false });
+      let activeRec = null;
+      try {
+        activeRec = await getActiveBattle(chat_id);
+      } catch (e) {
+        console.error('Failed to check active battle on login:', e.message || e);
+      }
+      return res.json({
+        player: updated[0],
+        session_token,
+        isNew: false,
+        active: Boolean(activeRec),
+        battle_id: activeRec ? activeRec.battle_id : null,
+        battle_data: activeRec ? activeRec.battle_data : null,
+      });
     }
     const created = await supabase('/players', {
       method: 'POST',
@@ -187,7 +200,20 @@ router.post('/login', async (req, res) => {
     } catch (e) {
       console.error('Failed to invoke daily-crystals function:', e.message || e);
     }
-    res.json({ player: created[0], session_token, isNew: true });
+    let activeRec = null;
+    try {
+      activeRec = await getActiveBattle(chat_id);
+    } catch (e) {
+      console.error('Failed to check active battle on login:', e.message || e);
+    }
+    res.json({
+      player: created[0],
+      session_token,
+      isNew: true,
+      active: Boolean(activeRec),
+      battle_id: activeRec ? activeRec.battle_id : null,
+      battle_data: activeRec ? activeRec.battle_data : null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

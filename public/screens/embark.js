@@ -25,7 +25,7 @@ const REGIONS = [
   },
 ];
 
-export function renderEmbark(root, { player }) {
+export function renderEmbark(root, { player, activeCheck } = {}) {
   applyBackground(root, player.faction, 'embark');
 
   root.innerHTML = `
@@ -145,13 +145,18 @@ export function renderEmbark(root, { player }) {
 
   async function loadRegions() {
     try {
-      const [progress, activeCheck] = await Promise.all([
-        api(`/progress?chat_id=${player.chat_id}`),
-        api(`/battle/active?chat_id=${player.chat_id}`),
-      ]);
+      const progress = await api(`/progress?chat_id=${player.chat_id}`);
+      let activeResp = activeCheck;
+      if (!activeResp) {
+        try {
+          activeResp = await api(`/battle/active?chat_id=${player.chat_id}`);
+        } catch (e) {
+          console.error('Failed to check active battle:', e);
+        }
+      }
 
-      if (activeCheck.active) {
-        showReconnectModal(activeCheck.battle_id, activeCheck.battle_data);
+      if (activeResp && activeResp.active) {
+        showReconnectModal(activeResp.battle_id, activeResp.battle_data);
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {

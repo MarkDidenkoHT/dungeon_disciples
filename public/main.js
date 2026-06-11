@@ -172,8 +172,12 @@ async function boot() {
   tg.ready();
 
   try {
-    const { player, session_token, isNew } = await api('/login', { initData: tg.initData });
+    const { player, session_token, isNew, active, battle_id, battle_data } = await api('/login', { initData: tg.initData });
     setSessionToken(session_token);
+    if (active) {
+      navigate('embark', { player, activeCheck: { battle_id, battle_data } });
+      return;
+    }
     if (isNew || !player.faction || !player.hero) {
       navigate('register', { player });
     } else {
