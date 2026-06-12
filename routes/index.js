@@ -10,6 +10,8 @@ const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 
+console.log('routes/index.js loaded');
+
 function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -219,9 +221,16 @@ function makeUnitData(unitId, buildingSlot) {
 }
 
 router.post('/login', async (req, res) => {
+  console.log('POST /api/login entered', { body: req.body });
   const { initData } = req.body;
-  if (!initData) return res.status(400).json({ error: 'initData required' });
+  if (!initData) {
+    console.log('POST /api/login missing initData');
+    return res.status(400).json({ error: 'initData required' });
+  }
   const telegramUser = validateTelegramInitData(initData);
+  if (!telegramUser) {
+    console.log('POST /api/login invalid telegram auth');
+  }
   if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
   const chat_id = String(telegramUser.id);
   const session_token = generateSessionToken();

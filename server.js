@@ -17,6 +17,7 @@ app.use(rateLimit({ windowMs: 60_000, max: 100 }));
 app.use('/data', express.static(path.join(__dirname, 'data')));
 app.use(express.static(path.join(__dirname, 'public')));
 
+console.log('Mounting API routes at /api');
 app.use('/api', routes);
 
 app.get('*', (req, res, next) => {

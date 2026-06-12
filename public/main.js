@@ -23,14 +23,17 @@ export async function api(path, body = null) {
   };
   if (_sessionToken) options.headers['X-Session-Token'] = _sessionToken;
   if (body) options.body = JSON.stringify(body);
+  console.log('[API] request', { path: `/api${path}`, options });
   const res = await fetch(`/api${path}`, options);
   const text = await res.text();
   let data;
   try {
     data = JSON.parse(text);
   } catch {
+    console.error('[API] invalid JSON response', { path: `/api${path}`, status: res.status, text });
     throw new Error(text.trim() || `HTTP ${res.status}`);
   }
+  console.log('[API] response', { path: `/api${path}`, status: res.status, data });
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
