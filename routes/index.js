@@ -169,6 +169,35 @@ function buildBattleData(engine, bd) {
   };
 }
 
+async function persistBattleRosterState(chat_id, battle_data) {
+  if (!battle_data || !Array.isArray(battle_data.units)) return;
+  const playerUnits = battle_data.units.filter(u => u.side === 'player' && u._rosterId != null);
+  await Promise.all(playerUnits.map(async (unit) => {
+    const rosterId = String(unit._rosterId);
+    const rows = await supabase(
+      `/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`
+    );
+    if (!rows.length) return;
+    const current = rows[0];
+    const updatedUnitData = {
+      ...current.unit_data,
+      alive:      unit.alive !== false,
+      current_hp: Number.isFinite(Number(unit.battle_hp)) ? Number(unit.battle_hp) : 0,
+    };
+    await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: updatedUnitData }),
+    });
+  }));
+}
+
+function getAlivePlayerRosterIds(battle_data) {
+  if (!battle_data || !Array.isArray(battle_data.units)) return [];
+  return battle_data.units
+    .filter(u => u.side === 'player' && u._rosterId != null && u.alive)
+    .map(u => String(u._rosterId));
+}
+
 function getFactionForUnit(unitDataId) {
   for (const [fKey, factionPool] of Object.entries(UNIT_UPGRADE_PATHS)) {
     if (factionPool[unitDataId]) return fKey;
@@ -777,6 +806,7 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'Battle not found' });
     if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
+    await persistBattleRosterState(chat_id, record.battle_data);
     await closeBattleState(battle_id);
     res.json({ success: true });
   } catch (err) {
@@ -795,7 +825,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player' });
     if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
     if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
-    await closeBattleState(battle_id);
+
+    await persistBattleRosterState(chat_id, record.battle_data);
+
     const { region_id, level } = record.battle_data;
     const won = record.battle_data?.winner === 'player';
     const region = REGIONS.find(r => r.id === region_id);
@@ -824,7 +856,11 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       }
       result.gold    = rewards.gold;
       result.crystal = crystalAmount;
-      const validSurvivorIds = Array.isArray(survivor_ids) ? survivor_ids : [];
+
+      const validSurvivorIds = Array.isArray(survivor_ids)
+        ? survivor_ids.map(String)
+        : getAlivePlayerRosterIds(record.battle_data);
+
       if (validSurvivorIds.length > 0) {
         const xpEach = Math.floor(rewards.xp / validSurvivorIds.length);
         result.xp_granted = xpEach;
