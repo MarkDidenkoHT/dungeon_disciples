@@ -2132,26 +2132,22 @@ button:active:not(:disabled) { opacity: 0.75; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .spells-slider-wrap {
   flex-shrink: 0;
   padding: 12px 14px;
-  position: sticky;
-  top: 50px;
 }
 
 .spells-slider {
     display: flex;
     gap: 10px;
-    overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
     padding-bottom: 2px;
     flex-direction: column;
-    align-content: center;
-    flex-wrap: wrap;
+    align-items: center;
 }
 
 .spells-slider::-webkit-scrollbar {
@@ -2285,18 +2281,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-detail-panel {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
 }
 
 .spell-detail-empty {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 120px;
   color: var(--muted);
   font-size: 0.75rem;
   text-align: center;
