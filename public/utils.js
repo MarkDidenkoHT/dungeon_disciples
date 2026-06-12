@@ -35,9 +35,9 @@ export const SCREEN_BACKGROUNDS = {
     grail_of_sorrow:     '/assets/screens/grail.jpg',
   },
   spells: {
-    empire:              '/assets/screens/empire.jpg',
-    choir_of_the_cursed: '/assets/screens/choir.jpg',
-    grail_of_sorrow:     '/assets/screens/grail.jpg',
+    empire:              '/assets/screens/spell_book.jpg',
+    choir_of_the_cursed: '/assets/screens/spell_book.jpg',
+    grail_of_sorrow:     '/assets/screens/spell_book.jpg',
   },
 };
 
