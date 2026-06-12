@@ -68,6 +68,15 @@ class BattleEngine {
       data.range        = data.action.range;
       data.target_type  = data.action.target_type;
     }
+    const maxHp = Number.isFinite(Number(data.max_hp)) && Number(data.max_hp) > 0
+      ? Number(data.max_hp)
+      : Number.isFinite(Number(data.hp)) && Number(data.hp) > 0
+        ? Number(data.hp)
+        : 50;
+    const currentHp = Number.isFinite(Number(data.current_hp))
+      ? Number(data.current_hp)
+      : maxHp;
+    const battleHp = Math.max(0, Math.min(currentHp, maxHp));
     const uniqueId = `${side}:${cellIdx}`;
     return {
       id:         uniqueId,
@@ -78,11 +87,11 @@ class BattleEngine {
       side,
       cellIndex:  cellIdx,
       size:       data.size ?? 'tile',
-      battle_hp:  data.hp ?? 50,
-      max_hp:     data.hp ?? 50,
+      battle_hp:  battleHp,
+      max_hp:     maxHp,
       armor:      data.armor ?? 0,
       initiative: data.initiative ?? 40,
-      alive:              true,
+      alive:      data.alive !== false && battleHp > 0,
       acted_this_round:   false,
       used_active:        false,
       defend_armor_bonus: 0,

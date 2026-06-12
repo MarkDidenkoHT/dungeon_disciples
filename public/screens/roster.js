@@ -70,6 +70,9 @@ export function renderRoster(root, { player }) {
     const tagRight = tags[1] || '';
 
     const currentXp  = stored.current_xp ?? 0;
+    const currentHp  = stored.current_hp != null ? stored.current_hp : (def?.hp ?? '—');
+    const maxHp      = stored.max_hp != null ? stored.max_hp : (def?.hp ?? '—');
+    const alive      = stored.alive !== false;
     const throneLevel = buildingsData['slot_0']?.level || 1;
 
     let heroPathsForUnit = [];
@@ -129,7 +132,7 @@ export function renderRoster(root, { player }) {
 
     const coreHtml = `
       <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${def?.hp ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}/${maxHp}</span></div>
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
         <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
@@ -244,10 +247,11 @@ export function renderRoster(root, { player }) {
 
     return `
       <div class="roster-slide">
-        <div class="unit-card">
+        <div class="unit-card ${alive ? '' : 'unit-card--dead'}">
           ${portraitHtml}
           <div class="unit-info">
             ${coreHtml}
+            ${alive ? '' : '<div class="unit-status-badge">Dead</div>'}
             ${resistsHtml}
             ${levelUpHtml}
             ${abilitiesHtml}

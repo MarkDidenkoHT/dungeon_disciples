@@ -205,17 +205,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
     const portraitUrl = getPortraitUrl(unit);
-
-    const currentHp = def?.hp ?? '—';
+    const currentHp = stored.current_hp != null ? stored.current_hp : (def?.hp ?? '—');
+    const maxHp     = stored.max_hp != null ? stored.max_hp : (def?.hp ?? '—');
+    const alive     = stored.alive !== false;
     const res        = def?.resistances || {};
 
     const coreHtml = `
       <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}</span></div>
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}/${maxHp}</span></div>
         <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
         <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${stored.current_xp ?? 0}</span></div>
       </div>
+      ${alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`}
     `;
 
     const resistCells = RESIST_ORDER.map(r => {
@@ -635,6 +637,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
         const portraitUrl = getPortraitUrl(unit, 'grid');
+        const currentHp   = unit.unit_data?.current_hp != null ? unit.unit_data.current_hp : (resolveUnitDef(unit)?.hp ?? '—');
+        const maxHp       = unit.unit_data?.max_hp != null ? unit.unit_data.max_hp : (resolveUnitDef(unit)?.hp ?? '—');
+        const isAlive     = unit.unit_data?.alive !== false;
         const spellBuffs = selectedSpells.filter(s => {
           if (s.target_scope === 'all_allies') return true;
           if (s.target_scope === 'all_enemies') return false;
@@ -646,12 +651,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           return false;
         });
         const spellDot = spellBuffs.length > 0 ? `<span class="battle-cell-spell-dot">✦</span>` : '';
-        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''}"
+        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''} ${isAlive ? '' : 'battle-cell--dead'}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
           <div class="battle-cell-info">
             <span class="battle-cell-name">${name}</span>
-            <span class="battle-cell-sub">${isHero ? '★ hero' : sizeLabel(occ.size)}</span>
+            <span class="battle-cell-sub">${isAlive ? `${currentHp}/${maxHp}` : 'Dead'}</span>
           </div>
           ${spellDot}
           <span class="battle-cell-remove" data-remove="${i}">✕</span>

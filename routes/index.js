@@ -107,6 +107,18 @@ function getUnitByDataId(unitDataId) {
   return null;
 }
 
+function buildPlayerUnitFromRosterEntry(r, entry) {
+  const def = getUnitByDataId(r.unit_data?.unit_id);
+  if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
+  return {
+    id:        String(entry.id),
+    _rosterId: String(entry._rosterId || entry.id),
+    unit_data: { ...def, ...(r.unit_data || {}) },
+    unit_name: def.name || def.id,
+    is_hero:   !!r.is_hero,
+  };
+}
+
 async function rehydrateEngine(record) {
   const bd = record.battle_data;
   const { playerUnitIds, placement } = bd.setup;
@@ -121,11 +133,10 @@ async function rehydrateEngine(record) {
   for (const r of rosterRows) rosterById[String(r.id)] = r;
 
   const playerUnits = playerUnitIds.map(entry => {
-    const r = rosterById[String(entry._rosterId || entry.id)];
+    const rosterId = String(entry._rosterId || entry.id);
+    const r = rosterById[rosterId];
     if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-    const def = getUnitByDataId(r.unit_data?.unit_id);
-    if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
-    return { id: String(entry.id), _rosterId: String(entry._rosterId || entry.id), unit_data: def, unit_name: def.name || def.id };
+    return buildPlayerUnitFromRosterEntry(r, entry);
   });
 
   return BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
@@ -527,16 +538,8 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       const rosterId = String(entry._rosterId || entry.id);
       const r = rosterById[rosterId];
       if (!r) return res.status(400).json({ error: `Roster unit ${rosterId} not found or does not belong to this player` });
-      const def = getUnitByDataId(r.unit_data?.unit_id);
-      if (!def) return res.status(400).json({ error: `Unit definition for ${r.unit_data?.unit_id} not found` });
       if (r.is_hero) heroRosterId = rosterId;
-      playerUnits.push({
-        id: String(entry.id),
-        _rosterId: rosterId,
-        unit_data: def,
-        unit_name: def.name || def.id,
-        is_hero:   !!r.is_hero,
-      });
+      playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry));
     }
 
     // ── Server-side loyalty enforcement ──────────────────────────
