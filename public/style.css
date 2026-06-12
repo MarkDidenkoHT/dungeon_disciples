@@ -2138,6 +2138,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spells-slider-wrap {
   flex-shrink: 0;
   padding: 12px 14px;
+  padding-top: 50px;
 }
 
 .spells-slider {
