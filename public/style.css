@@ -2138,16 +2138,20 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spells-slider-wrap {
   flex-shrink: 0;
   padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 50px;
 }
 
 .spells-slider {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 2px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+    flex-direction: column;
+    align-content: center;
+    flex-wrap: wrap;
 }
 
 .spells-slider::-webkit-scrollbar {
