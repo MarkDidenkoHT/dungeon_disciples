@@ -10,7 +10,6 @@ const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 
-console.log('routes/index.js loaded');
 
 function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -31,6 +30,7 @@ async function requireAuth(req, res, next) {
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, '');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const STARTING_RESOURCES = [
@@ -221,16 +221,9 @@ function makeUnitData(unitId, buildingSlot) {
 }
 
 router.post('/login', async (req, res) => {
-  console.log('POST /api/login entered', { body: req.body });
   const { initData } = req.body;
-  if (!initData) {
-    console.log('POST /api/login missing initData');
-    return res.status(400).json({ error: 'initData required' });
-  }
+  if (!initData) return res.status(400).json({ error: 'initData required' });
   const telegramUser = validateTelegramInitData(initData);
-  if (!telegramUser) {
-    console.log('POST /api/login invalid telegram auth');
-  }
   if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
   const chat_id = String(telegramUser.id);
   const session_token = generateSessionToken();
@@ -243,18 +236,14 @@ router.post('/login', async (req, res) => {
       });
       let dailyResult = null;
       try {
-        console.log('Invoking daily-crystals function for login (existing player)', { chat_id });
-        dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
-        console.log('daily-crystals result:', dailyResult);
-      } catch (e) {
-        console.error('Failed to invoke daily-crystals function:', e.message || e);
-      }
+        dailyResult = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/daily-crystals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
+          body: JSON.stringify({ chat_id }),
+        }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message || JSON.stringify(d)); return d; });
+      } catch (e) {}
       let activeRec = null;
-      try {
-        activeRec = await getActiveBattle(chat_id);
-      } catch (e) {
-        console.error('Failed to check active battle on login:', e.message || e);
-      }
+      try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
       return res.json({
         player: updated[0],
         session_token,
@@ -271,18 +260,14 @@ router.post('/login', async (req, res) => {
     });
     let dailyResult = null;
     try {
-      console.log('Invoking daily-crystals function for login (new player)', { chat_id });
-      dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
-      console.log('daily-crystals result:', dailyResult);
-    } catch (e) {
-      console.error('Failed to invoke daily-crystals function:', e.message || e);
-    }
+      dailyResult = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/daily-crystals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
+        body: JSON.stringify({ chat_id }),
+      }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message || JSON.stringify(d)); return d; });
+    } catch (e) {}
     let activeRec = null;
-    try {
-      activeRec = await getActiveBattle(chat_id);
-    } catch (e) {
-      console.error('Failed to check active battle on login:', e.message || e);
-    }
+    try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
     res.json({
       player: created[0],
       session_token,
