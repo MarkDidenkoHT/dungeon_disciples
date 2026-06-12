@@ -233,7 +233,9 @@ router.post('/login', async (req, res) => {
         body: JSON.stringify({ session_token }),
       });
       try {
-        await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+        console.log('Invoking daily-crystals function for login (existing player)', { chat_id });
+        const dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+        console.log('daily-crystals result:', dailyResult);
       } catch (e) {
         console.error('Failed to invoke daily-crystals function:', e.message || e);
       }
@@ -257,7 +259,9 @@ router.post('/login', async (req, res) => {
       body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null, session_token }),
     });
     try {
-      await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+      console.log('Invoking daily-crystals function for login (new player)', { chat_id });
+      const dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+      console.log('daily-crystals result:', dailyResult);
     } catch (e) {
       console.error('Failed to invoke daily-crystals function:', e.message || e);
     }
