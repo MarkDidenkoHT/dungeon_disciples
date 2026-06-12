@@ -414,7 +414,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function getEligibleTargets(spell) {
     if (spell.target_scope === 'single_ally') {
-      return roster.filter(u => placedUnitIds().has(u.id));
+      return roster.filter(u => placedUnitIds().has(u.id) && (u.unit_data?.alive !== false));
     }
     if (spell.target_scope === 'single_enemy') {
       return enemies.map((e, i) => ({ id: `enemy_${i}`, name: e.name, _enemyData: e }));
@@ -705,7 +705,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function renderPortraitTrack() {
     const track     = root.querySelector('#portrait-track');
     const placed    = placedUnitIds();
-    const available = roster.filter(u => !placed.has(u.id));
+    const available = roster.filter(u => !placed.has(u.id) && (u.unit_data?.alive !== false));
     const loyaltyLeft = maxNonHero - placedLoyaltyUsed();
 
     if (!available.length) {

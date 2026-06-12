@@ -43,9 +43,9 @@ const STARTING_RESOURCES = [
 ];
 
 const FACTION_STARTING_SPELLS = {
-  empire:              ['e_spell_1'],
-  choir_of_the_cursed: ['d_spell_1'],
-  grail_of_sorrow:     ['g_spell_1'],
+  empire:              ['e_spell_1', 'e_spell_7'],
+  choir_of_the_cursed: ['d_spell_1', 'd_spell_7'],
+  grail_of_sorrow:     ['g_spell_1', 'g_spell_7'],
 };
 
 const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1', 'h_g_2', 'h_g_3'];
@@ -105,6 +105,24 @@ function getUnitByDataId(unitDataId) {
     if (found) return found;
   }
   return null;
+}
+
+async function consumeCrystalCosts(chat_id, crystals) {
+  const crystalEntries = Object.entries(crystals || {}).filter(([, amt]) => Number.isFinite(amt) && amt > 0);
+  if (!crystalEntries.length) return;
+
+  const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+  for (const [crystalType, needed] of crystalEntries) {
+    const row = inventoryRows.find(r => r.item === crystalType);
+    if (!row || row.amount < needed) {
+      throw new Error(`Not enough ${crystalType}. Need ${needed}`);
+    }
+  }
+
+  await Promise.all(crystalEntries.map(([crystalType, needed]) => {
+    const row = inventoryRows.find(r => r.item === crystalType);
+    return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
+  }));
 }
 
 function buildPlayerUnitFromRosterEntry(r, entry) {
@@ -313,6 +331,44 @@ router.get('/roster', requireAuth, async (req, res) => {
   try {
     const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/roster/resurrect', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, spell_id } = req.body;
+  if (!chat_id || !roster_id || !spell_id) return res.status(400).json({ error: 'chat_id, roster_id and spell_id required' });
+
+  try {
+    const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player = playerRows[0];
+    const learnedSpells = player.learned_spells || [];
+    if (!learnedSpells.includes(spell_id)) return res.status(403).json({ error: 'Spell not learned' });
+
+    const factionSpells = SPELLS[player.faction] || [];
+    const spellDef = factionSpells.find(s => s.id === spell_id && s.usage === 'roster' && s.target_scope === 'single_ally');
+    if (!spellDef) return res.status(400).json({ error: 'Invalid roster spell' });
+
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    const entry = rosterRows[0];
+    const unitData = entry.unit_data || {};
+    if (unitData.alive !== false) return res.status(400).json({ error: 'Unit is already alive' });
+
+    await consumeCrystalCosts(chat_id, spellDef.cost?.crystals || {});
+
+    const newUnitData = { ...unitData, alive: true, current_hp: 1 };
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: newUnitData }),
+    });
+
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    res.json({ success: true, roster: updated[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -16,6 +16,20 @@ const SPELLS = {
     {
       id: 'e_spell_2',
       name: 'Knight\u2019s Oath',
+        {
+          id: 'e_spell_7',
+          name: 'Revival Prayer',
+          rank: 1,
+          tier: 1,
+          type: 'roster',
+          description: 'Use 5 Life crystals to resurrect one fallen ally at 1 HP.',
+          cost: { crystals: { Crystals_Life: 5 } },
+          icon: '🕊️',
+          effect_type: 'resurrect',
+          usage: 'roster',
+          target_scope: 'single_ally',
+          params: { resurrect: true }
+        },
       rank: 1,
       tier: 1,
       type: 'preparation',
@@ -42,6 +56,20 @@ const SPELLS = {
     {
       id: 'e_spell_4',
       name: 'Divine Wrath',
+        {
+          id: 'd_spell_7',
+          name: 'Grave Resurrection',
+          rank: 1,
+          tier: 1,
+          type: 'roster',
+          description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
+          cost: { crystals: { Crystals_Death: 5 } },
+          icon: '☠️',
+          effect_type: 'resurrect',
+          usage: 'roster',
+          target_scope: 'single_ally',
+          params: { resurrect: true }
+        },
       rank: 2,
       tier: 2,
       type: 'preparation',
@@ -68,6 +96,20 @@ const SPELLS = {
     {
       id: 'e_spell_6',
       name: 'Judgement',
+        {
+          id: 'g_spell_7',
+          name: 'Phoenix Rite',
+          rank: 1,
+          tier: 1,
+          type: 'roster',
+          description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
+          cost: { crystals: { Crystals_Fire: 5 } },
+          icon: '🔥',
+          effect_type: 'resurrect',
+          usage: 'roster',
+          target_scope: 'single_ally',
+          params: { resurrect: true }
+        },
       rank: 3,
       tier: 3,
       type: 'preparation',

@@ -1,5 +1,6 @@
 import { api }              from '../main.js';
 import { refreshResourceBar } from '../main.js';
+import { SPELLS }           from '../../data/spells.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
@@ -122,6 +123,7 @@ export function renderRoster(root, { player }) {
           <span class="unit-name">${unitName}</span>
           <span class="unit-level-text">${tierLabel}</span>
         </div>
+        ${alive ? '' : '<div class="unit-dead-overlay">Dead</div>'}
         ${tagLeft  ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
         ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
       </div>`;
@@ -158,6 +160,21 @@ export function renderRoster(root, { player }) {
     }).join('');
 
     const resistsHtml = `<div class="unit-resists-grid">${armorCell}${resistCells}</div>`;
+
+    const resurrectionSpell = SPELLS[player.faction]?.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
+    const resurrectionCost = resurrectionSpell
+      ? Object.entries(resurrectionSpell.cost?.crystals || {})
+          .filter(([, amt]) => amt > 0)
+          .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
+          .join(', ')
+      : '';
+    const resurrectButtonHtml = !alive && resurrectionSpell ? `
+      <div class="unit-resurrect-row">
+        <button class="resurrect-btn" data-roster-id="${u.id}" data-spell-id="${resurrectionSpell.id}">
+          Resurrect (${resurrectionCost})
+        </button>
+      </div>
+    ` : '';
 
     let levelUpHtml = '';
     if (isHero) {
@@ -251,7 +268,8 @@ export function renderRoster(root, { player }) {
           ${portraitHtml}
           <div class="unit-info">
             ${coreHtml}
-            ${alive ? '' : '<div class="unit-status-badge">Dead</div>'}
+            
+            ${resurrectButtonHtml}
             ${resistsHtml}
             ${levelUpHtml}
             ${abilitiesHtml}
@@ -340,6 +358,26 @@ export function renderRoster(root, { player }) {
         lvlBtn.disabled    = false;
         lvlBtn.textContent = 'Level Up';
         alert(err.message || 'Level up failed');
+      }
+      return;
+    }
+
+    const resurrectBtn = e.target.closest('.resurrect-btn');
+    if (resurrectBtn) {
+      const rosterId = resurrectBtn.dataset.rosterId;
+      const spellId  = resurrectBtn.dataset.spellId;
+      resurrectBtn.disabled    = true;
+      resurrectBtn.textContent = 'Resurrecting…';
+      try {
+        await api('/roster/resurrect', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
+        const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
+        units = freshUnits;
+        await refreshResourceBar(player).catch(() => {});
+        const savedIdx = current;
+        initSlider();
+        goTo(savedIdx);
+      } catch (err) {
+        alert(err.message || 'Resurrection failed');
       }
       return;
     }
