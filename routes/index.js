@@ -232,9 +232,10 @@ router.post('/login', async (req, res) => {
         method: 'PATCH',
         body: JSON.stringify({ session_token }),
       });
+      let dailyResult = null;
       try {
         console.log('Invoking daily-crystals function for login (existing player)', { chat_id });
-        const dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+        dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
         console.log('daily-crystals result:', dailyResult);
       } catch (e) {
         console.error('Failed to invoke daily-crystals function:', e.message || e);
@@ -252,15 +253,17 @@ router.post('/login', async (req, res) => {
         active: Boolean(activeRec),
         battle_id: activeRec ? activeRec.battle_id : null,
         battle_data: activeRec ? activeRec.battle_data : null,
+        daily_result: dailyResult,
       });
     }
     const created = await supabase('/players', {
       method: 'POST',
       body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null, session_token }),
     });
+    let dailyResult = null;
     try {
       console.log('Invoking daily-crystals function for login (new player)', { chat_id });
-      const dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
+      dailyResult = await supabase('/functions/v1/daily-crystals', { method: 'POST', body: JSON.stringify({ chat_id }) });
       console.log('daily-crystals result:', dailyResult);
     } catch (e) {
       console.error('Failed to invoke daily-crystals function:', e.message || e);
@@ -278,6 +281,7 @@ router.post('/login', async (req, res) => {
       active: Boolean(activeRec),
       battle_id: activeRec ? activeRec.battle_id : null,
       battle_data: activeRec ? activeRec.battle_data : null,
+      daily_result: dailyResult,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
