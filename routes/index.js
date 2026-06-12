@@ -148,12 +148,15 @@ function getFactionForUnit(unitDataId) {
 }
 
 function makeUnitData(unitId, buildingSlot) {
+  const def = getUnitByDataId(unitId);
+  const hp  = def?.hp ?? 50;
   return {
     unit_id: unitId,
     building_slot: buildingSlot || null,
     current_xp: 0,
-    buffs: [],
-    debuffs: [],
+    current_hp: hp,
+    max_hp: hp,
+    alive: true,
   };
 }
 
@@ -350,6 +353,11 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     if (!nextDef) return res.status(400).json({ error: `Definition for ${path.unit_id} not found` });
     const newUnitData = makeUnitData(nextDef.id, buildingSlot);
     newUnitData.current_xp = unitData.current_xp ?? 0;
+    const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
+    if (oldHp > 0) {
+      newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
+    }
+    newUnitData.alive = unitData.alive !== false;
     const updatePromises = [
       supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
     ];
