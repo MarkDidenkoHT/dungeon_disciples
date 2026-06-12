@@ -41,12 +41,16 @@ export const SCREEN_BACKGROUNDS = {
   },
 };
 
+export const SCREEN_BACKGROUND_POSITIONS = {
+  spells: 'left bottom',
+};
+
 export function applyBackground(root, faction, screen) {
   const url = SCREEN_BACKGROUNDS[screen]?.[faction];
   if (!url) return;
   root.style.backgroundImage    = `url('${url}')`;
   root.style.backgroundSize     = 'cover';
-  root.style.backgroundPosition = 'center';
+  root.style.backgroundPosition = SCREEN_BACKGROUND_POSITIONS[screen] || 'center';
   root.style.backgroundRepeat   = 'no-repeat';
 }
 
