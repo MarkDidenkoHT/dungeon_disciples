@@ -2275,133 +2275,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--accent);
 }
 
-.spell-cost-item .res-icon-img,
-.spell-detail-cost-item .res-icon-img {
+.spell-cost-item .res-icon-img {
   width: 12px;
   height: 12px;
 }
 
-.spell-detail-panel {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.spell-detail-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  color: var(--muted);
-  font-size: 0.75rem;
-  text-align: center;
-  padding: 20px;
-}
-
-.spell-detail-inner {
-  padding: 14px 14px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.spell-detail-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.spell-detail-big-icon {
-  font-size: 2rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.spell-detail-title {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.spell-detail-name {
-  font-size: 1rem;
-  font-weight: 700;
+.spell-modal-desc {
+  font-size: 0.88rem;
   color: var(--text);
-  line-height: 1.2;
-}
-
-.spell-detail-meta {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.spell-detail-rank-chip {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: var(--muted);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1px 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.spell-detail-type-chip {
-  font-size: 0.6rem;
-  font-weight: 700;
-  border-radius: 3px;
-  padding: 1px 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.spell-detail-type-chip--buff {
-  color: #7eb8f7;
-  background: #1a2d4a;
-  border: 1px solid #2e5080;
-}
-
-.spell-detail-type-chip--debuff {
-  color: #f77e7e;
-  background: #4a1a1a;
-  border: 1px solid #803030;
-}
-
-.spell-detail-cost-col {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-}
-
-.spell-detail-cost-label {
-  font-size: 0.58rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.spell-detail-cost-items {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.spell-detail-cost-item {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.spell-detail-desc {
-  font-size: 0.82rem;
-  color: var(--muted);
   line-height: 1.5;
 }
 

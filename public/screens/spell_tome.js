@@ -1,6 +1,6 @@
 import { api, refreshResourceBar } from '../main.js';
 import { SPELLS }                  from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
@@ -18,10 +18,6 @@ export function renderSpellTome(root, { player }) {
           <div class="spells-slider-wrap" id="spells-slider-wrap">
             <div class="spells-slider" id="spells-slider"></div>
           </div>
-
-          <div class="spell-detail-panel" id="spell-detail-panel">
-            <div class="spell-detail-empty">Select a spell to see details</div>
-          </div>
         </div>
       </main>
     </div>
@@ -35,7 +31,6 @@ export function renderSpellTome(root, { player }) {
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
-  const detailPanel = root.querySelector('#spell-detail-panel');
   const tierTabs    = root.querySelector('#tier-tabs');
 
   function costHtml(spell) {
@@ -97,27 +92,21 @@ export function renderSpellTome(root, { player }) {
         if (activeSpellId === spellId) {
           activeSpellId = null;
           renderSlider();
-          clearDetail();
+          closeSheet();
           return;
         }
         activeSpellId = spellId;
         renderSlider();
-        showDetail(spell);
+        openSpellModal(spell);
       });
     });
   }
 
-  function showDetail(spell) {
+  function modalBodyHtml(spell) {
     const isLearned    = learnedSpells.includes(spell.id);
     const affordable   = canAfford(spell);
     const tierUnlocked = throneLevel >= spell.tier;
     const canResearch  = tierUnlocked && !isLearned && affordable;
-
-    let costItemsHtml = '';
-    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
-      if (amt > 0) costItemsHtml += `<span class="spell-detail-cost-item">${CRYSTAL_ICONS[type] || '💎'} ${amt}</span>`;
-    }
-    if (!costItemsHtml) costItemsHtml = '<span class="spell-detail-cost-item">Free</span>';
 
     let actionHtml;
     if (isLearned) {
@@ -132,33 +121,17 @@ export function renderSpellTome(root, { player }) {
       `;
     }
 
-    const typeColor = spell.effect_type === 'buff' ? 'spell-detail-type-chip--buff' : 'spell-detail-type-chip--debuff';
-
-    detailPanel.innerHTML = `
-      <div class="spell-detail-inner">
-        <div class="spell-detail-header">
-          <div class="spell-detail-big-icon">${spell.icon}</div>
-          <div class="spell-detail-title">
-            <div class="spell-detail-name">${spell.name}</div>
-            <div class="spell-detail-meta">
-              <span class="spell-detail-rank-chip">Tier ${spell.tier}</span>
-              <span class="spell-detail-type-chip ${typeColor}">${spell.effect_type}</span>
-            </div>
-          </div>
-          <div class="spell-detail-cost-col">
-            <div class="spell-detail-cost-label">Cost</div>
-            <div class="spell-detail-cost-items">${costItemsHtml}</div>
-          </div>
-        </div>
-        <div class="spell-detail-desc">${spell.description}</div>
-        <div class="spell-detail-action">
-          ${actionHtml}
-          <div class="research-feedback" id="research-feedback" style="display:none"></div>
-        </div>
+    return `
+      <div class="spell-modal-desc">${spell.description}</div>
+      <div class="spell-detail-action">
+        ${actionHtml}
+        <div class="research-feedback" id="research-feedback" style="display:none"></div>
       </div>
     `;
+  }
 
-    const detailBtn = root.querySelector('#detail-research-btn');
+  function bindModalActions(spell) {
+    const detailBtn = getSheetBody().querySelector('#detail-research-btn');
     if (detailBtn) {
       detailBtn.addEventListener('click', async () => {
         detailBtn.disabled    = true;
@@ -168,12 +141,28 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
-  function clearDetail() {
-    detailPanel.innerHTML = '<div class="spell-detail-empty">Select a spell to see details</div>';
+  function openSpellModal(spell) {
+    openSheet(spell.name, modalBodyHtml(spell));
+    bindModalActions(spell);
+
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) {
+      const onClose = () => {
+        activeSpellId = null;
+        renderSlider();
+      };
+      overlay.querySelector('.modal-close-btn')?.addEventListener('click', onClose, { once: true });
+      overlay.addEventListener('click', e => { if (e.target === overlay) onClose(); }, { once: true });
+    }
+  }
+
+  function refreshModalBody(spell) {
+    getSheetBody().innerHTML = modalBodyHtml(spell);
+    bindModalActions(spell);
   }
 
   function showFeedback(msg, isError) {
-    const el = root.querySelector('#research-feedback');
+    const el = getSheetBody().querySelector('#research-feedback');
     if (!el) return;
     el.textContent   = msg;
     el.className     = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
@@ -195,16 +184,16 @@ export function renderSpellTome(root, { player }) {
         learnedSpells.push(spell.id);
         refreshResourceBar(player).catch(() => {});
         renderSlider();
-        showDetail(spell);
+        refreshModalBody(spell);
         showFeedback('Spell learned!', false);
       } else {
         showFeedback(result?.message || 'Research failed', true);
-        const btn = root.querySelector('#detail-research-btn');
+        const btn = getSheetBody().querySelector('#detail-research-btn');
         if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
       }
     } catch (err) {
       showFeedback(err.message || 'Research failed', true);
-      const btn = root.querySelector('#detail-research-btn');
+      const btn = getSheetBody().querySelector('#detail-research-btn');
       if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
     }
   }
@@ -216,7 +205,7 @@ export function renderSpellTome(root, { player }) {
       tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
       tab.classList.add('tier-tab--active');
       renderSlider();
-      clearDetail();
+      closeSheet();
     });
   });
 
