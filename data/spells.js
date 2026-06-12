@@ -56,20 +56,6 @@ const SPELLS = {
     {
       id: 'e_spell_4',
       name: 'Divine Wrath',
-        {
-          id: 'd_spell_7',
-          name: 'Grave Resurrection',
-          rank: 1,
-          tier: 1,
-          type: 'roster',
-          description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
-          cost: { crystals: { Crystals_Death: 5 } },
-          icon: '☠️',
-          effect_type: 'resurrect',
-          usage: 'roster',
-          target_scope: 'single_ally',
-          params: { resurrect: true }
-        },
       rank: 2,
       tier: 2,
       type: 'preparation',
@@ -96,20 +82,6 @@ const SPELLS = {
     {
       id: 'e_spell_6',
       name: 'Judgement',
-        {
-          id: 'g_spell_7',
-          name: 'Phoenix Rite',
-          rank: 1,
-          tier: 1,
-          type: 'roster',
-          description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
-          cost: { crystals: { Crystals_Fire: 5 } },
-          icon: '🔥',
-          effect_type: 'resurrect',
-          usage: 'roster',
-          target_scope: 'single_ally',
-          params: { resurrect: true }
-        },
       rank: 3,
       tier: 3,
       type: 'preparation',
@@ -161,6 +133,20 @@ const SPELLS = {
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { lifesteal: 0.15, resistances: { death: 15 } }
+    },
+    {
+      id: 'd_spell_7',
+      name: 'Grave Resurrection',
+      rank: 1,
+      tier: 1,
+      type: 'roster',
+      description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
+      cost: { crystals: { Crystals_Death: 5 } },
+      icon: '☠️',
+      effect_type: 'resurrect',
+      usage: 'roster',
+      target_scope: 'single_ally',
+      params: { resurrect: true }
     },
     {
       id: 'd_spell_5',
@@ -229,6 +215,20 @@ const SPELLS = {
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.15 }
+    },
+    {
+      id: 'g_spell_7',
+      name: 'Phoenix Rite',
+      rank: 1,
+      tier: 1,
+      type: 'roster',
+      description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
+      cost: { crystals: { Crystals_Fire: 5 } },
+      icon: '🔥',
+      effect_type: 'resurrect',
+      usage: 'roster',
+      target_scope: 'single_ally',
+      params: { resurrect: true }
     },
     {
       id: 'g_spell_4',
