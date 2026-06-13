@@ -2143,7 +2143,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .spells-slider {
     display: flex;
-    gap: 10px;
+    gap: 14px;
     scrollbar-width: none;
     -ms-overflow-style: none;
     padding-bottom: 2px;
@@ -2157,15 +2157,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .spell-card {
   flex-shrink: 0;
-  width: 88px;
-  border-radius: 10px;
+  width: 150px;
+  border-radius: 12px;
   background: var(--bg);
   border: 1.5px solid var(--border);
-  padding: 10px 8px 8px;
+  padding: 14px 12px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   position: relative;
@@ -2197,7 +2197,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spell-card-learned-ring {
   position: absolute;
   inset: -1.5px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1.5px solid #3a7a47;
   pointer-events: none;
 }
@@ -2205,22 +2205,22 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spell-card-lock-overlay {
   position: absolute;
   inset: 0;
-  border-radius: 9px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   background: color-mix(in srgb, var(--bg) 60%, transparent);
   z-index: 2;
 }
 
 .spell-card-icon {
-  font-size: 1.6rem;
+  font-size: 2.4rem;
   line-height: 1;
 }
 
 .spell-card-name {
-  font-size: 0.62rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
   text-align: center;
@@ -2229,12 +2229,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-card-type {
-  font-size: 0.55rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-radius: 3px;
-  padding: 1px 5px;
+  border-radius: 4px;
+  padding: 2px 7px;
 }
 
 .spell-card-type--buff {
@@ -2253,14 +2253,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .spell-card-check {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 0.6rem;
+  top: 7px;
+  right: 7px;
+  font-size: 0.8rem;
   color: #6ec87e;
   font-weight: 900;
   line-height: 1;
@@ -2269,15 +2269,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spell-cost-item {
   display: flex;
   align-items: center;
-  gap: 1px;
-  font-size: 0.6rem;
+  gap: 2px;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--accent);
 }
 
 .spell-cost-item .res-icon-img {
-  width: 12px;
-  height: 12px;
+  width: 15px;
+  height: 15px;
 }
 
 .spell-modal-desc {
