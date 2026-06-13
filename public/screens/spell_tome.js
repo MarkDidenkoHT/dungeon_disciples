@@ -1,6 +1,6 @@
 import { api, refreshResourceBar } from '../main.js';
 import { SPELLS }                  from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
@@ -42,6 +42,19 @@ export function renderSpellTome(root, { player }) {
     return parts || '—';
   }
 
+  function spellIconSlug(spell) {
+    return spell.name
+      .toLowerCase()
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/['’]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
+  function spellIconUrl(spell) {
+    return `/assets/icons/spells/${spellIconSlug(spell)}.png`;
+  }
+
   function canAfford(spell) {
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
       if (amt > 0 && (playerCrystals[type] || 0) < amt) return false;
@@ -69,15 +82,12 @@ export function renderSpellTome(root, { player }) {
       if (isActive)                                   cardCls += ' spell-card--active';
       if (tierUnlocked && !isLearned && !affordable)  cardCls += ' spell-card--unaffordable';
 
-      const typeColor = spell.effect_type === 'buff' ? 'spell-card-type--buff' : 'spell-card-type--debuff';
-
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
           ${isLearned    ? '<div class="spell-card-learned-ring"></div>'          : ''}
           ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><span>🔒</span></div>' : ''}
-          <div class="spell-card-icon">${spell.icon}</div>
+          <div class="spell-card-icon"><img src="${spellIconUrl(spell)}" alt="${spell.name}" onerror="this.style.display='none'"></div>
           <div class="spell-card-name">${spell.name}</div>
-          <div class="spell-card-type ${typeColor}">${spell.effect_type}</div>
           <div class="spell-card-cost">${costHtml(spell)}</div>
           ${isLearned ? '<div class="spell-card-check">✓</div>' : ''}
         </div>
@@ -122,7 +132,11 @@ export function renderSpellTome(root, { player }) {
       `;
     }
 
+    const typeLabels = { buff: 'Buff', debuff: 'Debuff', resurrect: 'Resurrect' };
+    const typeLabel  = typeLabels[spell.effect_type] || cap(spell.effect_type || '');
+
     return `
+      <div class="spell-modal-type spell-modal-type--${spell.effect_type}">${typeLabel}</div>
       <div class="spell-modal-desc">${spell.description}</div>
       <div class="spell-detail-action">
         ${actionHtml}
