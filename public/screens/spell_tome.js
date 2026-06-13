@@ -12,6 +12,7 @@ export function renderSpellTome(root, { player }) {
           <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
           <button class="tier-tab" data-tier="2">Tier II</button>
           <button class="tier-tab" data-tier="3">Tier III</button>
+          <button class="tier-tab" data-tier="4">Tier IV</button>
         </div>
 
         <div class="spelltome-body">

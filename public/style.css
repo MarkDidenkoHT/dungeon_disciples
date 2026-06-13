@@ -2112,12 +2112,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   transition: color 0.15s, border-color 0.15s;
   margin-bottom: -1px;
 }
