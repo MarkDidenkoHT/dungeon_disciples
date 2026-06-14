@@ -110,6 +110,44 @@ function navigate(screen, params = {}) {
 // Wire navigate into api.js so screens can call it without importing main.js
 setNavigate(navigate);
 
+function showReconnectModal(player, battle_id, battle_data) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-header"><span class="modal-title">Unfinished Battle</span></div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
+        <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
+          You have an unfinished battle in progress. Reconnect to continue, or abandon it.
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
+          <button id="boot-abandon-btn" class="action-btn action-btn--cancel">Abandon</button>
+          <button id="boot-reconnect-btn" class="action-btn">Reconnect</button>
+        </div>
+      </div>
+    </div>
+  `;
+  app.appendChild(overlay);
+
+  overlay.querySelector('#boot-reconnect-btn').addEventListener('click', async () => {
+    try {
+      const region_id = battle_data.region_id;
+      const level     = battle_data.level;
+      const { state } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+      overlay.remove();
+      navigate('battle', { player, battle_id, reconnect: true, snapshot: state, region_id, level });
+    } catch (err) {
+      console.error('Failed to reconnect:', err);
+    }
+  });
+
+  overlay.querySelector('#boot-abandon-btn').addEventListener('click', async () => {
+    try { await api('/battle/end', { battle_id, chat_id: player.chat_id }); } catch (_) {}
+    overlay.remove();
+    navigate('castle', { player });
+  });
+}
+
 async function boot() {
   const tg = window.Telegram?.WebApp;
 
@@ -124,7 +162,8 @@ async function boot() {
     const { player, session_token, isNew, active, battle_id, battle_data } = await api('/login', { initData: tg.initData });
     setSessionToken(session_token);
     if (active) {
-      navigate('embark', { player, activeCheck: { battle_id, battle_data } });
+      mountShell(player);
+      showReconnectModal(player, battle_id, battle_data);
       return;
     }
     if (isNew || !player.faction || !player.hero) {
