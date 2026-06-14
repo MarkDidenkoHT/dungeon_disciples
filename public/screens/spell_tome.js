@@ -1,4 +1,4 @@
-import { api, refreshResourceBar } from '../main.js';
+import { api, refreshResourceBar } from '../api.js';
 import { SPELLS }                  from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap } from '../utils.js';
 

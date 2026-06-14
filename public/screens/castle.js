@@ -1,6 +1,6 @@
-import { api }              from '../main.js';
-import { navigate }          from '../main.js';
-import { refreshResourceBar } from '../main.js';
+import { api }              from '../api.js';
+import { navigate }          from '../api.js';
+import { refreshResourceBar } from '../api.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';

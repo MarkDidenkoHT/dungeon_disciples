@@ -1,4 +1,4 @@
-import { api, navigate }  from '../main.js';
+import { api, navigate }  from '../api.js';
 import { SPELLS }          from '../../data/spells.js';
 import { getEncounter }    from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';

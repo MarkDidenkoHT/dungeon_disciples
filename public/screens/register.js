@@ -1,5 +1,5 @@
-import { api }      from '../main.js';
-import { navigate } from '../main.js';
+import { api }      from '../api.js';
+import { navigate } from '../api.js';
 
 const FACTIONS = [
   { id: 'empire',              label: 'The Empire',          description: 'Defenders of the realm, forged in honor.' },

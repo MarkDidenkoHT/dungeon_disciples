@@ -1,4 +1,4 @@
-import { api, navigate } from '../main.js';
+import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { RESIST_ICONS, RESIST_ORDER, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet } from '../utils.js';
 

@@ -1,4 +1,4 @@
-import { api, navigate } from '../main.js';
+import { api, navigate } from '../api.js';
 import { applyBackground } from '../utils.js';
 
 const REGIONS = [
