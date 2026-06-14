@@ -1088,11 +1088,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .unit-identity-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 8px 10px 4px;
-  border-bottom: 1px solid var(--border);
+  padding: 20px 10px 10px;
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75) 40%);
+  z-index: 2;
 }
 
 .unit-identity-main {
@@ -1105,15 +1110,17 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-name {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--accent);
+  color: #eaecf2;
   line-height: 1.1;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
 .unit-level-text {
   font-size: 0.68rem;
-  color: var(--muted);
+  color: rgba(234,236,242,0.85);
   font-weight: 600;
   white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
 .unit-identity-tags {

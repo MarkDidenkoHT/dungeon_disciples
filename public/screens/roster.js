@@ -121,15 +121,15 @@ export function renderRoster(root, { player }) {
           <span>${unitId || unitName}</span>
         </div>
         ${alive ? '' : '<div class="unit-dead-overlay">Dead</div>'}
-      </div>
-      <div class="unit-identity-bar">
-        <div class="unit-identity-main">
-          <span class="unit-name">${unitName}</span>
-          <span class="unit-level-text">${tierLabel}</span>
-        </div>
-        <div class="unit-identity-tags">
-          ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
-          ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
+        <div class="unit-identity-bar">
+          <div class="unit-identity-main">
+            <span class="unit-name">${unitName}</span>
+            <span class="unit-level-text">${tierLabel}</span>
+          </div>
+          <div class="unit-identity-tags">
+            ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
+            ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
+          </div>
         </div>
       </div>`;
 
