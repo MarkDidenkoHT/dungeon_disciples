@@ -587,6 +587,12 @@ class BattleEngine {
         size:             c.size,
         alive:            c.alive,
         battle_hp:        c.battle_hp,
+        max_hp:           c.max_hp,
+        armor:            c.armor,
+        initiative:       c.initiative,
+        defend_armor_bonus: c.defend_armor_bonus ?? 0,
+        martyrdom_pct:    c.martyrdom_pct ?? 0,
+        _lifesteal:       c._lifesteal ?? 0,
         acted_this_round: c.acted_this_round,
         buffs: {
           dot_dmg:             c.dot_dmg,
@@ -633,6 +639,12 @@ class BattleEngine {
       c.cellIndex          = s.cellIndex;
       c.size               = s.size ?? c.size;
       c.acted_this_round   = s.acted_this_round;
+      if (s.initiative    != null) c.initiative    = s.initiative;
+      if (s.max_hp        != null) c.max_hp        = s.max_hp;
+      if (s.armor         != null) c.armor         = s.armor;
+      c.defend_armor_bonus = s.defend_armor_bonus ?? 0;
+      c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
+      c._lifesteal         = s._lifesteal          ?? 0;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
       c._hot               = b._hot               ?? 0;
