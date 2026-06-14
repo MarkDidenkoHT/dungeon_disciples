@@ -120,13 +120,17 @@ export function renderRoster(root, { player }) {
         <div class="unit-portrait-fallback" style="display:none;">
           <span>${unitId || unitName}</span>
         </div>
-        <div class="unit-portrait-overlay">
+        ${alive ? '' : '<div class="unit-dead-overlay">Dead</div>'}
+      </div>
+      <div class="unit-identity-bar">
+        <div class="unit-identity-main">
           <span class="unit-name">${unitName}</span>
           <span class="unit-level-text">${tierLabel}</span>
         </div>
-        ${alive ? '' : '<div class="unit-dead-overlay">Dead</div>'}
-        ${tagLeft  ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
-        ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
+        <div class="unit-identity-tags">
+          ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
+          ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
+        </div>
       </div>`;
 
     const actionRaw   = def?.action;
