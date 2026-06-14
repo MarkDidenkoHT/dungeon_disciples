@@ -23,6 +23,54 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let pendingAction    = null;
   let selectedCombatant = null;
   let processing       = false;
+  let prevState        = null;   // snapshot before each render, used for diff-based animations
+
+  let prevLogLen = 0;
+
+  // ── Animation helpers ─────────────────────────────────────────────────────
+  function snapshotState() {
+    if (!state) return null;
+    const map = {};
+    for (const c of state.combatants) map[c.id] = { hp: c.battle_hp, alive: c.alive };
+    return map;
+  }
+
+  function animateAfterRender(prev, prevLen) {
+    if (!prev) return;
+    // Hit flash, heal pulse, death shake
+    root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
+      const id   = cell.dataset.id;
+      const was  = prev[id];
+      const now  = state.combatants.find(c => c.id === id);
+      if (!was || !now) return;
+
+      if (!now.alive && was.alive) {
+        triggerAnim(cell, 'anim-death');
+      } else if (now.battle_hp < was.hp) {
+        triggerAnim(cell, 'anim-hit');
+      } else if (now.battle_hp > was.hp) {
+        triggerAnim(cell, 'anim-heal');
+      }
+    });
+
+    // Log entry slide-in: animate only newly added entries
+    const newCount = (state.log?.length ?? 0) - prevLen;
+    if (newCount > 0) {
+      const logEl = root.querySelector('#battle-log');
+      if (logEl) {
+        Array.from(logEl.querySelectorAll('.log-entry')).slice(0, newCount).forEach(el => {
+          triggerAnim(el, 'anim-log-in');
+        });
+      }
+    }
+  }
+
+  function triggerAnim(el, cls) {
+    el.classList.remove(cls);
+    void el.offsetWidth; // force reflow to restart animation
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  }
 
   function openStatsModal(c) {
     selectedCombatant = c;
@@ -283,7 +331,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const portraitUrl = getPortraitUrl(occ, 'grid');
 
           let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
-          if (isActor)              cls += ' battle-cell--acting';
+          if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
           else if (isTarget)        cls += ' battle-cell--targetable';
           else if (isSelected)      cls += ' battle-cell--selected';
           else if (side === 'player') cls += ' battle-cell--placed';
@@ -380,19 +428,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     processing = true;
     render();
     try {
-      const result = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
+      const prev    = snapshotState();
+      const prevLen = state.log?.length ?? 0;
+      const result  = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
       state = result.state;
       if (result.done) return renderResult(result.winner);
+      render();
+      animateAfterRender(prev, prevLen);
     } catch (err) {
       console.error('Advance failed:', err);
+      render();
     } finally {
       processing = false;
     }
-    render();
   }
 
   async function sendAction(action, actor_id, target_id = null) {
     processing = true;
+    const prev    = snapshotState();
+    const prevLen = state.log?.length ?? 0;
     render();
     try {
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
@@ -415,6 +469,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       processing = false;
     }
     render();
+    animateAfterRender(prev, prevLen);
     advanceEnemyTurns();
   }
 
