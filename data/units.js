@@ -4,6 +4,7 @@ const UNITS = {
   choir_of_the_cursed: {
     black_castellan: {
       id: 'h_d_1',
+      name: 'Black Castellan',
       f: 'd', t: 1, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 90, armor: 10, initiative: 45,
@@ -15,6 +16,7 @@ const UNITS = {
     },
     black_castellan_path_a_t2: {
       id: 'h_d_1_a2',
+      name: 'Black Castellan',
       f: 'd', t: 2, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 144, armor: 10, initiative: 45,
@@ -26,6 +28,7 @@ const UNITS = {
     },
     black_castellan_path_b_t2: {
       id: 'h_d_1_b2',
+      name: 'Black Castellan',
       f: 'd', t: 2, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 130, armor: 12, initiative: 45,
@@ -37,6 +40,7 @@ const UNITS = {
     },
     black_castellan_path_a_t3: {
       id: 'h_d_1_a3',
+      name: 'Black Castellan',
       f: 'd', t: 3, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 173, armor: 12, initiative: 45,
@@ -48,6 +52,7 @@ const UNITS = {
     },
     black_castellan_path_b_t3: {
       id: 'h_d_1_b3',
+      name: 'Black Castellan',
       f: 'd', t: 3, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 160, armor: 14, initiative: 50,
@@ -59,6 +64,7 @@ const UNITS = {
     },
     black_castellan_path_a_t4: {
       id: 'h_d_1_a41',
+      name: 'Black Castellan',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 208, armor: 14, initiative: 45,
@@ -70,6 +76,7 @@ const UNITS = {
     },
     black_castellan_path_a_t4_alt: {
       id: 'h_d_1_a42',
+      name: 'Black Castellan',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 208, armor: 14, initiative: 45,
@@ -81,6 +88,7 @@ const UNITS = {
     },
     black_castellan_path_b_t4: {
       id: 'h_d_1_b41',
+      name: 'Black Castellan',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 195, armor: 16, initiative: 55,
@@ -92,6 +100,7 @@ const UNITS = {
     },
     black_castellan_path_b_t4_alt: {
       id: 'h_d_1_b42',
+      name: 'Black Castellan',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 195, armor: 16, initiative: 55,
@@ -103,6 +112,7 @@ const UNITS = {
     },
     choir_regent: {
       id: 'h_d_2',
+      name: 'Choir Regent',
       f: 'd', t: 1, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 50, armor: 0, initiative: 30,
@@ -114,6 +124,7 @@ const UNITS = {
     },
     choir_regent_path_a_t2: {
       id: 'h_d_2_a2',
+      name: 'Choir Regent',
       f: 'd', t: 2, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 84, armor: 2, initiative: 30,
@@ -125,6 +136,7 @@ const UNITS = {
     },
     choir_regent_path_b_t2: {
       id: 'h_d_2_b2',
+      name: 'Choir Regent',
       f: 'd', t: 2, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 75, armor: 2, initiative: 35,
@@ -136,6 +148,7 @@ const UNITS = {
     },
     choir_regent_path_a_t3: {
       id: 'h_d_2_a3',
+      name: 'Choir Regent',
       f: 'd', t: 3, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 101, armor: 3, initiative: 30,
@@ -147,6 +160,7 @@ const UNITS = {
     },
     choir_regent_path_b_t3: {
       id: 'h_d_2_b3',
+      name: 'Choir Regent',
       f: 'd', t: 3, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 90, armor: 3, initiative: 40,
@@ -158,6 +172,7 @@ const UNITS = {
     },
     choir_regent_path_a_t4: {
       id: 'h_d_2_a41',
+      name: 'Choir Regent',
       f: 'd', t: 4, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 121, armor: 4, initiative: 30,
@@ -169,6 +184,7 @@ const UNITS = {
     },
     choir_regent_path_a_t4_alt: {
       id: 'h_d_2_a42',
+      name: 'Choir Regent',
       f: 'd', t: 4, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 121, armor: 4, initiative: 30,
@@ -180,6 +196,7 @@ const UNITS = {
     },
     choir_regent_path_b_t4: {
       id: 'h_d_2_b41',
+      name: 'Choir Regent',
       f: 'd', t: 4, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 110, armor: 4, initiative: 45,
@@ -191,6 +208,7 @@ const UNITS = {
     },
     choir_regent_path_b_t4_alt: {
       id: 'h_d_2_b42',
+      name: 'Choir Regent',
       f: 'd', t: 4, size: 'tile',
       tags: ['Demon', 'Court'],
       hp: 110, armor: 4, initiative: 45,
@@ -202,6 +220,7 @@ const UNITS = {
     },
     infernal_ascendant: {
       id: 'h_d_3',
+      name: 'Infernal Ascendant',
       f: 'd', t: 1, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 50, armor: 0, initiative: 50,
@@ -213,6 +232,7 @@ const UNITS = {
     },
     infernal_ascendant_path_a_t2: {
       id: 'h_d_3_a2',
+      name: 'Infernal Ascendant',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 96, armor: 4, initiative: 120,
@@ -224,6 +244,7 @@ const UNITS = {
     },
     infernal_ascendant_path_b_t2: {
       id: 'h_d_3_b2',
+      name: 'Infernal Ascendant',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 85, armor: 2, initiative: 100,
@@ -235,6 +256,7 @@ const UNITS = {
     },
     infernal_ascendant_path_a_t3: {
       id: 'h_d_3_a3',
+      name: 'Infernal Ascendant',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 115, armor: 4, initiative: 144,
@@ -246,6 +268,7 @@ const UNITS = {
     },
     infernal_ascendant_path_b_t3: {
       id: 'h_d_3_b3',
+      name: 'Infernal Ascendant',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 102, armor: 3, initiative: 120,
@@ -257,6 +280,7 @@ const UNITS = {
     },
     infernal_ascendant_path_a_t4: {
       id: 'h_d_3_a41',
+      name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 138, armor: 5, initiative: 173,
@@ -268,6 +292,7 @@ const UNITS = {
     },
     infernal_ascendant_path_a_t4_alt: {
       id: 'h_d_3_a42',
+      name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 138, armor: 5, initiative: 173,
@@ -279,6 +304,7 @@ const UNITS = {
     },
     infernal_ascendant_path_b_t4: {
       id: 'h_d_3_b41',
+      name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 122, armor: 4, initiative: 145,
@@ -290,6 +316,7 @@ const UNITS = {
     },
     infernal_ascendant_path_b_t4_alt: {
       id: 'h_d_3_b42',
+      name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 122, armor: 4, initiative: 145,
@@ -436,6 +463,7 @@ const UNITS = {
   empire: {
     paladin: {
       id: 'h_e_1',
+      name: 'Paladin',
       f: 'e', t: 1, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 80, armor: 20, initiative: 45,
@@ -447,6 +475,7 @@ const UNITS = {
     },
     paladin_path_a_t2: {
       id: 'h_e_11',
+      name: 'Paladin',
       f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 95, armor: 25, initiative: 45,
@@ -458,6 +487,7 @@ const UNITS = {
     },
     paladin_path_b_t2: {
       id: 'h_e_12',
+      name: 'Paladin',
       f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 90, armor: 20, initiative: 45,
@@ -469,6 +499,7 @@ const UNITS = {
     },
     paladin_path_a_t3: {
       id: 'h_e_111',
+      name: 'Paladin',
       f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 25, initiative: 45,
@@ -480,6 +511,7 @@ const UNITS = {
     },
     paladin_path_b_t3: {
       id: 'h_e_121',
+      name: 'Paladin',
       f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 105, armor: 20, initiative: 50,
@@ -491,6 +523,7 @@ const UNITS = {
     },
     paladin_path_a_t4: {
       id: 'h_e_1111',
+      name: 'Paladin',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
@@ -502,6 +535,7 @@ const UNITS = {
     },
     paladin_path_a_t4_alt: {
       id: 'h_e_1112',
+      name: 'Paladin',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
@@ -513,6 +547,7 @@ const UNITS = {
     },
     paladin_path_b_t4: {
       id: 'h_e_1211',
+      name: 'Paladin',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
@@ -524,6 +559,7 @@ const UNITS = {
     },
     paladin_path_b_t4_alt: {
       id: 'h_e_1212',
+      name: 'Paladin',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       hp: 199, armor: 16, initiative: 45,
@@ -535,6 +571,7 @@ const UNITS = {
     },
     inquisitor: {
       id: 'h_e_2',
+      name: 'Inquisitor',
       f: 'e', t: 1, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 70, armor: 5, initiative: 40,
@@ -546,6 +583,7 @@ const UNITS = {
     },
     inquisitor_path_a_t2: {
       id: 'h_e_2_a2',
+      name: 'Inquisitor',
       f: 'e', t: 2, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 80, armor: 8, initiative: 40,
@@ -557,6 +595,7 @@ const UNITS = {
     },
     inquisitor_path_b_t2: {
       id: 'h_e_2_b2',
+      name: 'Inquisitor',
       f: 'e', t: 2, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 75, armor: 6, initiative: 45,
@@ -568,6 +607,7 @@ const UNITS = {
     },
     inquisitor_path_a_t3: {
       id: 'h_e_2_a3',
+      name: 'Inquisitor',
       f: 'e', t: 3, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 90, armor: 10, initiative: 40,
@@ -579,6 +619,7 @@ const UNITS = {
     },
     inquisitor_path_b_t3: {
       id: 'h_e_2_b3',
+      name: 'Inquisitor',
       f: 'e', t: 3, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 85, armor: 8, initiative: 50,
@@ -590,6 +631,7 @@ const UNITS = {
     },
     inquisitor_path_a_t4: {
       id: 'h_e_2_a41',
+      name: 'Inquisitor',
       f: 'e', t: 4, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 100, armor: 12, initiative: 40,
@@ -601,6 +643,7 @@ const UNITS = {
     },
     inquisitor_path_a_t4_alt: {
       id: 'h_e_2_a42',
+      name: 'Inquisitor',
       f: 'e', t: 4, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 100, armor: 12, initiative: 40,
@@ -612,6 +655,7 @@ const UNITS = {
     },
     inquisitor_path_b_t4: {
       id: 'h_e_2_b41',
+      name: 'Inquisitor',
       f: 'e', t: 4, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 95, armor: 10, initiative: 55,
@@ -623,6 +667,7 @@ const UNITS = {
     },
     inquisitor_path_b_t4_alt: {
       id: 'h_e_2_b42',
+      name: 'Inquisitor',
       f: 'e', t: 4, size: 'tile',
       tags: ['Caster', 'Holy'],
       hp: 95, armor: 10, initiative: 55,
@@ -634,6 +679,7 @@ const UNITS = {
     },
     ranger: {
       id: 'h_e_3',
+      name: 'Ranger',
       f: 'e', t: 1, size: 'tile',
       tags: ['Archer', null],
       hp: 82, armor: 3, initiative: 110,
@@ -645,6 +691,7 @@ const UNITS = {
     },
     ranger_path_a_t2: {
       id: 'h_e_3_a2',
+      name: 'Ranger',
       f: 'e', t: 2, size: 'tile',
       tags: ['Archer', null],
       hp: 98, armor: 4, initiative: 132,
@@ -656,6 +703,7 @@ const UNITS = {
     },
     ranger_path_b_t2: {
       id: 'h_e_3_b2',
+      name: 'Ranger',
       f: 'e', t: 2, size: 'tile',
       tags: ['Archer', null],
       hp: 90, armor: 3, initiative: 125,
@@ -667,6 +715,7 @@ const UNITS = {
     },
     ranger_path_a_t3: {
       id: 'h_e_3_a3',
+      name: 'Ranger',
       f: 'e', t: 3, size: 'tile',
       tags: ['Archer', null],
       hp: 118, armor: 4, initiative: 158,
@@ -678,6 +727,7 @@ const UNITS = {
     },
     ranger_path_b_t3: {
       id: 'h_e_3_b3',
+      name: 'Ranger',
       f: 'e', t: 3, size: 'tile',
       tags: ['Archer', null],
       hp: 108, armor: 4, initiative: 148,
@@ -689,6 +739,7 @@ const UNITS = {
     },
     ranger_path_a_t4: {
       id: 'h_e_3_a41',
+      name: 'Ranger',
       f: 'e', t: 4, size: 'tile',
       tags: ['Archer', null],
       hp: 142, armor: 5, initiative: 190,
@@ -700,6 +751,7 @@ const UNITS = {
     },
     ranger_path_a_t4_alt: {
       id: 'h_e_3_a42',
+      name: 'Ranger',
       f: 'e', t: 4, size: 'tile',
       tags: ['Archer', null],
       hp: 142, armor: 5, initiative: 190,
@@ -711,6 +763,7 @@ const UNITS = {
     },
     ranger_path_b_t4: {
       id: 'h_e_3_b41',
+      name: 'Ranger',
       f: 'e', t: 4, size: 'tile',
       tags: ['Archer', null],
       hp: 128, armor: 5, initiative: 178,
@@ -722,6 +775,7 @@ const UNITS = {
     },
     ranger_path_b_t4_alt: {
       id: 'h_e_3_b42',
+      name: 'Ranger',
       f: 'e', t: 4, size: 'tile',
       tags: ['Archer', null],
       hp: 128, armor: 5, initiative: 178,
@@ -1044,6 +1098,7 @@ const UNITS = {
   grail_of_sorrow: {
     mourning_prophet: {
       id: 'h_g_1',
+      name: 'Mourning Prophet',
       f: 'g', t: 1, size: 'tile',
       tags: ['Caster', null],
       hp: 55, armor: 0, initiative: 25,
@@ -1055,6 +1110,7 @@ const UNITS = {
     },
     mourning_prophet_path_a_t2: {
       id: 'h_g_1_a2',
+      name: 'Mourning Prophet',
       f: 'g', t: 2, size: 'tile',
       tags: ['Caster', 'Zombie'],
       hp: 80, armor: 0, initiative: 25,
@@ -1066,6 +1122,7 @@ const UNITS = {
     },
     mourning_prophet_path_b_t2: {
       id: 'h_g_1_b2',
+      name: 'Mourning Prophet',
       f: 'g', t: 2, size: 'tile',
       tags: ['Caster', 'Vampire'],
       hp: 70, armor: 0, initiative: 35,
@@ -1077,6 +1134,7 @@ const UNITS = {
     },
     mourning_prophet_path_a_t3: {
       id: 'h_g_1_a3',
+      name: 'Mourning Prophet',
       f: 'g', t: 3, size: 'tile',
       tags: ['Caster', 'Zombie'],
       hp: 95, armor: 0, initiative: 30,
@@ -1088,6 +1146,7 @@ const UNITS = {
     },
     mourning_prophet_path_b_t3: {
       id: 'h_g_1_b3',
+      name: 'Mourning Prophet',
       f: 'g', t: 3, size: 'tile',
       tags: ['Caster', 'Vampire'],  
       hp: 88, armor: 0, initiative: 35,
@@ -1099,6 +1158,7 @@ const UNITS = {
     },
     mourning_prophet_path_a_t4: {
       id: 'h_g_1_a41',
+      name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
       tags: ['Zombie', 'Caster'],
       hp: 115, armor: 0, initiative: 30,
@@ -1110,6 +1170,7 @@ const UNITS = {
     },
     mourning_prophet_path_a_t4_alt: {
       id: 'h_g_1_a42',
+      name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
       tags: ['Zombie', 'Caster'],
       hp: 115, armor: 0, initiative: 30,
@@ -1121,6 +1182,7 @@ const UNITS = {
     },
     mourning_prophet_path_b_t4: {
       id: 'h_g_1_b41',
+      name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
       tags: ['Zombie', 'Caster'],
       hp: 108, armor: 0, initiative: 35,
@@ -1132,6 +1194,7 @@ const UNITS = {
     },
     mourning_prophet_path_b_t4_alt: {
       id: 'h_g_1_b42',
+      name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
       tags: ['Zombie', 'Caster'],
       hp: 108, armor: 0, initiative: 35,
@@ -1143,6 +1206,7 @@ const UNITS = {
     },
     grail_warden: {
       id: 'h_g_2',
+      name: 'Grail Warden',
       f: 'g', t: 1, size: 'tile',
       tags: ['Knight', null],
       hp: 80, armor: 20, initiative: 35,
@@ -1154,6 +1218,7 @@ const UNITS = {
     },
     grail_warden_path_a_t2: {
       id: 'h_g_2_a2',
+      name: 'Grail Warden',
       f: 'g', t: 2, size: 'tile',
       tags: ['Knight', 'Zombie'],
       hp: 95, armor: 25, initiative: 30,
@@ -1165,6 +1230,7 @@ const UNITS = {
     },
     grail_warden_path_b_t2: {
       id: 'h_g_2_b2',
+      name: 'Grail Warden',
       f: 'g', t: 2, size: 'tile',
       tags: ['Knight', 'Vampire'],
       hp: 85, armor: 20, initiative: 40,
@@ -1176,6 +1242,7 @@ const UNITS = {
     },
     grail_warden_path_a_t3: {
       id: 'h_g_2_a3',
+      name: 'Grail Warden',
       f: 'g', t: 3, size: 'tile',
       tags: ['Knight', 'Zombie'],
       hp: 130, armor: 22, initiative: 35,
@@ -1187,6 +1254,7 @@ const UNITS = {
     },
     grail_warden_path_b_t3: {
       id: 'h_g_2_b3',
+      name: 'Grail Warden',
       f: 'g', t: 3, size: 'tile',
       tags: ['Knight', 'Vampire'],
       hp: 118, armor: 16, initiative: 45,
@@ -1198,6 +1266,7 @@ const UNITS = {
     },
     grail_warden_path_a_t4: {
       id: 'h_g_2_a41',
+      name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Zombie'],
       hp: 165, armor: 26, initiative: 35,
@@ -1209,6 +1278,7 @@ const UNITS = {
     },
     grail_warden_path_a_t4_alt: {
       id: 'h_g_2_a42',
+      name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Zombie'],
       hp: 165, armor: 26, initiative: 35,
@@ -1220,6 +1290,7 @@ const UNITS = {
     },
     grail_warden_path_b_t4: {
       id: 'h_g_2_b41',
+      name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Vampire'],
       hp: 150, armor: 18, initiative: 50,
@@ -1231,6 +1302,7 @@ const UNITS = {
     },
     grail_warden_path_b_t4_alt: {
       id: 'h_g_2_b42',
+      name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Vampire'],
       hp: 150, armor: 18, initiative: 50,
@@ -1242,6 +1314,7 @@ const UNITS = {
     },
     mothers_voice: {
       id: 'h_g_3',
+      name: 'Mothers Voice',
       f: 'g', t: 1, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 50, armor: 0, initiative: 55,
@@ -1253,6 +1326,7 @@ const UNITS = {
     },
     mothers_voice_path_a_t2: {
       id: 'h_g_3_a2',
+      name: 'Mothers Voice',
       f: 'g', t: 2, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 60, armor: 0, initiative: 60,
@@ -1264,6 +1338,7 @@ const UNITS = {
     },
     mothers_voice_path_b_t2: {
       id: 'h_g_3_b2',
+      name: 'Mothers Voice',
       f: 'g', t: 2, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 55, armor: 0, initiative: 55,
@@ -1275,6 +1350,7 @@ const UNITS = {
     },
     mothers_voice_path_a_t3: {
       id: 'h_g_3_a3',
+      name: 'Mothers Voice',
       f: 'g', t: 3, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 78, armor: 0, initiative: 65,
@@ -1286,6 +1362,7 @@ const UNITS = {
     },
     mothers_voice_path_b_t3: {
       id: 'h_g_3_b3',
+      name: 'Mothers Voice',
       f: 'g', t: 3, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 72, armor: 0, initiative: 60,
@@ -1297,6 +1374,7 @@ const UNITS = {
     },
     mothers_voice_path_a_t4: {
       id: 'h_g_3_a41',
+      name: 'Mothers Voice',
       f: 'g', t: 4, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 96, armor: 0, initiative: 70,
@@ -1308,6 +1386,7 @@ const UNITS = {
     },
     mothers_voice_path_a_t4_alt: {
       id: 'h_g_3_a42',
+      name: 'Mothers Voice',
       f: 'g', t: 4, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 96, armor: 0, initiative: 70,
@@ -1319,6 +1398,7 @@ const UNITS = {
     },
     mothers_voice_path_b_t4: {
       id: 'h_g_3_b41',
+      name: 'Mothers Voice',
       f: 'g', t: 4, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 90, armor: 0, initiative: 65,
@@ -1330,6 +1410,7 @@ const UNITS = {
     },
     mothers_voice_path_b_t4_alt: {
       id: 'h_g_3_b42',
+      name: 'Mothers Voice',
       f: 'g', t: 4, size: 'tile',
       tags: ['Spirit', 'Caster'],
       hp: 90, armor: 0, initiative: 65,
