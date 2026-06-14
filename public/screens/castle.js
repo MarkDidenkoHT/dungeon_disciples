@@ -104,7 +104,8 @@ export function renderCastle(root, { player }) {
     const tags     = (unit.tags || []).filter(Boolean);
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
-    const portrait = `/assets/character_art/${unit.id}.png`;
+    const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
+    const portrait = `/assets/character_art/${portraitId}.png`;
     const res      = unit.resistances || {};
 
     const portraitHtml = `

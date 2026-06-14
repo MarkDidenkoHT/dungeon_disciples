@@ -60,7 +60,8 @@ export function renderRoster(root, { player }) {
     const unitId   = stored.unit_id || '';
     const unitName = def?.name ?? unitId;
 
-    const portraitSrc = unitId ? `/assets/character_art/${unitId}.png` : null;
+    const portraitId  = unitId.match(/^(h_[a-z]_\d)/) ? unitId.match(/^(h_[a-z]_\d)/)[1] : unitId;
+    const portraitSrc = unitId ? `/assets/character_art/${portraitId}.png` : null;
 
     const res       = def?.resistances || {};
     const tier      = def?.t ?? 1;

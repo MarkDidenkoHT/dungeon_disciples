@@ -32,9 +32,10 @@ function getPortraitUrl(unit, variant = 'default') {
   const unitDef = resolveUnitDef(unit);
   const unitId = unitDef?.id;
   if (!unitId) return null;
+  const portraitId = unitId.match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
   const size = unitDef?.size ?? 'tile';
   const prefix = (variant === 'grid' && (size === 'row' || size === 'column')) ? 'p2' : 'p';
-  return `/assets/character_portraits/${prefix}_${unitId}.png`;
+  return `/assets/character_portraits/${prefix}_${portraitId}.png`;
 }
 
 function unitTypeIcon(unit) {
