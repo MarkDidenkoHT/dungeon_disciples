@@ -65,17 +65,17 @@ export function dmgReduction(val) {
 export function resolveUnitDef(unit) {
   const uid = unit.unit_data?.unit_id ?? unit.unit_data?.id;
   if (!uid) return null;
-  for (const factionPool of Object.values(UNITS)) {
-    if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
-    for (const entry of Object.values(factionPool)) {
-      if (entry?.id === uid) return entry;
-      if (typeof entry === 'object' && !entry.id) {
-        const nested = Object.values(entry).find(u => u?.id === uid);
-        if (nested) return nested;
-      }
+  function searchObj(obj, depth) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    if (obj.id === uid) return obj;
+    if (depth <= 0) return null;
+    for (const val of Object.values(obj)) {
+      const found = searchObj(val, depth - 1);
+      if (found) return found;
     }
+    return null;
   }
-  return null;
+  return searchObj(UNITS, 4);
 }
 
 export function resolveAbility(key) {
