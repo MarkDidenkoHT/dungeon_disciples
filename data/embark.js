@@ -4,10 +4,10 @@ const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Cryst
 
 const REGION_ENCOUNTERS = {
   crimson_basilica: {
-    level_1:  [
+    level_1: [
       { key: 'crimson_basilica.aggrails_herald', cell: 1 },
-      { key: 'crimson_basilica.crimson_archer',  cell: 3 },
-      { key: 'crimson_basilica.crimson_archer', cell: 5 },
+      { key: 'crimson_basilica.crimson_archer',  cell: 4 },
+      { key: 'crimson_basilica.crimson_archer',  cell: 2 },
     ],
     level_2:  [
       { key: 'crimson_basilica.thorn_archer',  cell: 0 },
