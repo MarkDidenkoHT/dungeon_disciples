@@ -10,7 +10,7 @@ import {
 } from '../utils.js';
 
 const REGION_META = {
-  forests_of_ashenveil: { label: 'Forests of Ashenveil', icon: '🌲' },
+  crimson_basilica: { label: 'Crimson Basilica', icon: '🌲' },
   mountains_of_valdrek: { label: 'Mountains of Valdrek',  icon: '⛰️' },
   dungeons_of_malgrath: { label: 'Dungeons of Malgrath',  icon: '💀' },
 };

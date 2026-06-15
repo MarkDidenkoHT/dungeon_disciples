@@ -3,8 +3,8 @@ import { applyBackground } from '../utils.js';
 
 const REGIONS = [
   {
-    id: 'forests_of_ashenveil',
-    label: 'Forests of Ashenveil',
+    id: 'crimson_basilica',
+    label: 'Crimson Basilica',
     icon: '🌲',
     description: 'Ancient woodland teeming with feral beasts, overgrown guardians, and things that should not breathe.',
     crystal: 'Nature',

@@ -3,71 +3,23 @@ import { UNITS } from './units.js';
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 
 const REGION_ENCOUNTERS = {
-  forests_of_ashenveil: {
+  crimson_basilica: {
     level_1:  [
-      { key: 'forests_of_ashenveil.bramble_hound', cell: 0 },
-      { key: 'forests_of_ashenveil.thorn_archer',  cell: 2 },
-      { key: 'forests_of_ashenveil.bramble_hound', cell: 4 },
+      { key: 'crimson_basilica.aggrails_herald', cell: 1 },
+      { key: 'crimson_basilica.crimson_archer',  cell: 3 },
+      { key: 'crimson_basilica.crimson_archer', cell: 5 },
     ],
     level_2:  [
-      { key: 'forests_of_ashenveil.thorn_archer',  cell: 0 },
-      { key: 'forests_of_ashenveil.forest_troll',  cell: 2 },
-      { key: 'forests_of_ashenveil.bramble_hound', cell: 1 },
-      { key: 'forests_of_ashenveil.thorn_archer',  cell: 4 },
+      { key: 'crimson_basilica.thorn_archer',  cell: 0 },
+      { key: 'crimson_basilica.forest_troll',  cell: 2 },
+      { key: 'crimson_basilica.bramble_hound', cell: 1 },
+      { key: 'crimson_basilica.thorn_archer',  cell: 4 },
     ],
     level_3:  [
-      { key: 'forests_of_ashenveil.forest_troll',  cell: 0 },
-      { key: 'forests_of_ashenveil.vine_witch',     cell: 2 },
-      { key: 'forests_of_ashenveil.thorn_archer',  cell: 1 },
-      { key: 'forests_of_ashenveil.bramble_hound', cell: 4 },
-    ],
-    level_4:  [
-      { key: 'forests_of_ashenveil.forest_troll',  cell: 0 },
-      { key: 'forests_of_ashenveil.vine_witch',     cell: 2 },
-      { key: 'forests_of_ashenveil.grove_warden',  cell: 4 },
-      { key: 'forests_of_ashenveil.thorn_archer',  cell: 1 },
-      { key: 'forests_of_ashenveil.bramble_hound', cell: 3 },
-    ],
-    level_5:  [
-      { key: 'forests_of_ashenveil.thornback_colossus', cell: 0 },
-      { key: 'forests_of_ashenveil.vine_witch',          cell: 2 },
-      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
-      { key: 'forests_of_ashenveil.forest_troll',       cell: 1 },
-    ],
-    level_6:  [
-      { key: 'forests_of_ashenveil.thornback_colossus', cell: 0 },
-      { key: 'forests_of_ashenveil.spore_shaman',        cell: 2 },
-      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
-      { key: 'forests_of_ashenveil.vine_witch',          cell: 1 },
-      { key: 'forests_of_ashenveil.forest_troll',       cell: 3 },
-    ],
-    level_7:  [
-      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
-      { key: 'forests_of_ashenveil.spore_shaman',        cell: 0 },
-      { key: 'forests_of_ashenveil.grove_warden',       cell: 4 },
-      { key: 'forests_of_ashenveil.thornback_colossus', cell: 1 },
-      { key: 'forests_of_ashenveil.vine_witch',          cell: 3 },
-    ],
-    level_8:  [
-      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
-      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 0 },
-      { key: 'forests_of_ashenveil.spore_shaman',        cell: 4 },
-      { key: 'forests_of_ashenveil.thornback_colossus', cell: 1 },
-      { key: 'forests_of_ashenveil.forest_troll',       cell: 3 },
-    ],
-    level_9:  [
-      { key: 'forests_of_ashenveil.the_devouring_wood', cell: 0 },
-      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 2 },
-      { key: 'forests_of_ashenveil.ancient_treant',     cell: 4 },
-      { key: 'forests_of_ashenveil.spore_shaman',        cell: 1 },
-      { key: 'forests_of_ashenveil.grove_warden',       cell: 3 },
-    ],
-    level_10: [
-      { key: 'forests_of_ashenveil.the_devouring_wood', cell: 0 },
-      { key: 'forests_of_ashenveil.ancient_treant',     cell: 2 },
-      { key: 'forests_of_ashenveil.forest_sovereign',   cell: 4 },
-      { key: 'forests_of_ashenveil.spore_shaman',        cell: 1 },
-      { key: 'forests_of_ashenveil.thornback_colossus', cell: 3 },
+      { key: 'crimson_basilica.forest_troll',  cell: 0 },
+      { key: 'crimson_basilica.vine_witch',     cell: 2 },
+      { key: 'crimson_basilica.thorn_archer',  cell: 1 },
+      { key: 'crimson_basilica.bramble_hound', cell: 4 },
     ],
   },
 
@@ -209,7 +161,7 @@ const REGION_ENCOUNTERS = {
 };
 
 const REGION_REWARDS = {
-  forests_of_ashenveil: {
+  crimson_casilica: {
     crystal_guaranteed: 'Crystals_Nature',
     crystal_pool: ALL_CRYSTALS,
     base: { gold: 15, xp: 30 },
@@ -246,10 +198,10 @@ function buildDifficulties(regionId) {
 
 const REGIONS = [
   {
-    id: 'forests_of_ashenveil',
+    id: 'crimson_basilica',
     crystal_guaranteed: 'Crystals_Nature',
     crystal_pool: ALL_CRYSTALS,
-    difficulties: buildDifficulties('forests_of_ashenveil'),
+    difficulties: buildDifficulties('crimson_basilica'),
   },
   {
     id: 'mountains_of_valdrek',
