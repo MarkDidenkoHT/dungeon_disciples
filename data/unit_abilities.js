@@ -125,6 +125,15 @@ const UNIT_ABILITIES = {
     description: 'Target receives 20% less healing.',
     params: { healing_reduction_pct: 20 },
   },
+  'aggrails_blessing 1': {
+    id: 'aggrails_blessing 1',
+    name: "Aggrail's Blessing",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'When this unit hits an enemy, deals 25% of that damage to the enemy with the lowest HP.',
+    params: { lowest_enemy_dmg_pct: 25 },
+  },
   'lifesteal 1': {
     id: 'lifesteal 1',
     name: 'Lifesteal',

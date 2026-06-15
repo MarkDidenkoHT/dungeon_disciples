@@ -183,6 +183,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
       lowest.battle_hp += actual;
       if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
     }
+    if (p.lowest_enemy_dmg_pct != null) {
+      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive);
+      if (enemies.length > 0) {
+        const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
+        const extra = Math.max(1, Math.floor(dmg * p.lowest_enemy_dmg_pct / 100));
+        lowest.battle_hp = Math.max(0, lowest.battle_hp - extra);
+        if (lowest.battle_hp <= 0) { lowest.alive = false; engine.applyOnDeathPassives(lowest); }
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
+      }
+    }
     if (p.self_heal_pct != null) {
       const heal = Math.floor(dmg * p.self_heal_pct / 100);
       const actual = Math.min(heal, owner.max_hp - owner.battle_hp);
