@@ -408,11 +408,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.eternal_grief_sacrifice_pct != null) {
       const sacrifice = Math.floor(owner.max_hp * p.eternal_grief_sacrifice_pct / 100);
-      // Cannot die from this — clamp to leave 1 HP
       const actualSacrifice = Math.min(sacrifice, owner.battle_hp - 1);
       if (actualSacrifice > 0) {
         owner.battle_hp -= actualSacrifice;
-        // Heal lowest HP ally that is not self
         const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.id !== owner.id);
         if (candidates.length > 0) {
           const lowest = candidates.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);

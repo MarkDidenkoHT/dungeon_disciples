@@ -97,7 +97,11 @@ function validateTelegramInitData(initData) {
   if (Date.now() / 1000 - authDate > 86400) return null;
   const userRaw = params.get('user');
   if (!userRaw) return null;
-  return JSON.parse(userRaw);
+  try {
+    return JSON.parse(userRaw);
+  } catch {
+    return null;
+  }
 }
 
 function getUnitByDataId(unitDataId) {
@@ -629,8 +633,6 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry));
     }
 
-    // ── Server-side loyalty enforcement ──────────────────────────
-    // Hero tier determines max loyalty (same formula as client getLoyalty)
     const heroDef    = playerUnits.find(u => u.is_hero);
     if (!heroDef) return res.status(400).json({ error: 'Squad must include a hero' });
     const heroTier   = heroDef.unit_data?.t ?? 1;
@@ -648,7 +650,6 @@ router.post('/battle/create', requireAuth, async (req, res) => {
         error: `Squad exceeds loyalty cap (used ${loyaltyUsed}, max ${maxLoyalty} for a tier-${heroTier} hero)`,
       });
     }
-    // ─────────────────────────────────────────────────────────────
 
     const enemies = getEncounter(region_id, level);
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
@@ -670,6 +671,13 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 
         const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
         if (!spellDef) return res.status(400).json({ error: `Spell definition not found for ${spellId}` });
+
+        // Deduct crystal cost server-side before applying effects
+        try {
+          await consumeCrystalCosts(chat_id, spellDef.cost?.crystals || {});
+        } catch (e) {
+          return res.status(400).json({ error: e.message });
+        }
 
         const scope    = spellDef.target_scope || '';
         const params   = spellDef.params || {};
@@ -859,9 +867,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       result.gold    = rewards.gold;
       result.crystal = crystalAmount;
 
-      const validSurvivorIds = Array.isArray(survivor_ids)
-        ? survivor_ids.map(String)
-        : getAlivePlayerRosterIds(record.battle_data);
+      const validSurvivorIds = getAlivePlayerRosterIds(record.battle_data);
 
       if (validSurvivorIds.length > 0) {
         const xpEach = Math.floor(rewards.xp / validSurvivorIds.length);
@@ -871,7 +877,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           if (!rows.length) return;
           const current        = rows[0];
           const updatedUnitData = { ...current.unit_data, current_xp: (current.unit_data?.current_xp ?? 0) + xpEach };
-          await supabase(`/roster?id=eq.${current.id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: updatedUnitData }) });
+          await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: updatedUnitData }) });
         }));
       }
       const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
@@ -887,6 +893,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         }
       }
     }
+
+    await closeBattleState(battle_id);
+
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -925,49 +934,14 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const spellTier   = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
-    const crystalEntries = Object.entries(spell.cost.crystals || {}).filter(([, amt]) => amt > 0);
-    if (crystalEntries.length > 0) {
-      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-      for (const [crystalType, needed] of crystalEntries) {
-        const row = inventoryRows.find(r => r.item === crystalType);
-        if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
-      }
-      await Promise.all(crystalEntries.map(([crystalType, needed]) => {
-        const row = inventoryRows.find(r => r.item === crystalType);
-        return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
-      }));
+    try {
+      await consumeCrystalCosts(chat_id, spell.cost?.crystals || {});
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
     }
     const newLearned = [...learned, spell_id];
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ learned_spells: newLearned }) });
     res.json({ success: true, learned_spells: newLearned });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/spells/consume', requireAuth, async (req, res) => {
-  const { chat_id, spell_id } = req.body;
-  if (!chat_id || !spell_id) return res.status(400).json({ error: 'chat_id, spell_id required' });
-  try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
-    const learned = rows[0].learned_spells || [];
-    if (!learned.includes(spell_id)) return res.status(400).json({ error: 'Spell not learned' });
-    const spell = Object.values(SPELLS).flat().find(s => s.id === spell_id);
-    if (!spell) return res.status(404).json({ error: 'Spell definition not found' });
-    const crystalEntries = Object.entries(spell.cost?.crystals || {}).filter(([, amt]) => amt > 0);
-    if (crystalEntries.length > 0) {
-      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-      for (const [crystalType, needed] of crystalEntries) {
-        const row = inventoryRows.find(r => r.item === crystalType);
-        if (!row || row.amount < needed) return res.status(400).json({ error: `Not enough ${crystalType}. Need ${needed}` });
-      }
-      await Promise.all(crystalEntries.map(([crystalType, needed]) => {
-        const row = inventoryRows.find(r => r.item === crystalType);
-        return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
-      }));
-    }
-    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -27,7 +27,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   let prevLogLen = 0;
 
-  // ── Animation helpers ─────────────────────────────────────────────────────
   function snapshotState() {
     if (!state) return null;
     const map = {};

@@ -64,7 +64,6 @@ export async function refreshResourceBar(player) {
   `;
 }
 
-// navigate is set by main.js after it initialises (avoids circular dep)
 let _navigate = null;
 export function setNavigate(fn) { _navigate = fn; }
 export function navigate(screen, params = {}) {

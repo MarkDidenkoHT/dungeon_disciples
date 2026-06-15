@@ -501,57 +501,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   async function confirmAndUseSpell(spell, target, factionSpells) {
-    try {
-      const result = await api('/spells/consume', {
-        chat_id:       player.chat_id,
-        spell_id:      spell.id,
-        crystals_cost: spell.cost.crystals || {},
-      });
-
-      if (result.success) {
-        for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
-          playerCrystals[type] = (playerCrystals[type] || 0) - amt;
-        }
-        const entry = { ...spell };
-        if (target) {
-          entry.target_id   = target.id;
-          entry.target_name = target.name;
-        }
-        const idx = selectedSpells.findIndex(s => s.id === spell.id);
-        if (idx < 0) selectedSpells.push(entry);
-        else selectedSpells[idx] = entry;
-
-        updateSpellsBadge();
-        await loadResources();
-        renderSpellSheetList();
-        openSpellSheet();
-      } else {
-        alert(result.message || 'Failed to use spell');
-        openSpellSheet();
-      }
-    } catch (err) {
-      console.error('Failed to use spell:', err);
-      alert(err.message || 'Failed to use spell');
-      openSpellSheet();
+    const entry = { ...spell };
+    if (target) {
+      entry.target_id   = target.id;
+      entry.target_name = target.name;
     }
+    const idx = selectedSpells.findIndex(s => s.id === spell.id);
+    if (idx < 0) selectedSpells.push(entry);
+    else selectedSpells[idx] = entry;
+
+    updateSpellsBadge();
+    renderSpellSheetList();
+    openSpellSheet();
   }
 
   async function undoSpell(spellId) {
     const idx = selectedSpells.findIndex(s => s.id === spellId);
     if (idx < 0) return;
-    const spell = selectedSpells[idx];
-
-    try {
-      await api('/spells/refund', {
-        chat_id:  player.chat_id,
-        spell_id: spellId,
-        crystals: spell.cost.crystals || {},
-      });
-    } catch (_) {}
-
-    for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
-      playerCrystals[type] = (playerCrystals[type] || 0) + amt;
-    }
     selectedSpells.splice(idx, 1);
     await loadResources();
   }
