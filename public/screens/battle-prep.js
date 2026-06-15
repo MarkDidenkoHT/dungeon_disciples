@@ -656,8 +656,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const colSpan = e.size === 'row' ? 2 : 1;
       const rowSpan = e.size === 'column' ? 2 : 1;
       return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
-        <span class="battle-cell-name">${e.name}</span>
-        <span class="battle-cell-sub">❤ ${e.hp}</span>
+        <img class="battle-cell-portrait" src="/assets/character_portraits/p_${e.id}.png" alt="${e.name}" onerror="this.style.display='none'">
+        <div class="battle-cell-info">
+          <span class="battle-cell-name">${e.name}</span>
+          <span class="battle-cell-sub">❤ ${e.hp}</span>
+        </div>
       </div>`;
     }).join('');
 
