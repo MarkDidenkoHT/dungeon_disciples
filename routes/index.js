@@ -45,9 +45,9 @@ const STARTING_RESOURCES = [
 ];
 
 const FACTION_STARTING_SPELLS = {
-  empire:              ['e_spell_1', 'e_spell_7'],
-  choir_of_the_cursed: ['d_spell_1', 'd_spell_7'],
-  grail_of_sorrow:     ['g_spell_1', 'g_spell_7'],
+  empire:              ['e_spell_1', 'e_spell_2'],
+  choir_of_the_cursed: ['d_spell_1', 'd_spell_2'],
+  grail_of_sorrow:     ['g_spell_1', 'g_spell_2'],
 };
 
 const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1', 'h_g_2', 'h_g_3'];
@@ -702,9 +702,11 @@ router.post('/battle/create', requireAuth, async (req, res) => {
         const targets = getTargets();
 
         for (const c of targets) {
+          if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
           if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
           if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
           if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
+          if (params.initiative_boost)     c.initiative = (c.initiative || 40) + params.initiative_boost;
           if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
           if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
           if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
