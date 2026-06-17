@@ -2,12 +2,17 @@ import { UNITS } from './units.js';
 
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 
+//encounter mapping
+// 01
+// 23
+// 45
+
 const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: [
-      { key: 'crimson_basilica.aggrails_herald', cell: 1 },
-      { key: 'crimson_basilica.crimson_archer',  cell: 4 },
-      { key: 'crimson_basilica.crimson_archer',  cell: 2 },
+      { key: 'crimson_basilica.aggrails_herald', cell: 2 },
+      { key: 'crimson_basilica.crimson_archer',  cell: 1 },
+      { key: 'crimson_basilica.crimson_archer',  cell: 5 },
     ],
     level_2:  [
       { key: 'crimson_basilica.aggrails_herald',  cell: 0 },
