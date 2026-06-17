@@ -508,7 +508,7 @@ router.post('/structures/throne/upgrade', requireAuth, async (req, res) => {
 });
 
 router.get('/buildings', (req, res) => {
-  res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES, upgrade_paths: UNIT_UPGRADE_PATHS, hero_max_level: HERO_MAX_LEVEL, throne_upgrade_costs: THRONE_UPGRADE_COSTS });
+  res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES, upgrade_paths: UNIT_UPGRADE_PATHS, hero_max_level: HERO_MAX_LEVEL, throne_upgrade_costs: THRONE_UPGRADE_COSTS, mercenary_buildings: MERCENARY_BUILDINGS });
 });
 
 router.get('/structures', requireAuth, async (req, res) => {

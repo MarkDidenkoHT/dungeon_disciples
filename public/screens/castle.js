@@ -34,6 +34,8 @@ export function renderCastle(root, { player }) {
   let upgradePaths       = null;
   let throneUpgradeCosts = {};
   let heroMaxLevel       = 4;
+  let mercenaryBuildings = {};
+  let trophyInventory    = [];
 
   function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
   function closeModal() { closeSheet(); }
@@ -54,8 +56,9 @@ export function renderCastle(root, { player }) {
   }
 
   async function load() {
-    const [inventory, structures, buildingsResp] = await Promise.all([
+    const [inventory, trophies, structures, buildingsResp] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
+      api(`/inventory?chat_id=${player.chat_id}&type=trophy`),
       api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
     ]);
@@ -64,6 +67,8 @@ export function renderCastle(root, { player }) {
     upgradePaths       = buildingsResp.upgrade_paths || {};
     throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
+    mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
+    trophyInventory     = trophies || [];
     structuresRecord   = structures;
 
     renderBuildings();
@@ -340,6 +345,8 @@ export function renderCastle(root, { player }) {
     if (slot === 'slot_0') { handleThroneClick(); return; }
     if (!state || !state.building_id) { openBuildModal(slot); return; }
 
+    if (state.building_id === 'mercenary_hall') { openMercenaryModal(slot); return; }
+
     const def = getBuildingDef(player.faction, state.building_id);
     if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
 
@@ -467,6 +474,61 @@ export function renderCastle(root, { player }) {
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');
+    }
+  }
+
+  function openMercenaryModal(slot) {
+    const region = 'crimson_basilica';
+    const allMercDefs = mercenaryBuildings[region] || [];
+    const tier1Defs    = allMercDefs.filter(b => b.tier === 1);
+
+    if (!tier1Defs.length) {
+      openModal('Mercenary Hall', '<p class="modal-empty">No mercenaries available yet.</p>');
+      return;
+    }
+
+    function trophyAmount(item) {
+      const row = trophyInventory.find(r => r.item === item);
+      return row ? Number(row.amount) : 0;
+    }
+
+    function costLabel(cost) {
+      return Object.entries(cost || {})
+        .map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`)
+        .join(' + ');
+    }
+
+    openSliderModal('Mercenary Hall',
+      tier1Defs.map(b => ({
+        unit:          getUnitByUnitId(b.unit_id),
+        buildingLabel: b.label,
+        confirmLabel:  `Recruit · ${b.label} (${costLabel(b.cost)})`,
+        mercBuildingId: b.id,
+        mercCost:       b.cost,
+        slot,
+      })),
+      s => {
+        const cost  = s.mercCost || {};
+        const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
+        if (short) { alert('Not enough trophies for this mercenary.'); return; }
+        performMercenaryRecruit(s.mercBuildingId);
+      }
+    );
+  }
+
+  async function performMercenaryRecruit(mercenary_building_id) {
+    closeModal();
+    try {
+      await api('/structures/mercenary/recruit', {
+        chat_id: player.chat_id,
+        mercenary_building_id,
+      });
+      const trophies = await api(`/inventory?chat_id=${player.chat_id}&type=trophy`);
+      trophyInventory = trophies || [];
+      refreshResourceBar(player).catch(() => {});
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Recruit failed');
     }
   }
 

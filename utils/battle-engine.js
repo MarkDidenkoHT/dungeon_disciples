@@ -56,9 +56,8 @@ class BattleEngine {
       this.combatants.push(this.createCombatant(u, 'player', cellIdx));
     });
     enemyUnits.forEach((e, i) => {
-      const col = i % COLS;
-      const row = Math.min(Math.floor(i / COLS), ROWS - 1);
-      this.combatants.push(this.createCombatant(e, 'enemy', cellIndex(row, col)));
+      const cellIdx = e.cell ?? cellIndex(Math.min(Math.floor(i / COLS), ROWS - 1), i % COLS);
+      this.combatants.push(this.createCombatant(e, 'enemy', cellIdx));
     });
     this.fireTrigger('on_battle_start', {});
   }
