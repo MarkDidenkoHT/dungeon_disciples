@@ -70,9 +70,9 @@ const BUILDING_POOLS = {
       { id: 'cinder_forge',        label: 'Cinder Forge',        category: 'barracks', tier: 3, unit_id: 'e412', upgrades: [],                        cost: { gold: 200 } },
     ],
     any: [
-      { id: 'market',           label: 'Market',           category: 'any', unit_id: null },
-      { id: 'watchtower',       label: 'Watchtower',        category: 'any', unit_id: null },
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', unit_id: null },
+      { id: 'market',           label: 'Market',           category: 'any', tier: 1, unit_id: null },
+      { id: 'watchtower',       label: 'Watchtower',        category: 'any', tier: 1, unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', tier: 1, unit_id: null },
     ],
   },
 
@@ -121,9 +121,9 @@ const BUILDING_POOLS = {
       { id: 'nether_baron_hall', label: 'Nether Baron Hall', category: 'barracks', tier: 2, unit_id: 'd61', upgrades: [],               cost: { gold: 100 } },
     ],
     any: [
-      { id: 'cursed_vault',     label: 'Cursed Vault',      category: 'any', unit_id: null },
-      { id: 'shadow_shrine',    label: 'Shadow Shrine',     category: 'any', unit_id: null },
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', unit_id: null },
+      { id: 'cursed_vault',     label: 'Cursed Vault',      category: 'any', tier: 1, unit_id: null },
+      { id: 'shadow_shrine',    label: 'Shadow Shrine',     category: 'any', tier: 1, unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', tier: 1, unit_id: null },
     ],
   },
 
@@ -183,9 +183,9 @@ const BUILDING_POOLS = {
       { id: 'apparition_mist',       label: 'Apparition Mist',       category: 'barracks', tier: 2, unit_id: 'gs62', upgrades: [],                          cost: { gold: 100 } },
     ],
     any: [
-      { id: 'sorrow_altar',     label: 'Altar of Sorrow',   category: 'any', unit_id: null },
-      { id: 'soul_vault',       label: 'Soul Vault',         category: 'any', unit_id: null },
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',     category: 'any', unit_id: null },
+      { id: 'sorrow_altar',     label: 'Altar of Sorrow',   category: 'any', tier: 1, unit_id: null },
+      { id: 'soul_vault',       label: 'Soul Vault',         category: 'any', tier: 1, unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',     category: 'any', tier: 1, unit_id: null },
     ],
   },
 };
