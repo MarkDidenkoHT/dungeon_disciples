@@ -20,6 +20,17 @@ const REGION_ENCOUNTERS = {
       { key: 'crimson_basilica.crimson_archer',  cell: 2 },
       { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
     ],
+    level_4:  [
+      { key: 'crimson_basilica.aggrails_herald',  cell: 1 },
+      { key: 'crimson_basilica.scarlet_agressor', cell: 0 },
+      { key: 'crimson_basilica.scarlet_agressor',  cell: 2 }
+    ],
+    level_5:  [
+      { key: 'crimson_basilica.aggrails_herald',  cell: 1 },
+      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+      { key: 'crimson_basilica.scarlet_agressor',  cell: 2 },
+      { key: 'crimson_basilica.keeper_of_purity',  cell: 4 },
+    ],
   },
 
   mountains_of_valdrek: {
