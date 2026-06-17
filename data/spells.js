@@ -53,15 +53,15 @@ const SPELLS = {
 
     {
       id: 'e_spell_5',
-      name: 'Divine Wrath',
+      name: 'A New Dawn',
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Curse enemies with holy fire. All foes lose 15% armor and 20% initiative for the battle.',
+      description: 'At the start of round 3, all Holy allies heal for 5 HP per Holy ally on the field.',
       cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { armor_reduction: 0.15, initiative_reduction: 0.20 }
+      effect_type: 'round_trigger_heal',
+      target_scope: 'tag_allies',
+      params: { trigger_round: 3, tag_required: 'Holy', heal_per_tagged_unit: 5 }
     },
     {
       id: 'e_spell_6',
@@ -156,8 +156,8 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'roster',
-      description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
-      cost: { crystals: { Crystals_Death: 5 } },
+      description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
+      cost: { crystals: { Crystals_Fire: 5 } },
       effect_type: 'resurrect',
       usage: 'roster',
       target_scope: 'single_ally',
@@ -170,7 +170,7 @@ const SPELLS = {
       tier: 1,
       type: 'preparation',
       description: 'Restore one ally to half their maximum HP before battle.',
-      cost: { crystals: { Crystals_Death: 10 } },
+      cost: { crystals: { Crystals_Fire: 10 } },
       effect_type: 'heal',
       target_scope: 'single_ally',
       params: { heal_pct: 0.5 }
@@ -182,7 +182,7 @@ const SPELLS = {
       tier: 1,
       type: 'preparation',
       description: 'Drive one ally into a killing frenzy. Grant +20% damage for the battle.',
-      cost: { crystals: { Crystals_Death: 15 } },
+      cost: { crystals: { Crystals_Fire: 15 } },
       effect_type: 'buff',
       target_scope: 'single_ally',
       params: { damage_boost: 0.20 }
@@ -194,7 +194,7 @@ const SPELLS = {
       tier: 2,
       type: 'trophy',
       description: 'Slain enemies may yield trophies of their fallen.',
-      cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
+      cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       region: 'crimson_basilica',
       target_scope: 'none',
@@ -203,15 +203,15 @@ const SPELLS = {
 
     {
       id: 'd_spell_5',
-      name: 'Withering Curse',
+      name: 'Nihilism',
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Wither the resolve of your foes. All enemies lose 20% armor for the battle.',
-      cost: { crystals: { Crystals_Death: 20, Crystals_Nature: 10 } },
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { armor_reduction: 0.20 }
+      description: '[PVP PLACEHOLDER] If the opposing player has also cast a tier 2 spell, it is ignored.',
+      cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 10 } },
+      effect_type: 'pvp_counter_tier2',
+      target_scope: 'none',
+      params: { cancels_opponent_tier: 2 }
     },
     {
       id: 'd_spell_6',
@@ -220,7 +220,7 @@ const SPELLS = {
       tier: 2,
       type: 'preparation',
       description: 'Encase all allies in bone. Grant all allies +12 armor for the battle.',
-      cost: { crystals: { Crystals_Death: 20 } },
+      cost: { crystals: { Crystals_Fire: 20 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { armor_boost: 12 }
@@ -232,7 +232,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: 'Tear at the souls of enemies. All foes lose 25% max HP.',
-      cost: { crystals: { Crystals_Death: 35, Crystals_Frost: 15 } },
+      cost: { crystals: { Crystals_Fire: 35, Crystals_Frost: 15 } },
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { max_hp_reduction: 0.25 }
@@ -244,7 +244,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: 'Embrace one ally with vampiric power. Grant +25% lifesteal and +15 Death resistance for the battle.',
-      cost: { crystals: { Crystals_Death: 40, Crystals_Frost: 10 } },
+      cost: { crystals: { Crystals_Fire: 40, Crystals_Frost: 10 } },
       effect_type: 'buff',
       target_scope: 'single_ally',
       params: { lifesteal: 0.25, resistances: { death: 15 } }
@@ -256,7 +256,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: 'Drive all allies into a killing frenzy. Grant all allies +20% damage.',
-      cost: { crystals: { Crystals_Death: 45 } },
+      cost: { crystals: { Crystals_Fire: 45 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20 }
@@ -268,7 +268,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: 'Plunge the battlefield into eternal night. Grant all allies +20% lifesteal and +20 Death resistance for the battle.',
-      cost: { crystals: { Crystals_Death: 55, Crystals_Frost: 20 } },
+      cost: { crystals: { Crystals_Fire: 55, Crystals_Frost: 20 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { lifesteal: 0.20, resistances: { death: 20 } }
@@ -280,7 +280,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: 'Afflict the enemy host with despair. All foes lose 30% max HP and 20% initiative for the battle.',
-      cost: { crystals: { Crystals_Death: 50, Crystals_Nature: 20 } },
+      cost: { crystals: { Crystals_Fire: 50, Crystals_Nature: 20 } },
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { max_hp_reduction: 0.30, initiative_reduction: 0.20 }
@@ -292,7 +292,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: 'Ascend your forces with dark power. Grant all allies +25% damage for the battle.',
-      cost: { crystals: { Crystals_Death: 60 } },
+      cost: { crystals: { Crystals_Fire: 60 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.25 }
@@ -306,8 +306,8 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'roster',
-      description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
-      cost: { crystals: { Crystals_Fire: 5 } },
+      description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
+      cost: { crystals: { Crystals_Death: 5 } },
       effect_type: 'resurrect',
       usage: 'roster',
       target_scope: 'single_ally',
@@ -320,7 +320,7 @@ const SPELLS = {
       tier: 1,
       type: 'preparation',
       description: 'Restore one ally to half their maximum HP before battle.',
-      cost: { crystals: { Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Death: 10 } },
       effect_type: 'heal',
       target_scope: 'single_ally',
       params: { heal_pct: 0.5 }
@@ -332,7 +332,7 @@ const SPELLS = {
       tier: 1,
       type: 'preparation',
       description: 'Bless one ally with sorrowful speed. Grant +15 initiative for the battle.',
-      cost: { crystals: { Crystals_Fire: 15 } },
+      cost: { crystals: { Crystals_Death: 15 } },
       effect_type: 'buff',
       target_scope: 'single_ally',
       params: { initiative_boost: 15 }
@@ -344,7 +344,7 @@ const SPELLS = {
       tier: 2,
       type: 'trophy',
       description: 'Slain enemies may yield trophies of their fallen.',
-      cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
+      cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       region: 'crimson_basilica',
       target_scope: 'none',
@@ -353,15 +353,15 @@ const SPELLS = {
 
     {
       id: 'g_spell_5',
-      name: 'Chronal Bind',
+      name: 'Shared Suffering',
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Bind enemies in temporal stasis. All foes lose 25% initiative.',
-      cost: { crystals: { Crystals_Fire: 20, Crystals_Death: 10 } },
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { initiative_reduction: 0.25 }
+      description: 'Selected ally gains 5 HP and 2 armor, but loses 2 initiative, for each Zombie ally on the field.',
+      cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 10 } },
+      effect_type: 'tag_count_buff',
+      target_scope: 'single_ally',
+      params: { tag_required: 'Zombie', hp_per_tagged_unit: 5, armor_per_tagged_unit: 2, initiative_penalty_per_tagged_unit: 2 }
     },
     {
       id: 'g_spell_6',
@@ -370,7 +370,7 @@ const SPELLS = {
       tier: 2,
       type: 'preparation',
       description: 'Wreathe allies in protective embers. Grant all allies +12 armor and +10 Fire resistance for the battle.',
-      cost: { crystals: { Crystals_Fire: 22, Crystals_Life: 8 } },
+      cost: { crystals: { Crystals_Death: 22, Crystals_Life: 8 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { armor_boost: 12, resistances: { fire: 10 } }
@@ -382,7 +382,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: "Unleash the grail's full power. Grant all allies +20% damage and +20 armor for the battle.",
-      cost: { crystals: { Crystals_Fire: 40, Crystals_Life: 15 } },
+      cost: { crystals: { Crystals_Death: 40, Crystals_Life: 15 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20, armor_boost: 20 }
@@ -394,7 +394,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: 'Collapse enemy timeline. All foes lose 35% initiative and 20% max HP for the battle.',
-      cost: { crystals: { Crystals_Fire: 35, Crystals_Death: 15 } },
+      cost: { crystals: { Crystals_Death: 35, Crystals_Fire: 15 } },
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { initiative_reduction: 0.35, max_hp_reduction: 0.20 }
@@ -406,7 +406,7 @@ const SPELLS = {
       tier: 3,
       type: 'preparation',
       description: 'Sear enemies with decay. All foes lose 20% armor and 15% max HP for the battle.',
-      cost: { crystals: { Crystals_Fire: 35, Crystals_Death: 15 } },
+      cost: { crystals: { Crystals_Death: 35, Crystals_Fire: 15 } },
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { armor_reduction: 0.20, max_hp_reduction: 0.15 }
@@ -418,7 +418,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: 'Ignite an undying flame within your allies. Grant all allies +25% damage and +20 Fire resistance for the battle.',
-      cost: { crystals: { Crystals_Fire: 50, Crystals_Life: 15 } },
+      cost: { crystals: { Crystals_Death: 50, Crystals_Life: 15 } },
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.25, resistances: { fire: 20 } }
@@ -430,7 +430,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: 'Collapse the flow of time around your foes. All enemies lose 40% initiative and 25% armor for the battle.',
-      cost: { crystals: { Crystals_Fire: 45, Crystals_Death: 20 } },
+      cost: { crystals: { Crystals_Death: 45, Crystals_Fire: 20 } },
       effect_type: 'debuff',
       target_scope: 'all_enemies',
       params: { initiative_reduction: 0.40, armor_reduction: 0.25 }
@@ -442,7 +442,7 @@ const SPELLS = {
       tier: 4,
       type: 'preparation',
       description: "Channel the grail's power into one ally. Grant +35% lifesteal and +20 armor for the battle.",
-      cost: { crystals: { Crystals_Fire: 55, Crystals_Life: 20 } },
+      cost: { crystals: { Crystals_Death: 55, Crystals_Life: 20 } },
       effect_type: 'buff',
       target_scope: 'single_ally',
       params: { lifesteal: 0.35, armor_boost: 20 }

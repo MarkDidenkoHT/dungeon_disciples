@@ -26,12 +26,14 @@ class BattleEngine {
       this.log        = state.log || [];
       this.done       = state.done || false;
       this.winner     = state.winner || null;
+      this.pendingRoundEffects = state.pendingRoundEffects || [];
     } else {
       this.combatants = [];
       this.round      = 1;
       this.log        = [];
       this.done       = false;
       this.winner     = null;
+      this.pendingRoundEffects = [];
     }
   }
   async init() {
@@ -519,6 +521,27 @@ class BattleEngine {
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
+    this.firePendingRoundEffects();
+  }
+  firePendingRoundEffects() {
+    if (!this.pendingRoundEffects?.length) return;
+    const remaining = [];
+    for (const effect of this.pendingRoundEffects) {
+      if (this.round !== effect.round) { remaining.push(effect); continue; }
+      if (effect.type === 'tag_heal_per_unit') {
+        const side    = effect.side;
+        const tagged  = this.combatants.filter(c => c.side === side && c.alive && (c.unit_data?.tags ?? []).includes(effect.tag));
+        const healAmt = tagged.length * effect.heal_per_tagged_unit;
+        if (healAmt > 0) {
+          for (const c of tagged) {
+            const healed = Math.min(healAmt, c.max_hp - c.battle_hp);
+            if (healed > 0) c.battle_hp += healed;
+          }
+          this.pushLog({ type: 'spell', spell: effect.name, targetName: `all ${effect.tag} allies`, value: healAmt, heal: true, message: `${effect.name} — all ${effect.tag} allies heal for ${healAmt} (${tagged.length} ${effect.tag} on the field)` });
+        }
+      }
+    }
+    this.pendingRoundEffects = remaining;
   }
   checkWin() {
     const pa = this.combatants.some(c => c.side === 'player' && c.alive);
@@ -580,6 +603,7 @@ class BattleEngine {
       round:  this.round,
       done:   this.done,
       winner: this.winner,
+      pendingRoundEffects: this.pendingRoundEffects,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -678,6 +702,7 @@ class BattleEngine {
     engine.round  = battleData.round;
     engine.done   = battleData.done;
     engine.winner = battleData.winner;
+    engine.pendingRoundEffects = battleData.pendingRoundEffects || [];
     engine.log    = [];
     return engine;
   }

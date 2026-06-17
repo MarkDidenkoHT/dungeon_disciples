@@ -690,17 +690,40 @@ router.post('/battle/create', requireAuth, async (req, res) => {
           if (scope === 'single_ally')   return engine.combatants.filter(c => c.side === 'player' && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
           if (scope === 'single_enemy')  return engine.combatants.filter(c => c.side === 'enemy'  && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
           if (scope === 'tag_allies') {
-            const tag = params.tag;
+            const tag = params.tag_required;
             return engine.combatants.filter(c => c.side === 'player' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
           }
           if (scope === 'tag_enemies') {
-            const tag = params.tag;
+            const tag = params.tag_required;
             return engine.combatants.filter(c => c.side === 'enemy' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
           }
           return [];
         }
 
-        const targets = getTargets();
+        const targets = spellDef.effect_type === 'round_trigger_heal' ? [] : getTargets();
+
+        if (spellDef.effect_type === 'round_trigger_heal') {
+          engine.pendingRoundEffects.push({
+            type:                 'tag_heal_per_unit',
+            round:                params.trigger_round,
+            side:                 'player',
+            tag:                  params.tag_required,
+            heal_per_tagged_unit: params.heal_per_tagged_unit,
+            name:                 spellDef.name,
+          });
+        }
+
+        if (spellDef.effect_type === 'tag_count_buff') {
+          const taggedCount = playerUnits.filter(u => (u.unit_data?.tags ?? []).includes(params.tag_required)).length;
+          const single = engine.combatants.find(c => c.side === 'player' && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
+          if (single && taggedCount > 0) {
+            const hpGain = taggedCount * (params.hp_per_tagged_unit || 0);
+            single.max_hp     += hpGain;
+            single.battle_hp  += hpGain;
+            single.armor       = (single.armor || 0) + taggedCount * (params.armor_per_tagged_unit || 0);
+            single.initiative  = Math.max(1, (single.initiative || 40) - taggedCount * (params.initiative_penalty_per_tagged_unit || 0));
+          }
+        }
 
         for (const c of targets) {
           if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }

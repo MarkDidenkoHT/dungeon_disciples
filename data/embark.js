@@ -172,7 +172,7 @@ const REGION_ENCOUNTERS = {
 
 const REGION_REWARDS = {
   crimson_casilica: {
-    crystal_guaranteed: 'Crystals_Nature',
+    crystal_guaranteed: 'Crystals_Life',
     crystal_pool: ALL_CRYSTALS,
     base: { gold: 15, xp: 30 },
   },
@@ -216,7 +216,7 @@ const REGION_TROPHIES = {
 const REGIONS = [
   {
     id: 'crimson_basilica',
-    crystal_guaranteed: 'Crystals_Nature',
+    crystal_guaranteed: 'Crystals_Life',
     crystal_pool: ALL_CRYSTALS,
     trophies: REGION_TROPHIES.crimson_basilica,
     difficulties: buildDifficulties('crimson_basilica'),
