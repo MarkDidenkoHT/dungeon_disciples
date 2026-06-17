@@ -70,8 +70,9 @@ const BUILDING_POOLS = {
       { id: 'cinder_forge',        label: 'Cinder Forge',        category: 'barracks', tier: 3, unit_id: 'e412', upgrades: [],                        cost: { gold: 200 } },
     ],
     any: [
-      { id: 'market',      label: 'Market',      category: 'any', unit_id: null },
-      { id: 'watchtower',  label: 'Watchtower',  category: 'any', unit_id: null },
+      { id: 'market',           label: 'Market',           category: 'any', unit_id: null },
+      { id: 'watchtower',       label: 'Watchtower',        category: 'any', unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', unit_id: null },
     ],
   },
 
@@ -120,8 +121,9 @@ const BUILDING_POOLS = {
       { id: 'nether_baron_hall', label: 'Nether Baron Hall', category: 'barracks', tier: 2, unit_id: 'd61', upgrades: [],               cost: { gold: 100 } },
     ],
     any: [
-      { id: 'cursed_vault',   label: 'Cursed Vault',   category: 'any', unit_id: null },
-      { id: 'shadow_shrine',  label: 'Shadow Shrine',  category: 'any', unit_id: null },
+      { id: 'cursed_vault',     label: 'Cursed Vault',      category: 'any', unit_id: null },
+      { id: 'shadow_shrine',    label: 'Shadow Shrine',     category: 'any', unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'any', unit_id: null },
     ],
   },
 
@@ -181,8 +183,9 @@ const BUILDING_POOLS = {
       { id: 'apparition_mist',       label: 'Apparition Mist',       category: 'barracks', tier: 2, unit_id: 'gs62', upgrades: [],                          cost: { gold: 100 } },
     ],
     any: [
-      { id: 'sorrow_altar',  label: 'Altar of Sorrow',  category: 'any', unit_id: null },
-      { id: 'soul_vault',    label: 'Soul Vault',        category: 'any', unit_id: null },
+      { id: 'sorrow_altar',     label: 'Altar of Sorrow',   category: 'any', unit_id: null },
+      { id: 'soul_vault',       label: 'Soul Vault',         category: 'any', unit_id: null },
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',     category: 'any', unit_id: null },
     ],
   },
 };
@@ -357,8 +360,68 @@ function emptyStructures() {
   return slots;
 }
 
+const MERCENARY_BUILDINGS = {
+  crimson_basilica: [
+    {
+      id:       'cb_aggrails_devoted',
+      label:    'Aggrails Devoted',
+      region:   'crimson_basilica',
+      unit_id:  'aggrails_devoted',
+      tier:     1,
+      upgrades: ['cb_aggrails_devoted_2'],
+      cost:     { vial_of_pure_blood: 2, aggrails_signet: 1 },
+    },
+    {
+      id:       'cb_aggrails_devoted_2',
+      label:    'Aggrails Devoted II',
+      region:   'crimson_basilica',
+      unit_id:  'aggrails_devoted',
+      tier:     2,
+      upgrades: [],
+      cost:     { vial_of_pure_blood: 4, aggrails_signet: 2 },
+    },
+    {
+      id:       'cb_keeper_of_purity',
+      label:    'Keeper of Purity',
+      region:   'crimson_basilica',
+      unit_id:  'keeper_of_purity',
+      tier:     1,
+      upgrades: ['cb_keeper_of_purity_2'],
+      cost:     { vial_of_pure_blood: 1, aggrails_signet: 2 },
+    },
+    {
+      id:       'cb_keeper_of_purity_2',
+      label:    'Keeper of Purity II',
+      region:   'crimson_basilica',
+      unit_id:  'keeper_of_purity',
+      tier:     2,
+      upgrades: [],
+      cost:     { vial_of_pure_blood: 2, aggrails_signet: 4 },
+    },
+    {
+      id:       'cb_grove_warden',
+      label:    'Grove Warden',
+      region:   'crimson_basilica',
+      unit_id:  'grove_warden',
+      tier:     1,
+      upgrades: ['cb_grove_warden_2'],
+      cost:     { vial_of_pure_blood: 2, aggrails_signet: 2 },
+    },
+    {
+      id:       'cb_grove_warden_2',
+      label:    'Grove Warden II',
+      region:   'crimson_basilica',
+      unit_id:  'grove_warden',
+      tier:     2,
+      upgrades: [],
+      cost:     { vial_of_pure_blood: 4, aggrails_signet: 4 },
+    },
+  ],
+};
+
 module.exports = {
   BUILDING_POOLS,
+  MERCENARY_BUILDINGS,
   SLOT_CATEGORIES,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,

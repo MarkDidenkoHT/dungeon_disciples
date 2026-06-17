@@ -195,11 +195,19 @@ function buildDifficulties(regionId) {
   return out;
 }
 
+const REGION_TROPHIES = {
+  crimson_basilica: [
+    { id: 'vial_of_pure_blood', label: 'Vial of Pure Blood' },
+    { id: 'aggrails_signet',    label: "Aggrail's Signet" },
+  ],
+};
+
 const REGIONS = [
   {
     id: 'crimson_basilica',
     crystal_guaranteed: 'Crystals_Nature',
     crystal_pool: ALL_CRYSTALS,
+    trophies: REGION_TROPHIES.crimson_basilica,
     difficulties: buildDifficulties('crimson_basilica'),
   },
   {
@@ -235,5 +243,5 @@ function getEncounter(region_id, level) {
     .filter(Boolean);
 }
 
-export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, getEncounter };
+export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter };

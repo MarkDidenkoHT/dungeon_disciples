@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter } = require('../data/embark');
-const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
@@ -169,9 +169,10 @@ async function rehydrateEngine(record) {
 function buildBattleData(engine, bd) {
   return {
     ...engine.getBattleData(),
-    region_id: bd.region_id,
-    level:     bd.level,
-    setup:     bd.setup,
+    region_id:       bd.region_id,
+    level:           bd.level,
+    setup:           bd.setup,
+    selected_spells: bd.selected_spells || [],
   };
 }
 
@@ -723,7 +724,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 
     if (!engine.done) engine.runAiTurns();
 
-    const battle_data = buildBattleData(engine, { region_id, level, setup: {
+    const battle_data = buildBattleData(engine, { region_id, level, selected_spells: Array.isArray(selected_spells) ? selected_spells : [], setup: {
       playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })),
       placement,
     }});
@@ -869,6 +870,21 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       result.gold    = rewards.gold;
       result.crystal = crystalAmount;
 
+      const activeTrophySpell = (record.battle_data.selected_spells || [])
+        .map(s => Object.values(SPELLS).flat().find(sp => sp.id === s.spell_id))
+        .find(sp => sp && sp.effect_type === 'trophy_gain' && sp.region === region_id);
+      if (activeTrophySpell && region.trophies?.length) {
+        const trophy = region.trophies[Math.floor(Math.random() * region.trophies.length)];
+        const trophyRow = inventoryRows.find(r => r.item === trophy.id);
+        if (trophyRow) {
+          await supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + 1 }) });
+        } else {
+          await supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: trophy.id, amount: 1 }) });
+        }
+        result.trophy_gained = trophy.id;
+        result.trophy_label  = trophy.label;
+      }
+
       const validSurvivorIds = getAlivePlayerRosterIds(record.battle_data);
 
       if (validSurvivorIds.length > 0) {
@@ -944,6 +960,61 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const newLearned = [...learned, spell_id];
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ learned_spells: newLearned }) });
     res.json({ success: true, learned_spells: newLearned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
+  const { chat_id, mercenary_building_id } = req.body;
+  if (!chat_id || !mercenary_building_id) return res.status(400).json({ error: 'chat_id and mercenary_building_id required' });
+  try {
+    const allMercBuildings = Object.values(MERCENARY_BUILDINGS).flat();
+    const bDef = allMercBuildings.find(b => b.id === mercenary_building_id);
+    if (!bDef) return res.status(404).json({ error: 'Mercenary building not found' });
+
+    const [structRows, inventoryRows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+
+    const slots = structRows[0].buildings_data || {};
+    const hasMercHall = Object.values(slots).some(s => s.building_id === 'mercenary_hall');
+    if (!hasMercHall) return res.status(400).json({ error: 'Mercenary Hall not built' });
+
+    const cost = bDef.cost || {};
+    for (const [item, required] of Object.entries(cost)) {
+      const row = inventoryRows.find(r => r.item === item);
+      const have = row ? Number(row.amount) : 0;
+      if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
+    }
+
+    for (const [item, required] of Object.entries(cost)) {
+      const row = inventoryRows.find(r => r.item === item);
+      if (!row) continue;
+      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }
+
+    const { UNITS } = require('../data/units');
+    const unitTemplate = UNITS.enemies?.[bDef.region]?.[bDef.unit_id];
+    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
+
+    const newUnit = {
+      chat_id:   String(chat_id),
+      is_hero:   false,
+      unit_data: {
+        ...unitTemplate,
+        mercenary:        true,
+        mercenary_region: bDef.region,
+        alive:            true,
+        current_hp:       unitTemplate.hp,
+        current_xp:       0,
+        tier:             bDef.tier,
+      },
+    };
+    const inserted = await supabase('/roster', { method: 'POST', body: JSON.stringify(newUnit), headers: { Prefer: 'return=representation' } });
+    res.json({ success: true, roster_entry: Array.isArray(inserted) ? inserted[0] : inserted });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -39,16 +39,18 @@ const SPELLS = {
     },
     {
       id: 'e_spell_4',
-      name: 'Radiant Ward',
+      name: 'Mark of the Crusade',
       rank: 2,
       tier: 2,
-      type: 'preparation',
-      description: 'Shield allies with radiant light. Grant all allies +15 Life resistance and +15 armor for the battle.',
-      cost: { crystals: { Crystals_Life: 25, Crystals_Frost: 10 } },
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 15, resistances: { life: 15 } }
+      type: 'trophy',
+      description: 'Slain enemies may yield trophies of their fallen.',
+      cost: { crystals: { Crystals_Life: 10, Crystals_Nature: 5 } },
+      effect_type: 'trophy_gain',
+      region: 'crimson_basilica',
+      target_scope: 'none',
+      params: { trophy_count: 1 },
     },
+
     {
       id: 'e_spell_5',
       name: 'Divine Wrath',
@@ -187,16 +189,18 @@ const SPELLS = {
     },
     {
       id: 'd_spell_4',
-      name: 'Unholy Pact',
+      name: 'Harvest of Souls',
       rank: 2,
       tier: 2,
-      type: 'preparation',
-      description: 'Form a dark covenant. Grant all allies +15% lifesteal and +15 Death resistance for the battle.',
-      cost: { crystals: { Crystals_Death: 25, Crystals_Nature: 10 } },
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { lifesteal: 0.15, resistances: { death: 15 } }
+      type: 'trophy',
+      description: 'Slain enemies may yield trophies of their fallen.',
+      cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
+      effect_type: 'trophy_gain',
+      region: 'crimson_basilica',
+      target_scope: 'none',
+      params: { trophy_count: 1 },
     },
+
     {
       id: 'd_spell_5',
       name: 'Withering Curse',
@@ -335,16 +339,18 @@ const SPELLS = {
     },
     {
       id: 'g_spell_4',
-      name: 'Blood Surge',
+      name: "Sorrow's Offering",
       rank: 2,
       tier: 2,
-      type: 'preparation',
-      description: 'Surge with grave power. Grant all allies +15% damage.',
-      cost: { crystals: { Crystals_Fire: 25, Crystals_Life: 10 } },
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { damage_boost: 0.15 }
+      type: 'trophy',
+      description: 'Slain enemies may yield trophies of their fallen.',
+      cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
+      effect_type: 'trophy_gain',
+      region: 'crimson_basilica',
+      target_scope: 'none',
+      params: { trophy_count: 1 },
     },
+
     {
       id: 'g_spell_5',
       name: 'Chronal Bind',
