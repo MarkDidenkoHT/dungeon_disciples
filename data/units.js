@@ -1710,16 +1710,16 @@ const UNITS = {
         damage_source: null, action_power: 20,
         xp: 240, passive: ['vitality 1', 'recuperate 1'], ability: 'infernal_mandate 1',
       },
-      grove_warden: {
+      scarlet_agressor: {
         id: 'opb_e5', f: 'opb', t: 2,
-        name: 'Grove Warden',
-        tags: ['Beast', 'Caster'],
+        name: 'Scarlet Agressor',
+        tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 95, armor: 2, initiative: 50,
+        hp: 55, armor: 15, initiative: 50,
         resistances: { air: 0, fire: 0, life: 20, death: 0, cold: 0, nature: 20 },
-        action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 28,
-        xp: 260, passive: 'renew 1', ability: null,
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: null, action_power: 20,
+        xp: 260, passive: ['rage 1', 'fanaticism 1'], ability: null,
       },
       thornback_colossus: {
         id: 'opb_e6', f: 'opb', t: 3,
