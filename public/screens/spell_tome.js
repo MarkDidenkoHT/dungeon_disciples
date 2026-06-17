@@ -52,7 +52,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function spellIconUrl(spell) {
-    return `/assets/icons/spells/${spellIconSlug(spell)}.png`;
+    return `/assets/icons/spells/${spell.id}.png`;
   }
 
   function canAfford(spell) {
