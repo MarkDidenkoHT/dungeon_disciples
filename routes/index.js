@@ -28,7 +28,7 @@ async function requireAuth(req, res, next) {
   }
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL.replace(/\/+$/, '');
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, '');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
