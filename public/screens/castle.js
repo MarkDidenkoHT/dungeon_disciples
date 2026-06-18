@@ -367,7 +367,7 @@ export function renderCastle(root, { player }) {
     const SLOT_CATEGORIES = {
       slot_0: 'throne', slot_1: 'barracks', slot_2: 'barracks',
       slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks',
-      slot_6: 'barracks', slot_7: 'any', slot_8: 'any',
+      slot_6: 'special', slot_7: 'special', slot_8: 'special',
     };
     const slotCategory = SLOT_CATEGORIES[slot] || 'any';
     const factionPools = buildingPools[player.faction] || {};
