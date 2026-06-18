@@ -289,11 +289,21 @@ export function renderCastle(root, { player }) {
           if (!def) return;
 
           const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+          const fileKey   = key.replace(/\s+/g, '_').replace(/_\d+$/, '');
+          const imgSrc    = `/assets/icons/abilities/${fileKey}.jpg`;
+
           const bodyHtml = `
             <div class="ability-modal-content">
-              <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
-              <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
-              ${renderModalContent(def.description || '')}
+              <div class="ability-modal-header">
+                <div class="ability-modal-icon">
+                  <img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">
+                </div>
+                <div class="ability-modal-titles">
+                  <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
+                  <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
+                </div>
+              </div>
+              <p class="ability-modal-desc">${def.description || ''}</p>
             </div>`;
 
           openAbilityModal(`${typeLabel} Ability`, bodyHtml);
