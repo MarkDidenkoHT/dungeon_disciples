@@ -7,6 +7,7 @@ import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
+  openSubSheet, closeSubSheet, getSubSheetBody, cap,
 } from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
@@ -38,13 +39,13 @@ export function renderCastle(root, { player }) {
   let trophyInventory    = [];
 
   function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
-  function closeModal() { closeSheet(); }
+  function closeModal() { closeSheet(); closeSubSheet(); }
 
   function openAbilityModal(title, bodyHtml) {
-    openSheet(title, bodyHtml);
+    openSubSheet(title, bodyHtml);
   }
 
-  function closeAbilityModal() { closeSheet(); }
+  function closeAbilityModal() { closeSubSheet(); }
 
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
   if (backgroundUrl) {
@@ -102,6 +103,19 @@ export function renderCastle(root, { player }) {
     return def.upgrades.map(uid => ({ unit_id: uid, building_id: uid, label: uid }));
   }
 
+  function getActionLabel(actionKey) {
+    if (!actionKey) return '—';
+    const k = typeof actionKey === 'string' ? actionKey : (actionKey.id || '');
+    const map = {
+      attack:       'Attack',
+      heal:         'Heal',
+      repair:       'Repair',
+      'mend flesh': 'Mend Flesh',
+      sacrifice:    'Sacrifice',
+    };
+    return map[k.toLowerCase()] || cap(k);
+  }
+
   function buildUnitCard(unit, opts = {}) {
     if (!unit) return `<div class="unit-card"><p class="placeholder">Unknown unit</p></div>`;
 
@@ -115,15 +129,36 @@ export function renderCastle(root, { player }) {
 
     const portraitHtml = `
       <div class="unit-portrait">
-        <img src="${portrait}" alt="${unit.name}"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="unit-portrait-fallback" style="display:none;"><span>${unit.id}</span></div>
-        <div class="unit-portrait-overlay">
-          <span class="unit-name">${unit.name}</span>
-          <span class="unit-level-text">${buildingLabel || unit.type || ''}</span>
+        <img
+          src="${portrait}"
+          alt="${unit.name}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+        >
+        <div class="unit-portrait-fallback" style="display:none;">
+          <span>${unit.id}</span>
         </div>
-        ${tagLeft  ? `<div class="unit-tag-left">${tagLeft}</div>`   : ''}
-        ${tagRight ? `<div class="unit-tag-right">${tagRight}</div>` : ''}
+        <div class="unit-identity-bar">
+          <div class="unit-identity-main">
+            <span class="unit-name">${unit.name}</span>
+            <span class="unit-level-text">${buildingLabel || unit.type || ''}</span>
+          </div>
+          <div class="unit-identity-tags">
+            ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
+            ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+
+    const actionLabel = getActionLabel(unit.action);
+    const power       = unit.action_power ?? unit.action?.value ?? '—';
+
+    const coreHtml = `
+      <div class="unit-core-stats">
+        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
+        <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
+        <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       </div>`;
 
     const STAT_MAP = [
@@ -134,15 +169,6 @@ export function renderCastle(root, { player }) {
       { label: 'Targets', key: 'targets'      },
       { label: 'Range',   key: 'range'        },
     ];
-
-    const coreHtml = `
-      <div class="unit-core-stats unit-core-stats--6">
-        ${STAT_MAP.map(s => `
-          <div class="core-stat">
-            <span class="core-stat-label">${s.label}</span>
-            <span class="core-stat-val">${unit[s.key] ?? '—'}</span>
-          </div>`).join('')}
-      </div>`;
 
     let diffHtml = '';
     if (compareUnit) {
@@ -156,18 +182,25 @@ export function renderCastle(root, { player }) {
       if (chips.length) diffHtml = `<div class="unit-stat-diffs">${chips.join('')}</div>`;
     }
 
-    const resistHtml = `
-      <div class="unit-resists-grid">
-        ${RESIST_ORDER.map(r => {
-          const info = RESIST_ICONS[r];
-          const val  = res[r] ?? 0;
-          const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
-          return `<div class="resist-cell" title="${info.label}">
-            <span class="resist-icon">${info.icon}</span>
-            <span class="resist-val ${cls}">${val}</span>
-          </div>`;
-        }).join('')}
+    const armorVal = unit.armor ?? 0;
+    const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
+    const armorCell = `
+      <div class="resist-cell" title="Armor" data-armor="${armorVal}">
+        <span class="resist-icon">🛡</span>
+        <span class="resist-val ${armorCls}">${armorVal}</span>
       </div>`;
+
+    const resistCells = RESIST_ORDER.map(r => {
+      const info = RESIST_ICONS[r];
+      const val  = res[r] ?? 0;
+      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+      return `<div class="resist-cell" title="${info.label}">
+        <span class="resist-icon">${info.icon}</span>
+        <span class="resist-val ${cls}">${val}</span>
+      </div>`;
+    }).join('');
+
+    const resistHtml = `<div class="unit-resists-grid">${armorCell}${resistCells}</div>`;
 
     const descHtml = unit.description
       ? `<p class="unit-slide-desc">${unit.description}</p>`
@@ -178,12 +211,15 @@ export function renderCastle(root, { player }) {
       const isEmpty = !def;
       const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
       const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.jpg` : null;
-      return `<button
-        class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
-        data-ability-key="${key || ''}"
-        data-ability-type="${type}"
-        ${isEmpty ? 'disabled' : ''}
-      >${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}</button>`;
+      return `
+        <button
+          class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
+          data-ability-key="${key || ''}"
+          data-ability-type="${type}"
+          ${isEmpty ? 'disabled' : ''}
+        >
+          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
+        </button>`;
     }
 
     const passiveKeys = Array.isArray(unit.passive)
@@ -191,19 +227,16 @@ export function renderCastle(root, { player }) {
       : (unit.passive ? [unit.passive] : []);
 
     const iconsHtml = [
-      unit.ability ? abilityIconHtml(unit.ability, 'active')   : abilityIconHtml('', 'empty'),
+      unit.ability   ? abilityIconHtml(unit.ability,   'active')  : abilityIconHtml('', 'empty'),
       passiveKeys[0] ? abilityIconHtml(passiveKeys[0], 'passive') : abilityIconHtml('', 'empty'),
       passiveKeys[1] ? abilityIconHtml(passiveKeys[1], 'passive') : abilityIconHtml('', 'empty'),
-      `<button class="ability-icon ability-icon--item ability-icon--empty" disabled title="Item slot — coming soon"></button>`,
+      passiveKeys[2] ? abilityIconHtml(passiveKeys[2], 'passive') : abilityIconHtml('', 'empty'),
     ].join('');
 
     const abilitiesHtml = `
       <div class="unit-abilities-row">
         <div class="unit-abilities-icons">
           ${iconsHtml}
-        </div>
-        <div class="ability-detail-panel">
-          <div class="ability-detail-desc"></div>
         </div>
       </div>`;
 

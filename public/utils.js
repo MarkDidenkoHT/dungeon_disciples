@@ -164,6 +164,47 @@ export function getSheetBody() {
   return ensureSheet().querySelector('.modal-body');
 }
 
+let _subSheetEl = null;
+
+function ensureSubSheet() {
+  if (_subSheetEl) return _subSheetEl;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay modal-overlay--sub hidden';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title-text"></span>
+        <button class="modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body"></div>
+    </div>
+  `;
+
+  overlay.querySelector('.modal-close-btn').addEventListener('click', closeSubSheet);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSubSheet(); });
+
+  document.body.appendChild(overlay);
+  _subSheetEl = overlay;
+  return overlay;
+}
+
+export function openSubSheet(title, bodyHtml) {
+  const overlay = ensureSubSheet();
+  overlay.querySelector('.modal-title-text').textContent = title;
+  overlay.querySelector('.modal-body').innerHTML = bodyHtml;
+  overlay.classList.remove('hidden');
+}
+
+export function closeSubSheet() {
+  if (!_subSheetEl) return;
+  _subSheetEl.classList.add('hidden');
+}
+
+export function getSubSheetBody() {
+  return ensureSubSheet().querySelector('.modal-body');
+}
+
 export function mountModal(root) {
   return {
     open:  (title, bodyHtml) => openSheet(title, bodyHtml),

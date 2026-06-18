@@ -268,6 +268,10 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .modal-overlay.hidden { display: none !important; }
 
+.modal-overlay--sub {
+  z-index: 150;
+}
+
 @keyframes overlay-in {
   from { opacity: 0; }
   to   { opacity: 1; }
