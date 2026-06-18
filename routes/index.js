@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const fetch = require('node-fetch');
+
 const crypto = require('crypto');
 
 const { UNITS } = require('../data/units');
