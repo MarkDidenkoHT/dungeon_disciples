@@ -86,11 +86,18 @@ export function renderCastle(root, { player }) {
 
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
-    const factions = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow', 'enemies'];
+    const factions = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow'];
     for (const f of factions) {
       if (!UNITS[f]) continue;
       const found = Object.values(UNITS[f]).find(u => u?.id === unitId);
       if (found) return found;
+    }
+    if (UNITS.enemies) {
+      for (const region of Object.values(UNITS.enemies)) {
+        if (!region || typeof region !== 'object') continue;
+        const found = Object.values(region).find(u => u?.id === unitId);
+        if (found) return found;
+      }
     }
     return null;
   }
