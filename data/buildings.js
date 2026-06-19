@@ -404,24 +404,6 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { vial_of_pure_blood: 2, aggrails_signet: 4 },
     },
-    {
-      id:       'cb_grove_warden',
-      label:    'Grove Warden',
-      region:   'crimson_basilica',
-      unit_id:  'grove_warden',
-      tier:     1,
-      upgrades: ['cb_grove_warden_2'],
-      cost:     { vial_of_pure_blood: 2, aggrails_signet: 2 },
-    },
-    {
-      id:       'cb_grove_warden_2',
-      label:    'Grove Warden II',
-      region:   'crimson_basilica',
-      unit_id:  'grove_warden',
-      tier:     2,
-      upgrades: [],
-      cost:     { vial_of_pure_blood: 4, aggrails_signet: 4 },
-    },
   ],
 };
 

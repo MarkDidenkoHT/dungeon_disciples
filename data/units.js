@@ -1700,7 +1700,7 @@ const UNITS = {
         xp: 65, passive: 'bleed 1', ability: null,
       },
       aggrails_devoted: {
-        id: 'opb_e3', f: 'opb', t: 2,
+        id: 'opb_e12', f: 'opb', t: 2,
         name: 'Aggrails Devoted',
         tags: ['Demon', 'Holy'],
         size: 'tile',
@@ -1711,7 +1711,7 @@ const UNITS = {
         xp: 230, passive: ['aggrails_blessing 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       aggrails_champion: {
-        id: 'opb_e31', f: 'opb', t: 3,
+        id: 'opb_e121', f: 'opb', t: 3,
         name: 'Aggrails Champion',
         tags: ['Demon', 'Holy'],
         size: 'tile',
@@ -1722,7 +1722,7 @@ const UNITS = {
         xp: 230, passive: ['aggrails_blessing 1', 'aegis 1', 'protector 1'], ability: 'sanctuary 1',
       },
       keeper_of_purity: {
-        id: 'opb_e4', f: 'opb', t: 2,
+        id: 'opb_e4', f: 'opb', t: 1,
         name: 'Keeper of Purity',
         tags: ['Caster', 'Holy'],
         size: 'tile',
@@ -1730,10 +1730,10 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 50, death: 10, cold: 0, nature: 25 },
         action: 'heal', target_type: 'ally', targets: 3, range: 3,
         damage_source: null, action_power: 20,
-        xp: 240, passive: ['vitality 1', 'recuperate 1'], ability: 'infernal_mandate 1',
+        xp: 140, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       scarlet_fanatic: {
-        id: 'opb_e5', f: 'opb', t: 2,
+        id: 'opb_e13', f: 'opb', t: 2,
         name: 'Scarlet Fanatic',
         tags: ['Demon', 'Holy'],
         size: 'tile',
@@ -1744,7 +1744,7 @@ const UNITS = {
         xp: 260, passive: ['rage 1', 'fanaticism 1'], ability: null,
       },
       scarlet_agressor: {
-        id: 'opb_e51', f: 'opb', t: 3,
+        id: 'opb_e131', f: 'opb', t: 3,
         name: 'Scarlet Agressor',
         tags: ['Demon', 'Holy'],
         size: 'tile',
