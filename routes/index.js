@@ -529,7 +529,6 @@ router.post('/structures/build', requireAuth, async (req, res) => {
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
   if (slotCategory === 'throne') return res.status(400).json({ error: 'Throne cannot be built' });
-  if (building_id === 'mercenary_hall') return res.status(400).json({ error: 'Use the mercenary recruit endpoint instead' });
   try {
     const [rows, playerRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
@@ -1008,7 +1007,7 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
 
     const record = structRows[0];
     const slots  = record.buildings_data || {};
-    if (slots[slot]?.building_id) return res.status(400).json({ error: 'Slot already occupied' });
+    if (slots[slot]?.building_id && slots[slot].building_id !== 'mercenary_hall') return res.status(400).json({ error: 'Slot already occupied' });
 
     const cost = bDef.cost || {};
     for (const [item, required] of Object.entries(cost)) {

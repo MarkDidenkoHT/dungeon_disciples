@@ -447,8 +447,6 @@ export function renderCastle(root, { player }) {
     };
     const slotCategory = SLOT_CATEGORIES[slot] || 'any';
 
-    if (slotCategory === 'special') { openMercenaryModal(slot); return; }
-
     const factionPools = buildingPools[player.faction] || {};
     const available    = [];
 
@@ -473,7 +471,10 @@ export function renderCastle(root, { player }) {
         buildingId:    b.id,
         slot,
       })),
-      s => performBuildingUpgrade(s.slot, s.buildingId)
+      s => {
+        if (s.buildingId === 'mercenary_hall') { openMercenaryModal(slot); return; }
+        performBuildingUpgrade(s.slot, s.buildingId);
+      }
     );
   }
 

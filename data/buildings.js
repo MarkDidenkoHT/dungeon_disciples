@@ -74,6 +74,7 @@ const BUILDING_POOLS = {
       { id: 'watchtower',       label: 'Watchtower',        category: 'any', unit_id: null },
     ],
     special: [
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
     ],
   },
 
@@ -126,6 +127,7 @@ const BUILDING_POOLS = {
       { id: 'shadow_shrine',    label: 'Shadow Shrine',     category: 'any', unit_id: null },
     ],
     special: [
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
     ],
   },
 
@@ -189,6 +191,7 @@ const BUILDING_POOLS = {
       { id: 'soul_vault',       label: 'Soul Vault',         category: 'any', unit_id: null },
     ],
     special: [
+      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
     ],
   },
 };
