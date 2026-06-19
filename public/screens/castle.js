@@ -390,12 +390,38 @@ export function renderCastle(root, { player }) {
     });
   }
 
+  function getMercBuildingDef(buildingId) {
+    for (const pool of Object.values(mercenaryBuildings)) {
+      const found = pool.find(b => b.id === buildingId);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function getMercUpgradePaths(def) {
+    if (!def || !def.upgrades || !def.upgrades.length) return [];
+    const pool = mercenaryBuildings[def.region] || [];
+    return def.upgrades.map(uid => pool.find(b => b.id === uid)).filter(Boolean);
+  }
+
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
     if (slot === 'slot_0') { handleThroneClick(); return; }
     if (!state || !state.building_id) { openBuildModal(slot); return; }
 
-    if (state.building_id === 'mercenary_hall') { openMercenaryModal(slot); return; }
+    const mercDef = getMercBuildingDef(state.building_id);
+    if (mercDef) {
+      const paths = getMercUpgradePaths(mercDef);
+      if (!paths.length) {
+        openSliderModal(mercDef.label,
+          [{ unit: getUnitByUnitId(mercDef.unit_id), buildingLabel: mercDef.label, confirmLabel: 'Maxed — No Upgrades' }],
+          () => closeModal()
+        );
+        return;
+      }
+      openMercUpgradeModal(slot, mercDef, paths);
+      return;
+    }
 
     const def = getBuildingDef(player.faction, state.building_id);
     if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
@@ -444,7 +470,10 @@ export function renderCastle(root, { player }) {
         buildingId:    b.id,
         slot,
       })),
-      s => performBuildingUpgrade(s.slot, s.buildingId)
+      s => {
+        if (s.buildingId === 'mercenary_hall') { openMercenaryModal(slot); return; }
+        performBuildingUpgrade(s.slot, s.buildingId);
+      }
     );
   }
 
@@ -489,6 +518,46 @@ export function renderCastle(root, { player }) {
         alert(err.message || 'Throne upgrade failed');
       }
     });
+  }
+
+  async function openMercUpgradeModal(slot, def, paths) {
+    const currentUnit = getUnitByUnitId(def.unit_id);
+
+    function trophyAmount(item) {
+      const row = trophyInventory.find(r => r.item === item);
+      return row ? Number(row.amount) : 0;
+    }
+
+    function costLabel(cost) {
+      return Object.entries(cost || {})
+        .map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`)
+        .join(' + ');
+    }
+
+    const roster = await api(`/roster?chat_id=${player.chat_id}`).catch(() => []);
+    const rosterEntry = roster.find(r => r.unit_data?.mercenary && r.unit_data?.mercenary_region === def.region && r.unit_data?.id === currentUnit?.id);
+
+    openSliderModal(def.label,
+      paths.map(path => {
+        const nextUnit = getUnitByUnitId(path.unit_id);
+        return {
+          unit:           nextUnit,
+          buildingLabel:  nextUnit?.name || path.label,
+          confirmLabel:   `Upgrade → ${nextUnit?.name || path.label} (${costLabel(path.cost)})`,
+          compareUnit:    currentUnit,
+          mercBuildingId: path.id,
+          mercCost:       path.cost,
+          rosterId:       rosterEntry?.id,
+          slot,
+        };
+      }),
+      s => {
+        const cost  = s.mercCost || {};
+        const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
+        if (short) { alert('Not enough trophies for this upgrade.'); return; }
+        performMercenaryUpgrade(s.mercBuildingId, slot, s.rosterId);
+      }
+    );
   }
 
   function openUpgradeModal(slot, def, paths) {
@@ -561,24 +630,47 @@ export function renderCastle(root, { player }) {
         const cost  = s.mercCost || {};
         const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
         if (short) { alert('Not enough trophies for this mercenary.'); return; }
-        performMercenaryRecruit(s.mercBuildingId);
+        performMercenaryRecruit(s.mercBuildingId, slot);
       }
     );
   }
 
-  async function performMercenaryRecruit(mercenary_building_id) {
+  async function performMercenaryRecruit(mercenary_building_id, slot) {
     closeModal();
     try {
-      await api('/structures/mercenary/recruit', {
+      const result = await api('/structures/mercenary/recruit', {
         chat_id: player.chat_id,
         mercenary_building_id,
+        slot,
       });
+      if (result.structures) structuresRecord = result.structures;
       const trophies = await api(`/inventory?chat_id=${player.chat_id}&type=trophy`);
       trophyInventory = trophies || [];
+      renderBuildings();
       refreshResourceBar(player).catch(() => {});
     } catch (err) {
       console.error(err);
       alert(err.message || 'Recruit failed');
+    }
+  }
+
+  async function performMercenaryUpgrade(mercenary_building_id, slot, roster_id) {
+    closeModal();
+    try {
+      const result = await api('/structures/mercenary/upgrade', {
+        chat_id: player.chat_id,
+        mercenary_building_id,
+        slot,
+        roster_id,
+      });
+      if (result.structures) structuresRecord = result.structures;
+      const trophies = await api(`/inventory?chat_id=${player.chat_id}&type=trophy`);
+      trophyInventory = trophies || [];
+      renderBuildings();
+      refreshResourceBar(player).catch(() => {});
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Upgrade failed');
     }
   }
 

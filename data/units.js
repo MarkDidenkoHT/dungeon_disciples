@@ -226,7 +226,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 15,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -237,8 +237,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 96, armor: 4, initiative: 120,
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 19,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 300
     },
@@ -249,8 +249,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 85, armor: 2, initiative: 100,
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
-      damage_source: 'physical', action_power: 17,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 300
     },
@@ -261,8 +261,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 115, armor: 4, initiative: 144,
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 23,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 600
     },
@@ -273,8 +273,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 102, armor: 3, initiative: 120,
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
-      damage_source: 'physical', action_power: 20,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 600
     },
@@ -285,8 +285,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 138, armor: 5, initiative: 173,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 28,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 780
     },
@@ -297,8 +297,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 138, armor: 5, initiative: 173,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 28,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 780
     },
@@ -309,8 +309,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 122, armor: 4, initiative: 145,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
-      damage_source: 'physical', action_power: 24,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 780
     },
@@ -321,8 +321,8 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       hp: 122, armor: 4, initiative: 145,
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 3, range: 3,
-      damage_source: 'physical', action_power: 24,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 10,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 780
     },
@@ -404,7 +404,7 @@ const UNITS = {
       xp: 70, passive: null, ability: null,
     },
     posessed: {
-      id: 'd4', f: 'd', t: 2,
+      id: 'd41', f: 'd', t: 2,
       name: 'Posessed',
       tags: ['Warrior', 'Puppet'],
       size: 'tile',
@@ -415,7 +415,7 @@ const UNITS = {
       xp: 270, passive: ['rage 1', 'blood_frenzy 1'], ability: null,
     },
     vessel: {
-      id: 'd4', f: 'd', t: 3,
+      id: 'd411', f: 'd', t: 3,
       name: 'Vessel',
       tags: ['Warrior', 'Demon'],
       size: 'tile',
@@ -426,7 +426,7 @@ const UNITS = {
       xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'predator 1'], ability: null,
     },
     pain_projector: {
-      id: 'd4', f: 'd', t: 3,
+      id: 'd412', f: 'd', t: 3,
       name: 'Pain Projector',
       tags: ['Puppet', 'Demon'],
       size: 'tile',
@@ -1319,7 +1319,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20,
       passive: 'sorrow', ability: 'mothers_kiss 1',
       building_slot: 'slot_0', xp: 95
@@ -1331,7 +1331,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 60, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 285
@@ -1343,7 +1343,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 55, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 285
@@ -1355,7 +1355,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 78, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 560
@@ -1367,7 +1367,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 72, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 560
@@ -1379,7 +1379,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 96, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
@@ -1391,7 +1391,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 96, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
@@ -1403,7 +1403,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
@@ -1415,7 +1415,7 @@ const UNITS = {
       tags: ['Spirit', 'Caster'],
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'heal', target_type: 'enemy', targets: 1, range: 3,
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25,
       passive: null, ability: null,
       building_slot: 'slot_0', xp: 730
@@ -1436,7 +1436,7 @@ const UNITS = {
       name: 'Poisonous Ghoul',
       tags: ['Zombie'],
       size: 'tile',
-      hp: 80, armor: 0, initiative: 20,
+      hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 15,
@@ -1447,7 +1447,7 @@ const UNITS = {
       name: 'Plague Knight',
       tags: ['Zombie', 'Knight'],
       size: 'tile',
-      hp: 95, armor: 20, initiative: 20,
+      hp: 75, armor: 20, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 20,

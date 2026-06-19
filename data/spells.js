@@ -353,7 +353,7 @@ const SPELLS = {
 
     {
       id: 'g_spell_5',
-      name: 'Shared Suffering',
+      name: 'Placeholder',
       rank: 2,
       tier: 2,
       type: 'preparation',

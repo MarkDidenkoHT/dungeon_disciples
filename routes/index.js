@@ -989,22 +989,25 @@ router.post('/spells/research', requireAuth, async (req, res) => {
 });
 
 router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
-  const { chat_id, mercenary_building_id } = req.body;
-  if (!chat_id || !mercenary_building_id) return res.status(400).json({ error: 'chat_id and mercenary_building_id required' });
+  const { chat_id, mercenary_building_id, slot } = req.body;
+  if (!chat_id || !mercenary_building_id || !slot) return res.status(400).json({ error: 'chat_id, mercenary_building_id, and slot required' });
   try {
     const allMercBuildings = Object.values(MERCENARY_BUILDINGS).flat();
     const bDef = allMercBuildings.find(b => b.id === mercenary_building_id);
     if (!bDef) return res.status(404).json({ error: 'Mercenary building not found' });
 
+    const slotCategory = SLOT_CATEGORIES[slot];
+    if (slotCategory !== 'special') return res.status(400).json({ error: 'Mercenaries can only be placed in special slots' });
+
     const [structRows, inventoryRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
-    if (!structRows.length)  return res.status(404).json({ error: 'Structures not found' });
+    if (!structRows.length) return res.status(404).json({ error: 'Structures not found' });
 
-    const slots = structRows[0].buildings_data || {};
-    const hasMercHall = Object.values(slots).some(s => s.building_id === 'mercenary_hall');
-    if (!hasMercHall) return res.status(400).json({ error: 'Mercenary Hall not built' });
+    const record = structRows[0];
+    const slots  = record.buildings_data || {};
+    if (slots[slot]?.building_id) return res.status(400).json({ error: 'Slot already occupied' });
 
     const cost = bDef.cost || {};
     for (const [item, required] of Object.entries(cost)) {
@@ -1023,21 +1026,89 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     const unitTemplate = UNITS.enemies?.[bDef.region]?.[bDef.unit_id];
     if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
 
-    const newUnit = {
-      chat_id:   String(chat_id),
-      is_hero:   false,
-      unit_data: {
-        ...unitTemplate,
-        mercenary:        true,
-        mercenary_region: bDef.region,
-        alive:            true,
-        current_hp:       unitTemplate.hp,
-        current_xp:       0,
-        tier:             bDef.tier,
-      },
+    slots[slot] = { level: 1, building_id: mercenary_building_id };
+    const [updatedStruct, inserted] = await Promise.all([
+      supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: slots }) }),
+      supabase('/roster', { method: 'POST', body: JSON.stringify({
+        chat_id:   String(chat_id),
+        is_hero:   false,
+        unit_data: {
+          ...unitTemplate,
+          mercenary:        true,
+          mercenary_region: bDef.region,
+          alive:            true,
+          current_hp:       unitTemplate.hp,
+          current_xp:       0,
+          tier:             bDef.tier,
+        },
+      }), headers: { Prefer: 'return=representation' } }),
+    ]);
+    res.json({ success: true, structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct, roster_entry: Array.isArray(inserted) ? inserted[0] : inserted });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, mercenary_building_id, slot } = req.body;
+  if (!chat_id || !roster_id || !mercenary_building_id || !slot) return res.status(400).json({ error: 'chat_id, roster_id, mercenary_building_id, and slot required' });
+  try {
+    const allMercBuildings = Object.values(MERCENARY_BUILDINGS).flat();
+    const bDef = allMercBuildings.find(b => b.id === mercenary_building_id);
+    if (!bDef) return res.status(404).json({ error: 'Mercenary building not found' });
+
+    const [rosterRows, structRows, inventoryRows] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+    if (!structRows.length) return res.status(404).json({ error: 'Structures not found' });
+
+    const record  = structRows[0];
+    const slots   = record.buildings_data || {};
+    if (slots[slot]?.building_id !== rosterRows[0].unit_data?.mercenary_building_id_ref &&
+        !allMercBuildings.some(b => b.id === slots[slot]?.building_id)) {
+      return res.status(400).json({ error: 'Slot does not contain a mercenary' });
+    }
+
+    const cost = bDef.cost || {};
+    for (const [item, required] of Object.entries(cost)) {
+      const row = inventoryRows.find(r => r.item === item);
+      const have = row ? Number(row.amount) : 0;
+      if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
+    }
+
+    for (const [item, required] of Object.entries(cost)) {
+      const row = inventoryRows.find(r => r.item === item);
+      if (!row) continue;
+      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }
+
+    const { UNITS } = require('../data/units');
+    const unitTemplate = UNITS.enemies?.[bDef.region]?.[bDef.unit_id];
+    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
+
+    const oldUnitData = rosterRows[0].unit_data || {};
+    const newUnitData = {
+      ...unitTemplate,
+      mercenary:        true,
+      mercenary_region: bDef.region,
+      alive:            oldUnitData.alive !== false,
+      current_hp:       Math.min(unitTemplate.hp, oldUnitData.current_hp ?? unitTemplate.hp),
+      current_xp:       oldUnitData.current_xp ?? 0,
+      tier:             bDef.tier,
     };
-    const inserted = await supabase('/roster', { method: 'POST', body: JSON.stringify(newUnit), headers: { Prefer: 'return=representation' } });
-    res.json({ success: true, roster_entry: Array.isArray(inserted) ? inserted[0] : inserted });
+
+    slots[slot] = { level: bDef.tier, building_id: mercenary_building_id };
+
+    const [updatedStruct] = await Promise.all([
+      supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: slots }) }),
+      supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
+    ]);
+
+    const updatedRoster = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
+    res.json({ success: true, structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct, roster_entry: updatedRoster[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
