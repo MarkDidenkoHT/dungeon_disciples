@@ -39,17 +39,7 @@ function getPortraitUrl(unit, variant = 'default') {
 }
 
 function spellIcon(spell) {
-  const icons = {
-    resurrect:          '✝',
-    heal:               '💚',
-    buff:               '⬆',
-    debuff:             '⬇',
-    trophy_gain:        '🏆',
-    round_trigger_heal: '💚',
-    tag_count_buff:     '⬆',
-    pvp_counter_tier2:  '⚔',
-  };
-  return icons[spell.effect_type] || '✦';
+  return `<img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}">`;
 }
 
 function unitTypeIcon(unit) {
