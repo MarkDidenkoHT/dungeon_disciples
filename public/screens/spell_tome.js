@@ -214,22 +214,20 @@ export function renderSpellTome(root, { player }) {
   }
 
   const turnPageAudio = new Audio('/assets/mp3/ui/turn-page.mp3');
-  let tierSwitching = false;
 
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const newTier = parseInt(tab.dataset.tier);
-      if (newTier === activeTier || tierSwitching) return;
-      tierSwitching = true;
+      if (newTier === activeTier) return;
       activeTier    = newTier;
       activeSpellId = null;
       tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
       tab.classList.add('tier-tab--active');
       renderSlider();
       closeSheet();
+      turnPageAudio.pause();
       turnPageAudio.currentTime = 0;
       turnPageAudio.play().catch(() => {});
-      turnPageAudio.onended = () => { tierSwitching = false; };
     });
   });
 
