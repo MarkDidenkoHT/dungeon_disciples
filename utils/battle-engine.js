@@ -617,6 +617,7 @@ class BattleEngine {
         martyrdom_pct:    c.martyrdom_pct ?? 0,
         _lifesteal:       c._lifesteal ?? 0,
         acted_this_round: c.acted_this_round,
+        _rosterId:        c._rosterId ?? null,
         buffs: {
           dot_dmg:             c.dot_dmg,
           _hot:                c._hot,
@@ -668,6 +669,7 @@ class BattleEngine {
       c.defend_armor_bonus = s.defend_armor_bonus ?? 0;
       c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
       c._lifesteal         = s._lifesteal          ?? 0;
+      if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
       c._hot               = b._hot               ?? 0;
