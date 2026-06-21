@@ -30,9 +30,9 @@ export const SCREEN_BACKGROUNDS = {
     grail_of_sorrow:     '/assets/screens/grail.jpg',
   },
   embark: {
-    empire:              '/assets/screens/empire.jpg',
-    choir_of_the_cursed: '/assets/screens/choir.jpg',
-    grail_of_sorrow:     '/assets/screens/grail.jpg',
+    empire:              '/assets/screens/embark.jpg',
+    choir_of_the_cursed: '/assets/screens/embark.jpg',
+    grail_of_sorrow:     '/assets/screens/embark.jpg',
   },
   spells: {
     empire:              '/assets/screens/spell_book.jpg',
@@ -43,6 +43,7 @@ export const SCREEN_BACKGROUNDS = {
 
 export const SCREEN_BACKGROUND_POSITIONS = {
   spells: 'left bottom',
+  embark: 'left bottom',
 };
 
 export function applyBackground(root, faction, screen) {
