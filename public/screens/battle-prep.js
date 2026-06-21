@@ -38,6 +38,20 @@ function getPortraitUrl(unit, variant = 'default') {
   return `/assets/character_portraits/${prefix}_${portraitId}.png`;
 }
 
+function spellIcon(spell) {
+  const icons = {
+    resurrect:          '✝',
+    heal:               '💚',
+    buff:               '⬆',
+    debuff:             '⬇',
+    trophy_gain:        '🏆',
+    round_trigger_heal: '💚',
+    tag_count_buff:     '⬆',
+    pvp_counter_tier2:  '⚔',
+  };
+  return icons[spell.effect_type] || '✦';
+}
+
 function unitTypeIcon(unit) {
   const t = unit?.unit_data?.type ?? '';
   const icons = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
@@ -367,7 +381,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon">${spell.icon}</div>
+          <div class="spell-list-icon">${spellIcon(spell)}</div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spell.name}</div>
             <div class="spell-list-meta">
@@ -453,7 +467,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function showTargetSheet(spell, targets, factionSpells) {
-    targetTitle.textContent = `${spell.icon} ${spell.name} — Choose Target`;
+    targetTitle.textContent = `${spellIcon(spell)} ${spell.name} — Choose Target`;
 
     if (targets.length === 0) {
       targetBody.innerHTML = `<div class="spell-sheet-empty">No eligible targets${spell.params?.tag ? ` (no ${spell.params.tag}s placed)` : ''}</div>`;
