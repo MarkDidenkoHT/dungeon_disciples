@@ -84,8 +84,8 @@ export function renderSpellTome(root, { player }) {
 
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
-          ${isLearned    ? '<div class="spell-card-learned-ring"></div>'          : ''}
-          ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><span>🔒</span></div>' : ''}
+          ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
+          ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><img src="/assets/icons/spells/spell_locked.png" alt="Locked" class="spell-card-lock-img"></div>' : ''}
           <div class="spell-card-icon"><img src="${spellIconUrl(spell)}" alt="${spell.name}" onerror="this.style.display='none'"></div>
           <div class="spell-card-name">${spell.name}</div>
           <div class="spell-card-cost">${costHtml(spell)}</div>
@@ -213,21 +213,14 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
-  const turnPageAudio = new Audio('/assets/mp3/ui/turn-page.mp3');
-
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      const newTier = parseInt(tab.dataset.tier);
-      if (newTier === activeTier) return;
-      activeTier    = newTier;
+      activeTier    = parseInt(tab.dataset.tier);
       activeSpellId = null;
       tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
       tab.classList.add('tier-tab--active');
       renderSlider();
       closeSheet();
-      turnPageAudio.pause();
-      turnPageAudio.currentTime = 0;
-      turnPageAudio.play().catch(() => {});
     });
   });
 
