@@ -2198,7 +2198,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   padding: 12px 14px;
   padding-top: 50px;
-  transform: translateX(-2%);
+  transform: translateX(-4%);
 }
 
 .spells-slider {
@@ -2267,23 +2267,25 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   background: transparent;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
 }
 
 .spell-card-lock-img {
-  width: clamp(64px, 16vw, 110px);
-  height: clamp(64px, 16vw, 110px);
+  width: clamp(80px, 20vw, 140px);
+  height: clamp(80px, 20vw, 140px);
   object-fit: contain;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .spell-card-icon {
-  width: clamp(48px, 12vw, 90px);
-  height: clamp(48px, 12vw, 90px);
+  width: clamp(64px, 16vw, 110px);
+  height: clamp(64px, 16vw, 110px);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .spell-card-icon img {
