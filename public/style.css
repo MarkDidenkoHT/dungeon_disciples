@@ -2267,7 +2267,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   background: transparent;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -2275,7 +2275,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: clamp(80px, 20vw, 140px);
   height: clamp(80px, 20vw, 140px);
   object-fit: contain;
-  opacity: 0.85;
+  opacity: 0.92;
 }
 
 .spell-card-icon {
@@ -2285,7 +2285,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 .spell-card-icon img {
