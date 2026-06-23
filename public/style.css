@@ -2198,6 +2198,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   padding: 12px 14px;
   padding-top: 50px;
+  transform: translateX(-6%);
 }
 
 .spells-slider {
@@ -2219,8 +2220,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: 150px;
   height: 150px;
   border-radius: 12px;
-  background: var(--bg);
-  border: 1.5px solid var(--border);
+  background: transparent;
+  border: none;
   padding: 14px 12px 10px;
   display: flex;
   flex-direction: column;
@@ -2228,19 +2229,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: flex-start;
   gap: 6px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: opacity 0.15s;
   position: relative;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .spell-card:active {
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+  opacity: 0.75;
 }
 
 .spell-card--active {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  outline: 2px solid var(--accent);
+  border-radius: 12px;
 }
 
 .spell-card--learned {
@@ -2276,8 +2277,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-card-icon {
-  width: 56px;
-  height: 56px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2304,10 +2305,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-card-cost {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
+  display: none;
 }
 
 .spell-card-check {
