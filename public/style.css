@@ -2260,22 +2260,18 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-card-lock-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  z-index: 3;
-  pointer-events: none;
+  display: none;
 }
 
 .spell-card-lock-img {
-  width: clamp(80px, 20vw, 140px);
-  height: clamp(80px, 20vw, 140px);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   opacity: 0.92;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .spell-card-icon {
@@ -2285,7 +2281,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   position: relative;
+}
+
+.spell-card-icon img:first-child {
+  position: relative;
   z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .spell-card-icon img {
