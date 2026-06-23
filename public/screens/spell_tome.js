@@ -85,7 +85,7 @@ export function renderSpellTome(root, { player }) {
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
           ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
-          ${!tierUnlocked ? '<div class="spell-card-lock-overlay"><img src="/assets/icons/spells/spell_locked.png" alt="Locked" class="spell-card-lock-img"></div>' : ''}
+          ${!isLearned ? '<div class="spell-card-lock-overlay"><img src="/assets/icons/spells/spell_locked.png" alt="Locked" class="spell-card-lock-img"></div>' : ''}
           <div class="spell-card-icon"><img src="${spellIconUrl(spell)}" alt="${spell.name}" onerror="this.style.display='none'"></div>
           <div class="spell-card-name">${spell.name}</div>
           <div class="spell-card-cost">${costHtml(spell)}</div>
