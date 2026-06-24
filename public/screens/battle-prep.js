@@ -89,13 +89,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation</div>
-          <div class="battle-grid" id="player-grid"></div>
+          <div class="battle-grid-wrap">
+            <div class="battle-grid" id="player-grid"></div>
+          </div>
           <div class="battle-loyalty-hint" id="loyalty-hint"></div>
         </div>
-        <div class="battle-vs">⚔</div>
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label">Enemies</div>
-          <div class="battle-grid" id="enemy-grid"></div>
+          <div class="battle-grid-wrap">
+            <div class="battle-grid" id="enemy-grid"></div>
+          </div>
         </div>
       </div>
 

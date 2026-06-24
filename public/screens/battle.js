@@ -381,11 +381,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
         <div class="battle-arena">
           <div class="battle-half battle-half--player">
-            <div class="battle-grid">${renderSide('player')}</div>
+            <div class="battle-grid-wrap">
+              <div class="battle-grid">${renderSide('player')}</div>
+            </div>
           </div>
-          <div class="battle-vs">⚔</div>
           <div class="battle-half battle-half--enemy">
-            <div class="battle-grid">${renderSide('enemy')}</div>
+            <div class="battle-grid-wrap">
+              <div class="battle-grid">${renderSide('enemy')}</div>
+            </div>
           </div>
         </div>
 

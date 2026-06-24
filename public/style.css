@@ -1620,10 +1620,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .battle-vs {
-  font-size: 0.9rem;
-  color: var(--muted);
-  align-self: center;
-  flex-shrink: 0;
+  display: none;
+}
+
+.battle-grid-wrap {
+  position: relative;
+  padding: 12px;
+  background-image: url('/assets/icons/ui/battle_grid.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .battle-grid {
@@ -1631,19 +1637,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(3, 110px);
   width: 100%;
-  position: relative;
-}
-
-.battle-grid::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('/assets/icons/ui/battle_grid.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  pointer-events: none;
-  z-index: 10;
 }
 
 .battle-cell {
