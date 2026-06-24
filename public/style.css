@@ -1625,13 +1625,20 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .battle-grid-wrap {
   position: relative;
-  padding: 12px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.battle-grid-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image: url('/assets/icons/ui/battle_grid.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .battle-grid {
@@ -1640,6 +1647,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   grid-template-rows: repeat(3, 110px);
   width: 100%;
   box-sizing: border-box;
+  margin: 12px;
+  width: calc(100% - 24px);
 }
 
 .battle-cell {
