@@ -1632,9 +1632,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   grid-template-rows: repeat(3, 110px);
   width: 100%;
   background-image: url('/assets/icons/ui/battle_grid.png');
-  background-size: cover;
+  background-size: calc(100% + 24px) calc(100% + 24px);
   background-position: center;
   background-repeat: no-repeat;
+  padding: 0 12px;
+  box-sizing: border-box;
 }
 
 .battle-cell {
