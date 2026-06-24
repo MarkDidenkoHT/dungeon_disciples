@@ -1800,6 +1800,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 7px;
   width: max-content;
   align-items: flex-end;
+  transition: box-shadow 0.15s, background 0.15s;
+  border-radius: 8px;
+}
+
+.portrait-track--drop-target {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .track-empty-hint {
@@ -2219,7 +2226,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   width: 55vw;
   max-width: 320px;
-  height: 18vh;
+  height: 36vh;
   border-radius: 12px;
   background: transparent;
   border: none;
@@ -2275,8 +2282,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .spell-card-icon {
-  width: clamp(64px, 16vw, 110px);
-  height: clamp(64px, 16vw, 110px);
+  width: clamp(160px, 22vh, 280px);
+  height: clamp(160px, 22vh, 280px);
   display: flex;
   align-items: center;
   justify-content: center;

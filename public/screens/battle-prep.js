@@ -38,10 +38,6 @@ function getPortraitUrl(unit, variant = 'default') {
   return `/assets/character_portraits/${prefix}_${portraitId}.png`;
 }
 
-function spellIcon(spell) {
-  return `<img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}">`;
-}
-
 function unitTypeIcon(unit) {
   const t = unit?.unit_data?.type ?? '';
   const icons = { melee: '⚔', ranged: '🏹', caster: '✦', healer: '✚' };
@@ -371,7 +367,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon">${spellIcon(spell)}</div>
+          <div class="spell-list-icon">${spell.icon}</div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spell.name}</div>
             <div class="spell-list-meta">
@@ -457,7 +453,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function showTargetSheet(spell, targets, factionSpells) {
-    targetTitle.textContent = `${spellIcon(spell)} ${spell.name} — Choose Target`;
+    targetTitle.textContent = `${spell.icon} ${spell.name} — Choose Target`;
 
     if (targets.length === 0) {
       targetBody.innerHTML = `<div class="spell-sheet-empty">No eligible targets${spell.params?.tag ? ` (no ${spell.params.tag}s placed)` : ''}</div>`;
@@ -829,6 +825,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  function isOverSlider(clientX, clientY) {
+    const track = root.querySelector('#portrait-track');
+    if (!track) return false;
+    const rect = track.getBoundingClientRect();
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+  }
+
   function finishPointerDrag(clientX, clientY) {
     clearHover();
     removeGhost();
@@ -849,6 +852,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
+    if (dragUnit && dragFromCell !== null && ignoreId) {
+      removeUnit(ignoreId);
+      dragUnit     = null;
+      dragFromCell = null;
+      fullRefresh();
+      return;
+    }
+
     dragUnit     = null;
     dragFromCell = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -862,6 +873,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     dragUnit        = null;
     dragFromCell    = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
+    const track = root.querySelector('#portrait-track');
+    if (track) track.classList.remove('portrait-track--drop-target');
   }
 
   document.addEventListener('pointermove', e => {
@@ -871,15 +884,24 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const cell     = cellFromPoint(e.clientX, e.clientY);
     const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
+    const track    = root.querySelector('#portrait-track');
+
     if (cell) {
       const i         = Number(cell.dataset.i);
       const targetOcc = occupied[i];
       const isSelf    = targetOcc && targetOcc.unitId === ignoreId;
       if ((!targetOcc || isSelf) && canPlace(dragUnit, i, ignoreId)) {
         setHover(i);
+        if (track) track.classList.remove('portrait-track--drop-target');
         return;
       }
     }
+
+    if (track && dragFromCell !== null) {
+      const overSlider = isOverSlider(e.clientX, e.clientY);
+      track.classList.toggle('portrait-track--drop-target', overSlider);
+    }
+
     clearHover();
   }, { passive: false });
 
