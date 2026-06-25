@@ -88,11 +88,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
-          <div class="battle-half-label">Your Formation</div>
+          <div class="battle-half-label">Your Formation <span id="loyalty-counter" class="loyalty-counter"></span></div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="player-grid"></div>
           </div>
-          <div class="battle-loyalty-hint" id="loyalty-hint"></div>
         </div>
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label">Enemies</div>
@@ -112,10 +111,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <div class="prep-bottom-bar">
-        <button class="spells-fab" id="spells-fab">✦ Spells <span class="spells-fab-badge" id="spells-fab-badge" style="display:none"></span></button>
-        <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
-      </div>
+      <button id="ready-btn" style="display:none" disabled></button>
     </div>
 
     <div id="spell-sheet-overlay" class="spell-sheet-overlay hidden">
@@ -183,17 +179,46 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     targetOverlay.classList.add('hidden');
   }
 
-  root.querySelector('#spells-fab').addEventListener('click', openSpellSheet);
+  const spellsNavBtn = document.querySelector('.nav-btn[data-screen="spells"]');
+  if (spellsNavBtn) {
+    spellsNavBtn.querySelector('.nav-btn-label').textContent = 'Cast Spell';
+    spellsNavBtn._battlePrepHandler = (e) => { e.stopImmediatePropagation(); openSpellSheet(); };
+    spellsNavBtn.addEventListener('click', spellsNavBtn._battlePrepHandler, true);
+  }
+
+  const embarkNavBtn = document.querySelector('.nav-btn[data-screen="embark"]');
+  if (embarkNavBtn) {
+    embarkNavBtn._battlePrepHandler = (e) => {
+      e.stopImmediatePropagation();
+      const btn = root.querySelector('#ready-btn');
+      if (btn && !btn.disabled) btn.click();
+    };
+    embarkNavBtn.addEventListener('click', embarkNavBtn._battlePrepHandler, true);
+  }
+
+  function restoreNavLabels() {
+    const s = document.querySelector('.nav-btn[data-screen="spells"]');
+    const em = document.querySelector('.nav-btn[data-screen="embark"]');
+    if (s) {
+      s.querySelector('.nav-btn-label').textContent = 'Spells';
+      if (s._battlePrepHandler) { s.removeEventListener('click', s._battlePrepHandler, true); delete s._battlePrepHandler; }
+    }
+    if (em) {
+      em.querySelector('.nav-btn-label').textContent = 'Embark';
+      em.classList.remove('nav-btn--battle-ready');
+      if (em._battlePrepHandler) { em.removeEventListener('click', em._battlePrepHandler, true); delete em._battlePrepHandler; }
+    }
+  }
+
+  const observer = new MutationObserver(() => {
+    if (!document.contains(root)) { restoreNavLabels(); observer.disconnect(); }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 
   function updateSpellsBadge() {
-    const badge = root.querySelector('#spells-fab-badge');
-    if (!badge) return;
-    if (selectedSpells.length > 0) {
-      badge.textContent = selectedSpells.length;
-      badge.style.display = '';
-    } else {
-      badge.style.display = 'none';
-    }
+    const spellsNav = document.querySelector('.nav-btn[data-screen="spells"] .nav-btn-label');
+    if (!spellsNav) return;
+    spellsNav.textContent = selectedSpells.length > 0 ? `Cast Spell (${selectedSpells.length})` : 'Cast Spell';
   }
 
   function showDetail(title, html) {
@@ -587,13 +612,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function updateLoyaltyHint() {
-    const hint = root.querySelector('#loyalty-hint');
-    if (!hint) return;
-    const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
-    const parts = [];
-    if (!heroPlaced) parts.push('Place your hero');
-    parts.push(`${placedLoyaltyUsed()}/${maxNonHero} loyalty used`);
-    hint.textContent = parts.join(' · ');
+    const counter = root.querySelector('#loyalty-counter');
+    if (counter) counter.textContent = `${placedLoyaltyUsed()}/${maxNonHero}`;
   }
 
   function renderPlayerGrid() {
@@ -709,10 +729,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function checkReady() {
-    const btn        = root.querySelector('#ready-btn');
-    const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
-    btn.disabled     = !heroPlaced;
-    btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
+    const heroPlaced   = heroId !== null && placedUnitIds().has(heroId);
+    const embarkNavBtn = document.querySelector('.nav-btn[data-screen="embark"]');
+    if (embarkNavBtn) {
+      embarkNavBtn.classList.toggle('nav-btn--battle-ready', heroPlaced);
+      embarkNavBtn.querySelector('.nav-btn-label').textContent = 'Enter Battle';
+    }
+    const btn = root.querySelector('#ready-btn');
+    if (btn) btn.disabled = !heroPlaced;
   }
 
   function setHover(i) {
