@@ -1590,8 +1590,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
-  padding: 2px;
-  gap: 4px;
+  padding: 5px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -1644,11 +1644,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 .battle-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, 130px);
+  grid-template-rows: repeat(3, 110px);
   width: 100%;
   box-sizing: border-box;
-  margin: 8px;
-  width: calc(100% - 16px);
+  margin: 12px;
+  width: calc(100% - 24px);
 }
 
 .battle-cell {
