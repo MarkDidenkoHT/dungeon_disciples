@@ -87,6 +87,22 @@ function navigate(screen, params = {}) {
   if (player && !isBattle) refreshResourceBar(player).catch(() => {});
 
   const root = document.getElementById('content-root');
+
+  // Restore any nav button overrides set by the previous screen
+  const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
+  const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
+  if (spellsNav) {
+    const label = spellsNav.querySelector('.nav-btn-label');
+    if (label) label.textContent = 'Spells';
+    if (spellsNav._battlePrepHandler) { spellsNav.removeEventListener('click', spellsNav._battlePrepHandler, true); delete spellsNav._battlePrepHandler; }
+  }
+  if (embarkNav) {
+    const label = embarkNav.querySelector('.nav-btn-label');
+    if (label) label.textContent = 'Embark';
+    embarkNav.classList.remove('nav-btn--battle-ready');
+    if (embarkNav._battlePrepHandler) { embarkNav.removeEventListener('click', embarkNav._battlePrepHandler, true); delete embarkNav._battlePrepHandler; }
+  }
+
   root.innerHTML = '';
   root.style.backgroundImage    = '';
   root.style.backgroundSize     = '';

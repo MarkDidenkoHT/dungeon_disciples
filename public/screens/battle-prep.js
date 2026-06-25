@@ -210,10 +210,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  const observer = new MutationObserver(() => {
-    if (!document.contains(root)) { restoreNavLabels(); observer.disconnect(); }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+
 
   function updateSpellsBadge() {
     const spellsNav = document.querySelector('.nav-btn[data-screen="spells"] .nav-btn-label');
