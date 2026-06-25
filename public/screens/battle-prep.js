@@ -395,7 +395,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon">${spell.icon}</div>
+          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}"></div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spell.name}</div>
             <div class="spell-list-meta">
@@ -481,7 +481,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function showTargetSheet(spell, targets, factionSpells) {
-    targetTitle.textContent = `${spell.icon} ${spell.name} — Choose Target`;
+    targetTitle.textContent = `${spell.name} — Choose Target`;
 
     if (targets.length === 0) {
       targetBody.innerHTML = `<div class="spell-sheet-empty">No eligible targets${spell.params?.tag ? ` (no ${spell.params.tag}s placed)` : ''}</div>`;
