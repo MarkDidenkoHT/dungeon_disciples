@@ -1,4 +1,4 @@
-import { api, navigate }  from '../api.js';
+import { api, navigate, setNavButtonOverride, clearNavButtonOverrides }  from '../api.js';
 import { SPELLS }          from '../../data/spells.js';
 import { getEncounter }    from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
@@ -88,17 +88,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
-          <div class="battle-half-label">Your Formation</div>
-          <div class="battle-grid-wrap">
-            <div class="battle-grid" id="player-grid"></div>
-          </div>
-          <div class="battle-loyalty-hint" id="loyalty-hint"></div>
+          <div class="battle-half-label">Your Formation <span class="battle-loyalty-hint" id="loyalty-hint"></span></div>
+          <div class="battle-grid" id="player-grid"></div>
         </div>
+        <div class="battle-vs">⚔</div>
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label">Enemies</div>
-          <div class="battle-grid-wrap">
-            <div class="battle-grid" id="enemy-grid"></div>
-          </div>
+          <div class="battle-grid" id="enemy-grid"></div>
         </div>
       </div>
 
@@ -110,11 +106,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <div class="prep-track-wrap">
           <div class="portrait-track" id="portrait-track"></div>
         </div>
-      </div>
-
-      <div class="prep-bottom-bar">
-        <button class="spells-fab" id="spells-fab">✦ Spells <span class="spells-fab-badge" id="spells-fab-badge" style="display:none"></span></button>
-        <button class="ready-btn" id="ready-btn" disabled>Place your hero to ready up</button>
       </div>
     </div>
 
@@ -183,17 +174,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     targetOverlay.classList.add('hidden');
   }
 
-  root.querySelector('#spells-fab').addEventListener('click', openSpellSheet);
-
   function updateSpellsBadge() {
-    const badge = root.querySelector('#spells-fab-badge');
-    if (!badge) return;
-    if (selectedSpells.length > 0) {
-      badge.textContent = selectedSpells.length;
-      badge.style.display = '';
-    } else {
-      badge.style.display = 'none';
-    }
+    const label = selectedSpells.length > 0 ? `Cast Spell (${selectedSpells.length})` : 'Cast Spell';
+    setNavButtonOverride('spells', { label, onClick: openSpellSheet });
   }
 
   function showDetail(title, html) {
@@ -590,10 +573,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const hint = root.querySelector('#loyalty-hint');
     if (!hint) return;
     const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
-    const parts = [];
-    if (!heroPlaced) parts.push('Place your hero');
-    parts.push(`${placedLoyaltyUsed()}/${maxNonHero} loyalty used`);
-    hint.textContent = parts.join(' · ');
+    hint.textContent = heroPlaced
+      ? `${placedLoyaltyUsed()}/${maxNonHero}`
+      : `Place hero · ${placedLoyaltyUsed()}/${maxNonHero}`;
   }
 
   function renderPlayerGrid() {
@@ -709,10 +691,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function checkReady() {
-    const btn        = root.querySelector('#ready-btn');
     const heroPlaced = heroId !== null && placedUnitIds().has(heroId);
-    btn.disabled     = !heroPlaced;
-    btn.textContent  = heroPlaced ? 'Ready' : 'Place your hero to ready up';
+    setNavButtonOverride('embark', {
+      label:     heroPlaced ? 'Battle' : 'Place hero',
+      onClick:   startBattle,
+      highlight: heroPlaced,
+    });
   }
 
   function setHover(i) {
@@ -828,13 +812,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  function isOverSlider(clientX, clientY) {
-    const track = root.querySelector('#portrait-track');
-    if (!track) return false;
-    const rect = track.getBoundingClientRect();
-    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
-  }
-
   function finishPointerDrag(clientX, clientY) {
     clearHover();
     removeGhost();
@@ -855,14 +832,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
-    if (dragUnit && dragFromCell !== null && ignoreId) {
-      removeUnit(ignoreId);
-      dragUnit     = null;
-      dragFromCell = null;
-      fullRefresh();
-      return;
-    }
-
     dragUnit     = null;
     dragFromCell = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -876,8 +845,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     dragUnit        = null;
     dragFromCell    = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
-    const track = root.querySelector('#portrait-track');
-    if (track) track.classList.remove('portrait-track--drop-target');
   }
 
   document.addEventListener('pointermove', e => {
@@ -887,24 +854,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const cell     = cellFromPoint(e.clientX, e.clientY);
     const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
-    const track    = root.querySelector('#portrait-track');
-
     if (cell) {
       const i         = Number(cell.dataset.i);
       const targetOcc = occupied[i];
       const isSelf    = targetOcc && targetOcc.unitId === ignoreId;
       if ((!targetOcc || isSelf) && canPlace(dragUnit, i, ignoreId)) {
         setHover(i);
-        if (track) track.classList.remove('portrait-track--drop-target');
         return;
       }
     }
-
-    if (track && dragFromCell !== null) {
-      const overSlider = isOverSlider(e.clientX, e.clientY);
-      track.classList.toggle('portrait-track--drop-target', overSlider);
-    }
-
     clearHover();
   }, { passive: false });
 
@@ -1040,12 +998,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  root.querySelector('#ready-btn').addEventListener('click', async () => {
+  async function startBattle() {
     if (!placedUnitIds().has(heroId)) return;
 
-    const btn = root.querySelector('#ready-btn');
-    btn.disabled = true;
-    btn.textContent = 'Preparing…';
+    setNavButtonOverride('embark', { label: 'Preparing…', onClick: () => {}, highlight: false });
 
     const playerUnitIds = roster
       .filter(u => placedUnitIds().has(u.id))
@@ -1074,11 +1030,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       });
       navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
     } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Ready Up';
       console.error('Failed to create battle:', err);
+      checkReady();
     }
-  });
+  }
 
   (async () => {
     try {
@@ -1103,6 +1058,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       attachGridDragEvents();
       updateLoyaltyHint();
       checkReady();
+      updateSpellsBadge();
     } catch (err) {
       console.error('Failed to initialise battle prep:', err);
     }
