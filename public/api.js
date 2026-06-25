@@ -69,15 +69,3 @@ export function setNavigate(fn) { _navigate = fn; }
 export function navigate(screen, params = {}) {
   if (_navigate) _navigate(screen, params);
 }
-
-let _setNavButtonOverride = null;
-export function setNavButtonOverrideFn(fn) { _setNavButtonOverride = fn; }
-export function setNavButtonOverride(screen, opts) {
-  if (_setNavButtonOverride) _setNavButtonOverride(screen, opts);
-}
-
-let _clearNavButtonOverrides = null;
-export function setClearNavButtonOverridesFn(fn) { _clearNavButtonOverrides = fn; }
-export function clearNavButtonOverrides() {
-  if (_clearNavButtonOverrides) _clearNavButtonOverrides();
-}

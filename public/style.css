@@ -180,24 +180,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: not-allowed;
 }
 
-.nav-btn--highlight {
-  animation: nav-btn-pulse 1.3s ease-in-out infinite;
-}
-
-.nav-btn--highlight .nav-btn-icon {
-  filter: brightness(1) sepia(0.4) saturate(1.4);
-}
-
-.nav-btn--highlight .nav-btn-label {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-@keyframes nav-btn-pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.08); }
-}
-
 .nav-btn:last-child { border-right: none; }
 .nav-btn.active  { color: var(--accent); }
 
@@ -285,10 +267,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .modal-overlay.hidden { display: none !important; }
-
-.modal-overlay--sub {
-  z-index: 150;
-}
 
 .modal-overlay--sub {
   z-index: 150;
@@ -1628,21 +1606,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .battle-loyalty-hint {
   font-size: 0.58rem;
-  color: var(--accent);
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1px 7px;
+  color: var(--muted);
+  text-align: center;
+  padding: 1px 4px 2px;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
 }
 
 .battle-vs {

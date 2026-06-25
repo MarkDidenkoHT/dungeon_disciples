@@ -13,8 +13,6 @@ import {
   setNavigate,
   setActiveNav,
   refreshResourceBar,
-  setNavButtonOverrideFn,
-  setClearNavButtonOverridesFn,
 } from './api.js';
 
 export { api, setSessionToken, setActiveNav, refreshResourceBar };
@@ -59,34 +57,10 @@ function mountShell(player) {
 
   document.getElementById('bottom-nav').addEventListener('click', e => {
     const btn = e.target.closest('.nav-btn');
-    if (!btn || btn.classList.contains('disabled')) return;
-    const override = navButtonOverrides[btn.dataset.screen];
-    if (override) { override(); return; }
-    navigate(btn.dataset.screen, { player });
+    if (btn && !btn.classList.contains('disabled')) {
+      navigate(btn.dataset.screen, { player });
+    }
   });
-}
-
-const navButtonOverrides = {};
-const NAV_DEFAULT_LABELS = { castle: 'Castle', roster: 'Roster', embark: 'Embark', spells: 'Spells', pvp: 'PvP' };
-
-function setNavButtonOverrideImpl(screen, { label, onClick, highlight } = {}) {
-  const btn = document.querySelector(`#bottom-nav .nav-btn[data-screen="${screen}"]`);
-  if (!btn) return;
-  const labelEl = btn.querySelector('.nav-btn-label');
-  if (label != null && labelEl) labelEl.textContent = label;
-  btn.classList.toggle('nav-btn--highlight', !!highlight);
-  if (onClick) navButtonOverrides[screen] = onClick;
-}
-
-function clearNavButtonOverridesImpl() {
-  for (const screen of Object.keys(navButtonOverrides)) {
-    delete navButtonOverrides[screen];
-    const btn = document.querySelector(`#bottom-nav .nav-btn[data-screen="${screen}"]`);
-    if (!btn) continue;
-    const labelEl = btn.querySelector('.nav-btn-label');
-    if (labelEl && NAV_DEFAULT_LABELS[screen]) labelEl.textContent = NAV_DEFAULT_LABELS[screen];
-    btn.classList.remove('nav-btn--highlight');
-  }
 }
 
 function navigate(screen, params = {}) {
@@ -103,7 +77,6 @@ function navigate(screen, params = {}) {
 
   mountShell(player);
   setActiveNav(screen);
-  clearNavButtonOverridesImpl();
 
   const isBattle = screen === 'battle';
   const navEl    = document.getElementById('bottom-nav');
@@ -136,8 +109,6 @@ function navigate(screen, params = {}) {
 
 // Wire navigate into api.js so screens can call it without importing main.js
 setNavigate(navigate);
-setNavButtonOverrideFn(setNavButtonOverrideImpl);
-setClearNavButtonOverridesFn(clearNavButtonOverridesImpl);
 
 function showReconnectModal(player, battle_id, battle_data) {
   const overlay = document.createElement('div');
