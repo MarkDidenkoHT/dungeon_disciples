@@ -183,6 +183,58 @@ button:active:not(:disabled) { opacity: 0.75; }
 .nav-btn:last-child { border-right: none; }
 .nav-btn.active  { color: var(--accent); }
 
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 20px;
+  max-width: 300px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.confirm-modal-text {
+  font-size: 0.95rem;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-modal-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.confirm-modal-btn--confirm {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
 .nav-btn--battle-ready {
   background-image: url('/assets/icons/ui/bottom-nav-active.png');
   animation: battle-ready-pulse 1.2s ease-in-out infinite;

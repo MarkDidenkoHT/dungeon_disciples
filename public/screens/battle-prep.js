@@ -1067,6 +1067,34 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
+    const loyaltyUsed = placedLoyaltyUsed();
+    const loyaltyLeft = maxNonHero - loyaltyUsed;
+    const hasUnplacedFollowers = roster.some(u => {
+      if (u.id === heroId) return false;
+      if (placedUnitIds().has(u.id)) return false;
+      const cost = u.unit_data?.loyalty_cost ?? 1;
+      return cost <= loyaltyLeft;
+    });
+
+    if (hasUnplacedFollowers) {
+      const confirmed = await new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+          <div class="confirm-modal">
+            <div class="confirm-modal-text">You can take more followers into battle. Continue without them?</div>
+            <div class="confirm-modal-actions">
+              <button class="confirm-modal-btn confirm-modal-btn--cancel">Go Back</button>
+              <button class="confirm-modal-btn confirm-modal-btn--confirm">Continue</button>
+            </div>
+          </div>`;
+        overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
+        overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', () => { overlay.remove(); resolve(true); });
+        document.body.appendChild(overlay);
+      });
+      if (!confirmed) return;
+    }
+
     const btn = root.querySelector('#ready-btn');
     btn.disabled = true;
     btn.textContent = 'Preparing…';
