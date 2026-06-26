@@ -2726,7 +2726,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .castle-node--production { border-color: #4a7a3a; }
 .castle-node--barracks   { border-color: #7a3a3a; }
-.castle-node--any        { border-color: #3a5a7a; }
+.castle-node--special        { border-color: #3a5a7a; }
 
 .castle-node--building {
   border-color: var(--accent);

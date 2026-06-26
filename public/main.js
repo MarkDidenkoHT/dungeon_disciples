@@ -87,10 +87,9 @@ function navigate(screen, params = {}) {
 
   const root = document.getElementById('content-root');
 
-  // Restore any nav button overrides set by the previous screen
   const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
   const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
-  // settings replaces pvp in nav
+
   if (spellsNav) {
     const label = spellsNav.querySelector('.nav-btn-label');
     if (label) label.textContent = 'Spells';

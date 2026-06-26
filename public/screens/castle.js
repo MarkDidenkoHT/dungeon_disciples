@@ -445,18 +445,12 @@ export function renderCastle(root, { player }) {
       slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks',
       slot_6: 'special', slot_7: 'special', slot_8: 'special',
     };
-    const slotCategory = SLOT_CATEGORIES[slot] || 'any';
+    const slotCategory = SLOT_CATEGORIES[slot];
+    if (!slotCategory) return;
 
     const factionPools = buildingPools[player.faction] || {};
-    const available    = [];
-
-    for (const [cat, pool] of Object.entries(factionPools)) {
-      if (slotCategory === 'any' || cat === slotCategory) {
-        for (const b of pool) {
-          if (b.category !== 'throne' && b.tier === 1) available.push(b);
-        }
-      }
-    }
+    const pool         = factionPools[slotCategory] || [];
+    const available    = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
 
     if (!available.length) {
       openModal('Build', '<p class="modal-empty">No buildings available for this slot.</p>');
@@ -469,10 +463,12 @@ export function renderCastle(root, { player }) {
         buildingLabel: b.label,
         confirmLabel:  `Build · ${b.label}`,
         buildingId:    b.id,
+        placeholder:   !!b.placeholder,
         slot,
       })),
       s => {
         if (s.buildingId === 'mercenary_hall') { openMercenaryModal(slot); return; }
+        if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
       }
     );
@@ -595,6 +591,16 @@ export function renderCastle(root, { player }) {
       console.error(err);
       alert(err.message || 'Upgrade failed');
     }
+  }
+
+  function openPlaceholderModal(buildingId) {
+    const def   = getBuildingDef(player.faction, buildingId);
+    const label = def?.label || 'Building';
+    openModal(label, `
+      <div class="throne-modal">
+        <div class="throne-level-display">${label}</div>
+        <p class="throne-desc">This building is still under construction. Check back later!</p>
+      </div>`);
   }
 
   function openMercenaryModal(slot) {

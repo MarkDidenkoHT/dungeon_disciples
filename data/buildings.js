@@ -69,12 +69,11 @@ const BUILDING_POOLS = {
       { id: 'ash_sanctum',         label: 'Ash Sanctum',         category: 'barracks', tier: 3, unit_id: 'e411', upgrades: [],                        cost: { gold: 200 } },
       { id: 'cinder_forge',        label: 'Cinder Forge',        category: 'barracks', tier: 3, unit_id: 'e412', upgrades: [],                        cost: { gold: 200 } },
     ],
-    any: [
-      { id: 'market',           label: 'Market',           category: 'any', unit_id: null },
-      { id: 'watchtower',       label: 'Watchtower',        category: 'any', unit_id: null },
-    ],
     special: [
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
+      { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
+      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null, placeholder: true },
+      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
+      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 
@@ -122,12 +121,11 @@ const BUILDING_POOLS = {
       { id: 'peer_court',        label: 'Peer Court',        category: 'barracks', tier: 1, unit_id: 'd6',  upgrades: ['d61'],          cost: { gold: 50 } },
       { id: 'nether_baron_hall', label: 'Nether Baron Hall', category: 'barracks', tier: 2, unit_id: 'd61', upgrades: [],               cost: { gold: 100 } },
     ],
-    any: [
-      { id: 'cursed_vault',     label: 'Cursed Vault',      category: 'any', unit_id: null },
-      { id: 'shadow_shrine',    label: 'Shadow Shrine',     category: 'any', unit_id: null },
-    ],
     special: [
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
+      { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
+      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null, placeholder: true },
+      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
+      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 
@@ -186,12 +184,11 @@ const BUILDING_POOLS = {
       { id: 'specter_hall',          label: 'Specter Hall',          category: 'barracks', tier: 2, unit_id: 'gs61', upgrades: [],                          cost: { gold: 100 } },
       { id: 'apparition_mist',       label: 'Apparition Mist',       category: 'barracks', tier: 2, unit_id: 'gs62', upgrades: [],                          cost: { gold: 100 } },
     ],
-    any: [
-      { id: 'sorrow_altar',     label: 'Altar of Sorrow',   category: 'any', unit_id: null },
-      { id: 'soul_vault',       label: 'Soul Vault',         category: 'any', unit_id: null },
-    ],
     special: [
-      { id: 'mercenary_hall',   label: 'Mercenary Hall',    category: 'special', unit_id: null },
+      { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
+      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null, placeholder: true },
+      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
+      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 };

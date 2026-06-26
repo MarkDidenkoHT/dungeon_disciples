@@ -539,7 +539,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     if (!faction) return res.status(400).json({ error: 'Player has no faction' });
     const def = getBuildingDef(faction, building_id);
     if (!def) return res.status(400).json({ error: 'Unknown building_id for this faction' });
-    if (slotCategory !== 'any' && def.category !== slotCategory) return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
+    if (def.category !== slotCategory) return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     const record    = rows[0];
     const buildings = record.buildings_data;
@@ -560,7 +560,6 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 router.get('/regions', (req, res) => {
   res.json(REGIONS);
 });
