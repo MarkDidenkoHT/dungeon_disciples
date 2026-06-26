@@ -11,31 +11,31 @@ const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: [
       { key: 'crimson_basilica.aggrails_herald', cell: 2 },
-      { key: 'crimson_basilica.crimson_archer',  cell: 1 },
-      { key: 'crimson_basilica.crimson_archer',  cell: 5 },
+      { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
+      { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
     ],
     level_2:  [
       { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.crimson_archer',   cell: 3 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+      { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_3:  [
-      { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
+      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.crimson_archer',   cell: 5 },
-      { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
+      { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_4:  [
-      { key: 'crimson_basilica.aggrails_herald', cell: 2 },
-      { key: 'crimson_basilica.scarlet_fanatic', cell: 0 },
-      { key: 'crimson_basilica.scarlet_fanatic', cell: 4 }
+      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+      { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_5:  [
-      { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
+      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.scarlet_fanatic',  cell: 4 },
-      { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
-      { key: 'crimson_basilica.crimson_archer',   cell: 1 },
+      { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
+      { key: 'crimson_basilica.initiate', cell: 1 },
     ],
   },
 
