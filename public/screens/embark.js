@@ -23,6 +23,14 @@ const REGIONS = [
     description: 'Sunken halls choked with undead, cursed knights, and Malgrath himself — who has already died once.',
     crystal: 'Death',
   },
+  {
+    id: 'pvp',
+    label: 'PvP Arena',
+    icon: '⚔',
+    description: 'Challenge other players in ranked combat. Coming soon.',
+    crystal: null,
+    comingSoon: true,
+  },
 ];
 
 export function renderEmbark(root, { player, activeCheck } = {}) {
@@ -37,13 +45,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         <div class="embark-regions-grid" id="embark-regions">
           <div style="color:var(--muted);text-align:center;padding:2rem">Checking active battles…</div>
         </div>
-        <div class="embark-controls">
-          <div class="embark-march-row">
-            <button class="embark-march-btn" id="embark-march-btn" disabled>
-              Select a level to march
-            </button>
-          </div>
-        </div>
+
       </main>
 
       <div id="modal-overlay" class="modal-overlay hidden">
@@ -58,8 +60,6 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
     </div>
   `;
 
-  let selectedRegion = null;
-  let selectedLevel  = null;
   let modalClosable  = true;
 
   const overlay       = root.querySelector('#modal-overlay');
@@ -125,23 +125,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
     });
   }
 
-  function selectLevel(regionId, level, regionLabel) {
-    selectedRegion = regionId;
-    selectedLevel  = level;
 
-    root.querySelectorAll('.embark-level-pip').forEach(p => p.classList.remove('embark-level-pip--selected'));
-    const pip = root.querySelector(`.embark-level-pip[data-region="${regionId}"][data-level="${level}"]`);
-    if (pip) pip.classList.add('embark-level-pip--selected');
-
-    root.querySelectorAll('.embark-card[data-id]').forEach(c => c.classList.remove('embark-card--active-region'));
-    const card = root.querySelector(`.embark-card[data-id="${regionId}"]`);
-    if (card) card.classList.add('embark-card--active-region');
-
-    const marchBtn = root.querySelector('#embark-march-btn');
-    marchBtn.disabled    = false;
-    marchBtn.textContent = `March to ${regionLabel} — Lv ${level}`;
-    marchBtn.onclick     = () => navigate('battle-prep', { player, region_id: selectedRegion, level: selectedLevel });
-  }
 
   async function loadRegions() {
     try {
@@ -160,6 +144,19 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
+        if (r.comingSoon) {
+          return `
+            <div class="embark-region-block embark-region-block--coming-soon">
+              <div class="embark-card embark-card--coming-soon" data-id="${r.id}">
+                <span class="embark-card-icon">${r.icon}</span>
+                <div class="embark-card-info">
+                  <span class="embark-card-label">${r.label}</span>
+                  <span class="embark-card-desc">${r.description}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
         const maxLevel = progress[r.id] ?? 1;
         const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
@@ -189,7 +186,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
         pip.addEventListener('click', () => {
-          selectLevel(pip.dataset.region, parseInt(pip.dataset.level), pip.dataset.label);
+          navigate('battle-prep', { player, region_id: pip.dataset.region, level: parseInt(pip.dataset.level) });
         });
       });
     } catch (err) {

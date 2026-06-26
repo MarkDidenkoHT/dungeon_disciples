@@ -2,10 +2,10 @@ import { renderRegister }   from './screens/register.js';
 import { renderCastle }     from './screens/castle.js';
 import { renderRoster }     from './screens/roster.js';
 import { renderEmbark }     from './screens/embark.js';
+import { renderSettings }   from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
-import { renderPvp }        from './screens/pvp.js';
 
 import {
   api,
@@ -46,10 +46,9 @@ function mountShell(player) {
           <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
           <span class="nav-btn-label">Spells</span>
         </button>
-        <button class="nav-btn" data-screen="pvp">
-          <img class="nav-btn-icon nav-btn-icon--pvp" src="/assets/icons/ui/pvp.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <span class="nav-btn-icon nav-btn-icon--pvp-fallback" style="display:none;">⚔</span>
-          <span class="nav-btn-label">PvP</span>
+        <button class="nav-btn" data-screen="settings">
+          <img class="nav-btn-icon" src="/assets/icons/ui/settings.png" alt="" onerror="this.style.display='none';">
+          <span class="nav-btn-label">Settings</span>
         </button>
       </nav>
     </div>
@@ -91,6 +90,7 @@ function navigate(screen, params = {}) {
   // Restore any nav button overrides set by the previous screen
   const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
   const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
+  // settings replaces pvp in nav
   if (spellsNav) {
     const label = spellsNav.querySelector('.nav-btn-label');
     if (label) label.textContent = 'Spells';
@@ -117,7 +117,7 @@ function navigate(screen, params = {}) {
     case 'battle-prep': renderBattlePrep(root, params); break;
     case 'battle':      renderBattle(root, params);     break;
     case 'spells':      renderSpellTome(root, params);  break;
-    case 'pvp':         renderPvp(root, params);        break;
+    case 'settings':    renderSettings(root, params);   break;
     default:
       root.innerHTML = `<p style="color:red">Unknown screen: ${screen}</p>`;
   }
