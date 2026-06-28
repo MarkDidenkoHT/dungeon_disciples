@@ -1696,7 +1696,7 @@ const UNITS = {
         hp: 45, armor: 10, initiative: 20,
         resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: null, action_power: 20,
+        damage_source: null, action_power: 12,
         xp: 55, passive: 'fanaticism 1', ability: null,
       },
       aggrails_devoted: {

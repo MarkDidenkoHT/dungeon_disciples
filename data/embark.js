@@ -17,25 +17,30 @@ const REGION_ENCOUNTERS = {
     level_2:  [
       { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
       { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
       { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_3:  [
-      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+      { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
       { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_4:  [
       { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
       { key: 'crimson_basilica.initiate', cell: 3 },
     ],
     level_5:  [
       { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+      { key: 'crimson_basilica.initiate', cell: 3 },
+    ],
+    level_6:  [
+      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
-      { key: 'crimson_basilica.initiate', cell: 1 },
+      { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
     ],
   },
 
