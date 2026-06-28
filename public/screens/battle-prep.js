@@ -7,6 +7,7 @@ import {
   cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody,
+  playPageTurnSound,
 } from '../utils.js';
 
 const REGION_META = {
@@ -121,6 +122,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <span class="spell-sheet-title">Spells</span>
           <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
         </div>
+        <div class="tier-tabs" id="spell-sheet-tier-tabs">
+          <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
+          <button class="tier-tab" data-tier="2">Tier II</button>
+          <button class="tier-tab" data-tier="3">Tier III</button>
+          <button class="tier-tab" data-tier="4">Tier IV</button>
+        </div>
         <div class="spell-sheet-body" id="spell-sheet-body"></div>
       </div>
     </div>
@@ -149,12 +156,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   let playerCrystals = {};
   let learnedSpells  = [];
+  let activeSpellTier = 1;
 
   function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
   function closeModal() { closeSheet(); }
 
-  const spellSheetOverlay = root.querySelector('#spell-sheet-overlay');
-  const spellSheetBody    = root.querySelector('#spell-sheet-body');
+  const spellSheetOverlay  = root.querySelector('#spell-sheet-overlay');
+  const spellSheetBody     = root.querySelector('#spell-sheet-body');
+  const spellSheetTierTabs = root.querySelector('#spell-sheet-tier-tabs');
 
   const targetOverlay   = root.querySelector('#spell-target-overlay');
   const targetBody      = root.querySelector('#spell-target-body');
@@ -178,6 +187,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function closeTargetSheet() {
     targetOverlay.classList.add('hidden');
   }
+
+  function syncSpellSheetTierTabs() {
+    spellSheetTierTabs.querySelectorAll('.tier-tab').forEach(t => {
+      t.classList.toggle('tier-tab--active', Number(t.dataset.tier) === activeSpellTier);
+    });
+  }
+
+  spellSheetTierTabs.querySelectorAll('.tier-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tier = parseInt(tab.dataset.tier, 10);
+      if (tier === activeSpellTier) return;
+      playPageTurnSound();
+      activeSpellTier = tier;
+      syncSpellSheetTierTabs();
+      renderSpellSheetList();
+    });
+  });
 
   const spellsNavBtn = document.querySelector('.nav-btn[data-screen="spells"]');
   if (spellsNavBtn) {
@@ -375,10 +401,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function renderSpellSheetList() {
     const factionSpells = SPELLS[player.faction] || [];
-    const learned       = factionSpells.filter(s => learnedSpells.includes(s.id));
+    const learned       = factionSpells.filter(s => learnedSpells.includes(s.id) && s.tier === activeSpellTier);
 
     if (learned.length === 0) {
-      spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No spells learned yet</div>`;
+      spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No learned spells in this tier</div>`;
       return;
     }
 
@@ -392,7 +418,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}"></div>
+          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}" onerror="this.style.display='none'"></div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spell.name}</div>
             <div class="spell-list-meta">
@@ -1144,6 +1170,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       enemies = getEncounter(region_id, level);
 
       await Promise.all([loadResources(), loadLearnedSpells()]);
+
+      const factionSpellsAll = SPELLS[player.faction] || [];
+      const firstLearnedTier = factionSpellsAll.find(s => learnedSpells.includes(s.id))?.tier;
+      if (firstLearnedTier) {
+        activeSpellTier = firstLearnedTier;
+        syncSpellSheetTierTabs();
+      }
 
       renderPlayerGrid();
       renderEnemyGrid();

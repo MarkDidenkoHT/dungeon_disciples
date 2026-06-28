@@ -1,6 +1,6 @@
 import { api, refreshResourceBar } from '../api.js';
 import { SPELLS }                  from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
@@ -217,6 +217,8 @@ export function renderSpellTome(root, { player }) {
 
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
     tab.addEventListener('click', () => {
+      if (parseInt(tab.dataset.tier) === activeTier) return;
+      playPageTurnSound();
       activeTier    = parseInt(tab.dataset.tier);
       activeSpellId = null;
       tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));

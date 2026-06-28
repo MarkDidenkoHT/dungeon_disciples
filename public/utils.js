@@ -12,6 +12,14 @@ export const RESIST_ICONS = {
 
 export const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
+const PAGE_TURN_SOUND_URL = '/assets/mp3/ui/turn-page.mp3';
+
+export function playPageTurnSound() {
+  const audio = new Audio(PAGE_TURN_SOUND_URL);
+  audio.volume = 0.55;
+  audio.play().catch(() => {});
+}
+
 export const CRYSTAL_ICONS = {
   Crystals_Life:   '<img src="/assets/icons/recources/life.png"   class="res-icon-img" alt="Life">',
   Crystals_Fire:   '<img src="/assets/icons/recources/fire.png"   class="res-icon-img" alt="Fire">',
