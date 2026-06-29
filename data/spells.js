@@ -9,6 +9,7 @@ const SPELLS = {
       description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Life: 5 } },
       effect_type: 'resurrect',
+      class: 'utility',
       usage: 'roster',
       target_scope: 'single_ally',
       params: { resurrect: true }
@@ -22,6 +23,7 @@ const SPELLS = {
       description: 'Restore one ally to half their maximum HP before battle.',
       cost: { crystals: { Crystals_Life: 10 } },
       effect_type: 'heal',
+      class: 'boon',
       target_scope: 'single_ally',
       params: { heal_pct: 0.5 }
     },
@@ -34,6 +36,7 @@ const SPELLS = {
       description: 'Bless one ally with divine protection. Grant +15 armor for the battle.',
       cost: { crystals: { Crystals_Life: 15 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { armor_boost: 15 }
     },
@@ -46,7 +49,7 @@ const SPELLS = {
       description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Life: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
-      region: 'crimson_basilica',
+      class: 'utility',
       target_scope: 'none',
       params: { trophy_count: 1 },
     },
@@ -60,6 +63,7 @@ const SPELLS = {
       description: 'At the start of round 3, all Holy allies heal for 10 HP per Holy ally on the field.',
       cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
       effect_type: 'round_trigger_heal',
+      class: 'boon',
       target_scope: 'tag_allies',
       params: { trigger_round: 3, tag_required: 'Holy', heal_per_tagged_unit: 10 }
     },
@@ -72,6 +76,7 @@ const SPELLS = {
       description: '[PVP PLACEHOLDER] If the opposing player casts a debuff spell, it is ignored.',
       cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
       effect_type: 'pvp_dispel_debuff',
+      class: 'utility',
       target_scope: 'none',
       params: { cancels_opponent_effect_type: 'debuff' }
     },
@@ -84,20 +89,22 @@ const SPELLS = {
       description: 'Anoint one ally as a martyr. 10% of damage taken by adjacent allies is redirected to the martyr.',
       cost: { crystals: { Crystals_Life: 45 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { martyrdom_redirect_pct: 10 }
     },
     {
       id: 'e_spell_8',
-      name: 'Judgement',
+      name: 'Vow of Protection',
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Pass divine judgement on all foes. Enemies lose 25% max HP and 20% armor for the battle.',
+      description: 'Select one ally to intercept attacks. Grant +25% intercept chance (stacks with the Protector passive) and +10 armor for the battle.',
       cost: { crystals: { Crystals_Life: 35, Crystals_Fire: 15 } },
-      effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { max_hp_reduction: 0.25, armor_reduction: 0.20 }
+      effect_type: 'buff',
+      class: 'buff',
+      target_scope: 'single_ally',
+      params: { intercept_chance_pct: 25, armor_boost: 10 }
     },
     {
       id: 'e_spell_9',
@@ -108,6 +115,7 @@ const SPELLS = {
       description: 'Call down righteous fury. All foes lose 20% initiative and 15% max HP for the battle.',
       cost: { crystals: { Crystals_Life: 30, Crystals_Fire: 20 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { initiative_reduction: 0.20, max_hp_reduction: 0.15 }
     },
@@ -120,6 +128,7 @@ const SPELLS = {
       description: 'Bathe the host in empyrean light. Grant all allies +25 armor and +20 Life resistance for the battle.',
       cost: { crystals: { Crystals_Life: 50, Crystals_Frost: 20 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { armor_boost: 25, resistances: { life: 20 } }
     },
@@ -132,6 +141,7 @@ const SPELLS = {
       description: 'Unleash a cataclysmic judgement. All foes lose 30% max HP and 25% armor for the battle.',
       cost: { crystals: { Crystals_Life: 45, Crystals_Fire: 25 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { max_hp_reduction: 0.30, armor_reduction: 0.25 }
     },
@@ -144,6 +154,7 @@ const SPELLS = {
       description: 'Channel divine power into one ally. Grant +30% damage and +20 armor for the battle.',
       cost: { crystals: { Crystals_Life: 60 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { damage_boost: 0.30, armor_boost: 20 }
     },
@@ -159,6 +170,7 @@ const SPELLS = {
       description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Fire: 5 } },
       effect_type: 'resurrect',
+      class: 'utility',
       usage: 'roster',
       target_scope: 'single_ally',
       params: { resurrect: true }
@@ -172,6 +184,7 @@ const SPELLS = {
       description: 'Restore one ally to half their maximum HP before battle.',
       cost: { crystals: { Crystals_Fire: 10 } },
       effect_type: 'heal',
+      class: 'boon',
       target_scope: 'single_ally',
       params: { heal_pct: 0.5 }
     },
@@ -184,6 +197,7 @@ const SPELLS = {
       description: 'Drive one ally into a killing frenzy. Grant +20% damage for the battle.',
       cost: { crystals: { Crystals_Fire: 15 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { damage_boost: 0.20 }
     },
@@ -196,7 +210,7 @@ const SPELLS = {
       description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
-      region: 'crimson_basilica',
+      class: 'utility',
       target_scope: 'none',
       params: { trophy_count: 1 },
     },
@@ -210,6 +224,7 @@ const SPELLS = {
       description: 'Encase all allies in bone. Grant all allies +12 armor for the battle.',
       cost: { crystals: { Crystals_Fire: 20 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { armor_boost: 12 }
     },
@@ -222,6 +237,7 @@ const SPELLS = {
       description: '[PVP PLACEHOLDER] If the opposing player has also cast a tier 2 spell, it is ignored.',
       cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 10 } },
       effect_type: 'pvp_counter_tier2',
+      class: 'utility',
       target_scope: 'none',
       params: { cancels_opponent_tier: 2 }
     },
@@ -234,20 +250,22 @@ const SPELLS = {
       description: 'Tear at the souls of enemies. All foes lose 25% max HP.',
       cost: { crystals: { Crystals_Fire: 35, Crystals_Frost: 15 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { max_hp_reduction: 0.25 }
     },
     {
       id: 'd_spell_8',
-      name: 'Vampiric Embrace',
+      name: 'Rite of Ruin',
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Embrace one ally with vampiric power. Grant +25% lifesteal and +15 Death resistance for the battle.',
+      description: 'One random enemy loses all passive abilities for round 1.',
       cost: { crystals: { Crystals_Fire: 40, Crystals_Frost: 10 } },
-      effect_type: 'buff',
-      target_scope: 'single_ally',
-      params: { lifesteal: 0.25, resistances: { death: 15 } }
+      effect_type: 'debuff',
+      class: 'curse',
+      target_scope: 'random_enemy',
+      params: { trigger_round: 1, strip_passives: true }
     },
     {
       id: 'd_spell_9',
@@ -258,6 +276,7 @@ const SPELLS = {
       description: 'Drive all allies into a killing frenzy. Grant all allies +20% damage.',
       cost: { crystals: { Crystals_Fire: 45 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20 }
     },
@@ -270,6 +289,7 @@ const SPELLS = {
       description: 'Plunge the battlefield into eternal night. Grant all allies +20% lifesteal and +20 Death resistance for the battle.',
       cost: { crystals: { Crystals_Fire: 55, Crystals_Frost: 20 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { lifesteal: 0.20, resistances: { death: 20 } }
     },
@@ -282,6 +302,7 @@ const SPELLS = {
       description: 'Afflict the enemy host with despair. All foes lose 30% max HP and 20% initiative for the battle.',
       cost: { crystals: { Crystals_Fire: 50, Crystals_Nature: 20 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { max_hp_reduction: 0.30, initiative_reduction: 0.20 }
     },
@@ -294,6 +315,7 @@ const SPELLS = {
       description: 'Ascend your forces with dark power. Grant all allies +25% damage for the battle.',
       cost: { crystals: { Crystals_Fire: 60 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.25 }
     },
@@ -309,6 +331,7 @@ const SPELLS = {
       description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Death: 5 } },
       effect_type: 'resurrect',
+      class: 'utility',
       usage: 'roster',
       target_scope: 'single_ally',
       params: { resurrect: true }
@@ -322,6 +345,7 @@ const SPELLS = {
       description: 'Restore one ally to half their maximum HP before battle.',
       cost: { crystals: { Crystals_Death: 10 } },
       effect_type: 'heal',
+      class: 'boon',
       target_scope: 'single_ally',
       params: { heal_pct: 0.5 }
     },
@@ -334,6 +358,7 @@ const SPELLS = {
       description: 'Bless one ally with sorrowful speed. Grant +15 initiative for the battle.',
       cost: { crystals: { Crystals_Death: 15 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { initiative_boost: 15 }
     },
@@ -346,7 +371,7 @@ const SPELLS = {
       description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
-      region: 'crimson_basilica',
+      class: 'utility',
       target_scope: 'none',
       params: { trophy_count: 1 },
     },
@@ -359,6 +384,7 @@ const SPELLS = {
       description: 'Selected ally gains 5 HP and 2 armor, but loses 2 initiative, for each Zombie ally on the field.',
       cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 10 } },
       effect_type: 'tag_count_buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { tag_required: 'Zombie', hp_per_tagged_unit: 5, armor_per_tagged_unit: 2, initiative_penalty_per_tagged_unit: 2 }
     },
@@ -371,6 +397,7 @@ const SPELLS = {
       description: '[PVP PLACEHOLDER] If the opposing player casts a buff spell, it is ignored.',
       cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 10 } },
       effect_type: 'pvp_dispel_buff',
+      class: 'utility',
       target_scope: 'none',
       params: { cancels_opponent_effect_type: 'buff' }
     },
@@ -383,20 +410,22 @@ const SPELLS = {
       description: "Unleash the grail's full power. Grant all allies +20% damage and +20 armor for the battle.",
       cost: { crystals: { Crystals_Death: 40, Crystals_Life: 15 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.20, armor_boost: 20 }
     },
     {
       id: 'g_spell_8',
-      name: 'Time Collapse',
+      name: 'Dirge',
       rank: 3,
       tier: 3,
       type: 'preparation',
-      description: 'Collapse enemy timeline. All foes lose 35% initiative and 20% max HP for the battle.',
+      description: 'No unit on the battlefield may use active abilities during round 1.',
       cost: { crystals: { Crystals_Death: 35, Crystals_Fire: 15 } },
       effect_type: 'debuff',
-      target_scope: 'all_enemies',
-      params: { initiative_reduction: 0.35, max_hp_reduction: 0.20 }
+      class: 'curse',
+      target_scope: 'none',
+      params: { trigger_round: 1, locks_active_abilities: true }
     },
     {
       id: 'g_spell_9',
@@ -407,6 +436,7 @@ const SPELLS = {
       description: 'Sear enemies with decay. All foes lose 20% armor and 15% max HP for the battle.',
       cost: { crystals: { Crystals_Death: 35, Crystals_Fire: 15 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { armor_reduction: 0.20, max_hp_reduction: 0.15 }
     },
@@ -419,6 +449,7 @@ const SPELLS = {
       description: 'Ignite an undying flame within your allies. Grant all allies +25% damage and +20 Fire resistance for the battle.',
       cost: { crystals: { Crystals_Death: 50, Crystals_Life: 15 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.25, resistances: { fire: 20 } }
     },
@@ -431,6 +462,7 @@ const SPELLS = {
       description: 'Collapse the flow of time around your foes. All enemies lose 40% initiative and 25% armor for the battle.',
       cost: { crystals: { Crystals_Death: 45, Crystals_Fire: 20 } },
       effect_type: 'debuff',
+      class: 'debuff',
       target_scope: 'all_enemies',
       params: { initiative_reduction: 0.40, armor_reduction: 0.25 }
     },
@@ -443,6 +475,7 @@ const SPELLS = {
       description: "Channel the grail's power into one ally. Grant +35% lifesteal and +20 armor for the battle.",
       cost: { crystals: { Crystals_Death: 55, Crystals_Life: 20 } },
       effect_type: 'buff',
+      class: 'buff',
       target_scope: 'single_ally',
       params: { lifesteal: 0.35, armor_boost: 20 }
     },

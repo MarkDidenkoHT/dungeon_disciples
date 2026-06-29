@@ -696,6 +696,11 @@ router.post('/battle/create', requireAuth, async (req, res) => {
             const tag = params.tag_required;
             return engine.combatants.filter(c => c.side === 'enemy' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
           }
+          if (scope === 'random_enemy') {
+            const pool = engine.combatants.filter(c => c.side === 'enemy' && c.alive);
+            if (!pool.length) return [];
+            return [pool[Math.floor(Math.random() * pool.length)]];
+          }
           return [];
         }
 
@@ -724,6 +729,10 @@ router.post('/battle/create', requireAuth, async (req, res) => {
           }
         }
 
+        if (params.locks_active_abilities) {
+          for (const c of engine.combatants) c._actives_locked = true;
+        }
+
         for (const c of targets) {
           if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
           if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
@@ -734,6 +743,8 @@ router.post('/battle/create', requireAuth, async (req, res) => {
           if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
           if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
           if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
+          if (params.intercept_chance_pct) c.intercept_bonus_pct = (c.intercept_bonus_pct || 0) + params.intercept_chance_pct;
+          if (params.strip_passives)       c._passives_locked = true;
           if (params.resistances) {
             for (const [rType, rVal] of Object.entries(params.resistances)) {
               if (!c.unit_data.resistances) c.unit_data.resistances = {};
@@ -894,7 +905,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
       const activeTrophySpell = (record.battle_data.selected_spells || [])
         .map(s => Object.values(SPELLS).flat().find(sp => sp.id === s.spell_id))
-        .find(sp => sp && sp.effect_type === 'trophy_gain' && sp.region === region_id);
+        .find(sp => sp && sp.effect_type === 'trophy_gain');
       if (activeTrophySpell && region.trophies?.length) {
         const trophy = region.trophies[Math.floor(Math.random() * region.trophies.length)];
         const trophyRow = inventoryRows.find(r => r.item === trophy.id);

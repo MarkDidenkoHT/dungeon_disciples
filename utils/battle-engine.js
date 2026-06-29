@@ -122,6 +122,9 @@ class BattleEngine {
       _reanimate_pending: null,
       _stun_rounds: 0,
       _stun_initiative_lost: 0,
+      intercept_bonus_pct: 0,
+      _passives_locked: false,
+      _actives_locked:  false,
     };
   }
   fireTrigger(trigger, ctx) {
@@ -313,18 +316,22 @@ class BattleEngine {
     if (targetCol !== backCol) return target;
     const protectors = this.combatants.filter(c => {
       if (!c.alive || c.side !== target.side || c.id === target.id) return false;
-      const defs = this.resolveAllPassiveDefs(c);
-      const interceptDef = defs.find(d => d.trigger === 'intercept');
-      if (!interceptDef) return false;
       if (cellCol(c.cellIndex) !== frontCol) return false;
       if (cellRow(c.cellIndex) !== targetRow) return false;
-      return interceptDef.params?.intercept_chance_pct != null;
+      const defs = this.resolveAllPassiveDefs(c);
+      const interceptDef  = defs.find(d => d.trigger === 'intercept');
+      const passiveChance = interceptDef?.params?.intercept_chance_pct ?? 0;
+      const spellChance   = c.intercept_bonus_pct ?? 0;
+      return (passiveChance + spellChance) > 0;
     });
     for (const protector of protectors) {
-      const def = this.resolveAllPassiveDefs(protector).find(d => d.trigger === 'intercept');
-      const chance = (def.params.intercept_chance_pct ?? 0) / 100;
+      const defs = this.resolveAllPassiveDefs(protector);
+      const interceptDef  = defs.find(d => d.trigger === 'intercept');
+      const passiveChance = interceptDef?.params?.intercept_chance_pct ?? 0;
+      const spellChance   = protector.intercept_bonus_pct ?? 0;
+      const chance = (passiveChance + spellChance) / 100;
       if (Math.random() < chance) {
-        this.pushLog({ type: 'intercept', passive: def.name, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
+        this.pushLog({ type: 'intercept', passive: interceptDef?.name || 'Vow of Protection', actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
         return protector;
       }
     }
@@ -355,6 +362,7 @@ class BattleEngine {
     return Math.max(0, remaining);
   }
   resolvePassiveDef(unit) {
+    if (unit._passives_locked) return null;
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !this.ABILITIES) return null;
     const keys = Array.isArray(key) ? key : [key];
@@ -365,6 +373,7 @@ class BattleEngine {
     return null;
   }
   resolveAllPassiveDefs(unit) {
+    if (unit._passives_locked) return [];
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !this.ABILITIES) return [];
     const keys = Array.isArray(key) ? key : [key];
@@ -446,7 +455,7 @@ class BattleEngine {
   }
   doAbility(actor, target) {
     const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
-    if (actor.used_active || !key) {
+    if (actor._actives_locked || actor.used_active || !key) {
       actor.acted_this_round = true;
       return this.afterAction(actor);
     }
@@ -507,6 +516,9 @@ class BattleEngine {
         }
         c._aegis_resists = {};
       }
+
+      c._passives_locked = false;
+      c._actives_locked  = false;
     }
     this.fireTrigger('on_round_start', { actor: null, target: null, dmg: 0, dying: null });
     // Reanimate: revive units that were marked for revival last round
@@ -574,7 +586,7 @@ class BattleEngine {
         continue;
       }
       const hasAbility = !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
-      if (hasAbility && !actor.used_active) {
+      if (hasAbility && !actor.used_active && !actor._actives_locked) {
         const targets = this.getValidTargets(actor, true);
         if (targets.length > 0) { this.doAbility(actor, targets[0]); newLog.push(...this.log.slice(before)); continue; }
       }
@@ -616,6 +628,7 @@ class BattleEngine {
         defend_armor_bonus: c.defend_armor_bonus ?? 0,
         martyrdom_pct:    c.martyrdom_pct ?? 0,
         _lifesteal:       c._lifesteal ?? 0,
+        intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
         acted_this_round: c.acted_this_round,
         _rosterId:        c._rosterId ?? null,
         buffs: {
@@ -647,6 +660,8 @@ class BattleEngine {
           _reanimate_pending:  c._reanimate_pending ?? null,
           _stun_rounds:        c._stun_rounds ?? 0,
           _stun_initiative_lost: c._stun_initiative_lost ?? 0,
+          _passives_locked:    c._passives_locked ?? false,
+          _actives_locked:     c._actives_locked  ?? false,
         },
       })),
     };
@@ -669,6 +684,7 @@ class BattleEngine {
       c.defend_armor_bonus = s.defend_armor_bonus ?? 0;
       c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
       c._lifesteal         = s._lifesteal          ?? 0;
+      c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
@@ -699,6 +715,8 @@ class BattleEngine {
       c._reanimate_pending = b._reanimate_pending ?? null;
       c._stun_rounds       = b._stun_rounds       ?? 0;
       c._stun_initiative_lost = b._stun_initiative_lost ?? 0;
+      c._passives_locked   = b._passives_locked   ?? false;
+      c._actives_locked    = b._actives_locked    ?? false;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

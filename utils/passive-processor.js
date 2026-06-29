@@ -8,6 +8,7 @@ function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   return UNIT_ABILITIES[key] ?? null;
 }
 function resolvePassiveDefs(unit, UNIT_ABILITIES) {
+  if (unit._passives_locked) return [];
   if (!UNIT_ABILITIES) return [];
   const raw = unit.unit_data?.passive || unit.unit_data?.passive_ability;
   if (!raw) return [];
