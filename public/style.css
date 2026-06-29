@@ -1789,7 +1789,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  padding: 68px 16% 80px 16%;
+  padding: 25px 20px 25px 20px;
 }
 
 .battle-grid-wrap::after {
