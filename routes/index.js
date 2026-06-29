@@ -974,7 +974,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const spellTier   = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
-    const spellIndex      = factionSpells.findIndex(s => s.id === spell_id);
+    const spellIndex        = factionSpells.filter(s => s.tier === spell.tier).findIndex(s => s.id === spell_id);
     const requiresMageGuild = spellIndex >= 0 && (spellIndex + 1) % 3 === 0;
     if (requiresMageGuild) {
       const hasMageGuild = Object.values(structRows[0].buildings_data || {}).some(s => s.building_id === 'mage_guild');

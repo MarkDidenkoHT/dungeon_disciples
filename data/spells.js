@@ -6,7 +6,7 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'roster',
-      description: 'Use 5 Life crystals to resurrect one fallen ally at 1 HP.',
+      description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Life: 5 } },
       effect_type: 'resurrect',
       usage: 'roster',
@@ -43,7 +43,7 @@ const SPELLS = {
       rank: 2,
       tier: 2,
       type: 'trophy',
-      description: 'Slain enemies may yield trophies of their fallen.',
+      description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Life: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       region: 'crimson_basilica',
@@ -65,15 +65,15 @@ const SPELLS = {
     },
     {
       id: 'e_spell_6',
-      name: 'Aegis of Faith',
+      name: 'Ward',
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Bolster the entire host with faith. Grant all allies +10 armor and +10 Fire resistance for the battle.',
+      description: '[PVP PLACEHOLDER] If the opposing player casts a debuff spell, it is ignored.',
       cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 10, resistances: { fire: 10 } }
+      effect_type: 'pvp_dispel_debuff',
+      target_scope: 'none',
+      params: { cancels_opponent_effect_type: 'debuff' }
     },
     {
       id: 'e_spell_7',
@@ -156,7 +156,7 @@ const SPELLS = {
       rank: 1,
       tier: 1,
       type: 'roster',
-      description: 'Use 5 Fire crystals to resurrect one fallen ally at 1 HP.',
+      description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Fire: 5 } },
       effect_type: 'resurrect',
       usage: 'roster',
@@ -189,11 +189,11 @@ const SPELLS = {
     },
     {
       id: 'd_spell_4',
-      name: 'Harvest of Souls',
+      name: 'Harvest',
       rank: 2,
       tier: 2,
       type: 'trophy',
-      description: 'Slain enemies may yield trophies of their fallen.',
+      description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       region: 'crimson_basilica',
@@ -203,18 +203,6 @@ const SPELLS = {
 
     {
       id: 'd_spell_5',
-      name: 'Nihilism',
-      rank: 2,
-      tier: 2,
-      type: 'preparation',
-      description: '[PVP PLACEHOLDER] If the opposing player has also cast a tier 2 spell, it is ignored.',
-      cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 10 } },
-      effect_type: 'pvp_counter_tier2',
-      target_scope: 'none',
-      params: { cancels_opponent_tier: 2 }
-    },
-    {
-      id: 'd_spell_6',
       name: 'Bone Armor',
       rank: 2,
       tier: 2,
@@ -224,6 +212,18 @@ const SPELLS = {
       effect_type: 'buff',
       target_scope: 'all_allies',
       params: { armor_boost: 12 }
+    },
+    {
+      id: 'd_spell_6',
+      name: 'Nihilism',
+      rank: 2,
+      tier: 2,
+      type: 'preparation',
+      description: '[PVP PLACEHOLDER] If the opposing player has also cast a tier 2 spell, it is ignored.',
+      cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 10 } },
+      effect_type: 'pvp_counter_tier2',
+      target_scope: 'none',
+      params: { cancels_opponent_tier: 2 }
     },
     {
       id: 'd_spell_7',
@@ -302,11 +302,11 @@ const SPELLS = {
   grail_of_sorrow: [
     {
       id: 'g_spell_1',
-      name: 'Phoenix Rite',
+      name: 'Forgiveness',
       rank: 1,
       tier: 1,
       type: 'roster',
-      description: 'Use 5 Death crystals to resurrect one fallen ally at 1 HP.',
+      description: 'Resurrect one fallen ally at 1 HP.',
       cost: { crystals: { Crystals_Death: 5 } },
       effect_type: 'resurrect',
       usage: 'roster',
@@ -343,17 +343,16 @@ const SPELLS = {
       rank: 2,
       tier: 2,
       type: 'trophy',
-      description: 'Slain enemies may yield trophies of their fallen.',
+      description: 'Slain enemies yield trophies of their fallen.',
       cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       region: 'crimson_basilica',
       target_scope: 'none',
       params: { trophy_count: 1 },
     },
-
     {
       id: 'g_spell_5',
-      name: 'Placeholder',
+      name: 'Dark Determination',
       rank: 2,
       tier: 2,
       type: 'preparation',
@@ -365,15 +364,15 @@ const SPELLS = {
     },
     {
       id: 'g_spell_6',
-      name: 'Ember Shield',
+      name: 'Decay',
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'Wreathe allies in protective embers. Grant all allies +12 armor and +10 Fire resistance for the battle.',
-      cost: { crystals: { Crystals_Death: 22, Crystals_Life: 8 } },
-      effect_type: 'buff',
-      target_scope: 'all_allies',
-      params: { armor_boost: 12, resistances: { fire: 10 } }
+      description: '[PVP PLACEHOLDER] If the opposing player casts a buff spell, it is ignored.',
+      cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 10 } },
+      effect_type: 'pvp_dispel_buff',
+      target_scope: 'none',
+      params: { cancels_opponent_effect_type: 'buff' }
     },
     {
       id: 'g_spell_7',

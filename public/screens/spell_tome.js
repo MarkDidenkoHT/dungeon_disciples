@@ -36,7 +36,8 @@ export function renderSpellTome(root, { player }) {
   const tierTabs    = root.querySelector('#tier-tabs');
 
   function requiresMageGuild(spell) {
-    const idx = factionSpells.findIndex(s => s.id === spell.id);
+    const tierSpells = factionSpells.filter(s => s.tier === spell.tier);
+    const idx = tierSpells.findIndex(s => s.id === spell.id);
     return idx >= 0 && (idx + 1) % 3 === 0;
   }
 
