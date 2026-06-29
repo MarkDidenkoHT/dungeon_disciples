@@ -27,12 +27,18 @@ export function renderSpellTome(root, { player }) {
   let playerCrystals  = {};
   let throneLevel     = 1;
   let learnedSpells   = [];
+  let hasMageGuild    = false;
   let activeSpellId   = null;
   let activeTier      = 1;
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
   const tierTabs    = root.querySelector('#tier-tabs');
+
+  function requiresMageGuild(spell) {
+    const idx = factionSpells.findIndex(s => s.id === spell.id);
+    return idx >= 0 && (idx + 1) % 3 === 0;
+  }
 
   function costHtml(spell) {
     let parts = '';
@@ -72,15 +78,16 @@ export function renderSpellTome(root, { player }) {
     }
 
     slider.innerHTML = tierSpells.map(spell => {
-      const isLearned  = learnedSpells.includes(spell.id);
-      const affordable = canAfford(spell);
-      const isActive   = activeSpellId === spell.id;
+      const isLearned       = learnedSpells.includes(spell.id);
+      const affordable      = canAfford(spell);
+      const isActive        = activeSpellId === spell.id;
+      const mageGuildLocked = requiresMageGuild(spell) && !hasMageGuild;
 
       let cardCls = 'spell-card';
-      if (isLearned)                                  cardCls += ' spell-card--learned';
-      if (!tierUnlocked)                              cardCls += ' spell-card--locked';
-      if (isActive)                                   cardCls += ' spell-card--active';
-      if (tierUnlocked && !isLearned && !affordable)  cardCls += ' spell-card--unaffordable';
+      if (isLearned)                                                cardCls += ' spell-card--learned';
+      if (!tierUnlocked || mageGuildLocked)                         cardCls += ' spell-card--locked';
+      if (isActive)                                                 cardCls += ' spell-card--active';
+      if (tierUnlocked && !mageGuildLocked && !isLearned && !affordable) cardCls += ' spell-card--unaffordable';
 
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
@@ -116,16 +123,19 @@ export function renderSpellTome(root, { player }) {
   }
 
   function modalBodyHtml(spell) {
-    const isLearned    = learnedSpells.includes(spell.id);
-    const affordable   = canAfford(spell);
-    const tierUnlocked = throneLevel >= spell.tier;
-    const canResearch  = tierUnlocked && !isLearned && affordable;
+    const isLearned       = learnedSpells.includes(spell.id);
+    const affordable      = canAfford(spell);
+    const tierUnlocked    = throneLevel >= spell.tier;
+    const mageGuildLocked = requiresMageGuild(spell) && !hasMageGuild;
+    const canResearch     = tierUnlocked && !mageGuildLocked && !isLearned && affordable;
 
     let actionHtml;
     if (isLearned) {
       actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Learned</span>`;
     } else if (!tierUnlocked) {
       actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Throne level ${spell.tier} required</span>`;
+    } else if (mageGuildLocked) {
+      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🏛 Requires Mage Guild</span>`;
     } else {
       actionHtml = `
         <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
@@ -237,6 +247,7 @@ export function renderSpellTome(root, { player }) {
       ]);
 
       throneLevel   = structData?.buildings_data?.slot_0?.level || 1;
+      hasMageGuild  = Object.values(structData?.buildings_data || {}).some(s => s.building_id === 'mage_guild');
       learnedSpells = Array.isArray(researchData)
         ? researchData
         : (researchData?.researched_spells || []);
