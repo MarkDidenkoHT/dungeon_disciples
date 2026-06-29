@@ -335,7 +335,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
-      xp: 170, passive: null, ability: null,
+      xp: 170, passive: 'rage 1', ability: 'devour 1',
     },
     tormentor: {
       id: 'd11', f: 'd', t: 2,
@@ -345,8 +345,8 @@ const UNITS = {
       hp: 120, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 20, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 20,
-      xp: 170, passive: 'burn 1', ability: null,
+      damage_source: 'fire', action_power: 25,
+      xp: 170, passive: ['rage 2', 'volcanic_skin 1'], ability: 'devour 1',
     },
     hellblade: {
       id: 'd12', f: 'd', t: 2,
@@ -357,7 +357,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      xp: 170, passive: null, ability: 'Devour 1',
+      xp: 170, passive: 'rage 1', ability: 'devour 1',
     },
     clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
@@ -401,7 +401,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      xp: 70, passive: null, ability: null,
+      xp: 70, passive: 'rage 1', ability: null,
     },
     posessed: {
       id: 'd41', f: 'd', t: 2,
@@ -417,7 +417,7 @@ const UNITS = {
     vessel: {
       id: 'd411', f: 'd', t: 3,
       name: 'Vessel',
-      tags: ['Warrior', 'Demon'],
+      tags: ['Demon', 'Puppet'],
       size: 'tile',
       hp: 70, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
@@ -428,7 +428,7 @@ const UNITS = {
     pain_projector: {
       id: 'd412', f: 'd', t: 3,
       name: 'Pain Projector',
-      tags: ['Puppet', 'Demon'],
+      tags: ['Demon', 'Puppet'],
       size: 'tile',
       hp: 80, armor: 10, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
@@ -445,7 +445,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 15,
-      xp: 470, passive: 'undying 1', ability: 'infernal_mandate 1',
+      xp: 470, passive: 'command 1', ability: 'infernal_mandate 1',
     },
     nether_baron: {
       id: 'd61', f: 'd', t: 2,
@@ -456,7 +456,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20,
-      xp: 470, passive: 'undying 1', ability: 'infernal_mandate 1',
+      xp: 470, passive: ['command 1', 'undying 1'], ability: 'infernal_mandate 1',
     },
   },
 
