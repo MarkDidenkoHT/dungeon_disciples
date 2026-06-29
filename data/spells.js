@@ -57,11 +57,11 @@ const SPELLS = {
       rank: 2,
       tier: 2,
       type: 'preparation',
-      description: 'At the start of round 3, all Holy allies heal for 5 HP per Holy ally on the field.',
+      description: 'At the start of round 3, all Holy allies heal for 10 HP per Holy ally on the field.',
       cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
       effect_type: 'round_trigger_heal',
       target_scope: 'tag_allies',
-      params: { trigger_round: 3, tag_required: 'Holy', heal_per_tagged_unit: 5 }
+      params: { trigger_round: 3, tag_required: 'Holy', heal_per_tagged_unit: 10 }
     },
     {
       id: 'e_spell_6',

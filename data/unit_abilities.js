@@ -680,8 +680,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_ally_death',
-    description: 'When an ally dies, sacrifice 10% of own max HP (cannot die from this) to heal the ally with the lowest HP. Does not heal self.',
-    params: { eternal_grief_sacrifice_pct: 10 },
+    description: 'When an ally dies, sacrifice 25% of own max HP (cannot die from this) to heal the ally with the lowest HP. Does not heal self.',
+    params: { eternal_grief_sacrifice_pct: 25 },
   },
   'stun 1': {
     id: 'stun 1',
