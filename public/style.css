@@ -1800,17 +1800,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-repeat: no-repeat;
   background-position: center;
   pointer-events: none;
-  z-index: 10;
+  z-index: 0;
 }
 
 .battle-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(3, 110px);
   width: 100%;
   box-sizing: border-box;
-  margin: 12px;
-  width: calc(100% - 24px);
+  margin: 16px;
+  width: calc(100% - 32px);
 }
 
 .battle-cell {
