@@ -1789,6 +1789,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   position: relative;
   width: 100%;
   box-sizing: border-box;
+  padding: 68px 16% 80px 16%;
 }
 
 .battle-grid-wrap::after {
@@ -1800,7 +1801,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-repeat: no-repeat;
   background-position: center;
   pointer-events: none;
-  z-index: 0;
+  z-index: 10;
 }
 
 .battle-grid {
@@ -1811,8 +1812,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   grid-template-rows: repeat(3, 110px);
   width: 100%;
   box-sizing: border-box;
-  margin: 16px;
-  width: calc(100% - 32px);
 }
 
 .battle-cell {
