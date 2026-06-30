@@ -680,8 +680,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_ally_death',
-    description: 'When an ally dies, sacrifice 25% of own max HP (cannot die from this) to heal the ally with the lowest HP. Does not heal self.',
-    params: { eternal_grief_sacrifice_pct: 25 },
+    description: 'When an ally dies, sacrifice 10% of own max HP (cannot die from this) to heal the ally with the lowest HP. Does not heal self.',
+    params: { eternal_grief_sacrifice_pct: 10 },
   },
   'stun 1': {
     id: 'stun 1',
@@ -711,7 +711,43 @@ const UNIT_ABILITIES = {
     description: 'Once per battle, this unit returns to life at the start of the next turn with 10% HP per Zombie tag among allies (including self).',
     params: { reanimate: true, reanimate_hp_pct_per_zombie: 10 },
   },
+  'inspiration_armor 1': {
+    id: 'inspiration_armor 1',
+    name: 'Inspiration',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain +10 armor.',
+    params: { inspiration_stat: 'armor', inspiration_value: 10 },
+  },
+  'inspiration_initiative 1': {
+    id: 'inspiration_initiative 1',
+    name: 'Inspiration',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain +10 initiative.',
+    params: { inspiration_stat: 'initiative', inspiration_value: 10 },
+  },
+  'inspiration_max_hp 1': {
+    id: 'inspiration_max_hp 1',
+    name: 'Inspiration',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain +20 max HP.',
+    params: { inspiration_stat: 'max_hp', inspiration_value: 20 },
+  },
+  'inspiration_damage 1': {
+    id: 'inspiration_damage 1',
+    name: 'Inspiration',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain +10% damage.',
+    params: { inspiration_stat: 'damage', inspiration_value: 10 },
+  },
 };
 
 export { UNIT_ABILITIES };
-if (typeof module !== 'undefined') module.exports = { UNIT_ABILITIES };
+if (typeof module !== 'undefined') module.exports = { UNIT_ABILITIES };s

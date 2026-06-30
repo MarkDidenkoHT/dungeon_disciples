@@ -91,6 +91,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all enemies', value: drain });
       }
     }
+    if (p.inspiration_stat != null && p.inspiration_value != null) {
+      const targets = engine.getInspirationTargets(owner);
+      for (const t of targets) {
+        if (p.inspiration_stat === 'armor') {
+          t.armor += p.inspiration_value;
+        } else if (p.inspiration_stat === 'initiative') {
+          t.initiative += p.inspiration_value;
+        } else if (p.inspiration_stat === 'max_hp') {
+          t.max_hp    += p.inspiration_value;
+          t.battle_hp += p.inspiration_value;
+        } else if (p.inspiration_stat === 'damage') {
+          t._dmg_mult = (t._dmg_mult ?? 1) * (1 + p.inspiration_value / 100);
+        }
+      }
+      if (targets.length) {
+        engine.recordGrantedBuff(owner, p.inspiration_stat, targets, p.inspiration_stat === 'damage' ? p.inspiration_value / 100 : p.inspiration_value);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: p.inspiration_value, message: `${def.name} — +${p.inspiration_value}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
+      }
+    }
     if (p.unity_bond === true && !owner._flags[def.id + '_bonded']) {
       owner._flags[def.id + '_bonded'] = true;
       const ownerRow = cellRow(owner.cellIndex);

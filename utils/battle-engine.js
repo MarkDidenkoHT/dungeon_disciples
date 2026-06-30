@@ -130,6 +130,45 @@ class BattleEngine {
   fireTrigger(trigger, ctx) {
     runTrigger(trigger, { engine: this, UNIT_ABILITIES: this.ABILITIES, ...ctx });
   }
+  getFootprint(unit) {
+    const size = unit.size ?? 'tile';
+    const r = cellRow(unit.cellIndex), c = cellCol(unit.cellIndex);
+    if (size === 'row') return [cellIndex(r, 0), cellIndex(r, 1)];
+    if (size === 'column') {
+      const topRow = r <= ROWS - 2 ? r : r - 1;
+      return [cellIndex(topRow, c), cellIndex(topRow + 1, c)];
+    }
+    return [unit.cellIndex];
+  }
+  getInspirationTargetCells(unit) {
+    const footprint = this.getFootprint(unit);
+    const rowsByCol = {};
+    for (const cell of footprint) {
+      const col = cellCol(cell), row = cellRow(cell);
+      rowsByCol[col] = rowsByCol[col] || [];
+      rowsByCol[col].push(row);
+    }
+    const targets = new Set();
+    for (const [col, rows] of Object.entries(rowsByCol)) {
+      const colNum  = Number(col);
+      const minRow  = Math.min(...rows);
+      const maxRow  = Math.max(...rows);
+      if (minRow - 1 >= 0)        targets.add(cellIndex(minRow - 1, colNum));
+      if (maxRow + 1 <= ROWS - 1) targets.add(cellIndex(maxRow + 1, colNum));
+    }
+    return [...targets];
+  }
+  getInspirationTargets(owner) {
+    const targetCells = this.getInspirationTargetCells(owner);
+    if (!targetCells.length) return [];
+    const results = [];
+    for (const c of this.combatants) {
+      if (!c.alive || c.side !== owner.side || c.id === owner.id) continue;
+      const footprint = this.getFootprint(c);
+      if (footprint.some(cell => targetCells.includes(cell))) results.push(c);
+    }
+    return results;
+  }
   recordGrantedBuff(source, type, targets, value) {
     source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
   }
@@ -145,6 +184,8 @@ class BattleEngine {
           target.armor = Math.max(0, target.armor - buff.value);
         } else if (buff.type === 'initiative') {
           target.initiative = Math.max(0, target.initiative - buff.value);
+        } else if (buff.type === 'damage') {
+          target._dmg_mult = Math.max(0.01, (target._dmg_mult ?? 1) / (1 + buff.value));
         }
       }
     }
