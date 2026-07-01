@@ -17,24 +17,24 @@ const REGION_ENCOUNTERS = {
     level_2:  [
       { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
       { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
-      { key: 'crimson_basilica.initiate', cell: 3 },
+      { key: 'crimson_basilica.initiate',         cell: 3 },
     ],
     level_3:  [
       { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
       { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
       { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-      { key: 'crimson_basilica.initiate', cell: 3 },
+      { key: 'crimson_basilica.initiate',         cell: 3 },
     ],
     level_4:  [
       { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.initiate', cell: 3 },
+      { key: 'crimson_basilica.initiate',         cell: 3 },
     ],
     level_5:  [
       { key: 'crimson_basilica.exalted_herald',   cell: 2 },
       { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
       { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-      { key: 'crimson_basilica.initiate', cell: 3 },
+      { key: 'crimson_basilica.initiate',         cell: 3 },
     ],
     level_6:  [
       { key: 'crimson_basilica.exalted_herald',   cell: 2 },
@@ -77,55 +77,7 @@ const REGION_ENCOUNTERS = {
       { key: 'dungeons_of_malgrath.bone_knight',    cell: 2 },
       { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
       { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
-    ],
-    level_4:  [
-      { key: 'dungeons_of_malgrath.bone_knight',    cell: 0 },
-      { key: 'dungeons_of_malgrath.death_cultist',  cell: 2 },
-      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 4 },
-      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
-      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 3 },
-    ],
-    level_5:  [
-      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 0 },
-      { key: 'dungeons_of_malgrath.death_cultist',  cell: 2 },
-      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 4 },
-      { key: 'dungeons_of_malgrath.bone_knight',    cell: 1 },
-    ],
-    level_6:  [
-      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 0 },
-      { key: 'dungeons_of_malgrath.revenant',       cell: 2 },
-      { key: 'dungeons_of_malgrath.death_cultist',  cell: 4 },
-      { key: 'dungeons_of_malgrath.bone_knight',    cell: 1 },
-      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 3 },
-    ],
-    level_7:  [
-      { key: 'dungeons_of_malgrath.soul_harvester', cell: 0 },
-      { key: 'dungeons_of_malgrath.revenant',       cell: 2 },
-      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 4 },
-      { key: 'dungeons_of_malgrath.death_cultist',  cell: 1 },
-      { key: 'dungeons_of_malgrath.bone_knight',    cell: 3 },
-    ],
-    level_8:  [
-      { key: 'dungeons_of_malgrath.dread_knight',   cell: 0 },
-      { key: 'dungeons_of_malgrath.soul_harvester', cell: 2 },
-      { key: 'dungeons_of_malgrath.revenant',       cell: 4 },
-      { key: 'dungeons_of_malgrath.tomb_colossus',  cell: 1 },
-      { key: 'dungeons_of_malgrath.death_cultist',  cell: 3 },
-    ],
-    level_9:  [
-      { key: 'dungeons_of_malgrath.malgrath_the_undying', cell: 0 },
-      { key: 'dungeons_of_malgrath.dread_knight',         cell: 2 },
-      { key: 'dungeons_of_malgrath.soul_harvester',       cell: 4 },
-      { key: 'dungeons_of_malgrath.revenant',             cell: 1 },
-      { key: 'dungeons_of_malgrath.wailing_ghost',        cell: 3 },
-    ],
-    level_10: [
-      { key: 'dungeons_of_malgrath.malgrath_the_undying', cell: 0 },
-      { key: 'dungeons_of_malgrath.dread_knight',         cell: 2 },
-      { key: 'dungeons_of_malgrath.soul_harvester',       cell: 4 },
-      { key: 'dungeons_of_malgrath.tomb_colossus',        cell: 1 },
-      { key: 'dungeons_of_malgrath.revenant',             cell: 3 },
-    ],
+    ]
   },
 };
 

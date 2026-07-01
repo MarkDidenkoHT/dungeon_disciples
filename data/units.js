@@ -499,7 +499,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 35, life: 35, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 12,
+      damage_source: 'fire', action_power: 10,
       xp: 470, passive: 'inspiration_damage 2', ability: 'infernal_mandate 1',
     },
   },
