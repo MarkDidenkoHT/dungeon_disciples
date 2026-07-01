@@ -750,4 +750,4 @@ const UNIT_ABILITIES = {
 };
 
 export { UNIT_ABILITIES };
-if (typeof module !== 'undefined') module.exports = { UNIT_ABILITIES };s
+if (typeof module !== 'undefined') module.exports = { UNIT_ABILITIES };
