@@ -235,9 +235,10 @@ router.post('/login', async (req, res) => {
   try {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (existing.length > 0) {
+      const mergedSettings = { ...(existing[0].settings || {}), language: telegramUser.language_code || existing[0].settings?.language || 'en' };
       const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ session_token }),
+        body: JSON.stringify({ session_token, settings: mergedSettings }),
       });
       let dailyResult = null;
       try {
@@ -261,7 +262,13 @@ router.post('/login', async (req, res) => {
     }
     const created = await supabase('/players', {
       method: 'POST',
-      body: JSON.stringify({ chat_id, username: telegramUser.username || null, first_name: telegramUser.first_name || null, session_token }),
+      body: JSON.stringify({
+        chat_id,
+        username: telegramUser.username || null,
+        first_name: telegramUser.first_name || null,
+        session_token,
+        settings: { language: telegramUser.language_code || 'en', notifications: true },
+      }),
     });
     let dailyResult = null;
     try {
@@ -294,6 +301,25 @@ router.get('/player', requireAuth, async (req, res) => {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/player/settings', requireAuth, async (req, res) => {
+  const { player_id, chat_id, settings } = req.body;
+  if (!player_id || !chat_id || !settings || typeof settings !== 'object') {
+    return res.status(400).json({ error: 'player_id, chat_id, and settings required' });
+  }
+  try {
+    const existing = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=settings&limit=1`);
+    if (!existing.length) return res.status(404).json({ error: 'Player not found' });
+    const mergedSettings = { ...(existing[0].settings || {}), ...settings };
+    const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ settings: mergedSettings }),
+    });
+    res.json(updated[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
