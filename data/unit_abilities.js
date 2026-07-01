@@ -170,6 +170,15 @@ const UNIT_ABILITIES = {
     description: 'After dealing damage, heals the lowest HP ally for 40% of damage dealt.',
     params: { lowest_ally_heal_pct: 40 },
   },
+  'last_verse 1': {
+    id: 'last_verse 1',
+    name: 'Last Verse',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_death',
+    description: 'On death, deals 10 fire damage to all enemies.',
+    params: { death_aoe_damage: 10, damage_type: 'nature' },
+  },
   'noxious_death 1': {
     id: 'noxious_death 1',
     name: 'Noxious Death',
