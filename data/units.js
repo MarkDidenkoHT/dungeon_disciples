@@ -848,7 +848,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15,
+      damage_source: 'physical', action_power: 12,
       xp: 90, passive: 'protector 1', ability: null,
     },
     infantry: {
@@ -856,10 +856,10 @@ const UNITS = {
       name: 'Infantry',
       tags: ['Knight', null],
       size: 'tile',
-      hp: 70, armor: 15, initiative: 40,
+      hp: 65, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 15,
       xp: 300, passive: 'protector 2', ability: null,
     },
     crossbowman: {
@@ -871,7 +871,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 20,
-      xp: 300, passive: ['pierce 2', 'find_weakness 1'], ability: null,
+      xp: 300, passive: ['pierce 2', 'impale 1'], ability: null,
     },
     heavy_infantry: {
       id: 'e112', f: 'e', t: 3,
@@ -882,7 +882,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 300, passive: ['protector 2'], ability: 'stun 1',
+      xp: 300, passive: ['protector 2', 'recuperate 1'], ability: 'stun 1',
     },
     horseman: {
       id: 'e12', f: 'e', t: 2,
@@ -1006,7 +1006,7 @@ const UNITS = {
       xp: 275, passive: ['find_weakness 1', ''], ability: null,
     },
     sniper: {
-      id: 'e82', f: 'e', t: 2,
+      id: 'e811', f: 'e', t: 3,
       name: 'Sniper',
       tags: ['Archer', null],
       size: 'tile',
@@ -1047,7 +1047,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
       action: 'none', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20,
-      xp: 60, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
+      xp: 60, passive: ['unity 1', 'light_of_dawn 2'], ability: null,
     },
     acolyte: {
       id: 'e2', f: 'e', t: 1,
@@ -1092,17 +1092,6 @@ const UNITS = {
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 35,
       xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 2',
-    },
-    purgator: {
-      id: 'e23', f: 'e', t: 2,
-      name: 'Purgator',
-      tags: ['Knight', 'Holy'],
-      size: 'tile',
-      hp: 55, armor: 10, initiative: 30,
-      resistances: { air: 0, fire: 15, life: 50, death: 5, cold: 5, nature: 5 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 2,
-      damage_source: 'life', action_power: 20,
-      xp: 280, passive: ['burn 1', 'dissipate 1'], ability: 'purge 1',
     },
     apprentice: {
       id: 'e4', f: 'e', t: 1,

@@ -251,6 +251,15 @@ const UNIT_ABILITIES = {
     description: '25% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
     params: { intercept_chance_pct: 25 },
   },
+  'protector 2': {
+    id: 'protector 2',
+    name: 'Protector',
+    rank: 2,
+    type: 'passive',
+    trigger: 'intercept',
+    description: '40% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
+    params: { intercept_chance_pct: 40 },
+  },
   'predator 1': {
     id: 'predator 1',
     name: 'Predator',
@@ -682,6 +691,15 @@ const UNIT_ABILITIES = {
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     params: { light_of_dawn: true, light_of_dawn_heal: 15, light_of_dawn_dmg: 15 },
+  },
+  'light_of_dawn 2': {
+    id: 'light_of_dawn 2',
+    name: 'Light of Dawn',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_turn_start',
+    description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
+    params: { light_of_dawn: true, light_of_dawn_heal: 25, light_of_dawn_dmg: 25 },
   },
   'eternal_grief 1': {
     id: 'eternal_grief 1',
