@@ -671,6 +671,7 @@ class BattleEngine {
         _lifesteal:       c._lifesteal ?? 0,
         intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
         acted_this_round: c.acted_this_round,
+        used_active:      c.used_active ?? false,
         _rosterId:        c._rosterId ?? null,
         buffs: {
           dot_dmg:             c.dot_dmg,
@@ -719,6 +720,7 @@ class BattleEngine {
       c.cellIndex          = s.cellIndex;
       c.size               = s.size ?? c.size;
       c.acted_this_round   = s.acted_this_round;
+      c.used_active        = s.used_active ?? false;
       if (s.initiative    != null) c.initiative    = s.initiative;
       if (s.max_hp        != null) c.max_hp        = s.max_hp;
       if (s.armor         != null) c.armor         = s.armor;
