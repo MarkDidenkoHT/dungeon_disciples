@@ -440,6 +440,15 @@ const UNIT_ABILITIES = {
     description: 'Armor and resistance debuffs applied to this unit are 30% less effective.',
     params: { debuff_reduction_pct: 30 },
   },
+  'unbreakable 2': {
+    id: 'unbreakable 2',
+    name: 'Unbreakable',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'Armor and resistance debuffs applied to this unit are 45% less effective.',
+    params: { debuff_reduction_pct: 45 },
+  },
   'chain 1': {
     id: 'chain 1',
     name: 'Chain',
@@ -602,15 +611,6 @@ const UNIT_ABILITIES = {
     description: 'Grant an ally +20 to all resistances for 2 rounds.',
     params: { all_resist_bonus: 20, duration_rounds: 2 },
   },
-  'smite 1': {
-    id: 'smite 1',
-    name: 'Smite',
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    description: 'Deal 20 damage to an enemy and heal the lowest HP ally for 25% of the damage dealt.',
-    params: { damage_flat: 20, lowest_ally_heal_pct: 25 },
-  },
   'parry 1': {
     id: 'parry 1',
     name: 'Parry',
@@ -744,8 +744,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain +10 armor.',
-    params: { inspiration_stat: 'armor', inspiration_value: 10 },
+    description: 'Adjacent allies in the same column gain armor.',
+    params: { inspiration_stat: 'armor', inspiration_value: 8 },
   },
   'inspiration_initiative 1': {
     id: 'inspiration_initiative 1',
@@ -753,8 +753,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain +10 initiative.',
-    params: { inspiration_stat: 'initiative', inspiration_value: 10 },
+    description: 'Adjacent allies in the same column gain initiative.',
+    params: { inspiration_stat: 'initiative', inspiration_value: 6 },
   },
   'inspiration_max_hp 1': {
     id: 'inspiration_max_hp 1',
@@ -762,8 +762,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain +20 max HP.',
-    params: { inspiration_stat: 'max_hp', inspiration_value: 20 },
+    description: 'Adjacent allies in the same column gain max HP.',
+    params: { inspiration_stat: 'max_hp', inspiration_value: 8 },
   },
   'inspiration_damage 1': {
     id: 'inspiration_damage 1',
@@ -771,7 +771,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain +10% damage.',
+    description: 'Adjacent allies in the same column gain increased damage.',
     params: { inspiration_stat: 'damage', inspiration_value: 10 },
   },
 };
