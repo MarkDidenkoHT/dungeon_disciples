@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const crypto = require('crypto');
+const fs     = require('fs');
+const path   = require('path');
 
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter } = require('../data/embark');
@@ -10,6 +12,35 @@ const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 
+const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
+const MANIFEST_FOLDERS = {
+  ui:            'icons/ui',
+  recources:     'icons/recources',
+  spells:        'icons/spells',
+  abilities:     'icons/abilities',
+  screens:       'screens',
+  character_art: 'character_art',
+  character_portraits: 'character_portraits',
+};
+
+function listAssetFolder(relFolder) {
+  const dir = path.join(ASSETS_DIR, relFolder);
+  try {
+    return fs.readdirSync(dir)
+      .filter(f => /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(f))
+      .map(f => `/assets/${relFolder}/${f}`);
+  } catch {
+    return [];
+  }
+}
+
+router.get('/assets-manifest', (req, res) => {
+  const manifest = {};
+  for (const [key, relFolder] of Object.entries(MANIFEST_FOLDERS)) {
+    manifest[key] = listAssetFolder(relFolder);
+  }
+  res.json(manifest);
+});
 
 function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');

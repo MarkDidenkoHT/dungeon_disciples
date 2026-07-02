@@ -220,3 +220,17 @@ export function mountModal(root) {
     close: () => closeSheet(),
   };
 }
+
+export function preloadAssets(urls, onProgress) {
+  const unique = [...new Set(urls)];
+  let loaded = 0;
+  const total = unique.length;
+  if (total === 0) { onProgress?.(1); return Promise.resolve(); }
+  return Promise.all(unique.map(url => new Promise(resolve => {
+    const img = new Image();
+    const done = () => { loaded++; onProgress?.(loaded / total); resolve(); };
+    img.onload  = done;
+    img.onerror = done;
+    img.src = url;
+  })));
+}

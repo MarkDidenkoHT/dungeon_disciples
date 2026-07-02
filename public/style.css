@@ -85,6 +85,220 @@ button {
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button:active:not(:disabled) { opacity: 0.75; }
 
+.screen-faction-slider {
+  position: relative;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+.faction-slider {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.faction-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.faction-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  overflow-y: auto;
+}
+
+.faction-slide-content {
+  padding: 24px 20px 88px 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faction-slide-title {
+  font-size: 1.7rem;
+  color: var(--accent);
+  font-weight: bold;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+.faction-slide-tagline {
+  font-size: 0.95rem;
+  color: var(--text);
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.faction-slide-desc {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+.faction-slide-roster {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 0 4px 0;
+  scrollbar-width: none;
+}
+
+.faction-slide-roster::-webkit-scrollbar {
+  display: none;
+}
+
+.faction-roster-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 58px;
+}
+
+.faction-roster-chip img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.faction-roster-chip span {
+  font-size: 0.62rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.1;
+}
+
+.faction-choose-btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.faction-slider-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.faction-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: background 0.2s, transform 0.2s;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.faction-dot--active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+.card--hero {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.card-hero-art {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.card-hero-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at 50% 40%, #1c1f28 0%, #0d0e12 100%);
+  gap: 20px;
+}
+
+.loading-crest {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  animation: loading-pulse 1.6s ease-in-out infinite;
+}
+
+.loading-crest-icon {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(70%) sepia(45%) saturate(500%) hue-rotate(360deg);
+}
+
+@keyframes loading-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 151, 58, 0.35); }
+  50%      { box-shadow: 0 0 0 10px rgba(200, 151, 58, 0); }
+}
+
+.loading-title {
+  font-size: 1.3rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.loading-bar-track {
+  width: 62vw;
+  max-width: 260px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), #e8b45a);
+  transition: width 0.2s ease-out;
+}
+
+.loading-pct {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
 .card-grid {
   display: flex;
   flex-direction: column;
