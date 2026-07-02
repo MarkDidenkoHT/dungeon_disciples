@@ -90,6 +90,8 @@ class BattleEngine {
       size:       data.size ?? 'tile',
       battle_hp:  battleHp,
       max_hp:     maxHp,
+      _base_max_hp: maxHp,
+      _fanaticism_bonus: 0,
       armor:      data.armor ?? 0,
       initiative: data.initiative ?? 40,
       alive:      data.alive !== false && battleHp > 0,
@@ -433,6 +435,7 @@ class BattleEngine {
       unit.battle_hp += actual;
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
+      if (actual > 0) this.fireHealTriggers(unit, unit, actual);
     }
   }
   doSacrifice(actor, target) {
@@ -670,6 +673,8 @@ class BattleEngine {
         martyrdom_pct:    c.martyrdom_pct ?? 0,
         _lifesteal:       c._lifesteal ?? 0,
         intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
+        _base_max_hp:     c._base_max_hp ?? c.max_hp,
+        _fanaticism_bonus: c._fanaticism_bonus ?? 0,
         acted_this_round: c.acted_this_round,
         used_active:      c.used_active ?? false,
         _rosterId:        c._rosterId ?? null,
@@ -728,6 +733,8 @@ class BattleEngine {
       c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
       c._lifesteal         = s._lifesteal          ?? 0;
       c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;
+      c._base_max_hp        = s._base_max_hp ?? c.max_hp;
+      c._fanaticism_bonus   = s._fanaticism_bonus ?? 0;
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;

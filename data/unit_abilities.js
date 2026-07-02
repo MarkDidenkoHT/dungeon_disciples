@@ -152,6 +152,15 @@ const UNIT_ABILITIES = {
     description: 'Heals self for 40% of damage dealt.',
     params: { self_heal_pct: 40 },
   },
+  'communion 1': {
+    id: 'communion 1',
+    name: "Communion",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt.',
+    params: { lowest_ally_heal_pct: 25 },
+  },
   'mithrails_light 1': {
     id: 'mithrails_light 1',
     name: "Mithrail's Light",
@@ -773,6 +782,24 @@ const UNIT_ABILITIES = {
     trigger: 'on_battle_start',
     description: 'Adjacent allies in the same column gain increased damage.',
     params: { inspiration_stat: 'damage', inspiration_value: 10 },
+  },
+  'sacrament 1': {
+    id: 'sacrament 1',
+    name: 'Sacrament',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_healed',
+    description: 'Whenever this unit gains HP, its max HP grows by the same amount, up to 50% of its base max HP, for the rest of the battle.',
+    params: { fanaticism_max_stack_pct: 50 },
+  },
+  'libation 1': {
+    id: 'libation 1',
+    name: 'Libation',
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: 'Sacrifice 30% of max HP (only usable above that threshold) to deal that much damage to a single enemy.',
+    params: { libation_sacrifice_pct: 30 },
   },
 };
 

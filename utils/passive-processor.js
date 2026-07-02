@@ -140,8 +140,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_turn_start' && owner === actor) {
     if (p.regen_pct != null) {
       const heal = Math.floor(owner.max_hp * p.regen_pct / 100);
+      const before = owner.battle_hp;
       owner.battle_hp = Math.min(owner.max_hp, owner.battle_hp + heal);
+      const actual = owner.battle_hp - before;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: heal });
+      if (actual > 0) engine.fireHealTriggers(owner, owner, actual);
     }
     if (owner._deferred_dmg > 0) {
       const deferred = owner._deferred_dmg;
@@ -201,7 +204,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
         .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, owner);
       const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
       lowest.battle_hp += actual;
-      if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
+      if (actual > 0) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: actual });
+        engine.fireHealTriggers(owner, lowest, actual);
+      }
     }
     if (p.lowest_enemy_dmg_pct != null) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive);
@@ -217,7 +223,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const heal = Math.floor(dmg * p.self_heal_pct / 100);
       const actual = Math.min(heal, owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
-      if (actual > 0) engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: actual });
+      if (actual > 0) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: actual });
+        engine.fireHealTriggers(owner, owner, actual);
+      }
     }
     if (p.dot_dmg_pct != null) {
       target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
@@ -390,6 +399,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_healed' && owner === target && dmg > 0) {
+    if (p.fanaticism_max_stack_pct != null) {
+      const cap       = Math.floor(owner._base_max_hp * p.fanaticism_max_stack_pct / 100);
+      const remaining = Math.max(0, cap - (owner._fanaticism_bonus ?? 0));
+      const grow      = Math.min(dmg, remaining);
+      if (grow > 0) {
+        owner._fanaticism_bonus = (owner._fanaticism_bonus ?? 0) + grow;
+        owner.max_hp    += grow;
+        owner.battle_hp += grow;
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: grow, message: `${def.name} — max HP grows by ${grow} (${owner._fanaticism_bonus}/${cap})` });
+      }
+    }
     if (p.radiance_pct != null) {
       const radDmg = Math.floor(dmg * p.radiance_pct / 100);
       if (radDmg > 0) {
@@ -528,6 +548,20 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   const def = UNIT_ABILITIES[abilityKey];
   if (!def) return false;
   const p = def.params || {};
+  if (p.libation_sacrifice_pct != null && target && def.target === 'enemy') {
+    const cost = Math.floor(actor.max_hp * p.libation_sacrifice_pct / 100);
+    if (actor.battle_hp <= cost + 1) {
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${def.name} — ${actor.unit_name} is too weak to invoke Libation.` });
+    } else {
+      actor.battle_hp -= cost;
+      const armor = Math.max(0, target.armor ?? 0);
+      const dmg = Math.max(1, Math.floor(cost * (1 - armor / 100)));
+      target.battle_hp = Math.max(0, target.battle_hp - dmg);
+      const dead = target.battle_hp <= 0;
+      if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${actor.unit_name} sacrifices ${cost} HP to strike ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
+    }
+  }
   if (p.mothers_kiss === true && !actor._mothers_kiss) {
     actor._mothers_kiss = true;
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'self', message: `${def.name} — ${actor.unit_name} begins channeling Mother's Kiss each turn.` });
@@ -558,6 +592,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       actor._dmg_mult = (actor._dmg_mult ?? 1) + p.devour_dmg_bonus_pct / 100;
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}${p.devour_dmg_bonus_pct != null ? `, +${p.devour_dmg_bonus_pct}% damage` : ''}` });
+    if (healed > 0) engine.fireHealTriggers(actor, actor, healed);
   }
   if (p.ally_initiative_bonus != null) {
     for (const a of combatants.filter(c => c.side === actor.side && c.alive)) {
@@ -625,6 +660,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (actual > 0) {
       lowest.battle_hp += actual;
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, message: `${def.name} — healed ${lowest.unit_name} for ${actual}`, value: actual, heal: true });
+      engine.fireHealTriggers(actor, lowest, actual);
     }
   }
 
