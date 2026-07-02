@@ -470,7 +470,7 @@ const UNITS = {
       xp: 470, passive: ['command 1', 'undying 1'], ability: 'infernal_mandate 1',
     },
     flame_spawn: {
-      id: 'd6', f: 'd', t: 1,
+      id: 'd7', f: 'd', t: 1,
       name: 'Flame Spawn',
       tags: ['Demon', 'Caster'],
       size: 'tile',
@@ -481,7 +481,7 @@ const UNITS = {
       xp: 470, passive: 'volcanic_skin 1', ability: null,
     },
     greater_flame_spawn: {
-      id: 'd61', f: 'd', t: 2,
+      id: 'd71', f: 'd', t: 2,
       name: 'Flame Spawn',
       tags: ['Demon', 'Caster'],
       size: 'tile',
@@ -1586,7 +1586,7 @@ const UNITS = {
       xp: 305, passive: 'lifesteal 1', ability: null,
     },
     crimson_mage: {
-      id: 'gs311', f: 'g', t: 3,
+      id: 'gs312', f: 'g', t: 3,
       name: 'Crimson Mage',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
@@ -1597,7 +1597,7 @@ const UNITS = {
       xp: 305, passive: ['lifesteal 1', 'vitality 1'], ability: 'blood_craze 1',
     },
     blood_knight: {
-      id: 'gs312', f: 'g', t: 3,
+      id: 'gs311', f: 'g', t: 3,
       name: 'Blood Knight',
       tags: ['Vampire', 'Knight'],
       size: 'tile',

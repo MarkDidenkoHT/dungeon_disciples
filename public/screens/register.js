@@ -4,9 +4,9 @@ import { UNITS }    from '../../data/units.js';
 import { preloadAssets } from '../utils.js';
 
 const UNIT_ART = new Set([
-  'e1', 'e2', 'e3', 'e4', 'e6', 'e7', 'e8',
-  'd4', 'd6',
-  'gs1', 'gs3', 'gs6',
+  'e1', 'e21', 'e3', 'e4', 'e6',  
+  'd11', 'd41', 'd6', 'd31', 'd7',
+  'gs12', 'gs311', 'gs6',
 ]);
 
 function tierOneHighlights(factionKey) {
