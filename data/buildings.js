@@ -340,6 +340,7 @@ const UNIT_UPGRADE_PATHS = {
 const HERO_MAX_LEVEL = 4;
 
 const THRONE_UPGRADE_COSTS = {
+  1: { gold: 50 },
   2: { gold: 150 },
   3: { gold: 300 },
   4: { gold: 600 },
@@ -356,7 +357,7 @@ function getBuildingDef(faction, buildingId) {
 }
 
 function emptyStructures() {
-  const slots = { slot_0: { level: 1, building_id: null } };
+  const slots = { slot_0: { level: 0, building_id: null } };
   for (let i = 1; i <= 8; i++) {
     slots[`slot_${i}`] = { level: 0, building_id: null };
   }

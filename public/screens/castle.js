@@ -1,6 +1,7 @@
 import { api }              from '../api.js';
 import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
+import { refreshNavLock }    from '../api.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
@@ -356,7 +357,7 @@ export function renderCastle(root, { player }) {
   function renderBuildings() {
     const data        = structuresRecord.buildings_data;
     const throneState = data['slot_0'];
-    const throneLevel = throneState?.level || 1;
+    const throneLevel = throneState?.level ?? 0;
     const throneMaxed = throneLevel >= heroMaxLevel;
 
     root.querySelector('#center-slot').innerHTML = `
@@ -476,7 +477,7 @@ export function renderCastle(root, { player }) {
 
   async function handleThroneClick() {
     const throneState = structuresRecord.buildings_data['slot_0'];
-    const throneLevel = throneState?.level || 1;
+    const throneLevel = throneState?.level ?? 0;
     const nextLevel   = throneLevel + 1;
     const cost        = throneUpgradeCosts[nextLevel];
     const isMaxed     = throneLevel >= heroMaxLevel;
@@ -511,6 +512,7 @@ export function renderCastle(root, { player }) {
         structuresRecord = updated;
         renderBuildings();
         refreshResourceBar(player).catch(() => {});
+        refreshNavLock(player).catch(() => {});
       } catch (err) {
         alert(err.message || 'Throne upgrade failed');
       }

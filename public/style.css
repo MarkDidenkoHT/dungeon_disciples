@@ -168,8 +168,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .faction-roster-chip img {
-  width: 60px;
-  height: 100px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
   border-radius: 50%;
   border: 1px solid var(--border);
@@ -392,6 +392,20 @@ button:active:not(:disabled) { opacity: 0.75; }
 .nav-btn.disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.nav-btn--locked {
+  position: relative;
+}
+
+.nav-btn--locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 2px;
+  right: 18%;
+  font-size: 0.65rem;
+  filter: none;
+  opacity: 1;
 }
 
 .nav-btn:last-child { border-right: none; }

@@ -48,6 +48,27 @@ export function setActiveNav(screen) {
   });
 }
 
+const LOCKED_UNTIL_THRONE_1 = ['roster', 'embark', 'spells'];
+
+export async function refreshNavLock(player) {
+  const nav = document.getElementById('bottom-nav');
+  if (!nav || !player?.chat_id) return;
+  let throneLevel = 0;
+  try {
+    const structures = await api(`/structures?chat_id=${player.chat_id}`);
+    throneLevel = structures?.buildings_data?.slot_0?.level ?? 0;
+  } catch {
+    throneLevel = 0;
+  }
+  const locked = throneLevel < 1;
+  LOCKED_UNTIL_THRONE_1.forEach(screen => {
+    const btn = nav.querySelector(`.nav-btn[data-screen="${screen}"]`);
+    if (!btn) return;
+    btn.classList.toggle('disabled', locked);
+    btn.classList.toggle('nav-btn--locked', locked);
+  });
+}
+
 export async function refreshResourceBar(player) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;

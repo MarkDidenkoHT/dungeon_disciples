@@ -490,7 +490,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     const xpRequired = fullDef.xp;
     if (entry.is_hero) {
       const currentTier = fullDef.t ?? 1;
-      const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+      const throneLevel = structRows[0].buildings_data['slot_0']?.level ?? 0;
       if (currentTier >= HERO_MAX_LEVEL) return res.status(400).json({ error: 'Hero is already at max tier' });
       if (currentTier >= throneLevel) return res.status(400).json({ error: `Upgrade your Throne to level ${currentTier + 1} first` });
       if (xpRequired != null && unitData.current_xp < xpRequired) return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
@@ -545,8 +545,8 @@ router.post('/structures/throne/upgrade', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     const record    = rows[0];
     const buildings = record.buildings_data;
-    const throne    = buildings['slot_0'] || { level: 1, building_id: null };
-    const nextLevel = (throne.level || 1) + 1;
+    const throne    = buildings['slot_0'] || { level: 0, building_id: null };
+    const nextLevel = (throne.level ?? 0) + 1;
     if (nextLevel > HERO_MAX_LEVEL) return res.status(400).json({ error: 'Throne is already at max level' });
     const cost = THRONE_UPGRADE_COSTS[nextLevel];
     if (!cost) return res.status(400).json({ error: 'No cost defined for that level' });
@@ -1038,7 +1038,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const spell = factionSpells.find(s => s.id === spell_id);
     if (!spell) return res.status(404).json({ error: 'Spell not found for your faction' });
     const learned     = playerRows[0].learned_spells || [];
-    const throneLevel = structRows[0].buildings_data['slot_0']?.level || 1;
+    const throneLevel = structRows[0].buildings_data['slot_0']?.level ?? 0;
     const spellTier   = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });

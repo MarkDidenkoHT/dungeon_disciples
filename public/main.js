@@ -14,9 +14,10 @@ import {
   setNavigate,
   setActiveNav,
   refreshResourceBar,
+  refreshNavLock,
 } from './api.js';
 
-export { api, setSessionToken, setActiveNav, refreshResourceBar };
+export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
 
 const app = document.getElementById('app');
 
@@ -84,7 +85,10 @@ function navigate(screen, params = {}) {
   if (navEl) navEl.style.display = isBattle ? 'none' : '';
   if (resBarEl) resBarEl.style.display = isBattle ? 'none' : '';
 
-  if (player && !isBattle) refreshResourceBar(player).catch(() => {});
+  if (player && !isBattle) {
+    refreshResourceBar(player).catch(() => {});
+    refreshNavLock(player).catch(() => {});
+  }
 
   const root = document.getElementById('content-root');
 
