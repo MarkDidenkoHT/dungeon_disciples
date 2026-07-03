@@ -118,7 +118,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .faction-slide-content {
-  padding: 24px 20px 88px 20px;
+  padding: 12px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -164,14 +164,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 58px;
+  width: 60px;
 }
 
 .faction-roster-chip img {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 100px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
 }
