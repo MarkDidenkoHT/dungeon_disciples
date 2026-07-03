@@ -155,6 +155,84 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1.4;
 }
 
+.hero-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-select-card {
+  display: flex;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.hero-select-card:active {
+  border-color: var(--accent);
+}
+
+.hero-select-art {
+  flex-shrink: 0;
+  width: 84px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.hero-select-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-select-body h3 {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.hero-select-flavor {
+  font-size: 0.78rem;
+  color: var(--text);
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+.hero-select-stats {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.first-recruit-hint {
+  margin-top: 14px;
+  background: rgba(200, 151, 58, 0.08);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.first-recruit-hint-title {
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.first-recruit-hint-text {
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.9;
+}
+
 .screen-intro {
   height: 100%;
   flex: 1;
