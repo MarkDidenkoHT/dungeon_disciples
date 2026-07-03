@@ -4,16 +4,15 @@ import { UNITS }    from '../../data/units.js';
 import { preloadAssets } from '../utils.js';
 
 const UNIT_ART = new Set([
-  'e1', 'e21', 'e3', 'e4', 'e6',
+  'e1', 'e21', 'e3', 'e4', 'e6',  
   'd11', 'd41', 'd6', 'd31', 'd7',
   'gs12', 'gs311', 'gs6',
 ]);
 
-function tierOneHighlights(factionKey) {
+function getHighlights(factionKey) {
   return Object.values(UNITS[factionKey] ?? {})
-    .filter(u => u.t === 1 && UNIT_ART.has(u.id))
-    .map(u => ({ id: u.id, name: u.name }))
-    .slice(0, 4);
+    .filter(u => UNIT_ART.has(u.id))
+    .map(u => ({ id: u.id, name: u.name }));
 }
 
 const FACTIONS = [
@@ -23,7 +22,7 @@ const FACTIONS = [
     tagline: 'Defenders of the realm, forged in honor.',
     description: 'Disciplined knights, holy casters, and battlefield engineers stand together behind shield and oath. The Empire rewards a steady front line and righteous retribution.',
     bg: '/assets/screens/empire.jpg',
-    highlights: tierOneHighlights('empire'),
+    highlights: getHighlights('empire'),
   },
   {
     id: 'choir_of_the_cursed',
@@ -31,7 +30,7 @@ const FACTIONS = [
     tagline: 'Creatures of darkness, bound by ambition.',
     description: 'Demons, puppets, and courtly schemers serve a hierarchy built on hunger and dread. The Choir thrives on frenzy, sacrifice, and turning enemy strength against itself.',
     bg: '/assets/screens/choir.jpg',
-    highlights: tierOneHighlights('choir_of_the_cursed'),
+    highlights: getHighlights('choir_of_the_cursed'),
   },
   {
     id: 'grail_of_sorrow',
@@ -39,7 +38,7 @@ const FACTIONS = [
     tagline: 'The undying faithful, bound to the sacred grail.',
     description: 'The risen dead, siege constructs, and grieving spirits march for a relic that promises resurrection without end. The Grail wears down its foes through attrition and undeath.',
     bg: '/assets/screens/grail.jpg',
-    highlights: tierOneHighlights('grail_of_sorrow'),
+    highlights: getHighlights('grail_of_sorrow'),
   },
 ];
 
@@ -125,7 +124,7 @@ export function renderRegister(root, { player } = {}) {
       const all = await api('/heroes');
       const prefixMap = { empire: 'h_e_', choir_of_the_cursed: 'h_d_', grail_of_sorrow: 'h_g_' };
       const factionPrefix = prefixMap[selectedFaction.id] ?? 'h_e_';
-      heroes = all.filter(h => h.id.startsWith(factionPrefix) && h.t === 1);
+      heroes = all.filter(h => h.id.startsWith(factionPrefix));
       await preloadAssets(heroes.map(h => `/assets/character_art/${h.id}.png`));
       showHeroStep();
     } catch (err) {
