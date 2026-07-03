@@ -2,6 +2,7 @@ import { api }              from '../api.js';
 import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
@@ -389,6 +390,13 @@ export function renderCastle(root, { player }) {
     root.querySelectorAll('.castle-node').forEach(node => {
       node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
     });
+
+    if (throneLevel < 1 && !isTutorialDone(player, 'throne_upgrade')) {
+      const throneEl = root.querySelector('.castle-node[data-slot="slot_0"]');
+      showTutorialSpotlight(player, 'throne_upgrade', throneEl);
+    } else {
+      hideTutorial();
+    }
   }
 
   function getMercBuildingDef(buildingId) {
@@ -513,6 +521,7 @@ export function renderCastle(root, { player }) {
         renderBuildings();
         refreshResourceBar(player).catch(() => {});
         refreshNavLock(player).catch(() => {});
+        if (nextLevel >= 1) markTutorialDone(player, 'throne_upgrade');
       } catch (err) {
         alert(err.message || 'Throne upgrade failed');
       }

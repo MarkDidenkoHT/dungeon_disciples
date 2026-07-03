@@ -85,6 +85,76 @@ button {
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button:active:not(:disabled) { opacity: 0.75; }
 
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  pointer-events: none;
+}
+
+.tutorial-blocker {
+  position: fixed;
+  background: rgba(6, 6, 10, 0.82);
+  pointer-events: auto;
+}
+
+.tutorial-ring {
+  position: fixed;
+  border-radius: 14px;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.25), 0 0 18px 4px rgba(200, 151, 58, 0.5);
+  pointer-events: none;
+  animation: tutorial-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.25), 0 0 18px 4px rgba(200, 151, 58, 0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(200, 151, 58, 0.15), 0 0 26px 8px rgba(200, 151, 58, 0.65); }
+}
+
+.tutorial-bubble {
+  position: fixed;
+  z-index: 5001;
+  max-width: 260px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+.tutorial-bubble::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+}
+
+.tutorial-bubble--below::before {
+  top: -16px;
+  border-bottom-color: var(--accent);
+}
+
+.tutorial-bubble--above::before {
+  bottom: -16px;
+  border-top-color: var(--accent);
+}
+
+.tutorial-bubble-title {
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.tutorial-bubble-text {
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .screen-faction-slider {
   position: relative;
   height: 100%;

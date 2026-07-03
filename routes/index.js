@@ -356,6 +356,25 @@ router.post('/player/settings', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/player/tutorials', requireAuth, async (req, res) => {
+  const { player_id, chat_id, tutorials } = req.body;
+  if (!player_id || !chat_id || !tutorials || typeof tutorials !== 'object') {
+    return res.status(400).json({ error: 'player_id, chat_id, and tutorials required' });
+  }
+  try {
+    const existing = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=tutorials&limit=1`);
+    if (!existing.length) return res.status(404).json({ error: 'Player not found' });
+    const mergedTutorials = { ...(existing[0].tutorials || {}), ...tutorials };
+    const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ tutorials: mergedTutorials }),
+    });
+    res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/heroes', (req, res) => {
   const heroes = HERO_IDS.map(id => getUnitByDataId(id)).filter(Boolean);
   res.json(heroes);
