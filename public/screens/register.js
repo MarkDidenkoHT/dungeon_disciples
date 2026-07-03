@@ -4,7 +4,7 @@ import { UNITS }    from '../../data/units.js';
 import { preloadAssets } from '../utils.js';
 
 const UNIT_ART = new Set([
-  'e1', 'e21', 'e3', 'e4', 'e6',  
+  'e1', 'e21', 'e3', 'e4', 'e6',
   'd11', 'd41', 'd6', 'd31', 'd7',
   'gs12', 'gs311', 'gs6',
 ]);
@@ -12,7 +12,8 @@ const UNIT_ART = new Set([
 function getHighlights(factionKey) {
   return Object.values(UNITS[factionKey] ?? {})
     .filter(u => UNIT_ART.has(u.id))
-    .map(u => ({ id: u.id, name: u.name }));
+    .map(u => ({ id: u.id, name: u.name }))
+    .slice(0, 4);
 }
 
 const FACTIONS = [
@@ -57,7 +58,22 @@ export function renderRegister(root, { player } = {}) {
   let heroes          = [];
   let activeIndex      = 0;
 
-  showFactionStep();
+  showIntroStep();
+
+  function showIntroStep() {
+    root.innerHTML = `
+      <div class="screen screen-intro" style="background-image: linear-gradient(180deg, rgba(10,10,14,0.35) 0%, rgba(10,10,14,0.75) 60%, rgba(10,10,14,0.96) 100%), url('/assets/screens/embark.jpg')">
+        <div class="intro-content">
+          <div class="intro-title">A Realm Divided</div>
+          <p class="intro-text">The old order has fallen. Where a single crown once held dominion, three powers now claw for what remains.</p>
+          <p class="intro-text">At the heart of the conflict lies a fractured relic — a vessel said to grant dominion over life, death, and the space between. Empire, Choir, and Grail each stake a rightful claim to its power, and none will yield.</p>
+          <p class="intro-text">You are a Disciple, bound to serve one banner in the dungeons and battlefields ahead. Choose wisely — your faction shapes not only your allies, but the fate of the realm.</p>
+          <button class="intro-continue-btn" id="intro-continue-btn">Choose Your Path</button>
+        </div>
+      </div>
+    `;
+    root.querySelector('#intro-continue-btn').addEventListener('click', showFactionStep);
+  }
 
   function showFactionStep() {
     root.innerHTML = `
@@ -124,7 +140,7 @@ export function renderRegister(root, { player } = {}) {
       const all = await api('/heroes');
       const prefixMap = { empire: 'h_e_', choir_of_the_cursed: 'h_d_', grail_of_sorrow: 'h_g_' };
       const factionPrefix = prefixMap[selectedFaction.id] ?? 'h_e_';
-      heroes = all.filter(h => h.id.startsWith(factionPrefix));
+      heroes = all.filter(h => h.id.startsWith(factionPrefix) && h.t === 1);
       await preloadAssets(heroes.map(h => `/assets/character_art/${h.id}.png`));
       showHeroStep();
     } catch (err) {

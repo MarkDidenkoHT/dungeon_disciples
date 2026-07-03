@@ -155,6 +155,43 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1.4;
 }
 
+.screen-intro {
+  height: 100%;
+  flex: 1;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  overflow-y: auto;
+}
+
+.intro-content {
+  padding: 24px 16px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.intro-title {
+  font-size: 1.6rem;
+  color: var(--accent);
+  font-weight: bold;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+.intro-text {
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.55;
+  opacity: 0.9;
+}
+
+.intro-continue-btn {
+  margin-top: 8px;
+  width: 100%;
+}
+
 .screen-faction-slider {
   position: relative;
   height: 100%;
@@ -234,12 +271,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 60px;
+  width: 90px;
 }
 
 .faction-roster-chip img {
-  width: 60px;
-  height: 100px;
+  width: 90px;
+  height: 150px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -260,7 +297,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .faction-slider-dots {
   position: absolute;
-  bottom: 20px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
