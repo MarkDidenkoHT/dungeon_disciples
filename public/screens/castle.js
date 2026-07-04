@@ -126,9 +126,15 @@ export function renderCastle(root, { player }) {
   }
 
   function buildUnitCard(unit, opts = {}) {
-    if (!unit) return `<div class="unit-card"><p class="placeholder">Unknown unit</p></div>`;
-
     const { buildingLabel = '', compareUnit = null } = opts;
+
+    if (!unit) {
+      return `
+        <div class="unit-card unit-card--building">
+          <div class="building-card-icon">⚔</div>
+          <div class="building-card-label">${buildingLabel}</div>
+        </div>`;
+    }
     const tags     = (unit.tags || []).filter(Boolean);
     const tagLeft  = tags[0] || '';
     const tagRight = tags[1] || '';
