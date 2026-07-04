@@ -1697,7 +1697,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-main-row .unit-portrait {
   flex: 1;
   min-width: 0;
-  height: 38vh;
+  height: 50vh;
   border-radius: 10px;
 }
 

@@ -6,6 +6,8 @@ import {
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, applyBackground,
+  renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
+  getActionLabel,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -40,19 +42,6 @@ export function renderRoster(root, { player }) {
 
   function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
 
-  function getActionLabel(actionKey) {
-    if (!actionKey) return '—';
-    const k = typeof actionKey === 'string' ? actionKey : (actionKey.id || '');
-    const map = {
-      attack:     'Attack',
-      heal:       'Heal',
-      repair:     'Repair',
-      'mend flesh': 'Mend Flesh',
-      sacrifice:  'Sacrifice',
-    };
-    return map[k.toLowerCase()] || cap(k);
-  }
-
   function buildCard(u) {
     const stored   = u.unit_data || {};
     const def      = resolveUnitDef(u);
@@ -60,22 +49,14 @@ export function renderRoster(root, { player }) {
     const unitId   = stored.unit_id || '';
     const unitName = def?.name ?? unitId;
 
-    const portraitId  = unitId.match(/^(h_[a-z]_\d)/) ? unitId.match(/^(h_[a-z]_\d)/)[1] : unitId;
-    const portraitSrc = unitId ? `/assets/character_art/${portraitId}.png` : null;
-
-    const res       = def?.resistances || {};
     const tier      = def?.t ?? 1;
     const tierLabel = isHero ? `Hero Lv ${tier}` : `Lv ${tier}`;
-
-    const tags     = (def?.tags || []).filter(Boolean);
-    const tagLeft  = tags[0] || '';
-    const tagRight = tags[1] || '';
 
     const currentXp  = stored.current_xp ?? 0;
     const currentHp  = stored.current_hp != null ? stored.current_hp : (def?.hp ?? '—');
     const maxHp      = stored.max_hp != null ? stored.max_hp : (def?.hp ?? '—');
     const alive      = stored.alive !== false;
-    const throneLevel = buildingsData['slot_0']?.level || 1;
+    const throneLevel = buildingsData['slot_0']?.level ?? 0;
 
     let heroPathsForUnit = [];
     if (isHero) {
@@ -110,61 +91,17 @@ export function renderRoster(root, { player }) {
 
     const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
-    const portraitHtml = `
-      <div class="unit-portrait">
-        <img
-          src="${portraitSrc || ''}"
-          alt="${unitName}"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-        >
-        <div class="unit-portrait-fallback" style="display:none;">
-          <span>${unitId || unitName}</span>
-        </div>
-        ${alive ? '' : '<div class="unit-dead-overlay">Dead</div>'}
-        <div class="unit-identity-bar">
-          <div class="unit-identity-main">
-            <span class="unit-name">${unitName}</span>
-            <span class="unit-level-text">${tierLabel}</span>
-          </div>
-          <div class="unit-identity-tags">
-            ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
-            ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
-          </div>
-        </div>
-      </div>`;
+    const liveUnit = {
+      ...(def || {}),
+      id:   unitId || def?.id,
+      name: unitName,
+      hp:   `${currentHp}/${maxHp}`,
+      xp:   currentXp,
+    };
 
-    const actionRaw   = def?.action;
-    const actionLabel = getActionLabel(actionRaw);
-    const power       = def?.action_power ?? def?.action?.value ?? '—';
-
-    const coreHtml = `
-      <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}/${maxHp}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
-        <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${currentXp}</span></div>
-      </div>`;
-
-    const armorVal = def?.armor ?? 0;
-    const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
-    const armorCell = `
-      <div class="resist-cell" title="Armor" data-armor="${armorVal}">
-        <span class="resist-icon">🛡</span>
-        <span class="resist-val ${armorCls}">${armorVal}</span>
-      </div>`;
-
-    const resistCells = RESIST_ORDER.map(r => {
-      const info = RESIST_ICONS[r];
-      const val  = res[r] ?? 0;
-      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
-      return `<div class="resist-cell" title="${info.label}">
-        <span class="resist-icon">${info.icon}</span>
-        <span class="resist-val ${cls}">${val}</span>
-      </div>`;
-    }).join('');
-
-    const resistsHtml = `<div class="unit-resists-grid">${armorCell}${resistCells}</div>`;
+    const portraitHtml = renderUnitPortrait(liveUnit, { badge: alive ? tierLabel : '💀 Dead' });
+    const coreHtml      = renderUnitCoreStatsColumn(liveUnit);
+    const resistsHtml   = renderUnitResistColumn(liveUnit);
 
     const resurrectionSpell = SPELLS[player.faction]?.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
     const resurrectionCost = resurrectionSpell
@@ -233,49 +170,18 @@ export function renderRoster(root, { player }) {
         </div>`;
     }
 
-    function abilityIconHtml(key, type) {
-      const aDef    = resolveAbility(key);
-      const isEmpty = !aDef;
-      const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.jpg` : null;
-      return `
-        <button
-          class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
-          data-ability-key="${key || ''}"
-          data-ability-type="${type}"
-          ${isEmpty ? 'disabled' : ''}
-        >
-          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${aDef.name}" onerror="this.style.visibility='hidden'">` : ''}
-        </button>`;
-    }
-
-    const passiveKeys = Array.isArray(def?.passive)
-      ? def.passive.filter(Boolean)
-      : (def?.passive ? [def.passive] : []);
-
-    const iconsHtml = [
-      def?.ability     ? abilityIconHtml(def.ability,     'active')  : abilityIconHtml('', 'empty'),
-      passiveKeys[0]   ? abilityIconHtml(passiveKeys[0],  'passive') : abilityIconHtml('', 'empty'),
-      passiveKeys[1]   ? abilityIconHtml(passiveKeys[1],  'passive') : abilityIconHtml('', 'empty'),
-      passiveKeys[2]   ? abilityIconHtml(passiveKeys[2],  'passive') : abilityIconHtml('', 'empty'),
-    ].join('');
-
-    const abilitiesHtml = `
-      <div class="unit-abilities-row">
-        <div class="unit-abilities-icons">
-          ${iconsHtml}
-        </div>
-      </div>`;
+    const abilitiesHtml = renderUnitAbilitiesRow(liveUnit);
 
     return `
       <div class="roster-slide">
         <div class="unit-card ${alive ? '' : 'unit-card--dead'}">
-          ${portraitHtml}
-          <div class="unit-info">
+          <div class="unit-main-row">
             ${coreHtml}
-            
-            ${resurrectButtonHtml}
+            ${portraitHtml}
             ${resistsHtml}
+          </div>
+          <div class="unit-info">
+            ${resurrectButtonHtml}
             ${levelUpHtml}
             ${abilitiesHtml}
           </div>

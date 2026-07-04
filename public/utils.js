@@ -139,25 +139,31 @@ export function getActionLabel(actionKey) {
   return map[k.toLowerCase()] || cap(k);
 }
 
-export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '' } = opts;
+export function renderUnitAbilityIcon(key, type) {
+  const def     = resolveAbility(key);
+  const isEmpty = !def;
+  const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
+  const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+  return `
+    <button
+      class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
+      data-ability-key="${key || ''}"
+      data-ability-type="${type}"
+      ${isEmpty ? 'disabled' : ''}
+    >
+      ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
+    </button>`;
+}
 
-  if (!unit) {
-    return `
-      <div class="unit-card unit-card--building">
-        <div class="building-card-icon">⚔</div>
-        <div class="building-card-label">${buildingLabel}</div>
-      </div>`;
-  }
-
+export function renderUnitPortrait(unit, opts = {}) {
+  const { badge = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
   const tagLeft  = tags[0] || '';
   const tagRight = tags[1] || '';
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
   const portrait = `/assets/character_art/${portraitId}.png`;
-  const res      = unit.resistances || {};
 
-  const portraitHtml = `
+  return `
     <div class="unit-portrait">
       <img
         src="${portrait}"
@@ -178,11 +184,13 @@ export function buildUnitCard(unit, opts = {}) {
         </div>
       </div>
     </div>`;
+}
 
+export function renderUnitCoreStatsColumn(unit) {
   const actionLabel = getActionLabel(unit.action);
   const power       = unit.action_power ?? unit.action?.value ?? '—';
 
-  const coreColumnHtml = `
+  return `
     <div class="unit-core-stats unit-core-stats--side">
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
@@ -190,28 +198,10 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
     </div>`;
+}
 
-  const STAT_MAP = [
-    { label: 'HP',      key: 'hp'           },
-    { label: 'Armor',   key: 'armor'        },
-    { label: 'Init',    key: 'initiative'   },
-    { label: 'Power',   key: 'action_power' },
-    { label: 'Targets', key: 'targets'      },
-    { label: 'Range',   key: 'range'        },
-  ];
-
-  let diffHtml = '';
-  if (compareUnit) {
-    const chips = STAT_MAP
-      .map(s => ({ label: s.label, diff: (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0) }))
-      .filter(d => d.diff !== 0)
-      .map(d => {
-        const cls = d.diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
-        return `<span class="stat-diff-chip ${cls}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
-      });
-    if (chips.length) diffHtml = `<div class="unit-stat-diffs">${chips.join('')}</div>`;
-  }
-
+export function renderUnitResistColumn(unit) {
+  const res      = unit.resistances || {};
   const armorVal = unit.armor ?? 0;
   const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
   const armorCell = `
@@ -230,57 +220,75 @@ export function buildUnitCard(unit, opts = {}) {
     </div>`;
   }).join('');
 
-  const resistColumnHtml = `<div class="unit-resists-grid unit-resists-grid--side">${armorCell}${resistCells}</div>`;
+  return `<div class="unit-resists-grid unit-resists-grid--side">${armorCell}${resistCells}</div>`;
+}
 
-  const descHtml = unit.description
-    ? `<p class="unit-slide-desc">${unit.description}</p>`
-    : '';
-
-  function abilityIconHtml(key, type) {
-    const def     = resolveAbility(key);
-    const isEmpty = !def;
-    const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-    const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.jpg` : null;
-    return `
-      <button
-        class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
-        data-ability-key="${key || ''}"
-        data-ability-type="${type}"
-        ${isEmpty ? 'disabled' : ''}
-      >
-        ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
-      </button>`;
-  }
-
+export function renderUnitAbilitiesRow(unit) {
   const passiveKeys = Array.isArray(unit.passive)
     ? unit.passive.filter(Boolean)
     : (unit.passive ? [unit.passive] : []);
 
   const iconsHtml = [
-    unit.ability   ? abilityIconHtml(unit.ability,   'active')  : abilityIconHtml('', 'empty'),
-    passiveKeys[0] ? abilityIconHtml(passiveKeys[0], 'passive') : abilityIconHtml('', 'empty'),
-    passiveKeys[1] ? abilityIconHtml(passiveKeys[1], 'passive') : abilityIconHtml('', 'empty'),
-    passiveKeys[2] ? abilityIconHtml(passiveKeys[2], 'passive') : abilityIconHtml('', 'empty'),
+    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active')  : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive') : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive') : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive') : renderUnitAbilityIcon('', 'empty'),
   ].join('');
 
-  const abilitiesHtml = `
+  return `
     <div class="unit-abilities-row">
       <div class="unit-abilities-icons">
         ${iconsHtml}
       </div>
     </div>`;
+}
+
+export function renderUnitStatDiffs(unit, compareUnit) {
+  if (!compareUnit) return '';
+  const STAT_MAP = [
+    { label: 'HP',      key: 'hp'           },
+    { label: 'Armor',   key: 'armor'        },
+    { label: 'Init',    key: 'initiative'   },
+    { label: 'Power',   key: 'action_power' },
+    { label: 'Targets', key: 'targets'      },
+    { label: 'Range',   key: 'range'        },
+  ];
+  const chips = STAT_MAP
+    .map(s => ({ label: s.label, diff: (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0) }))
+    .filter(d => d.diff !== 0)
+    .map(d => {
+      const cls = d.diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
+      return `<span class="stat-diff-chip ${cls}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
+    });
+  return chips.length ? `<div class="unit-stat-diffs">${chips.join('')}</div>` : '';
+}
+
+export function buildUnitCard(unit, opts = {}) {
+  const { buildingLabel = '', compareUnit = null, badge = '' } = opts;
+
+  if (!unit) {
+    return `
+      <div class="unit-card unit-card--building">
+        <div class="building-card-icon">⚔</div>
+        <div class="building-card-label">${buildingLabel}</div>
+      </div>`;
+  }
+
+  const descHtml = unit.description
+    ? `<p class="unit-slide-desc">${unit.description}</p>`
+    : '';
 
   return `
     <div class="unit-card">
       <div class="unit-main-row">
-        ${coreColumnHtml}
-        ${portraitHtml}
-        ${resistColumnHtml}
+        ${renderUnitCoreStatsColumn(unit)}
+        ${renderUnitPortrait(unit, { badge })}
+        ${renderUnitResistColumn(unit)}
       </div>
       <div class="unit-info">
-        ${diffHtml}
+        ${renderUnitStatDiffs(unit, compareUnit)}
         ${descHtml}
-        ${abilitiesHtml}
+        ${renderUnitAbilitiesRow(unit)}
       </div>
     </div>`;
 }

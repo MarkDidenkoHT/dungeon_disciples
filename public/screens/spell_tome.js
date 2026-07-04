@@ -247,7 +247,7 @@ export function renderSpellTome(root, { player }) {
         api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       ]);
 
-      throneLevel   = structData?.buildings_data?.slot_0?.level || 1;
+      throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
       hasMageGuild  = Object.values(structData?.buildings_data || {}).some(s => s.building_id === 'mage_guild');
       learnedSpells = Array.isArray(researchData)
         ? researchData
