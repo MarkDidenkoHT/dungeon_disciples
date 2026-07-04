@@ -107,7 +107,7 @@ const SPELLS = {
       params: { intercept_chance_pct: 25, armor_boost: 10 }
     },
     {
-      id: 'e_spell_9',
+      id: 'e_spell_9', //replace
       name: 'Wrath of Heaven',
       rank: 3,
       tier: 3,
@@ -120,7 +120,7 @@ const SPELLS = {
       params: { initiative_reduction: 0.20, max_hp_reduction: 0.15 }
     },
     {
-      id: 'e_spell_10',
+      id: 'e_spell_10', //replace
       name: 'Empyrean Blessing',
       rank: 4,
       tier: 4,
@@ -133,7 +133,7 @@ const SPELLS = {
       params: { armor_boost: 25, resistances: { life: 20 } }
     },
     {
-      id: 'e_spell_11',
+      id: 'e_spell_11', //replace
       name: 'Wrath of the Heavens',
       rank: 4,
       tier: 4,
@@ -146,7 +146,7 @@ const SPELLS = {
       params: { max_hp_reduction: 0.30, armor_reduction: 0.25 }
     },
     {
-      id: 'e_spell_12',
+      id: 'e_spell_12', //replace
       name: 'Avatar of Light',
       rank: 4,
       tier: 4,
@@ -189,7 +189,7 @@ const SPELLS = {
       params: { heal_pct: 0.5 }
     },
     {
-      id: 'd_spell_3',
+      id: 'd_spell_3', //replace
       name: 'Blood Frenzy',
       rank: 1,
       tier: 1,
@@ -216,7 +216,7 @@ const SPELLS = {
     },
 
     {
-      id: 'd_spell_5',
+      id: 'd_spell_5', //replace
       name: 'Bone Armor',
       rank: 2,
       tier: 2,
@@ -242,7 +242,7 @@ const SPELLS = {
       params: { cancels_opponent_tier: 2 }
     },
     {
-      id: 'd_spell_7',
+      id: 'd_spell_7', //reaplace
       name: 'Soul Rend',
       rank: 3,
       tier: 3,
@@ -268,7 +268,7 @@ const SPELLS = {
       params: { trigger_round: 1, strip_passives: true }
     },
     {
-      id: 'd_spell_9',
+      id: 'd_spell_9', //replace
       name: 'Mass Frenzy',
       rank: 3,
       tier: 3,
@@ -281,7 +281,7 @@ const SPELLS = {
       params: { damage_boost: 0.20 }
     },
     {
-      id: 'd_spell_10',
+      id: 'd_spell_10', //replace
       name: 'Eternal Night',
       rank: 4,
       tier: 4,
@@ -294,7 +294,7 @@ const SPELLS = {
       params: { lifesteal: 0.20, resistances: { death: 20 } }
     },
     {
-      id: 'd_spell_11',
+      id: 'd_spell_11', //replace
       name: 'Plague of Despair',
       rank: 4,
       tier: 4,
@@ -307,7 +307,7 @@ const SPELLS = {
       params: { max_hp_reduction: 0.30, initiative_reduction: 0.20 }
     },
     {
-      id: 'd_spell_12',
+      id: 'd_spell_12', //replace
       name: 'Cursed Ascendance',
       rank: 4,
       tier: 4,
@@ -337,7 +337,7 @@ const SPELLS = {
       params: { resurrect: true }
     },
     {
-      id: 'g_spell_2',
+      id: 'g_spell_2', //rename
       name: 'Ember Mending',
       rank: 1,
       tier: 1,
@@ -350,7 +350,7 @@ const SPELLS = {
       params: { heal_pct: 0.5 }
     },
     {
-      id: 'g_spell_3',
+      id: 'g_spell_3', //replace
       name: "Sorrow's Haste",
       rank: 1,
       tier: 1,
@@ -402,7 +402,7 @@ const SPELLS = {
       params: { cancels_opponent_effect_type: 'buff' }
     },
     {
-      id: 'g_spell_7',
+      id: 'g_spell_7', //replace
       name: "Grail's Fury",
       rank: 3,
       tier: 3,
@@ -428,7 +428,7 @@ const SPELLS = {
       params: { trigger_round: 1, locks_active_abilities: true }
     },
     {
-      id: 'g_spell_9',
+      id: 'g_spell_9', //replace
       name: 'Searing Decay',
       rank: 3,
       tier: 3,
@@ -441,7 +441,7 @@ const SPELLS = {
       params: { armor_reduction: 0.20, max_hp_reduction: 0.15 }
     },
     {
-      id: 'g_spell_10',
+      id: 'g_spell_10', //replace
       name: 'Eternal Flame',
       rank: 4,
       tier: 4,
@@ -454,7 +454,7 @@ const SPELLS = {
       params: { damage_boost: 0.25, resistances: { fire: 20 } }
     },
     {
-      id: 'g_spell_11',
+      id: 'g_spell_11', //replace
       name: 'Temporal Collapse',
       rank: 4,
       tier: 4,
@@ -467,7 +467,7 @@ const SPELLS = {
       params: { initiative_reduction: 0.40, armor_reduction: 0.25 }
     },
     {
-      id: 'g_spell_12',
+      id: 'g_spell_12', //replace
       name: "Grail's Ascension",
       rank: 4,
       tier: 4,
