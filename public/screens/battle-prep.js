@@ -1061,7 +1061,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         api(`/roster?chat_id=${player.chat_id}`),
       ]);
 
-      roster = rosterData.map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }));
+      roster = rosterData
+        .map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }))
+        .sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
 
       const heroUnit = roster.find(u => u.is_hero === true);
       heroId     = heroUnit?.id ?? null;

@@ -282,7 +282,7 @@ export function renderRoster(root, { player }) {
       try {
         await api('/roster/resurrect', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
         const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
-        units = freshUnits;
+        units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
         await refreshResourceBar(player).catch(() => {});
         const savedIdx = current;
         initSlider();
@@ -367,7 +367,7 @@ export function renderRoster(root, { player }) {
       api('/buildings').catch(() => null),
     ]);
 
-    units         = fetchedUnits;
+    units         = fetchedUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
     buildingsData = structRes?.buildings_data  || {};
     upgradePaths  = buildingRes?.upgrade_paths || {};
 
