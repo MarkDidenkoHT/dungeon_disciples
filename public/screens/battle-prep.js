@@ -7,7 +7,7 @@ import {
   cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody,
-  playPageTurnSound,
+  playPageTurnSound, buildUnitCard,
 } from '../utils.js';
 
 const REGION_META = {
@@ -254,122 +254,22 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function unitDetailHtml(unit) {
     const def    = resolveUnitDef(unit);
+    if (!def) return renderModalContent('Unit data unavailable.');
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
-    const portraitUrl = getPortraitUrl(unit);
-    const currentHp = stored.current_hp != null ? stored.current_hp : (def?.hp ?? '—');
-    const maxHp     = stored.max_hp != null ? stored.max_hp : (def?.hp ?? '—');
+    const currentHp = stored.current_hp != null ? stored.current_hp : (def.hp ?? '—');
+    const maxHp     = stored.max_hp != null ? stored.max_hp : (def.hp ?? '—');
     const alive     = stored.alive !== false;
-    const res        = def?.resistances || {};
 
-    const coreHtml = `
-      <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${currentHp}/${maxHp}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${def?.armor ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${def?.initiative ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${stored.current_xp ?? 0}</span></div>
-      </div>
-      ${alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`}
-    `;
+    const liveUnit = { ...def, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
+    const badge    = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
+    const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`;
 
-    const resistCells = RESIST_ORDER.map(r => {
-      const info = RESIST_ICONS[r];
-      const val  = res[r] ?? 0;
-      const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
-      return `<div class="resist-cell" title="${info.label}">
-        <span class="resist-icon">${info.icon}</span>
-        <span class="resist-val ${cls}">${val}</span>
-      </div>`;
-    }).join('');
-
-    const resistsHtml = `<div class="unit-resists-grid">${resistCells}</div>`;
-
-    function abilityIconHtml(key, type) {
-      const aDef    = resolveAbility(key);
-      const isEmpty = !aDef;
-      const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-      const imgSrc  = aDef ? `/assets/icons/abilities/${fileKey}.jpg` : null;
-      return `
-        <button
-          class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
-          data-ability-key="${key || ''}"
-          data-ability-type="${type}"
-          ${isEmpty ? 'disabled' : ''}
-        >
-          ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${aDef.name}" onerror="this.style.visibility='hidden'">` : ''}
-        </button>`;
-    }
-
-    const passiveSlots = [];
-    if (def?.passive) {
-      if (Array.isArray(def.passive)) {
-        for (const p of def.passive) passiveSlots.push(p);
-      } else {
-        passiveSlots.push(def.passive);
-      }
-    }
-    const activeSlot = def?.ability || null;
-    const visible = [
-      activeSlot,
-      passiveSlots[0] || null,
-      passiveSlots[1] || null,
-      passiveSlots[2] || null,
-    ];
-
-    const iconsHtml = visible.map((k, i) => {
-      if (!k) return abilityIconHtml('', 'empty');
-      const t = i === 0 ? 'active' : 'passive';
-      return abilityIconHtml(k, t);
-    }).join('');
-
-    const abilitiesHtml = `
-      <div class="unit-abilities-row">
-        <div class="unit-abilities-icons">
-          ${iconsHtml}
-        </div>
-      </div>
-    `;
-
-    const name  = def?.name ?? stored.unit_id ?? '?';
-    const tier  = def?.t ?? 1;
-    const badge = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
-
-    return `
-      <div class="detail-unit-header">
-        ${portraitUrl ? `<img class="detail-unit-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
-        <div class="detail-unit-info">
-          <span class="detail-unit-name">${name}</span>
-          <span class="detail-unit-badge">${badge}</span>
-          ${isHero ? `<span class="detail-unit-tier">Lv ${tier}</span>` : `<span class="detail-unit-tier">Tier ${tier}</span>`}
-        </div>
-      </div>
-      ${coreHtml}
-      ${resistsHtml}
-      ${abilitiesHtml}
-    `;
+    return buildUnitCard(liveUnit, { badge }) + deadHtml;
   }
 
   function enemyDetailHtml(e) {
-    return `
-      <div class="detail-unit-header">
-        <span class="detail-unit-name">${e.name}</span>
-        <span class="detail-unit-badge detail-unit-badge--enemy">Enemy</span>
-      </div>
-      <div class="unit-core-stats">
-        <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${e.hp}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Armor</span><span class="core-stat-val">${e.armor ?? '—'}</span></div>
-        <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${e.initiative ?? '—'}</span></div>
-      </div>
-      ${e.action ? `
-      <div class="detail-action">
-        <span class="detail-action-label">Basic Action</span>
-        <div class="unit-core-stats">
-          <div class="core-stat"><span class="core-stat-label">DMG</span><span class="core-stat-val">${e.action.value ?? '—'}</span></div>
-          <div class="core-stat"><span class="core-stat-label">Range</span><span class="core-stat-val">${e.action.range ?? '—'}</span></div>
-          <div class="core-stat"><span class="core-stat-label">Target</span><span class="core-stat-val">${e.action.target_type ?? '—'}</span></div>
-        </div>
-      </div>` : ''}
-    `;
+    return buildUnitCard(e, { badge: 'Enemy' });
   }
 
   function spellTargetLabel(spell) {
