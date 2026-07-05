@@ -1188,7 +1188,7 @@ const UNITS = {
       id: 'h_g_1',
       name: 'Mourning Prophet',
       f: 'g', t: 1, size: 'tile',
-      tags: ['Caster', null],
+      tags: ['Caster', 'Vampire'],
       hp: 55, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
@@ -1200,7 +1200,7 @@ const UNITS = {
       id: 'h_g_1_a2',
       name: 'Mourning Prophet',
       f: 'g', t: 2, size: 'tile',
-      tags: ['Caster', 'Zombie'],
+      tags: ['Caster', 'Vampire'],
       hp: 80, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
@@ -1224,7 +1224,7 @@ const UNITS = {
       id: 'h_g_1_a3',
       name: 'Mourning Prophet',
       f: 'g', t: 3, size: 'tile',
-      tags: ['Caster', 'Zombie'],
+      tags: ['Caster', 'Vampire'],
       hp: 95, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
@@ -1248,7 +1248,7 @@ const UNITS = {
       id: 'h_g_1_a41',
       name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Caster', 'Vampire'],
       hp: 115, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
@@ -1260,7 +1260,7 @@ const UNITS = {
       id: 'h_g_1_a42',
       name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Caster', 'Vampire'],
       hp: 115, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 3, range: 3,
@@ -1272,7 +1272,7 @@ const UNITS = {
       id: 'h_g_1_b41',
       name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Caster', 'Vampire'],
       hp: 108, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
@@ -1284,7 +1284,7 @@ const UNITS = {
       id: 'h_g_1_b42',
       name: 'Mourning Prophet',
       f: 'g', t: 4, size: 'tile',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Caster', 'Vampire'],
       hp: 108, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 6,
@@ -1301,7 +1301,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 12,
-      passive: 'protector 1', ability: 'sacrament_of_flesh 1',
+      passive: 'protector 1', ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 105
     },
     grail_warden_path_a_t2: {
@@ -1313,7 +1313,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16,
-      passive: ['protector 1', 'unbreakable 1'], ability: 'sacrament_of_flesh 1',
+      passive: ['protector 1', 'unbreakable 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 315
     },
     grail_warden_path_a_t3: {
@@ -1325,7 +1325,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: ['protector 2', 'unbreakable 1'], ability: 'sacrament_of_flesh 1',
+      passive: ['protector 2', 'unbreakable 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 580
     },
     grail_warden_path_a_t4: {
@@ -1337,7 +1337,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24,
-      passive: ['protector 2', 'unbreakable 1', 'aura_of_decay 1'], ability: 'sacrament_of_flesh 1',
+      passive: ['protector 2', 'unbreakable 1', 'aura_of_decay 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_a_t4_alt: {
@@ -1349,7 +1349,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24,
-      passive: ['protector 2', 'unbreakable 1', 'thorns 1'], ability: 'sacrament_of_flesh 1',
+      passive: ['protector 2', 'unbreakable 1', 'thorns 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_b_t2: {
@@ -1517,7 +1517,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 10,
-      xp: 80, passive: 'poison 1', ability: 'sacrament_of_flesh 1',
+      xp: 80, passive: 'poison 1', ability: 'shared_suffering 1',
     },
     poisonous_ghoul: {
       id: 'gs11', f: 'g', t: 2,
@@ -1528,7 +1528,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 15,
-      xp: 280, passive: ['poison 1', 'infect 1'], ability: 'sacrament_of_flesh 1',
+      xp: 280, passive: ['poison 1', 'infect 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
       id: 'gs111', f: 'g', t: 3,
@@ -1539,7 +1539,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 20,
-      xp: 420, passive: ['poison 1', 'infect 1', 'regenerate 1'], ability: 'sacrament_of_flesh 1',
+      xp: 420, passive: ['poison 1', 'infect 1', 'regenerate 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
       id: 'gs12', f: 'g', t: 2,
@@ -1550,7 +1550,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
-      xp: 300, passive: ['lifesteal 1', 'rage 1'], ability: 'sacrament_of_flesh 1',
+      xp: 300, passive: ['lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
     },
     abominate: {
       id: 'gs121', f: 'g', t: 3,
@@ -1561,7 +1561,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      xp: 570, passive: ['lifesteal 2', 'rage 1'], ability: 'sacrament_of_flesh 1',
+      xp: 570, passive: ['lifesteal 2', 'rage 1'], ability: 'shared_suffering 1',
     },
     cesswalker: {
       id: 'gs13', f: 'g', t: 2,

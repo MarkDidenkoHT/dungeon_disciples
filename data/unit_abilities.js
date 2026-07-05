@@ -819,9 +819,9 @@ const UNIT_ABILITIES = {
     description: 'Sacrifice 30% of max HP (only usable above that threshold) to deal that much damage to a single enemy.',
     params: { libation_sacrifice_pct: 30 },
   },
-  'sacrament_of_flesh 1': {
-    id: 'sacrament_of_flesh 1',
-    name: 'Sacrament of Flesh',
+  'shared_suffering 1': {
+    id: 'shared_suffering 1',
+    name: 'Shared Suffering',
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
