@@ -584,9 +584,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
   }
   if (p.ally_drain_pct != null && target) {
-    const drained = Math.floor(target.max_hp * p.ally_drain_pct / 100);
+    const drained  = Math.floor(target.max_hp * p.ally_drain_pct / 100);
     target.battle_hp = Math.max(1, target.battle_hp - drained);
-    const healed = Math.min(drained, actor.max_hp - actor.battle_hp);
+    const healAmount = drained * (p.ally_drain_heal_mult ?? 1);
+    const healed = Math.min(healAmount, actor.max_hp - actor.battle_hp);
     actor.battle_hp += healed;
     if (p.devour_dmg_bonus_pct != null) {
       actor._dmg_mult = (actor._dmg_mult ?? 1) + p.devour_dmg_bonus_pct / 100;

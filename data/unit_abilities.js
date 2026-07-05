@@ -68,8 +68,17 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Drain 25% HP from a Puppet ally. Heal self for the drained amount and gain +25% damage until end of battle.',
-    params: { ally_drain_pct: 25, tag_required: 'Puppet', devour_dmg_bonus_pct: 25 },
+    description: 'Drain 25% HP from a Demon ally. Heal self for the drained amount and gain +25% damage until end of battle.',
+    params: { ally_drain_pct: 25, tag_required: 'Demon', devour_dmg_bonus_pct: 25 },
+  },
+  'grails_blessing 1': {
+    id: 'grails_blessing 1',
+    name: "Grail's lessing",
+    rank: 1,
+    type: 'active',
+    target: 'ally_tagged',
+    description: 'Drain 25% HP from a Zombie ally. Heal self for the drained amount and gain +25% damage until end of battle.',
+    params: { ally_drain_pct: 25, tag_required: 'Zombie', devour_dmg_bonus_pct: 25 },
   },
   'burn 1': {
     id: 'burn 1',
@@ -89,8 +98,8 @@ const UNIT_ABILITIES = {
     description: 'Deals 40% of damage to target on their next turn.',
     params: { dot_dmg_pct: 40 },
   },
-  'death_mark 2': {
-    id: 'death_mark 2',
+  'death_mark 1': {
+    id: 'death_mark 1',
     name: 'Death Mark',
     rank: 2,
     type: 'passive',
@@ -341,23 +350,23 @@ const UNIT_ABILITIES = {
     description: 'Target loses 5 initiative until end of their next turn.',
     params: { initiative_shred: 5 },
   },
-  'spore_cloud 1': {
-    id: 'spore_cloud 1',
-    name: 'Spore Cloud',
+  'aura_of_decay 1': {
+    id: 'aura_of_decay 1',
+    name: 'Aura of Decay',
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 8 nature damage.',
-    params: { adjacent_aoe_damage: 8, damage_type: 'nature', range: 1 },
+    description: 'When hit, releases spores. Adjacent enemies take 3 nature damage.',
+    params: { adjacent_aoe_damage: 3, damage_type: 'nature', range: 1 },
   },
-  'spore_cloud 2': {
-    id: 'spore_cloud 2',
-    name: 'Spore Cloud',
+  'aura_of_decay 2': {
+    id: 'aura_of_decay 2',
+    name: 'Aura of Decay',
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 16 nature damage.',
-    params: { adjacent_aoe_damage: 16, damage_type: 'nature', range: 1 },
+    description: 'When hit, releases spores. Adjacent enemies take 5 nature damage.',
+    params: { adjacent_aoe_damage: 5, damage_type: 'nature', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',
@@ -765,6 +774,15 @@ const UNIT_ABILITIES = {
     description: 'Adjacent allies in the same column gain initiative.',
     params: { inspiration_stat: 'initiative', inspiration_value: 6 },
   },
+    'inspiration_initiative 2': {
+    id: 'inspiration_initiative 2',
+    name: 'Inspiration',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain initiative.',
+    params: { inspiration_stat: 'initiative', inspiration_value: 9 },
+  },
   'inspiration_max_hp 1': {
     id: 'inspiration_max_hp 1',
     name: 'Inspiration',
@@ -800,6 +818,15 @@ const UNIT_ABILITIES = {
     target: 'enemy',
     description: 'Sacrifice 30% of max HP (only usable above that threshold) to deal that much damage to a single enemy.',
     params: { libation_sacrifice_pct: 30 },
+  },
+  'sacrament_of_flesh 1': {
+    id: 'sacrament_of_flesh 1',
+    name: 'Sacrament of Flesh',
+    rank: 1,
+    type: 'active',
+    target: 'ally_tagged',
+    description: 'Consume 25% HP from a Zombie ally. Heal self for twice the amount drained.',
+    params: { ally_drain_pct: 25, tag_required: 'Zombie', ally_drain_heal_mult: 2 },
   },
 };
 

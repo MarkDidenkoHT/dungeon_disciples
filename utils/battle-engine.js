@@ -286,6 +286,7 @@ class BattleEngine {
   }
   executeAction(actor, target = null, actionType = 'attack') {
     this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
+    actor.defend_armor_bonus = 0;
     if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
@@ -498,6 +499,7 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   doAbility(actor, target) {
+    actor.defend_armor_bonus = 0;
     const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
     if (actor._actives_locked || actor.used_active || !key) {
       actor.acted_this_round = true;
@@ -509,6 +511,7 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   skipTurn(actor) {
+    actor.defend_armor_bonus = 0;
     this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex });
     actor.acted_this_round = true;
     return this.afterAction(actor);
@@ -522,7 +525,6 @@ class BattleEngine {
   advanceRound() {
     for (const c of this.combatants) {
       c.acted_this_round   = false;
-      c.defend_armor_bonus = 0;
       c.dot_dmg = 0;
 
       if (c._terror_rounds > 0) {
