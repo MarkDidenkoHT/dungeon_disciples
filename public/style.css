@@ -3772,6 +3772,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   object-fit: contain;
   padding: 6px;
   display: block;
+  background-color: wheat;
 }
 
 .spell-list-info {
