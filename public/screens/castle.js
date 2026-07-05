@@ -59,12 +59,15 @@ export function renderCastle(root, { player }) {
     root.style.backgroundColor = 'rgba(17, 19, 24, 0.75)';
   }
 
+  let rosterCount = 0;
+
   async function load() {
-    const [inventory, trophies, structures, buildingsResp] = await Promise.all([
+    const [inventory, trophies, structures, buildingsResp, roster] = await Promise.all([
       api(`/inventory?chat_id=${player.chat_id}&type=resource`),
       api(`/inventory?chat_id=${player.chat_id}&type=trophy`),
       api(`/structures?chat_id=${player.chat_id}`),
       api('/buildings'),
+      api(`/roster?chat_id=${player.chat_id}`),
     ]);
 
     buildingPools      = buildingsResp.pools;
@@ -74,6 +77,7 @@ export function renderCastle(root, { player }) {
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     trophyInventory     = trophies || [];
     structuresRecord   = structures;
+    rosterCount        = Array.isArray(roster) ? roster.length : 0;
 
     renderBuildings();
   }
@@ -245,6 +249,13 @@ export function renderCastle(root, { player }) {
     if (throneLevel < 1 && !isTutorialDone(player, 'throne_upgrade')) {
       const throneEl = root.querySelector('.castle-node[data-slot="slot_0"]');
       showTutorialSpotlight(player, 'throne_upgrade', throneEl);
+    } else if (throneLevel >= 1 && rosterCount < 3 && !isTutorialDone(player, 'second_building')) {
+      const emptySlot = Object.keys(data)
+        .filter(s => s !== 'slot_0' && s !== 'slot_4' && !data[s]?.building_id)
+        .sort()[0];
+      const targetEl = emptySlot ? root.querySelector(`.castle-node[data-slot="${emptySlot}"]`) : null;
+      if (targetEl) showTutorialSpotlight(player, 'second_building', targetEl);
+      else hideTutorial();
     } else {
       hideTutorial();
     }
@@ -447,6 +458,10 @@ export function renderCastle(root, { player }) {
         building_id,
       });
       structuresRecord = updated;
+      if (!isTutorialDone(player, 'second_building')) {
+        rosterCount += 1;
+        markTutorialDone(player, 'second_building');
+      }
       renderBuildings();
       refreshResourceBar(player).catch(() => {});
     } catch (err) {

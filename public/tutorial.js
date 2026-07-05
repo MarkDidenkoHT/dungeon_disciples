@@ -11,6 +11,36 @@ const TUTORIAL_STEPS = {
       text: 'Ваш трон пуст. Коснитесь его, чтобы начать правление и открыть королевство.',
     },
   },
+  second_building: {
+    en: {
+      title: 'Grow Your Army',
+      text: 'A hero alone cannot win every battle. Build another structure here to recruit a second unit.',
+    },
+    ru: {
+      title: 'Растите армию',
+      text: 'Один герой не выиграет каждую битву. Постройте здание здесь, чтобы набрать второго бойца.',
+    },
+  },
+  embark_region: {
+    en: {
+      title: 'Choose Your Battle',
+      text: 'Your army is ready. Tap this region to begin your first expedition.',
+    },
+    ru: {
+      title: 'Выберите битву',
+      text: 'Ваша армия готова. Коснитесь этого региона, чтобы начать первый поход.',
+    },
+  },
+  battle_prep_start: {
+    en: {
+      title: 'Prepare for Battle',
+      text: 'Tap your hero, then place them on your formation grid. Once placed, tap Enter Battle to begin.',
+    },
+    ru: {
+      title: 'Подготовка к бою',
+      text: 'Коснитесь героя, затем разместите его на сетке построения. После этого нажмите «В бой», чтобы начать.',
+    },
+  },
 };
 
 let activeCleanup = null;

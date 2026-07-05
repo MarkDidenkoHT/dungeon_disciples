@@ -1,5 +1,6 @@
 import { api, navigate } from '../api.js';
 import { applyBackground } from '../utils.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const REGIONS = [
   {
@@ -186,9 +187,17 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
         pip.addEventListener('click', () => {
+          markTutorialDone(player, 'embark_region');
           navigate('battle-prep', { player, region_id: pip.dataset.region, level: parseInt(pip.dataset.level) });
         });
       });
+
+      if (isTutorialDone(player, 'second_building') && !isTutorialDone(player, 'embark_region')) {
+        const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
+        if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
+      } else {
+        hideTutorial();
+      }
     } catch (err) {
       console.error('Failed to load regions:', err);
     }

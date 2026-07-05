@@ -2,6 +2,7 @@ import { api, navigate }  from '../api.js';
 import { SPELLS }          from '../../data/spells.js';
 import { getEncounter }    from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction, CRYSTAL_ICONS,
@@ -660,6 +661,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
     const btn = root.querySelector('#ready-btn');
     if (btn) btn.disabled = !heroPlaced;
+
+    if (heroPlaced) {
+      markTutorialDone(player, 'battle_prep_start');
+      hideTutorial();
+    } else if (!isTutorialDone(player, 'battle_prep_start')) {
+      const heroCard = root.querySelector('.portrait-card--hero');
+      if (heroCard) showTutorialSpotlight(player, 'battle_prep_start', heroCard);
+    }
   }
 
   function setHover(i) {
