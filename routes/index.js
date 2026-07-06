@@ -85,12 +85,12 @@ const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1',
 
 const HERO_STARTING_UNITS = {
   h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
-  h_e_2: { building_id: 'scout_post',         unit_id: 'e8',  slot: 'slot_4' },
-  h_e_3: { building_id: 'conscript_barracks', unit_id: 'e1',  slot: 'slot_4' },
-  h_d_1: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
-  h_d_2: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
-  h_d_3: { building_id: 'heretic_pit',        unit_id: 'd1',  slot: 'slot_4' },
-  h_g_1: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
+  h_e_2: { building_id: 'conscript_barracks',         unit_id: 'e1',  slot: 'slot_4' },
+  h_e_3: { building_id: 'golden_forge', unit_id: 'e5',  slot: 'slot_4' },
+  h_d_1: { building_id: 'peer_court',        unit_id: 'd6',  slot: 'slot_4' },
+  h_d_2: { building_id: 'imp_den',        unit_id: 'd1',  slot: 'slot_4' },
+  h_d_3: { building_id: 'flame_spawn_pit',        unit_id: 'd7',  slot: 'slot_4' },
+  h_g_1: { building_id: 'communicant_chapel',         unit_id: 'gs2', slot: 'slot_4' },
   h_g_2: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
   h_g_3: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
 };

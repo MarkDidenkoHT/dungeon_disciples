@@ -51,7 +51,7 @@ const BUILDING_POOLS = {
       { id: 'sentinel_forge',      label: 'Sentinel Forge',      category: 'barracks', tier: 1, unit_id: 'e3',   upgrades: ['e31', 'e32'],            cost: { gold: 50 } },
       { id: 'automaton_lab',       label: 'Automaton Lab',       category: 'barracks', tier: 2, unit_id: 'e31',  upgrades: [],                        cost: { gold: 100 } },
       { id: 'siege_workshop',      label: 'Siege Workshop',      category: 'barracks', tier: 2, unit_id: 'e32',  upgrades: [],                        cost: { gold: 100 } },
-      { id: 'golden_pride_forge',  label: 'Golden Pride Forge',  category: 'barracks', tier: 2, unit_id: 'e5',   upgrades: ['e51'],                   cost: { gold: 150 } },
+      { id: 'golden_forge',  label: 'Golden Forge',  category: 'barracks', tier: 2, unit_id: 'e5',   upgrades: ['e51'],                   cost: { gold: 150 } },
       { id: 'golden_pride_forge_2',label: 'Golden Pride Forge II', category: 'barracks', tier: 2, unit_id: 'e51', upgrades: [],                      cost: { gold: 150 } },
       { id: 'smith_workshop',      label: 'Smith Workshop',      category: 'barracks', tier: 1, unit_id: 'e6',   upgrades: ['e61', 'e62'],            cost: { gold: 50 } },
       { id: 'mechanic_den',        label: 'Mechanic Den',        category: 'barracks', tier: 2, unit_id: 'e61',  upgrades: ['e611'],                  cost: { gold: 100 } },
