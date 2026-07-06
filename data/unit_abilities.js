@@ -774,7 +774,7 @@ const UNIT_ABILITIES = {
     description: 'Adjacent allies in the same column gain initiative.',
     params: { inspiration_stat: 'initiative', inspiration_value: 6 },
   },
-    'inspiration_initiative 2': {
+  'inspiration_initiative 2': {
     id: 'inspiration_initiative 2',
     name: 'Inspiration',
     rank: 2,
