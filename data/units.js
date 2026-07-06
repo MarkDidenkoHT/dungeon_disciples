@@ -1685,7 +1685,7 @@ const UNITS = {
       xp: 250, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
     },
     crimson_communicant: {
-      id: 'gs2', f: 'g', t: 2,
+      id: 'gs21', f: 'g', t: 2,
       name: 'Communicant',
       tags: ['Vampire', 'Holy'],
       size: 'column',
