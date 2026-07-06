@@ -12,7 +12,7 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
-app.use(rateLimit({ windowMs: 60_000, max: 100 }));
+app.use(rateLimit({ windowMs: 60_000, max: 400 }));
 
 app.use('/data', express.static(path.join(__dirname, 'data')));
 app.use(express.static(path.join(__dirname, 'public')));

@@ -1,4 +1,4 @@
-import { api, refreshResourceBar } from '../api.js';
+import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
 import { SPELLS }                  from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound } from '../utils.js';
 
@@ -242,9 +242,9 @@ export function renderSpellTome(root, { player }) {
   async function init() {
     try {
       const [structData, researchData, inventory] = await Promise.all([
-        api(`/structures?chat_id=${player.chat_id}`),
+        structuresCache.get(player.chat_id),
         api(`/spells/research?chat_id=${player.chat_id}`),
-        api(`/inventory?chat_id=${player.chat_id}&type=resource`),
+        resourceCache.get(player.chat_id),
       ]);
 
       throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;

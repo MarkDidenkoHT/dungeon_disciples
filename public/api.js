@@ -28,19 +28,35 @@ export async function api(path, body = null) {
   return data;
 }
 
-export const resourceCache = {
-  data: null,
-  dirty: true,
-  async get(chat_id) {
-    if (!this.dirty && this.data) return this.data;
-    this.data = await api(`/inventory?chat_id=${chat_id}&type=resource`);
-    this.dirty = false;
-    return this.data;
-  },
-  invalidate() {
-    this.dirty = true;
-  },
-};
+function makeCache(fetcher) {
+  return {
+    data: null,
+    dirty: true,
+    _inflight: null,
+    async get(...args) {
+      if (!this.dirty && this.data) return this.data;
+      if (this._inflight) return this._inflight;
+      this._inflight = fetcher(...args)
+        .then(result => {
+          this.data     = result;
+          this.dirty    = false;
+          this._inflight = null;
+          return result;
+        })
+        .catch(err => {
+          this._inflight = null;
+          throw err;
+        });
+      return this._inflight;
+    },
+    invalidate() {
+      this.dirty = true;
+    },
+  };
+}
+
+export const resourceCache  = makeCache(chat_id => api(`/inventory?chat_id=${chat_id}&type=resource`));
+export const structuresCache = makeCache(chat_id => api(`/structures?chat_id=${chat_id}`));
 
 export function setActiveNav(screen) {
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => {
@@ -55,7 +71,8 @@ export async function refreshNavLock(player) {
   if (!nav || !player?.chat_id) return;
   let throneLevel = 0;
   try {
-    const structures = await api(`/structures?chat_id=${player.chat_id}`);
+    structuresCache.invalidate();
+    const structures = await structuresCache.get(player.chat_id);
     throneLevel = structures?.buildings_data?.slot_0?.level ?? 0;
   } catch {
     throneLevel = 0;

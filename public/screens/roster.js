@@ -1,5 +1,6 @@
 import { api }              from '../api.js';
 import { refreshResourceBar } from '../api.js';
+import { resourceCache, structuresCache } from '../api.js';
 import { SPELLS }           from '../../data/spells.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -266,7 +267,7 @@ export function renderRoster(root, { player }) {
         await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
         const [freshUnits, freshStruct] = await Promise.all([
           api(`/roster?chat_id=${player.chat_id}`),
-          api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
+          (structuresCache.invalidate(), structuresCache.get(player.chat_id).catch(() => null)),
         ]);
         units         = freshUnits;
         buildingsData = freshStruct?.buildings_data || {};
@@ -510,7 +511,7 @@ export function renderRoster(root, { player }) {
   async function load() {
     const [fetchedUnits, structRes, buildingRes, fetchedItems] = await Promise.all([
       api(`/roster?chat_id=${player.chat_id}`),
-      api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
+      structuresCache.get(player.chat_id).catch(() => null),
       api('/buildings').catch(() => null),
       api(`/items?chat_id=${player.chat_id}`).catch(() => []),
     ]);

@@ -1,4 +1,4 @@
-import { api, navigate }  from '../api.js';
+import { api, navigate, resourceCache }  from '../api.js';
 import { SPELLS }          from '../../data/spells.js';
 import { getEncounter }    from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
@@ -988,7 +988,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   async function loadResources() {
     try {
-      const inventory = await api(`/inventory?chat_id=${player.chat_id}&type=resource`);
+      const inventory = await resourceCache.get(player.chat_id);
       playerCrystals = {};
       if (Array.isArray(inventory)) {
         for (const row of inventory) {
