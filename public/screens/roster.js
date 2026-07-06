@@ -302,7 +302,7 @@ export function renderRoster(root, { player }) {
       return;
     }
 
-    const abilityBtn = e.target.closest('.ability-icon');
+    const abilityBtn = e.target.closest('.ability-icon:not([data-item-slot]):not([data-item-inspect])');
     if (abilityBtn) {
       const key  = abilityBtn.dataset.abilityKey;
       const type = abilityBtn.dataset.abilityType;
