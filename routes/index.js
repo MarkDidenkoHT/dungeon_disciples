@@ -356,6 +356,54 @@ router.post('/player/settings', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/player/reset', requireAuth, async (req, res) => {
+  const { player_id, chat_id } = req.body;
+  if (!player_id || !chat_id) {
+    return res.status(400).json({ error: 'player_id and chat_id required' });
+  }
+  try {
+    await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
+      supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
+    ]);
+
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    const emptySlots  = emptyStructures();
+    if (structRows.length) {
+      await supabase(`/structures?id=eq.${structRows[0].id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ buildings_data: emptySlots }),
+      });
+    } else {
+      await supabase('/structures', {
+        method: 'POST',
+        body: JSON.stringify({ chat_id, buildings_data: emptySlots }),
+      });
+    }
+
+    await supabase('/resources', {
+      method: 'POST',
+      body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
+    });
+
+    const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        faction: null,
+        hero: null,
+        progress: null,
+        learned_spells: null,
+        tutorials: null,
+      }),
+    });
+
+    res.json({ player: updated[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/player/tutorials', requireAuth, async (req, res) => {
   const { player_id, chat_id, tutorials } = req.body;
   if (!player_id || !chat_id || !tutorials || typeof tutorials !== 'object') {

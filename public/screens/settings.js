@@ -1,51 +1,83 @@
-import { api } from '../api.js';
+import { api, navigate } from '../api.js';
+
+function lang(player) {
+  return player?.settings?.language === 'ru' ? 'ru' : 'en';
+}
+
+const UI_TEXT = {
+  header:        { en: 'Settings', ru: 'Настройки' },
+  sfx:           { en: 'Sound Effects', ru: 'Звуковые эффекты' },
+  music:         { en: 'Music', ru: 'Музыка' },
+  notifications: { en: 'Notifications', ru: 'Уведомления' },
+  on:            { en: 'On', ru: 'Вкл' },
+  off:           { en: 'Off', ru: 'Выкл' },
+  player:        { en: 'Player', ru: 'Игрок' },
+  faction:       { en: 'Faction', ru: 'Фракция' },
+  language:      { en: 'Language', ru: 'Язык' },
+  dangerZone:    { en: 'Danger Zone', ru: 'Опасная зона' },
+  resetBtn:       { en: 'Reset Progress', ru: 'Сбросить прогресс' },
+  resetConfirmText: {
+    en: 'This will permanently delete your faction, hero, units, buildings, and resources. This cannot be undone. Are you sure?',
+    ru: 'Это безвозвратно удалит вашу фракцию, героя, юнитов, здания и ресурсы. Это действие невозможно отменить. Вы уверены?',
+  },
+  resetCancel: { en: 'Cancel', ru: 'Отмена' },
+  resetConfirm: { en: 'Reset Everything', ru: 'Сбросить всё' },
+  resetting:   { en: 'Resetting…', ru: 'Сброс…' },
+  resetFailed: { en: 'Failed to reset progress', ru: 'Не удалось сбросить прогресс' },
+};
 
 export function renderSettings(root, { player }) {
-  const sfxEnabled          = localStorage.getItem('sfx_enabled')   !== 'false';
-  const musicEnabled        = localStorage.getItem('music_enabled') !== 'false';
+  const L = lang(player);
+
+  const sfxEnabled           = localStorage.getItem('sfx_enabled')   !== 'false';
+  const musicEnabled         = localStorage.getItem('music_enabled') !== 'false';
   const notificationsEnabled = player?.settings?.notifications !== false;
-  const language            = player?.settings?.language || 'en';
-  const languageLabel       = { en: 'English', ru: 'Russian' }[language] || language;
+  const languageLabel        = { en: 'English', ru: 'Russian' }[L] || L;
 
   root.innerHTML = `
     <div class="screen screen-settings">
       <main class="settings-main">
-        <div class="settings-header">Settings</div>
+        <div class="settings-header">${UI_TEXT.header[L]}</div>
 
         <div class="settings-section">
           <div class="settings-row">
-            <span class="settings-label">Sound Effects</span>
+            <span class="settings-label">${UI_TEXT.sfx[L]}</span>
             <button class="settings-toggle ${sfxEnabled ? 'settings-toggle--on' : ''}" id="toggle-sfx" data-key="sfx_enabled">
-              ${sfxEnabled ? 'On' : 'Off'}
+              ${sfxEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
-            <span class="settings-label">Music</span>
+            <span class="settings-label">${UI_TEXT.music[L]}</span>
             <button class="settings-toggle ${musicEnabled ? 'settings-toggle--on' : ''}" id="toggle-music" data-key="music_enabled">
-              ${musicEnabled ? 'On' : 'Off'}
+              ${musicEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
-            <span class="settings-label">Notifications</span>
+            <span class="settings-label">${UI_TEXT.notifications[L]}</span>
             <button class="settings-toggle ${notificationsEnabled ? 'settings-toggle--on' : ''}" id="toggle-notifications">
-              ${notificationsEnabled ? 'On' : 'Off'}
+              ${notificationsEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
         </div>
 
         <div class="settings-section">
           <div class="settings-row settings-row--info">
-            <span class="settings-label">Player</span>
+            <span class="settings-label">${UI_TEXT.player[L]}</span>
             <span class="settings-value">${player?.name ?? '—'}</span>
           </div>
           <div class="settings-row settings-row--info">
-            <span class="settings-label">Faction</span>
+            <span class="settings-label">${UI_TEXT.faction[L]}</span>
             <span class="settings-value">${player?.faction?.replace(/_/g, ' ') ?? '—'}</span>
           </div>
           <div class="settings-row settings-row--info">
-            <span class="settings-label">Language</span>
+            <span class="settings-label">${UI_TEXT.language[L]}</span>
             <span class="settings-value">${languageLabel}</span>
           </div>
+        </div>
+
+        <div class="settings-section settings-section--danger">
+          <div class="settings-danger-title">${UI_TEXT.dangerZone[L]}</div>
+          <button class="settings-reset-btn" id="reset-progress-btn">${UI_TEXT.resetBtn[L]}</button>
         </div>
       </main>
     </div>
@@ -57,7 +89,7 @@ export function renderSettings(root, { player }) {
       const current = localStorage.getItem(key) !== 'false';
       const next    = !current;
       localStorage.setItem(key, String(next));
-      btn.textContent = next ? 'On' : 'Off';
+      btn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       btn.classList.toggle('settings-toggle--on', next);
     });
   });
@@ -65,7 +97,7 @@ export function renderSettings(root, { player }) {
   const notifBtn = root.querySelector('#toggle-notifications');
   notifBtn.addEventListener('click', async () => {
     const next = player.settings?.notifications === false;
-    notifBtn.textContent = next ? 'On' : 'Off';
+    notifBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
     notifBtn.classList.toggle('settings-toggle--on', next);
     try {
       const updated = await api('/player/settings', {
@@ -75,9 +107,43 @@ export function renderSettings(root, { player }) {
       });
       player.settings = updated.settings;
     } catch (err) {
-      notifBtn.textContent = !next ? 'On' : 'Off';
+      notifBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       notifBtn.classList.toggle('settings-toggle--on', !next);
       alert(err.message || 'Failed to save setting');
     }
+  });
+
+  root.querySelector('#reset-progress-btn').addEventListener('click', () => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-modal-text">${UI_TEXT.resetConfirmText[L]}</div>
+        <div class="confirm-modal-actions">
+          <button class="confirm-modal-btn confirm-modal-btn--cancel">${UI_TEXT.resetCancel[L]}</button>
+          <button class="confirm-modal-btn confirm-modal-btn--confirm confirm-modal-btn--danger">${UI_TEXT.resetConfirm[L]}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => overlay.remove());
+
+    overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', async () => {
+      const confirmBtn = overlay.querySelector('.confirm-modal-btn--confirm');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = UI_TEXT.resetting[L];
+      try {
+        const result = await api('/player/reset', {
+          player_id: player.id,
+          chat_id:   player.chat_id,
+        });
+        overlay.remove();
+        navigate('register', { player: result.player });
+      } catch (err) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = UI_TEXT.resetConfirm[L];
+        alert(err.message || UI_TEXT.resetFailed[L]);
+      }
+    });
   });
 }
