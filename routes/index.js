@@ -11,6 +11,7 @@ const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THR
 const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
+const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -162,15 +163,48 @@ async function consumeCrystalCosts(chat_id, crystals) {
   }));
 }
 
-function buildPlayerUnitFromRosterEntry(r, entry) {
+async function getItemsByRosterIds(rosterIds) {
+  const ids = [...new Set((rosterIds || []).map(String))].filter(Boolean);
+  if (!ids.length) return {};
+  const orFilter = ids.map(id => `equipped_by.eq.${id}`).join(',');
+  const rows = await supabase(`/items?or=(${orFilter})&select=id,item_name,item_stats,equipped_by`);
+  const map = {};
+  for (const row of rows) map[String(row.equipped_by)] = row;
+  return map;
+}
+
+async function unequipItemFromRosterUnit(item, rosterId) {
+  const rows = await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}&select=id,unit_data`);
+  if (rows.length) {
+    const unitData  = rows[0].unit_data || {};
+    const hpBonus   = Number(unitData._item_hp_bonus ?? item.item_stats?.stat_mods?.hp ?? 0);
+    const newMaxHp  = Math.max(1, Number(unitData.max_hp ?? 0) - hpBonus);
+    const newCurHp  = Math.min(newMaxHp, Math.max(0, Number(unitData.current_hp ?? 0) - hpBonus));
+    const newUnitData = { ...unitData, max_hp: newMaxHp, current_hp: newCurHp };
+    delete newUnitData._item_hp_bonus;
+    await supabase(`/roster?id=eq.${rosterId}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) });
+  }
+  await supabase(`/items?id=eq.${item.id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: null }) });
+}
+
+async function getPlayerByChatId(chat_id) {
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction&limit=1`);
+  return rows[0] || null;
+}
+
+function buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId = {}) {
   const def = getUnitByDataId(r.unit_data?.unit_id);
   if (!def) throw new Error(`Unit definition for ${r.unit_data?.unit_id} not found`);
+  let unit_data = { ...def, ...(r.unit_data || {}) };
+  const item = itemsByRosterId[String(r.id)];
+  if (item) unit_data = applyItemModifiers(unit_data, item.item_stats);
   return {
-    id:        String(entry.id),
-    _rosterId: String(entry._rosterId || entry.id),
-    unit_data: { ...def, ...(r.unit_data || {}) },
-    unit_name: def.name || def.id,
-    is_hero:   !!r.is_hero,
+    id:              String(entry.id),
+    _rosterId:       String(entry._rosterId || entry.id),
+    unit_data,
+    unit_name:       def.name || def.id,
+    is_hero:         !!r.is_hero,
+    _equipped_item:  item ? { id: item.id, item_name: item.item_name, item_stats: item.item_stats } : null,
   };
 }
 
@@ -187,11 +221,13 @@ async function rehydrateEngine(record) {
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
 
+  const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
+
   const playerUnits = playerUnitIds.map(entry => {
     const rosterId = String(entry._rosterId || entry.id);
     const r = rosterById[rosterId];
     if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-    return buildPlayerUnitFromRosterEntry(r, entry);
+    return buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId);
   });
 
   return BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
@@ -747,6 +783,8 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     const rosterById = {};
     for (const r of rosterRows) rosterById[String(r.id)] = r;
 
+    const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
+
     const playerUnits = [];
     let   heroRosterId = null;
     for (const entry of playerUnitIds) {
@@ -754,7 +792,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       const r = rosterById[rosterId];
       if (!r) return res.status(400).json({ error: `Roster unit ${rosterId} not found or does not belong to this player` });
       if (r.is_hero) heroRosterId = rosterId;
-      playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry));
+      playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId));
     }
 
     const heroDef    = playerUnits.find(u => u.is_hero);
@@ -1249,6 +1287,142 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
 
     const updatedRoster = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
     res.json({ success: true, structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct, roster_entry: updatedRoster[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/items', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    const rows = await supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/items/equip', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, item_id } = req.body;
+  if (!chat_id || !roster_id || !item_id) return res.status(400).json({ error: 'chat_id, roster_id, and item_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const [itemRows, rosterRows] = await Promise.all([
+      supabase(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+    ]);
+    if (!itemRows.length)   return res.status(404).json({ error: 'Item not found' });
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster unit not found' });
+
+    const item        = itemRows[0];
+    const rosterEntry = rosterRows[0];
+    const stats        = item.item_stats || {};
+
+    if (stats.faction && stats.faction !== player.faction) {
+      return res.status(400).json({ error: 'This item cannot be equipped by your faction' });
+    }
+
+    const unitDef  = getUnitByDataId(rosterEntry.unit_data?.unit_id);
+    const unitTags = (unitDef?.tags || []).filter(Boolean);
+    if (stats.tag_required && !unitTags.includes(stats.tag_required)) {
+      return res.status(400).json({ error: `This item requires the ${stats.tag_required} tag` });
+    }
+
+    // If this item is currently equipped by a different unit, unequip it there first.
+    if (item.equipped_by && String(item.equipped_by) !== String(roster_id)) {
+      await unequipItemFromRosterUnit(item, item.equipped_by);
+    }
+
+    // Each character can only equip one item at a time - unequip whatever this unit already has on.
+    const currentlyEquipped = await supabase(`/items?equipped_by=eq.${encodeURIComponent(roster_id)}&select=id,item_stats`);
+    for (const old of currentlyEquipped) {
+      if (String(old.id) === String(item_id)) continue;
+      await unequipItemFromRosterUnit(old, roster_id);
+    }
+
+    const freshRoster  = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,unit_data`);
+    const baseUnitData = freshRoster[0].unit_data || {};
+
+    const hpBonus   = Number(stats.stat_mods?.hp || 0);
+    const newMaxHp  = Number(baseUnitData.max_hp ?? 0) + hpBonus;
+    const newCurHp  = Math.min(newMaxHp, Number(baseUnitData.current_hp ?? 0) + hpBonus);
+    const newUnitData = { ...baseUnitData, max_hp: newMaxHp, current_hp: newCurHp, _item_hp_bonus: hpBonus };
+
+    await Promise.all([
+      supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
+      supabase(`/items?id=eq.${item_id}`,    { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) }),
+    ]);
+
+    const [updatedRoster, updatedItems] = await Promise.all([
+      supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+    ]);
+
+    res.json({ success: true, roster: updatedRoster[0], items: updatedItems });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/items/unequip', requireAuth, async (req, res) => {
+  const { chat_id, item_id } = req.body;
+  if (!chat_id || !item_id) return res.status(400).json({ error: 'chat_id and item_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const itemRows = await supabase(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
+    if (!itemRows.length) return res.status(404).json({ error: 'Item not found' });
+    const item = itemRows[0];
+    if (!item.equipped_by) return res.status(400).json({ error: 'Item is not equipped' });
+
+    await unequipItemFromRosterUnit(item, item.equipped_by);
+
+    const [updatedRoster, updatedItems] = await Promise.all([
+      supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+    ]);
+
+    res.json({ success: true, roster: updatedRoster[0], items: updatedItems });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// TEMPORARY dev-only endpoint: item acquisition/crafting isn't built yet, so this
+// grants one item from ITEM_DEFS directly for testing the equip mechanic. Remove
+// once crafting (trophies -> items) is implemented.
+router.post('/items/debug-grant', requireAuth, async (req, res) => {
+  const { chat_id, item_key } = req.body;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    const key = item_key || 'meteor_exoskeleton';
+    const def = ITEM_DEFS[key];
+    if (!def) return res.status(400).json({ error: 'Unknown item_key' });
+    const inserted = await supabase('/items', {
+      method: 'POST',
+      body: JSON.stringify({
+        player_id: player.id,
+        item_name: def.name,
+        item_stats: {
+          key:          def.key,
+          faction:      def.faction,
+          tag_required: def.tag_required,
+          adds_tag:     def.adds_tag,
+          stat_mods:    def.stat_mods,
+          passive:      def.passive,
+          icon:         def.icon,
+        },
+      }),
+    });
+    res.json({ success: true, item: inserted[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

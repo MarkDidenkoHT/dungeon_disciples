@@ -1,6 +1,6 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard } from '../utils.js';
+import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, renderItemDetailHtml } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
@@ -27,6 +27,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let prevState        = null;   // snapshot before each render, used for diff-based animations
 
   let prevLogLen = 0;
+
+  let items = [];
+  api(`/items?chat_id=${player.chat_id}`).then(data => { items = data || []; }).catch(() => {});
+
+  function equippedItemFor(rosterId) {
+    if (rosterId == null) return null;
+    return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
+  }
+
+  document.addEventListener('click', e => {
+    const itemBtn = e.target.closest('[data-item-inspect]');
+    if (!itemBtn) return;
+    const rosterId = itemBtn.dataset.rosterId;
+    const item = equippedItemFor(rosterId);
+    if (!item) return;
+    openSheet(item.item_name || 'Item', renderItemDetailHtml(item));
+  });
 
   function snapshotState() {
     if (!state) return null;
@@ -203,7 +220,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
-    return `<div class="battle-unit-detail">${buildUnitCard(liveUnit, { badge })}${statusHtml}</div>`;
+    const equippedItem = c.side === 'player' ? equippedItemFor(c._rosterId) : null;
+    const itemSlotHtml  = c.side === 'player' ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false }) : '';
+
+    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml })}${statusHtml}</div>`;
   }
 
   function formatLogEntry(entry) {

@@ -9,6 +9,7 @@ import {
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
+  renderItemSlotIcon, renderItemDetailHtml,
 } from '../utils.js';
 
 const REGION_META = {
@@ -146,6 +147,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   `;
 
   let roster           = [];
+  let items            = [];
+
+  function equippedItemFor(rosterId) {
+    return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
+  }
   let enemies          = [];
   let heroId           = null;
   let maxNonHero       = 2;
@@ -265,8 +271,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const liveUnit = { ...def, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
     const badge    = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
     const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`;
+    const equippedItem = equippedItemFor(unit.id);
+    const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false });
 
-    return buildUnitCard(liveUnit, { badge }) + deadHtml;
+    return buildUnitCard(liveUnit, { badge, itemSlotHtml }) + deadHtml;
   }
 
   function enemyDetailHtml(e) {
@@ -931,6 +939,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   document.addEventListener('click', e => {
     const abilityBtn = e.target.closest('.ability-icon');
     if (!abilityBtn) return;
+
+    const itemBtn = abilityBtn.closest('[data-item-inspect]');
+    if (itemBtn) {
+      const rosterId = itemBtn.dataset.rosterId;
+      const item = equippedItemFor(rosterId);
+      if (!item) return;
+      openModal(item.item_name || 'Item', renderItemDetailHtml(item));
+      return;
+    }
+
     const key  = abilityBtn.dataset.abilityKey;
     const type = abilityBtn.dataset.abilityType;
     const def  = resolveAbility(key);
@@ -1066,9 +1084,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   (async () => {
     try {
-      const [rosterData] = await Promise.all([
+      const [rosterData, itemsData] = await Promise.all([
         api(`/roster?chat_id=${player.chat_id}`),
+        api(`/items?chat_id=${player.chat_id}`).catch(() => []),
       ]);
+
+      items = itemsData || [];
 
       roster = rosterData
         .map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }))

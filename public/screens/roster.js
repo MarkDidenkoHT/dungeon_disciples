@@ -7,6 +7,7 @@ import {
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
+  renderItemSlotIcon, withEquippedItem,
   getActionLabel,
 } from '../utils.js';
 
@@ -39,6 +40,11 @@ export function renderRoster(root, { player }) {
 
   let buildingsData = {};
   let upgradePaths  = {};
+  let items         = [];
+
+  function equippedItemFor(rosterId) {
+    return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
+  }
 
   function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
 
@@ -91,13 +97,15 @@ export function renderRoster(root, { player }) {
 
     const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
-    const liveUnit = {
+    const equippedItem = equippedItemFor(u.id);
+
+    const liveUnit = withEquippedItem({
       ...(def || {}),
       id:   unitId || def?.id,
       name: unitName,
       hp:   `${currentHp}/${maxHp}`,
       xp:   currentXp,
-    };
+    }, equippedItem);
 
     const portraitHtml = renderUnitPortrait(liveUnit, { badge: alive ? tierLabel : '💀 Dead' });
     const coreHtml      = renderUnitCoreStatsColumn(liveUnit);
@@ -170,7 +178,8 @@ export function renderRoster(root, { player }) {
         </div>`;
     }
 
-    const abilitiesHtml = renderUnitAbilitiesRow(liveUnit);
+    const itemSlotHtml  = renderItemSlotIcon(equippedItem, u.id);
+    const abilitiesHtml = renderUnitAbilitiesRow(liveUnit, { itemSlotHtml });
 
     return `
       <div class="roster-slide">
@@ -358,18 +367,158 @@ export function renderRoster(root, { player }) {
       openDetailModal(label, renderModalContent(text));
       return;
     }
+
+    const itemSlot = e.target.closest('[data-item-slot]');
+    if (itemSlot) {
+      const rosterId = itemSlot.dataset.rosterId;
+      openItemModal(rosterId);
+      return;
+    }
   });
 
+  function formatStatMods(statMods = {}) {
+    return Object.entries(statMods).map(([key, val]) => {
+      const sign = val >= 0 ? '+' : '';
+      if (key === 'hp')    return `${sign}${val} HP`;
+      if (key === 'armor') return `${sign}${val} Armor`;
+      const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+      if (resistMatch) return `${sign}${val} ${cap(resistMatch[1])} Resist`;
+      return `${sign}${val} ${cap(key)}`;
+    }).join(', ');
+  }
+
+  function buildItemCard(item, unit, unitTags) {
+    const stats        = item.item_stats || {};
+    const iconId        = stats.icon || stats.key || 'item';
+    const equippedHere  = String(item.equipped_by) === String(unit.id);
+    const equippedElsewhere = item.equipped_by != null && !equippedHere;
+    const factionOk     = !stats.faction || stats.faction === player.faction;
+    const tagOk          = !stats.tag_required || unitTags.includes(stats.tag_required);
+    const canEquip       = factionOk && tagOk && !equippedHere;
+
+    let reason = '';
+    if (!factionOk) reason = 'Wrong faction';
+    else if (!tagOk) reason = `Requires ${stats.tag_required} tag`;
+    else if (equippedElsewhere) reason = 'Equipped on another unit';
+
+    return `
+      <div class="item-card ${equippedHere ? 'item-card--equipped' : ''}">
+        <div class="item-card-icon">
+          <img src="/assets/icons/items/${iconId}.png" alt="${item.item_name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+        </div>
+        <div class="item-card-name">${item.item_name}</div>
+        ${stats.tag_required ? `<div class="item-card-tag">Requires: ${stats.tag_required}</div>` : ''}
+        ${stats.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${stats.adds_tag}</div>` : ''}
+        <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
+        ${equippedHere
+          ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${item.id}">Unequip</button>`
+          : `<button class="item-action-btn item-action-btn--equip" data-item-id="${item.id}" data-roster-id="${unit.id}" ${canEquip ? '' : 'disabled'}>Equip</button>`}
+        ${!canEquip && !equippedHere ? `<div class="item-card-blocked">${reason}</div>` : ''}
+      </div>`;
+  }
+
+  function openItemModal(rosterId) {
+    const unit = units.find(u => String(u.id) === String(rosterId));
+    if (!unit) return;
+    const def      = resolveUnitDef(unit);
+    const unitTags = (def?.tags || []).filter(Boolean);
+
+    let filter = 'equippable';
+
+    function render() {
+      const filtered = items.filter(it => {
+        if (filter === 'all') return true;
+        const stats    = it.item_stats || {};
+        const factionOk = !stats.faction || stats.faction === player.faction;
+        const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+        const equippedHere = String(it.equipped_by) === String(rosterId);
+        return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
+      });
+
+      const cardsHtml = filtered.length
+        ? filtered.map(it => buildItemCard(it, unit, unitTags)).join('')
+        : `<p class="placeholder">No items to show.</p>`;
+
+      return `
+        <div class="items-modal">
+          <div class="items-filter-bar">
+            <button class="items-filter-btn ${filter === 'equippable' ? 'items-filter-btn--active' : ''}" data-filter="equippable">Equippable</button>
+            <button class="items-filter-btn ${filter === 'all' ? 'items-filter-btn--active' : ''}" data-filter="all">All Items</button>
+          </div>
+          <div class="items-slider">${cardsHtml}</div>
+        </div>`;
+    }
+
+    openSheet('Items', render());
+
+    const body = document.querySelector('.modal-body');
+
+    async function refreshAndRerender() {
+      items = await api(`/items?chat_id=${player.chat_id}`).catch(() => items);
+      body.innerHTML = render();
+    }
+
+    body.addEventListener('click', async (e) => {
+      const filterBtn = e.target.closest('[data-filter]');
+      if (filterBtn) {
+        filter = filterBtn.dataset.filter;
+        body.innerHTML = render();
+        return;
+      }
+
+      const equipBtn = e.target.closest('.item-action-btn--equip');
+      if (equipBtn && !equipBtn.disabled) {
+        equipBtn.disabled    = true;
+        equipBtn.textContent = 'Equipping…';
+        try {
+          await api('/items/equip', { chat_id: player.chat_id, roster_id: equipBtn.dataset.rosterId, item_id: equipBtn.dataset.itemId });
+          const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
+          units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
+          await refreshAndRerender();
+          const savedIdx = current;
+          initSlider();
+          goTo(savedIdx);
+        } catch (err) {
+          alert(err.message || 'Equip failed');
+          body.innerHTML = render();
+        }
+        return;
+      }
+
+      const unequipBtn = e.target.closest('.item-action-btn--unequip');
+      if (unequipBtn) {
+        unequipBtn.disabled    = true;
+        unequipBtn.textContent = 'Unequipping…';
+        try {
+          await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
+          const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
+          units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
+          await refreshAndRerender();
+          const savedIdx = current;
+          initSlider();
+          goTo(savedIdx);
+        } catch (err) {
+          alert(err.message || 'Unequip failed');
+          body.innerHTML = render();
+        }
+        return;
+      }
+    });
+  }
+
   async function load() {
-    const [fetchedUnits, structRes, buildingRes] = await Promise.all([
+    const [fetchedUnits, structRes, buildingRes, fetchedItems] = await Promise.all([
       api(`/roster?chat_id=${player.chat_id}`),
       api(`/structures?chat_id=${player.chat_id}`).catch(() => null),
       api('/buildings').catch(() => null),
+      api(`/items?chat_id=${player.chat_id}`).catch(() => []),
     ]);
 
     units         = fetchedUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
     buildingsData = structRes?.buildings_data  || {};
     upgradePaths  = buildingRes?.upgrade_paths || {};
+    items         = fetchedItems || [];
 
     if (!units.length) {
       track.innerHTML = `<div class="roster-slide"><p class="placeholder">No units yet.</p></div>`;

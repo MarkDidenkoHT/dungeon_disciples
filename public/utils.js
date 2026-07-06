@@ -1,5 +1,10 @@
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
+import { applyItemModifiers } from '../data/items.js';
+
+export function withEquippedItem(liveUnit, item) {
+  return item ? applyItemModifiers(liveUnit, item.item_stats) : liveUnit;
+}
 
 export const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
@@ -158,8 +163,7 @@ export function renderUnitAbilityIcon(key, type) {
 export function renderUnitPortrait(unit, opts = {}) {
   const { badge = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
-  const tagLeft  = tags[0] || '';
-  const tagRight = tags[1] || '';
+  const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
   const portrait = `/assets/character_art/${portraitId}.png`;
 
@@ -179,8 +183,7 @@ export function renderUnitPortrait(unit, opts = {}) {
           ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
         </div>
         <div class="unit-identity-tags">
-          ${tagLeft  ? `<span class="unit-tag">${tagLeft}</span>`  : ''}
-          ${tagRight ? `<span class="unit-tag">${tagRight}</span>` : ''}
+          ${tagsHtml}
         </div>
       </div>
     </div>`;
@@ -223,7 +226,31 @@ export function renderUnitResistColumn(unit) {
   return `<div class="unit-resists-grid unit-resists-grid--side">${armorCell}${resistCells}</div>`;
 }
 
-export function renderUnitAbilitiesRow(unit) {
+export function renderItemSlotIcon(item, rosterId, opts = {}) {
+  const { interactive = true } = opts;
+  const triggerAttr = interactive ? 'data-item-slot' : 'data-item-inspect';
+
+  if (item) {
+    const stats  = item.item_stats || {};
+    const iconId = stats.icon || stats.key || 'item';
+    return `
+      <button class="ability-icon ability-icon--item" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${item.item_name || 'Item'}">
+        <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${item.item_name || 'Item'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="item-slot-fallback" style="display:none;">⚙</span>
+      </button>`;
+  }
+
+  if (!interactive) {
+    return `<button class="ability-icon ability-icon--item ability-icon--item-empty" disabled></button>`;
+  }
+
+  return `
+    <button class="ability-icon ability-icon--item ability-icon--item-empty" data-item-slot data-roster-id="${rosterId}" title="Equip Item">
+      <span class="item-slot-plus">+</span>
+    </button>`;
+}
+
+export function renderUnitAbilitiesRow(unit, opts = {}) {
   const passiveKeys = Array.isArray(unit.passive)
     ? unit.passive.filter(Boolean)
     : (unit.passive ? [unit.passive] : []);
@@ -235,10 +262,12 @@ export function renderUnitAbilitiesRow(unit) {
     passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive') : renderUnitAbilityIcon('', 'empty'),
   ].join('');
 
+  const itemHtml = opts.itemSlotHtml || '';
+
   return `
     <div class="unit-abilities-row">
       <div class="unit-abilities-icons">
-        ${iconsHtml}
+        ${iconsHtml}${itemHtml}
       </div>
     </div>`;
 }
@@ -264,7 +293,7 @@ export function renderUnitStatDiffs(unit, compareUnit) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '' } = opts;
 
   if (!unit) {
     return `
@@ -288,8 +317,32 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="unit-info">
         ${renderUnitStatDiffs(unit, compareUnit)}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit)}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml })}
       </div>
+    </div>`;
+}
+
+export function renderItemDetailHtml(item) {
+  if (!item) return renderModalContent('No item equipped.');
+  const stats = item.item_stats || {};
+  const lines = [];
+  if (stats.faction)      lines.push(`Faction: ${cap(stats.faction.replace(/_/g, ' '))}`);
+  if (stats.tag_required) lines.push(`Requires tag: ${stats.tag_required}`);
+  if (stats.adds_tag)     lines.push(`Grants tag: ${stats.adds_tag}`);
+  const modParts = Object.entries(stats.stat_mods || {}).map(([key, val]) => {
+    const sign = val >= 0 ? '+' : '';
+    if (key === 'hp')    return `${sign}${val} HP`;
+    if (key === 'armor') return `${sign}${val} Armor`;
+    const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+    if (resistMatch) return `${sign}${val} ${cap(resistMatch[1])} Resist`;
+    return `${sign}${val} ${cap(key)}`;
+  });
+  if (modParts.length) lines.push(modParts.join(', '));
+  return `
+    <div class="ability-modal-content">
+      <div class="ability-modal-type ability-modal-type--passive">Item</div>
+      <div class="ability-modal-name">${item.item_name || 'Item'}</div>
+      <div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>
     </div>`;
 }
 

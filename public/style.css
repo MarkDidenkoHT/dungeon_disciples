@@ -3980,3 +3980,154 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
   z-index: 2;
 }
+/* ---------- Item equip slot (unit card abilities row) ---------- */
+.ability-icon--item {
+  border-color: #3a2e14;
+}
+.ability-icon--item:not([disabled]):active {
+  border-color: #c9922a;
+}
+.ability-icon--item-empty {
+  opacity: 0.5;
+}
+.item-slot-plus {
+  font-size: 1.4rem;
+  color: var(--accent);
+  line-height: 1;
+}
+.item-slot-fallback {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* ---------- Items modal ---------- */
+.items-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.items-filter-bar {
+  display: flex;
+  gap: 8px;
+}
+
+.items-filter-btn {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.items-filter-btn--active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.items-slider {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding-bottom: 4px;
+}
+
+.item-card {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  width: 62vw;
+  max-width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.item-card--equipped {
+  border-color: var(--accent);
+}
+
+.item-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: #0e1219;
+  border: 1px solid #222d3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.item-card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-card-icon-fallback {
+  font-size: 1.6rem;
+}
+
+.item-card-name {
+  color: var(--text);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.item-card-tag {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.item-card-tag--adds {
+  color: #c49a4a;
+}
+
+.item-card-stats {
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+.item-action-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.item-action-btn--equip {
+  background: linear-gradient(180deg,#2e7d32,#1b5e20);
+}
+
+.item-action-btn--equip[disabled] {
+  background: #333;
+  color: var(--muted);
+  cursor: default;
+}
+
+.item-action-btn--unequip {
+  background: linear-gradient(180deg,#8a2e2e,#5c1c1c);
+}
+
+.item-card-blocked {
+  font-size: 0.68rem;
+  color: #c0392b;
+}
