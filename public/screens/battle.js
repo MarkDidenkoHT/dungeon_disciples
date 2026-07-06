@@ -526,7 +526,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       render();
     });
 
-    if (!isEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
+    const tutorialActor = currentActor();
+    const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
+    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
       const mainBtn = root.querySelector('#btn-main');
       if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
     } else {
