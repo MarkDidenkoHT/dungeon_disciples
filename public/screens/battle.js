@@ -1,6 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard } from '../utils.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -429,6 +430,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   async function sendAction(action, actor_id, target_id = null) {
+    markTutorialDone(player, 'battle_first_action');
+    hideTutorial();
     processing = true;
     const prev    = snapshotState();
     const prevLen = state.log?.length ?? 0;
@@ -522,6 +525,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       pendingAction   = null;
       render();
     });
+
+    if (!isEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
+      const mainBtn = root.querySelector('#btn-main');
+      if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
+    } else {
+      hideTutorial();
+    }
   }
 
   async function renderResult(winner) {

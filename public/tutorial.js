@@ -41,6 +41,16 @@ const TUTORIAL_STEPS = {
       text: 'Коснитесь героя, затем разместите его на сетке построения. После этого нажмите «В бой», чтобы начать.',
     },
   },
+  battle_first_action: {
+    en: {
+      title: 'Your Turn',
+      text: 'Tap Attack, then tap an enemy to strike. You can also use an Ability or Defend instead.',
+    },
+    ru: {
+      title: 'Ваш ход',
+      text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать. Также можно использовать способность или защиту.',
+    },
+  },
 };
 
 let activeCleanup = null;
