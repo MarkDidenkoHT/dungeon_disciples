@@ -9,6 +9,7 @@ const UI_TEXT = {
   sfx:           { en: 'Sound Effects', ru: 'Звуковые эффекты' },
   music:         { en: 'Music', ru: 'Музыка' },
   notifications: { en: 'Notifications', ru: 'Уведомления' },
+  barks:         { en: 'Combat Barks', ru: 'Реплики в бою' },
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
   player:        { en: 'Player', ru: 'Игрок' },
@@ -32,6 +33,7 @@ export function renderSettings(root, { player }) {
   const sfxEnabled           = localStorage.getItem('sfx_enabled')   !== 'false';
   const musicEnabled         = localStorage.getItem('music_enabled') !== 'false';
   const notificationsEnabled = player?.settings?.notifications !== false;
+  const barksEnabled         = player?.settings?.barks_enabled !== false;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
   root.innerHTML = `
@@ -56,6 +58,12 @@ export function renderSettings(root, { player }) {
             <span class="settings-label">${UI_TEXT.notifications[L]}</span>
             <button class="settings-toggle ${notificationsEnabled ? 'settings-toggle--on' : ''}" id="toggle-notifications">
               ${notificationsEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
+            </button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">${UI_TEXT.barks[L]}</span>
+            <button class="settings-toggle ${barksEnabled ? 'settings-toggle--on' : ''}" id="toggle-barks">
+              ${barksEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
@@ -111,6 +119,25 @@ export function renderSettings(root, { player }) {
     } catch (err) {
       notifBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       notifBtn.classList.toggle('settings-toggle--on', !next);
+      alert(err.message || 'Failed to save setting');
+    }
+  });
+
+  const barksBtn = root.querySelector('#toggle-barks');
+  barksBtn.addEventListener('click', async () => {
+    const next = player.settings?.barks_enabled === false;
+    barksBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    barksBtn.classList.toggle('settings-toggle--on', next);
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { barks_enabled: next },
+      });
+      player.settings = updated.settings;
+    } catch (err) {
+      barksBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      barksBtn.classList.toggle('settings-toggle--on', !next);
       alert(err.message || 'Failed to save setting');
     }
   });

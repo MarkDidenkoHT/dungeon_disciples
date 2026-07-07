@@ -53,6 +53,34 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return map;
   }
 
+  function showBarkToast(actorId, text) {
+    if (player?.settings?.barks_enabled === false) return;
+    const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
+    if (!cell) return;
+    cell.classList.add('battle-cell--bark-active');
+    const toast = document.createElement('div');
+    toast.className = 'bark-toast';
+    toast.textContent = text;
+    cell.appendChild(toast);
+
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      toast.remove();
+      cell.classList.remove('battle-cell--bark-active');
+      document.removeEventListener('click', dismiss, true);
+      document.removeEventListener('touchstart', dismiss, true);
+    };
+    // Any interaction anywhere closes it - deferred so the click that triggered
+    // this render (e.g. the action button press) doesn't instantly dismiss it.
+    setTimeout(() => {
+      document.addEventListener('click', dismiss, true);
+      document.addEventListener('touchstart', dismiss, true);
+    }, 0);
+    setTimeout(dismiss, 6000);
+  }
+
   function animateAfterRender(prev, prevLen) {
     if (!prev) return;
     // Hit flash, heal pulse, death shake
@@ -80,6 +108,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           triggerAnim(el, 'anim-log-in');
         });
       }
+      (state.log || []).slice(prevLen).forEach(entry => {
+        if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
+      });
     }
   }
 
@@ -274,6 +305,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>`;
     }
     if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
+    if (entry.type === 'bark') {
+      if (player?.settings?.barks_enabled === false) return '';
+      return `<div class="log-entry log-entry--bark">${entry.actorName}: "${entry.text}"</div>`;
+    }
     if (entry.type === 'notice') return `<div class="log-entry log-entry--notice">${entry.message}</div>`;
     return '';
   }
