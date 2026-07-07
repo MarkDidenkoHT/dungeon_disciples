@@ -2,7 +2,7 @@ import { renderRegister }   from './screens/register.js';
 import { renderCastle }     from './screens/castle.js';
 import { renderRoster }     from './screens/roster.js';
 import { renderEmbark }     from './screens/embark.js';
-import { renderSettings }   from './screens/settings.js';
+import { renderSettings, lang } from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
@@ -22,11 +22,21 @@ export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock 
 
 const app = document.getElementById('app');
 
+const NAV_LABELS = {
+  castle:   { en: 'Castle',   ru: 'Замок' },
+  roster:   { en: 'Roster',   ru: 'Отряд' },
+  embark:   { en: 'Embark',   ru: 'Поход' },
+  spells:   { en: 'Spells',   ru: 'Заклинания' },
+  settings: { en: 'Settings', ru: 'Настройки' },
+};
+
 let shellMounted = false;
 
 function mountShell(player) {
   if (shellMounted) return;
   shellMounted = true;
+
+  const L = lang(player);
 
   app.innerHTML = `
     <div id="shell">
@@ -35,23 +45,23 @@ function mountShell(player) {
       <nav class="bottom-nav" id="bottom-nav">
         <button class="nav-btn" data-screen="castle">
           <img class="nav-btn-icon" src="/assets/icons/ui/castle.png" alt="">
-          <span class="nav-btn-label">Castle</span>
+          <span class="nav-btn-label">${NAV_LABELS.castle[L]}</span>
         </button>
         <button class="nav-btn" data-screen="roster">
           <img class="nav-btn-icon" src="/assets/icons/ui/roster.png" alt="">
-          <span class="nav-btn-label">Roster</span>
+          <span class="nav-btn-label">${NAV_LABELS.roster[L]}</span>
         </button>
         <button class="nav-btn" data-screen="embark">
           <img class="nav-btn-icon" src="/assets/icons/ui/embark.png" alt="">
-          <span class="nav-btn-label">Embark</span>
+          <span class="nav-btn-label">${NAV_LABELS.embark[L]}</span>
         </button>
         <button class="nav-btn" data-screen="spells">
           <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
-          <span class="nav-btn-label">Spells</span>
+          <span class="nav-btn-label">${NAV_LABELS.spells[L]}</span>
         </button>
         <button class="nav-btn" data-screen="settings">
           <img class="nav-btn-icon" src="/assets/icons/ui/settings.png" alt="" onerror="this.style.display='none';">
-          <span class="nav-btn-label">Settings</span>
+          <span class="nav-btn-label">${NAV_LABELS.settings[L]}</span>
         </button>
       </nav>
     </div>
@@ -94,17 +104,18 @@ function navigate(screen, params = {}) {
 
   const root = document.getElementById('content-root');
 
+  const L = lang(player);
   const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
   const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
 
   if (spellsNav) {
     const label = spellsNav.querySelector('.nav-btn-label');
-    if (label) label.textContent = 'Spells';
+    if (label) label.textContent = NAV_LABELS.spells[L];
     if (spellsNav._battlePrepHandler) { spellsNav.removeEventListener('click', spellsNav._battlePrepHandler, true); delete spellsNav._battlePrepHandler; }
   }
   if (embarkNav) {
     const label = embarkNav.querySelector('.nav-btn-label');
-    if (label) label.textContent = 'Embark';
+    if (label) label.textContent = NAV_LABELS.embark[L];
     embarkNav.classList.remove('nav-btn--battle-ready');
     if (embarkNav._battlePrepHandler) { embarkNav.removeEventListener('click', embarkNav._battlePrepHandler, true); delete embarkNav._battlePrepHandler; }
   }

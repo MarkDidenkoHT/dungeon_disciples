@@ -1,6 +1,6 @@
 import { api, navigate } from '../api.js';
 
-function lang(player) {
+export function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
 }
 

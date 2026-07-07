@@ -3,6 +3,7 @@ import { SPELLS }          from '../../data/spells.js';
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { lang } from './settings.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction, CRYSTAL_ICONS,
@@ -11,6 +12,13 @@ import {
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts,
 } from '../utils.js';
+
+const BP_NAV_LABELS = {
+  spells:      { en: 'Spells',      ru: 'Заклинания' },
+  embark:      { en: 'Embark',      ru: 'Поход' },
+  castSpell:   { en: 'Cast Spell',  ru: 'Заклинание' },
+  enterBattle: { en: 'Enter Battle', ru: 'В бой' },
+};
 
 const REGION_META = {
   crimson_basilica: { label: 'Crimson Basilica', icon: '🌲' },
@@ -82,6 +90,7 @@ function getLoyalty(heroUnit) {
 
 export function renderBattlePrep(root, { player, region_id, level }) {
   const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
+  const L = lang(player);
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
@@ -217,7 +226,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   const spellsNavBtn = document.querySelector('.nav-btn[data-screen="spells"]');
   if (spellsNavBtn) {
-    spellsNavBtn.querySelector('.nav-btn-label').textContent = 'Cast Spell';
+    spellsNavBtn.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.castSpell[L];
     spellsNavBtn._battlePrepHandler = (e) => { e.stopImmediatePropagation(); openSpellSheet(); };
     spellsNavBtn.addEventListener('click', spellsNavBtn._battlePrepHandler, true);
   }
@@ -236,11 +245,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const s = document.querySelector('.nav-btn[data-screen="spells"]');
     const em = document.querySelector('.nav-btn[data-screen="embark"]');
     if (s) {
-      s.querySelector('.nav-btn-label').textContent = 'Spells';
+      s.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.spells[L];
       if (s._battlePrepHandler) { s.removeEventListener('click', s._battlePrepHandler, true); delete s._battlePrepHandler; }
     }
     if (em) {
-      em.querySelector('.nav-btn-label').textContent = 'Embark';
+      em.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.embark[L];
       em.classList.remove('nav-btn--battle-ready');
       if (em._battlePrepHandler) { em.removeEventListener('click', em._battlePrepHandler, true); delete em._battlePrepHandler; }
     }
@@ -251,7 +260,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function updateSpellsBadge() {
     const spellsNav = document.querySelector('.nav-btn[data-screen="spells"] .nav-btn-label');
     if (!spellsNav) return;
-    spellsNav.textContent = selectedSpells.length > 0 ? `Cast Spell (${selectedSpells.length})` : 'Cast Spell';
+    spellsNav.textContent = selectedSpells.length > 0 ? `${BP_NAV_LABELS.castSpell[L]} (${selectedSpells.length})` : BP_NAV_LABELS.castSpell[L];
   }
 
   function showDetail(title, html) {
@@ -668,7 +677,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const embarkNavBtn = document.querySelector('.nav-btn[data-screen="embark"]');
     if (embarkNavBtn) {
       embarkNavBtn.classList.toggle('nav-btn--battle-ready', heroPlaced);
-      embarkNavBtn.querySelector('.nav-btn-label').textContent = 'Enter Battle';
+      embarkNavBtn.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.enterBattle[L];
     }
     const btn = root.querySelector('#ready-btn');
     if (btn) btn.disabled = !heroPlaced;
