@@ -1,6 +1,6 @@
 const TAG_RULES = {
   heal: {
-    targetExcludeTags: ['Construct'],
+    targetExcludeTags: ['Construct', 'Zombie', 'Demon'],
   },
   repair: {
     targetRequireTags: ['Construct'],
