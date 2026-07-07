@@ -274,6 +274,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>`;
     }
     if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
+    if (entry.type === 'notice') return `<div class="log-entry log-entry--notice">${entry.message}</div>`;
     return '';
   }
 

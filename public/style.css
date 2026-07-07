@@ -2112,6 +2112,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .log-entry        { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
 .log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
 .log-entry--skip  { color: #444; }
+.log-entry--notice { color: #c9922a; text-align: center; font-style: italic; font-size: 0.7rem; }
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: var(--text); }
 .log-target { color: #c8973a; }
@@ -2322,6 +2323,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.enemy-spell-indicator {
+  font-size: 0.85rem;
+  line-height: 1;
+  color: #c9922a;
+  text-shadow: 0 0 6px #c9922a, 0 0 2px #c9922a;
 }
 
 .battle-loyalty-hint {

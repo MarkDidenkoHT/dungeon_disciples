@@ -1,4 +1,5 @@
 import { UNITS } from './units.js';
+import { ITEM_DEFS, applyItemModifiers } from './items.js';
 
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 
@@ -9,75 +10,102 @@ const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Cryst
 
 const REGION_ENCOUNTERS = {
   crimson_basilica: {
-    level_1: [
-      { key: 'crimson_basilica.aggrails_herald', cell: 2 },
-      { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
-      { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
-    ],
-    level_2:  [
-      { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
-      { key: 'crimson_basilica.initiate',         cell: 3 },
-    ],
-    level_3:  [
-      { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-      { key: 'crimson_basilica.initiate',         cell: 3 },
-    ],
-    level_4:  [
-      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.initiate',         cell: 3 },
-    ],
-    level_5:  [
-      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-      { key: 'crimson_basilica.initiate',         cell: 3 },
-    ],
-    level_6:  [
-      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-      { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
-      { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
-    ],
+    level_1: {
+      enemies: [
+        { key: 'crimson_basilica.aggrails_herald', cell: 2, item_id: 'meteor_exoskeleton' },
+        { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
+        { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
+      ],
+    },
+    level_2: {
+      // One hardcoded spell per encounter, same as the player's one-spell-per-battle -
+      // there's no per-unit caster, the level itself "casts" this at battle start.
+      spell_id: 'enemy_spell_1',
+      enemies: [
+        { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
+        { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
+        { key: 'crimson_basilica.initiate',         cell: 3 },
+      ],
+    },
+    level_3: {
+      enemies: [
+        { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
+        { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
+        { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+        { key: 'crimson_basilica.initiate',         cell: 3 },
+      ],
+    },
+    level_4: {
+      enemies: [
+        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+        { key: 'crimson_basilica.initiate',         cell: 3 },
+      ],
+    },
+    level_5: {
+      enemies: [
+        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+        { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+        { key: 'crimson_basilica.initiate',         cell: 3 },
+      ],
+    },
+    level_6: {
+      enemies: [
+        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
+        { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
+      ],
+    },
   },
 
   mountains_of_valdrek: {
-    level_1:  [
-      { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-      { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
-    ],
-    level_2:  [
-      { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-      { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
-      { key: 'mountains_of_valdrek.patchling',   cell: 1 },
-    ],
-    level_3:  [
-      { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-      { key: 'mountains_of_valdrek.cairn',       cell: 2 },
-    ],
+    level_1: {
+      enemies: [
+        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
+        { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
+      ],
+    },
+    level_2: {
+      enemies: [
+        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
+        { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
+        { key: 'mountains_of_valdrek.patchling',   cell: 1 },
+      ],
+    },
+    level_3: {
+      enemies: [
+        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
+        { key: 'mountains_of_valdrek.cairn',       cell: 2 },
+      ],
+    },
   },
 
   dungeons_of_malgrath: {
-    level_1:  [
-      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 0 },
-      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 2 },
-      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
-    ],
-    level_2:  [
-      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 0 },
-      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 2 },
-      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 1 },
-      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 4 },
-    ],
-    level_3:  [
-      { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 0 },
-      { key: 'dungeons_of_malgrath.bone_knight',    cell: 2 },
-      { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
-      { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
-    ]
+    level_1: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 0 },
+        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 2 },
+        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
+      ],
+    },
+    level_2: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 0 },
+        { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 2 },
+        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 1 },
+        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 4 },
+      ],
+    },
+    level_3: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 0 },
+        { key: 'dungeons_of_malgrath.bone_knight',    cell: 2 },
+        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
+        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
+      ],
+    },
   },
 };
 
@@ -154,16 +182,42 @@ function resolveUnitKey(key) {
 
 function getEncounter(region_id, level) {
   const levelKey = `level_${level}`;
-  const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey];
+  const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey]?.enemies;
   if (!slots) return [];
   return slots
     .map(slot => {
-      const unitData = resolveUnitKey(slot.key);
+      let unitData = resolveUnitKey(slot.key);
       if (!unitData) return null;
-      return { ...unitData, cell: slot.cell };
+
+      // Optional per-encounter item: slot.item_id references data/items.js ITEM_DEFS.
+      // Applies armor/resist/tag/passive bonuses the same way player-equipped items do;
+      // HP is added directly to the flat `hp` field since enemies have no persisted
+      // roster row to bank the bonus on (unlike player units).
+      if (slot.item_id) {
+        const itemDef = ITEM_DEFS[slot.item_id];
+        if (itemDef) {
+          unitData = applyItemModifiers(unitData, itemDef);
+          const hpBonus = Number(itemDef.stat_mods?.hp || 0);
+          if (hpBonus) unitData = { ...unitData, hp: (unitData.hp ?? 0) + hpBonus };
+        }
+      }
+
+      return { ...unitData, cell: slot.cell, item_id: slot.item_id || null };
     })
     .filter(Boolean);
 }
 
-export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter };
+// One hardcoded spell per encounter (level), same as the player's one-spell-per-
+// battle rule - there is no per-unit caster and no in-battle selection for
+// enemies. spell_id can be any spell in data/spells.js (a faction spell or one
+// of SPELLS.enemies); the effect runs through the same target-scope + params
+// engine as player casts (see BattleEngine.castEnemyPreparedSpells). Never
+// shown to the player - only whether a cast happened (battle-prep.js
+// enemy-spell-indicator).
+function getEncounterSpellId(region_id, level) {
+  const levelKey = `level_${level}`;
+  return REGION_ENCOUNTERS[region_id]?.[levelKey]?.spell_id || null;
+}
+
+export { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter, getEncounterSpellId };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, REGION_REWARDS, REGION_TROPHIES, getEncounter, getEncounterSpellId };

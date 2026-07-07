@@ -1,6 +1,6 @@
 import { api, navigate, resourceCache }  from '../api.js';
 import { SPELLS }          from '../../data/spells.js';
-import { getEncounter }    from '../../data/embark.js';
+import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import {
@@ -97,7 +97,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           </div>
         </div>
         <div class="battle-half battle-half--enemy">
-          <div class="battle-half-label">Enemies</div>
+          <div class="battle-half-label">
+            Enemies
+            <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
+          </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="enemy-grid"></div>
           </div>
@@ -1099,6 +1102,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       maxNonHero = getLoyalty(heroUnit);
 
       enemies = getEncounter(region_id, level);
+
+      const enemySpellIndicator = root.querySelector('#enemy-spell-indicator');
+      if (enemySpellIndicator) {
+        const hasEnemySpell = !!getEncounterSpellId(region_id, level);
+        enemySpellIndicator.style.display = hasEnemySpell ? '' : 'none';
+      }
 
       await Promise.all([loadResources(), loadLearnedSpells()]);
 

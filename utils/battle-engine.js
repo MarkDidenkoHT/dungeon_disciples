@@ -1,5 +1,19 @@
 const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
+const { SPELLS } = require('../data/spells');
+
+// Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
+// through the exact same target-resolution + param-application system as player
+// prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
+// enemy_spell entry with e.g. target_scope: 'all_allies' and
+// params: { armor_boost: 10 } will buff every enemy combatant, the same way a
+// player spell with those fields buffs every player combatant. Fill in
+// spellDef.target_scope/params on the SPELLS.enemies entries; nothing else to
+// wire up. Only add a manual branch here for effects that don't fit the generic
+// scope/params shape (e.g. something like the player-only 'tag_count_buff').
+function applyEnemySpellEffect(engine, actor, spellDef) {
+  engine.castSpell(spellDef, { casterSide: 'enemy', targetId: null });
+}
 
 let _UNIT_ABILITIES = null;
 async function getAbilities() {
@@ -26,14 +40,16 @@ class BattleEngine {
       this.log        = state.log || [];
       this.done       = state.done || false;
       this.winner     = state.winner || null;
-      this.pendingRoundEffects = state.pendingRoundEffects || [];
+      this.pendingRoundEffects   = state.pendingRoundEffects || [];
+      this._encounter_spell_cast = state._encounter_spell_cast || false;
     } else {
       this.combatants = [];
       this.round      = 1;
       this.log        = [];
       this.done       = false;
       this.winner     = null;
-      this.pendingRoundEffects = [];
+      this.pendingRoundEffects   = [];
+      this._encounter_spell_cast = false;
     }
   }
   async init() {
@@ -661,6 +677,7 @@ class BattleEngine {
       done:   this.done,
       winner: this.winner,
       pendingRoundEffects: this.pendingRoundEffects,
+      _encounter_spell_cast: this._encounter_spell_cast ?? false,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -773,10 +790,96 @@ class BattleEngine {
     engine.round  = battleData.round;
     engine.done   = battleData.done;
     engine.winner = battleData.winner;
-    engine.pendingRoundEffects = battleData.pendingRoundEffects || [];
+    engine.pendingRoundEffects   = battleData.pendingRoundEffects || [];
+    engine._encounter_spell_cast = battleData._encounter_spell_cast ?? false;
     engine.log    = [];
     return engine;
   }
+  // Casts the encounter's one hardcoded spell (see data/embark.js
+  // getEncounterSpellId - REGION_ENCOUNTERS[region][level].spell_id), once, at
+  // battle start. This mirrors the player's one-spell-per-battle rule exactly:
+  // there is no per-unit caster, the level itself "casts" this. spellId can
+  // reference ANY spell in data/spells.js - a faction spell, or one of the
+  // SPELLS.enemies placeholders - same catalog, same effect engine as player
+  // casts. Only logs that a hidden spell was cast - never the spell's name or
+  // effect.
+  castEncounterSpell(spellId) {
+    if (!spellId || this._encounter_spell_cast) return;
+    this._encounter_spell_cast = true;
+    const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
+    if (!spellDef) return;
+    this.pushLog({
+      type:    'notice',
+      message: 'The enemy channels a hidden power before the battle begins.',
+    });
+    applyEnemySpellEffect(this, null, spellDef);
+  }
+  // Resolves the combatants a spell/cast affects, generalized by which side is
+  // casting (so the exact same scopes used by player prep-spells - 'all_allies',
+  // 'single_enemy', 'tag_allies', etc. - work identically for an enemy caster,
+  // just with ally/enemy flipped relative to the caster's own side).
+  getSpellTargets(spellDef, casterSide, targetId = null) {
+    const scope     = spellDef.target_scope || '';
+    const params     = spellDef.params || {};
+    const allySide   = casterSide;
+    const enemySide  = casterSide === 'player' ? 'enemy' : 'player';
+
+    if (scope === 'all_allies')   return this.combatants.filter(c => c.side === allySide  && c.alive);
+    if (scope === 'all_enemies')  return this.combatants.filter(c => c.side === enemySide && c.alive);
+    if (scope === 'single_ally')  return this.combatants.filter(c => c.side === allySide  && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
+    if (scope === 'single_enemy') return this.combatants.filter(c => c.side === enemySide && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
+    if (scope === 'tag_allies') {
+      const tag = params.tag_required;
+      return this.combatants.filter(c => c.side === allySide && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+    }
+    if (scope === 'tag_enemies') {
+      const tag = params.tag_required;
+      return this.combatants.filter(c => c.side === enemySide && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+    }
+    if (scope === 'random_enemy') {
+      const pool = this.combatants.filter(c => c.side === enemySide && c.alive);
+      if (!pool.length) return [];
+      return [pool[Math.floor(Math.random() * pool.length)]];
+    }
+    return [];
+  }
+
+  // Applies the common param-based spell effects (heal_pct, armor_boost, etc.)
+  // to a resolved target list. This is the same effect application used for
+  // player prep-spells (routes/index.js /battle/create) - shared, not duplicated.
+  applySpellParams(targets, params = {}) {
+    for (const c of targets) {
+      if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
+      if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
+      if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
+      if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
+      if (params.initiative_boost)     c.initiative = (c.initiative || 40) + params.initiative_boost;
+      if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
+      if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
+      if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
+      if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
+      if (params.intercept_chance_pct) c.intercept_bonus_pct = (c.intercept_bonus_pct || 0) + params.intercept_chance_pct;
+      if (params.strip_passives)       c._passives_locked = true;
+      if (params.resistances) {
+        for (const [rType, rVal] of Object.entries(params.resistances)) {
+          if (!c.unit_data.resistances) c.unit_data.resistances = {};
+          c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) + rVal;
+        }
+      }
+    }
+  }
+
+  // Convenience wrapper: resolve targets for casterSide then apply params. This
+  // is the generic path both player prep-spells and enemy prepared-spells run
+  // through; it does not cover the handful of bespoke effect_types (e.g.
+  // 'round_trigger_heal', 'tag_count_buff') that are still handled specially in
+  // routes/index.js for player casts.
+  castSpell(spellDef, { casterSide = 'player', targetId = null } = {}) {
+    const targets = this.getSpellTargets(spellDef, casterSide, targetId);
+    this.applySpellParams(targets, spellDef.params || {});
+    return targets;
+  }
+
   pushLog(entry) { this.log.push(entry); }
 }
 module.exports = { BattleEngine };

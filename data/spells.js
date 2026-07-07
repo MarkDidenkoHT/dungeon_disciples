@@ -479,7 +479,67 @@ const SPELLS = {
       target_scope: 'single_ally',
       params: { lifesteal: 0.35, armor_boost: 20 }
     },
-  ]
+  ],
+
+  // Convenience bucket for spells that only make sense on enemies (encounter
+  // design can also just point an encounter's spell_id at any existing faction
+  // spell in this file - see data/embark.js REGION_ENCOUNTERS[region][level]
+  // .spell_id / getEncounterSpellId - the lookup checks the whole SPELLS
+  // catalog, not just this array). One spell per encounter, same as the
+  // player's one-spell-per-battle rule - there is no per-unit caster. Not shown
+  // in the player-facing Spell Tome (spell_tome.js only reads
+  // SPELLS[player.faction]). Which spell is cast is never revealed to the
+  // player - only whether a cast happened.
+  enemies: [
+    {
+      id: 'enemy_spell_1',
+      name: 'Enemy Spell 1 (placeholder)',
+      rank: 1,
+      tier: 1,
+      type: 'enemy',
+      description: 'Placeholder enemy spell.',
+      effect_type: 'buff',
+      class: 'enemy',
+      target_scope: 'all_allies',
+      params: { armor_boost: 10 },
+    },
+    {
+      id: 'enemy_spell_2',
+      name: 'Enemy Spell 2 (placeholder)',
+      rank: 1,
+      tier: 1,
+      type: 'enemy',
+      description: 'Placeholder enemy spell.',
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'none',
+      params: {},
+    },
+    {
+      id: 'enemy_spell_3',
+      name: 'Enemy Spell 3 (placeholder)',
+      rank: 1,
+      tier: 1,
+      type: 'enemy',
+      description: 'Placeholder enemy spell.',
+      effect_type: 'heal',
+      class: 'enemy',
+      target_scope: 'none',
+      params: {},
+    },
+    {
+      id: 'enemy_spell_4',
+      name: 'Enemy Spell 4 (placeholder)',
+      rank: 1,
+      tier: 1,
+      type: 'enemy',
+      description: 'Placeholder enemy spell.',
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'none',
+      params: {},
+    },
+  ],
 };
 
 export { SPELLS };

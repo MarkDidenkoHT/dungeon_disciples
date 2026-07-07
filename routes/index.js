@@ -6,7 +6,7 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter } = require('../data/embark');
+const { REGIONS, getEncounter, getEncounterSpellId } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
@@ -846,6 +846,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
+    engine.castEncounterSpell(getEncounterSpellId(region_id, level));
 
     if (Array.isArray(selected_spells) && selected_spells.length > 1) {
       return res.status(400).json({ error: 'Only one spell may be cast per battle' });
@@ -874,28 +875,9 @@ router.post('/battle/create', requireAuth, async (req, res) => {
         const params   = spellDef.params || {};
         const targetId = clientSpell.target_id ?? null;
 
-        function getTargets() {
-          if (scope === 'all_allies')    return engine.combatants.filter(c => c.side === 'player' && c.alive);
-          if (scope === 'all_enemies')   return engine.combatants.filter(c => c.side === 'enemy'  && c.alive);
-          if (scope === 'single_ally')   return engine.combatants.filter(c => c.side === 'player' && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
-          if (scope === 'single_enemy')  return engine.combatants.filter(c => c.side === 'enemy'  && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
-          if (scope === 'tag_allies') {
-            const tag = params.tag_required;
-            return engine.combatants.filter(c => c.side === 'player' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
-          }
-          if (scope === 'tag_enemies') {
-            const tag = params.tag_required;
-            return engine.combatants.filter(c => c.side === 'enemy' && c.alive && (c.unit_data?.tags ?? []).includes(tag));
-          }
-          if (scope === 'random_enemy') {
-            const pool = engine.combatants.filter(c => c.side === 'enemy' && c.alive);
-            if (!pool.length) return [];
-            return [pool[Math.floor(Math.random() * pool.length)]];
-          }
-          return [];
-        }
-
-        const targets = spellDef.effect_type === 'round_trigger_heal' ? [] : getTargets();
+        const targets = spellDef.effect_type === 'round_trigger_heal'
+          ? []
+          : engine.getSpellTargets(spellDef, 'player', targetId);
 
         if (spellDef.effect_type === 'round_trigger_heal') {
           engine.pendingRoundEffects.push({
@@ -924,25 +906,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
           for (const c of engine.combatants) c._actives_locked = true;
         }
 
-        for (const c of targets) {
-          if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
-          if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
-          if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
-          if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
-          if (params.initiative_boost)     c.initiative = (c.initiative || 40) + params.initiative_boost;
-          if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
-          if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
-          if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
-          if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
-          if (params.intercept_chance_pct) c.intercept_bonus_pct = (c.intercept_bonus_pct || 0) + params.intercept_chance_pct;
-          if (params.strip_passives)       c._passives_locked = true;
-          if (params.resistances) {
-            for (const [rType, rVal] of Object.entries(params.resistances)) {
-              if (!c.unit_data.resistances) c.unit_data.resistances = {};
-              c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) + rVal;
-            }
-          }
-        }
+        engine.applySpellParams(targets, params);
       }
     }
 
