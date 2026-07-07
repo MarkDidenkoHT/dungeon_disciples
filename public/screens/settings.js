@@ -32,7 +32,7 @@ export function renderSettings(root, { player }) {
   const sfxEnabled           = localStorage.getItem('sfx_enabled')   !== 'false';
   const musicEnabled         = localStorage.getItem('music_enabled') !== 'false';
   const notificationsEnabled = player?.settings?.notifications !== false;
-  const languageLabel        = { en: 'English', ru: 'Russian' }[L] || L;
+  const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
   root.innerHTML = `
     <div class="screen screen-settings">
@@ -58,6 +58,12 @@ export function renderSettings(root, { player }) {
               ${notificationsEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
+          <div class="settings-row">
+            <span class="settings-label">${UI_TEXT.language[L]}</span>
+            <button class="settings-toggle settings-toggle--on" id="toggle-language">
+              ${languageLabel}
+            </button>
+          </div>
         </div>
 
         <div class="settings-section">
@@ -68,10 +74,6 @@ export function renderSettings(root, { player }) {
           <div class="settings-row settings-row--info">
             <span class="settings-label">${UI_TEXT.faction[L]}</span>
             <span class="settings-value">${player?.faction?.replace(/_/g, ' ') ?? '—'}</span>
-          </div>
-          <div class="settings-row settings-row--info">
-            <span class="settings-label">${UI_TEXT.language[L]}</span>
-            <span class="settings-value">${languageLabel}</span>
           </div>
         </div>
 
@@ -109,6 +111,24 @@ export function renderSettings(root, { player }) {
     } catch (err) {
       notifBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       notifBtn.classList.toggle('settings-toggle--on', !next);
+      alert(err.message || 'Failed to save setting');
+    }
+  });
+
+  const langBtn = root.querySelector('#toggle-language');
+  langBtn.addEventListener('click', async () => {
+    const next = L === 'ru' ? 'en' : 'ru';
+    langBtn.disabled = true;
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { language: next },
+      });
+      player.settings = updated.settings;
+      navigate('settings', { player });
+    } catch (err) {
+      langBtn.disabled = false;
       alert(err.message || 'Failed to save setting');
     }
   });

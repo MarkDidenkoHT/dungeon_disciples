@@ -105,6 +105,13 @@ function navigate(screen, params = {}) {
   const root = document.getElementById('content-root');
 
   const L = lang(player);
+
+  ['castle', 'roster', 'settings'].forEach(screen => {
+    const btn = document.querySelector(`.nav-btn[data-screen="${screen}"]`);
+    const label = btn?.querySelector('.nav-btn-label');
+    if (label) label.textContent = NAV_LABELS[screen][L];
+  });
+
   const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
   const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
 
