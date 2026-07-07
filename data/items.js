@@ -66,7 +66,6 @@ const ITEM_DEFS = {
     icon:         'shroud_of_the_fallen',
     cost:         { grave_dust: 2, aggrails_signet: 1, Gold: 100, Crystals_Death: 8 },
   },
-
   travelers_charm: {
     key:          'travelers_charm',
     name:         "Traveler's Charm",
