@@ -501,7 +501,7 @@ const SPELLS = {
       effect_type: 'buff',
       class: 'enemy',
       target_scope: 'all_allies',
-      params: { armor_boost: 10 },
+      params: { armor_boost: 5 },
     },
     {
       id: 'enemy_spell_2',

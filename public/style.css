@@ -4122,6 +4122,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: var(--accent);
 }
 
+.item-card--catalog {
+  opacity: 0.7;
+}
+
+.item-card--catalog .item-card-blocked {
+  color: var(--muted);
+}
+
 .item-card-icon {
   width: 56px;
   height: 56px;

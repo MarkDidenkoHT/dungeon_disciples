@@ -116,6 +116,15 @@ const UNIT_ABILITIES = {
     description: 'Deals 25% of damage to the unit behind the target.',
     params: { behind_splash_pct: 25 },
   },
+  'impale 2': {
+    id: 'impale 2',
+    name: 'Impale',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 35% of damage to the unit behind the target.',
+    params: { behind_splash_pct: 35 },
+  },
   'infect 1': {
     id: 'infect 1',
     name: 'Infect',

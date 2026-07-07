@@ -1,30 +1,85 @@
-// Item definitions. These are "templates" used when crafting/granting an item.
-// A crafted item's full stats are snapshotted into items.item_stats at creation
-// time (see items table), so balance changes here do not retroactively affect
-// items players already own.
-//
-// item_stats shape (as stored in items.item_stats jsonb):
-// {
-//   key:          'meteor_exoskeleton',  // template id, matches ITEM_DEFS key
-//   name:         'Meteor Exoskeleton',
-//   faction:      'empire',              // required faction to equip, or null for any
-//   tag_required: 'Engineer',            // unit must have this tag to equip, or null for any
-//   adds_tag:     'Construct',           // tag granted to the wearer while equipped, or null
-//   stat_mods:    { hp: 5, armor: 5, air_resist: 5 }, // added to base stats while equipped
-//   passive:      null,                  // UNIT_ABILITIES key granted while equipped, or null
-//   icon:         'meteor_exoskeleton',  // /assets/icons/items/<icon>.png
-// }
-
 const ITEM_DEFS = {
+
   meteor_exoskeleton: {
     key:          'meteor_exoskeleton',
     name:         'Meteor Exoskeleton',
     faction:      'empire',
     tag_required: 'Engineer',
     adds_tag:     'Construct',
-    stat_mods:    { hp: 5, armor: 5, air_resist: 5 },
+    stat_mods:    { hp: 5, armor: 5 },
     passive:      null,
     icon:         'meteor_exoskeleton',
+  },
+  aegis_of_the_first_ward: {
+    key:          'aegis_of_the_first_ward',
+    name:         'Aegis of the First Ward',
+    faction:      'empire',
+    tag_required: 'Knight',
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 10, death_resist: 10 },
+    passive:      null,
+    icon:         'aegis_of_the_first_ward',
+  },
+  sanctified_standard: {
+    key:          'sanctified_standard',
+    name:         'Sanctified Standard',
+    faction:      'empire',
+    tag_required: 'Knight',
+    adds_tag:     'Holy',
+    stat_mods:    null,
+    passive:      'inspiration_damage 1',
+    icon:         'sanctified_standard',
+  },
+  court_regalia: {
+    key:          'court_regalia',
+    name:         'Court Regalia',
+    faction:      'choir_of_the_cursed',
+    tag_required: 'Court',
+    adds_tag:     null,
+    stat_mods:    { armor: 5, hp: 15 },
+    passive:      null,
+    icon:         'court_regalia',
+  },
+  feral_collar: {
+    key:          'feral_collar',
+    name:         'Feral Collar',
+    faction:      'choir_of_the_cursed',
+    tag_required: 'Beast',
+    adds_tag:     null,
+    stat_mods:    { armor: 5 },
+    passive:      'thorns 1',
+    icon:         'feral_collar',
+  },
+  shroud_of_the_fallen: {
+    key:          'shroud_of_the_fallen',
+    name:         'Shroud of the Fallen',
+    faction:      'grail_of_sorrow',
+    tag_required: 'Vampire',
+    adds_tag:     'Zombie',
+    stat_mods:    { hp: 10 },
+    passive:      null,
+    icon:         'shroud_of_the_fallen',
+  },
+
+  travelers_charm: {
+    key:          'travelers_charm',
+    name:         "Traveler's Charm",
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { armor: 5, hp: 5 },
+    passive:      null,
+    icon:         'travelers_charm',
+  },
+  runed_tome: {
+    key:          'runed_tome',
+    name:         'Runed Tome',
+    faction:      null,
+    tag_required: 'Caster',
+    adds_tag:     null,
+    stat_mods:    null,
+    passive:      'dissipate 1',
+    icon:         'runed_tome',
   },
 };
 

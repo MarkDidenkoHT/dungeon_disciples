@@ -2,6 +2,7 @@ import { api }              from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { SPELLS }           from '../../data/spells.js';
+import { ITEM_DEFS }        from '../../data/items.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
@@ -370,7 +371,8 @@ export function renderRoster(root, { player }) {
     }
   });
 
-  function formatStatMods(statMods = {}) {
+  function formatStatMods(statMods) {
+    statMods = statMods || {};
     return Object.entries(statMods).map(([key, val]) => {
       const sign = val >= 0 ? '+' : '';
       if (key === 'hp')    return `${sign}${val} HP`;
@@ -412,6 +414,25 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+  function buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags) {
+    if (ownedInstance) return buildItemCard(ownedInstance, unit, unitTags);
+
+    const iconId = itemDef.icon || itemDef.key || 'item';
+    return `
+      <div class="item-card item-card--catalog">
+        <div class="item-card-icon">
+          <img src="/assets/icons/items/${iconId}.png" alt="${itemDef.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+        </div>
+        <div class="item-card-name">${itemDef.name}</div>
+        ${itemDef.faction      ? `<div class="item-card-tag">Faction: ${cap(itemDef.faction.replace(/_/g, ' '))}</div>` : ''}
+        ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
+        ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
+        <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
+        <div class="item-card-blocked">Not yet owned</div>
+      </div>`;
+  }
+
   function openItemModal(rosterId) {
     const unit = units.find(u => String(u.id) === String(rosterId));
     if (!unit) return;
@@ -421,6 +442,23 @@ export function renderRoster(root, { player }) {
     let filter = 'equippable';
 
     function render() {
+      if (filter === 'catalog') {
+        const cardsHtml = Object.values(ITEM_DEFS).map(itemDef => {
+          const ownedInstance = items.find(it => (it.item_stats?.key || it.item_stats?.icon) === itemDef.key);
+          return buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags);
+        }).join('');
+
+        return `
+          <div class="items-modal">
+            <div class="items-filter-bar">
+              <button class="items-filter-btn ${filter === 'equippable' ? 'items-filter-btn--active' : ''}" data-filter="equippable">Equippable</button>
+              <button class="items-filter-btn ${filter === 'all' ? 'items-filter-btn--active' : ''}" data-filter="all">All Items</button>
+              <button class="items-filter-btn ${filter === 'catalog' ? 'items-filter-btn--active' : ''}" data-filter="catalog">Catalog</button>
+            </div>
+            <div class="items-slider">${cardsHtml}</div>
+          </div>`;
+      }
+
       const filtered = items.filter(it => {
         if (filter === 'all') return true;
         const stats    = it.item_stats || {};
@@ -439,6 +477,7 @@ export function renderRoster(root, { player }) {
           <div class="items-filter-bar">
             <button class="items-filter-btn ${filter === 'equippable' ? 'items-filter-btn--active' : ''}" data-filter="equippable">Equippable</button>
             <button class="items-filter-btn ${filter === 'all' ? 'items-filter-btn--active' : ''}" data-filter="all">All Items</button>
+            <button class="items-filter-btn ${filter === 'catalog' ? 'items-filter-btn--active' : ''}" data-filter="catalog">Catalog</button>
           </div>
           <div class="items-slider">${cardsHtml}</div>
         </div>`;
