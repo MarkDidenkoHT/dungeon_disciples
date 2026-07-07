@@ -43,6 +43,7 @@ export function renderRoster(root, { player }) {
   let buildingsData = {};
   let upgradePaths  = {};
   let items         = [];
+  let resources     = [];
 
   function equippedItemFor(rosterId) {
     return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
@@ -414,10 +415,24 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+  function formatCost(cost = {}) {
+    return Object.entries(cost).map(([resName, amount]) => {
+      const have    = resources.find(r => r.item === resName)?.amount ?? 0;
+      const shortage = have < amount;
+      const label = resName.startsWith('Crystals_') ? resName.replace('Crystals_', '') + ' Crystals' : resName;
+      return `<span class="item-cost-part ${shortage ? 'item-cost-part--short' : ''}">${label} ${have}/${amount}</span>`;
+    }).join(' · ');
+  }
+
   function buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags) {
     if (ownedInstance) return buildItemCard(ownedInstance, unit, unitTags);
 
-    const iconId = itemDef.icon || itemDef.key || 'item';
+    const iconId      = itemDef.icon || itemDef.key || 'item';
+    const cost         = itemDef.cost || {};
+    const factionOk    = !itemDef.faction || itemDef.faction === player.faction;
+    const canAfford     = Object.entries(cost).every(([resName, amount]) => (resources.find(r => r.item === resName)?.amount ?? 0) >= amount);
+    const canCraft      = factionOk && canAfford;
+
     return `
       <div class="item-card item-card--catalog">
         <div class="item-card-icon">
@@ -429,7 +444,9 @@ export function renderRoster(root, { player }) {
         ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
-        <div class="item-card-blocked">Not yet owned</div>
+        <div class="item-cost">${formatCost(cost)}</div>
+        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>Craft</button>
+        ${!factionOk ? `<div class="item-card-blocked">Wrong faction</div>` : (!canAfford ? `<div class="item-card-blocked">Not enough resources</div>` : '')}
       </div>`;
   }
 
@@ -537,6 +554,23 @@ export function renderRoster(root, { player }) {
         }
         return;
       }
+
+      const craftBtn = e.target.closest('.item-action-btn--craft');
+      if (craftBtn && !craftBtn.disabled) {
+        craftBtn.disabled    = true;
+        craftBtn.textContent = 'Crafting…';
+        try {
+          const result = await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
+          items     = result.items     || items;
+          resources = result.resources || resources;
+          refreshResourceBar(player).catch(() => {});
+          body.innerHTML = render();
+        } catch (err) {
+          alert(err.message || 'Craft failed');
+          body.innerHTML = render();
+        }
+        return;
+      }
     });
   }
 
@@ -550,6 +584,7 @@ export function renderRoster(root, { player }) {
     buildingsData = boot.structures?.buildings_data || {};
     upgradePaths  = boot.buildings?.upgrade_paths || {};
     items         = fetchedItems || [];
+    resources     = [...(boot.resources || []), ...(boot.trophies || [])];
 
     if (!units.length) {
       track.innerHTML = `<div class="roster-slide"><p class="placeholder">No units yet.</p></div>`;

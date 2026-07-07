@@ -4196,6 +4196,26 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: linear-gradient(180deg,#8a2e2e,#5c1c1c);
 }
 
+.item-action-btn--craft {
+  background: linear-gradient(180deg,#2a5f8a,#1c3f5c);
+}
+
+.item-action-btn--craft[disabled] {
+  background: #333;
+  color: var(--muted);
+  cursor: default;
+}
+
+.item-cost {
+  font-size: 0.65rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.item-cost-part--short {
+  color: #c0392b;
+}
+
 .item-card-blocked {
   font-size: 0.68rem;
   color: #c0392b;

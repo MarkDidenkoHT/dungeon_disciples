@@ -1387,35 +1387,68 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
   }
 });
 
-// TEMPORARY dev-only endpoint: item acquisition/crafting isn't built yet, so this
-// grants one item from ITEM_DEFS directly for testing the equip mechanic. Remove
-// once crafting (trophies -> items) is implemented.
-router.post('/items/debug-grant', requireAuth, async (req, res) => {
+// Crafts an item from data/items.js ITEM_DEFS[item_key].cost - trophies, Gold,
+// and/or crystals, same cost-map shape and validate-then-deduct pattern as
+// /structures/mercenary/recruit. Faction-restricted items require the item's
+// faction to match the player's; neutral items (faction: null) are craftable
+// by anyone.
+router.post('/items/craft', requireAuth, async (req, res) => {
   const { chat_id, item_key } = req.body;
-  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  if (!chat_id || !item_key) return res.status(400).json({ error: 'chat_id and item_key required' });
   try {
+    const itemDef = ITEM_DEFS[item_key];
+    if (!itemDef) return res.status(404).json({ error: 'Unknown item' });
+
     const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
-    const key = item_key || 'meteor_exoskeleton';
-    const def = ITEM_DEFS[key];
-    if (!def) return res.status(400).json({ error: 'Unknown item_key' });
+
+    if (itemDef.faction && itemDef.faction !== player.faction) {
+      return res.status(400).json({ error: 'This item cannot be crafted by your faction' });
+    }
+
+    const cost = itemDef.cost || {};
+    const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+
+    for (const [resName, required] of Object.entries(cost)) {
+      const row  = inventoryRows.find(r => r.item === resName);
+      const have = row ? Number(row.amount) : 0;
+      if (have < required) return res.status(400).json({ error: `Not enough ${resName} (need ${required}, have ${have})` });
+    }
+
+    for (const [resName, required] of Object.entries(cost)) {
+      const row = inventoryRows.find(r => r.item === resName);
+      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }
+
     const inserted = await supabase('/items', {
       method: 'POST',
       body: JSON.stringify({
         player_id: player.id,
-        item_name: def.name,
+        item_name: itemDef.name,
         item_stats: {
-          key:          def.key,
-          faction:      def.faction,
-          tag_required: def.tag_required,
-          adds_tag:     def.adds_tag,
-          stat_mods:    def.stat_mods,
-          passive:      def.passive,
-          icon:         def.icon,
+          key:          itemDef.key,
+          faction:      itemDef.faction,
+          tag_required: itemDef.tag_required,
+          adds_tag:     itemDef.adds_tag,
+          stat_mods:    itemDef.stat_mods,
+          passive:      itemDef.passive,
+          icon:         itemDef.icon,
         },
       }),
+      headers: { Prefer: 'return=representation' },
     });
-    res.json({ success: true, item: inserted[0] });
+
+    const [updatedItems, updatedResources] = await Promise.all([
+      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+
+    res.json({
+      success:   true,
+      item:      Array.isArray(inserted) ? inserted[0] : inserted,
+      items:     updatedItems,
+      resources: updatedResources,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

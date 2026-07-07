@@ -9,6 +9,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 5, armor: 5 },
     passive:      null,
     icon:         'meteor_exoskeleton',
+    cost:         { cinder_ash: 2, Gold: 100, Crystals_Air: 8 },
   },
   aegis_of_the_first_ward: {
     key:          'aegis_of_the_first_ward',
@@ -19,6 +20,7 @@ const ITEM_DEFS = {
     stat_mods:    { fire_resist: 10, death_resist: 10 },
     passive:      null,
     icon:         'aegis_of_the_first_ward',
+    cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 4 },
   },
   sanctified_standard: {
     key:          'sanctified_standard',
@@ -29,6 +31,7 @@ const ITEM_DEFS = {
     stat_mods:    null,
     passive:      'inspiration_damage 1',
     icon:         'sanctified_standard',
+    cost:         { aggrails_signet: 2, rusted_shackle: 1, Gold: 90, Crystals_Life: 6 },
   },
   court_regalia: {
     key:          'court_regalia',
@@ -39,6 +42,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 5, hp: 15 },
     passive:      null,
     icon:         'court_regalia',
+    cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 4 },
   },
   feral_collar: {
     key:          'feral_collar',
@@ -49,6 +53,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 5 },
     passive:      'thorns 1',
     icon:         'feral_collar',
+    cost:         { cinder_ash: 1, Gold: 70, Crystals_Air: 5 },
   },
   shroud_of_the_fallen: {
     key:          'shroud_of_the_fallen',
@@ -59,6 +64,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 10 },
     passive:      null,
     icon:         'shroud_of_the_fallen',
+    cost:         { grave_dust: 2, aggrails_signet: 1, Gold: 100, Crystals_Death: 8 },
   },
 
   travelers_charm: {
@@ -70,6 +76,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 5, hp: 5 },
     passive:      null,
     icon:         'travelers_charm',
+    cost:         { Gold: 40 },
   },
   runed_tome: {
     key:          'runed_tome',
@@ -78,8 +85,9 @@ const ITEM_DEFS = {
     tag_required: 'Caster',
     adds_tag:     null,
     stat_mods:    null,
-    passive:      'dissipate 1',
+    passive:      'pierce 1',
     icon:         'runed_tome',
+    cost:         { Gold: 80, Crystals_Nature: 5 },
   },
 };
 

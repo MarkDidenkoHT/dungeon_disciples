@@ -12,7 +12,7 @@ const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: {
       enemies: [
-        { key: 'crimson_basilica.aggrails_herald', cell: 2, item_id: 'meteor_exoskeleton' },
+        { key: 'crimson_basilica.aggrails_herald', cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
       ],
@@ -150,6 +150,14 @@ const REGION_TROPHIES = {
     { id: 'vial_of_pure_blood', label: 'Vial of Pure Blood' },
     { id: 'aggrails_signet',    label: "Aggrail's Signet" },
   ],
+  mountains_of_valdrek: [
+    { id: 'cinder_ash',           label: 'Cinder Ash' },
+    { id: 'patchling_stitching',  label: 'Patchling Stitching' },
+  ],
+  dungeons_of_malgrath: [
+    { id: 'rusted_shackle', label: 'Rusted Shackle' },
+    { id: 'grave_dust',     label: 'Grave Dust' },
+  ],
 };
 
 const REGIONS = [
@@ -164,12 +172,14 @@ const REGIONS = [
     id: 'mountains_of_valdrek',
     crystal_guaranteed: 'Crystals_Air',
     crystal_pool: ALL_CRYSTALS,
+    trophies: REGION_TROPHIES.mountains_of_valdrek,
     difficulties: buildDifficulties('mountains_of_valdrek'),
   },
   {
     id: 'dungeons_of_malgrath',
     crystal_guaranteed: 'Crystals_Death',
     crystal_pool: ALL_CRYSTALS,
+    trophies: REGION_TROPHIES.dungeons_of_malgrath,
     difficulties: buildDifficulties('dungeons_of_malgrath'),
   },
 ];
