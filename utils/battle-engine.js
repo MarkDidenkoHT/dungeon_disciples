@@ -143,6 +143,10 @@ class BattleEngine {
       intercept_bonus_pct: 0,
       _passives_locked: false,
       _actives_locked:  false,
+      _taunted_by_id:      null,
+      _clear_shot_active:  false,
+      _clear_shot_initiative_amt: 0,
+      _clear_shot_dmg_amt: 0,
     };
   }
   fireTrigger(trigger, ctx) {
@@ -246,10 +250,23 @@ class BattleEngine {
   }
   getValidTargets(actor, forAbility = false) {
     if (forAbility) {
+      if (actor._taunted_by_id != null) return [];
       return getAbilityTargets(actor, this.combatants, this.ABILITIES);
     }
     const isHeal    = this.isHealer(actor);
     const actionKey = this.getActionKey(actor);
+
+    if (actor._taunted_by_id != null) {
+      const taunter = this.combatants.find(c => c.id === actor._taunted_by_id && c.alive);
+      if (!taunter) {
+        actor._taunted_by_id = null;
+      } else if (isHeal || actionKey === 'sacrifice') {
+        return [];
+      } else {
+        return [taunter];
+      }
+    }
+
     if (actionKey === 'sacrifice') {
       return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
     }
@@ -330,6 +347,26 @@ class BattleEngine {
           this.pushLog({ type: 'passive', passive: parryDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0 });
           actor.acted_this_round = true;
           return this.afterAction(actor);
+        }
+      }
+      if (actorRange <= 1) {
+        const duelistDef = this.resolveAllPassiveDefs(target).find(d => d.params?.preemptive_strike_pct != null);
+        if (duelistDef && cellRow(actor.cellIndex) === cellRow(target.cellIndex) && cellCol(actor.cellIndex) === (actor.side === 'enemy' ? 0 : 1)) {
+          const p = duelistDef.params;
+          const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor) * p.preemptive_strike_pct / 100));
+          actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
+          const actorDied = actor.battle_hp <= 0;
+          this.pushLog({ type: 'passive', passive: duelistDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg });
+          if (actorDied) {
+            actor.alive = false;
+            this.applyOnDeathPassives(actor);
+            this.fireTrigger('on_hit',        { actor: target, target: actor, dmg: preemptDmg, dying: null });
+            this.fireTrigger('on_hit_received', { actor: target, target: actor, dmg: preemptDmg, dying: null });
+            this.fireTrigger('on_kill',       { actor: target, target: actor, dmg: preemptDmg, dying: null });
+            this.fireTrigger('on_ally_death', { actor: target, target: actor, dmg: preemptDmg, dying: actor });
+            actor.acted_this_round = true;
+            return this.afterAction(actor);
+          }
         }
       }
       const dmg = this.calcDamage(actor, target);
@@ -533,6 +570,7 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    actor._taunted_by_id = null;
     const win = this.checkWin();
     if (win) { this.done = true; this.winner = win; return true; }
     if (this.getActingOrder().length === 0) this.advanceRound();
@@ -728,6 +766,10 @@ class BattleEngine {
           _stun_initiative_lost: c._stun_initiative_lost ?? 0,
           _passives_locked:    c._passives_locked ?? false,
           _actives_locked:     c._actives_locked  ?? false,
+          _taunted_by_id:      c._taunted_by_id ?? null,
+          _clear_shot_active:  c._clear_shot_active ?? false,
+          _clear_shot_initiative_amt: c._clear_shot_initiative_amt ?? 0,
+          _clear_shot_dmg_amt: c._clear_shot_dmg_amt ?? 0,
         },
       })),
     };
@@ -786,6 +828,10 @@ class BattleEngine {
       c._stun_initiative_lost = b._stun_initiative_lost ?? 0;
       c._passives_locked   = b._passives_locked   ?? false;
       c._actives_locked    = b._actives_locked    ?? false;
+      c._taunted_by_id      = b._taunted_by_id ?? null;
+      c._clear_shot_active  = b._clear_shot_active ?? false;
+      c._clear_shot_initiative_amt = b._clear_shot_initiative_amt ?? 0;
+      c._clear_shot_dmg_amt = b._clear_shot_dmg_amt ?? 0;
     }
     engine.round  = battleData.round;
     engine.done   = battleData.done;

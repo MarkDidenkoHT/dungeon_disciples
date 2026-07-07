@@ -479,6 +479,38 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
       owner._parry_available = true;
     }
+    if (p.clear_shot_initiative_bonus_pct != null || p.clear_shot_dmg_bonus_pct != null) {
+      if (owner._clear_shot_active) {
+        owner.initiative = Math.max(0, owner.initiative - (owner._clear_shot_initiative_amt || 0));
+        owner._dmg_mult   = (owner._dmg_mult ?? 1) - (owner._clear_shot_dmg_amt || 0);
+        owner._clear_shot_active = false;
+        owner._clear_shot_initiative_amt = 0;
+        owner._clear_shot_dmg_amt = 0;
+      }
+      if (owner.alive) {
+        const ownerCol = cellCol(owner.cellIndex);
+        const ownerRow = cellRow(owner.cellIndex);
+        const frontCol = owner.side === 'enemy' ? 0 : 1;
+        const backCol  = owner.side === 'enemy' ? 1 : 0;
+        if (ownerCol === backCol) {
+          const covered = engine.combatants.some(c =>
+            c.alive && c.side === owner.side && c.id !== owner.id &&
+            cellCol(c.cellIndex) === frontCol && cellRow(c.cellIndex) === ownerRow &&
+            !engine.resolveAllPassiveDefs(c).some(d => d.trigger === 'intercept')
+          );
+          if (!covered) {
+            const initAmt = Math.round(owner.initiative * (p.clear_shot_initiative_bonus_pct ?? 0) / 100);
+            const dmgAmt  = (p.clear_shot_dmg_bonus_pct ?? 0) / 100;
+            owner.initiative += initAmt;
+            owner._dmg_mult    = (owner._dmg_mult ?? 1) + dmgAmt;
+            owner._clear_shot_active = true;
+            owner._clear_shot_initiative_amt = initAmt;
+            owner._clear_shot_dmg_amt = dmgAmt;
+            engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — clear line of sight, +${p.clear_shot_initiative_bonus_pct ?? 0}% initiative and damage`, value: p.clear_shot_dmg_bonus_pct ?? 0 });
+          }
+        }
+      }
+    }
   }
 }
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
@@ -524,6 +556,14 @@ function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
   if (!def) return combatants.filter(c => c.side !== actor.side && c.alive);
   const p = def.params || {};
   if (def.target === 'enemy')    return combatants.filter(c => c.side !== actor.side && c.alive);
+  if (def.target === 'enemy_front') {
+    const actorRow = cellRow(actor.cellIndex);
+    return combatants.filter(c =>
+      c.side !== actor.side && c.alive &&
+      cellRow(c.cellIndex) === actorRow &&
+      cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1)
+    );
+  }
   if (def.target === 'self')     return [actor];
   if (def.target === 'ally')     return combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
   if (def.target === 'ally_any') return combatants.filter(c => c.side === actor.side && c.alive);
@@ -680,6 +720,11 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       target._stun_initiative_lost = (target._stun_initiative_lost ?? 0) + reduction;
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} loses ${reduction} initiative for ${p.duration_rounds} rounds`, value: reduction });
     }
+  }
+  if (p.taunt === true && target && def.target === 'enemy_front') {
+    target._taunted_by_id = actor.id;
+    target._actives_locked = true;
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is forced to attack ${actor.unit_name} on their next turn` });
   }
   return true;
 }

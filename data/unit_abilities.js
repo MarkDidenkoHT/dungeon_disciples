@@ -846,6 +846,34 @@ const UNIT_ABILITIES = {
     description: 'Consume 25% HP from a Zombie ally. Heal self for twice the amount drained.',
     params: { ally_drain_pct: 25, tag_required: 'Zombie', ally_drain_heal_mult: 2 },
   },
+  'clear_shot 1': {
+    id: 'clear_shot 1',
+    name: 'Clear Shot',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_round_start',
+    description: 'If this unit is in the back and has no living ally in front of it, gain +25% initiative and +25% damage.',
+    params: { clear_shot_initiative_bonus_pct: 25, clear_shot_dmg_bonus_pct: 25 },
+  },
+  'duelist 1': {
+    id: 'duelist 1',
+    name: 'Duelist',
+    rank: 1,
+    type: 'passive',
+    trigger: 'preemptive_strike',
+    description: 'When attacked in melee by the enemy directly in front, strike first for 50% damage. If this kills the attacker, their attack is cancelled.',
+    params: { preemptive_strike_pct: 50 },
+  },
+  'taunt 1': {
+    id: 'taunt 1',
+    name: 'Taunt',
+    rank: 1,
+    type: 'active',
+    target: 'enemy_front',
+    range: 1,
+    description: 'Force the enemy directly in front to attack you on their next turn. If they cannot attack (e.g. a healing or repair action), they skip their turn instead.',
+    params: { taunt: true },
+  },
 };
 
 export { UNIT_ABILITIES };
