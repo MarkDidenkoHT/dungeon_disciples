@@ -322,8 +322,23 @@ export function buildUnitCard(unit, opts = {}) {
     </div>`;
 }
 
-export function renderItemDetailHtml(item) {
-  if (!item) return renderModalContent('No item equipped.');
+export function renderModalPill(label, modifier) {
+  return `<span class="modal-header-pill modal-header-pill--${modifier}">${label}</span>`;
+}
+
+export function buildAbilityModalParts(def, type) {
+  const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+  const badges = `
+    ${renderModalPill(typeLabel, type)}
+    ${def.rank ? renderModalPill(`Rank ${def.rank}`, 'rank') : ''}
+  `;
+  const description = buildStatDescription(def, type) || 'No details available.';
+  const body = `<div class="ability-modal-desc">${description}</div>`;
+  return { title: def.name, badges, body };
+}
+
+export function buildItemModalParts(item) {
+  if (!item) return { title: 'Item', badges: '', body: renderModalContent('No item equipped.') };
   const stats = item.item_stats || {};
   const lines = [];
   if (stats.faction)      lines.push(`Faction: ${cap(stats.faction.replace(/_/g, ' '))}`);
@@ -338,12 +353,11 @@ export function renderItemDetailHtml(item) {
     return `${sign}${val} ${cap(key)}`;
   });
   if (modParts.length) lines.push(modParts.join(', '));
-  return `
-    <div class="ability-modal-content">
-      <div class="ability-modal-type ability-modal-type--passive">Item</div>
-      <div class="ability-modal-name">${item.item_name || 'Item'}</div>
-      <div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>
-    </div>`;
+  return {
+    title:  item.item_name || 'Item',
+    badges: renderModalPill('Item', 'item'),
+    body:   `<div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>`,
+  };
 }
 
 export function renderModalContent(text) {
@@ -361,6 +375,7 @@ function ensureSheet() {
     <div class="modal">
       <div class="modal-header">
         <span class="modal-title-text"></span>
+        <div class="modal-header-badges"></div>
         <button class="modal-close-btn" aria-label="Close">✕</button>
       </div>
       <div class="modal-body"></div>
@@ -375,9 +390,10 @@ function ensureSheet() {
   return overlay;
 }
 
-export function openSheet(title, bodyHtml) {
+export function openSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSheet();
   overlay.querySelector('.modal-title-text').textContent = title;
+  overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
   overlay.querySelector('.modal-body').innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -404,6 +420,7 @@ function ensureSubSheet() {
     <div class="modal">
       <div class="modal-header">
         <span class="modal-title-text"></span>
+        <div class="modal-header-badges"></div>
         <button class="modal-close-btn" aria-label="Close">✕</button>
       </div>
       <div class="modal-body"></div>
@@ -418,9 +435,10 @@ function ensureSubSheet() {
   return overlay;
 }
 
-export function openSubSheet(title, bodyHtml) {
+export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
   overlay.querySelector('.modal-title-text').textContent = title;
+  overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
   overlay.querySelector('.modal-body').innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
 }

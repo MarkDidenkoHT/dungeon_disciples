@@ -809,16 +809,65 @@ button:active:not(:disabled) { opacity: 0.75; }
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 10px 16px 12px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 .modal-title-text {
+  flex: 1;
+  min-width: 0;
   font-size: 1rem;
   font-weight: bold;
   color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.modal-header-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.modal-header-pill--active {
+  background: #2e1f06;
+  border: 1px solid #5a3e12;
+  color: #c9922a;
+}
+
+.modal-header-pill--passive {
+  background: #0c1e2e;
+  border: 1px solid #2e4e6a;
+  color: #5a9ec8;
+}
+
+.modal-header-pill--item {
+  background: #241a0c;
+  border: 1px solid #5a4420;
+  color: #c9a24a;
+}
+
+.modal-header-pill--rank {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
 }
 
 .modal-close-btn {

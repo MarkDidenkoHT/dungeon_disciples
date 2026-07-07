@@ -8,7 +8,7 @@ import {
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
-  renderItemSlotIcon, withEquippedItem,
+  renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
   getActionLabel,
 } from '../utils.js';
 
@@ -47,7 +47,7 @@ export function renderRoster(root, { player }) {
     return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
   }
 
-  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
+  function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
 
   function buildCard(u) {
     const stored   = u.unit_data || {};
@@ -253,8 +253,8 @@ export function renderRoster(root, { player }) {
     goTo(0);
   }
 
-  function openDetailModal(title, bodyHtml) {
-    openModal(title, bodyHtml);
+  function openDetailModal(title, bodyHtml, badgesHtml = '') {
+    openModal(title, bodyHtml, badgesHtml);
   }
 
   track.addEventListener('click', async (e) => {
@@ -309,15 +309,8 @@ export function renderRoster(root, { player }) {
       const type = abilityBtn.dataset.abilityType;
       const def  = resolveAbility(key);
       if (!def) return;
-      const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
-      const description = buildStatDescription(def, type) || 'No details available.';
-      const bodyHtml = `
-        <div class="ability-modal-content">
-          <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
-          <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
-          <div class="ability-modal-desc">${description}</div>
-        </div>`;
-      openDetailModal(`${typeLabel} Ability`, bodyHtml);
+      const parts = buildAbilityModalParts(def, type);
+      openDetailModal(parts.title, parts.body, parts.badges);
       return;
     }
 

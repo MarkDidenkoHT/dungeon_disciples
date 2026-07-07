@@ -9,7 +9,7 @@ import {
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
-  renderItemSlotIcon, renderItemDetailHtml,
+  renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts,
 } from '../utils.js';
 
 const REGION_META = {
@@ -165,7 +165,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let learnedSpells  = [];
   let activeSpellTier = 1;
 
-  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
+  function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); }
 
   const spellSheetOverlay  = root.querySelector('#spell-sheet-overlay');
@@ -945,7 +945,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const rosterId = itemBtn.dataset.rosterId;
       const item = equippedItemFor(rosterId);
       if (!item) return;
-      openModal(item.item_name || 'Item', renderItemDetailHtml(item));
+      const parts = buildItemModalParts(item);
+      openModal(parts.title, parts.body, parts.badges);
       return;
     }
 
@@ -953,10 +954,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const type = abilityBtn.dataset.abilityType;
     const def  = resolveAbility(key);
     if (!def) return;
-    const typeLabel   = type === 'passive' ? 'Passive' : 'Active';
-    const description = buildStatDescription(def, type) || 'No details available.';
-    const text = `[${typeLabel}] ${def.name}${def.rank ? ` (Rank ${def.rank})` : ''}\n\n${description}`;
-    openModal(`${typeLabel} Ability`, renderModalContent(text));
+    const parts = buildAbilityModalParts(def, type);
+    openModal(parts.title, parts.body, parts.badges);
   });
 
   function attachPortraitEvents() {

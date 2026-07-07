@@ -1,6 +1,6 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, renderItemDetailHtml } from '../utils.js';
+import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
@@ -42,7 +42,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const rosterId = itemBtn.dataset.rosterId;
     const item = equippedItemFor(rosterId);
     if (!item) return;
-    openSheet(item.item_name || 'Item', renderItemDetailHtml(item));
+    const parts = buildItemModalParts(item);
+    openSheet(parts.title, parts.body, parts.badges);
   });
 
   function snapshotState() {

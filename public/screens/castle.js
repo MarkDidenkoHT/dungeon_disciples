@@ -11,7 +11,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   openSubSheet, closeSubSheet, getSubSheetBody, cap,
-  buildUnitCard, getActionLabel,
+  buildUnitCard, getActionLabel, buildAbilityModalParts,
 } from '../utils.js';
 
 const CASTLE_BACKGROUNDS = {
@@ -42,11 +42,11 @@ export function renderCastle(root, { player }) {
   let mercenaryBuildings = {};
   let trophyInventory    = [];
 
-  function openModal(title, bodyHtml) { openSheet(title, bodyHtml); }
+  function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); closeSubSheet(); }
 
-  function openAbilityModal(title, bodyHtml) {
-    openSubSheet(title, bodyHtml);
+  function openAbilityModal(title, bodyHtml, badgesHtml = '') {
+    openSubSheet(title, bodyHtml, badgesHtml);
   }
 
   function closeAbilityModal() { closeSubSheet(); }
@@ -153,25 +153,19 @@ export function renderCastle(root, { player }) {
           const def  = resolveAbility(key);
           if (!def) return;
 
-          const typeLabel = type === 'passive' ? 'Passive' : 'Active';
-          const fileKey   = key.replace(/\s+/g, '_').replace(/_\d+$/, '');
-          const imgSrc    = `/assets/icons/abilities/${fileKey}.jpg`;
+          const parts   = buildAbilityModalParts(def, type);
+          const fileKey = key.replace(/\s+/g, '_').replace(/_\d+$/, '');
+          const imgSrc  = `/assets/icons/abilities/${fileKey}.jpg`;
 
           const bodyHtml = `
             <div class="ability-modal-content">
-              <div class="ability-modal-header">
-                <div class="ability-modal-icon">
-                  <img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">
-                </div>
-                <div class="ability-modal-titles">
-                  <div class="ability-modal-name">${def.name}${def.rank ? ` <span class="ability-modal-rank">Rank ${def.rank}</span>` : ''}</div>
-                  <div class="ability-modal-type ability-modal-type--${type}">${typeLabel}</div>
-                </div>
+              <div class="ability-modal-icon">
+                <img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">
               </div>
-              <p class="ability-modal-desc">${def.description || ''}</p>
+              ${parts.body}
             </div>`;
 
-          openAbilityModal(`${typeLabel} Ability`, bodyHtml);
+          openAbilityModal(parts.title, bodyHtml, parts.badges);
         });
       });
     }
