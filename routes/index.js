@@ -302,7 +302,7 @@ router.post('/login', async (req, res) => {
   try {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (existing.length > 0) {
-      const mergedSettings = { ...(existing[0].settings || {}), language: telegramUser.language_code || existing[0].settings?.language || 'en' };
+      const mergedSettings = { ...(existing[0].settings || {}), language: existing[0].settings?.language || telegramUser.language_code || 'en' };
       const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
         method: 'PATCH',
         body: JSON.stringify({ session_token, settings: mergedSettings }),

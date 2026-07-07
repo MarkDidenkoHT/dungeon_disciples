@@ -11,7 +11,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: null, ability: 'devour 1',
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 90
     },
     black_castellan_path_a_t2: {
@@ -23,7 +23,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_b_t2: {
@@ -35,7 +35,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_a_t3: {
@@ -47,7 +47,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 29,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_b_t3: {
@@ -59,7 +59,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 27,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_a_t4: {
@@ -71,7 +71,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_a_t4_alt: {
@@ -83,7 +83,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t4: {
@@ -95,7 +95,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t4_alt: {
@@ -107,7 +107,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33,
-      passive: null, ability: null,
+      passive: null, ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     choir_regent: {
@@ -1881,10 +1881,21 @@ const UNITS = {
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 45, armor: 0, initiative: 50,
+        resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 18,
+        xp: 340, passive: 'bleed 1', ability: null,
+      },
+      crimson_hunter2: {
+        id: 'opb_e41', f: 'opb', t: 2,
+        name: 'Crimson Hunter2',
+        tags: ['Archer', 'Holy'],
+        size: 'tile',
+        hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: null, action_power: 18,
-        xp: 340, passive: 'bleed 1', ability: null,
+        damage_source: 'physical', action_power: 24,
+        xp: 340, passive: ['bleed 1', 'clear_shot 1'], ability: null,
       },
     },
 
