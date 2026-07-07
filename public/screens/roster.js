@@ -1,6 +1,6 @@
 import { api }              from '../api.js';
 import { refreshResourceBar } from '../api.js';
-import { resourceCache, structuresCache } from '../api.js';
+import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { SPELLS }           from '../../data/spells.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -509,16 +509,14 @@ export function renderRoster(root, { player }) {
   }
 
   async function load() {
-    const [fetchedUnits, structRes, buildingRes, fetchedItems] = await Promise.all([
-      api(`/roster?chat_id=${player.chat_id}`),
-      structuresCache.get(player.chat_id).catch(() => null),
-      api('/buildings').catch(() => null),
+    const [boot, fetchedItems] = await Promise.all([
+      bootstrapCache.get(player.chat_id),
       api(`/items?chat_id=${player.chat_id}`).catch(() => []),
     ]);
 
-    units         = fetchedUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-    buildingsData = structRes?.buildings_data  || {};
-    upgradePaths  = buildingRes?.upgrade_paths || {};
+    units         = (boot.roster || []).slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
+    buildingsData = boot.structures?.buildings_data || {};
+    upgradePaths  = boot.buildings?.upgrade_paths || {};
     items         = fetchedItems || [];
 
     if (!units.length) {

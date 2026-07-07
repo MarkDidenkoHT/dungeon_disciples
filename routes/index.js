@@ -459,6 +459,35 @@ router.post('/player/tutorials', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/bootstrap', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const [resources, trophies, structRows, roster] = await Promise.all([
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.resource`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.trophy`),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+    ]);
+    res.json({
+      resources,
+      trophies,
+      structures: structRows[0] || null,
+      roster,
+      buildings: {
+        pools:                BUILDING_POOLS,
+        slot_categories:      SLOT_CATEGORIES,
+        upgrade_paths:        UNIT_UPGRADE_PATHS,
+        hero_max_level:       HERO_MAX_LEVEL,
+        throne_upgrade_costs: THRONE_UPGRADE_COSTS,
+        mercenary_buildings:  MERCENARY_BUILDINGS,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/heroes', (req, res) => {
   const heroes = HERO_IDS.map(id => getUnitByDataId(id)).filter(Boolean);
   res.json(heroes);

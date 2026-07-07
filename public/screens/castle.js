@@ -2,7 +2,7 @@ import { api }              from '../api.js';
 import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
-import { resourceCache, structuresCache } from '../api.js';
+import { bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
@@ -63,13 +63,13 @@ export function renderCastle(root, { player }) {
   let rosterCount = 0;
 
   async function load() {
-    const [inventory, trophies, structures, buildingsResp, roster] = await Promise.all([
-      resourceCache.get(player.chat_id),
-      api(`/inventory?chat_id=${player.chat_id}&type=trophy`),
-      structuresCache.get(player.chat_id),
-      api('/buildings'),
-      api(`/roster?chat_id=${player.chat_id}`),
-    ]);
+    const boot = await bootstrapCache.get(player.chat_id);
+
+    const inventory     = boot.resources;
+    const trophies       = boot.trophies;
+    const structures     = boot.structures;
+    const buildingsResp = boot.buildings;
+    const roster        = boot.roster;
 
     buildingPools      = buildingsResp.pools;
     upgradePaths       = buildingsResp.upgrade_paths || {};

@@ -55,8 +55,20 @@ function makeCache(fetcher) {
   };
 }
 
-export const resourceCache  = makeCache(chat_id => api(`/inventory?chat_id=${chat_id}&type=resource`));
-export const structuresCache = makeCache(chat_id => api(`/structures?chat_id=${chat_id}`));
+export const bootstrapCache = makeCache(chat_id => api(`/bootstrap?chat_id=${chat_id}`));
+
+// resourceCache / structuresCache are kept as separate exports for call sites that
+// only need one slice, but they're both backed by the same bootstrapCache fetch so
+// concurrent calls (e.g. refreshResourceBar + refreshNavLock + a screen's own load())
+// collapse into a single /api/bootstrap request instead of one request each.
+export const resourceCache = {
+  get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.resources); },
+  invalidate()  { bootstrapCache.invalidate(); },
+};
+export const structuresCache = {
+  get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.structures); },
+  invalidate()  { bootstrapCache.invalidate(); },
+};
 
 export function setActiveNav(screen) {
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => {
@@ -71,9 +83,9 @@ export async function refreshNavLock(player) {
   if (!nav || !player?.chat_id) return;
   let throneLevel = 0;
   try {
-    structuresCache.invalidate();
-    const structures = await structuresCache.get(player.chat_id);
-    throneLevel = structures?.buildings_data?.slot_0?.level ?? 0;
+    bootstrapCache.invalidate();
+    const boot = await bootstrapCache.get(player.chat_id);
+    throneLevel = boot.structures?.buildings_data?.slot_0?.level ?? 0;
   } catch {
     throneLevel = 0;
   }
@@ -89,8 +101,9 @@ export async function refreshNavLock(player) {
 export async function refreshResourceBar(player) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;
-  resourceCache.invalidate();
-  const inventory = await resourceCache.get(player.chat_id);
+  bootstrapCache.invalidate();
+  const boot = await bootstrapCache.get(player.chat_id);
+  const inventory = boot.resources || [];
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
   bar.innerHTML = `
     <div class="res-bar-item"><span class="res-bar-icon">${GOLD_ICON}</span><span class="res-bar-val">${find('Gold').amount}</span></div>
