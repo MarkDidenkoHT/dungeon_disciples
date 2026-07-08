@@ -315,18 +315,29 @@ export function renderCastle(root, { player }) {
 
     const factionPools = buildingPools[player.faction] || {};
     const pool         = factionPools[slotCategory] || [];
-    const available    = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
+    let available;
+    if (slot === 'slot_0') {
+      available = pool.filter(b => b.category === 'throne' && b.tier === 1 && b.unit_id === player.hero);
+      // Defensive fallback: player.hero should always be set by this point, but
+      // if it's ever missing, show every tier-1 throne option for the faction
+      // instead of a dead-end "no buildings available" screen.
+      if (!available.length) {
+        available = pool.filter(b => b.category === 'throne' && b.tier === 1);
+      }
+    } else {
+      available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
+    }
 
     if (!available.length) {
       openModal('Build', '<p class="modal-empty">No buildings available for this slot.</p>');
       return;
     }
 
-    openSliderModal('Choose Building',
+    openSliderModal(slot === 'slot_0' ? 'Begin Your Reign' : 'Choose Building',
       available.map(b => ({
         unit:          getUnitByUnitId(b.unit_id),
         buildingLabel: b.label,
-        confirmLabel:  `Build · ${b.label}`,
+        confirmLabel:  slot === 'slot_0' ? `Build ${b.label}` : `Build · ${b.label}`,
         buildingId:    b.id,
         placeholder:   !!b.placeholder,
         slot,
