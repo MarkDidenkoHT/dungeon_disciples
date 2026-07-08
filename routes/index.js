@@ -402,6 +402,7 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
       supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
+      supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' }),
     ]);
 
     const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
@@ -516,13 +517,13 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   if (startingUnit) {
     structures[startingUnit.slot] = { level: 1, building_id: startingUnit.building_id };
   }
-  const tier1Throne = (BUILDING_POOLS[faction]?.throne || []).find(b => b.unit_id === hero_id && b.tier === 1);
-  if (tier1Throne) {
-    structures['slot_0'] = { level: 1, building_id: tier1Throne.id };
-  }
+  // slot_0 (Throne) intentionally starts empty (level 0) - the tutorial's first
+  // tap on the throne triggers a free build to level 1 via /structures/build
+  // (see the isNew branch there). The hero still gets building_slot: 'slot_0'
+  // now so upgrade-path resolution works once that build happens.
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
   const rosterEntries = [
-    { chat_id, unit_data: makeUnitData(heroDef.id, tier1Throne ? 'slot_0' : null), is_hero: true },
+    { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true },
     ...(unitDef ? [{ chat_id, unit_data: makeUnitData(unitDef.id, startingUnit.slot), is_hero: false }] : []),
   ];
   try {
@@ -709,7 +710,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
 
     buildings[slot] = { level: nextLevel, building_id };
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
-    if (isNew && def.unit_id) {
+    if (isNew && def.unit_id && slotCategory !== 'throne') {
       const unitDef = getUnitByDataId(def.unit_id);
       if (unitDef) {
         await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot), is_hero: false }]) });
