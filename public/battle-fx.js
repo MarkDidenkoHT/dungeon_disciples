@@ -105,76 +105,97 @@ function reattachBattleFx(root) {
   forceResize(root);
 }
 
-function cellCenter(cellEl) {
-  if (!app || !rootEl || !cellEl) return null;
+function cellBoundsFor(dataId) {
+  if (!app || !rootEl || !dataId) return null;
+  const cellEl = rootEl.querySelector(`.battle-cell[data-id="${dataId}"]`);
+  if (!cellEl) return null;
   const cellRect = cellEl.getBoundingClientRect();
   const baseRect = rootEl.getBoundingClientRect();
   return {
-    x: cellRect.left - baseRect.left + cellRect.width / 2,
-    y: cellRect.top - baseRect.top + cellRect.height / 2,
+    x: cellRect.left - baseRect.left,
+    y: cellRect.top - baseRect.top,
+    width: cellRect.width,
+    height: cellRect.height,
   };
 }
 
-// Warm golden glow + a handful of rising light motes. Used for heal-type log
-// entries (Mithrail's Light, the generic heal action, etc).
+// Gentle, soothing bloom around the cell's border. Used for heal-type log
+// entries (Mithrail's Light, the generic heal action, etc). A soft blurred
+// outer glow plus a thin crisp inner line, both tracing the cell's rounded
+// border, fading in, breathing very slightly, then fading back out.
+//
+// battle.js's render() replaces the whole battle screen's DOM on every
+// action, and a follow-up render (e.g. advanceEnemyTurns firing right after
+// this one) can land while this effect is still mid-animation - well within
+// its ~1.3s duration. Rather than freezing the target's position/DOM node
+// once at the start (which would go stale the moment a re-render swaps in a
+// new element with the same data-id), position is re-resolved by data-id on
+// every tick. If the cell can't be found for a frame (e.g. a render is
+// mid-flight), that frame is simply skipped rather than snapping to (0,0).
 function playHealEffect(cellEl) {
   if (!app || !cellEl) return;
-  const pos = cellCenter(cellEl);
-  if (!pos) return;
+  const dataId = cellEl.dataset.id;
+  if (!dataId) return;
 
   const layer = new PIXI.Container();
-  layer.x = pos.x;
-  layer.y = pos.y;
   app.stage.addChild(layer);
 
-  const glow = new PIXI.Graphics();
-  glow.beginFill(0xffd97a, 0.55);
-  glow.drawCircle(0, 0, 6);
-  glow.endFill();
-  glow.filters = [new PIXI.BlurFilter(8)];
-  layer.addChild(glow);
+  const pad    = 3;
+  const radius = 10;
 
-  const ring = new PIXI.Graphics();
-  ring.lineStyle(3, 0xfff3c4, 0.9);
-  ring.drawCircle(0, 0, 4);
-  layer.addChild(ring);
+  const glowBorder = new PIXI.Graphics();
+  glowBorder.filters = [new PIXI.BlurFilter(7)];
+  layer.addChild(glowBorder);
 
-  const moteCount = 7;
-  const motes = [];
-  for (let i = 0; i < moteCount; i++) {
-    const mote = new PIXI.Graphics();
-    mote.beginFill(0xfff6da, 0.9);
-    mote.drawCircle(0, 0, 1.6 + Math.random() * 1.4);
-    mote.endFill();
-    const angle  = (Math.PI * 2 * i) / moteCount + Math.random() * 0.4;
-    const radius = 10 + Math.random() * 6;
-    mote.x = Math.cos(angle) * radius;
-    mote.y = Math.sin(angle) * radius * 0.6;
-    mote._vy    = -(0.4 + Math.random() * 0.5);
-    mote._delay = Math.random() * 120;
-    layer.addChild(mote);
-    motes.push(mote);
-  }
+  const crispBorder = new PIXI.Graphics();
+  layer.addChild(crispBorder);
 
-  const duration = 900;
+  const duration = 1300;
   const start = performance.now();
+
+  const redraw = (w, h) => {
+    glowBorder.clear();
+    glowBorder.lineStyle(7, 0xfff3c4, 0.55);
+    glowBorder.drawRoundedRect(pad, pad, w, h, radius);
+
+    crispBorder.clear();
+    crispBorder.lineStyle(1.5, 0xfffaf0, 0.9);
+    crispBorder.drawRoundedRect(pad, pad, w, h, radius);
+  };
+
+  let lastW = -1, lastH = -1;
 
   const tick = () => {
     if (!app) return; // destroyed mid-animation
     const elapsed = performance.now() - start;
     const t = Math.min(1, elapsed / duration);
 
-    glow.scale.set(0.6 + t * 2.2);
-    glow.alpha = 0.55 * (1 - t);
+    const b = cellBoundsFor(dataId);
+    if (b) {
+      const w = b.width  - pad * 2;
+      const h = b.height - pad * 2;
+      if (w !== lastW || h !== lastH) { redraw(w, h); lastW = w; lastH = h; }
 
-    ring.scale.set(0.4 + t * 2.6);
-    ring.alpha = 0.9 * (1 - t);
+      layer.visible = true;
+      layer.pivot.set(b.width / 2, b.height / 2);
+      layer.position.set(b.x + b.width / 2, b.y + b.height / 2);
 
-    motes.forEach(mote => {
-      const mt = Math.max(0, Math.min(1, (elapsed - mote._delay) / (duration - mote._delay)));
-      mote.y += mote._vy;
-      mote.alpha = mt < 0.15 ? mt / 0.15 : 1 - (mt - 0.15) / 0.85;
-    });
+      // Fade in quickly, hold softly, fade out slowly - a breath, not a burst.
+      let alpha;
+      if (t < 0.15)      alpha = t / 0.15;
+      else if (t < 0.55) alpha = 1;
+      else               alpha = Math.max(0, 1 - (t - 0.55) / 0.45);
+
+      const breathe = 1 + Math.sin(t * Math.PI) * 0.03;
+      layer.scale.set(breathe);
+
+      glowBorder.alpha  = alpha * 0.65;
+      crispBorder.alpha = alpha * 0.85;
+    } else {
+      // Cell temporarily unresolvable (mid-render) - hold last frame rather
+      // than snapping anywhere, and keep ticking so it can recover.
+      layer.visible = false;
+    }
 
     if (t >= 1) {
       app.ticker.remove(tick);
