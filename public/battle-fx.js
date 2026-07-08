@@ -1,42 +1,54 @@
 // Lightweight PixiJS layer for battle ability/action animations.
 //
 // Scope on purpose: this is a proof-of-concept foundation, not a full VFX
-// system. One PIXI.Application overlays the whole battle arena (both grids)
-// in a single shared canvas, positioned absolutely and non-interactive
-// (pointer-events: none) so it never blocks clicks on the real DOM cells
-// underneath. Effects are plain functions that take a target cell DOM element
-// and animate something at that position - see playHealEffect below for the
-// pattern. Add new effect functions here, then trigger them from
-// battle.js's log-diffing code (see registerLogAnimation calls in
+// system. One PIXI.Application overlays the battle screen in a single shared
+// canvas, positioned absolutely and non-interactive (pointer-events: none) so
+// it never blocks clicks on the real DOM cells underneath. Effects are plain
+// functions that take a target cell DOM element and animate something at that
+// position - see playHealEffect below for the pattern. Add new effect
+// functions here, then trigger them from battle.js's log-diffing code (see
 // animateAfterRender).
+//
+// IMPORTANT: battle.js's render() fully replaces its container's innerHTML on
+// every action (a fresh DOM tree each time). The PIXI Application is created
+// ONCE per battle screen mount and reused - it is NEVER destroyed/recreated on
+// every render, only re-parented (a cheap DOM move) into the fresh container
+// and resized to match. Recreating a WebGL-backed PIXI.Application repeatedly
+// (once per action) exhausts the browser's WebGL context budget within a
+// handful of actions, which shows up as visual corruption ("golden glitches")
+// and then silent failure once contexts stop being grantable. Call
+// initBattleFx(root) once when the battle screen mounts, then call
+// reattachBattleFx(root) at the end of every render() after the innerHTML
+// swap - it's a no-op if nothing changed.
 //
 // Requires the PIXI global (loaded via CDN script tag in index.html). If PIXI
 // isn't available for any reason, every function here becomes a safe no-op -
 // animations are pure enhancement, never required for the battle to work.
 
 let app = null;
-let containerEl = null;
+let rootEl = null;
 
 function destroyBattleFx() {
   if (app) {
     try { app.destroy(true, { children: true, texture: true, baseTexture: true }); } catch {}
     app = null;
   }
-  containerEl = null;
+  rootEl = null;
 }
 
-// Call once, right after the battle arena DOM exists (see battle.js). Safe to
-// call again later (e.g. re-entering the battle screen) - it tears down any
-// previous instance first.
-function initBattleFx(container) {
+// Call ONCE when the battle screen mounts (not on every render). Safe to call
+// again later (e.g. re-entering the battle screen) - it tears down any
+// previous instance first, so there is never more than one WebGL context
+// alive for the battle screen at a time.
+function initBattleFx(root) {
   destroyBattleFx();
-  if (typeof window === 'undefined' || !window.PIXI || !container) return;
+  if (typeof window === 'undefined' || !window.PIXI || !root) return;
 
-  containerEl = container;
+  rootEl = root;
 
   try {
     app = new PIXI.Application({
-      resizeTo: container,
+      resizeTo: root,
       backgroundAlpha: 0,
       antialias: true,
     });
@@ -54,16 +66,32 @@ function initBattleFx(container) {
   view.style.pointerEvents = 'none';
   view.style.zIndex = '15';
 
-  if (getComputedStyle(container).position === 'static') {
-    container.style.position = 'relative';
+  if (getComputedStyle(root).position === 'static') {
+    root.style.position = 'relative';
   }
-  container.appendChild(view);
+  root.appendChild(view);
+}
+
+// Call at the end of every render() after the innerHTML swap. render()
+// replaces the container's children wholesale, which silently detaches the
+// canvas from the DOM (it still exists in memory, just not visible). This
+// re-appends it - a cheap DOM move, not a recreation - and lets PIXI's
+// resizeTo pick up any size change on its own.
+function reattachBattleFx(root) {
+  if (!app || !root) return;
+  rootEl = root;
+  if (app.view.parentElement !== root) {
+    if (getComputedStyle(root).position === 'static') {
+      root.style.position = 'relative';
+    }
+    root.appendChild(app.view);
+  }
 }
 
 function cellCenter(cellEl) {
-  if (!app || !containerEl || !cellEl) return null;
+  if (!app || !rootEl || !cellEl) return null;
   const cellRect = cellEl.getBoundingClientRect();
-  const baseRect = containerEl.getBoundingClientRect();
+  const baseRect = rootEl.getBoundingClientRect();
   return {
     x: cellRect.left - baseRect.left + cellRect.width / 2,
     y: cellRect.top - baseRect.top + cellRect.height / 2,
@@ -140,4 +168,4 @@ function playHealEffect(cellEl) {
   app.ticker.add(tick);
 }
 
-export { initBattleFx, destroyBattleFx, playHealEffect };
+export { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect };

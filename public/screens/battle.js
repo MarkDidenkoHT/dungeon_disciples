@@ -1,7 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
-import { initBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
+import { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect } from './battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
@@ -28,6 +28,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let prevState        = null;   // snapshot before each render, used for diff-based animations
 
   let prevLogLen = 0;
+
+  initBattleFx(root);
 
   let items = [];
   api(`/items?chat_id=${player.chat_id}`).then(data => { items = data || []; }).catch(() => {});
@@ -470,7 +472,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>
     `;
 
-    initBattleFx(root.querySelector('.battle-arena'));
+    reattachBattleFx(root);
     attachEvents();
   }
 
