@@ -346,7 +346,7 @@ class BattleEngine {
       target.battle_hp += heal;
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
       this.checkBark('heal_low_hp', actor, { preHealRatio });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
@@ -516,7 +516,7 @@ class BattleEngine {
     target.battle_hp += heal;
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
     this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
-    this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: heal, heal: true });
+    this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
     const selfDmg = Math.floor(heal / 2);
     if (selfDmg > 0) {
       actor.battle_hp = Math.max(0, actor.battle_hp - selfDmg);
@@ -548,7 +548,7 @@ class BattleEngine {
       if (healAmt > 0) {
         a.battle_hp += healAmt;
         this.fireHealTriggers(actor, a, healAmt);
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, value: healAmt, heal: true });
+        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, targetId: a.id, value: healAmt, heal: true });
       }
     }
     actor.acted_this_round = true;

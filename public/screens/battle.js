@@ -1,6 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
+import { initBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
@@ -110,6 +111,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
       (state.log || []).slice(prevLen).forEach(entry => {
         if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
+        if (entry.targetId && (
+          (entry.type === 'action' && entry.heal === true) ||
+          (entry.type === 'passive' && entry.heal !== false && entry.passive === "Mithrail's Light")
+        )) {
+          const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
+          if (cell) playHealEffect(cell);
+        }
       });
     }
   }
@@ -462,6 +470,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>
     `;
 
+    initBattleFx(root.querySelector('.battle-arena'));
     attachEvents();
   }
 
@@ -635,7 +644,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const btn = root.querySelector('#back-to-castle');
     btn.disabled = false;
-    btn.addEventListener('click', () => navigate('castle', { player }));
+    btn.addEventListener('click', () => { destroyBattleFx(); navigate('castle', { player }); });
   }
 
   if (state && state.done) {
