@@ -282,8 +282,16 @@ class BattleEngine {
       if (t.side === actor.side) return false;
       const range = actor.unit_data?.range ?? 1;
       if (range === 1) {
-        const frontCol   = t.side === 'enemy' ? 0 : 1;
-        const backCol    = t.side === 'enemy' ? 1 : 0;
+        const frontCol  = t.side === 'enemy' ? 0 : 1;
+        const backCol   = t.side === 'enemy' ? 1 : 0;
+        const actorRow  = cellRow(actor.cellIndex);
+        const nearFront = this.combatants.filter(c =>
+          c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol &&
+          Math.abs(cellRow(c.cellIndex) - actorRow) <= 1
+        );
+        if (nearFront.length > 0) {
+          return cellCol(t.cellIndex) === frontCol && Math.abs(cellRow(t.cellIndex) - actorRow) <= 1;
+        }
         const frontAlive = this.combatants.filter(c => c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol);
         const reachable  = frontAlive.length > 0 ? frontCol : backCol;
         return cellCol(t.cellIndex) === reachable;
