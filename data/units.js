@@ -1736,7 +1736,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15,
+      damage_source: 'death', action_power: 12,
       xp: 75, passive: 'communion 1', ability: 'blood_craze 1',
     },
     grail_tender: {

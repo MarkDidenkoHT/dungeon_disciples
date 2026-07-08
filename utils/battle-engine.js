@@ -356,7 +356,7 @@ class BattleEngine {
         const parryDef = this.resolveAllPassiveDefs(target).find(d => d.params?.block_first_melee);
         if (parryDef) {
           target._parry_available = false;
-          this.pushLog({ type: 'passive', passive: parryDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0 });
+          this.pushLog({ type: 'passive', passive: parryDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0, heal: false });
           actor.acted_this_round = true;
           return this.afterAction(actor);
         }
@@ -368,7 +368,7 @@ class BattleEngine {
           const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor) * p.preemptive_strike_pct / 100));
           actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
           const actorDied = actor.battle_hp <= 0;
-          this.pushLog({ type: 'passive', passive: duelistDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg });
+          this.pushLog({ type: 'passive', passive: duelistDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
           if (actorDied) {
             actor.alive = false;
             this.applyOnDeathPassives(actor);

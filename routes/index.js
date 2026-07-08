@@ -67,7 +67,6 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 200 },
-  { item_type: 'resource', item: 'Trophies',        amount: 0   },
   { item_type: 'resource', item: 'Crystals_Life',   amount: 20  },
   { item_type: 'resource', item: 'Crystals_Fire',   amount: 20  },
   { item_type: 'resource', item: 'Crystals_Death',  amount: 20  },
@@ -403,21 +402,14 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
       supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
       supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' }),
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
     ]);
 
-    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    const emptySlots  = emptyStructures();
-    if (structRows.length) {
-      await supabase(`/structures?id=eq.${structRows[0].id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ buildings_data: emptySlots }),
-      });
-    } else {
-      await supabase('/structures', {
-        method: 'POST',
-        body: JSON.stringify({ chat_id, buildings_data: emptySlots }),
-      });
-    }
+    const emptySlots = emptyStructures();
+    await supabase('/structures', {
+      method: 'POST',
+      body: JSON.stringify({ chat_id, buildings_data: emptySlots }),
+    });
 
     await supabase('/resources', {
       method: 'POST',
@@ -527,6 +519,11 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     ...(unitDef ? [{ chat_id, unit_data: makeUnitData(unitDef.id, startingUnit.slot), is_hero: false }] : []),
   ];
   try {
+    const existingStruct = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    const structuresWrite = existingStruct.length
+      ? supabase(`/structures?id=eq.${existingStruct[0].id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: structures }) })
+      : supabase('/structures', { method: 'POST', body: JSON.stringify({ chat_id, buildings_data: structures }) });
+
     const [updated] = await Promise.all([
       supabase(`/players?id=eq.${player_id}`, {
         method: 'PATCH',
@@ -534,7 +531,7 @@ router.post('/player/faction', requireAuth, async (req, res) => {
       }),
       supabase('/roster', { method: 'POST', body: JSON.stringify(rosterEntries) }),
       supabase('/resources', { method: 'POST', body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))) }),
-      supabase('/structures', { method: 'POST', body: JSON.stringify({ chat_id, buildings_data: structures }) }),
+      structuresWrite,
     ]);
     res.json({ player: updated[0] });
   } catch (err) {
