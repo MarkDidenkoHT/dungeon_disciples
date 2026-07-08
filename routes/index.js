@@ -516,9 +516,13 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   if (startingUnit) {
     structures[startingUnit.slot] = { level: 1, building_id: startingUnit.building_id };
   }
+  const tier1Throne = (BUILDING_POOLS[faction]?.throne || []).find(b => b.unit_id === hero_id && b.tier === 1);
+  if (tier1Throne) {
+    structures['slot_0'] = { level: 1, building_id: tier1Throne.id };
+  }
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
   const rosterEntries = [
-    { chat_id, unit_data: makeUnitData(heroDef.id, null), is_hero: true },
+    { chat_id, unit_data: makeUnitData(heroDef.id, tier1Throne ? 'slot_0' : null), is_hero: true },
     ...(unitDef ? [{ chat_id, unit_data: makeUnitData(unitDef.id, startingUnit.slot), is_hero: false }] : []),
   ];
   try {
@@ -669,55 +673,11 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/structures/throne/upgrade', requireAuth, async (req, res) => {
-  const { chat_id } = req.body;
-  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
-  try {
-    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
-    const record    = rows[0];
-    const buildings = record.buildings_data;
-    const throne    = buildings['slot_0'] || { level: 0, building_id: null };
-    const nextLevel = (throne.level ?? 0) + 1;
-    if (nextLevel > HERO_MAX_LEVEL) return res.status(400).json({ error: 'Throne is already at max level' });
-    const cost = THRONE_UPGRADE_COSTS[nextLevel];
-    if (!cost) return res.status(400).json({ error: 'No cost defined for that level' });
-    if (cost.gold > 0) {
-      const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-      const goldRow   = inventory.find(r => r.item === 'Gold');
-      if (!goldRow || goldRow.amount < cost.gold) return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
-      await supabase(`/resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
-    }
-    buildings['slot_0'] = { ...throne, level: nextLevel };
-    const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
-    res.json(updated[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/buildings', (req, res) => {
-  res.json({ pools: BUILDING_POOLS, slot_categories: SLOT_CATEGORIES, upgrade_paths: UNIT_UPGRADE_PATHS, hero_max_level: HERO_MAX_LEVEL, throne_upgrade_costs: THRONE_UPGRADE_COSTS, mercenary_buildings: MERCENARY_BUILDINGS });
-});
-
-router.get('/structures', requireAuth, async (req, res) => {
-  const { chat_id } = req.query;
-  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
-  try {
-    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.post('/structures/build', requireAuth, async (req, res) => {
   const { chat_id, slot, building_id } = req.body;
   if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
-  if (slotCategory === 'throne') return res.status(400).json({ error: 'Throne cannot be built' });
   try {
     const [rows, playerRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
@@ -736,6 +696,17 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const isNew     = !current.building_id;
     const nextLevel = (current.level || 0) + 1;
     if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
+
+    if (slotCategory === 'throne' && !isNew) {
+      const cost = THRONE_UPGRADE_COSTS[nextLevel];
+      if (cost?.gold > 0) {
+        const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+        const goldRow   = inventory.find(r => r.item === 'Gold');
+        if (!goldRow || goldRow.amount < cost.gold) return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
+        await supabase(`/resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
+      }
+    }
+
     buildings[slot] = { level: nextLevel, building_id };
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
     if (isNew && def.unit_id) {

@@ -272,7 +272,6 @@ export function renderCastle(root, { player }) {
 
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
-    if (slot === 'slot_0') { handleThroneClick(); return; }
     if (!state || !state.building_id) { openBuildModal(slot); return; }
 
     const mercDef = getMercBuildingDef(state.building_id);
@@ -338,51 +337,6 @@ export function renderCastle(root, { player }) {
         performBuildingUpgrade(s.slot, s.buildingId);
       }
     );
-  }
-
-  async function handleThroneClick() {
-    const throneState = structuresRecord.buildings_data['slot_0'];
-    const throneLevel = throneState?.level ?? 0;
-    const nextLevel   = throneLevel + 1;
-    const cost        = throneUpgradeCosts[nextLevel];
-    const isMaxed     = throneLevel >= heroMaxLevel;
-    const label       = player.faction === 'choir_of_the_cursed' ? 'Dark Throne' : 'Throne';
-
-    if (isMaxed) {
-      openModal(label, `
-        <div class="throne-modal">
-          <div class="throne-level-display">Level <span class="throne-level-num">${throneLevel}</span></div>
-          <p class="throne-maxed">The Throne is fully upgraded. Your hero may reach their full potential.</p>
-        </div>`);
-      return;
-    }
-
-    openModal(label, `
-      <div class="throne-modal">
-        <div class="throne-level-display">
-          Level <span class="throne-level-num">${throneLevel}</span>
-          → <span class="throne-level-num throne-level-next">${nextLevel}</span>
-        </div>
-        <p class="throne-desc">Upgrading the Throne allows your hero to reach level ${nextLevel}.</p>
-        <div class="throne-cost">
-          ${cost?.gold > 0 ? `<span class="throne-cost-item">${GOLD_ICON} ${cost.gold} Gold</span>` : ''}
-        </div>
-        <button class="upgrade-confirm-btn" id="confirm-throne-btn">Upgrade Throne</button>
-      </div>`);
-
-    getSheetBody().querySelector('#confirm-throne-btn')?.addEventListener('click', async () => {
-      closeModal();
-      try {
-        const updated = await api('/structures/throne/upgrade', { chat_id: player.chat_id });
-        structuresRecord = updated;
-        renderBuildings();
-        refreshResourceBar(player).catch(() => {});
-        refreshNavLock(player).catch(() => {});
-        if (nextLevel >= 1) markTutorialDone(player, 'throne_upgrade');
-      } catch (err) {
-        alert(err.message || 'Throne upgrade failed');
-      }
-    });
   }
 
   async function openMercUpgradeModal(slot, def, paths) {
