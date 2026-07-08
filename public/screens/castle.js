@@ -418,12 +418,13 @@ export function renderCastle(root, { player }) {
         building_id,
       });
       structuresRecord = updated;
-      if (!isTutorialDone(player, 'second_building')) {
+      if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         rosterCount += 1;
         markTutorialDone(player, 'second_building');
       }
       renderBuildings();
       refreshResourceBar(player).catch(() => {});
+      refreshNavLock(player).catch(() => {});
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');
