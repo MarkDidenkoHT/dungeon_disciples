@@ -132,10 +132,16 @@ function cellBoundsFor(dataId) {
 // new element with the same data-id), position is re-resolved by data-id on
 // every tick. If the cell can't be found for a frame (e.g. a render is
 // mid-flight), that frame is simply skipped rather than snapping to (0,0).
-function playHealEffect(cellEl) {
+const HEAL_TINTS = {
+  default: { glow: 0xfff3c4, glowAlpha: 0.55, crisp: 0xfffaf0 },
+  holy:    { glow: 0xcfe8ff, glowAlpha: 0.55, crisp: 0xeaf5ff },
+};
+
+function playHealEffect(cellEl, variant = 'default') {
   if (!app || !cellEl) return;
   const dataId = cellEl.dataset.id;
   if (!dataId) return;
+  const tint = HEAL_TINTS[variant] || HEAL_TINTS.default;
 
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
@@ -155,11 +161,11 @@ function playHealEffect(cellEl) {
 
   const redraw = (w, h) => {
     glowBorder.clear();
-    glowBorder.lineStyle(7, 0xfff3c4, 0.55);
+    glowBorder.lineStyle(7, tint.glow, tint.glowAlpha);
     glowBorder.drawRoundedRect(pad, pad, w, h, radius);
 
     crispBorder.clear();
-    crispBorder.lineStyle(1.5, 0xfffaf0, 0.9);
+    crispBorder.lineStyle(1.5, tint.crisp, 0.9);
     crispBorder.drawRoundedRect(pad, pad, w, h, radius);
   };
 

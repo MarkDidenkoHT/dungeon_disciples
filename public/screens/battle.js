@@ -113,12 +113,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
       (state.log || []).slice(prevLen).forEach(entry => {
         if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
-        if (entry.targetId && (
-          (entry.type === 'action' && entry.heal === true) ||
-          (entry.type === 'passive' && entry.heal !== false && entry.passive === "Mithrail's Light")
-        )) {
+        if (entry.targetId && entry.type === 'action' && entry.heal === true) {
           const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
           if (cell) playHealEffect(cell);
+        }
+        if (entry.targetId && entry.type === 'passive' && entry.heal !== false && entry.passive === "Mithrail's Light") {
+          const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
+          if (cell) playHealEffect(cell, 'holy');
         }
       });
     }
