@@ -36,6 +36,13 @@ function destroyBattleFx() {
   rootEl = null;
 }
 
+function forceResize(root) {
+  if (!app || !root) return;
+  const w = root.clientWidth  || root.offsetWidth  || 1;
+  const h = root.clientHeight || root.offsetHeight || 1;
+  try { app.renderer.resize(w, h); } catch {}
+}
+
 // Call ONCE when the battle screen mounts (not on every render). Safe to call
 // again later (e.g. re-entering the battle screen) - it tears down any
 // previous instance first, so there is never more than one WebGL context
@@ -70,13 +77,22 @@ function initBattleFx(root) {
     root.style.position = 'relative';
   }
   root.appendChild(view);
+  forceResize(root);
 }
 
 // Call at the end of every render() after the innerHTML swap. render()
 // replaces the container's children wholesale, which silently detaches the
 // canvas from the DOM (it still exists in memory, just not visible). This
-// re-appends it - a cheap DOM move, not a recreation - and lets PIXI's
-// resizeTo pick up any size change on its own.
+// re-appends it - a cheap DOM move, not a recreation - and forces a
+// synchronous resize rather than relying solely on PIXI's resizeTo, which
+// resizes via a ResizeObserver that fires asynchronously (next frame). Since
+// effects are triggered synchronously right after render() in the same tick,
+// waiting on the async observer means the canvas can still be the OLD size
+// whenever the screen's layout size changed between renders (log panel
+// growing, init-queue card count changing, etc.) - causing effects to be
+// computed at the right on-screen position but drawn onto a canvas that
+// hasn't caught up yet, landing off-position or clipped. Forcing the resize
+// here makes it deterministic instead of a coin flip.
 function reattachBattleFx(root) {
   if (!app || !root) return;
   rootEl = root;
@@ -86,6 +102,7 @@ function reattachBattleFx(root) {
     }
     root.appendChild(app.view);
   }
+  forceResize(root);
 }
 
 function cellCenter(cellEl) {
