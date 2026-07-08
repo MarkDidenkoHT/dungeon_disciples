@@ -1,7 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
-import { initBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
+import { initBattleFx, destroyBattleFx, playHealEffect } from './battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const ROWS = 3;
