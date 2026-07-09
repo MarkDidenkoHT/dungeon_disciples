@@ -28,7 +28,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
 
     try {
       const cfg = await api(`/battle/realtime-config?chat_id=${encodeURIComponent(playerId)}`);
-      const url = cfg?.url;
+      const url = normalizeSupabaseUrl(cfg?.url);
       const anonKey = cfg?.anonKey;
 
       if (!(url && anonKey && isSupabaseAvailable())) {
