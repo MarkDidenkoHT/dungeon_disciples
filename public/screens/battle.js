@@ -133,6 +133,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (entry.effect && entry.targetId) {
           const targetCell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
           if (!targetCell) return;
+          console.log('battle-ui: effect entry', entry.effect, 'targetId=', entry.targetId, 'sourceId=', entry.sourceId, entry);
           // Some effects (e.g. communion) transfer from a source to target.
           if (entry.effect === 'communion' && entry.sourceId) {
             const sourceCell = root.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`);

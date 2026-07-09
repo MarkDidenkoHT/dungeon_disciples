@@ -295,10 +295,9 @@ function shield(cellEl) { playShieldEffect(cellEl); }
 
 function playBattleEffect(effect, ...args) {
   if (!effect) return;
-  // Log when an effect is triggered; if DOM elements are passed, log their data-id.
   try {
     const ids = args.map(a => (a && a.dataset && a.dataset.id) ? a.dataset.id : (typeof a === 'string' ? a : null)).filter(Boolean);
-    console.debug('battle-fx: trigger effect', effect, ids.length ? ids : args.length ? args : null);
+    console.log('battle-fx: trigger effect', effect, ids.length ? ids : args.length ? args : null);
   } catch (e) { /* ignore logging errors */ }
 
   const host = (typeof globalThis !== 'undefined') ? globalThis : (typeof window !== 'undefined' ? window : null);
@@ -309,6 +308,8 @@ function playBattleEffect(effect, ...args) {
     } catch (err) {
       console.error('battle-fx: effect', effect, 'failed', err);
     }
+  } else {
+    console.warn('battle-fx: no effect function found for', effect);
   }
 }
 
