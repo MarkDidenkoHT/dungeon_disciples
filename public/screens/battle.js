@@ -633,6 +633,34 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
 
+  async function sendAction(action, actor_id, target_id = null) {
+    markTutorialDone(player, 'battle_first_action');
+    hideTutorial();
+    processing = true;
+    selectingTarget = null;
+    pendingAction   = null;
+    render();
+    try {
+      const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
+      if (result.error) throw new Error(result.error);
+      if (result.done) {
+        processing = false;
+        renderResult(result.winner);
+      }
+    } catch (err) {
+      console.error('Action failed:', err);
+      processing = false;
+      const log = ui?.battleLog;
+      if (log) {
+        const el = document.createElement('div');
+        el.className = 'log-entry log-entry--error';
+        el.textContent = `⚠ ${err.message}`;
+        log.prepend(el);
+      }
+      render();
+    }
+  }
+
   function attachEvents() {
     if (ui?.screen?._battleHandlersAttached) return;
 
