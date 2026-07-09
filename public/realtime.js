@@ -22,7 +22,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     if (!battleId || stopped) return;
 
     try {
-      const cfg = await api('/battle/realtime-config');
+      const cfg = await api(`/battle/realtime-config?chat_id=${encodeURIComponent(playerId)}`);
       const url = cfg?.url;
       const anonKey = cfg?.anonKey;
 
