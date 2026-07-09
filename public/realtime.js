@@ -6,7 +6,6 @@ function isSupabaseAvailable() {
 
 export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError }) {
   let channel = null;
-  let pollTimer = null;
   let stopped = false;
 
   async function refreshFromServer() {
@@ -57,32 +56,24 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
             return;
           }
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            startPolling();
+            onError?.(new Error(`Realtime channel status: ${status}`));
+            stopped = true;
           }
         });
         return;
       }
     } catch (err) {
       onError?.(err);
+      stopped = true;
+      return;
     }
 
-    startPolling();
+    // No polling fallback — realtime only
+    onError?.(new Error('Realtime unavailable: missing config or Supabase client'));
+    stopped = true;
   }
-
-  function startPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    refreshFromServer();
-    pollTimer = window.setInterval(() => {
-      refreshFromServer();
-    }, 2000);
-  }
-
   function stop() {
     stopped = true;
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
     if (channel) {
       try { channel.unsubscribe(); } catch {}
       channel = null;
