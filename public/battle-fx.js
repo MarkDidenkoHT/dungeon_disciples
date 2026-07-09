@@ -28,6 +28,11 @@
 let app = null;
 let rootEl = null;
 
+function getBattleFxHost(root) {
+  if (!root) return null;
+  return root.querySelector?.('.screen-battle') || root;
+}
+
 function destroyBattleFx() {
   if (app) {
     try { app.destroy(true, { children: true, texture: true, baseTexture: true }); } catch {}
@@ -48,10 +53,11 @@ function forceResize(root) {
 // previous instance first, so there is never more than one WebGL context
 // alive for the battle screen at a time.
 function initBattleFx(root) {
+  const host = getBattleFxHost(root);
   destroyBattleFx();
-  if (typeof window === 'undefined' || !window.PIXI || !root) return;
+  if (typeof window === 'undefined' || !window.PIXI || !host) return;
 
-  rootEl = root;
+  rootEl = host;
 
   try {
     app = new PIXI.Application({
@@ -71,13 +77,13 @@ function initBattleFx(root) {
   view.style.width = '100%';
   view.style.height = '100%';
   view.style.pointerEvents = 'none';
-  view.style.zIndex = '15';
+  view.style.zIndex = '20';
 
-  if (getComputedStyle(root).position === 'static') {
-    root.style.position = 'relative';
+  if (getComputedStyle(host).position === 'static') {
+    host.style.position = 'relative';
   }
-  root.appendChild(view);
-  forceResize(root);
+  host.appendChild(view);
+  forceResize(host);
 }
 
 // Call at the end of every render() after the innerHTML swap. render()
@@ -94,15 +100,16 @@ function initBattleFx(root) {
 // hasn't caught up yet, landing off-position or clipped. Forcing the resize
 // here makes it deterministic instead of a coin flip.
 function reattachBattleFx(root) {
-  if (!app || !root) return;
-  rootEl = root;
-  if (app.view.parentElement !== root) {
-    if (getComputedStyle(root).position === 'static') {
-      root.style.position = 'relative';
+  const host = getBattleFxHost(root);
+  if (!app || !host) return;
+  rootEl = host;
+  if (app.view.parentElement !== host) {
+    if (getComputedStyle(host).position === 'static') {
+      host.style.position = 'relative';
     }
-    root.appendChild(app.view);
+    host.appendChild(app.view);
   }
-  forceResize(root);
+  forceResize(host);
 }
 
 function cellBoundsFor(dataId) {
@@ -138,15 +145,7 @@ const HEAL_TINTS = {
 };
 
 function playHealEffect(cellEl, variant = 'default') {
-  if (!cellEl) return;
-
-  if (!app || typeof window === 'undefined' || !window.PIXI) {
-    cellEl.classList.remove('anim-heal');
-    void cellEl.offsetWidth;
-    cellEl.classList.add('anim-heal');
-    cellEl.addEventListener('animationend', () => cellEl.classList.remove('anim-heal'), { once: true });
-    return;
-  }
+  if (!cellEl || !app || typeof window === 'undefined' || !window.PIXI) return;
 
   const dataId = cellEl.dataset.id;
   if (!dataId) return;

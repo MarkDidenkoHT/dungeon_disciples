@@ -33,8 +33,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let realtimeController = null;
   let battleResolved = false;
   let rewardRequestInFlight = false;
-
-  initBattleFx(root);
+  let fxInitialized = false;
 
   let items = [];
   api(`/items?chat_id=${player.chat_id}`).then(data => { items = data || []; }).catch(() => {});
@@ -136,15 +135,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (entry.targetId && entry.heal === true) {
           const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
           if (cell) {
-            playHealEffect(cell);
-            triggerAnim(cell, 'anim-heal');
+            requestAnimationFrame(() => playHealEffect(cell));
           }
         }
         if (entry.targetId && entry.heal !== false && entry.passive === "Mithrail's Light") {
           const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
           if (cell) {
-            playHealEffect(cell, 'holy');
-            triggerAnim(cell, 'anim-heal');
+            requestAnimationFrame(() => playHealEffect(cell, 'holy'));
           }
         }
       });
@@ -528,7 +525,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
 
-    reattachBattleFx(root);
+    const battleHost = root.querySelector('.screen-battle') || root;
+    if (!fxInitialized) {
+      initBattleFx(battleHost);
+      fxInitialized = true;
+    } else {
+      reattachBattleFx(battleHost);
+    }
 
     const tutorialActor = currentActor();
     const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
