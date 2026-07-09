@@ -4,6 +4,11 @@ function isSupabaseAvailable() {
   return typeof window !== 'undefined' && !!window.supabase?.createClient;
 }
 
+function normalizeSupabaseUrl(url) {
+  if (!url) return null;
+  return String(url).replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+}
+
 export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError }) {
   let channel = null;
   let stopped = false;
