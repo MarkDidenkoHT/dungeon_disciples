@@ -646,7 +646,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (result.done) {
         processing = false;
         renderResult(result.winner);
+        return;
       }
+      // Fallback: if realtime doesn't fire within 3s, fetch state directly
+      setTimeout(async () => {
+        if (!processing) return;
+        console.warn('[battle] realtime timeout - fetching state directly');
+        try {
+          const data = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+          if (data?.state && !battleResolved) {
+            const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
+            state = { ...data.state, log: [...(state.log || []), ...newLogs] };
+            if (data.done) { renderResult(data.winner); return; }
+            await playbackSequence(newLogs);
+          }
+        } catch (e) { console.error('Fallback fetch failed:', e); }
+        processing = false;
+        render();
+      }, 3000);
     } catch (err) {
       console.error('Action failed:', err);
       processing = false;
