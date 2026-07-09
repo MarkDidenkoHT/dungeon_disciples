@@ -830,11 +830,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       playerId: player.chat_id,
       onStateChange: async (data) => {
         if (!data?.state || battleResolved) return;
+        // Skip if sendAction is already handling this turn's entries directly.
+        // The lastLogId guard means onStateChange will only have genuinely new
+        // entries that sendAction didn't receive (e.g. from a second DB write).
+        if (processing) return;
         const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
+        if (!newLogs.length) {
+          // State update only, no new log entries - just reconcile state
+          state = { ...data.state, log: state.log || [] };
+          render();
+          return;
+        }
         state = { ...data.state, log: [...(state.log || []), ...newLogs] };
 
-        // Rebuild log display up to the entries already played
-        if (ui?.battleLog && newLogs.length) {
+        if (ui?.battleLog) {
           const existingCount = (state.log || []).length - newLogs.length;
           ui.battleLog.innerHTML = (state.log || []).slice(0, existingCount).slice().reverse().map(formatLogEntry).join('');
         }
