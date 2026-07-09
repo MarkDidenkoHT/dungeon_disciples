@@ -68,14 +68,9 @@ async function requireAuth(req, res, next) {
   }
 }
 
-function normalizeSupabaseUrl(url) {
-  if (!url) return null;
-  return String(url).replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
-}
-
-const SUPABASE_URL = normalizeSupabaseUrl(process.env.SUPABASE_URL || '');
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const SUPABASE_FUNCTIONS_URL = (process.env.SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+const SUPABASE_FUNCTIONS_URL = process.env.SUPABASE_URL || '';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const STARTING_RESOURCES = [
@@ -761,7 +756,7 @@ router.get('/battle/active', requireAuth, async (req, res) => {
 
 router.get('/battle/realtime-config', requireAuth, async (req, res) => {
   res.json({
-    url: normalizeSupabaseUrl(process.env.SUPABASE_URL || null),
+    url: process.env.SUPABASE_URL || null,
     anonKey: process.env.SUPABASE_ANON_KEY || null,
   });
 });
