@@ -212,7 +212,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
         lowest.battle_hp += actual;
         if (actual > 0) {
-          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, targetId: lowest.id, value: actual });
+          // Include sourceId/sourceCell so visual effects (e.g. communion) can
+          // draw transfers from the damaged enemy to the healed ally.
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, targetId: lowest.id, value: actual, sourceId: target?.id, sourceCell: target?.cellIndex });
           engine.fireHealTriggers(owner, lowest, actual);
         }
       }

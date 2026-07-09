@@ -187,6 +187,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt.',
     params: { lowest_ally_heal_pct: 25 },
+    effect_name: 'communion',
   },
   'mithrails_light 1': {
     id: 'mithrails_light 1',
@@ -331,6 +332,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_heal',
     description: 'Heals for 25% of health restored to the target on their next turn.',
     params: { hot_pct: 25 },
+    effect_name: 'renew',
   },
   'shatter 1': {
     id: 'shatter 1',
@@ -727,6 +729,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     params: { light_of_dawn: true, light_of_dawn_heal: 15, light_of_dawn_dmg: 15 },
+    effect_name: 'holy_heal',
   },
   'light_of_dawn 2': {
     id: 'light_of_dawn 2',
@@ -736,6 +739,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     params: { light_of_dawn: true, light_of_dawn_heal: 25, light_of_dawn_dmg: 25 },
+    effect_name: 'holy_heal',
   },
   'eternal_grief 1': {
     id: 'eternal_grief 1',

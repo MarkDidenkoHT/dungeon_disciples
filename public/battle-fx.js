@@ -131,19 +131,6 @@ function cellBoundsFor(dataId) {
   };
 }
 
-// Gentle, soothing bloom around the cell's border. Used for heal-type log
-// entries (Mithrail's Light, the generic heal action, etc). A soft blurred
-// outer glow plus a thin crisp inner line, both tracing the cell's rounded
-// border, fading in, breathing very slightly, then fading back out.
-//
-// battle.js's render() replaces the whole battle screen's DOM on every
-// action, and a follow-up render (e.g. advanceEnemyTurns firing right after
-// this one) can land while this effect is still mid-animation - well within
-// its ~1.3s duration. Rather than freezing the target's position/DOM node
-// once at the start (which would go stale the moment a re-render swaps in a
-// new element with the same data-id), position is re-resolved by data-id on
-// every tick. If the cell can't be found for a frame (e.g. a render is
-// mid-flight), that frame is simply skipped rather than snapping to (0,0).
 const HEAL_TINTS = {
   default: { glow: 0xfff3c4, glowAlpha: 0.55, crisp: 0xfffaf0 },
   holy:    { glow: 0xcfe8ff, glowAlpha: 0.55, crisp: 0xeaf5ff },
@@ -211,8 +198,6 @@ function playHealEffect(cellEl, variant = 'default') {
       glowBorder.alpha  = alpha * 0.65;
       crispBorder.alpha = alpha * 0.85;
     } else {
-      // Cell temporarily unresolvable (mid-render) - hold last frame rather
-      // than snapping anywhere, and keep ticking so it can recover.
       layer.visible = false;
     }
 
@@ -225,9 +210,174 @@ function playHealEffect(cellEl, variant = 'default') {
   app.ticker.add(tick);
 }
 
-export { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect };
+function playHitEffect(cellEl) {
+  if (!cellEl || !app || typeof window === 'undefined' || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  if (!dataId) return;
+
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  const border = new PIXI.Graphics();
+  layer.addChild(border);
+
+  const duration = 700;
+  const start = performance.now();
+
+  const tick = () => {
+    if (!app) return;
+    const elapsed = performance.now() - start;
+    const t = Math.min(1, elapsed / duration);
+    const b = cellBoundsFor(dataId);
+    if (b) {
+      border.clear();
+      border.lineStyle(4, 0xff4f4f, 0.9 * (1 - t));
+      border.drawRoundedRect(2, 2, b.width - 4, b.height - 4, 8);
+      layer.pivot.set(b.width / 2, b.height / 2);
+      layer.position.set(b.x + b.width / 2, b.y + b.height / 2);
+      layer.scale.set(1 + t * 0.08);
+    }
+    if (t >= 1) {
+      app.ticker.remove(tick);
+      layer.destroy({ children: true });
+    }
+  };
+
+  app.ticker.add(tick);
+}
+
+function playShieldEffect(cellEl) {
+  if (!cellEl || !app || typeof window === 'undefined' || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  if (!dataId) return;
+
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  const circle = new PIXI.Graphics();
+  layer.addChild(circle);
+
+  const duration = 900;
+  const start = performance.now();
+
+  const tick = () => {
+    if (!app) return;
+    const elapsed = performance.now() - start;
+    const t = Math.min(1, elapsed / duration);
+    const b = cellBoundsFor(dataId);
+    if (b) {
+      circle.clear();
+      const alpha = Math.max(0, 0.8 - t);
+      circle.lineStyle(6, 0x70c0ff, alpha);
+      const radius = Math.min(b.width, b.height) / 2 + t * 10;
+      circle.drawCircle(0, 0, radius);
+      layer.position.set(b.x + b.width / 2, b.y + b.height / 2);
+    }
+    if (t >= 1) {
+      app.ticker.remove(tick);
+      layer.destroy({ children: true });
+    }
+  };
+
+  app.ticker.add(tick);
+}
+
+// Dedicated effect entry points. Each effect gets its own function so art/behavior
+// can be changed independently later. Functions are registered on `window` by
+// their effect string name so `entry.effect` can call them directly.
+function holy_heal(cellEl) { playHealEffect(cellEl, 'holy'); }
+function renew(cellEl) { /* reserved for Renew-specific VFX */ playHealEffect(cellEl, 'default'); }
+function sacrifice(cellEl) { /* reserved for Sacrifice VFX */ playHitEffect(cellEl); }
+function mothers_kiss(cellEl) { /* reserved for Mother's Kiss VFX */ playHealEffect(cellEl, 'default'); }
+function heal(cellEl) { playHealEffect(cellEl, 'default'); }
+function hit(cellEl) { playHitEffect(cellEl); }
+function shield(cellEl) { playShieldEffect(cellEl); }
+
+function playBattleEffect(effect, cellEl) {
+  if (!effect || !cellEl) return;
+  // Prefer global registration by effect name (e.g. window['holy_heal']) so
+  // `data.unit_abilities.effect_name` can be any string we choose.
+  const host = (typeof globalThis !== 'undefined') ? globalThis : (typeof window !== 'undefined' ? window : null);
+  const fn = host && host[effect];
+  if (typeof fn === 'function') fn(cellEl);
+}
+
+export { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect, playBattleEffect };
 
 // DEV HELPERS: expose a manual trigger to the console for quick debugging.
 if (typeof window !== 'undefined') {
-  try { window.__playHeal = playHealEffect; } catch {}
+  try {
+    window.__playHeal = playHealEffect;
+    window.__playBattleEffect = playBattleEffect;
+    // Register effect-named functions so engine-provided `entry.effect` strings
+    // call the corresponding animation directly.
+    window.heal = heal;
+    window.holy_heal = holy_heal;
+    window.renew = renew;
+    window.sacrifice = sacrifice;
+    window.mothers_kiss = mothers_kiss;
+    window.hit = hit;
+    window.shield = shield;
+  } catch {}
+}
+
+function communion(sourceCellEl, targetCellEl) {
+  if (!sourceCellEl || !targetCellEl || !app || typeof window === 'undefined' || !window.PIXI) return;
+  const srcId = sourceCellEl.dataset.id;
+  const dstId = targetCellEl.dataset.id;
+  if (!srcId || !dstId) return;
+
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  const line = new PIXI.Graphics();
+  layer.addChild(line);
+
+  const particle = new PIXI.Graphics();
+  particle.beginFill(0xff1e1e);
+  particle.drawCircle(0, 0, 6);
+  particle.endFill();
+  layer.addChild(particle);
+
+  const start = performance.now();
+  const duration = 700;
+
+  let lastSrc = null, lastDst = null;
+
+  const tick = () => {
+    if (!app) return;
+    const elapsed = performance.now() - start;
+    const t = Math.min(1, elapsed / duration);
+
+    const s = cellBoundsFor(srcId);
+    const d = cellBoundsFor(dstId);
+    if (s && d) {
+      const sx = s.x + s.width / 2;
+      const sy = s.y + s.height / 2;
+      const dx = d.x + d.width / 2;
+      const dy = d.y + d.height / 2;
+
+      line.clear();
+      const alpha = 1 - t;
+      line.lineStyle(4, 0x8a0303, 0.9 * alpha);
+      line.moveTo(sx, sy);
+      line.lineTo(dx, dy);
+
+      // particle travels from source -> target
+      const px = sx + (dx - sx) * t;
+      const py = sy + (dy - sy) * t;
+      particle.position.set(px, py);
+      particle.alpha = 1 - Math.abs(0.5 - t) * 2;
+    }
+
+    if (t >= 1) {
+      app.ticker.remove(tick);
+      // small heal + hit pulses
+      try { playHitEffect(sourceCellEl); } catch {}
+      try { playHealEffect(targetCellEl); } catch {}
+      layer.destroy({ children: true });
+    }
+  };
+
+  app.ticker.add(tick);
 }

@@ -35,6 +35,7 @@ function cellCol(i) { return i % COLS; }
 class BattleEngine {
   constructor(state) {
     this.ABILITIES = null;
+    this.effectHandler = null;
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -55,6 +56,18 @@ class BattleEngine {
   }
   async init() {
     this.ABILITIES = await getAbilities();
+    // Build a quick lookup map from ability id/name -> effect_name for visual mapping
+    this._abilityEffectMap = {};
+    const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (this.ABILITIES) {
+      for (const [k, def] of Object.entries(this.ABILITIES)) {
+        if (!def) continue;
+        if (def.effect_name) {
+          if (def.id) this._abilityEffectMap[norm(def.id)] = def.effect_name;
+          if (def.name) this._abilityEffectMap[norm(def.name)] = def.effect_name;
+        }
+      }
+    }
   }
   static async fromSetup(playerUnits, enemyUnits, placement) {
     const engine = new BattleEngine(null);
@@ -153,6 +166,40 @@ class BattleEngine {
   }
   fireTrigger(trigger, ctx) {
     runTrigger(trigger, { engine: this, UNIT_ABILITIES: this.ABILITIES, ...ctx });
+  }
+  setEffectHandler(fn) {
+    this.effectHandler = typeof fn === 'function' ? fn : null;
+  }
+  getVisualEffect(entry) {
+    if (!entry || typeof entry !== 'object') return null;
+    if (entry.effect) return entry.effect;
+    const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Check passive/ability name map first
+    if (entry.passive) {
+      const m = this._abilityEffectMap?.[norm(entry.passive)];
+      if (m) return m;
+    }
+    if (entry.spell) {
+      const m = this._abilityEffectMap?.[norm(entry.spell)];
+      if (m) return m;
+    }
+    if (entry.type === 'action' && entry.targetId) {
+      if (entry.heal === true) return 'heal';
+      if (entry.value > 0) return 'hit';
+    }
+    if (entry.type === 'passive' && entry.targetId && entry.value > 0) {
+      if (entry.heal === true) return 'heal';
+      return 'hit';
+    }
+    if (entry.type === 'shield') return 'shield';
+    if (entry.type === 'status') return 'status';
+    return null;
+  }
+  applyVisualEffect(entry) {
+    if (!entry || typeof entry !== 'object') return;
+    if (entry.effect !== undefined) return;
+    const effect = this.getVisualEffect(entry);
+    if (effect) entry.effect = effect;
   }
   getFootprint(unit) {
     const size = unit.size ?? 'tile';
@@ -941,7 +988,17 @@ class BattleEngine {
     return targets;
   }
 
-  pushLog(entry) { this.log.push(entry); }
+  pushLog(entry) {
+    this.applyVisualEffect(entry);
+    if (this.effectHandler) {
+      try {
+        this.effectHandler(entry);
+      } catch (err) {
+        // swallow effect handler errors so battle flow stays intact
+      }
+    }
+    this.log.push(entry);
+  }
 
   // Cosmetic combat barks - see data/combat_barks.js for the decaying-chance
   // rules. Purely flavor text; never affects gameplay state beyond the log.

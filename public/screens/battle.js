@@ -1,7 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
-import { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
+import { initBattleFx, reattachBattleFx, destroyBattleFx, playBattleEffect } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { createBattleRealtimeController } from '../realtime.js';
 
@@ -130,16 +130,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
       (state.log || []).slice(prevLen).forEach(entry => {
         if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
-        if (entry.targetId && entry.heal === true) {
-          const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
-          if (cell) {
-            requestAnimationFrame(() => playHealEffect(cell));
-          }
-        }
-        if (entry.targetId && entry.heal !== false && entry.passive === "Mithrail's Light") {
-          const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
-          if (cell) {
-            requestAnimationFrame(() => playHealEffect(cell, 'holy'));
+        if (entry.effect && entry.targetId) {
+          const targetCell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
+          if (!targetCell) return;
+          // Some effects (e.g. communion) transfer from a source to target.
+          if (entry.effect === 'communion' && entry.sourceId) {
+            const sourceCell = root.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`);
+            if (sourceCell) {
+              requestAnimationFrame(() => playBattleEffect(entry.effect, sourceCell, targetCell));
+            } else {
+              requestAnimationFrame(() => playBattleEffect(entry.effect, targetCell));
+            }
+          } else {
+            requestAnimationFrame(() => playBattleEffect(entry.effect, targetCell));
           }
         }
       });
