@@ -135,11 +135,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
         if (entry.targetId && entry.heal === true) {
           const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
-          if (cell) playHealEffect(cell);
+          if (cell) {
+            playHealEffect(cell);
+            triggerAnim(cell, 'anim-heal');
+          }
         }
         if (entry.targetId && entry.heal !== false && entry.passive === "Mithrail's Light") {
           const cell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
-          if (cell) playHealEffect(cell, 'holy');
+          if (cell) {
+            playHealEffect(cell, 'holy');
+            triggerAnim(cell, 'anim-heal');
+          }
         }
       });
     }

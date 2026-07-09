@@ -138,7 +138,16 @@ const HEAL_TINTS = {
 };
 
 function playHealEffect(cellEl, variant = 'default') {
-  if (!app || !cellEl) return;
+  if (!cellEl) return;
+
+  if (!app || typeof window === 'undefined' || !window.PIXI) {
+    cellEl.classList.remove('anim-heal');
+    void cellEl.offsetWidth;
+    cellEl.classList.add('anim-heal');
+    cellEl.addEventListener('animationend', () => cellEl.classList.remove('anim-heal'), { once: true });
+    return;
+  }
+
   const dataId = cellEl.dataset.id;
   if (!dataId) return;
   const tint = HEAL_TINTS[variant] || HEAL_TINTS.default;
