@@ -294,8 +294,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const range = actor.unit_data?.range ?? 1;
     state.combatants.filter(c => c.side !== actor.side && c.alive).forEach(t => {
       if (range > 1) { targets.add(t.id); return; }
-      const frontCol   = t.side === 'enemy' ? 0 : 1;
-      const backCol    = t.side === 'enemy' ? 1 : 0;
+      const frontCol  = t.side === 'enemy' ? 0 : 1;
+      const backCol   = t.side === 'enemy' ? 1 : 0;
+      const actorRow  = Math.floor(actor.cellIndex / COLS);
+      const nearFront = state.combatants.filter(c =>
+        c.side === t.side && c.alive && c.cellIndex % COLS === frontCol &&
+        Math.abs(Math.floor(c.cellIndex / COLS) - actorRow) <= 1
+      );
+      if (nearFront.length > 0) {
+        if (t.cellIndex % COLS === frontCol && Math.abs(Math.floor(t.cellIndex / COLS) - actorRow) <= 1) targets.add(t.id);
+        return;
+      }
       const frontAlive = state.combatants.filter(c => c.side === t.side && c.alive && c.cellIndex % COLS === frontCol);
       const reachable  = frontAlive.length > 0 ? frontCol : backCol;
       if (t.cellIndex % COLS === reachable) targets.add(t.id);
