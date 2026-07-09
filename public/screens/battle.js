@@ -29,6 +29,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let prevState        = null;   // snapshot before each render, used for diff-based animations
 
   let prevLogLen = 0;
+  let lastLogId  = null;
   let ui = null;
   let realtimeController = null;
   let battleResolved = false;
@@ -139,7 +140,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   async function playbackSequence(newEntries) {
     console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
     for (const entry of newEntries) {
-      // 1. Apply this entry's state change to local state
+      // Track position in the log
+      if (entry.id != null) lastLogId = entry.id;
       applyLogEntryToState(entry);
 
       // 2. Update the grid to reflect the new HP/alive state
@@ -651,9 +653,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // Fallback: if realtime doesn't fire within 3s, fetch state directly
       setTimeout(async () => {
         if (!processing) return;
-        console.warn('[battle] realtime timeout - fetching state directly');
+        console.warn('[battle] realtime timeout - fetching state directly, lastLogId:', lastLogId);
         try {
-          const data = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+          const url = `/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}${lastLogId != null ? `&last_log_id=${lastLogId}` : ''}`;
+          const data = await api(url);
           if (data?.state && !battleResolved) {
             const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
             state = { ...data.state, log: [...(state.log || []), ...newLogs] };
