@@ -293,13 +293,23 @@ function heal(cellEl) { playHealEffect(cellEl, 'default'); }
 function hit(cellEl) { playHitEffect(cellEl); }
 function shield(cellEl) { playShieldEffect(cellEl); }
 
-function playBattleEffect(effect, cellEl) {
-  if (!effect || !cellEl) return;
-  // Prefer global registration by effect name (e.g. window['holy_heal']) so
-  // `data.unit_abilities.effect_name` can be any string we choose.
+function playBattleEffect(effect, ...args) {
+  if (!effect) return;
+  // Log when an effect is triggered; if DOM elements are passed, log their data-id.
+  try {
+    const ids = args.map(a => (a && a.dataset && a.dataset.id) ? a.dataset.id : (typeof a === 'string' ? a : null)).filter(Boolean);
+    console.debug('battle-fx: trigger effect', effect, ids.length ? ids : args.length ? args : null);
+  } catch (e) { /* ignore logging errors */ }
+
   const host = (typeof globalThis !== 'undefined') ? globalThis : (typeof window !== 'undefined' ? window : null);
   const fn = host && host[effect];
-  if (typeof fn === 'function') fn(cellEl);
+  if (typeof fn === 'function') {
+    try {
+      fn(...args);
+    } catch (err) {
+      console.error('battle-fx: effect', effect, 'failed', err);
+    }
+  }
 }
 
 export { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect, playBattleEffect };
@@ -321,11 +331,20 @@ if (typeof window !== 'undefined') {
   } catch {}
 }
 
+// Register communion if available (defined later in file).
+if (typeof window !== 'undefined') {
+  try {
+    if (typeof communion === 'function') window.communion = communion;
+  } catch {}
+}
+
 function communion(sourceCellEl, targetCellEl) {
   if (!sourceCellEl || !targetCellEl || !app || typeof window === 'undefined' || !window.PIXI) return;
   const srcId = sourceCellEl.dataset.id;
   const dstId = targetCellEl.dataset.id;
   if (!srcId || !dstId) return;
+
+  try { console.debug('battle-fx: communion start', srcId, '->', dstId); } catch (e) {}
 
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
@@ -376,6 +395,7 @@ function communion(sourceCellEl, targetCellEl) {
       try { playHitEffect(sourceCellEl); } catch {}
       try { playHealEffect(targetCellEl); } catch {}
       layer.destroy({ children: true });
+      try { console.debug('battle-fx: communion end', srcId, '->', dstId); } catch (e) {}
     }
   };
 
