@@ -31,6 +31,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let prevLogLen = 0;
   let ui = null;
   let realtimeController = null;
+  let battleResolved = false;
+  let rewardRequestInFlight = false;
 
   initBattleFx(root);
 
@@ -643,6 +645,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   async function renderResult(winner) {
+    if (battleResolved) return;
+    battleResolved = true;
+    if (realtimeController) {
+      realtimeController.stop();
+      realtimeController = null;
+    }
+
     const won         = winner === 'player';
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
@@ -659,6 +668,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>
     `;
 
+    rewardRequestInFlight = true;
     try {
       const result = await api('/battle/reward', {
         chat_id:      player.chat_id,
@@ -678,8 +688,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         rewardsEl.innerHTML = `<p style="color:var(--muted)">No rewards on defeat.</p>`;
       }
     } catch (err) {
-      root.querySelector('#result-rewards').innerHTML =
-        `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`;
+      const isAlreadyClaimed = /already claimed|already/i.test(err.message || '');
+      root.querySelector('#result-rewards').innerHTML = isAlreadyClaimed
+        ? '<p style="color:var(--muted)">Rewards already processed.</p>'
+        : `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`;
+    } finally {
+      rewardRequestInFlight = false;
     }
 
     const btn = root.querySelector('#back-to-castle');
@@ -694,12 +708,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     advanceEnemyTurns();
   }
 
-  if (battle_id && player?.chat_id) {
+  if (battle_id && player?.chat_id && !state?.done) {
     realtimeController = createBattleRealtimeController({
       battleId: battle_id,
       playerId: player.chat_id,
       onStateChange: (data) => {
-        if (!data?.state) return;
+        if (!data?.state || battleResolved) return;
         const nextLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : (data.state?.log || []);
         state = { ...(data.state || state), log: nextLogs };
         if (data.state?.done) {
