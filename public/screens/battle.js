@@ -662,7 +662,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (result.error) throw new Error(result.error);
 
       const newLogs = result.logs || [];
-      state = { ...state, log: [...(state.log || []), ...newLogs] };
+      state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
 
       if (ui?.battleLog) {
         const existingCount = (state.log || []).length - newLogs.length;
@@ -858,6 +858,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         render();
       },
     });
+    if (lastLogId != null) realtimeController.setLastLogId(lastLogId);
     realtimeController.start();
   }
 }

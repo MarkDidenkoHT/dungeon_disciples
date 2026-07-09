@@ -985,7 +985,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       console.error('Failed to persist battle log:', err);
     }
 
-    res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs });
+    res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

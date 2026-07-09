@@ -113,8 +113,8 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
       const level     = battle_data.level;
       if (!region_id) return;
       try {
-        const { state } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
-        navigate('battle', { player, battle_id, reconnect: true, snapshot: state, region_id, level });
+        const { state, logs } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+        navigate('battle', { player, battle_id, reconnect: true, snapshot: state, logs, region_id, level });
       } catch (err) {
         console.error('Failed to reconnect:', err);
       }

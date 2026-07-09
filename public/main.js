@@ -173,9 +173,9 @@ function showReconnectModal(player, battle_id, battle_data) {
     try {
       const region_id = battle_data.region_id;
       const level     = battle_data.level;
-      const { state } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+      const { state, logs } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
       overlay.remove();
-      navigate('battle', { player, battle_id, reconnect: true, snapshot: state, region_id, level });
+      navigate('battle', { player, battle_id, reconnect: true, snapshot: state, logs, region_id, level });
     } catch (err) {
       console.error('Failed to reconnect:', err);
     }
