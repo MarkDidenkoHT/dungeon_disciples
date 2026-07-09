@@ -1085,7 +1085,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           target_id: s.target_id ?? null,
         })),
       });
-      navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells });
+      navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells, logs: result.logs || [] });
     } catch (err) {
       btn.disabled = false;
       btn.textContent = 'Ready Up';

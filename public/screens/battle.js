@@ -30,6 +30,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   let prevLogLen = 0;
   let lastLogId  = null;
+  // Initialize lastLogId from the logs passed at mount (e.g. on reconnect)
+  // so the first action only fetches entries newer than what's already displayed.
+  if (Array.isArray(logs) && logs.length) {
+    const lastEntry = logs[logs.length - 1];
+    if (lastEntry?.id != null) lastLogId = lastEntry.id;
+  }
   let ui = null;
   let realtimeController = null;
   let battleResolved = false;
@@ -844,6 +850,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         }
 
         await playbackSequence(newLogs);
+        if (newLogs.length && newLogs[newLogs.length - 1].id != null) {
+          lastLogId = newLogs[newLogs.length - 1].id;
+        }
         processing = false;
         render();
       },
