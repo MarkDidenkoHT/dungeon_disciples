@@ -191,6 +191,7 @@ const UNIT_ABILITIES = {
   },
   'mithrails_light 1': {
     id: 'mithrails_light 1',
+    effect_name: 'mithrails_light',
     name: "Mithrail's Light",
     rank: 1,
     type: 'passive',
@@ -200,6 +201,7 @@ const UNIT_ABILITIES = {
   },
   'mithrails_light 2': {
     id: 'mithrails_light 2',
+    effect_name: 'mithrails_light',
     name: "Mithrail's Light",
     rank: 2,
     type: 'passive',
@@ -326,6 +328,7 @@ const UNIT_ABILITIES = {
   },
   'renew 1': {
     id: 'renew 1',
+    effect_name: 'renew',
     name: 'Renew',
     rank: 1,
     type: 'passive',
@@ -390,6 +393,7 @@ const UNIT_ABILITIES = {
   },
   'thorns 1': {
     id: 'thorns 1',
+    effect_name: 'thorns',
     name: 'Thorns',
     rank: 1,
     type: 'passive',
@@ -399,6 +403,7 @@ const UNIT_ABILITIES = {
   },
   'thorns 2': {
     id: 'thorns 2',
+    effect_name: 'thorns',
     name: 'Thorns',
     rank: 2,
     type: 'passive',
@@ -489,6 +494,7 @@ const UNIT_ABILITIES = {
   },
   'chain 1': {
     id: 'chain 1',
+    effect_name: 'chain',
     name: 'Chain',
     rank: 1,
     type: 'passive',
@@ -498,6 +504,7 @@ const UNIT_ABILITIES = {
   },
   'chain 2': {
     id: 'chain 2',
+    effect_name: 'chain',
     name: 'Chain',
     rank: 2,
     type: 'passive',

@@ -1,7 +1,7 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
-import { initBattleFx, reattachBattleFx, destroyBattleFx, playBattleEffect } from '../battle-fx.js';
+import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { createBattleRealtimeController } from '../realtime.js';
 
@@ -103,50 +103,84 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     setTimeout(dismiss, 6000);
   }
 
-  function animateAfterRender(prev, prevLen) {
-    if (!prev) return;
-    // Hit flash, heal pulse, death shake
-    root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
-      const id   = cell.dataset.id;
-      const was  = prev[id];
-      const now  = state.combatants.find(c => c.id === id);
-      if (!was || !now) return;
+  // Resolves the animation effect name for a log entry.
+  // Passive entries use effect_name from the ability definition.
+  // Action entries use the actor's action string.
+  function effectForEntry(entry, actorCombatant) {
+    if (entry.type === 'passive' && entry.passive) {
+      // Find the ability def whose name matches entry.passive
+      const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
+      if (def?.effect_name) return def.effect_name;
+    }
+    if (entry.type === 'action' && actorCombatant) {
+      const actionRaw = actorCombatant.unit_data?.action;
+      const key = typeof actionRaw === 'string' ? actionRaw : actionRaw?.id;
+      if (key) return key.toLowerCase().replace(/\s+/g, '_');
+    }
+    return null;
+  }
 
-      if (!now.alive && was.alive) {
-        triggerAnim(cell, 'anim-death');
-      } else if (now.battle_hp < was.hp) {
-        triggerAnim(cell, 'anim-hit');
+  // Patches local state incrementally from a single log entry so HP bars
+  // update in sync with the animation rather than all at once at the end.
+  function applyLogEntryToState(entry) {
+    if (!entry.targetId) return;
+    const c = state.combatants.find(u => u.id === entry.targetId);
+    if (!c) return;
+    if (entry.type === 'action' || entry.type === 'passive') {
+      if (entry.heal) {
+        c.battle_hp = Math.min(c.max_hp, (c.battle_hp ?? 0) + (entry.value ?? 0));
+      } else if (entry.value > 0 && entry.heal !== true) {
+        c.battle_hp = Math.max(0, (c.battle_hp ?? 0) - (entry.value ?? 0));
       }
-    });
+      if (entry.killed || (c.battle_hp <= 0 && !entry.heal)) c.alive = false;
+    }
+  }
 
-    // Log entry slide-in: animate only newly added entries
-    const newCount = (state.log?.length ?? 0) - prevLen;
-    if (newCount > 0) {
-      const logEl = root.querySelector('#battle-log');
+  async function playbackSequence(newEntries) {
+    for (const entry of newEntries) {
+      // 1. Apply this entry's state change to local state
+      applyLogEntryToState(entry);
+
+      // 2. Update the grid to reflect the new HP/alive state
+      render();
+
+      // 3. Append this log line to the visible battle log
+      const logEl = ui?.battleLog;
       if (logEl) {
-        Array.from(logEl.querySelectorAll('.log-entry')).slice(0, newCount).forEach(el => {
-          triggerAnim(el, 'anim-log-in');
-        });
-      }
-      (state.log || []).slice(prevLen).forEach(entry => {
-        if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
-        if (entry.effect && entry.targetId) {
-          const targetCell = root.querySelector(`.battle-cell[data-id="${entry.targetId}"]`);
-          if (!targetCell) return;
-          console.log('battle-ui: effect entry', entry.effect, 'targetId=', entry.targetId, 'sourceId=', entry.sourceId, entry);
-          // Some effects (e.g. communion) transfer from a source to target.
-          if (entry.effect === 'communion' && entry.sourceId) {
-            const sourceCell = root.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`);
-            if (sourceCell) {
-              requestAnimationFrame(() => playBattleEffect(entry.effect, sourceCell, targetCell));
-            } else {
-              requestAnimationFrame(() => playBattleEffect(entry.effect, targetCell));
-            }
-          } else {
-            requestAnimationFrame(() => playBattleEffect(entry.effect, targetCell));
+        const html = formatLogEntry(entry);
+        if (html) {
+          const div = document.createElement('div');
+          div.innerHTML = html;
+          const el = div.firstElementChild;
+          if (el) {
+            triggerAnim(el, 'anim-log-in');
+            logEl.prepend(el);
           }
         }
-      });
+      }
+
+      // 4. Show bark toast if applicable
+      if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
+
+      // 5. Play the animation and await completion before moving to next entry
+      const actor = state.combatants.find(u => u.id === entry.actorId ||
+        (entry.actorCell !== undefined && u.cellIndex === entry.actorCell && u.side !== 'enemy'));
+      const effectName = effectForEntry(entry, actor);
+      if (effectName && EFFECTS[effectName]) {
+        const targetCell = entry.targetId
+          ? document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`)
+          : null;
+        const sourceCell = entry.sourceId
+          ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
+          : null;
+        if (targetCell) {
+          if (effectName === 'communion' && sourceCell) {
+            await EFFECTS.communion(sourceCell, targetCell);
+          } else {
+            await EFFECTS[effectName](targetCell);
+          }
+        }
+      }
     }
   }
 
@@ -570,7 +604,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.cancelBtn.disabled = !selectingTarget;
     ui.cancelBtn.textContent = '✕ Cancel';
 
-    ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
+    if (!processing) {
+      ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
+    }
 
     const battleHost = root.querySelector('.screen-battle') || root;
     if (!fxInitialized) {
@@ -596,17 +632,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     processing = true;
     render();
     try {
-      const prev    = snapshotState();
       const prevLen = state.log?.length ?? 0;
       const result  = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
       state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
+      const newEntries = (state.log || []).slice(prevLen);
+      if (ui?.battleLog) ui.battleLog.innerHTML = (state.log || []).slice(0, prevLen).slice().reverse().map(formatLogEntry).join('');
       if (result.done) {
-        render();
-        animateAfterRender(prev, prevLen);
+        await playbackSequence(newEntries);
         return renderResult(result.winner);
       }
-      render();
-      animateAfterRender(prev, prevLen);
+      await playbackSequence(newEntries);
     } catch (err) {
       console.error('Advance failed:', err);
       render();
@@ -619,19 +654,26 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     markTutorialDone(player, 'battle_first_action');
     hideTutorial();
     processing = true;
-    const prev    = snapshotState();
-    const prevLen = state.log?.length ?? 0;
     render();
     try {
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
+      const prevLen = state.log?.length ?? 0;
       state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
       selectingTarget = null;
       pendingAction   = null;
+      const newEntries = (state.log || []).slice(prevLen);
+      // Clear log display - playbackSequence will rebuild it entry by entry
+      if (ui?.battleLog) ui.battleLog.innerHTML = '';
+      // Prepend existing entries (already played) without animation
+      const existingEntries = (state.log || []).slice(0, prevLen);
+      if (ui?.battleLog) {
+        ui.battleLog.innerHTML = existingEntries.slice().reverse().map(formatLogEntry).join('');
+      }
       if (result.done) {
-        render();
-        animateAfterRender(prev, prevLen);
+        await playbackSequence(newEntries);
         return renderResult(result.winner);
       }
+      await playbackSequence(newEntries);
     } catch (err) {
       console.error('Action failed:', err);
       const log = ui?.battleLog;
@@ -645,7 +687,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       processing = false;
     }
     render();
-    animateAfterRender(prev, prevLen);
     advanceEnemyTurns();
   }
 
