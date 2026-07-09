@@ -555,7 +555,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const prevLen = state.log?.length ?? 0;
       const result  = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
       state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
-      if (result.done) return renderResult(result.winner);
+      if (result.done) {
+        render();
+        animateAfterRender(prev, prevLen);
+        return renderResult(result.winner);
+      }
       render();
       animateAfterRender(prev, prevLen);
     } catch (err) {
@@ -579,6 +583,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       selectingTarget = null;
       pendingAction   = null;
       if (result.done) {
+        render();
+        animateAfterRender(prev, prevLen);
         return renderResult(result.winner);
       }
     } catch (err) {
@@ -745,7 +751,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         }
         render();
       },
-      onError: () => {},
+      onError: (err) => {
+        console.error('battle realtime error', err);
+      },
     });
     realtimeController.start();
   }

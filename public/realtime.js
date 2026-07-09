@@ -26,52 +26,49 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
       const url = cfg?.url;
       const anonKey = cfg?.anonKey;
 
-      if (url && anonKey && isSupabaseAvailable()) {
-        const supabase = window.supabase.createClient(url, anonKey, { auth: { persistSession: false } });
-        channel = supabase.channel(`battle:${battleId}`, {
-          config: { broadcast: { self: false } },
-        });
-
-        channel.on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'battle_state',
-          filter: `battle_id=eq.${battleId}`,
-        }, () => {
-          refreshFromServer();
-        });
-
-        channel.on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'battle_log',
-          filter: `battle_id=eq.${battleId}`,
-        }, () => {
-          refreshFromServer();
-        });
-
-        channel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            refreshFromServer();
-            return;
-          }
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            onError?.(new Error(`Realtime channel status: ${status}`));
-            stopped = true;
-          }
-        });
+      if (!(url && anonKey && isSupabaseAvailable())) {
+        onError?.(new Error('Realtime unavailable: missing config or Supabase client'));
         return;
       }
+
+      const supabase = window.supabase.createClient(url, anonKey, { auth: { persistSession: false } });
+      channel = supabase.channel(`battle:${battleId}`, {
+        config: { broadcast: { self: false } },
+      });
+
+      channel.on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'battle_state',
+        filter: `battle_id=eq.${battleId}`,
+      }, () => {
+        refreshFromServer();
+      });
+
+      channel.on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'battle_log',
+        filter: `battle_id=eq.${battleId}`,
+      }, () => {
+        refreshFromServer();
+      });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          refreshFromServer();
+          return;
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          onError?.(new Error(`Realtime channel status: ${status}`));
+          stopped = true;
+        }
+      });
     } catch (err) {
       onError?.(err);
-      stopped = true;
-      return;
     }
-
-    // No polling fallback — realtime only
-    onError?.(new Error('Realtime unavailable: missing config or Supabase client'));
-    stopped = true;
   }
+
   function stop() {
     stopped = true;
     if (channel) {
