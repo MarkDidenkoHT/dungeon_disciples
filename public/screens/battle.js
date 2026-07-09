@@ -671,11 +671,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
       if (result.done) {
         await playbackSequence(newLogs);
+        if (realtimeController) realtimeController.setLastLogId(lastLogId);
         renderResult(result.winner);
         return;
       }
 
       await playbackSequence(newLogs);
+      if (realtimeController) realtimeController.setLastLogId(lastLogId);
       processing = false;
       render();
     } catch (err) {
