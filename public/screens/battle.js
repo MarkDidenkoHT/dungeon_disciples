@@ -137,6 +137,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   async function playbackSequence(newEntries) {
+    console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
     for (const entry of newEntries) {
       // 1. Apply this entry's state change to local state
       applyLogEntryToState(entry);
@@ -166,6 +167,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actor = state.combatants.find(u => u.id === entry.actorId ||
         (entry.actorCell !== undefined && u.cellIndex === entry.actorCell && u.side !== 'enemy'));
       const effectName = effectForEntry(entry, actor);
+      console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
         const targetCell = entry.targetId
           ? document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`)
@@ -173,15 +175,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const sourceCell = entry.sourceId
           ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
           : null;
+        console.log('[battle] playing effect', effectName, '| targetCell:', !!targetCell, '| sourceCell:', !!sourceCell);
         if (targetCell) {
           if (effectName === 'communion' && sourceCell) {
             await EFFECTS.communion(sourceCell, targetCell);
           } else {
             await EFFECTS[effectName](targetCell);
           }
+        } else {
+          console.warn('[battle] targetCell not found for', entry.targetId);
         }
       }
     }
+    console.log('[battle] playbackSequence END');
   }
 
   function triggerAnim(el, cls) {
