@@ -116,8 +116,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         triggerAnim(cell, 'anim-death');
       } else if (now.battle_hp < was.hp) {
         triggerAnim(cell, 'anim-hit');
-      } else if (now.battle_hp > was.hp) {
-        triggerAnim(cell, 'anim-heal');
       }
     });
 
