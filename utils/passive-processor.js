@@ -199,14 +199,22 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
     if (p.lowest_ally_heal_pct != null) {
       const heal = Math.floor(dmg * p.lowest_ally_heal_pct / 100);
-      const lowest = engine.combatants
-        .filter(c => c.side === owner.side && c.alive)
-        .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, owner);
-      const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
-      lowest.battle_hp += actual;
-      if (actual > 0) {
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, targetId: lowest.id, value: actual });
-        engine.fireHealTriggers(owner, lowest, actual);
+      const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
+      if (candidates.length > 0) {
+        const lowest = candidates.reduce((a, b) => {
+          const aMissing = a.max_hp - a.battle_hp;
+          const bMissing = b.max_hp - b.battle_hp;
+          if (aMissing === bMissing) {
+            return a.battle_hp < b.battle_hp ? a : b;
+          }
+          return aMissing < bMissing ? a : b;
+        }, candidates[0]);
+        const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
+        lowest.battle_hp += actual;
+        if (actual > 0) {
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, targetId: lowest.id, value: actual });
+          engine.fireHealTriggers(owner, lowest, actual);
+        }
       }
     }
     if (p.lowest_enemy_dmg_pct != null) {

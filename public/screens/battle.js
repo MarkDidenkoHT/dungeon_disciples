@@ -1,6 +1,6 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
+import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { createBattleRealtimeController } from '../realtime.js';
@@ -62,6 +62,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const map = {};
     for (const c of state.combatants) map[c.id] = { hp: c.battle_hp, alive: c.alive };
     return map;
+  }
+
+  function renderAbilityButtonContent(actor, fallbackLabel) {
+    const abilityKey = actor?.unit_data?.ability || actor?.unit_data?.active_ability;
+    const def = resolveAbility(abilityKey);
+    const fileKey = abilityKey ? abilityKey.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
+    const imgSrc = def && fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+
+    if (imgSrc) {
+      return `<img class="battle-action-ability-icon" src="${imgSrc}" alt="${def.name || fallbackLabel}" onerror="this.style.display='none'">`;
+    }
+    return `<span class="action-btn__label">${fallbackLabel}</span>`;
   }
 
   function showBarkToast(actorId, text) {
@@ -453,7 +465,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const hasAbility   = actor && !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
     const abilityName  = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : 'Ability';
     const actionLabel  = actor ? getActionLabel(actor) : 'Attack';
-    const passiveName  = actor ? getPassiveName(actor) : '';
     const isNoneAction = actor && (typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type === 'none' : false);
 
     const validTargetKeys = new Set();
@@ -490,7 +501,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ? '<span style="color:var(--muted)">Processing…</span>'
       : isEnemyTurn
         ? '<span style="color:var(--muted)">Enemy is acting…</span>'
-        : `<strong>${actor.unit_name}</strong> <small style="color:var(--muted)">· Passive: ${passiveName}</small>`;
+        : `<strong>${actor.unit_name}</strong>`;
 
     ui.mainBtn.className = `action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
@@ -498,7 +509,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.abilityBtn.className = `action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
-    ui.abilityBtn.textContent = `${actor && actor.used_active ? '(used) ' : ''}${abilityName}`;
+    ui.abilityBtn.innerHTML = renderAbilityButtonContent(actor, abilityName);
+    ui.abilityBtn.title = abilityName;
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
