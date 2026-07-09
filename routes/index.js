@@ -913,13 +913,17 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       placement,
     }});
     const record = await createBattleState({ chat_id, battle_id, battle_data });
+    let initialLogs = [];
     try {
       const initialEvents = Array.isArray(engine.log) ? engine.log : [];
-      if (initialEvents.length) await appendBattleLogEntries(battle_id, initialEvents);
+      if (initialEvents.length) {
+        const inserted = await appendBattleLogEntries(battle_id, initialEvents);
+        initialLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+      }
     } catch (err) {
       console.error('Failed to persist initial battle log:', err);
     }
-    res.json({ record, state: engine.getSnapshot(), logs: Array.isArray(engine.log) ? engine.log : [] });
+    res.json({ record, state: engine.getSnapshot(), logs: initialLogs });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -971,13 +975,17 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     const newEntries = engine.log.slice(previousLog.length);
 
     await updateBattleState(battle_id, battle_data);
+    let insertedLogs = [];
     try {
-      if (newEntries.length) await appendBattleLogEntries(battle_id, newEntries);
+      if (newEntries.length) {
+        const inserted = await appendBattleLogEntries(battle_id, newEntries);
+        insertedLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+      }
     } catch (err) {
       console.error('Failed to persist battle log:', err);
     }
 
-    res.json({ ok: true, done: engine.done, winner: engine.winner });
+    res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -660,28 +660,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     try {
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
       if (result.error) throw new Error(result.error);
+
+      const newLogs = result.logs || [];
+      state = { ...state, log: [...(state.log || []), ...newLogs] };
+
+      if (ui?.battleLog) {
+        const existingCount = (state.log || []).length - newLogs.length;
+        ui.battleLog.innerHTML = (state.log || []).slice(0, existingCount).slice().reverse().map(formatLogEntry).join('');
+      }
+
       if (result.done) {
-        processing = false;
+        await playbackSequence(newLogs);
         renderResult(result.winner);
         return;
       }
-      // Fallback: if realtime doesn't fire within 3s, fetch state directly
-      setTimeout(async () => {
-        if (!processing) return;
-        console.warn('[battle] realtime timeout - fetching state directly, lastLogId:', lastLogId);
-        try {
-          const url = `/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}${lastLogId != null ? `&last_log_id=${lastLogId}` : ''}`;
-          const data = await api(url);
-          if (data?.state && !battleResolved) {
-            const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
-            state = { ...data.state, log: [...(state.log || []), ...newLogs] };
-            if (data.done) { renderResult(data.winner); return; }
-            await playbackSequence(newLogs);
-          }
-        } catch (e) { console.error('Fallback fetch failed:', e); }
-        processing = false;
-        render();
-      }, 3000);
+
+      await playbackSequence(newLogs);
+      processing = false;
+      render();
     } catch (err) {
       console.error('Action failed:', err);
       processing = false;
