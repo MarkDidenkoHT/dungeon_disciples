@@ -2136,8 +2136,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 .action-btns { display: flex; gap: 8px; }
 
 .action-btn {
-  flex: 1;
-  padding: 10px 6px;
+  flex: 0 1 100px;
+  max-width: 100px;
+  min-width: 72px;
+  min-height: 56px;
+  padding: 8px 6px;
   border-radius: 6px;
   border: 1px solid var(--accent);
   background: var(--bg);
@@ -2147,6 +2150,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: pointer;
   font-family: inherit;
   transition: background 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-action-ability-icon {
+  width: min(100%, 84px);
+  height: min(100%, 84px);
+  max-width: 84px;
+  max-height: 84px;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
 }
 
 .action-btn:active       { background: #2a200a; }
