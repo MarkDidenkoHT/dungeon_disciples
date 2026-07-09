@@ -60,12 +60,17 @@ function initBattleFx(root) {
   rootEl = host;
 
   try {
+    if (!window.PIXI) {
+      console.warn('battle-fx: PIXI not found on window');
+    }
     app = new PIXI.Application({
-      resizeTo: root,
+      resizeTo: host,
       backgroundAlpha: 0,
       antialias: true,
     });
-  } catch {
+    console.debug('battle-fx: PIXI app created', app && app.view && host);
+  } catch (err) {
+    console.error('battle-fx: failed to create PIXI.Application', err);
     app = null;
     return;
   }
@@ -221,3 +226,8 @@ function playHealEffect(cellEl, variant = 'default') {
 }
 
 export { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect };
+
+// DEV HELPERS: expose a manual trigger to the console for quick debugging.
+if (typeof window !== 'undefined') {
+  try { window.__playHeal = playHealEffect; } catch {}
+}
