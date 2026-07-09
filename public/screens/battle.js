@@ -397,6 +397,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return ui;
   }
 
+  function patchCell(cellEl, occ, actor, validTargetKeys) {
+    const isActor  = actor?.id === occ.id;
+    const isTarget = validTargetKeys.has(occ.id);
+    const hpPct    = occ.battle_hp / occ.max_hp;
+
+    let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
+    if (isActor)               cls += ' battle-cell--acting anim-actor-pulse';
+    else if (isTarget)         cls += ' battle-cell--targetable';
+    else if (selectedCombatant?.id === occ.id) cls += ' battle-cell--selected';
+    else if (occ.side === 'player') cls += ' battle-cell--placed';
+    else                       cls += ' battle-cell--enemy';
+
+    for (const ac of ['anim-hit', 'anim-death', 'battle-cell--bark-active']) {
+      if (cellEl.classList.contains(ac)) cls += ` ${ac}`;
+    }
+    cellEl.className = cls;
+
+    const sub = cellEl.querySelector('.battle-cell-sub');
+    if (sub) {
+      sub.innerHTML = occ.alive
+        ? `${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}`
+        : '💀';
+    }
+    const fill = cellEl.querySelector('.bc-hp-fill');
+    if (fill) {
+      fill.style.width = `${Math.max(0, hpPct * 100)}%`;
+      fill.style.background = hpColor(hpPct);
+    }
+  }
+
   function renderSide(side, actor, validTargetKeys) {
     const cellMap = {};
     const shadow  = new Set();
@@ -499,8 +529,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       `;
     }).join('');
 
-    ui.playerGrid.innerHTML = renderSide('player', actor, validTargetKeys);
-    ui.enemyGrid.innerHTML  = renderSide('enemy', actor, validTargetKeys);
+    for (const side of ['player', 'enemy']) {
+      const gridEl = side === 'player' ? ui.playerGrid : ui.enemyGrid;
+      const existingCells = gridEl.querySelectorAll('.battle-cell[data-id]');
+      const existingIds = new Set([...existingCells].map(el => el.dataset.id));
+      const expectedIds = new Set(state.combatants.filter(c => c.side === side).map(c => c.id));
+      const needsRebuild = existingCells.length === 0 ||
+        [...expectedIds].some(id => !existingIds.has(id)) ||
+        [...existingIds].some(id => !expectedIds.has(id));
+      if (needsRebuild) {
+        gridEl.innerHTML = renderSide(side, actor, validTargetKeys);
+      } else {
+        for (const occ of state.combatants.filter(c => c.side === side)) {
+          const cellEl = gridEl.querySelector(`.battle-cell[data-id="${occ.id}"]`);
+          if (cellEl) patchCell(cellEl, occ, actor, validTargetKeys);
+        }
+      }
+    }
 
     ui.actionPanelLabel.innerHTML = processing
       ? '<span style="color:var(--muted)">Processing…</span>'
