@@ -3,6 +3,7 @@ import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, playHealEffect } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { createBattleRealtimeController } from '../realtime.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -19,8 +20,8 @@ function getPortraitUrl(unit, variant = 'default') {
   return `/assets/character_portraits/${prefix}_${portraitId}.png`;
 }
 
-export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells }) {
-  let state            = snapshot;
+export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
+  let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
   let pendingAction    = null;
   let selectedCombatant = null;
@@ -28,6 +29,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let prevState        = null;   // snapshot before each render, used for diff-based animations
 
   let prevLogLen = 0;
+  let ui = null;
+  let realtimeController = null;
 
   initBattleFx(root);
 
@@ -39,15 +42,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
   }
 
-  document.addEventListener('click', e => {
-    const itemBtn = e.target.closest('[data-item-inspect]');
-    if (!itemBtn) return;
-    const rosterId = itemBtn.dataset.rosterId;
-    const item = equippedItemFor(rosterId);
-    if (!item) return;
-    const parts = buildItemModalParts(item);
-    openSheet(parts.title, parts.body, parts.badges);
-  });
+  if (!document.__battleItemInspectBound) {
+    document.addEventListener('click', e => {
+      const itemBtn = e.target.closest('[data-item-inspect]');
+      if (!itemBtn) return;
+      const rosterId = itemBtn.dataset.rosterId;
+      const item = equippedItemFor(rosterId);
+      if (!item) return;
+      const parts = buildItemModalParts(item);
+      openSheet(parts.title, parts.body, parts.badges);
+    });
+    document.__battleItemInspectBound = true;
+  }
 
   function snapshotState() {
     if (!state) return null;
@@ -324,7 +330,120 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return '';
   }
 
+  function ensureShell() {
+    if (ui?.screen) return ui;
+
+    root.innerHTML = `
+      <div class="screen screen-battle">
+        <div class="init-queue" id="init-queue"></div>
+        <div class="battle-arena">
+          <div class="battle-half battle-half--player">
+            <div class="battle-grid-wrap">
+              <div class="battle-grid" id="battle-grid-player"></div>
+            </div>
+          </div>
+          <div class="battle-half battle-half--enemy">
+            <div class="battle-grid-wrap">
+              <div class="battle-grid" id="battle-grid-enemy"></div>
+            </div>
+          </div>
+        </div>
+        <div class="action-panel">
+          <div class="action-panel-label" id="action-panel-label"></div>
+          <div class="action-btns">
+            <button class="action-btn" id="btn-main" data-battle-action="main"></button>
+            <button class="action-btn" id="btn-ability" data-battle-action="ability"></button>
+            <button class="action-btn" id="btn-defend" data-battle-action="defend"></button>
+            <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
+          </div>
+        </div>
+        <div class="battle-log" id="battle-log"></div>
+      </div>
+    `;
+
+    ui = {
+      screen: root.querySelector('.screen-battle'),
+      initQueue: root.querySelector('#init-queue'),
+      playerGrid: root.querySelector('#battle-grid-player'),
+      enemyGrid: root.querySelector('#battle-grid-enemy'),
+      actionPanelLabel: root.querySelector('#action-panel-label'),
+      mainBtn: root.querySelector('#btn-main'),
+      abilityBtn: root.querySelector('#btn-ability'),
+      defendBtn: root.querySelector('#btn-defend'),
+      cancelBtn: root.querySelector('#btn-cancel'),
+      battleLog: root.querySelector('#battle-log'),
+    };
+
+    attachEvents();
+    return ui;
+  }
+
+  function renderSide(side, actor, validTargetKeys) {
+    const cellMap = {};
+    const shadow  = new Set();
+
+    for (const co of state.combatants) {
+      if (co.side !== side) continue;
+      const anchor = co.cellIndex;
+      const size   = co.size ?? 'tile';
+      const r      = Math.floor(anchor / COLS);
+      const c      = anchor % COLS;
+      cellMap[anchor] = co;
+      if (size === 'row'    && c === 0)        shadow.add(anchor + 1);
+      if (size === 'column' && r <= ROWS - 2)  shadow.add(anchor + COLS);
+    }
+
+    const html = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const idx = r * COLS + c;
+        if (shadow.has(idx)) continue;
+
+        const occ = cellMap[idx];
+        if (!occ) {
+          html.push(`<div class="battle-cell battle-cell--empty"><span class="battle-cell-row-hint">R${r+1}</span></div>`);
+          continue;
+        }
+
+        const size      = occ.size ?? 'tile';
+        const colSpan   = size === 'row'    ? 2 : 1;
+        const rowSpan   = size === 'column' ? 2 : 1;
+        const spanStyle = (colSpan > 1 || rowSpan > 1)
+          ? `grid-column:span ${colSpan};grid-row:span ${rowSpan};`
+          : '';
+
+        const isActor    = actor?.id === occ.id;
+        const isTarget   = validTargetKeys.has(occ.id);
+        const isSelected = selectedCombatant?.id === occ.id;
+        const hpPct      = occ.battle_hp / occ.max_hp;
+        const portraitUrl = getPortraitUrl(occ, 'grid');
+
+        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
+        if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
+        else if (isTarget)        cls += ' battle-cell--targetable';
+        else if (isSelected)      cls += ' battle-cell--selected';
+        else if (side === 'player') cls += ' battle-cell--placed';
+        else                      cls += ' battle-cell--enemy';
+
+        html.push(`
+          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
+            ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
+            <div class="battle-cell-info">
+              <span class="battle-cell-name">${occ.unit_name}</span>
+              ${occ.alive
+                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
+                : `<span class="battle-cell-sub">💀</span>`}
+              <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
+            </div>
+          </div>
+        `);
+      }
+    }
+    return html.join('');
+  }
+
   function render() {
+    ensureShell();
     const actor = currentActor();
     if (!state) return;
 
@@ -340,141 +459,65 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       getValidTargetIds(selectingTarget, pendingAction === 'ability').forEach(id => validTargetKeys.add(id));
     }
 
-    function renderSide(side) {
-
-      const cellMap = {};
-      const shadow  = new Set();
-
-      for (const co of state.combatants) {
-        if (co.side !== side) continue;
-        const anchor = co.cellIndex;
-        const size   = co.size ?? 'tile';
-        const r      = Math.floor(anchor / COLS);
-        const c      = anchor % COLS;
-        cellMap[anchor] = co;
-        if (size === 'row'    && c === 0)        shadow.add(anchor + 1);
-        if (size === 'column' && r <= ROWS - 2)  shadow.add(anchor + COLS);
-      }
-
-      const html = [];
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const idx = r * COLS + c;
-          if (shadow.has(idx)) continue;
-
-          const occ = cellMap[idx];
-          if (!occ) {
-            html.push(`<div class="battle-cell battle-cell--empty"><span class="battle-cell-row-hint">R${r+1}</span></div>`);
-            continue;
-          }
-
-          const size      = occ.size ?? 'tile';
-          const colSpan   = size === 'row'    ? 2 : 1;
-          const rowSpan   = size === 'column' ? 2 : 1;
-          const spanStyle = (colSpan > 1 || rowSpan > 1)
-            ? `grid-column:span ${colSpan};grid-row:span ${rowSpan};`
-            : '';
-
-          const isActor    = actor?.id === occ.id;
-          const isTarget   = validTargetKeys.has(occ.id);
-          const isSelected = selectedCombatant?.id === occ.id;
-          const hpPct      = occ.battle_hp / occ.max_hp;
-          const portraitUrl = getPortraitUrl(occ, 'grid');
-
-          let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
-          if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
-          else if (isTarget)        cls += ' battle-cell--targetable';
-          else if (isSelected)      cls += ' battle-cell--selected';
-          else if (side === 'player') cls += ' battle-cell--placed';
-          else                      cls += ' battle-cell--enemy';
-
-          html.push(`
-            <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
-              ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
-              <div class="battle-cell-info">
-                <span class="battle-cell-name">${occ.unit_name}</span>
-                ${occ.alive
-                  ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
-                  : `<span class="battle-cell-sub">💀</span>`}
-                <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
-              </div>
-            </div>
-          `);
-        }
-      }
-      return html.join('');
-    }
-
     const actingOrder = state.combatants
       .filter(c => c.alive && !c.acted_this_round)
       .sort((a, b) => b.initiative - a.initiative);
 
-    root.innerHTML = `
-      <div class="screen screen-battle">
-        <div class="init-queue" id="init-queue">
-          ${actingOrder.map((c, i) => {
-            const portrait = getPortraitUrl(c);
-            const isActive = i === 0;
-            const side     = c.side;
-            return `
-              <div class="init-card ${isActive ? 'init-card--active' : ''} init-card--${side}">
-                <div class="init-portrait">
-                  ${portrait
-                    ? `<img class="init-portrait-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
-                    : `<span class="init-portrait-fallback">${side === 'player' ? '⚔' : '💀'}</span>`
-                  }
-                </div>
-                <span class="init-name">${c.unit_name.split(' ')[0]}</span>
-                <div class="init-side-strip"></div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="battle-arena">
-          <div class="battle-half battle-half--player">
-            <div class="battle-grid-wrap">
-              <div class="battle-grid">${renderSide('player')}</div>
-            </div>
-          </div>
-          <div class="battle-half battle-half--enemy">
-            <div class="battle-grid-wrap">
-              <div class="battle-grid">${renderSide('enemy')}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="action-panel">
-          <div class="action-panel-label">
-            ${processing
-              ? `<span style="color:var(--muted)">Processing…</span>`
-              : isEnemyTurn
-                ? `<span style="color:var(--muted)">Enemy is acting…</span>`
-                : `<strong>${actor.unit_name}</strong> <small style="color:var(--muted)">· Passive: ${passiveName}</small>`
+    ui.initQueue.innerHTML = actingOrder.map((c, i) => {
+      const portrait = getPortraitUrl(c);
+      const isActive = i === 0;
+      const side     = c.side;
+      return `
+        <div class="init-card ${isActive ? 'init-card--active' : ''} init-card--${side}">
+          <div class="init-portrait">
+            ${portrait
+              ? `<img class="init-portrait-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
+              : `<span class="init-portrait-fallback">${side === 'player' ? '⚔' : '💀'}</span>`
             }
           </div>
-          <div class="action-btns">
-            <button class="action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}"
-                    id="btn-main" ${isEnemyTurn || processing || isNoneAction ? 'disabled' : ''}>${actionLabel}</button>
-            <button class="action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}"
-                    id="btn-ability" ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'disabled' : ''}>
-              ${actor && actor.used_active ? '(used) ' : ''}${abilityName}
-            </button>
-            <button class="action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}"
-                    id="btn-defend" ${isEnemyTurn || processing ? 'disabled' : ''}>Defend</button>
-            <button class="action-btn action-btn--cancel ${!selectingTarget ? 'action-btn--disabled' : ''}"
-                    id="btn-cancel" ${!selectingTarget ? 'disabled' : ''}>✕ Cancel</button>
-          </div>
+          <span class="init-name">${c.unit_name.split(' ')[0]}</span>
+          <div class="init-side-strip"></div>
         </div>
+      `;
+    }).join('');
 
-        <div class="battle-log" id="battle-log">
-          ${(state.log || []).slice().reverse().map(formatLogEntry).join('')}
-        </div>
-      </div>
-    `;
+    ui.playerGrid.innerHTML = renderSide('player', actor, validTargetKeys);
+    ui.enemyGrid.innerHTML  = renderSide('enemy', actor, validTargetKeys);
+
+    ui.actionPanelLabel.innerHTML = processing
+      ? '<span style="color:var(--muted)">Processing…</span>'
+      : isEnemyTurn
+        ? '<span style="color:var(--muted)">Enemy is acting…</span>'
+        : `<strong>${actor.unit_name}</strong> <small style="color:var(--muted)">· Passive: ${passiveName}</small>`;
+
+    ui.mainBtn.className = `action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
+    ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
+    ui.mainBtn.textContent = actionLabel;
+
+    ui.abilityBtn.className = `action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
+    ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
+    ui.abilityBtn.textContent = `${actor && actor.used_active ? '(used) ' : ''}${abilityName}`;
+
+    ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
+    ui.defendBtn.disabled = isEnemyTurn || processing;
+    ui.defendBtn.textContent = 'Defend';
+
+    ui.cancelBtn.className = `action-btn action-btn--cancel ${!selectingTarget ? 'action-btn--disabled' : ''}`;
+    ui.cancelBtn.disabled = !selectingTarget;
+    ui.cancelBtn.textContent = '✕ Cancel';
+
+    ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
 
     reattachBattleFx(root);
-    attachEvents();
+
+    const tutorialActor = currentActor();
+    const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
+    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
+      const mainBtn = ui.mainBtn;
+      if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
+    } else {
+      hideTutorial();
+    }
   }
 
   async function advanceEnemyTurns() {
@@ -486,7 +529,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const prev    = snapshotState();
       const prevLen = state.log?.length ?? 0;
       const result  = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
-      state = result.state;
+      state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
       if (result.done) return renderResult(result.winner);
       render();
       animateAfterRender(prev, prevLen);
@@ -507,7 +550,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     render();
     try {
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
-      state = result.state;
+      state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
       selectingTarget = null;
       pendingAction   = null;
       if (result.done) {
@@ -515,7 +558,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
     } catch (err) {
       console.error('Action failed:', err);
-      const log = root.querySelector('#battle-log');
+      const log = ui?.battleLog;
       if (log) {
         const el = document.createElement('div');
         el.className = 'log-entry log-entry--error';
@@ -531,78 +574,72 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   function attachEvents() {
-    root.querySelectorAll('.battle-cell[data-id]').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const id = cell.dataset.id;
-        const combatant = state.combatants.find(c => c.id === id);
-        if (!combatant) return;
+    if (ui?.screen?._battleHandlersAttached) return;
 
-        if (selectingTarget && pendingAction) {
-          const validIds = getValidTargetIds(selectingTarget, pendingAction === 'ability');
-          if (validIds.has(combatant.id)) {
-            sendAction(pendingAction, selectingTarget.id, combatant.id);
+    ui.screen.addEventListener('click', event => {
+      const actionBtn = event.target.closest('[data-battle-action]');
+      if (actionBtn) {
+        const action = actionBtn.dataset.battleAction;
+        const actor = currentActor();
+        if (!actor || actor.side === 'enemy' || processing) return;
+        closeStatsModal();
+        if (action === 'main') {
+          const actionType = typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type : null;
+          if (actionType === 'none') return;
+          if (actor.buffs?._mothers_kiss) {
+            sendAction('attack', actor.id, actor.id);
             return;
           }
+          selectingTarget = actor;
+          pendingAction   = 'attack';
+          render();
+          return;
         }
-
-        openStatsModal(combatant);
-        root.querySelectorAll('.battle-cell--selected').forEach(c => c.classList.remove('battle-cell--selected'));
-        cell.classList.add('battle-cell--selected');
-      });
-    });
-
-    root.querySelector('#btn-main')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side === 'enemy' || processing) return;
-      closeStatsModal();
-      const actionType = typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type : null;
-      if (actionType === 'none') return;
-      if (actor.buffs?._mothers_kiss) {
-        sendAction('attack', actor.id, actor.id);
+        if (action === 'ability') {
+          const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
+          const def        = abilityKey ? UNIT_ABILITIES[abilityKey] : null;
+          const ttype      = def?.target ?? 'enemy';
+          if (ttype === 'self' || ttype === 'all_allies' || ttype === 'ally_any' || def?.params?.mothers_kiss) {
+            sendAction('ability', actor.id, actor.id);
+            return;
+          }
+          selectingTarget = actor;
+          pendingAction   = 'ability';
+          render();
+          return;
+        }
+        if (action === 'defend') {
+          sendAction('defend', actor.id);
+          return;
+        }
+        if (action === 'cancel') {
+          selectingTarget = null;
+          pendingAction   = null;
+          render();
+        }
         return;
       }
-      selectingTarget = actor;
-      pendingAction   = 'attack';
-      render();
-    });
 
-    root.querySelector('#btn-ability')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side === 'enemy' || processing || actor.used_active) return;
-      closeStatsModal();
-      const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
-      const def        = abilityKey ? UNIT_ABILITIES[abilityKey] : null;
-      const ttype      = def?.target ?? 'enemy';
-      if (ttype === 'self' || ttype === 'all_allies' || ttype === 'ally_any' || def?.params?.mothers_kiss) {
-        sendAction('ability', actor.id, actor.id);
-        return;
+      const cell = event.target.closest('.battle-cell[data-id]');
+      if (!cell) return;
+      const id = cell.dataset.id;
+      const combatant = state.combatants.find(c => c.id === id);
+      if (!combatant) return;
+
+      if (selectingTarget && pendingAction) {
+        const validIds = getValidTargetIds(selectingTarget, pendingAction === 'ability');
+        if (validIds.has(combatant.id)) {
+          sendAction(pendingAction, selectingTarget.id, combatant.id);
+          return;
+        }
       }
-      selectingTarget = actor;
-      pendingAction   = 'ability';
-      render();
+
+      openStatsModal(combatant);
+      ui.screen.querySelectorAll('.battle-cell--selected').forEach(c => c.classList.remove('battle-cell--selected'));
+      cell.classList.add('battle-cell--selected');
     });
 
-    root.querySelector('#btn-defend')?.addEventListener('click', () => {
-      const actor = currentActor();
-      if (!actor || actor.side === 'enemy' || processing) return;
-      closeStatsModal();
-      sendAction('defend', actor.id);
-    });
-
-    root.querySelector('#btn-cancel')?.addEventListener('click', () => {
-      selectingTarget = null;
-      pendingAction   = null;
-      render();
-    });
-
-    const tutorialActor = currentActor();
-    const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
-    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
-      const mainBtn = root.querySelector('#btn-main');
-      if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
-    } else {
-      hideTutorial();
-    }
+    ui.screen._battleHandlersAttached = true;
   }
 
   async function renderResult(winner) {
@@ -655,5 +692,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   } else {
     render();
     advanceEnemyTurns();
+  }
+
+  if (battle_id && player?.chat_id) {
+    realtimeController = createBattleRealtimeController({
+      battleId: battle_id,
+      playerId: player.chat_id,
+      onStateChange: (data) => {
+        if (!data?.state) return;
+        const nextLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : (data.state?.log || []);
+        state = { ...(data.state || state), log: nextLogs };
+        if (data.state?.done) {
+          renderResult(data.state.winner);
+          return;
+        }
+        render();
+      },
+      onError: () => {},
+    });
+    realtimeController.start();
   }
 }

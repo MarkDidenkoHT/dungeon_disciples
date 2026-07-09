@@ -62,4 +62,27 @@ async function closeBattleState(battle_id) {
   return updated[0] || null;
 }
 
-module.exports = { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState };
+async function appendBattleLogEntries(battle_id, events = []) {
+  if (!battle_id || !Array.isArray(events) || !events.length) return [];
+  const payload = events.map(event => ({ battle_id, event }));
+  return supabaseService('/battle_log', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function getBattleLogs(battle_id) {
+  if (!battle_id) return [];
+  const rows = await supabaseService(`/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&order=id.asc`);
+  return (rows || []).map(row => row.event).filter(Boolean);
+}
+
+module.exports = {
+  getActiveBattle,
+  getBattleState,
+  createBattleState,
+  updateBattleState,
+  closeBattleState,
+  appendBattleLogEntries,
+  getBattleLogs,
+};

@@ -9,7 +9,15 @@ const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
-const { getActiveBattle, getBattleState, createBattleState, updateBattleState, closeBattleState } = require('../utils/realtime');
+const {
+  getActiveBattle,
+  getBattleState,
+  createBattleState,
+  updateBattleState,
+  closeBattleState,
+  appendBattleLogEntries,
+  getBattleLogs,
+} = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
 
@@ -746,6 +754,13 @@ router.get('/battle/active', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/battle/realtime-config', requireAuth, async (req, res) => {
+  res.json({
+    url: process.env.SUPABASE_URL || null,
+    anonKey: process.env.SUPABASE_ANON_KEY || null,
+  });
+});
+
 router.get('/battle/state', requireAuth, async (req, res) => {
   const { battle_id } = req.query;
   if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
@@ -753,8 +768,11 @@ router.get('/battle/state', requireAuth, async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'No active battle found' });
 
-    const engine = await rehydrateEngine(record);
-    res.json({ state: engine.getSnapshot(), region_id: record.battle_data.region_id, level: record.battle_data.level });
+    const [engine, logs] = await Promise.all([
+      rehydrateEngine(record),
+      getBattleLogs(battle_id),
+    ]);
+    res.json({ state: engine.getSnapshot(), logs, region_id: record.battle_data.region_id, level: record.battle_data.level });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -886,7 +904,13 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       placement,
     }});
     const record = await createBattleState({ chat_id, battle_id, battle_data });
-    res.json({ record, state: engine.getSnapshot() });
+    try {
+      const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+      if (initialEvents.length) await appendBattleLogEntries(battle_id, initialEvents);
+    } catch (err) {
+      console.error('Failed to persist initial battle log:', err);
+    }
+    res.json({ record, state: engine.getSnapshot(), logs: Array.isArray(engine.log) ? engine.log : [] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -934,9 +958,17 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 
     const battle_data = buildBattleData(engine, record.battle_data);
 
-    await updateBattleState(battle_id, battle_data);
+    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
+    const newEntries = engine.log.slice(previousLog.length);
 
-    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
+    await updateBattleState(battle_id, battle_data);
+    try {
+      if (newEntries.length) await appendBattleLogEntries(battle_id, newEntries);
+    } catch (err) {
+      console.error('Failed to persist battle log:', err);
+    }
+
+    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner, logs: engine.log });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -961,9 +993,17 @@ router.post('/battle/advance', requireAuth, async (req, res) => {
     engine.runAiTurns();
 
     const battle_data = buildBattleData(engine, record.battle_data);
-    await updateBattleState(battle_id, battle_data);
+    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
+    const newEntries = engine.log.slice(previousLog.length);
 
-    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner });
+    await updateBattleState(battle_id, battle_data);
+    try {
+      if (newEntries.length) await appendBattleLogEntries(battle_id, newEntries);
+    } catch (err) {
+      console.error('Failed to persist battle log:', err);
+    }
+
+    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner, logs: engine.log });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
