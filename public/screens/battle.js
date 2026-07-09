@@ -632,69 +632,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
   }
 
-  async function advanceEnemyTurns() {
-    const actor = currentActor();
-    if (!actor || actor.side !== 'enemy' || processing) return;
-    processing = true;
-    render();
-    try {
-      const prevLen = state.log?.length ?? 0;
-      const result  = await api('/battle/advance', { chat_id: player.chat_id, battle_id });
-      state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
-      const newEntries = (state.log || []).slice(prevLen);
-      if (ui?.battleLog) ui.battleLog.innerHTML = (state.log || []).slice(0, prevLen).slice().reverse().map(formatLogEntry).join('');
-      if (result.done) {
-        await playbackSequence(newEntries);
-        return renderResult(result.winner);
-      }
-      await playbackSequence(newEntries);
-    } catch (err) {
-      console.error('Advance failed:', err);
-      render();
-    } finally {
-      processing = false;
-    }
-  }
-
-  async function sendAction(action, actor_id, target_id = null) {
-    markTutorialDone(player, 'battle_first_action');
-    hideTutorial();
-    processing = true;
-    render();
-    try {
-      const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
-      const prevLen = state.log?.length ?? 0;
-      state = { ...(result.state || state), log: result.logs || result.state?.log || state.log };
-      selectingTarget = null;
-      pendingAction   = null;
-      const newEntries = (state.log || []).slice(prevLen);
-      // Clear log display - playbackSequence will rebuild it entry by entry
-      if (ui?.battleLog) ui.battleLog.innerHTML = '';
-      // Prepend existing entries (already played) without animation
-      const existingEntries = (state.log || []).slice(0, prevLen);
-      if (ui?.battleLog) {
-        ui.battleLog.innerHTML = existingEntries.slice().reverse().map(formatLogEntry).join('');
-      }
-      if (result.done) {
-        await playbackSequence(newEntries);
-        return renderResult(result.winner);
-      }
-      await playbackSequence(newEntries);
-    } catch (err) {
-      console.error('Action failed:', err);
-      const log = ui?.battleLog;
-      if (log) {
-        const el = document.createElement('div');
-        el.className = 'log-entry log-entry--error';
-        el.textContent = `⚠ ${err.message}`;
-        log.prepend(el);
-      }
-    } finally {
-      processing = false;
-    }
-    render();
-    advanceEnemyTurns();
-  }
 
   function attachEvents() {
     if (ui?.screen?._battleHandlersAttached) return;
@@ -826,25 +763,37 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     renderResult(state.winner);
   } else {
     render();
-    advanceEnemyTurns();
   }
 
   if (battle_id && player?.chat_id && !state?.done) {
     realtimeController = createBattleRealtimeController({
       battleId: battle_id,
       playerId: player.chat_id,
-      onStateChange: (data) => {
+      onStateChange: async (data) => {
         if (!data?.state || battleResolved) return;
-        const nextLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : (data.state?.log || []);
-        state = { ...(data.state || state), log: nextLogs };
-        if (data.state?.done) {
-          renderResult(data.state.winner);
+        const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
+        state = { ...data.state, log: [...(state.log || []), ...newLogs] };
+
+        // Rebuild log display up to the entries already played
+        if (ui?.battleLog && newLogs.length) {
+          const existingCount = (state.log || []).length - newLogs.length;
+          ui.battleLog.innerHTML = (state.log || []).slice(0, existingCount).slice().reverse().map(formatLogEntry).join('');
+        }
+
+        if (data.done) {
+          await playbackSequence(newLogs);
+          renderResult(data.winner);
           return;
         }
+
+        await playbackSequence(newLogs);
+        processing = false;
         render();
       },
       onError: (err) => {
         console.error('battle realtime error', err);
+        processing = false;
+        render();
       },
     });
     realtimeController.start();

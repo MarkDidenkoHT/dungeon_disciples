@@ -74,7 +74,16 @@ async function appendBattleLogEntries(battle_id, events = []) {
 async function getBattleLogs(battle_id) {
   if (!battle_id) return [];
   const rows = await supabaseService(`/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&order=id.asc`);
-  return (rows || []).map(row => row.event).filter(Boolean);
+  return (rows || []).map(row => ({ id: row.id, ...row.event })).filter(Boolean);
+}
+
+async function getBattleLogsSince(battle_id, last_log_id) {
+  if (!battle_id) return [];
+  const filter = last_log_id
+    ? `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&id=gt.${last_log_id}&order=id.asc`
+    : `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&order=id.asc`;
+  const rows = await supabaseService(filter);
+  return (rows || []).map(row => ({ id: row.id, ...row.event })).filter(Boolean);
 }
 
 module.exports = {
@@ -85,4 +94,5 @@ module.exports = {
   closeBattleState,
   appendBattleLogEntries,
   getBattleLogs,
+  getBattleLogsSince,
 };

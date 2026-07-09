@@ -12,15 +12,26 @@ function normalizeSupabaseUrl(url) {
 export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError }) {
   let channel = null;
   let stopped = false;
+  let lastLogId = null;
 
   async function refreshFromServer() {
     if (!battleId || stopped) return;
     try {
-      const data = await api(`/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}`);
+      const url = lastLogId
+        ? `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}&last_log_id=${lastLogId}`
+        : `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}`;
+      const data = await api(url);
+      if (data?.logs?.length) {
+        lastLogId = data.logs[data.logs.length - 1].id;
+      }
       onStateChange?.(data);
     } catch (err) {
       onError?.(err);
     }
+  }
+
+  function setLastLogId(id) {
+    if (id != null) lastLogId = id;
   }
 
   async function start() {
@@ -82,5 +93,5 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     }
   }
 
-  return { start, stop, refresh: refreshFromServer };
+  return { start, stop, refresh: refreshFromServer, setLastLogId };
 }

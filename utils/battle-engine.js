@@ -395,7 +395,7 @@ class BattleEngine {
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: remaining, killed: !target.alive });
+            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });

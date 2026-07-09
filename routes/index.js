@@ -17,6 +17,7 @@ const {
   closeBattleState,
   appendBattleLogEntries,
   getBattleLogs,
+  getBattleLogsSince,
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
@@ -762,7 +763,7 @@ router.get('/battle/realtime-config', requireAuth, async (req, res) => {
 });
 
 router.get('/battle/state', requireAuth, async (req, res) => {
-  const { battle_id } = req.query;
+  const { battle_id, last_log_id } = req.query;
   if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
   try {
     const record = await getBattleState(battle_id);
@@ -770,9 +771,17 @@ router.get('/battle/state', requireAuth, async (req, res) => {
 
     const [engine, logs] = await Promise.all([
       rehydrateEngine(record),
-      getBattleLogs(battle_id),
+      getBattleLogsSince(battle_id, last_log_id ? Number(last_log_id) : null),
     ]);
-    res.json({ state: engine.getSnapshot(), logs, region_id: record.battle_data.region_id, level: record.battle_data.level });
+    const bd = record.battle_data;
+    res.json({
+      state:     engine.getSnapshot(),
+      logs,
+      done:      bd.done   ?? false,
+      winner:    bd.winner ?? null,
+      region_id: bd.region_id,
+      level:     bd.level,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -968,42 +977,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       console.error('Failed to persist battle log:', err);
     }
 
-    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner, logs: engine.log });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/battle/advance', requireAuth, async (req, res) => {
-  const { chat_id, battle_id } = req.body;
-  if (!chat_id || !battle_id) return res.status(400).json({ error: 'chat_id and battle_id required' });
-  try {
-    const record = await getBattleState(battle_id);
-    if (!record) return res.status(404).json({ error: 'No active battle found' });
-    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
-
-    const engine = await rehydrateEngine(record);
-    if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
-
-    const actor = engine.currentActor();
-    if (!actor || actor.side !== 'enemy') {
-      return res.status(400).json({ error: 'No enemy turn to advance' });
-    }
-
-    engine.runAiTurns();
-
-    const battle_data = buildBattleData(engine, record.battle_data);
-    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
-    const newEntries = engine.log.slice(previousLog.length);
-
-    await updateBattleState(battle_id, battle_data);
-    try {
-      if (newEntries.length) await appendBattleLogEntries(battle_id, newEntries);
-    } catch (err) {
-      console.error('Failed to persist battle log:', err);
-    }
-
-    res.json({ state: engine.getSnapshot(), done: engine.done, winner: engine.winner, logs: engine.log });
+    res.json({ ok: true, done: engine.done, winner: engine.winner });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
