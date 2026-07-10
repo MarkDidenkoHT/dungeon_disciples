@@ -153,21 +153,77 @@ function sourceColor(dmgSource) {
   return SOURCE_COLOR[dmgSource] || SOURCE_COLOR.physical;
 }
 
-// Melee: sharp border flash on the target cell
+// Melee: sword swings across the target cell
 async function attackMelee(targetDataId, color) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
-  const border = new PIXI.Graphics();
-  layer.addChild(border);
-  await animate(400, t => {
+
+  // Load the sword sprite (cached by PIXI after first load)
+  let texture;
+  try {
+    texture = await PIXI.Assets.load('/assets/vfx/sword.png');
+  } catch {
+    // Fallback to old border flash if texture fails
+    const border = new PIXI.Graphics();
+    layer.addChild(border);
+    await animate(400, t => {
+      const b = cellBoundsFor(targetDataId);
+      if (!b) { layer.visible = false; return; }
+      layer.visible = true;
+      const alpha = t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.85);
+      border.clear();
+      border.lineStyle(4, color, alpha);
+      border.drawRect(b.x + 2, b.y + 2, b.width - 4, b.height - 4);
+    });
+    layer.destroy({ children: true });
+    return;
+  }
+
+  // Main sword sprite + two ghost trails for motion blur feel
+  const sprites = [0.18, 0.35, 1].map((alpha, i) => {
+    const s = new PIXI.Sprite(texture);
+    s.anchor.set(0.5, 0.8); // anchor near handle so it rotates naturally
+    const size = 0.55 + i * 0.08;
+    s.scale.set(size);
+    s.alpha = alpha;
+    layer.addChild(s);
+    return s;
+  });
+  const [ghost1, ghost2, main] = sprites;
+
+  // Swing params — sword is already diagonal so offset start angle accordingly
+  // The image points upper-right (~-45°), swing from ~-0.6rad to ~1.1rad (≈ 100° arc)
+  const START_ROT = -0.6;
+  const END_ROT   =  1.1;
+
+  await animate(350, t => {
     const b = cellBoundsFor(targetDataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
-    const alpha = t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.85);
-    border.clear();
-    border.lineStyle(4, color, alpha);
-    border.drawRect(b.x + 2, b.y + 2, b.width - 4, b.height - 4);
+
+    const cx = b.x + b.width  * 0.55;
+    const cy = b.y + b.height * 0.45;
+
+    // Ease in-out for the swing
+    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const rot  = START_ROT + (END_ROT - START_ROT) * ease;
+
+    // Fade: quick in, hold, quick out
+    const alpha = t < 0.12 ? t / 0.12 : t > 0.8 ? (1 - t) / 0.2 : 1;
+
+    main.position.set(cx, cy);
+    main.rotation  = rot;
+    main.alpha     = alpha;
+
+    ghost2.position.set(cx, cy);
+    ghost2.rotation = rot - 0.18;
+    ghost2.alpha    = alpha * 0.35;
+
+    ghost1.position.set(cx, cy);
+    ghost1.rotation = rot - 0.35;
+    ghost1.alpha    = alpha * 0.18;
   });
+
   layer.destroy({ children: true });
 }
 
