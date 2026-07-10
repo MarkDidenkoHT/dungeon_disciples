@@ -135,20 +135,99 @@ export async function communion(sourceCellEl, targetCellEl) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
-  const line = new PIXI.Graphics();
-  const particle = new PIXI.Graphics();
-  particle.beginFill(0xff1e1e); particle.drawCircle(0, 0, 6); particle.endFill();
-  layer.addChild(line); layer.addChild(particle);
+  const COLOR    = 0xff2a2a;
+  const COLOR_LT = 0xff8888;
+  const DURATION = 900;
+  const N_PARTICLES = 5;
 
-  await animate(700, t => {
+  // One fading line connecting source to target
+  const line = new PIXI.Graphics();
+  layer.addChild(line);
+
+  // Source pulse ring
+  const srcRing = new PIXI.Graphics();
+  layer.addChild(srcRing);
+
+  // Target impact ring (starts invisible, pulses at arrival)
+  const dstRing = new PIXI.Graphics();
+  layer.addChild(dstRing);
+
+  // Particles staggered across the path
+  const particles = Array.from({ length: N_PARTICLES }, (_, i) => {
+    const g = new PIXI.Graphics();
+    const size = 3 + Math.random() * 3;
+    g.beginFill(i % 2 === 0 ? COLOR : COLOR_LT, 1);
+    g.drawCircle(0, 0, size);
+    g.endFill();
+    // Small trail circles
+    for (let j = 1; j <= 3; j++) {
+      const trail = new PIXI.Graphics();
+      trail.beginFill(COLOR, 0.3 / j);
+      trail.drawCircle(0, 0, size * 0.6 / j);
+      trail.endFill();
+      g._trail = g._trail || [];
+      g._trail.push(trail);
+      layer.addChild(trail);
+    }
+    layer.addChild(g);
+    return { g, delay: i / N_PARTICLES * 0.45, size };
+  });
+
+  await animate(DURATION, t => {
     const s = cellBoundsFor(srcId), d = cellBoundsFor(dstId);
     if (!s || !d) { layer.visible = false; return; }
-    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
-    const dx = d.x + d.width / 2, dy = d.y + d.height / 2;
-    line.clear(); line.lineStyle(4, 0x8a0303, 0.9 * (1 - t));
-    line.moveTo(sx, sy); line.lineTo(dx, dy);
-    particle.position.set(sx + (dx - sx) * t, sy + (dy - sy) * t);
-    particle.alpha = 1 - Math.abs(0.5 - t) * 2;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2,  sy = s.y + s.height / 2;
+    const dx = d.x + d.width / 2,  dy = d.y + d.height / 2;
+
+    // Fading line
+    line.clear();
+    line.lineStyle(2, COLOR, 0.35 * (1 - t));
+    line.moveTo(sx, sy);
+    line.lineTo(dx, dy);
+
+    // Source pulse - expands and fades out over first half
+    srcRing.clear();
+    if (t < 0.5) {
+      const r = (s.width * 0.3) * (t * 2);
+      srcRing.lineStyle(3, COLOR, 0.7 * (1 - t * 2));
+      srcRing.drawCircle(sx, sy, r);
+    }
+
+    // Target impact ring - appears in second half
+    dstRing.clear();
+    if (t > 0.6) {
+      const it = (t - 0.6) / 0.4;
+      dstRing.lineStyle(3, COLOR_LT, 0.8 * (1 - it));
+      dstRing.drawCircle(dx, dy, (d.width * 0.35) * it);
+    }
+
+    // Particles travel along the path with stagger
+    for (const { g, delay, size } of particles) {
+      const pt = Math.max(0, Math.min(1, (t - delay) / (1 - delay)));
+      if (pt <= 0) { g.alpha = 0; if (g._trail) g._trail.forEach(tr => { tr.alpha = 0; }); continue; }
+
+      // Slight arc via perpendicular offset
+      const midX = (sx + dx) / 2 + (dy - sy) * 0.08;
+      const midY = (sy + dy) / 2 - (dx - sx) * 0.08;
+      const bx = (1 - pt) * (1 - pt) * sx + 2 * (1 - pt) * pt * midX + pt * pt * dx;
+      const by = (1 - pt) * (1 - pt) * sy + 2 * (1 - pt) * pt * midY + pt * pt * dy;
+
+      g.position.set(bx, by);
+      g.alpha = pt < 0.1 ? pt / 0.1 : pt > 0.85 ? (1 - pt) / 0.15 : 1;
+
+      // Trail circles behind
+      if (g._trail) {
+        g._trail.forEach((tr, j) => {
+          const trailPt = Math.max(0, pt - 0.04 * (j + 1));
+          const tbx = (1 - trailPt) * (1 - trailPt) * sx + 2 * (1 - trailPt) * trailPt * midX + trailPt * trailPt * dx;
+          const tby = (1 - trailPt) * (1 - trailPt) * sy + 2 * (1 - trailPt) * trailPt * midY + trailPt * trailPt * dy;
+          tr.position.set(tbx, tby);
+          tr.alpha = g.alpha * (0.4 / (j + 1));
+        });
+      }
+    }
   });
 
   layer.destroy({ children: true });
