@@ -129,31 +129,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   // Patches local state incrementally from a single log entry so HP bars
   // update in sync with the animation rather than all at once at the end.
-  function applyLogEntryToState(entry) {
-    if (!entry.targetId) return;
-    const c = state.combatants.find(u => u.id === entry.targetId);
-    if (!c) return;
-    if (entry.type === 'action' || entry.type === 'passive') {
-      if (entry.heal) {
-        c.battle_hp = Math.min(c.max_hp, (c.battle_hp ?? 0) + (entry.value ?? 0));
-      } else if (entry.value > 0 && entry.heal !== true) {
-        c.battle_hp = Math.max(0, (c.battle_hp ?? 0) - (entry.value ?? 0));
-      }
-      if (entry.killed || (c.battle_hp <= 0 && !entry.heal)) c.alive = false;
-    }
-  }
-
   async function playbackSequence(newEntries) {
     console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
     for (const entry of newEntries) {
       // Track position in the log
       if (entry.id != null) lastLogId = entry.id;
-      applyLogEntryToState(entry);
-
-      // 2. Update the grid to reflect the new HP/alive state
-      render();
-
-      // 3. Append this log line to the visible battle log
+      // Append this log line to the visible battle log
       const logEl = ui?.battleLog;
       if (logEl) {
         const html = formatLogEntry(entry);
