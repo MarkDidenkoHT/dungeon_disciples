@@ -152,9 +152,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // 4. Show bark toast if applicable
       if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
 
-      // 5. Play the animation and await completion before moving to next entry
+      // Find actor from either side — needed for enemy attacks to get damage_source and range
       const actor = state.combatants.find(u => u.id === entry.actorId ||
-        (entry.actorCell !== undefined && u.cellIndex === entry.actorCell && u.side !== 'enemy'));
+        (entry.actorCell !== undefined && u.cellIndex === entry.actorCell));
       const effectName = effectForEntry(entry, actor);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
@@ -168,6 +168,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (targetCell) {
           if (effectName === 'communion' && sourceCell) {
             await EFFECTS.communion(sourceCell, targetCell);
+          } else if (effectName === 'attack') {
+            const dmgSource = actor?.unit_data?.damage_source ?? 'physical';
+            const range     = actor?.unit_data?.range ?? 1;
+            const srcId     = actor ? actor.id : null;
+            await EFFECTS.attack(targetCell, { sourceId: srcId, dmgSource, range });
           } else {
             await EFFECTS[effectName](targetCell);
           }
