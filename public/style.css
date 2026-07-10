@@ -1748,7 +1748,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .unit-card {
-  background: linear-gradient(180deg, #1c2130 0%, #13171e 100%);
+  background: #000000;
   border: 1px solid #2e3a50;
   border-radius: 12px;
   overflow: hidden;

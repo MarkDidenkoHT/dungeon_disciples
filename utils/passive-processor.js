@@ -207,7 +207,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           if (aMissing === bMissing) {
             return a.battle_hp < b.battle_hp ? a : b;
           }
-          return aMissing < bMissing ? a : b;
+          return aMissing > bMissing ? a : b;
         }, candidates[0]);
         const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
         lowest.battle_hp += actual;
