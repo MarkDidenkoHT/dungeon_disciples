@@ -126,7 +126,7 @@ export async function mithrails_light(cellEl) {
 export async function communion(sourceCellEl, targetCellEl) {
   console.log('[battle-fx] communion START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
   if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) {
-    console.warn('[battle-fx] communion SKIP - missing args', { src: !!sourceCellEl, dst: !!targetCellEl, app: !!app });
+    console.warn('[battle-fx] communion SKIP', { src: !!sourceCellEl, dst: !!targetCellEl, app: !!app });
     return;
   }
   const srcId = sourceCellEl.dataset.id;
