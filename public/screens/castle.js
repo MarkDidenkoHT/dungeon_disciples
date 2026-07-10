@@ -152,20 +152,8 @@ export function renderCastle(root, { player }) {
           const type = btn.dataset.abilityType;
           const def  = resolveAbility(key);
           if (!def) return;
-
-          const parts   = buildAbilityModalParts(def, type);
-          const fileKey = key.replace(/\s+/g, '_').replace(/_\d+$/, '');
-          const imgSrc  = `/assets/icons/abilities/${fileKey}.jpg`;
-
-          const bodyHtml = `
-            <div class="ability-modal-content">
-              <div class="ability-modal-icon">
-                <img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">
-              </div>
-              ${parts.body}
-            </div>`;
-
-          openAbilityModal(parts.title, bodyHtml, parts.badges);
+          const parts = buildAbilityModalParts(def, type);
+          openAbilityModal(parts.title, parts.body, parts.badges);
         });
       });
     }

@@ -333,7 +333,13 @@ export function buildAbilityModalParts(def, type) {
     ${def.rank ? renderModalPill(`Rank ${def.rank}`, 'rank') : ''}
   `;
   const description = buildStatDescription(def, type) || 'No details available.';
-  const body = `<div class="ability-modal-desc">${description}</div>`;
+  const fileKey = def.id ? def.id.replace(/\s+/g, '_').replace(/_\d+$/, '') : '';
+  const imgSrc  = fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+  const body = `
+    <div class="ability-modal-content">
+      ${imgSrc ? `<div class="ability-modal-icon"><img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'"></div>` : ''}
+      <div class="ability-modal-desc">${description}</div>
+    </div>`;
   return { title: def.name, badges, body };
 }
 
