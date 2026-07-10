@@ -1,6 +1,6 @@
 import { api, navigate } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
+import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { createBattleRealtimeController } from '../realtime.js';
@@ -58,7 +58,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const item = equippedItemFor(rosterId);
       if (!item) return;
       const parts = buildItemModalParts(item);
-      openSheet(parts.title, parts.body, parts.badges);
+      openSubSheet(parts.title, parts.body, parts.badges);
     });
     document.__battleItemInspectBound = true;
   }
