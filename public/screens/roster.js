@@ -7,7 +7,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, openSheet, closeSheet, applyBackground,
+  renderModalContent, openSheet, closeSheet, openSubSheet, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
   getActionLabel,
@@ -155,8 +155,10 @@ export function renderRoster(root, { player }) {
               </div>
               <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
             ` : ''}
-            <span class="hero-level-label">Hero Level ${tier}${blockedMsg}</span>
-            ${!blocked ? `<button class="levelup-btn levelup-btn--ready" data-roster-id="${u.id}">Level Up</button>` : ''}
+            <span class="hero-level-label">Hero Level ${tier}</span>
+            ${blocked
+              ? `<button class="levelup-btn levelup-btn--locked" data-hint="${blockedMsg.replace(' — ', '').trim()}" disabled>Level Up</button>`
+              : `<button class="levelup-btn levelup-btn--ready" data-roster-id="${u.id}">Level Up</button>`}
           </div>`;
       }
     } else if (hasPath) {
@@ -170,10 +172,9 @@ export function renderRoster(root, { player }) {
           <button
             class="levelup-btn ${canLevelUp ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
             data-roster-id="${u.id}"
-            ${canLevelUp ? '' : 'disabled'}
+            ${canLevelUp ? '' : `disabled data-hint="${upgradeBuildingHint || 'Cannot level up yet'}"`}
           >Level Up</button>
-        </div>
-        ${upgradeBuildingHint ? `<div class="levelup-hint">${upgradeBuildingHint}</div>` : ''}`;
+        </div>`;
     } else {
       levelUpHtml = `
         <div class="levelup-row">
@@ -256,10 +257,27 @@ export function renderRoster(root, { player }) {
   }
 
   function openDetailModal(title, bodyHtml, badgesHtml = '') {
-    openModal(title, bodyHtml, badgesHtml);
+    openSubSheet(title, bodyHtml, badgesHtml);
   }
 
   track.addEventListener('click', async (e) => {
+    const lockedLvlBtn = e.target.closest('.levelup-btn--locked');
+    if (lockedLvlBtn) {
+      const hint = lockedLvlBtn.dataset.hint;
+      if (hint) {
+        const existing = lockedLvlBtn.parentElement.querySelector('.levelup-popup');
+        if (existing) { existing.remove(); return; }
+        const popup = document.createElement('div');
+        popup.className = 'levelup-popup';
+        popup.textContent = hint;
+        lockedLvlBtn.parentElement.appendChild(popup);
+        const dismiss = () => { popup.remove(); document.removeEventListener('click', dismiss, true); };
+        setTimeout(() => document.addEventListener('click', dismiss, true), 0);
+        setTimeout(dismiss, 4000);
+      }
+      return;
+    }
+
     const lvlBtn = e.target.closest('.levelup-btn--ready');
     if (lvlBtn) {
       const rosterId = lvlBtn.dataset.rosterId;

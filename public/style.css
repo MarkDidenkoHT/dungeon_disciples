@@ -1177,6 +1177,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .levelup-xp-bar {
@@ -1237,10 +1238,21 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: not-allowed;
 }
 
-.levelup-hint {
-  font-size: 0.62rem;
-  color: var(--muted);
-  margin-top: -2px;
+.levelup-popup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.65rem;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 20;
+  animation: bark-toast-in 0.15s ease-out;
+  pointer-events: none;
 }
 
 .screen-embark {
