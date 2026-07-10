@@ -1801,7 +1801,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-main-row .unit-portrait {
   flex: 1;
   min-width: 0;
-  height: 50vh;
+  height: 60vh;
   border-radius: 10px;
 }
 
