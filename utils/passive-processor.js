@@ -125,13 +125,23 @@ function dispatchPassive(trigger, owner, def, ctx) {
         host._unity_bonded_id = owner.id;
         owner._invulnerable = true;
         owner._untargetable = true;
-        const stats = ['battle_hp', 'max_hp', 'armor', 'initiative'];
+        const stats = ['battle_hp', 'max_hp', 'armor', 'initiative', 'action_power'];
         for (const stat of stats) {
           const bonus = Math.floor((owner.unit_data?.[stat] ?? owner[stat] ?? 0) * 0.5);
           if (stat === 'battle_hp') { host.battle_hp += bonus; host.max_hp += bonus; engine.recordGrantedBuff(owner, 'max_hp', [host], bonus); }
           else if (stat === 'max_hp') { }
           else if (stat === 'armor') { host.armor += bonus; engine.recordGrantedBuff(owner, 'armor', [host], bonus); }
           else if (stat === 'initiative') { host.initiative += bonus; engine.recordGrantedBuff(owner, 'initiative', [host], bonus); }
+          else if (stat === 'action_power' && host.unit_data) { host.unit_data = { ...host.unit_data, action_power: (host.unit_data.action_power ?? 0) + bonus }; }
+        }
+        // Transfer 50% of resistances
+        const ownerResists = owner.unit_data?.resistances || {};
+        if (host.unit_data) {
+          const hostResists = { ...(host.unit_data.resistances || {}) };
+          for (const [type, val] of Object.entries(ownerResists)) {
+            hostResists[type] = (hostResists[type] || 0) + Math.floor(val * 0.5);
+          }
+          host.unit_data = { ...host.unit_data, resistances: hostResists };
         }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, Unity guardian is invulnerable.` });
       }
@@ -652,17 +662,18 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: `${def.name} — +${p.ally_initiative_bonus} initiative to all allies` });
   }
   if (p.bonus_attack != null && target) {
-    const enemies = combatants.filter(c => c.side !== actor.side && c.alive);
-    if (enemies.length > 0) {
-      const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
-      const basePower = target.unit_data?.action_power ?? target.unit_data?.action?.value ?? 12;
-      const attackPower = Math.floor(basePower * p.bonus_attack / 100);
-      const armor = Math.max(0, randomEnemy.armor ?? 0);
-      const dmg = Math.max(1, Math.floor(attackPower * (1 - armor / 100)));
-      randomEnemy.battle_hp = Math.max(0, randomEnemy.battle_hp - dmg);
-      if (randomEnemy.battle_hp <= 0) { randomEnemy.alive = false; engine.applyOnDeathPassives(randomEnemy); }
-      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: randomEnemy.unit_name, targetCell: randomEnemy.cellIndex, message: `${def.name} — ${target.unit_name} strikes ${randomEnemy.unit_name} for ${dmg}`, value: dmg });
+    // Route through engine.executeAction so range, invulnerability, unity bonds,
+    // and all other targeting/damage rules are fully respected.
+    const savedPower = target.unit_data?.action_power;
+    const scaledPower = Math.floor((savedPower ?? 12) * p.bonus_attack / 100);
+    if (target.unit_data) target.unit_data = { ...target.unit_data, action_power: scaledPower };
+    const validTargets = engine.getValidTargets(target, false);
+    if (validTargets.length > 0) {
+      const randomEnemy = validTargets[Math.floor(Math.random() * validTargets.length)];
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — commands ${target.unit_name} to strike` });
+      engine.executeAction(target, randomEnemy, 'attack');
     }
+    if (target.unit_data) target.unit_data = { ...target.unit_data, action_power: savedPower };
   }
 
   if (p.heal_flat != null && def.target === 'all_allies') {

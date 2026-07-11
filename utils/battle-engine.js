@@ -687,6 +687,7 @@ class BattleEngine {
       if (!actor || actor.side !== 'enemy') break;
       const before = this.log.length;
       if (actor._unity_host_id != null || actor._invulnerable) {
+        this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
         this.doNone(actor);
         newLog.push(...this.log.slice(before));
         continue;
