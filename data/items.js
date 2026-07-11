@@ -22,15 +22,15 @@ const ITEM_DEFS = {
     icon:         'aegis_of_the_first_ward',
     cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 4 },
   },
-  sanctified_standard: {
-    key:          'sanctified_standard',
-    name:         'Sanctified Standard',
+  sanctified_bulwark: {
+    key:          'sanctified_bulwark',
+    name:         'Sanctified Bulwark',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     'Holy',
     stat_mods:    null,
     passive:      'inspiration_damage 1',
-    icon:         'sanctified_standard',
+    icon:         'sanctified_bulwark',
     cost:         { aggrails_signet: 2, rusted_shackle: 1, Gold: 90, Crystals_Life: 6 },
   },
   court_regalia: {
@@ -76,17 +76,6 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'travelers_charm',
     cost:         { Gold: 40 },
-  },
-  runed_tome: {
-    key:          'runed_tome',
-    name:         'Runed Tome',
-    faction:      null,
-    tag_required: 'Caster',
-    adds_tag:     null,
-    stat_mods:    null,
-    passive:      'pierce 1',
-    icon:         'runed_tome',
-    cost:         { Gold: 80, Crystals_Nature: 5 },
   },
 };
 
