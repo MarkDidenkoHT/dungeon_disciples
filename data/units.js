@@ -569,7 +569,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      passive: 'mithrails_light 1', ability: null, action_icon: 'sword.png',
+      passive: 'mithrails_light 1', ability: null, action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 105
     },
     paladin_path_a_t2: {
@@ -581,7 +581,7 @@ const UNITS = {
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
-      passive: ['mithrails_light 1', 'protector 1'], ability: null, action_icon: 'sword.png',
+      passive: ['mithrails_light 1', 'protector 1'], ability: null, action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_a_t3: {
@@ -593,7 +593,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
-      passive: ['mithrails_light 1', 'protector 2'], ability: null, action_icon: 'sword.png',
+      passive: ['mithrails_light 1', 'protector 2'], ability: null, action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 560
     },
     paladin_path_a_t4: {
@@ -629,7 +629,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 20,
-      passive: ['mithrails_light 1', 'chain 1'], ability: null, action_icon: 'sword.png',
+      passive: ['mithrails_light 1', 'chain 1'], ability: null, action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_b_t3: {
@@ -892,7 +892,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12,
+      damage_source: 'physical', action_power: 12, action_icon: 'spear.jpg',
       xp: 90, passive: 'protector 1', ability: null,
     },
     infantry: {
@@ -925,7 +925,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'sword.png',
+      damage_source: 'physical', action_power: 30, action_icon: 'sword.jpg',
       xp: 300, passive: ['protector 2', 'recuperate 1'], ability: 'stun 1',
     },
     horseman: {
@@ -936,7 +936,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'sword.png',
+      damage_source: 'physical', action_power: 30, action_icon: 'spear.jpg',
       xp: 550, passive: ['impale 2', 'recuperate 1'], ability: null,
     },
     sentinel: {
@@ -1002,7 +1002,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15,
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg',
       xp: 75, passive: 'fortify 1', ability: null,
     },
     mechanic: {
@@ -1013,7 +1013,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
       xp: 75, passive: 'fortify 1', ability: null,
     },
     mechanic2: {
@@ -1024,7 +1024,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25,
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
       xp: 75, passive: 'fortify 1', ability: null,
     },
     rifleman: {
@@ -1101,7 +1101,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 15,
       xp: 60, passive: 'renew 1', ability: null,
     },
     templar: {
@@ -1112,7 +1112,7 @@ const UNITS = {
       hp: 60, armor: 20, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 15,
       xp: 320, passive: ['aegis 1', 'mithrails_light 1'], ability: 'sanctuary 1',
     },
     mithrails_champion: {
@@ -1120,7 +1120,7 @@ const UNITS = {
       name: 'Mithrails Champion',
       tags: ['Knight', 'Holy'],
       size: 'tile',
-      hp: 75, armor: 25, initiative: 30,
+      hp: 70, armor: 25, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
@@ -1134,7 +1134,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25,
+      damage_source: null, action_power: 20,
       xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
@@ -1145,7 +1145,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 35,
+      damage_source: null, action_power: 25,
       xp: 250, passive: ['renew 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
