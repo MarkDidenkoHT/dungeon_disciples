@@ -2145,11 +2145,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 .action-panel-label  { font-size: 0.72rem; color: var(--muted); }
 .action-panel-label strong { color: var(--text); }
 
-.action-btns { display: flex; gap: 6px; }
+.action-btns { display: flex; gap: 6px; justify-content: center; }
 
-.action-btn {
-  width: 52px;
-  height: 52px;
+.action-btns .action-btn {
+  width: 65px;
+  height: 65px;
   padding: 0;
   border-radius: 6px;
   border: 1px solid var(--accent);
@@ -2165,6 +2165,22 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .battle-action-icon-img {
