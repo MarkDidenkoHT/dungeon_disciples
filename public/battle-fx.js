@@ -153,8 +153,7 @@ function sourceColor(dmgSource) {
   return SOURCE_COLOR[dmgSource] || SOURCE_COLOR.physical;
 }
 
-// Melee: sword swings toward the enemy grid
-async function attackMelee(targetDataId, isEnemy) {
+async function attackMelee(targetDataId, actorDataId, isEnemy) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
@@ -166,7 +165,6 @@ async function attackMelee(targetDataId, isEnemy) {
     return;
   }
 
-  // Player attacks left→right, enemy attacks right→left
   const dir = isEnemy ? -1 : 1;
 
   const sprites = [0.18, 0.35, 1].map(alpha => {
@@ -181,16 +179,16 @@ async function attackMelee(targetDataId, isEnemy) {
   });
   const [ghost1, ghost2, main] = sprites;
 
-  // Fixed swing: blade starts pointing toward enemy grid, arcs through ~60°
-  const baseAngle = isEnemy ? Math.PI / 2 : -Math.PI / 2; // down for player, up for enemy… no:
-  // Blade up = -π/2. Player swings right so center at -π/4 (upper-right), enemy swings left at -3π/4 (upper-left)
-  const CENTER = isEnemy ? -Math.PI * 0.75 : -Math.PI * 0.25;
-  const SWING  = 1.0; // ~57° arc
+  const CENTER    = isEnemy ? -Math.PI * 0.75 : -Math.PI * 0.25;
+  const SWING     = 1.0;
   const START_ROT = CENTER - SWING / 2;
   const END_ROT   = CENTER + SWING / 2;
 
+  // Use actor cell as the anchor point for the swing
+  const anchorId = actorDataId || targetDataId;
+
   await animate(1000, t => {
-    const b = cellBoundsFor(targetDataId);
+    const b = cellBoundsFor(anchorId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
@@ -251,7 +249,7 @@ export async function attack(targetCellEl, opts = {}) {
   if (isRanged && opts.sourceId) {
     await attackRanged(opts.sourceId, targetCellEl.dataset.id, color);
   } else {
-    await attackMelee(targetCellEl.dataset.id, isEnemy);
+    await attackMelee(targetCellEl.dataset.id, opts.sourceId || null, isEnemy);
   }
   console.log('[battle-fx] attack END', targetCellEl?.dataset?.id);
 }
