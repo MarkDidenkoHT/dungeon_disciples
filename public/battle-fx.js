@@ -179,7 +179,7 @@ async function attackMelee(targetDataId, actorDataId, isEnemy) {
   });
   const [ghost1, ghost2, main] = sprites;
 
-  const CENTER    = isEnemy ? -Math.PI * 0.75 : -Math.PI * 0.25;
+  const CENTER    = isEnemy ? -Math.PI * 0.75 + Math.PI / 3 : -Math.PI * 0.25 + Math.PI / 3;
   const SWING     = 1.0;
   const START_ROT = CENTER - SWING / 2;
   const END_ROT   = CENTER + SWING / 2;
