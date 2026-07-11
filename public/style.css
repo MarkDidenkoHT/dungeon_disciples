@@ -1801,7 +1801,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-main-row .unit-portrait {
   flex: 1;
   min-width: 0;
-  height: 60vh;
+  height: 50vh;
   border-radius: 10px;
 }
 
@@ -2165,6 +2165,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.battle-action-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
 }
 
 .battle-action-ability-icon {

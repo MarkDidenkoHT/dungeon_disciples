@@ -569,7 +569,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      passive: 'mithrails_light 1', ability: null,
+      passive: 'mithrails_light 1', ability: null, action_icon: 'sword.png',
       building_slot: 'slot_0', xp: 105
     },
     paladin_path_a_t2: {
@@ -581,7 +581,7 @@ const UNITS = {
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
-      passive: ['mithrails_light 1', 'protector 1'], ability: null,
+      passive: ['mithrails_light 1', 'protector 1'], ability: null, action_icon: 'sword.png',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_a_t3: {
@@ -593,7 +593,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
-      passive: ['mithrails_light 1', 'protector 2'], ability: null,
+      passive: ['mithrails_light 1', 'protector 2'], ability: null, action_icon: 'sword.png',
       building_slot: 'slot_0', xp: 560
     },
     paladin_path_a_t4: {
@@ -629,7 +629,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 20,
-      passive: ['mithrails_light 1', 'chain 1'], ability: null,
+      passive: ['mithrails_light 1', 'chain 1'], ability: null, action_icon: 'sword.png',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_b_t3: {
@@ -925,7 +925,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30,
+      damage_source: 'physical', action_power: 30, action_icon: 'sword.png',
       xp: 300, passive: ['protector 2', 'recuperate 1'], ability: 'stun 1',
     },
     horseman: {
@@ -936,7 +936,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30,
+      damage_source: 'physical', action_power: 30, action_icon: 'sword.png',
       xp: 550, passive: ['impale 2', 'recuperate 1'], ability: null,
     },
     sentinel: {
@@ -1806,7 +1806,7 @@ const UNITS = {
         hp: 80, armor: 5, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 8,
+        damage_source: 'physical', action_power: 8, action_animation: 'sword_swing',
         xp: 60, passive: 'beacon_of_hope 1', ability: 'lions_roar 1',
       },
       exalted_herald: {
@@ -1828,7 +1828,7 @@ const UNITS = {
         hp: 45, armor: 10, initiative: 40,
         resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: null, action_power: 12,
+        damage_source: null, action_power: 12, action_animation: 'sword_swing',
         xp: 55, passive: 'fanaticism 1', ability: null,
       },
       aggrails_devoted: {

@@ -115,14 +115,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Action entries use the actor's action string.
   function effectForEntry(entry, actorCombatant) {
     if (entry.type === 'passive' && entry.passive) {
-      // Find the ability def whose name matches entry.passive
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
       if (def?.effect_name) return def.effect_name;
     }
     if (entry.type === 'action' && actorCombatant) {
-      const actionRaw = actorCombatant.unit_data?.action;
-      const key = typeof actionRaw === 'string' ? actionRaw : actionRaw?.id;
-      if (key) return key.toLowerCase().replace(/\s+/g, '_');
+      return actorCombatant.unit_data?.action_animation || null;
     }
     return null;
   }
@@ -168,12 +165,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (targetCell) {
           if (effectName === 'communion' && sourceCell) {
             await EFFECTS.communion(sourceCell, targetCell);
-          } else if (effectName === 'attack') {
-            const dmgSource = actor?.unit_data?.damage_source ?? 'physical';
-            const range     = actor?.unit_data?.range ?? 1;
-            const srcId     = actor ? actor.id : null;
-            const isEnemy   = actor?.side === 'enemy';
-            await EFFECTS.attack(targetCell, { sourceId: srcId, dmgSource, range, isEnemy });
           } else {
             await EFFECTS[effectName](targetCell);
           }
@@ -544,6 +535,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const hasAbility   = actor && !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
     const abilityName  = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : 'Ability';
     const actionLabel  = actor ? getActionLabel(actor) : 'Attack';
+    const actionIcon   = actor?.unit_data?.action_icon ?? null;
     const isNoneAction = actor && (typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type === 'none' : false);
 
     const validTargetKeys = new Set();
@@ -599,7 +591,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.mainBtn.className = `action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
-    ui.mainBtn.textContent = actionLabel;
+    if (actionIcon) {
+      ui.mainBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/${actionIcon}" alt="${actionLabel}" onerror="this.style.display='none'"><span class="battle-action-icon-fallback" style="display:none">${actionLabel}</span>`;
+    } else {
+      ui.mainBtn.textContent = actionLabel;
+    }
 
     ui.abilityBtn.className = `action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;

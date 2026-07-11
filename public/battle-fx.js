@@ -140,20 +140,13 @@ export async function communion(sourceCellEl, targetCellEl) {
 
 // ── Attack — melee border flash, ranged orb travel ────────────────────────────
 // Color per damage source
-const SOURCE_COLOR = {
-  physical: 0xdddddd,
-  death:    0x9b30ff,
-  fire:     0xff6600,
-  life:     0xffd966,
-  cold:     0x88ccff,
-  nature:   0x66cc44,
-};
 
-function sourceColor(dmgSource) {
-  return SOURCE_COLOR[dmgSource] || SOURCE_COLOR.physical;
-}
+// ── sword_swing — assign action_animation: 'sword_swing' on any unit def ──────
+export async function sword_swing(targetCellEl) {
+  console.log('[battle-fx] sword_swing START', targetCellEl?.dataset?.id);
+  if (!targetCellEl || !app || !window.PIXI) return;
+  const dataId = targetCellEl.dataset.id;
 
-async function attackMelee(targetDataId, actorDataId, isEnemy) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
@@ -165,35 +158,29 @@ async function attackMelee(targetDataId, actorDataId, isEnemy) {
     return;
   }
 
-  const dir = isEnemy ? -1 : 1;
-
   const sprites = [0.18, 0.35, 1].map(alpha => {
     const s = new PIXI.Sprite(texture);
     s.anchor.set(0.5, 0.8);
-    s.width  = 50;
-    s.height = 50;
-    s.alpha  = alpha;
-    s.scale.x *= dir;
+    const scale = 50 / Math.max(texture.width, texture.height);
+    s.scale.set(scale);
+    s.alpha = alpha;
     layer.addChild(s);
     return s;
   });
   const [ghost1, ghost2, main] = sprites;
 
-  const CENTER    = isEnemy ? -Math.PI * 0.75 + Math.PI / 3 : -Math.PI * 0.25 + Math.PI / 3;
+  const CENTER    = -Math.PI * 0.25 + Math.PI * 2 / 3;
   const SWING     = 1.0;
   const START_ROT = CENTER - SWING / 2;
   const END_ROT   = CENTER + SWING / 2;
 
-  // Use actor cell as the anchor point for the swing
-  const anchorId = actorDataId || targetDataId;
-
   await animate(1000, t => {
-    const b = cellBoundsFor(anchorId);
+    const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
-    const cx = b.x + b.width  / 2;
-    const cy = b.y + b.height / 2;
+    const cx    = b.x + b.width  / 2;
+    const cy    = b.y + b.height / 2;
     const ease  = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     const rot   = START_ROT + (END_ROT - START_ROT) * ease;
     const alpha = t < 0.1 ? t / 0.1 : t > 0.8 ? (1 - t) / 0.2 : 1;
@@ -204,58 +191,11 @@ async function attackMelee(targetDataId, actorDataId, isEnemy) {
   });
 
   layer.destroy({ children: true });
-}
-
-// Ranged: small orb travels from source to target, impact flash on arrival
-async function attackRanged(srcDataId, dstDataId, color) {
-  const layer = new PIXI.Container();
-  app.stage.addChild(layer);
-  const orb = new PIXI.Graphics();
-  orb.beginFill(color);
-  orb.drawCircle(0, 0, 5);
-  orb.endFill();
-  orb.filters = [new PIXI.BlurFilter(2)];
-  const impact = new PIXI.Graphics();
-  layer.addChild(orb);
-  layer.addChild(impact);
-  await animate(500, t => {
-    const s = cellBoundsFor(srcDataId), d = cellBoundsFor(dstDataId);
-    if (!s || !d) { layer.visible = false; return; }
-    layer.visible = true;
-    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
-    const dx = d.x + d.width / 2, dy = d.y + d.height / 2;
-    // Orb travels first 70% of duration
-    const travelT = Math.min(1, t / 0.7);
-    orb.position.set(sx + (dx - sx) * travelT, sy + (dy - sy) * travelT);
-    orb.alpha = t < 0.65 ? 1 : Math.max(0, 1 - (t - 0.65) / 0.05);
-    // Impact flash after orb arrives
-    impact.clear();
-    if (t > 0.65) {
-      const it = (t - 0.65) / 0.35;
-      impact.lineStyle(3, color, Math.max(0, 1 - it));
-      impact.drawCircle(dx, dy, d.width * 0.35 * it);
-    }
-  });
-  layer.destroy({ children: true });
-}
-
-// Public attack effect — called with (targetCell, { sourceId, dmgSource, range })
-export async function attack(targetCellEl, opts = {}) {
-  console.log('[battle-fx] attack START', targetCellEl?.dataset?.id, opts);
-  if (!targetCellEl || !app || !window.PIXI) return;
-  const color    = sourceColor(opts.dmgSource);
-  const isRanged = (opts.range ?? 1) > 1;
-  const isEnemy  = opts.isEnemy ?? false;
-  if (isRanged && opts.sourceId) {
-    await attackRanged(opts.sourceId, targetCellEl.dataset.id, color);
-  } else {
-    await attackMelee(targetCellEl.dataset.id, opts.sourceId || null, isEnemy);
-  }
-  console.log('[battle-fx] attack END', targetCellEl?.dataset?.id);
+  console.log('[battle-fx] sword_swing END', dataId);
 }
 
 export const EFFECTS = {
   mithrails_light,
   communion,
-  attack,
+  sword_swing,
 };
