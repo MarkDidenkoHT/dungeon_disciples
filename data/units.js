@@ -1861,7 +1861,7 @@ const UNITS = {
         hp: 40, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20,
+        damage_source: null, action_power: 15,
         xp: 110, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
@@ -1872,7 +1872,7 @@ const UNITS = {
         hp: 50, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 25,
+        damage_source: null, action_power: 20,
         xp: 340, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
       crimson_hunter: {

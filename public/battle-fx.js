@@ -154,7 +154,7 @@ function sourceColor(dmgSource) {
 }
 
 // Melee: sword swings across the target cell, oriented attacker→target
-async function attackMelee(targetDataId, actorDataId, color) {
+async function attackMelee(targetDataId, actorDataId, color, isEnemy) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
@@ -168,44 +168,46 @@ async function attackMelee(targetDataId, actorDataId, color) {
 
   const sprites = [0.18, 0.35, 1].map(alpha => {
     const s = new PIXI.Sprite(texture);
-    s.anchor.set(0.5, 0.8);
+    s.anchor.set(0.5, 0.8);   // anchor near handle
     s.width  = 100;
     s.height = 100;
     s.alpha  = alpha;
+    if (isEnemy) s.scale.x *= -1; // mirror for enemies
     layer.addChild(s);
     return s;
   });
   const [ghost1, ghost2, main] = sprites;
 
-  // Direction from actor cell to target cell → base rotation for the sword
-  // The image points upper-right at ~-45° (−π/4), so we offset by that
-  let baseAngle = 0;
+  // Blade points straight up (−π/2 in PIXI coords where right=0).
+  // Add π/2 so that rotation=0 means blade pointing right, matching atan2 convention.
+  // atan2(dy, dx) gives angle from actor center to target center.
+  let baseAngle = -Math.PI / 2; // default: swing downward if no direction info
   const srcB = actorDataId ? cellBoundsFor(actorDataId) : null;
   const dstB = cellBoundsFor(targetDataId);
   if (srcB && dstB) {
     const dx = (dstB.x + dstB.width  / 2) - (srcB.x + srcB.width  / 2);
     const dy = (dstB.y + dstB.height / 2) - (srcB.y + srcB.height / 2);
-    baseAngle = Math.atan2(dy, dx) - Math.PI / 4; // -π/4 corrects for image orientation
+    baseAngle = Math.atan2(dy, dx) + Math.PI / 2;
   }
 
-  const SWING = 1.1; // ~63° arc
+  const SWING = 1.1; // ~63° arc centered on direction
   const START_ROT = baseAngle - SWING / 2;
   const END_ROT   = baseAngle + SWING / 2;
 
-  await animate(350, t => {
+  await animate(700, t => {
     const b = cellBoundsFor(targetDataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
     const cx = b.x + b.width  / 2;
     const cy = b.y + b.height / 2;
-    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    const rot  = START_ROT + (END_ROT - START_ROT) * ease;
+    const ease  = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const rot   = START_ROT + (END_ROT - START_ROT) * ease;
     const alpha = t < 0.12 ? t / 0.12 : t > 0.8 ? (1 - t) / 0.2 : 1;
 
-    main.position.set(cx, cy);   main.rotation = rot;   main.alpha = alpha;
-    ghost2.position.set(cx, cy); ghost2.rotation = rot - 0.15; ghost2.alpha = alpha * 0.35;
-    ghost1.position.set(cx, cy); ghost1.rotation = rot - 0.28; ghost1.alpha = alpha * 0.18;
+    main.position.set(cx, cy);   main.rotation = rot;             main.alpha = alpha;
+    ghost2.position.set(cx, cy); ghost2.rotation = rot - 0.15;   ghost2.alpha = alpha * 0.35;
+    ghost1.position.set(cx, cy); ghost1.rotation = rot - 0.28;   ghost1.alpha = alpha * 0.18;
   });
 
   layer.destroy({ children: true });
@@ -248,12 +250,13 @@ async function attackRanged(srcDataId, dstDataId, color) {
 export async function attack(targetCellEl, opts = {}) {
   console.log('[battle-fx] attack START', targetCellEl?.dataset?.id, opts);
   if (!targetCellEl || !app || !window.PIXI) return;
-  const color   = sourceColor(opts.dmgSource);
+  const color    = sourceColor(opts.dmgSource);
   const isRanged = (opts.range ?? 1) > 1;
+  const isEnemy  = opts.isEnemy ?? false;
   if (isRanged && opts.sourceId) {
     await attackRanged(opts.sourceId, targetCellEl.dataset.id, color);
   } else {
-    await attackMelee(targetCellEl.dataset.id, opts.sourceId || null, color);
+    await attackMelee(targetCellEl.dataset.id, opts.sourceId || null, color, isEnemy);
   }
   console.log('[battle-fx] attack END', targetCellEl?.dataset?.id);
 }

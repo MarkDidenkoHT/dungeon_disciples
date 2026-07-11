@@ -172,7 +172,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             const dmgSource = actor?.unit_data?.damage_source ?? 'physical';
             const range     = actor?.unit_data?.range ?? 1;
             const srcId     = actor ? actor.id : null;
-            await EFFECTS.attack(targetCell, { sourceId: srcId, dmgSource, range });
+            const isEnemy   = actor?.side === 'enemy';
+            await EFFECTS.attack(targetCell, { sourceId: srcId, dmgSource, range, isEnemy });
           } else {
             await EFFECTS[effectName](targetCell);
           }
