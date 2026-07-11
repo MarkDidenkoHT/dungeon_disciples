@@ -169,8 +169,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (effectName === 'communion' && sourceCell) {
           await EFFECTS.communion(sourceCell, targetCell);
         } else if (entry.type === 'action') {
-          // Action animations anchor to the actor's cell, with enemy mirroring
-          const cell = actorCell || targetCell;
+          const isHealAction = entry.heal === true;
+          const cell = isHealAction ? targetCell : (actorCell || targetCell);
+          console.log('[battle] action routing: isHeal', isHealAction, 'targetCell', !!targetCell, 'actorCell', !!actorCell, 'using', isHealAction ? 'target' : 'actor');
           if (cell) await EFFECTS[effectName](cell, { isEnemy });
         } else {
           // Passive animations anchor to the target cell
