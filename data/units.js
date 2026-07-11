@@ -1101,7 +1101,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15,
+      damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg',
       xp: 60, passive: 'renew 1', ability: null,
     },
     templar: {
@@ -1112,7 +1112,7 @@ const UNITS = {
       hp: 60, armor: 20, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15,
+      damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
       xp: 320, passive: ['aegis 1', 'mithrails_light 1'], ability: 'sanctuary 1',
     },
     mithrails_champion: {
@@ -1123,7 +1123,7 @@ const UNITS = {
       hp: 70, armor: 25, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
       xp: 320, passive: ['aegis 1', 'mithrails_light 1', 'radiance 1'], ability: 'sanctuary 1',
     },
     priest: {
@@ -1134,7 +1134,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg',
       xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
@@ -1145,7 +1145,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25,
+      damage_source: null, action_power: 25, action_icon: 'holy_heal.jpg',
       xp: 250, passive: ['renew 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
@@ -1861,7 +1861,7 @@ const UNITS = {
         hp: 40, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15,
+        damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg',
         xp: 110, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
