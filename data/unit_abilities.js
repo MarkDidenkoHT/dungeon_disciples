@@ -464,8 +464,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit by physical damage, deals 8 fire damage back to attacker.',
-    params: { retaliation_damage: 8, damage_type: 'fire' },
+    description: 'When hit by physical damage, deals 5 fire damage back to attacker.',
+    params: { retaliation_damage: 5, damage_type: 'fire' },
   },
   'recuperate 1': {
     id: 'recuperate 1',

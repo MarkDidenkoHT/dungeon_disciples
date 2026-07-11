@@ -433,23 +433,35 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
-  function formatCost(cost = {}) {
-    return Object.entries(cost).map(([resName, amount]) => {
+  function formatCost(cost = {}, itemCost = {}) {
+    const resParts = Object.entries(cost).map(([resName, amount]) => {
       const have    = resources.find(r => r.item === resName)?.amount ?? 0;
       const shortage = have < amount;
       const label = resName.startsWith('Crystals_') ? resName.replace('Crystals_', '') + ' Crystals' : resName;
       return `<span class="item-cost-part ${shortage ? 'item-cost-part--short' : ''}">${label} ${have}/${amount}</span>`;
-    }).join(' · ');
+    });
+    const itemParts = Object.entries(itemCost).map(([ingredientKey, count]) => {
+      const ownedCount = items.filter(it =>
+        (it.item_stats?.key || it.item_stats?.icon) === ingredientKey && !it.equipped_by
+      ).length;
+      const shortage = ownedCount < count;
+      const def = ITEM_DEFS[ingredientKey];
+      const label = def ? def.name : ingredientKey;
+      return `<span class="item-cost-part ${shortage ? 'item-cost-part--short' : ''}">🔧 ${label} ${ownedCount}/${count}</span>`;
+    });
+    return [...resParts, ...itemParts].join(' · ');
   }
 
   function buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags) {
     if (ownedInstance) return buildItemCard(ownedInstance, unit, unitTags);
 
     const iconId      = itemDef.icon || itemDef.key || 'item';
-    const cost         = itemDef.cost || {};
+    const cost         = itemDef.cost      || {};
+    const itemCost     = itemDef.item_cost || {};
     const factionOk    = !itemDef.faction || itemDef.faction === player.faction;
-    const canAfford     = Object.entries(cost).every(([resName, amount]) => (resources.find(r => r.item === resName)?.amount ?? 0) >= amount);
-    const canCraft      = factionOk && canAfford;
+    const canAfford    = Object.entries(cost).every(([resName, amount]) => (resources.find(r => r.item === resName)?.amount ?? 0) >= amount) &&
+                         Object.entries(itemCost).every(([key, count]) => items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === key && !it.equipped_by).length >= count);
+    const canCraft     = factionOk && canAfford;
 
     return `
       <div class="item-card item-card--catalog">
@@ -462,7 +474,7 @@ export function renderRoster(root, { player }) {
         ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
-        <div class="item-cost">${formatCost(cost)}</div>
+        <div class="item-cost">${formatCost(cost, itemCost)}</div>
         <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>Craft</button>
         ${!factionOk ? `<div class="item-card-blocked">Wrong faction</div>` : (!canAfford ? `<div class="item-card-blocked">Not enough resources</div>` : '')}
       </div>`;

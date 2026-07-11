@@ -969,6 +969,19 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       engine.runAiTurns();
     }
 
+    // Auto-process any unity-bonded player units whose turn is next —
+    // they can't act but their passives should still trigger, same as the AI loop.
+    if (!engine.done) {
+      let next = engine.currentActor();
+      while (next && next.side === 'player' && (next._unity_host_id != null || next._invulnerable)) {
+        engine.fireTrigger('on_turn_start', { actor: next, target: next, dmg: 0, dying: null });
+        engine.executeAction(next, null, 'none');
+        if (engine.done) break;
+        engine.runAiTurns();
+        next = engine.currentActor();
+      }
+    }
+
     const battle_data = buildBattleData(engine, record.battle_data);
 
     const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
@@ -1397,19 +1410,43 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'This item cannot be crafted by your faction' });
     }
 
-    const cost = itemDef.cost || {};
-    const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    const cost     = itemDef.cost      || {};
+    const itemCost = itemDef.item_cost || {};
 
+    const [inventoryRows, ownedItems] = await Promise.all([
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+    ]);
+
+    // Validate resource costs
     for (const [resName, required] of Object.entries(cost)) {
       const row  = inventoryRows.find(r => r.item === resName);
       const have = row ? Number(row.amount) : 0;
       if (have < required) return res.status(400).json({ error: `Not enough ${resName} (need ${required}, have ${have})` });
     }
 
+    // Validate item ingredient costs — must own the item unequipped
+    const ingredientRows = [];
+    for (const [ingredientKey, requiredCount] of Object.entries(itemCost)) {
+      const matches = ownedItems.filter(it =>
+        (it.item_stats?.key || it.item_stats?.icon) === ingredientKey && !it.equipped_by
+      );
+      if (matches.length < requiredCount) {
+        return res.status(400).json({ error: `Need ${requiredCount} unequipped ${ingredientKey} as ingredient` });
+      }
+      ingredientRows.push(...matches.slice(0, requiredCount));
+    }
+
+    // Deduct resource costs
     for (const [resName, required] of Object.entries(cost)) {
       const row = inventoryRows.find(r => r.item === resName);
       await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
     }
+
+    // Consume item ingredients
+    await Promise.all(ingredientRows.map(it =>
+      supabase(`/items?id=eq.${it.id}`, { method: 'DELETE' })
+    ));
 
     const inserted = await supabase('/items', {
       method: 'POST',
