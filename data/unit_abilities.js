@@ -283,6 +283,7 @@ const UNIT_ABILITIES = {
   },
   'protector 1': {
     id: 'protector 1',
+    effect_name: 'protector',
     name: 'Protector',
     rank: 1,
     type: 'passive',
@@ -292,6 +293,7 @@ const UNIT_ABILITIES = {
   },
   'protector 2': {
     id: 'protector 2',
+    effect_name: 'protector',
     name: 'Protector',
     rank: 2,
     type: 'passive',

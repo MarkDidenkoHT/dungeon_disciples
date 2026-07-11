@@ -161,15 +161,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const sourceCell = entry.sourceId
           ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
           : null;
-        console.log('[battle] playing effect', effectName, '| targetCell:', !!targetCell, '| sourceCell:', !!sourceCell);
-        if (targetCell) {
-          if (effectName === 'communion' && sourceCell) {
-            await EFFECTS.communion(sourceCell, targetCell);
-          } else {
-            await EFFECTS[effectName](targetCell);
-          }
+        const actorCell = actor
+          ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
+          : null;
+        const isEnemy = actor?.side === 'enemy';
+
+        if (effectName === 'communion' && sourceCell) {
+          await EFFECTS.communion(sourceCell, targetCell);
+        } else if (entry.type === 'action') {
+          // Action animations anchor to the actor's cell, with enemy mirroring
+          const cell = actorCell || targetCell;
+          if (cell) await EFFECTS[effectName](cell, { isEnemy });
         } else {
-          console.warn('[battle] targetCell not found for', entry.targetId);
+          // Passive animations anchor to the target cell
+          if (targetCell) await EFFECTS[effectName](targetCell);
         }
       }
     }

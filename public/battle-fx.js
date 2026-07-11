@@ -142,10 +142,11 @@ export async function communion(sourceCellEl, targetCellEl) {
 // Color per damage source
 
 // ── sword_swing — assign action_animation: 'sword_swing' on any unit def ──────
-export async function sword_swing(targetCellEl) {
-  console.log('[battle-fx] sword_swing START', targetCellEl?.dataset?.id);
-  if (!targetCellEl || !app || !window.PIXI) return;
-  const dataId = targetCellEl.dataset.id;
+export async function sword_swing(cellEl, opts = {}) {
+  console.log('[battle-fx] sword_swing START', cellEl?.dataset?.id, opts);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const isEnemy = opts.isEnemy ?? false;
 
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
@@ -162,14 +163,19 @@ export async function sword_swing(targetCellEl) {
     const s = new PIXI.Sprite(texture);
     s.anchor.set(0.5, 0.8);
     const scale = 50 / Math.max(texture.width, texture.height);
-    s.scale.set(scale);
+    // Mirror X for enemies so sword points toward player grid
+    s.scale.set(isEnemy ? -scale : scale, scale);
     s.alpha = alpha;
     layer.addChild(s);
     return s;
   });
   const [ghost1, ghost2, main] = sprites;
 
-  const CENTER    = -Math.PI * 0.25 + Math.PI * 2 / 3;
+  // Player swings toward enemy grid (right side), enemy swings toward player grid (left side)
+  // Blade points up = 0 rad. Swing center toward the opposing grid.
+  const CENTER    = isEnemy
+    ? -Math.PI * 0.25 - Math.PI * 2 / 3   // enemy: mirror of player
+    :  -Math.PI * 0.25 + Math.PI * 2 / 3;  // player
   const SWING     = 1.0;
   const START_ROT = CENTER - SWING / 2;
   const END_ROT   = CENTER + SWING / 2;
@@ -194,8 +200,88 @@ export async function sword_swing(targetCellEl) {
   console.log('[battle-fx] sword_swing END', dataId);
 }
 
+// ── holy_heal — golden light bloom rising from bottom of cell ─────────────────
+export async function holy_heal(cellEl) {
+  console.log('[battle-fx] holy_heal START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const layer  = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  const glow = new PIXI.Graphics();
+  glow.filters = [new PIXI.BlurFilter(10)];
+  const crisp = new PIXI.Graphics();
+  layer.addChild(glow);
+  layer.addChild(crisp);
+
+  await animate(900, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const alpha = t < 0.15 ? t / 0.15 : t < 0.55 ? 1 : Math.max(0, 1 - (t - 0.55) / 0.45);
+    const rise  = 1 - t; // starts at bottom, rises toward top
+    const fillH = b.height * (0.3 + t * 0.5);
+    const fillY = b.y + b.height - fillH * (0.5 + t * 0.5);
+
+    glow.clear();
+    glow.beginFill(0xffd966, 0.5 * alpha);
+    glow.drawRoundedRect(b.x - 4, fillY, b.width + 8, fillH, 8);
+    glow.endFill();
+
+    crisp.clear();
+    crisp.lineStyle(2, 0xfff3c4, 0.8 * alpha);
+    crisp.drawRoundedRect(b.x + 2, b.y + 2, b.width - 4, b.height - 4, 6);
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] holy_heal END', dataId);
+}
+
+// ── protector — half-dome shield that deflects an incoming hit ─────────────────
+export async function protector(cellEl) {
+  console.log('[battle-fx] protector START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const layer  = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  const shield = new PIXI.Graphics();
+  layer.addChild(shield);
+
+  await animate(700, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width  / 2;
+    const cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height) * 0.55;
+
+    // Expand in, hold, shrink out
+    const scale  = t < 0.2 ? t / 0.2 : t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+    const alpha  = t < 0.15 ? t / 0.15 : t > 0.7 ? Math.max(0, 1 - (t - 0.7) / 0.3) : 1;
+
+    shield.clear();
+    // Outer glow ring
+    shield.lineStyle(6, 0x88ccff, 0.25 * alpha);
+    shield.arc(cx, cy, r * scale * 1.15, Math.PI, 0);
+    // Main dome — semicircle opening toward enemy side (top half)
+    shield.lineStyle(3, 0xaaddff, 0.9 * alpha);
+    shield.arc(cx, cy, r * scale, Math.PI, 0);
+    // Base line closing the dome
+    shield.moveTo(cx - r * scale, cy);
+    shield.lineTo(cx + r * scale, cy);
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] protector END', dataId);
+}
+
 export const EFFECTS = {
   mithrails_light,
   communion,
   sword_swing,
+  holy_heal,
+  protector,
 };
