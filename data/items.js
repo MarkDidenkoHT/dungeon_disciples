@@ -103,11 +103,15 @@ function applyItemModifiers(unitData, itemStats) {
 
   const resistances = { ...(unitData.resistances || {}) };
   const mods  = itemStats.stat_mods || {};
-  let   armor = unitData.armor ?? 0;
+  let   armor        = unitData.armor        ?? 0;
+  let   action_power = unitData.action_power ?? 0;
+  let   initiative   = unitData.initiative   ?? 0;
 
   for (const [statKey, val] of Object.entries(mods)) {
-    if (statKey === 'hp') continue;
-    if (statKey === 'armor') { armor += val; continue; }
+    if (statKey === 'hp')           continue;
+    if (statKey === 'armor')        { armor        += val; continue; }
+    if (statKey === 'action_power') { action_power += val; continue; }
+    if (statKey === 'initiative')   { initiative   += val; continue; }
     const resistMatch = statKey.match(/^(air|fire|nature|cold|life|death)_resist$/);
     if (resistMatch) {
       const resType = resistMatch[1];
@@ -122,7 +126,7 @@ function applyItemModifiers(unitData, itemStats) {
     else                        passive = itemStats.passive;
   }
 
-  return { ...unitData, tags, armor, resistances, passive };
+  return { ...unitData, tags, armor, action_power, initiative, resistances, passive };
 }
 
 export { ITEM_DEFS, applyItemModifiers };
