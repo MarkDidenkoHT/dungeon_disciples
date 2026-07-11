@@ -2168,21 +2168,19 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .battle-action-icon-img {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   display: block;
-  margin: 0 auto;
+  border-radius: 4px;
 }
 
 .battle-action-ability-icon {
-  width: min(100%, 84px);
-  height: min(100%, 84px);
-  max-width: 84px;
-  max-height: 84px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
   display: block;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .action-btn:active       { background: #2a200a; }

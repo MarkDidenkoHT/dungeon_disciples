@@ -604,11 +604,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
-    ui.defendBtn.textContent = 'Defend';
+    ui.defendBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/defend.jpg" alt="Defend" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><span style="display:none">Defend</span>`;
 
     ui.cancelBtn.className = `action-btn action-btn--cancel ${!selectingTarget ? 'action-btn--disabled' : ''}`;
     ui.cancelBtn.disabled = !selectingTarget;
-    ui.cancelBtn.textContent = '✕ Cancel';
+    ui.cancelBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/cancel.jpg" alt="Cancel" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><span style="display:none">✕</span>`;
 
     if (!processing) {
       ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
