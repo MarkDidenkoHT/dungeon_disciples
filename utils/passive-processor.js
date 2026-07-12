@@ -536,6 +536,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   const data = actor.unit_data || actor;
   let power = data.action_power ?? data.action?.value ?? 12;
+  console.log('[calcDmg] actor:', actor.unit_name, 'action_power on unit_data:', data.action_power, 'action?.value:', data.action?.value, 'resolved power:', power);
   const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
   const p = Object.assign({}, ...defs.map(d => d.params || {}));
   if (p.execute_bonus_pct != null && p.execute_threshold_pct != null) {
