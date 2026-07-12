@@ -4226,8 +4226,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .item-card-icon {
-  width: 56px;
-  height: 56px;
+  width: 150px;
+  height: 150px;
   border-radius: 8px;
   background: #0e1219;
   border: 1px solid #222d3e;

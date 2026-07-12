@@ -95,8 +95,10 @@ export async function mithrails_light(cellEl) {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
-    const flashH = b.height * 0.6;
-    const riseY  = b.y + b.height - flashH * t;
+    // Portrait occupies ~top 80% of cell; start flash there not below the HP bar
+    const portraitBottom = b.y + b.height * 0.80;
+    const flashH = b.height * 0.75;
+    const riseY  = portraitBottom - flashH * t;
     rect.clear();
     const alpha = t < 0.2 ? t / 0.2 : t < 0.6 ? 1 : Math.max(0, 1 - (t - 0.6) / 0.4);
     rect.beginFill(0xffe08a, 0.55 * alpha);
