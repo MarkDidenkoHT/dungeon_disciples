@@ -131,7 +131,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 3, initiate: 3 },
+    stat_mods:    { power: 3, initiative: 3 },
     passive:      null,
     icon:         'crude_sword',
     cost:         { Gold: 25, Crystals_Death: 25 },
