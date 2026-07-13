@@ -547,8 +547,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When taking damage, gain +8% attack damage and +3 initiative.',
-    params: { rage_atk_bonus: 8, rage_init_bonus: 3 },
+    description: 'When taking damage, gain +10% attack damage and +3 initiative.',
+    params: { rage_atk_bonus: 10, rage_init_bonus: 3 },
   },
   'bleed 1': {
     id: 'bleed 1',
@@ -675,6 +675,15 @@ const UNIT_ABILITIES = {
     trigger: 'on_take_damage',
     description: 'After taking damage, gain +3 armor or resistance to that damage type for the rest of the round.',
     params: { resist_gain: 3, duration_rounds: 1, match_damage_type: true },
+  },
+    'aegis 2': {
+    id: 'aegis 1',
+    name: 'Aegis',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_take_damage',
+    description: 'After taking damage, gain +5 armor or resistance to that damage type for the rest of the round.',
+    params: { resist_gain: 5, duration_rounds: 1, match_damage_type: true },
   },
   'terror 1': {
     id: 'terror 1',
