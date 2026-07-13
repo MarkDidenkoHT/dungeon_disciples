@@ -399,8 +399,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 3 nature damage.',
-    params: { adjacent_aoe_damage: 3, damage_type: 'nature', range: 1 },
+    description: 'When hit, releases spores. Adjacent enemies take 3 death damage.',
+    params: { adjacent_aoe_damage: 3, damage_type: 'death', range: 1 },
   },
   'aura_of_decay 2': {
     id: 'aura_of_decay 2',
@@ -409,7 +409,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit_received',
     description: 'When hit, releases spores. Adjacent enemies take 5 nature damage.',
-    params: { adjacent_aoe_damage: 5, damage_type: 'nature', range: 1 },
+    params: { adjacent_aoe_damage: 5, damage_type: 'death', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',

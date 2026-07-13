@@ -62,6 +62,6 @@ export async function runPreload(root) {
   await preloadAssets(assetUrls, setProgress);
 
   const elapsed = Date.now() - start;
-  const minDuration = 2500;
+  const minDuration = 4500;
   if (elapsed < minDuration) await new Promise(r => setTimeout(r, minDuration - elapsed));
 }
