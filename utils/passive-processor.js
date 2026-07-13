@@ -56,6 +56,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus });
     }
+    if (p.hp_per_tagged_unit != null && p.tag_required != null) {
+      const tagCount = engine.combatants.filter(c =>
+        c.side === owner.side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(p.tag_required)
+      ).length;
+      if (tagCount > 0) {
+        const hpBonus    = (p.hp_per_tagged_unit ?? 0) * tagCount;
+        const armorBonus = (p.armor_per_tagged_unit ?? 0) * tagCount;
+        if (hpBonus > 0) {
+          owner.battle_hp += hpBonus;
+          owner.max_hp    += hpBonus;
+          engine.recordGrantedBuff(owner, 'max_hp', [owner], hpBonus);
+        }
+        if (armorBonus > 0) {
+          owner.armor += armorBonus;
+          engine.recordGrantedBuff(owner, 'armor', [owner], armorBonus);
+        }
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: tagCount, message: `${def.name} — ${tagCount} ${p.tag_required} allies: +${hpBonus} HP, +${armorBonus} armor` });
+      }
+    }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
 
       const enemies = engine.combatants.filter(c => c.side !== owner.side);
@@ -536,7 +555,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   const data = actor.unit_data || actor;
   let power = data.action_power ?? data.action?.value ?? 12;
-  console.log('[calcDmg] actor:', actor.unit_name, 'action_power on unit_data:', data.action_power, 'action?.value:', data.action?.value, 'resolved power:', power);
   const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
   const p = Object.assign({}, ...defs.map(d => d.params || {}));
   if (p.execute_bonus_pct != null && p.execute_threshold_pct != null) {
@@ -568,7 +586,7 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
     const resistance = resistances[damageSource] ?? 0;
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
   }
-  return Math.max(1, dmg);
+  return { dmg: Math.max(1, dmg), rawDmg };
 }
 function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
   const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;

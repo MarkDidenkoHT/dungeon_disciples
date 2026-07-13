@@ -302,6 +302,9 @@ class BattleEngine {
   calcDamage(actor, target) {
     return calcDamageWithPassives(actor, target, this.ABILITIES);
   }
+  calcDamageValue(actor, target) {
+    return this.calcDamage(actor, target).dmg;
+  }
   calcHeal(actor) {
     const data  = actor.unit_data || actor;
     const power = data.action_power ?? data.action?.value ?? 15;
@@ -365,7 +368,7 @@ class BattleEngine {
         const duelistDef = this.resolveAllPassiveDefs(target).find(d => d.params?.preemptive_strike_pct != null);
         if (duelistDef && cellRow(actor.cellIndex) === cellRow(target.cellIndex) && cellCol(actor.cellIndex) === (actor.side === 'enemy' ? 0 : 1)) {
           const p = duelistDef.params;
-          const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor) * p.preemptive_strike_pct / 100));
+          const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor).dmg * p.preemptive_strike_pct / 100));
           actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
           const actorDied = actor.battle_hp <= 0;
           this.pushLog({ type: 'passive', passive: duelistDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
@@ -381,7 +384,7 @@ class BattleEngine {
           }
         }
       }
-      const dmg = this.calcDamage(actor, target);
+      const { dmg, rawDmg } = this.calcDamage(actor, target);
       if (target._invulnerable) {
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
         actor.acted_this_round = true;
@@ -395,7 +398,7 @@ class BattleEngine {
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, killed: !target.alive });
+            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });

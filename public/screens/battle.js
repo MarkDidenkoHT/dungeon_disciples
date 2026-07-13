@@ -374,10 +374,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
       const verb      = entry.heal ? 'healed' : 'hit';
       const valClass  = entry.heal ? 'log-val-heal' : 'log-val';
+      const resistedStr = (!entry.heal && entry.rawDmg != null && entry.resisted > 0)
+        ? ` <span class="log-resisted">(${entry.rawDmg} power, ${entry.resisted} resisted)</span>` : '';
+      const powerStr = (!entry.heal && entry.rawDmg != null && entry.resisted === 0)
+        ? ` <span class="log-resisted">(${entry.rawDmg} power)</span>` : '';
       return `<div class="log-entry">
         <span class="log-actor">${entry.actorName}</span>${actorLoc} ${verb}
         <span class="log-target"> ${entry.targetName}</span>${targetLoc} for
-        <span class="${valClass}">${entry.value}</span>
+        <span class="${valClass}">${entry.value}</span>${resistedStr}${powerStr}
         ${entry.killed ? ' 💀' : ''}
       </div>`;
     }

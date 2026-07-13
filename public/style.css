@@ -430,6 +430,44 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 20px;
 }
 
+.loading-screen--fullbg {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  justify-content: flex-end;
+  padding-bottom: 48px;
+  gap: 0;
+}
+
+.loading-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.92) 100%);
+  pointer-events: none;
+}
+
+.loading-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.loading-flavour {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.6);
+  font-style: italic;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
 .loading-crest {
   width: 72px;
   height: 72px;
@@ -2129,6 +2167,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: var(--text); }
 .log-target { color: #c8973a; }
+.log-resisted { color: var(--muted); font-size: 0.7em; }
 .log-val    { color: #c84a3a; font-weight: bold; }
 
 .action-panel {
@@ -4226,8 +4265,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .item-card-icon {
-  width: 150px;
-  height: 150px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   background: #0e1219;
   border: 1px solid #222d3e;
