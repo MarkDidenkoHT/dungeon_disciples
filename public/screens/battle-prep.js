@@ -116,6 +116,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
+      <div class="battle-prep-enter-row">
+        <button id="ready-btn" class="battle-prep-enter-btn" disabled>⚔ Enter Battle</button>
+      </div>
+
       <div class="battle-prep-tabs">
         <button class="battle-prep-tab-btn active" data-tab="formation">Formation</button>
       </div>
@@ -126,7 +130,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
-      <button id="ready-btn" style="display:none" disabled></button>
     </div>
 
     <div id="spell-sheet-overlay" class="spell-sheet-overlay hidden">
@@ -231,27 +234,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     spellsNavBtn.addEventListener('click', spellsNavBtn._battlePrepHandler, true);
   }
 
-  const embarkNavBtn = document.querySelector('.nav-btn[data-screen="embark"]');
-  if (embarkNavBtn) {
-    embarkNavBtn._battlePrepHandler = (e) => {
-      e.stopImmediatePropagation();
-      const btn = root.querySelector('#ready-btn');
-      if (btn && !btn.disabled) btn.click();
-    };
-    embarkNavBtn.addEventListener('click', embarkNavBtn._battlePrepHandler, true);
-  }
 
   function restoreNavLabels() {
     const s = document.querySelector('.nav-btn[data-screen="spells"]');
-    const em = document.querySelector('.nav-btn[data-screen="embark"]');
     if (s) {
       s.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.spells[L];
       if (s._battlePrepHandler) { s.removeEventListener('click', s._battlePrepHandler, true); delete s._battlePrepHandler; }
-    }
-    if (em) {
-      em.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.embark[L];
-      em.classList.remove('nav-btn--battle-ready');
-      if (em._battlePrepHandler) { em.removeEventListener('click', em._battlePrepHandler, true); delete em._battlePrepHandler; }
     }
   }
 
@@ -674,13 +662,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function checkReady() {
     const heroPlaced   = heroId !== null && placedUnitIds().has(heroId);
-    const embarkNavBtn = document.querySelector('.nav-btn[data-screen="embark"]');
-    if (embarkNavBtn) {
-      embarkNavBtn.classList.toggle('nav-btn--battle-ready', heroPlaced);
-      embarkNavBtn.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.enterBattle[L];
-    }
     const btn = root.querySelector('#ready-btn');
-    if (btn) btn.disabled = !heroPlaced;
+    if (btn) {
+      btn.disabled = !heroPlaced;
+      btn.classList.toggle('battle-prep-enter-btn--ready', heroPlaced);
+    }
 
     if (heroPlaced) {
       markTutorialDone(player, 'battle_prep_start');

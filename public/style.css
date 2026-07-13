@@ -2613,6 +2613,41 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
 }
 
+.battle-prep-enter-row {
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 4px;
+}
+
+.battle-prep-enter-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 0;
+  border-radius: 8px;
+  border: 1px solid var(--muted);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: not-allowed;
+  opacity: 0.5;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.battle-prep-enter-btn--ready {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(200, 151, 58, 0.08);
+  opacity: 1;
+  cursor: pointer;
+}
+
+.battle-prep-enter-btn--ready:active {
+  background: rgba(200, 151, 58, 0.2);
+}
+
 .battle-prep-tabs {
   display: flex;
   border-top: 1px solid var(--border);
