@@ -2648,6 +2648,16 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: rgba(200, 151, 58, 0.2);
 }
 
+.army-power {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.core-stat--power { border-top: 1px solid var(--border); margin-top: 2px; padding-top: 2px; }
+.core-stat-val--power { color: var(--accent); font-weight: 700; }
+
 .battle-prep-tabs {
   display: flex;
   border-top: 1px solid var(--border);

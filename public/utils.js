@@ -189,9 +189,26 @@ export function renderUnitPortrait(unit, opts = {}) {
     </div>`;
 }
 
+export function calcUnitPower(unit) {
+  const res      = unit.resistances || {};
+  const avgRes   = Object.values(res).reduce((s, v) => s + (v || 0), 0) / 6;
+  const armor    = unit.armor ?? 0;
+  const hp       = unit.max_hp ?? unit.hp ?? 0;
+  const hp_num   = typeof hp === 'string' ? parseInt(hp.split('/')[1] || hp) : hp;
+  const vitality = ((avgRes + armor) / 2) + hp_num;
+
+  const power      = unit.action_power ?? unit.action?.value ?? 0;
+  const targets    = unit.targets ?? 1;
+  const initiative = unit.initiative ?? 0;
+  const dps        = power * (targets / 2) * (1 + initiative / 100);
+
+  return Math.round(vitality + dps);
+}
+
 export function renderUnitCoreStatsColumn(unit) {
   const actionLabel = getActionLabel(unit.action);
   const power       = unit.action_power ?? unit.action?.value ?? '—';
+  const unitPower   = calcUnitPower(unit);
 
   return `
     <div class="unit-core-stats unit-core-stats--side">
@@ -200,6 +217,7 @@ export function renderUnitCoreStatsColumn(unit) {
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
       <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
+      <div class="core-stat core-stat--power"><span class="core-stat-label">⚔ Unit Power</span><span class="core-stat-val core-stat-val--power">${unitPower}</span></div>
     </div>`;
 }
 

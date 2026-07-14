@@ -10,7 +10,7 @@ import {
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
-  renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts,
+  renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
 } from '../utils.js';
 
 const BP_NAV_LABELS = {
@@ -100,7 +100,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
-          <div class="battle-half-label">Your Formation <span id="loyalty-counter" class="loyalty-counter"></span></div>
+          <div class="battle-half-label">Your Formation <span id="loyalty-counter" class="loyalty-counter"></span><span id="player-army-power" class="army-power"></span></div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="player-grid"></div>
           </div>
@@ -109,6 +109,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <div class="battle-half-label">
             Enemies
             <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
+            <span id="enemy-army-power" class="army-power"></span>
           </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="enemy-grid"></div>
@@ -589,6 +590,18 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <span class="battle-cell-row-hint">R${cellRow(i) + 1}</span>
       </div>`;
     }).join('');
+
+    const playerPowerEl = root.querySelector('#player-army-power');
+    if (playerPowerEl) {
+      const placed = Object.values(occupied).filter(o => o && o.anchor !== undefined);
+      const total  = placed.reduce((sum, occ) => {
+        const u = roster.find(r => r.id === occ.unitId);
+        if (!u) return sum;
+        const def = resolveUnitDef(u) || {};
+        return sum + calcUnitPower({ ...def, hp: u.unit_data?.max_hp ?? def.hp });
+      }, 0);
+      playerPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
+    }
   }
 
   function renderEnemyGrid() {
@@ -618,6 +631,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>`;
     }).join('');
+
+    const enemyPowerEl = root.querySelector('#enemy-army-power');
+    if (enemyPowerEl) {
+      const total = enemies.reduce((sum, e) => sum + calcUnitPower(e), 0);
+      enemyPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
+    }
 
     grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
       cell.addEventListener('click', () => {
