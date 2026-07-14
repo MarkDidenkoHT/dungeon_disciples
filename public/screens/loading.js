@@ -16,9 +16,14 @@ const LOADING_SLIDES = [
   },
   {
     img:  '/assets/loading_screens/loading4.jpg',
-    text: "Some units occupy two tiles - a row, or a column.",
+    text: "Some units occupy two tiles - a row, or a column. These units require 2 loyalty.",
   },
 ];
+
+//some text ideas for future
+//Loyalty is your hero stat that is tied to heroes level. It allows taking more characters in combat.
+//Each character can equip an item. Items cna be crafted and equipped in roster.
+//Characters that die in combat do not receive exp for that battle, even if remaining characters won.
 
 export function renderLoadingScreen(root) {
   const slide = LOADING_SLIDES[Math.floor(Math.random() * LOADING_SLIDES.length)];
