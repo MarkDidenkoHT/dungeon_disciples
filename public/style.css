@@ -1818,22 +1818,26 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   flex-shrink: 0;
   width: 64px;
-  justify-content: center;
+  justify-content: space-between;
+  align-self: stretch;
 }
 
 .unit-core-stats--side .core-stat {
-  flex: 0 0 auto;
+  flex: 1;
+  justify-content: center;
 }
 
 .unit-resists-grid--side {
   flex-direction: column;
   flex-shrink: 0;
   width: 48px;
-  justify-content: center;
+  justify-content: space-between;
+  align-self: stretch;
 }
 
 .unit-resists-grid--side .resist-cell {
-  flex: 0 0 auto;
+  flex: 1;
+  justify-content: center;
 }
 
 .unit-main-row .unit-portrait {

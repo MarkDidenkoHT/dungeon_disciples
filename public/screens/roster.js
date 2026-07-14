@@ -110,7 +110,7 @@ export function renderRoster(root, { player }) {
       xp:   currentXp,
     }, equippedItem);
 
-    const portraitHtml = renderUnitPortrait(liveUnit, { badge: alive ? tierLabel : '💀 Dead' });
+    const portraitHtml = renderUnitPortrait(liveUnit, { badge: alive ? '' : '💀 Dead' });
     const coreHtml      = renderUnitCoreStatsColumn(liveUnit);
     const resistsHtml   = renderUnitResistColumn(liveUnit);
 
