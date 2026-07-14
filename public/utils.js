@@ -209,15 +209,17 @@ export function renderUnitCoreStatsColumn(unit) {
   const actionLabel = getActionLabel(unit.action);
   const power       = unit.action_power ?? unit.action?.value ?? '—';
   const unitPower   = calcUnitPower(unit);
+  const tier        = unit.t ?? unit.tier ?? '—';
 
   return `
     <div class="unit-core-stats unit-core-stats--side">
+      <div class="core-stat"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></div>
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
       <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
-      <div class="core-stat core-stat--power"><span class="core-stat-label">⚔ Unit Power</span><span class="core-stat-val core-stat-val--power">${unitPower}</span></div>
+      <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
 }
 

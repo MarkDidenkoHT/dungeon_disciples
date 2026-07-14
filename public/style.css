@@ -2655,9 +2655,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin-left: 6px;
 }
 
-.core-stat--power { border-top: 1px solid var(--border); margin-top: 2px; padding-top: 2px; }
-.core-stat-val--power { color: var(--accent); font-weight: 700; }
-
 .battle-prep-tabs {
   display: flex;
   border-top: 1px solid var(--border);
