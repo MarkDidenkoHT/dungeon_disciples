@@ -4,19 +4,19 @@ import { preloadAssets } from '../utils.js';
 const LOADING_SLIDES = [
   {
     img:  '/assets/loading_screens/loading1.jpg',
-    text: 'Paladins and Templars of the Empire are defensive front line bruisers, gaining bonuses for being offensive.',
+    text: 'Characters in back line cannot be damaged by melee attacks while there is at least one character in front line.',
   },
   {
     img:  '/assets/loading_screens/loading2.jpg',
-    text: "Grail's Zombies offer sturdy frontlines that grow stronger with numbers.",
+    text: "Many characters have interactions and abilities based on ally tags. Inspect and learn character abilities in Roster tab.",
   },
   {
     img:  '/assets/loading_screens/loading3.jpg',
-    text: 'Crimson Basilica followers have fallen to corruption.',
+    text: "Don't forget to check on health of your characters before embarking!",
   },
   {
     img:  '/assets/loading_screens/loading4.jpg',
-    text: "Empire has holy machinery watched by engineer. Sentinel is a large unbreakable construct.",
+    text: "Some units occupy two tiles - a row, or a column.",
   },
 ];
 
