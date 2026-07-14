@@ -111,7 +111,7 @@ export function renderRoster(root, { player }) {
     }, equippedItem);
 
     const portraitHtml = renderUnitPortrait(liveUnit, { badge: alive ? '' : '💀 Dead' });
-    const coreHtml      = renderUnitCoreStatsColumn(liveUnit);
+    const coreHtml      = renderUnitCoreStatsColumn(liveUnit, { canLevelUp: !!canLevelUp, rosterId: u.id });
     const resistsHtml   = renderUnitResistColumn(liveUnit);
 
     const resurrectionSpell = SPELLS[player.faction]?.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
@@ -169,11 +169,11 @@ export function renderRoster(root, { player }) {
             <div class="levelup-xp-fill" style="width:${pct}%"></div>
           </div>
           <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
-          <button
-            class="levelup-btn ${canLevelUp ? 'levelup-btn--ready' : 'levelup-btn--locked'}"
+          ${!canLevelUp ? `<button
+            class="levelup-btn levelup-btn--locked"
             data-roster-id="${u.id}"
-            ${canLevelUp ? '' : `disabled data-hint="${upgradeBuildingHint || 'Cannot level up yet'}"`}
-          >Level Up</button>
+            disabled data-hint="${upgradeBuildingHint || 'Cannot level up yet'}"
+          >Level Up</button>` : ''}
         </div>`;
     } else {
       levelUpHtml = `

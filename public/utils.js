@@ -205,15 +205,20 @@ export function calcUnitPower(unit) {
   return Math.round(vitality + dps);
 }
 
-export function renderUnitCoreStatsColumn(unit) {
+export function renderUnitCoreStatsColumn(unit, opts = {}) {
   const actionLabel = getActionLabel(unit.action);
   const power       = unit.action_power ?? unit.action?.value ?? '—';
   const unitPower   = calcUnitPower(unit);
   const tier        = unit.t ?? unit.tier ?? '—';
+  const { canLevelUp = false, rosterId = null } = opts;
+
+  const lvCell = canLevelUp && rosterId
+    ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-roster-id="${rosterId}"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></button>`
+    : `<div class="core-stat"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></div>`;
 
   return `
     <div class="unit-core-stats unit-core-stats--side">
-      <div class="core-stat"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></div>
+      ${lvCell}
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>

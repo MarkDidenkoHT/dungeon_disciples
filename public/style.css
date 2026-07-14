@@ -1178,6 +1178,23 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 2px;
 }
 
+.core-stat--levelup {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  border-radius: 4px;
+  outline: 1px solid var(--accent);
+  animation: levelup-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes levelup-pulse {
+  0%, 100% { outline-color: var(--accent); }
+  50%       { outline-color: transparent; }
+}
+
 .resist-cell {
   display: flex;
   flex-direction: column;
