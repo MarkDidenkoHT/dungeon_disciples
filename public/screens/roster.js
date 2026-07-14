@@ -98,7 +98,7 @@ export function renderRoster(root, { player }) {
       }
     }
 
-    const canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
+    let canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
 
     const equippedItem = equippedItemFor(u.id);
 
@@ -147,6 +147,8 @@ export function renderRoster(root, { player }) {
 
         const pct = xpRequired != null ? Math.min(100, Math.floor((currentXp / xpRequired) * 100)) : 100;
 
+        if (!blocked) canLevelUp = true;
+
         levelUpHtml = `
           <div class="levelup-row">
             ${xpRequired != null ? `
@@ -155,10 +157,9 @@ export function renderRoster(root, { player }) {
               </div>
               <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
             ` : ''}
-            <span class="hero-level-label">Hero Level ${tier}</span>
             ${blocked
               ? `<button class="levelup-btn levelup-btn--locked" data-hint="${blockedMsg.replace(' — ', '').trim()}" disabled>Level Up</button>`
-              : `<button class="levelup-btn levelup-btn--ready" data-roster-id="${u.id}">Level Up</button>`}
+              : ''}
           </div>`;
       }
     } else if (hasPath) {
