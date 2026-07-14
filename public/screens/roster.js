@@ -157,9 +157,7 @@ export function renderRoster(root, { player }) {
               </div>
               <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
             ` : ''}
-            ${blocked
-              ? `<button class="levelup-btn levelup-btn--locked" data-hint="${blockedMsg.replace(' — ', '').trim()}" disabled>Level Up</button>`
-              : ''}
+
           </div>`;
       }
     } else if (hasPath) {
@@ -170,11 +168,7 @@ export function renderRoster(root, { player }) {
             <div class="levelup-xp-fill" style="width:${pct}%"></div>
           </div>
           <span class="levelup-xp-label">${currentXp}/${xpRequired} XP</span>
-          ${!canLevelUp ? `<button
-            class="levelup-btn levelup-btn--locked"
-            data-roster-id="${u.id}"
-            disabled data-hint="${upgradeBuildingHint || 'Cannot level up yet'}"
-          >Level Up</button>` : ''}
+
         </div>`;
     } else {
       levelUpHtml = `
