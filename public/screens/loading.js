@@ -1,39 +1,35 @@
 import { api } from '../api.js';
 import { preloadAssets } from '../utils.js';
 
-const LOADING_SLIDES = [
-  {
-    img:  '/assets/loading_screens/loading1.jpg',
-    text: 'Characters in back line cannot be damaged by melee attacks while there is at least one character in front line.',
-  },
-  {
-    img:  '/assets/loading_screens/loading2.jpg',
-    text: "Many characters have interactions and abilities based on ally tags. Inspect and learn character abilities in Roster tab.",
-  },
-  {
-    img:  '/assets/loading_screens/loading3.jpg',
-    text: "Don't forget to check on health of your characters before embarking!",
-  },
-  {
-    img:  '/assets/loading_screens/loading4.jpg',
-    text: "Some units occupy two tiles - a row, or a column. These units require 2 loyalty.",
-  },
+const LOADING_IMAGES = [
+  '/assets/loading_screens/loading1.jpg',
+  '/assets/loading_screens/loading2.jpg',
+  '/assets/loading_screens/loading3.jpg',
+  '/assets/loading_screens/loading4.jpg',
+  '/assets/loading_screens/loading5.jpg',
+  '/assets/loading_screens/loading6.jpg',
 ];
 
-//some text ideas for future
-//Loyalty is your hero stat that is tied to heroes level. It allows taking more characters in combat.
-//Each character can equip an item. Items cna be crafted and equipped in roster.
-//Characters that die in combat do not receive exp for that battle, even if remaining characters won.
+const LOADING_TIPS = [
+  'Characters in back line cannot be damaged by melee attacks while there is at least one character in front line.',
+  'Many characters have interactions and abilities based on ally tags. Inspect and learn character abilities in Roster tab.',
+  "Don't forget to check on health of your characters before embarking!",
+  'Some units occupy two tiles - a row, or a column. These units require 2 loyalty.',
+  'Items can be crafted and equipped in the Roster tab.',
+  'Loyalty is your hero stat that is tied to hero level. It allows taking more characters in combat.',
+];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 export function renderLoadingScreen(root) {
-  const slide = LOADING_SLIDES[Math.floor(Math.random() * LOADING_SLIDES.length)];
-
   root.innerHTML = `
-    <div class="loading-screen loading-screen--fullbg" style="background-image: url('${slide.img}')">
+    <div class="loading-screen loading-screen--fullbg" style="background-image: url('${pick(LOADING_IMAGES)}')">
       <div class="loading-bg-overlay"></div>
       <div class="loading-content">
         <div class="loading-title">Dungeon Disciples</div>
-        <div class="loading-flavour">${slide.text}</div>
+        <div class="loading-flavour">${pick(LOADING_TIPS)}</div>
         <div class="loading-bar-track">
           <div class="loading-bar-fill" id="loading-bar-fill"></div>
         </div>
