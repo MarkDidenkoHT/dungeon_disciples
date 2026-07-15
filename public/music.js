@@ -1,17 +1,27 @@
+const FACTION_THEME = {
+  empire:              '/assets/sfx/themes/empire.mp3',
+  choir_of_the_cursed: '/assets/sfx/themes/choir.mp3',
+  grail_of_sorrow:     '/assets/sfx/themes/grail.mp3',
+};
+
 let _audio       = null;
 let _faction     = null;
 let _enabled     = true;
-let _pendingPlay = false;  // ← new
+let _pendingPlay = false;
 
-document.addEventListener('pointerdown', () => {
+function attemptPlay() {
+  if (!_audio || !_enabled) return;
+  const p = _audio.play();
+  if (p instanceof Promise) {
+    p.catch(() => { _pendingPlay = true; });
+  }
+}
+
+function onFirstGesture() {
   if (_pendingPlay && _audio?.paused) {
     _audio.play().catch(() => {});
   }
   _pendingPlay = false;
-}, { once: true });
-
-export function initMusic(player) {
-  _enabled = player?.settings?.music_enabled !== false;
 }
 
 function createAudio(src) {
@@ -21,14 +31,9 @@ function createAudio(src) {
   return a;
 }
 
-function attemptPlay() {
-  if (!_audio || !_enabled) return;
-  const p = _audio.play();
-  if (p instanceof Promise) {
-    p.catch(() => {
-      _pendingPlay = true;
-    });
-  }
+export function initMusic(player) {
+  _enabled = player?.settings?.music_enabled !== false;
+  document.addEventListener('pointerdown', onFirstGesture, { once: true });
 }
 
 export function playFactionTheme(faction) {
