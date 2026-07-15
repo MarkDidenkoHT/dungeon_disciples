@@ -18,6 +18,9 @@ import {
   refreshNavLock,
 } from './api.js';
 
+import { hideTutorial }           from './tutorial.js';
+import { playFactionTheme, setMusicEnabled } from './music.js';
+
 export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
 
 const app = document.getElementById('app');
@@ -147,7 +150,6 @@ function navigate(screen, params = {}) {
   }
 }
 
-// Wire navigate into api.js so screens can call it without importing main.js
 setNavigate(navigate);
 
 function showReconnectModal(player, battle_id, battle_data) {
@@ -205,6 +207,9 @@ async function boot() {
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
     setSessionToken(session_token);
+
+    if (player.faction) playFactionTheme(player.faction);
+
     if (active) {
       mountShell(player);
       showReconnectModal(player, battle_id, battle_data);

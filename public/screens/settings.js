@@ -1,4 +1,5 @@
 import { api, navigate } from '../api.js';
+import { setMusicEnabled } from '../music.js';
 
 export function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -50,7 +51,7 @@ export function renderSettings(root, { player }) {
           </div>
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.music[L]}</span>
-            <button class="settings-toggle ${musicEnabled ? 'settings-toggle--on' : ''}" id="toggle-music" data-key="music_enabled">
+            <button class="settings-toggle ${musicEnabled ? 'settings-toggle--on' : ''}" id="toggle-music">
               ${musicEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
@@ -102,6 +103,15 @@ export function renderSettings(root, { player }) {
       btn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       btn.classList.toggle('settings-toggle--on', next);
     });
+  });
+
+  const musicBtn = root.querySelector('#toggle-music');
+  musicBtn.addEventListener('click', () => {
+    const current = localStorage.getItem('music_enabled') !== 'false';
+    const next    = !current;
+    setMusicEnabled(next);
+    musicBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    musicBtn.classList.toggle('settings-toggle--on', next);
   });
 
   const notifBtn = root.querySelector('#toggle-notifications');

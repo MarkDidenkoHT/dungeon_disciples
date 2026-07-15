@@ -2,6 +2,7 @@ import { api }      from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
 import { preloadAssets } from '../utils.js';
+import { playFactionTheme } from '../music.js';
 
 function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -229,6 +230,7 @@ export function renderRegister(root, { player } = {}) {
     root.querySelectorAll('.faction-choose-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         selectedFaction = FACTIONS.find(f => f.id === btn.dataset.id);
+        playFactionTheme(selectedFaction.id);
         await loadAndShowHeroStep();
       });
     });
