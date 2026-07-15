@@ -334,8 +334,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 HP and +2 armor for each Zombie ally on the field.',
-    params: { tag_required: 'Zombie', hp_per_tagged_unit: 2, armor_per_tagged_unit: 2 },
+    description: 'At battle start, gain +2 HP and +1 armor for each Zombie ally on the field.',
+    params: { tag_required: 'Zombie', hp_per_tagged_unit: 2, armor_per_tagged_unit: 1 },
   },
   'horde 2': {
     id: 'horde 2',
@@ -343,8 +343,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +4 HP and +3 armor for each Zombie ally on the field.',
-    params: { tag_required: 'Zombie', hp_per_tagged_unit: 4, armor_per_tagged_unit: 3 },
+    description: 'At battle start, gain +4 HP and +2 armor for each Zombie ally on the field.',
+    params: { tag_required: 'Zombie', hp_per_tagged_unit: 4, armor_per_tagged_unit: 2 },
   },
   'renew 1': {
     id: 'renew 1',
