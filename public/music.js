@@ -1,12 +1,14 @@
-const FACTION_THEME = {
-  empire:              '/assets/sfx/themes/empire.mp3',
-  choir_of_the_cursed: '/assets/sfx/themes/choir.mp3',
-  grail_of_sorrow:     '/assets/sfx/themes/grail.mp3',
-};
+let _audio       = null;
+let _faction     = null;
+let _enabled     = true;
+let _pendingPlay = false;  // ← new
 
-let _audio   = null;
-let _faction = null;
-let _enabled = true;
+document.addEventListener('pointerdown', () => {
+  if (_pendingPlay && _audio?.paused) {
+    _audio.play().catch(() => {});
+  }
+  _pendingPlay = false;
+}, { once: true });
 
 export function initMusic(player) {
   _enabled = player?.settings?.music_enabled !== false;
@@ -19,23 +21,34 @@ function createAudio(src) {
   return a;
 }
 
+function attemptPlay() {
+  if (!_audio || !_enabled) return;
+  const p = _audio.play();
+  if (p instanceof Promise) {
+    p.catch(() => {
+      _pendingPlay = true;
+    });
+  }
+}
+
 export function playFactionTheme(faction) {
   const src = FACTION_THEME[faction];
   if (!src) return;
   if (_faction === faction) {
-    if (_enabled && _audio?.paused) _audio.play().catch(() => {});
+    if (_enabled && _audio?.paused) attemptPlay();
     return;
   }
   if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
   _faction = faction;
   if (!_enabled) return;
   _audio = createAudio(src);
-  _audio.play().catch(() => {});
+  attemptPlay();
 }
 
 export function stopTheme() {
   if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
-  _faction = null;
+  _faction     = null;
+  _pendingPlay = false;
 }
 
 export function setMusicEnabled(enabled) {
@@ -45,9 +58,9 @@ export function setMusicEnabled(enabled) {
   } else {
     if (_faction && !_audio) {
       _audio = createAudio(FACTION_THEME[_faction]);
-      _audio.play().catch(() => {});
+      attemptPlay();
     } else if (_audio?.paused) {
-      _audio.play().catch(() => {});
+      attemptPlay();
     }
   }
 }
