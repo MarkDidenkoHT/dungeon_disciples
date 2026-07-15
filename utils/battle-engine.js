@@ -1,7 +1,7 @@
 const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 const { SPELLS } = require('../data/spells');
-const { COMBAT_BARKS } = require('../data/combat_barks');
+const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 
 // Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
 // through the exact same target-resolution + param-application system as player
@@ -350,7 +350,7 @@ class BattleEngine {
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
-      this.checkBark('heal_low_hp', actor, { preHealRatio });
+      this.checkBark('heal_low_hp', actor, { target, preHealRatio });
     } else {
       target = this.resolveProtectorIntercept(actor, target);
 
@@ -405,7 +405,10 @@ class BattleEngine {
             if (dead && !target.alive) {
               this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
               this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-              this.checkBark('kill_tag', actor, { dead: true, targetTags: target.unit_data?.tags ?? target.tags ?? [] });
+              this.checkBark('kill', actor, { target });
+              this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
+            } else {
+              this.checkBark('attack', actor, { target });
             }
           } else {
             this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
@@ -949,28 +952,71 @@ class BattleEngine {
     this.log.push(entry);
   }
 
-  // Cosmetic combat barks - see data/combat_barks.js for the decaying-chance
-  // rules. Purely flavor text; never affects gameplay state beyond the log.
+  // Cosmetic combat barks - see data/combat_barks.js for the rule format and
+  // the decaying-chance rules. Purely flavor text; never affects gameplay state
+  // beyond the log, and must never be allowed to throw into combat resolution.
+  barkTags(unit) {
+    if (!unit) return [];
+    const tags = unit.unit_data?.tags ?? unit.tags ?? [];
+    return Array.isArray(tags) ? tags.filter(Boolean) : [];
+  }
+
+  // Returns the filter's specificity score, or -1 if the unit does not match.
+  // An absent filter matches anything at score 0.
+  barkFilterScore(filter, unit) {
+    if (!filter) return 0;
+    if (!unit) return -1;
+    let score = 0;
+    if (filter.name != null) {
+      if (unit.unit_name !== filter.name) return -1;
+      score += 100; // a named rule must always beat any tag combination
+    }
+    const tags = this.barkTags(unit);
+    const wanted = filter.tags ?? (filter.tag != null ? [filter.tag] : []);
+    for (const t of wanted) {
+      if (!tags.includes(t)) return -1;
+      score += 2;
+    }
+    // `not` is a pure gate and scores nothing: a rule must not out-rank a more
+    // specific one just by listing more exclusions.
+    const banned = filter.not == null ? [] : (Array.isArray(filter.not) ? filter.not : [filter.not]);
+    for (const t of banned) {
+      if (tags.includes(t)) return -1;
+    }
+    return score;
+  }
+
   checkBark(triggerKey, owner, ctx = {}) {
-    const barkDef = COMBAT_BARKS[triggerKey];
-    if (!barkDef) return;
-    const lines = barkDef.units?.[owner.unit_name];
-    if (!lines || !lines.length) return;
-
+    if (!owner) return;
     if (triggerKey === 'heal_low_hp') {
-      if (ctx.preHealRatio == null || ctx.preHealRatio >= barkDef.threshold_pct / 100) return;
-    }
-    if (triggerKey === 'kill_tag') {
-      if (!ctx.dead || !(ctx.targetTags || []).includes(barkDef.tag)) return;
+      if (ctx.preHealRatio == null || ctx.preHealRatio >= HEAL_BARK_THRESHOLD_PCT / 100) return;
     }
 
+    // Chance decays per unit, per trigger, per battle; check it before the
+    // (more expensive) rule scan so most calls cost almost nothing.
     owner._bark_counts = owner._bark_counts || {};
-    const spoken = owner._bark_counts[triggerKey] ?? 0;
-    const chance = spoken === 0 ? 0.5 : spoken === 1 ? 0.25 : 0;
+    const spoken  = owner._bark_counts[triggerKey] ?? 0;
+    const chances = BARK_CHANCES[triggerKey] ?? [];
+    const chance  = chances[spoken] ?? 0;
     if (chance <= 0 || Math.random() >= chance) return;
 
+    let best = -1;
+    let pool = [];
+    for (const rule of COMBAT_BARKS) {
+      if (rule.trigger !== triggerKey) continue;
+      const aScore = this.barkFilterScore(rule.actor, owner);
+      if (aScore < 0) continue;
+      const tScore = this.barkFilterScore(rule.target, ctx.target);
+      if (tScore < 0) continue;
+      const score = aScore + tScore;
+      if (score < best) continue;
+      if (score > best) { best = score; pool = []; }
+      pool.push(...(rule.lines ?? []));
+    }
+    if (!pool.length) return;
+
     owner._bark_counts[triggerKey] = spoken + 1;
-    const line = lines[Math.floor(Math.random() * lines.length)];
+    const line = pool[Math.floor(Math.random() * pool.length)];
     this.pushLog({ type: 'bark', actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: line });
   }
 }
