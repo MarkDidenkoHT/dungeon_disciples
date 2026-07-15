@@ -192,9 +192,11 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         });
       });
 
-      // Gated on the roster steps, not the castle ones: the player is sent here
-      // from the roster once their hero is equipped.
-      if (isTutorialDone(player, 'roster_equip') && !isTutorialDone(player, 'embark_region')) {
+      // Deliberately gated on the castle step, not the roster ones: onboarding
+      // order is enforced by navigation (castle -> roster -> here), so a player
+      // who reaches embark another way still gets this step instead of being
+      // stranded behind a roster step that never ran.
+      if (isTutorialDone(player, 'second_building') && !isTutorialDone(player, 'embark_region')) {
         const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
         if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
       } else {

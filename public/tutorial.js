@@ -1,5 +1,8 @@
 import { api } from './api.js';
 
+// Label for the bubble's dismiss button on informational steps (opts.showContinue).
+const CONTINUE_LABEL = { en: 'Got it', ru: 'Понятно' };
+
 const TUTORIAL_STEPS = {
   throne_upgrade: {
     en: {
@@ -19,6 +22,46 @@ const TUTORIAL_STEPS = {
     ru: {
       title: 'Растите армию',
       text: 'Один герой не выиграет каждую битву. Постройте здание здесь, чтобы набрать второго бойца.',
+    },
+  },
+  roster_intro: {
+    en: {
+      title: 'Your Troops',
+      text: 'This is your roster. Inspect any unit here, level them up once they have earned enough experience, and equip them with items.',
+    },
+    ru: {
+      title: 'Ваш отряд',
+      text: 'Это ваш отряд. Здесь можно осмотреть любого бойца, повысить его уровень, когда он накопит достаточно опыта, и снарядить предметами.',
+    },
+  },
+  roster_equip_slot: {
+    en: {
+      title: 'Equipment Slot',
+      text: 'Every unit carries one item, and it sits in this slot. Your hero came with a set of Padded Armor — tap the empty slot to open your items.',
+    },
+    ru: {
+      title: 'Слот снаряжения',
+      text: 'Каждый боец носит один предмет — он занимает этот слот. У вашего героя есть стёганый доспех: коснитесь пустого слота, чтобы открыть предметы.',
+    },
+  },
+  roster_equip: {
+    en: {
+      title: 'Arm Your Hero',
+      text: 'Here is everything this unit can wear. Padded Armor grants +5 HP — tap Equip to put it on.',
+    },
+    ru: {
+      title: 'Снарядите героя',
+      text: 'Здесь всё, что может носить этот боец. Стёганый доспех даёт +5 к здоровью — нажмите Equip, чтобы надеть его.',
+    },
+  },
+  roster_equipped: {
+    en: {
+      title: 'Armor Equipped',
+      text: 'The armor now fills your hero\'s slot and its +5 HP is already counted in their health. Tap the slot any time to swap gear. Your hero is ready — on to your first battle.',
+    },
+    ru: {
+      title: 'Доспех надет',
+      text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение. Герой готов — вперёд, в первый бой.',
     },
   },
   embark_region: {
@@ -88,12 +131,30 @@ export function hideTutorial() {
   }
 }
 
+/**
+ * Spotlights `targetEl` and shows the copy for `stepId`.
+ *
+ * opts.padding      px of breathing room around the target (default 8)
+ * opts.showContinue render a dismiss button in the bubble, for steps that only
+ *                   explain something instead of asking for a specific tap
+ * opts.onAdvance    called once, when the player taps the target (or the
+ *                   continue button). Use it to chain the next step.
+ */
 export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   hideTutorial();
-  if (!targetEl) return;
+  // Both of these used to fail silently, which is indistinguishable from the
+  // tutorial simply not running. Say so instead.
+  if (!targetEl) {
+    console.warn(`[tutorial] step "${stepId}" has no target element — skipping`);
+    return;
+  }
   const step = TUTORIAL_STEPS[stepId];
-  if (!step) return;
-  const copy = step[lang(player)];
+  if (!step) {
+    console.warn(`[tutorial] unknown step "${stepId}" — is tutorial.js up to date?`);
+    return;
+  }
+  const L = lang(player);
+  const copy = step[L];
   const padding = opts.padding ?? 8;
 
   const container = document.createElement('div');
@@ -107,12 +168,16 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
 
   const ring = document.createElement('div');
   ring.className = 'tutorial-ring';
+  // Informational steps (showContinue) point at their target without letting it
+  // be tapped; action steps must let the tap through to the real control.
+  const ringHits = opts.showContinue ? 'auto' : 'none';
 
   const bubble = document.createElement('div');
   bubble.className = 'tutorial-bubble';
   bubble.innerHTML = `
     <div class="tutorial-bubble-title">${copy.title}</div>
     <div class="tutorial-bubble-text">${copy.text}</div>
+    ${opts.showContinue ? `<button class="tutorial-bubble-btn">${CONTINUE_LABEL[L]}</button>` : ''}
   `;
 
   container.appendChild(top);
@@ -138,7 +203,9 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
     bottom.style.cssText = `top:${hole.bottom}px; left:0; width:${vw}px; height:${Math.max(0, vh - hole.bottom)}px;`;
     left.style.cssText   = `top:${hole.top}px; left:0; width:${Math.max(0, hole.left)}px; height:${hole.bottom - hole.top}px;`;
     right.style.cssText  = `top:${hole.top}px; left:${hole.right}px; width:${Math.max(0, vw - hole.right)}px; height:${hole.bottom - hole.top}px;`;
-    ring.style.cssText   = `top:${hole.top}px; left:${hole.left}px; width:${hole.right - hole.left}px; height:${hole.bottom - hole.top}px;`;
+    // layout() rewrites cssText wholesale, so the ring's hit-testing has to be
+    // set here rather than as a one-off inline style.
+    ring.style.cssText   = `top:${hole.top}px; left:${hole.left}px; width:${hole.right - hole.left}px; height:${hole.bottom - hole.top}px; pointer-events:${ringHits};`;
 
     const spaceBelow = vh - hole.bottom;
     const placeBelow = spaceBelow > 140;
@@ -159,11 +226,30 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   activeResizeHandler = layout;
   window.addEventListener('resize', activeResizeHandler);
 
-  const onTargetTap = () => hideTutorial();
-  targetEl.addEventListener('click', onTargetTap, { once: true });
+  // Either source advances the step, and only the first one counts: hideTutorial()
+  // tears down the listeners, so onAdvance can safely show the next step.
+  let advanced = false;
+  const advance = () => {
+    if (advanced) return;
+    advanced = true;
+    hideTutorial();
+    opts.onAdvance?.();
+  };
+
+  const continueBtn = bubble.querySelector('.tutorial-bubble-btn');
+  continueBtn?.addEventListener('click', advance);
+
+  // An informational step only highlights its target to point at it — the ring
+  // swallows taps so the player can't trigger the underlying control (and open a
+  // sheet over the next spotlight). Its button is the only way onward.
+  let onTargetTap = null;
+  if (!opts.showContinue) {
+    onTargetTap = () => advance();
+    targetEl.addEventListener('click', onTargetTap, { once: true });
+  }
 
   activeCleanup = () => {
     container.remove();
-    targetEl.removeEventListener('click', onTargetTap);
+    if (onTargetTap) targetEl.removeEventListener('click', onTargetTap);
   };
 }
