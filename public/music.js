@@ -4,56 +4,54 @@ const FACTION_THEME = {
   grail_of_sorrow:     '/assets/sfx/themes/grail.mp3',
 };
 
-let _audio       = null;
-let _faction     = null;
-let _enabled     = true;
-let _pendingPlay = false;
-
-function attemptPlay() {
-  if (!_audio || !_enabled) return;
-  const p = _audio.play();
-  if (p instanceof Promise) {
-    p.catch(() => { _pendingPlay = true; });
-  }
-}
-
-function onFirstGesture() {
-  if (_pendingPlay && _audio?.paused) {
-    _audio.play().catch(() => {});
-  }
-  _pendingPlay = false;
-}
+let _audio    = null;
+let _faction  = null;
+let _enabled  = true;
+let _unlocked = false;
 
 function createAudio(src) {
   const a  = new Audio(src);
   a.loop   = true;
-  a.volume = 0.3;
+  a.volume = 0.75;
   return a;
+}
+
+function unlockAudio() {
+  if (_unlocked) return;
+  _unlocked = true;
+  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(evt =>
+    document.removeEventListener(evt, unlockAudio, true)
+  );
+  if (_faction && _enabled) {
+    _audio = createAudio(FACTION_THEME[_faction]);
+    _audio.play().catch(() => {});
+  }
 }
 
 export function initMusic(player) {
   _enabled = player?.settings?.music_enabled !== false;
-  document.addEventListener('pointerdown', onFirstGesture, { once: true });
+  ['pointerdown', 'touchstart', 'touchend', 'click'].forEach(evt =>
+    document.addEventListener(evt, unlockAudio, { passive: true, capture: true })
+  );
 }
 
 export function playFactionTheme(faction) {
   const src = FACTION_THEME[faction];
   if (!src) return;
   if (_faction === faction) {
-    if (_enabled && _audio?.paused) attemptPlay();
+    if (_enabled && _audio?.paused) _audio.play().catch(() => {});
     return;
   }
   if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
   _faction = faction;
-  if (!_enabled) return;
+  if (!_enabled || !_unlocked) return;
   _audio = createAudio(src);
-  attemptPlay();
+  _audio.play().catch(() => {});
 }
 
 export function stopTheme() {
   if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
-  _faction     = null;
-  _pendingPlay = false;
+  _faction = null;
 }
 
 export function setMusicEnabled(enabled) {
@@ -61,11 +59,11 @@ export function setMusicEnabled(enabled) {
   if (!enabled) {
     if (_audio) _audio.pause();
   } else {
-    if (_faction && !_audio) {
+    if (_faction && !_audio && _unlocked) {
       _audio = createAudio(FACTION_THEME[_faction]);
-      attemptPlay();
+      _audio.play().catch(() => {});
     } else if (_audio?.paused) {
-      attemptPlay();
+      _audio.play().catch(() => {});
     }
   }
 }
