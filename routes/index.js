@@ -431,6 +431,15 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'player_id and chat_id required' });
   }
   try {
+    // battle_log rows point at battle_state via battle_log_battle_id_fkey, so
+    // they must be cleared before the battle_state rows they reference - a plain
+    // battle_state delete violates that constraint for anyone who has fought.
+    const battles   = await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&select=battle_id`);
+    const battleIds = [...new Set((battles || []).map(b => b.battle_id).filter(Boolean))];
+    await Promise.all(battleIds.map(id =>
+      supabase(`/battle_log?battle_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' })
+    ));
+
     await Promise.all([
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
