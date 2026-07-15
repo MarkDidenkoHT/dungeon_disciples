@@ -556,12 +556,12 @@ export function renderRoster(root, { player }) {
           const savedIdx = current;
           initSlider();
           goTo(savedIdx);
-          // Onboarding's last roster beat: the hero is armed, so close up and
-          // hand off to embark, which is gated on this step being done.
+          // Onboarding's last roster beat. Marked here, on the equip actually
+          // succeeding, rather than on the tap that requested it.
           if (!isTutorialDone(player, 'roster_equip')) {
             markTutorialDone(player, 'roster_equip');
             closeSheet(); // navigate() clears the spotlight, but not the sheet
-            navigate('embark', { player });
+            showEquippedStep(equipBtn.dataset.rosterId);
           }
         } catch (err) {
           alert(err.message || 'Equip failed');
@@ -609,9 +609,10 @@ export function renderRoster(root, { player }) {
   }
 
   // Onboarding chain, entered right after the player's second building (castle.js
-  // navigates here). Runs: intro -> tap the hero's item slot -> tap Equip. The
-  // final step is completed by the equip handler in openItemModal(), not by the
-  // tap itself, so the tutorial only advances once the item is really on.
+  // navigates here). Runs: intro -> tap the hero's item slot -> tap Equip ->
+  // confirm, then hands off to embark. The equip step is completed by the equip
+  // handler in openItemModal() rather than by the tap that requested it, so the
+  // chain only advances once the item is really on.
   const STARTING_ITEM_KEY = 'padded_armor';
 
   function heroUnit() {
@@ -626,21 +627,22 @@ export function renderRoster(root, { player }) {
   }
 
   function runRosterTutorial() {
+    const hero = heroUnit();
+    // TEMPORARY onboarding diagnostic — remove once the roster steps are confirmed.
+    console.log('[roster] tutorial gate', {
+      second_building: isTutorialDone(player, 'second_building'),
+      roster_intro:    isTutorialDone(player, 'roster_intro'),
+      roster_equip:    isTutorialDone(player, 'roster_equip'),
+      units:           units.length,
+      items:           items.length,
+      itemKeys:        items.map(it => it.item_stats?.key || it.item_stats?.icon),
+      hero:            hero?.unit_data?.unit_id,
+      heroEquipped:    hero ? !!equippedItemFor(hero.id) : null,
+    });
+
     if (!isTutorialDone(player, 'second_building')) return;
     if (isTutorialDone(player, 'roster_equip')) return;
-    const hero = heroUnit();
     if (!hero) return;
-
-    // Don't start a walkthrough that cannot be finished: the hero may already be
-    // armed, or have nothing to put on (a player who registered before starting
-    // gear was granted). Embark's step is gated on roster_equip, so complete it
-    // here instead of stranding them behind a spotlight that never resolves.
-    const hasSomethingToEquip = !equippedItemFor(hero.id)
-      && items.some(it => !it.equipped_by && isEquippableBy(it, hero));
-    if (!hasSomethingToEquip) {
-      markTutorialDone(player, 'roster_equip');
-      return;
-    }
 
     const heroIdx = units.indexOf(hero);
     goTo(heroIdx);
@@ -661,12 +663,29 @@ export function renderRoster(root, { player }) {
   }
 
   function showEquipSlotStep(hero) {
+    // Nothing to teach if the hero is already armed, or has nothing to put on
+    // (an account that registered before starting gear was granted). Just stop —
+    // never mark the step done here, or a later item could never teach it.
+    if (equippedItemFor(hero.id)) return;
+    if (!items.some(it => !it.equipped_by && isEquippableBy(it, hero))) return;
+
     const slot = track.querySelector(`[data-item-slot][data-roster-id="${hero.id}"]`);
     if (!slot) return;
     showTutorialSpotlight(player, 'roster_equip_slot', slot, {
       // The same tap also opens the items sheet via the delegated track handler,
       // which runs after this one — wait a frame for that body to exist.
       onAdvance: () => requestAnimationFrame(() => showEquipButtonStep()),
+    });
+  }
+
+  // Payoff for the equip chain: the sheet is closed and the slot now shows the
+  // item, so point at it before handing off to embark.
+  function showEquippedStep(rosterId) {
+    const slot = track.querySelector(`[data-item-slot][data-roster-id="${rosterId}"]`);
+    if (!slot) { navigate('embark', { player }); return; }
+    showTutorialSpotlight(player, 'roster_equipped', slot, {
+      showContinue: true,
+      onAdvance: () => navigate('embark', { player }),
     });
   }
 
