@@ -206,6 +206,7 @@ async function boot() {
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
     setSessionToken(session_token);
 
+    initMusic(player);
     if (player.faction) playFactionTheme(player.faction);
 
     if (active) {

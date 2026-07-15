@@ -6,9 +6,10 @@ const FACTION_THEME = {
 
 let _audio   = null;
 let _faction = null;
+let _enabled = true;
 
-function isMusicEnabled() {
-  return localStorage.getItem('music_enabled') !== 'false';
+export function initMusic(player) {
+  _enabled = player?.settings?.music_enabled !== false;
 }
 
 function createAudio(src) {
@@ -21,36 +22,24 @@ function createAudio(src) {
 export function playFactionTheme(faction) {
   const src = FACTION_THEME[faction];
   if (!src) return;
-
   if (_faction === faction) {
-    if (isMusicEnabled() && _audio?.paused) _audio.play().catch(() => {});
+    if (_enabled && _audio?.paused) _audio.play().catch(() => {});
     return;
   }
-
-  if (_audio) {
-    _audio.pause();
-    _audio.src = '';
-    _audio = null;
-  }
-
+  if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
   _faction = faction;
-  if (!isMusicEnabled()) return;
-
+  if (!_enabled) return;
   _audio = createAudio(src);
   _audio.play().catch(() => {});
 }
 
 export function stopTheme() {
-  if (_audio) {
-    _audio.pause();
-    _audio.src = '';
-    _audio = null;
-  }
+  if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
   _faction = null;
 }
 
 export function setMusicEnabled(enabled) {
-  localStorage.setItem('music_enabled', String(enabled));
+  _enabled = enabled;
   if (!enabled) {
     if (_audio) _audio.pause();
   } else {

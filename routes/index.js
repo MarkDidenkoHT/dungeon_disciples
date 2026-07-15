@@ -342,7 +342,7 @@ router.post('/login', async (req, res) => {
         username: telegramUser.username || null,
         first_name: telegramUser.first_name || null,
         session_token,
-        settings: { language: telegramUser.language_code || 'en', notifications: true },
+        settings: { language: telegramUser.language_code || 'en', notifications: true, music_enabled: true, sfx_enabled: true, barks_enabled: true, },
       }),
     });
     let dailyResult = null;

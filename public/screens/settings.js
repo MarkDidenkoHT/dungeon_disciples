@@ -32,10 +32,11 @@ export function renderSettings(root, { player }) {
   const L = lang(player);
 
   const sfxEnabled           = localStorage.getItem('sfx_enabled')   !== 'false';
-  const musicEnabled         = localStorage.getItem('music_enabled') !== 'false';
+  const musicEnabled = player?.settings?.music_enabled !== false;
   const notificationsEnabled = player?.settings?.notifications !== false;
   const barksEnabled         = player?.settings?.barks_enabled !== false;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
+  
 
   root.innerHTML = `
     <div class="screen screen-settings">
@@ -94,24 +95,36 @@ export function renderSettings(root, { player }) {
     </div>
   `;
 
-  root.querySelectorAll('.settings-toggle[data-key]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key     = btn.dataset.key;
-      const current = localStorage.getItem(key) !== 'false';
-      const next    = !current;
-      localStorage.setItem(key, String(next));
-      btn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
-      btn.classList.toggle('settings-toggle--on', next);
-    });
-  });
+  // root.querySelectorAll('.settings-toggle[data-key]').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     const key     = btn.dataset.key;
+  //     const current = localStorage.getItem(key) !== 'false';
+  //     const next    = !current;
+  //     localStorage.setItem(key, String(next));
+  //     btn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+  //     btn.classList.toggle('settings-toggle--on', next);
+  //   });
+  // });
 
   const musicBtn = root.querySelector('#toggle-music');
-  musicBtn.addEventListener('click', () => {
-    const current = localStorage.getItem('music_enabled') !== 'false';
-    const next    = !current;
-    setMusicEnabled(next);
+  musicBtn.addEventListener('click', async () => {
+    const next = player.settings?.music_enabled === false;
     musicBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
     musicBtn.classList.toggle('settings-toggle--on', next);
+    setMusicEnabled(next);
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { music_enabled: next },
+      });
+      player.settings = updated.settings;
+    } catch (err) {
+      musicBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      musicBtn.classList.toggle('settings-toggle--on', !next);
+      setMusicEnabled(!next);
+      alert(err.message || 'Failed to save setting');
+    }
   });
 
   const notifBtn = root.querySelector('#toggle-notifications');
