@@ -8,6 +8,8 @@ const LOADING_IMAGES = [
   '/assets/loading_screens/loading4.jpg',
   '/assets/loading_screens/loading5.jpg',
   '/assets/loading_screens/loading6.jpg',
+  '/assets/loading_screens/loading7.jpg',
+  '/assets/loading_screens/loading8.jpg',
 ];
 
 const LOADING_TIPS = {
@@ -18,6 +20,7 @@ const LOADING_TIPS = {
     'Some units occupy two tiles - a row, or a column. These units require 2 loyalty.',
     'Items can be crafted and equipped in the Roster tab.',
     'Loyalty is your hero stat that is tied to hero level. It allows taking more characters in combat.',
+    'Some equippable items provide unique bonuses - like tags or abilities.',
   ],
   ru: [
     'Персонажи на задней линии не могут получать урон от ближних атак, пока на передней линии есть хотя бы один персонаж.',
@@ -26,6 +29,7 @@ const LOADING_TIPS = {
     'Некоторые юниты занимают две клетки — ряд или колонку. Такие юниты требуют 2 единицы лояльности.',
     'Предметы можно создавать и надевать во вкладке Отряд.',
     'Лояльность — характеристика героя, связанная с его уровнем. Она позволяет брать больше персонажей в бой.',
+    'Некоторые предметы дают уникальные бонусы - такие как тэги или способности.',
   ],
 };
 
