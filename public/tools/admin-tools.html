@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit Balance · Compare + Scores</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      background: #0e1016;
+      color: #e4e6ed;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; }
+    .sub {
+      color: #8a8fa8;
+      font-size: 14px;
+      margin-bottom: 18px;
+      border-left: 3px solid #4c6ef5;
+      padding-left: 14px;
+      background: #1a1d27;
+      border-radius: 0 8px 8px 0;
+      line-height: 1.4;
+    }
+    .toolbar {
+      background: #1b1e28;
+      border: 1px solid #2b2f3d;
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      align-items: center;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    .toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #b0b6cc;
+    }
+    .toolbar input, .toolbar select, .toolbar button {
+      background: #262b38;
+      border: 1px solid #363c4e;
+      color: #f0f2fa;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      transition: 0.15s;
+    }
+    .toolbar input:focus, .toolbar select:focus {
+      border-color: #6c8cff;
+      outline: none;
+      box-shadow: 0 0 0 2px #2f3b6b;
+    }
+    .toolbar button {
+      background: #4c6ef5;
+      border: none;
+      font-weight: 600;
+      color: #fff;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .toolbar button.secondary {
+      background: #2d3345;
+      color: #d0d5e8;
+    }
+    .toolbar button.success {
+      background: #2d8f4e;
+      color: #fff;
+    }
+    .toolbar button:hover { filter: brightness(1.1); }
+    .status { font-size: 13px; color: #989eb6; }
+    .status.ok { color: #7bdf9a; }
+    .status.err { color: #f67a7a; }
+
+    .layout {
+      display: flex;
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+    .list-panel {
+      background: #181c26;
+      border: 1px solid #2b2f3d;
+      border-radius: 14px;
+      width: 330px;
+      flex-shrink: 0;
+      max-height: 75vh;
+      overflow-y: auto;
+      padding-bottom: 6px;
+    }
+    .list-panel .group-title {
+      background: #232836;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #7f98ff;
+      border-bottom: 1px solid #2b2f3d;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .unit-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-bottom: 1px solid #232836;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.08s;
+    }
+    .unit-row:hover { background: #232a38; }
+    .unit-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #6c8cff;
+      pointer-events: none;
+    }
+    .unit-row .tname { flex: 1; font-weight: 500; }
+    .unit-row .ttier {
+      background: #2f3548;
+      padding: 0 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #b6bdd6;
+    }
+    .unit-row .tsize {
+      color: #8890ad;
+      font-size: 11px;
+      text-transform: capitalize;
+    }
+
+    .compare-panel {
+      flex: 1;
+      background: #181c26;
+      border: 1px solid #2b2f3d;
+      border-radius: 14px;
+      padding: 6px 0 12px 0;
+      overflow-x: auto;
+      max-height: 75vh;
+    }
+    .empty-msg {
+      color: #6a708b;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 700px;
+    }
+    th {
+      background: #1f2432;
+      padding: 10px 10px 6px 10px;
+      text-align: left;
+      border-bottom: 2px solid #2f3548;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      font-weight: 600;
+      color: #c8cee6;
+    }
+    th .pill {
+      display: inline-block;
+      background: #2a3042;
+      border-radius: 30px;
+      padding: 0 10px;
+      font-size: 10px;
+      font-weight: 400;
+      color: #949bb8;
+      margin-top: 2px;
+    }
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #262c3b;
+      vertical-align: middle;
+    }
+    tr:hover td { background: #1f2535; }
+    .stat-label {
+      color: #9ca3c0;
+      font-weight: 600;
+      white-space: nowrap;
+      background: #141a26;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+    .best { color: #7bdf9a; font-weight: 700; }
+    .worst { color: #f67a7a; }
+    .score-high { color: #f5c542; font-weight: 700; }
+    .remove-btn {
+      background: transparent;
+      border: none;
+      color: #7a829f;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .remove-btn:hover { background: #3a2f3f; color: #ff8a8a; }
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      align-items: center;
+    }
+    .filter-group select, .filter-group input {
+      min-width: 90px;
+    }
+    #clearSelection {
+      margin-left: auto;
+    }
+    .score-section {
+      background: #1b1f2b;
+      border-radius: 12px;
+      padding: 8px 14px;
+      margin: 10px 12px 4px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px 30px;
+      border: 1px solid #2f3548;
+    }
+    .score-item {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .score-item .label {
+      font-size: 12px;
+      color: #8d95b2;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .score-item .value {
+      font-weight: 700;
+      font-size: 15px;
+      color: #d6defa;
+    }
+    .score-item .value.high { color: #f5c542; }
+    .score-item .value.total { color: #7f98ff; }
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2d8f4e;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    @media (max-width: 800px) {
+      .layout { flex-direction: column; }
+      .list-panel { width: 100%; max-height: 40vh; }
+      .compare-panel { max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>⚖️ Unit Balance · Compare + Scores</h1>
+<div class="sub">Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.</div>
+
+<div class="toolbar">
+  <span class="status" id="loadStatus">⏳ Loading units data...</span>
+  <div class="filter-group">
+    <input type="text" id="searchBox" placeholder="🔍 name, tag, id…" style="min-width:140px;">
+    <select id="factionFilter"><option value="">Faction</option></select>
+    <select id="tierFilter"><option value="">Tier</option></select>
+    <select id="sizeFilter"><option value="">Size</option></select>
+    <select id="tagFilter"><option value="">Tag</option></select>
+  </div>
+  <button class="secondary" id="clearSelection">✕ Clear</button>
+  <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
+</div>
+
+<div class="layout">
+  <div class="list-panel" id="listPanel">
+    <div class="empty-msg">Loading units...</div>
+  </div>
+  <div class="compare-panel" id="comparePanel">
+    <div class="empty-msg">Select units from the left panel to compare.</div>
+  </div>
+</div>
+
+<div id="toast" class="toast">✅ Copied to clipboard!</div>
+
+<script>
+  (function(){
+    const loadStatus = document.getElementById('loadStatus');
+    const searchBox = document.getElementById('searchBox');
+    const factionFilter = document.getElementById('factionFilter');
+    const tierFilter = document.getElementById('tierFilter');
+    const sizeFilter = document.getElementById('sizeFilter');
+    const tagFilter = document.getElementById('tagFilter');
+    const listPanel = document.getElementById('listPanel');
+    const comparePanel = document.getElementById('comparePanel');
+    const clearSelectionBtn = document.getElementById('clearSelection');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
+    const toast = document.getElementById('toast');
+
+    let UNITS = null;
+    let flatUnits = [];
+    let selected = new Set();
+
+    function calcVitality(unit) {
+      const d = unit.data;
+      const hp = d.hp || 0;
+      const armor = d.armor || 0;
+      const res = d.resistances || {};
+      const resistValues = [res.air, res.fire, res.life, res.death, res.cold, res.nature]
+        .filter(v => typeof v === 'number' && !isNaN(v));
+      const avgRes = resistValues.length ? resistValues.reduce((a,b)=>a+b,0) / resistValues.length : 0;
+      return ((avgRes + armor) / 2) + hp;
+    }
+
+    function calcDPS(unit) {
+      const d = unit.data;
+      const power = d.action_power || 0;
+      const targets = d.targets || 0;
+      const initiative = d.initiative || 0;
+      return power * (targets / 2) * (1 + initiative / 100);
+    }
+
+    function calcOverall(unit) {
+      return unit.vitality + unit.dps;
+    }
+
+    function flattenUnits(units) {
+      const result = [];
+      for (const groupName in units) {
+        const group = units[groupName];
+        if (typeof group !== 'object' || !group) continue;
+        if (groupName === 'enemies') {
+          for (const subGroupName in group) {
+            const sub = group[subGroupName];
+            for (const key in sub) {
+              const data = sub[key];
+              if (typeof data !== 'object' || !data) continue;
+              const unit = {
+                key: `enemies.${subGroupName}.${key}`,
+                group: `enemies / ${subGroupName}`,
+                data: data,
+                vitality: calcVitality({ data }),
+                dps: calcDPS({ data })
+              };
+              unit.overall = calcOverall(unit);
+              result.push(unit);
+            }
+          }
+        } else {
+          for (const key in group) {
+            const data = group[key];
+            if (typeof data !== 'object' || !data) continue;
+            const unit = {
+              key: `${groupName}.${key}`,
+              group: groupName,
+              data: data,
+              vitality: calcVitality({ data }),
+              dps: calcDPS({ data })
+            };
+            unit.overall = calcOverall(unit);
+            result.push(unit);
+          }
+        }
+      }
+      return result;
+    }
+
+    function getTagList() {
+      const set = new Set();
+      flatUnits.forEach(u => {
+        const t = u.data.tags;
+        if (Array.isArray(t)) t.forEach(tag => { if (tag) set.add(tag); });
+        else if (typeof t === 'string' && t) set.add(t);
+      });
+      return [...set].sort();
+    }
+
+    function populateFilters() {
+      const factions = new Set();
+      const tiers = new Set();
+      const sizes = new Set();
+      flatUnits.forEach(u => {
+        if (u.data.f) factions.add(u.data.f);
+        if (u.data.t !== undefined && u.data.t !== null) tiers.add(u.data.t);
+        if (u.data.size) sizes.add(u.data.size);
+      });
+      factionFilter.innerHTML = '<option value="">All factions</option>' +
+        [...factions].sort().map(f => `<option value="${f}">${f}</option>`).join('');
+      tierFilter.innerHTML = '<option value="">All tiers</option>' +
+        [...tiers].sort((a,b)=>a-b).map(t => `<option value="${t}">${t}</option>`).join('');
+      
+      const sizeOptions = [...sizes].sort();
+      let sizeHtml = '<option value="">All sizes</option>';
+      sizeHtml += `<option value="large">⬆ All Large (row + column)</option>`;
+      sizeOptions.forEach(s => {
+        sizeHtml += `<option value="${s}">${s}</option>`;
+      });
+      sizeFilter.innerHTML = sizeHtml;
+
+      const tags = getTagList();
+      tagFilter.innerHTML = '<option value="">All tags</option>' +
+        tags.map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
+    function matchesFilters(u) {
+      const q = searchBox.value.trim().toLowerCase();
+      const fF = factionFilter.value;
+      const tF = tierFilter.value;
+      const sF = sizeFilter.value;
+      const tagF = tagFilter.value;
+      const d = u.data;
+      
+      if (fF && d.f !== fF) return false;
+      if (tF && String(d.t) !== tF) return false;
+      
+      if (sF) {
+        if (sF === 'large') {
+          if (d.size !== 'row' && d.size !== 'column') return false;
+        } else {
+          if (d.size !== sF) return false;
+        }
+      }
+      
+      if (tagF) {
+        const tags = Array.isArray(d.tags) ? d.tags : (d.tags ? [d.tags] : []);
+        if (!tags.includes(tagF)) return false;
+      }
+      
+      if (!q) return true;
+      const haystack = [
+        d.name, d.id, d.f, u.group, d.size,
+        ...(Array.isArray(d.tags) ? d.tags : [d.tags])
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    }
+
+    function renderList() {
+      if (!flatUnits.length) {
+        listPanel.innerHTML = '<div class="empty-msg">No units loaded.</div>';
+        return;
+      }
+      const filtered = flatUnits.filter(matchesFilters);
+      const groups = {};
+      filtered.forEach(u => {
+        if (!groups[u.group]) groups[u.group] = [];
+        groups[u.group].push(u);
+      });
+      let html = '';
+      Object.keys(groups).sort().forEach(gName => {
+        const items = groups[gName];
+        html += `<div class="group-title">${gName} (${items.length})</div>`;
+        items.forEach(u => {
+          const checked = selected.has(u.key) ? 'checked' : '';
+          const sizeLabel = u.data.size ? `<span class="tsize">${u.data.size}</span>` : '';
+          html += `<div class="unit-row" data-key="${u.key}">
+            <input type="checkbox" ${checked}>
+            <span class="tname">${u.data.name || u.key}</span>
+            <span class="ttier">T${u.data.t ?? '?'}</span>
+            ${sizeLabel}
+          </div>`;
+        });
+      });
+      listPanel.innerHTML = html || '<div class="empty-msg">No units match filters.</div>';
+
+      listPanel.querySelectorAll('.unit-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const key = row.dataset.key;
+          if (selected.has(key)) selected.delete(key);
+          else selected.add(key);
+          renderList();
+          renderCompare();
+        });
+      });
+    }
+
+    const STAT_ROWS = [
+      { label: 'Faction', get: d => d.f, numeric: false },
+      { label: 'Tier', get: d => d.t, numeric: true, higherBetter: false },
+      { label: 'Size', get: d => d.size, numeric: false },
+      { label: 'Tags', get: d => Array.isArray(d.tags) ? d.tags.filter(Boolean).join(', ') : (d.tags || ''), numeric: false },
+      { label: 'HP', get: d => d.hp, numeric: true, higherBetter: true },
+      { label: 'Armor', get: d => d.armor, numeric: true, higherBetter: true },
+      { label: 'Initiative', get: d => d.initiative, numeric: true, higherBetter: true },
+      { label: 'Action', get: d => d.action, numeric: false },
+      { label: 'Target Type', get: d => d.target_type, numeric: false },
+      { label: 'Targets', get: d => d.targets, numeric: true, higherBetter: true },
+      { label: 'Range', get: d => d.range, numeric: true, higherBetter: true },
+      { label: 'Damage Source', get: d => d.damage_source, numeric: false },
+      { label: 'Action Power', get: d => d.action_power, numeric: true, higherBetter: true },
+      { label: 'XP Cost', get: d => d.xp, numeric: true, higherBetter: false },
+      { label: 'Passive', get: d => Array.isArray(d.passive) ? d.passive.filter(Boolean).join(', ') : (d.passive || '—'), numeric: false },
+      { label: 'Ability', get: d => d.ability || '—', numeric: false },
+      { label: 'Res: Air', get: d => d.resistances?.air, numeric: true, higherBetter: true },
+      { label: 'Res: Fire', get: d => d.resistances?.fire, numeric: true, higherBetter: true },
+      { label: 'Res: Life', get: d => d.resistances?.life, numeric: true, higherBetter: true },
+      { label: 'Res: Death', get: d => d.resistances?.death, numeric: true, higherBetter: true },
+      { label: 'Res: Cold', get: d => d.resistances?.cold, numeric: true, higherBetter: true },
+      { label: 'Res: Nature', get: d => d.resistances?.nature, numeric: true, higherBetter: true },
+      { label: '💪 Vitality', get: (d, u) => u ? u.vitality : calcVitality({data:d}), numeric: true, higherBetter: true, score: true },
+      { label: '⚔️ DPS', get: (d, u) => u ? u.dps : calcDPS({data:d}), numeric: true, higherBetter: true, score: true },
+      { label: '⭐ Overall', get: (d, u) => u ? u.overall : calcOverall({data:d, vitality: calcVitality({data:d}), dps: calcDPS({data:d})}), numeric: true, higherBetter: true, score: true },
+    ];
+
+    function renderCompare() {
+      const units = flatUnits.filter(u => selected.has(u.key));
+      if (!units.length) {
+        comparePanel.innerHTML = '<div class="empty-msg">Select units from the left panel to compare.</div>';
+        return;
+      }
+
+      let summaryHtml = `<div class="score-section">`;
+      const vitList = units.map(u => ({ key: u.key, name: u.data.name || u.key, val: u.vitality }));
+      const dpsList = units.map(u => ({ key: u.key, name: u.data.name || u.key, val: u.dps }));
+      const overallList = units.map(u => ({ key: u.key, name: u.data.name || u.key, val: u.overall }));
+      
+      const bestVit = vitList.reduce((a,b) => a.val > b.val ? a : b);
+      const bestDps = dpsList.reduce((a,b) => a.val > b.val ? a : b);
+      const bestOverall = overallList.reduce((a,b) => a.val > b.val ? a : b);
+      
+      summaryHtml += `<div class="score-item"><span class="label">💪 Vitality</span>
+        <span class="value high">${bestVit.name} (${bestVit.val.toFixed(1)})</span></div>`;
+      summaryHtml += `<div class="score-item"><span class="label">⚔️ DPS</span>
+        <span class="value high">${bestDps.name} (${bestDps.val.toFixed(1)})</span></div>`;
+      summaryHtml += `<div class="score-item"><span class="label">⭐ Overall</span>
+        <span class="value total">${bestOverall.name} (${bestOverall.val.toFixed(1)})</span></div>`;
+      summaryHtml += `</div>`;
+
+      let html = summaryHtml;
+      html += '<table><thead><tr><th class="stat-label">Stat</th>';
+      units.forEach(u => {
+        const name = u.data.name || u.key;
+        html += `<th>${name}<br><span class="pill">${u.key}</span><br>
+          <button class="remove-btn" data-key="${u.key}" title="remove">✕</button></th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      STAT_ROWS.forEach(row => {
+        const values = units.map(u => {
+          const val = row.get(u.data, u);
+          return (val === undefined || val === null || isNaN(val)) ? null : val;
+        });
+        let bestVal = null, worstVal = null;
+        if (row.numeric) {
+          const nums = values.filter(v => typeof v === 'number' && !isNaN(v));
+          if (nums.length > 1) {
+            const sorted = [...nums].sort((a,b)=>a-b);
+            bestVal = row.higherBetter === false ? sorted[0] : sorted[sorted.length-1];
+            worstVal = row.higherBetter === false ? sorted[sorted.length-1] : sorted[0];
+          }
+        }
+        html += `<tr><td class="stat-label">${row.label}</td>`;
+        values.forEach((v, idx) => {
+          let cls = '';
+          if (row.numeric && typeof v === 'number' && !isNaN(v) && bestVal !== null && bestVal !== worstVal) {
+            if (v === bestVal) cls = 'best';
+            else if (v === worstVal) cls = 'worst';
+          }
+          if (row.score && typeof v === 'number') cls += ' score-high';
+          const display = (v === null || v === undefined || v === '') ? '—' : (typeof v === 'number' ? v.toFixed(1) : v);
+          html += `<td class="${cls}">${display}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      comparePanel.innerHTML = html;
+
+      comparePanel.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selected.delete(btn.dataset.key);
+          renderList();
+          renderCompare();
+        });
+      });
+    }
+
+    function copySelectionAsJson() {
+      const units = flatUnits.filter(u => selected.has(u.key));
+      if (!units.length) {
+        showToast('⚠️ No units selected!');
+        return;
+      }
+
+      const prompt = `I need help balancing these units in my game. Here are the units I'm comparing with their stats and scores:
+
+${units.map(u => {
+  const name = u.data.name || u.key;
+  return `- ${name} (${u.key})
+  • Faction: ${u.data.f || 'N/A'}, Tier: ${u.data.t || 'N/A'}, Size: ${u.data.size || 'N/A'}
+  • HP: ${u.data.hp || 0}, Armor: ${u.data.armor || 0}, Initiative: ${u.data.initiative || 0}
+  • Action: ${u.data.action || 'N/A'}, Targets: ${u.data.targets || 0}, Range: ${u.data.range || 0}
+  • Action Power: ${u.data.action_power || 0}, XP Cost: ${u.data.xp || 0}
+  • Tags: ${Array.isArray(u.data.tags) ? u.data.tags.filter(Boolean).join(', ') : (u.data.tags || 'None')}
+  • Resistances: ${u.data.resistances ? Object.entries(u.data.resistances).map(([k,v]) => `${k}:${v}`).join(', ') : 'None'}
+  • Vitality Score: ${u.vitality.toFixed(1)}
+  • DPS Score: ${u.dps.toFixed(1)}
+  • Overall Score: ${u.overall.toFixed(1)}
+  • Passive: ${Array.isArray(u.data.passive) ? u.data.passive.filter(Boolean).join(', ') : (u.data.passive || 'None')}
+  • Ability: ${u.data.ability || 'None'}`;
+}).join('\n\n')}
+
+Based on this data, please provide:
+1. Balance observations - which units seem over/under-powered and why
+2. Suggested stat adjustments to make them more balanced
+3. Any other balance considerations I should be aware of`;
+
+      const jsonData = units.map(u => ({
+        key: u.key,
+        group: u.group,
+        name: u.data.name || u.key,
+        tier: u.data.t,
+        faction: u.data.f,
+        size: u.data.size,
+        tags: u.data.tags,
+        hp: u.data.hp,
+        armor: u.data.armor,
+        initiative: u.data.initiative,
+        action: u.data.action,
+        targets: u.data.targets,
+        range: u.data.range,
+        action_power: u.data.action_power,
+        xp: u.data.xp,
+        passive: u.data.passive,
+        ability: u.data.ability,
+        resistances: u.data.resistances,
+        vitality: u.vitality,
+        dps: u.dps,
+        overall: u.overall
+      }));
+
+      const fullContent = `${prompt}\n\n--- RAW JSON DATA ---\n${JSON.stringify(jsonData, null, 2)}`;
+      
+      navigator.clipboard.writeText(fullContent).then(() => {
+        showToast(`✅ Copied ${units.length} units with AI prompt!`);
+      }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = fullContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`✅ Copied ${units.length} units with AI prompt!`);
+      });
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function fixTrailingCommas(str) {
+      return str.replace(/,(\s*[}\]])/g, '$1');
+    }
+
+    async function loadUnitsFromProject() {
+      try {
+        loadStatus.textContent = '⏳ Loading units data...';
+        loadStatus.className = 'status';
+        
+        const response = await fetch('/data/units.js');
+        if (!response.ok) {
+          throw new Error(`Failed to load units.js: ${response.status} ${response.statusText}`);
+        }
+        
+        let code = await response.text();
+        
+        let cleaned = code;
+        cleaned = cleaned.replace(/^\s*import\s+.*?['"][^'"]+['"]\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*import\s*\{[^}]*\}\s*from\s*['"][^'"]+['"]\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s+default\s+.*?;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s+(const|let|var)\s+/gm, '');
+        cleaned = cleaned.replace(/^\s*if\s*\(\s*typeof\s+module\s*!==\s*['"]undefined['"]\s*\)\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*module\.exports\s*=\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*module\.exports\s*=\s*.*?;?\s*$/gm, '');
+        cleaned = cleaned.replace(/\/\/.*$/gm, '');
+        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//gm, '');
+        
+        const unitsMatch = cleaned.match(/(?:const|let|var)?\s*UNITS\s*=\s*\{/);
+        if (!unitsMatch) {
+          throw new Error('Could not find UNITS object definition in the file.');
+        }
+        
+        let startIndex = unitsMatch.index;
+        let braceCount = 0;
+        let endIndex = -1;
+        let inString = false;
+        let stringChar = '';
+        let inTemplate = false;
+        
+        for (let i = startIndex; i < cleaned.length; i++) {
+          const char = cleaned[i];
+          if (!inString && !inTemplate) {
+            if (char === '"' || char === "'") {
+              inString = true;
+              stringChar = char;
+              continue;
+            }
+            if (char === '`') {
+              inTemplate = true;
+              continue;
+            }
+            if (char === '{') braceCount++;
+            if (char === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                endIndex = i + 1;
+                break;
+              }
+            }
+          } else if (inString) {
+            if (char === stringChar && cleaned[i-1] !== '\\') {
+              inString = false;
+            }
+          } else if (inTemplate) {
+            if (char === '`' && cleaned[i-1] !== '\\') {
+              inTemplate = false;
+            }
+          }
+        }
+        
+        if (endIndex === -1) {
+          throw new Error('Could not find matching closing brace for UNITS object.');
+        }
+        
+        let unitsObjectStr = cleaned.substring(startIndex, endIndex);
+        unitsObjectStr = fixTrailingCommas(unitsObjectStr);
+        
+        let result;
+        try {
+          const fn = new Function(`return (${unitsObjectStr});`);
+          result = fn();
+        } catch (evalError) {
+          try {
+            const objStr = unitsObjectStr.substring(unitsObjectStr.indexOf('{'));
+            const fixedStr = fixTrailingCommas(objStr);
+            const fn2 = new Function(`return (${fixedStr});`);
+            result = fn2();
+          } catch (evalError2) {
+            throw new Error(`Failed to parse UNITS object: ${evalError2.message}`);
+          }
+        }
+        
+        if (!result || typeof result !== 'object') {
+          throw new Error('UNITS object not found or invalid.');
+        }
+        
+        UNITS = result;
+        flatUnits = flattenUnits(UNITS);
+        selected.clear();
+        populateFilters();
+        loadStatus.textContent = `✅ Loaded ${flatUnits.length} units from project.`;
+        loadStatus.className = 'status ok';
+        renderList();
+        renderCompare();
+        
+      } catch (err) {
+        loadStatus.textContent = '❌ Error loading units: ' + err.message;
+        loadStatus.className = 'status err';
+        console.error('Error details:', err);
+        console.error('Stack trace:', err.stack);
+        listPanel.innerHTML = `<div class="empty-msg">Failed to load units. Make sure the file exists at /data/units.js</div>`;
+      }
+    }
+
+    loadUnitsFromProject();
+
+    [searchBox, factionFilter, tierFilter, sizeFilter, tagFilter].forEach(el => {
+      el.addEventListener('input', renderList);
+      el.addEventListener('change', renderList);
+    });
+
+    clearSelectionBtn.addEventListener('click', () => {
+      selected.clear();
+      renderList();
+      renderCompare();
+    });
+
+    copyJsonBtn.addEventListener('click', copySelectionAsJson);
+
+    loadStatus.className = 'status';
+  })();
+</script>
+</body>
+</html>
