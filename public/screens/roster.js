@@ -1,6 +1,8 @@
 import { api }              from '../api.js';
+import { navigate }         from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
+import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { SPELLS }           from '../../data/spells.js';
 import { ITEM_DEFS }        from '../../data/items.js';
 import {
@@ -554,6 +556,13 @@ export function renderRoster(root, { player }) {
           const savedIdx = current;
           initSlider();
           goTo(savedIdx);
+          // Onboarding's last roster beat: the hero is armed, so close up and
+          // hand off to embark, which is gated on this step being done.
+          if (!isTutorialDone(player, 'roster_equip')) {
+            markTutorialDone(player, 'roster_equip');
+            closeSheet(); // navigate() clears the spotlight, but not the sheet
+            navigate('embark', { player });
+          }
         } catch (err) {
           alert(err.message || 'Equip failed');
           body.innerHTML = render();
@@ -599,6 +608,79 @@ export function renderRoster(root, { player }) {
     });
   }
 
+  // Onboarding chain, entered right after the player's second building (castle.js
+  // navigates here). Runs: intro -> tap the hero's item slot -> tap Equip. The
+  // final step is completed by the equip handler in openItemModal(), not by the
+  // tap itself, so the tutorial only advances once the item is really on.
+  const STARTING_ITEM_KEY = 'padded_armor';
+
+  function heroUnit() {
+    return units.find(u => u.is_hero === true) || units[0] || null;
+  }
+
+  function isEquippableBy(item, unit) {
+    const stats    = item.item_stats || {};
+    const unitTags = (resolveUnitDef(unit)?.tags || []).filter(Boolean);
+    return (!stats.faction || stats.faction === player.faction)
+        && (!stats.tag_required || unitTags.includes(stats.tag_required));
+  }
+
+  function runRosterTutorial() {
+    if (!isTutorialDone(player, 'second_building')) return;
+    if (isTutorialDone(player, 'roster_equip')) return;
+    const hero = heroUnit();
+    if (!hero) return;
+
+    // Don't start a walkthrough that cannot be finished: the hero may already be
+    // armed, or have nothing to put on (a player who registered before starting
+    // gear was granted). Embark's step is gated on roster_equip, so complete it
+    // here instead of stranding them behind a spotlight that never resolves.
+    const hasSomethingToEquip = !equippedItemFor(hero.id)
+      && items.some(it => !it.equipped_by && isEquippableBy(it, hero));
+    if (!hasSomethingToEquip) {
+      markTutorialDone(player, 'roster_equip');
+      return;
+    }
+
+    const heroIdx = units.indexOf(hero);
+    goTo(heroIdx);
+
+    if (!isTutorialDone(player, 'roster_intro')) {
+      const card = track.children[heroIdx]?.querySelector('.unit-card');
+      if (!card) return;
+      showTutorialSpotlight(player, 'roster_intro', card, {
+        showContinue: true,
+        onAdvance: () => {
+          markTutorialDone(player, 'roster_intro');
+          showEquipSlotStep(hero);
+        },
+      });
+      return;
+    }
+    showEquipSlotStep(hero);
+  }
+
+  function showEquipSlotStep(hero) {
+    const slot = track.querySelector(`[data-item-slot][data-roster-id="${hero.id}"]`);
+    if (!slot) return;
+    showTutorialSpotlight(player, 'roster_equip_slot', slot, {
+      // The same tap also opens the items sheet via the delegated track handler,
+      // which runs after this one — wait a frame for that body to exist.
+      onAdvance: () => requestAnimationFrame(() => showEquipButtonStep()),
+    });
+  }
+
+  function showEquipButtonStep() {
+    const body = document.querySelector('.modal-body');
+    if (!body) return;
+    const buttons = [...body.querySelectorAll('.item-action-btn--equip:not([disabled])')];
+    const target = buttons.find(b => {
+      const item = items.find(it => String(it.id) === String(b.dataset.itemId));
+      return (item?.item_stats?.key || item?.item_stats?.icon) === STARTING_ITEM_KEY;
+    }) || buttons[0];
+    if (target) showTutorialSpotlight(player, 'roster_equip', target);
+  }
+
   async function load() {
     const [boot, fetchedItems] = await Promise.all([
       bootstrapCache.get(player.chat_id),
@@ -617,6 +699,7 @@ export function renderRoster(root, { player }) {
     }
 
     initSlider();
+    runRosterTutorial();
   }
 
   load();

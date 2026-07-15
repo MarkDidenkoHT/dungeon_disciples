@@ -409,6 +409,10 @@ export function renderCastle(root, { player }) {
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         rosterCount += 1;
         markTutorialDone(player, 'second_building');
+        // Onboarding hands off to the roster here: the player has a second unit
+        // and an unequipped starting item, so the roster steps run before embark.
+        navigate('roster', { player });
+        return;
       }
       renderBuildings();
       refreshResourceBar(player).catch(() => {});

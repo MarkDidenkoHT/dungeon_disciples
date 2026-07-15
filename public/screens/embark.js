@@ -192,7 +192,9 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         });
       });
 
-      if (isTutorialDone(player, 'second_building') && !isTutorialDone(player, 'embark_region')) {
+      // Gated on the roster steps, not the castle ones: the player is sent here
+      // from the roster once their hero is equipped.
+      if (isTutorialDone(player, 'roster_equip') && !isTutorialDone(player, 'embark_region')) {
         const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
         if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
       } else {

@@ -74,6 +74,31 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_FUNCTIONS_URL = process.env.SUPABASE_URL || '';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
+// Granted once, when the player picks a faction (see /player/faction). Neutral,
+// tag-free gear so it equips on any hero — the roster tutorial walks the player
+// through putting it on.
+const STARTING_ITEM_KEYS = ['padded_armor'];
+
+// Shapes an ITEM_DEFS entry into an /items row. The item_stats snapshot is what
+// equip/craft read back, so this must stay the single source of that shape.
+function makeItemRow(playerId, itemKey) {
+  const def = ITEM_DEFS[itemKey];
+  if (!def) return null;
+  return {
+    player_id:  playerId,
+    item_name:  def.name,
+    item_stats: {
+      key:          def.key,
+      faction:      def.faction,
+      tag_required: def.tag_required,
+      adds_tag:     def.adds_tag,
+      stat_mods:    def.stat_mods,
+      passive:      def.passive,
+      icon:         def.icon,
+    },
+  };
+}
+
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 200 },
   { item_type: 'resource', item: 'Crystals_Life',   amount: 20  },
@@ -527,6 +552,7 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true },
     ...(unitDef ? [{ chat_id, unit_data: makeUnitData(unitDef.id, startingUnit.slot), is_hero: false }] : []),
   ];
+  const startingItems = STARTING_ITEM_KEYS.map(k => makeItemRow(player_id, k)).filter(Boolean);
   try {
     const existingStruct = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     const structuresWrite = existingStruct.length
@@ -541,6 +567,7 @@ router.post('/player/faction', requireAuth, async (req, res) => {
       supabase('/roster', { method: 'POST', body: JSON.stringify(rosterEntries) }),
       supabase('/resources', { method: 'POST', body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))) }),
       structuresWrite,
+      ...(startingItems.length ? [supabase('/items', { method: 'POST', body: JSON.stringify(startingItems) })] : []),
     ]);
     res.json({ player: updated[0] });
   } catch (err) {
@@ -1450,19 +1477,7 @@ router.post('/items/craft', requireAuth, async (req, res) => {
 
     const inserted = await supabase('/items', {
       method: 'POST',
-      body: JSON.stringify({
-        player_id: player.id,
-        item_name: itemDef.name,
-        item_stats: {
-          key:          itemDef.key,
-          faction:      itemDef.faction,
-          tag_required: itemDef.tag_required,
-          adds_tag:     itemDef.adds_tag,
-          stat_mods:    itemDef.stat_mods,
-          passive:      itemDef.passive,
-          icon:         itemDef.icon,
-        },
-      }),
+      body: JSON.stringify(makeItemRow(player.id, item_key)),
       headers: { Prefer: 'return=representation' },
     });
 
