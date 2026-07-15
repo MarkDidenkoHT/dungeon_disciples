@@ -1,5 +1,6 @@
 import { api, navigate } from '../api.js';
 import { setMusicEnabled } from '../music.js';
+import { saveLanguageCache } from './loading.js';
 
 export function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -36,7 +37,6 @@ export function renderSettings(root, { player }) {
   const notificationsEnabled = player?.settings?.notifications !== false;
   const barksEnabled         = player?.settings?.barks_enabled !== false;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
-  
 
   root.innerHTML = `
     <div class="screen screen-settings">
@@ -176,6 +176,7 @@ export function renderSettings(root, { player }) {
         settings:  { language: next },
       });
       player.settings = updated.settings;
+      saveLanguageCache(next);
       navigate('settings', { player });
     } catch (err) {
       langBtn.disabled = false;

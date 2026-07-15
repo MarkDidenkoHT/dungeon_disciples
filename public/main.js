@@ -6,7 +6,7 @@ import { renderSettings, lang } from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
-import { runPreload }       from './screens/loading.js';
+import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 
@@ -205,6 +205,10 @@ async function boot() {
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
     setSessionToken(session_token);
+
+    if (player.settings?.language) {
+      saveLanguageCache(player.settings.language);
+    }
 
     initMusic(player);
     if (player.faction) playFactionTheme(player.faction);
