@@ -8,6 +8,7 @@ import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload }       from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
+import { playFactionTheme, setMusicEnabled } from './music.js';
 
 import {
   api,
@@ -17,9 +18,6 @@ import {
   refreshResourceBar,
   refreshNavLock,
 } from './api.js';
-
-import { hideTutorial }           from './tutorial.js';
-import { playFactionTheme, setMusicEnabled } from './music.js';
 
 export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
 
