@@ -222,6 +222,10 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
 
   layout();
   requestAnimationFrame(layout);
+  // Insurance: if the target is still settling (a sheet sliding up, a late
+  // reflow), the first measurements put the hole in the wrong place and the
+  // blockers cover everything. Re-measure once more so that self-corrects.
+  const settleTimer = setTimeout(layout, 300);
 
   activeResizeHandler = layout;
   window.addEventListener('resize', activeResizeHandler);
@@ -249,6 +253,7 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   }
 
   activeCleanup = () => {
+    clearTimeout(settleTimer);
     container.remove();
     if (onTargetTap) targetEl.removeEventListener('click', onTargetTap);
   };

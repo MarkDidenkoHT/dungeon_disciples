@@ -672,10 +672,30 @@ export function renderRoster(root, { player }) {
     const slot = track.querySelector(`[data-item-slot][data-roster-id="${hero.id}"]`);
     if (!slot) return;
     showTutorialSpotlight(player, 'roster_equip_slot', slot, {
-      // The same tap also opens the items sheet via the delegated track handler,
-      // which runs after this one — wait a frame for that body to exist.
-      onAdvance: () => requestAnimationFrame(() => showEquipButtonStep()),
+      // The same tap opens the items sheet via the delegated track handler, which
+      // runs after this one — wait for that sheet to finish sliding up before
+      // spotlighting anything inside it.
+      onAdvance: () => afterSheetSettles(() => showEquipButtonStep()),
     });
+  }
+
+  // The items sheet slides up (.modal, `sheet-up`, 0.22s). Measuring a button
+  // inside it before that settles reads a rect that is still off the bottom of
+  // the screen, which puts the spotlight hole off-screen and leaves the blockers
+  // covering the whole view. Wait for the animation, with a timeout in case it
+  // was skipped (reduced motion, or an already-open sheet).
+  function afterSheetSettles(fn) {
+    const modal = document.querySelector('.modal-overlay:not(.hidden):not(.modal-overlay--sub) .modal');
+    if (!modal) { requestAnimationFrame(fn); return; }
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      modal.removeEventListener('animationend', run);
+      fn();
+    };
+    modal.addEventListener('animationend', run);
+    setTimeout(run, 400);
   }
 
   // Payoff for the equip chain: the sheet is closed and the slot now shows the
