@@ -499,8 +499,11 @@ class BattleEngine {
     if (!unit.alive) return;
     if (unit.dot_dmg > 0) {
       unit.battle_hp = Math.max(0, unit.battle_hp - unit.dot_dmg);
-      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false });
+      // dot_kind (burn/poison, defaulting to burn) is cosmetic only — see _dot_type.
+      const dotKind = unit._dot_type === 'poison' ? 'poison' : 'burn';
+      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false, dot_kind: dotKind });
       unit.dot_dmg = 0;
+      unit._dot_type = null;
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
@@ -775,6 +778,7 @@ class BattleEngine {
           _aegis_resists:      c._aegis_resists,
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
+          _dot_type:           c._dot_type ?? null,
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
           _unity_host_id:      c._unity_host_id,
@@ -820,6 +824,7 @@ class BattleEngine {
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
+      c._dot_type          = b._dot_type          ?? null;
       c._hot               = b._hot               ?? 0;
       c._stacks            = b._stacks            || {};
       c._flags             = b._flags             || {};

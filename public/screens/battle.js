@@ -149,6 +149,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // 4. Show bark toast if applicable
       if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
 
+      // Flash the portrait when a damage-over-time effect ticks on it.
+      const dotKind = dotTickKind(entry);
+      if (dotKind && entry.targetId) {
+        flashCellStatus(document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`), dotKind);
+      }
+
       // Find actor from either side — needed for enemy attacks to get damage_source and range
       const actor = state.combatants.find(u => u.id === entry.actorId ||
         (entry.actorCell !== undefined && u.cellIndex === entry.actorCell));
@@ -442,6 +448,44 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return ui;
   }
 
+  // Status effects surfaced as small icons on top of a unit's portrait. The
+  // engine tracks each on the raw combatant (see getSnapshot). Order here is the
+  // left-to-right order the icons appear in. Extend this list to add more.
+  function dotType(c) { return (c?._dot_type || '').toLowerCase(); }
+  const STATUS_DEFS = [
+    { key: 'bleed',  icon: '🩸', active: c => (c._bleed_dmg || 0) > 0 },
+    { key: 'chill',  icon: '❄️', active: c => (c._chill_dmg || 0) > 0 },
+    { key: 'poison', icon: '☠️', active: c => (c.dot_dmg || 0) > 0 && dotType(c) === 'poison' },
+    { key: 'burn',   icon: '🔥', active: c => (c.dot_dmg || 0) > 0 && dotType(c) !== 'poison' },
+  ];
+
+  function statusIconsHtml(occ) {
+    if (!occ || !occ.alive) return '';
+    return STATUS_DEFS
+      .filter(s => s.active(occ))
+      .map(s => `<span class="bc-status-icon bc-status-icon--${s.key}">${s.icon}</span>`)
+      .join('');
+  }
+
+  // A one-shot coloured pulse over a portrait when its DoT ticks. Purely visual;
+  // sits above the portrait but below the name/HP so text stays readable.
+  function flashCellStatus(cellEl, kind) {
+    if (!cellEl) return;
+    const flash = document.createElement('div');
+    flash.className = `bc-status-flash bc-status-flash--${kind}`;
+    const info = cellEl.querySelector('.battle-cell-info');
+    if (info) cellEl.insertBefore(flash, info);
+    else cellEl.appendChild(flash);
+    flash.addEventListener('animationend', () => flash.remove(), { once: true });
+    setTimeout(() => flash.remove(), 900); // fallback if animationend never fires
+  }
+
+  // 'Bleed'/'Chill'/'DoT' passive ticks carry a dot_kind; anything else is not a DoT.
+  function dotTickKind(entry) {
+    if (entry.type !== 'passive') return null;
+    return entry.dot_kind || null;
+  }
+
   function patchCell(cellEl, occ, actor, validTargetKeys) {
     const isActor  = actor?.id === occ.id;
     const isTarget = validTargetKeys.has(occ.id);
@@ -470,6 +514,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       fill.style.width = `${Math.max(0, hpPct * 100)}%`;
       fill.style.background = hpColor(hpPct);
     }
+    const statusEl = cellEl.querySelector('.bc-status-icons');
+    if (statusEl) statusEl.innerHTML = statusIconsHtml(occ);
   }
 
   function renderSide(side, actor, validTargetKeys) {
@@ -522,6 +568,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         html.push(`
           <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
+            <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
             <div class="battle-cell-info">
               <span class="battle-cell-name">${occ.unit_name}</span>
               ${occ.alive

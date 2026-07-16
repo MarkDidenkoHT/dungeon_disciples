@@ -186,14 +186,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const bleed = owner._bleed_dmg;
       owner._bleed_dmg = 0;
       owner.battle_hp = Math.max(0, owner.battle_hp - bleed);
-      engine.pushLog({ type: 'passive', passive: 'Bleed', actorName: '🦸', targetName: owner.unit_name, targetCell: owner.cellIndex, value: bleed, heal: false });
+      engine.pushLog({ type: 'passive', passive: 'Bleed', actorName: '🦸', targetName: owner.unit_name, targetId: owner.id, targetCell: owner.cellIndex, value: bleed, heal: false, dot_kind: 'bleed' });
       if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
     }
     if (owner._chill_dmg > 0) {
       const chill = owner._chill_dmg;
       owner._chill_dmg = 0;
       owner.battle_hp = Math.max(0, owner.battle_hp - chill);
-      engine.pushLog({ type: 'passive', passive: 'Chill', actorName: '❄️', targetName: owner.unit_name, targetCell: owner.cellIndex, value: chill, heal: false });
+      engine.pushLog({ type: 'passive', passive: 'Chill', actorName: '❄️', targetName: owner.unit_name, targetId: owner.id, targetCell: owner.cellIndex, value: chill, heal: false, dot_kind: 'chill' });
       if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
     }
     if (p.light_of_dawn === true) {
@@ -269,6 +269,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.dot_dmg_pct != null) {
       target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
+      // Burn and poison share the generic dot_dmg field; record which one it was
+      // purely so the UI can show the right icon/flash colour. Never read by logic.
+      target._dot_type = (def.name || '').toLowerCase() === 'poison' ? 'poison' : 'burn';
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
     }
     if (p.bleed_dmg_pct != null) {

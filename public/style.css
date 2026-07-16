@@ -2404,6 +2404,45 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 0;
 }
 
+/* Status-effect icons pinned to the top of a unit's portrait (bleed/chill/burn/
+   poison). No z-index: painted after the portrait but before .battle-cell-info,
+   so they sit over the art while the name/HP still paint on top. */
+.bc-status-icons {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  pointer-events: none;
+  line-height: 1;
+}
+.bc-status-icon {
+  font-size: 9px;
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);
+}
+
+/* One-shot coloured pulse over the portrait when a DoT ticks. Inserted before
+   .battle-cell-info and given no z-index so the text stays legible above it. */
+.bc-status-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 4px;
+  opacity: 0;
+  animation: bc-status-flash 0.65s ease-out;
+}
+@keyframes bc-status-flash {
+  0%   { opacity: 0; }
+  22%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+.bc-status-flash--burn   { background: radial-gradient(circle, rgba(255,130,25,0.95), rgba(255,60,0,0.35) 65%, transparent 85%); }
+.bc-status-flash--poison { background: radial-gradient(circle, rgba(130,235,60,0.9),  rgba(45,160,20,0.35) 65%, transparent 85%); }
+.bc-status-flash--bleed  { background: radial-gradient(circle, rgba(235,25,45,0.9),   rgba(140,0,10,0.35) 65%, transparent 85%); }
+.bc-status-flash--chill  { background: radial-gradient(circle, rgba(125,205,255,0.9), rgba(30,120,220,0.35) 65%, transparent 85%); }
+
 .detail-unit-portrait {
   width: 48px;
   height: 48px;

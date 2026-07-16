@@ -109,33 +109,141 @@ export async function mithrails_light(cellEl) {
   console.log('[battle-fx] mithrails_light END', dataId);
 }
 
-// ── Communion — single particle + fading line ─────────────────────────────────
+// ── Communion — blood-drain ritual from a damaged enemy to a wounded ally ──────
+// Ported from the standalone prototype: a phased windup → drain → transfer →
+// bloom sequence, re-anchored to the source (drained) and target (healed) cells.
 export async function communion(sourceCellEl, targetCellEl) {
   console.log('[battle-fx] communion START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
   if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) return;
   const srcId = sourceCellEl.dataset.id;
   const dstId = targetCellEl.dataset.id;
-  const layer = new PIXI.Container();
+  const TAU = Math.PI * 2;
+  const rand   = (a, b) => a + Math.random() * (b - a);
+  const lerp   = (a, b, t) => a + (b - a) * t;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  // Fakes a radial-gradient glow (PIXI Graphics has no gradients) with a few
+  // concentric fills — brightest in the middle. Meant to sit on an ADD-blended,
+  // blurred layer so the steps read as a soft bloom.
+  const softGlow = (g, x, y, radius, color, alpha) => {
+    if (alpha <= 0 || radius <= 0) return;
+    const steps = 4;
+    for (let i = steps; i >= 1; i--) {
+      g.beginFill(color, alpha * (1 - (i - 1) / steps) * 0.5);
+      g.drawCircle(x, y, radius * (i / steps));
+      g.endFill();
+    }
+  };
+
+  // Stable per-particle constants so motion doesn't jitter frame to frame.
+  const sparks = Array.from({ length: 16 }, () => ({
+    ang: rand(0, TAU), rad: rand(26, 68), speed: rand(0.9, 1.5), delay: rand(0, 1), size: rand(2, 4),
+  }));
+  const mist = Array.from({ length: 18 }, () => ({
+    delay: rand(0, 0.55), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(10, 26), speed: rand(0.85, 1.15),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const sourceAura = new PIXI.Graphics(); sourceAura.blendMode = ADD;
+  const sparkG     = new PIXI.Graphics(); sparkG.blendMode     = ADD;
+  const mistG      = new PIXI.Graphics(); mistG.blendMode      = ADD;
+  const targetGlow = new PIXI.Graphics(); targetGlow.blendMode = ADD;
+  const beam       = new PIXI.Graphics(); beam.blendMode       = ADD;
+  const ring       = new PIXI.Graphics();
+  glowLayer.addChild(sourceAura, sparkG, mistG, targetGlow);
+  layer.addChild(glowLayer, beam, ring);
   app.stage.addChild(layer);
-  const line = new PIXI.Graphics();
-  const particle = new PIXI.Graphics();
-  particle.beginFill(0xff1e1e);
-  particle.drawCircle(0, 0, 6);
-  particle.endFill();
-  layer.addChild(line);
-  layer.addChild(particle);
-  await animate(700, t => {
+
+  const DURATION = 1400;
+  await animate(DURATION, t => {
     const s = cellBoundsFor(srcId), d = cellBoundsFor(dstId);
     if (!s || !d) { layer.visible = false; return; }
-    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
-    const dx = d.x + d.width / 2, dy = d.y + d.height / 2;
-    line.clear();
-    line.lineStyle(4, 0x8a0303, 0.9 * (1 - t));
-    line.moveTo(sx, sy);
-    line.lineTo(dx, dy);
-    particle.position.set(sx + (dx - sx) * t, sy + (dy - sy) * t);
-    particle.alpha = 1 - Math.abs(0.5 - t) * 2;
+    layer.visible = true;
+
+    const sx0 = s.x + s.width / 2, sy0 = s.y + s.height / 2;
+    const dx  = d.x + d.width / 2, dy  = d.y + d.height / 2;
+    const cellR = Math.min(s.width, s.height);
+
+    // Phases: windup (0–.28) draws life to the enemy, drain (.28–.72) the beam
+    // + mist crossing, bloom (.72–1) the ally lighting up.
+    const windup = clamp01(t / 0.28);
+    const drain  = clamp01((t - 0.28) / 0.44);
+    const bloom  = clamp01((t - 0.72) / 0.28);
+
+    // Source flinches while its life is torn out, calm again by the bloom.
+    const shakeAmt = drain * (1 - bloom) * 4;
+    const sx = sx0 + (Math.random() - 0.5) * shakeAmt;
+    const sy = sy0 + (Math.random() - 0.5) * shakeAmt;
+
+    const ang   = Math.atan2(dy - sy, dx - sx);
+    const perpX = Math.cos(ang + Math.PI / 2);
+    const perpY = Math.sin(ang + Math.PI / 2);
+    const time  = t * DURATION * 0.06; // frame-ish clock for wobble
+
+    // Gathering aura at the source.
+    sourceAura.clear();
+    softGlow(sourceAura, sx, sy, cellR * 0.75, 0x8b0000, Math.max(windup * 0.5, drain * 0.55) * (1 - bloom));
+
+    // Sparks raining inward into the source during windup and early drain.
+    sparkG.clear();
+    const sparkGate = Math.min(1, windup * 1.5) * (1 - clamp01((t - 0.6) / 0.2));
+    if (sparkGate > 0) {
+      for (const p of sparks) {
+        const phase = (t * p.speed + p.delay) % 1;
+        const r = p.rad * (1 - phase);
+        const a = p.ang + phase * 2;
+        const px = sx + Math.cos(a) * r;
+        const py = sy + Math.sin(a) * r * 0.8;
+        const fade = phase < 0.85 ? 1 : (1 - phase) / 0.15;
+        softGlow(sparkG, px, py, p.size * 2.2, 0xff1e1e, 0.9 * fade * sparkGate);
+      }
+    }
+
+    // The jagged three-layer beam, straight from the prototype's drawBeam.
+    beam.clear();
+    const beamA = drain * (1 - bloom) * 0.7;
+    if (beamA > 0) {
+      const segs = 18;
+      const layers = [[6, 0xff2020, 0.4], [4, 0xcc0000, 0.27], [2.5, 0x880000, 0.14]];
+      layers.forEach(([width, color, la], li) => {
+        beam.lineStyle(width, color, la * beamA);
+        beam.moveTo(sx, sy);
+        for (let i = 1; i <= segs; i++) {
+          const tt = i / segs;
+          const mx = lerp(sx, dx, tt), my = lerp(sy, dy, tt);
+          const off = Math.sin(time * 0.15 + i * 0.7 + li) * (12 - li * 3) * Math.sin(tt * Math.PI);
+          beam.lineTo(mx + perpX * off, my + perpY * off);
+        }
+      });
+    }
+
+    // Mist blobs carrying the stolen life across to the ally.
+    mistG.clear();
+    for (const m of mist) {
+      const lp = clamp01(((t - 0.28) * m.speed - m.delay * 0.4) / 0.5);
+      if (lp <= 0) continue;
+      const bx = lerp(sx, dx, lp), by = lerp(sy, dy, lp);
+      const wob = Math.sin(time * 0.5 + m.wob) * 8 * (1 - lp * 0.5);
+      const off = m.perp * 14 + wob;
+      softGlow(mistG, bx + perpX * off, by + perpY * off, m.size, 0xc8001e, Math.sin(lp * Math.PI) * 0.55);
+    }
+
+    // Ally bloom + expanding ring as the life takes hold.
+    targetGlow.clear();
+    if (bloom > 0) {
+      const pop = bloom < 0.6 ? bloom / 0.6 : 1 - (bloom - 0.6) / 0.4;
+      softGlow(targetGlow, dx, dy, cellR * (0.5 + bloom * 0.5), 0xb4002a, 0.5 * pop);
+    }
+    ring.clear();
+    if (bloom > 0) {
+      ring.lineStyle(2, 0xcc0033, (1 - bloom) * 0.7);
+      ring.drawCircle(dx, dy, 6 + bloom * cellR * 1.2);
+    }
   });
+
   layer.destroy({ children: true });
   console.log('[battle-fx] communion END', srcId, '->', dstId);
 }
