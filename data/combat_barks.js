@@ -566,21 +566,6 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { name: 'Dungeon Rat' },
-    lines: [
-      '*skitter*',
-      'Squeak!',
-      '*it is genuinely trying its best*',
-    ],
-  },
-  {
-    trigger: 'death', actor: { name: 'Dungeon Rat' },
-    lines: [
-      '*squeak…*',
-      '*the tiny paws stop*',
-    ],
-  },
-  {
     trigger: 'attack', actor: { name: 'Malgrath the Undying' },
     lines: [
       'I have outlived your gods, your kings, and your grandmother.',

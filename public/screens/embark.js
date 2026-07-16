@@ -18,8 +18,8 @@ const REGIONS = [
     crystal: 'Air',
   },
   {
-    id: 'dungeons_of_malgrath',
-    label: 'Dungeons of Malgrath',
+    id: 'chamber_of_unrest',
+    label: 'Chamber Of Unrest',
     icon: '💀',
     description: 'Sunken halls choked with undead, cursed knights, and Malgrath himself — who has already died once.',
     crystal: 'Death',

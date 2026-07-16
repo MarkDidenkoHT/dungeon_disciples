@@ -637,7 +637,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 25 HP.',
+    description: 'Heal all allies for 20 HP.',
     params: { heal_flat: 25 },
   },
   'prayer_of_healing 2': {
@@ -646,8 +646,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 40 HP.',
-    params: { heal_flat: 40 },
+    description: 'Heal all allies for 30 HP.',
+    params: { heal_flat: 30 },
   },
   'fanaticism 1': {
     id: 'fanaticism 1',
@@ -694,7 +694,7 @@ const UNIT_ABILITIES = {
     description: 'After taking damage, gain +3 armor or resistance to that damage type for the rest of the round.',
     params: { resist_gain: 3, duration_rounds: 1, match_damage_type: true },
   },
-    'aegis 2': {
+  'aegis 2': {
     id: 'aegis 1',
     name: 'Aegis',
     rank: 1,
@@ -764,7 +764,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
-    params: { light_of_dawn: true, light_of_dawn_heal: 15, light_of_dawn_dmg: 15 },
+    params: { light_of_dawn: true, light_of_dawn_heal: 3, light_of_dawn_dmg: 3 },
     effect_name: 'holy_heal',
   },
   'light_of_dawn 2': {
@@ -774,7 +774,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
-    params: { light_of_dawn: true, light_of_dawn_heal: 25, light_of_dawn_dmg: 25 },
+    params: { light_of_dawn: true, light_of_dawn_heal: 5, light_of_dawn_dmg: 5 },
     effect_name: 'holy_heal',
   },
   'eternal_grief 1': {
