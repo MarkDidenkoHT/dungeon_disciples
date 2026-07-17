@@ -81,6 +81,86 @@ function animate(duration, onTick) {
   });
 }
 
+// Fakes a radial-gradient glow (PIXI Graphics has no gradients) with concentric
+// fills, brightest in the middle. Draw onto an ADD-blended, blurred layer.
+function softGlow(g, x, y, radius, color, alpha) {
+  if (alpha <= 0 || radius <= 0) return;
+  const steps = 4;
+  for (let i = steps; i >= 1; i--) {
+    g.beginFill(color, alpha * (1 - (i - 1) / steps) * 0.5);
+    g.drawCircle(x, y, radius * (i / steps));
+    g.endFill();
+  }
+}
+
+// Shared elemental burst on a single cell — used by noxious_death (plague/green)
+// and last_verse (lava/flame). Same shape, palette swapped: a central bloom, an
+// outward spray of motes, and an expanding shockwave ring.
+async function elementalBurst(cellEl, pal) {
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const TAU = Math.PI * 2;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  // Stable per-mote constants so the spray doesn't jitter frame to frame.
+  const motes = Array.from({ length: 16 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.55, 1.15), size: rand(2, 5), drift: rand(-0.25, 0.25),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const bloom = new PIXI.Graphics(); bloom.blendMode = ADD;
+  const moteG = new PIXI.Graphics(); moteG.blendMode = ADD;
+  const ring  = new PIXI.Graphics();
+  glowLayer.addChild(bloom, moteG);
+  layer.addChild(glowLayer, ring);
+  app.stage.addChild(layer);
+
+  await animate(560, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    // Central bloom: snaps in, then fades over the rest of the burst.
+    bloom.clear();
+    const bloomA = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
+    softGlow(bloom, cx, cy, R * (0.5 + t * 0.5), pal.core, 0.7 * bloomA);
+    softGlow(bloom, cx, cy, R * (0.3 + t * 0.4), pal.mid,  0.6 * bloomA);
+
+    // Motes sprayed outward, fading as they travel.
+    moteG.clear();
+    for (const m of motes) {
+      const dist = R * 0.95 * t * m.speed;
+      const mx = cx + Math.cos(m.ang) * dist;
+      const my = cy + Math.sin(m.ang) * dist + m.drift * dist;
+      softGlow(moteG, mx, my, m.size * (1.4 - t * 0.6), pal.mid, 0.8 * (1 - t));
+    }
+
+    // Shockwave ring.
+    ring.clear();
+    ring.lineStyle(3 * (1 - t) + 1, pal.core, (1 - t) * 0.85);
+    ring.drawCircle(cx, cy, R * 0.2 + t * R);
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── noxious_death — green plague nova on a dying unit's enemies ────────────────
+export async function noxious_death(cellEl) {
+  console.log('[battle-fx] noxious_death', cellEl?.dataset?.id);
+  return elementalBurst(cellEl, { core: 0xeaffb0, mid: 0x63dd2b });
+}
+
+// ── last_verse — lava/flame nova, same shape as noxious_death ──────────────────
+export async function last_verse(cellEl) {
+  console.log('[battle-fx] last_verse', cellEl?.dataset?.id);
+  return elementalBurst(cellEl, { core: 0xffe27a, mid: 0xff6a1a });
+}
+
 // ── Mithrail's Light ──────────────────────────────────────────────────────────
 export async function mithrails_light(cellEl) {
   console.log('[battle-fx] mithrails_light START', cellEl?.dataset?.id);
@@ -394,4 +474,6 @@ export const EFFECTS = {
   sword_swing,
   holy_heal,
   protector,
+  noxious_death,
+  last_verse,
 };

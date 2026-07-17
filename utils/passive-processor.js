@@ -413,7 +413,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
         e.battle_hp = Math.max(0, e.battle_hp - p.death_aoe_damage);
         if (e.battle_hp <= 0) e.alive = false;
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: p.death_aoe_damage, heal: false });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: p.death_aoe_damage, heal: false });
       }
     }
   }

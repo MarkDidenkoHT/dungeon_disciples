@@ -217,6 +217,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_death',
     description: 'On death, deals 10 fire damage to all enemies.',
     params: { death_aoe_damage: 10, damage_type: 'nature' },
+    effect_name: 'last_verse',
   },
   'noxious_death 1': {
     id: 'noxious_death 1',
@@ -226,6 +227,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_death',
     description: 'On death, deals 10 nature damage to all enemies.',
     params: { death_aoe_damage: 10, damage_type: 'nature' },
+    effect_name: 'noxious_death',
   },
   'noxious_death 2': {
     id: 'noxious_death 2',
@@ -235,6 +237,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_death',
     description: 'On death, deals 20 nature damage to all enemies.',
     params: { death_aoe_damage: 20, damage_type: 'nature' },
+    effect_name: 'noxious_death',
   },
   'find_weakness 1': {
     id: 'find_weakness 1',
@@ -353,7 +356,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_heal',
-    description: 'Heals for 25% of health restored to the target on their next turn.',
+    description: 'Banks 25% of healing received and restores it after this unit next takes a hit.',
     params: { hot_pct: 25 },
     effect_name: 'renew',
   },
@@ -637,7 +640,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 20 HP.',
+    description: 'Heal all allies for 25 HP.',
     params: { heal_flat: 25 },
   },
   'prayer_of_healing 2': {
@@ -646,8 +649,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 30 HP.',
-    params: { heal_flat: 30 },
+    description: 'Heal all allies for 40 HP.',
+    params: { heal_flat: 40 },
   },
   'fanaticism 1': {
     id: 'fanaticism 1',
@@ -694,7 +697,7 @@ const UNIT_ABILITIES = {
     description: 'After taking damage, gain +3 armor or resistance to that damage type for the rest of the round.',
     params: { resist_gain: 3, duration_rounds: 1, match_damage_type: true },
   },
-  'aegis 2': {
+    'aegis 2': {
     id: 'aegis 1',
     name: 'Aegis',
     rank: 1,
@@ -764,7 +767,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
-    params: { light_of_dawn: true, light_of_dawn_heal: 3, light_of_dawn_dmg: 3 },
+    params: { light_of_dawn: true, light_of_dawn_heal: 15, light_of_dawn_dmg: 15 },
     effect_name: 'holy_heal',
   },
   'light_of_dawn 2': {
@@ -774,7 +777,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_turn_start',
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
-    params: { light_of_dawn: true, light_of_dawn_heal: 5, light_of_dawn_dmg: 5 },
+    params: { light_of_dawn: true, light_of_dawn_heal: 25, light_of_dawn_dmg: 25 },
     effect_name: 'holy_heal',
   },
   'eternal_grief 1': {
