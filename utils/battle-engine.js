@@ -330,8 +330,16 @@ class BattleEngine {
     }
     return immediate;
   }
-  executeAction(actor, target = null, actionType = 'attack') {
+  // opts.turnStart defaults true: this is the unit's own turn beginning, so its
+  // turn-start DoTs tick here. Pass { turnStart: false } for out-of-turn strikes
+  // (e.g. a commanded Infernal Mandate hit) so they don't tick the striker's DoTs.
+  executeAction(actor, target = null, actionType = 'attack', opts = {}) {
     this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
+    if (opts.turnStart !== false) {
+      this.applyTurnStartDoTs(actor);
+      // If the unit bled/chilled out at the start of its own turn, it doesn't act.
+      if (!actor.alive) { actor.acted_this_round = true; return this.afterAction(actor); }
+    }
     actor.defend_armor_bonus = 0;
     if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
@@ -494,6 +502,31 @@ class BattleEngine {
     if (!key || !this.ABILITIES) return [];
     const keys = Array.isArray(key) ? key : [key];
     return keys.map(k => this.ABILITIES[k]).filter(Boolean);
+  }
+  // Turn-start damage-over-time ticks that any unit can be afflicted with,
+  // regardless of its own passives: bleed, chill, and Recuperate's deferred hit.
+  // These used to live in the passive processor's on_turn_start branch, which
+  // only ran if the *victim* happened to own an on_turn_start passive — so on
+  // most units they silently never fired. Runs once at the acting unit's turn.
+  applyTurnStartDoTs(unit) {
+    if (!unit || !unit.alive) return;
+    const tick = (amount, passive, actorName, extra = {}) => {
+      unit.battle_hp = Math.max(0, unit.battle_hp - amount);
+      this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: amount, heal: false, ...extra });
+      if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
+    };
+    if (unit._deferred_dmg > 0) {
+      const d = unit._deferred_dmg; unit._deferred_dmg = 0;
+      tick(d, 'Recuperate (deferred)', '⏳');
+    }
+    if (unit.alive && unit._bleed_dmg > 0) {
+      const b = unit._bleed_dmg; unit._bleed_dmg = 0;
+      tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
+    }
+    if (unit.alive && unit._chill_dmg > 0) {
+      const c = unit._chill_dmg; unit._chill_dmg = 0;
+      tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
+    }
   }
   applyDoTs(unit) {
     if (!unit.alive) return;
@@ -695,6 +728,11 @@ class BattleEngine {
       const actor = this.currentActor();
       if (!actor || actor.side !== 'enemy') break;
       const before = this.log.length;
+      // Turn-start DoTs tick once here, before whichever branch this enemy takes
+      // (ability/skip/none/attack all bypass executeAction's own tick — see the
+      // { turnStart: false } on the attack branch below).
+      this.applyTurnStartDoTs(actor);
+      if (!actor.alive) { actor.acted_this_round = true; newLog.push(...this.log.slice(before)); continue; }
       if (actor._unity_host_id != null || actor._invulnerable) {
         this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
         this.doNone(actor);
@@ -717,7 +755,7 @@ class BattleEngine {
       if (!targets.length) { this.skipTurn(actor); }
       else {
         const target = targets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
-        this.executeAction(actor, target, 'attack');
+        this.executeAction(actor, target, 'attack', { turnStart: false }); // already ticked at loop top
       }
       newLog.push(...this.log.slice(before));
     }

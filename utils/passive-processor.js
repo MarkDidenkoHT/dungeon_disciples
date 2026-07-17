@@ -175,27 +175,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: heal });
       if (actual > 0) engine.fireHealTriggers(owner, owner, actual);
     }
-    if (owner._deferred_dmg > 0) {
-      const deferred = owner._deferred_dmg;
-      owner._deferred_dmg = 0;
-      owner.battle_hp = Math.max(0, owner.battle_hp - deferred);
-      engine.pushLog({ type: 'passive', passive: 'Recuperate (deferred)', actorName: '⏳', targetName: owner.unit_name, targetCell: owner.cellIndex, value: deferred, heal: false });
-      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
-    }
-    if (owner._bleed_dmg > 0) {
-      const bleed = owner._bleed_dmg;
-      owner._bleed_dmg = 0;
-      owner.battle_hp = Math.max(0, owner.battle_hp - bleed);
-      engine.pushLog({ type: 'passive', passive: 'Bleed', actorName: '🦸', targetName: owner.unit_name, targetId: owner.id, targetCell: owner.cellIndex, value: bleed, heal: false, dot_kind: 'bleed' });
-      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
-    }
-    if (owner._chill_dmg > 0) {
-      const chill = owner._chill_dmg;
-      owner._chill_dmg = 0;
-      owner.battle_hp = Math.max(0, owner.battle_hp - chill);
-      engine.pushLog({ type: 'passive', passive: 'Chill', actorName: '❄️', targetName: owner.unit_name, targetId: owner.id, targetCell: owner.cellIndex, value: chill, heal: false, dot_kind: 'chill' });
-      if (owner.battle_hp <= 0) { owner.alive = false; engine.applyOnDeathPassives(owner); }
-    }
+    // Bleed, chill, and Recuperate's deferred damage are status ticks any unit
+    // can carry, so they run unconditionally in engine.applyTurnStartDoTs — not
+    // here, where the block only executes for units that own an on_turn_start
+    // passive. Only genuine passives (regen above, light_of_dawn below) belong here.
     if (p.light_of_dawn === true) {
       const ownerRow = cellRow(owner.cellIndex);
       const ownerCol = cellCol(owner.cellIndex);
@@ -693,7 +676,8 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (validTargets.length > 0) {
       const randomEnemy = validTargets[Math.floor(Math.random() * validTargets.length)];
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — commands ${target.unit_name} to strike` });
-      engine.executeAction(target, randomEnemy, 'attack');
+      // Out-of-turn strike: don't tick the commanded unit's own turn-start DoTs.
+      engine.executeAction(target, randomEnemy, 'attack', { turnStart: false });
     }
     if (target.unit_data) target.unit_data = { ...target.unit_data, action_power: savedPower };
   }
