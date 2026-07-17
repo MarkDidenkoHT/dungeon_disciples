@@ -22,7 +22,7 @@ const ITEM_DEFS = {
     icon:         'aegis_of_the_first_ward',
     cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 45 },
   },
-    might_of_the_pure: {
+  might_of_the_pure: {
     key:          'might_of_the_pure',
     name:         'Might Of The Pure',
     faction:      'empire',
@@ -31,8 +31,8 @@ const ITEM_DEFS = {
     stat_mods:    { action_power: 5, death_resist: 5 },
     passive:      null,
     icon:         'might_of_the_pure',
-    cost:         { Gold: 160, Crystals_Life: 45 },
-    item_cost:    { death_resistance_potion: 1, mace: 1}
+    cost:         { Gold: 100, Crystals_Life: 25, Crystals_Death: 25 },
+    item_cost:    { death_resistance_potion: 1, mace: 1, broken_seal: 1}
   },
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
@@ -142,10 +142,21 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 5 },
+    stat_mods:    { power: 3 },
     passive:      null,
     icon:         'mace',
     cost:         { Gold: 25, Crystals_Death: 25 },
+  },
+  broken_seal: {
+    key:          'broken_seal',
+    name:         "Broken Seal",
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { power: 2 },
+    passive:      null,
+    icon:         'broken_seal',
+    cost:         { aggrails_signet: 1, Gold: 25 },
   },
 };
 
