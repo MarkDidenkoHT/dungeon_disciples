@@ -84,8 +84,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return `<span class="action-btn__label">${fallbackLabel}</span>`;
   }
 
+  // Localized bark text. For a non-English language, returns ONLY that language's
+  // line (no English fallback), matching the spell-translation rule.
+  function barkText(entry) {
+    const lang = player?.settings?.language;
+    if (lang && lang !== 'en') return entry.text_ru ?? '';
+    return entry.text ?? '';
+  }
+
   function showBarkToast(actorId, text) {
     if (player?.settings?.barks_enabled === false) return;
+    if (!text) return;
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
     if (!cell) return;
     cell.classList.add('battle-cell--bark-active');
@@ -160,7 +169,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
 
       // 4. Show bark toast if applicable
-      if (entry.type === 'bark') showBarkToast(entry.actorId, entry.text);
+      if (entry.type === 'bark') showBarkToast(entry.actorId, barkText(entry));
 
       // Flash the portrait when a damage-over-time effect ticks on it.
       const dotKind = dotTickKind(entry);
@@ -409,7 +418,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
     if (entry.type === 'bark') {
       if (player?.settings?.barks_enabled === false) return '';
-      return `<div class="log-entry log-entry--bark">${entry.actorName}: "${entry.text}"</div>`;
+      return `<div class="log-entry log-entry--bark">${entry.actorName}: "${barkText(entry)}"</div>`;
     }
     if (entry.type === 'notice') return `<div class="log-entry log-entry--notice">${entry.message}</div>`;
     return '';

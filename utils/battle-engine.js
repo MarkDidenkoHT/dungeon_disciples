@@ -1068,7 +1068,8 @@ class BattleEngine {
     if (chance <= 0 || Math.random() >= chance) return;
 
     let best = -1;
-    let pool = [];
+    let pool = [];    // English lines
+    let poolRu = [];  // Russian lines, kept index-aligned with pool
     for (const rule of COMBAT_BARKS) {
       if (rule.trigger !== triggerKey) continue;
       const aScore = this.barkFilterScore(rule.actor, owner);
@@ -1077,14 +1078,18 @@ class BattleEngine {
       if (tScore < 0) continue;
       const score = aScore + tScore;
       if (score < best) continue;
-      if (score > best) { best = score; pool = []; }
-      pool.push(...(rule.lines ?? []));
+      if (score > best) { best = score; pool = []; poolRu = []; }
+      const lines = rule.lines ?? [];
+      pool.push(...lines);
+      // Pad ru so it stays index-aligned even if a rule lacks/short lines_ru.
+      poolRu.push(...lines.map((_, i) => (rule.lines_ru ?? [])[i] ?? ''));
     }
     if (!pool.length) return;
 
     owner._bark_counts[triggerKey] = spoken + 1;
-    const line = pool[Math.floor(Math.random() * pool.length)];
-    this.pushLog({ type: 'bark', actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: line });
+    const idx = Math.floor(Math.random() * pool.length);
+    // Carry both languages; the client picks by the viewer's language (no fallback).
+    this.pushLog({ type: 'bark', actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: pool[idx], text_ru: poolRu[idx] });
   }
 }
 module.exports = { BattleEngine };

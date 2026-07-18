@@ -16,9 +16,11 @@
 // Specificity (higher wins, ties are pooled together):
 //   +100 name, +2 per tag, +0 per `not` (a gate only), on each of actor and
 //   target. A named rule therefore always beats any tag rule.
-// So a Paladin-vs-Demon rule beats a Knight-vs-Demon rule, which beats a
-// generic Holy-vs-Demon rule. This lets you write broad tag coverage once and
-// override it for characterful units without touching the broad rules.
+//
+// Localization: each rule carries `lines` (English) and a parallel `lines_ru`
+// of the SAME length and order. The engine picks one index and logs both the
+// English and Russian line; the client shows the one for the viewer's language
+// (no English fallback). Keep lines and lines_ru index-aligned when editing.
 //
 // Triggers:
 //   attack       actor lands a damaging hit that does NOT kill
@@ -54,6 +56,13 @@ const COMBAT_BARKS = [
       'Even your veins run hot with spite.',
       'Foul vintage. I will drink it anyway.',
     ],
+    lines_ru: [
+      'Твоя кровь обжигает горло!',
+      'Пепел и угли — это всё, что в тебе есть?',
+      'Ты истекаешь угольками. Какое разочарование.',
+      'Даже твои вены полны злобы.',
+      'Скверный урожай. Но я всё равно выпью.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Knight' },
@@ -63,6 +72,13 @@ const COMBAT_BARKS = [
       'Take off the helm. I want to see your face empty.',
       'Chivalry bleeds the same as cowardice.',
       'Such a polished shell. Let us see the meat.',
+    ],
+    lines_ru: [
+      'Столько железа — а горло всё равно открыто.',
+      'Твои клятвы отдают молоком, рыцарёк.',
+      'Сними шлем. Хочу видеть, как гаснет твоё лицо.',
+      'Благородство кровоточит так же, как трусость.',
+      'Такой отполированный панцирь. Взглянем на мясо.',
     ],
   },
   {
@@ -74,6 +90,13 @@ const COMBAT_BARKS = [
       'Consecrated, and still warm. Exquisite.',
       'Light cannot fill a body once it is empty.',
     ],
+    lines_ru: [
+      'Освящённая кровь — мой любимый урожай.',
+      'Молись громче. Хочу слышать, как частит твой пульс.',
+      'Твой бог не смотрит. Я проверил.',
+      'Освящённая и ещё тёплая. Изысканно.',
+      'Свет не наполнит тело, когда оно опустеет.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Zombie' },
@@ -83,6 +106,12 @@ const COMBAT_BARKS = [
       'You are a corpse that forgot to lie down.',
       'Not even hunger would stoop to you.',
     ],
+    lines_ru: [
+      'Свернувшаяся. Прокисшая. Совершенно недостойна меня.',
+      'В тебе нет ничего, что стоило бы пить.',
+      'Ты труп, забывший лечь.',
+      'Даже голод не опустится до тебя.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Construct' },
@@ -90,6 +119,11 @@ const COMBAT_BARKS = [
       'No blood. No sport. Just work.',
       'Whoever built you denied me my supper.',
       'A body with nothing to give. How rude.',
+    ],
+    lines_ru: [
+      'Ни крови. Ни забавы. Только работа.',
+      'Тот, кто собрал тебя, лишил меня ужина.',
+      'Тело, которому нечего дать. Как грубо.',
     ],
   },
   {
@@ -99,12 +133,21 @@ const COMBAT_BARKS = [
       'Sanctity drains as easily as sin.',
       'Sleep. Your god will not miss one more.',
     ],
+    lines_ru: [
+      'Твой свет теперь мой. До капли.',
+      'Святость иссякает так же легко, как грех.',
+      'Спи. Твой бог не заметит пропажи ещё одного.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire' }, target: { tag: 'Demon' },
     lines: [
       'Back to the ash you crawled from.',
       'Burnt on the tongue — but swallowed all the same.',
+    ],
+    lines_ru: [
+      'Назад в пепел, из которого ты выполз.',
+      'Обжигает язык — но всё же проглочено.',
     ],
   },
   {
@@ -114,6 +157,11 @@ const COMBAT_BARKS = [
       'You were never anything but a cup.',
       'Thank you. Truly.',
     ],
+    lines_ru: [
+      'Ещё тёплая. Как я люблю.',
+      'Ты никогда не был ничем, кроме чаши.',
+      'Спасибо. Искренне.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Vampire' },
@@ -121,6 +169,11 @@ const COMBAT_BARKS = [
       'I have died before. It never takes.',
       'The night… remembers…',
       'You have merely… postponed… my thirst…',
+    ],
+    lines_ru: [
+      'Я уже умирал. Это никогда не приживается.',
+      'Ночь… помнит…',
+      'Ты лишь… отсрочил… мою жажду…',
     ],
   },
 
@@ -136,6 +189,13 @@ const COMBAT_BARKS = [
       'Heaven is not listening. I am.',
       'Burn, and call it a blessing.',
     ],
+    lines_ru: [
+      'Кричи своему богу! Пусть услышит!',
+      'Твои молитвы — растопка. Не более.',
+      'Каждый гимн кончается влажным звуком.',
+      'Небеса не слушают. Слушаю я.',
+      'Гори и зови это благословением.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Knight' },
@@ -145,6 +205,12 @@ const COMBAT_BARKS = [
       'Tin man. Tin heart. Tin end.',
       'I have broken better vows on worse days.',
     ],
+    lines_ru: [
+      'Твоя клятва не скрепит осколки.',
+      'Честь так тяжело нести. Позволь помочь.',
+      'Жестяной болван. Жестяное сердце. Жестяной конец.',
+      'Я ломал клятвы получше в дни похуже.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Vampire' },
@@ -152,6 +218,11 @@ const COMBAT_BARKS = [
       'Bloodsucker. You are a parasite on a corpse.',
       'You stole your immortality. I was born to mine.',
       'All that hunger, and nothing to show for it.',
+    ],
+    lines_ru: [
+      'Кровосос. Ты паразит на трупе.',
+      'Ты украл своё бессмертие. Я рождён со своим.',
+      'Столько голода — и ничего взамен.',
     ],
   },
   {
@@ -161,12 +232,21 @@ const COMBAT_BARKS = [
       'You read about fire. I *am* fire.',
       'Put the book down and burn properly.',
     ],
+    lines_ru: [
+      'Заёмная сила. Смотри, как я её отберу.',
+      'Ты читал об огне. Я и *есть* огонь.',
+      'Отложи книгу и гори как следует.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Construct' },
     lines: [
       'Someone made you. That is your first mistake.',
       'Let us see how the seams hold.',
+    ],
+    lines_ru: [
+      'Тебя кто-то создал. Это твоя первая ошибка.',
+      'Посмотрим, как держатся швы.',
     ],
   },
   {
@@ -176,6 +256,11 @@ const COMBAT_BARKS = [
       'Tell your god who sent you.',
       'One less voice in the choir.',
     ],
+    lines_ru: [
+      'И свет гаснет. Как всегда.',
+      'Скажи своему богу, кто тебя послал.',
+      'Одним голосом в хоре меньше.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Demon' },
@@ -184,6 +269,11 @@ const COMBAT_BARKS = [
       'The abyss thanks you for your donation.',
       'Was that all?',
     ],
+    lines_ru: [
+      'Пепел. Пепел и тишина.',
+      'Бездна благодарит за пожертвование.',
+      'И это всё?',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Demon' },
@@ -191,6 +281,11 @@ const COMBAT_BARKS = [
       'I go back… and I will come again…',
       'The abyss… is patient…',
       'You have killed nothing. You have only sent me home.',
+    ],
+    lines_ru: [
+      'Я возвращаюсь… и вернусь снова…',
+      'Бездна… терпелива…',
+      'Ты никого не убил. Ты лишь отправил меня домой.',
     ],
   },
 
@@ -205,6 +300,12 @@ const COMBAT_BARKS = [
       'You have no place beneath this sky!',
       'Every wound I give is a prayer answered.',
     ],
+    lines_ru: [
+      'Назад в яму, мерзость!',
+      'Свет не ведёт переговоров!',
+      'Тебе нет места под этим небом!',
+      'Каждая моя рана — услышанная молитва.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Vampire' },
@@ -212,6 +313,11 @@ const COMBAT_BARKS = [
       'Your hunger ends here, leech!',
       'A stolen life is no life at all!',
       'How many nights until you are done? Answer me!',
+    ],
+    lines_ru: [
+      'Твой голод кончается здесь, пиявка!',
+      'Краденая жизнь — вовсе не жизнь!',
+      'Сколько ночей, пока ты насытишься? Отвечай!',
     ],
   },
   {
@@ -221,6 +327,11 @@ const COMBAT_BARKS = [
       'This is a mercy, though you cannot know it.',
       'Death was your gift. Stop refusing it!',
     ],
+    lines_ru: [
+      'Упокойся! Ты заслужил покой и забыл о нём!',
+      'Это милость, хоть тебе и не понять.',
+      'Смерть была твоим даром. Перестань отвергать его!',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Zombie' },
@@ -229,6 +340,11 @@ const COMBAT_BARKS = [
       'Be still. Please, just be still.',
       'This body is not yours to walk in!',
     ],
+    lines_ru: [
+      'Кто-то когда-то любил тебя. Прости меня за это.',
+      'Замри. Прошу, просто замри.',
+      'Это тело не тебе носить!',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Spirit' },
@@ -236,6 +352,11 @@ const COMBAT_BARKS = [
       'Let go! There is nothing left to hold!',
       'Your grief does not excuse this.',
       'The way onward is open. Take it!',
+    ],
+    lines_ru: [
+      'Отпусти! Держаться больше не за что!',
+      'Твоя скорбь этого не оправдывает.',
+      'Путь дальше открыт. Ступай!',
     ],
   },
   {
@@ -246,6 +367,12 @@ const COMBAT_BARKS = [
       'The light purges all!',
       'No mercy for the wicked!',
     ],
+    lines_ru: [
+      'Узри мощь праведных!',
+      'Обратно в бездну!',
+      'Свет очищает всё!',
+      'Нет пощады нечестивым!',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Undead' },
@@ -254,6 +381,11 @@ const COMBAT_BARKS = [
       'Go where you were always meant to go.',
       'It is finished. Be at peace.',
     ],
+    lines_ru: [
+      'Упокойся. На этот раз по-настоящему.',
+      'Ступай туда, куда тебе всегда было суждено.',
+      'Кончено. Обрети покой.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Holy' },
@@ -261,6 +393,11 @@ const COMBAT_BARKS = [
       'Into the light… at last…',
       'I regret… nothing…',
       'Hold the line… without me…',
+    ],
+    lines_ru: [
+      'В свет… наконец-то…',
+      'Я ни о чём… не жалею…',
+      'Держите строй… без меня…',
     ],
   },
 
@@ -275,6 +412,12 @@ const COMBAT_BARKS = [
       'Steel answers steel!',
       'Give ground and you give everything!',
     ],
+    lines_ru: [
+      'Держать строй!',
+      'За корону!',
+      'Сталь отвечает сталью!',
+      'Уступишь пядь — уступишь всё!',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Knight', not: ['Undead', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
@@ -282,6 +425,11 @@ const COMBAT_BARKS = [
       'I have read your name in the old books. It dies today.',
       'You will not pass this shield!',
       'Come on then, hellspawn!',
+    ],
+    lines_ru: [
+      'Я читал твоё имя в старых книгах. Сегодня оно умрёт.',
+      'Ты не пройдёшь этот щит!',
+      'Ну давай же, отродье ада!',
     ],
   },
   {
@@ -291,6 +439,11 @@ const COMBAT_BARKS = [
       'Still… standing… post…',
       'Orders… were… never… rescinded…',
     ],
+    lines_ru: [
+      'Клятва… держит…',
+      'Всё ещё… на… посту…',
+      'Приказ… не был… отменён…',
+    ],
   },
   {
     trigger: 'attack', actor: { tags: ['Knight', 'Undead'] },
@@ -299,6 +452,11 @@ const COMBAT_BARKS = [
       'I kept my oath. I keep it still.',
       'The grave was a poor barracks.',
     ],
+    lines_ru: [
+      'Смерть не освободила меня от долга.',
+      'Я сдержал клятву. Держу и поныне.',
+      'Могила была скверной казармой.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Knight', not: ['Undead', 'Zombie'] },
@@ -306,6 +464,11 @@ const COMBAT_BARKS = [
       'The line… holds…',
       'Tell them I did not… step back…',
       'Someone… take up the shield…',
+    ],
+    lines_ru: [
+      'Строй… держится…',
+      'Скажите им, что я не… отступил…',
+      'Кто-нибудь… поднимите щит…',
     ],
   },
 
@@ -319,6 +482,11 @@ const COMBAT_BARKS = [
       'Stop… singing…',
       'It… hurts… to… look… at… you…',
     ],
+    lines_ru: [
+      'Твой… свет… такой… громкий…',
+      'Хватит… петь…',
+      'Больно… на… тебя… смотреть…',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Zombie' },
@@ -326,6 +494,11 @@ const COMBAT_BARKS = [
       'Warm…',
       'Hungry… always… hungry…',
       'Down… come… down…',
+    ],
+    lines_ru: [
+      'Тёплое…',
+      'Голод… вечный… голод…',
+      'Вниз… иди… вниз…',
     ],
   },
   {
@@ -335,6 +508,11 @@ const COMBAT_BARKS = [
       'You will be quiet soon. Everyone is.',
       'The grave is patient. I am not.',
     ],
+    lines_ru: [
+      'Я помню руки. Помню, как делал ими это.',
+      'Скоро ты затихнешь. Как все.',
+      'Могила терпелива. Я — нет.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Undead' },
@@ -343,6 +521,11 @@ const COMBAT_BARKS = [
       'Now you understand.',
       'One more for the long dark.',
     ],
+    lines_ru: [
+      'Добро пожаловать. Тесно, но ты поместишься.',
+      'Теперь ты понимаешь.',
+      'Ещё один для долгой тьмы.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Zombie' },
@@ -350,6 +533,11 @@ const COMBAT_BARKS = [
       'Oh… good…',
       'Rest…?',
       'Thank… you…',
+    ],
+    lines_ru: [
+      'О… хорошо…',
+      'Покой…?',
+      'Спа… сибо…',
     ],
   },
 
@@ -364,6 +552,12 @@ const COMBAT_BARKS = [
       'Do you hear it too? The weeping?',
       'Stay. Everyone leaves. Stay.',
     ],
+    lines_ru: [
+      'Ты такой тяжёлый. Такой тяжёлый.',
+      'Я лишь хочу, чтобы ты стал таким же холодным, как я.',
+      'Ты тоже это слышишь? Этот плач?',
+      'Останься. Все уходят. Останься.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Spirit' }, target: { tag: 'Holy' },
@@ -372,6 +566,11 @@ const COMBAT_BARKS = [
       'I prayed. I prayed and this is what I got.',
       'Where were you? WHERE WERE YOU?',
     ],
+    lines_ru: [
+      'Ты обещал мне покой. Обещал!',
+      'Я молилась. Молилась — и вот что получила.',
+      'Где ты был? ГДЕ ТЫ БЫЛ?',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Spirit' },
@@ -379,6 +578,11 @@ const COMBAT_BARKS = [
       'Finally…',
       'Is it… quiet… where you go…?',
       'I forget… my name… again…',
+    ],
+    lines_ru: [
+      'Наконец-то…',
+      'Там… тихо… куда ты уходишь…?',
+      'Я снова… забываю… своё имя…',
     ],
   },
 
@@ -393,6 +597,12 @@ const COMBAT_BARKS = [
       'Field test! Taking notes!',
       'That is going in the report.',
     ],
+    lines_ru: [
+      'Допуски в пределах нормы!',
+      'Не дёргайся, всё откалибровано!',
+      'Полевые испытания! Делаю пометки!',
+      'Это пойдёт в отчёт.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Construct' },
@@ -401,12 +611,21 @@ const COMBAT_BARKS = [
       'I can see the seams from here!',
       'Amateur work. Let me show you.',
     ],
+    lines_ru: [
+      'Скверная сварка. Тебя собирали второпях.',
+      'Отсюда видно все швы!',
+      'Любительская работа. Дай покажу.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Demon' },
     lines: [
       'Thermally interesting. Structurally not.',
       'Fire is just an engineering problem!',
+    ],
+    lines_ru: [
+      'Термически любопытно. Конструктивно — нет.',
+      'Огонь — это просто инженерная задача!',
     ],
   },
   {
@@ -416,6 +635,11 @@ const COMBAT_BARKS = [
       'Log it: one confirmed stop.',
       'The math was never in question.',
     ],
+    lines_ru: [
+      'Работает по проекту.',
+      'Запиши: одна подтверждённая остановка.',
+      'Расчёты никогда не подводили.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Engineer' },
@@ -423,6 +647,11 @@ const COMBAT_BARKS = [
       'Design flaw… mine…',
       'Check my notes… the third page…',
       'It should have… held…',
+    ],
+    lines_ru: [
+      'Дефект конструкции… мой…',
+      'Проверьте мои записи… третья страница…',
+      'Оно должно было… выдержать…',
     ],
   },
 
@@ -437,6 +666,12 @@ const COMBAT_BARKS = [
       'PROCEEDING.',
       'OBSTRUCTION NOTED. REMOVING.',
     ],
+    lines_ru: [
+      'ЦЕЛЬ ЗАХВАЧЕНА.',
+      'СОГЛАСИЕ НЕ ТРЕБУЕТСЯ.',
+      'ПРОДОЛЖАЮ.',
+      'ПРЕПЯТСТВИЕ ОТМЕЧЕНО. УСТРАНЯЮ.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Construct' },
@@ -445,6 +680,11 @@ const COMBAT_BARKS = [
       'TASK COMPLETE. NEXT.',
       'NO FURTHER INPUT DETECTED.',
     ],
+    lines_ru: [
+      'ПРЕПЯТСТВИЕ УСТРАНЕНО.',
+      'ЗАДАЧА ВЫПОЛНЕНА. СЛЕДУЮЩАЯ.',
+      'ДАЛЬНЕЙШИХ ДАННЫХ НЕ ОБНАРУЖЕНО.',
+    ],
   },
   {
     trigger: 'death', actor: { tag: 'Construct' },
@@ -452,6 +692,11 @@ const COMBAT_BARKS = [
       'INTEGRITY… FAIL…',
       'SHUTTING D—',
       'TASK… INCOMPLETE…',
+    ],
+    lines_ru: [
+      'ЦЕЛОСТНОСТЬ… СБОЙ…',
+      'ОТКЛЮЧЕ—',
+      'ЗАДАЧА… НЕ ВЫПОЛНЕНА…',
     ],
   },
 
@@ -466,12 +711,22 @@ const COMBAT_BARKS = [
       'This is beneath me. I will do it anyway.',
       'Do you know what I am? You will.',
     ],
+    lines_ru: [
+      'Ты обращаешься к тем, кто выше тебя.',
+      'Преклони колени — или их преклонят за тебя.',
+      'Это ниже моего достоинства. Но я всё равно это сделаю.',
+      'Знаешь, кто я? Скоро узнаешь.',
+    ],
   },
   {
     trigger: 'attack', actor: { tag: 'Court' }, target: { tag: 'Holy' },
     lines: [
       'Your church built me a throne and forgot why.',
       'Titles outlast gods, priest.',
+    ],
+    lines_ru: [
+      'Твоя церковь возвела мне трон и забыла зачем.',
+      'Титулы переживают богов, жрец.',
     ],
   },
   {
@@ -481,12 +736,21 @@ const COMBAT_BARKS = [
       'We are many voices and one throat.',
       'Harmony demands your silence.',
     ],
+    lines_ru: [
+      'Пой с нами. У тебя нет выбора.',
+      'Мы — много голосов и одна глотка.',
+      'Гармония требует твоего молчания.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Choir' },
     lines: [
       'And the note resolves.',
       'Your voice is ours now.',
+    ],
+    lines_ru: [
+      'И нота разрешается.',
+      'Твой голос теперь наш.',
     ],
   },
 
@@ -500,12 +764,21 @@ const COMBAT_BARKS = [
       'Nocked and gone.',
       'I had you three breaths ago.',
     ],
+    lines_ru: [
+      'Ветер благосклонен. Ты — нет.',
+      'Наложил стрелу — и всё кончено.',
+      'Ты был мой ещё три вдоха назад.',
+    ],
   },
   {
     trigger: 'kill', actor: { tag: 'Archer' },
     lines: [
       'Clean.',
       'Next quiver, next name.',
+    ],
+    lines_ru: [
+      'Чисто.',
+      'Новый колчан — новое имя.',
     ],
   },
   {
@@ -514,6 +787,11 @@ const COMBAT_BARKS = [
       '*a low, wet snarl*',
       '*teeth, and nothing behind the eyes*',
       '*it has stopped making sounds you know*',
+    ],
+    lines_ru: [
+      '*низкий, влажный рык*',
+      '*зубы и пустота за глазами*',
+      '*оно перестало издавать звуки, которые ты знаешь*',
     ],
   },
 
@@ -527,12 +805,21 @@ const COMBAT_BARKS = [
       'Name yourself, so I may carve it on your marker!',
       'The oath is older than you, and it is heavier!',
     ],
+    lines_ru: [
+      'Я охочусь на твоё племя с тех пор, как смог поднять клинок!',
+      'Назовись, чтобы я вырезал имя на твоём надгробии!',
+      'Клятва старше тебя — и тяжелее!',
+    ],
   },
   {
     trigger: 'kill', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
     lines: [
       'Feel the might of the righteous!',
       'Back to the abyss with you!',
+    ],
+    lines_ru: [
+      'Узри мощь праведных!',
+      'Обратно в бездну!',
     ],
   },
   {
@@ -542,12 +829,21 @@ const COMBAT_BARKS = [
       'I have a list. You are on it.',
       'Doubt is the wound. I am the cautery.',
     ],
+    lines_ru: [
+      'Признавайся. Это ничего не изменит, но признавайся.',
+      'У меня есть список. Ты в нём.',
+      'Сомнение — это рана. Я — прижигание.',
+    ],
   },
   {
     trigger: 'attack', actor: { name: 'Blood Knight' }, target: { tag: 'Holy' },
     lines: [
       'I wore your colours once. They stained.',
       'Your order cast me out. It made me thorough.',
+    ],
+    lines_ru: [
+      'Я носил твои цвета когда-то. Они запятнались.',
+      'Твой орден изгнал меня. Это сделало меня дотошным.',
     ],
   },
   {
@@ -557,12 +853,45 @@ const COMBAT_BARKS = [
       'You have such promising bones.',
       'Stand still — you are ruining the specimen.',
     ],
+    lines_ru: [
+      'Думай об этом не как о смерти. Думай как о найме.',
+      'У тебя такие многообещающие кости.',
+      'Стой смирно — ты портишь образец.',
+    ],
   },
   {
     trigger: 'kill', actor: { name: 'Necromancer' },
     lines: [
       'Welcome to the staff.',
       'Do not get comfortable. You start immediately.',
+    ],
+    lines_ru: [
+      'Добро пожаловать в штат.',
+      'Не устраивайся поудобнее. Приступаешь немедленно.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { name: 'Dungeon Rat' },
+    lines: [
+      '*skitter*',
+      'Squeak!',
+      '*it is genuinely trying its best*',
+    ],
+    lines_ru: [
+      '*шмыг*',
+      'Пи-и!',
+      '*оно и правда очень старается*',
+    ],
+  },
+  {
+    trigger: 'death', actor: { name: 'Dungeon Rat' },
+    lines: [
+      '*squeak…*',
+      '*the tiny paws stop*',
+    ],
+    lines_ru: [
+      '*пи…*',
+      '*крошечные лапки замирают*',
     ],
   },
   {
@@ -572,6 +901,11 @@ const COMBAT_BARKS = [
       'Undying is not a boast. It is an inconvenience I have made peace with.',
       'Do continue. I am curious how you think this ends.',
     ],
+    lines_ru: [
+      'Я пережил твоих богов, твоих королей и твою бабку.',
+      'Бессмертие — не хвастовство. Это неудобство, с которым я смирился.',
+      'Продолжай. Мне любопытно, чем, по-твоему, это кончится.',
+    ],
   },
   {
     trigger: 'attack', actor: { name: 'Imp' },
@@ -580,12 +914,21 @@ const COMBAT_BARKS = [
       'I am SO much worse than I look!',
       'Pick on someone your own size! Wait — no!',
     ],
+    lines_ru: [
+      'Ха! Промах! О — нет, этот попал!',
+      'Я НАМНОГО хуже, чем кажусь!',
+      'Задирай кого-нибудь своего размера! Стой — нет!',
+    ],
   },
   {
     trigger: 'death', actor: { name: 'Imp' },
     lines: [
       'Not fair! Not FAIR!',
       'Tell the Baron I fought REALLY hard!',
+    ],
+    lines_ru: [
+      'Нечестно! НЕЧЕСТНО!',
+      'Передайте Барону, что я дрался ИЗО ВСЕХ СИЛ!',
     ],
   },
 
@@ -599,6 +942,11 @@ const COMBAT_BARKS = [
       'Stay with me!',
       'The light will not abandon you!',
     ],
+    lines_ru: [
+      'Ты не падёшь!',
+      'Держись за меня!',
+      'Свет тебя не оставит!',
+    ],
   },
   {
     trigger: 'heal_low_hp', actor: { name: 'Priest' },
@@ -606,6 +954,11 @@ const COMBAT_BARKS = [
       'You shall not fall!',
       'Hold on, I have you!',
       'Rise, and fight on!',
+    ],
+    lines_ru: [
+      'Ты не падёшь!',
+      'Держись, я рядом!',
+      'Встань и сражайся дальше!',
     ],
   },
   {
@@ -616,6 +969,12 @@ const COMBAT_BARKS = [
       'Breathe. Just breathe.',
       'I have you. I have you.',
     ],
+    lines_ru: [
+      'Не сегодня. Не пока я стою!',
+      'Свет с тобой ещё не закончил!',
+      'Дыши. Просто дыши.',
+      'Я держу тебя. Держу.',
+    ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Vampire' },
@@ -623,6 +982,11 @@ const COMBAT_BARKS = [
       'I am not saving you. I am protecting my investment.',
       'Take some of mine. You may keep it.',
       'Do not mistake this for kindness.',
+    ],
+    lines_ru: [
+      'Я не спасаю тебя. Я берегу вложение.',
+      'Возьми немного моей. Можешь оставить себе.',
+      'Не прими это за доброту.',
     ],
   },
   {
@@ -632,6 +996,11 @@ const COMBAT_BARKS = [
       'Get up. The bargain is not done.',
       'I decide when you die.',
     ],
+    lines_ru: [
+      'В кусках ты мне бесполезен.',
+      'Вставай. Сделка не завершена.',
+      'Я решаю, когда ты умрёшь.',
+    ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Engineer' },
@@ -640,12 +1009,21 @@ const COMBAT_BARKS = [
       'Patching you up — do not test the seal!',
       'Structurally sound. Ish. Go.',
     ],
+    lines_ru: [
+      'Полевой ремонт! Не дёргайся!',
+      'Латаю тебя — не проверяй шов на прочность!',
+      'Конструктивно цел. Вроде. Иди.',
+    ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Undead' },
     lines: [
       'Stay on this side a little longer.',
       'The dark can wait for you. I told it so.',
+    ],
+    lines_ru: [
+      'Побудь на этой стороне ещё немного.',
+      'Тьма может подождать. Я ей так и сказал.',
     ],
   },
 ];

@@ -2558,7 +2558,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .battle-cell--bark-active {
   overflow: visible;
-  z-index: 25;
+  /* Above the battle HUD (resource-bar z-index 300) so a top-row unit's toast
+     isn't hidden behind it, but below modals/tutorial (1000+). */
+  z-index: 400;
 }
 
 .bark-toast {
