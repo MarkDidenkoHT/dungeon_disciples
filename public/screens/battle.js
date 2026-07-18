@@ -3,6 +3,7 @@ import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../realtime.js';
 
 const ROWS = 3;
@@ -21,6 +22,7 @@ function getPortraitUrl(unit, variant = 'default') {
 }
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
+  initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
   let pendingAction    = null;
@@ -124,6 +126,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return null;
   }
 
+  // Ability sound base name for an entry, if its ability def declares
+  // animation_sound. Keyed the same way as effectForEntry so the sound pairs
+  // with the animation. See public/sfx.js.
+  function soundForEntry(entry) {
+    if ((entry.type === 'passive' || entry.type === 'status') && entry.passive) {
+      const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
+      return def?.animation_sound || null;
+    }
+    return null;
+  }
+
   // Patches local state incrementally from a single log entry so HP bars
   // update in sync with the animation rather than all at once at the end.
   async function playbackSequence(newEntries) {
@@ -159,6 +172,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actor = state.combatants.find(u => u.id === entry.actorId ||
         (entry.actorCell !== undefined && u.cellIndex === entry.actorCell));
       const effectName = effectForEntry(entry, actor);
+      const abilitySound = soundForEntry(entry);
+      if (abilitySound) playAbilitySound(abilitySound);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
         const targetCell = entry.targetId

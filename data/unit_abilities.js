@@ -188,6 +188,7 @@ const UNIT_ABILITIES = {
     description: 'After dealing damage, heals the lowest HP ally for 25% of damage dealt.',
     params: { lowest_ally_heal_pct: 25 },
     effect_name: 'communion',
+    animation_sound: 'communion',
   },
   'mithrails_light 1': {
     id: 'mithrails_light 1',
@@ -218,6 +219,7 @@ const UNIT_ABILITIES = {
     description: 'On death, deals 10 fire damage to all enemies.',
     params: { death_aoe_damage: 10, damage_type: 'nature' },
     effect_name: 'last_verse',
+    animation_sound: 'last_verse',
   },
   'noxious_death 1': {
     id: 'noxious_death 1',
@@ -228,6 +230,7 @@ const UNIT_ABILITIES = {
     description: 'On death, deals 10 nature damage to all enemies.',
     params: { death_aoe_damage: 10, damage_type: 'nature' },
     effect_name: 'noxious_death',
+    animation_sound: 'noxious_death',
   },
   'noxious_death 2': {
     id: 'noxious_death 2',
@@ -238,6 +241,7 @@ const UNIT_ABILITIES = {
     description: 'On death, deals 20 nature damage to all enemies.',
     params: { death_aoe_damage: 20, damage_type: 'nature' },
     effect_name: 'noxious_death',
+    animation_sound: 'noxious_death',
   },
   'find_weakness 1': {
     id: 'find_weakness 1',
