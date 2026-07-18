@@ -236,7 +236,7 @@ const ITEM_DEFS = {
     faction:      'grail_of_sorrow',
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { cold_resist: 3, air_resist_3 },
+    stat_mods:    { cold_resist: 3, air_resist: 3 },
     passive:      'undying 1',
     icon:         'veil_of_discord',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
