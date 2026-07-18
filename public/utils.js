@@ -2,6 +2,18 @@ import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers } from '../data/items.js';
 
+// Localized spell text. Reads the language-suffixed field on the spell (e.g.
+// name_ru / description_ru) for non-English players, falling back to the plain
+// English field. `name`/`description` stay English — the icon filename is
+// derived from `name` (see spell_tome.js), so only display text changes.
+function spellText(spell, field, player) {
+  const lang = player?.settings?.language;
+  if (lang && lang !== 'en' && spell?.[`${field}_${lang}`]) return spell[`${field}_${lang}`];
+  return spell?.[field] || '';
+}
+export const spellName = (spell, player) => spellText(spell, 'name', player);
+export const spellDesc = (spell, player) => spellText(spell, 'description', player);
+
 export function withEquippedItem(liveUnit, item) {
   return item ? applyItemModifiers(liveUnit, item.item_stats) : liveUnit;
 }
