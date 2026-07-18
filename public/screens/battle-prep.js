@@ -11,6 +11,7 @@ import {
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
+  spellName, spellDesc,
 } from '../utils.js';
 
 const BP_NAV_LABELS = {
@@ -328,14 +329,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spell.name}" onerror="this.style.display='none'"></div>
+          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spellName(spell, player)}" onerror="this.style.display='none'"></div>
           <div class="spell-list-info">
-            <div class="spell-list-name">${spell.name}</div>
+            <div class="spell-list-name">${spellName(spell, player)}</div>
             <div class="spell-list-meta">
               <span class="spell-list-cost">${spellCostLabel(spell)}</span>
               <span class="spell-list-target">${targetLabel}</span>
             </div>
-            <div class="spell-list-desc">${spell.description}</div>
+            <div class="spell-list-desc">${spellDesc(spell, player)}</div>
           </div>
           <div class="spell-list-action">
             ${used
@@ -414,7 +415,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function showTargetSheet(spell, targets, factionSpells) {
-    targetTitle.textContent = `${spell.name} — Choose Target`;
+    targetTitle.textContent = `${spellName(spell, player)} — Choose Target`;
 
     if (targets.length === 0) {
       targetBody.innerHTML = `<div class="spell-sheet-empty">No eligible targets${spell.params?.tag ? ` (no ${spell.params.tag}s placed)` : ''}</div>`;
@@ -423,7 +424,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
 
     targetBody.innerHTML = `
-      <div class="spell-target-hint">${spell.description}</div>
+      <div class="spell-target-hint">${spellDesc(spell, player)}</div>
       <div class="spell-target-grid" id="spell-target-grid">
         ${targets.map(u => {
           const isEnemy = !!u._enemyData;

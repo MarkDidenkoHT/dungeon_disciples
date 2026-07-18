@@ -1,6 +1,6 @@
 import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
 import { SPELLS }                  from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
@@ -94,10 +94,10 @@ export function renderSpellTome(root, { player }) {
         <div class="${cardCls}" data-spell-id="${spell.id}">
           ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
           <div class="spell-card-icon">
-            <img src="${spellIconUrl(spell)}" alt="${spell.name}" onerror="this.style.display='none'">
+            <img src="${spellIconUrl(spell)}" alt="${spellName(spell, player)}" onerror="this.style.display='none'">
             ${!isLearned ? '<img src="/assets/icons/spells/spell_locked.png" alt="Locked" class="spell-card-lock-img">' : ''}
           </div>
-          <div class="spell-card-name">${spell.name}</div>
+          <div class="spell-card-name">${spellName(spell, player)}</div>
           <div class="spell-card-cost">${costHtml(spell)}</div>
           ${isLearned ? '<div class="spell-card-check">✓</div>' : ''}
         </div>
@@ -150,7 +150,7 @@ export function renderSpellTome(root, { player }) {
 
     return `
       <div class="spell-modal-type spell-modal-type--${spell.effect_type}">${typeLabel}</div>
-      <div class="spell-modal-desc">${spell.description}</div>
+      <div class="spell-modal-desc">${spellDesc(spell, player)}</div>
       <div class="spell-detail-action">
         ${actionHtml}
         <div class="research-feedback" id="research-feedback" style="display:none"></div>
@@ -170,7 +170,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function openSpellModal(spell) {
-    openSheet(spell.name, modalBodyHtml(spell));
+    openSheet(spellName(spell, player), modalBodyHtml(spell));
     bindModalActions(spell);
 
     const overlay = document.querySelector('.modal-overlay');
