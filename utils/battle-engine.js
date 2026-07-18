@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 const { SPELLS } = require('../data/spells');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
@@ -116,6 +116,9 @@ class BattleEngine {
       used_active:        false,
       defend_armor_bonus: 0,
       dot_dmg:            0,
+      _dot_permanent:     0,
+      _bleed_permanent:   0,
+      _dodge_count:       0,
       _hot:               0,
       _stacks:            {},
       _flags:             {},
@@ -392,6 +395,18 @@ class BattleEngine {
           }
         }
       }
+      // Dodge — every Nth physical attack against this unit is avoided entirely.
+      if ((actor.unit_data?.damage_source ?? 'physical') === 'physical') {
+        const dodgeDef = this.resolveAllPassiveDefs(target).find(d => d.params?.dodge_every != null);
+        if (dodgeDef) {
+          target._dodge_count = (target._dodge_count ?? 0) + 1;
+          if (target._dodge_count % dodgeDef.params.dodge_every === 0) {
+            this.pushLog({ type: 'passive', passive: dodgeDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
+            actor.acted_this_round = true;
+            return this.afterAction(actor);
+          }
+        }
+      }
       const { dmg, rawDmg } = this.calcDamage(actor, target);
       if (target._invulnerable) {
         this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
@@ -500,7 +515,7 @@ class BattleEngine {
     if (unit._passives_locked) return [];
     const key = unit.unit_data?.passive || unit.unit_data?.passive_ability;
     if (!key || !this.ABILITIES) return [];
-    const keys = Array.isArray(key) ? key : [key];
+    const keys = stackPassiveKeys(Array.isArray(key) ? key : [key], this.ABILITIES);
     return keys.map(k => this.ABILITIES[k]).filter(Boolean);
   }
   // Turn-start damage-over-time ticks that any unit can be afflicted with,
@@ -522,6 +537,8 @@ class BattleEngine {
     if (unit.alive && unit._bleed_dmg > 0) {
       const b = unit._bleed_dmg; unit._bleed_dmg = 0;
       tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
+      // Exsanguinate makes the bleed permanent: re-arm it after ticking.
+      if (unit.alive && unit._bleed_permanent > 0) unit._bleed_dmg = unit._bleed_permanent;
     }
     if (unit.alive && unit._chill_dmg > 0) {
       const c = unit._chill_dmg; unit._chill_dmg = 0;
@@ -535,8 +552,9 @@ class BattleEngine {
       // dot_kind (burn/poison, defaulting to burn) is cosmetic only — see _dot_type.
       const dotKind = unit._dot_type === 'poison' ? 'poison' : 'burn';
       this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false, dot_kind: dotKind });
-      unit.dot_dmg = 0;
-      unit._dot_type = null;
+      // Mark of Ash makes the burn permanent: re-arm it instead of clearing.
+      if (unit._dot_permanent > 0 && unit.alive) { unit.dot_dmg = unit._dot_permanent; }
+      else { unit.dot_dmg = 0; unit._dot_type = null; }
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
@@ -817,6 +835,9 @@ class BattleEngine {
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
           _dot_type:           c._dot_type ?? null,
+          _dot_permanent:      c._dot_permanent ?? 0,
+          _bleed_permanent:    c._bleed_permanent ?? 0,
+          _dodge_count:        c._dodge_count ?? 0,
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
           _unity_host_id:      c._unity_host_id,
@@ -881,6 +902,9 @@ class BattleEngine {
       c._aegis_resists     = b._aegis_resists     || {};
       c._bleed_dmg         = b._bleed_dmg         ?? 0;
       c._chill_dmg         = b._chill_dmg         ?? 0;
+      c._dot_permanent     = b._dot_permanent     ?? 0;
+      c._bleed_permanent   = b._bleed_permanent   ?? 0;
+      c._dodge_count       = b._dodge_count       ?? 0;
       c._invulnerable      = b._invulnerable      ?? false;
       c._untargetable      = b._untargetable      ?? false;
       c._unity_host_id     = b._unity_host_id     ?? null;

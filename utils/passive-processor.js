@@ -7,12 +7,44 @@ function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   if (!key || !UNIT_ABILITIES) return null;
   return UNIT_ABILITIES[key] ?? null;
 }
+// Collapses duplicate passives (same base name, e.g. an item granting a passive
+// the unit already has) into a single higher rank: 'regenerate 1' + 'regenerate 1'
+// -> 'regenerate 2'. Ranks add, capped at 3 AND at the highest rank actually
+// defined for that ability (so we never produce a missing key like 'regenerate 3'
+// when only ranks 1–2 exist). Unknown/rankless keys pass through untouched.
+function stackPassiveKeys(keys, UNIT_ABILITIES) {
+  if (!Array.isArray(keys) || keys.length < 2 || !UNIT_ABILITIES) return keys;
+  const parse = k => { const m = /^(.*)\s+(\d+)$/.exec(k); return m ? { base: m[1], rank: +m[2] } : null; };
+
+  const summed = {};
+  for (const k of keys) {
+    const pr = parse(k);
+    if (pr && UNIT_ABILITIES[k]) summed[pr.base] = (summed[pr.base] ?? 0) + pr.rank;
+  }
+  const maxRank = {};
+  for (const key of Object.keys(UNIT_ABILITIES)) {
+    const pr = parse(key);
+    if (pr) maxRank[pr.base] = Math.max(maxRank[pr.base] ?? 0, pr.rank);
+  }
+  const emitted = {};
+  const out = [];
+  for (const k of keys) {
+    const pr = parse(k);
+    if (!pr || !UNIT_ABILITIES[k]) { out.push(k); continue; }
+    if (emitted[pr.base]) continue; // stacked version already placed at first occurrence
+    emitted[pr.base] = true;
+    const rank = Math.max(1, Math.min(3, maxRank[pr.base] ?? pr.rank, summed[pr.base]));
+    out.push(`${pr.base} ${rank}`);
+  }
+  return out;
+}
+
 function resolvePassiveDefs(unit, UNIT_ABILITIES) {
   if (unit._passives_locked) return [];
   if (!UNIT_ABILITIES) return [];
   const raw = unit.unit_data?.passive || unit.unit_data?.passive_ability;
   if (!raw) return [];
-  const keys = Array.isArray(raw) ? raw : [raw];
+  const keys = stackPassiveKeys(Array.isArray(raw) ? raw : [raw], UNIT_ABILITIES);
   return keys.map(k => UNIT_ABILITIES[k] ?? null).filter(Boolean);
 }
 function runTrigger(trigger, ctx) {
@@ -310,6 +342,23 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
     }
+    if (p.fellfire_pct != null) {
+      // Splash a fraction of the damage to every OTHER burning enemy.
+      const burning = engine.combatants.filter(c =>
+        c.side !== owner.side && c.alive && c.id !== target.id && (c.dot_dmg ?? 0) > 0
+      );
+      for (const b of burning) {
+        const splash = Math.max(1, Math.floor(dmg * p.fellfire_pct / 100));
+        b.battle_hp = Math.max(0, b.battle_hp - splash);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: b.unit_name, targetId: b.id, targetCell: b.cellIndex, value: splash, heal: false });
+        if (b.battle_hp <= 0) {
+          b.alive = false;
+          engine.applyOnDeathPassives(b);
+          engine.fireTrigger('on_kill', { actor: owner, target: b, dmg: splash, dying: null });
+          engine.fireTrigger('on_ally_death', { actor: owner, target: b, dmg: splash, dying: b });
+        }
+      }
+    }
     if (p.healing_reduction_pct != null && !target._flags[def.id + '_applied']) {
       target._flags[def.id + '_applied'] = true;
       target._healing_reduction = Math.min(100, (target._healing_reduction ?? 0) + p.healing_reduction_pct);
@@ -548,6 +597,10 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
       power = Math.floor(power * (1 + p.execute_bonus_pct / 100));
     }
   }
+  // Leech: bonus damage against bleeding targets.
+  if (p.leech_bleed_bonus_pct != null && (target._bleed_dmg ?? 0) > 0) {
+    power = Math.floor(power * (1 + p.leech_bleed_bonus_pct / 100));
+  }
   const rawDmg = Math.floor(power * (actor._dmg_mult ?? 1));
   const damageSource = data.damage_source ?? 'physical';
   const resistances = target.unit_data?.resistances ?? target.resistances ?? {};
@@ -633,8 +686,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   }
   if (p.cleanse_debuffs && target) {
     target.dot_dmg = 0;
+    target._dot_permanent = 0;
     target._hot = 0;
     target._bleed_dmg = 0;
+    target._bleed_permanent = 0;
     target._chill_dmg = 0;
     target._healing_reduction = 0;
     target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
@@ -642,6 +697,22 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       if (key.endsWith('_applied')) target._flags[key] = false;
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — stripped all debuffs` });
+  }
+  if (p.make_burn_permanent === true && target) {
+    if ((target.dot_dmg ?? 0) > 0) {
+      target._dot_permanent = target.dot_dmg;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name}'s Burn is now permanent (${target.dot_dmg}/turn)` });
+    } else {
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is not burning` });
+    }
+  }
+  if (p.make_bleed_permanent === true && target) {
+    if ((target._bleed_dmg ?? 0) > 0) {
+      target._bleed_permanent = target._bleed_dmg;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name}'s Bleed is now permanent (${target._bleed_dmg}/turn)` });
+    } else {
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is not bleeding` });
+    }
   }
   if (p.resurrect_hp_pct != null && target) {
     target.alive = true;
@@ -756,5 +827,5 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs };
+  module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
 }
