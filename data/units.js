@@ -119,7 +119,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20,
-      passive: null, ability: 'infernal_mandate 1',
+      passive: 'inspiration_damage 1', ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 95
     },
     choir_regent_path_a_t2: {
@@ -127,11 +127,11 @@ const UNITS = {
       name: 'Choir Regent',
       f: 'd', t: 2, size: 'tile',
       tags: ['Demon', 'Court'],
-      hp: 84, armor: 2, initiative: 30,
+      hp: 55, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 12, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 22,
-      passive: null, ability: 'infernal_mandate 1',
+      damage_source: 'fire', action_power: 22,
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 285
     },
     choir_regent_path_a_t3: {
@@ -139,11 +139,11 @@ const UNITS = {
       name: 'Choir Regent',
       f: 'd', t: 3, size: 'tile',
       tags: ['Demon', 'Court'],
-      hp: 101, armor: 3, initiative: 30,
+      hp: 60, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 14, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 26,
-      passive: null, ability: 'infernal_mandate 1',
+      damage_source: 'fire', action_power: 26,
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 570
     },
     choir_regent_path_a_t4: {
@@ -154,8 +154,8 @@ const UNITS = {
       hp: 121, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 17, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 31,
-      passive: null, ability: 'infernal_mandate 1',
+      damage_source: 'fire', action_power: 31,
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 740
     },
     choir_regent_path_a_t4_alt: {
@@ -166,8 +166,8 @@ const UNITS = {
       hp: 121, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 17, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 31,
-      passive: null, ability: 'infernal_mandate 1',
+      damage_source: 'fire', action_power: 31,
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 740
     },
     choir_regent_path_b_t2: {
@@ -179,7 +179,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 22,
-      passive: null, ability: 'infernal_mandate 1',
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 285
     },
     choir_regent_path_b_t3: {
@@ -191,7 +191,7 @@ const UNITS = {
       resistances: { air: 0, fire: 12, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24,
-      passive: null, ability: 'infernal_mandate 1',
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 570
     },
     choir_regent_path_b_t4: {
@@ -203,7 +203,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 29,
-      passive: null, ability: 'infernal_mandate 1',
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 740
     },
     choir_regent_path_b_t4_alt: {
@@ -215,7 +215,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 29,
-      passive: null, ability: 'infernal_mandate 1',
+      passive: ['inspiration_damage 1', ''], ability: 'infernal_mandate 1',
       building_slot: 'slot_0', xp: 740
     },
     infernal_ascendant: {
@@ -223,11 +223,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 1, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 50, armor: 0, initiative: 50,
+      hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12,
+      passive: 'fellfire 1', ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 100
     },
     infernal_ascendant_path_a_t2: {
@@ -235,11 +235,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 96, armor: 4, initiative: 120,
-      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 60, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 1', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 300
     },
     infernal_ascendant_path_a_t3: {
@@ -247,11 +247,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 115, armor: 4, initiative: 144,
-      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 2', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 600
     },
     infernal_ascendant_path_a_t4: {
@@ -259,11 +259,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 138, armor: 5, initiative: 173,
-      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 80, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 2', 'dissipate 1', 'clear_shot 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 780
     },
     infernal_ascendant_path_a_t4_alt: {
@@ -271,11 +271,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 138, armor: 5, initiative: 173,
-      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 80, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 2', 'dissipate 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 780
     },
     infernal_ascendant_path_b_t2: {
@@ -283,11 +283,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 85, armor: 2, initiative: 100,
-      resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 55, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 6, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 1', 'find_weakness 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 300
     },
     infernal_ascendant_path_b_t3: {
@@ -295,11 +295,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 102, armor: 3, initiative: 120,
-      resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 60, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 7, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 1', 'find_weakness 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 600
     },
     infernal_ascendant_path_b_t4: {
@@ -307,11 +307,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 122, armor: 4, initiative: 145,
-      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 70, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 1', 'find_weakness 2', 'predator 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 780
     },
     infernal_ascendant_path_b_t4_alt: {
@@ -319,11 +319,11 @@ const UNITS = {
       name: 'Infernal Ascendant',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
-      hp: 122, armor: 4, initiative: 145,
-      resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      hp: 65, armor: 15, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 8, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: null, ability: null,
+      passive: ['fellfire 1', 'find_weakness 2', 'recuperate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 780
     },
     imp: {
@@ -500,7 +500,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16,
-      xp: 470, passive: ['command 1', 'undying 1'], ability: 'infernal_mandate 1',
+      xp: 470, passive: ['command 1', 'undying 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
       id: 'd611', f: 'd', t: 3,
@@ -511,7 +511,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20,
-      xp: 470, passive: ['command 1', 'undying 1', 'dissipate 1'], ability: 'infernal_mandate 1',
+      xp: 470, passive: ['command 2', 'undying 1'], ability: 'infernal_mandate 3',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -553,9 +553,9 @@ const UNITS = {
       size: 'tile',
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 6,
-      xp: 95, passive: 'inspiration_damage 1', ability: 'infernal_mandate 1',
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12,
+      xp: 95, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
       id: 'd51', f: 'd', t: 2,
@@ -563,10 +563,10 @@ const UNITS = {
       tags: ['Caster', null],
       size: 'tile',
       hp: 50, armor: 0, initiative: 30,
-      resistances: { air: 0, fire: 35, life: 35, death: 0, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 8,
-      xp: 470, passive: 'inspiration_damage 2', ability: 'infernal_mandate 1',
+      resistances: { air: 0, fire: 35, life: 35, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 18,
+      xp: 470, passive: ['burn 1' 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
       id: 'd511', f: 'd', t: 3,
@@ -574,10 +574,10 @@ const UNITS = {
       tags: ['Caster', 'Demon'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 30,
-      resistances: { air: 0, fire: 40, life: 30, death: 0, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 12,
-      xp: 470, passive: ['inspiration_damage 3'], ability: 'infernal_mandate 1',
+      resistances: { air: 0, fire: 40, life: 30, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24,
+      xp: 470, passive: ['burn 2' 'fellfire 1'], ability: 'mark_of_ash 1',
     },
   },
 
@@ -1950,7 +1950,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 8, action_animation: 'sword_swing',
-        xp: 60, passive: 'beacon_of_hope 1', ability: 'lions_roar 1',
+        xp: 60, passive: 'inspiration_damage 1', ability: 'lions_roar 1',
       },
       exalted_herald: {
         id: 'opb_e11', f: 'opb', t: 2,
@@ -1961,7 +1961,18 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 12,
-        xp: 260, passive: ['beacon_of_hope 1', 'undying 1'], ability: 'lions_roar 1',
+        xp: 260, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
+      },
+      exalted_herald2: {
+        id: 'opb_e111', f: 'opb', t: 3,
+        name: 'Exalted Herald2',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 105, armor: 15, initiative: 50,
+        resistances: { air: 5, fire: 10, life: 50, death: 10, cold: 5, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 15,
+        xp: 260, passive: ['inspiration_damage 2', 'beacon_of_hope 1'], ability: 'lions_roar 1',
       },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,
@@ -2018,6 +2029,17 @@ const UNITS = {
         damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
         xp: 340, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
+      keeper_of_purity: {
+        id: 'opb_e311', f: 'opb', t: 3,
+        name: 'Keeper of Purity2',
+        tags: ['Caster', 'Holy'],
+        size: 'tile',
+        hp: 60, armor: 0, initiative: 20,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        xp: 340, passive: 'vitality 2', ability: 'infernal_mandate 1',
+      },
       crimson_hunter: {
         id: 'opb_e4', f: 'opb', t: 1,
         name: 'Crimson Hunter',
@@ -2026,7 +2048,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 18,
+        damage_source: 'physical', action_power: 12,
         xp: 340, passive: 'bleed 1', ability: null,
       },
       crimson_hunter2: {
@@ -2037,8 +2059,19 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 24,
+        damage_source: 'physical', action_power: 16,
         xp: 340, passive: ['bleed 1', 'clear_shot 1'], ability: null,
+      },
+      crimson_hunter3: {
+        id: 'opb_e411', f: 'opb', t: 3,
+        name: 'Crimson Hunter3',
+        tags: ['Archer', 'Holy'],
+        size: 'tile',
+        hp: 70, armor: 0, initiative: 50,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 20,
+        xp: 340, passive: ['bleed 2', 'clear_shot 1'], ability: null,
       },
     },
 
