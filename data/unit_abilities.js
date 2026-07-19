@@ -371,6 +371,15 @@ const UNIT_ABILITIES = {
     description: 'At battle start, gain +4 HP and +2 armor for each Zombie ally on the field.',
     params: { tag_required: 'Zombie', hp_per_tagged_unit: 4, armor_per_tagged_unit: 2 },
   },
+    'iron_will 1': {
+    id: 'iron_will 1',
+    name: 'Iron Will',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, gain +2 HP and +1 armor for each Knight ally on the field.',
+    params: { tag_required: 'Knight', hp_per_tagged_unit: 2, armor_per_tagged_unit: 1 },
+  },
   'renew 1': {
     id: 'renew 1',
     effect_name: 'renew',
@@ -424,7 +433,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 3 death damage.',
+    description: 'When hit adjacent enemies take 3 death damage.',
     params: { adjacent_aoe_damage: 3, damage_type: 'death', range: 1 },
   },
   'aura_of_decay 2': {
@@ -433,7 +442,7 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
-    description: 'When hit, releases spores. Adjacent enemies take 5 nature damage.',
+    description: 'When hit adjacent enemies take 5 nature damage.',
     params: { adjacent_aoe_damage: 5, damage_type: 'death', range: 1 },
   },
   'thorns 1': {
