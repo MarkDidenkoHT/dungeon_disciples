@@ -16,58 +16,58 @@ const UNIT_ART = new Set([
 
 const HERO_FLAVOR = {
   h_e_1: {
-    en: 'A sworn shield of the Empire, first to the front and last to fall back. Placeholder flavor text.',
-    ru: 'Верный щит Империи, первый в атаке и последний в отступлении. Placeholder-текст.',
+    en: 'A sworn shield of the Empire, first to the front and last to fall back. Where the Paladin’s mace falls the light answers, mending a wounded ally even as it breaks the wicked.',
+    ru: 'Верный щит Империи, первый в атаке и последний в отступлении. Там, где опускается булава Паладина, отвечает свет — исцеляя раненого союзника и сокрушая нечестивых.',
   },
   h_e_2: {
-    en: 'A witch-hunter of the Holy Order, burning heresy from the ranks with word and flame. Placeholder flavor text.',
-    ru: 'Охотница на ведьм Святого Ордена, выжигающая ересь словом и пламенем. Placeholder-текст.',
+    en: 'An Inquisitor of the Holy Order, whose condemnation falls as searing light across the whole enemy line. Their unwavering presence steels the faithful, hardening every ally against the trials to come.',
+    ru: 'Инквизитор Святого Ордена, чей приговор обрушивается жгучим светом на весь вражеский строй. Непоколебимое присутствие Инквизитора укрепляет верных, закаляя каждого союзника перед грядущими испытаниями.',
   },
   h_e_3: {
-    en: 'A scout of the border marches, trusting range and instinct over steel. Placeholder flavor text.',
-    ru: 'Разведчик приграничных земель, полагающийся на дальний бой и чутьё, а не на сталь. Placeholder-текст.',
+    en: 'A master Artificer of the Empire, tending the armored ranks from just behind the line. Every ally marches out better-plated for their craft, and in these hands broken things do not stay broken for long.',
+    ru: 'Мастер-механик Империи, что чинит латников прямо из-за линии фронта. Благодаря такому ремеслу каждый союзник выходит в бой в лучшей броне, а в этих руках сломанное недолго остаётся сломанным.',
   },
   h_d_1: {
-    en: 'A castellan bound to infernal service, commanding the Choir\u2019s knights with cold authority. Placeholder flavor text.',
-    ru: 'Кастелян, связанный адской службой, холодно командующий рыцарями Хора. Placeholder-текст.',
+    en: 'A castellan bound to infernal service, commanding the Choir\u2019s knights with cold authority — an unmoving wall that dares the enemy to strike anywhere but here.',
+    ru: 'Кастелян, связанный адской службой, холодно командующий рыцарями Хора, — недвижимая стена, что заставляет врага бить куда угодно, только не сюда.',
   },
   h_d_2: {
-    en: 'A regent of the demon court, whose ambition burns hotter than the throne beneath them. Placeholder flavor text.',
-    ru: 'Регент демонического двора, чьи амбиции горячее самого трона. Placeholder-текст.',
+    en: 'A regent of the demon court, whose ambition burns hotter than the throne beneath them. Their command sharpens every ally’s strike, and the abyss yields its dead back at their word.',
+    ru: 'Регент демонического двора, чьи амбиции горячее самого трона. Приказ Регента оттачивает удары каждого союзника, а бездна по его слову возвращает своих мертвецов.',
   },
   h_d_3: {
-    en: 'An ascendant caster touched by the abyss, wielding power it has not yet learned to fear. Placeholder flavor text.',
-    ru: 'Возносящийся заклинатель, тронутый бездной, владеющий силой, которую ещё не научился бояться. Placeholder-текст.',
+    en: 'An ascendant caster touched by the abyss, wielding fire it has not yet learned to fear. What it sets alight it keeps burning, and every ember left behind only feeds the next.',
+    ru: 'Возносящийся заклинатель, тронутый бездной, владеющий огнём, которого ещё не научился бояться. Что он поджёг — то горит без конца, и каждый оставленный уголёк лишь питает следующий.',
   },
   h_g_1: {
-    en: 'A prophet who mourns the living as though they were already lost. Placeholder flavor text.',
-    ru: 'Пророк, оплакивающий живых так, будто они уже потеряны. Placeholder-текст.',
+    en: 'A prophet who mourns the living as though they were already lost. Draw close and the Mourning Prophet strikes first, drinking deep before a blade can ever fall.',
+    ru: 'Пророк, оплакивающий живых так, будто они уже потеряны. Подойди ближе — и Скорбящий Пророк ударит первым, испив досыта прежде, чем опустится клинок.',
   },
   h_g_2: {
-    en: 'A warden sworn to the Grail, standing watch over the undying faithful. Placeholder flavor text.',
-    ru: 'Страж, присягнувший Граалю, охраняющий нестареющих верных. Placeholder-текст.',
+    en: 'A warden sworn to the Grail, standing watch over the undying faithful. The more of the dead that march at their side, the harder the Warden is to put down.',
+    ru: 'Страж, присягнувший Граалю, охраняющий нестареющих верных. Чем больше мертвецов идёт рядом, тем труднее свалить Стража.',
   },
   h_g_3: {
-    en: 'A spirit who speaks with a mother\u2019s voice, though she died before the Grail was ever found. Placeholder flavor text.',
-    ru: 'Дух, говорящий голосом матери, хотя она умерла ещё до обретения Грааля. Placeholder-текст.',
+    en: 'A spirit who speaks with a mother\u2019s voice, though she died before the Grail was ever found. Her sorrow mends the wounded and drags the enemy down into a slow, mournful crawl.',
+    ru: 'Дух, говорящий голосом матери, хотя она умерла ещё до обретения Грааля. Её скорбь исцеляет раненых и тянет врагов в тоскливое оцепенение.',
   },
 };
 
 const FIRST_RECRUIT_HINT = {
   empire: {
     name: 'Conscript',
-    en: 'New to the Empire? Your first recruit should be a Conscript — sturdy enough to hold the front line while you learn the ropes. Casters and scouts hit hard, but they won\u2019t survive long without a shield ahead of them. Placeholder tip text.',
-    ru: 'Впервые за Империю? Первым бойцом лучше взять Новобранца — он достаточно крепок, чтобы держать фронт, пока вы осваиваетесь. Заклинатели и разведчики бьют больно, но долго не проживут без щита впереди. Placeholder-подсказка.',
+    en: 'New to the Empire? Your first recruit should be a Conscript — sturdy enough to hold the front line while you learn the ropes. Casters and scouts hit hard, but they won\u2019t survive long without a shield ahead of them.',
+    ru: 'Впервые за Империю? Первым бойцом лучше взять Новобранца — он достаточно крепок, чтобы держать фронт, пока вы осваиваетесь. Заклинатели и разведчики бьют больно, но долго не проживут без щита впереди.',
   },
   choir_of_the_cursed: {
     name: 'Clay Gargoyle',
-    en: 'New to the Choir? Your first recruit should be a Clay Gargoyle — its armor forgives early mistakes while you find your footing. The Choir\u2019s squishier servants are powerful, but easy to lose before they matter. Placeholder tip text.',
-    ru: 'Впервые за Хор? Первым бойцом лучше взять Глиняную Горгулью — её броня прощает ранние ошибки, пока вы учитесь. Более хрупкие слуги Хора сильны, но их легко потерять раньше времени. Placeholder-подсказка.',
+    en: 'New to the Choir? Your first recruit should be a Clay Gargoyle — its armor forgives early mistakes while you find your footing. The Choir\u2019s squishier servants are powerful, but easy to lose before they matter.',
+    ru: 'Впервые за Хор? Первым бойцом лучше взять Глиняную Горгулью — её броня прощает ранние ошибки, пока вы учитесь. Более хрупкие слуги Хора сильны, но их легко потерять раньше времени.',
   },
   grail_of_sorrow: {
     name: 'Risen',
-    en: 'New to the Grail? Your first recruit should be a Risen — simple, resilient, and undemanding to field. Save the fragile spirits and casters for once you\u2019ve got a frontline to protect them. Placeholder tip text.',
-    ru: 'Впервые за Грааль? Первым бойцом лучше взять Восставшего — простой, выносливый и неприхотливый боец. Хрупких духов и заклинателей приберегите до тех пор, пока не появится фронт для их защиты. Placeholder-подсказка.',
+    en: 'New to the Grail? Your first recruit should be a Risen — simple, resilient, and undemanding to field. Save the fragile spirits and casters for once you\u2019ve got a frontline to protect them.',
+    ru: 'Впервые за Грааль? Первым бойцом лучше взять Восставшего — простой, выносливый и неприхотливый боец. Хрупких духов и заклинателей приберегите до тех пор, пока не появится фронт для их защиты.',
   },
 };
 

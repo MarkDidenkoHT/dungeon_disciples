@@ -566,7 +566,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 35, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 18,
-      xp: 470, passive: ['burn 1' 'fellfire 1'], ability: 'mark_of_ash 1',
+      xp: 470, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
       id: 'd511', f: 'd', t: 3,
@@ -577,7 +577,7 @@ const UNITS = {
       resistances: { air: 0, fire: 40, life: 30, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24,
-      xp: 470, passive: ['burn 2' 'fellfire 1'], ability: 'mark_of_ash 1',
+      xp: 470, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
   },
 
