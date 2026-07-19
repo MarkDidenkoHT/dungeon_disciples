@@ -371,7 +371,7 @@ const UNIT_ABILITIES = {
     description: 'At battle start, gain +4 HP and +2 armor for each Zombie ally on the field.',
     params: { tag_required: 'Zombie', hp_per_tagged_unit: 4, armor_per_tagged_unit: 2 },
   },
-    'iron_will 1': {
+  'iron_will 1': {
     id: 'iron_will 1',
     name: 'Iron Will',
     rank: 1,
@@ -444,6 +444,15 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit_received',
     description: 'When hit adjacent enemies take 5 nature damage.',
     params: { adjacent_aoe_damage: 5, damage_type: 'death', range: 1 },
+  },
+  'rimeguard 1': {
+    id: 'rimeguard 1',
+    name: 'Rimeguard',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'When hit adjacent enemies take 3 death damage.',
+    params: { adjacent_aoe_damage: 3, damage_type: 'cold', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',
