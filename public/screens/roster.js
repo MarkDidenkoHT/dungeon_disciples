@@ -131,6 +131,24 @@ export function renderRoster(root, { player }) {
       </div>
     ` : '';
 
+    // Heal is an out-of-combat spell (roster only), usable on a living but
+    // damaged unit — the counterpart to Resurrect for a fallen one.
+    const healSpell = SPELLS[player.faction]?.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
+    const healCost = healSpell
+      ? Object.entries(healSpell.cost?.crystals || {})
+          .filter(([, amt]) => amt > 0)
+          .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
+          .join(', ')
+      : '';
+    const isDamaged = alive && stored.current_hp != null && stored.max_hp != null && stored.current_hp < stored.max_hp;
+    const healButtonHtml = isDamaged && healSpell ? `
+      <div class="unit-heal-row">
+        <button class="heal-btn" data-roster-id="${u.id}" data-spell-id="${healSpell.id}">
+          Heal (${healCost})
+        </button>
+      </div>
+    ` : '';
+
     let levelUpHtml = '';
     if (isHero) {
       if (heroMaxed) {
@@ -192,6 +210,7 @@ export function renderRoster(root, { player }) {
           </div>
           <div class="unit-info">
             ${resurrectButtonHtml}
+            ${healButtonHtml}
             ${levelUpHtml}
             ${abilitiesHtml}
           </div>
@@ -316,6 +335,26 @@ export function renderRoster(root, { player }) {
         goTo(savedIdx);
       } catch (err) {
         alert(err.message || 'Resurrection failed');
+      }
+      return;
+    }
+
+    const healBtn = e.target.closest('.heal-btn');
+    if (healBtn) {
+      const rosterId = healBtn.dataset.rosterId;
+      const spellId  = healBtn.dataset.spellId;
+      healBtn.disabled    = true;
+      healBtn.textContent = 'Healing…';
+      try {
+        await api('/roster/heal', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
+        const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
+        units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
+        await refreshResourceBar(player).catch(() => {});
+        const savedIdx = current;
+        initSlider();
+        goTo(savedIdx);
+      } catch (err) {
+        alert(err.message || 'Heal failed');
       }
       return;
     }

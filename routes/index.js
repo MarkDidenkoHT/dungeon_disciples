@@ -646,6 +646,57 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
   }
 });
 
+// Out-of-combat heal (roster only): restores a living but damaged unit by the
+// spell's heal_pct of its max HP. Counterpart to /roster/resurrect for the dead.
+router.post('/roster/heal', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, spell_id } = req.body;
+  if (!chat_id || !roster_id || !spell_id) return res.status(400).json({ error: 'chat_id, roster_id and spell_id required' });
+
+  try {
+    const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player = playerRows[0];
+    const learnedSpells = player.learned_spells || [];
+    if (!learnedSpells.includes(spell_id)) return res.status(403).json({ error: 'Spell not learned' });
+
+    const factionSpells = SPELLS[player.faction] || [];
+    const spellDef = factionSpells.find(s => s.id === spell_id && s.effect_type === 'heal' && s.target_scope === 'single_ally');
+    if (!spellDef) return res.status(400).json({ error: 'Invalid roster spell' });
+
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    const entry = rosterRows[0];
+    const unitData = entry.unit_data || {};
+    if (unitData.alive === false) return res.status(400).json({ error: 'Cannot heal a fallen unit — resurrect it first' });
+
+    const maxHp = Number(unitData.max_hp ?? 0);
+    const curHp = Number(unitData.current_hp ?? maxHp);
+    if (maxHp <= 0 || curHp >= maxHp) return res.status(400).json({ error: 'Unit is already at full health' });
+
+    const healPct = spellDef.params?.heal_pct ?? 0.5;
+    const healed  = Math.min(maxHp, curHp + Math.floor(maxHp * healPct));
+
+    try {
+      await consumeCrystalCosts(chat_id, spellDef.cost?.crystals || {});
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+
+    const newUnitData = { ...unitData, current_hp: healed };
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: newUnitData }),
+    });
+
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    res.json({ success: true, roster: updated[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/roster/levelup', requireAuth, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });

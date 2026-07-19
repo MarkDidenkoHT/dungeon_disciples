@@ -2003,6 +2003,17 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .resurrect-btn[disabled] { opacity: 0.6; cursor: default; }
 
+.unit-heal-row { margin: 8px 0; }
+.heal-btn {
+  background: linear-gradient(180deg,#16a34a,#0f7a37);
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.heal-btn[disabled] { opacity: 0.6; cursor: default; }
+
 .unit-dead-overlay {
   position: absolute;
   inset: 0;
