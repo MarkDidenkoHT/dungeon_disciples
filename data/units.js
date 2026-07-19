@@ -1244,7 +1244,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_animation: 'frost_spell_impact',
       xp: 250, passive: ['inspiration_initiative 1', 'chill 1'], ability: null,
     },
     cryomancer: {
@@ -1255,7 +1255,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 15,
+      damage_source: 'fire', action_power: 15, action_animation: 'frost_spell_impact',
       xp: 450, passive: ['inspiration_initiative 1', 'chill 2'], ability: null,
     },
   },

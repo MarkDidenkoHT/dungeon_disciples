@@ -91,7 +91,7 @@ const ITEM_DEFS = {
     icon:         'padded_armor',
     cost:         { Gold: 50 },
   },
-    iron_armor: {
+  iron_armor: {
     key:          'iron_armor',
     name:         "Iron Armor",
     faction:      null,
@@ -103,7 +103,7 @@ const ITEM_DEFS = {
     cost:         { Gold: 50 },
     item_cost:    { padded_armor: 1 },
   },
-    fire_resistance_potion: {
+  fire_resistance_potion: {
     key:          'fire_resistance_potion',
     name:         "Fire Resistance Potion",
     faction:      null,
@@ -114,7 +114,7 @@ const ITEM_DEFS = {
     icon:         'fire_resistance_potion',
     cost:         { Gold: 25, Crystals_Fire: 25 },
   },
-    death_resistance_potion: {
+  death_resistance_potion: {
     key:          'death_resistance_potion',
     name:         "Death Resistance Potion",
     faction:      null,
@@ -125,18 +125,54 @@ const ITEM_DEFS = {
     icon:         'death_resistance_potion',
     cost:         { Gold: 25, Crystals_Death: 25 },
   },
-    crude_sword: {
+  crude_sword: {
     key:          'crude_sword',
     name:         "Crude Sword",
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 3, initiative: 3 },
-    passive:      null,
+    stat_mods:    { power: 1, initiative: 1 },
+    passive:      'iron_will 1',
     icon:         'crude_sword',
-    cost:         { Gold: 25, Crystals_Death: 25 },
+    cost:         { Gold: 25, Crystals_Death: 5, Crystals_Life: 5 },
   },
-    mace: {
+  iron_sword: {
+    key:          'iron_sword',
+    name:         "Iron Sword",
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     null,
+    stat_mods:    { power: 2, initiative: 2 },
+    passive:      'iron_will 1',
+    icon:         'iron_sword',
+    cost:         { Gold: 50, Crystals_Fire: 5, Crystals_Nature: 5 },
+    item_cost:    { crude_sword: 1 },
+  },
+  iron_sword: {
+    key:          'iron_sword',
+    name:         "Iron Sword",
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     null,
+    stat_mods:    { power: 3, initiative: 3 },
+    passive:      'iron_will 1',
+    icon:         'iron_sword',
+    cost:         { Gold: 75, Crystals_Life: 5, Crystals_Death: 5 },
+    item_cost:    { crude_sword: 1 },
+  },
+  crystal_sword: {
+    key:          'crystal_sword',
+    name:         "Crystal Sword",
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     null,
+    stat_mods:    { power: 4, initiative: 4 },
+    passive:      'iron_will 2',
+    icon:         'crystal_sword',
+    cost:         { Gold: 100, Crystals_Air: 5, Crystals_Cold: 5 },
+    item_cost:    { iron_sword: 1 },
+  },
+  mace: {
     key:          'mace',
     name:         "Mace",
     faction:      null,
@@ -182,7 +218,7 @@ const ITEM_DEFS = {
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
-    dendrareume: {
+  dendrareume: {
     key:          'dendrareume',
     name:         "Dendrareume",
     faction:      null,
@@ -213,7 +249,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { power: 2 },
-    passive:      'chill 2',
+    passive:      'chill 1',
     icon:         'frost_lance',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
@@ -241,6 +277,17 @@ const ITEM_DEFS = {
     icon:         'veil_of_discord',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
+  },
+  cloak_of_evasion: {
+    key:          'cloak_of_evasion',
+    name:         "Cloak Of Evasion",
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 5 },
+    passive:      'dodge 1',
+    icon:         'cloak_of_evasion',
+    cost:         { Gold: 50 },
   },
 };
 
