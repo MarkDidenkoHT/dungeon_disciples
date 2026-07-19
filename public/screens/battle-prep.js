@@ -141,8 +141,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <span class="spell-sheet-title">Spells</span>
           <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
         </div>
+        <!-- Tier I is roster-only (resurrect/heal); combat spells start at Tier II. -->
         <div class="tier-tabs" id="spell-sheet-tier-tabs">
-          <button class="tier-tab" data-tier="1">Tier I</button>
           <button class="tier-tab tier-tab--active" data-tier="2">Tier II</button>
           <button class="tier-tab" data-tier="3">Tier III</button>
           <button class="tier-tab" data-tier="4">Tier IV</button>
