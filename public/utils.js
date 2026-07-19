@@ -26,6 +26,14 @@ export function itemName(item, player) {
   return def?.name ?? item.name ?? item.item_name ?? '';
 }
 
+// Rarity slug for an item (common/rare/epic/mythic), resolved from ITEM_DEFS by
+// key since owned rows don't store it. Drives the coloured card/slot border.
+export function itemRarity(item) {
+  if (!item) return 'common';
+  const key = item.key ?? item.item_stats?.key ?? item.item_stats?.icon;
+  return (key && ITEM_DEFS[key]?.rarity) || item.rarity || 'common';
+}
+
 export function withEquippedItem(liveUnit, item) {
   return item ? applyItemModifiers(liveUnit, item.item_stats) : liveUnit;
 }
@@ -284,7 +292,7 @@ export function renderItemSlotIcon(item, rosterId, opts = {}) {
     const iconId = stats.icon || stats.key || 'item';
     const label  = itemName(item, player) || item.item_name || 'Item';
     return `
-      <button class="ability-icon ability-icon--item" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${label}">
+      <button class="ability-icon ability-icon--item ability-icon--rarity-${itemRarity(item)}" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${label}">
         <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
         <span class="item-slot-fallback" style="display:none;">⚙</span>
       </button>`;

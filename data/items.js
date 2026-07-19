@@ -366,6 +366,36 @@ const ITEM_DEFS = {
   },
 };
 
+// Item rarity → border colour in the UI (common green, rare blue, epic orange,
+// mythic red). Purely cosmetic. Kept as one editable table so rarities can be
+// re-tuned in a single place; anything not listed defaults to 'common'. The
+// value is stamped onto each ITEM_DEFS entry below as `.rarity`.
+const ITEM_RARITY = {
+  meteor_exoskeleton:      'mythic',
+  aegis_of_the_first_ward: 'mythic',
+  might_of_the_pure:       'epic',
+  sanctified_bulwark:      'epic',
+  dragon_skin:             'epic',
+  shroud_of_the_fallen:    'epic',
+  crystal_sword:           'epic',
+  veil_of_discord:         'epic',
+  codex_militarum:         'rare',
+  court_regalia:           'rare',
+  rimeheart:               'rare',
+  iron_sword:              'rare',
+  lion_signet:             'rare',
+  staff_of_thaumaturgy:    'rare',
+  dendrareume:             'rare',
+  poisonous_dagger:        'rare',
+  frost_lance:             'rare',
+  bone_barrier:            'rare',
+  cloak_of_evasion:        'rare',
+  // everything else (basic gear, potions, materials) is common
+};
+for (const [key, def] of Object.entries(ITEM_DEFS)) {
+  def.rarity = ITEM_RARITY[key] || 'common';
+}
+
 // Applies an item's non-HP modifiers (armor, resistances, tags, passive) on top
 // of a unit_data object. HP is handled separately since it is persisted directly
 // on the roster row (see equip/unequip in routes/index.js) rather than derived

@@ -2591,7 +2591,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--text);
   text-align: center;
   box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  z-index: 9999;
+  z-index: 30;
   pointer-events: none;
   animation: bark-toast-in 0.18s ease-out;
 }
@@ -4301,6 +4301,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 .ability-icon--item {
   border-color: #3a2e14;
 }
+/* Rarity tint on the equipped-item slot icon, matching the item cards. */
+.ability-icon--rarity-common { border-color: #16a34a; }
+.ability-icon--rarity-rare   { border-color: #2f74e0; }
+.ability-icon--rarity-epic   { border-color: #e8912a; }
+.ability-icon--rarity-mythic { border-color: #e0453f; }
 .ability-icon--item:not([disabled]):active {
   border-color: #c9922a;
 }
@@ -4382,8 +4387,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow-y: auto;
 }
 
+/* Rarity border colours. Placed after --equipped so rarity owns the border; the
+   equipped state is shown as a glow ring below instead of a border colour. */
+.item-card--rarity-common { border-color: #16a34a; }            /* green  */
+.item-card--rarity-rare   { border-color: #2f74e0; }            /* blue   */
+.item-card--rarity-epic   { border: 2px solid #e8912a; }        /* orange */
+.item-card--rarity-mythic { border: 2px solid #e0453f; }        /* red    */
+
 .item-card--equipped {
-  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .item-card--catalog {

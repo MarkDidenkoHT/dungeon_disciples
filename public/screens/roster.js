@@ -12,7 +12,7 @@ import {
   renderModalContent, openSheet, closeSheet, openSubSheet, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
-  getActionLabel, itemName,
+  getActionLabel, itemName, itemRarity,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -453,7 +453,7 @@ export function renderRoster(root, { player }) {
     else if (equippedElsewhere) reason = 'Equipped on another unit';
 
     return `
-      <div class="item-card ${equippedHere ? 'item-card--equipped' : ''}">
+      <div class="item-card item-card--rarity-${itemRarity(item)} ${equippedHere ? 'item-card--equipped' : ''}">
         <div class="item-card-icon">
           <img src="/assets/icons/items/${iconId}.png" alt="${itemName(item, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
@@ -500,7 +500,7 @@ export function renderRoster(root, { player }) {
     const canCraft     = factionOk && canAfford;
 
     return `
-      <div class="item-card item-card--catalog">
+      <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)}">
         <div class="item-card-icon">
           <img src="/assets/icons/items/${iconId}.png" alt="${itemName(itemDef, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
