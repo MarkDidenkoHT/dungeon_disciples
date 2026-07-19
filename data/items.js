@@ -3,6 +3,7 @@ const ITEM_DEFS = {
   meteor_exoskeleton: {
     key:          'meteor_exoskeleton',
     name:         'Meteor Exoskeleton',
+    name_ru:      'Метеоритный экзоскелет',
     faction:      'empire',
     tag_required: 'Engineer',
     adds_tag:     'Construct',
@@ -14,6 +15,7 @@ const ITEM_DEFS = {
   aegis_of_the_first_ward: {
     key:          'aegis_of_the_first_ward',
     name:         'Aegis of the First Ward',
+    name_ru:      'Эгида Первого Оберега',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     null,
@@ -25,6 +27,7 @@ const ITEM_DEFS = {
   might_of_the_pure: {
     key:          'might_of_the_pure',
     name:         'Might Of The Pure',
+    name_ru:      'Мощь Чистых',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     null,
@@ -37,6 +40,7 @@ const ITEM_DEFS = {
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
     name:         'Sanctified Bulwark',
+    name_ru:      'Освящённый оплот',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     'Holy',
@@ -49,6 +53,7 @@ const ITEM_DEFS = {
   codex_militarum: {
     key:          'codex_militarum',
     name:         'Codex Militarum',
+    name_ru:      'Кодекс Милитарум',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     null,
@@ -60,6 +65,7 @@ const ITEM_DEFS = {
   court_regalia: {
     key:          'court_regalia',
     name:         'Court Regalia',
+    name_ru:      'Придворные регалии',
     faction:      'choir_of_the_cursed',
     tag_required: 'Court',
     adds_tag:     null,
@@ -71,6 +77,7 @@ const ITEM_DEFS = {
   dragon_skin: {
     key:          'dragon_skin',
     name:         'Dragon SKin',
+    name_ru:      'Драконья кожа',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -83,6 +90,7 @@ const ITEM_DEFS = {
   shroud_of_the_fallen: {
     key:          'shroud_of_the_fallen',
     name:         'Shroud of the Fallen',
+    name_ru:      'Саван павших',
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     'Zombie',
@@ -95,6 +103,7 @@ const ITEM_DEFS = {
   mothers_gift: {
     key:          'mothers_gift',
     name:         "Mother's Gift",
+    name_ru:      'Дар матери',
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     null,
@@ -106,6 +115,7 @@ const ITEM_DEFS = {
   padded_armor: {
     key:          'padded_armor',
     name:         "Padded Armor",
+    name_ru:      'Стёганый доспех',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -117,6 +127,7 @@ const ITEM_DEFS = {
   iron_armor: {
     key:          'iron_armor',
     name:         "Iron Armor",
+    name_ru:      'Железный доспех',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -129,6 +140,7 @@ const ITEM_DEFS = {
   rimeheart: {
     key:          'rimeheart',
     name:         "Iron Armor",
+    name_ru:      'Железный доспех',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -141,6 +153,7 @@ const ITEM_DEFS = {
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
     name:         "Fire Resistance Potion",
+    name_ru:      'Зелье огнестойкости',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -152,6 +165,7 @@ const ITEM_DEFS = {
   death_resistance_potion: {
     key:          'death_resistance_potion',
     name:         "Death Resistance Potion",
+    name_ru:      'Зелье защиты от смерти',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -163,6 +177,7 @@ const ITEM_DEFS = {
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
     name:         "Cold Resistance Potion",
+    name_ru:      'Зелье холодостойкости',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -174,6 +189,7 @@ const ITEM_DEFS = {
   crude_sword: {
     key:          'crude_sword',
     name:         "Crude Sword",
+    name_ru:      'Грубый меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -185,6 +201,7 @@ const ITEM_DEFS = {
   iron_sword: {
     key:          'iron_sword',
     name:         "Iron Sword",
+    name_ru:      'Железный меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -197,6 +214,7 @@ const ITEM_DEFS = {
   iron_sword: {
     key:          'iron_sword',
     name:         "Iron Sword",
+    name_ru:      'Железный меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -209,6 +227,7 @@ const ITEM_DEFS = {
   crystal_sword: {
     key:          'crystal_sword',
     name:         "Crystal Sword",
+    name_ru:      'Кристальный меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -221,6 +240,7 @@ const ITEM_DEFS = {
   mace: {
     key:          'mace',
     name:         "Mace",
+    name_ru:      'Булава',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -232,6 +252,7 @@ const ITEM_DEFS = {
   broken_seal: {
     key:          'broken_seal',
     name:         "Broken Seal",
+    name_ru:      'Сломанная печать',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -243,6 +264,7 @@ const ITEM_DEFS = {
   lion_signet: {
     key:          'lion_signet',
     name:         "Lion Signet",
+    name_ru:      'Львиный перстень',
     faction:      'empire',
     tag_required: null,
     adds_tag:     null,
@@ -255,6 +277,7 @@ const ITEM_DEFS = {
   staff_of_thaumaturgy: {
     key:          'staff_of_thaumaturgy',
     name:         "Staff Of Thaumaturgy",
+    name_ru:      'Посох тавматургии',
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     'Caster',
@@ -267,6 +290,7 @@ const ITEM_DEFS = {
   dendrareume: {
     key:          'dendrareume',
     name:         "Dendrareume",
+    name_ru:      'Дендрареум',
     faction:      null,
     tag_required: null,
     adds_tag:     'Treefolk',
@@ -279,6 +303,7 @@ const ITEM_DEFS = {
   poisonous_dagger: {
     key:          'poisonous_dagger',
     name:         "Poisonous Dagger",
+    name_ru:      'Ядовитый кинжал',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -291,6 +316,7 @@ const ITEM_DEFS = {
   frost_lance: {
     key:          'frost_lance',
     name:         "Frost Lance",
+    name_ru:      'Морозная пика',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -303,6 +329,7 @@ const ITEM_DEFS = {
   bone_barrier: {
     key:          'bone_barrier',
     name:         "Bone Barrier",
+    name_ru:      'Костяной барьер',
     faction:      null,
     tag_required: null,
     adds_tag:     'Skeleton',
@@ -315,6 +342,7 @@ const ITEM_DEFS = {
   veil_of_discord: {
     key:          'veil_of_discord',
     name:         "Veil Of Discord",
+    name_ru:      'Покров раздора',
     faction:      'grail_of_sorrow',
     tag_required: null,
     adds_tag:     null,
@@ -327,6 +355,7 @@ const ITEM_DEFS = {
   cloak_of_evasion: {
     key:          'cloak_of_evasion',
     name:         "Cloak Of Evasion",
+    name_ru:      'Плащ уклонения',
     faction:      null,
     tag_required: null,
     adds_tag:     null,

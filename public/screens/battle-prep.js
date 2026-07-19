@@ -274,7 +274,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const badge    = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
     const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`;
     const equippedItem = equippedItemFor(unit.id);
-    const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false });
+    const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false, player });
 
     return buildUnitCard(liveUnit, { badge, itemSlotHtml }) + deadHtml;
   }
@@ -970,7 +970,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const rosterId = itemBtn.dataset.rosterId;
       const item = equippedItemFor(rosterId);
       if (!item) return;
-      const parts = buildItemModalParts(item);
+      const parts = buildItemModalParts(item, player);
       openModal(parts.title, parts.body, parts.badges);
       return;
     }

@@ -12,7 +12,7 @@ import {
   renderModalContent, openSheet, closeSheet, openSubSheet, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
-  getActionLabel,
+  getActionLabel, itemName,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -197,7 +197,7 @@ export function renderRoster(root, { player }) {
         </div>`;
     }
 
-    const itemSlotHtml  = renderItemSlotIcon(equippedItem, u.id);
+    const itemSlotHtml  = renderItemSlotIcon(equippedItem, u.id, { player });
     const abilitiesHtml = renderUnitAbilitiesRow(liveUnit, { itemSlotHtml });
 
     return `
@@ -455,10 +455,10 @@ export function renderRoster(root, { player }) {
     return `
       <div class="item-card ${equippedHere ? 'item-card--equipped' : ''}">
         <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${item.item_name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <img src="/assets/icons/items/${iconId}.png" alt="${itemName(item, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
-        <div class="item-card-name">${item.item_name}</div>
+        <div class="item-card-name">${itemName(item, player)}</div>
         ${stats.tag_required ? `<div class="item-card-tag">Requires: ${stats.tag_required}</div>` : ''}
         ${stats.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${stats.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
@@ -502,10 +502,10 @@ export function renderRoster(root, { player }) {
     return `
       <div class="item-card item-card--catalog">
         <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${itemDef.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <img src="/assets/icons/items/${iconId}.png" alt="${itemName(itemDef, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
-        <div class="item-card-name">${itemDef.name}</div>
+        <div class="item-card-name">${itemName(itemDef, player)}</div>
         ${itemDef.faction      ? `<div class="item-card-tag">Faction: ${cap(itemDef.faction.replace(/_/g, ' '))}</div>` : ''}
         ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}

@@ -1,6 +1,6 @@
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
-import { applyItemModifiers } from '../data/items.js';
+import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -12,6 +12,19 @@ function spellText(spell, field, player) {
 }
 export const spellName = (spell, player) => spellText(spell, 'name', player);
 export const spellDesc = (spell, player) => spellText(spell, 'description', player);
+
+// Localized item name. Resolves the item's key (from a catalog def's `key` or an
+// owned row's `item_stats.key`) and reads name_ru from ITEM_DEFS. Same rule as
+// spells: for a non-English language it returns ONLY that language's name (no
+// English fallback); English is the default.
+export function itemName(item, player) {
+  if (!item) return '';
+  const key = item.key ?? item.item_stats?.key ?? item.item_stats?.icon;
+  const def = key ? ITEM_DEFS[key] : null;
+  const lang = player?.settings?.language;
+  if (lang && lang !== 'en') return def?.name_ru ?? '';
+  return def?.name ?? item.name ?? item.item_name ?? '';
+}
 
 export function withEquippedItem(liveUnit, item) {
   return item ? applyItemModifiers(liveUnit, item.item_stats) : liveUnit;
@@ -263,15 +276,16 @@ export function renderUnitResistColumn(unit) {
 }
 
 export function renderItemSlotIcon(item, rosterId, opts = {}) {
-  const { interactive = true } = opts;
+  const { interactive = true, player = null } = opts;
   const triggerAttr = interactive ? 'data-item-slot' : 'data-item-inspect';
 
   if (item) {
     const stats  = item.item_stats || {};
     const iconId = stats.icon || stats.key || 'item';
+    const label  = itemName(item, player) || item.item_name || 'Item';
     return `
-      <button class="ability-icon ability-icon--item" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${item.item_name || 'Item'}">
-        <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${item.item_name || 'Item'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <button class="ability-icon ability-icon--item" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${label}">
+        <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
         <span class="item-slot-fallback" style="display:none;">⚙</span>
       </button>`;
   }
@@ -379,7 +393,7 @@ export function buildAbilityModalParts(def, type) {
   return { title: def.name, badges, body };
 }
 
-export function buildItemModalParts(item) {
+export function buildItemModalParts(item, player) {
   if (!item) return { title: 'Item', badges: '', body: renderModalContent('No item equipped.') };
   const stats = item.item_stats || {};
   const lines = [];
@@ -396,7 +410,7 @@ export function buildItemModalParts(item) {
   });
   if (modParts.length) lines.push(modParts.join(', '));
   return {
-    title:  item.item_name || 'Item',
+    title:  itemName(item, player) || item.item_name || 'Item',
     badges: renderModalPill('Item', 'item'),
     body:   `<div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>`,
   };

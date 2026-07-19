@@ -59,7 +59,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const rosterId = itemBtn.dataset.rosterId;
       const item = equippedItemFor(rosterId);
       if (!item) return;
-      const parts = buildItemModalParts(item);
+      const parts = buildItemModalParts(item, player);
       openSubSheet(parts.title, parts.body, parts.badges);
     });
     document.__battleItemInspectBound = true;
@@ -361,7 +361,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
     const equippedItem = c.side === 'player' ? equippedItemFor(c._rosterId) : null;
-    const itemSlotHtml  = c.side === 'player' ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false }) : '';
+    const itemSlotHtml  = c.side === 'player' ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player }) : '';
 
     return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml })}${statusHtml}</div>`;
   }
