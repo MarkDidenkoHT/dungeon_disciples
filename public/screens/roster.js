@@ -9,7 +9,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, openSheet, closeSheet, openSubSheet, applyBackground,
+  renderModalContent, openSheet, closeSheet, openSubSheet, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
   getActionLabel,
@@ -529,7 +529,11 @@ export function renderRoster(root, { player }) {
 
     openSheet('Items', render());
 
-    const body = document.querySelector('.modal-body');
+    // Bind to the MAIN sheet's body specifically. document.querySelector('.modal-body')
+    // returns whichever sheet is first in the DOM — if a sub-sheet (ability/stat
+    // detail) was opened earlier it can win, leaving this handler on a hidden body
+    // so equip/craft taps never fire. getSheetBody() always targets the main sheet.
+    const body = getSheetBody();
 
     async function refreshAndRerender() {
       items = await api(`/items?chat_id=${player.chat_id}`).catch(() => items);
@@ -710,7 +714,7 @@ export function renderRoster(root, { player }) {
   }
 
   function showEquipButtonStep() {
-    const body = document.querySelector('.modal-body');
+    const body = getSheetBody(); // main sheet body — see note in openItemModal
     if (!body) return;
     const buttons = [...body.querySelectorAll('.item-action-btn--equip:not([disabled])')];
     const target = buttons.find(b => {

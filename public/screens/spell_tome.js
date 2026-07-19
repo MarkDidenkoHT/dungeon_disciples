@@ -27,19 +27,13 @@ export function renderSpellTome(root, { player }) {
   let playerCrystals  = {};
   let throneLevel     = 1;
   let learnedSpells   = [];
-  let hasMageGuild    = false;
   let activeSpellId   = null;
   let activeTier      = 1;
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
+  const sliderWrap  = root.querySelector('#spells-slider-wrap');
   const tierTabs    = root.querySelector('#tier-tabs');
-
-  function requiresMageGuild(spell) {
-    const tierSpells = factionSpells.filter(s => s.tier === spell.tier);
-    const idx = tierSpells.findIndex(s => s.id === spell.id);
-    return idx >= 0 && (idx + 1) % 3 === 0;
-  }
 
   function costHtml(spell) {
     let parts = '';
@@ -79,16 +73,15 @@ export function renderSpellTome(root, { player }) {
     }
 
     slider.innerHTML = tierSpells.map(spell => {
-      const isLearned       = learnedSpells.includes(spell.id);
-      const affordable      = canAfford(spell);
-      const isActive        = activeSpellId === spell.id;
-      const mageGuildLocked = requiresMageGuild(spell) && !hasMageGuild;
+      const isLearned  = learnedSpells.includes(spell.id);
+      const affordable = canAfford(spell);
+      const isActive   = activeSpellId === spell.id;
 
       let cardCls = 'spell-card';
-      if (isLearned)                                                cardCls += ' spell-card--learned';
-      if (!tierUnlocked || mageGuildLocked)                         cardCls += ' spell-card--locked';
-      if (isActive)                                                 cardCls += ' spell-card--active';
-      if (tierUnlocked && !mageGuildLocked && !isLearned && !affordable) cardCls += ' spell-card--unaffordable';
+      if (isLearned)                                       cardCls += ' spell-card--learned';
+      if (!tierUnlocked)                                   cardCls += ' spell-card--locked';
+      if (isActive)                                        cardCls += ' spell-card--active';
+      if (tierUnlocked && !isLearned && !affordable)       cardCls += ' spell-card--unaffordable';
 
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
@@ -124,19 +117,16 @@ export function renderSpellTome(root, { player }) {
   }
 
   function modalBodyHtml(spell) {
-    const isLearned       = learnedSpells.includes(spell.id);
-    const affordable      = canAfford(spell);
-    const tierUnlocked    = throneLevel >= spell.tier;
-    const mageGuildLocked = requiresMageGuild(spell) && !hasMageGuild;
-    const canResearch     = tierUnlocked && !mageGuildLocked && !isLearned && affordable;
+    const isLearned    = learnedSpells.includes(spell.id);
+    const affordable   = canAfford(spell);
+    const tierUnlocked = throneLevel >= spell.tier;
+    const canResearch  = tierUnlocked && !isLearned && affordable;
 
     let actionHtml;
     if (isLearned) {
       actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Learned</span>`;
     } else if (!tierUnlocked) {
       actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Throne level ${spell.tier} required</span>`;
-    } else if (mageGuildLocked) {
-      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🏛 Requires Mage Guild</span>`;
     } else {
       actionHtml = `
         <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
@@ -226,18 +216,39 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
+  function setTier(tier) {
+    tier = Math.max(1, Math.min(4, tier));
+    if (tier === activeTier) return;
+    playPageTurnSound();
+    activeTier    = tier;
+    activeSpellId = null;
+    tierTabs.querySelectorAll('.tier-tab').forEach(t =>
+      t.classList.toggle('tier-tab--active', Number(t.dataset.tier) === tier));
+    renderSlider();
+    closeSheet();
+  }
+
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      if (parseInt(tab.dataset.tier) === activeTier) return;
-      playPageTurnSound();
-      activeTier    = parseInt(tab.dataset.tier);
-      activeSpellId = null;
-      tierTabs.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('tier-tab--active'));
-      tab.classList.add('tier-tab--active');
-      renderSlider();
-      closeSheet();
-    });
+    tab.addEventListener('click', () => setTier(Number(tab.dataset.tier)));
   });
+
+  // Most of the game switches views by swiping; the spell tome's tiers are tabs,
+  // and testers tried to swipe them. Let a horizontal swipe change tier too.
+  let touchX = 0, touchY = 0, swiping = false;
+  sliderWrap.addEventListener('touchstart', e => {
+    touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiping = false;
+  }, { passive: true });
+  sliderWrap.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - touchX);
+    const dy = Math.abs(e.touches[0].clientY - touchY);
+    if (dx > dy && dx > 8) swiping = true;
+  }, { passive: true });
+  sliderWrap.addEventListener('touchend', e => {
+    if (!swiping) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) < 40) return;
+    setTier(activeTier + (dx < 0 ? 1 : -1)); // swipe left → next tier
+  }, { passive: true });
 
   async function init() {
     try {
@@ -248,7 +259,6 @@ export function renderSpellTome(root, { player }) {
       ]);
 
       throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
-      hasMageGuild  = Object.values(structData?.buildings_data || {}).some(s => s.building_id === 'mage_guild');
       learnedSpells = Array.isArray(researchData)
         ? researchData
         : (researchData?.researched_spells || []);

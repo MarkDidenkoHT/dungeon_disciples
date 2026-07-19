@@ -75,7 +75,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null },
       { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
       { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
@@ -136,7 +135,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null },
       { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
       { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
@@ -201,7 +199,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'mage_guild',     label: 'Mage Guild',     category: 'special', unit_id: null },
       { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
       { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],

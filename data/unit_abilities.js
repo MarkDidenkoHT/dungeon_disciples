@@ -89,9 +89,9 @@ const UNIT_ABILITIES = {
     description: 'All allies gain +10 initiative.',
     params: { ally_initiative_bonus: 10 },
   },
-  'devour 1': {
-    id: 'devour 1',
-    name: 'Devour',
+  'pact 1': {
+    id: 'pact 1',
+    name: 'Pact',
     rank: 1,
     type: 'active',
     target: 'ally_tagged',

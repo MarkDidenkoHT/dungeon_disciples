@@ -142,8 +142,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
         </div>
         <div class="tier-tabs" id="spell-sheet-tier-tabs">
-          <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
-          <button class="tier-tab" data-tier="2">Tier II</button>
+          <button class="tier-tab" data-tier="1">Tier I</button>
+          <button class="tier-tab tier-tab--active" data-tier="2">Tier II</button>
           <button class="tier-tab" data-tier="3">Tier III</button>
           <button class="tier-tab" data-tier="4">Tier IV</button>
         </div>
@@ -180,7 +180,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   let playerCrystals = {};
   let learnedSpells  = [];
-  let activeSpellTier = 1;
+  let activeSpellTier = 2; // tier 1 is roster-only (resurrect/heal), so start on the first combat tier
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); }
@@ -310,9 +310,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
+  // Resurrect and heal are out-of-combat spells — usable only from the roster
+  // screen, never in a battle. Everything else is a combat/preparation spell.
+  function isRosterOnlySpell(spell) {
+    return spell.effect_type === 'resurrect' || spell.effect_type === 'heal';
+  }
+
   function renderSpellSheetList() {
     const factionSpells = SPELLS[player.faction] || [];
-    const learned       = factionSpells.filter(s => learnedSpells.includes(s.id) && s.tier === activeSpellTier);
+    const learned       = factionSpells.filter(s =>
+      learnedSpells.includes(s.id) && s.tier === activeSpellTier && !isRosterOnlySpell(s));
 
     if (learned.length === 0) {
       spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No learned spells in this tier</div>`;
