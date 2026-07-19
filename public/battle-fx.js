@@ -390,6 +390,77 @@ export async function sword_swing(cellEl, opts = {}) {
   console.log('[battle-fx] sword_swing END', dataId);
 }
 
+// ── impale — a spear thrust from the actor toward the target, then a recoil ────
+// Assign action_animation: 'impale' on any melee unit. The sprite points up; we
+// aim it along the actor→target line and jab it forward, then pull it back.
+export async function impale(cellEl, opts = {}) {
+  console.log('[battle-fx] impale START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const actorId  = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const isEnemy  = opts.isEnemy ?? false;
+
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  let texture;
+  try {
+    texture = await PIXI.Assets.load('/assets/vfx/impale.png');
+  } catch {
+    layer.destroy({ children: true });
+    return;
+  }
+
+  // Main spear + two trailing ghosts for a motion-blur streak.
+  const sprites = [0.16, 0.32, 1].map(alpha => {
+    const s = new PIXI.Sprite(texture);
+    s.anchor.set(0.5, 1.0); // pivot at the butt of the shaft; the tip leads
+    const scale = 62 / Math.max(texture.width, texture.height);
+    s.scale.set(scale, scale);
+    s.alpha = alpha;
+    layer.addChild(s);
+    return s;
+  });
+  const [ghost1, ghost2, main] = sprites;
+
+  await animate(650, t => {
+    const a = cellBoundsFor(actorId);
+    if (!a) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const ax = a.x + a.width / 2, ay = a.y + a.height / 2;
+    // Aim at the target if we have one; otherwise jab toward the opposing grid.
+    const tx = d ? d.x + d.width / 2 : ax + (isEnemy ? -1 : 1) * a.width;
+    const ty = d ? d.y + d.height / 2 : ay;
+
+    const ang  = Math.atan2(ty - ay, tx - ax);
+    const dirX = Math.cos(ang), dirY = Math.sin(ang);
+    const dist = Math.hypot(tx - ax, ty - ay);
+    const reach = d ? Math.max(a.width * 0.6, dist - Math.min(d.width, d.height) * 0.35) : a.width;
+
+    // Thrust profile: small wind-back, fast lunge, brief hold, then recoil home.
+    let travel;
+    if (t < 0.15)      travel = -0.18 * (t / 0.15);                    // wind back
+    else if (t < 0.42) { const u = (t - 0.15) / 0.27; travel = -0.18 + (1.18) * (u * u); } // lunge (ease-in)
+    else if (t < 0.55) travel = 1;                                     // hold at full extension
+    else               travel = 1 - (t - 0.55) / 0.45;                 // recoil back
+
+    const ox = ax + dirX * reach * travel;
+    const oy = ay + dirY * reach * travel;
+    const rot = ang + Math.PI / 2; // sprite tip (up) points along the aim
+    const alpha = t < 0.1 ? t / 0.1 : t > 0.85 ? (1 - t) / 0.15 : 1;
+
+    main.position.set(ox, oy);   main.rotation = rot; main.alpha = alpha;
+    // Ghosts trail slightly behind along the thrust line.
+    ghost2.position.set(ox - dirX * reach * 0.10, oy - dirY * reach * 0.10); ghost2.rotation = rot; ghost2.alpha = alpha * 0.32;
+    ghost1.position.set(ox - dirX * reach * 0.20, oy - dirY * reach * 0.20); ghost1.rotation = rot; ghost1.alpha = alpha * 0.16;
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] impale END', actorId);
+}
+
 // ── holy_heal — golden light bloom rising from bottom of cell ─────────────────
 export async function holy_heal(cellEl) {
   console.log('[battle-fx] holy_heal START', cellEl?.dataset?.id);
@@ -472,6 +543,7 @@ export const EFFECTS = {
   mithrails_light,
   communion,
   sword_swing,
+  impale,
   holy_heal,
   protector,
   noxious_death,

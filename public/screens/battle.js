@@ -202,7 +202,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const isHealAction = entry.heal === true;
           const cell = isHealAction ? targetCell : (actorCell || targetCell);
           console.log('[battle] action routing: isHeal', isHealAction, 'targetCell', !!targetCell, 'actorCell', !!actorCell, 'using', isHealAction ? 'target' : 'actor');
-          if (cell) await EFFECTS[effectName](cell, { isEnemy });
+          // targetCell lets directional attack animations (e.g. impale) aim from actor to target.
+          if (cell) await EFFECTS[effectName](cell, { isEnemy, targetCell });
         } else {
           // Passive animations anchor to the target cell
           if (targetCell) await EFFECTS[effectName](targetCell);
