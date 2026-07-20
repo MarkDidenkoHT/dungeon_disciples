@@ -86,38 +86,60 @@ const REGION_ENCOUNTERS = {
   dungeons_of_malgrath: {
     level_1: {
       enemies: [
-        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 0 },
-        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 2 },
-        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
+        { key: 'dungeons_of_malgrath.bone_knight', cell: 0 },
+        { key: 'dungeons_of_malgrath.bone_knight', cell: 4 },
       ],
     },
     level_2: {
       enemies: [
-        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 0 },
-        { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 2 },
-        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 1 },
-        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 4 },
+        { key: 'dungeons_of_malgrath.bone_knight',   cell: 0 },
+        { key: 'dungeons_of_malgrath.bone_knight',   cell: 4 },
+        { key: 'dungeons_of_malgrath.wailing_ghost', cell: 3 },
       ],
     },
     level_3: {
       enemies: [
-        { key: 'dungeons_of_malgrath.wailing_ghost',  cell: 0 },
-        { key: 'dungeons_of_malgrath.bone_knight',    cell: 2 },
-        { key: 'dungeons_of_malgrath.crypt_shambler', cell: 1 },
-        { key: 'dungeons_of_malgrath.dungeon_rat',    cell: 4 },
+        { key: 'dungeons_of_malgrath.bone_knight',            cell: 0 },
+        { key: 'dungeons_of_malgrath.bone_knight',            cell: 4 },
+        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 3 },
+        { key: 'dungeons_of_malgrath.malgrath_the_undying_1', cell: 2 },
+      ],
+    },
+    level_4: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
+        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 2 },
+      ],
+    },
+    level_5: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
+        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 1 },
+        { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
+      ],
+    },
+    level_6: {
+      enemies: [
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
+        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
+        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 1 },
+        { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
+        { key: 'dungeons_of_malgrath.malgrath_the_undying_2', cell: 2 },
       ],
     },
   },
 };
 
 const REGION_REWARDS = {
-  crimson_casilica: {
+  crimson_basilica: {
     crystal_guaranteed: 'Crystals_Life',
     crystal_pool: ALL_CRYSTALS,
     base: { gold: 15, xp: 30 },
   },
   mountains_of_valdrek: {
-    crystal_guaranteed: 'Crystals_Air',
+    crystal_guaranteed: 'Crystals_Fire',
     crystal_pool: ALL_CRYSTALS,
     base: { gold: 15, xp: 30 },
   },

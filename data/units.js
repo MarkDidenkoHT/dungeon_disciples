@@ -11,7 +11,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16,
-      passive: null, ability: 'taunt 1',
+      passive: 'rage 1', ability: 'taunt 1',
       building_slot: 'slot_0', xp: 90
     },
     black_castellan_path_a_t2: {
@@ -23,7 +23,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_a_t3: {
@@ -35,7 +35,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 29,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_a_t4: {
@@ -47,7 +47,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_a_t4_alt: {
@@ -59,7 +59,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 35,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t2: {
@@ -71,7 +71,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_b_t3: {
@@ -83,7 +83,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 27,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_b_t4: {
@@ -95,7 +95,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t4_alt: {
@@ -107,7 +107,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33,
-      passive: null, ability: 'taunt 1',
+      passive: ['rage 1', ''], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     choir_regent: {
@@ -1704,7 +1704,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
-      xp: 305, passive: ['lifesteal 1', 'dodge 1', 'bleed 1'], ability: null,
+      xp: 305, passive: ['lifesteal 1', 'dodge 1', 'bleed 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
       id: 'gs32', f: 'g', t: 2,
@@ -1835,7 +1835,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'communion',
+      damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
       xp: 75, passive: 'communion 1', ability: 'blood_craze 1',
     },
     grail_tender: {
@@ -1846,7 +1846,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'communion',
+      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
       xp: 350, passive: ['communion 1', 'inspiration_initiative 1'], ability: 'blood_craze 1',
     },
     grail_tender: {
@@ -1857,7 +1857,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'communion',
+      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
       xp: 350, passive: ['communion 1', 'inspiration_initiative 1', 'inspiration_damage 1'], ability: 'blood_craze 1',
     },
     greiving_servant: {
@@ -1868,7 +1868,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'communion',
+      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
       xp: 370, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
     },
     greiving_servant2: {
@@ -1879,7 +1879,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'communion',
+      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
       xp: 370, passive: ['communion 1', 'lifesteal 1', 'rage 1'], ability: 'blood_craze 1',
     },
     ghost: {
@@ -2121,7 +2121,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 10,
-        xp: 260, passive: 'iron_will 1', ability: null,
+        xp: 90, passive: 'iron_will 1', ability: 'terror 1',
       },
       dread_knight: {
         id: 'dm_e11', f: 'dm', t: 2,
@@ -2132,7 +2132,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 14,
-        xp: 780, passive: ['iron_will 1', 'infect 1'], ability: null,
+        xp: 280, passive: ['iron_will 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
         id: 'dm_e111', f: 'dm', t: 23,
@@ -2143,51 +2143,95 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 18,
-        xp: 780, passive: ['iron_will 1', 'infect 2'], ability: null,
+        xp: 510, passive: ['iron_will 1', 'infect 2'], ability: 'terror 2',
+      },
+      oathbound_martyr: {
+        id: 'dm_25', f: 'dm', t: 1,
+        name: 'Oathbound Martyr',
+        tags: ['Zombie', 'Knight'],
+        size: 'tile',
+        hp: 50, armor: 10, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 10,
+        xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
+      },
+      oathsworn_martyr: {
+        id: 'dm_251', f: 'dm', t: 2,
+        name: 'Oathsworn Martyr',
+        tags: ['Zombie', 'Knight'],
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 15,
+        xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
+      },
+      martyr_of_the_vow: {
+        id: 'dm_e211', f: 'dm', t: 3,
+        name: 'Martyr of the Vow',
+        tags: ['Zombie', 'Knight'],
+        size: 'row',
+        hp: 65, armor: 15, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 20,
+        xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
       },
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,
         name: 'Wailing Ghost',
         tags: ['Ghost', 'Caster'],
         size: 'tile',
-        hp: 78, armor: 0, initiative: 70,
+        hp: 45, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'death', action_power: 5,
-        xp: 200, passive: 'infect 1', ability: null,
+        damage_source: 'death', action_power: 4,
+        xp: 75, passive: 'infect 1', ability: null,
       },
       revenant: {
         id: 'dm_e31', f: 'dm', t: 2,
         name: 'Revenant',
         tags: ['Ghost', 'Caster'],
         size: 'tile',
-        hp: 155, armor: 8, initiative: 50,
+        hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 45, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 1,
-        damage_source: 'death', action_power: 8,
-        xp: 440, passive: 'lifesteal 1', ability: null,
+        damage_source: 'death', action_power: 7,
+        xp: 260, passive: ['infect 1', 'sorrow 1'], ability: null,
       },
       soul_harvester: {
         id: 'dm_e311', f: 'dm', t: 3,
         name: 'Soul Harvester',
         tags: ['Ghost', 'Caster'],
         size: 'tile',
-        hp: 185, armor: 5, initiative: 60,
+        hp: 65, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'death', action_power: 12,
-        xp: 740, passive: 'infect 2', ability: null,
+        damage_source: 'death', action_power: 10,
+        xp: 480, passive: ['infect 2', 'sorrow 1'], ability: null,
       },
-      malgrath_the_undying: {
-        id: 'dm_e10', f: 'dm', t: 5,
+      malgrath_the_undying_1: {
+        id: 'dm_e4', f: 'dm', t: 2,
         name: 'Malgrath the Undying',
-        tags: ['Undead', null],
+        tags: ['Skeleton', 'Knight'],
         size: 'row',
-        hp: 460, armor: 25, initiative: 35,
+        hp: 100, armor: 20, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 65,
-        xp: 1400, passive: ['lifesteal 2', 'noxious_death 2'], ability: null,
+        damage_source: 'death', action_power: 20,
+        xp: 1400, passive: ['iron_will 1', 'undying 1'], ability: null,
+      },
+      malgrath_the_undying_2: {
+        id: 'dm_e41', f: 'dm', t: 3,
+        name: 'Malgrath the Undying',
+        tags: ['Skeleton', 'Knight'],
+        size: 'row',
+        hp: 120, armor: 20, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 25,
+        xp: 1400, passive: ['iron_will 1', 'undying 1', 'aura_of_decay 1'], ability: null,
       },
     },
   },
