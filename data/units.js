@@ -2146,7 +2146,7 @@ const UNITS = {
         xp: 510, passive: ['iron_will 1', 'infect 2'], ability: 'terror 2',
       },
       oathbound_martyr: {
-        id: 'dm_25', f: 'dm', t: 1,
+        id: 'dm_2', f: 'dm', t: 1,
         name: 'Oathbound Martyr',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
@@ -2157,7 +2157,7 @@ const UNITS = {
         xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
-        id: 'dm_251', f: 'dm', t: 2,
+        id: 'dm_21', f: 'dm', t: 2,
         name: 'Oathsworn Martyr',
         tags: ['Zombie', 'Knight'],
         size: 'tile',

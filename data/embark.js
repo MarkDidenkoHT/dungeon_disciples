@@ -92,15 +92,15 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'dungeons_of_malgrath.bone_knight',   cell: 0 },
-        { key: 'dungeons_of_malgrath.bone_knight',   cell: 4 },
-        { key: 'dungeons_of_malgrath.wailing_ghost', cell: 3 },
+        { key: 'dungeons_of_malgrath.bone_knight',      cell: 0 },
+        { key: 'dungeons_of_malgrath.bone_knight',      cell: 4 },
+        { key: 'dungeons_of_malgrath.oathbound_martyr', cell: 3 },
       ],
     },
     level_3: {
       enemies: [
         { key: 'dungeons_of_malgrath.bone_knight',            cell: 0 },
-        { key: 'dungeons_of_malgrath.bone_knight',            cell: 4 },
+        { key: 'dungeons_of_malgrath.oathbound_martyr',       cell: 5 },
         { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 3 },
         { key: 'dungeons_of_malgrath.malgrath_the_undying_1', cell: 2 },
       ],
@@ -109,14 +109,14 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 2 },
+        { key: 'dungeons_of_malgrath.oathbound_martyr',       cell: 2 },
       ],
     },
     level_5: {
       enemies: [
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 1 },
+        { key: 'dungeons_of_malgrath.oathsworn_martyr',       cell: 1 },
         { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
       ],
     },
@@ -124,7 +124,7 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
         { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 1 },
+        { key: 'dungeons_of_malgrath.oathsworn_martyr',       cell: 1 },
         { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
         { key: 'dungeons_of_malgrath.malgrath_the_undying_2', cell: 2 },
       ],

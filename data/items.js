@@ -150,6 +150,18 @@ const ITEM_DEFS = {
     cost:         { Gold: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
   },
+  everliving_stalk: {
+    key:          'everliving_stalk',
+    name:         "Everliving Stalk",
+    name_ru:      'Стебель Вечноживника',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    null,
+    passive:      'regenerate 1',
+    icon:         'everliving_stalk',
+    cost:         { Gold: 30, Crystals_Life: 10, Crystals_Death: 10 },
+  },
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
     name:         "Fire Resistance Potion",

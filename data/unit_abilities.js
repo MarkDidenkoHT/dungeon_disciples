@@ -353,6 +353,15 @@ const UNIT_ABILITIES = {
     description: 'Heals 7% of max HP at the start of own turn.',
     params: { regen_pct: 7 },
   },
+  'regenerate 3': {
+    id: 'regenerate 3',
+    name: 'Regenerate',
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_turn_start',
+    description: 'Heals 9% of max HP at the start of own turn.',
+    params: { regen_pct: 9 },
+  },
   'horde 1': {
     id: 'horde 1',
     name: 'Horde',
