@@ -287,24 +287,43 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // Burn and poison share the generic dot_dmg field; record which one it was
       // purely so the UI can show the right icon/flash colour. Never read by logic.
       target._dot_type = (def.name || '').toLowerCase() === 'poison' ? 'poison' : 'burn';
+      engine.registerEffect(target, {
+        key: 'dot', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+        clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null },
+      });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
     }
     if (p.bleed_dmg_pct != null) {
       target._bleed_dmg = Math.floor(dmg * p.bleed_dmg_pct / 100);
+      engine.registerEffect(target, {
+        key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+        clear: { _bleed_dmg: 0, _bleed_permanent: 0 },
+      });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._bleed_dmg });
     }
     if (p.chill_dmg_pct != null) {
       target._chill_dmg = Math.floor(dmg * p.chill_dmg_pct / 100);
+      engine.registerEffect(target, {
+        key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, clear: { _chill_dmg: 0 },
+      });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._chill_dmg });
     }
     if (p.armor_shred != null) {
       const reduction = target._debuff_reduction ?? 0;
       const effective = Math.max(1, Math.floor(p.armor_shred * (1 - reduction / 100)));
+      const applied   = Math.min(effective, target.armor); // can't restore more than was taken
       target.armor = Math.max(0, target.armor - effective);
+      engine.registerEffect(target, {
+        key: 'armor_shred', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, restore: { armor: applied },
+      });
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: effective, heal: false });
     }
     if (p.initiative_shred != null) {
+      const applied = Math.min(p.initiative_shred, target.initiative);
       target.initiative = Math.max(0, target.initiative - p.initiative_shred);
+      engine.registerEffect(target, {
+        key: 'initiative_shred', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, restore: { initiative: applied },
+      });
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.initiative_shred, heal: false });
     }
     if (p.stacks_needed != null && p.stack_burst_damage != null) {
@@ -361,7 +380,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.healing_reduction_pct != null && !target._flags[def.id + '_applied']) {
       target._flags[def.id + '_applied'] = true;
-      target._healing_reduction = Math.min(100, (target._healing_reduction ?? 0) + p.healing_reduction_pct);
+      const before = target._healing_reduction ?? 0;
+      target._healing_reduction = Math.min(100, before + p.healing_reduction_pct);
+      engine.registerEffect(target, {
+        key: 'healing_reduction', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+        // Also clear the once-per-unit flag so the debuff can be re-applied later.
+        restore: { _healing_reduction: -(target._healing_reduction - before) },
+        clear:   { [`_flags.${def.id}_applied`]: false },
+      });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.healing_reduction_pct });
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
@@ -469,6 +495,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_heal' && owner === actor) {
     if (p.hot_pct != null && target) {
       target._hot = (target._hot ?? 0) + Math.floor(dmg * p.hot_pct / 100);
+      engine.registerEffect(target, {
+        key: 'hot', name: def.name, polarity: 'positive', dispellable: def.dispellable === true, clear: { _hot: 0 },
+      });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._hot });
     }
   }
@@ -684,7 +713,28 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     actor._mothers_kiss = true;
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'self', message: `${def.name} — ${actor.unit_name} begins channeling Mother's Kiss each turn.` });
   }
+  // Dispels. `dispel_negative` strips debuffs (cast on an ally), `dispel_positive`
+  // strips buffs (cast on an enemy). Count defaults to all. Both read the unit's
+  // _effects registry, so any effect registered via engine.registerEffect is
+  // covered automatically — no dispel needs to know individual mechanics.
+  if (p.dispel_negative != null && target) {
+    const removed = engine.dispelEffects(target, 'negative', p.dispel_negative === true ? Infinity : p.dispel_negative);
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex,
+      message: removed.length
+        ? `${def.name} — cleansed ${removed.map(e => e.name).join(', ')} from ${target.unit_name}`
+        : `${def.name} — nothing to cleanse` });
+  }
+  if (p.dispel_positive != null && target) {
+    const removed = engine.dispelEffects(target, 'positive', p.dispel_positive === true ? Infinity : p.dispel_positive);
+    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex,
+      message: removed.length
+        ? `${def.name} — stripped ${removed.map(e => e.name).join(', ')} from ${target.unit_name}`
+        : `${def.name} — nothing to strip` });
+  }
   if (p.cleanse_debuffs && target) {
+    // Legacy blanket cleanse. Also drop the registry entries so _effects doesn't
+    // keep stale records for debuffs this just wiped.
+    engine.dispelEffects(target, 'negative');
     target.dot_dmg = 0;
     target._dot_permanent = 0;
     target._hot = 0;
@@ -779,6 +829,15 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
     target._sanctuary_rounds = p.duration_rounds ?? 2;
     target._sanctuary_resist = p.all_resist_bonus;
+    // Dispellable positive: give the resistances back on each type it touched.
+    const resPath = target.unit_data?.resistances ? 'unit_data.resistances' : 'resistances';
+    const sanctuaryRestore = {};
+    for (const type of resistTypes) sanctuaryRestore[`${resPath}.${type}`] = -p.all_resist_bonus;
+    engine.registerEffect(target, {
+      key: 'sanctuary', name: def.name, polarity: 'positive', dispellable: def.dispellable === true,
+      restore: sanctuaryRestore,
+      clear:   { _sanctuary_rounds: 0, _sanctuary_resist: null },
+    });
     engine.recordGrantedBuff(actor, 'all_resist', [target], p.all_resist_bonus);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — +${p.all_resist_bonus} all resists for ${p.duration_rounds} rounds` });
     engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });

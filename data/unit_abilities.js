@@ -5,8 +5,26 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'enemy',
-    description: 'Removes all buffs from target.',
-    params: { cleanse_debuffs: true },
+    description: 'Strips all positive effects (buffs) from an enemy.',
+    params: { dispel_positive: true },
+  },
+  'cleanse 1': {
+    id: 'cleanse 1',
+    name: 'Cleanse',
+    rank: 1,
+    type: 'active',
+    target: 'ally',
+    description: 'Removes all negative effects (bleed, burn, poison, chill, slow, shred…) from an ally.',
+    params: { dispel_negative: true },
+  },
+  'cleanse 2': {
+    id: 'cleanse 2',
+    name: 'Cleanse',
+    rank: 2,
+    type: 'active',
+    target: 'ally',
+    description: 'Removes up to 2 negative effects from an ally.',
+    params: { dispel_negative: 2 },
   },
   'raise_dead 1': {
     id: 'raise_dead 1',
@@ -51,6 +69,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_kill',
     description: 'On killing a unit, gains +15% damage until end of battle.',
+    dispellable: false,
     params: { kill_damage_bonus_pct: 15 },
   },
   'fortify 1': {
@@ -96,6 +115,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'ally_tagged',
     description: 'Drain 25% HP from a Demon ally. Heal self for the drained amount and gain +10% damage until end of battle.',
+    dispellable: false,
     params: { ally_drain_pct: 25, tag_required: 'Demon', devour_dmg_bonus_pct: 10 },
   },
   'grails_blessing 1': {
@@ -105,6 +125,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'ally_tagged',
     description: 'Drain 25% HP from a Zombie ally. Heal self for the drained amount and gain +10% damage until end of battle.',
+    dispellable: false,
     params: { ally_drain_pct: 25, tag_required: 'Zombie', devour_dmg_bonus_pct: 10 },
   },
   'burn 1': {
@@ -114,6 +135,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
+    dispellable: true,
     params: { dot_dmg_pct: 25 },
   },
   'burn 2': {
@@ -123,6 +145,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
+    dispellable: true,
     params: { dot_dmg_pct: 40 },
   },
   'death_mark 1': {
@@ -159,6 +182,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target receives 20% less healing.',
+    dispellable: true,
     params: { healing_reduction_pct: 20 },
   },
   'infect 2': {
@@ -168,6 +192,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target receives 35% less healing.',
+    dispellable: true,
     params: { healing_reduction_pct: 35 },
   },
   'aggrails_blessing 1': {
@@ -295,6 +320,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 25% of damage to target on their next turn.',
+    dispellable: true,
     params: { dot_dmg_pct: 25 },
   },
   'poison 2': {
@@ -304,6 +330,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 40% of damage to target on their next turn.',
+    dispellable: true,
     params: { dot_dmg_pct: 40 },
   },
   'protector 1': {
@@ -314,6 +341,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'intercept',
     description: '25% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
+    dispellable: false,
     params: { intercept_chance_pct: 25 },
   },
   'protector 2': {
@@ -324,6 +352,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'intercept',
     description: '40% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
+    dispellable: false,
     params: { intercept_chance_pct: 40 },
   },
   'predator 1': {
@@ -406,6 +435,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_heal',
     description: 'Banks 25% of healing received and restores it after this unit next takes a hit.',
+    dispellable: true,
     params: { hot_pct: 25 },
     effect_name: 'renew',
   },
@@ -416,6 +446,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Reduces target armor by 3 until end of battle.',
+    dispellable: true,
     params: { armor_shred: 3 },
   },
   'shatter 2': {
@@ -425,6 +456,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Reduces target armor by 4 until end of battle.',
+    dispellable: true,
     params: { armor_shred: 4 },
   },
   'slow 1': {
@@ -434,6 +466,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target loses 3 initiative until end of their next turn.',
+    dispellable: true,
     params: { initiative_shred: 3 },
   },
   'slow 2': {
@@ -443,6 +476,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Target loses 5 initiative until end of their next turn.',
+    dispellable: true,
     params: { initiative_shred: 5 },
   },
   'aura_of_decay 1': {
@@ -618,6 +652,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit_received',
     description: 'When taking damage, gain +5% attack damage and +2 initiative.',
+    dispellable: false,
     params: { rage_atk_bonus: 5, rage_init_bonus: 2 },
   },
   'rage 2': {
@@ -627,6 +662,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit_received',
     description: 'When taking damage, gain +10% attack damage and +3 initiative.',
+    dispellable: false,
     params: { rage_atk_bonus: 10, rage_init_bonus: 3 },
   },
   'bleed 1': {
@@ -636,6 +672,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 20% of physical damage as bleed on the targets next turn.',
+    dispellable: true,
     params: { bleed_dmg_pct: 20 },
   },
   'bleed 2': {
@@ -645,6 +682,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 35% of physical damage as bleed on the targets next turn.',
+    dispellable: true,
     params: { bleed_dmg_pct: 35 },
   },
   'chill 1': {
@@ -654,6 +692,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 20% of cold damage as chill on the targets next turn.',
+    dispellable: true,
     params: { chill_dmg_pct: 20 },
   },
   'chill 2': {
@@ -663,6 +702,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 35% of cold damage as chill on the targets next turn.',
+    dispellable: true,
     params: { chill_dmg_pct: 35 },
   },
   'blood_craze 1': {
@@ -762,6 +802,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'ally',
     description: 'Grant an ally +20 to all resistances for 2 rounds.',
+    dispellable: true,
     params: { all_resist_bonus: 20, duration_rounds: 2 },
   },
   'sanctuary 2': {

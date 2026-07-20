@@ -119,6 +119,8 @@ class BattleEngine {
       _dot_permanent:     0,
       _bleed_permanent:   0,
       _dodge_count:       0,
+      _effects:           [],
+      _effect_seq:        0,
       _hot:               0,
       _stacks:            {},
       _flags:             {},
@@ -196,6 +198,39 @@ class BattleEngine {
     }
     return results;
   }
+  // Resolves the container object for a possibly-dotted path. `create` builds
+  // missing objects (for clears); without it a missing branch yields null.
+  _effectPathOwner(unit, parts, create) {
+    let cur = unit;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (cur[parts[i]] == null || typeof cur[parts[i]] !== 'object') {
+        if (!create) return null;
+        cur[parts[i]] = {};
+      }
+      cur = cur[parts[i]];
+    }
+    return cur;
+  }
+
+  revertEffect(unit, eff) {
+    if (!unit || !eff) return;
+    // Stat give-backs first, then flag/field clears. Both accept dotted paths
+    // (e.g. 'unit_data.resistances.fire' or '_flags.shatter 1_applied').
+    for (const [path, amount] of Object.entries(eff.restore || {})) {
+      const parts = path.split('.');
+      const owner = this._effectPathOwner(unit, parts, false);
+      if (!owner) continue;
+      const last = parts[parts.length - 1];
+      owner[last] = Math.max(0, (Number(owner[last]) || 0) + Number(amount || 0));
+    }
+    for (const [path, value] of Object.entries(eff.clear || {})) {
+      const parts = path.split('.');
+      const owner = this._effectPathOwner(unit, parts, true);
+      if (!owner) continue;
+      owner[parts[parts.length - 1]] = value;
+    }
+  }
+
   recordGrantedBuff(source, type, targets, value) {
     source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
   }
@@ -518,6 +553,65 @@ class BattleEngine {
     const keys = stackPassiveKeys(Array.isArray(key) ? key : [key], this.ABILITIES);
     return keys.map(k => this.ABILITIES[k]).filter(Boolean);
   }
+  // ── Dispellable effect registry ─────────────────────────────────────────────
+  // Every applied status (bleed, poison, slow, renew, …) also registers a plain
+  // data record here so it can be removed later by a dispel. Records must stay
+  // JSON-serializable (they ride along in the battle snapshot), so the "undo" is
+  // data rather than a callback:
+  //   clear:   { field: value }  -> on dispel, set unit[field] = value
+  //   restore: { field: amount } -> on dispel, unit[field] += amount (undo a shred)
+  // polarity is 'negative' (a debuff, dispelled off allies) or 'positive'
+  // (a buff, stripped off enemies).
+  registerEffect(unit, rec) {
+    if (!unit || !rec?.key) return;
+    unit._effects = unit._effects || [];
+    const existing = unit._effects.find(e => e.key === rec.key);
+    if (existing) {
+      // Re-applied: keep one record, but accumulate the undo so a dispel fully
+      // reverses every stack of a shred-style effect.
+      for (const [f, amt] of Object.entries(rec.restore || {})) {
+        existing.restore = existing.restore || {};
+        existing.restore[f] = (existing.restore[f] || 0) + amt;
+      }
+      existing.clear = { ...(existing.clear || {}), ...(rec.clear || {}) };
+      existing.name  = rec.name || existing.name;
+      return existing;
+    }
+    const eff = {
+      key:      rec.key,
+      name:     rec.name || rec.key,
+      polarity: rec.polarity === 'positive' ? 'positive' : 'negative',
+      clear:    rec.clear   || {},
+      restore:  rec.restore || {},
+      // `dispellable: false` opts an effect out of dispels (permanent/structural).
+      ...(rec.dispellable === false ? { dispellable: false } : {}),
+    };
+    unit._effects.push(eff);
+    return eff;
+  }
+
+  // Drops an effect record without reverting anything — for when the effect ends
+  // naturally (e.g. a DoT ticks and expires) rather than being dispelled.
+  clearEffect(unit, key) {
+    if (!unit?._effects?.length) return;
+    unit._effects = unit._effects.filter(e => e.key !== key);
+  }
+
+  // Removes up to `count` effects of the given polarity, reversing each. Returns
+  // the removed records so the caller can log what was stripped.
+  dispelEffects(unit, polarity, count = Infinity) {
+    if (!unit?._effects?.length) return [];
+    const matching = unit._effects
+      .filter(e => e.polarity === polarity && e.dispellable !== false)
+      .slice(0, count);
+    if (!matching.length) return [];
+    // revertEffect handles dotted `_flags.x` paths and clamps stats at 0.
+    for (const eff of matching) this.revertEffect(unit, eff);
+    const removed = new Set(matching);
+    unit._effects = unit._effects.filter(e => !removed.has(e));
+    return matching;
+  }
+
   // Turn-start damage-over-time ticks that any unit can be afflicted with,
   // regardless of its own passives: bleed, chill, and Recuperate's deferred hit.
   // These used to live in the passive processor's on_turn_start branch, which
@@ -539,10 +633,12 @@ class BattleEngine {
       tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
       // Exsanguinate makes the bleed permanent: re-arm it after ticking.
       if (unit.alive && unit._bleed_permanent > 0) unit._bleed_dmg = unit._bleed_permanent;
+      else this.clearEffect(unit, 'bleed');
     }
     if (unit.alive && unit._chill_dmg > 0) {
       const c = unit._chill_dmg; unit._chill_dmg = 0;
       tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
+      this.clearEffect(unit, 'chill');
     }
   }
   applyDoTs(unit) {
@@ -554,7 +650,7 @@ class BattleEngine {
       this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false, dot_kind: dotKind });
       // Mark of Ash makes the burn permanent: re-arm it instead of clearing.
       if (unit._dot_permanent > 0 && unit.alive) { unit.dot_dmg = unit._dot_permanent; }
-      else { unit.dot_dmg = 0; unit._dot_type = null; }
+      else { unit.dot_dmg = 0; unit._dot_type = null; this.clearEffect(unit, 'dot'); }
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
@@ -562,6 +658,7 @@ class BattleEngine {
       unit.battle_hp += actual;
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
+      this.clearEffect(unit, 'hot');
       if (actual > 0) this.fireHealTriggers(unit, unit, actual);
     }
   }
@@ -838,6 +935,9 @@ class BattleEngine {
           _dot_permanent:      c._dot_permanent ?? 0,
           _bleed_permanent:    c._bleed_permanent ?? 0,
           _dodge_count:        c._dodge_count ?? 0,
+          _effects:            c._effects ?? [],
+          _effect_seq:         c._effect_seq ?? 0,
+          _effects:            c._effects ?? [],
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
           _unity_host_id:      c._unity_host_id,
@@ -905,6 +1005,9 @@ class BattleEngine {
       c._dot_permanent     = b._dot_permanent     ?? 0;
       c._bleed_permanent   = b._bleed_permanent   ?? 0;
       c._dodge_count       = b._dodge_count       ?? 0;
+      c._effects           = b._effects           || [];
+      c._effect_seq        = b._effect_seq        ?? 0;
+      c._effects           = b._effects           ?? [];
       c._invulnerable      = b._invulnerable      ?? false;
       c._untargetable      = b._untargetable      ?? false;
       c._unity_host_id     = b._unity_host_id     ?? null;

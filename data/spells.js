@@ -1,7 +1,7 @@
 const SPELLS = {
   empire: [
     {
-      id: 'e_spell_1',
+      id: 'e_spell_1', //non-combat
       name: 'Revival Prayer',
       name_ru: 'Молитва воскрешения',
       rank: 1,
@@ -17,7 +17,7 @@ const SPELLS = {
       params: { resurrect: true }
     },
     {
-      id: 'e_spell_2',
+      id: 'e_spell_2', //non-combat
       name: 'Divine Mending',
       name_ru: 'Божественное исцеление',
       rank: 1,
@@ -32,7 +32,7 @@ const SPELLS = {
       params: { heal_pct: 0.5 }
     },
     {
-      id: 'e_spell_3',
+      id: 'e_spell_3', //buffs
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       rank: 1,
@@ -47,7 +47,7 @@ const SPELLS = {
       params: { armor_boost: 15 }
     },
     {
-      id: 'e_spell_4',
+      id: 'e_spell_4', //special
       name: 'Mark of the Crusade',
       name_ru: 'Знак крестового похода',
       rank: 2,
@@ -63,7 +63,7 @@ const SPELLS = {
     },
 
     {
-      id: 'e_spell_5',
+      id: 'e_spell_5', //special
       name: 'A New Dawn',
       name_ru: 'Новый рассвет',
       rank: 2,
@@ -78,7 +78,7 @@ const SPELLS = {
       params: { trigger_round: 3, tag_required: 'Holy', heal_per_tagged_unit: 10 }
     },
     {
-      id: 'e_spell_6',
+      id: 'e_spell_6', //special
       name: 'Ward',
       name_ru: 'Оберег',
       rank: 2,
@@ -93,7 +93,7 @@ const SPELLS = {
       params: { cancels_opponent_effect_type: 'debuff' }
     },
     {
-      id: 'e_spell_7',
+      id: 'e_spell_7', //buffs
       name: 'Martyrdom',
       name_ru: 'Мученичество',
       rank: 3,
@@ -108,7 +108,7 @@ const SPELLS = {
       params: { martyrdom_redirect_pct: 10 }
     },
     {
-      id: 'e_spell_8',
+      id: 'e_spell_8', //buffs
       name: 'Vow of Protection',
       name_ru: 'Обет защиты',
       rank: 3,
@@ -123,7 +123,7 @@ const SPELLS = {
       params: { intercept_chance_pct: 25, armor_boost: 10 }
     },
     {
-      id: 'e_spell_9', //replace
+      id: 'e_spell_9', //replace - debuff - on start of round 3 all enemies take 20 Life damage
       name: 'Wrath of Heaven',
       name_ru: 'Гнев небес',
       rank: 3,
@@ -138,7 +138,7 @@ const SPELLS = {
       params: { initiative_reduction: 0.20, max_hp_reduction: 0.15 }
     },
     {
-      id: 'e_spell_10', //replace
+      id: 'e_spell_10', //replace - debuff Condemn - enemies deal lose 10 life resist and 10 armor for 2 rounds
       name: 'Empyrean Blessing',
       name_ru: 'Эмпирейское благословение',
       rank: 4,
@@ -153,7 +153,7 @@ const SPELLS = {
       params: { armor_boost: 25, resistances: { life: 20 } }
     },
     {
-      id: 'e_spell_11', //replace
+      id: 'e_spell_11', //replace - debuff - Purge - every round dispel one random enemy buff for 3 rounds
       name: 'Wrath of the Heavens',
       name_ru: 'Гнев небесной тверди',
       rank: 4,
@@ -171,7 +171,7 @@ const SPELLS = {
 
   choir_of_the_cursed: [
     {
-      id: 'd_spell_1',
+      id: 'd_spell_1', //non-combat
       name: 'Grave Resurrection',
       name_ru: 'Могильное воскрешение',
       rank: 1,
@@ -187,7 +187,7 @@ const SPELLS = {
       params: { resurrect: true }
     },
     {
-      id: 'd_spell_2',
+      id: 'd_spell_2', //non-combat
       name: 'Dark Mending',
       name_ru: 'Тёмное исцеление',
       rank: 1,
@@ -202,7 +202,7 @@ const SPELLS = {
       params: { heal_pct: 0.5 }
     },
     {
-      id: 'd_spell_3', //replace
+      id: 'd_spell_3', //buffs - rename for proper choir name, song of frenzy?
       name: 'Blood Frenzy',
       name_ru: 'Кровавое неистовство',
       rank: 1,
@@ -217,7 +217,7 @@ const SPELLS = {
       params: { damage_boost: 0.20 }
     },
     {
-      id: 'd_spell_4',
+      id: 'd_spell_4', //special
       name: 'Harvest',
       name_ru: 'Жатва',
       rank: 2,
@@ -233,7 +233,7 @@ const SPELLS = {
     },
 
     {
-      id: 'd_spell_5', //replace
+      id: 'd_spell_5', //buffs - not bone, rename to choir related - and nerf - single ally 15 air and cold resist
       name: 'Bone Armor',
       name_ru: 'Костяная броня',
       rank: 2,
@@ -248,7 +248,7 @@ const SPELLS = {
       params: { armor_boost: 12 }
     },
     {
-      id: 'd_spell_6',
+      id: 'd_spell_6', //special
       name: 'Nihilism',
       name_ru: 'Нигилизм',
       rank: 2,
@@ -263,7 +263,7 @@ const SPELLS = {
       params: { cancels_opponent_tier: 2 }
     },
     {
-      id: 'd_spell_7', //reaplace
+      id: 'd_spell_7', //replace - change name to choir - song of weakness? debuff - first round enemies deal 20% less damage
       name: 'Soul Rend',
       name_ru: 'Разрыв души',
       rank: 3,
@@ -278,7 +278,7 @@ const SPELLS = {
       params: { max_hp_reduction: 0.25 }
     },
     {
-      id: 'd_spell_8',
+      id: 'd_spell_8', //debuff - all enemies lose 15 fire resist and 5 armor for 2 rounds
       name: 'Rite of Ruin',
       name_ru: 'Обряд разрушения',
       rank: 3,
@@ -293,7 +293,7 @@ const SPELLS = {
       params: { trigger_round: 1, strip_passives: true }
     },
     {
-      id: 'd_spell_9', //replace
+      id: 'd_spell_9', //replace - buff - rename for some choir theme, and 10% damage for 2 rounds
       name: 'Mass Frenzy',
       name_ru: 'Массовое неистовство',
       rank: 3,
@@ -308,7 +308,7 @@ const SPELLS = {
       params: { damage_boost: 0.20 }
     },
     {
-      id: 'd_spell_10', //replace
+      id: 'd_spell_10', //replace - debuff - rename for some choir theme, enemies take 15 fire damage at start of round 2
       name: 'Eternal Night',
       name_ru: 'Вечная ночь',
       rank: 4,
@@ -323,7 +323,7 @@ const SPELLS = {
       params: { lifesteal: 0.20, resistances: { death: 20 } }
     },
     {
-      id: 'd_spell_11', //replace
+      id: 'd_spell_11', //replace - special - 
       name: 'Plague of Despair',
       name_ru: 'Чума отчаяния',
       rank: 4,
@@ -341,7 +341,7 @@ const SPELLS = {
 
   grail_of_sorrow: [
     {
-      id: 'g_spell_1',
+      id: 'g_spell_1', //non-combat
       name: 'Forgiveness',
       name_ru: 'Прощение',
       rank: 1,
@@ -357,7 +357,7 @@ const SPELLS = {
       params: { resurrect: true }
     },
     {
-      id: 'g_spell_2', //rename
+      id: 'g_spell_2', //non-combat - replace name to feel more undead, not ember
       name: 'Ember Mending',
       name_ru: 'Тлеющее исцеление',
       rank: 1,
@@ -372,7 +372,7 @@ const SPELLS = {
       params: { heal_pct: 0.5 }
     },
     {
-      id: 'g_spell_3', //replace
+      id: 'g_spell_3', //buffs
       name: "Sorrow's Haste",
       name_ru: 'Спешка скорби',
       rank: 1,
@@ -387,7 +387,7 @@ const SPELLS = {
       params: { initiative_boost: 15 }
     },
     {
-      id: 'g_spell_4',
+      id: 'g_spell_4', //special
       name: "Sorrow's Offering",
       name_ru: 'Подношение скорби',
       rank: 2,
@@ -402,7 +402,7 @@ const SPELLS = {
       params: { trophy_count: 1 },
     },
     {
-      id: 'g_spell_5',
+      id: 'g_spell_5',//buffs
       name: 'Dark Determination',
       name_ru: 'Тёмная решимость',
       rank: 2,
@@ -417,7 +417,7 @@ const SPELLS = {
       params: { tag_required: 'Zombie', hp_per_tagged_unit: 5, armor_per_tagged_unit: 2, initiative_penalty_per_tagged_unit: 2 }
     },
     {
-      id: 'g_spell_6',
+      id: 'g_spell_6',//special
       name: 'Decay',
       name_ru: 'Тлен',
       rank: 2,
@@ -432,7 +432,7 @@ const SPELLS = {
       params: { cancels_opponent_effect_type: 'buff' }
     },
     {
-      id: 'g_spell_7', //replace
+      id: 'g_spell_7', //replace - debuff
       name: "Grail's Fury",
       name_ru: 'Ярость Грааля',
       rank: 3,
@@ -447,7 +447,7 @@ const SPELLS = {
       params: { damage_boost: 0.20, armor_boost: 20 }
     },
     {
-      id: 'g_spell_8',
+      id: 'g_spell_8',//special
       name: 'Dirge',
       name_ru: 'Панихида',
       rank: 3,
@@ -462,7 +462,7 @@ const SPELLS = {
       params: { trigger_round: 1, locks_active_abilities: true }
     },
     {
-      id: 'g_spell_9', //replace
+      id: 'g_spell_9', //replace - debuff
       name: 'Searing Decay',
       name_ru: 'Жгучий тлен',
       rank: 3,
@@ -477,7 +477,7 @@ const SPELLS = {
       params: { armor_reduction: 0.20, max_hp_reduction: 0.15 }
     },
     {
-      id: 'g_spell_10', //replace
+      id: 'g_spell_10', //replace - buff 
       name: 'Eternal Flame',
       name_ru: 'Вечное пламя',
       rank: 4,
@@ -492,7 +492,7 @@ const SPELLS = {
       params: { damage_boost: 0.25, resistances: { fire: 20 } }
     },
     {
-      id: 'g_spell_11', //replace
+      id: 'g_spell_11', //replace - debuff - enemies take 10 death damage at start of round 1
       name: 'Temporal Collapse',
       name_ru: 'Крушение времени',
       rank: 4,
