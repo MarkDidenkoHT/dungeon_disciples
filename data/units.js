@@ -591,7 +591,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15,
-      passive: 'mithrails_light 1', ability: null, action_icon: 'mace.jpg',
+      passive: 'mithrails_light 1', ability: 'cleanse 1', action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 105
     },
     paladin_path_a_t2: {
@@ -603,7 +603,7 @@ const UNITS = {
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18,
-      passive: ['mithrails_light 1', 'protector 1'], ability: null, action_icon: 'mace.jpg',
+      passive: ['mithrails_light 1', 'protector 1'], ability: 'cleanse 1', action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_a_t3: {
@@ -615,7 +615,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22,
-      passive: ['mithrails_light 1', 'protector 2'], ability: null, action_icon: 'mace.jpg',
+      passive: ['mithrails_light 1', 'protector 2'], ability: 'cleanse 1', action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 560
     },
     paladin_path_a_t4: {
@@ -627,7 +627,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
-      passive: ['mithrails_light 2', 'protector 2'], ability: null,
+      passive: ['mithrails_light 2', 'protector 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     paladin_path_a_t4_alt: {
@@ -639,7 +639,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25,
-      passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: null,
+      passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     paladin_path_b_t2: {
@@ -651,7 +651,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 20,
-      passive: ['mithrails_light 1', 'dissipate 1'], ability: null, action_icon: 'mace.jpg',
+      passive: ['mithrails_light 1', 'dissipate 1'], ability: 'cleanse 1', action_icon: 'mace.jpg',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_b_t3: {
@@ -663,7 +663,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25,
-      passive: ['mithrails_light 2', 'dissipate 1'], ability: null,
+      passive: ['mithrails_light 2', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 560
     },
     paladin_path_b_t4: {
@@ -675,7 +675,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      passive: ['mithrails_light 1', 'dissipate 2'], ability: null,
+      passive: ['mithrails_light 1', 'dissipate 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     paladin_path_b_t4_alt: {
@@ -687,7 +687,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
-      passive: ['mithrails_light 2', 'dissipate 2'], ability: null,
+      passive: ['mithrails_light 2', 'dissipate 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     inquisitor: {
@@ -699,7 +699,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 10,
-      passive: 'vitality 1', ability: null,
+      passive: 'vitality 1', ability: 'purge 1',
       building_slot: 'slot_0', xp: 110
     },
     inquisitor_path_a_t2: {
