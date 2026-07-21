@@ -32,8 +32,8 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
-        { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-        { key: 'crimson_basilica.initiate',         cell: 3 },
+        { key: 'crimson_basilica.sister_aldra_1',   cell: 5 },
+        { key: 'crimson_basilica.initiate',         cell: 1 },
       ],
     },
     level_4: {
@@ -41,6 +41,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.initiate',         cell: 3 },
+        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
     },
     level_5: {
@@ -49,14 +50,16 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
         { key: 'crimson_basilica.initiate',         cell: 3 },
+        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
     },
     level_6: {
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-        { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
+        { key: 'crimson_basilica.sister_aldra_2',   cell: 4 },
         { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
+        { key: 'crimson_basilica.crimson_hunter',   cell: 5 },
       ],
     },
   },
