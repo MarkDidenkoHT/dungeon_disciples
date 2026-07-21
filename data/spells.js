@@ -138,7 +138,7 @@ const SPELLS = {
       params: { initiative_reduction: 0.20, max_hp_reduction: 0.15 }
     },
     {
-      id: 'e_spell_10', //replace - debuff Condemn - enemies deal lose 10 life resist and 10 armor for 2 rounds
+      id: 'e_spell_10', //replace - debuff Condemn - enemies lose 10 life resist and 10 armor for 2 rounds
       name: 'Empyrean Blessing',
       name_ru: 'Эмпирейское благословение',
       rank: 4,
@@ -153,7 +153,7 @@ const SPELLS = {
       params: { armor_boost: 25, resistances: { life: 20 } }
     },
     {
-      id: 'e_spell_11', //replace - debuff - Purge - every round dispel one random enemy buff for 3 rounds
+      id: 'e_spell_11', //replace - debuff - Purgation - every round dispel one random enemy buff for 3 rounds
       name: 'Wrath of the Heavens',
       name_ru: 'Гнев небесной тверди',
       rank: 4,
@@ -263,7 +263,7 @@ const SPELLS = {
       params: { cancels_opponent_tier: 2 }
     },
     {
-      id: 'd_spell_7', //replace - change name to choir - song of weakness? debuff - first round enemies deal 20% less damage
+      id: 'd_spell_7', //replace - change name to choir - song of weakness? debuff - first round enemies deal 10% less damage
       name: 'Soul Rend',
       name_ru: 'Разрыв души',
       rank: 3,

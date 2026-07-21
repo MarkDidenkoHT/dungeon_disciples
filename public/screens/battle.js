@@ -866,6 +866,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           <div class="reward-row"><span>💎 Crystals</span><span>+${result.crystal}</span></div>
           ${result.crystal_bonus > 0 ? `<div class="reward-row"><span>${CRYSTAL_ICONS[result.crystal_bonus_type] || '💎'} ${result.crystal_bonus_type?.replace('Crystals_', '')} Crystal (bonus)</span><span>+${result.crystal_bonus}</span></div>` : ''}
           <div class="reward-row"><span>⭐ XP</span><span>+${result.xp_granted} each (${survivorIds.length} survivors)</span></div>
+          ${Object.entries(result.trophies_gained || {}).map(([id, amt]) =>
+            `<div class="reward-row"><span>🏆 ${id.replace(/_/g, ' ')}</span><span>+${amt}</span></div>`).join('')}
           ${result.progress_unlocked ? `<div class="reward-row reward-row--unlock"><span>🔓 Level ${result.next_level} unlocked!</span></div>` : ''}
         `;
       } else {

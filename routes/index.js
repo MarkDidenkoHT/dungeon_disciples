@@ -6,7 +6,7 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter, getEncounterSpellId } = require('../data/embark');
+const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
@@ -1135,34 +1135,60 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         if (!row) return;
         await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
       };
-      const crystalAmount  = Math.round(6 * (1 + (level - 1) * 0.3));
-      const guaranteedType = region.crystal_guaranteed;
-      const pool           = region.crystal_pool || [guaranteedType];
-      const randomType     = pool[Math.floor(Math.random() * pool.length)];
-      await updateItem('Gold', rewards.gold);
-      await updateItem(guaranteedType, crystalAmount);
-      if (randomType !== guaranteedType) {
-        await updateItem(randomType, 1);
-        result.crystal_bonus      = 1;
-        result.crystal_bonus_type = randomType;
-      }
-      result.gold    = rewards.gold;
-      result.crystal = crystalAmount;
+      // Per-level payout, declared on the level itself (see getLevelRewards in
+      // data/embark.js). No scaling formula — what the level says is what it pays.
+      const tuned = getLevelRewards(region_id, level);
 
+      // Gold, then the level's guaranteed crystals (exact types and amounts).
+      await updateItem('Gold', tuned.gold);
+      result.gold = tuned.gold;
+      let crystalTotal = 0;
+      for (const { type, amount } of tuned.crystals) {
+        if (!type || !amount) continue;
+        await updateItem(type, amount);
+        crystalTotal += amount;
+      }
+      result.crystal = crystalTotal;
+
+      // The only randomised drop: one type picked from the level's pool.
+      const rndPool = tuned.crystals_random.pool;
+      if (rndPool.length && tuned.crystals_random.amount > 0) {
+        const bonusType = rndPool[Math.floor(Math.random() * rndPool.length)];
+        await updateItem(bonusType, tuned.crystals_random.amount);
+        result.crystal_bonus      = tuned.crystals_random.amount;
+        result.crystal_bonus_type = bonusType;
+      }
+
+      // Two independent trophy tracks that COMBINE: `trophies` always drop on a
+      // win; `spell_trophies` are granted on top when a trophy_gain spell was cast.
       const activeTrophySpell = (record.battle_data.selected_spells || [])
         .map(s => Object.values(SPELLS).flat().find(sp => sp.id === s.spell_id))
         .find(sp => sp && sp.effect_type === 'trophy_gain');
-      if (activeTrophySpell && region.trophies?.length) {
-        const trophy = region.trophies[Math.floor(Math.random() * region.trophies.length)];
-        const trophyRow = inventoryRows.find(r => r.item === trophy.id);
-        if (trophyRow) {
-          await supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + 1 }) });
-        } else {
-          await supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: trophy.id, amount: 1 }) });
-        }
-        result.trophy_gained = trophy.id;
-        result.trophy_label  = trophy.label;
+
+      const granted = {};
+      for (const { id, amount } of tuned.trophies) {
+        if (id && amount) granted[id] = (granted[id] || 0) + amount;
       }
+      if (activeTrophySpell) {
+        for (const { id, amount } of tuned.spell_trophies) {
+          if (id && amount) granted[id] = (granted[id] || 0) + amount;
+        }
+      }
+      for (const [id, amount] of Object.entries(granted)) {
+        const trophyRow = inventoryRows.find(r => r.item === id);
+        if (trophyRow) {
+          await supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + amount }) });
+        } else {
+          await supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: id, amount }) });
+        }
+      }
+      if (Object.keys(granted).length) {
+        result.trophies_gained = granted;             // { trophy_id: amount }
+        result.trophy_gained   = Object.keys(granted)[0]; // legacy single-id field
+      }
+
+      // No finished-item drops by design — equipment comes only from crafting.
+      // The shards above are the crafting inputs.
 
       const validSurvivorIds = getAlivePlayerRosterIds(record.battle_data);
 
