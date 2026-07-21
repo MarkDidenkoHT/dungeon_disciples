@@ -2157,7 +2157,7 @@ const UNITS = {
         xp: 280, passive: ['iron_will 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
-        id: 'dm_e111', f: 'dm', t: 23,
+        id: 'dm_e111', f: 'dm', t: 3,
         name: 'Death Knight',
         tags: ['Skeleton', 'Knight'],
         size: 'row',
