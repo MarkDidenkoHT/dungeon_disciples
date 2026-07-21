@@ -921,7 +921,6 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
-    engine.castEncounterSpell(getEncounterSpellId(region_id, level));
 
     if (Array.isArray(selected_spells) && selected_spells.length > 1) {
       return res.status(400).json({ error: 'Only one spell may be cast per battle' });
@@ -977,13 +976,20 @@ router.post('/battle/create', requireAuth, async (req, res) => {
           }
         }
 
-        if (params.locks_active_abilities) {
-          for (const c of engine.combatants) c._actives_locked = true;
-        }
+        // A counter-spell has no effect of its own — it just arms the check in
+        // castEncounterSpell below, which is why that cast happens after this
+        // loop rather than right after fromSetup.
+        if (params.counters_category) engine.declareCounter(params.counters_category);
 
-        engine.applySpellParams(targets, params);
+        engine.applySpellParams(targets, { ...params, _spell_name: spellDef.name });
       }
     }
+
+    engine.castEncounterSpell(getEncounterSpellId(region_id, level));
+
+    // Round 1 never goes through advanceRound(), so anything a spell scheduled
+    // for the round the battle opens on has to be drained explicitly.
+    engine.firePendingRoundEffects();
 
     if (!engine.done) engine.runAiTurns();
 

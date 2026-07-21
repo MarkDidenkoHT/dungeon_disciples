@@ -821,6 +821,58 @@ class BattleEngine {
           this.pushLog({ type: 'spell', spell: effect.name, targetName: `all ${effect.tag} allies`, value: healAmt, heal: true, message: `${effect.name} — all ${effect.tag} allies heal for ${healAmt} (${tagged.length} ${effect.tag} on the field)` });
         }
       }
+      else if (effect.type === 'round_damage') {
+        const unit = this.combatants.find(c => c.id === effect.unitId);
+        if (!unit || !unit.alive) continue;
+        // Typed damage, so it obeys the target's resistance the same way a
+        // non-physical attack does (see calcDamageWithPassives).
+        const resist = (unit.unit_data?.resistances ?? unit.resistances ?? {})[effect.damage_type] ?? 0;
+        const dmg    = Math.max(1, Math.floor(effect.amount * (1 - resist / 100)));
+        unit.battle_hp = Math.max(0, unit.battle_hp - dmg);
+        this.pushLog({ type: 'spell', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dmg, heal: false, message: `${unit.unit_name} takes ${dmg} ${effect.damage_type} damage` });
+        if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
+      }
+      else if (effect.type === 'apply_passive') {
+        const unit = this.combatants.find(c => c.id === effect.unitId);
+        if (!unit || !unit.alive) continue;
+        // resolvePassiveDefs reads unit_data.passive, so a granted passive has
+        // to land there — stackPassiveKeys then merges it with any same-named
+        // passive the unit already owns (infect 1 + infect 2 -> infect 3).
+        if (!unit.unit_data) continue;
+        const owned = unit.unit_data.passive ?? unit.unit_data.passive_ability;
+        const list  = Array.isArray(owned) ? [...owned] : (owned ? [owned] : []);
+        list.push(effect.key);
+        unit.unit_data = { ...unit.unit_data, passive: list };
+        this.pushLog({ type: 'status', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, message: `${unit.unit_name} is afflicted with ${effect.key}` });
+      }
+      else if (effect.type === 'dispel_per_round') {
+        const unit = this.combatants.find(c => c.id === effect.unitId);
+        if (unit?.alive) {
+          const removed = this.dispelEffects(unit, effect.polarity, effect.count);
+          if (removed.length) {
+            this.pushLog({ type: 'status', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, message: `${unit.unit_name} loses ${removed.map(e => e.key).join(', ')}` });
+          }
+        }
+        // Re-queue for the next round until the duration is spent. Requeue even
+        // if the unit died, so the entry drains rather than lingering forever.
+        if (effect.remaining > 1) {
+          remaining.push({ ...effect, round: this.round + 1, remaining: effect.remaining - 1 });
+        }
+      }
+      else if (effect.type === 'expire_modifier') {
+        const unit = this.combatants.find(c => c.id === effect.unitId);
+        if (!unit) continue;
+        const r = effect.revert || {};
+        if (r.armor)      unit.armor      = Math.max(0, (unit.armor      || 0) + r.armor);
+        if (r.initiative) unit.initiative = Math.max(1, (unit.initiative || 40) + r.initiative);
+        if (r.dmg_mult_div) unit._dmg_mult = (unit._dmg_mult || 1) / r.dmg_mult_div;
+        if (r.resistances) {
+          if (!unit.unit_data.resistances) unit.unit_data.resistances = {};
+          for (const [rType, rVal] of Object.entries(r.resistances)) {
+            unit.unit_data.resistances[rType] = Math.max(0, (unit.unit_data.resistances[rType] || 0) + rVal);
+          }
+        }
+      }
     }
     this.pendingRoundEffects = remaining;
   }
@@ -937,7 +989,6 @@ class BattleEngine {
           _dodge_count:        c._dodge_count ?? 0,
           _effects:            c._effects ?? [],
           _effect_seq:         c._effect_seq ?? 0,
-          _effects:            c._effects ?? [],
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
           _unity_host_id:      c._unity_host_id,
@@ -1041,11 +1092,28 @@ class BattleEngine {
   // SPELLS.enemies placeholders - same catalog, same effect engine as player
   // casts. Only logs that a hidden spell was cast - never the spell's name or
   // effect.
+  // Counter-spells (Ward / Nihilism / Decay) negate the encounter spell when its
+  // category matches. Recorded by the player's cast so castEncounterSpell can
+  // check it — which means the encounter spell must be cast AFTER the player's
+  // (see routes/index.js /battle/create). The encounter is the PvE stand-in for
+  // an opposing player, so PvP will set this from the opponent's pick instead.
+  declareCounter(category) {
+    if (category) this._counter_category = category;
+  }
   castEncounterSpell(spellId) {
     if (!spellId || this._encounter_spell_cast) return;
     this._encounter_spell_cast = true;
     const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
     if (!spellDef) return;
+    if (this._counter_category && spellDef.category === this._counter_category) {
+      // Tell the player their counter earned its keep, without revealing which
+      // spell it ate — the encounter's spell stays hidden either way.
+      this.pushLog({
+        type:    'notice',
+        message: 'The enemy reaches for a hidden power — your counter-spell smothers it.',
+      });
+      return;
+    }
     this.pushLog({
       type:    'notice',
       message: 'The enemy channels a hidden power before the battle begins.',
@@ -1085,15 +1153,41 @@ class BattleEngine {
   // Applies the common param-based spell effects (heal_pct, armor_boost, etc.)
   // to a resolved target list. This is the same effect application used for
   // player prep-spells (routes/index.js /battle/create) - shared, not duplicated.
+  //
+  // Params fall into three groups:
+  //   * instant, permanent-for-the-battle (armor_boost, damage_boost, ...)
+  //   * instant but time-limited - the same params plus `duration_rounds`, which
+  //     schedules an 'expire_modifier' that undoes exactly what was applied
+  //   * deferred - round_damage / apply_passive / dispel_per_round, which queue a
+  //     pendingRoundEffect that fires at the start of the round they name
+  // Duration and deferral are orthogonal to the param itself, so a new timed
+  // buff usually needs no new code here at all.
   applySpellParams(targets, params = {}) {
+    const duration = params.duration_rounds || 0;
+
     for (const c of targets) {
+      // Undo ledger for this unit, filled in as timed params are applied.
+      const revert = {};
+
       if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
-      if (params.armor_boost)          c.armor      = (c.armor      || 0) + params.armor_boost;
+      if (params.armor_boost)          { c.armor = (c.armor || 0) + params.armor_boost; revert.armor = -params.armor_boost; }
       if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
+      if (params.armor_flat_reduction) {
+        // Flat shred, unlike armor_reduction's percentage. Only give back what
+        // was actually taken, so a unit at 3 armor doesn't rebound to 10.
+        const taken = Math.min(c.armor || 0, params.armor_flat_reduction);
+        c.armor = (c.armor || 0) - taken;
+        revert.armor = (revert.armor || 0) + taken;
+      }
       if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
-      if (params.initiative_boost)     c.initiative = (c.initiative || 40) + params.initiative_boost;
+      if (params.initiative_boost)     { c.initiative = (c.initiative || 40) + params.initiative_boost; revert.initiative = -params.initiative_boost; }
       if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
-      if (params.damage_boost)         c._dmg_mult  = (c._dmg_mult || 1) * (1 + params.damage_boost);
+      if (params.damage_boost)         { c._dmg_mult = (c._dmg_mult || 1) * (1 + params.damage_boost); revert.dmg_mult_div = (revert.dmg_mult_div || 1) * (1 + params.damage_boost); }
+      if (params.damage_dealt_reduction_pct) {
+        const factor = 1 - params.damage_dealt_reduction_pct / 100;
+        c._dmg_mult = (c._dmg_mult || 1) * factor;
+        revert.dmg_mult_div = (revert.dmg_mult_div || 1) * factor;
+      }
       if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
       if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
       if (params.intercept_chance_pct) c.intercept_bonus_pct = (c.intercept_bonus_pct || 0) + params.intercept_chance_pct;
@@ -1102,8 +1196,79 @@ class BattleEngine {
         for (const [rType, rVal] of Object.entries(params.resistances)) {
           if (!c.unit_data.resistances) c.unit_data.resistances = {};
           c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) + rVal;
+          revert.resistances = revert.resistances || {};
+          revert.resistances[rType] = (revert.resistances[rType] || 0) - rVal;
         }
       }
+      if (params.resist_reduction) {
+        for (const [rType, rVal] of Object.entries(params.resist_reduction)) {
+          if (!c.unit_data.resistances) c.unit_data.resistances = {};
+          const taken = Math.min(c.unit_data.resistances[rType] || 0, rVal);
+          c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) - taken;
+          revert.resistances = revert.resistances || {};
+          revert.resistances[rType] = (revert.resistances[rType] || 0) + taken;
+        }
+      }
+
+      // Timed stat changes are also dispellable effects, so Purgation and the
+      // like can strip them early — registerEffect's revert runs the same undo.
+      if (duration && Object.keys(revert).length) {
+        const polarity = params.resist_reduction || params.armor_flat_reduction || params.damage_dealt_reduction_pct
+          ? 'negative' : 'positive';
+        this.pendingRoundEffects.push({
+          type:   'expire_modifier',
+          round:  this.round + duration,
+          unitId: c.id,
+          revert,
+        });
+      }
+
+      // Deferred: a flat hit of typed damage on a named round.
+      if (params.round_damage) {
+        this.pendingRoundEffects.push({
+          type:   'round_damage',
+          round:  params.round_damage.round,
+          unitId: c.id,
+          amount: params.round_damage.amount,
+          damage_type: params.round_damage.damage_type,
+          name:   params._spell_name,
+        });
+      }
+
+      // Deferred: hang a passive on the target on a named round (e.g. Infect 2).
+      if (params.apply_passive) {
+        this.pendingRoundEffects.push({
+          type:   'apply_passive',
+          round:  params.apply_passive.round,
+          unitId: c.id,
+          key:    params.apply_passive.key,
+          name:   params._spell_name,
+        });
+      }
+
+      // Deferred + recurring: strip N effects of a polarity, every round, for
+      // `rounds` rounds. The handler re-queues itself until the count runs out.
+      if (params.dispel_per_round) {
+        this.pendingRoundEffects.push({
+          type:     'dispel_per_round',
+          round:    this.round,
+          unitId:   c.id,
+          polarity: params.dispel_per_round.polarity || 'positive',
+          count:    params.dispel_per_round.count ?? 1,
+          remaining: params.dispel_per_round.rounds ?? 1,
+          name:     params._spell_name,
+        });
+      }
+    }
+
+    // Battlefield-wide locks are deliberately not per-target: they hit every
+    // combatant on BOTH sides, the caster's own units included. advanceRound()
+    // clears both flags each round, so a 1-round lock needs no expiry entry.
+    if (params.lock_all_passives_rounds) {
+      for (const c of this.combatants) c._passives_locked = true;
+    }
+    if (params.lock_all_actives_rounds) {
+      for (const c of this.combatants) c._actives_locked = true;
     }
   }
 
@@ -1114,7 +1279,13 @@ class BattleEngine {
   // routes/index.js for player casts.
   castSpell(spellDef, { casterSide = 'player', targetId = null } = {}) {
     const targets = this.getSpellTargets(spellDef, casterSide, targetId);
-    this.applySpellParams(targets, spellDef.params || {});
+    // _spell_name only rides along so deferred effects can name themselves in
+    // the log; it is never read as a gameplay param.
+    this.applySpellParams(targets, { ...(spellDef.params || {}), _spell_name: spellDef.name });
+    // Spells resolve before round 1 has "advanced", and firePendingRoundEffects
+    // otherwise only runs from advanceRound() — so anything scheduled for the
+    // current round would never fire. Drain it here.
+    this.firePendingRoundEffects();
     return targets;
   }
 
