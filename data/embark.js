@@ -12,7 +12,7 @@ const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: {
       enemies: [
-        { key: 'crimson_basilica.aggrails_herald', cell: 2, item_id: 'padded_armor' },
+        { key: 'crimson_basilica.aggrails_herald', cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
       ],
@@ -329,11 +329,7 @@ function getEncounter(region_id, level) {
       // roster row to bank the bonus on (unlike player units).
       if (slot.item_id) {
         const itemDef = ITEM_DEFS[slot.item_id];
-        if (itemDef) {
-          unitData = applyItemModifiers(unitData, itemDef);
-          const hpBonus = Number(itemDef.stat_mods?.hp || 0);
-          if (hpBonus) unitData = { ...unitData, hp: (unitData.hp ?? 0) + hpBonus };
-        }
+        if (itemDef) unitData = applyItemModifiers(unitData, itemDef);
       }
 
       return { ...unitData, cell: slot.cell, item_id: slot.item_id || null };

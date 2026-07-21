@@ -11,7 +11,7 @@ import {
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
-  spellName, spellDesc,
+  spellName, spellDesc, withEquippedItem,
 } from '../utils.js';
 
 const BP_NAV_LABELS = {
@@ -266,14 +266,19 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (!def) return renderModalContent('Unit data unavailable.');
     const stored = unit.unit_data || {};
     const isHero = unit.id === heroId;
-    const currentHp = stored.current_hp != null ? stored.current_hp : (def.hp ?? '—');
-    const maxHp     = stored.max_hp != null ? stored.max_hp : (def.hp ?? '—');
     const alive     = stored.alive !== false;
+    const equippedItem = equippedItemFor(unit.id);
+    // HP derived from base + worn item, same as every other item stat.
+    const baseMaxHp = stored.max_hp != null ? stored.max_hp : (def.hp ?? null);
+    const derived   = withEquippedItem(
+      { max_hp: baseMaxHp ?? 0, current_hp: stored.current_hp ?? baseMaxHp ?? 0 },
+      equippedItem);
+    const currentHp = baseMaxHp == null ? '—' : derived.current_hp;
+    const maxHp     = baseMaxHp == null ? '—' : derived.max_hp;
 
     const liveUnit = { ...def, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
     const badge    = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
     const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`;
-    const equippedItem = equippedItemFor(unit.id);
     const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false, player });
 
     return buildUnitCard(liveUnit, { badge, itemSlotHtml }) + deadHtml;
@@ -568,8 +573,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const colSpan = sizeColSpan(occ.size);
         const name    = unit ? getUnitName(unit) : '?';
         const portraitUrl = getPortraitUrl(unit, 'grid');
-        const currentHp   = unit.unit_data?.current_hp != null ? unit.unit_data.current_hp : (resolveUnitDef(unit)?.hp ?? '—');
-        const maxHp       = unit.unit_data?.max_hp != null ? unit.unit_data.max_hp : (resolveUnitDef(unit)?.hp ?? '—');
+        // HP derived from base + worn item (see applyItemModifiers).
+        const gridBaseMax = unit.unit_data?.max_hp != null ? unit.unit_data.max_hp : (resolveUnitDef(unit)?.hp ?? null);
+        const gridDerived = withEquippedItem(
+          { max_hp: gridBaseMax ?? 0, current_hp: unit.unit_data?.current_hp ?? gridBaseMax ?? 0 },
+          equippedItemFor(unit.id));
+        const currentHp   = gridBaseMax == null ? '—' : gridDerived.current_hp;
+        const maxHp       = gridBaseMax == null ? '—' : gridDerived.max_hp;
         const isAlive     = unit.unit_data?.alive !== false;
         const spellBuffs = selectedSpells.filter(s => {
           if (s.target_scope === 'all_allies') return true;
@@ -606,7 +616,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const u = roster.find(r => r.id === occ.unitId);
         if (!u) return sum;
         const def = resolveUnitDef(u) || {};
-        return sum + calcUnitPower({ ...def, hp: u.unit_data?.max_hp ?? def.hp });
+        // Army power must count the worn item's stats too.
+        const withItem = withEquippedItem(
+          { ...def, hp: u.unit_data?.max_hp ?? def.hp }, equippedItemFor(u.id));
+        return sum + calcUnitPower(withItem);
       }, 0);
       playerPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
     }

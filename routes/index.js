@@ -206,17 +206,9 @@ async function getItemsByRosterIds(rosterIds) {
   return map;
 }
 
+// Unequipping only clears the link. Item stats are never baked into the roster
+// row — they are derived from the worn item wherever the unit is used.
 async function unequipItemFromRosterUnit(item, rosterId) {
-  const rows = await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}&select=id,unit_data`);
-  if (rows.length) {
-    const unitData  = rows[0].unit_data || {};
-    const hpBonus   = Number(unitData._item_hp_bonus ?? item.item_stats?.stat_mods?.hp ?? 0);
-    const newMaxHp  = Math.max(1, Number(unitData.max_hp ?? 0) - hpBonus);
-    const newCurHp  = Math.min(newMaxHp, Math.max(0, Number(unitData.current_hp ?? 0) - hpBonus));
-    const newUnitData = { ...unitData, max_hp: newMaxHp, current_hp: newCurHp };
-    delete newUnitData._item_hp_bonus;
-    await supabase(`/roster?id=eq.${rosterId}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) });
-  }
   await supabase(`/items?id=eq.${item.id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: null }) });
 }
 
@@ -1450,18 +1442,9 @@ router.post('/items/equip', requireAuth, async (req, res) => {
       await unequipItemFromRosterUnit(old, roster_id);
     }
 
-    const freshRoster  = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,unit_data`);
-    const baseUnitData = freshRoster[0].unit_data || {};
-
-    const hpBonus   = Number(stats.stat_mods?.hp || 0);
-    const newMaxHp  = Number(baseUnitData.max_hp ?? 0) + hpBonus;
-    const newCurHp  = Math.min(newMaxHp, Number(baseUnitData.current_hp ?? 0) + hpBonus);
-    const newUnitData = { ...baseUnitData, max_hp: newMaxHp, current_hp: newCurHp, _item_hp_bonus: hpBonus };
-
-    await Promise.all([
-      supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
-      supabase(`/items?id=eq.${item_id}`,    { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) }),
-    ]);
+    // Equipping only records the link. The roster row keeps the unit's BASE
+    // stats; every consumer derives base + item via applyItemModifiers.
+    await supabase(`/items?id=eq.${item_id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) });
 
     const [updatedRoster, updatedItems] = await Promise.all([
       supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`),

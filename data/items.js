@@ -10,6 +10,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 3, armor: 3 },
     passive:      null,
     icon:         'meteor_exoskeleton',
+    rarity:       'mythic',
     cost:         { cinder_ash: 2, Gold: 100 },
   },
   aegis_of_the_first_ward: {
@@ -22,6 +23,7 @@ const ITEM_DEFS = {
     stat_mods:    { fire_resist: 8, death_resist: 8 },
     passive:      null,
     icon:         'aegis_of_the_first_ward',
+    rarity:       'mythic',
     cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 45 },
   },
   might_of_the_pure: {
@@ -34,6 +36,7 @@ const ITEM_DEFS = {
     stat_mods:    { action_power: 5, death_resist: 5 },
     passive:      null,
     icon:         'might_of_the_pure',
+    rarity:       'epic',
     cost:         { Gold: 100, Crystals_Life: 25, Crystals_Death: 25 },
     item_cost:    { death_resistance_potion: 2, mace: 1, broken_seal: 1}
   },
@@ -47,6 +50,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 3, armor: 5 },
     passive:      'inspiration_damage 1',
     icon:         'sanctified_bulwark',
+    rarity:       'epic',
     cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
     item_cost:    { iron_armor: 1, codex_militarum: 2 },
   },
@@ -60,6 +64,7 @@ const ITEM_DEFS = {
     stat_mods:    null,
     passive:      'inspiration_damage 1',
     icon:         'codex_militarum',
+    rarity:       'rare',
     cost:         { Gold: 90, Crystals_Life: 25 },
   },
   court_regalia: {
@@ -72,6 +77,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 15 },
     passive:      null,
     icon:         'court_regalia',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 4 },
   },
   dragon_skin: {
@@ -84,6 +90,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 3, hp: 5, fire_resist: 5 },
     passive:      'volcanic_skin 1',
     icon:         'dragon_skin',
+    rarity:       'epic',
     cost:         { cinder_ash: 2, Gold: 75, Crystals_Fire: 25 },
     item_cost:    { iron_armor: 1, fire_resistance_potion: 2 },
   },
@@ -97,6 +104,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 10, armor: 3 },
     passive:      'horde 1',
     icon:         'shroud_of_the_fallen',
+    rarity:       'epic',
     cost:         { grave_dust: 2, Gold: 100, Crystals_Death: 25 },
     item_cost:    { iron_armor: 1, mothers_gift: 1 },
   },
@@ -110,6 +118,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 5 },
     passive:      null,
     icon:         'mothers_gift',
+    rarity:       'common',
     cost:         { Gold: 25, Crystals_Death: 25 },
   },
   padded_armor: {
@@ -122,6 +131,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 5 },
     passive:      null,
     icon:         'padded_armor',
+    rarity:       'common',
     cost:         { Gold: 50 },
   },
   iron_armor: {
@@ -134,6 +144,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 3, hp: 5 },
     passive:      null,
     icon:         'iron_armor',
+    rarity:       'common',
     cost:         { Gold: 50 },
     item_cost:    { padded_armor: 1 },
   },
@@ -147,6 +158,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 3, hp: 5, cold_resist: 5 },
     passive:      'rimeguard 1',
     icon:         'rimeheart',
+    rarity:       'rare',
     cost:         { Gold: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
   },
@@ -160,6 +172,7 @@ const ITEM_DEFS = {
     stat_mods:    null,
     passive:      'regenerate 1',
     icon:         'everliving_stalk',
+    rarity:       'common',
     cost:         { Gold: 30, Crystals_Life: 10, Crystals_Death: 10 },
   },
   fire_resistance_potion: {
@@ -169,9 +182,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { fire_resistance: 5 },
+    stat_mods:    { fire_resist: 5 },
     passive:      null,
     icon:         'fire_resistance_potion',
+    rarity:       'common',
     cost:         { Gold: 25, Crystals_Fire: 25 },
   },
   death_resistance_potion: {
@@ -181,9 +195,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { fire_resistance: 5 },
+    stat_mods:    { death_resist: 5 },
     passive:      null,
     icon:         'death_resistance_potion',
+    rarity:       'common',
     cost:         { Gold: 25, Crystals_Death: 25 },
   },
   cold_resistance_potion: {
@@ -193,10 +208,11 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { cold_resistance: 5 },
+    stat_mods:    { cold_resist: 5 },
     passive:      null,
     icon:         'cold_resistance_potion',
-    cost:         { Gold: 25, Crystals_Cold: 25 },
+    rarity:       'common',
+    cost:         { Gold: 25, Crystals_Frost: 25 },
   },
   crude_sword: {
     key:          'crude_sword',
@@ -205,9 +221,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 1, initiative: 1 },
+    stat_mods:    { action_power: 1, initiative: 1 },
     passive:      'iron_will 1',
     icon:         'crude_sword',
+    rarity:       'common',
     cost:         { Gold: 25, Crystals_Death: 5, Crystals_Life: 5 },
   },
   iron_sword: {
@@ -217,9 +234,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 2, initiative: 2 },
+    stat_mods:    { action_power: 2, initiative: 2 },
     passive:      'iron_will 1',
     icon:         'iron_sword',
+    rarity:       'rare',
     cost:         { Gold: 50, Crystals_Fire: 5, Crystals_Nature: 5 },
     item_cost:    { crude_sword: 1 },
   },
@@ -230,9 +248,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 3, initiative: 3 },
+    stat_mods:    { action_power: 3, initiative: 3 },
     passive:      'iron_will 1',
     icon:         'iron_sword',
+    rarity:       'rare',
     cost:         { Gold: 75, Crystals_Life: 5, Crystals_Death: 5 },
     item_cost:    { crude_sword: 1 },
   },
@@ -243,10 +262,11 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 4, initiative: 4 },
+    stat_mods:    { action_power: 4, initiative: 4 },
     passive:      'iron_will 2',
     icon:         'crystal_sword',
-    cost:         { Gold: 100, Crystals_Air: 5, Crystals_Cold: 5 },
+    rarity:       'epic',
+    cost:         { Gold: 100, Crystals_Air: 5, Crystals_Frost: 5 },
     item_cost:    { iron_sword: 1 },
   },
   mace: {
@@ -256,9 +276,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { power: 3 },
+    stat_mods:    { action_power: 3 },
     passive:      null,
     icon:         'mace',
+    rarity:       'common',
     cost:         { Gold: 25, Crystals_Death: 25 },
   },
   broken_seal: {
@@ -268,9 +289,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { power: 2 },
+    stat_mods:    { action_power: 2 },
     passive:      null,
     icon:         'broken_seal',
+    rarity:       'common',
     cost:         { aggrails_signet: 1, Gold: 25 },
   },
   lion_signet: {
@@ -280,9 +302,10 @@ const ITEM_DEFS = {
     faction:      'empire',
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { power: 3, hp: 3 },
+    stat_mods:    { action_power: 3, hp: 3 },
     passive:      null,
     icon:         'lion_signet',
+    rarity:       'rare',
     cost:         { aggrails_signet: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -293,9 +316,10 @@ const ITEM_DEFS = {
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     'Caster',
-    stat_mods:    { power: 3, hp: 3 },
+    stat_mods:    { action_power: 3, hp: 3 },
     passive:      'bleed 1',
     icon:         'staff_of_thaumaturgy',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -306,9 +330,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Treefolk',
-    stat_mods:    { power: 2, nature_resist: 5 },
+    stat_mods:    { action_power: 2, nature_resist: 5 },
     passive:      null,
     icon:         'dendrareume',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -319,9 +344,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { power: 2 },
+    stat_mods:    { action_power: 2 },
     passive:      'poison 1',
     icon:         'poisonous_dagger',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -332,9 +358,10 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { power: 2 },
+    stat_mods:    { action_power: 2 },
     passive:      'chill 1',
     icon:         'frost_lance',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -348,6 +375,7 @@ const ITEM_DEFS = {
     stat_mods:    { armor: 5 },
     passive:      'undying 1',
     icon:         'bone_barrier',
+    rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -361,6 +389,7 @@ const ITEM_DEFS = {
     stat_mods:    { cold_resist: 3, air_resist: 3 },
     passive:      'undying 1',
     icon:         'veil_of_discord',
+    rarity:       'epic',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },
@@ -374,44 +403,22 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 5 },
     passive:      'dodge 1',
     icon:         'cloak_of_evasion',
+    rarity:       'rare',
     cost:         { Gold: 50 },
   },
 };
 
-// Item rarity → border colour in the UI (common green, rare blue, epic orange,
-// mythic red). Purely cosmetic. Kept as one editable table so rarities can be
-// re-tuned in a single place; anything not listed defaults to 'common'. The
-// value is stamped onto each ITEM_DEFS entry below as `.rarity`.
-const ITEM_RARITY = {
-  meteor_exoskeleton:      'mythic',
-  aegis_of_the_first_ward: 'mythic',
-  might_of_the_pure:       'epic',
-  sanctified_bulwark:      'epic',
-  dragon_skin:             'epic',
-  shroud_of_the_fallen:    'epic',
-  crystal_sword:           'epic',
-  veil_of_discord:         'epic',
-  codex_militarum:         'rare',
-  court_regalia:           'rare',
-  rimeheart:               'rare',
-  iron_sword:              'rare',
-  lion_signet:             'rare',
-  staff_of_thaumaturgy:    'rare',
-  dendrareume:             'rare',
-  poisonous_dagger:        'rare',
-  frost_lance:             'rare',
-  bone_barrier:            'rare',
-  cloak_of_evasion:        'rare',
-  // everything else (basic gear, potions, materials) is common
-};
-for (const [key, def] of Object.entries(ITEM_DEFS)) {
-  def.rarity = ITEM_RARITY[key] || 'common';
-}
-
-// Applies an item's non-HP modifiers (armor, resistances, tags, passive) on top
-// of a unit_data object. HP is handled separately since it is persisted directly
-// on the roster row (see equip/unequip in routes/index.js) rather than derived
-// on the fly, so it is intentionally skipped here.
+// Applies every modifier an item grants (hp, armor, action_power, initiative,
+// resistances, added tag, granted passive) on top of a unit_data object.
+//
+// This is the SINGLE place item stats are applied. Equipping only records that
+// the item is worn (items.equipped_by); nothing is ever baked into the roster
+// row. Roster, battle-prep and the battle engine all derive stats by running a
+// unit through here, so a unit's stats are always base + currently-worn item.
+//
+// `max_hp` and `hp` both get the bonus so this works for roster rows (max_hp)
+// and raw unit defs (hp). `current_hp` is real damage carried between battles,
+// so it is never inflated — only clamped so it can't exceed the new maximum.
 function applyItemModifiers(unitData, itemStats) {
   if (!itemStats) return unitData;
 
@@ -423,9 +430,10 @@ function applyItemModifiers(unitData, itemStats) {
   let   armor        = unitData.armor        ?? 0;
   let   action_power = unitData.action_power ?? 0;
   let   initiative   = unitData.initiative   ?? 0;
+  let   hpBonus      = 0;
 
   for (const [statKey, val] of Object.entries(mods)) {
-    if (statKey === 'hp')           continue;
+    if (statKey === 'hp')           { hpBonus      += val; continue; }
     if (statKey === 'armor')        { armor        += val; continue; }
     if (statKey === 'action_power') { action_power += val; continue; }
     if (statKey === 'initiative')   { initiative   += val; continue; }
@@ -443,7 +451,15 @@ function applyItemModifiers(unitData, itemStats) {
     else                        passive = itemStats.passive;
   }
 
-  return { ...unitData, tags, armor, action_power, initiative, resistances, passive };
+  const out = { ...unitData, tags, armor, action_power, initiative, resistances, passive };
+  if (hpBonus) {
+    if (typeof out.max_hp === 'number') out.max_hp = out.max_hp + hpBonus;
+    if (typeof out.hp     === 'number') out.hp     = out.hp     + hpBonus;
+    if (typeof out.current_hp === 'number' && typeof out.max_hp === 'number') {
+      out.current_hp = Math.min(out.current_hp, out.max_hp);
+    }
+  }
+  return out;
 }
 
 export { ITEM_DEFS, applyItemModifiers };

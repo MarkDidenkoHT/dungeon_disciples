@@ -64,8 +64,14 @@ export function renderRoster(root, { player }) {
     const tierLabel = isHero ? `Hero Lv ${tier}` : `Lv ${tier}`;
 
     const currentXp  = stored.current_xp ?? 0;
-    const currentHp  = stored.current_hp != null ? stored.current_hp : (def?.hp ?? '—');
-    const maxHp      = stored.max_hp != null ? stored.max_hp : (def?.hp ?? '—');
+    // HP is derived like every other item stat: the roster row holds the unit's
+    // BASE max, the equipped item's bonus is applied on top for display.
+    const baseMaxHp  = stored.max_hp != null ? stored.max_hp : (def?.hp ?? null);
+    const derived    = withEquippedItem(
+      { max_hp: baseMaxHp ?? 0, current_hp: stored.current_hp ?? baseMaxHp ?? 0 },
+      equippedItemFor(u.id));
+    const maxHp      = baseMaxHp == null ? '—' : derived.max_hp;
+    const currentHp  = baseMaxHp == null ? '—' : derived.current_hp;
     const alive      = stored.alive !== false;
     const throneLevel = buildingsData['slot_0']?.level ?? 0;
 
