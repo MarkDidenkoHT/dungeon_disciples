@@ -22,7 +22,7 @@ const REGION_ENCOUNTERS = {
       // there's no per-unit caster, the level itself "casts" this at battle start.
       spell_id: 'enemy_spell_1',
       enemies: [
-        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
+        { key: 'crimson_basilica.crimson_scout',    cell: 1 },
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
         { key: 'crimson_basilica.initiate',         cell: 3 },
@@ -41,7 +41,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.initiate',         cell: 3 },
-        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
+        { key: 'crimson_basilica.crimson_scout',   cell: 1 },
       ],
     },
     level_5: {

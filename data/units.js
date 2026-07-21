@@ -1007,7 +1007,7 @@ const UNITS = {
     },
     golden_pride: {
       id: 'e5', f: 'e', t: 1,
-      name: 'Golden Pride',
+      name: 'Golden Lion',
       tags: ['Construct', 'Holy'],
       size: 'row',
       hp: 90, armor: 20, initiative: 50,
@@ -1016,9 +1016,9 @@ const UNITS = {
       damage_source: 'physical', action_power: 20,
       xp: 250, passive: ['aegis 1', 'radiance 1'], ability: 'lions_roar 1',
     },
-    golden_pride2: {
+    golden_pride: {
       id: 'e51', f: 'e', t: 2,
-      name: 'Golden Pride2',
+      name: 'Golden Pride',
       tags: ['Construct', 'Holy'],
       size: 'row',
       hp: 110, armor: 20, initiative: 50,
@@ -1027,9 +1027,9 @@ const UNITS = {
       damage_source: 'physical', action_power: 25,
       xp: 450, passive: ['aegis 1', 'radiance 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
     },
-    golden_pride3: {
+    golden_exemplar: {
       id: 'e511', f: 'e', t: 3,
-      name: 'Golden Pride3',
+      name: 'Golden Exemplar',
       tags: ['Construct', 'Holy'],
       size: 'row',
       hp: 130, armor: 20, initiative: 50,
@@ -1060,9 +1060,9 @@ const UNITS = {
       damage_source: null, action_power: 20, action_icon: 'repair.jpg',
       xp: 75, passive: 'fortify 1', ability: null,
     },
-    mechanic2: {
+    master_mechanic: {
       id: 'e611', f: 'e', t: 3,
-      name: 'Mechanic2',
+      name: 'Master Mechanic',
       tags: ['Engineer', null],
       size: 'tile',
       hp: 60, armor: 10, initiative: 20,
@@ -1763,7 +1763,7 @@ const UNITS = {
     },
     crimson_communicant: {
       id: 'gs21', f: 'g', t: 2,
-      name: 'Communicant2',
+      name: 'Crimson Communicant',
       tags: ['Vampire', 'Holy'],
       size: 'column',
       hp: 105, armor: 15, initiative: 50,
@@ -1772,9 +1772,9 @@ const UNITS = {
       damage_source: 'physical', action_power: 32,
       xp: 250, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
     },
-    crimson_communicant2: {
+    chosen: {
       id: 'gs211', f: 'g', t: 3,
-      name: 'Communicant3',
+      name: 'Chosen',
       tags: ['Vampire', 'Holy'],
       size: 'column',
       hp: 130, armor: 15, initiative: 50,
@@ -1849,9 +1849,9 @@ const UNITS = {
       damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
       xp: 350, passive: ['communion 1', 'inspiration_initiative 1'], ability: 'blood_craze 1',
     },
-    grail_tender: {
+    grail_keeper: {
       id: 'gs511', f: 'g', t: 3,
-      name: 'Grail Tender2',
+      name: 'Grail Keeper',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 55, armor: 0, initiative: 30,
@@ -1871,9 +1871,9 @@ const UNITS = {
       damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
       xp: 370, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
     },
-    greiving_servant2: {
-      id: 'gs52', f: 'g', t: 3,
-      name: 'Greiving Servant2',
+    greiving_custodian: {
+      id: 'gs521', f: 'g', t: 3,
+      name: 'Greiving Custodian',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 70, armor: 0, initiative: 30,
@@ -1904,9 +1904,9 @@ const UNITS = {
       damage_source: 'death', action_power: 9,
       xp: 280, passive: ['dodge 1', 'slow 1'], ability: 'terror 1',
     },
-    specter2: {
+    wraith: {
       id: 'gs611', f: 'g', t: 3,
-      name: 'Specter',
+      name: 'Wraith',
       tags: ['Spirit', 'Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 55,
@@ -1926,9 +1926,9 @@ const UNITS = {
       damage_source: 'death', action_power: 9,
       xp: 310, passive: ['dodge 1', 'dissipate 1'], ability: 'terror 1',
     },
-    apparition2: {
+    phantom: {
       id: 'gs621', f: 'g', t: 3,
-      name: 'Apparition2',
+      name: 'Phantom',
       tags: ['Spirit', 'Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 50,
@@ -1963,9 +1963,9 @@ const UNITS = {
         damage_source: 'physical', action_power: 12,
         xp: 260, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
       },
-      exalted_herald2: {
+      exalted_evangelist: {
         id: 'opb_e111', f: 'opb', t: 3,
-        name: 'Exalted Herald2',
+        name: 'Exalted Evangelist',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 105, armor: 15, initiative: 50,
@@ -1993,8 +1993,8 @@ const UNITS = {
         hp: 55, armor: 20, initiative: 25,
         resistances: { air: 5, fire: 10, life: 50, death: 15, cold: 5, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 20,
-        xp: 230, passive: ['aggrails_blessing 1', 'aegis 1'], ability: 'sanctuary 1',
+        damage_source: 'physical', action_power: 16,
+        xp: 230, passive: ['aggrails_blessing 1', 'protector 1'], ability: 'sanctuary 1',
       },
       aggrails_champion: {
         id: 'opb_e211', f: 'opb', t: 3,
@@ -2004,8 +2004,8 @@ const UNITS = {
         hp: 70, armor: 25, initiative: 25,
         resistances: { air: 10, fire: 20, life: 50, death: 15, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 25,
-        xp: 230, passive: ['aggrails_blessing 1', 'aegis 1', 'protector 1'], ability: 'sanctuary 1',
+        damage_source: 'physical', action_power: 20,
+        xp: 230, passive: ['aggrails_blessing 1', 'protector 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
@@ -2029,9 +2029,9 @@ const UNITS = {
         damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
         xp: 340, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
-      keeper_of_purity: {
+      high_keeper: {
         id: 'opb_e311', f: 'opb', t: 3,
-        name: 'Keeper of Purity2',
+        name: 'High Keeper',
         tags: ['Caster', 'Holy'],
         size: 'tile',
         hp: 60, armor: 0, initiative: 20,
@@ -2040,9 +2040,9 @@ const UNITS = {
         damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
         xp: 340, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
-      crimson_hunter: {
+      crimson_scout: {
         id: 'opb_e4', f: 'opb', t: 1,
-        name: 'Crimson Hunter',
+        name: 'Crimson Scout',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 45, armor: 0, initiative: 50,
@@ -2051,9 +2051,9 @@ const UNITS = {
         damage_source: 'physical', action_power: 12,
         xp: 340, passive: 'bleed 1', ability: null,
       },
-      crimson_hunter2: {
+      crimson_hunter: {
         id: 'opb_e41', f: 'opb', t: 2,
-        name: 'Crimson Hunter2',
+        name: 'Crimson Hunter',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 55, armor: 0, initiative: 50,
@@ -2062,9 +2062,9 @@ const UNITS = {
         damage_source: 'physical', action_power: 16,
         xp: 340, passive: ['bleed 1', 'clear_shot 1'], ability: null,
       },
-      crimson_hunter3: {
+      crimson_stalker: {
         id: 'opb_e411', f: 'opb', t: 3,
-        name: 'Crimson Hunter3',
+        name: 'Crimson Stalker',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 70, armor: 0, initiative: 50,
