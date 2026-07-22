@@ -82,7 +82,7 @@ const ITEM_DEFS = {
   },
   dragon_skin: {
     key:          'dragon_skin',
-    name:         'Dragon SKin',
+    name:         'Dragon Skin',
     name_ru:      'Драконья кожа',
     faction:      null,
     tag_required: null,
@@ -93,6 +93,20 @@ const ITEM_DEFS = {
     rarity:       'epic',
     cost:         { cinder_ash: 2, Gold: 75, Crystals_Fire: 25 },
     item_cost:    { iron_armor: 1, fire_resistance_potion: 2 },
+  },
+  aldras_devotion: {
+    key:          'aldras_devotion',
+    name:         "Akdra's Devotion",
+    name_ru:      'Преданность Алдры',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { armor: 3, hp: 5, death_resist: 5, life_resist: 5 },
+    passive:      'fortify 1',
+    icon:         'aldras_devotion',
+    rarity:       'epic',
+    cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Life: 20, Crystals_Death: 20 },
+    item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
   },
   shroud_of_the_fallen: {
     key:          'shroud_of_the_fallen',
@@ -199,7 +213,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'death_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Death: 25 },
+    cost:         { grave_dust: 2, Gold: 20, Crystals_Death: 10 },
   },
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
