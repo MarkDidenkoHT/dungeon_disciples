@@ -914,7 +914,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 10, action_icon: 'spear.jpg', action_animation: 'impale',
       xp: 90, passive: 'impale 1', ability: null,
     },
     infantry: {
@@ -925,7 +925,7 @@ const UNITS = {
       hp: 55, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 14, action_icon: 'spear.jpg', action_animation: 'impale',
       xp: 300, passive: ['impale 1', 'protector 1'], ability: null,
     },
     crossbowman: {
@@ -947,7 +947,7 @@ const UNITS = {
       hp: 70, armor: 20, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale',
       xp: 300, passive: ['impale 1', 'protector 1', 'iron_will 1'], ability: 'stun 1',
     },
     horseman: {
