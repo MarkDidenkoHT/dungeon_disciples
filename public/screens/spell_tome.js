@@ -1,18 +1,19 @@
 import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
-import { SPELLS }                  from '../../data/spells.js';
+import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
 
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
 
+  const isRu = player?.settings?.language === 'ru';
+
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
         <div class="tier-tabs" id="tier-tabs">
-          <button class="tier-tab tier-tab--active" data-tier="1">Tier I</button>
-          <button class="tier-tab" data-tier="2">Tier II</button>
-          <button class="tier-tab" data-tier="3">Tier III</button>
-          <button class="tier-tab" data-tier="4">Tier IV</button>
+          ${SPELL_CATEGORIES.map((c, i) => `
+            <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
+          `).join('')}
         </div>
 
         <div class="spelltome-body">
@@ -28,7 +29,7 @@ export function renderSpellTome(root, { player }) {
   let throneLevel     = 1;
   let learnedSpells   = [];
   let activeSpellId   = null;
-  let activeTier      = 1;
+  let activeCategory  = SPELL_CATEGORIES[0].id;
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
@@ -64,24 +65,28 @@ export function renderSpellTome(root, { player }) {
   }
 
   function renderSlider() {
-    const tierSpells   = factionSpells.filter(s => s.tier === activeTier);
-    const tierUnlocked = throneLevel >= activeTier;
+    // Tabs are categories now; the lock is per-spell, since the three spells in
+    // a combat category unlock at throne 2 / 3 / 4 rather than as a block.
+    const catSpells = factionSpells
+      .filter(s => s.category === activeCategory)
+      .sort((a, b) => a.tier - b.tier);
 
-    if (!tierSpells.length) {
-      slider.innerHTML = `<div class="spells-empty">No spells for this tier.</div>`;
+    if (!catSpells.length) {
+      slider.innerHTML = `<div class="spells-empty">${isRu ? 'Нет заклинаний в этой категории.' : 'No spells in this category.'}</div>`;
       return;
     }
 
-    slider.innerHTML = tierSpells.map(spell => {
+    slider.innerHTML = catSpells.map(spell => {
       const isLearned  = learnedSpells.includes(spell.id);
       const affordable = canAfford(spell);
       const isActive   = activeSpellId === spell.id;
+      const unlocked   = throneLevel >= spell.tier;
 
       let cardCls = 'spell-card';
       if (isLearned)                                       cardCls += ' spell-card--learned';
-      if (!tierUnlocked)                                   cardCls += ' spell-card--locked';
+      if (!unlocked)                                       cardCls += ' spell-card--locked';
       if (isActive)                                        cardCls += ' spell-card--active';
-      if (tierUnlocked && !isLearned && !affordable)       cardCls += ' spell-card--unaffordable';
+      if (unlocked && !isLearned && !affordable)           cardCls += ' spell-card--unaffordable';
 
       return `
         <div class="${cardCls}" data-spell-id="${spell.id}">
@@ -216,24 +221,30 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
-  function setTier(tier) {
-    tier = Math.max(1, Math.min(4, tier));
-    if (tier === activeTier) return;
+  function setCategory(categoryId) {
+    if (!categoryId || categoryId === activeCategory) return;
     playPageTurnSound();
-    activeTier    = tier;
-    activeSpellId = null;
+    activeCategory = categoryId;
+    activeSpellId  = null;
     tierTabs.querySelectorAll('.tier-tab').forEach(t =>
-      t.classList.toggle('tier-tab--active', Number(t.dataset.tier) === tier));
+      t.classList.toggle('tier-tab--active', t.dataset.category === categoryId));
     renderSlider();
     closeSheet();
   }
 
+  // Swiping steps one tab along the SPELL_CATEGORIES order, stopping at the ends.
+  function stepCategory(delta) {
+    const i    = SPELL_CATEGORIES.findIndex(c => c.id === activeCategory);
+    const next = Math.max(0, Math.min(SPELL_CATEGORIES.length - 1, i + delta));
+    setCategory(SPELL_CATEGORIES[next].id);
+  }
+
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
-    tab.addEventListener('click', () => setTier(Number(tab.dataset.tier)));
+    tab.addEventListener('click', () => setCategory(tab.dataset.category));
   });
 
-  // Most of the game switches views by swiping; the spell tome's tiers are tabs,
-  // and testers tried to swipe them. Let a horizontal swipe change tier too.
+  // Most of the game switches views by swiping; the spell tome's tabs are tabs,
+  // and testers tried to swipe them. Let a horizontal swipe change tab too.
   let touchX = 0, touchY = 0, swiping = false;
   sliderWrap.addEventListener('touchstart', e => {
     touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiping = false;
@@ -247,7 +258,7 @@ export function renderSpellTome(root, { player }) {
     if (!swiping) return;
     const dx = e.changedTouches[0].clientX - touchX;
     if (Math.abs(dx) < 40) return;
-    setTier(activeTier + (dx < 0 ? 1 : -1)); // swipe left → next tier
+    stepCategory(dx < 0 ? 1 : -1); // swipe left → next tab
   }, { passive: true });
 
   async function init() {

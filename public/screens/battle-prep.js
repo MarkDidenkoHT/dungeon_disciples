@@ -1,5 +1,9 @@
 import { api, navigate, resourceCache }  from '../api.js';
-import { SPELLS }          from '../../data/spells.js';
+import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
+
+// The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
+// castable in a battle.
+const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
@@ -141,11 +145,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <span class="spell-sheet-title">Spells</span>
           <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
         </div>
-        <!-- Tier I is roster-only (resurrect/heal); combat spells start at Tier II. -->
+        <!-- Non-combat spells are roster-only, so that tab is omitted here. -->
         <div class="tier-tabs" id="spell-sheet-tier-tabs">
-          <button class="tier-tab tier-tab--active" data-tier="2">Tier II</button>
-          <button class="tier-tab" data-tier="3">Tier III</button>
-          <button class="tier-tab" data-tier="4">Tier IV</button>
+          ${COMBAT_CATEGORIES.map((c, i) => `
+            <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${player?.settings?.language === 'ru' ? c.name_ru : c.name}</button>
+          `).join('')}
         </div>
         <div class="spell-sheet-body" id="spell-sheet-body"></div>
       </div>
@@ -180,7 +184,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   let playerCrystals = {};
   let learnedSpells  = [];
-  let activeSpellTier = 2; // tier 1 is roster-only (resurrect/heal), so start on the first combat tier
+  let activeSpellCategory = COMBAT_CATEGORIES[0].id;
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); }
@@ -214,16 +218,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function syncSpellSheetTierTabs() {
     spellSheetTierTabs.querySelectorAll('.tier-tab').forEach(t => {
-      t.classList.toggle('tier-tab--active', Number(t.dataset.tier) === activeSpellTier);
+      t.classList.toggle('tier-tab--active', t.dataset.category === activeSpellCategory);
     });
   }
 
   spellSheetTierTabs.querySelectorAll('.tier-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      const tier = parseInt(tab.dataset.tier, 10);
-      if (tier === activeSpellTier) return;
+      const category = tab.dataset.category;
+      if (category === activeSpellCategory) return;
       playPageTurnSound();
-      activeSpellTier = tier;
+      activeSpellCategory = category;
       syncSpellSheetTierTabs();
       renderSpellSheetList();
     });
@@ -315,19 +319,20 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
-  // Resurrect and heal are out-of-combat spells — usable only from the roster
-  // screen, never in a battle. Everything else is a combat/preparation spell.
+  // Non-combat spells (resurrect/heal) are usable only from the roster screen,
+  // never in a battle. Their category is the single source of truth for that.
   function isRosterOnlySpell(spell) {
-    return spell.effect_type === 'resurrect' || spell.effect_type === 'heal';
+    return spell.category === 'non_combat';
   }
 
   function renderSpellSheetList() {
     const factionSpells = SPELLS[player.faction] || [];
-    const learned       = factionSpells.filter(s =>
-      learnedSpells.includes(s.id) && s.tier === activeSpellTier && !isRosterOnlySpell(s));
+    const learned       = factionSpells
+      .filter(s => learnedSpells.includes(s.id) && s.category === activeSpellCategory)
+      .sort((a, b) => a.tier - b.tier);
 
     if (learned.length === 0) {
-      spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No learned spells in this tier</div>`;
+      spellSheetBody.innerHTML = `<div class="spell-sheet-empty">No learned spells in this category</div>`;
       return;
     }
 
@@ -1146,10 +1151,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       await Promise.all([loadResources(), loadLearnedSpells()]);
 
+      // Open on a tab the player actually has something in, so the sheet never
+      // greets them with an empty list.
       const factionSpellsAll = SPELLS[player.faction] || [];
-      const firstLearnedTier = factionSpellsAll.find(s => learnedSpells.includes(s.id))?.tier;
-      if (firstLearnedTier) {
-        activeSpellTier = firstLearnedTier;
+      const firstCategory = COMBAT_CATEGORIES
+        .map(c => c.id)
+        .find(id => factionSpellsAll.some(s => s.category === id && learnedSpells.includes(s.id)));
+      if (firstCategory) {
+        activeSpellCategory = firstCategory;
         syncSpellSheetTierTabs();
       }
 
