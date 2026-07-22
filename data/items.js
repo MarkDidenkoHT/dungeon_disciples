@@ -540,8 +540,12 @@ function applyItemModifiers(unitData, itemStats) {
   if (hpBonus) {
     if (typeof out.max_hp === 'number') out.max_hp = out.max_hp + hpBonus;
     if (typeof out.hp     === 'number') out.hp     = out.hp     + hpBonus;
+    // The bonus is extra HP the unit actually gains, so current_hp rises with it
+    // (a full unit stays full instead of entering battle already wounded), then
+    // clamps to the new max. Derivation always runs from the stored BASE current_hp,
+    // so this stays idempotent — re-deriving never stacks the bonus.
     if (typeof out.current_hp === 'number' && typeof out.max_hp === 'number') {
-      out.current_hp = Math.min(out.current_hp, out.max_hp);
+      out.current_hp = Math.min(out.current_hp + hpBonus, out.max_hp);
     }
   }
   return out;

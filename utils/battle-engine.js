@@ -320,19 +320,20 @@ class BattleEngine {
       if (t.side === actor.side) return false;
       const range = actor.unit_data?.range ?? 1;
       if (range === 1) {
+        // A melee unit only reaches targets within one row of its own — the
+        // "local target rule". Within that band it hits the front column if any
+        // front unit is in reach, otherwise the exposed back column. A target
+        // outside the band (row diff > 1) is NEVER reachable — the old fallback
+        // dropped this check and let a melee unit strike clear across the field.
         const frontCol  = t.side === 'enemy' ? 0 : 1;
         const backCol   = t.side === 'enemy' ? 1 : 0;
         const actorRow  = cellRow(actor.cellIndex);
-        const nearFront = this.combatants.filter(c =>
-          c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol &&
-          Math.abs(cellRow(c.cellIndex) - actorRow) <= 1
-        );
-        if (nearFront.length > 0) {
-          return cellCol(t.cellIndex) === frontCol && Math.abs(cellRow(t.cellIndex) - actorRow) <= 1;
-        }
-        const frontAlive = this.combatants.filter(c => c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol);
-        const reachable  = frontAlive.length > 0 ? frontCol : backCol;
-        return cellCol(t.cellIndex) === reachable;
+        const inReach   = c => Math.abs(cellRow(c.cellIndex) - actorRow) <= 1;
+        if (!inReach(t)) return false;
+        const frontNear = this.combatants.filter(c =>
+          c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol && inReach(c));
+        const reachableCol = frontNear.length > 0 ? frontCol : backCol;
+        return cellCol(t.cellIndex) === reachableCol;
       }
       return true;
     });
@@ -379,6 +380,10 @@ class BattleEngine {
       if (!actor.alive) { actor.acted_this_round = true; return this.afterAction(actor); }
     }
     actor.defend_armor_bonus = 0;
+    // A unit whose intrinsic action is 'sacrifice' always pays the HP cost, even
+    // when the AI drives it (the AI loop calls this with 'attack'). Without this,
+    // enemy sacrifice-healers healed allies for free.
+    if (actionType === 'attack' && actor.unit_data?.action === 'sacrifice') actionType = 'sacrifice';
     if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
@@ -398,6 +403,22 @@ class BattleEngine {
       this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
       this.checkBark('heal_low_hp', actor, { target, preHealRatio });
     } else {
+      // Multi-target attackers (unit_data.targets > 1) strike every valid target
+      // at once — an AoE hit, e.g. the Gargoyles' targets:6 sweeps the whole
+      // enemy field. All current multi-target units are ranged, so the melee-only
+      // parry/duelist reactions below don't apply to them; strikeTarget still
+      // runs per-target dodge and all the on-hit machinery.
+      const maxTargets = Math.max(1, Number(actor.unit_data?.targets ?? 1));
+      if (maxTargets > 1) {
+        const list = this.getValidTargets(actor).slice(0, maxTargets);
+        for (const tgt of list) {
+          if (!actor.alive) break;
+          if (tgt.alive) this.strikeTarget(actor, tgt);
+        }
+        actor.acted_this_round = true;
+        return this.afterAction(actor);
+      }
+
       target = this.resolveProtectorIntercept(actor, target);
 
       const actorRange = actor.unit_data?.range ?? 1;
@@ -481,6 +502,62 @@ class BattleEngine {
     }
     actor.acted_this_round = true;
     return this.afterAction(actor);
+  }
+  // Applies one physical/typed strike from actor to a single target: protector
+  // intercept, per-target dodge, damage, martyrdom/recuperate, and all on-hit
+  // triggers. Does NOT set acted_this_round or call afterAction — the caller owns
+  // turn flow. Used by the multi-target attack path; the single-target path still
+  // inlines this same sequence alongside its melee-only parry/duelist reactions.
+  strikeTarget(actor, target) {
+    target = this.resolveProtectorIntercept(actor, target);
+    if (!target || !target.alive) return;
+
+    // Dodge — every Nth physical attack against this unit is avoided entirely.
+    if ((actor.unit_data?.damage_source ?? 'physical') === 'physical') {
+      const dodgeDef = this.resolveAllPassiveDefs(target).find(d => d.params?.dodge_every != null);
+      if (dodgeDef) {
+        target._dodge_count = (target._dodge_count ?? 0) + 1;
+        if (target._dodge_count % dodgeDef.params.dodge_every === 0) {
+          this.pushLog({ type: 'passive', passive: dodgeDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
+          return;
+        }
+      }
+    }
+
+    if (target._invulnerable) {
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
+      return;
+    }
+
+    const { dmg, rawDmg } = this.calcDamage(actor, target);
+    if (dmg <= 0) {
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+      this.applyDoTs(target);
+      return;
+    }
+
+    let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
+    if (remaining > 0) remaining = this.applyRecuperate(target, remaining);
+    if (remaining > 0) {
+      target.battle_hp = Math.max(0, target.battle_hp - remaining);
+      const dead = target.battle_hp <= 0;
+      if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
+      this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
+      this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
+      this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
+      if (dead && !target.alive) {
+        this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
+        this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
+        this.checkBark('kill', actor, { target });
+        this.checkBark('death', target, { target: actor });
+      } else {
+        this.checkBark('attack', actor, { target });
+      }
+    } else {
+      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+    }
+    this.applyDoTs(target);
   }
   resolveProtectorIntercept(actor, target) {
     const targetCol = cellCol(target.cellIndex);
@@ -674,7 +751,9 @@ class BattleEngine {
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
     this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
     this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
-    const selfDmg = Math.floor(heal / 2);
+    // Cost is half the channelled heal, not half of what actually landed — the
+    // sacrifice is paid even when the ally couldn't absorb the full amount.
+    const selfDmg = Math.floor((raw * factor) / 2);
     if (selfDmg > 0) {
       actor.battle_hp = Math.max(0, actor.battle_hp - selfDmg);
       const dead = actor.battle_hp <= 0;
