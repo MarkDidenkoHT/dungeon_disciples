@@ -513,7 +513,7 @@
       const passiveIcons = [];
       const passives = extractPassiveNames(unit.data.passive);
       for (const p of passives) {
-        const path = `/assets/icons/passives/${p}.jpg`;
+        const path = `/assets/icons/abilities/${p}.jpg`;
         const exists = await checkAssetExists(path);
         passiveIcons.push({ name: p, path, exists });
       }
