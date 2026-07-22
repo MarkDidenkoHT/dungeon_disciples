@@ -415,8 +415,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 HP and +2 armor for each Knight ally on the field.',
-    params: { tag_required: 'Knight', hp_per_tagged_unit: 2, armor_per_tagged_unit: 1 },
+    description: 'At battle start, gain +1 HP and +2 armor for each Knight ally on the field.',
+    params: { tag_required: 'Knight', hp_per_tagged_unit: 1, armor_per_tagged_unit: 2 },
   },
   'iron_will 2': {
     id: 'iron_will 2',
@@ -424,7 +424,7 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +4 HP and +2 armor for each Knight ally on the field.',
+    description: 'At battle start, gain +2 HP and +2 armor for each Knight ally on the field.',
     params: { tag_required: 'Knight', hp_per_tagged_unit: 2, armor_per_tagged_unit: 2 },
   },
   'renew 1': {
