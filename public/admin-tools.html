@@ -90,7 +90,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 480px;
+      width: 520px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -112,12 +112,13 @@
     .unit-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       padding: 8px 14px;
       border-bottom: 1px solid #232836;
       cursor: pointer;
       font-size: 13px;
       transition: 0.08s;
+      flex-wrap: wrap;
     }
     .unit-row:hover { background: #232a38; }
     .unit-row input[type="checkbox"] {
@@ -127,7 +128,7 @@
       pointer-events: none;
       flex-shrink: 0;
     }
-    .unit-row .tname { flex: 1; font-weight: 500; }
+    .unit-row .tname { flex: 1; font-weight: 500; min-width: 80px; }
     .unit-row .ttier {
       background: #2f3548;
       padding: 0 8px;
@@ -145,21 +146,23 @@
     .asset-status {
       display: inline-flex;
       gap: 2px;
-      font-size: 11px;
+      font-size: 10px;
       background: #1a1d27;
       border-radius: 4px;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border: 1px solid #2b2f3d;
       flex-shrink: 0;
       font-weight: 600;
       cursor: help;
       font-family: monospace;
+      align-items: center;
     }
     .asset-status .label {
       color: #6a708b;
+      font-size: 9px;
     }
     .asset-status .icon {
-      font-size: 12px;
+      font-size: 11px;
     }
     .asset-status .icon.ok { color: #5ae07a; }
     .asset-status .icon.missing { color: #f67a7a; }
@@ -317,7 +320,7 @@
     }
     .legend {
       display: inline-flex;
-      gap: 16px;
+      gap: 12px;
       font-size: 12px;
       color: #8d95b2;
       margin-left: 16px;
@@ -344,14 +347,15 @@
 <div class="sub">
   Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
   <span class="legend">
-    <span class="legend-item"><span class="label">A</span> = Art ({id}.png)</span>
-    <span class="legend-item"><span class="label">P</span> = Portrait (p_{id}.png)</span>
-    <span class="legend-item"><span class="label">P2</span> = 2nd Portrait (p2_{id}.png)</span>
-    <span class="legend-item">✅ = exists</span>
-    <span class="legend-item">❌ = missing</span>
-    <span class="legend-item" style="color:#4a4f66;">— = N/A</span>
-    <span class="legend-item" style="color:#f5c542;">⏳ = checking</span>
-    <span class="legend-item" style="color:#7f98ff;">⭐ Hero: all variants share all images</span>
+    <span class="legend-item"><span class="label">A</span> Art</span>
+    <span class="legend-item"><span class="label">P</span> Portrait</span>
+    <span class="legend-item"><span class="label">P2</span> 2nd Portrait</span>
+    <span class="legend-item"><span class="label">Ab</span> Ability Icon</span>
+    <span class="legend-item"><span class="label">Ac</span> Action Icon</span>
+    <span class="legend-item"><span class="label">Ps</span> Passive Icons</span>
+    <span class="legend-item">✅ exists</span>
+    <span class="legend-item">❌ missing</span>
+    <span class="legend-item" style="color:#4a4f66;">— N/A</span>
   </span>
 </div>
 
@@ -409,6 +413,42 @@
       return id;
     }
 
+    function extractAbilityName(ability) {
+      if (!ability) return null;
+      if (typeof ability === 'string') {
+        const parts = ability.split(' ');
+        if (parts.length >= 1 && parts[0].length > 0) {
+          return parts[0];
+        }
+        return ability;
+      }
+      return null;
+    }
+
+    function extractPassiveNames(passive) {
+      if (!passive) return [];
+      if (typeof passive === 'string') {
+        const parts = passive.split(' ');
+        if (parts.length >= 1 && parts[0].length > 0) {
+          return [parts[0]];
+        }
+        return [];
+      }
+      if (Array.isArray(passive)) {
+        const names = [];
+        passive.forEach(p => {
+          if (p && typeof p === 'string') {
+            const parts = p.split(' ');
+            if (parts.length >= 1 && parts[0].length > 0) {
+              names.push(parts[0]);
+            }
+          }
+        });
+        return names;
+      }
+      return [];
+    }
+
     async function checkAssetExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD' });
@@ -424,7 +464,7 @@
       
       const rawId = unit.data.id;
       if (!rawId) {
-        const result = { art: false, portrait: false, p2: false, id: null, isLarge: false };
+        const result = { art: false, portrait: false, p2: false, id: null, isLarge: false, abilityIcons: [], actionIcons: [], passiveIcons: [] };
         assetCache.set(key, result);
         return result;
       }
@@ -450,6 +490,33 @@
         checkAssetExists(portPath),
         isLarge ? checkAssetExists(p2Path) : Promise.resolve(false)
       ]);
+
+      const abilityIcons = [];
+      const ability = unit.data.ability;
+      if (ability) {
+        const name = extractAbilityName(ability);
+        if (name) {
+          const path = `/assets/icons/abilities/${name}.jpg`;
+          const exists = await checkAssetExists(path);
+          abilityIcons.push({ name, path, exists });
+        }
+      }
+
+      const actionIcons = [];
+      const actionIcon = unit.data.action_icon;
+      if (actionIcon) {
+        const path = `/assets/icons/abilities/${actionIcon}`;
+        const exists = await checkAssetExists(path);
+        actionIcons.push({ name: actionIcon, path, exists });
+      }
+
+      const passiveIcons = [];
+      const passives = extractPassiveNames(unit.data.passive);
+      for (const p of passives) {
+        const path = `/assets/icons/passives/${p}.jpg`;
+        const exists = await checkAssetExists(path);
+        passiveIcons.push({ name: p, path, exists });
+      }
       
       const result = { 
         art: artOk, 
@@ -461,7 +528,10 @@
         isHero,
         artPath,
         portPath,
-        p2Path: isLarge ? p2Path : null
+        p2Path: isLarge ? p2Path : null,
+        abilityIcons,
+        actionIcons,
+        passiveIcons
       };
       assetCache.set(key, result);
       return result;
@@ -605,17 +675,37 @@
       return haystack.includes(q);
     }
 
+    function renderIconStatus(label, exists, path, isArray = false) {
+      if (isArray) {
+        if (!exists || exists.length === 0) {
+          return `<span class="icon na">—</span>`;
+        }
+        const allOk = exists.every(e => e.exists);
+        const icon = allOk ? '✅' : '❌';
+        const cls = allOk ? 'ok' : 'missing';
+        const tooltip = exists.map(e => `${e.name}: ${e.exists ? '✅' : '❌'} (${e.path})`).join('\n');
+        return `<span class="icon ${cls}" title="${tooltip}">${icon}</span>`;
+      }
+      const icon = exists ? '✅' : '❌';
+      const cls = exists ? 'ok' : 'missing';
+      return `<span class="icon ${cls}" title="${path}: ${exists ? 'Exists' : 'Missing'}">${icon}</span>`;
+    }
+
     function renderAssetStatus(asset) {
       if (!asset || !asset.id) {
-        return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—</span>`;
+        return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—<span class="sep">|</span><span class="label">Ab</span>—<span class="sep">|</span><span class="label">Ac</span>—<span class="sep">|</span><span class="label">Ps</span>—</span>`;
       }
       
       const artIcon = asset.art ? '✅' : '❌';
       const portIcon = asset.portrait ? '✅' : '❌';
       const p2Icon = asset.isLarge ? (asset.p2 ? '✅' : '❌') : '—';
       
-      const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2);
-      const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2);
+      const abilityOk = asset.abilityIcons.length > 0 ? asset.abilityIcons.every(a => a.exists) : true;
+      const actionOk = asset.actionIcons.length > 0 ? asset.actionIcons.every(a => a.exists) : true;
+      const passivesOk = asset.passiveIcons.length > 0 ? asset.passiveIcons.every(p => p.exists) : true;
+      
+      const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2) && abilityOk && actionOk && passivesOk;
+      const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2) || !abilityOk || !actionOk || !passivesOk;
       const statusClass = allOk ? 'all-ok' : (anyMissing ? 'missing-asset' : '');
       
       let tooltip = `ID: ${asset.id}`;
@@ -628,6 +718,35 @@
       } else {
         tooltip += `P2 Portrait: — (not a large unit)`;
       }
+      if (asset.abilityIcons.length > 0) {
+        tooltip += `\nAbility Icons:`;
+        asset.abilityIcons.forEach(a => {
+          tooltip += `\n  ${a.name}: ${a.exists ? '✅' : '❌'} (${a.path})`;
+        });
+      }
+      if (asset.actionIcons.length > 0) {
+        tooltip += `\nAction Icons:`;
+        asset.actionIcons.forEach(a => {
+          tooltip += `\n  ${a.name}: ${a.exists ? '✅' : '❌'} (${a.path})`;
+        });
+      }
+      if (asset.passiveIcons.length > 0) {
+        tooltip += `\nPassive Icons:`;
+        asset.passiveIcons.forEach(p => {
+          tooltip += `\n  ${p.name}: ${p.exists ? '✅' : '❌'} (${p.path})`;
+        });
+      }
+      
+      const abilityDisplay = asset.abilityIcons.length > 0 ? 
+        (asset.abilityIcons.every(a => a.exists) ? '✅' : '❌') : '—';
+      const actionDisplay = asset.actionIcons.length > 0 ? 
+        (asset.actionIcons.every(a => a.exists) ? '✅' : '❌') : '—';
+      const passiveDisplay = asset.passiveIcons.length > 0 ? 
+        (asset.passiveIcons.every(p => p.exists) ? '✅' : '❌') : '—';
+      
+      const abilityCls = asset.abilityIcons.length > 0 ? (asset.abilityIcons.every(a => a.exists) ? 'ok' : 'missing') : 'na';
+      const actionCls = asset.actionIcons.length > 0 ? (asset.actionIcons.every(a => a.exists) ? 'ok' : 'missing') : 'na';
+      const passiveCls = asset.passiveIcons.length > 0 ? (asset.passiveIcons.every(p => p.exists) ? 'ok' : 'missing') : 'na';
       
       return `<span class="asset-status ${statusClass}" title="${tooltip}">
         <span class="label">A</span><span class="icon ${asset.art ? 'ok' : 'missing'}">${artIcon}</span>
@@ -635,6 +754,12 @@
         <span class="label">P</span><span class="icon ${asset.portrait ? 'ok' : 'missing'}">${portIcon}</span>
         <span class="sep">|</span>
         <span class="label">P2</span><span class="icon ${asset.isLarge ? (asset.p2 ? 'ok' : 'missing') : 'na'}">${p2Icon}</span>
+        <span class="sep">|</span>
+        <span class="label">Ab</span><span class="icon ${abilityCls}">${abilityDisplay}</span>
+        <span class="sep">|</span>
+        <span class="label">Ac</span><span class="icon ${actionCls}">${actionDisplay}</span>
+        <span class="sep">|</span>
+        <span class="label">Ps</span><span class="icon ${passiveCls}">${passiveDisplay}</span>
       </span>`;
     }
 
@@ -744,7 +869,7 @@
         const heroStar = u.data.id && u.data.id.startsWith('h_') ? '⭐' : '';
         html += `<th>${heroStar} ${name}<br><span class="pill">${u.key}</span><br>
           <button class="remove-btn" data-key="${u.key}" title="remove">✕</button>
-          <div style="margin-top:4px;">${statusHtml}</div>
+          <div style="margin-top:4px;font-size:10px;">${statusHtml}</div>
         </th>`;
       });
       html += '</tr></thead><tbody>';
