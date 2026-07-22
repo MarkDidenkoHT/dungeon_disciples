@@ -90,7 +90,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 450px;
+      width: 480px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -144,7 +144,7 @@
     }
     .asset-status {
       display: inline-flex;
-      gap: 3px;
+      gap: 2px;
       font-size: 11px;
       background: #1a1d27;
       border-radius: 4px;
@@ -344,9 +344,9 @@
 <div class="sub">
   Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
   <span class="legend">
-    <span class="legend-item"><span class="label">A</span> = Art (d_{id}.png)</span>
-    <span class="legend-item"><span class="label">P</span> = Portrait (p_d_{id}.png)</span>
-    <span class="legend-item"><span class="label">P2</span> = 2nd Portrait (p2_d_{id}.png)</span>
+    <span class="legend-item"><span class="label">A</span> = Art ({id}.png)</span>
+    <span class="legend-item"><span class="label">P</span> = Portrait (p_{id}.png)</span>
+    <span class="legend-item"><span class="label">P2</span> = 2nd Portrait (p2_{id}.png)</span>
     <span class="legend-item">✅ = exists</span>
     <span class="legend-item">❌ = missing</span>
     <span class="legend-item" style="color:#4a4f66;">— = N/A</span>
@@ -395,7 +395,7 @@
     let UNITS = null;
     let flatUnits = [];
     let selected = new Set();
-    let assetCache = new Map(); // key -> { art, portrait, p2 }
+    let assetCache = new Map();
 
     async function checkAssetExists(path) {
       try {
@@ -410,9 +410,7 @@
       const key = unit.key;
       if (assetCache.has(key)) return assetCache.get(key);
       
-      // Get the ID from the unit data - this IS the filename!
       const id = unit.data.id;
-      
       if (!id) {
         const result = { art: false, portrait: false, p2: false, id: null, isLarge: false };
         assetCache.set(key, result);
@@ -420,13 +418,10 @@
       }
       
       const isLarge = unit.data.size === 'row' || unit.data.size === 'column';
-      
-      // Use the ID directly - it's already in the right format (e.g., "d_12")
       const artPath = `/assets/character_art/${id}.png`;
       const portPath = `/assets/character_portraits/p_${id}.png`;
       const p2Path = `/assets/character_portraits/p2_${id}.png`;
       
-      // Check all assets in parallel
       const [artOk, portOk, p2Ok] = await Promise.all([
         checkAssetExists(artPath),
         checkAssetExists(portPath),
@@ -955,7 +950,6 @@ Based on this data, please provide:
         loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, checking assets...`;
         loadStatus.className = 'status ok';
         
-        // Check all assets
         await checkAllAssets(flatUnits);
         
         loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, assets checked.`;
