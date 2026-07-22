@@ -467,7 +467,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'predexecuteator 1'], ability: null,
+      xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: null,
     },
     pain_projector: {
       id: 'd412', f: 'd', t: 3,
