@@ -404,14 +404,16 @@
       if (parts.length < 3) return id;
       let heroNum = '';
       for (let i = 0; i < parts[2].length; i++) {
-        if (parts[2][i] >= '0' && parts[2][i] <= '9') {
-          heroNum += parts[2][i];
+        const char = parts[2][i];
+        if (char >= '0' && char <= '9') {
+          heroNum += char;
         } else {
           break;
         }
       }
       if (heroNum.length === 0) return id;
-      return `h_${parts[1]}_${heroNum}`;
+      const faction = parts[1];
+      return `h_${faction}_${heroNum}`;
     }
 
     async function checkAssetExists(path) {
