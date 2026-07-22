@@ -1353,7 +1353,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 45,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
       passive: ['duelist 1', 'communion 2', 'life_steal 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 740
     },
@@ -1365,7 +1365,7 @@ const UNITS = {
       hp: 95, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
       passive: ['duelist 1', 'communion 2', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 740
     },
@@ -1377,7 +1377,7 @@ const UNITS = {
       hp: 80, armor: 20, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12,
+      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg',
       passive: 'horde 1', ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 105
     },
@@ -1389,7 +1389,7 @@ const UNITS = {
       hp: 95, armor: 25, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16,
+      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg',
       passive: ['horde 1', 'unbreakable 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 315
     },
@@ -1401,7 +1401,7 @@ const UNITS = {
       hp: 110, armor: 25, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
       passive: ['horde 2', 'unbreakable 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 580
     },
@@ -1413,7 +1413,7 @@ const UNITS = {
       hp: 125, armor: 30, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
       passive: ['horde 2', 'unbreakable 1', 'aura_of_decay 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
@@ -1425,7 +1425,7 @@ const UNITS = {
       hp: 135, armor: 25, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
       passive: ['horde 2', 'unbreakable 1', 'thorns 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
@@ -1437,7 +1437,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
       passive: ['horde 1', 'protector 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 315
     },
@@ -1449,7 +1449,7 @@ const UNITS = {
       hp: 118, armor: 16, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 29,
+      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg',
       passive: ['horde 1', 'protector 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 580
     },
@@ -1461,7 +1461,7 @@ const UNITS = {
       hp: 150, armor: 18, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35,
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
       passive: ['horde 1', 'protector 2', 'undying 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
@@ -1473,7 +1473,7 @@ const UNITS = {
       hp: 150, armor: 18, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35,
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
       passive: ['horde 2', 'protector 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
@@ -1593,7 +1593,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 15,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 6,
+      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg',
       xp: 80, passive: 'horde 1', ability: 'shared_suffering 1',
     },
     poisonous_ghoul: {
@@ -1604,7 +1604,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 10,
+      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg',
       xp: 280, passive: ['horde 1', 'infect 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
@@ -1615,7 +1615,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 15,
+      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg',
       xp: 420, passive: ['horde 1', 'infect 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
@@ -1626,7 +1626,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12,
+      damage_source: 'physical', action_power: 12, action_icon: 'infected_claw.jpg',
       xp: 300, passive: ['horde 1', 'lifesteal 1'], ability: 'shared_suffering 1',
     },
     abominate: {
@@ -1637,7 +1637,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 40,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25,
+      damage_source: 'physical', action_power: 25, action_icon: 'infected_claw.jpg',
       xp: 570, passive: ['horde 1', 'lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
     },
     cesswalker: {
@@ -1791,7 +1791,7 @@ const UNITS = {
       hp: 120, armor: 0, initiative: 20,
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg',
       xp: 300, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
