@@ -402,18 +402,11 @@
       if (!id || !id.startsWith('h_')) return id;
       const parts = id.split('_');
       if (parts.length < 3) return id;
-      let heroNum = '';
-      for (let i = 0; i < parts[2].length; i++) {
-        const char = parts[2][i];
-        if (char >= '0' && char <= '9') {
-          heroNum += char;
-        } else {
-          break;
-        }
+      const firstChar = parts[2][0];
+      if (firstChar >= '0' && firstChar <= '9') {
+        return `h_${parts[1]}_${firstChar}`;
       }
-      if (heroNum.length === 0) return id;
-      const faction = parts[1];
-      return `h_${faction}_${heroNum}`;
+      return id;
     }
 
     async function checkAssetExists(path) {
