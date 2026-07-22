@@ -2204,7 +2204,7 @@ const UNITS = {
         id: 'dm_e211', f: 'dm', t: 3,
         name: 'Martyr of the Vow',
         tags: ['Zombie', 'Knight'],
-        size: 'row',
+        size: 'tile',
         hp: 65, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,

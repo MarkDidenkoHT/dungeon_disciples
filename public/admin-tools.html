@@ -90,7 +90,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 330px;
+      width: 450px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -112,7 +112,7 @@
     .unit-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       padding: 8px 14px;
       border-bottom: 1px solid #232836;
       cursor: pointer;
@@ -125,6 +125,7 @@
       height: 16px;
       accent-color: #6c8cff;
       pointer-events: none;
+      flex-shrink: 0;
     }
     .unit-row .tname { flex: 1; font-weight: 500; }
     .unit-row .ttier {
@@ -133,25 +134,56 @@
       border-radius: 20px;
       font-size: 11px;
       color: #b6bdd6;
+      flex-shrink: 0;
     }
     .unit-row .tsize {
       color: #8890ad;
       font-size: 11px;
       text-transform: capitalize;
+      flex-shrink: 0;
     }
-    .asset-badge {
+    .asset-status {
       display: inline-flex;
-      gap: 6px;
-      font-size: 10px;
-      background: #1e2433;
-      border-radius: 30px;
-      padding: 0 8px;
-      line-height: 18px;
-      color: #aab2d0;
+      gap: 3px;
+      font-size: 11px;
+      background: #1a1d27;
+      border-radius: 4px;
+      padding: 2px 6px;
+      border: 1px solid #2b2f3d;
+      flex-shrink: 0;
+      font-weight: 600;
+      cursor: help;
+      font-family: monospace;
     }
-    .asset-badge.missing { background: #3d2a33; color: #f7a1a1; }
-    .asset-badge.ok { background: #1f3d2c; color: #7bdf9a; }
-    .asset-badge.p2 { background: #2d334f; color: #b0bffa; }
+    .asset-status .label {
+      color: #6a708b;
+    }
+    .asset-status .icon {
+      font-size: 12px;
+    }
+    .asset-status .icon.ok { color: #5ae07a; }
+    .asset-status .icon.missing { color: #f67a7a; }
+    .asset-status .icon.na { color: #4a4f66; }
+    .asset-status .sep {
+      color: #2b2f3d;
+      margin: 0 1px;
+    }
+    .asset-status.missing-asset {
+      border-color: #6a2a3a;
+      background: #2a1a22;
+    }
+    .asset-status.all-ok {
+      border-color: #2a6a3a;
+      background: #1a2a22;
+    }
+    .asset-status .loading {
+      color: #f5c542;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
 
     .compare-panel {
       flex: 1;
@@ -283,17 +315,44 @@
     .toast.show {
       opacity: 1;
     }
+    .legend {
+      display: inline-flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #8d95b2;
+      margin-left: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-item .label { color: #6a708b; font-weight: 600; }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
       .compare-panel { max-height: 50vh; }
+      .legend { margin-left: 0; }
     }
   </style>
 </head>
 <body>
 
 <h1>⚖️ Unit Balance · Compare + Scores</h1>
-<div class="sub">Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS. <span style="color:#f5c542;">●</span> Asset status: art + portrait (p2 for large).</div>
+<div class="sub">
+  Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
+  <span class="legend">
+    <span class="legend-item"><span class="label">A</span> = Art (d_{id}.png)</span>
+    <span class="legend-item"><span class="label">P</span> = Portrait (p_d_{id}.png)</span>
+    <span class="legend-item"><span class="label">P2</span> = 2nd Portrait (p2_d_{id}.png)</span>
+    <span class="legend-item">✅ = exists</span>
+    <span class="legend-item">❌ = missing</span>
+    <span class="legend-item" style="color:#4a4f66;">— = N/A</span>
+    <span class="legend-item" style="color:#f5c542;">⏳ = checking</span>
+  </span>
+</div>
 
 <div class="toolbar">
   <span class="status" id="loadStatus">⏳ Loading units data...</span>
@@ -336,6 +395,62 @@
     let UNITS = null;
     let flatUnits = [];
     let selected = new Set();
+    let assetCache = new Map(); // key -> { art, portrait, p2 }
+
+    async function checkAssetExists(path) {
+      try {
+        const response = await fetch(path, { method: 'HEAD' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function checkUnitAssets(unit) {
+      const key = unit.key;
+      if (assetCache.has(key)) return assetCache.get(key);
+      
+      // Get the ID from the unit data - this IS the filename!
+      const id = unit.data.id;
+      
+      if (!id) {
+        const result = { art: false, portrait: false, p2: false, id: null, isLarge: false };
+        assetCache.set(key, result);
+        return result;
+      }
+      
+      const isLarge = unit.data.size === 'row' || unit.data.size === 'column';
+      
+      // Use the ID directly - it's already in the right format (e.g., "d_12")
+      const artPath = `/assets/character_art/${id}.png`;
+      const portPath = `/assets/character_portraits/p_${id}.png`;
+      const p2Path = `/assets/character_portraits/p2_${id}.png`;
+      
+      // Check all assets in parallel
+      const [artOk, portOk, p2Ok] = await Promise.all([
+        checkAssetExists(artPath),
+        checkAssetExists(portPath),
+        isLarge ? checkAssetExists(p2Path) : Promise.resolve(false)
+      ]);
+      
+      const result = { 
+        art: artOk, 
+        portrait: portOk, 
+        p2: p2Ok, 
+        id, 
+        isLarge,
+        artPath,
+        portPath,
+        p2Path: isLarge ? p2Path : null
+      };
+      assetCache.set(key, result);
+      return result;
+    }
+
+    async function checkAllAssets(units) {
+      const promises = units.map(u => checkUnitAssets(u));
+      await Promise.all(promises);
+    }
 
     function calcVitality(unit) {
       const d = unit.data;
@@ -358,31 +473,6 @@
 
     function calcOverall(unit) {
       return unit.vitality + unit.dps;
-    }
-
-    function getAssetStatus(unit) {
-      const key = unit.key;
-      const parts = key.split('.');
-      let id = parts[parts.length - 1];
-      if (id.startsWith('d_')) {
-        id = id.substring(2);
-      } else if (id.startsWith('p_d_')) {
-        id = id.substring(4);
-      }
-      const artPath = `/assets/character_art/d_${id}.png`;
-      const portPath = `/assets/character_portraits/p_d_${id}.png`;
-      const p2Path = `/assets/character_portraits/p2_d_${id}.png`;
-      
-      const size = unit.data.size;
-      const isLarge = size === 'row' || size === 'column';
-      
-      let artOk = false, portOk = false, p2Ok = false;
-      if (id && id.length > 0) {
-        artOk = true; 
-        portOk = true;
-        if (isLarge) p2Ok = true; 
-      }
-      return { artOk, portOk, p2Ok, isLarge, id, artPath, portPath, p2Path };
     }
 
     function flattenUnits(units) {
@@ -495,6 +585,37 @@
       return haystack.includes(q);
     }
 
+    function renderAssetStatus(asset) {
+      if (!asset || !asset.id) {
+        return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—</span>`;
+      }
+      
+      const artIcon = asset.art ? '✅' : '❌';
+      const portIcon = asset.portrait ? '✅' : '❌';
+      const p2Icon = asset.isLarge ? (asset.p2 ? '✅' : '❌') : '—';
+      
+      const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2);
+      const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2);
+      const statusClass = allOk ? 'all-ok' : (anyMissing ? 'missing-asset' : '');
+      
+      let tooltip = `ID: ${asset.id}\n`;
+      tooltip += `Art: ${asset.art ? '✅ Exists' : '❌ Missing'} (${asset.artPath || 'N/A'})\n`;
+      tooltip += `Portrait: ${asset.portrait ? '✅ Exists' : '❌ Missing'} (${asset.portPath || 'N/A'})\n`;
+      if (asset.isLarge) {
+        tooltip += `P2 Portrait: ${asset.p2 ? '✅ Exists' : '❌ Missing'} (${asset.p2Path || 'N/A'})`;
+      } else {
+        tooltip += `P2 Portrait: — (not a large unit)`;
+      }
+      
+      return `<span class="asset-status ${statusClass}" title="${tooltip}">
+        <span class="label">A</span><span class="icon ${asset.art ? 'ok' : 'missing'}">${artIcon}</span>
+        <span class="sep">|</span>
+        <span class="label">P</span><span class="icon ${asset.portrait ? 'ok' : 'missing'}">${portIcon}</span>
+        <span class="sep">|</span>
+        <span class="label">P2</span><span class="icon ${asset.isLarge ? (asset.p2 ? 'ok' : 'missing') : 'na'}">${p2Icon}</span>
+      </span>`;
+    }
+
     function renderList() {
       if (!flatUnits.length) {
         listPanel.innerHTML = '<div class="empty-msg">No units loaded.</div>';
@@ -513,26 +634,15 @@
         items.forEach(u => {
           const checked = selected.has(u.key) ? 'checked' : '';
           const sizeLabel = u.data.size ? `<span class="tsize">${u.data.size}</span>` : '';
-          const asset = getAssetStatus(u);
-          let badge = '';
-          if (asset.id) {
-            const parts = [];
-            if (asset.artOk) parts.push('<span class="ok">🎨</span>');
-            else parts.push('<span class="missing">🎨</span>');
-            if (asset.portOk) parts.push('<span class="ok">🖼️</span>');
-            else parts.push('<span class="missing">🖼️</span>');
-            if (asset.isLarge) {
-              if (asset.p2Ok) parts.push('<span class="ok">2️⃣</span>');
-              else parts.push('<span class="missing">2️⃣</span>');
-            }
-            badge = `<span class="asset-badge ${asset.artOk && asset.portOk && (!asset.isLarge || asset.p2Ok) ? 'ok' : 'missing'}">${parts.join('')}</span>`;
-          }
+          const asset = assetCache.get(u.key);
+          const statusHtml = asset ? renderAssetStatus(asset) : `<span class="asset-status"><span class="loading">⏳ checking...</span></span>`;
+          
           html += `<div class="unit-row" data-key="${u.key}">
             <input type="checkbox" ${checked}>
             <span class="tname">${u.data.name || u.key}</span>
             <span class="ttier">T${u.data.t ?? '?'}</span>
             ${sizeLabel}
-            ${badge}
+            ${statusHtml}
           </div>`;
         });
       });
@@ -605,23 +715,11 @@
       html += '<table><thead><tr><th class="stat-label">Stat</th>';
       units.forEach(u => {
         const name = u.data.name || u.key;
-        const asset = getAssetStatus(u);
-        let badge = '';
-        if (asset.id) {
-          const parts = [];
-          if (asset.artOk) parts.push('✅');
-          else parts.push('❌');
-          if (asset.portOk) parts.push('✅');
-          else parts.push('❌');
-          if (asset.isLarge) {
-            if (asset.p2Ok) parts.push('✅');
-            else parts.push('❌');
-          }
-          badge = ` <span style="font-size:11px;background:#1f2432;padding:0 6px;border-radius:10px;">${parts.join(' ')}</span>`;
-        }
+        const asset = assetCache.get(u.key);
+        const statusHtml = asset ? renderAssetStatus(asset) : '';
         html += `<th>${name}<br><span class="pill">${u.key}</span><br>
           <button class="remove-btn" data-key="${u.key}" title="remove">✕</button>
-          ${badge}
+          <div style="margin-top:4px;">${statusHtml}</div>
         </th>`;
       });
       html += '</tr></thead><tbody>';
@@ -678,8 +776,8 @@
 
 ${units.map(u => {
   const name = u.data.name || u.key;
-  const asset = getAssetStatus(u);
-  const assetStatus = `Art: ${asset.artOk?'✅':'❌'}, Portrait: ${asset.portOk?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2Ok?'✅':'❌'}` : ''}`;
+  const asset = assetCache.get(u.key);
+  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}` : 'Assets: unknown';
   return `- ${name} (${u.key})
   • Faction: ${u.data.f || 'N/A'}, Tier: ${u.data.t || 'N/A'}, Size: ${u.data.size || 'N/A'}
   • HP: ${u.data.hp || 0}, Armor: ${u.data.armor || 0}, Initiative: ${u.data.initiative || 0}
@@ -700,33 +798,34 @@ Based on this data, please provide:
 2. Suggested stat adjustments to make them more balanced
 3. Any other balance considerations I should be aware of`;
 
-      const jsonData = units.map(u => ({
-        key: u.key,
-        group: u.group,
-        name: u.data.name || u.key,
-        tier: u.data.t,
-        faction: u.data.f,
-        size: u.data.size,
-        tags: u.data.tags,
-        hp: u.data.hp,
-        armor: u.data.armor,
-        initiative: u.data.initiative,
-        action: u.data.action,
-        targets: u.data.targets,
-        range: u.data.range,
-        action_power: u.data.action_power,
-        xp: u.data.xp,
-        passive: u.data.passive,
-        ability: u.data.ability,
-        resistances: u.data.resistances,
-        vitality: u.vitality,
-        dps: u.dps,
-        overall: u.overall,
-        assets: (() => {
-          const a = getAssetStatus(u);
-          return { art: a.artOk, portrait: a.portOk, p2: a.p2Ok, isLarge: a.isLarge };
-        })()
-      }));
+      const jsonData = units.map(u => {
+        const asset = assetCache.get(u.key);
+        return {
+          key: u.key,
+          group: u.group,
+          name: u.data.name || u.key,
+          id: u.data.id,
+          tier: u.data.t,
+          faction: u.data.f,
+          size: u.data.size,
+          tags: u.data.tags,
+          hp: u.data.hp,
+          armor: u.data.armor,
+          initiative: u.data.initiative,
+          action: u.data.action,
+          targets: u.data.targets,
+          range: u.data.range,
+          action_power: u.data.action_power,
+          xp: u.data.xp,
+          passive: u.data.passive,
+          ability: u.data.ability,
+          resistances: u.data.resistances,
+          vitality: u.vitality,
+          dps: u.dps,
+          overall: u.overall,
+          assets: asset ? { art: asset.art, portrait: asset.portrait, p2: asset.p2, isLarge: asset.isLarge } : null
+        };
+      });
 
       const fullContent = `${prompt}\n\n--- RAW JSON DATA ---\n${JSON.stringify(jsonData, null, 2)}`;
       
@@ -852,8 +951,14 @@ Based on this data, please provide:
         flatUnits = flattenUnits(UNITS);
         selected.clear();
         populateFilters();
-        loadStatus.textContent = `✅ Loaded ${flatUnits.length} units from project.`;
+        
+        loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, checking assets...`;
         loadStatus.className = 'status ok';
+        
+        // Check all assets
+        await checkAllAssets(flatUnits);
+        
+        loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, assets checked.`;
         renderList();
         renderCompare();
         
