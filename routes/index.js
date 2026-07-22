@@ -278,10 +278,15 @@ async function persistBattleRosterState(chat_id, battle_data) {
     );
     if (!rows.length) return;
     const current = rows[0];
+    const def = getUnitByDataId(current.unit_data?.unit_id);
+    const baseMaxHp = def?.hp ?? Number(current.unit_data?.max_hp ?? 0);
+    const rawHp = Number.isFinite(Number(unit.battle_hp)) ? Number(unit.battle_hp) : 0;
+    const clampedHp = Math.min(rawHp, baseMaxHp);
     const updatedUnitData = {
       ...current.unit_data,
       alive:      unit.alive !== false,
-      current_hp: Number.isFinite(Number(unit.battle_hp)) ? Number(unit.battle_hp) : 0,
+      current_hp: Math.max(0, clampedHp),
+      max_hp:     baseMaxHp,
     };
     await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, {
       method: 'PATCH',
