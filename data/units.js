@@ -1354,7 +1354,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['duelist 1', 'communion 2', 'life_steal 1'], ability: 'taunt 1',
+      passive: ['duelist 1', 'communion 2', 'lifesteal 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 740
     },
     mourning_prophet_path_b_t4_alt: {
