@@ -398,16 +398,20 @@
     let selected = new Set();
     let assetCache = new Map();
 
-    function getBaseId(id) {
-      if (!id) return null;
-      if (id.startsWith('h_')) {
-        const parts = id.split('_');
-        if (parts.length >= 3) {
-          return `h_${parts[1]}_${parts[2]}`;
+    function getHeroBaseId(id) {
+      if (!id || !id.startsWith('h_')) return id;
+      const parts = id.split('_');
+      if (parts.length < 3) return id;
+      let heroNum = '';
+      for (let i = 0; i < parts[2].length; i++) {
+        if (parts[2][i] >= '0' && parts[2][i] <= '9') {
+          heroNum += parts[2][i];
+        } else {
+          break;
         }
-        return id;
       }
-      return id;
+      if (heroNum.length === 0) return id;
+      return `h_${parts[1]}_${heroNum}`;
     }
 
     async function checkAssetExists(path) {
@@ -430,12 +434,17 @@
         return result;
       }
       
-      const baseId = getBaseId(rawId);
       const isLarge = unit.data.size === 'row' || unit.data.size === 'column';
       const isHero = rawId.startsWith('h_');
       
-      const artId = isHero ? baseId : rawId;
-      const portId = isHero ? baseId : rawId;
+      let artId = rawId;
+      let portId = rawId;
+      
+      if (isHero) {
+        const baseId = getHeroBaseId(rawId);
+        artId = baseId;
+        portId = baseId;
+      }
       
       const artPath = `/assets/character_art/${artId}.png`;
       const portPath = `/assets/character_portraits/p_${portId}.png`;
@@ -452,7 +461,7 @@
         portrait: portOk, 
         p2: p2Ok, 
         id: rawId,
-        baseId: baseId,
+        baseId: isHero ? getHeroBaseId(rawId) : rawId,
         isLarge,
         isHero,
         artPath,
