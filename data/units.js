@@ -524,9 +524,9 @@ const UNITS = {
       damage_source: 'fire', action_power: 5,
       xp: 110, passive: 'volcanic_skin 1', ability: null,
     },
-    greater_flame_spawn: {
+    blaze_spawn: {
       id: 'd71', f: 'd', t: 2,
-      name: 'Flame Spawn',
+      name: 'Blaze Spawn',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 70, armor: 5, initiative: 10,
@@ -535,9 +535,9 @@ const UNITS = {
       damage_source: 'fire', action_power: 8,
       xp: 270, passive: ['volcanic_skin 1', 'last_verse 1'], ability: null,
     },
-    greater_flame_spawn: {
+    inferno_spawn: {
       id: 'd711', f: 'd', t: 3,
-      name: 'Flame Spawn',
+      name: 'Inferno Spawn',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 75, armor: 10, initiative: 10,
@@ -1093,9 +1093,9 @@ const UNITS = {
       damage_source: 'physical', action_power: 30,
       xp: 575, passive: 'shatter 2', ability: null,
     },
-    flamefrower: {
+    flamethrower: {
       id: 'e622', f: 'e', t: 3,
-      name: 'Flamefrower',
+      name: 'Flamethrower',
       tags: ['Engineer', null],
       size: 'tile',
       hp: 65, armor: 10, initiative: 40,
@@ -1792,17 +1792,28 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 300, passive: ['infect 1', 'regenerate 1'], ability: 'raise_dead 2',
+      xp: 300, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
       id: 'gs41', f: 'g', t: 2,
       name: 'Grail Seraph',
-      tags: ['Zombie'],
+      tags: ['Zombie', 'Holy'],
       size: 'row',
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
+      xp: 550, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
+    },
+    grail_angel: {
+      id: 'gs41', f: 'g', t: 3,
+      name: 'Grail Angel',
+      tags: ['Zombie', 'Holy'],
+      size: 'row',
+      hp: 140, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 40,
       xp: 550, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
@@ -1814,18 +1825,18 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 10,
-      xp: 550, passive: ['vitality 2', 'eternal_grief 1'], ability: 'raise_dead 2',
+      xp: 550, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
-    sorrow_bearer2: {
+    sorrow_vessel: {
       id: 'gs421', f: 'g', t: 3,
-      name: 'Sorrow Bearer',
+      name: 'Sorrow Vessel',
       tags: ['Zombie','Caster'],
       size: 'row',
       hp: 115, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 15,
-      xp: 550, passive: ['vitality 2', 'eternal_grief 1'], ability: 'raise_dead 2',
+      xp: 550, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
       id: 'gs5', f: 'g', t: 1,
@@ -1860,9 +1871,9 @@ const UNITS = {
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
       xp: 350, passive: ['communion 1', 'inspiration_initiative 1', 'inspiration_damage 1'], ability: 'blood_craze 1',
     },
-    greiving_servant: {
+    grieving_servant: {
       id: 'gs52', f: 'g', t: 2,
-      name: 'Greiving Servant',
+      name: 'Grieving Servant',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 30,
@@ -1871,9 +1882,9 @@ const UNITS = {
       damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
       xp: 370, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
     },
-    greiving_custodian: {
+    grieving_custodian: {
       id: 'gs521', f: 'g', t: 3,
-      name: 'Greiving Custodian',
+      name: 'Grieving Custodian',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 70, armor: 0, initiative: 30,
