@@ -351,6 +351,7 @@
     <span class="legend-item">❌ = missing</span>
     <span class="legend-item" style="color:#4a4f66;">— = N/A</span>
     <span class="legend-item" style="color:#f5c542;">⏳ = checking</span>
+    <span class="legend-item" style="color:#7f98ff;">Hero: all variants share same portrait</span>
   </span>
 </div>
 
@@ -397,6 +398,18 @@
     let selected = new Set();
     let assetCache = new Map();
 
+    function getBaseId(id) {
+      if (!id) return null;
+      if (id.startsWith('h_')) {
+        const parts = id.split('_');
+        if (parts.length >= 3) {
+          return `h_${parts[1]}_${parts[2]}`;
+        }
+        return id;
+      }
+      return id;
+    }
+
     async function checkAssetExists(path) {
       try {
         const response = await fetch(path, { method: 'HEAD' });
@@ -410,17 +423,21 @@
       const key = unit.key;
       if (assetCache.has(key)) return assetCache.get(key);
       
-      const id = unit.data.id;
-      if (!id) {
+      const rawId = unit.data.id;
+      if (!rawId) {
         const result = { art: false, portrait: false, p2: false, id: null, isLarge: false };
         assetCache.set(key, result);
         return result;
       }
       
+      const baseId = getBaseId(rawId);
       const isLarge = unit.data.size === 'row' || unit.data.size === 'column';
-      const artPath = `/assets/character_art/${id}.png`;
-      const portPath = `/assets/character_portraits/p_${id}.png`;
-      const p2Path = `/assets/character_portraits/p2_${id}.png`;
+      const isHero = rawId.startsWith('h_');
+      
+      const artPath = `/assets/character_art/${rawId}.png`;
+      const portId = isHero ? baseId : rawId;
+      const portPath = `/assets/character_portraits/p_${portId}.png`;
+      const p2Path = `/assets/character_portraits/p2_${portId}.png`;
       
       const [artOk, portOk, p2Ok] = await Promise.all([
         checkAssetExists(artPath),
@@ -432,8 +449,10 @@
         art: artOk, 
         portrait: portOk, 
         p2: p2Ok, 
-        id, 
+        id: rawId,
+        baseId: baseId,
         isLarge,
+        isHero,
         artPath,
         portPath,
         p2Path: isLarge ? p2Path : null
@@ -593,7 +612,9 @@
       const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2);
       const statusClass = allOk ? 'all-ok' : (anyMissing ? 'missing-asset' : '');
       
-      let tooltip = `ID: ${asset.id}\n`;
+      let tooltip = `ID: ${asset.id}`;
+      if (asset.isHero) tooltip += ` (hero, portrait from: ${asset.baseId})`;
+      tooltip += `\n`;
       tooltip += `Art: ${asset.art ? '✅ Exists' : '❌ Missing'} (${asset.artPath || 'N/A'})\n`;
       tooltip += `Portrait: ${asset.portrait ? '✅ Exists' : '❌ Missing'} (${asset.portPath || 'N/A'})\n`;
       if (asset.isLarge) {
@@ -632,9 +653,11 @@
           const asset = assetCache.get(u.key);
           const statusHtml = asset ? renderAssetStatus(asset) : `<span class="asset-status"><span class="loading">⏳ checking...</span></span>`;
           
+          const heroIndicator = u.data.id && u.data.id.startsWith('h_') ? '⭐' : '';
+          
           html += `<div class="unit-row" data-key="${u.key}">
             <input type="checkbox" ${checked}>
-            <span class="tname">${u.data.name || u.key}</span>
+            <span class="tname">${heroIndicator} ${u.data.name || u.key}</span>
             <span class="ttier">T${u.data.t ?? '?'}</span>
             ${sizeLabel}
             ${statusHtml}
@@ -712,7 +735,8 @@
         const name = u.data.name || u.key;
         const asset = assetCache.get(u.key);
         const statusHtml = asset ? renderAssetStatus(asset) : '';
-        html += `<th>${name}<br><span class="pill">${u.key}</span><br>
+        const heroStar = u.data.id && u.data.id.startsWith('h_') ? '⭐' : '';
+        html += `<th>${heroStar} ${name}<br><span class="pill">${u.key}</span><br>
           <button class="remove-btn" data-key="${u.key}" title="remove">✕</button>
           <div style="margin-top:4px;">${statusHtml}</div>
         </th>`;
@@ -772,7 +796,7 @@
 ${units.map(u => {
   const name = u.data.name || u.key;
   const asset = assetCache.get(u.key);
-  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}` : 'Assets: unknown';
+  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}${asset.isHero ? ` (hero, base: ${asset.baseId})` : ''}` : 'Assets: unknown';
   return `- ${name} (${u.key})
   • Faction: ${u.data.f || 'N/A'}, Tier: ${u.data.t || 'N/A'}, Size: ${u.data.size || 'N/A'}
   • HP: ${u.data.hp || 0}, Armor: ${u.data.armor || 0}, Initiative: ${u.data.initiative || 0}
@@ -818,7 +842,7 @@ Based on this data, please provide:
           vitality: u.vitality,
           dps: u.dps,
           overall: u.overall,
-          assets: asset ? { art: asset.art, portrait: asset.portrait, p2: asset.p2, isLarge: asset.isLarge } : null
+          assets: asset ? { art: asset.art, portrait: asset.portrait, p2: asset.p2, isLarge: asset.isLarge, isHero: asset.isHero, baseId: asset.baseId } : null
         };
       });
 
