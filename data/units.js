@@ -311,7 +311,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 10,
-      passive: ['fellfire 1', 'find_weakness 2', 'predator 1'], ability: 'mark_of_ash 1',
+      passive: ['fellfire 1', 'find_weakness 2', 'execute 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 780
     },
     infernal_ascendant_path_b_t4_alt: {
@@ -401,7 +401,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 30,
-      xp: 470, passive: ['unbreakable 1', 'aegis 1', 'predator 1'], ability: null,
+      xp: 470, passive: ['unbreakable 1', 'aegis 1', 'execute 1'], ability: null,
     },
     onyx_gargoyle: {
       id: 'd311', f: 'd', t: 3,
@@ -412,7 +412,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 35,
-      xp: 470, passive: ['unbreakable 1', 'aegis 1', 'predator 2'], ability: null,
+      xp: 470, passive: ['unbreakable 1', 'aegis 1', 'execute 2'], ability: null,
     },
     quartz_gargoyle: {
       id: 'd32', f: 'd', t: 2,
@@ -467,7 +467,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20,
-      xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'predator 1'], ability: null,
+      xp: 470, passive: ['rage 1', 'blood_frenzy 1', 'predexecuteator 1'], ability: null,
     },
     pain_projector: {
       id: 'd412', f: 'd', t: 3,

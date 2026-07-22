@@ -494,31 +494,42 @@ export function renderRoster(root, { player }) {
     return [...resParts, ...itemParts].join(' · ');
   }
 
-  function buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags) {
-    if (ownedInstance) return buildItemCard(ownedInstance, unit, unitTags);
-
+  function buildCatalogItemCard(itemDef, ownedCount, unit, unitTags) {
     const iconId      = itemDef.icon || itemDef.key || 'item';
     const cost         = itemDef.cost      || {};
     const itemCost     = itemDef.item_cost || {};
     const factionOk    = !itemDef.faction || itemDef.faction === player.faction;
     const canAfford    = Object.entries(cost).every(([resName, amount]) => (resources.find(r => r.item === resName)?.amount ?? 0) >= amount) &&
                          Object.entries(itemCost).every(([key, count]) => items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === key && !it.equipped_by).length >= count);
-    const canCraft     = factionOk && canAfford;
+    // Unique items you already own can never be re-crafted, no matter the cost.
+    const uniqueOwned  = !!itemDef.unique && ownedCount > 0;
+    const canCraft     = factionOk && canAfford && !uniqueOwned;
+
+    // A short availability line: why you can (or can't) make this right now.
+    let blocked = '';
+    if (uniqueOwned)       blocked = 'Unique — already owned';
+    else if (!factionOk)   blocked = 'Wrong faction';
+    else if (!canAfford)   blocked = 'Not enough resources';
+
+    const ownedBadge = ownedCount > 0
+      ? `<div class="item-card-owned">${itemDef.unique ? 'Owned' : `Owned ×${ownedCount}`}</div>`
+      : '';
 
     return `
-      <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)}">
+      <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)} ${canCraft ? 'item-card--available' : ''}">
+        ${itemDef.unique ? '<div class="item-card-unique">Unique</div>' : ''}
         <div class="item-card-icon">
           <img src="/assets/icons/items/${iconId}.png" alt="${itemName(itemDef, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
         <div class="item-card-name">${itemName(itemDef, player)}</div>
-        ${itemDef.faction      ? `<div class="item-card-tag">Faction: ${cap(itemDef.faction.replace(/_/g, ' '))}</div>` : ''}
+        ${ownedBadge}
         ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
         <div class="item-cost">${formatCost(cost, itemCost)}</div>
         <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>Craft</button>
-        ${!factionOk ? `<div class="item-card-blocked">Wrong faction</div>` : (!canAfford ? `<div class="item-card-blocked">Not enough resources</div>` : '')}
+        ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
       </div>`;
   }
 
@@ -528,28 +539,31 @@ export function renderRoster(root, { player }) {
     const def      = resolveUnitDef(unit);
     const unitTags = (def?.tags || []).filter(Boolean);
 
-    let filter = 'equippable';
+    let filter = 'equippable'; // 'equippable' | 'owned' | 'craft'
+    let search = '';
 
-    function render() {
-      if (filter === 'catalog') {
-        const cardsHtml = Object.values(ITEM_DEFS).map(itemDef => {
-          const ownedInstance = items.find(it => (it.item_stats?.key || it.item_stats?.icon) === itemDef.key);
-          return buildCatalogItemCard(itemDef, ownedInstance, unit, unitTags);
-        }).join('');
+    const matchesSearch = name => !search || (name || '').toLowerCase().includes(search.toLowerCase());
+    const itemKeyOf     = it => it.item_stats?.key || it.item_stats?.icon;
 
-        return `
-          <div class="items-modal">
-            <div class="items-filter-bar">
-              <button class="items-filter-btn ${filter === 'equippable' ? 'items-filter-btn--active' : ''}" data-filter="equippable">Equippable</button>
-              <button class="items-filter-btn ${filter === 'all' ? 'items-filter-btn--active' : ''}" data-filter="all">All Items</button>
-              <button class="items-filter-btn ${filter === 'catalog' ? 'items-filter-btn--active' : ''}" data-filter="catalog">Catalog</button>
-            </div>
-            <div class="items-slider">${cardsHtml}</div>
-          </div>`;
+    // Just the cards — recomputed on every filter change AND every keystroke.
+    // Kept separate from the chrome so live search can refresh the list without
+    // rebuilding (and stealing focus from) the search input.
+    function sliderCards() {
+      if (filter === 'craft') {
+        const cards = Object.values(ITEM_DEFS)
+          // Other factions' items are never obtainable, so don't tease them.
+          .filter(def => !def.faction || def.faction === player.faction)
+          .filter(def => matchesSearch(itemName(def, player)))
+          .map(def => {
+            const ownedCount = items.filter(it => itemKeyOf(it) === def.key).length;
+            return buildCatalogItemCard(def, ownedCount, unit, unitTags);
+          });
+        return cards.length ? cards.join('') : `<p class="placeholder">No items match.</p>`;
       }
 
       const filtered = items.filter(it => {
-        if (filter === 'all') return true;
+        if (!matchesSearch(itemName(it, player))) return false;
+        if (filter === 'owned') return true;
         const stats    = it.item_stats || {};
         const factionOk = !stats.faction || stats.faction === player.faction;
         const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
@@ -557,18 +571,24 @@ export function renderRoster(root, { player }) {
         return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
       });
 
-      const cardsHtml = filtered.length
+      return filtered.length
         ? filtered.map(it => buildItemCard(it, unit, unitTags)).join('')
         : `<p class="placeholder">No items to show.</p>`;
+    }
 
+    function render() {
+      const chip = (id, label) =>
+        `<button class="items-filter-btn ${filter === id ? 'items-filter-btn--active' : ''}" data-filter="${id}">${label}</button>`;
       return `
         <div class="items-modal">
+          <input class="items-search" id="items-search" type="search" placeholder="Search items…"
+                 value="${search.replace(/"/g, '&quot;')}" autocomplete="off">
           <div class="items-filter-bar">
-            <button class="items-filter-btn ${filter === 'equippable' ? 'items-filter-btn--active' : ''}" data-filter="equippable">Equippable</button>
-            <button class="items-filter-btn ${filter === 'all' ? 'items-filter-btn--active' : ''}" data-filter="all">All Items</button>
-            <button class="items-filter-btn ${filter === 'catalog' ? 'items-filter-btn--active' : ''}" data-filter="catalog">Catalog</button>
+            ${chip('equippable', 'Equippable')}
+            ${chip('owned', 'Owned')}
+            ${chip('craft', 'Craft')}
           </div>
-          <div class="items-slider">${cardsHtml}</div>
+          <div class="items-slider" id="items-slider">${sliderCards()}</div>
         </div>`;
     }
 
@@ -585,11 +605,28 @@ export function renderRoster(root, { player }) {
       body.innerHTML = render();
     }
 
+    // Repaint only the card list, leaving the search input (and its focus/caret)
+    // untouched.
+    function refreshSlider() {
+      const slider = body.querySelector('#items-slider');
+      if (slider) slider.innerHTML = sliderCards();
+    }
+
+    body.addEventListener('input', (e) => {
+      if (e.target.id === 'items-search') {
+        search = e.target.value;
+        refreshSlider();
+      }
+    });
+
     body.addEventListener('click', async (e) => {
       const filterBtn = e.target.closest('[data-filter]');
       if (filterBtn) {
         filter = filterBtn.dataset.filter;
-        body.innerHTML = render();
+        // Update chip highlight + list in place so the search box survives.
+        body.querySelectorAll('.items-filter-btn').forEach(b =>
+          b.classList.toggle('items-filter-btn--active', b.dataset.filter === filter));
+        refreshSlider();
         return;
       }
 

@@ -355,14 +355,23 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { intercept_chance_pct: 40 },
   },
-  'predator 1': {
-    id: 'predator 1',
-    name: 'Predator',
+  'execute 1': {
+    id: 'execute 1',
+    name: 'Execute',
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 20% bonus damage to targets below 50% HP.',
     params: { execute_bonus_pct: 20, execute_threshold_pct: 50 },
+  },
+  'execute 2': {
+    id: 'execute 2',
+    name: 'Execute',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 30% bonus damage to targets below 50% HP.',
+    params: { execute_bonus_pct: 30, execute_threshold_pct: 50 },
   },
   'regenerate 1': {
     id: 'regenerate 1',

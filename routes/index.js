@@ -95,6 +95,7 @@ function makeItemRow(playerId, itemKey) {
       stat_mods:    def.stat_mods,
       passive:      def.passive,
       icon:         def.icon,
+      unique:       def.unique ?? false,
     },
   };
 }
@@ -1519,6 +1520,12 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
       supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
+
+    // Unique items are one-per-player: refuse a second copy (equipped or not).
+    if (itemDef.unique) {
+      const alreadyOwned = ownedItems.some(it => (it.item_stats?.key || it.item_stats?.icon) === item_key);
+      if (alreadyOwned) return res.status(400).json({ error: 'You already own this unique item' });
+    }
 
     // Validate resource costs
     for (const [resName, required] of Object.entries(cost)) {

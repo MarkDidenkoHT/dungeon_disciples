@@ -1,3 +1,11 @@
+// Each entry is an item blueprint. Fields the crafting/equip systems care about:
+//   faction       null = craftable by anyone; otherwise only that faction may
+//                 craft it, AND it is hidden from other factions' catalogs.
+//   unique        true = the player may only ever own ONE copy (crafting a
+//                 second is refused). Absent/false = craft as many as you like.
+//                 By convention every epic/mythic item is unique; commons and
+//                 rares are stackable. Flip per-item as balance needs.
+//   cost/item_cost resource + item-ingredient cost to craft.
 const ITEM_DEFS = {
 
   meteor_exoskeleton: {
@@ -11,6 +19,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'meteor_exoskeleton',
     rarity:       'mythic',
+    unique:       true,
     cost:         { cinder_ash: 2, Gold: 100 },
   },
   meteor_shield: {
@@ -37,6 +46,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
+    unique:       true,
     cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 45 },
   },
   might_of_the_pure: {
@@ -50,6 +60,7 @@ const ITEM_DEFS = {
     passive:      'iron_will 1',
     icon:         'might_of_the_pure',
     rarity:       'epic',
+    unique:       true,
     cost:         { shard_of_might: 10, Gold: 100, Crystals_Life: 25, Crystals_Death: 25 },
     item_cost:    { death_resistance_potion: 2, mace: 1, broken_seal: 1}
   },
@@ -64,6 +75,7 @@ const ITEM_DEFS = {
     passive:      'inspiration_damage 1',
     icon:         'sanctified_bulwark',
     rarity:       'epic',
+    unique:       true,
     cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
     item_cost:    { iron_armor: 1, codex_militarum: 2 },
   },
@@ -78,6 +90,7 @@ const ITEM_DEFS = {
     passive:      'protector 1',
     icon:         'sanctified_guardian',
     rarity:       'epic',
+    unique:       true,
     cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
     item_cost:    { iron_shield: 1 },
   },
@@ -144,6 +157,7 @@ const ITEM_DEFS = {
     passive:      'volcanic_skin 1',
     icon:         'dragon_skin',
     rarity:       'epic',
+    unique:       true,
     cost:         { cinder_ash: 2, Gold: 75, Crystals_Fire: 25 },
     item_cost:    { iron_armor: 1, fire_resistance_potion: 2 },
   },
@@ -158,6 +172,7 @@ const ITEM_DEFS = {
     passive:      'fortify 1',
     icon:         'aldras_devotion',
     rarity:       'epic',
+    unique:       true,
     cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Life: 20, Crystals_Death: 20 },
     item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
   },
@@ -172,6 +187,7 @@ const ITEM_DEFS = {
     passive:      'horde 1',
     icon:         'shroud_of_the_fallen',
     rarity:       'epic',
+    unique:       true,
     cost:         { grave_dust: 2, Gold: 100, Crystals_Death: 25 },
     item_cost:    { iron_armor: 1, mothers_gift: 1 },
   },
@@ -333,6 +349,7 @@ const ITEM_DEFS = {
     passive:      'iron_will 2',
     icon:         'crystal_sword',
     rarity:       'epic',
+    unique:       true,
     cost:         { Gold: 100, Crystals_Air: 5, Crystals_Frost: 5 },
     item_cost:    { iron_sword: 1 },
   },
@@ -457,6 +474,7 @@ const ITEM_DEFS = {
     passive:      'undying 1',
     icon:         'veil_of_discord',
     rarity:       'epic',
+    unique:       true,
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
     item_cost:    { broken_seal: 1 },
   },

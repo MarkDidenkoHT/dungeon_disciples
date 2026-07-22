@@ -4334,6 +4334,23 @@ button:active:not(:disabled) { opacity: 0.75; }
   max-height: 60vh;
 }
 
+.items-search {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+}
+.items-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.items-search::placeholder { color: var(--muted); }
+
 .items-filter-bar {
   display: flex;
   gap: 8px;
@@ -4371,6 +4388,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .item-card {
+  position: relative;
   scroll-snap-align: start;
   flex: 0 0 auto;
   width: 62vw;
@@ -4402,13 +4420,39 @@ button:active:not(:disabled) { opacity: 0.75; }
   opacity: 0.7;
 }
 
+/* Craftable-right-now catalog cards read at full strength and get an accent ring. */
+.item-card--catalog.item-card--available {
+  opacity: 1;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 .item-card--catalog .item-card-blocked {
   color: var(--muted);
 }
 
+.item-card-unique {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e0453f;
+  border: 1px solid #e0453f;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.item-card-owned {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .item-card-icon {
-  width: 56px;
-  height: 56px;
+  width: 76px;
+  height: 76px;
   border-radius: 8px;
   background: #0e1219;
   border: 1px solid #222d3e;
