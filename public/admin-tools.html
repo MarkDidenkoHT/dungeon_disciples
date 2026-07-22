@@ -505,7 +505,7 @@
       const actionIcons = [];
       const actionIcon = unit.data.action_icon;
       if (actionIcon) {
-        const path = `/assets/icons/abilities/${actionIcon}`;
+        const path = `/assets/icons/actions/${actionIcon}`;
         const exists = await checkAssetExists(path);
         actionIcons.push({ name: actionIcon, path, exists });
       }
@@ -673,22 +673,6 @@
         ...(Array.isArray(d.tags) ? d.tags : [d.tags])
       ].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
-    }
-
-    function renderIconStatus(label, exists, path, isArray = false) {
-      if (isArray) {
-        if (!exists || exists.length === 0) {
-          return `<span class="icon na">—</span>`;
-        }
-        const allOk = exists.every(e => e.exists);
-        const icon = allOk ? '✅' : '❌';
-        const cls = allOk ? 'ok' : 'missing';
-        const tooltip = exists.map(e => `${e.name}: ${e.exists ? '✅' : '❌'} (${e.path})`).join('\n');
-        return `<span class="icon ${cls}" title="${tooltip}">${icon}</span>`;
-      }
-      const icon = exists ? '✅' : '❌';
-      const cls = exists ? 'ok' : 'missing';
-      return `<span class="icon ${cls}" title="${path}: ${exists ? 'Exists' : 'Missing'}">${icon}</span>`;
     }
 
     function renderAssetStatus(asset) {
