@@ -351,7 +351,7 @@
     <span class="legend-item">❌ = missing</span>
     <span class="legend-item" style="color:#4a4f66;">— = N/A</span>
     <span class="legend-item" style="color:#f5c542;">⏳ = checking</span>
-    <span class="legend-item" style="color:#7f98ff;">Hero: all variants share same portrait</span>
+    <span class="legend-item" style="color:#7f98ff;">⭐ Hero: all variants share all images</span>
   </span>
 </div>
 
@@ -434,8 +434,10 @@
       const isLarge = unit.data.size === 'row' || unit.data.size === 'column';
       const isHero = rawId.startsWith('h_');
       
-      const artPath = `/assets/character_art/${rawId}.png`;
+      const artId = isHero ? baseId : rawId;
       const portId = isHero ? baseId : rawId;
+      
+      const artPath = `/assets/character_art/${artId}.png`;
       const portPath = `/assets/character_portraits/p_${portId}.png`;
       const p2Path = `/assets/character_portraits/p2_${portId}.png`;
       
@@ -613,7 +615,7 @@
       const statusClass = allOk ? 'all-ok' : (anyMissing ? 'missing-asset' : '');
       
       let tooltip = `ID: ${asset.id}`;
-      if (asset.isHero) tooltip += ` (hero, portrait from: ${asset.baseId})`;
+      if (asset.isHero) tooltip += ` (hero, all images use base: ${asset.baseId})`;
       tooltip += `\n`;
       tooltip += `Art: ${asset.art ? '✅ Exists' : '❌ Missing'} (${asset.artPath || 'N/A'})\n`;
       tooltip += `Portrait: ${asset.portrait ? '✅ Exists' : '❌ Missing'} (${asset.portPath || 'N/A'})\n`;
@@ -796,7 +798,7 @@
 ${units.map(u => {
   const name = u.data.name || u.key;
   const asset = assetCache.get(u.key);
-  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}${asset.isHero ? ` (hero, base: ${asset.baseId})` : ''}` : 'Assets: unknown';
+  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}${asset.isHero ? ` (hero, all images from: ${asset.baseId})` : ''}` : 'Assets: unknown';
   return `- ${name} (${u.key})
   • Faction: ${u.data.f || 'N/A'}, Tier: ${u.data.t || 'N/A'}, Size: ${u.data.size || 'N/A'}
   • HP: ${u.data.hp || 0}, Armor: ${u.data.armor || 0}, Initiative: ${u.data.initiative || 0}
