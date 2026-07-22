@@ -233,7 +233,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const regionMeta = {
     crimson_basilica: { label: 'Crimson Basilica', icon: '🌲' },
     mountains_of_valdrek: { label: 'Mountains of Valdrek', icon: '⛰️' },
-    dungeons_of_malgrath: { label: 'Dungeons of Malgrath', icon: '💀' },
+    chamber_of_unrest: { label: 'Chamber Of Unrest', icon: '💀' },
   };
   const meta = regionMeta[region_id] || { label: region_id, icon: '⚔' };
 

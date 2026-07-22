@@ -147,11 +147,11 @@ const REGION_ENCOUNTERS = {
     },
   },
 
-  dungeons_of_malgrath: {
+  chamber_of_unrest: {
     level_1: {
       enemies: [
-        { key: 'dungeons_of_malgrath.bone_knight', cell: 0, item_id: 'crude_sword' },
-        { key: 'dungeons_of_malgrath.bone_knight', cell: 4, item_id: 'crude_sword' },
+        { key: 'chamber_of_unrest.bone_knight', cell: 0, item_id: 'crude_sword' },
+        { key: 'chamber_of_unrest.bone_knight', cell: 4, item_id: 'crude_sword' },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -163,9 +163,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'dungeons_of_malgrath.bone_knight',      cell: 0 },
-        { key: 'dungeons_of_malgrath.bone_knight',      cell: 4 },
-        { key: 'dungeons_of_malgrath.oathbound_martyr', cell: 3, item_id: 'everliving_stalk' },
+        { key: 'chamber_of_unrest.bone_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.bone_knight',      cell: 4 },
+        { key: 'chamber_of_unrest.oathbound_martyr', cell: 3, item_id: 'everliving_stalk' },
       ],
       rewards: {
         gold: 20, xp: 40,
@@ -177,10 +177,10 @@ const REGION_ENCOUNTERS = {
     },
     level_3: {
       enemies: [
-        { key: 'dungeons_of_malgrath.bone_knight',            cell: 0 },
-        { key: 'dungeons_of_malgrath.oathbound_martyr',       cell: 5 },
-        { key: 'dungeons_of_malgrath.wailing_ghost',          cell: 3 },
-        { key: 'dungeons_of_malgrath.malgrath_the_undying_1', cell: 2 },
+        { key: 'chamber_of_unrest.bone_knight',            cell: 0 },
+        { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
+        { key: 'chamber_of_unrest.wailing_ghost',          cell: 3 },
+        { key: 'chamber_of_unrest.malgrath_the_undying_1', cell: 2 },
       ],
       rewards: {
         gold: 25, xp: 50,
@@ -192,9 +192,9 @@ const REGION_ENCOUNTERS = {
     },
     level_4: {
       enemies: [
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.oathbound_martyr',       cell: 2 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.oathbound_martyr',       cell: 2 },
       ],
       rewards: {
         gold: 30, xp: 60,
@@ -206,10 +206,10 @@ const REGION_ENCOUNTERS = {
     },
     level_5: {
       enemies: [
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.oathsworn_martyr',       cell: 1 },
-        { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
+        { key: 'chamber_of_unrest.revenant',               cell: 5 },
       ],
       rewards: {
         gold: 35, xp: 70,
@@ -221,11 +221,11 @@ const REGION_ENCOUNTERS = {
     },
     level_6: {
       enemies: [
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 0 },
-        { key: 'dungeons_of_malgrath.dread_knight',           cell: 4 },
-        { key: 'dungeons_of_malgrath.oathsworn_martyr',       cell: 1 },
-        { key: 'dungeons_of_malgrath.revenant',               cell: 5 },
-        { key: 'dungeons_of_malgrath.malgrath_the_undying_2', cell: 2 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
+        { key: 'chamber_of_unrest.revenant',               cell: 5 },
+        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2 },
       ],
       rewards: {
         gold: 40, xp: 80,
@@ -259,7 +259,7 @@ function buildDifficulties(regionId) {
 const REGIONS = [
   { id: 'crimson_basilica',     difficulties: buildDifficulties('crimson_basilica') },
   { id: 'mountains_of_valdrek', difficulties: buildDifficulties('mountains_of_valdrek') },
-  { id: 'dungeons_of_malgrath', difficulties: buildDifficulties('dungeons_of_malgrath') },
+  { id: 'chamber_of_unrest', difficulties: buildDifficulties('chamber_of_unrest') },
 ];
 
 
