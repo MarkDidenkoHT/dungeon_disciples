@@ -489,7 +489,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 35, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 12,
-      xp: 470, passive: 'command 1', ability: 'infernal_mandate 1',
+      xp: 470, passive: 'magic_attunement 1', ability: 'infernal_mandate 1',
     },
     nether_baron: {
       id: 'd61', f: 'd', t: 2,
@@ -500,7 +500,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16,
-      xp: 470, passive: ['command 1', 'undying 1'], ability: 'infernal_mandate 2',
+      xp: 470, passive: ['magic_attunement 1', 'undying 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
       id: 'd611', f: 'd', t: 3,
@@ -511,7 +511,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20,
-      xp: 470, passive: ['command 2', 'undying 1'], ability: 'infernal_mandate 3',
+      xp: 470, passive: ['magic_attunement 2', 'undying 1'], ability: 'infernal_mandate 3',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -651,7 +651,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['mithrails_light 1', 'dissipate 1'], ability: 'cleanse 1',
+      passive: ['mithrails_light 1', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 300
     },
     paladin_path_b_t3: {
@@ -663,7 +663,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'mace.jpg',
-      passive: ['mithrails_light 2', 'dissipate 1'], ability: 'cleanse 1',
+      passive: ['mithrails_light 2', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 560
     },
     paladin_path_b_t4: {
@@ -675,7 +675,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg',
-      passive: ['mithrails_light 1', 'dissipate 2'], ability: 'cleanse 1',
+      passive: ['mithrails_light 2', 'combat_veteran 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     paladin_path_b_t4_alt: {
@@ -687,7 +687,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg',
-      passive: ['mithrails_light 2', 'dissipate 2'], ability: 'cleanse 1',
+      passive: ['mithrails_light 2', 'combat_veteran 1', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 700
     },
     inquisitor: {
@@ -1047,29 +1047,29 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'repair.jpg',
-      xp: 75, passive: 'fortify 1', ability: null,
+      xp: 75, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     mechanic: {
       id: 'e61', f: 'e', t: 2,
       name: 'Mechanic',
       tags: ['Engineer', null],
       size: 'tile',
-      hp: 50, armor: 10, initiative: 20,
+      hp: 50, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg',
-      xp: 75, passive: 'fortify 1', ability: null,
+      xp: 75, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     master_mechanic: {
       id: 'e611', f: 'e', t: 3,
       name: 'Master Mechanic',
       tags: ['Engineer', null],
       size: 'tile',
-      hp: 60, armor: 10, initiative: 20,
+      hp: 55, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg',
-      xp: 75, passive: 'fortify 1', ability: null,
+      xp: 75, passive: ['fortify 2', 'scavenger 1'], ability: null,
     },
     rifleman: {
       id: 'e62', f: 'e', t: 2,
@@ -1080,7 +1080,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 20,
-      xp: 275, passive: 'shatter 1', ability: null,
+      xp: 275, passive: ['shatter 1', 'scavenger 1'], ability: null,
     },
     devastator: {
       id: 'e621', f: 'e', t: 3,
@@ -1091,7 +1091,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 30,
-      xp: 575, passive: 'shatter 2', ability: null,
+      xp: 575, passive: ['shatter 2', 'scavenger 1'], ability: null,
     },
     flamethrower: {
       id: 'e622', f: 'e', t: 3,
@@ -1102,7 +1102,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'fire', action_power: 15,
-      xp: 475, passive: ['burn 2', 'dissipate 1'], ability: null,
+      xp: 475, passive: ['burn 2', 'scavenger 1'], ability: null,
     },
     blessed_soul: {
       id: 'e7', f: 'e', t: 1,
@@ -1146,7 +1146,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 60, passive: 'renew 1', ability: null,
+      xp: 60, passive: 'rejuvenating_presence 1', ability: null,
     },
     templar: {
       id: 'e21', f: 'e', t: 2,
@@ -1179,18 +1179,18 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 250, passive: ['renew 1', 'vitality 1'], ability: 'prayer_of_healing 1',
+      xp: 250, passive: ['rejuvenating_presence 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
       id: 'e221', f: 'e', t: 3,
       name: 'Ardent Priest',
       tags: ['Caster', 'Holy'],
       size: 'tile',
-      hp: 70, armor: 0, initiative: 20,
+      hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 250, passive: ['renew 1', 'vitality 2'], ability: 'prayer_of_healing 2',
+      xp: 250, passive: ['rejuvenating_presence 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
@@ -1715,7 +1715,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15,
-      xp: 520, passive: ['vitality 1', 'reanimate 1'], ability: 'raise_dead 1',
+      xp: 520, passive: ['unending_servitude 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 1',
     },
     death_lord: {
       id: 'gs321', f: 'g', t: 3,
@@ -1726,7 +1726,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20,
-      xp: 520, passive: ['vitality 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 2',
+      xp: 520, passive: ['unending_servitude 1', 'reanimate 2', 'horde 1'], ability: 'raise_dead 2',
     },
     plague_scholar: {
       id: 'gs33', f: 'g', t: 2,
@@ -2092,7 +2092,7 @@ const UNITS = {
         hp: 85, armor: 10, initiative: 50,
         resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 10,
+        damage_source: 'physical', action_power: 10,
         xp: 340, passive: 'bleed 1', ability: null,
       },
       sister_aldra_2: {

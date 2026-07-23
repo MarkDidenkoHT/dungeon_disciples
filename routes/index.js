@@ -21,6 +21,7 @@ const {
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
+const { UNIT_ABILITIES } = require('../data/unit_abilities');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -301,6 +302,33 @@ function getAlivePlayerRosterIds(battle_data) {
   return battle_data.units
     .filter(u => u.side === 'player' && u._rosterId != null && u.alive)
     .map(u => String(u._rosterId));
+}
+
+// Expedition passives (data/unit_abilities.js, trigger 'on_embark_complete').
+// Every copy across the party contributes — a unit's own passives AND its
+// equipped item's — and same-kind bonuses SUM: two Scavenger 1 units plus a
+// Scavenger's Satchel is a flat +30% gold. servitudeIds are the roster ids that
+// keep their XP share when dead (Unending Servitude is self-scoped).
+function collectEmbarkBonuses(rosterRows, itemsByRosterId) {
+  const totals = { heal_pct: 0, xp_pct: 0, gold_pct: 0, crystal_pct: 0 };
+  const servitudeIds = new Set();
+  for (const r of rosterRows) {
+    const def = getUnitByDataId(r.unit_data?.unit_id);
+    const own = r.unit_data?.passive ?? def?.passive;
+    const keys = Array.isArray(own) ? [...own] : (own ? [own] : []);
+    const item = itemsByRosterId[String(r.id)];
+    if (item?.item_stats?.passive) keys.push(item.item_stats.passive);
+    for (const key of keys) {
+      const p = UNIT_ABILITIES[key]?.params;
+      if (!p) continue;
+      totals.heal_pct    += p.embark_heal_pct          ?? 0;
+      totals.xp_pct      += p.embark_xp_bonus_pct      ?? 0;
+      totals.gold_pct    += p.embark_gold_bonus_pct    ?? 0;
+      totals.crystal_pct += p.embark_crystal_bonus_pct ?? 0;
+      if (p.dead_unit_gains_xp) servitudeIds.add(String(r.id));
+    }
+  }
+  return { totals, servitudeIds };
 }
 
 function getFactionForUnit(unitDataId) {
@@ -1143,14 +1171,29 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       // data/embark.js). No scaling formula — what the level says is what it pays.
       const tuned = getLevelRewards(region_id, level);
 
+      // Expedition passives: everything the party carried into this battle
+      // (units + their equipped items) contributes; same-kind bonuses sum.
+      // Fetched AFTER persistBattleRosterState so unit_data reflects the battle.
+      const participantIds = (record.battle_data.units || [])
+        .filter(u => u.side === 'player' && u._rosterId != null)
+        .map(u => String(u._rosterId));
+      const participantRows = participantIds.length
+        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data`)
+        : [];
+      const embarkItems = await getItemsByRosterIds(participantIds);
+      const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
+
       // Gold, then the level's guaranteed crystals (exact types and amounts).
-      await updateItem('Gold', tuned.gold);
-      result.gold = tuned.gold;
+      const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
+      await updateItem('Gold', goldPayout);
+      result.gold = goldPayout;
+      const crystalMult = 1 + embarkBonus.crystal_pct / 100;
       let crystalTotal = 0;
       for (const { type, amount } of tuned.crystals) {
         if (!type || !amount) continue;
-        await updateItem(type, amount);
-        crystalTotal += amount;
+        const amt = Math.round(amount * crystalMult);
+        await updateItem(type, amt);
+        crystalTotal += amt;
       }
       result.crystal = crystalTotal;
 
@@ -1158,8 +1201,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const rndPool = tuned.crystals_random.pool;
       if (rndPool.length && tuned.crystals_random.amount > 0) {
         const bonusType = rndPool[Math.floor(Math.random() * rndPool.length)];
-        await updateItem(bonusType, tuned.crystals_random.amount);
-        result.crystal_bonus      = tuned.crystals_random.amount;
+        const bonusAmt  = Math.round(tuned.crystals_random.amount * crystalMult);
+        await updateItem(bonusType, bonusAmt);
+        result.crystal_bonus      = bonusAmt;
         result.crystal_bonus_type = bonusType;
       }
 
@@ -1196,17 +1240,42 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
       const validSurvivorIds = getAlivePlayerRosterIds(record.battle_data);
 
-      if (validSurvivorIds.length > 0) {
-        const xpEach = Math.floor(rewards.xp / validSurvivorIds.length);
-        result.xp_granted = xpEach;
-        await Promise.all(validSurvivorIds.map(async (rosterId) => {
-          const rows = await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`);
-          if (!rows.length) return;
-          const current        = rows[0];
-          const updatedUnitData = { ...current.unit_data, current_xp: (current.unit_data?.current_xp ?? 0) + xpEach };
-          await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: updatedUnitData }) });
-        }));
-      }
+      // XP goes to survivors plus any fallen unit with Unending Servitude —
+      // those still take their share of the split. Combat Veteran multiplies
+      // everyone's share.
+      const deadEarnerIds = participantIds.filter(id => !validSurvivorIds.includes(id) && servitudeIds.has(id));
+      const xpRecipients  = [...validSurvivorIds, ...deadEarnerIds];
+
+      // One unit_data patch per unit: XP share and the post-embark camp regen
+      // (Rejuvenating Presence heals every SURVIVOR by the summed percentage).
+      const xpEach = xpRecipients.length > 0
+        ? Math.round(Math.floor(rewards.xp / xpRecipients.length) * (1 + embarkBonus.xp_pct / 100))
+        : 0;
+      result.xp_granted = xpEach;
+
+      await Promise.all(participantRows.map(async (row) => {
+        const rosterId = String(row.id);
+        let unitData  = row.unit_data || {};
+        let changed   = false;
+
+        if (xpEach > 0 && xpRecipients.includes(rosterId)) {
+          unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpEach };
+          changed  = true;
+        }
+
+        if (embarkBonus.heal_pct > 0 && unitData.alive !== false) {
+          const maxHp = Number(unitData.max_hp ?? 0);
+          const cur   = Number(unitData.current_hp ?? maxHp);
+          if (maxHp > 0 && cur < maxHp) {
+            const healed = Math.min(maxHp, cur + Math.round(maxHp * embarkBonus.heal_pct / 100));
+            unitData = { ...unitData, current_hp: healed };
+            changed  = true;
+          }
+        }
+
+        if (!changed) return;
+        await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
+      }));
       const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
       if (playerRows.length) {
         const progress     = playerRows[0].progress || {};
