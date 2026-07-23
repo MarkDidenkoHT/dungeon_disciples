@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shattered Crown — FX Preview</title>
+  <!-- Same PIXI build the real battle screen uses. -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
+  <!-- Reuse the game's stylesheet so the grid/cells look exactly like battle. -->
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Dev-tool chrome only — the arena itself is styled by style.css. */
+    body { margin: 0; background: #0b0e14; color: #e5e9f0; font-family: system-ui, sans-serif; }
+    .fx-wrap { display: grid; grid-template-columns: 300px 1fr 260px; gap: 12px; padding: 12px; min-height: 100vh; box-sizing: border-box; }
+    .fx-panel { background: #121722; border: 1px solid #26303f; border-radius: 10px; padding: 12px; }
+    .fx-panel h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8fa3bf; margin: 0 0 10px; }
+    .fx-panel h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6f8199; margin: 14px 0 6px; }
+    .fx-arena-host { position: relative; display: flex; align-items: center; justify-content: center; background: #0e1219; border: 1px solid #26303f; border-radius: 10px; overflow: hidden; }
+    .fx-modes { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+    .fx-modes button { flex: 1; min-width: 60px; background: #1a2130; border: 1px solid #2c3a4e; color: #b9c5d6; border-radius: 6px; padding: 7px 4px; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+    .fx-modes button.active { background: #2b6cb0; border-color: #2b6cb0; color: #fff; }
+    .fx-field { margin-bottom: 10px; }
+    .fx-field label { display: block; font-size: 0.7rem; color: #8fa3bf; margin-bottom: 4px; }
+    .fx-field select, .fx-field input[type="search"] { width: 100%; box-sizing: border-box; background: #0e1219; border: 1px solid #2c3a4e; color: #e5e9f0; border-radius: 6px; padding: 7px 9px; font-size: 0.82rem; }
+    .fx-btn { width: 100%; box-sizing: border-box; border: none; border-radius: 7px; padding: 10px; font-weight: 700; cursor: pointer; color: #fff; margin-top: 6px; }
+    .fx-btn--fire { background: linear-gradient(180deg,#2e7d32,#1b5e20); }
+    .fx-btn--replay { background: linear-gradient(180deg,#2a5f8a,#1c3f5c); }
+    .fx-btn--copy { background: #384a63; }
+    .fx-btn--reset { background: #5c1c1c; }
+    .fx-palette { max-height: 240px; overflow-y: auto; border: 1px solid #2c3a4e; border-radius: 6px; }
+    .fx-palette-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; cursor: pointer; font-size: 0.78rem; border-bottom: 1px solid #1a2130; }
+    .fx-palette-item:hover { background: #1a2130; }
+    .fx-palette-item.sel { background: #2b6cb0; color: #fff; }
+    .fx-palette-item img { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; background: #0e1219; }
+    .fx-palette-fac { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6f8199; padding: 6px 8px 2px; }
+    .fx-speed-val { color: #e5e9f0; font-weight: 700; }
+    .fx-hint { font-size: 0.68rem; color: #6f8199; line-height: 1.5; margin: 6px 0 0; }
+    .fx-cover-item { display: flex; justify-content: space-between; gap: 6px; font-size: 0.72rem; padding: 3px 0; border-bottom: 1px solid #1a2130; }
+    .fx-cover-ok { color: #4ade80; }
+    .fx-cover-missing { color: #f87171; }
+    .fx-cover-unused { color: #fbbf24; }
+    /* Caster/target markers on top of the normal cell styling. */
+    .battle-cell.fx-caster { box-shadow: 0 0 0 3px #f5c542 !important; }
+    .battle-cell.fx-target { box-shadow: 0 0 0 3px #e0453f !important; }
+    .fx-arena-host .battle-cell { cursor: pointer; }
+    .fx-empty-slot { display: flex; align-items: center; justify-content: center; color: #3a4657; font-size: 1.4rem; }
+    #fx-status { font-size: 0.72rem; color: #8fa3bf; min-height: 1.2em; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="fx-wrap">
+    <!-- LEFT: placement + palette -->
+    <div class="fx-panel">
+      <h2>Roster</h2>
+      <div class="fx-modes" id="fx-modes">
+        <button data-mode="place" class="active">Place</button>
+        <button data-mode="caster">Caster</button>
+        <button data-mode="target">Target</button>
+        <button data-mode="clear">Clear</button>
+      </div>
+      <p class="fx-hint" id="fx-mode-hint">Pick a unit below, then click a cell to place it.</p>
+      <div class="fx-field">
+        <input type="search" id="fx-search" placeholder="Search units…" autocomplete="off">
+      </div>
+      <div class="fx-palette" id="fx-palette"></div>
+    </div>
+
+    <!-- CENTER: the real battle arena -->
+    <div class="fx-arena-host" id="fx-arena-host">
+      <div class="screen screen-battle" id="fx-screen" style="width:100%;">
+        <div class="battle-arena">
+          <div class="battle-half battle-half--player">
+            <div class="battle-grid-wrap"><div class="battle-grid" id="fx-grid-player"></div></div>
+          </div>
+          <div class="battle-half battle-half--enemy">
+            <div class="battle-grid-wrap"><div class="battle-grid" id="fx-grid-enemy"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: effect controls + coverage -->
+    <div class="fx-panel">
+      <h2>Effect</h2>
+      <div class="fx-field">
+        <label>Animation</label>
+        <select id="fx-effect"></select>
+      </div>
+      <div class="fx-field">
+        <label>Speed <span class="fx-speed-val" id="fx-speed-val">1.0×</span></label>
+        <input type="range" id="fx-speed" min="0.25" max="3" step="0.05" value="1" style="width:100%;">
+      </div>
+      <button class="fx-btn fx-btn--fire" id="fx-fire">▶ Fire</button>
+      <button class="fx-btn fx-btn--replay" id="fx-replay">↻ Replay last</button>
+      <button class="fx-btn fx-btn--copy" id="fx-copy">⧉ Copy setup for AI</button>
+      <button class="fx-btn fx-btn--reset" id="fx-reset">Clear board</button>
+      <div id="fx-status"></div>
+
+      <h3>Coverage</h3>
+      <p class="fx-hint">Abilities/actions in data vs. registered effects.</p>
+      <div id="fx-coverage"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { EFFECTS, initBattleFx, reattachBattleFx } from '/battle-fx.js';
+    import { UNITS } from '/data/units.js';
+
+    const ROWS = 3, COLS = 2;
+    const setStatus = m => { document.getElementById('fx-status').textContent = m; };
+
+    // ── Flatten every unit def, keyed by its data id ────────────────────────────
+    const ALL_UNITS = [];
+    for (const [faction, pool] of Object.entries(UNITS)) {
+      for (const def of Object.values(pool)) {
+        if (def && def.id) ALL_UNITS.push({ ...def, _faction: faction });
+      }
+    }
+    const unitById = Object.fromEntries(ALL_UNITS.map(u => [u.id, u]));
+
+    // Mirror of getPortraitUrl() in screens/battle.js.
+    function portraitUrl(def) {
+      if (!def?.id) return null;
+      const portraitId = def.id.match(/^(h_[a-z]_\d)/)?.[1] ?? def.id;
+      const size = def.size ?? 'tile';
+      const prefix = (size === 'row' || size === 'column') ? 'p2' : 'p';
+      return `/assets/character_portraits/${prefix}_${portraitId}.png`;
+    }
+
+    // ── Board state: side -> cellIndex -> unitId ────────────────────────────────
+    const board = { player: {}, enemy: {} };
+    let mode = 'place';
+    let selectedUnitId = null;
+    let casterKey = null;   // "side:idx"
+    let targetKey = null;
+    let lastFire = null;    // { effectKey, casterKey, targetKey } for replay
+
+    const keyOf = (side, idx) => `${side}:${idx}`;
+
+    function renderGrid(side) {
+      const grid = document.getElementById(side === 'player' ? 'fx-grid-player' : 'fx-grid-enemy');
+      const cells = [];
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const idx = r * COLS + c;
+          const key = keyOf(side, idx);
+          const unitId = board[side][idx];
+          const def = unitId ? unitById[unitId] : null;
+          let cls = 'battle-cell';
+          if (!def) cls += ' battle-cell--empty fx-empty-slot';
+          else cls += side === 'player' ? ' battle-cell--placed' : ' battle-cell--enemy';
+          if (key === casterKey) cls += ' fx-caster';
+          if (key === targetKey) cls += ' fx-target';
+          const pu = def ? portraitUrl(def) : null;
+          cells.push(`
+            <div class="${cls}" data-id="${key}" data-side="${side}" data-idx="${idx}">
+              ${def ? `
+                ${pu ? `<img class="battle-cell-portrait" src="${pu}" alt="${def.name}" onerror="this.style.display='none'">` : ''}
+                <div class="battle-cell-info"><span class="battle-cell-name">${def.name}</span></div>
+              ` : `<span>+</span>`}
+            </div>`);
+        }
+      }
+      grid.innerHTML = cells.join('');
+    }
+    function renderBoard() { renderGrid('player'); renderGrid('enemy'); }
+
+    // ── Cell clicks: behaviour depends on the active mode ───────────────────────
+    document.getElementById('fx-screen').addEventListener('click', e => {
+      const cell = e.target.closest('.battle-cell');
+      if (!cell) return;
+      const side = cell.dataset.side;
+      const idx  = Number(cell.dataset.idx);
+      const key  = keyOf(side, idx);
+      if (mode === 'place') {
+        if (!selectedUnitId) { setStatus('Pick a unit from the palette first.'); return; }
+        board[side][idx] = selectedUnitId;
+      } else if (mode === 'clear') {
+        delete board[side][idx];
+        if (casterKey === key) casterKey = null;
+        if (targetKey === key) targetKey = null;
+      } else if (mode === 'caster') {
+        if (!board[side][idx]) { setStatus('That cell is empty.'); return; }
+        casterKey = key;
+      } else if (mode === 'target') {
+        if (!board[side][idx]) { setStatus('That cell is empty.'); return; }
+        targetKey = key;
+      }
+      renderBoard();
+    });
+
+    // ── Mode buttons ────────────────────────────────────────────────────────────
+    const MODE_HINTS = {
+      place:  'Pick a unit below, then click a cell to place it.',
+      caster: 'Click a placed unit to make it the caster (gold).',
+      target: 'Click a placed unit to make it the target (red).',
+      clear:  'Click a cell to empty it.',
+    };
+    document.getElementById('fx-modes').addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#fx-modes button').forEach(b => b.classList.toggle('active', b === btn));
+      document.getElementById('fx-mode-hint').textContent = MODE_HINTS[mode];
+    });
+
+    // ── Palette ─────────────────────────────────────────────────────────────────
+    function renderPalette(filter = '') {
+      const host = document.getElementById('fx-palette');
+      const q = filter.trim().toLowerCase();
+      const byFaction = {};
+      for (const u of ALL_UNITS) {
+        if (q && !u.name.toLowerCase().includes(q) && !u.id.toLowerCase().includes(q)) continue;
+        (byFaction[u._faction] = byFaction[u._faction] || []).push(u);
+      }
+      const html = [];
+      for (const [fac, list] of Object.entries(byFaction)) {
+        html.push(`<div class="fx-palette-fac">${fac.replace(/_/g, ' ')}</div>`);
+        for (const u of list) {
+          html.push(`
+            <div class="fx-palette-item ${u.id === selectedUnitId ? 'sel' : ''}" data-unit="${u.id}">
+              <img src="${portraitUrl(u)}" onerror="this.style.visibility='hidden'">
+              <span>${u.name}</span>
+            </div>`);
+        }
+      }
+      host.innerHTML = html.join('') || `<div class="fx-palette-fac">No matches</div>`;
+    }
+    document.getElementById('fx-palette').addEventListener('click', e => {
+      const item = e.target.closest('.fx-palette-item'); if (!item) return;
+      selectedUnitId = item.dataset.unit;
+      mode = 'place';
+      document.querySelectorAll('#fx-modes button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'place'));
+      document.getElementById('fx-mode-hint').textContent = MODE_HINTS.place;
+      renderPalette(document.getElementById('fx-search').value);
+      setStatus(`Selected ${unitById[selectedUnitId].name} — click a cell to place.`);
+    });
+    document.getElementById('fx-search').addEventListener('input', e => renderPalette(e.target.value));
+
+    // ── Effect dropdown ─────────────────────────────────────────────────────────
+    const EFFECT_KEYS = Object.keys(EFFECTS).sort();
+    const effectSel = document.getElementById('fx-effect');
+    effectSel.innerHTML = `<option value="__auto">Auto (from caster)</option>` +
+      EFFECT_KEYS.map(k => `<option value="${k}">${k}</option>`).join('');
+
+    // Best-effort mapping from a unit to an effect key, mirroring how the battle
+    // screen decides what to play: explicit action_animation, else ability base
+    // name, else action name.
+    function autoEffectFor(def) {
+      if (!def) return null;
+      const candidates = [
+        def.action_animation,
+        ...(Array.isArray(def.ability) ? def.ability : [def.ability]).map(a => a && String(a).split(' ')[0]),
+        typeof def.action === 'string' ? def.action : null,
+      ].filter(Boolean);
+      return candidates.find(c => EFFECTS[c]) || null;
+    }
+
+    // ── Speed ───────────────────────────────────────────────────────────────────
+    const speedInput = document.getElementById('fx-speed');
+    speedInput.addEventListener('input', () => {
+      window.__FX_SPEED__ = Number(speedInput.value);
+      document.getElementById('fx-speed-val').textContent = `${Number(speedInput.value).toFixed(2)}×`;
+    });
+    window.__FX_SPEED__ = 1;
+
+    // ── Firing ──────────────────────────────────────────────────────────────────
+    // communion is the only source->target signature; everything else takes
+    // (casterCell, { targetCell, isEnemy }) and ignores what it doesn't use.
+    const SOURCE_TARGET = new Set(['communion']);
+
+    function cellEl(key) { return key ? document.querySelector(`.battle-cell[data-id="${key}"]`) : null; }
+
+    async function fire(effectKey, cKey, tKey) {
+      const caster = cellEl(cKey);
+      if (!caster) { setStatus('Set a caster first (Caster mode).'); return; }
+      let key = effectKey;
+      if (key === '__auto') {
+        const def = unitById[board[cKey.split(':')[0]][Number(cKey.split(':')[1])]];
+        key = autoEffectFor(def);
+        if (!key) { setStatus(`No auto effect for ${def?.name ?? 'that unit'} — pick one manually.`); return; }
+        setStatus(`Auto → ${key}`);
+      }
+      const fn = EFFECTS[key];
+      if (!fn) { setStatus(`Unknown effect: ${key}`); return; }
+      const target = cellEl(tKey);
+      const isEnemy = cKey.startsWith('enemy:');
+      lastFire = { effectKey, casterKey: cKey, targetKey: tKey };
+      reattachBattleFx(document.getElementById('fx-screen'));
+      try {
+        if (SOURCE_TARGET.has(key)) {
+          if (!target) { setStatus(`${key} needs a target (Target mode).`); return; }
+          await fn(caster, target);
+        } else {
+          await fn(caster, { targetCell: target, isEnemy });
+        }
+        setStatus(`Played ${key}${target ? ` → target` : ''}.`);
+      } catch (err) {
+        console.error(err); setStatus(`Error: ${err.message}`);
+      }
+    }
+
+    document.getElementById('fx-fire').addEventListener('click', () => fire(effectSel.value, casterKey, targetKey));
+    document.getElementById('fx-replay').addEventListener('click', () => {
+      if (!lastFire) { setStatus('Nothing to replay yet.'); return; }
+      fire(lastFire.effectKey, lastFire.casterKey, lastFire.targetKey);
+    });
+    document.getElementById('fx-reset').addEventListener('click', () => {
+      board.player = {}; board.enemy = {}; casterKey = targetKey = null; renderBoard();
+      setStatus('Board cleared.');
+    });
+
+    // ── Copy setup for AI ───────────────────────────────────────────────────────
+    document.getElementById('fx-copy').addEventListener('click', () => {
+      const cDef = casterKey ? unitById[board[casterKey.split(':')[0]][Number(casterKey.split(':')[1])]] : null;
+      const tDef = targetKey ? unitById[board[targetKey.split(':')[0]][Number(targetKey.split(':')[1])]] : null;
+      const spec = [
+        `FX preview setup:`,
+        `- effect: ${effectSel.value === '__auto' ? `auto (${cDef ? autoEffectFor(cDef) : '?'})` : effectSel.value}`,
+        `- caster: ${cDef ? `${cDef.name} (${cDef.id}) on ${casterKey}` : 'none'}`,
+        `- target: ${tDef ? `${tDef.name} (${tDef.id}) on ${targetKey}` : 'none'}`,
+        `- speed: ${Number(speedInput.value).toFixed(2)}x`,
+      ].join('\n');
+      navigator.clipboard?.writeText(spec).then(
+        () => setStatus('Setup copied to clipboard.'),
+        () => setStatus('Copy failed — clipboard blocked.'));
+    });
+
+    // ── Coverage report ─────────────────────────────────────────────────────────
+    function renderCoverage() {
+      const used = new Set();       // effect keys reachable from some unit
+      const missing = new Map();    // ability/action name -> example unit, no effect
+      for (const u of ALL_UNITS) {
+        const names = [
+          u.action_animation,
+          ...(Array.isArray(u.ability) ? u.ability : [u.ability]).map(a => a && String(a).split(' ')[0]),
+          typeof u.action === 'string' ? u.action : null,
+        ].filter(Boolean);
+        for (const n of names) {
+          if (EFFECTS[n]) used.add(n);
+        }
+        // A unit with an active ability but no matching effect = candidate gap.
+        const abilityBase = Array.isArray(u.ability) ? u.ability[0] : u.ability;
+        if (abilityBase) {
+          const base = String(abilityBase).split(' ')[0];
+          if (!EFFECTS[base] && !missing.has(base)) missing.set(base, u.name);
+        }
+      }
+      const unused = EFFECT_KEYS.filter(k => !used.has(k));
+      const rows = [];
+      rows.push(`<div class="fx-cover-item"><b>${used.size}</b><span class="fx-cover-ok">effects wired to units</span></div>`);
+      for (const [name, ex] of [...missing].slice(0, 40)) {
+        rows.push(`<div class="fx-cover-item"><span>${name}</span><span class="fx-cover-missing">no fx (e.g. ${ex})</span></div>`);
+      }
+      for (const k of unused) {
+        rows.push(`<div class="fx-cover-item"><span>${k}</span><span class="fx-cover-unused">unused effect</span></div>`);
+      }
+      document.getElementById('fx-coverage').innerHTML = rows.join('');
+    }
+
+    // ── Boot ────────────────────────────────────────────────────────────────────
+    function boot() {
+      renderPalette();
+      renderBoard();
+      renderCoverage();
+      // A sensible default board so there's something to fire at immediately.
+      const firstPlayer = ALL_UNITS.find(u => u._faction !== 'enemies');
+      const firstEnemy  = ALL_UNITS.find(u => u._faction === 'enemies') || ALL_UNITS[1];
+      if (firstPlayer) { board.player[2] = firstPlayer.id; casterKey = 'player:2'; }
+      if (firstEnemy)  { board.enemy[2]  = firstEnemy.id;  targetKey = 'enemy:2'; }
+      renderBoard();
+      initBattleFx(document.getElementById('fx-screen'));
+      setStatus('Ready. Place units, set a caster & target, then Fire.');
+    }
+    if (window.PIXI) boot();
+    else window.addEventListener('load', boot);
+    window.addEventListener('resize', () => reattachBattleFx(document.getElementById('fx-screen')));
+  </script>
+</body>
+</html>
