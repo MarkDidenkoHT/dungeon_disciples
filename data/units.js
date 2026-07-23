@@ -2092,7 +2092,7 @@ const UNITS = {
         hp: 85, armor: 10, initiative: 50,
         resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 9,
+        damage_source: 'life', action_power: 10,
         xp: 340, passive: 'bleed 1', ability: null,
       },
       sister_aldra_2: {
@@ -2103,7 +2103,7 @@ const UNITS = {
         hp: 125, armor: 15, initiative: 50,
         resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 12,
+        damage_source: 'life', action_power: 15,
         xp: 340, passive: 'bleed 2', ability: null,
       },
     },
