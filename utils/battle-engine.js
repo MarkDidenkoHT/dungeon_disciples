@@ -751,9 +751,9 @@ class BattleEngine {
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
     this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
     this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
-    // Cost is half the channelled heal, not half of what actually landed — the
+    // Cost is fifth the channelled heal, not half of what actually landed — the
     // sacrifice is paid even when the ally couldn't absorb the full amount.
-    const selfDmg = Math.floor((raw * factor) / 2);
+    const selfDmg = Math.floor((raw * factor) / 5);
     if (selfDmg > 0) {
       actor.battle_hp = Math.max(0, actor.battle_hp - selfDmg);
       const dead = actor.battle_hp <= 0;
