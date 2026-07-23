@@ -26,6 +26,31 @@
       border-radius: 0 8px 8px 0;
       line-height: 1.4;
     }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 18px;
+      background: #1b1e28;
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid #2b2f3d;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #8a8fa8;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .tab-btn:hover { color: #e4e6ed; background: #262b38; }
+    .tab-btn.active { background: #4c6ef5; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     .toolbar {
       background: #1b1e28;
       border: 1px solid #2b2f3d;
@@ -109,7 +134,7 @@
       top: 0;
       z-index: 2;
     }
-    .unit-row {
+    .unit-row, .item-row {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -120,16 +145,16 @@
       transition: 0.08s;
       flex-wrap: wrap;
     }
-    .unit-row:hover { background: #232a38; }
-    .unit-row input[type="checkbox"] {
+    .unit-row:hover, .item-row:hover { background: #232a38; }
+    .unit-row input[type="checkbox"], .item-row input[type="checkbox"] {
       width: 16px;
       height: 16px;
       accent-color: #6c8cff;
       pointer-events: none;
       flex-shrink: 0;
     }
-    .unit-row .tname { flex: 1; font-weight: 500; min-width: 80px; }
-    .unit-row .ttier {
+    .unit-row .tname, .item-row .iname { flex: 1; font-weight: 500; min-width: 80px; }
+    .unit-row .ttier, .item-row .irarity {
       background: #2f3548;
       padding: 0 8px;
       border-radius: 20px;
@@ -137,10 +162,20 @@
       color: #b6bdd6;
       flex-shrink: 0;
     }
-    .unit-row .tsize {
+    .unit-row .tsize, .item-row .ifaction {
       color: #8890ad;
       font-size: 11px;
       text-transform: capitalize;
+      flex-shrink: 0;
+    }
+    .item-row .icost {
+      color: #f5c542;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .item-row .istats {
+      color: #7bdf9a;
+      font-size: 11px;
       flex-shrink: 0;
     }
     .asset-status {
@@ -386,6 +421,10 @@
     }
     .asset-stats .stat-item .count.ok { color: #5ae07a; }
     .asset-stats .stat-item .count.missing { color: #f67a7a; }
+    .rarity-common { color: #8a8fa8; }
+    .rarity-rare { color: #4c9aff; }
+    .rarity-epic { color: #b47cff; }
+    .rarity-mythic { color: #f5c542; }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -398,45 +437,92 @@
 
 <h1>⚖️ Unit Balance · Compare + Scores</h1>
 <div class="sub">
-  Loading units data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
-  <span class="legend">
-    <span class="legend-item"><span class="label">A</span> Art</span>
-    <span class="legend-item"><span class="label">P</span> Portrait</span>
-    <span class="legend-item"><span class="label">P2</span> 2nd Portrait</span>
-    <span class="legend-item"><span class="label">Ab</span> Ability Icon</span>
-    <span class="legend-item"><span class="label">Ac</span> Action Icon</span>
-    <span class="legend-item"><span class="label">Ps</span> Passive Icons</span>
-    <span class="legend-item">✅ exists</span>
-    <span class="legend-item">❌ missing</span>
-    <span class="legend-item" style="color:#4a4f66;">— N/A</span>
-  </span>
+  Loading data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
 </div>
 
-<div class="toolbar">
-  <span class="status" id="loadStatus">⏳ Loading units data...</span>
-  <div class="filter-group">
-    <input type="text" id="searchBox" placeholder="🔍 name, tag, id…" style="min-width:140px;">
-    <select id="factionFilter"><option value="">Faction</option></select>
-    <select id="tierFilter"><option value="">Tier</option></select>
-    <select id="sizeFilter"><option value="">Size</option></select>
-    <select id="tagFilter"><option value="">Tag</option></select>
-  </div>
-  <div class="asset-filter-group">
-    <span class="filter-label">Assets:</span>
-    <select id="assetFilter"><option value="">All</option><option value="missing_any">⚠️ Missing Any</option><option value="all_ok">✅ All OK</option><option value="no_art">❌ No Art</option><option value="no_portrait">❌ No Portrait</option><option value="no_p2">❌ No P2</option><option value="no_ability">❌ No Ability Icon</option><option value="no_action">❌ No Action Icon</option><option value="no_passive">❌ No Passive Icon</option></select>
-  </div>
-  <button class="secondary" id="clearSelection">✕ Clear</button>
-  <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
+<div class="tabs">
+  <button class="tab-btn active" data-tab="units">Units</button>
+  <button class="tab-btn" data-tab="items">Items</button>
 </div>
 
-<div id="assetStats" class="asset-stats"></div>
-
-<div class="layout">
-  <div class="list-panel" id="listPanel">
-    <div class="empty-msg">Loading units...</div>
+<div id="tab-units" class="tab-content active">
+  <div class="sub">
+    <span class="legend">
+      <span class="legend-item"><span class="label">A</span> Art</span>
+      <span class="legend-item"><span class="label">P</span> Portrait</span>
+      <span class="legend-item"><span class="label">P2</span> 2nd Portrait</span>
+      <span class="legend-item"><span class="label">Ab</span> Ability Icon</span>
+      <span class="legend-item"><span class="label">Ac</span> Action Icon</span>
+      <span class="legend-item"><span class="label">Ps</span> Passive Icons</span>
+      <span class="legend-item">✅ exists</span>
+      <span class="legend-item">❌ missing</span>
+      <span class="legend-item" style="color:#4a4f66;">— N/A</span>
+    </span>
   </div>
-  <div class="compare-panel" id="comparePanel">
-    <div class="empty-msg">Select units from the left panel to compare.</div>
+
+  <div class="toolbar">
+    <span class="status" id="loadStatus">⏳ Loading units data...</span>
+    <div class="filter-group">
+      <input type="text" id="searchBox" placeholder="🔍 name, tag, id…" style="min-width:140px;">
+      <select id="factionFilter"><option value="">Faction</option></select>
+      <select id="tierFilter"><option value="">Tier</option></select>
+      <select id="sizeFilter"><option value="">Size</option></select>
+      <select id="tagFilter"><option value="">Tag</option></select>
+    </div>
+    <div class="asset-filter-group">
+      <span class="filter-label">Assets:</span>
+      <select id="assetFilter"><option value="">All</option><option value="missing_any">⚠️ Missing Any</option><option value="all_ok">✅ All OK</option><option value="no_art">❌ No Art</option><option value="no_portrait">❌ No Portrait</option><option value="no_p2">❌ No P2</option><option value="no_ability">❌ No Ability Icon</option><option value="no_action">❌ No Action Icon</option><option value="no_passive">❌ No Passive Icon</option></select>
+    </div>
+    <button class="secondary" id="clearSelection">✕ Clear</button>
+    <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
+  </div>
+
+  <div id="assetStats" class="asset-stats"></div>
+
+  <div class="layout">
+    <div class="list-panel" id="listPanel">
+      <div class="empty-msg">Loading units...</div>
+    </div>
+    <div class="compare-panel" id="comparePanel">
+      <div class="empty-msg">Select units from the left panel to compare.</div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-items" class="tab-content">
+  <div class="sub">
+    <span class="legend">
+      <span class="legend-item"><span class="label">Ic</span> Item Icon</span>
+      <span class="legend-item">✅ exists</span>
+      <span class="legend-item">❌ missing</span>
+    </span>
+  </div>
+
+  <div class="toolbar">
+    <span class="status" id="itemLoadStatus">⏳ Loading items data...</span>
+    <div class="filter-group">
+      <input type="text" id="itemSearchBox" placeholder="🔍 name, key…" style="min-width:140px;">
+      <select id="itemFactionFilter"><option value="">Faction</option></select>
+      <select id="itemRarityFilter"><option value="">Rarity</option></select>
+      <select id="itemTagFilter"><option value="">Tag Required</option></select>
+    </div>
+    <div class="asset-filter-group">
+      <span class="filter-label">Icons:</span>
+      <select id="itemIconFilter"><option value="">All</option><option value="missing_icon">❌ Missing Icon</option><option value="has_icon">✅ Has Icon</option></select>
+    </div>
+    <button class="secondary" id="clearItemSelection">✕ Clear</button>
+    <button class="success" id="copyItemsBtn">📋 Copy Items</button>
+  </div>
+
+  <div id="itemStats" class="asset-stats"></div>
+
+  <div class="layout">
+    <div class="list-panel" id="itemListPanel">
+      <div class="empty-msg">Loading items...</div>
+    </div>
+    <div class="compare-panel" id="itemComparePanel">
+      <div class="empty-msg">Select items from the left panel to compare.</div>
+    </div>
   </div>
 </div>
 
@@ -445,6 +531,7 @@
 <script>
   (function(){
     const loadStatus = document.getElementById('loadStatus');
+    const itemLoadStatus = document.getElementById('itemLoadStatus');
     const searchBox = document.getElementById('searchBox');
     const factionFilter = document.getElementById('factionFilter');
     const tierFilter = document.getElementById('tierFilter');
@@ -456,13 +543,40 @@
     const comparePanel = document.getElementById('comparePanel');
     const clearSelectionBtn = document.getElementById('clearSelection');
     const copyJsonBtn = document.getElementById('copyJsonBtn');
+
+    const itemSearchBox = document.getElementById('itemSearchBox');
+    const itemFactionFilter = document.getElementById('itemFactionFilter');
+    const itemRarityFilter = document.getElementById('itemRarityFilter');
+    const itemTagFilter = document.getElementById('itemTagFilter');
+    const itemIconFilter = document.getElementById('itemIconFilter');
+    const itemStats = document.getElementById('itemStats');
+    const itemListPanel = document.getElementById('itemListPanel');
+    const itemComparePanel = document.getElementById('itemComparePanel');
+    const clearItemSelection = document.getElementById('clearItemSelection');
+    const copyItemsBtn = document.getElementById('copyItemsBtn');
+
     const toast = document.getElementById('toast');
 
     let UNITS = null;
+    let ITEMS = null;
     let flatUnits = [];
+    let flatItems = [];
     let selected = new Set();
+    let selectedItems = new Set();
     let assetCache = new Map();
+    let itemIconCache = new Map();
 
+    // ---- Tab switching ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ---- Hero helpers ----
     function getHeroBaseId(id) {
       if (!id || !id.startsWith('h_')) return id;
       const parts = id.split('_');
@@ -519,6 +633,7 @@
       }
     }
 
+    // ---- Unit asset checking ----
     async function checkUnitAssets(unit) {
       const key = unit.key;
       if (assetCache.has(key)) return assetCache.get(key);
@@ -598,11 +713,26 @@
       return result;
     }
 
-    async function checkAllAssets(units) {
-      const promises = units.map(u => checkUnitAssets(u));
-      await Promise.all(promises);
+    // ---- Item icon checking ----
+    async function checkItemIcon(item) {
+      const key = item.key;
+      if (itemIconCache.has(key)) return itemIconCache.get(key);
+      
+      const icon = item.icon;
+      if (!icon) {
+        const result = { exists: false, path: null };
+        itemIconCache.set(key, result);
+        return result;
+      }
+      
+      const path = `/assets/icons/items/${icon}.png`;
+      const exists = await checkAssetExists(path);
+      const result = { exists, path };
+      itemIconCache.set(key, result);
+      return result;
     }
 
+    // ---- Calc functions ----
     function calcVitality(unit) {
       const d = unit.data;
       const hp = d.hp || 0;
@@ -626,6 +756,7 @@
       return unit.vitality + unit.dps;
     }
 
+    // ---- Flatten units ----
     function flattenUnits(units) {
       const result = [];
       for (const groupName in units) {
@@ -667,6 +798,31 @@
       return result;
     }
 
+    // ---- Flatten items ----
+    function flattenItems(items) {
+      const result = [];
+      for (const key in items) {
+        const data = items[key];
+        if (typeof data !== 'object' || !data) continue;
+        result.push({
+          key: key,
+          data: data,
+          name: data.name || key,
+          faction: data.faction || null,
+          rarity: data.rarity || 'common',
+          tag_required: data.tag_required || null,
+          stat_mods: data.stat_mods || {},
+          passive: data.passive || null,
+          cost: data.cost || {},
+          item_cost: data.item_cost || {},
+          icon: data.icon || null,
+          unique: data.unique || false
+        });
+      }
+      return result;
+    }
+
+    // ---- Filters ----
     function getTagList() {
       const set = new Set();
       flatUnits.forEach(u => {
@@ -704,6 +860,23 @@
         tags.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
+    function populateItemFilters() {
+      const factions = new Set();
+      const rarities = new Set();
+      const tags = new Set();
+      flatItems.forEach(item => {
+        if (item.faction) factions.add(item.faction);
+        if (item.rarity) rarities.add(item.rarity);
+        if (item.tag_required) tags.add(item.tag_required);
+      });
+      itemFactionFilter.innerHTML = '<option value="">All factions</option>' +
+        [...factions].sort().map(f => `<option value="${f}">${f}</option>`).join('');
+      itemRarityFilter.innerHTML = '<option value="">All rarities</option>' +
+        [...rarities].sort().map(r => `<option value="${r}">${r}</option>`).join('');
+      itemTagFilter.innerHTML = '<option value="">All tags</option>' +
+        [...tags].sort().map(t => `<option value="${t}">${t}</option>`).join('');
+    }
+
     function matchesAssetFilter(asset, filter) {
       if (!filter || filter === '') return true;
       
@@ -714,25 +887,37 @@
       const allOk = asset.art && asset.portrait && p2Ok && abilityOk && actionOk && passivesOk;
       
       switch(filter) {
-        case 'missing_any':
-          return !allOk;
-        case 'all_ok':
-          return allOk;
-        case 'no_art':
-          return !asset.art;
-        case 'no_portrait':
-          return !asset.portrait;
-        case 'no_p2':
-          return asset.isLarge && !asset.p2;
-        case 'no_ability':
-          return asset.abilityIcons.length > 0 && !asset.abilityIcons.every(a => a.exists);
-        case 'no_action':
-          return asset.actionIcons.length > 0 && !asset.actionIcons.every(a => a.exists);
-        case 'no_passive':
-          return asset.passiveIcons.length > 0 && !asset.passiveIcons.every(p => p.exists);
-        default:
-          return true;
+        case 'missing_any': return !allOk;
+        case 'all_ok': return allOk;
+        case 'no_art': return !asset.art;
+        case 'no_portrait': return !asset.portrait;
+        case 'no_p2': return asset.isLarge && !asset.p2;
+        case 'no_ability': return asset.abilityIcons.length > 0 && !asset.abilityIcons.every(a => a.exists);
+        case 'no_action': return asset.actionIcons.length > 0 && !asset.actionIcons.every(a => a.exists);
+        case 'no_passive': return asset.passiveIcons.length > 0 && !asset.passiveIcons.every(p => p.exists);
+        default: return true;
       }
+    }
+
+    function matchesItemFilters(item) {
+      const q = itemSearchBox.value.trim().toLowerCase();
+      const fF = itemFactionFilter.value;
+      const rF = itemRarityFilter.value;
+      const tF = itemTagFilter.value;
+      const iF = itemIconFilter.value;
+      
+      if (fF && item.faction !== fF) return false;
+      if (rF && item.rarity !== rF) return false;
+      if (tF && item.tag_required !== tF) return false;
+      
+      const icon = itemIconCache.get(item.key);
+      if (iF === 'missing_icon' && icon && icon.exists) return false;
+      if (iF === 'has_icon' && (!icon || !icon.exists)) return false;
+      
+      if (!q) return true;
+      const haystack = [item.name, item.key, item.faction, item.rarity, item.tag_required]
+        .filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
     }
 
     function matchesFilters(u) {
@@ -773,6 +958,7 @@
       return haystack.includes(q);
     }
 
+    // ---- Render functions ----
     function renderAssetStatus(asset) {
       if (!asset || !asset.id) {
         return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—<span class="sep">|</span><span class="label">Ab</span>—<span class="sep">|</span><span class="label">Ac</span>—<span class="sep">|</span><span class="label">Ps</span>—</span>`;
@@ -782,9 +968,9 @@
       const portIcon = asset.portrait ? '✅' : '❌';
       const p2Icon = asset.isLarge ? (asset.p2 ? '✅' : '❌') : '—';
       
-      const abilityOk = asset.abilityIcons.length > 0 ? asset.abilityIcons.every(a => a.exists) : true;
-      const actionOk = asset.actionIcons.length > 0 ? asset.actionIcons.every(a => a.exists) : true;
-      const passivesOk = asset.passiveIcons.length > 0 ? asset.passiveIcons.every(p => p.exists) : true;
+      const abilityOk = asset.abilityIcons.length === 0 || asset.abilityIcons.every(a => a.exists);
+      const actionOk = asset.actionIcons.length === 0 || asset.actionIcons.every(a => a.exists);
+      const passivesOk = asset.passiveIcons.length === 0 || asset.passiveIcons.every(p => p.exists);
       
       const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2) && abilityOk && actionOk && passivesOk;
       const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2) || !abilityOk || !actionOk || !passivesOk;
@@ -845,7 +1031,21 @@
       </span>`;
     }
 
-    function renderAssetStats() {
+    function renderItemIconStatus(item) {
+      const icon = itemIconCache.get(item.key);
+      if (!icon) {
+        return `<span class="asset-status"><span class="label">Ic</span><span class="icon na">⏳</span></span>`;
+      }
+      const cls = icon.exists ? 'ok' : 'missing';
+      const display = icon.exists ? '✅' : '❌';
+      const statusClass = icon.exists ? 'all-ok' : 'missing-asset';
+      const tooltip = icon.path ? `${icon.path}: ${icon.exists ? 'Exists' : 'Missing'}` : 'No icon defined';
+      return `<span class="asset-status ${statusClass}" title="${tooltip}">
+        <span class="label">Ic</span><span class="icon ${cls}">${display}</span>
+      </span>`;
+    }
+
+    function renderUnitStats() {
       let artTotal = 0, artOk = 0;
       let portTotal = 0, portOk = 0;
       let p2Total = 0, p2Ok = 0;
@@ -906,11 +1106,24 @@
       `;
     }
 
-    function updateStats() {
-      assetStats.innerHTML = renderAssetStats();
+    function renderItemStats() {
+      let total = 0, ok = 0;
+      flatItems.forEach(item => {
+        const icon = itemIconCache.get(item.key);
+        if (icon) {
+          total++;
+          if (icon.exists) ok++;
+        }
+      });
+
+      return `
+        <div class="stat-item"><span class="label">Ic</span> <span class="count ${ok === total ? 'ok' : 'missing'}">${ok}/${total}</span></div>
+        <div class="stat-item"><span class="label">Items</span> <span class="count">${flatItems.length}</span></div>
+      `;
     }
 
-    function renderList() {
+    // ---- Render lists ----
+    function renderUnitList() {
       if (!flatUnits.length) {
         listPanel.innerHTML = '<div class="empty-msg">No units loaded.</div>';
         return;
@@ -949,13 +1162,64 @@
           const key = row.dataset.key;
           if (selected.has(key)) selected.delete(key);
           else selected.add(key);
-          renderList();
-          renderCompare();
+          renderUnitList();
+          renderUnitCompare();
         });
       });
     }
 
-    const STAT_ROWS = [
+    function renderItemList() {
+      if (!flatItems.length) {
+        itemListPanel.innerHTML = '<div class="empty-msg">No items loaded.</div>';
+        return;
+      }
+      const filtered = flatItems.filter(matchesItemFilters);
+      const groups = {};
+      filtered.forEach(item => {
+        const faction = item.faction || 'global';
+        if (!groups[faction]) groups[faction] = [];
+        groups[faction].push(item);
+      });
+      let html = '';
+      Object.keys(groups).sort().forEach(gName => {
+        const items = groups[gName];
+        const label = gName === 'global' ? 'Global (any faction)' : gName;
+        html += `<div class="group-title">${label} (${items.length})</div>`;
+        items.forEach(item => {
+          const checked = selectedItems.has(item.key) ? 'checked' : '';
+          const rarityClass = `rarity-${item.rarity || 'common'}`;
+          const iconStatus = renderItemIconStatus(item);
+          
+          const statStr = Object.entries(item.stat_mods).map(([k,v]) => `${k}+${v}`).join(' ');
+          const passiveStr = item.passive ? `p:${item.passive}` : '';
+          const costStr = Object.entries(item.cost).map(([k,v]) => `${k}:${v}`).join(' ');
+          
+          html += `<div class="item-row" data-key="${item.key}">
+            <input type="checkbox" ${checked}>
+            <span class="iname">${item.name}</span>
+            <span class="irarity ${rarityClass}">${item.rarity || 'common'}</span>
+            ${item.tag_required ? `<span class="ifaction">req:${item.tag_required}</span>` : ''}
+            ${statStr ? `<span class="istats">${statStr}</span>` : ''}
+            ${passiveStr ? `<span class="istats">${passiveStr}</span>` : ''}
+            ${iconStatus}
+          </div>`;
+        });
+      });
+      itemListPanel.innerHTML = html || '<div class="empty-msg">No items match filters.</div>';
+
+      itemListPanel.querySelectorAll('.item-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const key = row.dataset.key;
+          if (selectedItems.has(key)) selectedItems.delete(key);
+          else selectedItems.add(key);
+          renderItemList();
+          renderItemCompare();
+        });
+      });
+    }
+
+    // ---- Compare panels ----
+    const UNIT_STAT_ROWS = [
       { label: 'Faction', get: d => d.f, numeric: false },
       { label: 'Tier', get: d => d.t, numeric: true, higherBetter: false },
       { label: 'Size', get: d => d.size, numeric: false },
@@ -983,7 +1247,7 @@
       { label: '⭐ Overall', get: (d, u) => u ? u.overall : calcOverall({data:d, vitality: calcVitality({data:d}), dps: calcDPS({data:d})}), numeric: true, higherBetter: true, score: true },
     ];
 
-    function renderCompare() {
+    function renderUnitCompare() {
       const units = flatUnits.filter(u => selected.has(u.key));
       if (!units.length) {
         comparePanel.innerHTML = '<div class="empty-msg">Select units from the left panel to compare.</div>';
@@ -1021,7 +1285,7 @@
       });
       html += '</tr></thead><tbody>';
 
-      STAT_ROWS.forEach(row => {
+      UNIT_STAT_ROWS.forEach(row => {
         const values = units.map(u => {
           const val = row.get(u.data, u);
           return (val === undefined || val === null || isNaN(val)) ? null : val;
@@ -1056,44 +1320,88 @@
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           selected.delete(btn.dataset.key);
-          renderList();
-          renderCompare();
+          renderUnitList();
+          renderUnitCompare();
         });
       });
     }
 
-    function copySelectionAsJson() {
+    const ITEM_STAT_ROWS = [
+      { label: 'Key', get: d => d.key, numeric: false },
+      { label: 'Faction', get: d => d.faction || 'global', numeric: false },
+      { label: 'Rarity', get: d => d.rarity, numeric: false },
+      { label: 'Tag Required', get: d => d.tag_required || '—', numeric: false },
+      { label: 'Unique', get: d => d.unique ? 'Yes' : 'No', numeric: false },
+      { label: 'HP', get: d => d.stat_mods?.hp, numeric: true, higherBetter: true },
+      { label: 'Armor', get: d => d.stat_mods?.armor, numeric: true, higherBetter: true },
+      { label: 'Action Power', get: d => d.stat_mods?.action_power, numeric: true, higherBetter: true },
+      { label: 'Initiative', get: d => d.stat_mods?.initiative, numeric: true, higherBetter: true },
+      { label: 'Fire Resist', get: d => d.stat_mods?.fire_resist, numeric: true, higherBetter: true },
+      { label: 'Cold Resist', get: d => d.stat_mods?.cold_resist, numeric: true, higherBetter: true },
+      { label: 'Nature Resist', get: d => d.stat_mods?.nature_resist, numeric: true, higherBetter: true },
+      { label: 'Life Resist', get: d => d.stat_mods?.life_resist, numeric: true, higherBetter: true },
+      { label: 'Death Resist', get: d => d.stat_mods?.death_resist, numeric: true, higherBetter: true },
+      { label: 'Passive', get: d => d.passive || '—', numeric: false },
+      { label: 'Cost', get: d => Object.entries(d.cost || {}).map(([k,v]) => `${k}:${v}`).join(', ') || '—', numeric: false },
+    ];
+
+    function renderItemCompare() {
+      const items = flatItems.filter(item => selectedItems.has(item.key));
+      if (!items.length) {
+        itemComparePanel.innerHTML = '<div class="empty-msg">Select items from the left panel to compare.</div>';
+        return;
+      }
+
+      let html = '<table><thead><tr><th class="stat-label">Stat</th>';
+      items.forEach(item => {
+        const icon = itemIconCache.get(item.key);
+        const iconStatus = icon ? (icon.exists ? '✅' : '❌') : '⏳';
+        html += `<th>${item.name}<br><span class="pill">${item.key}</span><br>
+          <button class="remove-btn" data-key="${item.key}" title="remove">✕</button>
+          <div style="margin-top:4px;font-size:10px;">Ic: ${iconStatus}</div>
+        </th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      ITEM_STAT_ROWS.forEach(row => {
+        const values = items.map(item => row.get(item.data));
+        html += `<tr><td class="stat-label">${row.label}</td>`;
+        values.forEach(v => {
+          const display = (v === null || v === undefined || v === '') ? '—' : v;
+          html += `<td>${display}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      itemComparePanel.innerHTML = html;
+
+      itemComparePanel.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedItems.delete(btn.dataset.key);
+          renderItemList();
+          renderItemCompare();
+        });
+      });
+    }
+
+    // ---- Update stats ----
+    function updateUnitStats() {
+      assetStats.innerHTML = renderUnitStats();
+    }
+
+    function updateItemStats() {
+      itemStats.innerHTML = renderItemStats();
+    }
+
+    // ---- Copy functions ----
+    function copyUnitSelection() {
       const units = flatUnits.filter(u => selected.has(u.key));
       if (!units.length) {
         showToast('⚠️ No units selected!');
         return;
       }
-
-      const prompt = `I need help balancing these units in my game. Here are the units I'm comparing with their stats and scores:
-
-${units.map(u => {
-  const name = u.data.name || u.key;
-  const asset = assetCache.get(u.key);
-  const assetStatus = asset ? `Art: ${asset.art?'✅':'❌'}, Portrait: ${asset.portrait?'✅':'❌'}${asset.isLarge ? `, P2: ${asset.p2?'✅':'❌'}` : ''}${asset.isHero ? ` (hero, all images from: ${asset.baseId})` : ''}` : 'Assets: unknown';
-  return `- ${name} (${u.key})
-  • Faction: ${u.data.f || 'N/A'}, Tier: ${u.data.t || 'N/A'}, Size: ${u.data.size || 'N/A'}
-  • HP: ${u.data.hp || 0}, Armor: ${u.data.armor || 0}, Initiative: ${u.data.initiative || 0}
-  • Action: ${u.data.action || 'N/A'}, Targets: ${u.data.targets || 0}, Range: ${u.data.range || 0}
-  • Action Power: ${u.data.action_power || 0}, XP Cost: ${u.data.xp || 0}
-  • Tags: ${Array.isArray(u.data.tags) ? u.data.tags.filter(Boolean).join(', ') : (u.data.tags || 'None')}
-  • Resistances: ${u.data.resistances ? Object.entries(u.data.resistances).map(([k,v]) => `${k}:${v}`).join(', ') : 'None'}
-  • Vitality Score: ${u.vitality.toFixed(1)}
-  • DPS Score: ${u.dps.toFixed(1)}
-  • Overall Score: ${u.overall.toFixed(1)}
-  • Passive: ${Array.isArray(u.data.passive) ? u.data.passive.filter(Boolean).join(', ') : (u.data.passive || 'None')}
-  • Ability: ${u.data.ability || 'None'}
-  • Assets: ${assetStatus}`;
-}).join('\n\n')}
-
-Based on this data, please provide:
-1. Balance observations - which units seem over/under-powered and why
-2. Suggested stat adjustments to make them more balanced
-3. Any other balance considerations I should be aware of`;
 
       const jsonData = units.map(u => {
         const asset = assetCache.get(u.key);
@@ -1124,18 +1432,54 @@ Based on this data, please provide:
         };
       });
 
-      const fullContent = `${prompt}\n\n--- RAW JSON DATA ---\n${JSON.stringify(jsonData, null, 2)}`;
-      
-      navigator.clipboard.writeText(fullContent).then(() => {
-        showToast(`✅ Copied ${units.length} units with AI prompt!`);
+      navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2)).then(() => {
+        showToast(`✅ Copied ${units.length} units!`);
       }).catch(() => {
         const textarea = document.createElement('textarea');
-        textarea.value = fullContent;
+        textarea.value = JSON.stringify(jsonData, null, 2);
         document.body.appendChild(textarea);
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        showToast(`✅ Copied ${units.length} units with AI prompt!`);
+        showToast(`✅ Copied ${units.length} units!`);
+      });
+    }
+
+    function copyItemSelection() {
+      const items = flatItems.filter(item => selectedItems.has(item.key));
+      if (!items.length) {
+        showToast('⚠️ No items selected!');
+        return;
+      }
+
+      const jsonData = items.map(item => {
+        const icon = itemIconCache.get(item.key);
+        return {
+          key: item.key,
+          name: item.name,
+          faction: item.faction,
+          rarity: item.rarity,
+          tag_required: item.tag_required,
+          unique: item.unique,
+          stat_mods: item.stat_mods,
+          passive: item.passive,
+          cost: item.cost,
+          item_cost: item.item_cost,
+          icon: item.icon,
+          icon_exists: icon ? icon.exists : false
+        };
+      });
+
+      navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2)).then(() => {
+        showToast(`✅ Copied ${items.length} items!`);
+      }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = JSON.stringify(jsonData, null, 2);
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`✅ Copied ${items.length} items!`);
       });
     }
 
@@ -1147,10 +1491,12 @@ Based on this data, please provide:
       }, 3000);
     }
 
+    // ---- Fix trailing commas ----
     function fixTrailingCommas(str) {
       return str.replace(/,(\s*[}\]])/g, '$1');
     }
 
+    // ---- Load data ----
     async function loadUnitsFromProject() {
       try {
         loadStatus.textContent = '⏳ Loading units data...';
@@ -1255,9 +1601,9 @@ Based on this data, please provide:
         await checkAllAssets(flatUnits);
         
         loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, assets checked.`;
-        updateStats();
-        renderList();
-        renderCompare();
+        updateUnitStats();
+        renderUnitList();
+        renderUnitCompare();
         
       } catch (err) {
         loadStatus.textContent = '❌ Error loading units: ' + err.message;
@@ -1268,22 +1614,161 @@ Based on this data, please provide:
       }
     }
 
-    loadUnitsFromProject();
+    async function checkAllAssets(units) {
+      const promises = units.map(u => checkUnitAssets(u));
+      await Promise.all(promises);
+    }
 
+    async function loadItemsFromProject() {
+      try {
+        itemLoadStatus.textContent = '⏳ Loading items data...';
+        itemLoadStatus.className = 'status';
+        
+        const response = await fetch('/data/items.js');
+        if (!response.ok) {
+          throw new Error(`Failed to load items.js: ${response.status} ${response.statusText}`);
+        }
+        
+        let code = await response.text();
+        
+        let cleaned = code;
+        cleaned = cleaned.replace(/^\s*import\s+.*?['"][^'"]+['"]\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*import\s*\{[^}]*\}\s*from\s*['"][^'"]+['"]\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s+default\s+.*?;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*export\s+(const|let|var)\s+/gm, '');
+        cleaned = cleaned.replace(/^\s*if\s*\(\s*typeof\s+module\s*!==\s*['"]undefined['"]\s*\)\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*module\.exports\s*=\s*\{[^}]*\}\s*;?\s*$/gm, '');
+        cleaned = cleaned.replace(/^\s*module\.exports\s*=\s*.*?;?\s*$/gm, '');
+        cleaned = cleaned.replace(/\/\/.*$/gm, '');
+        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//gm, '');
+        
+        const itemsMatch = cleaned.match(/(?:const|let|var)?\s*ITEM_DEFS\s*=\s*\{/);
+        if (!itemsMatch) {
+          throw new Error('Could not find ITEM_DEFS object definition in the file.');
+        }
+        
+        let startIndex = itemsMatch.index;
+        let braceCount = 0;
+        let endIndex = -1;
+        let inString = false;
+        let stringChar = '';
+        let inTemplate = false;
+        
+        for (let i = startIndex; i < cleaned.length; i++) {
+          const char = cleaned[i];
+          if (!inString && !inTemplate) {
+            if (char === '"' || char === "'") {
+              inString = true;
+              stringChar = char;
+              continue;
+            }
+            if (char === '`') {
+              inTemplate = true;
+              continue;
+            }
+            if (char === '{') braceCount++;
+            if (char === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                endIndex = i + 1;
+                break;
+              }
+            }
+          } else if (inString) {
+            if (char === stringChar && cleaned[i-1] !== '\\') {
+              inString = false;
+            }
+          } else if (inTemplate) {
+            if (char === '`' && cleaned[i-1] !== '\\') {
+              inTemplate = false;
+            }
+          }
+        }
+        
+        if (endIndex === -1) {
+          throw new Error('Could not find matching closing brace for ITEM_DEFS object.');
+        }
+        
+        let itemsObjectStr = cleaned.substring(startIndex, endIndex);
+        itemsObjectStr = fixTrailingCommas(itemsObjectStr);
+        
+        let result;
+        try {
+          const fn = new Function(`return (${itemsObjectStr});`);
+          result = fn();
+        } catch (evalError) {
+          try {
+            const objStr = itemsObjectStr.substring(itemsObjectStr.indexOf('{'));
+            const fixedStr = fixTrailingCommas(objStr);
+            const fn2 = new Function(`return (${fixedStr});`);
+            result = fn2();
+          } catch (evalError2) {
+            throw new Error(`Failed to parse ITEM_DEFS object: ${evalError2.message}`);
+          }
+        }
+        
+        if (!result || typeof result !== 'object') {
+          throw new Error('ITEM_DEFS object not found or invalid.');
+        }
+        
+        ITEMS = result;
+        flatItems = flattenItems(ITEMS);
+        selectedItems.clear();
+        populateItemFilters();
+        
+        itemLoadStatus.textContent = `✅ Loaded ${flatItems.length} items, checking icons...`;
+        itemLoadStatus.className = 'status ok';
+        
+        const promises = flatItems.map(item => checkItemIcon(item));
+        await Promise.all(promises);
+        
+        itemLoadStatus.textContent = `✅ Loaded ${flatItems.length} items, icons checked.`;
+        updateItemStats();
+        renderItemList();
+        renderItemCompare();
+        
+      } catch (err) {
+        itemLoadStatus.textContent = '❌ Error loading items: ' + err.message;
+        itemLoadStatus.className = 'status err';
+        console.error('Error details:', err);
+        console.error('Stack trace:', err.stack);
+        itemListPanel.innerHTML = `<div class="empty-msg">Failed to load items. Make sure the file exists at /data/items.js</div>`;
+      }
+    }
+
+    // ---- Event listeners ----
     [searchBox, factionFilter, tierFilter, sizeFilter, tagFilter, assetFilter].forEach(el => {
-      el.addEventListener('input', renderList);
-      el.addEventListener('change', renderList);
+      el.addEventListener('input', renderUnitList);
+      el.addEventListener('change', renderUnitList);
+    });
+
+    [itemSearchBox, itemFactionFilter, itemRarityFilter, itemTagFilter, itemIconFilter].forEach(el => {
+      el.addEventListener('input', renderItemList);
+      el.addEventListener('change', renderItemList);
     });
 
     clearSelectionBtn.addEventListener('click', () => {
       selected.clear();
-      renderList();
-      renderCompare();
+      renderUnitList();
+      renderUnitCompare();
     });
 
-    copyJsonBtn.addEventListener('click', copySelectionAsJson);
+    clearItemSelection.addEventListener('click', () => {
+      selectedItems.clear();
+      renderItemList();
+      renderItemCompare();
+    });
+
+    copyJsonBtn.addEventListener('click', copyUnitSelection);
+    copyItemsBtn.addEventListener('click', copyItemSelection);
+
+    // ---- Start ----
+    loadUnitsFromProject();
+    loadItemsFromProject();
 
     loadStatus.className = 'status';
+    itemLoadStatus.className = 'status';
   })();
 </script>
 </body>
