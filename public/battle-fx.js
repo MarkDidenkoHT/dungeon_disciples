@@ -198,7 +198,7 @@ export async function mithrails_light(cellEl) {
 // bloom sequence, re-anchored to the source (drained) and target (healed) cells.
 export async function communion(sourceCellEl, targetCellEl) {
   console.log('[battle-fx] communion START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
-  if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) return;
+  if (!sourceCellEl?.dataset || !targetCellEl?.dataset || !app || !window.PIXI) return;
   const srcId = sourceCellEl.dataset.id;
   const dstId = targetCellEl.dataset.id;
   const TAU = Math.PI * 2;
@@ -544,12 +544,13 @@ export async function protector(cellEl) {
 }
 
 // ── sacrifice — the actor tears its own blood and hurls it into the target ─────
-// Signature mirrors impale: (actorCell, { targetCell }). Blood gathers on the
-// actor (who flinches), a jagged red beam + droplets cross to the target, and
-// the target takes a crimson splash. With no target it just bleeds in place.
+// Signature mirrors impale: (actorCell, { targetCell }). Reuses communion's
+// blood look — gathering aura, jagged three-layer beam, and drifting red mist
+// blobs — but pointed actor→target: the actor bleeds itself to feed the target,
+// which blooms and rings. With no target it just wells blood in place.
 export async function sacrifice(cellEl, opts = {}) {
   console.log('[battle-fx] sacrifice START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
-  if (!cellEl || !app || !window.PIXI) return;
+  if (!cellEl?.dataset || !app || !window.PIXI) return;
   const actorId  = cellEl.dataset.id;
   const targetId = opts.targetCell?.dataset?.id || null;
   const TAU = Math.PI * 2;
@@ -558,22 +559,24 @@ export async function sacrifice(cellEl, opts = {}) {
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const ADD = PIXI.BLEND_MODES.ADD;
 
-  const drops = Array.from({ length: 14 }, () => ({
-    delay: rand(0, 0.4), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(4, 10), speed: rand(0.9, 1.25),
+  // Blood mist blobs that drift from the actor to the target — the communion look.
+  const mist = Array.from({ length: 18 }, () => ({
+    delay: rand(0, 0.5), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(10, 26), speed: rand(0.85, 1.15),
   }));
 
   const layer     = new PIXI.Container();
   const glowLayer = new PIXI.Container();
   glowLayer.filters = [new PIXI.BlurFilter(5)];
   const actorAura = new PIXI.Graphics(); actorAura.blendMode = ADD;
-  const dropG     = new PIXI.Graphics(); dropG.blendMode     = ADD;
-  const splash    = new PIXI.Graphics(); splash.blendMode    = ADD;
+  const mistG     = new PIXI.Graphics(); mistG.blendMode     = ADD;
+  const targetGlow= new PIXI.Graphics(); targetGlow.blendMode= ADD;
   const beam      = new PIXI.Graphics(); beam.blendMode      = ADD;
-  glowLayer.addChild(actorAura, dropG, splash);
-  layer.addChild(glowLayer, beam);
+  const ring      = new PIXI.Graphics();
+  glowLayer.addChild(actorAura, mistG, targetGlow);
+  layer.addChild(glowLayer, beam, ring);
   app.stage.addChild(layer);
 
-  const DURATION = 900;
+  const DURATION = 1200;
   await animate(DURATION, t => {
     const a = cellBoundsFor(actorId);
     const d = targetId ? cellBoundsFor(targetId) : null;
@@ -581,55 +584,63 @@ export async function sacrifice(cellEl, opts = {}) {
     layer.visible = true;
 
     const cellR = Math.min(a.width, a.height);
-    // Draw (0–.45): blood wells up on the actor, who shudders.
-    const draw = clamp01(t / 0.45);
-    // Throw (.35–1): beam + droplets fly to the target.
-    const throwT = clamp01((t - 0.35) / 0.65);
+    // Phases: welling (0–.3) blood gathers on the actor who flinches, drain
+    // (.25–.75) beam + mist cross, bloom (.72–1) the target lights up.
+    const well  = clamp01(t / 0.30);
+    const drain = clamp01((t - 0.25) / 0.50);
+    const bloom = clamp01((t - 0.72) / 0.28);
 
-    const shake = draw * (1 - throwT) * 4;
+    const shake = drain * (1 - bloom) * 4;
     const ax = a.x + a.width / 2 + (Math.random() - 0.5) * shake;
     const ay = a.y + a.height / 2 + (Math.random() - 0.5) * shake;
     const dx = d ? d.x + d.width / 2 : ax;
     const dy = d ? d.y + d.height / 2 : ay;
+    const ang   = Math.atan2(dy - ay, dx - ax);
+    const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+    const time  = t * DURATION * 0.06;
 
+    // Blood welling up on the actor as it cuts itself.
     actorAura.clear();
-    softGlow(actorAura, ax, ay, cellR * 0.6, 0x8b0000, Math.max(draw * 0.6, throwT * 0.3) * (1 - throwT * 0.5));
+    softGlow(actorAura, ax, ay, cellR * 0.7, 0x8b0000, Math.max(well * 0.55, drain * 0.5) * (1 - bloom));
 
+    // Jagged three-layer beam actor→target.
     beam.clear();
-    if (d && throwT > 0 && throwT < 1) {
-      const ang   = Math.atan2(dy - ay, dx - ax);
-      const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
-      const segs  = 16;
-      const beamA = Math.sin(throwT * Math.PI) * 0.8;
-      [[6, 0xff2020, 0.4], [3, 0xaa0000, 0.22]].forEach(([w, color, la], li) => {
+    const beamA = d ? drain * (1 - bloom) * 0.7 : 0;
+    if (beamA > 0) {
+      const segs = 18;
+      [[6, 0xff2020, 0.4], [4, 0xcc0000, 0.27], [2.5, 0x880000, 0.14]].forEach(([w, color, la], li) => {
         beam.lineStyle(w, color, la * beamA);
         beam.moveTo(ax, ay);
         for (let i = 1; i <= segs; i++) {
           const tt = i / segs;
           const mx = lerp(ax, dx, tt), my = lerp(ay, dy, tt);
-          const off = Math.sin(t * DURATION * 0.02 + i * 0.8 + li) * 9 * Math.sin(tt * Math.PI);
+          const off = Math.sin(time * 0.15 + i * 0.7 + li) * (12 - li * 3) * Math.sin(tt * Math.PI);
           beam.lineTo(mx + perpX * off, my + perpY * off);
         }
       });
     }
 
-    dropG.clear();
+    // Red mist carrying the actor's blood across to the target.
+    mistG.clear();
     if (d) {
-      const ang   = Math.atan2(dy - ay, dx - ax);
-      const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
-      for (const m of drops) {
-        const lp = clamp01((throwT * m.speed - m.delay) / 0.6);
+      for (const m of mist) {
+        const lp = clamp01(((t - 0.25) * m.speed - m.delay * 0.4) / 0.5);
         if (lp <= 0) continue;
         const bx = lerp(ax, dx, lp), by = lerp(ay, dy, lp);
-        const off = m.perp * 12 + Math.sin(t * DURATION * 0.05 + m.wob) * 6 * (1 - lp);
-        softGlow(dropG, bx + perpX * off, by + perpY * off, m.size, 0xc8001e, Math.sin(lp * Math.PI) * 0.7);
+        const wob = Math.sin(time * 0.5 + m.wob) * 8 * (1 - lp * 0.5);
+        const off = m.perp * 14 + wob;
+        softGlow(mistG, bx + perpX * off, by + perpY * off, m.size, 0xc8001e, Math.sin(lp * Math.PI) * 0.55);
       }
     }
 
-    splash.clear();
-    if (d && throwT > 0.55) {
-      const pop = clamp01((throwT - 0.55) / 0.45);
-      softGlow(splash, dx, dy, cellR * (0.35 + pop * 0.5), 0xd0001e, 0.6 * Math.sin(pop * Math.PI));
+    // Target bloom + ring as the offered blood strikes home.
+    targetGlow.clear();
+    ring.clear();
+    if (d && bloom > 0) {
+      const pop = bloom < 0.6 ? bloom / 0.6 : 1 - (bloom - 0.6) / 0.4;
+      softGlow(targetGlow, dx, dy, cellR * (0.5 + bloom * 0.5), 0xd0001e, 0.5 * pop);
+      ring.lineStyle(2, 0xff2038, (1 - bloom) * 0.7);
+      ring.drawCircle(dx, dy, 6 + bloom * cellR * 1.2);
     }
   });
 
@@ -643,7 +654,9 @@ export async function sacrifice(cellEl, opts = {}) {
 // palette so it never reads as the enemy blood-drain.
 export async function shared_suffering(sourceCellEl, targetCellEl) {
   console.log('[battle-fx] shared_suffering START', sourceCellEl?.dataset?.id, '<-', targetCellEl?.dataset?.id);
-  if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) return;
+  // Require two REAL cells — guards against being called single-cell style with
+  // an opts object as the second arg (which has no .dataset and would throw).
+  if (!sourceCellEl?.dataset || !targetCellEl?.dataset || !app || !window.PIXI) return;
   const casterId = sourceCellEl.dataset.id;
   const allyId   = targetCellEl.dataset.id;
   const TAU = Math.PI * 2;
