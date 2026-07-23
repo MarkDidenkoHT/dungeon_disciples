@@ -1127,7 +1127,7 @@ const UNITS = {
       xp: 60, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
     },
     mithrails_will: {
-      id: 'e72', f: 'e', t: 3,
+      id: 'e711', f: 'e', t: 3,
       name: 'Mithrails Will',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
@@ -1390,7 +1390,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'unbreakable 1'], ability: 'shared_suffering 1',
+      passive: ['horde 1', 'protector 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 315
     },
     grail_warden_path_a_t3: {
@@ -1402,7 +1402,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['horde 2', 'unbreakable 1'], ability: 'shared_suffering 1',
+      passive: ['horde 2', 'protector 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 580
     },
     grail_warden_path_a_t4: {
@@ -1414,7 +1414,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
-      passive: ['horde 2', 'unbreakable 1', 'aura_of_decay 1'], ability: 'shared_suffering 1',
+      passive: ['horde 2', 'protector 1', 'aura_of_decay 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_a_t4_alt: {
@@ -1426,7 +1426,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
-      passive: ['horde 2', 'unbreakable 1', 'thorns 1'], ability: 'shared_suffering 1',
+      passive: ['horde 2', 'protector 1', 'thorns 1'], ability: 'shared_suffering 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_b_t2: {
@@ -1438,7 +1438,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'protector 1'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'vengeance 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 315
     },
     grail_warden_path_b_t3: {
@@ -1450,7 +1450,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 29, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'protector 2'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'vengeance 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 580
     },
     grail_warden_path_b_t4: {
@@ -1462,7 +1462,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'protector 2', 'undying 1'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'vengeance 2', 'undying 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_b_t4_alt: {
@@ -1474,7 +1474,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
-      passive: ['horde 2', 'protector 2'], ability: 'grails_blessing 1',
+      passive: ['horde 2', 'vengeance 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
     mothers_voice: {
