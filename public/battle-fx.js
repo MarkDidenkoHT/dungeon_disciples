@@ -652,89 +652,127 @@ export async function sacrifice(sourceCellEl, targetCellEl) {
 // Same source→target shape as communion, but read the other way: life is pulled
 // from the ally (targetCell) INTO the caster (sourceCell). Distinct violet
 // palette so it never reads as the enemy blood-drain.
-export async function shared_suffering(sourceCellEl, targetCellEl) {
-  console.log('[battle-fx] shared_suffering START', sourceCellEl?.dataset?.id, '<-', targetCellEl?.dataset?.id);
-  // Require two REAL cells — guards against being called single-cell style with
-  // an opts object as the second arg (which has no .dataset and would throw).
-  if (!sourceCellEl?.dataset || !targetCellEl?.dataset || !app || !window.PIXI) return;
-  const casterId = sourceCellEl.dataset.id;
-  const allyId   = targetCellEl.dataset.id;
+// A green clone of communion: same windup → drain → transfer → bloom, but life
+// (not blood) is pulled from the ally INTO the caster. Called (casterCell,
+// allyCell); internally the ALLY is the drained source and the CASTER is the
+// bloomed destination, so the flow reads ally → caster.
+export async function shared_suffering(casterCellEl, allyCellEl) {
+  console.log('[battle-fx] shared_suffering START', casterCellEl?.dataset?.id, '<-', allyCellEl?.dataset?.id);
+  if (!casterCellEl?.dataset || !allyCellEl?.dataset || !app || !window.PIXI) return;
+  const srcId = allyCellEl.dataset.id;    // drained
+  const dstId = casterCellEl.dataset.id;  // satiated
   const TAU = Math.PI * 2;
-  const rand  = (a, b) => a + Math.random() * (b - a);
-  const lerp  = (a, b, t) => a + (b - a) * t;
+  const rand   = (a, b) => a + Math.random() * (b - a);
+  const lerp   = (a, b, t) => a + (b - a) * t;
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const ADD = PIXI.BLEND_MODES.ADD;
 
-  // Life motes flow ally -> caster.
-  const motes = Array.from({ length: 16 }, () => ({
-    delay: rand(0, 0.5), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(8, 18), speed: rand(0.85, 1.2),
+  const sparks = Array.from({ length: 16 }, () => ({
+    ang: rand(0, TAU), rad: rand(26, 68), speed: rand(0.9, 1.5), delay: rand(0, 1), size: rand(2, 4),
+  }));
+  const mist = Array.from({ length: 18 }, () => ({
+    delay: rand(0, 0.55), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(10, 26), speed: rand(0.85, 1.15),
   }));
 
   const layer     = new PIXI.Container();
   const glowLayer = new PIXI.Container();
   glowLayer.filters = [new PIXI.BlurFilter(5)];
-  const allyAura   = new PIXI.Graphics(); allyAura.blendMode   = ADD;
-  const moteG      = new PIXI.Graphics(); moteG.blendMode      = ADD;
-  const casterGlow = new PIXI.Graphics(); casterGlow.blendMode = ADD;
-  const tether     = new PIXI.Graphics(); tether.blendMode     = ADD;
-  glowLayer.addChild(allyAura, moteG, casterGlow);
-  layer.addChild(glowLayer, tether);
+  const sourceAura = new PIXI.Graphics(); sourceAura.blendMode = ADD;
+  const sparkG     = new PIXI.Graphics(); sparkG.blendMode     = ADD;
+  const mistG      = new PIXI.Graphics(); mistG.blendMode      = ADD;
+  const targetGlow = new PIXI.Graphics(); targetGlow.blendMode = ADD;
+  const beam       = new PIXI.Graphics(); beam.blendMode       = ADD;
+  const ring       = new PIXI.Graphics();
+  glowLayer.addChild(sourceAura, sparkG, mistG, targetGlow);
+  layer.addChild(glowLayer, beam, ring);
   app.stage.addChild(layer);
 
-  const DURATION = 1300;
+  const DURATION = 1400;
   await animate(DURATION, t => {
-    const c = cellBoundsFor(casterId), al = cellBoundsFor(allyId);
-    if (!c || !al) { layer.visible = false; return; }
+    const s = cellBoundsFor(srcId), d = cellBoundsFor(dstId);
+    if (!s || !d) { layer.visible = false; return; }
     layer.visible = true;
 
-    const cx = c.x + c.width / 2, cy = c.y + c.height / 2;   // caster (destination)
-    const ax = al.x + al.width / 2, ay = al.y + al.height / 2; // ally (source)
-    const cellR = Math.min(c.width, c.height);
+    const sx0 = s.x + s.width / 2, sy0 = s.y + s.height / 2;
+    const dx  = d.x + d.width / 2, dy  = d.y + d.height / 2;
+    const cellR = Math.min(s.width, s.height);
 
-    const draw  = clamp01(t / 0.30);
-    const flow  = clamp01((t - 0.25) / 0.55);
-    const bloom = clamp01((t - 0.72) / 0.28);
+    const windup = clamp01(t / 0.28);
+    const drain  = clamp01((t - 0.28) / 0.44);
+    const bloom  = clamp01((t - 0.72) / 0.28);
 
-    const ang   = Math.atan2(cy - ay, cx - ax);
-    const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+    const shakeAmt = drain * (1 - bloom) * 4;
+    const sx = sx0 + (Math.random() - 0.5) * shakeAmt;
+    const sy = sy0 + (Math.random() - 0.5) * shakeAmt;
 
-    allyAura.clear();
-    softGlow(allyAura, ax, ay, cellR * 0.7, 0x2f8f2f, Math.max(draw * 0.5, flow * 0.5) * (1 - bloom));
+    const ang   = Math.atan2(dy - sy, dx - sx);
+    const perpX = Math.cos(ang + Math.PI / 2);
+    const perpY = Math.sin(ang + Math.PI / 2);
+    const time  = t * DURATION * 0.06;
 
-    tether.clear();
-    const tetherA = flow * (1 - bloom) * 0.7;
-    if (tetherA > 0) {
-      [[5, 0x8dff5a, 0.35], [2.5, 0x3fbf3f, 0.2]].forEach(([w, color, la], li) => {
-        tether.lineStyle(w, color, la * tetherA);
-        tether.moveTo(ax, ay);
-        const segs = 16;
+    // Gathering aura at the drained ally.
+    sourceAura.clear();
+    softGlow(sourceAura, sx, sy, cellR * 0.75, 0x1f7a1f, Math.max(windup * 0.5, drain * 0.55) * (1 - bloom));
+
+    // Sparks raining inward as the ally's life is pulled loose.
+    sparkG.clear();
+    const sparkGate = Math.min(1, windup * 1.5) * (1 - clamp01((t - 0.6) / 0.2));
+    if (sparkGate > 0) {
+      for (const p of sparks) {
+        const phase = (t * p.speed + p.delay) % 1;
+        const r = p.rad * (1 - phase);
+        const a = p.ang + phase * 2;
+        const px = sx + Math.cos(a) * r;
+        const py = sy + Math.sin(a) * r * 0.8;
+        const fade = phase < 0.85 ? 1 : (1 - phase) / 0.15;
+        softGlow(sparkG, px, py, p.size * 2.2, 0x9dff5a, 0.9 * fade * sparkGate);
+      }
+    }
+
+    // Jagged three-layer beam, ally → caster.
+    beam.clear();
+    const beamA = drain * (1 - bloom) * 0.7;
+    if (beamA > 0) {
+      const segs = 18;
+      const layers = [[6, 0x9dff5a, 0.4], [4, 0x3fbf3f, 0.27], [2.5, 0x1f7a1f, 0.14]];
+      layers.forEach(([width, color, la], li) => {
+        beam.lineStyle(width, color, la * beamA);
+        beam.moveTo(sx, sy);
         for (let i = 1; i <= segs; i++) {
           const tt = i / segs;
-          const mx = lerp(ax, cx, tt), my = lerp(ay, cy, tt);
-          const off = Math.sin(t * DURATION * 0.015 + i * 0.7 + li) * 10 * Math.sin(tt * Math.PI);
-          tether.lineTo(mx + perpX * off, my + perpY * off);
+          const mx = lerp(sx, dx, tt), my = lerp(sy, dy, tt);
+          const off = Math.sin(time * 0.15 + i * 0.7 + li) * (12 - li * 3) * Math.sin(tt * Math.PI);
+          beam.lineTo(mx + perpX * off, my + perpY * off);
         }
       });
     }
 
-    moteG.clear();
-    for (const m of motes) {
-      const lp = clamp01(((t - 0.25) * m.speed - m.delay * 0.4) / 0.5);
+    // Mist blobs carrying the stolen life across to the caster.
+    mistG.clear();
+    for (const m of mist) {
+      const lp = clamp01(((t - 0.28) * m.speed - m.delay * 0.4) / 0.5);
       if (lp <= 0) continue;
-      const bx = lerp(ax, cx, lp), by = lerp(ay, cy, lp);
-      const off = m.perp * 13 + Math.sin(t * DURATION * 0.03 + m.wob) * 7 * (1 - lp * 0.5);
-      softGlow(moteG, bx + perpX * off, by + perpY * off, m.size, 0xbdf58a, Math.sin(lp * Math.PI) * 0.55);
+      const bx = lerp(sx, dx, lp), by = lerp(sy, dy, lp);
+      const wob = Math.sin(time * 0.5 + m.wob) * 8 * (1 - lp * 0.5);
+      const off = m.perp * 14 + wob;
+      softGlow(mistG, bx + perpX * off, by + perpY * off, m.size, 0x5fd83f, Math.sin(lp * Math.PI) * 0.55);
     }
 
-    casterGlow.clear();
+    // Caster bloom + expanding ring as the life takes hold.
+    targetGlow.clear();
     if (bloom > 0) {
       const pop = bloom < 0.6 ? bloom / 0.6 : 1 - (bloom - 0.6) / 0.4;
-      softGlow(casterGlow, cx, cy, cellR * (0.5 + bloom * 0.5), 0x6fe03a, 0.5 * pop);
+      softGlow(targetGlow, dx, dy, cellR * (0.5 + bloom * 0.5), 0x3fcf3f, 0.5 * pop);
+    }
+    ring.clear();
+    if (bloom > 0) {
+      ring.lineStyle(2, 0x9dff5a, (1 - bloom) * 0.7);
+      ring.drawCircle(dx, dy, 6 + bloom * cellR * 1.2);
     }
   });
 
   layer.destroy({ children: true });
-  console.log('[battle-fx] shared_suffering END', casterId);
+  console.log('[battle-fx] shared_suffering END', dstId);
 }
 
 // ── light_of_dawn — a warm sunbeam pours across the actor's whole row ───────────
