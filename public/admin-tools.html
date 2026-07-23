@@ -361,6 +361,31 @@
       border-color: #6c8cff;
       outline: none;
     }
+    .asset-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      padding: 6px 14px;
+      background: #141a26;
+      border-radius: 8px;
+      border: 1px solid #2b2f3d;
+      font-size: 12px;
+      margin: 0 14px 8px 14px;
+    }
+    .asset-stats .stat-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .asset-stats .stat-item .label {
+      color: #6a708b;
+      font-weight: 600;
+    }
+    .asset-stats .stat-item .count {
+      color: #d6defa;
+    }
+    .asset-stats .stat-item .count.ok { color: #5ae07a; }
+    .asset-stats .stat-item .count.missing { color: #f67a7a; }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -404,6 +429,8 @@
   <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
 </div>
 
+<div id="assetStats" class="asset-stats"></div>
+
 <div class="layout">
   <div class="list-panel" id="listPanel">
     <div class="empty-msg">Loading units...</div>
@@ -424,6 +451,7 @@
     const sizeFilter = document.getElementById('sizeFilter');
     const tagFilter = document.getElementById('tagFilter');
     const assetFilter = document.getElementById('assetFilter');
+    const assetStats = document.getElementById('assetStats');
     const listPanel = document.getElementById('listPanel');
     const comparePanel = document.getElementById('comparePanel');
     const clearSelectionBtn = document.getElementById('clearSelection');
@@ -817,6 +845,71 @@
       </span>`;
     }
 
+    function renderAssetStats() {
+      let artTotal = 0, artOk = 0;
+      let portTotal = 0, portOk = 0;
+      let p2Total = 0, p2Ok = 0;
+      let abilityTotal = 0, abilityOk = 0;
+      let actionTotal = 0, actionOk = 0;
+      let passiveTotal = 0, passiveOk = 0;
+
+      flatUnits.forEach(u => {
+        const asset = assetCache.get(u.key);
+        if (!asset || !asset.id) return;
+        
+        if (asset.art) artOk++;
+        artTotal++;
+        
+        if (asset.portrait) portOk++;
+        portTotal++;
+        
+        if (asset.isLarge) {
+          if (asset.p2) p2Ok++;
+          p2Total++;
+        }
+        
+        if (asset.abilityIcons.length > 0) {
+          asset.abilityIcons.forEach(a => {
+            if (a.exists) abilityOk++;
+            abilityTotal++;
+          });
+        }
+        
+        if (asset.actionIcons.length > 0) {
+          asset.actionIcons.forEach(a => {
+            if (a.exists) actionOk++;
+            actionTotal++;
+          });
+        }
+        
+        if (asset.passiveIcons.length > 0) {
+          asset.passiveIcons.forEach(p => {
+            if (p.exists) passiveOk++;
+            passiveTotal++;
+          });
+        }
+      });
+
+      const p2Label = p2Total > 0 ? `P2 ${p2Ok}/${p2Total}` : 'P2 —';
+      const abilityLabel = abilityTotal > 0 ? `Ab ${abilityOk}/${abilityTotal}` : 'Ab —';
+      const actionLabel = actionTotal > 0 ? `Ac ${actionOk}/${actionTotal}` : 'Ac —';
+      const passiveLabel = passiveTotal > 0 ? `Ps ${passiveOk}/${passiveTotal}` : 'Ps —';
+
+      return `
+        <div class="stat-item"><span class="label">A</span> <span class="count ${artOk === artTotal ? 'ok' : 'missing'}">${artOk}/${artTotal}</span></div>
+        <div class="stat-item"><span class="label">P</span> <span class="count ${portOk === portTotal ? 'ok' : 'missing'}">${portOk}/${portTotal}</span></div>
+        <div class="stat-item"><span class="label">${p2Label}</span></div>
+        <div class="stat-item"><span class="label">${abilityLabel}</span></div>
+        <div class="stat-item"><span class="label">${actionLabel}</span></div>
+        <div class="stat-item"><span class="label">${passiveLabel}</span></div>
+        <div class="stat-item"><span class="label">Units</span> <span class="count">${flatUnits.length}</span></div>
+      `;
+    }
+
+    function updateStats() {
+      assetStats.innerHTML = renderAssetStats();
+    }
+
     function renderList() {
       if (!flatUnits.length) {
         listPanel.innerHTML = '<div class="empty-msg">No units loaded.</div>';
@@ -1162,6 +1255,7 @@ Based on this data, please provide:
         await checkAllAssets(flatUnits);
         
         loadStatus.textContent = `✅ Loaded ${flatUnits.length} units, assets checked.`;
+        updateStats();
         renderList();
         renderCompare();
         
