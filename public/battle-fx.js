@@ -70,6 +70,10 @@ function cellBoundsFor(dataId) {
 function animate(duration, onTick) {
   return new Promise(resolve => {
     if (!app) { resolve(); return; }
+    // Dev-only global speed override used by fx-preview.html. Undefined in
+    // production, so this is a no-op there (divisor stays 1).
+    const speed = (typeof window !== 'undefined' && Number(window.__FX_SPEED__)) || 1;
+    duration = duration / speed;
     const start = performance.now();
     const tick = () => {
       if (!app) { resolve(); return; }
@@ -539,6 +543,244 @@ export async function protector(cellEl) {
   console.log('[battle-fx] protector END', dataId);
 }
 
+// ── sacrifice — the actor tears its own blood and hurls it into the target ─────
+// Signature mirrors impale: (actorCell, { targetCell }). Blood gathers on the
+// actor (who flinches), a jagged red beam + droplets cross to the target, and
+// the target takes a crimson splash. With no target it just bleeds in place.
+export async function sacrifice(cellEl, opts = {}) {
+  console.log('[battle-fx] sacrifice START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const actorId  = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const TAU = Math.PI * 2;
+  const rand  = (a, b) => a + Math.random() * (b - a);
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  const drops = Array.from({ length: 14 }, () => ({
+    delay: rand(0, 0.4), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(4, 10), speed: rand(0.9, 1.25),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const actorAura = new PIXI.Graphics(); actorAura.blendMode = ADD;
+  const dropG     = new PIXI.Graphics(); dropG.blendMode     = ADD;
+  const splash    = new PIXI.Graphics(); splash.blendMode    = ADD;
+  const beam      = new PIXI.Graphics(); beam.blendMode      = ADD;
+  glowLayer.addChild(actorAura, dropG, splash);
+  layer.addChild(glowLayer, beam);
+  app.stage.addChild(layer);
+
+  const DURATION = 900;
+  await animate(DURATION, t => {
+    const a = cellBoundsFor(actorId);
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    if (!a) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cellR = Math.min(a.width, a.height);
+    // Draw (0–.45): blood wells up on the actor, who shudders.
+    const draw = clamp01(t / 0.45);
+    // Throw (.35–1): beam + droplets fly to the target.
+    const throwT = clamp01((t - 0.35) / 0.65);
+
+    const shake = draw * (1 - throwT) * 4;
+    const ax = a.x + a.width / 2 + (Math.random() - 0.5) * shake;
+    const ay = a.y + a.height / 2 + (Math.random() - 0.5) * shake;
+    const dx = d ? d.x + d.width / 2 : ax;
+    const dy = d ? d.y + d.height / 2 : ay;
+
+    actorAura.clear();
+    softGlow(actorAura, ax, ay, cellR * 0.6, 0x8b0000, Math.max(draw * 0.6, throwT * 0.3) * (1 - throwT * 0.5));
+
+    beam.clear();
+    if (d && throwT > 0 && throwT < 1) {
+      const ang   = Math.atan2(dy - ay, dx - ax);
+      const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+      const segs  = 16;
+      const beamA = Math.sin(throwT * Math.PI) * 0.8;
+      [[6, 0xff2020, 0.4], [3, 0xaa0000, 0.22]].forEach(([w, color, la], li) => {
+        beam.lineStyle(w, color, la * beamA);
+        beam.moveTo(ax, ay);
+        for (let i = 1; i <= segs; i++) {
+          const tt = i / segs;
+          const mx = lerp(ax, dx, tt), my = lerp(ay, dy, tt);
+          const off = Math.sin(t * DURATION * 0.02 + i * 0.8 + li) * 9 * Math.sin(tt * Math.PI);
+          beam.lineTo(mx + perpX * off, my + perpY * off);
+        }
+      });
+    }
+
+    dropG.clear();
+    if (d) {
+      const ang   = Math.atan2(dy - ay, dx - ax);
+      const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+      for (const m of drops) {
+        const lp = clamp01((throwT * m.speed - m.delay) / 0.6);
+        if (lp <= 0) continue;
+        const bx = lerp(ax, dx, lp), by = lerp(ay, dy, lp);
+        const off = m.perp * 12 + Math.sin(t * DURATION * 0.05 + m.wob) * 6 * (1 - lp);
+        softGlow(dropG, bx + perpX * off, by + perpY * off, m.size, 0xc8001e, Math.sin(lp * Math.PI) * 0.7);
+      }
+    }
+
+    splash.clear();
+    if (d && throwT > 0.55) {
+      const pop = clamp01((throwT - 0.55) / 0.45);
+      softGlow(splash, dx, dy, cellR * (0.35 + pop * 0.5), 0xd0001e, 0.6 * Math.sin(pop * Math.PI));
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] sacrifice END', actorId);
+}
+
+// ── shared_suffering — the caster satiates by drawing life from an ally ─────────
+// Same source→target shape as communion, but read the other way: life is pulled
+// from the ally (targetCell) INTO the caster (sourceCell). Distinct violet
+// palette so it never reads as the enemy blood-drain.
+export async function shared_suffering(sourceCellEl, targetCellEl) {
+  console.log('[battle-fx] shared_suffering START', sourceCellEl?.dataset?.id, '<-', targetCellEl?.dataset?.id);
+  if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) return;
+  const casterId = sourceCellEl.dataset.id;
+  const allyId   = targetCellEl.dataset.id;
+  const TAU = Math.PI * 2;
+  const rand  = (a, b) => a + Math.random() * (b - a);
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  // Life motes flow ally -> caster.
+  const motes = Array.from({ length: 16 }, () => ({
+    delay: rand(0, 0.5), perp: rand(-1, 1), wob: rand(0, TAU), size: rand(8, 18), speed: rand(0.85, 1.2),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const allyAura   = new PIXI.Graphics(); allyAura.blendMode   = ADD;
+  const moteG      = new PIXI.Graphics(); moteG.blendMode      = ADD;
+  const casterGlow = new PIXI.Graphics(); casterGlow.blendMode = ADD;
+  const tether     = new PIXI.Graphics(); tether.blendMode     = ADD;
+  glowLayer.addChild(allyAura, moteG, casterGlow);
+  layer.addChild(glowLayer, tether);
+  app.stage.addChild(layer);
+
+  const DURATION = 1300;
+  await animate(DURATION, t => {
+    const c = cellBoundsFor(casterId), al = cellBoundsFor(allyId);
+    if (!c || !al) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = c.x + c.width / 2, cy = c.y + c.height / 2;   // caster (destination)
+    const ax = al.x + al.width / 2, ay = al.y + al.height / 2; // ally (source)
+    const cellR = Math.min(c.width, c.height);
+
+    const draw  = clamp01(t / 0.30);
+    const flow  = clamp01((t - 0.25) / 0.55);
+    const bloom = clamp01((t - 0.72) / 0.28);
+
+    const ang   = Math.atan2(cy - ay, cx - ax);
+    const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+
+    allyAura.clear();
+    softGlow(allyAura, ax, ay, cellR * 0.7, 0x9b30ff, Math.max(draw * 0.5, flow * 0.5) * (1 - bloom));
+
+    tether.clear();
+    const tetherA = flow * (1 - bloom) * 0.7;
+    if (tetherA > 0) {
+      [[5, 0xd070ff, 0.35], [2.5, 0x9b30ff, 0.2]].forEach(([w, color, la], li) => {
+        tether.lineStyle(w, color, la * tetherA);
+        tether.moveTo(ax, ay);
+        const segs = 16;
+        for (let i = 1; i <= segs; i++) {
+          const tt = i / segs;
+          const mx = lerp(ax, cx, tt), my = lerp(ay, cy, tt);
+          const off = Math.sin(t * DURATION * 0.015 + i * 0.7 + li) * 10 * Math.sin(tt * Math.PI);
+          tether.lineTo(mx + perpX * off, my + perpY * off);
+        }
+      });
+    }
+
+    moteG.clear();
+    for (const m of motes) {
+      const lp = clamp01(((t - 0.25) * m.speed - m.delay * 0.4) / 0.5);
+      if (lp <= 0) continue;
+      const bx = lerp(ax, cx, lp), by = lerp(ay, cy, lp);
+      const off = m.perp * 13 + Math.sin(t * DURATION * 0.03 + m.wob) * 7 * (1 - lp * 0.5);
+      softGlow(moteG, bx + perpX * off, by + perpY * off, m.size, 0xc890ff, Math.sin(lp * Math.PI) * 0.55);
+    }
+
+    casterGlow.clear();
+    if (bloom > 0) {
+      const pop = bloom < 0.6 ? bloom / 0.6 : 1 - (bloom - 0.6) / 0.4;
+      softGlow(casterGlow, cx, cy, cellR * (0.5 + bloom * 0.5), 0xb060ff, 0.5 * pop);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] shared_suffering END', casterId);
+}
+
+// ── light_of_dawn — a warm sunbeam pours across the actor's whole row ───────────
+// Single-cell trigger, but the light spans the full arena width at the actor's
+// row: a brightening band plus a few soft god-rays that sweep and fade.
+export async function light_of_dawn(cellEl) {
+  console.log('[battle-fx] light_of_dawn START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // Stable god-ray slots across the band.
+  const rays = Array.from({ length: 6 }, (_, i) => ({ frac: (i + 0.5) / 6 + rand(-0.05, 0.05), w: rand(0.05, 0.11), phase: rand(0, 1) }));
+
+  const layer = new PIXI.Container();
+  const band  = new PIXI.Graphics(); band.blendMode = PIXI.BLEND_MODES.ADD;
+  const rayG  = new PIXI.Graphics(); rayG.blendMode = PIXI.BLEND_MODES.ADD;
+  band.filters = [new PIXI.BlurFilter(4)];
+  layer.addChild(band, rayG);
+  app.stage.addChild(layer);
+
+  await animate(1100, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const W  = app.screen.width;                 // full arena width
+    const y  = b.y;                               // top of the actor's row
+    const h  = b.height * 0.85;                   // band covers the portrait band
+    // Rise in, hold, fade out.
+    const alpha = t < 0.25 ? t / 0.25 : t < 0.6 ? 1 : Math.max(0, 1 - (t - 0.6) / 0.4);
+
+    band.clear();
+    // Warm core with a softer halo above and below.
+    band.beginFill(0xffe6a0, 0.30 * alpha); band.drawRect(0, y - h * 0.25, W, h * 1.5); band.endFill();
+    band.beginFill(0xfff2c8, 0.45 * alpha); band.drawRect(0, y, W, h); band.endFill();
+
+    // Diagonal god-rays sweeping slowly along the band.
+    rayG.clear();
+    const sweep = t * 0.15;
+    for (const r of rays) {
+      const cx = ((r.frac + sweep + r.phase) % 1) * W;
+      const rw = r.w * W;
+      const flick = 0.5 + 0.5 * Math.sin(t * 6 + r.phase * 6);
+      rayG.beginFill(0xfff0c0, 0.16 * alpha * flick);
+      // A thin parallelogram slanted downward.
+      rayG.moveTo(cx, y - h * 0.2);
+      rayG.lineTo(cx + rw, y - h * 0.2);
+      rayG.lineTo(cx + rw - h * 0.4, y + h * 1.1);
+      rayG.lineTo(cx - h * 0.4, y + h * 1.1);
+      rayG.closePath();
+      rayG.endFill();
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] light_of_dawn END', dataId);
+}
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -548,4 +790,7 @@ export const EFFECTS = {
   protector,
   noxious_death,
   last_verse,
+  sacrifice,
+  shared_suffering,
+  light_of_dawn,
 };
