@@ -90,7 +90,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 520px;
+      width: 560px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -333,6 +333,34 @@
       gap: 4px;
     }
     .legend-item .label { color: #6a708b; font-weight: 600; }
+    .asset-filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      align-items: center;
+      background: #141a26;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid #2b2f3d;
+    }
+    .asset-filter-group .filter-label {
+      font-size: 11px;
+      color: #6a708b;
+      margin-right: 4px;
+    }
+    .asset-filter-group select {
+      background: #262b38;
+      border: 1px solid #363c4e;
+      color: #f0f2fa;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      min-width: 50px;
+    }
+    .asset-filter-group select:focus {
+      border-color: #6c8cff;
+      outline: none;
+    }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -368,6 +396,10 @@
     <select id="sizeFilter"><option value="">Size</option></select>
     <select id="tagFilter"><option value="">Tag</option></select>
   </div>
+  <div class="asset-filter-group">
+    <span class="filter-label">Assets:</span>
+    <select id="assetFilter"><option value="">All</option><option value="missing_any">⚠️ Missing Any</option><option value="all_ok">✅ All OK</option><option value="no_art">❌ No Art</option><option value="no_portrait">❌ No Portrait</option><option value="no_p2">❌ No P2</option><option value="no_ability">❌ No Ability Icon</option><option value="no_action">❌ No Action Icon</option><option value="no_passive">❌ No Passive Icon</option></select>
+  </div>
   <button class="secondary" id="clearSelection">✕ Clear</button>
   <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
 </div>
@@ -391,6 +423,7 @@
     const tierFilter = document.getElementById('tierFilter');
     const sizeFilter = document.getElementById('sizeFilter');
     const tagFilter = document.getElementById('tagFilter');
+    const assetFilter = document.getElementById('assetFilter');
     const listPanel = document.getElementById('listPanel');
     const comparePanel = document.getElementById('comparePanel');
     const clearSelectionBtn = document.getElementById('clearSelection');
@@ -643,12 +676,44 @@
         tags.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
+    function matchesAssetFilter(asset, filter) {
+      if (!filter || filter === '') return true;
+      
+      const abilityOk = asset.abilityIcons.length === 0 || asset.abilityIcons.every(a => a.exists);
+      const actionOk = asset.actionIcons.length === 0 || asset.actionIcons.every(a => a.exists);
+      const passivesOk = asset.passiveIcons.length === 0 || asset.passiveIcons.every(p => p.exists);
+      const p2Ok = !asset.isLarge || asset.p2;
+      const allOk = asset.art && asset.portrait && p2Ok && abilityOk && actionOk && passivesOk;
+      
+      switch(filter) {
+        case 'missing_any':
+          return !allOk;
+        case 'all_ok':
+          return allOk;
+        case 'no_art':
+          return !asset.art;
+        case 'no_portrait':
+          return !asset.portrait;
+        case 'no_p2':
+          return asset.isLarge && !asset.p2;
+        case 'no_ability':
+          return asset.abilityIcons.length > 0 && !asset.abilityIcons.every(a => a.exists);
+        case 'no_action':
+          return asset.actionIcons.length > 0 && !asset.actionIcons.every(a => a.exists);
+        case 'no_passive':
+          return asset.passiveIcons.length > 0 && !asset.passiveIcons.every(p => p.exists);
+        default:
+          return true;
+      }
+    }
+
     function matchesFilters(u) {
       const q = searchBox.value.trim().toLowerCase();
       const fF = factionFilter.value;
       const tF = tierFilter.value;
       const sF = sizeFilter.value;
       const tagF = tagFilter.value;
+      const aF = assetFilter.value;
       const d = u.data;
       
       if (fF && d.f !== fF) return false;
@@ -665,6 +730,11 @@
       if (tagF) {
         const tags = Array.isArray(d.tags) ? d.tags : (d.tags ? [d.tags] : []);
         if (!tags.includes(tagF)) return false;
+      }
+      
+      if (aF) {
+        const asset = assetCache.get(u.key);
+        if (!asset || !matchesAssetFilter(asset, aF)) return false;
       }
       
       if (!q) return true;
@@ -1106,7 +1176,7 @@ Based on this data, please provide:
 
     loadUnitsFromProject();
 
-    [searchBox, factionFilter, tierFilter, sizeFilter, tagFilter].forEach(el => {
+    [searchBox, factionFilter, tierFilter, sizeFilter, tagFilter, assetFilter].forEach(el => {
       el.addEventListener('input', renderList);
       el.addEventListener('change', renderList);
     });
