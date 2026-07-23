@@ -2,7 +2,7 @@ import { api }              from '../api.js';
 import { navigate }         from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
-import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { SPELLS }           from '../../data/spells.js';
 import { ITEM_DEFS }        from '../../data/items.js';
 import {
@@ -339,6 +339,12 @@ export function renderRoster(root, { player }) {
         const savedIdx = current;
         initSlider();
         goTo(savedIdx);
+        // Onboarding: revive done → move on to the heal step.
+        if (spellTutorialActive && !isTutorialDone(player, 'spell_revive')) {
+          markTutorialDone(player, 'spell_revive');
+          hideTutorial();
+          showHealStep();
+        }
       } catch (err) {
         alert(err.message || 'Resurrection failed');
       }
@@ -359,6 +365,13 @@ export function renderRoster(root, { player }) {
         const savedIdx = current;
         initSlider();
         goTo(savedIdx);
+        // Onboarding: heal done → the spell tutorial is complete, on to embark.
+        if (spellTutorialActive && !isTutorialDone(player, 'spell_heal')) {
+          markTutorialDone(player, 'spell_heal');
+          spellTutorialActive = false;
+          hideTutorial();
+          navigate('embark', { player });
+        }
       } catch (err) {
         alert(err.message || 'Heal failed');
       }
@@ -701,8 +714,64 @@ export function renderRoster(root, { player }) {
   // chain only advances once the item is really on.
   const STARTING_ITEM_KEY = 'padded_armor';
 
+  // True while the opening spell tutorial (revive → heal) is running, so the
+  // resurrect/heal click handlers only advance the chain during onboarding and
+  // never spotlight for a veteran reviving a unit in normal play.
+  let spellTutorialActive = false;
+
   function heroUnit() {
     return units.find(u => u.is_hero === true) || units[0] || null;
+  }
+
+  // The dead bonus recruit the spell tutorial revives.
+  function deadTutorialUnit() {
+    return units.find(u => u.is_hero !== true && u.unit_data?.alive === false) || null;
+  }
+  // A living but wounded non-hero — the heal step's target (the just-revived unit).
+  function woundedTutorialUnit() {
+    return units.find(u => u.is_hero !== true && u.unit_data?.alive !== false &&
+      u.unit_data?.current_hp != null && u.unit_data?.max_hp != null &&
+      u.unit_data.current_hp < u.unit_data.max_hp) || null;
+  }
+
+  // After the equip step, run the spell tutorial (if a dead recruit is waiting
+  // and it hasn't been completed), otherwise head straight to embark.
+  function startSpellTutorialOrEmbark() {
+    if (!isTutorialDone(player, 'spell_heal') && (deadTutorialUnit() || woundedTutorialUnit())) {
+      spellTutorialActive = true;
+      showReviveStep();
+    } else {
+      navigate('embark', { player });
+    }
+  }
+
+  function showReviveStep() {
+    if (isTutorialDone(player, 'spell_revive')) { showHealStep(); return; }
+    const dead = deadTutorialUnit();
+    if (!dead) { showHealStep(); return; }
+    const idx = units.indexOf(dead);
+    goTo(idx);
+    // Let the slider settle on the dead unit before measuring its button.
+    requestAnimationFrame(() => {
+      const btn = track.children[idx]?.querySelector('.resurrect-btn');
+      if (!btn) { showHealStep(); return; }
+      // Action step: advances (and clears) on the tap; the resurrect handler
+      // then marks it done and chains to the heal step after the re-render.
+      showTutorialSpotlight(player, 'spell_revive', btn);
+    });
+  }
+
+  function showHealStep() {
+    if (isTutorialDone(player, 'spell_heal')) { spellTutorialActive = false; navigate('embark', { player }); return; }
+    const target = woundedTutorialUnit();
+    if (!target) { markTutorialDone(player, 'spell_heal'); spellTutorialActive = false; navigate('embark', { player }); return; }
+    const idx = units.indexOf(target);
+    goTo(idx);
+    requestAnimationFrame(() => {
+      const btn = track.children[idx]?.querySelector('.heal-btn');
+      if (!btn) { markTutorialDone(player, 'spell_heal'); spellTutorialActive = false; navigate('embark', { player }); return; }
+      showTutorialSpotlight(player, 'spell_heal', btn);
+    });
   }
 
   function isEquippableBy(item, unit) {
@@ -727,25 +796,35 @@ export function renderRoster(root, { player }) {
     });
 
     if (!isTutorialDone(player, 'second_building')) return;
-    if (isTutorialDone(player, 'roster_equip')) return;
-    if (!hero) return;
 
-    const heroIdx = units.indexOf(hero);
-    goTo(heroIdx);
+    // Equip step still pending → run the intro/equip chain as before.
+    if (!isTutorialDone(player, 'roster_equip')) {
+      if (!hero) return;
+      const heroIdx = units.indexOf(hero);
+      goTo(heroIdx);
 
-    if (!isTutorialDone(player, 'roster_intro')) {
-      const card = track.children[heroIdx]?.querySelector('.unit-card');
-      if (!card) return;
-      showTutorialSpotlight(player, 'roster_intro', card, {
-        showContinue: true,
-        onAdvance: () => {
-          markTutorialDone(player, 'roster_intro');
-          showEquipSlotStep(hero);
-        },
-      });
+      if (!isTutorialDone(player, 'roster_intro')) {
+        const card = track.children[heroIdx]?.querySelector('.unit-card');
+        if (!card) return;
+        showTutorialSpotlight(player, 'roster_intro', card, {
+          showContinue: true,
+          onAdvance: () => {
+            markTutorialDone(player, 'roster_intro');
+            showEquipSlotStep(hero);
+          },
+        });
+        return;
+      }
+      showEquipSlotStep(hero);
       return;
     }
-    showEquipSlotStep(hero);
+
+    // Equip done but the spell tutorial hasn't finished (e.g. a reload mid-way):
+    // resume it as long as there's still a fallen/wounded recruit to act on.
+    if (!isTutorialDone(player, 'spell_heal') && (deadTutorialUnit() || woundedTutorialUnit())) {
+      spellTutorialActive = true;
+      showReviveStep();
+    }
   }
 
   function showEquipSlotStep(hero) {
@@ -788,10 +867,10 @@ export function renderRoster(root, { player }) {
   // item, so point at it before handing off to embark.
   function showEquippedStep(rosterId) {
     const slot = track.querySelector(`[data-item-slot][data-roster-id="${rosterId}"]`);
-    if (!slot) { navigate('embark', { player }); return; }
+    if (!slot) { startSpellTutorialOrEmbark(); return; }
     showTutorialSpotlight(player, 'roster_equipped', slot, {
       showContinue: true,
-      onAdvance: () => navigate('embark', { player }),
+      onAdvance: () => startSpellTutorialOrEmbark(),
     });
   }
 

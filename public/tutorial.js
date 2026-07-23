@@ -64,6 +64,36 @@ const TUTORIAL_STEPS = {
       text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение. Герой готов — вперёд, в первый бой.',
     },
   },
+  spell_revive: {
+    en: {
+      title: 'A Fallen Ally',
+      text: 'One of your recruits lies fallen. Your Revival spell can bring them back — tap Resurrect to raise them.',
+    },
+    ru: {
+      title: 'Павший союзник',
+      text: 'Один из ваших бойцов пал. Заклинание воскрешения вернёт его — нажмите «Воскресить», чтобы поднять его.',
+    },
+  },
+  spell_heal: {
+    en: {
+      title: 'Mend the Wounded',
+      text: 'They return with barely any health. Your Mending spell restores HP outside of battle — tap Heal to patch them up.',
+    },
+    ru: {
+      title: 'Исцелите раненого',
+      text: 'Он вернулся почти без здоровья. Заклинание исцеления восстанавливает HP вне боя — нажмите «Лечить», чтобы подлечить его.',
+    },
+  },
+  spell_buff: {
+    en: {
+      title: 'Prepare a Blessing',
+      text: 'Before the fight, you can empower an ally. Open your spellbook and cast your buff on a unit to strengthen it for this battle.',
+    },
+    ru: {
+      title: 'Подготовьте благословение',
+      text: 'Перед боем можно усилить союзника. Откройте книгу заклинаний и наложите усиление на бойца, чтобы укрепить его в этом бою.',
+    },
+  },
   embark_region: {
     en: {
       title: 'Choose Your Battle',

@@ -111,10 +111,13 @@ const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Crystals_Air',    amount: 20  },
 ];
 
+// Both support (non-combat) spells plus the faction's first buff, pre-learned so
+// the opening spell tutorial can teach revive, heal, and buff. The buff is
+// normally throne-2 gated, but pre-granting bypasses the research gate.
 const FACTION_STARTING_SPELLS = {
-  empire:              ['e_spell_1', 'e_spell_2'],
-  choir_of_the_cursed: ['d_spell_1', 'd_spell_2'],
-  grail_of_sorrow:     ['g_spell_1', 'g_spell_2'],
+  empire:              ['e_spell_1', 'e_spell_2', 'e_spell_3'],
+  choir_of_the_cursed: ['d_spell_1', 'd_spell_2', 'd_spell_3'],
+  grail_of_sorrow:     ['g_spell_1', 'g_spell_2', 'g_spell_3'],
 };
 
 const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1', 'h_g_2', 'h_g_3'];
@@ -583,9 +586,11 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   // (see the isNew branch there). The hero still gets building_slot: 'slot_0'
   // now so upgrade-path resolution works once that build happens.
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
+  // The bonus unit starts DEAD so the opening spell tutorial has something to
+  // revive (then heal). The hero is alive and armed as usual.
   const rosterEntries = [
     { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true },
-    ...(unitDef ? [{ chat_id, unit_data: makeUnitData(unitDef.id, startingUnit.slot), is_hero: false }] : []),
+    ...(unitDef ? [{ chat_id, unit_data: { ...makeUnitData(unitDef.id, startingUnit.slot), alive: false, current_hp: 0 }, is_hero: false }] : []),
   ];
   const startingItems = STARTING_ITEM_KEYS.map(k => makeItemRow(player_id, k)).filter(Boolean);
   try {
