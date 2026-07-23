@@ -9,6 +9,12 @@ import { createBattleRealtimeController } from '../realtime.js';
 const ROWS = 3;
 const COLS = 2;
 
+// Effects that take two positional cells — EFFECTS[name](sourceCell, targetCell)
+// — because something (life, blood) travels between the acting unit and its
+// target. Everything else is single-cell / (cell, opts). Keep in sync with the
+// two-cell effects in battle-fx.js.
+const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
+
 function cellIndex(row, col) { return row * COLS + col; }
 
 function getPortraitUrl(unit, variant = 'default') {
@@ -196,8 +202,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           : null;
         const isEnemy = actor?.side === 'enemy';
 
-        if (effectName === 'communion' && sourceCell) {
-          await EFFECTS.communion(sourceCell, targetCell);
+        if (SRC_TARGET_FX.has(effectName)) {
+          // Two-cell effects: life/blood flows between a source and a target.
+          // communion carries an explicit sourceId (the drained enemy); the
+          // others originate on the acting unit, so fall back to the actor cell.
+          const src = sourceCell || actorCell;
+          if (src) await EFFECTS[effectName](src, targetCell);
         } else if (entry.type === 'action') {
           const isHealAction = entry.heal === true;
           const cell = isHealAction ? targetCell : (actorCell || targetCell);

@@ -544,15 +544,15 @@ export async function protector(cellEl) {
 }
 
 // ── sacrifice — the actor tears its own blood and hurls it into the target ─────
-// Signature mirrors impale: (actorCell, { targetCell }). Reuses communion's
+// Source→target signature like communion: (actorCell, targetCell). Reuses the
 // blood look — gathering aura, jagged three-layer beam, and drifting red mist
-// blobs — but pointed actor→target: the actor bleeds itself to feed the target,
+// blobs — pointed actor→target: the actor bleeds itself to feed the target,
 // which blooms and rings. With no target it just wells blood in place.
-export async function sacrifice(cellEl, opts = {}) {
-  console.log('[battle-fx] sacrifice START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
-  if (!cellEl?.dataset || !app || !window.PIXI) return;
-  const actorId  = cellEl.dataset.id;
-  const targetId = opts.targetCell?.dataset?.id || null;
+export async function sacrifice(sourceCellEl, targetCellEl) {
+  console.log('[battle-fx] sacrifice START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
+  if (!sourceCellEl?.dataset || !app || !window.PIXI) return;
+  const actorId  = sourceCellEl.dataset.id;
+  const targetId = targetCellEl?.dataset?.id || null;
   const TAU = Math.PI * 2;
   const rand  = (a, b) => a + Math.random() * (b - a);
   const lerp  = (a, b, t) => a + (b - a) * t;
