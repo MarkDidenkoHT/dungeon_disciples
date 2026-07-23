@@ -138,6 +138,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'action' && actorCombatant) {
       return actorCombatant.unit_data?.action_animation || null;
     }
+    if (entry.type === 'ability') {
+      // Active abilities carry their key on the entry (e.g. 'shared_suffering 1').
+      // Map to an effect via the def's effect_name, else the ability's base name.
+      const key = entry.ability
+        || actorCombatant?.unit_data?.ability
+        || actorCombatant?.unit_data?.active_ability;
+      const def = key ? UNIT_ABILITIES[key] : null;
+      return def?.effect_name || (key ? String(key).split(' ')[0] : null);
+    }
     return null;
   }
 

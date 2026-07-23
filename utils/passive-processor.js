@@ -778,7 +778,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (p.devour_dmg_bonus_pct != null) {
       actor._dmg_mult = (actor._dmg_mult ?? 1) + p.devour_dmg_bonus_pct / 100;
     }
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}${p.devour_dmg_bonus_pct != null ? `, +${p.devour_dmg_bonus_pct}% damage` : ''}` });
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — drained ${drained} HP from ${target.unit_name}, healed self for ${healed}${p.devour_dmg_bonus_pct != null ? `, +${p.devour_dmg_bonus_pct}% damage` : ''}` });
     if (healed > 0) engine.fireHealTriggers(actor, actor, healed);
   }
   if (p.ally_initiative_bonus != null) {

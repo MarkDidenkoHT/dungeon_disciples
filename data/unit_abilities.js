@@ -1057,6 +1057,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
+    effect_name: 'shared_suffering',
     description: 'Consume 25% HP from a Zombie ally. Heal self for twice the amount drained.',
     params: { ally_drain_pct: 25, tag_required: 'Zombie', ally_drain_heal_mult: 2 },
   },

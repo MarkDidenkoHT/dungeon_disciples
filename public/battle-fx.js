@@ -699,12 +699,12 @@ export async function shared_suffering(sourceCellEl, targetCellEl) {
     const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
 
     allyAura.clear();
-    softGlow(allyAura, ax, ay, cellR * 0.7, 0x9b30ff, Math.max(draw * 0.5, flow * 0.5) * (1 - bloom));
+    softGlow(allyAura, ax, ay, cellR * 0.7, 0x2f8f2f, Math.max(draw * 0.5, flow * 0.5) * (1 - bloom));
 
     tether.clear();
     const tetherA = flow * (1 - bloom) * 0.7;
     if (tetherA > 0) {
-      [[5, 0xd070ff, 0.35], [2.5, 0x9b30ff, 0.2]].forEach(([w, color, la], li) => {
+      [[5, 0x8dff5a, 0.35], [2.5, 0x3fbf3f, 0.2]].forEach(([w, color, la], li) => {
         tether.lineStyle(w, color, la * tetherA);
         tether.moveTo(ax, ay);
         const segs = 16;
@@ -723,13 +723,13 @@ export async function shared_suffering(sourceCellEl, targetCellEl) {
       if (lp <= 0) continue;
       const bx = lerp(ax, cx, lp), by = lerp(ay, cy, lp);
       const off = m.perp * 13 + Math.sin(t * DURATION * 0.03 + m.wob) * 7 * (1 - lp * 0.5);
-      softGlow(moteG, bx + perpX * off, by + perpY * off, m.size, 0xc890ff, Math.sin(lp * Math.PI) * 0.55);
+      softGlow(moteG, bx + perpX * off, by + perpY * off, m.size, 0xbdf58a, Math.sin(lp * Math.PI) * 0.55);
     }
 
     casterGlow.clear();
     if (bloom > 0) {
       const pop = bloom < 0.6 ? bloom / 0.6 : 1 - (bloom - 0.6) / 0.4;
-      softGlow(casterGlow, cx, cy, cellR * (0.5 + bloom * 0.5), 0xb060ff, 0.5 * pop);
+      softGlow(casterGlow, cx, cy, cellR * (0.5 + bloom * 0.5), 0x6fe03a, 0.5 * pop);
     }
   });
 
