@@ -2201,7 +2201,7 @@ const UNITS = {
         xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
-        id: 'dm_e211', f: 'dm', t: 3,
+        id: 'dm_211', f: 'dm', t: 3,
         name: 'Martyr of the Vow',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
