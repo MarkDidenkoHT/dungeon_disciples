@@ -515,6 +515,15 @@ const UNIT_ABILITIES = {
     description: 'When hit adjacent enemies take 3 cold damage.',
     params: { adjacent_aoe_damage: 3, damage_type: 'cold', range: 1 },
   },
+  'rimeguard 2': {
+    id: 'rimeguard 2',
+    name: 'Rimeguard',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'When hit adjacent enemies take 5 cold damage.',
+    params: { adjacent_aoe_damage: 3, damage_type: 'cold', range: 1 },
+  },
   'thorns 1': {
     id: 'thorns 1',
     effect_name: 'thorns',
