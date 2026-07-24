@@ -20,7 +20,7 @@ const ITEM_DEFS = {
     icon:         'crystal_exoskeleton',
     rarity:       'mythic',
     unique:       true,
-    cost:         { crystal_dust: 2, Gold: 100 },
+    cost:         { living_geode: 10, crystal_dust: 2, Gold: 100 },
     item_cost:    { iron_armor: 1, codex_militarum: 2 },
   },
   crystal_shield: {
@@ -34,7 +34,8 @@ const ITEM_DEFS = {
     passive:      'unbreakable 1',
     icon:         'crystal_shield',
     rarity:       'rare',
-    cost:         { crystal_dust: 2, Gold: 100 },
+    cost:         { living_geode: 2, crystal_dust: 2, Gold: 50 },
+    item_cost:    { iron_shield: 1 },
   },
   aegis_of_the_first_ward: {
     key:          'aegis_of_the_first_ward',
@@ -102,7 +103,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { hp: 3, armor: 5 },
+    stat_mods:    { hp: 3, armor: 3 },
     passive:      'protector 1',
     icon:         'iron_shield',
     rarity:       'rare',

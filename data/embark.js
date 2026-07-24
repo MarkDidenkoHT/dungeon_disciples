@@ -112,8 +112,8 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 15, xp: 30,
-        crystals:        [{ type: 'Crystals_Air', amount: 6 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 6 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
@@ -126,8 +126,8 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 20, xp: 40,
-        crystals:        [{ type: 'Crystals_Air', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 8 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
@@ -139,10 +139,56 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 25, xp: 50,
-        crystals:        [{ type: 'Crystals_Air', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 10 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'living_geode', amount: 1 }],
+      },
+    },
+    level_4: {
+      enemies: [
+        { key: 'glittering_abyss.dread_knight',           cell: 0 },
+        { key: 'glittering_abyss.dread_knight',           cell: 4 },
+        { key: 'glittering_abyss.oathbound_martyr',       cell: 1 },
+        { key: 'glittering_abyss.oathbound_martyr',       cell: 5 },
+      ],
+      rewards: {
+        gold: 30, xp: 60,
+        crystals:        [{ type: 'Crystals_Death', amount: 11 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        trophies:        [{ id: 'grave_dust', amount: 1 }],
+        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+      },
+    },
+    level_5: {
+      enemies: [
+        { key: 'glittering_abyss.dread_knight',           cell: 0 },
+        { key: 'glittering_abyss.dread_knight',           cell: 4 },
+        { key: 'glittering_abyss.oathsworn_martyr',       cell: 1 },
+        { key: 'glittering_abyss.revenant',               cell: 5 },
+      ],
+      rewards: {
+        gold: 35, xp: 70,
+        crystals:        [{ type: 'Crystals_Death', amount: 13 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        trophies:        [{ id: 'grave_dust', amount: 2 }],
+        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+      },
+    },
+    level_6: {
+      enemies: [
+        { key: 'glittering_abyss.dread_knight',           cell: 0 },
+        { key: 'glittering_abyss.dread_knight',           cell: 4 },
+        { key: 'glittering_abyss.oathsworn_martyr',       cell: 1 },
+        { key: 'glittering_abyss.revenant',               cell: 5 },
+        { key: 'glittering_abyss.malgrath_the_undying_2', cell: 2 },
+      ],
+      rewards: {
+        gold: 40, xp: 80,
+        crystals:        [{ type: 'Crystals_Death', amount: 14 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 2 },
+        trophies:        [{ id: 'grave_dust', amount: 2 }],
+        spell_trophies:  [{ id: 'shard_of_might', amount: 2 }],
       },
     },
   },
@@ -150,8 +196,9 @@ const REGION_ENCOUNTERS = {
   chamber_of_unrest: {
     level_1: {
       enemies: [
-        { key: 'chamber_of_unrest.bone_knight', cell: 0, item_id: 'crude_sword' },
-        { key: 'chamber_of_unrest.bone_knight', cell: 4, item_id: 'crude_sword' },
+        { key: 'chamber_of_unrest.bone_knight',   cell: 0, item_id: 'crude_sword' },
+        { key: 'chamber_of_unrest.bone_knight',   cell: 4, item_id: 'crude_sword' },
+        { key: 'chamber_of_unrest.wailing_ghost', cell: 3 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -163,7 +210,7 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'chamber_of_unrest.bone_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.bone_knight',      cell: 0, item_id: 'iron_armor' },
         { key: 'chamber_of_unrest.bone_knight',      cell: 4 },
         { key: 'chamber_of_unrest.oathbound_martyr', cell: 3, item_id: 'everliving_stalk' },
       ],

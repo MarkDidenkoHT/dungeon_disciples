@@ -2177,7 +2177,7 @@ const UNITS = {
       },
       cairnling: {
         id: 'mv_e3', f: 'mv', t: 1,
-        name: 'Cairnling',
+        name: 'Frost Golem',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 110, armor: 10, initiative: 20,
