@@ -2111,7 +2111,7 @@ const UNITS = {
     glittering_abyss: {
       patchling: {
         id: 'mv_e1', f: 'mv', t: 1,
-        name: 'Patchling',
+        name: 'Geodeling',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 40, armor: 10, initiative: 15,
@@ -2122,7 +2122,7 @@ const UNITS = {
       },
       patchling2: {
         id: 'mv_e11', f: 'mv', t: 2,
-        name: 'Patchling',
+        name: 'Geode Mender',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 45, armor: 15, initiative: 15,
@@ -2133,7 +2133,7 @@ const UNITS = {
       },
       patchling3: {
         id: 'mv_e111', f: 'mv', t: 3,
-        name: 'Patchling',
+        name: 'Radiant Geode',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 50, armor: 20, initiative: 15,
@@ -2144,7 +2144,7 @@ const UNITS = {
       },
       cinderling: {
         id: 'mv_e2', f: 'mv', t: 1,
-        name: 'Cinderling',
+        name: 'Frostshard',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 35, armor: 15, initiative: 60,
@@ -2155,7 +2155,7 @@ const UNITS = {
       },
       cinderling2: {
         id: 'mv_e21', f: 'mv', t: 2,
-        name: 'Cinderling',
+        name: 'Rime Splinter',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 45, armor: 15, initiative: 60,
@@ -2166,7 +2166,7 @@ const UNITS = {
       },
       cinderling3: {
         id: 'mv_e211', f: 'mv', t: 3,
-        name: 'Cinderling',
+        name: 'Glacial Prism',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 50, armor: 20, initiative: 60,
@@ -2177,7 +2177,7 @@ const UNITS = {
       },
       crystalite: {
         id: 'mv_e3', f: 'mv', t: 1,
-        name: 'Cinderling',
+        name: 'Cairnling',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 110, armor: 10, initiative: 20,
@@ -2188,7 +2188,7 @@ const UNITS = {
       },
       crystalite2: {
         id: 'mv_e31', f: 'mv', t: 2,
-        name: 'Cinderling',
+        name: 'Rimewarden',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 130, armor: 15, initiative: 20,
@@ -2199,7 +2199,7 @@ const UNITS = {
       },
       crystalite3: {
         id: 'mv_e311', f: 'mv', t: 3,
-        name: 'Cinderling',
+        name: 'Bulwark Geode',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 145, armor: 20, initiative: 20,
@@ -2210,7 +2210,7 @@ const UNITS = {
       },
       prismatis: {
         id: 'mv_e4', f: 'mv', t: 2,
-        name: 'Cairn',
+        name: 'Prism Golem',
         tags: ['Construct', 'Caster'],
         size: 'column',
         hp: 180, armor: 25, initiative: 30,
@@ -2221,7 +2221,7 @@ const UNITS = {
       },
       prismatis2: {
         id: 'mv_e41', f: 'mv', t: 3,
-        name: 'Cairn',
+        name: 'Prismatic Colossus',
         tags: ['Construct', 'Caster'],
         size: 'column',
         hp: 240, armor: 25, initiative: 30,
