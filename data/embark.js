@@ -104,11 +104,11 @@ const REGION_ENCOUNTERS = {
     },
   },
 
-  mountains_of_valdrek: {
+  glittering_abyss: {
     level_1: {
       enemies: [
-        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-        { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
+        { key: 'glittering_abyss.cinderling',  cell: 0 },
+        { key: 'glittering_abyss.cinderling',  cell: 4 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -120,9 +120,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-        { key: 'mountains_of_valdrek.cinderling',  cell: 4 },
-        { key: 'mountains_of_valdrek.patchling',   cell: 1 },
+        { key: 'glittering_abyss.cinderling',  cell: 0 },
+        { key: 'glittering_abyss.cinderling',  cell: 4 },
+        { key: 'glittering_abyss.patchling',   cell: 1 },
       ],
       rewards: {
         gold: 20, xp: 40,
@@ -134,8 +134,8 @@ const REGION_ENCOUNTERS = {
     },
     level_3: {
       enemies: [
-        { key: 'mountains_of_valdrek.cinderling',  cell: 0 },
-        { key: 'mountains_of_valdrek.cairn',       cell: 2 },
+        { key: 'glittering_abyss.cinderling',  cell: 0 },
+        { key: 'glittering_abyss.cairn',       cell: 2 },
       ],
       rewards: {
         gold: 25, xp: 50,
@@ -258,7 +258,7 @@ function buildDifficulties(regionId) {
 // `difficulties` only exists so the server can validate a level and count them.
 const REGIONS = [
   { id: 'crimson_basilica',     difficulties: buildDifficulties('crimson_basilica') },
-  { id: 'mountains_of_valdrek', difficulties: buildDifficulties('mountains_of_valdrek') },
+  { id: 'glittering_abyss', difficulties: buildDifficulties('glittering_abyss') },
   { id: 'chamber_of_unrest', difficulties: buildDifficulties('chamber_of_unrest') },
 ];
 

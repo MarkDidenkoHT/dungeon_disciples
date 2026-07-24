@@ -27,7 +27,7 @@ const BP_NAV_LABELS = {
 
 const REGION_META = {
   crimson_basilica: { label: 'Crimson Basilica', icon: '🌲' },
-  mountains_of_valdrek: { label: 'Mountains of Valdrek',  icon: '⛰️' },
+  glittering_abyss: { label: 'Glittering Abyss',  icon: '⛰️' },
   chamber_of_unrest: { label: 'Chamber Of Unrest',  icon: '💀' },
 };
 

@@ -11,8 +11,8 @@ const REGIONS = [
     crystal: 'Nature',
   },
   {
-    id: 'mountains_of_valdrek',
-    label: 'Mountains of Valdrek',
+    id: 'glittering_abyss',
+    label: 'Glittering Abyss',
     icon: '⛰️',
     description: 'Wind-scoured peaks ruled by stone colossi, frost shamans, and a king that does not die.',
     crystal: 'Air',
