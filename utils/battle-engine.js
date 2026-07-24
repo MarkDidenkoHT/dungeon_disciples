@@ -968,6 +968,106 @@ class BattleEngine {
       .sort((a, b) => b.initiative - a.initiative);
   }
   currentActor() { return this.getActingOrder()[0] ?? null; }
+
+  // ── Enemy AI ────────────────────────────────────────────────────────────────
+  // A light strategy layer: cast abilities only when they'd actually accomplish
+  // something and on a sensible target, let a threatened tank defend when the
+  // team can heal it and still deal damage, and focus attacks to secure kills.
+  // Deliberately shallow — readable heuristics, not a planner.
+
+  // Does this unit's basic action heal allies (target_type 'ally')?
+  aiIsHealer(u) { return this.isHealer(u); }
+
+  // Can this unit contribute offense — a normal attacker with power?
+  aiIsDamageDealer(u) {
+    if (this.aiIsHealer(u)) return false;
+    const power = u.unit_data?.action_power ?? u.unit_data?.action?.value ?? 0;
+    return power > 0;
+  }
+
+  // Picks the best target for a basic action. Healers mend the most-wounded
+  // ally; attackers prefer a target they can kill this hit, then soft/low-HP ones.
+  aiPickActionTarget(actor, targets) {
+    if (!targets.length) return null;
+    if (this.aiIsHealer(actor)) {
+      return targets.slice().sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0];
+    }
+    let best = null, bestScore = -Infinity;
+    for (const t of targets) {
+      const dmg    = this.calcDamageValue(actor, t);
+      const lethal = dmg >= t.battle_hp ? 1 : 0;
+      // Kills first; then raw damage; then favour finishing lower-HP targets.
+      const score = lethal * 100000 + dmg - t.battle_hp * 0.5;
+      if (score > bestScore) { bestScore = score; best = t; }
+    }
+    return best;
+  }
+
+  // Returns a target to cast the ability on, or null to NOT cast it this turn
+  // (so the AI won't waste a heal on the healthy or a cleanse on the clean).
+  aiPickAbilityTarget(actor, def, targets) {
+    if (!def || !targets.length) return null;
+    const p = def.params || {};
+    const hasNegative = c => (c._effects || []).some(e => e.polarity === 'negative')
+      || (c.dot_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._healing_reduction > 0);
+    const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive') || (c._dmg_mult || 1) > 1;
+
+    // Resurrect a fallen ally — always worth it when a valid corpse exists.
+    if (p.resurrect_hp_pct != null) return targets[0];
+    // Cleanse — only if an ally actually carries a debuff.
+    if (p.dispel_negative != null) return targets.find(hasNegative) || null;
+    // Purge — only if an enemy actually carries a buff.
+    if (p.dispel_positive != null) return targets.find(hasPositive) || null;
+    // Drain from an ally — only from a healthy-ish donor (never the near-dead).
+    if (p.ally_drain_pct != null || p.libation_sacrifice_pct != null) {
+      return targets.filter(c => c.id !== actor.id && c.battle_hp / c.max_hp > 0.5)
+        .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
+    }
+    // Heal-type ability — only if someone is wounded.
+    if (p.lowest_ally_heal_pct != null || p.heal_pct != null || p.ally_heal != null) {
+      return targets.filter(c => c.battle_hp < c.max_hp)
+        .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0] || null;
+    }
+    // Team/self buff (initiative, etc.) — cast it; earlier is better, and the
+    // AI only gets one shot at it anyway.
+    if (def.target === 'self' || def.target === 'all_allies' || def.target === 'ally' || def.target === 'ally_any' || def.target === 'ally_tagged') {
+      return targets.includes(actor) ? actor : targets[0];
+    }
+    // Offensive ability — same target logic as an attack (secure kills).
+    return this.aiPickActionTarget(actor, targets);
+  }
+
+  // A wounded tank should defend when a healer is alive to mend it and someone
+  // else can carry the offense — exactly the "hold the line" case. Healers never
+  // defend (they should be healing).
+  aiShouldDefend(actor) {
+    if (this.aiIsHealer(actor)) return false;
+    if (actor.battle_hp / actor.max_hp >= 0.4) return false; // only when threatened
+    const allies = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+    const hasHealer = allies.some(a => this.aiIsHealer(a));
+    const hasOtherDamage = allies.some(a => this.aiIsDamageDealer(a));
+    return hasHealer && hasOtherDamage;
+  }
+
+  // Chooses this enemy's whole turn: ability / defend / attack / skip.
+  chooseAiAction(actor) {
+    const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
+    if (key && !actor.used_active && !actor._actives_locked) {
+      const def = this.ABILITIES?.[key];
+      const abilityTargets = this.getValidTargets(actor, true);
+      if (abilityTargets.length) {
+        const pick = this.aiPickAbilityTarget(actor, def, abilityTargets);
+        if (pick) return { type: 'ability', target: pick };
+      }
+    }
+    if (this.aiShouldDefend(actor)) return { type: 'defend', target: null };
+    const targets = this.getValidTargets(actor);
+    // No one to act on (e.g. a melee unit with nothing in reach): brace instead
+    // of idling — a defending unit is better than a wasted turn.
+    if (!targets.length) return { type: 'defend', target: null };
+    return { type: 'attack', target: this.aiPickActionTarget(actor, targets) };
+  }
+
   runAiTurns() {
     const newLog = [];
     while (!this.done) {
@@ -992,16 +1092,13 @@ class BattleEngine {
         newLog.push(...this.log.slice(before));
         continue;
       }
-      const hasAbility = !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
-      if (hasAbility && !actor.used_active && !actor._actives_locked) {
-        const targets = this.getValidTargets(actor, true);
-        if (targets.length > 0) { this.doAbility(actor, targets[0]); newLog.push(...this.log.slice(before)); continue; }
-      }
-      const targets = this.getValidTargets(actor);
-      if (!targets.length) { this.skipTurn(actor); }
-      else {
-        const target = targets.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
-        this.executeAction(actor, target, 'attack', { turnStart: false }); // already ticked at loop top
+      const decision = this.chooseAiAction(actor);
+      if (decision.type === 'ability') {
+        this.doAbility(actor, decision.target);
+      } else if (decision.type === 'defend') {
+        this.executeAction(actor, null, 'defend', { turnStart: false });
+      } else {
+        this.executeAction(actor, decision.target, 'attack', { turnStart: false }); // already ticked at loop top
       }
       newLog.push(...this.log.slice(before));
     }
