@@ -461,6 +461,97 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { vial_of_pure_blood: 1, aggrails_signet: 1 },
     },
+    // Sister Aldra (opb_e5/opb_e51) is a boss — deliberately NOT recruitable.
+  ],
+
+  // Living-crystal mercenaries of the Glittering Abyss. Costs use the region's
+  // trophies (crystal_dust / crystal_shard). The Prismatis line (mv_e4/mv_e41)
+  // is a boss and is intentionally absent — bosses are never mercenaries.
+  glittering_abyss: [
+    // Geodeling line — repairing menders.
+    {
+      id:       'ga_geodeling',
+      label:    'Geodeling',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e1',
+      tier:     1,
+      upgrades: ['ga_geode_mender'],
+      cost:     { crystal_dust: 1, crystal_shard: 1 },
+    },
+    {
+      id:       'ga_geode_mender',
+      label:    'Geode Mender',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e11',
+      tier:     2,
+      upgrades: ['ga_radiant_geode'],
+      cost:     { crystal_dust: 2, crystal_shard: 2 },
+    },
+    {
+      id:       'ga_radiant_geode',
+      label:    'Radiant Geode',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e111',
+      tier:     3,
+      upgrades: [],
+      cost:     { crystal_dust: 4, crystal_shard: 3 },
+    },
+    // Frostshard line — fast cold strikers.
+    {
+      id:       'ga_frostshard',
+      label:    'Frostshard',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e2',
+      tier:     1,
+      upgrades: ['ga_rime_splinter'],
+      cost:     { crystal_dust: 1, crystal_shard: 1 },
+    },
+    {
+      id:       'ga_rime_splinter',
+      label:    'Rime Splinter',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e21',
+      tier:     2,
+      upgrades: ['ga_glacial_prism'],
+      cost:     { crystal_dust: 2, crystal_shard: 2 },
+    },
+    {
+      id:       'ga_glacial_prism',
+      label:    'Glacial Prism',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e211',
+      tier:     3,
+      upgrades: [],
+      cost:     { crystal_dust: 4, crystal_shard: 3 },
+    },
+    // Cairnling line — row-holding protectors.
+    {
+      id:       'ga_cairnling',
+      label:    'Cairnling',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e3',
+      tier:     1,
+      upgrades: ['ga_rimewarden'],
+      cost:     { crystal_dust: 2, crystal_shard: 1 },
+    },
+    {
+      id:       'ga_rimewarden',
+      label:    'Rimewarden',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e31',
+      tier:     2,
+      upgrades: ['ga_bulwark_geode'],
+      cost:     { crystal_dust: 3, crystal_shard: 2 },
+    },
+    {
+      id:       'ga_bulwark_geode',
+      label:    'Bulwark Geode',
+      region:   'glittering_abyss',
+      unit_id:  'mv_e311',
+      tier:     3,
+      upgrades: [],
+      cost:     { crystal_dust: 5, crystal_shard: 3 },
+    },
   ],
 };
 

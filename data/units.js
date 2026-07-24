@@ -2109,7 +2109,7 @@ const UNITS = {
     },
 
     glittering_abyss: {
-      patchling: {
+      geodeling: {
         id: 'mv_e1', f: 'mv', t: 1,
         name: 'Geodeling',
         tags: ['Construct', 'Caster'],
@@ -2120,7 +2120,7 @@ const UNITS = {
         damage_source: null, action_power: 10,
         xp: 55, passive: 'fortify 1', ability: null,
       },
-      patchling2: {
+      geodeling2: {
         id: 'mv_e11', f: 'mv', t: 2,
         name: 'Geode Mender',
         tags: ['Construct', 'Caster'],
@@ -2131,7 +2131,7 @@ const UNITS = {
         damage_source: null, action_power: 15,
         xp: 55, passive: ['fortify 1'], ability: null,
       },
-      patchling3: {
+      geodeling3: {
         id: 'mv_e111', f: 'mv', t: 3,
         name: 'Radiant Geode',
         tags: ['Construct', 'Caster'],
@@ -2142,7 +2142,7 @@ const UNITS = {
         damage_source: null, action_power: 20,
         xp: 55, passive: ['fortify 1'], ability: null,
       },
-      cinderling: {
+      frostshard: {
         id: 'mv_e2', f: 'mv', t: 1,
         name: 'Frostshard',
         tags: ['Construct', 'Caster'],
@@ -2153,7 +2153,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 10,
         xp: 75, passive: ['slow 1'], ability: null,
       },
-      cinderling2: {
+      frostshard2: {
         id: 'mv_e21', f: 'mv', t: 2,
         name: 'Rime Splinter',
         tags: ['Construct', 'Caster'],
@@ -2164,7 +2164,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 14,
         xp: 75, passive: ['slow 1'], ability: null,
       },
-      cinderling3: {
+      frostshard3: {
         id: 'mv_e211', f: 'mv', t: 3,
         name: 'Glacial Prism',
         tags: ['Construct', 'Caster'],
@@ -2175,7 +2175,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 18,
         xp: 75, passive: ['slow 1'], ability: null,
       },
-      crystalite: {
+      cairnling: {
         id: 'mv_e3', f: 'mv', t: 1,
         name: 'Cairnling',
         tags: ['Construct', 'Caster'],
@@ -2186,7 +2186,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 12,
         xp: 75, passive: ['protector 1', 'rimeguard 1'], ability: null,
       },
-      crystalite2: {
+      cairnling2: {
         id: 'mv_e31', f: 'mv', t: 2,
         name: 'Rimewarden',
         tags: ['Construct', 'Caster'],
@@ -2197,7 +2197,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 16,
         xp: 75, passive: ['protector 2', 'rimeguard 1'], ability: null,
       },
-      crystalite3: {
+      cairnling3: {
         id: 'mv_e311', f: 'mv', t: 3,
         name: 'Bulwark Geode',
         tags: ['Construct', 'Caster'],
@@ -2208,7 +2208,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 20,
         xp: 75, passive: ['protector 2', 'rimeguard 2'], ability: null,
       },
-      prismatis: {
+      prism_golem: {
         id: 'mv_e4', f: 'mv', t: 2,
         name: 'Prism Golem',
         tags: ['Construct', 'Caster'],
@@ -2219,7 +2219,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 30,
         xp: 320, passive: ['chill 1', 'dissipate 1'], ability: null,
       },
-      prismatis2: {
+      prism_golem2: {
         id: 'mv_e41', f: 'mv', t: 3,
         name: 'Prismatic Colossus',
         tags: ['Construct', 'Caster'],

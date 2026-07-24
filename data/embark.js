@@ -107,8 +107,8 @@ const REGION_ENCOUNTERS = {
   glittering_abyss: {
     level_1: {
       enemies: [
-        { key: 'glittering_abyss.cinderling',  cell: 0 },
-        { key: 'glittering_abyss.cinderling',  cell: 4 },
+        { key: 'glittering_abyss.frostshard',  cell: 0 },
+        { key: 'glittering_abyss.frostshard',  cell: 4 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -120,9 +120,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'glittering_abyss.cinderling',  cell: 0 },
-        { key: 'glittering_abyss.cinderling',  cell: 4 },
-        { key: 'glittering_abyss.patchling',   cell: 1 },
+        { key: 'glittering_abyss.frostshard',  cell: 0 },
+        { key: 'glittering_abyss.frostshard',  cell: 4 },
+        { key: 'glittering_abyss.geodeling',   cell: 1 },
       ],
       rewards: {
         gold: 20, xp: 40,
@@ -134,8 +134,8 @@ const REGION_ENCOUNTERS = {
     },
     level_3: {
       enemies: [
-        { key: 'glittering_abyss.cinderling',  cell: 0 },
-        { key: 'glittering_abyss.cairn',       cell: 2 },
+        { key: 'glittering_abyss.frostshard',  cell: 0 },
+        { key: 'glittering_abyss.cairnling',       cell: 2 },
       ],
       rewards: {
         gold: 25, xp: 50,
