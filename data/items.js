@@ -8,32 +8,33 @@
 //   cost/item_cost resource + item-ingredient cost to craft.
 const ITEM_DEFS = {
 
-  meteor_exoskeleton: {
-    key:          'meteor_exoskeleton',
-    name:         'Meteor Exoskeleton',
-    name_ru:      'Метеоритный Экзоскелет',
+  crystal_exoskeleton: {
+    key:          'crystal_exoskeleton',
+    name:         'Crystal Exoskeleton',
+    name_ru:      'Кристальный Экзоскелет',
     faction:      null,
     tag_required: 'Engineer',
     adds_tag:     'Construct',
     stat_mods:    { hp: 3, armor: 3 },
     passive:      null,
-    icon:         'meteor_exoskeleton',
+    icon:         'crystal_exoskeleton',
     rarity:       'mythic',
     unique:       true,
-    cost:         { cinder_ash: 2, Gold: 100 },
+    cost:         { crystal_dust: 2, Gold: 100 },
+    item_cost:    { iron_armor: 1, codex_militarum: 2 },
   },
-  meteor_shield: {
-    key:          'meteor_shield',
-    name:         'Meteor Exoskeleton',
-    name_ru:      'Метеоритный экзоскелет',
+  crystal_shield: {
+    key:          'crystal_shield',
+    name:         'Crystal Exoskeleton',
+    name_ru:      'Кристальный Экзоскелет',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { hp: 3, armor: 3 },
     passive:      'unbreakable 1',
-    icon:         'meteor_shield',
+    icon:         'crystal_shield',
     rarity:       'rare',
-    cost:         { cinder_ash: 2, Gold: 100 },
+    cost:         { crystal_dust: 2, Gold: 100 },
   },
   aegis_of_the_first_ward: {
     key:          'aegis_of_the_first_ward',
@@ -67,7 +68,7 @@ const ITEM_DEFS = {
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
     name:         'Sanctified Bulwark',
-    name_ru:      'Освящённый оплот',
+    name_ru:      'Освящённый Оплот',
     faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     'Holy',
@@ -149,7 +150,7 @@ const ITEM_DEFS = {
   dragon_skin: {
     key:          'dragon_skin',
     name:         'Dragon Skin',
-    name_ru:      'Драконья кожа',
+    name_ru:      'Драконья Кожа',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -158,7 +159,7 @@ const ITEM_DEFS = {
     icon:         'dragon_skin',
     rarity:       'epic',
     unique:       true,
-    cost:         { cinder_ash: 2, Gold: 75, Crystals_Fire: 25 },
+    cost:         { crystal_dust: 2, Gold: 75, Crystals_Fire: 25 },
     item_cost:    { iron_armor: 1, fire_resistance_potion: 2 },
   },
   aldras_devotion: {
@@ -220,7 +221,7 @@ const ITEM_DEFS = {
   iron_armor: {
     key:          'iron_armor',
     name:         "Iron Armor",
-    name_ru:      'Железный доспех',
+    name_ru:      'Железный Доспех',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -233,8 +234,8 @@ const ITEM_DEFS = {
   },
   rimeheart: {
     key:          'rimeheart',
-    name:         "Iron Armor",
-    name_ru:      'Железный доспех',
+    name:         "Rime Heart",
+    name_ru:      'Сердце Зимы',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -261,7 +262,7 @@ const ITEM_DEFS = {
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
     name:         "Fire Resistance Potion",
-    name_ru:      'Зелье огнестойкости',
+    name_ru:      'Зелье Огнестойкости',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -288,7 +289,7 @@ const ITEM_DEFS = {
   death_resistance_potion: {
     key:          'death_resistance_potion',
     name:         "Death Resistance Potion",
-    name_ru:      'Зелье защиты от смерти',
+    name_ru:      'Зелье Защиты От Смерти',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -301,7 +302,7 @@ const ITEM_DEFS = {
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
     name:         "Cold Resistance Potion",
-    name_ru:      'Зелье холодостойкости',
+    name_ru:      'Зелье Холодостойкости',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -314,7 +315,7 @@ const ITEM_DEFS = {
   crude_sword: {
     key:          'crude_sword',
     name:         "Crude Sword",
-    name_ru:      'Грубый меч',
+    name_ru:      'Грубый Меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -327,7 +328,7 @@ const ITEM_DEFS = {
   iron_sword: {
     key:          'iron_sword',
     name:         "Iron Sword",
-    name_ru:      'Железный меч',
+    name_ru:      'Железный Меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -341,7 +342,7 @@ const ITEM_DEFS = {
   crystal_sword: {
     key:          'crystal_sword',
     name:         "Crystal Sword",
-    name_ru:      'Кристальный меч',
+    name_ru:      'Кристальный Меч',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -369,7 +370,7 @@ const ITEM_DEFS = {
   broken_seal: {
     key:          'broken_seal',
     name:         "Broken Seal",
-    name_ru:      'Сломанная печать',
+    name_ru:      'Сломанная Печать',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -382,7 +383,7 @@ const ITEM_DEFS = {
   lion_signet: {
     key:          'lion_signet',
     name:         "Lion Signet",
-    name_ru:      'Львиный перстень',
+    name_ru:      'Львиный Перстень',
     faction:      'empire',
     tag_required: null,
     adds_tag:     null,
@@ -425,7 +426,7 @@ const ITEM_DEFS = {
   poisonous_dagger: {
     key:          'poisonous_dagger',
     name:         "Poisonous Dagger",
-    name_ru:      'Ядовитый кинжал',
+    name_ru:      'Ядовитый Кинжал',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -439,7 +440,7 @@ const ITEM_DEFS = {
   frost_lance: {
     key:          'frost_lance',
     name:         "Frost Lance",
-    name_ru:      'Морозная пика',
+    name_ru:      'Морозная Пика',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -453,7 +454,7 @@ const ITEM_DEFS = {
   bone_barrier: {
     key:          'bone_barrier',
     name:         "Bone Barrier",
-    name_ru:      'Костяной барьер',
+    name_ru:      'Костяной Барьер',
     faction:      null,
     tag_required: null,
     adds_tag:     'Skeleton',
@@ -467,7 +468,7 @@ const ITEM_DEFS = {
   veil_of_discord: {
     key:          'veil_of_discord',
     name:         "Veil Of Discord",
-    name_ru:      'Покров раздора',
+    name_ru:      'Покров Раздора',
     faction:      'grail_of_sorrow',
     tag_required: null,
     adds_tag:     null,
@@ -482,7 +483,7 @@ const ITEM_DEFS = {
   cloak_of_evasion: {
     key:          'cloak_of_evasion',
     name:         "Cloak Of Evasion",
-    name_ru:      'Плащ уклонения',
+    name_ru:      'Плащ Уклонения',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -500,7 +501,7 @@ const ITEM_DEFS = {
   travelers_bedroll: {
     key:          'travelers_bedroll',
     name:         "Traveler's Bedroll",
-    name_ru:      'Походная скатка',
+    name_ru:      'Походная Скатка',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -514,7 +515,7 @@ const ITEM_DEFS = {
   veterans_medal: {
     key:          'veterans_medal',
     name:         "Veteran's Medal",
-    name_ru:      'Медаль ветерана',
+    name_ru:      'Медаль Ветерана',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -528,7 +529,7 @@ const ITEM_DEFS = {
   shackle_of_servitude: {
     key:          'shackle_of_servitude',
     name:         'Shackle of Servitude',
-    name_ru:      'Оковы служения',
+    name_ru:      'Оковы Служения',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -542,7 +543,7 @@ const ITEM_DEFS = {
   scavengers_satchel: {
     key:          'scavengers_satchel',
     name:         "Scavenger's Satchel",
-    name_ru:      'Сумка мародёра',
+    name_ru:      'Сумка Мародёра',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -556,7 +557,7 @@ const ITEM_DEFS = {
   attuned_focus: {
     key:          'attuned_focus',
     name:         'Attuned Focus',
-    name_ru:      'Настроенный фокус',
+    name_ru:      'Настроенный Фокус',
     faction:      null,
     tag_required: null,
     adds_tag:     null,

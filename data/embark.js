@@ -114,8 +114,8 @@ const REGION_ENCOUNTERS = {
         gold: 15, xp: 30,
         crystals:        [{ type: 'Crystals_Air', amount: 6 }],
         crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
-        trophies:        [{ id: 'cinder_ash', amount: 1 }],
-        spell_trophies:  [{ id: 'patchling_stitching', amount: 1 }],
+        trophies:        [{ id: 'crystal_dust', amount: 1 }],
+        spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
     },
     level_2: {
@@ -128,8 +128,8 @@ const REGION_ENCOUNTERS = {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Air', amount: 8 }],
         crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
-        trophies:        [{ id: 'cinder_ash', amount: 1 }],
-        spell_trophies:  [{ id: 'patchling_stitching', amount: 1 }],
+        trophies:        [{ id: 'crystal_dust', amount: 1 }],
+        spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
     },
     level_3: {
@@ -141,8 +141,8 @@ const REGION_ENCOUNTERS = {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Air', amount: 10 }],
         crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature'], amount: 1 },
-        trophies:        [{ id: 'cinder_ash', amount: 1 }],
-        spell_trophies:  [{ id: 'patchling_stitching', amount: 1 }],
+        trophies:        [{ id: 'crystal_dust', amount: 1 }],
+        spell_trophies:  [{ id: 'living_geode', amount: 1 }],
       },
     },
   },
@@ -194,7 +194,8 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
-        { key: 'chamber_of_unrest.oathbound_martyr',       cell: 2 },
+        { key: 'chamber_of_unrest.oathbound_martyr',       cell: 1 },
+        { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
       ],
       rewards: {
         gold: 30, xp: 60,
