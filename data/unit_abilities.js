@@ -1177,27 +1177,27 @@ const UNIT_ABILITIES = {
   // and same-kind bonuses SUM — two Scavenger 1 units plus a Scavenger item is
   // a flat +30% gold. trigger 'on_embark_complete' is never fired by the battle
   // engine; it just marks these as out-of-combat.
-  'rejuvenating_presence 1': {
-    id: 'rejuvenating_presence 1',
-    name: 'Rejuvenating Presence',
+  'field_medic 1': {
+    id: 'field_medic 1',
+    name: 'Field Medic',
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
     description: 'After a successful embark, all surviving units regenerate 10% of their max HP.',
     params: { embark_heal_pct: 10 },
   },
-  'rejuvenating_presence 2': {
-    id: 'rejuvenating_presence 2',
-    name: 'Rejuvenating Presence',
+  'field_medic 2': {
+    id: 'field_medic 2',
+    name: 'Field Medic',
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
     description: 'After a successful embark, all surviving units regenerate 20% of their max HP.',
     params: { embark_heal_pct: 20 },
   },
-  'rejuvenating_presence 3': {
-    id: 'rejuvenating_presence 3',
-    name: 'Rejuvenating Presence',
+  'field_medic 3': {
+    id: 'field_medic 3',
+    name: 'Field Medic',
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -1210,8 +1210,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 10% bonus XP.',
-    params: { embark_xp_bonus_pct: 10 },
+    description: 'After a successful embark, all units gain 8% bonus XP.',
+    params: { embark_xp_bonus_pct: 8 },
   },
   'combat_veteran 2': {
     id: 'combat_veteran 2',
@@ -1219,8 +1219,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 20% bonus XP.',
-    params: { embark_xp_bonus_pct: 20 },
+    description: 'After a successful embark, all units gain 12% bonus XP.',
+    params: { embark_xp_bonus_pct: 12 },
   },
   'combat_veteran 3': {
     id: 'combat_veteran 3',
@@ -1228,8 +1228,8 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 30% bonus XP.',
-    params: { embark_xp_bonus_pct: 30 },
+    description: 'After a successful embark, all units gain 15% bonus XP.',
+    params: { embark_xp_bonus_pct: 15 },
   },
   'unending_servitude 1': {
     id: 'unending_servitude 1',

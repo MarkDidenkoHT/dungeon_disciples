@@ -507,7 +507,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     null,
     stat_mods:    null,
-    passive:      'rejuvenating_presence 1',
+    passive:      'field_medic 1',
     icon:         'travelers_bedroll',
     rarity:       'rare',
     unique:       true,

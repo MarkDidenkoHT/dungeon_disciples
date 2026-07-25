@@ -1146,7 +1146,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 60, passive: 'rejuvenating_presence 1', ability: null,
+      xp: 60, passive: 'field_medic 1', ability: null,
     },
     templar: {
       id: 'e21', f: 'e', t: 2,
@@ -1179,7 +1179,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 250, passive: ['rejuvenating_presence 1', 'vitality 1'], ability: 'prayer_of_healing 1',
+      xp: 250, passive: ['field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
       id: 'e221', f: 'e', t: 3,
@@ -1190,7 +1190,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
-      xp: 250, passive: ['rejuvenating_presence 2', 'vitality 2'], ability: 'prayer_of_healing 2',
+      xp: 250, passive: ['field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
