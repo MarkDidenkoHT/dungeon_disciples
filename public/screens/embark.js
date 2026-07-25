@@ -2,26 +2,29 @@ import { api, navigate } from '../api.js';
 import { applyBackground } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
+// Each region shows /assets/embark/<id>.jpg; `icon` is the emoji fallback used
+// until that art exists. Descriptions and the guaranteed crystal match the
+// region's real roster and rewards (see data/units.js + data/embark.js).
 const REGIONS = [
   {
     id: 'crimson_basilica',
     label: 'Crimson Basilica',
-    icon: '🌲',
-    description: 'Ancient woodland teeming with feral beasts, overgrown guardians, and things that should not breathe.',
-    crystal: 'Nature',
+    icon: '🩸',
+    description: 'A blood-soaked cathedral of the Aggrail faithful — zealous heralds, the devoted, and Sister Aldra, who bleeds for her god.',
+    crystal: 'Life',
   },
   {
     id: 'glittering_abyss',
     label: 'Glittering Abyss',
-    icon: '⛰️',
-    description: 'Wind-scoured peaks ruled by stone colossi, frost shamans, and a king that does not die.',
+    icon: '💎',
+    description: 'A frozen vault of living crystal — mending geodes, frost-shard casters, and the Prismatic Colossus that slumbers in the dark.',
     crystal: 'Air',
   },
   {
     id: 'chamber_of_unrest',
     label: 'Chamber Of Unrest',
     icon: '💀',
-    description: 'Sunken halls choked with undead, cursed knights, and Malgrath himself — who has already died once.',
+    description: 'Sunken crypts of the restless dead — cursed knights, shambling horrors, and Malgrath the Undying, who has already died once.',
     crystal: 'Death',
   },
   {
@@ -33,6 +36,16 @@ const REGIONS = [
     comingSoon: true,
   },
 ];
+
+// Region thumbnail: the art if present, otherwise the emoji fallback.
+function regionIconHtml(r) {
+  return `
+    <span class="embark-card-icon">
+      <img class="embark-card-img" src="/assets/embark/${r.id}.jpg" alt="${r.label}"
+           onerror="this.style.display='none';this.parentElement.classList.add('embark-card-icon--emoji');this.parentElement.querySelector('.embark-card-emoji').style.display='inline';">
+      <span class="embark-card-emoji" style="display:none;">${r.icon}</span>
+    </span>`;
+}
 
 export function renderEmbark(root, { player, activeCheck } = {}) {
   applyBackground(root, player.faction, 'embark');
@@ -149,7 +162,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
           return `
             <div class="embark-region-block embark-region-block--coming-soon">
               <div class="embark-card embark-card--coming-soon" data-id="${r.id}">
-                <span class="embark-card-icon">${r.icon}</span>
+                ${regionIconHtml(r)}
                 <div class="embark-card-info">
                   <span class="embark-card-label">${r.label}</span>
                   <span class="embark-card-desc">${r.description}</span>
@@ -163,7 +176,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         return `
           <div class="embark-region-block">
             <div class="embark-card" data-id="${r.id}">
-              <span class="embark-card-icon">${r.icon}</span>
+              ${regionIconHtml(r)}
               <div class="embark-card-info">
                 <span class="embark-card-label">${r.label}</span>
                 <span class="embark-card-desc">${r.description}</span>

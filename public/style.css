@@ -1380,7 +1380,22 @@ button:active:not(:disabled) { opacity: 0.75; }
 .embark-card--disabled { opacity: 0.55; }
 .embark-card--active-region { border-color: var(--accent); }
 
-.embark-card-icon { font-size: 1.5rem; flex-shrink: 0; }
+.embark-card-icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.embark-card-icon--emoji { font-size: 1.8rem; }
+.embark-card-img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
 
 .embark-card-info {
   flex: 1;
