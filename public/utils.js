@@ -63,7 +63,7 @@ export const CRYSTAL_ICONS = {
   Crystals_Death:  '<img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death">',
   Crystals_Frost:  '<img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost">',
   Crystals_Nature: '<img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature">',
-  Crystals_Air:    '<span class="res-icon-emoji" title="Air">🌬️</span>',
+  Crystals_Air:    '<img src="/assets/icons/recources/air.png" class="res-icon-img" alt="Air">',
 };
 
 export const GOLD_ICON = '<img src="/assets/icons/recources/gold.png" class="res-icon-img" alt="Gold">';
