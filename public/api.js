@@ -112,6 +112,7 @@ export async function refreshResourceBar(player) {
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death"></span><span class="res-bar-val">${find('Crystals_Death').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature"></span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost"></span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
+    <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/air.png"   class="res-icon-img" alt="Air"></span><span class="res-bar-val">${find('Crystals_Air').amount}</span></div>
   `;
 }
 

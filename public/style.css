@@ -760,7 +760,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .res-bar-item {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
@@ -774,8 +774,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-icon-img {
-  width: 16px;
-  height: 16px;
+  width: 40;
+  height: 40px;
   object-fit: contain;
   display: block;
   image-rendering: pixelated;
