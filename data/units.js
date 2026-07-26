@@ -1438,7 +1438,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'vengeance 1'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'infect 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 315
     },
     grail_warden_path_b_t3: {
@@ -1446,11 +1446,11 @@ const UNITS = {
       name: 'Grail Warden',
       f: 'g', t: 3, size: 'tile',
       tags: ['Knight', 'Zombie'],
-      hp: 118, armor: 16, initiative: 45,
+      hp: 95, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 29, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'vengeance 2'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 580
     },
     grail_warden_path_b_t4: {
@@ -1458,11 +1458,11 @@ const UNITS = {
       name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Zombie'],
-      hp: 150, armor: 18, initiative: 50,
+      hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
-      passive: ['horde 1', 'vengeance 2', 'undying 1'], ability: 'grails_blessing 1',
+      passive: ['horde 1', 'infect 2', 'undying 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
     grail_warden_path_b_t4_alt: {
@@ -1470,11 +1470,11 @@ const UNITS = {
       name: 'Grail Warden',
       f: 'g', t: 4, size: 'tile',
       tags: ['Knight', 'Zombie'],
-      hp: 150, armor: 18, initiative: 50,
+      hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
-      passive: ['horde 2', 'vengeance 2'], ability: 'grails_blessing 1',
+      passive: ['horde 2', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 750
     },
     mothers_voice: {
