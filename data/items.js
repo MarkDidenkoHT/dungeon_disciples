@@ -64,7 +64,7 @@ const ITEM_DEFS = {
     rarity:       'epic',
     unique:       true,
     cost:         { shard_of_might: 10, Gold: 100, Crystals_Life: 25, Crystals_Death: 25 },
-    item_cost:    { death_resistance_potion: 2, mace: 1, broken_seal: 1}
+    item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
   },
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
@@ -398,16 +398,16 @@ const ITEM_DEFS = {
     rarity:       'common',
     cost:         { Gold: 25, Crystals_Death: 25 },
   },
-  broken_seal: {
-    key:          'broken_seal',
-    name:         "Broken Seal",
-    name_ru:      'Сломанная Печать',
+  seal_of_power: {
+    key:          'seal_of_power',
+    name:         "Seal Of Power",
+    name_ru:      'Печать Силы',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { action_power: 2 },
     passive:      null,
-    icon:         'broken_seal',
+    icon:         'seal_of_power',
     rarity:       'common',
     cost:         { aggrails_signet: 1, Gold: 25 },
   },
@@ -423,7 +423,7 @@ const ITEM_DEFS = {
     icon:         'lion_signet',
     rarity:       'rare',
     cost:         { aggrails_signet: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   staff_of_thaumaturgy: {
     key:          'staff_of_thaumaturgy',
@@ -437,7 +437,7 @@ const ITEM_DEFS = {
     icon:         'staff_of_thaumaturgy',
     rarity:       'mythic',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   grovekeeper_staff: {
     key:          'grovekeeper_staff',
@@ -452,7 +452,7 @@ const ITEM_DEFS = {
     rarity:       'rare',
     unique:       true,
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   poisonous_dagger: {
     key:          'poisonous_dagger',
@@ -466,7 +466,7 @@ const ITEM_DEFS = {
     icon:         'poisonous_dagger',
     rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   frost_lance: {
     key:          'frost_lance',
@@ -480,7 +480,7 @@ const ITEM_DEFS = {
     icon:         'frost_lance',
     rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   bone_barrier: {
     key:          'bone_barrier',
@@ -494,7 +494,7 @@ const ITEM_DEFS = {
     icon:         'bone_barrier',
     rarity:       'rare',
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   veil_of_discord: {
     key:          'veil_of_discord',
@@ -509,7 +509,7 @@ const ITEM_DEFS = {
     rarity:       'epic',
     unique:       true,
     cost:         { vial_of_pure_blood: 1, Gold: 25 },
-    item_cost:    { broken_seal: 1 },
+    item_cost:    { seal_of_power: 1 },
   },
   cloak_of_evasion: {
     key:          'cloak_of_evasion',
