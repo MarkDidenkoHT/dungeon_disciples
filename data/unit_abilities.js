@@ -151,11 +151,20 @@ const UNIT_ABILITIES = {
   'death_mark 1': {
     id: 'death_mark 1',
     name: 'Death Mark',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 25 bonus death damage.',
+    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 25, damage_type: 'death' },
+  },
+  'death_mark 2': {
+    id: 'death_mark 2',
+    name: 'Death Mark',
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 45 bonus death damage.',
-    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 45, damage_type: 'death' },
+    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 50 bonus death damage.',
+    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 50, damage_type: 'death' },
   },
   'impale 1': {
     id: 'impale 1',
