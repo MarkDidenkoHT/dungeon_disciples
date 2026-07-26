@@ -23,7 +23,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_a_t3: {
@@ -35,7 +35,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_a_t4: {
@@ -47,7 +47,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_a_t4_alt: {
@@ -59,7 +59,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t2: {
@@ -71,7 +71,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 6, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'command 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_b_t3: {
@@ -83,7 +83,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 7, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 27, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'command 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_b_t4: {
@@ -95,7 +95,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'command 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t4_alt: {
@@ -107,7 +107,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 8, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 33, action_icon: 'mace.jpg',
-      passive: ['rage 1', ''], ability: 'taunt 1',
+      passive: ['rage 1', 'command 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 700
     },
     choir_regent: {
