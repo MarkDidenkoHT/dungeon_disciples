@@ -1368,44 +1368,32 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .embark-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-end;
+  min-height: 120px;
   background: var(--surface);
+  background-size: cover;
+  background-position: center;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
-  transition: border-color 0.15s;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .embark-card--disabled { opacity: 0.55; }
-.embark-card--active-region { border-color: var(--accent); }
-
-.embark-card-icon {
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.embark-card-icon--emoji { font-size: 1.8rem; }
-.embark-card-img {
-  width: 64px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
+.embark-card--active-region { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
 .embark-card-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
-.embark-card-label { font-size: 0.9rem; font-weight: bold; color: var(--text); }
-.embark-card-desc  { font-size: 0.7rem; color: var(--muted); }
+/* Text sits over the region art, so it's light with a soft shadow for contrast. */
+.embark-card-label { font-size: 1.05rem; font-weight: bold; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.embark-card-desc  { font-size: 0.72rem; color: #d7dce6; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.embark-card-crystal { font-size: 0.7rem; color: #f5c542; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
 
 .embark-card-badge {
   font-size: 0.7rem;

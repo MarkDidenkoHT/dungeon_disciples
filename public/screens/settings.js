@@ -14,8 +14,6 @@ const UI_TEXT = {
   barks:         { en: 'Combat Barks', ru: 'Реплики в бою' },
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
-  player:        { en: 'Player', ru: 'Игрок' },
-  faction:       { en: 'Faction', ru: 'Фракция' },
   language:      { en: 'Language', ru: 'Язык' },
   dangerZone:    { en: 'Danger Zone', ru: 'Опасная зона' },
   resetBtn:       { en: 'Reset Progress', ru: 'Сбросить прогресс' },
@@ -73,17 +71,6 @@ export function renderSettings(root, { player }) {
             <button class="settings-toggle settings-toggle--on" id="toggle-language">
               ${languageLabel}
             </button>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <div class="settings-row settings-row--info">
-            <span class="settings-label">${UI_TEXT.player[L]}</span>
-            <span class="settings-value">${player?.name ?? '—'}</span>
-          </div>
-          <div class="settings-row settings-row--info">
-            <span class="settings-label">${UI_TEXT.faction[L]}</span>
-            <span class="settings-value">${player?.faction?.replace(/_/g, ' ') ?? '—'}</span>
           </div>
         </div>
 

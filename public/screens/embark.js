@@ -1,63 +1,96 @@
 import { api, navigate } from '../api.js';
 import { applyBackground } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { lang } from './settings.js';
 
-// Each region shows /assets/embark/<id>.jpg; `icon` is the emoji fallback used
-// until that art exists. Descriptions and the guaranteed crystal match the
+// Static UI strings, keyed by language (see lang(player)). Region label/desc live
+// on REGIONS with _ru suffixes, following the game's inline-localization rule.
+const UI_TEXT = {
+  selectRegion:    { en: 'Select Region',        ru: 'Выберите регион' },
+  checking:        { en: 'Checking active battles…', ru: 'Проверка активных боёв…' },
+  reconnectTitle:  { en: 'Reconnect to Battle',   ru: 'Вернуться в бой' },
+  reconnectBody:   {
+    en: 'You have an unfinished battle in progress. Reconnect to continue where you left off, or abandon it and start a new fight.',
+    ru: 'У вас есть незавершённый бой. Вернитесь, чтобы продолжить с того места, где остановились, или бросьте его и начните новый.',
+  },
+  abandon:         { en: 'Abandon',   ru: 'Бросить' },
+  reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
+  levelAria:       { en: 'Level',     ru: 'Уровень' },
+  // Guaranteed-crystal line; crystalName is already localized per region.
+  guaranteed: (L, crystalName) => L === 'ru'
+    ? `Гарантировано: кристаллы ${crystalName} + 1 случайный`
+    : `Guaranteed: ${crystalName} Crystals + 1 random`,
+};
+
+// Each region card uses /assets/embark/<id>.jpg as its full background (see the
+// regionBgStyle scrim below). Descriptions and the guaranteed crystal match the
 // region's real roster and rewards (see data/units.js + data/embark.js).
 const REGIONS = [
   {
     id: 'crimson_basilica',
     label: 'Crimson Basilica',
+    label_ru: 'Багровая базилика',
     icon: '🩸',
     description: 'A blood-soaked cathedral of the Aggrail faithful — zealous heralds, the devoted, and Sister Aldra, who bleeds for her god.',
+    description_ru: 'Залитый кровью собор верных Аграилу — рьяные глашатаи, преданные и Сестра Алдра, что кровоточит во славу своего бога.',
     crystal: 'Life',
+    crystal_ru: 'Жизни',
   },
   {
     id: 'glittering_abyss',
     label: 'Glittering Abyss',
+    label_ru: 'Мерцающая бездна',
     icon: '💎',
     description: 'A frozen vault of living crystal — mending geodes, frost-shard casters, and the Prismatic Colossus that slumbers in the dark.',
+    description_ru: 'Ледяная сокровищница живого кристалла — исцеляющие жеоды, заклинатели морозных осколков и Призматический колосс, дремлющий во тьме.',
     crystal: 'Air',
+    crystal_ru: 'Воздуха',
   },
   {
     id: 'chamber_of_unrest',
     label: 'Chamber Of Unrest',
+    label_ru: 'Чертог беспокойства',
     icon: '💀',
     description: 'Sunken crypts of the restless dead — cursed knights, shambling horrors, and Malgrath the Undying, who has already died once.',
+    description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, бредущие ужасы и Малграт Неумирающий, что уже умирал однажды.',
     crystal: 'Death',
+    crystal_ru: 'Смерти',
   },
   {
     id: 'pvp',
     label: 'PvP Arena',
+    label_ru: 'Арена PvP',
     icon: '⚔',
     description: 'Challenge other players in ranked combat. Coming soon.',
+    description_ru: 'Сразитесь с другими игроками в рейтинговых боях. Скоро.',
     crystal: null,
     comingSoon: true,
   },
 ];
 
-// Region thumbnail: the art if present, otherwise the emoji fallback.
-function regionIconHtml(r) {
-  return `
-    <span class="embark-card-icon">
-      <img class="embark-card-img" src="/assets/embark/${r.id}.jpg" alt="${r.label}"
-           onerror="this.style.display='none';this.parentElement.classList.add('embark-card-icon--emoji');this.parentElement.querySelector('.embark-card-emoji').style.display='inline';">
-      <span class="embark-card-emoji" style="display:none;">${r.icon}</span>
-    </span>`;
+// Region art as the card's full background, under a dark scrim so the overlaid
+// text stays readable. If the art is missing the browser just drops the image
+// layer and the scrim tints the card's base surface — no broken state.
+function regionBgStyle(r) {
+  return `background-image: linear-gradient(rgba(12,15,22,.60), rgba(12,15,22,.84)), url('/assets/embark/${r.id}.jpg');`;
 }
 
 export function renderEmbark(root, { player, activeCheck } = {}) {
   applyBackground(root, player.faction, 'embark');
 
+  const L = lang(player);
+  const rLabel = r => (L === 'ru' && r.label_ru)       || r.label;
+  const rDesc  = r => (L === 'ru' && r.description_ru)  || r.description;
+  const rCrystal = r => (L === 'ru' && r.crystal_ru)   || r.crystal;
+
   root.innerHTML = `
     <div class="screen screen-embark">
       <main class="embark-main">
         <div class="embark-header">
-          <h2>Select Region</h2>
+          <h2>${UI_TEXT.selectRegion[L]}</h2>
         </div>
         <div class="embark-regions-grid" id="embark-regions">
-          <div style="color:var(--muted);text-align:center;padding:2rem">Checking active battles…</div>
+          <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
         </div>
 
       </main>
@@ -109,14 +142,14 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
   }
 
   function showReconnectModal(battle_id, battle_data) {
-    openModal('Reconnect to Battle', `
+    openModal(UI_TEXT.reconnectTitle[L], `
       <div style="display:flex;flex-direction:column;gap:1rem;">
         <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
-          You have an unfinished battle in progress. Reconnect to continue where you left off, or abandon it and start a new fight.
+          ${UI_TEXT.reconnectBody[L]}
         </div>
         <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
-          <button id="modal-abandon-btn" class="action-btn action-btn--cancel" type="button">Abandon</button>
-          <button id="modal-reconnect-btn" class="action-btn" type="button">Reconnect</button>
+          <button id="modal-abandon-btn" class="action-btn action-btn--cancel" type="button">${UI_TEXT.abandon[L]}</button>
+          <button id="modal-reconnect-btn" class="action-btn" type="button">${UI_TEXT.reconnect[L]}</button>
         </div>
       </div>
     `, { closable: false });
@@ -161,11 +194,10 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         if (r.comingSoon) {
           return `
             <div class="embark-region-block embark-region-block--coming-soon">
-              <div class="embark-card embark-card--coming-soon" data-id="${r.id}">
-                ${regionIconHtml(r)}
+              <div class="embark-card embark-card--coming-soon" data-id="${r.id}" style="${regionBgStyle(r)}">
                 <div class="embark-card-info">
-                  <span class="embark-card-label">${r.label}</span>
-                  <span class="embark-card-desc">${r.description}</span>
+                  <span class="embark-card-label">${rLabel(r)}</span>
+                  <span class="embark-card-desc">${rDesc(r)}</span>
                 </div>
               </div>
             </div>
@@ -175,12 +207,11 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
         const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
           <div class="embark-region-block">
-            <div class="embark-card" data-id="${r.id}">
-              ${regionIconHtml(r)}
+            <div class="embark-card" data-id="${r.id}" style="${regionBgStyle(r)}">
               <div class="embark-card-info">
-                <span class="embark-card-label">${r.label}</span>
-                <span class="embark-card-desc">${r.description}</span>
-                <span class="embark-card-crystal">Guaranteed: ${r.crystal} Crystals + 1 random</span>
+                <span class="embark-card-label">${rLabel(r)}</span>
+                <span class="embark-card-desc">${rDesc(r)}</span>
+                <span class="embark-card-crystal">${UI_TEXT.guaranteed(L, rCrystal(r))}</span>
               </div>
             </div>
             <div class="embark-level-row">
@@ -189,8 +220,8 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
                   class="embark-level-pip"
                   data-region="${r.id}"
                   data-level="${lv}"
-                  data-label="${r.label}"
-                  aria-label="Level ${lv}"
+                  data-label="${rLabel(r)}"
+                  aria-label="${UI_TEXT.levelAria[L]} ${lv}"
                 >${lv}</button>
               `).join('')}
             </div>
