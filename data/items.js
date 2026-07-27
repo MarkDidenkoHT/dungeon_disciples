@@ -20,7 +20,7 @@ const ITEM_DEFS = {
     icon:         'crystal_exoskeleton',
     rarity:       'mythic',
     unique:       true,
-    cost:         { living_geode: 10, crystal_dust: 2, Gold: 100 },
+    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100 },
     item_cost:    { iron_armor: 1, codex_militarum: 2 },
   },
   crystal_shield: {
@@ -34,7 +34,7 @@ const ITEM_DEFS = {
     passive:      'unbreakable 1',
     icon:         'crystal_shield',
     rarity:       'rare',
-    cost:         { living_geode: 2, crystal_dust: 2, Gold: 50 },
+    cost:         { living_geode: 2, crystal_dust: 2, crystal_shard: 1, Gold: 50 },
     item_cost:    { iron_shield: 1 },
   },
   aegis_of_the_first_ward: {
@@ -49,7 +49,7 @@ const ITEM_DEFS = {
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,
-    cost:         { vial_of_pure_blood: 1, Gold: 60, Crystals_Life: 45 },
+    cost:         { vial_of_pure_blood: 1, crystal_shard: 1, Gold: 60, Crystals_Life: 45 },
   },
   might_of_the_pure: {
     key:          'might_of_the_pure',
