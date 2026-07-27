@@ -1161,6 +1161,15 @@ const UNIT_ABILITIES = {
     description: "This unit's attacks also deal 30% of their damage to every burning enemy.",
     params: { fellfire_pct: 30 },
   },
+  'hungering_frost': {
+    id: 'hungering_frost 1',
+    name: 'Hungering Frost',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: "This unit's attacks also deal 30% of their damage to every burning enemy.",
+    params: { fellfire_pct: 20 },
+  },
   'mark_of_ash 1': {
     id: 'mark_of_ash 1',
     name: 'Mark of Ash',
@@ -1169,6 +1178,15 @@ const UNIT_ABILITIES = {
     target: 'enemy',
     description: 'The Burn currently on the target becomes permanent — it ticks every turn and never expires.',
     params: { make_burn_permanent: true },
+  },
+  'permafrost 1': {
+    id: 'permafrost 1',
+    name: 'Permafrost',
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: 'The Chill currently on the target becomes permanent — it ticks every turn and never expires.',
+    params: { make_chill_permanent: true },
   },
   'exsanguinate 1': {
     id: 'exsanguinate 1',

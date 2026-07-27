@@ -2109,9 +2109,9 @@ const UNITS = {
     },
 
     glittering_abyss: {
-      geodeling: {
+      cryostax: {
         id: 'mv_e1', f: 'mv', t: 1,
-        name: 'Geodeling',
+        name: 'Cryostax',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 40, armor: 10, initiative: 15,
@@ -2120,27 +2120,27 @@ const UNITS = {
         damage_source: null, action_power: 10,
         xp: 55, passive: 'fortify 1', ability: null,
       },
-      geodeling2: {
+      glaciron: {
         id: 'mv_e11', f: 'mv', t: 2,
-        name: 'Geode Mender',
+        name: 'Glacieron',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 45, armor: 15, initiative: 15,
         resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 50, nature: 15 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 15,
-        xp: 55, passive: ['fortify 1'], ability: null,
+        xp: 55, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
-      geodeling3: {
+      arctyx: {
         id: 'mv_e111', f: 'mv', t: 3,
-        name: 'Radiant Geode',
+        name: 'Arctyx',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 50, armor: 20, initiative: 15,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 20,
-        xp: 55, passive: ['fortify 1'], ability: null,
+        xp: 55, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {
         id: 'mv_e2', f: 'mv', t: 1,
@@ -2151,9 +2151,9 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 10,
-        xp: 75, passive: ['slow 1'], ability: null,
+        xp: 75, passive: 'slow 1', ability: 'permafrost',
       },
-      frostshard2: {
+      rime_splinter: {
         id: 'mv_e21', f: 'mv', t: 2,
         name: 'Rime Splinter',
         tags: ['Construct', 'Caster'],
@@ -2162,9 +2162,9 @@ const UNITS = {
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 14,
-        xp: 75, passive: ['slow 1'], ability: null,
+        xp: 75, passive: ['slow 1', 'hungering_frost 1'], ability: 'permafrost',
       },
-      frostshard3: {
+      glacial_prism: {
         id: 'mv_e211', f: 'mv', t: 3,
         name: 'Glacial Prism',
         tags: ['Construct', 'Caster'],
@@ -2173,11 +2173,11 @@ const UNITS = {
         resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 50, nature: 30 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 18,
-        xp: 75, passive: ['slow 1'], ability: null,
+        xp: 75, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost',
       },
-      cairnling: {
+      сhillrock: {
         id: 'mv_e3', f: 'mv', t: 1,
-        name: 'Frost Golem',
+        name: 'Сhillrock',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 110, armor: 10, initiative: 20,
@@ -2186,7 +2186,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 12,
         xp: 75, passive: ['protector 1', 'rimeguard 1'], ability: null,
       },
-      cairnling2: {
+      rimewarden: {
         id: 'mv_e31', f: 'mv', t: 2,
         name: 'Rimewarden',
         tags: ['Construct', 'Caster'],
@@ -2197,9 +2197,9 @@ const UNITS = {
         damage_source: 'cold', action_power: 16,
         xp: 75, passive: ['protector 2', 'rimeguard 1'], ability: null,
       },
-      cairnling3: {
+      glaciok: {
         id: 'mv_e311', f: 'mv', t: 3,
-        name: 'Bulwark Geode',
+        name: 'Glaciok',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 145, armor: 20, initiative: 20,
@@ -2208,9 +2208,9 @@ const UNITS = {
         damage_source: 'cold', action_power: 20,
         xp: 75, passive: ['protector 2', 'rimeguard 2'], ability: null,
       },
-      prism_golem: {
+      cryodrox: {
         id: 'mv_e4', f: 'mv', t: 2,
-        name: 'Prism Golem',
+        name: 'Cryodrox',
         tags: ['Construct', 'Caster'],
         size: 'column',
         hp: 180, armor: 25, initiative: 30,
@@ -2219,9 +2219,9 @@ const UNITS = {
         damage_source: 'cold', action_power: 30,
         xp: 320, passive: ['chill 1', 'dissipate 1'], ability: null,
       },
-      prism_golem2: {
+      cryodrox2: {
         id: 'mv_e41', f: 'mv', t: 3,
-        name: 'Prismatic Colossus',
+        name: 'Cryodrox',
         tags: ['Construct', 'Caster'],
         size: 'column',
         hp: 240, armor: 25, initiative: 30,

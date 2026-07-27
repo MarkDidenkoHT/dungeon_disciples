@@ -107,8 +107,8 @@ const REGION_ENCOUNTERS = {
   glittering_abyss: {
     level_1: {
       enemies: [
-        { key: 'glittering_abyss.frostshard',  cell: 0 },
-        { key: 'glittering_abyss.frostshard',  cell: 4 },
+        { key: 'glittering_abyss.сhillrock',  cell: 0 },
+        { key: 'glittering_abyss.cryostax',  cell: 3 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -120,9 +120,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'glittering_abyss.frostshard',  cell: 0 },
-        { key: 'glittering_abyss.frostshard',  cell: 4 },
-        { key: 'glittering_abyss.geodeling',   cell: 1 },
+        { key: 'glittering_abyss.сhillrock',  cell: 0 },
+        { key: 'glittering_abyss.cryostax',  cell: 3 },
+        { key: 'glittering_abyss.frostshard',  cell: 3 },
       ],
       rewards: {
         gold: 20, xp: 40,
@@ -134,8 +134,9 @@ const REGION_ENCOUNTERS = {
     },
     level_3: {
       enemies: [
-        { key: 'glittering_abyss.frostshard',  cell: 0 },
-        { key: 'glittering_abyss.cairnling',       cell: 2 },
+        { key: 'glittering_abyss.cryodrox',  cell: 2 },
+        { key: 'glittering_abyss.cryostax',  cell: 1 },
+        { key: 'glittering_abyss.frostshard',  cell: 3 },
       ],
       rewards: {
         gold: 25, xp: 50,
@@ -147,10 +148,9 @@ const REGION_ENCOUNTERS = {
     },
     level_4: {
       enemies: [
-        { key: 'glittering_abyss.dread_knight',           cell: 0 },
-        { key: 'glittering_abyss.dread_knight',           cell: 4 },
-        { key: 'glittering_abyss.oathbound_martyr',       cell: 1 },
-        { key: 'glittering_abyss.oathbound_martyr',       cell: 5 },
+        { key: 'glittering_abyss.rime_splinter',       cell: 1 },
+        { key: 'glittering_abyss.rime_splinter',       cell: 3 },
+        { key: 'glittering_abyss.rime_splinter',       cell: 5 },
       ],
       rewards: {
         gold: 30, xp: 60,
@@ -162,10 +162,9 @@ const REGION_ENCOUNTERS = {
     },
     level_5: {
       enemies: [
-        { key: 'glittering_abyss.dread_knight',           cell: 0 },
-        { key: 'glittering_abyss.dread_knight',           cell: 4 },
-        { key: 'glittering_abyss.oathsworn_martyr',       cell: 1 },
-        { key: 'glittering_abyss.revenant',               cell: 5 },
+        { key: 'glittering_abyss.rimewarden',             cell: 2 },
+        { key: 'glittering_abyss.glaciron',               cell: 1 },
+        { key: 'glittering_abyss.rime_splinter',          cell: 5 },
       ],
       rewards: {
         gold: 35, xp: 70,
@@ -177,11 +176,10 @@ const REGION_ENCOUNTERS = {
     },
     level_6: {
       enemies: [
-        { key: 'glittering_abyss.dread_knight',           cell: 0 },
-        { key: 'glittering_abyss.dread_knight',           cell: 4 },
-        { key: 'glittering_abyss.oathsworn_martyr',       cell: 1 },
-        { key: 'glittering_abyss.revenant',               cell: 5 },
-        { key: 'glittering_abyss.malgrath_the_undying_2', cell: 2 },
+        { key: 'glittering_abyss.cryodrox2',      cell: 0 },
+        { key: 'glittering_abyss.rimewarden',     cell: 4 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 1 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 3 },
       ],
       rewards: {
         gold: 40, xp: 80,

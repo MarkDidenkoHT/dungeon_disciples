@@ -756,6 +756,14 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is not burning` });
     }
   }
+  if (p.make_chill_permanent === true && target) {
+    if ((target.dot_dmg ?? 0) > 0) {
+      target._dot_permanent = target.dot_dmg;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name}'s Chill is now permanent (${target.dot_dmg}/turn)` });
+    } else {
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is not chilled` });
+    }
+  }
   if (p.make_bleed_permanent === true && target) {
     if ((target._bleed_dmg ?? 0) > 0) {
       target._bleed_permanent = target._bleed_dmg;
