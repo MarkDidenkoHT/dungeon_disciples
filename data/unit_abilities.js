@@ -1040,7 +1040,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'Adjacent allies in the same column gain increased damage.',
-    params: { inspiration_stat: 'damage', inspiration_value: 5 },
+    params: { inspiration_stat: 'damage', inspiration_value: 3 },
   },
   'inspiration_damage 2': {
     id: 'inspiration_damage 2',
@@ -1049,7 +1049,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'Adjacent allies in the same column gain increased damage.',
-    params: { inspiration_stat: 'damage', inspiration_value: 8 },
+    params: { inspiration_stat: 'damage', inspiration_value: 5 },
   },
   'sacrament 1': {
     id: 'sacrament 1',
