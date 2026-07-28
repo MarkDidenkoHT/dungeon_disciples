@@ -989,7 +989,7 @@ const UNITS = {
       tags: ['Construct', null],
       size: 'column',
       hp: 100, armor: 25, initiative: 40,
-      resistances: { air: , fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
+      resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30,
       xp: 800, passive: ['unbreakable 2', 'protector 1'], ability: null,
