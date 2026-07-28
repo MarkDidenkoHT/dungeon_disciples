@@ -127,7 +127,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Frost', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 2 },
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
@@ -141,8 +141,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Frost', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
-        trophies:        [{ id: 'crystal_dust', amount: 1 }],
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 3 },
+        trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'living_geode', amount: 1 }],
       },
     },
@@ -155,7 +155,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Death', amount: 11 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 4 },
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -169,7 +169,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Death', amount: 13 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 5 },
         trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -184,7 +184,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 2 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 6 },
         trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'living_geode', amount: 2 }],
       },
@@ -215,7 +215,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Death', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Frost', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Frost', 'Crystals_Air'], amount: 2},
         trophies:        [{ id: 'grave_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -230,7 +230,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Death', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 3 },
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 1 }],
       },
@@ -245,7 +245,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Death', amount: 11 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 4 },
         trophies:        [{ id: 'grave_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -260,7 +260,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Death', amount: 13 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 5 },
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -276,7 +276,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 2 },
+        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 6 },
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 2 }],
       },

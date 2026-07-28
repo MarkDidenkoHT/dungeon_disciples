@@ -264,9 +264,9 @@
     window.__FX_SPEED__ = 1;
 
     // ── Firing ──────────────────────────────────────────────────────────────────
-    // communion is the only source->target signature; everything else takes
-    // (casterCell, { targetCell, isEnemy }) and ignores what it doesn't use.
-    const SOURCE_TARGET = new Set(['communion']);
+    // Effects that use (sourceCellEl, targetCellEl) positional signature
+    // rather than (cellEl, opts) — currently only communion and shared_suffering.
+    const SOURCE_TARGET = new Set(['communion', 'shared_suffering']);
 
     function cellEl(key) { return key ? document.querySelector(`.battle-cell[data-id="${key}"]`) : null; }
 

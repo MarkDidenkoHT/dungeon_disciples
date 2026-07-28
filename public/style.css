@@ -3498,8 +3498,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-image: url('/assets/icons/ui/building_slot_bg_highlight.png');
   background-size: cover;
   background-position: center;
-  min-height: 175px;
-  min-width: 110px;
+  min-height: 160px;
+  min-width: 100px;
 }
 
 .outer-ring .castle-node.castle-node--empty {

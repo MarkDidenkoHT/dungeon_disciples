@@ -355,7 +355,7 @@ function makeUnitData(unitId, buildingSlot) {
 }
 
 router.post('/login', async (req, res) => {
-  const { initData } = req.body;
+  const { initData, timezone } = req.body;
   if (!initData) return res.status(400).json({ error: 'initData required' });
   const telegramUser = validateTelegramInitData(initData);
   if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
@@ -365,9 +365,11 @@ router.post('/login', async (req, res) => {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (existing.length > 0) {
       const mergedSettings = { ...(existing[0].settings || {}), language: existing[0].settings?.language || telegramUser.language_code || 'en' };
+      const patchBody = { session_token, settings: mergedSettings };
+      if (timezone) patchBody.timezone = timezone;
       const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({ session_token, settings: mergedSettings }),
+        body: JSON.stringify(patchBody),
       });
       let dailyResult = null;
       try {
@@ -389,15 +391,17 @@ router.post('/login', async (req, res) => {
         daily_result: dailyResult,
       });
     }
+    const newPlayerBody = {
+      chat_id,
+      username: telegramUser.username || null,
+      first_name: telegramUser.first_name || null,
+      session_token,
+      settings: { language: telegramUser.language_code || 'en', notifications: true, music_enabled: true, sfx_enabled: true, barks_enabled: true },
+    };
+    if (timezone) newPlayerBody.timezone = timezone;
     const created = await supabase('/players', {
       method: 'POST',
-      body: JSON.stringify({
-        chat_id,
-        username: telegramUser.username || null,
-        first_name: telegramUser.first_name || null,
-        session_token,
-        settings: { language: telegramUser.language_code || 'en', notifications: true, music_enabled: true, sfx_enabled: true, barks_enabled: true, },
-      }),
+      body: JSON.stringify(newPlayerBody),
     });
     let dailyResult = null;
     try {
@@ -460,9 +464,6 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'player_id and chat_id required' });
   }
   try {
-    // battle_log rows point at battle_state via battle_log_battle_id_fkey, so
-    // they must be cleared before the battle_state rows they reference - a plain
-    // battle_state delete violates that constraint for anyone who has fought.
     const battles   = await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&select=battle_id`);
     const battleIds = [...new Set((battles || []).map(b => b.battle_id).filter(Boolean))];
     await Promise.all(battleIds.map(id =>
@@ -488,6 +489,9 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
     });
 
+    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
+    const preservedTimezone = existingPlayer[0]?.timezone ?? null;
+
     const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -496,6 +500,7 @@ router.post('/player/reset', requireAuth, async (req, res) => {
         progress: null,
         learned_spells: null,
         tutorials: null,
+        timezone: preservedTimezone,
       }),
     });
 

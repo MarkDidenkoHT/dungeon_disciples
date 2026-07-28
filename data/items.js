@@ -13,15 +13,15 @@ const ITEM_DEFS = {
     name:         'Crystal Exoskeleton',
     name_ru:      'Кристальный Экзоскелет',
     faction:      null,
-    tag_required: 'Engineer',
+    tag_required: null,
     adds_tag:     'Construct',
-    stat_mods:    { hp: 3, armor: 3 },
-    passive:      null,
+    stat_mods:    { hp: 3, armor: 3, cold_resist: 5 },
+    passive:      'magic_attunement 1',
     icon:         'crystal_exoskeleton',
     rarity:       'mythic',
     unique:       true,
-    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100 },
-    item_cost:    { iron_armor: 1, codex_militarum: 2 },
+    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100, Crystals_Frost: 50 },
+    item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
   },
   crystal_shield: {
     key:          'crystal_shield',
@@ -30,12 +30,12 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { hp: 3, armor: 3 },
+    stat_mods:    { hp: 3, armor: 3, cold_resist: 5 },
     passive:      'unbreakable 1',
     icon:         'crystal_shield',
     rarity:       'rare',
-    cost:         { living_geode: 2, crystal_dust: 2, crystal_shard: 1, Gold: 50 },
-    item_cost:    { iron_shield: 1 },
+    cost:         { living_geode: 2, crystal_dust: 2, crystal_shard: 1, Gold: 50, Crystals_Frost: 50 },
+    item_cost:    { iron_shield: 1, cold_resistance_potion: 2 },
   },
   aegis_of_the_first_ward: {
     key:          'aegis_of_the_first_ward',
@@ -45,16 +45,17 @@ const ITEM_DEFS = {
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { fire_resist: 8, death_resist: 8 },
-    passive:      null,
+    passive:      'combat_veteran 1',
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,
     cost:         { vial_of_pure_blood: 1, crystal_shard: 1, Gold: 60, Crystals_Life: 45 },
+    item_cost:    { iron_shield: 1, death_resistance_potion: 1, fire_resistance_potion: 1, veterans_medal: 1 },
   },
   might_of_the_pure: {
     key:          'might_of_the_pure',
     name:         'Might Of The Pure',
-    name_ru:      'Мощь Чистых',
+    name_ru:      'Мощь Непорочных',
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
@@ -185,7 +186,7 @@ const ITEM_DEFS = {
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     'Zombie',
-    stat_mods:    { hp: 10, armor: 3 },
+    stat_mods:    { hp: 8, armor: 3 },
     passive:      'horde 1',
     icon:         'shroud_of_the_fallen',
     rarity:       'epic',
@@ -244,7 +245,7 @@ const ITEM_DEFS = {
     passive:      'rimeguard 1',
     icon:         'rimeheart',
     rarity:       'epic',
-    cost:         { Gold: 50 },
+    cost:         { Gold: 50, Crystals_Frost: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
   },
   everliving_stalk: {
@@ -303,7 +304,7 @@ const ITEM_DEFS = {
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
     name:         "Cold Resistance Potion",
-    name_ru:      'Зелье Холодостойкости',
+    name_ru:      'Зелье Защиты От Холодоа',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -352,7 +353,7 @@ const ITEM_DEFS = {
     icon:         'crystal_sword',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Air: 5, Crystals_Frost: 5 },
+    cost:         { Gold: 100, Crystals_Air: 25, Crystals_Frost: 50 },
     item_cost:    { iron_sword: 1 },
   },
   forbidden_vow: {
@@ -479,7 +480,7 @@ const ITEM_DEFS = {
     passive:      'chill 1',
     icon:         'frost_lance',
     rarity:       'rare',
-    cost:         { vial_of_pure_blood: 1, Gold: 25 },
+    cost:         { crystal_dust: 1, crystal_shard: 1, Gold: 25, Crystals_Frost: 25 },
     item_cost:    { seal_of_power: 1 },
   },
   bone_barrier: {
@@ -524,11 +525,6 @@ const ITEM_DEFS = {
     rarity:       'rare',
     cost:         { Gold: 50 },
   },
-
-  // ── Expedition items ────────────────────────────────────────────────────────
-  // One per expedition passive (see data/unit_abilities.js). Unique on purpose:
-  // the item is one extra stack on top of however many units carry the passive —
-  // all sources SUM in /battle/reward.
   travelers_bedroll: {
     key:          'travelers_bedroll',
     name:         "Traveler's Bedroll",

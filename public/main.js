@@ -200,7 +200,7 @@ async function boot() {
 
   try {
     const [loginResult] = await Promise.all([
-      api('/login', { initData: tg.initData }),
+      api('/login', { initData: tg.initData, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
       runPreload(app),
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
