@@ -10,7 +10,7 @@ const UNITS = {
       hp: 80, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg',
       passive: 'rage 1', ability: 'taunt 1',
       building_slot: 'slot_0', xp: 90
     },
@@ -22,7 +22,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg',
       passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 270
     },
@@ -70,8 +70,8 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      passive: ['rage 1', 'combat_veteran 1', 'command 1'], ability: 'taunt 1',
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1'], ability: 'pact 1',
       building_slot: 'slot_0', xp: 270
     },
     black_castellan_path_b_t3: {
@@ -82,8 +82,8 @@ const UNITS = {
       hp: 100, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 27, action_icon: 'mace.jpg',
-      passive: ['rage 1', 'combat_veteran 1', 'command 1'], ability: 'taunt 1',
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: 'pact 1',
       building_slot: 'slot_0', xp: 540
     },
     black_castellan_path_b_t4: {
@@ -94,8 +94,8 @@ const UNITS = {
       hp: 110, armor: 25, initiative: 55,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 33, action_icon: 'mace.jpg',
-      passive: ['rage 1', 'combat_veteran 1', 'command 1'], ability: 'taunt 1',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1', 'execute 2'], ability: 'pact 1',
       building_slot: 'slot_0', xp: 700
     },
     black_castellan_path_b_t4_alt: {
@@ -106,8 +106,8 @@ const UNITS = {
       hp: 110, armor: 25, initiative: 55,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 33, action_icon: 'mace.jpg',
-      passive: ['rage 1', 'combat_veteran 1', 'command 1'], ability: 'taunt 1',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 2', 'execute 1'], ability: 'pact 1',
       building_slot: 'slot_0', xp: 700
     },
     choir_regent: {

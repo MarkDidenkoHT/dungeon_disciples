@@ -72,6 +72,16 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { kill_damage_bonus_pct: 15 },
   },
+  'blood_frenzy 2': {
+    id: 'blood_frenzy 2',
+    name: 'Blood Frenzy',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_kill',
+    description: 'On killing a unit, gains +25% damage until end of battle.',
+    dispellable: false,
+    params: { kill_damage_bonus_pct: 25 },
+  },
   'fortify 1': {
     id: 'fortify 1',
     name: 'Fortify',
