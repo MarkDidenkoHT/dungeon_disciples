@@ -873,15 +873,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
 
+    // Pick a random loading screen
+    const screenNum = Math.floor(Math.random() * 8) + 1;
+    const bgImage = `/assets/loading_screens/loading${screenNum}.jpg`;
+
     root.innerHTML = `
-      <div class="screen screen-battle-result">
-        <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}">
-          ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
+      <div class="screen screen-battle-result" style="background-image: url('${bgImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div class="result-content" style="max-width: 500px; width: 100%; padding: 40px; background: rgba(0, 0, 0, 0.75); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); text-align: center;">
+          <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}" style="font-size: 3rem; font-weight: bold; margin-bottom: 24px; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); ${won ? 'color: #ffd700;' : 'color: #ff4444;'}">
+            ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
+          </div>
+          <div class="result-rewards" id="result-rewards" style="margin: 24px 0; text-align: left; background: rgba(0, 0, 0, 0.4); border-radius: 8px; padding: 16px;">
+            <p style="color:var(--muted)">Calculating rewards…</p>
+          </div>
+          <button class="ready-btn" id="back-to-castle" disabled style="margin-top: 16px; padding: 12px 32px; background: linear-gradient(135deg, #4a6fa5, #2d4a7a); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease;">Return to Castle</button>
         </div>
-        <div class="result-rewards" id="result-rewards">
-          <p style="color:var(--muted)">Calculating rewards…</p>
-        </div>
-        <button class="ready-btn" id="back-to-castle" disabled>Return to Castle</button>
       </div>
     `;
 
