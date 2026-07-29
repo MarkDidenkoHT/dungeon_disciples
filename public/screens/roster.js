@@ -644,6 +644,11 @@ export function renderRoster(root, { player }) {
 
     openSheet('Items', render());
 
+    const closeBtn = document.querySelector('.modal-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideTrophyBar, { once: true });
+    }
+
     // Remove the trophy bar when the sheet is dismissed
     const _sheetCloseObserver = new MutationObserver(() => {
       const overlay = document.querySelector('.modal-overlay:not(.hidden):not(.modal-overlay--sub)');
