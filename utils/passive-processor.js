@@ -75,6 +75,7 @@ function runTrigger(trigger, ctx) {
 function dispatchPassive(trigger, owner, def, ctx) {
   const { engine, actor, target, dmg, dying } = ctx;
   const p = def.params || {};
+  const abilityKey = def.id ?? def.name ?? null;
   if (trigger === 'on_battle_start') {
     if (p.ally_max_hp_bonus != null) {
       const allies = engine.combatants.filter(c => c.side === owner.side);

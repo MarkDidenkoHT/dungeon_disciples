@@ -768,18 +768,28 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (realtimeController) realtimeController.setLastLogId(lastLogId);
       processing = false;
       render();
-    } catch (err) {
-      console.error('Action failed:', err);
-      processing = false;
-      const log = ui?.battleLog;
-      if (log) {
-        const el = document.createElement('div');
-        el.className = 'log-entry log-entry--error';
-        el.textContent = `⚠ ${err.message}`;
-        log.prepend(el);
-      }
-      render();
-    }
+        } catch (err) {
+          console.error('Action failed:', err);
+          processing = false;
+          const log = ui?.battleLog;
+          if (log) {
+            const actorUnit = state.combatants.find(c => c.id === actor_id);
+            const targetUnit = target_id ? state.combatants.find(c => c.id === target_id) : null;
+            const details = [
+              `action: ${action}`,
+              `actor: ${actorUnit?.unit_name ?? actor_id} (id=${actor_id})`,
+              targetUnit ? `target: ${targetUnit?.unit_name ?? target_id} (id=${target_id})` : null,
+              actorUnit ? `ability key: ${actorUnit.unit_data?.ability ?? actorUnit.unit_data?.active_ability ?? 'none'}` : null,
+              actorUnit ? `action field: ${JSON.stringify(actorUnit.unit_data?.action)}` : null,
+            ].filter(Boolean).join(' | ');
+
+            const el = document.createElement('div');
+            el.className = 'log-entry log-entry--error';
+            el.innerHTML = `<strong>⚠ ${err.message}</strong><br><span style="font-size:0.75em;opacity:0.8">${details}</span>`;
+            log.prepend(el);
+          }
+          render();
+        }
   }
 
   function attachEvents() {
