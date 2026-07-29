@@ -560,11 +560,13 @@ export function renderRoster(root, { player }) {
     bar.className = 'roster-trophy-bar';
     bar.innerHTML = trophyItems.map(t => `
       <div class="trophy-bar-item" title="${t.item}">
-        <img src="/assets/icons/recources/${t.item}.png"
-            class="trophy-bar-icon"
-            alt="${t.item}"
-            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <span class="trophy-bar-icon-fallback" style="display:none;">🏆</span>
+        <div class="trophy-bar-icon-wrap">
+          <img src="/assets/icons/recources/${t.item}.png"
+              class="trophy-bar-icon"
+              alt="${t.item}"
+              onerror="this.style.display='none';this.nextSibling.style.display='flex';">
+          <span class="trophy-bar-icon-fallback">🏆</span>
+        </div>
         <span class="trophy-bar-val">${t.amount}</span>
       </div>
     `).join('');

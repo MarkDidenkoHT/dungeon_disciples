@@ -799,16 +799,19 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .roster-trophy-bar {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.75rem;
-  background: var(--surface, #1a1a2e);
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
-  flex-shrink: 0;
-  z-index: 10;
-  /* sits directly below #resource-bar, same width */
+  position: relative;
+  z-index: 300;
   width: 100%;
   box-sizing: border-box;
 }
@@ -817,31 +820,43 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .trophy-bar-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.2rem;
-  white-space: nowrap;
+  gap: 3px;
   flex-shrink: 0;
 }
 
+.trophy-bar-icon-wrap {
+  font-size: 0.82rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
 .trophy-bar-icon {
-  width: 18px;
-  height: 18px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
+  display: block;
+  image-rendering: pixelated;
 }
 
 .trophy-bar-icon-fallback {
-  width: 18px;
-  height: 18px;
+  width: 40px;
+  height: 40px;
+  display: none;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .trophy-bar-val {
-  font-size: 0.78rem;
-  color: var(--text, #e0d5c0);
-  font-weight: 600;
-  min-width: 1ch;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  min-width: 14px;
+  text-align: center;
 }
 
 .modal-overlay {
