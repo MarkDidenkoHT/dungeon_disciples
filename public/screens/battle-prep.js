@@ -1,4 +1,4 @@
-import { api, navigate, resourceCache }  from '../api.js';
+import { api, navigate, resourceCache, refreshResourceBar }  from '../api.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
@@ -23,12 +23,6 @@ const BP_NAV_LABELS = {
   embark:      { en: 'Embark',      ru: 'Поход' },
   castSpell:   { en: 'Cast Spell',  ru: 'Заклинание' },
   enterBattle: { en: 'Enter Battle', ru: 'В бой' },
-};
-
-const REGION_META = {
-  crimson_basilica: { label: 'Crimson Basilica', icon: '🌲' },
-  glittering_abyss: { label: 'Glittering Abyss',  icon: '⛰️' },
-  chamber_of_unrest: { label: 'Chamber Of Unrest',  icon: '💀' },
 };
 
 const ROWS = 3;
@@ -94,15 +88,10 @@ function getLoyalty(heroUnit) {
 }
 
 export function renderBattlePrep(root, { player, region_id, level }) {
-  const meta = REGION_META[region_id] || { label: region_id, icon: '⚔' };
   const L = lang(player);
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
-      <div class="embark-header">
-        <span class="embark-title">${meta.icon} ${meta.label} — Lv ${level}</span>
-      </div>
-
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
           <div class="battle-half-label">Your Formation <span id="loyalty-counter" class="loyalty-counter"></span><span id="player-army-power" class="army-power"></span></div>
@@ -201,9 +190,18 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   // often) can't re-trigger it.
   let spellBuffPrompted = false;
 
+  // The resource bar is collapsed in battle prep; slide it down while the spell
+  // sheet is open so the player can see their crystals, then slide it back up.
+  function setResourceBarVisible(visible) {
+    const bar = document.getElementById('resource-bar');
+    if (bar) bar.classList.toggle('resource-bar--collapsed', !visible);
+  }
+
   function openSpellSheet() {
     renderSpellSheetList();
     spellSheetOverlay.classList.remove('hidden');
+    refreshResourceBar(player).catch(() => {}); // show current crystal counts
+    setResourceBarVisible(true);
     // Opening the book satisfies the buff lesson.
     if (!isTutorialDone(player, 'spell_buff')) {
       markTutorialDone(player, 'spell_buff');
@@ -213,6 +211,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function closeSpellSheet() {
     spellSheetOverlay.classList.add('hidden');
+    setResourceBarVisible(false);
   }
 
   root.querySelector('#spell-sheet-close').addEventListener('click', closeSpellSheet);

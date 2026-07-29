@@ -96,7 +96,13 @@ function navigate(screen, params = {}) {
   const navEl    = document.getElementById('bottom-nav');
   const resBarEl = document.getElementById('resource-bar');
   if (navEl) navEl.style.display = isBattle ? 'none' : '';
-  if (resBarEl) resBarEl.style.display = isBattle ? 'none' : '';
+  if (resBarEl) {
+    resBarEl.style.display = isBattle ? 'none' : '';
+    // Battle prep hides the bar by default; it slides down only while the spell
+    // sheet is open (see battle-prep openSpellSheet/closeSpellSheet). Every other
+    // screen shows it normally.
+    resBarEl.classList.toggle('resource-bar--collapsed', screen === 'battle-prep');
+  }
 
   if (player && !isBattle) {
     refreshResourceBar(player).catch(() => {});

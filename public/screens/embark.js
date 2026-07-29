@@ -22,6 +22,9 @@ const UI_TEXT = {
     : `Guaranteed: ${crystalName} Crystals + 1 random`,
 };
 
+// Levels that end in a boss fight — highlighted red on the level row.
+const BOSS_LEVELS = [3, 6];
+
 // Each region card uses /assets/embark/<id>.jpg as its full background (see the
 // regionBgStyle scrim below). Descriptions and the guaranteed crystal match the
 // region's real roster and rewards (see data/units.js + data/embark.js).
@@ -217,7 +220,7 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
             <div class="embark-level-row">
               ${levels.map(lv => `
                 <button
-                  class="embark-level-pip"
+                  class="embark-level-pip${BOSS_LEVELS.includes(lv) ? ' embark-level-pip--boss' : ''}"
                   data-region="${r.id}"
                   data-level="${lv}"
                   data-label="${rLabel(r)}"

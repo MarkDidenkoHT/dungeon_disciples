@@ -756,6 +756,18 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow: hidden;
   position: relative;
   z-index: 300;
+  max-height: 80px;
+  transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
+}
+
+/* Collapsed (slid up): used in battle prep until the spell sheet opens. Also
+   reclaims its vertical space so the arena isn't pushed down. */
+.resource-bar--collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  border-bottom-width: 0;
 }
 
 .res-bar-item {
@@ -1504,6 +1516,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
   color: var(--accent);
+}
+
+/* Boss levels (3, 6) — red so the player knows a boss waits. */
+.embark-level-pip--boss {
+  border-color: #e0453f;
+  color: #ff7a72;
+  background: color-mix(in srgb, #e0453f 20%, var(--surface));
+}
+.embark-level-pip--boss:hover {
+  border-color: #ff6a62;
+  color: #ff9a92;
 }
 
 .embark-main {
