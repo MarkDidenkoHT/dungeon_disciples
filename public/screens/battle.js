@@ -332,20 +332,26 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     const range = actor.unit_data?.range ?? 1;
+    const actorRow = Math.floor(actor.cellIndex / COLS);
     state.combatants.filter(c => c.side !== actor.side && c.alive).forEach(t => {
       if (range > 1) { targets.add(t.id); return; }
-      // Melee "local target rule" — must mirror getValidTargets on the server.
-      // A melee unit only reaches targets within one row of its own; within that
-      // band, front column if any front unit is in reach, else the back column.
-      const frontCol  = t.side === 'enemy' ? 0 : 1;
-      const backCol   = t.side === 'enemy' ? 1 : 0;
-      const actorRow  = Math.floor(actor.cellIndex / COLS);
-      const inReach   = c => Math.abs(Math.floor(c.cellIndex / COLS) - actorRow) <= 1;
-      if (!inReach(t)) return;
-      const frontNear = state.combatants.filter(c =>
-        c.side === t.side && c.alive && c.cellIndex % COLS === frontCol && inReach(c));
-      const reachableCol = frontNear.length > 0 ? frontCol : backCol;
-      if (t.cellIndex % COLS === reachableCol) targets.add(t.id);
+      // Melee reach — must mirror meleeCanReach() on the server. Front column
+      // first (whole column must fall before the back is exposed), then adjacent
+      // rows (±1); if none in the reachable column are adjacent, the nearest by
+      // row distance is reachable.
+      const side       = t.side;
+      const frontCol   = side === 'enemy' ? 0 : 1;
+      const backCol    = side === 'enemy' ? 1 : 0;
+      const frontAlive = state.combatants.some(c => c.side === side && c.alive && c.cellIndex % COLS === frontCol);
+      const reachableCol = frontAlive ? frontCol : backCol;
+      if (t.cellIndex % COLS !== reachableCol) return;
+      const colUnits = state.combatants.filter(c => c.side === side && c.alive && c.cellIndex % COLS === reachableCol);
+      const tDist    = Math.abs(Math.floor(t.cellIndex / COLS) - actorRow);
+      const hasAdjacent = colUnits.some(c => Math.abs(Math.floor(c.cellIndex / COLS) - actorRow) <= 1);
+      const ok = hasAdjacent
+        ? tDist <= 1
+        : tDist === Math.min(...colUnits.map(c => Math.abs(Math.floor(c.cellIndex / COLS) - actorRow)));
+      if (ok) targets.add(t.id);
     });
     return targets;
   }

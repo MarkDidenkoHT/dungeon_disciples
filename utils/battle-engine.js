@@ -319,24 +319,33 @@ class BattleEngine {
       }
       if (t.side === actor.side) return false;
       const range = actor.unit_data?.range ?? 1;
-      if (range === 1) {
-        // A melee unit only reaches targets within one row of its own — the
-        // "local target rule". Within that band it hits the front column if any
-        // front unit is in reach, otherwise the exposed back column. A target
-        // outside the band (row diff > 1) is NEVER reachable — the old fallback
-        // dropped this check and let a melee unit strike clear across the field.
-        const frontCol  = t.side === 'enemy' ? 0 : 1;
-        const backCol   = t.side === 'enemy' ? 1 : 0;
-        const actorRow  = cellRow(actor.cellIndex);
-        const inReach   = c => Math.abs(cellRow(c.cellIndex) - actorRow) <= 1;
-        if (!inReach(t)) return false;
-        const frontNear = this.combatants.filter(c =>
-          c.side === t.side && c.alive && cellCol(c.cellIndex) === frontCol && inReach(c));
-        const reachableCol = frontNear.length > 0 ? frontCol : backCol;
-        return cellCol(t.cellIndex) === reachableCol;
-      }
+      if (range === 1) return this.meleeCanReach(actor, t);
       return true;
     });
+  }
+  // Melee reach (range 1). Two gates:
+  //  1. Column — the target must be in the reachable column: the FRONT column
+  //     (nearest this side) while any front-column defender lives, otherwise the
+  //     back column. The whole front column must fall before the back is exposed.
+  //  2. Row — within that column, the target must be in an ADJACENT row (±1 of
+  //     the attacker). If no unit in the reachable column is adjacent, the melee
+  //     unit instead reaches the NEAREST one(s) by row distance, so it's never
+  //     stranded when a target exists in its lane.
+  meleeCanReach(actor, t) {
+    const side       = t.side;
+    const frontCol   = side === 'enemy' ? 0 : 1;
+    const backCol    = side === 'enemy' ? 1 : 0;
+    const frontAlive = this.combatants.some(c => c.side === side && c.alive && cellCol(c.cellIndex) === frontCol);
+    const reachableCol = frontAlive ? frontCol : backCol;
+    if (cellCol(t.cellIndex) !== reachableCol) return false;
+
+    const actorRow = cellRow(actor.cellIndex);
+    const colUnits = this.combatants.filter(c => c.side === side && c.alive && cellCol(c.cellIndex) === reachableCol);
+    const tDist    = Math.abs(cellRow(t.cellIndex) - actorRow);
+    const hasAdjacent = colUnits.some(c => Math.abs(cellRow(c.cellIndex) - actorRow) <= 1);
+    if (hasAdjacent) return tDist <= 1;
+    const minDist = Math.min(...colUnits.map(c => Math.abs(cellRow(c.cellIndex) - actorRow)));
+    return tDist === minDist;
   }
   calcDamage(actor, target) {
     return calcDamageWithPassives(actor, target, this.ABILITIES);
@@ -985,12 +994,16 @@ class BattleEngine {
     return power > 0;
   }
 
-  // Picks the best target for a basic action. Healers mend the most-wounded
-  // ally; attackers prefer a target they can kill this hit, then soft/low-HP ones.
+  // Picks the best target for a basic action. Healers ALWAYS mend the ally with
+  // the lowest current HP (preferring wounded ones, so a full-HP unit is never
+  // chosen while someone is hurt); attackers prefer a target they can kill this
+  // hit, then soft/low-HP ones.
   aiPickActionTarget(actor, targets) {
     if (!targets.length) return null;
     if (this.aiIsHealer(actor)) {
-      return targets.slice().sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0];
+      const wounded = targets.filter(c => c.battle_hp < c.max_hp);
+      const pool    = wounded.length ? wounded : targets;
+      return pool.slice().sort((a, b) => a.battle_hp - b.battle_hp)[0];
     }
     let best = null, bestScore = -Infinity;
     for (const t of targets) {
