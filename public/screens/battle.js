@@ -873,9 +873,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
 
-    // Pick a random loading screen
-    const screenNum = Math.floor(Math.random() * 8) + 1;
-    const bgImage = `/assets/loading_screens/loading${screenNum}.jpg`;
+    // Victory shows the player's faction art (/assets/victory_screens/victory_<c|e|g>.jpg);
+    // defeat keeps a random loading screen.
+    const FACTION_LETTER = { empire: 'e', choir_of_the_cursed: 'c', grail_of_sorrow: 'g' };
+    const bgImage = won
+      ? `/assets/victory_screens/victory_${FACTION_LETTER[player.faction] || 'e'}.jpg`
+      : `/assets/loading_screens/loading${Math.floor(Math.random() * 8) + 1}.jpg`;
 
     root.innerHTML = `
       <div class="screen screen-battle-result" style="background-image: url('${bgImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
@@ -900,14 +903,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       });
       const rewardsEl = root.querySelector('#result-rewards');
       if (won) {
+        // Icon-forward reward chips: proper resource icons (gold/crystals) plus
+        // amount. XP and trophies have no image asset, so they keep a glyph.
+        const chip = (iconHtml, amount, label = '') =>
+          `<div class="reward-chip">
+             <span class="reward-chip-icon">${iconHtml}</span>
+             <span class="reward-chip-amt">+${amount}</span>
+             ${label ? `<span class="reward-chip-label">${label}</span>` : ''}
+           </div>`;
+        const trophies = Object.entries(result.trophies_gained || {})
+          .map(([id, amt]) => chip('🏆', amt, id.replace(/_/g, ' '))).join('');
         rewardsEl.innerHTML = `
-          <div class="reward-row"><span>${GOLD_ICON} Gold</span><span>+${result.gold}</span></div>
-          <div class="reward-row"><span>💎 Crystals</span><span>+${result.crystal}</span></div>
-          ${result.crystal_bonus > 0 ? `<div class="reward-row"><span>${CRYSTAL_ICONS[result.crystal_bonus_type] || '💎'} ${result.crystal_bonus_type?.replace('Crystals_', '')} Crystal (bonus)</span><span>+${result.crystal_bonus}</span></div>` : ''}
-          <div class="reward-row"><span>⭐ XP</span><span>+${result.xp_granted} each (${survivorIds.length} survivors)</span></div>
-          ${Object.entries(result.trophies_gained || {}).map(([id, amt]) =>
-            `<div class="reward-row"><span>🏆 ${id.replace(/_/g, ' ')}</span><span>+${amt}</span></div>`).join('')}
-          ${result.progress_unlocked ? `<div class="reward-row reward-row--unlock"><span>🔓 Level ${result.next_level} unlocked!</span></div>` : ''}
+          <div class="reward-grid">
+            ${result.gold    > 0 ? chip(GOLD_ICON, result.gold) : ''}
+            ${result.crystal > 0 ? chip(CRYSTAL_ICONS[result.crystal_type] || '💎', result.crystal) : ''}
+            ${result.crystal_bonus > 0 ? chip(CRYSTAL_ICONS[result.crystal_bonus_type] || '💎', result.crystal_bonus) : ''}
+            ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, 'XP each') : ''}
+            ${trophies}
+          </div>
+          ${result.progress_unlocked ? `<div class="reward-unlock">🔓 Level ${result.next_level} unlocked!</div>` : ''}
         `;
       } else {
         rewardsEl.innerHTML = `<p style="color:var(--muted)">No rewards on defeat.</p>`;

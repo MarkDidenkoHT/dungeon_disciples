@@ -2467,6 +2467,33 @@ button:active:not(:disabled) { opacity: 0.75; }
 .result-reward-row span { color: var(--accent); font-weight: bold; }
 .result-log { font-size: 0.75rem; color: var(--muted); }
 
+/* Victory reward chips — icon-forward, wrapping grid. */
+.reward-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.reward-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.reward-chip-icon { display: flex; align-items: center; font-size: 1.4rem; line-height: 1; }
+.reward-chip-icon .res-icon-img { width: 28px; height: 28px; }
+.reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
+.reward-chip-label { color: #cfd6e2; font-size: 0.72rem; text-transform: capitalize; }
+.reward-unlock {
+  margin-top: 12px;
+  color: #6fe03a;
+  font-weight: bold;
+  text-align: center;
+}
+
 
 .battle-cell-portrait {
   position: absolute;
@@ -2696,6 +2723,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: #1a2a1a;
   cursor: grab;
   position: relative;
+  /* Let pointer-drag work on touch: without this the browser hijacks the
+     press-and-drag as a scroll/pan and fires pointercancel, so grid→grid drag
+     never starts on mobile (roster→grid already works via .portrait-card). */
+  touch-action: none;
 }
 
 .battle-cell--placed:active {
