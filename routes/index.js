@@ -464,25 +464,17 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'player_id and chat_id required' });
   }
   try {
-    const battles   = await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&select=battle_id`);
+    const battles = await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&select=battle_id`);
     const battleIds = [...new Set((battles || []).map(b => b.battle_id).filter(Boolean))];
     await Promise.all(battleIds.map(id =>
       supabase(`/battle_log?battle_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' })
     ));
 
-    await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
-      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
-      supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
-      supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' }),
-      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' }),
-    ]);
-
-    const emptySlots = emptyStructures();
-    await supabase('/structures', {
-      method: 'POST',
-      body: JSON.stringify({ chat_id, buildings_data: emptySlots }),
-    });
+    await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    await supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' });
+    await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
 
     await supabase('/resources', {
       method: 'POST',
@@ -491,6 +483,12 @@ router.post('/player/reset', requireAuth, async (req, res) => {
 
     const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
     const preservedTimezone = existingPlayer[0]?.timezone ?? null;
+
+    const emptySlots = emptyStructures();
+    await supabase('/structures', {
+      method: 'POST',
+      body: JSON.stringify({ chat_id, buildings_data: emptySlots }),
+    });
 
     const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
@@ -504,8 +502,14 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       }),
     });
 
-    res.json({ player: updated[0] });
+    const verifyResources = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    
+    res.json({ 
+      player: updated[0],
+      resources: verifyResources
+    });
   } catch (err) {
+    console.error('Reset error:', err);
     res.status(500).json({ error: err.message });
   }
 });
