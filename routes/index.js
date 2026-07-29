@@ -471,8 +471,18 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     ));
 
     await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
-    await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    
+    const rosterEntries = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id`);
+    const rosterIds = rosterEntries.map(r => r.id);
+    
+    if (rosterIds.length) {
+      await Promise.all(rosterIds.map(id =>
+        supabase(`/items?equipped_by=eq.${encodeURIComponent(id)}`, { method: 'DELETE' })
+      ));
+    }
+    
     await supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' });
+    await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
 
