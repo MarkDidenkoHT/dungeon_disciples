@@ -484,7 +484,13 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     await supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' });
     await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
-    await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    
+    const deleteResult = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+    
+    const verifyBeforeInsert = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    if (verifyBeforeInsert.length > 0) {
+      throw new Error(`Failed to delete resources: ${verifyBeforeInsert.length} records remain`);
+    }
 
     await supabase('/resources', {
       method: 'POST',
