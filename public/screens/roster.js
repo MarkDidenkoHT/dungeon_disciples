@@ -546,9 +546,44 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+
+  function showTrophyBar() {
+    if (!resources.length) return;
+    const trophyItems = resources.filter(r => r.item_type === 'trophy' && r.amount > 0);
+    if (!trophyItems.length) return;
+
+    const existing = document.getElementById('roster-trophy-bar');
+    if (existing) existing.remove();
+
+    const bar = document.createElement('div');
+    bar.id = 'roster-trophy-bar';
+    bar.className = 'roster-trophy-bar';
+    bar.innerHTML = trophyItems.map(t => `
+      <div class="trophy-bar-item" title="${t.item}">
+        <img src="/assets/icons/recources/${t.item}.png"
+            class="trophy-bar-icon"
+            alt="${t.item}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="trophy-bar-icon-fallback" style="display:none;">🏆</span>
+        <span class="trophy-bar-val">${t.amount}</span>
+      </div>
+    `).join('');
+
+    const resourceBar = document.getElementById('resource-bar');
+    if (resourceBar) {
+      resourceBar.insertAdjacentElement('afterend', bar);
+    }
+  }
+
+  function hideTrophyBar() {
+    document.getElementById('roster-trophy-bar')?.remove();
+  }
+
   function openItemModal(rosterId) {
     const unit = units.find(u => String(u.id) === String(rosterId));
     if (!unit) return;
+
+    showTrophyBar();
     const def      = resolveUnitDef(unit);
     const unitTags = (def?.tags || []).filter(Boolean);
 
@@ -606,6 +641,16 @@ export function renderRoster(root, { player }) {
     }
 
     openSheet('Items', render());
+
+    // Remove the trophy bar when the sheet is dismissed
+    const _sheetCloseObserver = new MutationObserver(() => {
+      const overlay = document.querySelector('.modal-overlay:not(.hidden):not(.modal-overlay--sub)');
+      if (!overlay) {
+        hideTrophyBar();
+        _sheetCloseObserver.disconnect();
+      }
+    });
+    _sheetCloseObserver.observe(document.body, { childList: true, subtree: true });
 
     // Bind to the MAIN sheet's body specifically. document.querySelector('.modal-body')
     // returns whichever sheet is first in the DOM — if a sub-sheet (ability/stat
@@ -696,6 +741,7 @@ export function renderRoster(root, { player }) {
           const result = await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
           items     = result.items     || items;
           resources = result.resources || resources;
+          showTrophyBar();
           refreshResourceBar(player).catch(() => {});
           body.innerHTML = render();
         } catch (err) {

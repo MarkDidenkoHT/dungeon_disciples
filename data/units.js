@@ -1604,7 +1604,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg',
       xp: 400, passive: ['horde 1', 'lifesteal 1'], ability: 'shared_suffering 1',
     },
     abominate: {
@@ -1615,7 +1615,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 40,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
       xp: 900, passive: ['horde 1', 'lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
     },
     cesswalker: {
@@ -1736,7 +1736,7 @@ const UNITS = {
       hp: 90, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
       xp: 200, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
     },
     crimson_communicant: {
@@ -1747,7 +1747,7 @@ const UNITS = {
       hp: 105, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 32,
+      damage_source: 'physical', action_power: 32, action_icon: 'blood_claw.jpg',
       xp: 800, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
     },
     chosen: {
@@ -1758,7 +1758,7 @@ const UNITS = {
       hp: 130, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40,
+      damage_source: 'physical', action_power: 40, action_icon: 'blood_claw.jpg',
       xp: 1800, passive: ['sacrament 1', 'regenerate 2', 'lifesteal 1'], ability: 'libation 1',
     },
     husk_colossus: {
@@ -1780,7 +1780,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30,
+      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg',
       xp: 800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_angel: {
@@ -1791,7 +1791,7 @@ const UNITS = {
       hp: 140, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40,
+      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg',
       xp: 1800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
@@ -2063,7 +2063,7 @@ const UNITS = {
         xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
       },
       sister_aldra_1: {
-        id: 'opb_e5', f: 'opb', t: 1,
+        id: 'opb_e5', f: 'opb', t: 2,
         name: 'Sister Aldra',
         tags: ['Demon', 'Holy'],
         size: 'tile',
@@ -2071,10 +2071,10 @@ const UNITS = {
         resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'physical', action_power: 10,
-        xp: 999, passive: 'bleed 1', ability: null,
+        xp: 999, passive: 'bleed 2', ability: null,
       },
       sister_aldra_2: {
-        id: 'opb_e51', f: 'opb', t: 2,
+        id: 'opb_e51', f: 'opb', t: 3,
         name: 'Sister Aldra',
         tags: ['Demon', 'Holy'],
         size: 'tile',
@@ -2082,7 +2082,7 @@ const UNITS = {
         resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'life', action_power: 15,
-        xp: 999, passive: 'bleed 2', ability: null,
+        xp: 999, passive: ['bleed 2', 'recuperate 1'], ability: null,
       },
     },
 

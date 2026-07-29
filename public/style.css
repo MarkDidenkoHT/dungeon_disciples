@@ -797,6 +797,53 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0 2px;
 }
 
+.roster-trophy-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface, #1a1a2e);
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  z-index: 10;
+  /* sits directly below #resource-bar, same width */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.roster-trophy-bar::-webkit-scrollbar { display: none; }
+
+.trophy-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trophy-bar-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.trophy-bar-icon-fallback {
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.trophy-bar-val {
+  font-size: 0.78rem;
+  color: var(--text, #e0d5c0);
+  font-weight: 600;
+  min-width: 1ch;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -3253,9 +3300,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .spell-card--active .spell-card-icon img {
   filter: drop-shadow(0 0 6px var(--accent));
-}
-
-.spell-card--learned {
 }
 
 .spell-card--unaffordable {

@@ -364,7 +364,7 @@ const THRONE_UPGRADE_COSTS = {
   1: { gold: 50 },
   2: { gold: 150 },
   3: { gold: 300 },
-  4: { gold: 600 },
+  4: { gold: 500 },
 };
 
 function getBuildingDef(faction, buildingId) {

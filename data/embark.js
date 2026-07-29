@@ -12,9 +12,8 @@ const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: {
       enemies: [
-        { key: 'crimson_basilica.initiate', cell: 3, item_id: 'padded_armor' },
+        { key: 'crimson_basilica.aggrails_herald', cell: 2, item_id: 'padded_armor' },
         { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
-        { key: 'crimson_basilica.scarlet_recruit', cell: 4 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -194,9 +193,8 @@ const REGION_ENCOUNTERS = {
   chamber_of_unrest: {
     level_1: {
       enemies: [
-        { key: 'chamber_of_unrest.bone_knight',   cell: 0, item_id: 'crude_sword' },
-        { key: 'chamber_of_unrest.bone_knight',   cell: 4, item_id: 'crude_sword' },
-        { key: 'chamber_of_unrest.wailing_ghost', cell: 3 },
+        { key: 'chamber_of_unrest.bone_knight',   cell: 0 },
+        { key: 'chamber_of_unrest.bone_knight',   cell: 4 },
       ],
       rewards: {
         gold: 15, xp: 30,
