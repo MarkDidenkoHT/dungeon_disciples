@@ -793,8 +793,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 25 HP.',
-    params: { heal_flat: 25 },
+    description: 'Heal all allies for 12 HP.',
+    params: { heal_flat: 12 },
   },
   'prayer_of_healing 2': {
     id: 'prayer_of_healing 2',
@@ -802,8 +802,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'all_allies',
-    description: 'Heal all allies for 40 HP.',
-    params: { heal_flat: 40 },
+    description: 'Heal all allies for 16 HP.',
+    params: { heal_flat: 16 },
   },
   'fanaticism 1': {
     id: 'fanaticism 1',
@@ -1207,21 +1207,14 @@ const UNIT_ABILITIES = {
     description: 'The Bleed currently on the target becomes permanent — it ticks every turn and never expires.',
     params: { make_bleed_permanent: true },
   },
-
-  // ── Expedition passives ─────────────────────────────────────────────────────
-  // These do nothing during combat. They are read by /battle/reward after a WON
-  // embark: every copy across the party (units AND equipped items) contributes,
-  // and same-kind bonuses SUM — two Scavenger 1 units plus a Scavenger item is
-  // a flat +30% gold. trigger 'on_embark_complete' is never fired by the battle
-  // engine; it just marks these as out-of-combat.
   'field_medic 1': {
     id: 'field_medic 1',
     name: 'Field Medic',
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all surviving units regenerate 10% of their max HP.',
-    params: { embark_heal_pct: 10 },
+    description: 'After a successful embark, all surviving units regenerate 5% of their max HP.',
+    params: { embark_heal_pct: 5 },
   },
   'field_medic 2': {
     id: 'field_medic 2',
@@ -1229,8 +1222,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all surviving units regenerate 20% of their max HP.',
-    params: { embark_heal_pct: 20 },
+    description: 'After a successful embark, all surviving units regenerate 10% of their max HP.',
+    params: { embark_heal_pct: 10 },
   },
   'field_medic 3': {
     id: 'field_medic 3',
@@ -1238,8 +1231,8 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all surviving units regenerate 30% of their max HP.',
-    params: { embark_heal_pct: 30 },
+    description: 'After a successful embark, all surviving units regenerate 15% of their max HP.',
+    params: { embark_heal_pct: 15 },
   },
   'combat_veteran 1': {
     id: 'combat_veteran 1',
@@ -1247,7 +1240,7 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 8% bonus XP.',
+    description: 'After a successful embark, all units gain 5% bonus XP.',
     params: { embark_xp_bonus_pct: 8 },
   },
   'combat_veteran 2': {
@@ -1256,8 +1249,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 12% bonus XP.',
-    params: { embark_xp_bonus_pct: 12 },
+    description: 'After a successful embark, all units gain 7% bonus XP.',
+    params: { embark_xp_bonus_pct: 7 },
   },
   'combat_veteran 3': {
     id: 'combat_veteran 3',
@@ -1265,8 +1258,8 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'After a successful embark, all units gain 15% bonus XP.',
-    params: { embark_xp_bonus_pct: 15 },
+    description: 'After a successful embark, all units gain 9% bonus XP.',
+    params: { embark_xp_bonus_pct: 9 },
   },
   'unending_servitude 1': {
     id: 'unending_servitude 1',
@@ -1284,7 +1277,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_embark_complete',
     description: 'A successful embark yields 10% more gold.',
-    params: { embark_gold_bonus_pct: 10 },
+    params: { embark_gold_bonus_pct: 5 },
   },
   'scavenger 2': {
     id: 'scavenger 2',
@@ -1293,7 +1286,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_embark_complete',
     description: 'A successful embark yields 20% more gold.',
-    params: { embark_gold_bonus_pct: 20 },
+    params: { embark_gold_bonus_pct: 10 },
   },
   'scavenger 3': {
     id: 'scavenger 3',
@@ -1302,7 +1295,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_embark_complete',
     description: 'A successful embark yields 30% more gold.',
-    params: { embark_gold_bonus_pct: 30 },
+    params: { embark_gold_bonus_pct: 15 },
   },
   'magic_attunement 1': {
     id: 'magic_attunement 1',
@@ -1310,8 +1303,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'A successful embark yields 10% more crystals.',
-    params: { embark_crystal_bonus_pct: 10 },
+    description: 'A successful embark yields 5% more crystals.',
+    params: { embark_crystal_bonus_pct: 5 },
   },
   'magic_attunement 2': {
     id: 'magic_attunement 2',
@@ -1319,8 +1312,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'A successful embark yields 20% more crystals.',
-    params: { embark_crystal_bonus_pct: 20 },
+    description: 'A successful embark yields 10% more crystals.',
+    params: { embark_crystal_bonus_pct: 10 },
   },
   'magic_attunement 3': {
     id: 'magic_attunement 3',
@@ -1328,8 +1321,8 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
-    description: 'A successful embark yields 30% more crystals.',
-    params: { embark_crystal_bonus_pct: 30 },
+    description: 'A successful embark yields 15% more crystals.',
+    params: { embark_crystal_bonus_pct: 15 },
   },
 };
 
