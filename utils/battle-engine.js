@@ -118,6 +118,9 @@ class BattleEngine {
       dot_dmg:            0,
       _dot_permanent:     0,
       _bleed_permanent:   0,
+      _dot_source_key:    null,
+      _bleed_source_key:  null,
+      _chill_source_key:  null,
       _dodge_count:       0,
       _effects:           [],
       _effect_seq:        0,
@@ -715,14 +718,23 @@ class BattleEngine {
       tick(d, 'Recuperate (deferred)', '⏳');
     }
     if (unit.alive && unit._bleed_dmg > 0) {
-      const b = unit._bleed_dmg; unit._bleed_dmg = 0;
+      const bleedSourceKey = unit._bleed_source_key ?? null;
+      const bleedRank = bleedSourceKey && this.ABILITIES
+        ? (this.ABILITIES[bleedSourceKey]?.rank ?? 1)
+        : 1;
+      const b = Math.max(bleedRank, unit._bleed_dmg);
+      unit._bleed_dmg = 0;
       tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
-      // Exsanguinate makes the bleed permanent: re-arm it after ticking.
       if (unit.alive && unit._bleed_permanent > 0) unit._bleed_dmg = unit._bleed_permanent;
       else this.clearEffect(unit, 'bleed');
     }
     if (unit.alive && unit._chill_dmg > 0) {
-      const c = unit._chill_dmg; unit._chill_dmg = 0;
+      const chillSourceKey = unit._chill_source_key ?? null;
+      const chillRank = chillSourceKey && this.ABILITIES
+        ? (this.ABILITIES[chillSourceKey]?.rank ?? 1)
+        : 1;
+      const c = Math.max(chillRank, unit._chill_dmg);
+      unit._chill_dmg = 0;
       tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
       this.clearEffect(unit, 'chill');
     }
@@ -730,11 +742,14 @@ class BattleEngine {
   applyDoTs(unit) {
     if (!unit.alive) return;
     if (unit.dot_dmg > 0) {
-      unit.battle_hp = Math.max(0, unit.battle_hp - unit.dot_dmg);
-      // dot_kind (burn/poison, defaulting to burn) is cosmetic only — see _dot_type.
+      const dotSourceKey = unit._dot_source_key ?? null;
+      const dotRank = dotSourceKey && this.ABILITIES
+        ? (this.ABILITIES[dotSourceKey]?.rank ?? 1)
+        : 1;
+      const dotDmg = Math.max(dotRank, unit.dot_dmg);
+      unit.battle_hp = Math.max(0, unit.battle_hp - dotDmg);
       const dotKind = unit._dot_type === 'poison' ? 'poison' : 'burn';
-      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: unit.dot_dmg, heal: false, dot_kind: dotKind });
-      // Mark of Ash makes the burn permanent: re-arm it instead of clearing.
+      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dotDmg, heal: false, dot_kind: dotKind });
       if (unit._dot_permanent > 0 && unit.alive) { unit.dot_dmg = unit._dot_permanent; }
       else { unit.dot_dmg = 0; unit._dot_type = null; this.clearEffect(unit, 'dot'); }
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
@@ -1175,6 +1190,9 @@ class BattleEngine {
           _dot_type:           c._dot_type ?? null,
           _dot_permanent:      c._dot_permanent ?? 0,
           _bleed_permanent:    c._bleed_permanent ?? 0,
+          _dot_source_key:   c._dot_source_key   ?? null,
+          _bleed_source_key: c._bleed_source_key ?? null,
+          _chill_source_key: c._chill_source_key ?? null,
           _dodge_count:        c._dodge_count ?? 0,
           _effects:            c._effects ?? [],
           _effect_seq:         c._effect_seq ?? 0,
@@ -1224,6 +1242,9 @@ class BattleEngine {
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
       c._dot_type          = b._dot_type          ?? null;
+      c._dot_source_key   = b._dot_source_key   ?? null;
+      c._bleed_source_key = b._bleed_source_key ?? null;
+      c._chill_source_key = b._chill_source_key ?? null;
       c._hot               = b._hot               ?? 0;
       c._stacks            = b._stacks            || {};
       c._flags             = b._flags             || {};

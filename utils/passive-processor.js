@@ -284,27 +284,29 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.dot_dmg_pct != null) {
       target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
-      // Burn and poison share the generic dot_dmg field; record which one it was
-      // purely so the UI can show the right icon/flash colour. Never read by logic.
       target._dot_type = (def.name || '').toLowerCase() === 'poison' ? 'poison' : 'burn';
+      target._dot_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'dot', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null },
+        clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null },
       });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
     }
     if (p.bleed_dmg_pct != null) {
       target._bleed_dmg = Math.floor(dmg * p.bleed_dmg_pct / 100);
+      target._bleed_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { _bleed_dmg: 0, _bleed_permanent: 0 },
+        clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
       });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._bleed_dmg });
     }
     if (p.chill_dmg_pct != null) {
       target._chill_dmg = Math.floor(dmg * p.chill_dmg_pct / 100);
+      target._chill_source_key = abilityKey;
       engine.registerEffect(target, {
-        key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, clear: { _chill_dmg: 0 },
+        key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+        clear: { _chill_dmg: 0, _chill_source_key: null },
       });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._chill_dmg });
     }
