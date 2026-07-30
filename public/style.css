@@ -864,10 +864,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 .timeline-sprite-fig { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; }
 .timeline-sprite-fig figcaption { font-size: 0.68rem; color: var(--muted); }
 .timeline-sprite {
-  max-width: 140px;
-  min-width: 100px;
-  max-height: 140px;
-  min-height: 100px;
+  width: 120px;
+  height: 120px;
   background-size: 500% 500%;   /* 5×5 sheet */
   background-repeat: no-repeat;
 }
@@ -3035,7 +3033,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  width: 58px;
+  width: 60px;
   cursor: grab;
   flex-shrink: 0;
   border: 1px solid var(--border);
@@ -3044,6 +3042,31 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--surface);
   user-select: none;
   touch-action: none;
+}
+
+/* The character portrait sits inside the ornate formation frame art; the
+   portrait is inset so it fills the grey inner panel, not the border. The
+   background-color is a fallback until formation.png is present. */
+.portrait-frame {
+  position: relative;
+  width: 46px;
+  height: 60px;
+  flex-shrink: 0;
+  background-color: #14181f;
+  background-image: url('/assets/icons/ui/formation.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.portrait-frame .portrait-art-img,
+.portrait-frame .portrait-art {
+  position: absolute;
+  /* Sit in the grey inner panel — explicit % size because an <img> ignores
+     inset-derived sizing (replaced elements use their intrinsic size). */
+  top: 12%;
+  left: 14%;
+  width: 72%;   /* 100% − 2×14% */
+  height: 76%;  /* 100% − 2×12% */
+  border-radius: 2px;
 }
 
 .portrait-card:active {
