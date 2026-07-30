@@ -499,12 +499,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Status effects surfaced as small icons on top of a unit's portrait. The
   // engine tracks each on the raw combatant (see getSnapshot). Order here is the
   // left-to-right order the icons appear in. Extend this list to add more.
-  function dotType(c) { return (c?._dot_type || '').toLowerCase(); }
+  // Burn (dot_dmg) and Poison (_poison_dmg) are independent slots now, so a unit
+  // can show both icons at once.
   const STATUS_DEFS = [
     { key: 'bleed',  icon: '🩸', active: c => (c._bleed_dmg || 0) > 0 },
     { key: 'chill',  icon: '❄️', active: c => (c._chill_dmg || 0) > 0 },
-    { key: 'poison', icon: '☠️', active: c => (c.dot_dmg || 0) > 0 && dotType(c) === 'poison' },
-    { key: 'burn',   icon: '🔥', active: c => (c.dot_dmg || 0) > 0 && dotType(c) !== 'poison' },
+    { key: 'poison', icon: '☠️', active: c => (c._poison_dmg || 0) > 0 },
+    { key: 'burn',   icon: '🔥', active: c => (c.dot_dmg || 0) > 0 },
   ];
 
   function statusIconsHtml(occ) {

@@ -284,32 +284,46 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.dot_dmg_pct != null) {
-      target.dot_dmg = Math.floor(dmg * p.dot_dmg_pct / 100);
-      target._dot_type = (def.name || '').toLowerCase() === 'poison' ? 'poison' : 'burn';
-      target._dot_source_key = abilityKey;
-      engine.registerEffect(target, {
-        key: 'dot', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null },
-      });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target.dot_dmg });
+      // Burn and Poison are now INDEPENDENT damage-over-time effects on separate
+      // slots (burn -> dot_dmg, poison -> _poison_dmg), so a unit can carry both
+      // at once. Each new hit STACKS onto whatever is already there.
+      const add      = Math.floor(dmg * p.dot_dmg_pct / 100);
+      const isPoison = (def.name || '').toLowerCase() === 'poison';
+      if (isPoison) {
+        target._poison_dmg = (target._poison_dmg ?? 0) + add;
+        target._poison_source_key = abilityKey;
+        engine.registerEffect(target, {
+          key: 'poison', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+          clear: { _poison_dmg: 0, _poison_source_key: null },
+        });
+      } else {
+        target.dot_dmg = (target.dot_dmg ?? 0) + add;
+        target._dot_type = 'burn';
+        target._dot_source_key = abilityKey;
+        engine.registerEffect(target, {
+          key: 'dot', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+          clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null },
+        });
+      }
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
     }
     if (p.bleed_dmg_pct != null) {
-      target._bleed_dmg = Math.floor(dmg * p.bleed_dmg_pct / 100);
+      target._bleed_dmg = (target._bleed_dmg ?? 0) + Math.floor(dmg * p.bleed_dmg_pct / 100); // stacks
       target._bleed_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
         clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
       });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._bleed_dmg });
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: Math.floor(dmg * p.bleed_dmg_pct / 100) });
     }
     if (p.chill_dmg_pct != null) {
-      target._chill_dmg = Math.floor(dmg * p.chill_dmg_pct / 100);
+      target._chill_dmg = (target._chill_dmg ?? 0) + Math.floor(dmg * p.chill_dmg_pct / 100); // stacks
       target._chill_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
         clear: { _chill_dmg: 0, _chill_source_key: null },
       });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._chill_dmg });
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: Math.floor(dmg * p.chill_dmg_pct / 100) });
     }
     if (p.armor_shred != null) {
       const reduction = target._debuff_reduction ?? 0;
@@ -381,17 +395,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
         }
       }
     }
-    if (p.healing_reduction_pct != null && !target._flags[def.id + '_applied']) {
-      target._flags[def.id + '_applied'] = true;
-      const before = target._healing_reduction ?? 0;
-      target._healing_reduction = Math.min(100, before + p.healing_reduction_pct);
+    if (p.healing_reduction_pct != null) {
+      // Infect now STACKS each hit, up to a 100% healing-reduction cap.
+      const before  = target._healing_reduction ?? 0;
+      const applied = Math.min(100, before + p.healing_reduction_pct) - before;
+      target._healing_reduction = before + applied;
       engine.registerEffect(target, {
         key: 'healing_reduction', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        // Also clear the once-per-unit flag so the debuff can be re-applied later.
-        restore: { _healing_reduction: -(target._healing_reduction - before) },
-        clear:   { [`_flags.${def.id}_applied`]: false },
+        restore: { _healing_reduction: -applied }, // dispel undoes exactly what stacked
       });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.healing_reduction_pct });
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: applied });
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && c.id !== target.id);
@@ -739,6 +752,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     // keep stale records for debuffs this just wiped.
     engine.dispelEffects(target, 'negative');
     target.dot_dmg = 0;
+    target._poison_dmg = 0;
     target._dot_permanent = 0;
     target._hot = 0;
     target._bleed_dmg = 0;

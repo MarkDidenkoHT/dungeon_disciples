@@ -116,9 +116,11 @@ class BattleEngine {
       used_active:        false,
       defend_armor_bonus: 0,
       dot_dmg:            0,
+      _poison_dmg:        0,
       _dot_permanent:     0,
       _bleed_permanent:   0,
       _dot_source_key:    null,
+      _poison_source_key: null,
       _bleed_source_key:  null,
       _chill_source_key:  null,
       _dodge_count:       0,
@@ -358,8 +360,9 @@ class BattleEngine {
   }
   calcHeal(actor) {
     const data  = actor.unit_data || actor;
-    const power = data.action_power ?? data.action?.value ?? 15;
-    return Math.floor(power * 1.3);
+    // Heal equals the unit's action_power — no hidden multiplier. (Previously
+    // ×1.3, which made a power-10 healer restore 13 and read as a bug.)
+    return data.action_power ?? data.action?.value ?? 15;
   }
   applyRecuperate(target, rawDmg) {
     const defs = this.resolveAllPassiveDefs(target);
@@ -741,6 +744,8 @@ class BattleEngine {
   }
   applyDoTs(unit) {
     if (!unit.alive) return;
+    // Burn (dot_dmg) — the accumulated burn ticks once, then clears unless it was
+    // made permanent (Mark of Ash).
     if (unit.dot_dmg > 0) {
       const dotSourceKey = unit._dot_source_key ?? null;
       const dotRank = dotSourceKey && this.ABILITIES
@@ -748,10 +753,20 @@ class BattleEngine {
         : 1;
       const dotDmg = Math.max(dotRank, unit.dot_dmg);
       unit.battle_hp = Math.max(0, unit.battle_hp - dotDmg);
-      const dotKind = unit._dot_type === 'poison' ? 'poison' : 'burn';
-      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dotDmg, heal: false, dot_kind: dotKind });
+      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dotDmg, heal: false, dot_kind: 'burn' });
       if (unit._dot_permanent > 0 && unit.alive) { unit.dot_dmg = unit._dot_permanent; }
       else { unit.dot_dmg = 0; unit._dot_type = null; this.clearEffect(unit, 'dot'); }
+      if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
+    }
+    // Poison (_poison_dmg) — independent of burn; the accumulated poison ticks
+    // once, then clears.
+    if (unit.alive && unit._poison_dmg > 0) {
+      const psnKey  = unit._poison_source_key ?? null;
+      const psnRank = psnKey && this.ABILITIES ? (this.ABILITIES[psnKey]?.rank ?? 1) : 1;
+      const psnDmg  = Math.max(psnRank, unit._poison_dmg);
+      unit.battle_hp = Math.max(0, unit.battle_hp - psnDmg);
+      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '☠️', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: psnDmg, heal: false, dot_kind: 'poison' });
+      unit._poison_dmg = 0; unit._poison_source_key = null; this.clearEffect(unit, 'poison');
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
@@ -1037,7 +1052,7 @@ class BattleEngine {
     if (!def || !targets.length) return null;
     const p = def.params || {};
     const hasNegative = c => (c._effects || []).some(e => e.polarity === 'negative')
-      || (c.dot_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._healing_reduction > 0);
+      || (c.dot_dmg > 0) || (c._poison_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._healing_reduction > 0);
     const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive') || (c._dmg_mult || 1) > 1;
 
     // Resurrect a fallen ally — always worth it when a valid corpse exists.
@@ -1187,10 +1202,12 @@ class BattleEngine {
           _aegis_resists:      c._aegis_resists,
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
+          _poison_dmg:         c._poison_dmg ?? 0,
           _dot_type:           c._dot_type ?? null,
           _dot_permanent:      c._dot_permanent ?? 0,
           _bleed_permanent:    c._bleed_permanent ?? 0,
           _dot_source_key:   c._dot_source_key   ?? null,
+          _poison_source_key: c._poison_source_key ?? null,
           _bleed_source_key: c._bleed_source_key ?? null,
           _chill_source_key: c._chill_source_key ?? null,
           _dodge_count:        c._dodge_count ?? 0,
@@ -1241,8 +1258,10 @@ class BattleEngine {
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
+      c._poison_dmg        = b._poison_dmg        ?? 0;
       c._dot_type          = b._dot_type          ?? null;
       c._dot_source_key   = b._dot_source_key   ?? null;
+      c._poison_source_key = b._poison_source_key ?? null;
       c._bleed_source_key = b._bleed_source_key ?? null;
       c._chill_source_key = b._chill_source_key ?? null;
       c._hot               = b._hot               ?? 0;
