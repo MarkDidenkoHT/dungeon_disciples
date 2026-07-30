@@ -94,16 +94,24 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     <div class="screen screen-battle-prep">
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
-          <div class="battle-half-label">Your Formation <span id="loyalty-counter" class="loyalty-counter"></span><span id="player-army-power" class="army-power"></span></div>
+          <div class="battle-half-label battle-half-label--formation">
+            <span class="formation-title">Your Formation</span>
+            <span class="formation-stats">
+              <span id="loyalty-counter" class="loyalty-counter"></span>
+              <span id="player-army-power" class="army-power"></span>
+            </span>
+          </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="player-grid"></div>
           </div>
         </div>
         <div class="battle-half battle-half--enemy">
-          <div class="battle-half-label">
-            Enemies
-            <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
-            <span id="enemy-army-power" class="army-power"></span>
+          <div class="battle-half-label battle-half-label--formation">
+            <span class="formation-title">Enemies</span>
+            <span class="formation-stats">
+              <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
+              <span id="enemy-army-power" class="army-power"></span>
+            </span>
           </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="enemy-grid"></div>

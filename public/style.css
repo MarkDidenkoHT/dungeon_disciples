@@ -2706,6 +2706,46 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 5px;
 }
 
+/* Ornate golden formation header: title stacked over a loyalty / power row. */
+.battle-half-label--formation {
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 0 2px;
+}
+.formation-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.75));
+}
+.formation-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+/* Bigger, warmer stat text over the golden theme. */
+.formation-stats .loyalty-counter {
+  margin-left: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ece3c8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+.formation-stats .army-power {
+  margin-left: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f2d489;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
 .enemy-spell-indicator {
   font-size: 0.85rem;
   line-height: 1;
