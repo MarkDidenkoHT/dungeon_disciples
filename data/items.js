@@ -478,12 +478,12 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'mace',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Death: 10, Crystals_Air; 10 },
+    cost:         { Gold: 25, Crystals_Death: 10, Crystals_Air: 10 },
   },
   morning_star: {
     key:          'morning_star',
     name:         "Morning Star",
-    name_ru:      'Утрення Здвезда',
+    name_ru:      'Утренняя Здвезда',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -538,7 +538,7 @@ const ITEM_DEFS = {
   },
   orb_of_pure_blood: {
     key:          'orb_of_pure_blood',
-    name:         "orb Of Pure Blood",
+    name:         "Orb Of Pure Blood",
     name_ru:      'Сфера Чистой Крови',
     faction:      null,
     tag_required: 'Caster',
@@ -592,7 +592,7 @@ const ITEM_DEFS = {
     passive:      'poison 1',
     icon:         'poisonous_dagger',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Nature: 25,  },
+    cost:         { Gold: 25, Crystals_Nature: 25  },
   },
   frost_lance: {
     key:          'frost_lance',
