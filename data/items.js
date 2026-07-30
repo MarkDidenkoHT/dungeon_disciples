@@ -166,7 +166,7 @@ const ITEM_DEFS = {
   },
   aldras_devotion: {
     key:          'aldras_devotion',
-    name:         "Akdra's Devotion",
+    name:         "Aldra's Devotion",
     name_ru:      'Преданность Алдры',
     faction:      null,
     tag_required: null,
@@ -494,7 +494,7 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { Gold: 25, Crystals_Death: 25 },
     item_cost:    {mace: 1},
-  }
+  },
   seal_of_power: {
     key:          'seal_of_power',
     name:         "Seal Of Power",
