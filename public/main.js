@@ -8,6 +8,7 @@ import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
+import { openTimeline }     from './timeline.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 
 import {
@@ -73,6 +74,12 @@ function mountShell(player) {
     if (btn && !btn.classList.contains('disabled')) {
       navigate(btn.dataset.screen, { player });
     }
+  });
+
+  // Resource bar is rebuilt on every navigation (refreshResourceBar), so delegate
+  // the timeline click from the container, which is mounted once.
+  document.getElementById('resource-bar').addEventListener('click', e => {
+    if (e.target.closest('.res-bar-timeline')) openTimeline();
   });
 }
 
