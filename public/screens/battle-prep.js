@@ -705,9 +705,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
                     ${isSelected ? 'portrait-card--selected' : ''}
                     ${locked     ? 'portrait-card--locked'   : ''}"
              data-id="${u.id}">
-          <div class="portrait-frame">
-            ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
-          </div>
+          ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
           <div class="portrait-name">${name}</div>
           <div class="portrait-size">${sizeLabel(size)}</div>
         </div>

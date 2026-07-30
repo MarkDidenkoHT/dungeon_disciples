@@ -3028,75 +3028,50 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-self: center;
 }
 
+/* The whole card is wrapped in the ornate formation frame art; its content
+   (portrait, name, size) is inset with padding so it sits in the grey inner
+   panel, not on the border. background-color is a fallback until formation.png
+   exists. Hero/selected use a glow (box-shadow) since the art owns the border. */
 .portrait-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  width: 60px;
+  gap: 2px;
+  width: 62px;
+  height: 84px;
+  box-sizing: border-box;
+  /* top / sides / bottom padding ≈ the frame's border thickness */
+  padding: 11px 9px 12px;
   cursor: grab;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 3px 4px;
-  background: var(--surface);
-  user-select: none;
-  touch-action: none;
-}
-
-/* The character portrait sits inside the ornate formation frame art; the
-   portrait is inset so it fills the grey inner panel, not the border. The
-   background-color is a fallback until formation.png is present. */
-.portrait-frame {
-  position: relative;
-  width: 46px;
-  height: 60px;
   flex-shrink: 0;
   background-color: #14181f;
   background-image: url('/assets/icons/ui/formation.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
-}
-.portrait-frame .portrait-art-img,
-.portrait-frame .portrait-art {
-  position: absolute;
-  /* Sit in the grey inner panel — explicit % size because an <img> ignores
-     inset-derived sizing (replaced elements use their intrinsic size). */
-  top: 12%;
-  left: 14%;
-  width: 72%;   /* 100% − 2×14% */
-  height: 76%;  /* 100% − 2×12% */
-  border-radius: 2px;
+  user-select: none;
+  touch-action: none;
 }
 
-.portrait-card:active {
-  border-color: var(--accent);
-}
-
-.portrait-card--hero {
-  border-color: gold;
-}
-
-.portrait-card--selected {
-  border-color: var(--accent);
-  background: #1a2a1a;
-}
+.portrait-card:active   { box-shadow: inset 0 0 0 2px var(--accent); }
+.portrait-card--hero    { box-shadow: inset 0 0 0 2px gold; }
+.portrait-card--selected { box-shadow: inset 0 0 0 2px var(--accent); }
 
 .portrait-art {
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
   background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .portrait-art-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
   object-fit: cover;
   object-position: top center;
   display: block;
@@ -3109,14 +3084,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .portrait-name {
-  font-size: 0.55rem;
+  font-size: 0.52rem;
   color: var(--text);
   text-align: center;
   line-height: 1.1;
-  max-width: 54px;
+  max-width: 44px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
 .portrait-size {
