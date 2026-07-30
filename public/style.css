@@ -864,8 +864,10 @@ button:active:not(:disabled) { opacity: 0.75; }
 .timeline-sprite-fig { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; }
 .timeline-sprite-fig figcaption { font-size: 0.68rem; color: var(--muted); }
 .timeline-sprite {
-  width: 120px;
-  height: 120px;
+  max-width: 140px;
+  min-width: 100px;
+  max-height: 140px;
+  min-height: 100px;
   background-size: 500% 500%;   /* 5×5 sheet */
   background-repeat: no-repeat;
 }

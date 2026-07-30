@@ -11,8 +11,8 @@ const FRAME_MS      = 90;     // ~11 fps idle loop
 const TIMELINE = [
   {
     date: 'Coming soon',
-    title: 'New Heroes: Templar & Crimson Mage',
-    desc: 'Two fully-animated units join the roster.',
+    title: 'Character animations!',
+    desc: 'Fully-animated units join the roster.',
     sprites: [
       { src: '/assets/character_sprites/e21.png',   alt: 'Templar' },
       { src: '/assets/character_sprites/gs312.png', alt: 'Crimson Mage' },
