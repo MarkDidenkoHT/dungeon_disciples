@@ -4045,6 +4045,25 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0;
 }
 
+/* Throne perk choice (level 2/3/4 branching boon). */
+.throne-perk-choice { display: flex; flex-direction: column; gap: 10px; }
+.throne-perk-intro  { font-size: 0.82rem; color: var(--muted); margin: 0 0 2px; text-align: center; }
+.throne-perk-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.throne-perk-card:hover  { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.throne-perk-card:active { transform: scale(0.99); }
+.throne-perk-label { font-weight: 700; color: #f2d489; font-size: 0.95rem; }
+.throne-perk-desc  { font-size: 0.78rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
 .throne-cost {
   display: flex;
   gap: 10px;

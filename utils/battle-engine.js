@@ -3,6 +3,22 @@ const { filterByTagRules } = require('./tag-rules.js');
 const { SPELLS } = require('../data/spells');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 
+// Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
+// sides equally, so it also works for PvP later. All tunable here.
+//   Battle Fatigue: from the round AFTER fatigue_start_round, every point of HP
+//     restored (heals, lifesteal, HoT, drains — everything) is reduced by
+//     fatigue_pct_per_round more, capped at fatigue_max_pct.
+//   Withering: from the round AFTER wither_start_round, each unit loses
+//     wither_pct_max_hp of its max HP as true damage at the start of its turn
+//     (can kill — that's what forces a resolution).
+const BATTLE_FATIGUE = {
+  fatigue_start_round: 5,
+  fatigue_pct_per_round: 10,
+  fatigue_max_pct: 50,
+  wither_start_round: 10,
+  wither_pct_max_hp: 5,
+};
+
 // Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
 // through the exact same target-resolution + param-application system as player
 // prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
@@ -364,6 +380,19 @@ class BattleEngine {
     // ×1.3, which made a power-10 healer restore 13 and read as a bug.)
     return data.action_power ?? data.action?.value ?? 15;
   }
+  // ── Battle Fatigue (see BATTLE_FATIGUE) ─────────────────────────────────────
+  // Current healing-reduction percentage from fatigue (0 until it kicks in).
+  fatigueHealReductionPct() {
+    const over = this.round - BATTLE_FATIGUE.fatigue_start_round;
+    if (over <= 0) return 0;
+    return Math.min(BATTLE_FATIGUE.fatigue_max_pct, over * BATTLE_FATIGUE.fatigue_pct_per_round);
+  }
+  // Multiplier applied to EVERY point of HP restored while fatigue is active.
+  // Call this at each heal site so no heal source (heal, lifesteal, HoT, drain)
+  // can dodge the reduction.
+  fatigueHealMult() {
+    return 1 - this.fatigueHealReductionPct() / 100;
+  }
   applyRecuperate(target, rawDmg) {
     const defs = this.resolveAllPassiveDefs(target);
     const recuperateDef = defs.find(d => d.params?.recuperate_prevent_pct != null);
@@ -410,7 +439,7 @@ class BattleEngine {
       }
       const raw    = this.calcHeal(actor);
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
-      const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
+      const heal   = Math.floor(Math.min(raw * factor * this.fatigueHealMult(), target.max_hp - target.battle_hp));
       const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
       target.battle_hp += heal;
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
@@ -716,6 +745,14 @@ class BattleEngine {
       this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: amount, heal: false, ...extra });
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     };
+    // Withering — after wither_start_round, every unit loses a % of its max HP as
+    // true damage at the start of its turn (can kill; both sides). Forces a
+    // resolution when heals + reduced healing still aren't ending the fight.
+    if (this.round > BATTLE_FATIGUE.wither_start_round) {
+      const wither = Math.max(1, Math.floor(unit.max_hp * BATTLE_FATIGUE.wither_pct_max_hp / 100));
+      tick(wither, 'Withering', '🥀', { dot_kind: 'wither' });
+      if (!unit.alive) return;
+    }
     if (unit._deferred_dmg > 0) {
       const d = unit._deferred_dmg; unit._deferred_dmg = 0;
       tick(d, 'Recuperate (deferred)', '⏳');
@@ -770,7 +807,7 @@ class BattleEngine {
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     }
     if (unit._hot > 0) {
-      const actual = Math.min(unit._hot, unit.max_hp - unit.battle_hp);
+      const actual = Math.min(Math.floor(unit._hot * this.fatigueHealMult()), unit.max_hp - unit.battle_hp);
       unit.battle_hp += actual;
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
@@ -819,7 +856,7 @@ class BattleEngine {
     actor.battle_hp = Math.max(1, actor.battle_hp - totalCost);
     this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: totalCost, heal: false });
     for (const a of allies) {
-      const healAmt = Math.min(sacrificePerAlly, a.max_hp - a.battle_hp);
+      const healAmt = Math.min(Math.floor(sacrificePerAlly * this.fatigueHealMult()), a.max_hp - a.battle_hp);
       if (healAmt > 0) {
         a.battle_hp += healAmt;
         this.fireHealTriggers(actor, a, healAmt);
@@ -920,6 +957,13 @@ class BattleEngine {
     }
     this.round++;
     this.pushLog({ type: 'round', round: this.round });
+    // Environmental-pressure onset notices, once, as each phase begins.
+    if (this.round === BATTLE_FATIGUE.fatigue_start_round + 1) {
+      this.pushLog({ type: 'notice', message: 'Battle Fatigue sets in — healing grows weaker each round.' });
+    }
+    if (this.round === BATTLE_FATIGUE.wither_start_round + 1) {
+      this.pushLog({ type: 'notice', message: 'The Withering takes hold — every combatant decays each turn.' });
+    }
     this.firePendingRoundEffects();
   }
   firePendingRoundEffects() {
@@ -930,7 +974,7 @@ class BattleEngine {
       if (effect.type === 'tag_heal_per_unit') {
         const side    = effect.side;
         const tagged  = this.combatants.filter(c => c.side === side && c.alive && (c.unit_data?.tags ?? []).includes(effect.tag));
-        const healAmt = tagged.length * effect.heal_per_tagged_unit;
+        const healAmt = Math.floor(tagged.length * effect.heal_per_tagged_unit * this.fatigueHealMult());
         if (healAmt > 0) {
           for (const c of tagged) {
             const healed = Math.min(healAmt, c.max_hp - c.battle_hp);
@@ -1398,7 +1442,7 @@ class BattleEngine {
       // Undo ledger for this unit, filled in as timed params are applied.
       const revert = {};
 
-      if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
+      if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult()); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
       if (params.armor_boost)          { c.armor = (c.armor || 0) + params.armor_boost; revert.armor = -params.armor_boost; }
       if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
       if (params.armor_flat_reduction) {

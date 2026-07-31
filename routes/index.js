@@ -7,7 +7,7 @@ const path   = require('path');
 
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
-const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
   getActiveBattle,
@@ -570,6 +570,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         upgrade_paths:        UNIT_UPGRADE_PATHS,
         hero_max_level:       HERO_MAX_LEVEL,
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
+        throne_perks:         THRONE_PERKS,
         mercenary_buildings:  MERCENARY_BUILDINGS,
       },
     });
@@ -824,7 +825,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
 });
 
 router.post('/structures/build', requireAuth, async (req, res) => {
-  const { chat_id, slot, building_id } = req.body;
+  const { chat_id, slot, building_id, perk } = req.body;
   if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
@@ -847,6 +848,17 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const nextLevel = (current.level || 0) + 1;
     if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
 
+    // Levels 2–4 offer a perk choice; validate + record it. Stored under
+    // buildings_data.throne_perks so both routes and the Supabase cron/edge
+    // functions (regen, daily crystals) can read the player's picks.
+    let chosenPerk = null;
+    if (slotCategory === 'throne' && !isNew && THRONE_PERKS[nextLevel]) {
+      chosenPerk = THRONE_PERKS[nextLevel].find(p => p.id === perk);
+      if (!chosenPerk) {
+        return res.status(400).json({ error: `Choose a perk: ${THRONE_PERKS[nextLevel].map(p => p.id).join(' or ')}` });
+      }
+    }
+
     if (slotCategory === 'throne' && !isNew) {
       const cost = THRONE_UPGRADE_COSTS[nextLevel];
       if (cost?.gold > 0) {
@@ -858,6 +870,9 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     }
 
     buildings[slot] = { level: nextLevel, building_id };
+    if (chosenPerk) {
+      buildings.throne_perks = { ...(buildings.throne_perks || {}), [nextLevel]: chosenPerk.id };
+    }
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
     if (isNew && def.unit_id && slotCategory !== 'throne') {
       const unitDef = getUnitByDataId(def.unit_id);
@@ -1213,6 +1228,14 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const embarkItems = await getItemsByRosterIds(participantIds);
       const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
 
+      // Throne perks (War Chest / Scholar's Sanctum / Grand Reliquary) feed the
+      // same gold/xp/crystal bonus pipeline as the expedition passives.
+      const structForPerks = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+      const perkBonus = getThronePerkEmbarkBonuses(structForPerks[0]?.buildings_data?.throne_perks);
+      embarkBonus.gold_pct    += perkBonus.gold_pct;
+      embarkBonus.xp_pct      += perkBonus.xp_pct;
+      embarkBonus.crystal_pct += perkBonus.crystal_pct;
+
       // Gold, then the level's guaranteed crystals (exact types and amounts).
       const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
       await updateItem('Gold', goldPayout);
@@ -1360,9 +1383,14 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const spellTier   = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
-    // Spell tiers are gated by throne level only — the Mage Guild was removed.
+    // Mage Guild throne perk discounts the crystal cost.
+    const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data?.throne_perks) / 100;
+    const discountedCost = {};
+    for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
+      discountedCost[type] = Math.max(0, Math.ceil(amt * (1 - spellDiscount)));
+    }
     try {
-      await consumeCrystalCosts(chat_id, spell.cost?.crystals || {});
+      await consumeCrystalCosts(chat_id, discountedCost);
     } catch (e) {
       return res.status(400).json({ error: e.message });
     }

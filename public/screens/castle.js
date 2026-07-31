@@ -38,9 +38,11 @@ export function renderCastle(root, { player }) {
   let buildingPools      = null;
   let upgradePaths       = null;
   let throneUpgradeCosts = {};
+  let thronePerks        = {};
   let heroMaxLevel       = 4;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
+  const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); closeSubSheet(); }
@@ -74,6 +76,7 @@ export function renderCastle(root, { player }) {
     buildingPools      = buildingsResp.pools;
     upgradePaths       = buildingsResp.upgrade_paths || {};
     throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
+    thronePerks        = buildingsResp.throne_perks || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     trophyInventory     = trophies || [];
@@ -301,6 +304,10 @@ export function renderCastle(root, { player }) {
     const slotCategory = SLOT_CATEGORIES[slot];
     if (!slotCategory) return;
 
+    // Special slots are mercenary-only now — skip straight to the recruit picker
+    // instead of building an empty hall first.
+    if (slotCategory === 'special') { openMercenaryModal(slot); return; }
+
     const factionPools = buildingPools[player.faction] || {};
     const pool         = factionPools[slotCategory] || [];
     let available;
@@ -397,13 +404,40 @@ export function renderCastle(root, { player }) {
     );
   }
 
-  async function performBuildingUpgrade(slot, building_id) {
+  // Perk choice shown when upgrading the Throne to a level that offers perks.
+  function openThronePerkChoice(level, perks, onPick) {
+    const cards = perks.map(p => `
+      <button class="throne-perk-card" data-perk="${p.id}">
+        <div class="throne-perk-label">${castleLang === 'ru' ? (p.label_ru || p.label) : p.label}</div>
+        <div class="throne-perk-desc">${castleLang === 'ru' ? (p.desc_ru || p.desc) : p.desc}</div>
+      </button>`).join('');
+    openModal(castleLang === 'ru' ? `Трон — уровень ${level}` : `Throne — Level ${level}`, `
+      <div class="throne-perk-choice">
+        <p class="throne-perk-intro">${castleLang === 'ru' ? 'Выберите постоянное улучшение:' : 'Choose one permanent boon:'}</p>
+        ${cards}
+      </div>`);
+    getSheetBody()?.querySelectorAll('.throne-perk-card').forEach(btn => {
+      btn.addEventListener('click', () => onPick(btn.dataset.perk));
+    });
+  }
+
+  async function performBuildingUpgrade(slot, building_id, perk = null) {
+    // Throne upgrades to a perk level require a perk pick first.
+    if (slot === 'slot_0' && !perk) {
+      const nextLevel = (structuresRecord.buildings_data.slot_0?.level ?? 0) + 1;
+      const perks = thronePerks[nextLevel];
+      if (perks && perks.length) {
+        openThronePerkChoice(nextLevel, perks, chosen => performBuildingUpgrade(slot, building_id, chosen));
+        return;
+      }
+    }
     closeModal();
     try {
       const updated = await api('/structures/build', {
         chat_id: player.chat_id,
         slot,
         building_id,
+        perk,
       });
       structuresRecord = updated;
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
@@ -434,28 +468,25 @@ export function renderCastle(root, { player }) {
   }
 
   function openMercenaryModal(slot) {
-    const region = 'crimson_basilica';
-    const allMercDefs = mercenaryBuildings[region] || [];
-    const tier1Defs    = allMercDefs.filter(b => b.tier === 1);
+    // Tier-1 mercenaries from EVERY region — a merc's region trophies gate it
+    // implicitly (no trophies → not affordable → not shown), so unlocked-region
+    // logic is handled by resources, not a separate check.
+    const tier1Defs = Object.values(mercenaryBuildings).flat().filter(b => b.tier === 1);
 
-    if (!tier1Defs.length) {
-      openModal('Mercenary Hall', '<p class="modal-empty">No mercenaries available yet.</p>');
+    const trophyAmount = item => { const row = trophyInventory.find(r => r.item === item); return row ? Number(row.amount) : 0; };
+    const canAfford    = cost => Object.entries(cost || {}).every(([item, amt]) => trophyAmount(item) >= amt);
+    const costLabel    = cost => Object.entries(cost || {}).map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`).join(' + ');
+
+    const affordable = tier1Defs.filter(b => canAfford(b.cost));
+    // Nothing you can afford → don't build anything, just say why.
+    if (!affordable.length) {
+      openModal('Mercenary Hall',
+        '<p class="modal-empty">No mercenaries you can afford yet — gather more trophies from embarks.</p>');
       return;
     }
 
-    function trophyAmount(item) {
-      const row = trophyInventory.find(r => r.item === item);
-      return row ? Number(row.amount) : 0;
-    }
-
-    function costLabel(cost) {
-      return Object.entries(cost || {})
-        .map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`)
-        .join(' + ');
-    }
-
     openSliderModal('Mercenary Hall',
-      tier1Defs.map(b => ({
+      affordable.map(b => ({
         unit:          getUnitByUnitId(b.unit_id),
         buildingLabel: b.label,
         confirmLabel:  `Recruit · ${b.label} (${costLabel(b.cost)})`,
@@ -463,12 +494,7 @@ export function renderCastle(root, { player }) {
         mercCost:       b.cost,
         slot,
       })),
-      s => {
-        const cost  = s.mercCost || {};
-        const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
-        if (short) { alert('Not enough trophies for this mercenary.'); return; }
-        performMercenaryRecruit(s.mercBuildingId, slot);
-      }
+      s => performMercenaryRecruit(s.mercBuildingId, slot)
     );
   }
 

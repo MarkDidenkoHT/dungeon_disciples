@@ -73,8 +73,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
-      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 
@@ -133,8 +131,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
-      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 
@@ -197,8 +193,6 @@ const BUILDING_POOLS = {
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
-      { id: 'crystal_mine',   label: 'Crystal Mine',   category: 'special', unit_id: null, placeholder: true },
-      { id: 'infirmary',      label: 'Infirmary',      category: 'special', unit_id: null, placeholder: true },
     ],
   },
 };
@@ -366,6 +360,59 @@ const THRONE_UPGRADE_COSTS = {
   3: { gold: 300 },
   4: { gold: 500 },
 };
+
+// Upgrading the Throne to level 2/3/4 lets the player pick ONE perk from that
+// level's pair (permanent). The chosen perks live in
+// buildings_data.throne_perks = { "2": <id>, "3": <id>, "4": <id> }.
+//
+// `effect` is read by whatever system owns that reward:
+//   spell_cost_reduction_pct  -> routes /spells/research
+//   embark_gold_pct / embark_xp_pct / embark_crystal_pct -> routes /battle/reward
+//   regen (out-of-combat) and daily_crystal_bonus_pct are applied by the Supabase
+//   cron/edge functions, which read throne_perks directly; routes just stores them.
+const THRONE_PERKS = {
+  2: [
+    { id: 'infirmary',   label: 'Infirmary',    label_ru: 'Лазарет',      desc: 'Doubles out-of-combat health regeneration.', desc_ru: 'Удваивает восстановление здоровья вне боя.', effect: { regen_mult: 2 } },
+    { id: 'crystal_mine', label: 'Crystal Mine', label_ru: 'Кристальная шахта', desc: '+25% crystals from your daily reward.', desc_ru: '+25% кристаллов от ежедневной награды.', effect: { daily_crystal_bonus_pct: 25 } },
+  ],
+  3: [
+    { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', desc: 'Spell research costs 25% fewer crystals.', desc_ru: 'Изучение заклинаний стоит на 25% меньше кристаллов.', effect: { spell_cost_reduction_pct: 25 } },
+    { id: 'war_chest',  label: 'War Chest',  label_ru: 'Военный сундук', desc: '+15% gold from every embark.', desc_ru: '+15% золота за каждый поход.', effect: { embark_gold_pct: 15 } },
+  ],
+  4: [
+    { id: 'scholars_sanctum', label: "Scholar's Sanctum", label_ru: 'Святилище учёных', desc: '+15% XP from every embark.', desc_ru: '+15% опыта за каждый поход.', effect: { embark_xp_pct: 15 } },
+    { id: 'grand_reliquary',  label: 'Grand Reliquary',    label_ru: 'Великий реликварий', desc: '+15% crystals from every embark.', desc_ru: '+15% кристаллов за каждый поход.', effect: { embark_crystal_pct: 15 } },
+  ],
+};
+
+// Resolves the chosen perk def for a given level from a throne_perks map.
+function getThronePerk(level, throne_perks) {
+  const chosenId = throne_perks?.[String(level)] ?? throne_perks?.[level];
+  if (!chosenId) return null;
+  return (THRONE_PERKS[level] || []).find(p => p.id === chosenId) || null;
+}
+
+// Sums every chosen perk's embark reward bonuses across all levels.
+function getThronePerkEmbarkBonuses(throne_perks) {
+  const totals = { gold_pct: 0, xp_pct: 0, crystal_pct: 0 };
+  for (const level of Object.keys(THRONE_PERKS)) {
+    const perk = getThronePerk(Number(level), throne_perks);
+    if (!perk) continue;
+    totals.gold_pct    += perk.effect.embark_gold_pct    ?? 0;
+    totals.xp_pct      += perk.effect.embark_xp_pct      ?? 0;
+    totals.crystal_pct += perk.effect.embark_crystal_pct ?? 0;
+  }
+  return totals;
+}
+
+// Spell-research cost reduction from the Mage Guild perk (0 if not chosen).
+function getSpellCostReductionPct(throne_perks) {
+  for (const level of Object.keys(THRONE_PERKS)) {
+    const perk = getThronePerk(Number(level), throne_perks);
+    if (perk?.effect.spell_cost_reduction_pct) return perk.effect.spell_cost_reduction_pct;
+  }
+  return 0;
+}
 
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
@@ -551,6 +598,23 @@ const MERCENARY_BUILDINGS = {
       cost:     { crystal_dust: 5, crystal_shard: 3 },
     },
   ],
+
+  // Restless dead of the Chamber of Unrest. Costs use its trophies (grave_dust /
+  // rusted_shackle). Malgrath the Undying (dm_e4/dm_e41) is a boss — not here.
+  chamber_of_unrest: [
+    // Bone Knight line.
+    { id: 'cu_bone_knight',  label: 'Bone Knight',  region: 'chamber_of_unrest', unit_id: 'dm_e1',   tier: 1, upgrades: ['cu_dread_knight'], cost: { grave_dust: 1, rusted_shackle: 1 } },
+    { id: 'cu_dread_knight', label: 'Dread Knight', region: 'chamber_of_unrest', unit_id: 'dm_e11',  tier: 2, upgrades: ['cu_death_knight'], cost: { grave_dust: 2, rusted_shackle: 2 } },
+    { id: 'cu_death_knight', label: 'Death Knight', region: 'chamber_of_unrest', unit_id: 'dm_e111', tier: 3, upgrades: [],                   cost: { grave_dust: 4, rusted_shackle: 3 } },
+    // Oathbound Martyr line.
+    { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 1, rusted_shackle: 1 } },
+    { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 2, rusted_shackle: 2 } },
+    { id: 'cu_martyr_of_the_vow', label: 'Martyr of the Vow', region: 'chamber_of_unrest', unit_id: 'dm_211', tier: 3, upgrades: [],                       cost: { grave_dust: 4, rusted_shackle: 3 } },
+    // Wailing Ghost line.
+    { id: 'cu_wailing_ghost',  label: 'Wailing Ghost',  region: 'chamber_of_unrest', unit_id: 'dm_e3',   tier: 1, upgrades: ['cu_revenant'],       cost: { grave_dust: 2, rusted_shackle: 1 } },
+    { id: 'cu_revenant',       label: 'Revenant',       region: 'chamber_of_unrest', unit_id: 'dm_e31',  tier: 2, upgrades: ['cu_soul_harvester'], cost: { grave_dust: 3, rusted_shackle: 2 } },
+    { id: 'cu_soul_harvester', label: 'Soul Harvester', region: 'chamber_of_unrest', unit_id: 'dm_e311', tier: 3, upgrades: [],                     cost: { grave_dust: 5, rusted_shackle: 3 } },
+  ],
 };
 
 module.exports = {
@@ -560,6 +624,10 @@ module.exports = {
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
+  THRONE_PERKS,
+  getThronePerk,
+  getThronePerkEmbarkBonuses,
+  getSpellCostReductionPct,
   getBuildingDef,
   emptyStructures,
 };
