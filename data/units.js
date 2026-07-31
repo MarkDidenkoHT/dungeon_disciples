@@ -590,7 +590,7 @@ const UNITS = {
       hp: 80, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 15, action_icon: 'holy_attack.jpg',
       passive: 'mithrails_light 1', ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -602,7 +602,7 @@ const UNITS = {
       hp: 95, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 18, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 1', 'protector 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -614,7 +614,7 @@ const UNITS = {
       hp: 120, armor: 25, initiative: 45,
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 1', 'protector 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -626,7 +626,7 @@ const UNITS = {
       hp: 125, armor: 30, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 2', 'protector 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -638,7 +638,7 @@ const UNITS = {
       hp: 135, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -650,7 +650,7 @@ const UNITS = {
       hp: 90, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 20, action_icon: 'mace.jpg',
+      damage_source: 'life', action_power: 20, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 1', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -662,7 +662,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 25, action_icon: 'mace.jpg',
+      damage_source: 'life', action_power: 25, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -674,7 +674,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -686,7 +686,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_attack.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 1', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -698,7 +698,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 6,
+      damage_source: 'life', action_power: 6, action_icon: 'judgement.jpg',
       passive: 'vitality 1', ability: 'purge 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -710,7 +710,7 @@ const UNITS = {
       hp: 65, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 9,
+      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg',
       passive: ['vitality 1', 'inspiration_damage 1'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -722,7 +722,7 @@ const UNITS = {
       hp: 65, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 12,
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg',
       passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -734,7 +734,7 @@ const UNITS = {
       hp: 75, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15,
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
       passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -746,7 +746,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15,
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
       passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -758,7 +758,7 @@ const UNITS = {
       hp: 75, armor: 6, initiative: 45,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 22,
+      damage_source: 'life', action_power: 22, action_icon: 'judgement.jpg',
       passive: ['vitality 1', 'inspiration_initiative 1'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -770,7 +770,7 @@ const UNITS = {
       hp: 85, armor: 8, initiative: 50,
       resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 27,
+      damage_source: 'life', action_power: 27, action_icon: 'judgement.jpg',
       passive: ['vitality 1', ''], ability: 'purge 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -782,7 +782,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 32,
+      damage_source: 'life', action_power: 32, action_icon: 'judgement.jpg',
       passive: ['vitality 1', ''], ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -794,7 +794,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 32,
+      damage_source: 'life', action_power: 32, action_icon: 'judgement.jpg',
       passive: 'vitality 2', ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1879,7 +1879,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 6,
+      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg',
       xp: 100, passive: 'dodge 1', ability: 'terror 1',
     },
     specter: {
@@ -1890,7 +1890,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9,
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
       xp: 400, passive: ['dodge 1', 'slow 1'], ability: 'terror 1',
     },
     wraith: {
@@ -1901,7 +1901,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12,
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
       xp: 900, passive: ['dodge 2', 'slow 1'], ability: 'terror 1',
     },
     apparition: {
@@ -1912,7 +1912,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9,
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
       xp: 400, passive: ['dodge 1', 'dissipate 1'], ability: 'terror 1',
     },
     phantom: {
@@ -1923,7 +1923,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12,
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
       xp: 900, passive: ['dodge 2', 'dissipate 1', ], ability: 'terror 1',
     },
   },
@@ -2037,7 +2037,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 12,
+        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg',
         xp: 100, passive: 'bleed 1', ability: null,
       },
       crimson_hunter: {
@@ -2048,7 +2048,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 16,
+        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg',
         xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: null,
       },
       crimson_stalker: {
@@ -2059,7 +2059,7 @@ const UNITS = {
         hp: 70, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20,
+        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg',
         xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
       },
       sister_aldra_1: {
@@ -2285,7 +2285,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 6,
+        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg',
         xp: 75, passive: 'chill 1', ability: null,
       },
       revenant: {
@@ -2296,7 +2296,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 1,
-        damage_source: 'cold', action_power: 9,
+        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg',
         xp: 260, passive: ['chill 1', 'sorrow 1'], ability: null,
       },
       soul_harvester: {
@@ -2307,7 +2307,7 @@ const UNITS = {
         hp: 65, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 12,
+        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg',
         xp: 480, passive: ['chill 2', 'sorrow 1'], ability: null,
       },
       malgrath_the_undying_1: {
