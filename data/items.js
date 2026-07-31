@@ -389,7 +389,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { cold_resist: 5 },
+    stat_mods:    { air_resist: 5 },
     passive:      null,
     icon:         'air_resistance_potion',
     rarity:       'common',
