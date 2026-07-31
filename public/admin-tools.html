@@ -115,7 +115,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 560px;
+      width: 580px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -452,7 +452,7 @@
       <span class="legend-item"><span class="label">P</span> Portrait</span>
       <span class="legend-item"><span class="label">P2</span> 2nd Portrait</span>
       <span class="legend-item"><span class="label">Ab</span> Ability Icon</span>
-      <span class="legend-item"><span class="label">Ac</span> Action Icon</span>
+      <span class="legend-item"><span class="label">Ai</span> Action Icon</span>
       <span class="legend-item"><span class="label">Ps</span> Passive Icons</span>
       <span class="legend-item">✅ exists</span>
       <span class="legend-item">❌ missing</span>
@@ -961,7 +961,7 @@
     // ---- Render functions ----
     function renderAssetStatus(asset) {
       if (!asset || !asset.id) {
-        return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—<span class="sep">|</span><span class="label">Ab</span>—<span class="sep">|</span><span class="label">Ac</span>—<span class="sep">|</span><span class="label">Ps</span>—</span>`;
+        return `<span class="asset-status"><span class="label">A</span>—<span class="sep">|</span><span class="label">P</span>—<span class="sep">|</span><span class="label">P2</span>—<span class="sep">|</span><span class="label">Ab</span>—<span class="sep">|</span><span class="label">Ai</span>—<span class="sep">|</span><span class="label">Ps</span>—</span>`;
       }
       
       const artIcon = asset.art ? '✅' : '❌';
@@ -1025,7 +1025,7 @@
         <span class="sep">|</span>
         <span class="label">Ab</span><span class="icon ${abilityCls}">${abilityDisplay}</span>
         <span class="sep">|</span>
-        <span class="label">Ac</span><span class="icon ${actionCls}">${actionDisplay}</span>
+        <span class="label">Ai</span><span class="icon ${actionCls}">${actionDisplay}</span>
         <span class="sep">|</span>
         <span class="label">Ps</span><span class="icon ${passiveCls}">${passiveDisplay}</span>
       </span>`;
@@ -1092,7 +1092,7 @@
 
       const p2Label = p2Total > 0 ? `P2 ${p2Ok}/${p2Total}` : 'P2 —';
       const abilityLabel = abilityTotal > 0 ? `Ab ${abilityOk}/${abilityTotal}` : 'Ab —';
-      const actionLabel = actionTotal > 0 ? `Ac ${actionOk}/${actionTotal}` : 'Ac —';
+      const actionLabel = actionTotal > 0 ? `Ai ${actionOk}/${actionTotal}` : 'Ai —';
       const passiveLabel = passiveTotal > 0 ? `Ps ${passiveOk}/${passiveTotal}` : 'Ps —';
 
       return `

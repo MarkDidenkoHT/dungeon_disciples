@@ -118,7 +118,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
       passive: 'inspiration_damage 1', ability: 'rite_of_reclamation 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -130,7 +130,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 22,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -142,7 +142,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 26,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 900
     },
@@ -154,7 +154,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 31,
+      damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -166,7 +166,7 @@ const UNITS = {
       hp: 121, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 31,
+      damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -178,7 +178,7 @@ const UNITS = {
       hp: 75, armor: 2, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 22,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -190,7 +190,7 @@ const UNITS = {
       hp: 90, armor: 3, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 900
     },
@@ -202,7 +202,7 @@ const UNITS = {
       hp: 110, armor: 4, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 29,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -214,7 +214,7 @@ const UNITS = {
       hp: 110, armor: 4, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 29,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -226,7 +226,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
       passive: 'fellfire 1', ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -238,7 +238,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -250,7 +250,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -262,7 +262,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 1', 'clear_shot 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -274,7 +274,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -286,7 +286,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -298,7 +298,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -310,7 +310,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2', 'execute 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -322,7 +322,7 @@ const UNITS = {
       hp: 65, armor: 15, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2', 'recuperate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -554,7 +554,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12,
+      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',
       xp: 100, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
@@ -565,7 +565,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16,
+      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg',
       xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
@@ -576,7 +576,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,
+      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg',
       xp: 900, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
   },
