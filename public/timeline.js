@@ -1,38 +1,60 @@
-// Roadmap / "coming soon" timeline, opened from the leftmost resource-bar slot.
-// Entries are intentionally simple placeholders for the dev to edit by hand.
-// An entry may carry `date` (any string) and one or more `sprites` — 5×5 (25
-// frame) 256px idle spritesheets under /assets/character_sprites, animated here.
-
-const SPRITE_COLS   = 5;      // 5×5 grid
+const SPRITE_COLS   = 5;
 const SPRITE_FRAMES = 25;
-const FRAME_MS      = 90;     // ~11 fps idle loop
+const FRAME_MS      = 90;
 
-// ── Edit these freely ────────────────────────────────────────────────────────
+function lang(player) {
+  return player?.settings?.language === 'ru' ? 'ru' : 'en';
+}
+
 const TIMELINE = [
   {
-    date: 'Coming soon',
-    title: 'Character animations!',
-    desc: 'Fully-animated units join the roster.',
+    date: '',
+    title: { en: 'Errands!',
+             ru: 'Поручения!' },
+    desc:  { en: 'Daily quests system, specific player/faction/roster tailored tasks and rewards!',
+             ru: 'Система ежедневных заданий — персоналазированные поручения и награды специально под вашу фракцию и армию!' },
+  },
+  {
+    date: '',
+    title: { en: 'PvP',
+             ru: 'PvP' },
+    desc:  { en: 'New embark region, ladder, party strength matchmaking!',
+             ru: 'Новый регион, рейтинговая лестница и подбор противников по силе отряда!' },
+  },
+  {
+    date: '',
+    title: { en: 'Character animations!',
+             ru: 'Анимации персонажей!' },
+    desc:  { en: 'Fully-animated units and improved battle grid!',
+             ru: 'Полностью анимированные юниты и обновлённая боевая сетка!' },
     sprites: [
       { src: '/assets/character_sprites/e21.png',   alt: 'Templar' },
       { src: '/assets/character_sprites/gs312.png', alt: 'Crimson Mage' },
     ],
   },
-  { date: '', title: 'Placeholder update', desc: 'Coming later — edit me in public/timeline.js.' },
-  { date: '', title: 'Placeholder update', desc: 'Coming later — edit me in public/timeline.js.' },
-  { date: '', title: 'Placeholder update', desc: 'Coming later — edit me in public/timeline.js.' },
+  {
+    date: '',
+    title: { en: 'Dominion and first season!',
+             ru: 'Доминион и первый сезон!' },
+    desc:  { en: 'Global faction progress system! All players contribute to their faction goal for the season! Seasonal rewards! New seasonal daily errands!',
+             ru: 'Глобальный прогресс фракций! Все игроки вносят вклад в цель сезона! Сезонные награды и новые ежедневные поручения!' },
+  },
+  {
+    date: '',
+    title: { en: 'New faction!',
+             ru: 'Новая фракция!' },
+    desc:  { en: 'Something watches the conflict...',
+             ru: 'Что-то наблюдает за конфликтом...' },
+  },
 ];
-// ─────────────────────────────────────────────────────────────────────────────
 
 let activeCleanup = null;
 
-// Steps an element's background through the 5×5 sheet. Returns a stop function.
 function animateSprite(el) {
   let i = 0;
   const tick = () => {
     const col = i % SPRITE_COLS;
     const row = Math.floor(i / SPRITE_COLS);
-    // Percentage positioning over a 500%-sized background: frame c sits at c/4*100%.
     el.style.backgroundPosition = `${col * 25}% ${row * 25}%`;
     i = (i + 1) % SPRITE_FRAMES;
   };
@@ -41,7 +63,9 @@ function animateSprite(el) {
   return () => clearInterval(id);
 }
 
-function entryHtml(e) {
+function entryHtml(e, L) {
+  const title = typeof e.title === 'object' ? (e.title[L] ?? e.title.en) : e.title;
+  const desc  = typeof e.desc  === 'object' ? (e.desc[L]  ?? e.desc.en)  : (e.desc ?? '');
   const spriteRow = (e.sprites && e.sprites.length)
     ? `<div class="timeline-sprites">${e.sprites.map(s => `
          <figure class="timeline-sprite-fig">
@@ -55,31 +79,32 @@ function entryHtml(e) {
       <div class="timeline-dot"></div>
       <div class="timeline-body">
         ${e.date ? `<span class="timeline-date">${e.date}</span>` : ''}
-        <div class="timeline-title">${e.title}</div>
-        ${e.desc ? `<div class="timeline-desc">${e.desc}</div>` : ''}
+        <div class="timeline-title">${title}</div>
+        ${desc ? `<div class="timeline-desc">${desc}</div>` : ''}
         ${spriteRow}
       </div>
     </div>`;
 }
 
-export function openTimeline() {
-  closeTimeline(); // never stack two
+export function openTimeline(player) {
+  closeTimeline();
+
+  const L = lang(player);
 
   const overlay = document.createElement('div');
   overlay.className = 'timeline-overlay';
   overlay.innerHTML = `
     <div class="timeline-modal" role="dialog" aria-label="Roadmap">
       <div class="timeline-header">
-        <span class="timeline-header-title">What's Next</span>
+        <span class="timeline-header-title">${L === 'ru' ? 'Что дальше' : "What's Next"}</span>
         <button class="timeline-close" aria-label="Close">✕</button>
       </div>
       <div class="timeline-list">
-        ${TIMELINE.map(entryHtml).join('')}
+        ${TIMELINE.map(e => entryHtml(e, L)).join('')}
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
-  // Start every sprite's loop and collect their stoppers.
   const stops = [...overlay.querySelectorAll('.timeline-sprite')].map(animateSprite);
 
   const close = () => closeTimeline();
