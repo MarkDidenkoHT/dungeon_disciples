@@ -72,7 +72,6 @@ async function requireAuth(req, res, next) {
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const SUPABASE_FUNCTIONS_URL = process.env.SUPABASE_URL || '';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Granted once, when the player picks a faction (see /player/faction). Neutral,
@@ -371,14 +370,6 @@ router.post('/login', async (req, res) => {
         method: 'PATCH',
         body: JSON.stringify(patchBody),
       });
-      let dailyResult = null;
-      try {
-        dailyResult = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/daily-crystals`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
-          body: JSON.stringify({ chat_id }),
-        }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message || JSON.stringify(d)); return d; });
-      } catch (e) {}
       let activeRec = null;
       try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
       return res.json({
@@ -388,7 +379,6 @@ router.post('/login', async (req, res) => {
         active: Boolean(activeRec),
         battle_id: activeRec ? activeRec.battle_id : null,
         battle_data: activeRec ? activeRec.battle_data : null,
-        daily_result: dailyResult,
       });
     }
     const newPlayerBody = {
@@ -403,14 +393,6 @@ router.post('/login', async (req, res) => {
       method: 'POST',
       body: JSON.stringify(newPlayerBody),
     });
-    let dailyResult = null;
-    try {
-      dailyResult = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/daily-crystals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
-        body: JSON.stringify({ chat_id }),
-      }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message || JSON.stringify(d)); return d; });
-    } catch (e) {}
     let activeRec = null;
     try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
     res.json({
@@ -420,7 +402,6 @@ router.post('/login', async (req, res) => {
       active: Boolean(activeRec),
       battle_id: activeRec ? activeRec.battle_id : null,
       battle_data: activeRec ? activeRec.battle_data : null,
-      daily_result: dailyResult,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

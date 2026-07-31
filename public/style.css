@@ -749,7 +749,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
   gap: 6px;
   padding: 4px 12px;
-  background: var(--surface);
+  /* Ornate frame art stretched across the bar; --surface shows through as a
+     fallback until recource_bar.png is present. */
+  background-color: var(--surface);
+  background-image: url('/assets/icons/ui/recource_bar.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: nowrap;
@@ -908,7 +913,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
   gap: 6px;
   padding: 4px 12px;
-  background: var(--surface);
+  /* Same ornate frame art as the resource bar (fallback: --surface). */
+  background-color: var(--surface);
+  background-image: url('/assets/icons/ui/recource_bar.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: nowrap;
