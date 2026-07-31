@@ -1792,7 +1792,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg',
-      xp: 1800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
+      xp: 1800, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
       id: 'gs42', f: 'g', t: 2,
@@ -1810,7 +1810,7 @@ const UNITS = {
       name: 'Sorrow Vessel',
       tags: ['Zombie','Caster'],
       size: 'row',
-      hp: 115, armor: 20, initiative: 20,
+      hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 15,
