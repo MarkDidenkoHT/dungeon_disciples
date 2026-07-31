@@ -131,7 +131,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 1',
+      passive: ['inspiration_damage 1', 'vitality 1'], ability: 'rite_of_reclamation 1',
       building_slot: 'slot_0', xp: 400
     },
     choir_regent_path_a_t3: {
@@ -143,7 +143,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 1', 'vitality 2'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 900
     },
     choir_regent_path_a_t4: {
@@ -155,7 +155,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 2', 'vitality 2'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
     choir_regent_path_a_t4_alt: {
@@ -167,7 +167,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 1', 'vitality 2', 'inspiration_max_hp 1'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
     choir_regent_path_b_t2: {
@@ -179,7 +179,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 1',
+      passive: ['inspiration_damage 1', 'command 1'], ability: 'rite_of_reclamation 1',
       building_slot: 'slot_0', xp: 400
     },
     choir_regent_path_b_t3: {
@@ -191,7 +191,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 1', 'command 2'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 900
     },
     choir_regent_path_b_t4: {
@@ -203,7 +203,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 2', 'command 2'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
     choir_regent_path_b_t4_alt: {
@@ -215,7 +215,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
-      passive: ['inspiration_damage 1', ''], ability: 'rite_of_reclamation 2',
+      passive: ['inspiration_damage 1', 'command 2'], ability: 'rite_of_reclamation 2',
       building_slot: 'slot_0', xp: 1500
     },
     infernal_ascendant: {
@@ -238,7 +238,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -250,7 +250,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -262,7 +262,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 1', 'clear_shot 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -274,7 +274,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 2', 'dissipate 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -286,7 +286,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -298,7 +298,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -310,7 +310,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2', 'execute 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -322,7 +322,7 @@ const UNITS = {
       hp: 65, armor: 15, initiative: 20,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
       passive: ['fellfire 1', 'find_weakness 2', 'recuperate 1'], ability: 'mark_of_ash 1',
       building_slot: 'slot_0', xp: 1500
     },

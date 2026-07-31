@@ -20,6 +20,7 @@ const {
   getBattleLogsSince,
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
+const { telegramWebhookHandler } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 
@@ -407,6 +408,10 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Telegram bot webhook (welcome flow lives in utils/telegram.js). Register once:
+//   curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<HOST>/api/telegram/webhook&secret_token=<SECRET>"
+router.post('/telegram/webhook', telegramWebhookHandler);
 
 router.get('/player', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
