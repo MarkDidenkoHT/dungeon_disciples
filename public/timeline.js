@@ -11,8 +11,8 @@ const TIMELINE = [
     date: '',
     title: { en: 'Errands!',
              ru: 'Поручения!' },
-    desc:  { en: 'Daily quests system, specific player/faction/roster tailored tasks and rewards!',
-             ru: 'Система ежедневных заданий — персоналазированные поручения и награды специально под вашу фракцию и армию!' },
+    desc:  { en: 'A daily quest system with tasks and rewards tailored to your faction and roster!',
+             ru: 'Система ежедневных заданий — персонализированные поручения и награды под вашу фракцию и армию!' },
   },
   {
     date: '',
