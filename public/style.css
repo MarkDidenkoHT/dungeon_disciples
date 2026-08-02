@@ -2087,7 +2087,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .portrait-card--roster.portrait-card--selected {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  background-image: url('/assets/icons/ui/formation_highligt.png');
 }
 
 /* .roster-nav / .roster-dot rules removed — the roster pages via the portrait
@@ -2980,11 +2980,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: grabbing;
 }
 
-.battle-cell--hero {
-  outline-color: gold;
-  background: #2a2a10;
-}
-
 .battle-cell--hover {
   background: #1a2a1a;
   outline-color: var(--accent);
@@ -3044,39 +3039,54 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
 }
 
+/* Sits inside .battle-arena, between the player's and the enemy's formation
+   headers. Art-only button: no chrome of its own, the PNG is the button. */
 .battle-prep-enter-row {
   display: flex;
+  align-items: flex-start;
   justify-content: center;
-  padding: 10px 16px 4px;
+  flex-shrink: 0;
+  padding: 2px 2px 0;
+  align-self: stretch;
 }
 
 .battle-prep-enter-btn {
-  width: 100%;
-  max-width: 320px;
-  padding: 12px 0;
-  border-radius: 8px;
-  border: 1px solid var(--muted);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-weight: 700;
+  border: none;
+  background: none;
+  padding: 0;
   font-family: inherit;
+  font-size: 1.4rem;
+  color: var(--muted);
+  line-height: 0;
   cursor: not-allowed;
-  opacity: 0.5;
-  transition: all 0.2s;
-  letter-spacing: 0.04em;
+  /* Unplaced hero = not ready: drained and dim, so "ready" reads as the art
+     lighting up rather than as a colour change. */
+  filter: grayscale(85%) brightness(0.55);
+  opacity: 0.65;
+  transition: filter 0.2s, opacity 0.2s, transform 0.1s;
+}
+
+.battle-prep-enter-btn img {
+  display: block;
+  width: clamp(46px, 13vw, 76px);
+  height: auto;
 }
 
 .battle-prep-enter-btn--ready {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(200, 151, 58, 0.08);
-  opacity: 1;
   cursor: pointer;
+  filter: none;
+  opacity: 1;
+  animation: to-battle-pulse 2.2s ease-in-out infinite;
 }
 
 .battle-prep-enter-btn--ready:active {
-  background: rgba(200, 151, 58, 0.2);
+  transform: scale(0.94);
+  animation: none;
+}
+
+@keyframes to-battle-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(200, 151, 58, 0.35)); }
+  50%      { filter: drop-shadow(0 0 9px rgba(200, 151, 58, 0.75)); }
 }
 
 .army-power {
@@ -3135,7 +3145,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow-y: hidden;
   padding: 8px 10px;
   -webkit-overflow-scrolling: touch;
+  /* Scrollbar chrome is hidden everywhere a portrait track scrolls; swipe and
+     drag still work, and the bar itself was eating vertical space. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.prep-track-wrap::-webkit-scrollbar { display: none; }
 
 .portrait-track,
 .spell-track {
@@ -3184,9 +3200,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   touch-action: none;
 }
 
-.portrait-card:active   { box-shadow: inset 0 0 0 2px var(--accent); }
-.portrait-card--hero    { box-shadow: inset 0 0 0 2px gold; }
-.portrait-card--selected { box-shadow: inset 0 0 0 2px var(--accent); }
+/* Selection swaps the frame art for its lit variant. The hero gets no special
+   highlight: they always occupy the first slot, which says it already. */
+.portrait-card:active,
+.portrait-card--selected {
+  background-image: url('/assets/icons/ui/formation_highligt.png');
+}
 
 .portrait-art {
   width: 40px;
@@ -3208,11 +3227,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   object-position: top center;
   display: block;
   flex-shrink: 0;
-}
-
-.portrait-card--hero .portrait-art {
-  background: #2a2510;
-  color: gold;
 }
 
 .portrait-name {

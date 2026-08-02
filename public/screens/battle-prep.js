@@ -105,6 +105,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <div class="battle-grid" id="player-grid"></div>
           </div>
         </div>
+        <!-- The launch button lives between the two army balances, in the gap
+             between the player's and the enemy's formation headers. -->
+        <div class="battle-prep-enter-row">
+          <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="To Battle">
+            <img src="/assets/icons/ui/to_battle.png" alt="To Battle"
+                 onerror="this.replaceWith(document.createTextNode('⚔'))">
+          </button>
+        </div>
+
         <div class="battle-half battle-half--enemy">
           <div class="battle-half-label battle-half-label--formation">
             <span class="formation-title">Enemies</span>
@@ -117,10 +126,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <div class="battle-grid" id="enemy-grid"></div>
           </div>
         </div>
-      </div>
-
-      <div class="battle-prep-enter-row">
-        <button id="ready-btn" class="battle-prep-enter-btn" disabled>⚔ Enter Battle</button>
       </div>
 
       <div class="battle-prep-tabs">
