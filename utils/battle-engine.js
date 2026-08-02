@@ -280,7 +280,7 @@ class BattleEngine {
     const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
     if (bonded) {
       bonded.alive = false;
-      this.pushLog({ type: 'passive', passive: 'Unity', actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetName: bonded.unit_name, targetCell: bonded.cellIndex, message: `${bonded.unit_name} perishes with their host.` });
+      this.pushLog({ type: 'passive', passive: 'Unity', actorId: bonded.id, actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetName: bonded.unit_name, targetCell: bonded.cellIndex, message: `${bonded.unit_name} perishes with their host.` });
       this.revokeGrantedBuffs(bonded);
       this.fireTrigger('on_death', { dying: bonded, actor: bonded, target: null, dmg: 0 });
     }
@@ -291,7 +291,7 @@ class BattleEngine {
         if (sorrowIdx !== -1) {
           e._sorrow_source_ids.splice(sorrowIdx, 1);
           e.initiative = Math.max(0, e.initiative + 2);
-          this.pushLog({ type: 'passive', passive: 'Sorrow', actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, message: `Sorrow fades — ${e.unit_name} regains 2 initiative.`, value: 2 });
+          this.pushLog({ type: 'passive', passive: 'Sorrow', actorId: dying.id, actorName: dying.unit_name, actorCell: dying.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, message: `Sorrow fades — ${e.unit_name} regains 2 initiative.`, value: 2 });
         }
       }
     }
@@ -405,7 +405,7 @@ class BattleEngine {
     if (prevented > 0) {
       this.pushLog({
         type: 'passive', passive: recuperateDef.name,
-        actorName: target.unit_name, actorCell: target.cellIndex,
+        actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex,
         targetName: target.unit_name, targetCell: target.cellIndex,
         message: `Recuperate — ${prevented} prevented, ${deferred} deferred, ${immediate} taken now`,
         value: immediate,
@@ -444,7 +444,7 @@ class BattleEngine {
       target.battle_hp += heal;
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
       this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
       this.checkBark('heal_low_hp', actor, { target, preHealRatio });
     } else {
       // Multi-target attackers (unit_data.targets > 1) strike every valid target
@@ -470,7 +470,7 @@ class BattleEngine {
         const parryDef = this.resolveAllPassiveDefs(target).find(d => d.params?.block_first_melee);
         if (parryDef) {
           target._parry_available = false;
-          this.pushLog({ type: 'passive', passive: parryDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0, heal: false });
+          this.pushLog({ type: 'passive', passive: parryDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${parryDef.name} — blocked the attack!`, value: 0, heal: false });
           actor.acted_this_round = true;
           return this.afterAction(actor);
         }
@@ -482,7 +482,7 @@ class BattleEngine {
           const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor).dmg * p.preemptive_strike_pct / 100));
           actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
           const actorDied = actor.battle_hp <= 0;
-          this.pushLog({ type: 'passive', passive: duelistDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
+          this.pushLog({ type: 'passive', passive: duelistDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
           if (actorDied) {
             actor.alive = false;
             this.applyOnDeathPassives(actor);
@@ -501,7 +501,7 @@ class BattleEngine {
         if (dodgeDef) {
           target._dodge_count = (target._dodge_count ?? 0) + 1;
           if (target._dodge_count % dodgeDef.params.dodge_every === 0) {
-            this.pushLog({ type: 'passive', passive: dodgeDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
+            this.pushLog({ type: 'passive', passive: dodgeDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
             actor.acted_this_round = true;
             return this.afterAction(actor);
           }
@@ -509,7 +509,7 @@ class BattleEngine {
       }
       const { dmg, rawDmg } = this.calcDamage(actor, target);
       if (target._invulnerable) {
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
+        this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
         actor.acted_this_round = true;
         return this.afterAction(actor);
       }
@@ -521,7 +521,7 @@ class BattleEngine {
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
+            this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
@@ -534,13 +534,13 @@ class BattleEngine {
               this.checkBark('attack', actor, { target });
             }
           } else {
-            this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+            this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
           }
         } else {
-          this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+          this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
         }
       } else {
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+        this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
       this.applyDoTs(target);
     }
@@ -562,20 +562,20 @@ class BattleEngine {
       if (dodgeDef) {
         target._dodge_count = (target._dodge_count ?? 0) + 1;
         if (target._dodge_count % dodgeDef.params.dodge_every === 0) {
-          this.pushLog({ type: 'passive', passive: dodgeDef.name, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
+          this.pushLog({ type: 'passive', passive: dodgeDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${dodgeDef.name} — dodged ${actor.unit_name}'s attack!`, value: 0, heal: false });
           return;
         }
       }
     }
 
     if (target._invulnerable) {
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false, message: `${target.unit_name} is invulnerable!` });
       return;
     }
 
     const { dmg, rawDmg } = this.calcDamage(actor, target);
     if (dmg <= 0) {
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       this.applyDoTs(target);
       return;
     }
@@ -586,7 +586,7 @@ class BattleEngine {
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
       this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
@@ -599,7 +599,7 @@ class BattleEngine {
         this.checkBark('attack', actor, { target });
       }
     } else {
-      this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
     }
     this.applyDoTs(target);
   }
@@ -626,7 +626,7 @@ class BattleEngine {
       const spellChance   = protector.intercept_bonus_pct ?? 0;
       const chance = (passiveChance + spellChance) / 100;
       if (Math.random() < chance) {
-        this.pushLog({ type: 'intercept', passive: interceptDef?.name || 'Vow of Protection', actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
+        this.pushLog({ type: 'intercept', passive: interceptDef?.name || 'Vow of Protection', actorId: protector.id, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
         return protector;
       }
     }
@@ -652,7 +652,7 @@ class BattleEngine {
       martyr.battle_hp = Math.max(0, martyr.battle_hp - redirected);
       const dead = martyr.battle_hp <= 0;
       if (dead) { martyr.alive = false; this.applyOnDeathPassives(martyr); }
-      this.pushLog({ type: 'passive', passive: 'Martyrdom', actorName: martyr.unit_name, actorCell: martyr.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: redirected, heal: false });
+      this.pushLog({ type: 'passive', passive: 'Martyrdom', actorId: martyr.id, actorName: martyr.unit_name, actorCell: martyr.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: redirected, heal: false });
     }
     return Math.max(0, remaining);
   }
@@ -826,7 +826,7 @@ class BattleEngine {
     target.battle_hp += heal;
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
     this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
-    this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
+    this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
     // Cost is fifth the channelled heal, not half of what actually landed — the
     // sacrifice is paid even when the ally couldn't absorb the full amount.
     const selfDmg = Math.floor((raw * factor) / 5);
@@ -834,13 +834,13 @@ class BattleEngine {
       actor.battle_hp = Math.max(0, actor.battle_hp - selfDmg);
       const dead = actor.battle_hp <= 0;
       if (dead) { actor.alive = false; this.applyOnDeathPassives(actor); }
-      this.pushLog({ type: 'passive', passive: 'Sacrifice', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: selfDmg, heal: false });
+      this.pushLog({ type: 'passive', passive: 'Sacrifice', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: selfDmg, heal: false });
     }
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
   doNone(actor) {
-    this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex, message: `${actor.unit_name} stands ready.` });
+    this.pushLog({ type: 'skip', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, message: `${actor.unit_name} stands ready.` });
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
@@ -849,18 +849,18 @@ class BattleEngine {
     const sacrificePerAlly = Math.max(1, Math.floor(actor.battle_hp * 0.05));
     const totalCost = sacrificePerAlly * allies.length;
     if (actor.battle_hp <= totalCost) {
-      this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${actor.unit_name} is too weak to channel Mother's Kiss.`, value: 0 });
+      this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${actor.unit_name} is too weak to channel Mother's Kiss.`, value: 0 });
       actor.acted_this_round = true;
       return this.afterAction(actor);
     }
     actor.battle_hp = Math.max(1, actor.battle_hp - totalCost);
-    this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: totalCost, heal: false });
+    this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: totalCost, heal: false });
     for (const a of allies) {
       const healAmt = Math.min(Math.floor(sacrificePerAlly * this.fatigueHealMult()), a.max_hp - a.battle_hp);
       if (healAmt > 0) {
         a.battle_hp += healAmt;
         this.fireHealTriggers(actor, a, healAmt);
-        this.pushLog({ type: 'action', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, targetId: a.id, value: healAmt, heal: true });
+        this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, targetId: a.id, value: healAmt, heal: true });
       }
     }
     actor.acted_this_round = true;
@@ -873,7 +873,7 @@ class BattleEngine {
   doDefend(actor) {
     actor.defend_armor_bonus = 25;
     actor.acted_this_round   = true;
-    this.pushLog({ type: 'defend', actorName: actor.unit_name, actorCell: actor.cellIndex, message: 'defended (+25 armor this round)' });
+    this.pushLog({ type: 'defend', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, message: 'defended (+25 armor this round)' });
     return this.afterAction(actor);
   }
   doAbility(actor, target) {
@@ -890,7 +890,7 @@ class BattleEngine {
   }
   skipTurn(actor) {
     actor.defend_armor_bonus = 0;
-    this.pushLog({ type: 'skip', actorName: actor.unit_name, actorCell: actor.cellIndex });
+    this.pushLog({ type: 'skip', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex });
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
@@ -952,7 +952,7 @@ class BattleEngine {
         c.alive = true;
         c.battle_hp = c._reanimate_pending;
         c._reanimate_pending = null;
-        this.pushLog({ type: 'passive', passive: 'Reanimate', actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: c.battle_hp, message: `Reanimate — ${c.unit_name} rises from the dead with ${c.battle_hp} HP!` });
+        this.pushLog({ type: 'passive', passive: 'Reanimate', actorId: c.id, actorName: c.unit_name, actorCell: c.cellIndex, targetName: c.unit_name, targetCell: c.cellIndex, value: c.battle_hp, message: `Reanimate — ${c.unit_name} rises from the dead with ${c.battle_hp} HP!` });
       }
     }
     this.round++;
@@ -1636,7 +1636,7 @@ class BattleEngine {
     owner._bark_counts[triggerKey] = spoken + 1;
     const idx = Math.floor(Math.random() * pool.length);
     // Carry both languages; the client picks by the viewer's language (no fallback).
-    this.pushLog({ type: 'bark', actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: pool[idx], text_ru: poolRu[idx] });
+    this.pushLog({ type: 'bark', actorId: owner.id, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: pool[idx], text_ru: poolRu[idx] });
   }
 }
 module.exports = { BattleEngine };

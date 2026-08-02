@@ -192,9 +192,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         flashCellStatus(document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`), dotKind);
       }
 
-      // Find actor from either side — needed for enemy attacks to get damage_source and range
-      const actor = state.combatants.find(u => u.id === entry.actorId ||
-        (entry.actorCell !== undefined && u.cellIndex === entry.actorCell));
+      // Find actor from either side — needed for enemy attacks to get damage_source and range.
+      //
+      // Only `bark` entries carry actorId; every action/passive entry identifies
+      // its actor by actorCell + actorName (see pushLog in utils/battle-engine.js).
+      // cellIndex is 0..5 PER SIDE, so a player and an enemy routinely share one,
+      // and matching on cell alone returned whichever came first in
+      // state.combatants — always a player unit, since those are pushed first.
+      // An enemy's attack then resolved to the player unit standing on the same
+      // index, which both picked that unit's action_animation and anchored it on
+      // that unit's own cell: your spear replaying on your own side.
+      // actorName breaks the tie; cell-only is kept as a last resort.
+      const actor =
+        (entry.actorId != null && state.combatants.find(u => u.id === entry.actorId)) ||
+        (entry.actorCell !== undefined && entry.actorName != null &&
+          state.combatants.find(u => u.cellIndex === entry.actorCell && u.unit_name === entry.actorName)) ||
+        (entry.actorCell !== undefined &&
+          state.combatants.find(u => u.cellIndex === entry.actorCell)) ||
+        null;
       const effectName = effectForEntry(entry, actor);
       const abilitySound = soundForEntry(entry);
       if (abilitySound) playAbilitySound(abilitySound);
