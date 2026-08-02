@@ -196,6 +196,14 @@ export function renderCastle(root, { player }) {
     attach();
   }
 
+  // buildings_data mixes building slots with bookkeeping keys such as
+  // throne_perks; anything that isn't slot_N must never be treated as a slot.
+  function buildingSlotKeys(data) {
+    return Object.keys(data || {})
+      .filter(k => /^slot_\d+$/.test(k))
+      .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
+  }
+
   function renderBuildings() {
     const data        = structuresRecord.buildings_data;
     const throneState = data['slot_0'];
@@ -210,7 +218,9 @@ export function renderCastle(root, { player }) {
         ${!throneMaxed ? `<div class="castle-node-hint">Upgrade</div>` : ''}
       </div>`;
 
-    root.querySelector('#outer-ring').innerHTML = Object.keys(data)
+    // buildings_data also carries non-slot keys (throne_perks); only slot_N
+    // entries are castle nodes.
+    root.querySelector('#outer-ring').innerHTML = buildingSlotKeys(data)
       .filter(s => s !== 'slot_0')
       .map(slot => {
         const state      = data[slot] || { level: 0, building_id: null };
@@ -236,7 +246,7 @@ export function renderCastle(root, { player }) {
       const throneEl = root.querySelector('.castle-node[data-slot="slot_0"]');
       showTutorialSpotlight(player, 'throne_upgrade', throneEl);
     } else if (throneLevel >= 1 && rosterCount < 3 && !isTutorialDone(player, 'second_building')) {
-      const emptySlot = Object.keys(data)
+      const emptySlot = buildingSlotKeys(data)
         .filter(s => s !== 'slot_0' && s !== 'slot_4' && !data[s]?.building_id)
         .sort()[0];
       const targetEl = emptySlot ? root.querySelector(`.castle-node[data-slot="${emptySlot}"]`) : null;
