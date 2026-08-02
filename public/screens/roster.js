@@ -24,6 +24,13 @@ export function renderRoster(root, { player }) {
         <div class="roster-slider-wrap">
           <div class="roster-track" id="roster-track"></div>
         </div>
+
+        <!-- At-a-glance strip: every unit's portrait + HP, so damaged and dead
+             units are visible without paging. Clicking a portrait jumps the
+             slider to that unit's card. -->
+        <div class="prep-track-wrap roster-portrait-wrap">
+          <div class="portrait-track" id="roster-portrait-track"></div>
+        </div>
       </main>
 
       <div class="roster-nav" id="roster-nav">
@@ -224,6 +231,74 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+  // Portrait path mirrors battle-prep's getPortraitUrl so the strip uses the
+  // same art as the formation track.
+  function portraitUrlFor(u) {
+    const def    = resolveUnitDef(u);
+    const unitId = def?.id;
+    if (!unitId) return null;
+    const portraitId = unitId.match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
+    return `/assets/character_portraits/p_${portraitId}.png`;
+  }
+
+  // Current/max HP with the equipped item's bonus applied — same derivation as
+  // the full card, so the strip never disagrees with it.
+  function hpFor(u) {
+    const stored    = u.unit_data || {};
+    const def       = resolveUnitDef(u);
+    const baseMaxHp = stored.max_hp != null ? stored.max_hp : (def?.hp ?? null);
+    if (baseMaxHp == null) return null;
+    const derived = withEquippedItem(
+      { max_hp: baseMaxHp, current_hp: stored.current_hp ?? baseMaxHp },
+      equippedItemFor(u.id));
+    return { cur: derived.current_hp, max: derived.max_hp };
+  }
+
+  function renderPortraitStrip() {
+    const strip = root.querySelector('#roster-portrait-track');
+    if (!strip) return;
+
+    strip.innerHTML = units.map((u, i) => {
+      const def     = resolveUnitDef(u);
+      const name    = def?.name ?? u.unit_data?.unit_id ?? '';
+      const isHero  = u.is_hero === true;
+      const alive   = u.unit_data?.alive !== false;
+      const hp      = hpFor(u);
+      const pct     = hp && hp.max > 0 ? Math.max(0, Math.min(100, Math.round((hp.cur / hp.max) * 100))) : 0;
+      const damaged = alive && hp && hp.cur < hp.max;
+      const url     = portraitUrlFor(u);
+
+      const state = !alive ? 'dead' : (pct <= 33 ? 'critical' : (damaged ? 'damaged' : 'ok'));
+
+      return `
+        <div class="portrait-card portrait-card--roster
+                    ${isHero  ? 'portrait-card--hero' : ''}
+                    ${!alive  ? 'portrait-card--dead' : ''}
+                    ${i === current ? 'portrait-card--selected' : ''}"
+             data-i="${i}" data-roster-id="${u.id}" title="${name}">
+          ${url
+            ? `<img class="portrait-art-img" src="${url}" alt="${name}" onerror="this.style.display='none'">`
+            : `<div class="portrait-art">${isHero ? '★' : '⚔'}</div>`}
+          <div class="portrait-name">${name}</div>
+          ${alive ? `
+            <div class="portrait-hp-bar">
+              <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+            </div>
+            <div class="portrait-hp-label">${hp ? `${hp.cur}/${hp.max}` : '—'}</div>
+          ` : `
+            <div class="portrait-status portrait-status--dead">💀 Dead</div>
+          `}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateStripSelection() {
+    root.querySelectorAll('#roster-portrait-track .portrait-card').forEach(card => {
+      card.classList.toggle('portrait-card--selected', Number(card.dataset.i) === current);
+    });
+  }
+
   function updateNav() {
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === units.length - 1;
@@ -236,13 +311,24 @@ export function renderRoster(root, { player }) {
     current = Math.max(0, Math.min(idx, units.length - 1));
     track.style.transform = `translateX(-${current * 100}%)`;
     updateNav();
+    updateStripSelection();
+
+    const active = root.querySelector(`#roster-portrait-track .portrait-card[data-i="${current}"]`);
+    if (active) active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
   }
+
+  root.querySelector('#roster-portrait-track')?.addEventListener('click', e => {
+    const card = e.target.closest('.portrait-card');
+    if (!card) return;
+    goTo(Number(card.dataset.i));
+  });
 
   prevBtn.addEventListener('click', () => goTo(current - 1));
   nextBtn.addEventListener('click', () => goTo(current + 1));
 
   function initSlider() {
     track.innerHTML = units.map(u => buildCard(u)).join('');
+    renderPortraitStrip();
 
     dotsWrap.innerHTML = units.map((_, i) =>
       `<span class="roster-dot" data-i="${i}"></span>`
