@@ -2630,15 +2630,20 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: 100%;
 }
 
-.result-rewards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* The victory art is the backdrop; the panel is a plain black block on top of
+   it, with no card chrome around it (see .result-content). */
+.result-content {
+  max-width: 500px;
   width: 100%;
-  max-width: 280px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+}
+
+.result-rewards {
+  margin: 24px 0;
+  text-align: left;
+  background: #000;
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -2656,7 +2661,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* Victory reward chips — icon-forward, wrapping grid. */
 .reward-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
   justify-content: center;
 }

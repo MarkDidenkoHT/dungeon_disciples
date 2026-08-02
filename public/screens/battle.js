@@ -884,8 +884,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     root.innerHTML = `
       <div class="screen screen-battle-result" style="background-image: url('${bgImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div class="result-content" style="max-width: 500px; width: 100%; padding: 40px; border-radius: 16px; text-align: center;">
-          <div class="result-rewards" id="result-rewards" style="margin: 24px 0; text-align: left; background: rgba(0, 0, 0, 0.4); border-radius: 8px; padding: 16px;">
+        <div class="result-content">
+          <div class="result-rewards" id="result-rewards">
             <p style="color:var(--muted)">Calculating rewards…</p>
           </div>
           <button class="ready-btn" id="back-to-castle" disabled style="margin-top: 16px; padding: 12px 32px; background: linear-gradient(135deg, #4a6fa5, #2d4a7a); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease;">Return to Castle</button>

@@ -202,6 +202,7 @@
     .asset-status .icon.ok { color: #5ae07a; }
     .asset-status .icon.missing { color: #f67a7a; }
     .asset-status .icon.na { color: #4a4f66; }
+    .asset-status .icon.warning { color: #f5c542; }
     .asset-status .sep {
       color: #2b2f3d;
       margin: 0 1px;
@@ -421,6 +422,7 @@
     }
     .asset-stats .stat-item .count.ok { color: #5ae07a; }
     .asset-stats .stat-item .count.missing { color: #f67a7a; }
+    .asset-stats .stat-item .count.warning { color: #f5c542; }
     .rarity-common { color: #8a8fa8; }
     .rarity-rare { color: #4c9aff; }
     .rarity-epic { color: #b47cff; }
@@ -472,7 +474,7 @@
     </div>
     <div class="asset-filter-group">
       <span class="filter-label">Assets:</span>
-      <select id="assetFilter"><option value="">All</option><option value="missing_any">⚠️ Missing Any</option><option value="all_ok">✅ All OK</option><option value="no_art">❌ No Art</option><option value="no_portrait">❌ No Portrait</option><option value="no_p2">❌ No P2</option><option value="no_ability">❌ No Ability Icon</option><option value="no_action">❌ No Action Icon</option><option value="no_passive">❌ No Passive Icon</option></select>
+      <select id="assetFilter"><option value="">All</option><option value="missing_any">⚠️ Missing Any</option><option value="all_ok">✅ All OK</option><option value="no_art">❌ No Art</option><option value="no_portrait">❌ No Portrait</option><option value="no_p2">❌ No P2</option><option value="no_ability">❌ No Ability Icon</option><option value="no_action">❌ No Action Icon</option><option value="no_passive">❌ No Passive Icon</option><option value="needs_action">⚠️ Needs Action Icon</option></select>
     </div>
     <button class="secondary" id="clearSelection">✕ Clear</button>
     <button class="success" id="copyJsonBtn">📋 Copy for AI</button>
@@ -683,19 +685,18 @@
       const actionIcon = unit.data.action_icon;
       const action = unit.data.action;
       
-      // If unit has an action but no action_icon, mark as missing
+      // If unit has an action but no action_icon, mark as needs action icon
       if (action && !actionIcon) {
         actionIcons.push({ 
           name: action, 
           path: null, 
           exists: false,
-          missing: true,
-          reason: 'No action icon assigned'
+          needsAction: true
         });
       } else if (actionIcon) {
         const path = `/assets/icons/actions/${actionIcon}`;
         const exists = await checkAssetExists(path);
-        actionIcons.push({ name: actionIcon, path, exists, missing: false });
+        actionIcons.push({ name: actionIcon, path, exists, needsAction: false });
       }
       // If no action and no action_icon, don't add anything (N/A)
 
@@ -720,7 +721,8 @@
         p2Path: isLarge ? p2Path : null,
         abilityIcons,
         actionIcons,
-        passiveIcons
+        passiveIcons,
+        needsAction: action && !actionIcon
       };
       assetCache.set(key, result);
       return result;
@@ -908,6 +910,7 @@
         case 'no_ability': return asset.abilityIcons.length > 0 && !asset.abilityIcons.every(a => a.exists);
         case 'no_action': return asset.actionIcons.length > 0 && !asset.actionIcons.every(a => a.exists);
         case 'no_passive': return asset.passiveIcons.length > 0 && !asset.passiveIcons.every(p => p.exists);
+        case 'needs_action': return asset.needsAction === true;
         default: return true;
       }
     }
@@ -982,11 +985,41 @@
       const p2Icon = asset.isLarge ? (asset.p2 ? '✅' : '❌') : '—';
       
       const abilityOk = asset.abilityIcons.length === 0 || asset.abilityIcons.every(a => a.exists);
-      const actionOk = asset.actionIcons.length === 0 || asset.actionIcons.every(a => a.exists);
       const passivesOk = asset.passiveIcons.length === 0 || asset.passiveIcons.every(p => p.exists);
       
-      const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2) && abilityOk && actionOk && passivesOk;
-      const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2) || !abilityOk || !actionOk || !passivesOk;
+      // Action icon status: check if needs action icon, or if file exists
+      let actionOk = true;
+      let actionDisplay = '—';
+      let actionCls = 'na';
+      
+      if (asset.actionIcons.length > 0) {
+        const hasNeedsAction = asset.actionIcons.some(a => a.needsAction);
+        const allExist = asset.actionIcons.every(a => a.exists);
+        
+        if (hasNeedsAction) {
+          // Unit has action but no action_icon assigned
+          actionOk = false;
+          actionDisplay = '⚠️';
+          actionCls = 'warning';
+        } else if (allExist) {
+          actionOk = true;
+          actionDisplay = '✅';
+          actionCls = 'ok';
+        } else {
+          actionOk = false;
+          actionDisplay = '❌';
+          actionCls = 'missing';
+        }
+      }
+      
+      const allOk = asset.art && asset.portrait && (!asset.isLarge || asset.p2) && 
+                     (asset.abilityIcons.length === 0 || asset.abilityIcons.every(a => a.exists)) &&
+                     actionOk &&
+                     (asset.passiveIcons.length === 0 || asset.passiveIcons.every(p => p.exists));
+      const anyMissing = !asset.art || !asset.portrait || (asset.isLarge && !asset.p2) || 
+                         (asset.abilityIcons.length > 0 && !asset.abilityIcons.every(a => a.exists)) ||
+                         !actionOk ||
+                         (asset.passiveIcons.length > 0 && !asset.passiveIcons.every(p => p.exists));
       const statusClass = allOk ? 'all-ok' : (anyMissing ? 'missing-asset' : '');
       
       let tooltip = `ID: ${asset.id}`;
@@ -1008,8 +1041,8 @@
       if (asset.actionIcons.length > 0) {
         tooltip += `\nAction Icons:`;
         asset.actionIcons.forEach(a => {
-          if (a.missing) {
-            tooltip += `\n  ${a.name}: ❌ (${a.reason || 'Missing'})`;
+          if (a.needsAction) {
+            tooltip += `\n  ${a.name}: ⚠️ Needs action icon assigned`;
           } else {
             tooltip += `\n  ${a.name}: ${a.exists ? '✅' : '❌'} (${a.path})`;
           }
@@ -1024,13 +1057,10 @@
       
       const abilityDisplay = asset.abilityIcons.length > 0 ? 
         (asset.abilityIcons.every(a => a.exists) ? '✅' : '❌') : '—';
-      const actionDisplay = asset.actionIcons.length > 0 ? 
-        (asset.actionIcons.every(a => a.exists) ? '✅' : '❌') : '—';
       const passiveDisplay = asset.passiveIcons.length > 0 ? 
         (asset.passiveIcons.every(p => p.exists) ? '✅' : '❌') : '—';
       
       const abilityCls = asset.abilityIcons.length > 0 ? (asset.abilityIcons.every(a => a.exists) ? 'ok' : 'missing') : 'na';
-      const actionCls = asset.actionIcons.length > 0 ? (asset.actionIcons.every(a => a.exists) ? 'ok' : 'missing') : 'na';
       const passiveCls = asset.passiveIcons.length > 0 ? (asset.passiveIcons.every(p => p.exists) ? 'ok' : 'missing') : 'na';
       
       return `<span class="asset-status ${statusClass}" title="${tooltip}">
@@ -1069,6 +1099,7 @@
       let abilityTotal = 0, abilityOk = 0;
       let actionTotal = 0, actionOk = 0;
       let passiveTotal = 0, passiveOk = 0;
+      let needsActionTotal = 0;
 
       flatUnits.forEach(u => {
         const asset = assetCache.get(u.key);
@@ -1094,7 +1125,11 @@
         
         if (asset.actionIcons.length > 0) {
           asset.actionIcons.forEach(a => {
-            if (a.exists) actionOk++;
+            if (a.needsAction) {
+              needsActionTotal++;
+            } else if (a.exists) {
+              actionOk++;
+            }
             actionTotal++;
           });
         }
@@ -1111,6 +1146,7 @@
       const abilityLabel = abilityTotal > 0 ? `Ab ${abilityOk}/${abilityTotal}` : 'Ab —';
       const actionLabel = actionTotal > 0 ? `Ai ${actionOk}/${actionTotal}` : 'Ai —';
       const passiveLabel = passiveTotal > 0 ? `Ps ${passiveOk}/${passiveTotal}` : 'Ps —';
+      const needsActionLabel = needsActionTotal > 0 ? `⚠️ ${needsActionTotal} need action icon` : '';
 
       return `
         <div class="stat-item"><span class="label">A</span> <span class="count ${artOk === artTotal ? 'ok' : 'missing'}">${artOk}/${artTotal}</span></div>
@@ -1119,6 +1155,7 @@
         <div class="stat-item"><span class="label">${abilityLabel}</span></div>
         <div class="stat-item"><span class="label">${actionLabel}</span></div>
         <div class="stat-item"><span class="label">${passiveLabel}</span></div>
+        ${needsActionLabel ? `<div class="stat-item"><span class="label" style="color:#f5c542;">${needsActionLabel}</span></div>` : ''}
         <div class="stat-item"><span class="label">Units</span> <span class="count">${flatUnits.length}</span></div>
       `;
     }
@@ -1445,7 +1482,7 @@
           vitality: u.vitality,
           dps: u.dps,
           overall: u.overall,
-          assets: asset ? { art: asset.art, portrait: asset.portrait, p2: asset.p2, isLarge: asset.isLarge, isHero: asset.isHero, baseId: asset.baseId } : null
+          assets: asset ? { art: asset.art, portrait: asset.portrait, p2: asset.p2, isLarge: asset.isLarge, isHero: asset.isHero, baseId: asset.baseId, needsAction: asset.needsAction } : null
         };
       });
 
