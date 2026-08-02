@@ -2090,74 +2090,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
-.roster-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 14px 5px;
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-}
+/* .roster-nav / .roster-dot rules removed — the roster pages via the portrait
+   strip and swipe; there are no arrows or dots. */
 
-.roster-nav-arrow {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.roster-nav-arrow:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.roster-nav-arrow:not(:disabled):active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.roster-nav-dots {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  flex: 1;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.roster-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.roster-dot--active {
-  background: var(--accent);
-  transform: scale(1.35);
-}
-
-.roster-nav-label {
-  font-size: 0.68rem;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 110px;
-  text-align: center;
-  flex-shrink: 0;
-}
 
 .unit-card {
   background: #000000;

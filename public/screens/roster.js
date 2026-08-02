@@ -32,22 +32,14 @@ export function renderRoster(root, { player }) {
           <div class="portrait-track" id="roster-portrait-track"></div>
         </div>
       </main>
-
-      <div class="roster-nav" id="roster-nav">
-        <button class="roster-nav-arrow" id="nav-prev">‹</button>
-        <div class="roster-nav-dots" id="roster-dots"></div>
-        <button class="roster-nav-arrow" id="nav-next">›</button>
-      </div>
     </div>
   `;
 
   let current = 0;
   let units   = [];
 
-  const track    = root.querySelector('#roster-track');
-  const dotsWrap = root.querySelector('#roster-dots');
-  const prevBtn  = root.querySelector('#nav-prev');
-  const nextBtn  = root.querySelector('#nav-next');
+  // Paging is the portrait strip + swipe; there is no arrow/dot nav.
+  const track = root.querySelector('#roster-track');
 
   let buildingsData = {};
   let upgradePaths  = {};
@@ -297,18 +289,9 @@ export function renderRoster(root, { player }) {
     });
   }
 
-  function updateNav() {
-    prevBtn.disabled = current === 0;
-    nextBtn.disabled = current === units.length - 1;
-    dotsWrap.querySelectorAll('.roster-dot').forEach((d, i) => {
-      d.classList.toggle('roster-dot--active', i === current);
-    });
-  }
-
   function goTo(idx) {
     current = Math.max(0, Math.min(idx, units.length - 1));
     track.style.transform = `translateX(-${current * 100}%)`;
-    updateNav();
     updateStripSelection();
 
     const active = root.querySelector(`#roster-portrait-track .portrait-card[data-i="${current}"]`);
@@ -321,20 +304,25 @@ export function renderRoster(root, { player }) {
     goTo(Number(card.dataset.i));
   });
 
-  prevBtn.addEventListener('click', () => goTo(current - 1));
-  nextBtn.addEventListener('click', () => goTo(current + 1));
+  // Re-renders the cards + strip and keeps the player on the same UNIT, not the
+  // same index — a refresh can reorder the roster (level-up returns unsorted
+  // rows, resurrect changes nothing but a future sort might), so restoring by
+  // index silently jumps to a different character.
+  function rerenderKeeping(rosterId) {
+    const idx = rosterId != null
+      ? units.findIndex(u => String(u.id) === String(rosterId))
+      : -1;
+    initSlider();
+    goTo(idx >= 0 ? idx : current);
+  }
 
   function initSlider() {
+    // Any spotlight still up is anchored to DOM we are about to destroy; the
+    // caller re-shows the step it wants to keep (see the equip flow).
+    hideTutorial();
+
     track.innerHTML = units.map(u => buildCard(u)).join('');
     renderPortraitStrip();
-
-    dotsWrap.innerHTML = units.map((_, i) =>
-      `<span class="roster-dot" data-i="${i}"></span>`
-    ).join('');
-
-    dotsWrap.querySelectorAll('.roster-dot').forEach(dot => {
-      dot.addEventListener('click', () => goTo(Number(dot.dataset.i)));
-    });
 
     let touchStartX = 0;
     let touchStartY = 0;
@@ -395,12 +383,12 @@ export function renderRoster(root, { player }) {
           api(`/roster?chat_id=${player.chat_id}`),
           (structuresCache.invalidate(), structuresCache.get(player.chat_id).catch(() => null)),
         ]);
-        units         = freshUnits;
+        // Sorted hero-first like every other refresh — the raw rows come back
+        // in insert order, which reshuffles the slider under the player.
+        units         = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
         buildingsData = freshStruct?.buildings_data || {};
         refreshResourceBar(player).catch(() => {});
-        const savedIdx = current;
-        initSlider();
-        goTo(savedIdx);
+        rerenderKeeping(rosterId);
       } catch (err) {
         lvlBtn.disabled    = false;
         lvlBtn.textContent = 'Level Up';
@@ -420,9 +408,7 @@ export function renderRoster(root, { player }) {
         const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
         units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
         await refreshResourceBar(player).catch(() => {});
-        const savedIdx = current;
-        initSlider();
-        goTo(savedIdx);
+        rerenderKeeping(rosterId);
         // Onboarding: revive done → move on to the heal step.
         if (spellTutorialActive && !isTutorialDone(player, 'spell_revive')) {
           markTutorialDone(player, 'spell_revive');
@@ -446,9 +432,7 @@ export function renderRoster(root, { player }) {
         const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
         units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
         await refreshResourceBar(player).catch(() => {});
-        const savedIdx = current;
-        initSlider();
-        goTo(savedIdx);
+        rerenderKeeping(rosterId);
         // Onboarding: heal done → the spell tutorial is complete, on to embark.
         if (spellTutorialActive && !isTutorialDone(player, 'spell_heal')) {
           markTutorialDone(player, 'spell_heal');
@@ -788,9 +772,7 @@ export function renderRoster(root, { player }) {
           const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
           units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
           await refreshAndRerender();
-          const savedIdx = current;
-          initSlider();
-          goTo(savedIdx);
+          rerenderKeeping(equipBtn.dataset.rosterId);
           // Onboarding's last roster beat. Marked here, on the equip actually
           // succeeding, rather than on the tap that requested it.
           if (!isTutorialDone(player, 'roster_equip')) {
@@ -809,14 +791,13 @@ export function renderRoster(root, { player }) {
       if (unequipBtn) {
         unequipBtn.disabled    = true;
         unequipBtn.textContent = 'Unequipping…';
+        const focusedId = units[current]?.id;
         try {
           await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
           const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
           units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
           await refreshAndRerender();
-          const savedIdx = current;
-          initSlider();
-          goTo(savedIdx);
+          rerenderKeeping(focusedId);
         } catch (err) {
           alert(err.message || 'Unequip failed');
           body.innerHTML = render();
