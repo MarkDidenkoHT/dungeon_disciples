@@ -2006,22 +2006,43 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   border-top: 1px solid var(--border);
   background: var(--surface);
+  padding: clamp(3px, 0.6vh, 8px) 10px;
+  /* Scrollbar chrome is hidden: the nav arrows/dots are the paging control,
+     and goTo() scrolls the active portrait into view. Swipe still works. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.roster-portrait-wrap::-webkit-scrollbar { display: none; }
+
+/* Sizes are viewport-driven (clamped) so the strip shrinks on short screens
+   instead of pushing the unit card out of view. Everything inside the card is
+   derived from --portrait-card-h, so one value tunes the whole strip. */
 .portrait-card--roster {
-  height: 104px;
-  padding-bottom: 8px;
+  --portrait-card-h: clamp(48px, 7.5vh, 68px);
+  --portrait-art: calc(var(--portrait-card-h) * 0.58);
+  height: var(--portrait-card-h);
+  width: calc(var(--portrait-card-h) * 0.80);
+  padding: calc(var(--portrait-card-h) * 0.13) calc(var(--portrait-card-h) * 0.11);
+  gap: calc(var(--portrait-card-h) * 0.05);
+  justify-content: center;
   cursor: pointer;
   position: relative;
 }
 
+.portrait-card--roster .portrait-art-img,
+.portrait-card--roster .portrait-art {
+  width: var(--portrait-art);
+  height: var(--portrait-art);
+}
+
 .portrait-hp-bar {
-  width: 42px;
-  height: 4px;
+  width: var(--portrait-art, 42px);
+  height: 5px;
   border-radius: 2px;
   background: rgba(0,0,0,0.6);
   overflow: hidden;
-  margin-top: 1px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
 }
 
 .portrait-hp-fill {
@@ -2034,18 +2055,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 .portrait-hp-fill--damaged  { background: #d8b23a; }
 .portrait-hp-fill--critical { background: #d1483a; }
 
-.portrait-hp-label {
-  font-size: 0.46rem;
-  color: var(--muted);
-  line-height: 1.1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
 .portrait-status--dead {
-  font-size: 0.46rem;
-  color: #d1483a;
-  line-height: 1.1;
-  white-space: nowrap;
+  font-size: 0.6rem;
+  line-height: 1;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
@@ -2140,8 +2152,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-main-row {
   display: flex;
   align-items: stretch;
-  gap: 6px;
-  padding: 6px;
+  gap: 4px;
+  padding: 4px;
 }
 
 .unit-core-stats--side {
@@ -2152,10 +2164,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-self: stretch;
 }
 
+/* Tightened only for the roster card's side columns — .core-stat is shared with
+   the detail sheets, which have room to spare. */
 .unit-core-stats--side .core-stat {
   flex: 1;
   justify-content: center;
+  padding: 2px 2px;
 }
+
+.unit-core-stats--side .core-stat-label { font-size: 0.48rem; }
+.unit-core-stats--side .core-stat-val   { font-size: 0.78rem; }
+.unit-core-stats--side .core-stat-val--action { font-size: 0.56rem; }
 
 .unit-resists-grid--side {
   flex-direction: column;
@@ -2173,7 +2192,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .unit-main-row .unit-portrait {
   flex: 1;
   min-width: 0;
-  height: 50vh;
+  height: 45vh;
   border-radius: 10px;
 }
 

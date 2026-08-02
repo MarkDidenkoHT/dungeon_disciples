@@ -279,14 +279,12 @@ export function renderRoster(root, { player }) {
           ${url
             ? `<img class="portrait-art-img" src="${url}" alt="${name}" onerror="this.style.display='none'">`
             : `<div class="portrait-art">${isHero ? '★' : '⚔'}</div>`}
-          <div class="portrait-name">${name}</div>
           ${alive ? `
-            <div class="portrait-hp-bar">
+            <div class="portrait-hp-bar" title="${hp ? `${hp.cur}/${hp.max}` : ''}">
               <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
             </div>
-            <div class="portrait-hp-label">${hp ? `${hp.cur}/${hp.max}` : '—'}</div>
           ` : `
-            <div class="portrait-status portrait-status--dead">💀 Dead</div>
+            <div class="portrait-status portrait-status--dead">💀</div>
           `}
         </div>
       `;
