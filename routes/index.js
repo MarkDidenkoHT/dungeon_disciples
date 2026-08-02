@@ -7,6 +7,7 @@ const path   = require('path');
 
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
+const { getEquipBlock } = require('../data/item_rules');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
@@ -1564,6 +1565,14 @@ router.post('/items/equip', requireAuth, async (req, res) => {
     const unitTags = (unitDef?.tags || []).filter(Boolean);
     if (stats.tag_required && !unitTags.includes(stats.tag_required)) {
       return res.status(400).json({ error: `This item requires the ${stats.tag_required} tag` });
+    }
+
+    // Incoherent pairings — e.g. a passive that only fires on a damaging hit
+    // going to a unit whose action is a heal. See data/item_rules.js; the client
+    // greys the button out using the same call, this is the enforcement.
+    const equipBlock = getEquipBlock(stats, unitDef, UNIT_ABILITIES);
+    if (equipBlock) {
+      return res.status(400).json({ error: equipBlock.reason, code: equipBlock.code });
     }
 
     // If this item is currently equipped by a different unit, unequip it there first.

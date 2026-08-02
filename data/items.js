@@ -6,6 +6,18 @@
 //                 By convention every epic/mythic item is unique; commons and
 //                 rares are stackable. Flip per-item as balance needs.
 //   cost/item_cost resource + item-ingredient cost to craft.
+//
+// Equip restrictions (checked in data/item_rules.js, enforced by
+// POST /items/equip and mirrored by the roster UI):
+//   tag_required  unit must carry this tag
+//   blocked_tags    ['Construct']  refuse units carrying ANY of these
+//   blocked_actions ['heal']       refuse units whose action is of this kind
+//                                  ('damage' | 'heal' | 'sacrifice' | 'none')
+//   requires_action 'damage'       unit's action MUST be of this kind
+// The last three are only needed for special cases: an item whose `passive`
+// declares a trigger that requires attacking (on_hit / on_kill /
+// preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
+// unit that cannot do that — no authoring required.
 const ITEM_DEFS = {
 
   crystal_exoskeleton: {

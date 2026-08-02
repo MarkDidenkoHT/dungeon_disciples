@@ -4,6 +4,8 @@ import { refreshResourceBar } from '../api.js';
 import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { SPELLS }           from '../../data/spells.js';
+import { UNIT_ABILITIES }   from '../../data/unit_abilities.js';
+import { getEquipBlock }    from '../../data/item_rules.js';
 import { ITEM_DEFS }        from '../../data/items.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -532,12 +534,17 @@ export function renderRoster(root, { player }) {
     const equippedElsewhere = item.equipped_by != null && !equippedHere;
     const factionOk     = !stats.faction || stats.faction === player.faction;
     const tagOk          = !stats.tag_required || unitTags.includes(stats.tag_required);
-    const canEquip       = factionOk && tagOk && !equippedHere;
+    // Incoherent pairings (a bleed-on-hit relic on a unit that only heals) are
+    // refused with the reason spelled out — see data/item_rules.js.
+    const block          = getEquipBlock(stats, resolveUnitDef(unit), UNIT_ABILITIES);
+    const canEquip       = factionOk && tagOk && !block && !equippedHere;
 
+    const ru = player?.settings?.language === 'ru';
     let reason = '';
-    if (!factionOk) reason = 'Wrong faction';
-    else if (!tagOk) reason = `Requires ${stats.tag_required} tag`;
-    else if (equippedElsewhere) reason = 'Equipped on another unit';
+    if (!factionOk) reason = ru ? 'Не та фракция' : 'Wrong faction';
+    else if (!tagOk) reason = ru ? `Требуется метка ${stats.tag_required}` : `Requires ${stats.tag_required} tag`;
+    else if (block) reason = ru ? block.reason_ru : block.reason;
+    else if (equippedElsewhere) reason = ru ? 'Надет на другом бойце' : 'Equipped on another unit';
 
     return `
       <div class="item-card item-card--rarity-${itemRarity(item)} ${equippedHere ? 'item-card--equipped' : ''}">
@@ -894,9 +901,11 @@ export function renderRoster(root, { player }) {
 
   function isEquippableBy(item, unit) {
     const stats    = item.item_stats || {};
-    const unitTags = (resolveUnitDef(unit)?.tags || []).filter(Boolean);
+    const def      = resolveUnitDef(unit);
+    const unitTags = (def?.tags || []).filter(Boolean);
     return (!stats.faction || stats.faction === player.faction)
-        && (!stats.tag_required || unitTags.includes(stats.tag_required));
+        && (!stats.tag_required || unitTags.includes(stats.tag_required))
+        && !getEquipBlock(stats, def, UNIT_ABILITIES);
   }
 
   function runRosterTutorial() {
