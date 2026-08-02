@@ -334,7 +334,7 @@ const UNITS = {
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22,
+      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg',
       xp: 200, passive: ['rage 1', 'vengeance 1'], ability: 'pact 1',
     },
     tormentor: {
@@ -345,7 +345,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30,
+      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     praetor: {
@@ -356,7 +356,7 @@ const UNITS = {
       hp: 140, armor: 15, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 36,
+      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg',
       xp: 1800, passive: ['rage 2', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     chorister: {
@@ -1211,7 +1211,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 35,
+      damage_source: 'fire', action_power: 35, action_icon: 'flame_sword.jpg',
       xp: 900, passive: ['inspiration_initiative 1', 'regenerate 1', 'volcanic_skin 1'], ability: null,
     },
     blue_mage: {
@@ -1222,7 +1222,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'cold', action_power: 10, action_animation: 'frost_spell_impact',
+      damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
       xp: 400, passive: ['inspiration_initiative 1', 'chill 1'], ability: null,
     },
     cryomancer: {
@@ -1233,7 +1233,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 15, action_animation: 'frost_spell_impact',
+      damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
       xp: 900, passive: ['inspiration_initiative 1', 'chill 2'], ability: null,
     },
   },
@@ -1247,7 +1247,7 @@ const UNITS = {
       hp: 75, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15,
+      damage_source: 'physical', action_power: 15, action_icon: 'blood_pierce.jpg',
       passive: 'duelist 1', ability: 'taunt 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -1259,7 +1259,7 @@ const UNITS = {
       hp: 85, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'lifesteal 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1271,7 +1271,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'lifesteal 2'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -1283,7 +1283,7 @@ const UNITS = {
       hp: 105, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30,
+      damage_source: 'physical', action_power: 30, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'lifesteal 2', 'impale 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1295,7 +1295,7 @@ const UNITS = {
       hp: 115, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'lifesteal 2', 'inspiration_initiative 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1307,7 +1307,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 40,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'communion 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1319,7 +1319,7 @@ const UNITS = {
       hp: 85, armor: 15, initiative: 40,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'communion 2'], ability: 'taunt 2',
       building_slot: 'slot_0', xp: 900
     },
@@ -1331,7 +1331,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 45,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'communion 2', 'lifesteal 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1343,7 +1343,7 @@ const UNITS = {
       hp: 95, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
       passive: ['duelist 1', 'communion 2', 'inspiration_damage 1'], ability: 'taunt 1',
       building_slot: 'slot_0', xp: 1500
     },
