@@ -2798,41 +2798,58 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 5px;
 }
 
-/* Ornate golden formation header: title stacked over a loyalty / power row. */
-.battle-half-label--formation {
-  flex-direction: column;
-  gap: 3px;
-  padding: 4px 0 2px;
+/* One header bar across both grids: player stats | launch button | enemy stats.
+   Both sides share a single type scale so neither reads as the louder one. */
+.battle-prep-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px 2px;
+  flex-shrink: 0;
 }
-.formation-title {
+
+.prep-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.prep-side-label {
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 700;
-  font-size: 0.9rem;
-  letter-spacing: 0.14em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.75));
+  white-space: nowrap;
 }
-.formation-stats {
+
+.prep-side-stats {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   line-height: 1;
 }
-/* Bigger, warmer stat text over the golden theme. */
-.formation-stats .loyalty-counter {
+
+.prep-side-stats .loyalty-counter {
   margin-left: 0;
-  font-size: 0.95rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #ece3c8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
-.formation-stats .army-power {
+
+.prep-side-stats .army-power {
   margin-left: 0;
-  font-size: 0.95rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #f2d489;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
@@ -3039,18 +3056,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1;
 }
 
-/* Sits inside .battle-arena, between the player's and the enemy's formation
-   headers. Art-only button: no chrome of its own, the PNG is the button. */
-.battle-prep-enter-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 2px 2px 0;
-  align-self: stretch;
-}
-
+/* Sits in .battle-prep-header, in the gap between the two power readouts.
+   Art-only button: no chrome of its own, the PNG is the button. */
 .battle-prep-enter-btn {
+  flex-shrink: 0;
   border: none;
   background: none;
   padding: 0;

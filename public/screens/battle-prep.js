@@ -92,36 +92,39 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
+      <!-- One header bar spanning both grids: your power on the left, the
+           enemy's on the right, and the launch button in the gap between them.
+           Both sides use the same type scale so neither one shouts. -->
+      <div class="battle-prep-header">
+        <div class="prep-side prep-side--player">
+          <span class="prep-side-label">Your Power</span>
+          <span class="prep-side-stats">
+            <span id="loyalty-counter" class="loyalty-counter"></span>
+            <span id="player-army-power" class="army-power"></span>
+          </span>
+        </div>
+
+        <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="To Battle">
+          <img src="/assets/icons/ui/to_battle.png" alt="To Battle"
+               onerror="this.replaceWith(document.createTextNode('⚔'))">
+        </button>
+
+        <div class="prep-side prep-side--enemy">
+          <span class="prep-side-label">Enemy Power</span>
+          <span class="prep-side-stats">
+            <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
+            <span id="enemy-army-power" class="army-power"></span>
+          </span>
+        </div>
+      </div>
+
       <div class="battle-arena">
         <div class="battle-half battle-half--player">
-          <div class="battle-half-label battle-half-label--formation">
-            <span class="formation-title">Your Formation</span>
-            <span class="formation-stats">
-              <span id="loyalty-counter" class="loyalty-counter"></span>
-              <span id="player-army-power" class="army-power"></span>
-            </span>
-          </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="player-grid"></div>
           </div>
         </div>
-        <!-- The launch button lives between the two army balances, in the gap
-             between the player's and the enemy's formation headers. -->
-        <div class="battle-prep-enter-row">
-          <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="To Battle">
-            <img src="/assets/icons/ui/to_battle.png" alt="To Battle"
-                 onerror="this.replaceWith(document.createTextNode('⚔'))">
-          </button>
-        </div>
-
         <div class="battle-half battle-half--enemy">
-          <div class="battle-half-label battle-half-label--formation">
-            <span class="formation-title">Enemies</span>
-            <span class="formation-stats">
-              <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
-              <span id="enemy-army-power" class="army-power"></span>
-            </span>
-          </div>
           <div class="battle-grid-wrap">
             <div class="battle-grid" id="enemy-grid"></div>
           </div>
