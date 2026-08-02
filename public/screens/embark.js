@@ -240,7 +240,21 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
       }).join('');
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
-        pip.addEventListener('click', () => {
+        pip.addEventListener('click', async () => {
+          // Re-check at the moment of departure, not just on screen load. The
+          // load-time modal can be dismissed by hand (desktop Telegram exposes
+          // devtools), and the server would then reject /battle/create with a
+          // bare error after the player had already built a formation. Send
+          // them back to reconnect-or-abandon instead, penalty included.
+          try {
+            const active = await api(`/battle/active?chat_id=${player.chat_id}`);
+            if (active?.active) {
+              showReconnectModal(active.battle_id, active.battle_data);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to check active battle:', e);
+          }
           markTutorialDone(player, 'embark_region');
           navigate('battle-prep', { player, region_id: pip.dataset.region, level: parseInt(pip.dataset.level) });
         });

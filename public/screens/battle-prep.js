@@ -1126,9 +1126,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (!confirmed) return;
     }
 
+    // The button is art (see .battle-prep-enter-btn) - never write textContent
+    // to it, that would replace the image with a string. Disable it instead.
     const btn = root.querySelector('#ready-btn');
     btn.disabled = true;
-    btn.textContent = 'Preparing…';
+    btn.classList.remove('battle-prep-enter-btn--ready');
 
     const playerUnitIds = roster
       .filter(u => placedUnitIds().has(u.id))
@@ -1157,9 +1159,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       });
       navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells, logs: result.logs || [] });
     } catch (err) {
-      btn.disabled = false;
-      btn.textContent = 'Ready Up';
       console.error('Failed to create battle:', err);
+      // The server refuses a second battle while one is still open. Reaching
+      // here means the embark guard was bypassed (hand-dismissed modal, direct
+      // navigation), so send the player back to embark, which puts the
+      // reconnect-or-abandon choice in front of them.
+      if (/already in progress/i.test(err.message || '')) {
+        navigate('embark', { player });
+        return;
+      }
+      btn.disabled = false;
+      btn.classList.add('battle-prep-enter-btn--ready');
     }
   });
 
