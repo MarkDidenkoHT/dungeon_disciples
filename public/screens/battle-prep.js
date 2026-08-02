@@ -92,9 +92,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
-      <!-- One header bar spanning both grids: your power on the left, the
-           enemy's on the right, and the launch button in the gap between them.
-           Both sides use the same type scale so neither one shouts. -->
+      <div class="battle-arena">
+        <div class="battle-half battle-half--player">
+          <div class="battle-grid-wrap">
+            <div class="battle-grid" id="player-grid"></div>
+          </div>
+        </div>
+        <div class="battle-half battle-half--enemy">
+          <div class="battle-grid-wrap">
+            <div class="battle-grid" id="enemy-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sits BELOW the grids: a launch button pinned to the top edge of the
+           screen is awkward to reach on a phone. Your power on the left, the
+           enemy's on the right, the button in the gap between them. Both sides
+           use the same type scale so neither one shouts. -->
       <div class="battle-prep-header">
         <div class="prep-side prep-side--player">
           <span class="prep-side-label">Your Power</span>
@@ -115,19 +129,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
             <span id="enemy-army-power" class="army-power"></span>
           </span>
-        </div>
-      </div>
-
-      <div class="battle-arena">
-        <div class="battle-half battle-half--player">
-          <div class="battle-grid-wrap">
-            <div class="battle-grid" id="player-grid"></div>
-          </div>
-        </div>
-        <div class="battle-half battle-half--enemy">
-          <div class="battle-grid-wrap">
-            <div class="battle-grid" id="enemy-grid"></div>
-          </div>
         </div>
       </div>
 

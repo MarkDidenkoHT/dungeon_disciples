@@ -2812,7 +2812,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px 10px 2px;
+  padding: 6px 10px;
   flex-shrink: 0;
 }
 
@@ -3067,42 +3067,76 @@ button:active:not(:disabled) { opacity: 0.75; }
    Art-only button: no chrome of its own, the PNG is the button. */
 .battle-prep-enter-btn {
   flex-shrink: 0;
+  position: relative;
   border: none;
   background: none;
-  padding: 0;
+  /* Padding is the tap target, not decoration - the art alone is a small hit
+     area for a thumb, and this is the screen's primary action. */
+  padding: 6px 10px;
+  margin: -6px -10px;
   font-family: inherit;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   color: var(--muted);
   line-height: 0;
   cursor: not-allowed;
   /* Unplaced hero = not ready: drained and dim, so "ready" reads as the art
      lighting up rather than as a colour change. */
   filter: grayscale(85%) brightness(0.55);
-  opacity: 0.65;
-  transition: filter 0.2s, opacity 0.2s, transform 0.1s;
+  opacity: 0.6;
+  transition: filter 0.25s, opacity 0.25s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .battle-prep-enter-btn img {
   display: block;
-  width: clamp(46px, 13vw, 76px);
+  width: clamp(58px, 17vw, 92px);
   height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* The glow is its own layer behind the art: a radial bloom that breathes, so
+   the light spills past the button's edges instead of tracing its alpha mask
+   the way a drop-shadow does. */
+.battle-prep-enter-btn::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 214, 120, 0.55) 0%,
+    rgba(200, 151, 58, 0.32) 38%,
+    rgba(200, 151, 58, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
 }
 
 .battle-prep-enter-btn--ready {
   cursor: pointer;
-  filter: none;
+  filter: drop-shadow(0 0 6px rgba(255, 200, 90, 0.55));
   opacity: 1;
-  animation: to-battle-pulse 2.2s ease-in-out infinite;
+}
+
+.battle-prep-enter-btn--ready::before {
+  opacity: 1;
+  animation: to-battle-bloom 2s ease-in-out infinite;
 }
 
 .battle-prep-enter-btn--ready:active {
-  transform: scale(0.94);
-  animation: none;
+  transform: scale(0.93);
+  filter: drop-shadow(0 0 10px rgba(255, 214, 120, 0.9));
 }
 
-@keyframes to-battle-pulse {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(200, 151, 58, 0.35)); }
-  50%      { filter: drop-shadow(0 0 9px rgba(200, 151, 58, 0.75)); }
+.battle-prep-enter-btn--ready:active::before { animation: none; opacity: 1; }
+
+@keyframes to-battle-bloom {
+  0%, 100% { opacity: 0.45; transform: scale(0.92); }
+  50%      { opacity: 1;    transform: scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-prep-enter-btn--ready::before { animation: none; opacity: 0.8; }
 }
 
 .army-power {
