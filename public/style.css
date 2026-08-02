@@ -2018,26 +2018,46 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* Sizes are viewport-driven (clamped) so the strip shrinks on short screens
    instead of pushing the unit card out of view. Everything inside the card is
    derived from --portrait-card-h, so one value tunes the whole strip. */
+/* The art fills the whole inner panel of the frame; the HP bar is overlaid
+   along its bottom edge rather than taking a row of its own. */
 .portrait-card--roster {
-  --portrait-card-h: clamp(48px, 7.5vh, 68px);
-  --portrait-art: calc(var(--portrait-card-h) * 0.58);
+  --portrait-card-h: clamp(52px, 8vh, 74px);
+  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
   height: var(--portrait-card-h);
   width: calc(var(--portrait-card-h) * 0.80);
-  padding: calc(var(--portrait-card-h) * 0.13) calc(var(--portrait-card-h) * 0.11);
-  gap: calc(var(--portrait-card-h) * 0.05);
-  justify-content: center;
+  padding: var(--portrait-inset);
+  gap: 0;
   cursor: pointer;
   position: relative;
 }
 
 .portrait-card--roster .portrait-art-img,
 .portrait-card--roster .portrait-art {
-  width: var(--portrait-art);
-  height: var(--portrait-art);
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  border-radius: 2px;
+}
+
+.portrait-card--roster .portrait-hp-bar {
+  position: absolute;
+  left: var(--portrait-inset);
+  right: var(--portrait-inset);
+  bottom: var(--portrait-inset);
+  width: auto;
+}
+
+.portrait-card--roster .portrait-status--dead {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
 }
 
 .portrait-hp-bar {
-  width: var(--portrait-art, 42px);
   height: 5px;
   border-radius: 2px;
   background: rgba(0,0,0,0.6);
