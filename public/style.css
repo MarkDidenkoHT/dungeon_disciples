@@ -2595,13 +2595,27 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: width 0.3s ease;
 }
 
+/* --result-bg is set inline per battle (victory art vs a loading screen); the
+   rest of the layout belongs here, not in a style attribute. */
 .screen-battle-result {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  padding: 32px 20px;
+  min-height: 100vh;
+  padding: 20px;
+  background-image: var(--result-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.result-pending { color: var(--muted); }
+.result-error   { color: var(--danger); }
+
+.ready-btn--result {
+  margin: 16px auto 0;
+  padding: 12px 32px;
+  font-size: 1rem;
 }
 
 /* One word at the head of the rewards panel - the old boxed banner and the
@@ -2675,7 +2689,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 8px 12px;
 }
 .reward-chip-icon { display: flex; align-items: center; font-size: 1.4rem; line-height: 1; }
-.reward-chip-icon .res-icon-img { width: 28px; height: 28px; }
+.reward-chip-icon .res-icon-img,
+.reward-chip-img { width: 28px; height: 28px; display: block; object-fit: contain; }
 .reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
 .reward-chip-label { color: #cfd6e2; font-size: 0.72rem; text-transform: capitalize; }
 .reward-unlock {

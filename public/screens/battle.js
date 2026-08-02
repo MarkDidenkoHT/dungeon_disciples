@@ -883,12 +883,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       : `/assets/loading_screens/loading${Math.floor(Math.random() * 8) + 1}.jpg`;
 
     root.innerHTML = `
-      <div class="screen screen-battle-result" style="background-image: url('${bgImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <!-- The only inline style here is the background URL, which is chosen at
+           runtime; everything else lives in .screen-battle-result and friends.
+           Inline rules silently outrank the stylesheet, so editing the CSS then
+           looked like it did nothing. -->
+      <div class="screen screen-battle-result" style="--result-bg: url('${bgImage}');">
         <div class="result-content">
           <div class="result-rewards" id="result-rewards">
-            <p style="color:var(--muted)">Calculating rewards…</p>
+            <p class="result-pending">Calculating rewards…</p>
           </div>
-          <button class="ready-btn" id="back-to-castle" disabled style="margin-top: 16px; padding: 12px 32px; background: linear-gradient(135deg, #4a6fa5, #2d4a7a); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease;">Return to Castle</button>
+          <button class="ready-btn ready-btn--result" id="back-to-castle" disabled>Return to Castle</button>
         </div>
       </div>
     `;
@@ -908,16 +912,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       });
       const rewardsEl = root.querySelector('#result-rewards');
       if (won) {
-        // Icon-forward reward chips: proper resource icons (gold/crystals) plus
-        // amount. XP and trophies have no image asset, so they keep a glyph.
+        // Icon-forward reward chips: real art for gold, crystals and trophies.
+        // Trophy icons are /assets/icons/recources/<trophy_id>.png, named after
+        // the id in data/embark.js. No onerror fallback by design - a missing
+        // file should show as a hole, not quietly paper over itself.
         const chip = (iconHtml, amount, label = '') =>
           `<div class="reward-chip">
              <span class="reward-chip-icon">${iconHtml}</span>
              <span class="reward-chip-amt">+${amount}</span>
              ${label ? `<span class="reward-chip-label">${label}</span>` : ''}
            </div>`;
+        const trophyIcon = id => `<img class="reward-chip-img" src="/assets/icons/recources/${id}.png" alt="${id.replace(/_/g, ' ')}">`;
         const trophies = Object.entries(result.trophies_gained || {})
-          .map(([id, amt]) => chip('🏆', amt, id.replace(/_/g, ' '))).join('');
+          .map(([id, amt]) => chip(trophyIcon(id), amt, id.replace(/_/g, ' '))).join('');
         rewardsEl.innerHTML = `
           ${outcomeHtml}
           <div class="reward-grid">
@@ -930,13 +937,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           ${result.progress_unlocked ? `<div class="reward-unlock">🔓 Level ${result.next_level} unlocked!</div>` : ''}
         `;
       } else {
-        rewardsEl.innerHTML = `${outcomeHtml}<p style="color:var(--muted)">No rewards on defeat.</p>`;
+        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">No rewards on defeat.</p>`;
       }
     } catch (err) {
       const isAlreadyClaimed = /already claimed|already/i.test(err.message || '');
       root.querySelector('#result-rewards').innerHTML = outcomeHtml + (isAlreadyClaimed
-        ? '<p style="color:var(--muted)">Rewards already processed.</p>'
-        : `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`);
+        ? '<p class="result-pending">Rewards already processed.</p>'
+        : `<p class="result-error">Failed to save rewards: ${err.message}</p>`);
     } finally {
       rewardRequestInFlight = false;
     }
