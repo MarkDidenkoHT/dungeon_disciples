@@ -657,15 +657,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const portrait = getPortraitUrl(c);
       const isActive = i === 0;
       const side     = c.side;
+      // Same frame art as the formation track; the unit acting next wears the
+      // lit variant (.portrait-card--selected), exactly as a selected card does.
       return `
-        <div class="init-card ${isActive ? 'init-card--active' : ''} init-card--${side}">
-          <div class="init-portrait">
-            ${portrait
-              ? `<img class="init-portrait-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
-              : `<span class="init-portrait-fallback">${side === 'player' ? '⚔' : '💀'}</span>`
-            }
-          </div>
-          <span class="init-name">${c.unit_name.split(' ')[0]}</span>
+        <div class="portrait-card portrait-card--init portrait-card--${side}
+                    ${isActive ? 'portrait-card--selected' : ''}"
+             title="${c.unit_name}">
+          ${portrait
+            ? `<img class="portrait-art-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
+            : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
+          }
           <div class="init-side-strip"></div>
         </div>
       `;
@@ -883,10 +884,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     root.innerHTML = `
       <div class="screen screen-battle-result" style="background-image: url('${bgImage}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div class="result-content" style="max-width: 500px; width: 100%; padding: 40px; background: rgba(0, 0, 0, 0.75); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8); text-align: center;">
-          <div class="result-banner ${won ? 'result-banner--win' : 'result-banner--loss'}" style="font-size: 3rem; font-weight: bold; margin-bottom: 24px; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); ${won ? 'color: #ffd700;' : 'color: #ff4444;'}">
-            ${won ? '🏆 VICTORY!' : '💀 DEFEAT'}
-          </div>
+        <div class="result-content" style="max-width: 500px; width: 100%; padding: 40px; border-radius: 16px; text-align: center;">
           <div class="result-rewards" id="result-rewards" style="margin: 24px 0; text-align: left; background: rgba(0, 0, 0, 0.4); border-radius: 8px; padding: 16px;">
             <p style="color:var(--muted)">Calculating rewards…</p>
           </div>
@@ -894,6 +892,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
       </div>
     `;
+
+    // The outcome is a single word at the head of the rewards panel - the old
+    // 3rem emoji banner is gone. Every branch below prefixes it, including the
+    // failure paths, so the player is always told how the battle ended.
+    const outcomeHtml =
+      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? 'Victory' : 'Defeat'}</div>`;
 
     rewardRequestInFlight = true;
     try {
@@ -915,6 +919,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const trophies = Object.entries(result.trophies_gained || {})
           .map(([id, amt]) => chip('🏆', amt, id.replace(/_/g, ' '))).join('');
         rewardsEl.innerHTML = `
+          ${outcomeHtml}
           <div class="reward-grid">
             ${result.gold    > 0 ? chip(GOLD_ICON, result.gold) : ''}
             ${result.crystal > 0 ? chip(CRYSTAL_ICONS[result.crystal_type] || '💎', result.crystal) : ''}
@@ -925,13 +930,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           ${result.progress_unlocked ? `<div class="reward-unlock">🔓 Level ${result.next_level} unlocked!</div>` : ''}
         `;
       } else {
-        rewardsEl.innerHTML = `<p style="color:var(--muted)">No rewards on defeat.</p>`;
+        rewardsEl.innerHTML = `${outcomeHtml}<p style="color:var(--muted)">No rewards on defeat.</p>`;
       }
     } catch (err) {
       const isAlreadyClaimed = /already claimed|already/i.test(err.message || '');
-      root.querySelector('#result-rewards').innerHTML = isAlreadyClaimed
+      root.querySelector('#result-rewards').innerHTML = outcomeHtml + (isAlreadyClaimed
         ? '<p style="color:var(--muted)">Rewards already processed.</p>'
-        : `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`;
+        : `<p style="color:var(--danger)">Failed to save rewards: ${err.message}</p>`);
     } finally {
       rewardRequestInFlight = false;
     }

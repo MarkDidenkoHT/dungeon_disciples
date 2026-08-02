@@ -13,6 +13,10 @@ const UI_TEXT = {
     en: 'You have an unfinished battle in progress. Reconnect to continue where you left off, or abandon it and start a new fight.',
     ru: 'У вас есть незавершённый бой. Вернитесь, чтобы продолжить с того места, где остановились, или бросьте его и начните новый.',
   },
+  abandonWarning:  {
+    en: 'Abandoning costs you the field: the fallen stay dead, and every survivor walks away at 1 HP.',
+    ru: 'Бросить бой — значит уступить поле: павшие остаются мёртвыми, а выжившие уходят с 1 HP.',
+  },
   abandon:         { en: 'Abandon',   ru: 'Бросить' },
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
   levelAria:       { en: 'Level',     ru: 'Уровень' },
@@ -149,6 +153,9 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
       <div style="display:flex;flex-direction:column;gap:1rem;">
         <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
           ${UI_TEXT.reconnectBody[L]}
+        </div>
+        <div style="color:var(--danger);font-size:.85rem;line-height:1.4;">
+          ${UI_TEXT.abandonWarning[L]}
         </div>
         <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
           <button id="modal-abandon-btn" class="action-btn action-btn--cancel" type="button">${UI_TEXT.abandon[L]}</button>

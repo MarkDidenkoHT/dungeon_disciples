@@ -173,6 +173,9 @@ function showReconnectModal(player, battle_id, battle_data) {
         <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
           You have an unfinished battle in progress. Reconnect to continue, or abandon it.
         </div>
+        <div style="color:var(--danger);font-size:.85rem;line-height:1.4;">
+          Abandoning costs you the field: the fallen stay dead, and every survivor walks away at 1 HP.
+        </div>
         <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
           <button id="boot-abandon-btn" class="action-btn action-btn--cancel">Abandon</button>
           <button id="boot-reconnect-btn" class="action-btn">Reconnect</button>

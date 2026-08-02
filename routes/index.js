@@ -273,7 +273,12 @@ function buildBattleData(engine, bd) {
   };
 }
 
-async function persistBattleRosterState(chat_id, battle_data) {
+// `abandoned` is the penalty path: the player walked out of a battle that was
+// still running. Without it, quitting a fight that is going badly is strictly
+// better than losing it — the party keeps whatever HP it had left and the dead
+// are the only cost. So: the dead STAY dead (no take-backs), and every survivor
+// is written back at 1 HP regardless of what they had. Nothing is free.
+async function persistBattleRosterState(chat_id, battle_data, { abandoned = false } = {}) {
   if (!battle_data || !Array.isArray(battle_data.units)) return;
   const playerUnits = battle_data.units.filter(u => u.side === 'player' && u._rosterId != null);
   await Promise.all(playerUnits.map(async (unit) => {
@@ -287,10 +292,12 @@ async function persistBattleRosterState(chat_id, battle_data) {
     const baseMaxHp = def?.hp ?? Number(current.unit_data?.max_hp ?? 0);
     const rawHp = Number.isFinite(Number(unit.battle_hp)) ? Number(unit.battle_hp) : 0;
     const clampedHp = Math.min(rawHp, baseMaxHp);
+    const alive = unit.alive !== false;
+    const survivorHp = abandoned ? Math.min(1, baseMaxHp) : Math.max(0, clampedHp);
     const updatedUnitData = {
       ...current.unit_data,
-      alive:      unit.alive !== false,
-      current_hp: Math.max(0, clampedHp),
+      alive,
+      current_hp: alive ? survivorHp : 0,
       max_hp:     baseMaxHp,
     };
     await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, {
@@ -1161,9 +1168,13 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     const record = await getBattleState(battle_id);
     if (!record) return res.status(404).json({ error: 'Battle not found' });
     if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
-    await persistBattleRosterState(chat_id, record.battle_data);
+    // Both callers of this route are "Abandon" buttons, but only a battle that
+    // had not resolved is an abandonment. A finished battle closed through here
+    // keeps its real HP; nothing is being escaped.
+    const abandoned = !record.battle_data?.done;
+    await persistBattleRosterState(chat_id, record.battle_data, { abandoned });
     await closeBattleState(battle_id);
-    res.json({ success: true });
+    res.json({ success: true, abandoned });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

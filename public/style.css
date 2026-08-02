@@ -2384,86 +2384,58 @@ button:active:not(:disabled) { opacity: 0.75; }
 .init-queue {
   display: flex;
   flex-direction: row;
+  align-items: flex-end;
   gap: 5px;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 5px 8px;
   overflow-x: auto;
   flex-shrink: 0;
-  background: var(--bg);
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 .init-queue::-webkit-scrollbar { display: none; }
 
-.init-card {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  flex-shrink: 0;
-  width: 44px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  overflow: hidden;
+/* The queue reuses the formation portrait-card frame (and its lit variant for
+   whoever acts next), so the same art reads the same way in prep and in battle.
+   Only the size and the side strip are queue-specific. */
+.portrait-card--init {
+  --portrait-card-h: clamp(46px, 7vh, 62px);
+  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
+  height: var(--portrait-card-h);
+  width: calc(var(--portrait-card-h) * 0.80);
+  padding: var(--portrait-inset);
+  gap: 0;
   position: relative;
   cursor: default;
 }
 
-.init-card--active {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.init-portrait {
-  width: 44px;
-  height: 44px;
-  position: relative;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.init-portrait-img {
-  position: absolute;
-  inset: 0;
+.portrait-card--init .portrait-art-img,
+.portrait-card--init .portrait-art {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
+  flex: 1;
+  min-height: 0;
+  border-radius: 2px;
 }
 
-.init-portrait-fallback {
-  font-size: 1.1rem;
-  line-height: 1;
+.portrait-card--init .portrait-art {
+  background: var(--bg);
+  font-size: 1rem;
 }
 
-.init-name {
-  font-size: 0.46rem;
-  color: var(--muted);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 2px 3px 1px;
-}
-
+/* Which army the unit belongs to, along the bottom edge of the art. */
 .init-side-strip {
+  position: absolute;
+  left: var(--portrait-inset);
+  right: var(--portrait-inset);
+  bottom: var(--portrait-inset);
   height: 3px;
+  border-radius: 2px;
   background: var(--border);
 }
-.init-card--player .init-side-strip { background: var(--accent); }
-.init-card--enemy  .init-side-strip { background: #c84a3a; }
+.portrait-card--player .init-side-strip { background: var(--accent); }
+.portrait-card--enemy  .init-side-strip { background: #c84a3a; }
 
-.init-card--active .init-portrait::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 0 2px var(--accent);
-  border-radius: 0;
-  pointer-events: none;
-}
+.portrait-card--dead-init { opacity: 0.5; }
 
 .battle-log {
   flex-shrink: 0;
@@ -2632,16 +2604,23 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 32px 20px;
 }
 
-.result-banner {
-  font-size: 2rem;
-  font-weight: bold;
-  padding: 16px 32px;
-  border-radius: 12px;
-  border: 2px solid;
+/* One word at the head of the rewards panel - the old boxed banner and the
+   3rem emoji headline are gone; the victory art carries the moment. */
+.result-outcome {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
 }
 
-.result-banner--win  { color: var(--accent); border-color: var(--accent); background: #2a1e00; }
-.result-banner--loss { color: var(--danger);  border-color: var(--danger);  background: #2a0a0a; }
+.result-outcome--win  { color: var(--accent); }
+.result-outcome--loss { color: var(--danger); }
 
 .result-body {
   display: flex;
@@ -2764,20 +2743,17 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 /* Faction-independent, so it lives here rather than in SCREEN_BACKGROUNDS
-   (utils.js), which keys every screen's art by faction. The gradient is a scrim
-   over the art — the grids and header sit on top of it and need the contrast. */
+   (utils.js), which keys every screen's art by faction. */
 .screen-battle-prep {
   padding: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background-image:
-    linear-gradient(180deg, rgba(6, 8, 12, 0.72) 0%, rgba(6, 8, 12, 0.55) 45%, rgba(6, 8, 12, 0.85) 100%),
-    url('/assets/screens/battle_prep_bg.jpeg');
-  background-size: cover, cover;
-  background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
+  background-image: url('/assets/screens/battle_prep_bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .battle-arena {
@@ -2786,6 +2762,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: flex-start;
   justify-content: center;
   flex-shrink: 0;
+  width: 95vw;
+  margin: 0 auto;
 }
 
 .battle-half {
@@ -3114,38 +3092,22 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin-left: 6px;
 }
 
+/* Not a tab strip - there is only ever one section here, so this is a plain
+   caption over the portrait track. No borders, no surface fill. */
 .battle-prep-tabs {
   display: flex;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.battle-prep-tab-btn {
-  flex: 1;
-  padding: 7px 4px;
+.battle-prep-tab-label {
+  padding: 6px 4px 2px;
   font-size: 0.68rem;
   font-weight: 600;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  cursor: pointer;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  transition: color 0.15s, border-color 0.15s;
-  border-radius: 0;
-}
-
-.battle-prep-tab-btn.active {
   color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.battle-prep-tab-btn.disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .battle-prep-tab-content {

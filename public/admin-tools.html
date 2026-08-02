@@ -457,6 +457,7 @@
       <span class="legend-item">✅ exists</span>
       <span class="legend-item">❌ missing</span>
       <span class="legend-item" style="color:#4a4f66;">— N/A</span>
+      <span class="legend-item" style="color:#f5c542;">⚠️ needs action icon</span>
     </span>
   </div>
 
@@ -680,11 +681,23 @@
 
       const actionIcons = [];
       const actionIcon = unit.data.action_icon;
-      if (actionIcon) {
+      const action = unit.data.action;
+      
+      // If unit has an action but no action_icon, mark as missing
+      if (action && !actionIcon) {
+        actionIcons.push({ 
+          name: action, 
+          path: null, 
+          exists: false,
+          missing: true,
+          reason: 'No action icon assigned'
+        });
+      } else if (actionIcon) {
         const path = `/assets/icons/actions/${actionIcon}`;
         const exists = await checkAssetExists(path);
-        actionIcons.push({ name: actionIcon, path, exists });
+        actionIcons.push({ name: actionIcon, path, exists, missing: false });
       }
+      // If no action and no action_icon, don't add anything (N/A)
 
       const passiveIcons = [];
       const passives = extractPassiveNames(unit.data.passive);
@@ -995,7 +1008,11 @@
       if (asset.actionIcons.length > 0) {
         tooltip += `\nAction Icons:`;
         asset.actionIcons.forEach(a => {
-          tooltip += `\n  ${a.name}: ${a.exists ? '✅' : '❌'} (${a.path})`;
+          if (a.missing) {
+            tooltip += `\n  ${a.name}: ❌ (${a.reason || 'Missing'})`;
+          } else {
+            tooltip += `\n  ${a.name}: ${a.exists ? '✅' : '❌'} (${a.path})`;
+          }
         });
       }
       if (asset.passiveIcons.length > 0) {

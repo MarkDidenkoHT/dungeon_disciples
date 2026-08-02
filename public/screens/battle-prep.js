@@ -131,8 +131,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
       </div>
 
+      <!-- Caption, not a control: there is only one section, and nothing ever
+           bound a handler to it. A <button> here just lied about being one. -->
       <div class="battle-prep-tabs">
-        <button class="battle-prep-tab-btn active" data-tab="formation">Formation</button>
+        <span class="battle-prep-tab-label">Formation</span>
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
