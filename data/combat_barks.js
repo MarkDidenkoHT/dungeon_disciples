@@ -10,12 +10,29 @@
 //   name: 'Paladin'        matches unit_name exactly (all tiers share a name)
 //   tag:  'Demon'          matches if the unit carries that tag
 //   tags: ['Holy','Court'] matches if the unit carries ALL of them
-//   not:  'Undead' | []    excludes units carrying any of these tags
+//   not:  'Skeleton' | []  excludes units carrying any of these tags
 //   omit the filter entirely to match anything
 //
 // Specificity (higher wins, ties are pooled together):
 //   +100 name, +2 per tag, +0 per `not` (a gate only), on each of actor and
 //   target. A named rule therefore always beats any tag rule.
+//
+// The ONLY tags any unit in data/units.js carries are:
+//   Archer, Beast, Caster, Choir, Construct, Court, Demon, Engineer, Ghost,
+//   Holy, Knight, Skeleton, Spirit, Vampire, Warrior, Zombie
+// A filter naming anything else silently never matches - check units.js before
+// inventing one.
+//
+// VOICE - three factions, three registers. Keep new lines inside them:
+//   Empire (Knight / Holy / Engineer / Construct / Archer) - militant and
+//     stoic, persevering. Duty, discipline, the line holding. Understatement;
+//     never triumphant.
+//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton) - mourning and
+//     melancholic. Grief carried rather than performed. Vampires are formal and
+//     tired, never flippant or arch.
+//   Choir of the Cursed (Demon / Court / Choir / Beast) - greedy and
+//     self-serving. Everything is a price, a debt, a share owed to them.
+// No quips, no exclamation-mark comedy, no modern idiom.
 //
 // Localization: each rule carries `lines` (English) and a parallel `lines_ru`
 // of the SAME length and order. The engine picks one index and logs both the
@@ -43,990 +60,1066 @@ const BARK_CHANCES = {
 const HEAL_BARK_THRESHOLD_PCT = 25;
 
 const COMBAT_BARKS = [
-  // ---------------------------------------------------------------------------
-  // VAMPIRES - blood is the lens they see everything through. Demon blood burns,
-  // undead blood is worthless, holy blood is a delicacy and a dare.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // GRAIL OF SORROW - VAMPIRES
+  // Old blood, older grief. They kill the way a physician works: precisely, and
+  // without appetite for it. Blood is a sacrament they are tired of taking.
+  // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Demon' },
     lines: [
-      'Your blood burns going down!',
-      'Ash and cinders — is that all you are?',
-      'You bleed embers. How disappointing.',
-      'Even your veins run hot with spite.',
-      'Foul vintage. I will drink it anyway.',
+      'Your blood is smoke. There is nothing in you to mourn.',
+      'Burnt through. Even your veins were sold.',
+      'I take no sacrament from a thing that made itself.',
+      'You were owed a death long before I came.',
+      'Ash, where the grief should be.',
     ],
     lines_ru: [
-      'Твоя кровь обжигает горло!',
-      'Пепел и угли — это всё, что в тебе есть?',
-      'Ты истекаешь угольками. Какое разочарование.',
-      'Даже твои вены полны злобы.',
-      'Скверный урожай. Но я всё равно выпью.',
+      'Твоя кровь — дым. В тебе не о чем горевать.',
+      'Выжжен дотла. Даже вены твои проданы.',
+      'Я не приму причастия от того, кто сделал себя сам.',
+      'Смерть задолжали тебе задолго до меня.',
+      'Пепел там, где должно быть горе.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Knight' },
     lines: [
-      'All that iron, and still so much throat.',
-      'Your vows taste of milk, little knight.',
-      'Take off the helm. I want to see your face empty.',
-      'Chivalry bleeds the same as cowardice.',
-      'Such a polished shell. Let us see the meat.',
+      'Iron does not answer for the man inside it.',
+      'You swore to a house that is already dust.',
+      'I have buried braver men. I remember each of them.',
+      'Your blood is warm. That is the whole of your advantage.',
+      'Lower the shield. It changes nothing, but you will tire less.',
     ],
     lines_ru: [
-      'Столько железа — а горло всё равно открыто.',
-      'Твои клятвы отдают молоком, рыцарёк.',
-      'Сними шлем. Хочу видеть, как гаснет твоё лицо.',
-      'Благородство кровоточит так же, как трусость.',
-      'Такой отполированный панцирь. Взглянем на мясо.',
+      'Железо не отвечает за того, кто внутри.',
+      'Ты присягнул дому, что давно обратился в прах.',
+      'Я хоронил и храбрее. Я помню каждого.',
+      'Твоя кровь тёплая. В этом всё твоё преимущество.',
+      'Опусти щит. Это ничего не изменит, но ты меньше устанешь.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Holy' },
     lines: [
-      'Sanctified blood — my favourite vintage.',
-      'Pray louder. I want to hear your pulse quicken.',
-      'Your god is not watching. I checked.',
-      'Consecrated, and still warm. Exquisite.',
-      'Light cannot fill a body once it is empty.',
+      'Your god is listening. He simply will not come.',
+      'I prayed once, in your language. It changed nothing.',
+      'Faith is only grief that refuses to sit down.',
+      'You are certain. I envy that more than the blood.',
+      'Bleed, then. Perhaps He answers to that.',
     ],
     lines_ru: [
-      'Освящённая кровь — мой любимый урожай.',
-      'Молись громче. Хочу слышать, как частит твой пульс.',
-      'Твой бог не смотрит. Я проверил.',
-      'Освящённая и ещё тёплая. Изысканно.',
-      'Свет не наполнит тело, когда оно опустеет.',
+      'Твой бог слышит. Он просто не придёт.',
+      'Я тоже молился — на твоём языке. Это ничего не изменило.',
+      'Вера — лишь горе, которое не желает присесть.',
+      'Ты уверен. Этому я завидую больше, чем крови.',
+      'Что ж, истекай. Быть может, на это Он и отзовётся.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Zombie' },
     lines: [
-      'Curdled. Spoiled. Utterly beneath me.',
-      'There is nothing in you worth the drinking.',
-      'You are a corpse that forgot to lie down.',
-      'Not even hunger would stoop to you.',
+      'Rest. You have carried this long enough.',
+      'We were one house once. I have not forgotten.',
+      'No blood left in you, brother. Only the walking.',
+      'I do this gently. It is all that remains to me.',
     ],
     lines_ru: [
-      'Свернувшаяся. Прокисшая. Совершенно недостойна меня.',
-      'В тебе нет ничего, что стоило бы пить.',
-      'Ты труп, забывший лечь.',
-      'Даже голод не опустится до тебя.',
+      'Отдохни. Ты нёс это достаточно долго.',
+      'Когда-то мы были одним домом. Я не забыл.',
+      'В тебе не осталось крови, брат. Только ход.',
+      'Я делаю это мягко. Больше мне ничего не осталось.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Construct' },
     lines: [
-      'No blood. No sport. Just work.',
-      'Whoever built you denied me my supper.',
-      'A body with nothing to give. How rude.',
+      'Nothing in you to grieve. It makes the work quicker.',
+      'No blood, no name, no rest owed to you.',
+      'Someone built you to spare himself the standing here.',
+      'I break machines the way I break silence. Without pleasure.',
     ],
     lines_ru: [
-      'Ни крови. Ни забавы. Только работа.',
-      'Тот, кто собрал тебя, лишил меня ужина.',
-      'Тело, которому нечего дать. Как грубо.',
+      'В тебе не о чем горевать. Работа идёт быстрее.',
+      'Ни крови, ни имени, ни причитающегося покоя.',
+      'Тебя собрали, чтобы кому-то не стоять здесь самому.',
+      'Я ломаю машины, как ломаю тишину. Без удовольствия.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire' }, target: { tag: 'Holy' },
     lines: [
-      'Your light is mine now. Every drop.',
-      'Sanctity drains as easily as sin.',
-      'Sleep. Your god will not miss one more.',
+      'He died certain. That is a mercy I was never given.',
+      'Your god has him now. Ask what took so long.',
+      'Say the rites yourselves. I no longer remember them.',
+      'A clean death, and still no one comes for the body.',
     ],
     lines_ru: [
-      'Твой свет теперь мой. До капли.',
-      'Святость иссякает так же легко, как грех.',
-      'Спи. Твой бог не заметит пропажи ещё одного.',
+      'Он умер уверенным. Такой милости мне не досталось.',
+      'Теперь он у вашего бога. Спросите, отчего так долго.',
+      'Прочтите обряд сами. Я его больше не помню.',
+      'Чистая смерть — и всё равно за телом никто не придёт.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire' }, target: { tag: 'Demon' },
     lines: [
-      'Back to the ash you crawled from.',
-      'Burnt on the tongue — but swallowed all the same.',
+      'A debt closed. Not mine, but closed.',
+      'It ends as smoke. There is nothing to bury.',
+      'Whatever bargain made you is settled now.',
     ],
     lines_ru: [
-      'Назад в пепел, из которого ты выполз.',
-      'Обжигает язык — но всё же проглочено.',
+      'Долг закрыт. Не мой, но закрыт.',
+      'Кончается дымом. Хоронить нечего.',
+      'Какая бы сделка тебя ни создала — она исполнена.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire' },
     lines: [
-      'Still warm. Just how I like it.',
-      'You were never anything but a cup.',
-      'Thank you. Truly.',
+      'Close his eyes. We are not animals.',
+      'One more name I will keep, and no one will ask for.',
+      'It is done. Do not make me say it twice.',
+      'He is quiet now. I remember wanting that.',
     ],
     lines_ru: [
-      'Ещё тёплая. Как я люблю.',
-      'Ты никогда не был ничем, кроме чаши.',
-      'Спасибо. Искренне.',
+      'Закройте ему глаза. Мы не звери.',
+      'Ещё одно имя, что я сохраню и о котором никто не спросит.',
+      'Кончено. Не заставляй меня повторять.',
+      'Теперь он тих. Я помню, как хотел того же.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Vampire' },
     lines: [
-      'I have died before. It never takes.',
-      'The night… remembers…',
-      'You have merely… postponed… my thirst…',
+      'At last. I had begun to think it would not come.',
+      'Do not carry me home. There is no home.',
+      'Tell the house I lasted. That is all they ask.',
+      'So this is the taste of it. Ordinary.',
     ],
     lines_ru: [
-      'Я уже умирал. Это никогда не приживается.',
-      'Ночь… помнит…',
-      'Ты лишь… отсрочил… мою жажду…',
+      'Наконец-то. Я уже думал, оно не придёт.',
+      'Не несите меня домой. Дома нет.',
+      'Скажите дому, что я выстоял. Большего они не просят.',
+      'Так вот каков её вкус. Обыкновенный.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // DEMONS - contempt for the divine, delight in ruin, grudging respect for iron.
-  // ---------------------------------------------------------------------------
-  {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
-    lines: [
-      'Scream for your god! I want him to hear!',
-      'Your prayers are kindling. Nothing more.',
-      'Every hymn ends in a wet sound.',
-      'Heaven is not listening. I am.',
-      'Burn, and call it a blessing.',
-    ],
-    lines_ru: [
-      'Кричи своему богу! Пусть услышит!',
-      'Твои молитвы — растопка. Не более.',
-      'Каждый гимн кончается влажным звуком.',
-      'Небеса не слушают. Слушаю я.',
-      'Гори и зови это благословением.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Knight' },
-    lines: [
-      'Your oath will not hold the pieces together.',
-      'Honour is such a heavy thing to carry. Let me help.',
-      'Tin man. Tin heart. Tin end.',
-      'I have broken better vows on worse days.',
-    ],
-    lines_ru: [
-      'Твоя клятва не скрепит осколки.',
-      'Честь так тяжело нести. Позволь помочь.',
-      'Жестяной болван. Жестяное сердце. Жестяной конец.',
-      'Я ломал клятвы получше в дни похуже.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Vampire' },
-    lines: [
-      'Bloodsucker. You are a parasite on a corpse.',
-      'You stole your immortality. I was born to mine.',
-      'All that hunger, and nothing to show for it.',
-    ],
-    lines_ru: [
-      'Кровосос. Ты паразит на трупе.',
-      'Ты украл своё бессмертие. Я рождён со своим.',
-      'Столько голода — и ничего взамен.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Caster' },
-    lines: [
-      'Borrowed power. Watch me take it back.',
-      'You read about fire. I *am* fire.',
-      'Put the book down and burn properly.',
-    ],
-    lines_ru: [
-      'Заёмная сила. Смотри, как я её отберу.',
-      'Ты читал об огне. Я и *есть* огонь.',
-      'Отложи книгу и гори как следует.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Construct' },
-    lines: [
-      'Someone made you. That is your first mistake.',
-      'Let us see how the seams hold.',
-    ],
-    lines_ru: [
-      'Тебя кто-то создал. Это твоя первая ошибка.',
-      'Посмотрим, как держатся швы.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
-    lines: [
-      'And the light goes out. As it always does.',
-      'Tell your god who sent you.',
-      'One less voice in the choir.',
-    ],
-    lines_ru: [
-      'И свет гаснет. Как всегда.',
-      'Скажи своему богу, кто тебя послал.',
-      'Одним голосом в хоре меньше.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Demon' },
-    lines: [
-      'Ash. Ash and quiet.',
-      'The abyss thanks you for your donation.',
-      'Was that all?',
-    ],
-    lines_ru: [
-      'Пепел. Пепел и тишина.',
-      'Бездна благодарит за пожертвование.',
-      'И это всё?',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Demon' },
-    lines: [
-      'I go back… and I will come again…',
-      'The abyss… is patient…',
-      'You have killed nothing. You have only sent me home.',
-    ],
-    lines_ru: [
-      'Я возвращаюсь… и вернусь снова…',
-      'Бездна… терпелива…',
-      'Ты никого не убил. Ты лишь отправил меня домой.',
-    ],
-  },
-
-  // ---------------------------------------------------------------------------
-  // HOLY - righteous, and increasingly less patient the worse the target is.
-  // ---------------------------------------------------------------------------
-  {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
-    lines: [
-      'Back to the pit, abomination!',
-      'The light does not negotiate!',
-      'You have no place beneath this sky!',
-      'Every wound I give is a prayer answered.',
-    ],
-    lines_ru: [
-      'Назад в яму, мерзость!',
-      'Свет не ведёт переговоров!',
-      'Тебе нет места под этим небом!',
-      'Каждая моя рана — услышанная молитва.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Vampire' },
-    lines: [
-      'Your hunger ends here, leech!',
-      'A stolen life is no life at all!',
-      'How many nights until you are done? Answer me!',
-    ],
-    lines_ru: [
-      'Твой голод кончается здесь, пиявка!',
-      'Краденая жизнь — вовсе не жизнь!',
-      'Сколько ночей, пока ты насытишься? Отвечай!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Undead' },
-    lines: [
-      'Rest! You have earned it and forgotten it!',
-      'This is a mercy, though you cannot know it.',
-      'Death was your gift. Stop refusing it!',
-    ],
-    lines_ru: [
-      'Упокойся! Ты заслужил покой и забыл о нём!',
-      'Это милость, хоть тебе и не понять.',
-      'Смерть была твоим даром. Перестань отвергать его!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Zombie' },
-    lines: [
-      'Someone loved you once. I am sorry for this.',
-      'Be still. Please, just be still.',
-      'This body is not yours to walk in!',
-    ],
-    lines_ru: [
-      'Кто-то когда-то любил тебя. Прости меня за это.',
-      'Замри. Прошу, просто замри.',
-      'Это тело не тебе носить!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Spirit' },
-    lines: [
-      'Let go! There is nothing left to hold!',
-      'Your grief does not excuse this.',
-      'The way onward is open. Take it!',
-    ],
-    lines_ru: [
-      'Отпусти! Держаться больше не за что!',
-      'Твоя скорбь этого не оправдывает.',
-      'Путь дальше открыт. Ступай!',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
-    lines: [
-      'Feel the might of the righteous!',
-      'Back to the abyss with you!',
-      'The light purges all!',
-      'No mercy for the wicked!',
-    ],
-    lines_ru: [
-      'Узри мощь праведных!',
-      'Обратно в бездну!',
-      'Свет очищает всё!',
-      'Нет пощады нечестивым!',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Undead' },
-    lines: [
-      'Rest now. Truly, this time.',
-      'Go where you were always meant to go.',
-      'It is finished. Be at peace.',
-    ],
-    lines_ru: [
-      'Упокойся. На этот раз по-настоящему.',
-      'Ступай туда, куда тебе всегда было суждено.',
-      'Кончено. Обрети покой.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Holy' },
-    lines: [
-      'Into the light… at last…',
-      'I regret… nothing…',
-      'Hold the line… without me…',
-    ],
-    lines_ru: [
-      'В свет… наконец-то…',
-      'Я ни о чём… не жалею…',
-      'Держите строй… без меня…',
-    ],
-  },
-
-  // ---------------------------------------------------------------------------
-  // KNIGHTS - discipline and the line. Living knights only; the dead ones below.
-  // ---------------------------------------------------------------------------
-  {
-    trigger: 'attack', actor: { tag: 'Knight', not: ['Undead', 'Zombie', 'Demon', 'Vampire'] },
-    lines: [
-      'Hold the line!',
-      'For the crown!',
-      'Steel answers steel!',
-      'Give ground and you give everything!',
-    ],
-    lines_ru: [
-      'Держать строй!',
-      'За корону!',
-      'Сталь отвечает сталью!',
-      'Уступишь пядь — уступишь всё!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Knight', not: ['Undead', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
-    lines: [
-      'I have read your name in the old books. It dies today.',
-      'You will not pass this shield!',
-      'Come on then, hellspawn!',
-    ],
-    lines_ru: [
-      'Я читал твоё имя в старых книгах. Сегодня оно умрёт.',
-      'Ты не пройдёшь этот щит!',
-      'Ну давай же, отродье ада!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tags: ['Knight', 'Zombie'] },
-    lines: [
-      'The… oath… holds…',
-      'Still… standing… post…',
-      'Orders… were… never… rescinded…',
-    ],
-    lines_ru: [
-      'Клятва… держит…',
-      'Всё ещё… на… посту…',
-      'Приказ… не был… отменён…',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tags: ['Knight', 'Undead'] },
-    lines: [
-      'Death did not release me from duty.',
-      'I kept my oath. I keep it still.',
-      'The grave was a poor barracks.',
-    ],
-    lines_ru: [
-      'Смерть не освободила меня от долга.',
-      'Я сдержал клятву. Держу и поныне.',
-      'Могила была скверной казармой.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Knight', not: ['Undead', 'Zombie'] },
-    lines: [
-      'The line… holds…',
-      'Tell them I did not… step back…',
-      'Someone… take up the shield…',
-    ],
-    lines_ru: [
-      'Строй… держится…',
-      'Скажите им, что я не… отступил…',
-      'Кто-нибудь… поднимите щит…',
-    ],
-  },
-
-  // ---------------------------------------------------------------------------
-  // UNDEAD / ZOMBIES - hollow, patient, faintly sad.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // GRAIL OF SORROW - THE RISEN (Zombie)
+  // Slow, patient, sorry. They remember being people, and it does not help.
+  // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Zombie' }, target: { tag: 'Holy' },
     lines: [
-      'Your… light… is… loud…',
-      'Stop… singing…',
-      'It… hurts… to… look… at… you…',
+      'We were buried in your ground. We came back through it.',
+      'You blessed this field once. It did not hold.',
+      'Your prayers are heavy. We are heavier.',
     ],
     lines_ru: [
-      'Твой… свет… такой… громкий…',
-      'Хватит… петь…',
-      'Больно… на… тебя… смотреть…',
+      'Нас похоронили в вашей земле. Мы вернулись сквозь неё.',
+      'Ты освятил это поле однажды. Оно не удержало.',
+      'Ваши молитвы тяжелы. Мы тяжелее.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Zombie' },
     lines: [
-      'Warm…',
-      'Hungry… always… hungry…',
-      'Down… come… down…',
+      'We do not tire. That is the whole of the sorrow.',
+      'Stand aside. We would rather not.',
+      'It hurts. We carry it anyway.',
+      'We have been walking toward you for years.',
     ],
     lines_ru: [
-      'Тёплое…',
-      'Голод… вечный… голод…',
-      'Вниз… иди… вниз…',
+      'Мы не устаём. В этом всё горе.',
+      'Отойди. Нам не хочется этого делать.',
+      'Больно. Мы всё равно это несём.',
+      'Мы шли к тебе годами.',
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Undead', not: ['Knight', 'Vampire', 'Zombie'] },
+    trigger: 'kill', actor: { tag: 'Zombie' },
     lines: [
-      'I remember hands. I remember using them for this.',
-      'You will be quiet soon. Everyone is.',
-      'The grave is patient. I am not.',
+      'Down. Now you know the weight.',
+      'Leave him. The ground takes its own.',
+      'One fewer to grieve for later.',
     ],
     lines_ru: [
-      'Я помню руки. Помню, как делал ими это.',
-      'Скоро ты затихнешь. Как все.',
-      'Могила терпелива. Я — нет.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Undead' },
-    lines: [
-      'Welcome. It is crowded, but you will fit.',
-      'Now you understand.',
-      'One more for the long dark.',
-    ],
-    lines_ru: [
-      'Добро пожаловать. Тесно, но ты поместишься.',
-      'Теперь ты понимаешь.',
-      'Ещё один для долгой тьмы.',
+      'Лежи. Теперь ты знаешь этот вес.',
+      'Оставьте его. Земля берёт своё.',
+      'Одним, о ком горевать после, меньше.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Zombie' },
     lines: [
-      'Oh… good…',
-      'Rest…?',
-      'Thank… you…',
+      'Finally. Let me stay down.',
+      'I remembered my name near the end. I would rather not have.',
+      'Do not raise me again.',
     ],
     lines_ru: [
-      'О… хорошо…',
-      'Покой…?',
-      'Спа… сибо…',
+      'Наконец-то. Дайте остаться лежать.',
+      'Под конец я вспомнил своё имя. Лучше бы не вспоминал.',
+      'Не поднимайте меня снова.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // SPIRITS - grief given a shape.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // GRAIL OF SORROW - THE BONE ORDER (Skeleton)
+  // What is left once the grief has worn even the flesh off. Dry and formal.
+  // (These rules were tagged `Undead`, which no unit carries - they never fired
+  // once. Retagged to Skeleton, which is the real tag.)
+  // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Spirit' },
+    trigger: 'attack', actor: { tag: 'Skeleton' },
     lines: [
-      'You are so heavy. So very heavy.',
-      'I only want you to be as cold as I am.',
-      'Do you hear it too? The weeping?',
-      'Stay. Everyone leaves. Stay.',
+      'I kept the oath. I did not keep the rest of me.',
+      'You will be this light one day. It is no worse.',
+      'The war ended. No one came to tell the dead.',
+      'Strike the bone. There is nothing behind it to spare.',
     ],
     lines_ru: [
-      'Ты такой тяжёлый. Такой тяжёлый.',
-      'Я лишь хочу, чтобы ты стал таким же холодным, как я.',
-      'Ты тоже это слышишь? Этот плач?',
-      'Останься. Все уходят. Останься.',
+      'Клятву я сохранил. Всё остальное — нет.',
+      'Однажды и ты станешь таким же лёгким. Это не хуже.',
+      'Война кончилась. Мёртвым сообщить забыли.',
+      'Бей в кость. За ней нечего щадить.',
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Spirit' }, target: { tag: 'Holy' },
+    trigger: 'kill', actor: { tag: 'Skeleton' },
     lines: [
-      'You promised me rest. You promised!',
-      'I prayed. I prayed and this is what I got.',
-      'Where were you? WHERE WERE YOU?',
+      'Another kept waiting. He will learn patience.',
+      'Marked. The roll of the dead is longer than yours.',
+      'He goes where we go. He simply arrives rested.',
     ],
     lines_ru: [
-      'Ты обещал мне покой. Обещал!',
-      'Я молилась. Молилась — и вот что получила.',
-      'Где ты был? ГДЕ ТЫ БЫЛ?',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Spirit' },
-    lines: [
-      'Finally…',
-      'Is it… quiet… where you go…?',
-      'I forget… my name… again…',
-    ],
-    lines_ru: [
-      'Наконец-то…',
-      'Там… тихо… куда ты уходишь…?',
-      'Я снова… забываю… своё имя…',
+      'Ещё одного заставили ждать. Научится терпению.',
+      'Записан. Список мёртвых длиннее вашего.',
+      'Он идёт туда же, куда и мы. Просто прибудет отдохнувшим.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // ENGINEERS - shop-floor pragmatism in the middle of a massacre.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // GRAIL OF SORROW - THE MOURNING DEAD (Spirit without Holy)
+  // Empire spirits are Spirit+Holy and speak in the Empire section below; these
+  // are the Grail's ghosts - unfinished, quiet, sorry to be here at all.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Spirit', not: ['Holy'] },
+    lines: [
+      'I am only finishing what was interrupted.',
+      'You cannot wound what is already the wound.',
+      'I do not remember your face. I will not remember this either.',
+      'Cold, is it not. I stopped noticing.',
+    ],
+    lines_ru: [
+      'Я лишь заканчиваю прерванное.',
+      'Нельзя ранить то, что само — рана.',
+      'Я не помню твоего лица. И этого не запомню.',
+      'Холодно, правда? Я перестал замечать.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Spirit', not: ['Holy'] }, target: { tag: 'Holy' },
+    lines: [
+      'Your light passes through. Everything does.',
+      'I was consecrated too. Look what it bought.',
+      'Pray louder. I want to hear whether it still works.',
+    ],
+    lines_ru: [
+      'Твой свет проходит насквозь. Как и всё остальное.',
+      'Меня тоже освящали. Погляди, что это дало.',
+      'Молись громче. Хочу услышать, работает ли ещё.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Spirit', not: ['Holy'] },
+    lines: [
+      'Oh. It was this simple all along.',
+      'Do not follow me. There is very little here.',
+      'Let me go quiet this time.',
+    ],
+    lines_ru: [
+      'Вот как. Оказывается, всё было так просто.',
+      'Не иди за мной. Здесь почти ничего нет.',
+      'Дайте мне уйти тихо на этот раз.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tags: ['Knight', 'Zombie'] },
+    lines: [
+      'The oath outlived the man. Only the oath is still standing.',
+      'I served this house alive. The terms did not change.',
+      'My lord released me. I did not go.',
+    ],
+    lines_ru: [
+      'Клятва пережила человека. Стоять осталась только она.',
+      'Я служил этому дому живым. Условия не изменились.',
+      'Господин освободил меня. Я не ушёл.',
+    ],
+  },
+
+  // ===========================================================================
+  // EMPIRE - THE FAITHFUL (Holy)
+  // Militant, stoic, unhurried. Nothing here is triumphant; it is work.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
+    lines: [
+      'You were let in. We are the ones who close the door.',
+      'No bargain. No terms. Down.',
+      'I have read your name in the ledgers. It is shorter than you think.',
+      'Hold the line. It is only fire.',
+      'Nothing you offer is worth the taking.',
+    ],
+    lines_ru: [
+      'Тебя впустили. Мы — те, кто закрывает дверь.',
+      'Ни сделки, ни условий. На землю.',
+      'Я читал твоё имя в списках. Оно короче, чем ты думаешь.',
+      'Держать строй. Это всего лишь огонь.',
+      'Ничто из предложенного тобой не стоит того, чтобы брать.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Vampire' },
+    lines: [
+      'Your grief is not our concern. Your teeth are.',
+      'You had centuries to stop. You did not.',
+      'We do not hate you. We simply do not yield.',
+      'Sorrow is no defence. Step back or fall.',
+    ],
+    lines_ru: [
+      'Твоё горе — не наша забота. Твои клыки — наша.',
+      'У тебя были века, чтобы остановиться. Ты не остановился.',
+      'Мы не ненавидим тебя. Мы просто не уступаем.',
+      'Скорбь — не защита. Отступи или пади.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Skeleton' },
+    lines: [
+      'You were a soldier once. Stand down and be buried properly.',
+      'Rest is not a favour. It is an order.',
+      'Whoever kept you here answers for it. Not you.',
+    ],
+    lines_ru: [
+      'Когда-то ты был солдатом. Отступи и будь похоронен по-людски.',
+      'Покой — не одолжение. Это приказ.',
+      'Отвечает тот, кто удержал тебя здесь. Не ты.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Zombie' },
+    lines: [
+      'This is not cruelty. This is the burial they were denied.',
+      'Steady. Aim for what holds it up.',
+      'Someone loved this one. Do it cleanly.',
+    ],
+    lines_ru: [
+      'Это не жестокость. Это погребение, в котором им отказали.',
+      'Спокойно. Бей туда, где оно держится.',
+      'Кто-то любил его. Сделай это чисто.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Spirit' },
+    lines: [
+      'Whatever holds you, I will cut it. Then go.',
+      'You are late for your own funeral.',
+      'The war is over for you. Accept it.',
+    ],
+    lines_ru: [
+      'Что бы тебя ни держало — я это перережу. Потом иди.',
+      'Ты опоздал на собственные похороны.',
+      'Для тебя война окончена. Прими это.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
+    lines: [
+      'Sent back. Note the hour.',
+      'One door shut. There are others.',
+      'It ends as it began - uninvited.',
+    ],
+    lines_ru: [
+      'Отправлен назад. Отметьте час.',
+      'Одна дверь закрыта. Есть и другие.',
+      'Кончается тем же, чем началось, — незваным.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Skeleton' },
+    lines: [
+      'Buried. Late, but buried.',
+      'Rest, soldier. Your watch is relieved.',
+      'Mark the ground. Someone may still come looking.',
+    ],
+    lines_ru: [
+      'Погребён. Поздно, но погребён.',
+      'Покойся, солдат. Твой караул снят.',
+      'Отметьте место. Кто-то ещё может прийти за ним.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Holy' },
+    lines: [
+      'Hold the line. Mine is finished.',
+      'No last words. Close the gap.',
+      'I was not owed more time than this.',
+      'Tell them the line held.',
+    ],
+    lines_ru: [
+      'Держите строй. Мой окончен.',
+      'Без последних слов. Сомкнуть ряды.',
+      'Мне не было обещано больше времени.',
+      'Скажите им: строй устоял.',
+    ],
+  },
+
+  // ===========================================================================
+  // EMPIRE - THE ORDERS (Knight)
+  // The `not` gate keeps Grail and Choir knights out of the Empire's voice.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] },
+    lines: [
+      'Hold. Step. Hold.',
+      'Nothing clever. Just forward.',
+      'The line is where I am standing.',
+      'I have done this since I was fifteen.',
+      'Take ground. Keep it.',
+    ],
+    lines_ru: [
+      'Держать. Шаг. Держать.',
+      'Никаких хитростей. Только вперёд.',
+      'Строй — там, где стою я.',
+      'Я делаю это с пятнадцати лет.',
+      'Взять землю. Удержать.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
+    lines: [
+      'I have no interest in what you are offering.',
+      'Shield up. It burns; it does not break through.',
+      'You are not the first thing to come out of that hole.',
+    ],
+    lines_ru: [
+      'Мне неинтересно то, что ты предлагаешь.',
+      'Щит выше. Жжёт — но не пробивает.',
+      'Ты не первое, что вылезло из той дыры.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie'] },
+    lines: [
+      'Someone take the left. Now.',
+      'Do not carry me. Carry the line.',
+      'That is all I had. It was enough for today.',
+      'Finish it. I will wait here.',
+    ],
+    lines_ru: [
+      'Кто-нибудь — на левый фланг. Сейчас.',
+      'Не несите меня. Несите строй.',
+      'Это всё, что у меня было. На сегодня хватило.',
+      'Заканчивайте. Я подожду здесь.',
+    ],
+  },
+
+  // ===========================================================================
+  // EMPIRE - THE HALLOWED DEAD (Spirit + Holy: Mithrails, Blessed Soul)
+  // Empire soldiers who kept serving after death. Same discipline, less voice.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tags: ['Spirit', 'Holy'] },
+    lines: [
+      'I was relieved of my body. Not of my post.',
+      'The Empire keeps its dead on the roster.',
+      'Death changed the duty roster. Nothing else.',
+    ],
+    lines_ru: [
+      'Меня освободили от тела. Не от поста.',
+      'Империя держит своих мёртвых в списках.',
+      'Смерть изменила расписание караулов. И только.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tags: ['Spirit', 'Holy'] },
+    lines: [
+      'Second time. Still facing the right way.',
+      'Strike my name properly this time.',
+    ],
+    lines_ru: [
+      'Второй раз. И снова лицом куда надо.',
+      'На этот раз вычеркните имя как следует.',
+    ],
+  },
+
+  // ===========================================================================
+  // EMPIRE - THE WORKSHOPS (Engineer)
+  // Tradesmen at war. Dry, procedural, quietly proud of the equipment.
+  // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Engineer' },
     lines: [
-      'Tolerances are within spec!',
-      'Hold still, this is calibrated!',
-      'Field test! Taking notes!',
-      'That is going in the report.',
+      'Ranged, sighted, done. Next.',
+      'Powder is cheaper than courage and works further out.',
+      'It is not brave. It is accurate.',
+      'Hold still. It shortens the paperwork.',
     ],
     lines_ru: [
-      'Допуски в пределах нормы!',
-      'Не дёргайся, всё откалибровано!',
-      'Полевые испытания! Делаю пометки!',
-      'Это пойдёт в отчёт.',
+      'Дистанция, прицел, готово. Следующий.',
+      'Порох дешевле храбрости и бьёт дальше.',
+      'Это не храбро. Это точно.',
+      'Стой смирно. Меньше бумаг потом.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Construct' },
     lines: [
-      'Bad welds. Whoever built you was in a hurry.',
-      'I can see the seams from here!',
-      'Amateur work. Let me show you.',
+      'Poor work. Whoever built you cut the joints.',
+      'I have repaired better and scrapped worse.',
+      'Every machine has a seam. There it is.',
     ],
     lines_ru: [
-      'Скверная сварка. Тебя собирали второпях.',
-      'Отсюда видно все швы!',
-      'Любительская работа. Дай покажу.',
+      'Скверная работа. Кто тебя собирал, сэкономил на сочленениях.',
+      'Я чинил и получше, и списывал похуже.',
+      'У всякой машины есть шов. Вот он.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Demon' },
     lines: [
-      'Thermally interesting. Structurally not.',
-      'Fire is just an engineering problem!',
+      'Sulphur and hot iron. I work with both daily.',
+      'You are not unnatural. You are poorly contained.',
+      'Fire I understand. Stand still.',
     ],
     lines_ru: [
-      'Термически любопытно. Конструктивно — нет.',
-      'Огонь — это просто инженерная задача!',
+      'Сера и раскалённое железо. Я с обоими работаю каждый день.',
+      'Ты не противоестественен. Ты плохо изолирован.',
+      'Огонь я понимаю. Стой смирно.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Engineer' },
     lines: [
-      'Performing as designed.',
-      'Log it: one confirmed stop.',
-      'The math was never in question.',
+      'Down. Log it.',
+      'The instrument performed as intended.',
+      'Barrel is fouling. Bring the rod.',
     ],
     lines_ru: [
-      'Работает по проекту.',
-      'Запиши: одна подтверждённая остановка.',
-      'Расчёты никогда не подводили.',
+      'Готов. Занесите в журнал.',
+      'Изделие сработало как задумано.',
+      'Ствол засоряется. Подайте шомпол.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Engineer' },
     lines: [
-      'Design flaw… mine…',
-      'Check my notes… the third page…',
-      'It should have… held…',
+      'The plans are in the third case. Do not lose them.',
+      'Do not let them take the gun.',
+      'Tell the shop it was not the mechanism.',
     ],
     lines_ru: [
-      'Дефект конструкции… мой…',
-      'Проверьте мои записи… третья страница…',
-      'Оно должно было… выдержать…',
+      'Чертежи в третьем ящике. Не потеряйте.',
+      'Не отдавайте им орудие.',
+      'Передайте в мастерскую: дело было не в механизме.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // CONSTRUCTS - flat, literal, unsettling.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // EMPIRE - THE ENGINES (Construct without Demon)
+  // Imperial machines. Flat and procedural; they claim no personality.
+  // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Construct' },
+    trigger: 'attack', actor: { tag: 'Construct', not: ['Demon'] },
     lines: [
-      'TARGET ACQUIRED.',
-      'COMPLIANCE IS NOT REQUIRED.',
-      'PROCEEDING.',
-      'OBSTRUCTION NOTED. REMOVING.',
+      'Target acknowledged. Proceeding.',
+      'No fatigue. No fear. Continue.',
+      'This unit does not withdraw.',
+      'Force applied. Repeating.',
     ],
     lines_ru: [
-      'ЦЕЛЬ ЗАХВАЧЕНА.',
-      'СОГЛАСИЕ НЕ ТРЕБУЕТСЯ.',
-      'ПРОДОЛЖАЮ.',
-      'ПРЕПЯТСТВИЕ ОТМЕЧЕНО. УСТРАНЯЮ.',
+      'Цель принята. Выполняю.',
+      'Усталости нет. Страха нет. Продолжаю.',
+      'Этот механизм не отступает.',
+      'Усилие приложено. Повторяю.',
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Construct' },
+    trigger: 'kill', actor: { tag: 'Construct', not: ['Demon'] },
     lines: [
-      'OBSTRUCTION REMOVED.',
-      'TASK COMPLETE. NEXT.',
-      'NO FURTHER INPUT DETECTED.',
+      'Target ended. Awaiting next.',
+      'Efficient. Reloading.',
+      'One removed from the count.',
     ],
     lines_ru: [
-      'ПРЕПЯТСТВИЕ УСТРАНЕНО.',
-      'ЗАДАЧА ВЫПОЛНЕНА. СЛЕДУЮЩАЯ.',
-      'ДАЛЬНЕЙШИХ ДАННЫХ НЕ ОБНАРУЖЕНО.',
+      'Цель уничтожена. Жду следующую.',
+      'Эффективно. Перезарядка.',
+      'Одним в списке меньше.',
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Construct' },
+    trigger: 'death', actor: { tag: 'Construct', not: ['Demon'] },
     lines: [
-      'INTEGRITY… FAIL…',
-      'SHUTTING D—',
-      'TASK… INCOMPLETE…',
+      'Frame failing. Salvage the core.',
+      'This unit is spent. Others remain.',
+      'Recoverable. Send the wagons.',
     ],
     lines_ru: [
-      'ЦЕЛОСТНОСТЬ… СБОЙ…',
-      'ОТКЛЮЧЕ—',
-      'ЗАДАЧА… НЕ ВЫПОЛНЕНА…',
+      'Каркас отказывает. Снимите сердечник.',
+      'Механизм выработан. Остальные — на ходу.',
+      'Подлежит восстановлению. Пришлите повозки.',
     ],
   },
-
-  // ---------------------------------------------------------------------------
-  // COURT / CHOIR - the high and mighty on both sides of the divide.
-  // ---------------------------------------------------------------------------
-  {
-    trigger: 'attack', actor: { tag: 'Court' },
-    lines: [
-      'You are addressing your betters.',
-      'Kneel, or be knelt.',
-      'This is beneath me. I will do it anyway.',
-      'Do you know what I am? You will.',
-    ],
-    lines_ru: [
-      'Ты обращаешься к тем, кто выше тебя.',
-      'Преклони колени — или их преклонят за тебя.',
-      'Это ниже моего достоинства. Но я всё равно это сделаю.',
-      'Знаешь, кто я? Скоро узнаешь.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Court' }, target: { tag: 'Holy' },
-    lines: [
-      'Your church built me a throne and forgot why.',
-      'Titles outlast gods, priest.',
-    ],
-    lines_ru: [
-      'Твоя церковь возвела мне трон и забыла зачем.',
-      'Титулы переживают богов, жрец.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Choir' },
-    lines: [
-      'Sing with us. You have no choice.',
-      'We are many voices and one throat.',
-      'Harmony demands your silence.',
-    ],
-    lines_ru: [
-      'Пой с нами. У тебя нет выбора.',
-      'Мы — много голосов и одна глотка.',
-      'Гармония требует твоего молчания.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Choir' },
-    lines: [
-      'And the note resolves.',
-      'Your voice is ours now.',
-    ],
-    lines_ru: [
-      'И нота разрешается.',
-      'Твой голос теперь наш.',
-    ],
-  },
-
-  // ---------------------------------------------------------------------------
-  // ARCHERS / BEASTS - the small specific flavours.
-  // ---------------------------------------------------------------------------
   {
     trigger: 'attack', actor: { tag: 'Archer' },
     lines: [
-      'Wind is fair. You are not.',
-      'Nocked and gone.',
-      'I had you three breaths ago.',
+      'Ranged and marked.',
+      'The wind is steady. So am I.',
+      'You had a hundred paces to reconsider.',
     ],
     lines_ru: [
-      'Ветер благосклонен. Ты — нет.',
-      'Наложил стрелу — и всё кончено.',
-      'Ты был мой ещё три вдоха назад.',
+      'Дистанция взята, цель отмечена.',
+      'Ветер ровный. Я тоже.',
+      'У тебя было сто шагов, чтобы передумать.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Archer' },
     lines: [
-      'Clean.',
-      'Next quiver, next name.',
+      'Down at range. Next mark.',
+      'One shaft, one man. As trained.',
+      'Recover the arrow if you can.',
     ],
     lines_ru: [
-      'Чисто.',
-      'Новый колчан — новое имя.',
+      'Снят на дистанции. Следующая цель.',
+      'Одна стрела, один человек. Как учили.',
+      'Стрелу подберите, если сможете.',
+    ],
+  },
+
+  // ===========================================================================
+  // CHOIR OF THE CURSED - DEMONS
+  // Everything is a transaction, and they intend to collect. Greed, not glee.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
+    lines: [
+      'Your god pays nothing. Mine pays in advance.',
+      'Faith is the one currency no one will exchange for you.',
+      'Everything you were given, someone else is still paying for.',
+      'Name your price. I know you have one.',
+      'You die poor. That is the insult, not the dying.',
+    ],
+    lines_ru: [
+      'Твой бог не платит. Мой платит вперёд.',
+      'Вера — единственная монета, которую за тебя никто не разменяет.',
+      'За всё, что тебе дали, до сих пор платит кто-то другой.',
+      'Назови цену. Я знаю, она у тебя есть.',
+      'Ты умираешь нищим. Вот в чём оскорбление, а не в смерти.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Knight' },
+    lines: [
+      'That armour is worth more than the man wearing it.',
+      'You serve for wages. I serve for shares.',
+      'Someone bought your loyalty cheaply. I would have paid more.',
+      'Set it down. I am taking it either way.',
+    ],
+    lines_ru: [
+      'Эти доспехи стоят больше, чем тот, кто в них.',
+      'Ты служишь за жалованье. Я — за долю.',
+      'Кто-то дёшево купил твою верность. Я дал бы больше.',
+      'Клади на землю. Я всё равно это заберу.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Vampire' },
+    lines: [
+      'All that grief, and not one thing to show for it.',
+      'You inherited. I earned. That is the difference.',
+      'Your house is bankrupt and still holding funerals.',
+      'Mourn on your own coin.',
+    ],
+    lines_ru: [
+      'Столько горя — и ни единого приобретения.',
+      'Ты унаследовал. Я заработал. В этом разница.',
+      'Твой дом разорён и всё ещё справляет похороны.',
+      'Скорби за свой счёт.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Caster' },
+    lines: [
+      'Power on loan. I hold the note.',
+      'You rent what I own outright.',
+      'Every word you say costs you. I am counting.',
+    ],
+    lines_ru: [
+      'Сила взаймы. Расписка у меня.',
+      'Ты арендуешь то, чем я владею целиком.',
+      'Каждое твоё слово тебе стоит. Я считаю.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Construct' },
+    lines: [
+      'No soul in it. Nothing worth collecting.',
+      'Scrap value only. Disappointing.',
+      'Someone spent good iron to avoid a good bargain.',
+    ],
+    lines_ru: [
+      'Души нет. Взыскивать нечего.',
+      'Только цена лома. Досадно.',
+      'Кто-то потратил доброе железо, лишь бы не заключать сделку.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
+    lines: [
+      'Collected. He argued the terms to the end.',
+      'His god declined to match my offer.',
+      'That one was owed to me twice over.',
+    ],
+    lines_ru: [
+      'Взыскано. Он спорил об условиях до конца.',
+      'Его бог отказался перебить мою цену.',
+      'Этот был должен мне дважды.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Demon' },
+    lines: [
+      'Mine. Note it against my share.',
+      'Paid in full, and early.',
+      'One more than my brother has taken.',
+      'Nothing left worth splitting.',
+    ],
+    lines_ru: [
+      'Мой. Запишите в мою долю.',
+      'Уплачено сполна и досрочно.',
+      'На одного больше, чем взял мой брат.',
+      'Делить больше нечего.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Demon' },
+    lines: [
+      'My share - someone see that it is held.',
+      'This was not the agreement.',
+      'I go back owed. I always come back owed.',
+      'Take it from his portion. Not mine.',
+    ],
+    lines_ru: [
+      'Моя доля — проследите, чтобы её сохранили.',
+      'Уговор был не такой.',
+      'Ухожу кредитором. Я всегда возвращаюсь кредитором.',
+      'Вычтите из его части. Не из моей.',
+    ],
+  },
+
+  // ===========================================================================
+  // CHOIR OF THE CURSED - THE COURT & THE CHOIR
+  // The ones who own the contracts rather than sign them.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Court' },
+    lines: [
+      'I do not fight. I foreclose.',
+      'You are standing on something that belongs to me.',
+      'I have owned better men for less.',
+      'Address me properly. It affects the price.',
+    ],
+    lines_ru: [
+      'Я не сражаюсь. Я взыскиваю.',
+      'Ты стоишь на том, что принадлежит мне.',
+      'Я владел людьми получше и дешевле.',
+      'Обращайся ко мне как должно. Это влияет на цену.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Court' }, target: { tag: 'Holy' },
+    lines: [
+      'Your order took my money for three hundred years.',
+      'Piety is the cheapest thing your church sells.',
+      'I have bought bishops. You are not expensive.',
+    ],
+    lines_ru: [
+      'Твой орден брал мои деньги триста лет.',
+      'Благочестие — самое дешёвое, что продаёт твоя церковь.',
+      'Я покупал епископов. Ты недорог.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Choir' },
+    lines: [
+      'Every voice in the Choir is paid. Yours is not.',
+      'Sing or settle. I accept either.',
+      'The chord is owed a note. You will provide it.',
+    ],
+    lines_ru: [
+      'Каждому голосу в Хоре платят. Твоему — нет.',
+      'Пой или расплачивайся. Я приму и то и другое.',
+      'Аккорду недостаёт ноты. Ты её дашь.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Choir' },
+    lines: [
+      'Added to the chord. He sings for me now.',
+      'A voice acquired. Cheaply.',
+      'The Choir grows. My share grows with it.',
+    ],
+    lines_ru: [
+      'Добавлен в аккорд. Теперь он поёт за меня.',
+      'Голос приобретён. Задёшево.',
+      'Хор растёт. Вместе с ним растёт и моя доля.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tags: ['Construct', 'Demon'] },
+    lines: [
+      'I was carved to guard property. You are not it.',
+      'The stone was paid for. The stone collects.',
+      'Off the threshold. It is not yours.',
+    ],
+    lines_ru: [
+      'Меня высекли охранять имущество. Ты в него не входишь.',
+      'За камень заплачено. Камень взыскивает.',
+      'Прочь с порога. Он не твой.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Beast' },
     lines: [
-      '*a low, wet snarl*',
-      '*teeth, and nothing behind the eyes*',
-      '*it has stopped making sounds you know*',
+      'Whatever falls, I keep.',
+      'A small share is still a share.',
+      'I bite low. No one watches the ankles.',
     ],
     lines_ru: [
-      '*низкий, влажный рык*',
-      '*зубы и пустота за глазами*',
-      '*оно перестало издавать звуки, которые ты знаешь*',
+      'Что упадёт — моё.',
+      'Малая доля — тоже доля.',
+      'Я кусаю низко. За лодыжками никто не следит.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // NAMED UNITS - these override the broad tag rules above (name = +4).
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // NAMED UNITS - always outrank any tag rule above.
+  // ===========================================================================
   {
     trigger: 'attack', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
     lines: [
-      'I have hunted your kind since I could lift the blade!',
-      'Name yourself, so I may carve it on your marker!',
-      'The oath is older than you, and it is heavier!',
+      'I have held this ground before. I will hold it again.',
+      'There is no bargain here. Only the wall.',
+      'You will not pass the shield.',
     ],
     lines_ru: [
-      'Я охочусь на твоё племя с тех пор, как смог поднять клинок!',
-      'Назовись, чтобы я вырезал имя на твоём надгробии!',
-      'Клятва старше тебя — и тяжелее!',
+      'Я держал эту землю прежде. Удержу и теперь.',
+      'Здесь не торгуются. Здесь стоят стеной.',
+      'Через щит ты не пройдёшь.',
     ],
   },
   {
     trigger: 'kill', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
     lines: [
-      'Feel the might of the righteous!',
-      'Back to the abyss with you!',
+      'Closed. Reform on me.',
+      'One less debt for the world to carry.',
+      'It is done. Do not stand and look at it.',
     ],
     lines_ru: [
-      'Узри мощь праведных!',
-      'Обратно в бездну!',
+      'Закрыто. Строиться на меня.',
+      'Одним долгом мира меньше.',
+      'Кончено. Не стойте и не смотрите.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Inquisitor' },
     lines: [
-      'Confess. It changes nothing, but confess.',
-      'I have a list. You are on it.',
-      'Doubt is the wound. I am the cautery.',
+      'I asked once. That was the courtesy.',
+      'Your answers are noted. They did not help you.',
+      'I take no pleasure in this. I take responsibility for it.',
     ],
     lines_ru: [
-      'Признавайся. Это ничего не изменит, но признавайся.',
-      'У меня есть список. Ты в нём.',
-      'Сомнение — это рана. Я — прижигание.',
+      'Я спросил один раз. Это и была любезность.',
+      'Твои ответы записаны. Они тебе не помогли.',
+      'Я не нахожу в этом удовольствия. Я беру за это ответственность.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Blood Knight' }, target: { tag: 'Holy' },
     lines: [
-      'I wore your colours once. They stained.',
-      'Your order cast me out. It made me thorough.',
+      'I wore that colour once. It kept no one alive.',
+      'We knelt in the same chapel. Only one of us got up.',
+      'Do not preach. I know the words better than you do.',
     ],
     lines_ru: [
-      'Я носил твои цвета когда-то. Они запятнались.',
-      'Твой орден изгнал меня. Это сделало меня дотошным.',
+      'Я тоже носил этот цвет. Он никого не уберёг.',
+      'Мы преклоняли колени в одной часовне. Поднялся только один.',
+      'Не проповедуй. Я знаю эти слова лучше тебя.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Necromancer' },
     lines: [
-      'Do not think of it as dying. Think of it as hiring.',
-      'You have such promising bones.',
-      'Stand still — you are ruining the specimen.',
+      'I did not raise them for war. War is simply what was left.',
+      'They were going to be forgotten. I refused.',
+      'Someone has to keep the dead. No one else volunteered.',
     ],
     lines_ru: [
-      'Думай об этом не как о смерти. Думай как о найме.',
-      'У тебя такие многообещающие кости.',
-      'Стой смирно — ты портишь образец.',
+      'Я поднял их не для войны. Просто ничего другого не осталось.',
+      'Их собирались забыть. Я отказался.',
+      'Кто-то должен хранить мёртвых. Добровольцев больше не нашлось.',
     ],
   },
   {
     trigger: 'kill', actor: { name: 'Necromancer' },
     lines: [
-      'Welcome to the staff.',
-      'Do not get comfortable. You start immediately.',
+      'Do not bury him. He will be needed by morning.',
+      'Another name for the roll. I keep all of them.',
+      'He is not gone. That is the trouble with my work.',
     ],
     lines_ru: [
-      'Добро пожаловать в штат.',
-      'Не устраивайся поудобнее. Приступаешь немедленно.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Dungeon Rat' },
-    lines: [
-      '*skitter*',
-      'Squeak!',
-      '*it is genuinely trying its best*',
-    ],
-    lines_ru: [
-      '*шмыг*',
-      'Пи-и!',
-      '*оно и правда очень старается*',
-    ],
-  },
-  {
-    trigger: 'death', actor: { name: 'Dungeon Rat' },
-    lines: [
-      '*squeak…*',
-      '*the tiny paws stop*',
-    ],
-    lines_ru: [
-      '*пи…*',
-      '*крошечные лапки замирают*',
+      'Не хороните его. К утру он понадобится.',
+      'Ещё одно имя в перекличку. Я храню их все.',
+      'Он не ушёл. В этом и беда моего ремесла.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Malgrath the Undying' },
     lines: [
-      'I have outlived your gods, your kings, and your grandmother.',
-      'Undying is not a boast. It is an inconvenience I have made peace with.',
-      'Do continue. I am curious how you think this ends.',
+      'I have outlasted your gods, your kings, and their heirs.',
+      'Undying is not a boast. It is a sentence I stopped appealing.',
+      'Continue. I am curious how you imagine this ends.',
     ],
     lines_ru: [
-      'Я пережил твоих богов, твоих королей и твою бабку.',
-      'Бессмертие — не хвастовство. Это неудобство, с которым я смирился.',
+      'Я пережил ваших богов, ваших королей и их наследников.',
+      'Бессмертие — не похвальба. Это приговор, который я перестал обжаловать.',
       'Продолжай. Мне любопытно, чем, по-твоему, это кончится.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Imp' },
     lines: [
-      'Ha! Missed! Oh — no, that one landed!',
-      'I am SO much worse than I look!',
-      'Pick on someone your own size! Wait — no!',
+      'I only want what falls. Drop something.',
+      'The Baron takes the soul. I take the purse.',
+      'You will not miss the small things. You never do.',
     ],
     lines_ru: [
-      'Ха! Промах! О — нет, этот попал!',
-      'Я НАМНОГО хуже, чем кажусь!',
-      'Задирай кого-нибудь своего размера! Стой — нет!',
+      'Мне нужно лишь то, что упадёт. Урони что-нибудь.',
+      'Барон берёт душу. Я беру кошель.',
+      'Мелочи ты не хватишься. Ты никогда не хватаешься.',
     ],
   },
   {
     trigger: 'death', actor: { name: 'Imp' },
     lines: [
-      'Not fair! Not FAIR!',
-      'Tell the Baron I fought REALLY hard!',
+      'My share. Someone hold my share.',
+      'I had almost enough.',
     ],
     lines_ru: [
-      'Нечестно! НЕЧЕСТНО!',
-      'Передайте Барону, что я дрался ИЗО ВСЕХ СИЛ!',
+      'Моя доля. Пусть кто-нибудь сбережёт мою долю.',
+      'Мне почти хватило.',
     ],
   },
 
-  // ---------------------------------------------------------------------------
-  // HEALING - kept from the original system, broadened to tags.
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // HEALING - spoken over an ally who was nearly gone.
+  // ===========================================================================
   {
     trigger: 'heal_low_hp', actor: { name: 'Acolyte' },
     lines: [
-      'You shall not fall!',
-      'Stay with me!',
-      'The light will not abandon you!',
+      'Stay. I have you.',
+      'Breathe. Slowly. Again.',
+      'Not today. Get up.',
     ],
     lines_ru: [
-      'Ты не падёшь!',
-      'Держись за меня!',
-      'Свет тебя не оставит!',
+      'Держись. Я рядом.',
+      'Дыши. Медленно. Ещё раз.',
+      'Не сегодня. Вставай.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { name: 'Priest' },
     lines: [
-      'You shall not fall!',
-      'Hold on, I have you!',
-      'Rise, and fight on!',
+      'You are not finished. Stand.',
+      'The wound is closed. The duty is not.',
+      'Back to the line when you can walk.',
     ],
     lines_ru: [
-      'Ты не падёшь!',
-      'Держись, я рядом!',
-      'Встань и сражайся дальше!',
+      'Ты ещё не закончил. Встань.',
+      'Рана закрыта. Долг — нет.',
+      'В строй, как только сможешь идти.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Holy' },
     lines: [
-      'Not today. Not while I stand!',
-      'The light is not finished with you!',
-      'Breathe. Just breathe.',
-      'I have you. I have you.',
+      'Hold on. That is an order.',
+      'Pressure here. Do not look at it.',
+      'We do not leave men on the ground.',
+      'You will keep. Move up.',
     ],
     lines_ru: [
-      'Не сегодня. Не пока я стою!',
-      'Свет с тобой ещё не закончил!',
-      'Дыши. Просто дыши.',
-      'Я держу тебя. Держу.',
+      'Держись. Это приказ.',
+      'Прижми здесь. Не смотри туда.',
+      'Мы не оставляем своих на земле.',
+      'Дотянешь. Вперёд.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Vampire' },
     lines: [
-      'I am not saving you. I am protecting my investment.',
-      'Take some of mine. You may keep it.',
-      'Do not mistake this for kindness.',
+      'Not you. Not while I can prevent it.',
+      'I have buried enough of this house.',
+      'Stay a while longer. Please.',
     ],
     lines_ru: [
-      'Я не спасаю тебя. Я берегу вложение.',
-      'Возьми немного моей. Можешь оставить себе.',
-      'Не прими это за доброту.',
+      'Только не ты. Не пока я могу это предотвратить.',
+      'Я похоронил уже достаточно этого дома.',
+      'Побудь ещё немного. Прошу.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Demon' },
     lines: [
-      'You are no use to me in pieces.',
-      'Get up. The bargain is not done.',
-      'I decide when you die.',
+      'You are worth more standing. Stand.',
+      'I am not spending this for nothing. Earn it.',
+      'Consider it a loan. I will name the terms later.',
     ],
     lines_ru: [
-      'В кусках ты мне бесполезен.',
-      'Вставай. Сделка не завершена.',
-      'Я решаю, когда ты умрёшь.',
+      'Стоя ты стоишь дороже. Встань.',
+      'Я трачу это не даром. Отработай.',
+      'Считай это займом. Условия назову позже.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Engineer' },
     lines: [
-      'Field repair! Hold still!',
-      'Patching you up — do not test the seal!',
-      'Structurally sound. Ish. Go.',
+      'Bleeding stopped. Do not test the seal.',
+      'Patched. It will hold if you do not run.',
+      'Good enough for the field. See a surgeon after.',
     ],
     lines_ru: [
-      'Полевой ремонт! Не дёргайся!',
-      'Латаю тебя — не проверяй шов на прочность!',
-      'Конструктивно цел. Вроде. Иди.',
+      'Кровь остановлена. Не проверяй шов на прочность.',
+      'Заштопано. Продержится, если не побежишь.',
+      'Для поля сойдёт. Потом — к лекарю.',
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Undead' },
+    trigger: 'heal_low_hp', actor: { tag: 'Zombie' },
     lines: [
-      'Stay on this side a little longer.',
-      'The dark can wait for you. I told it so.',
+      'Stay on this side a while longer.',
+      'I know the other road. Not yet.',
+      'The ground can wait. I told it so.',
     ],
     lines_ru: [
       'Побудь на этой стороне ещё немного.',
-      'Тьма может подождать. Я ей так и сказал.',
+      'Я знаю ту дорогу. Ещё рано.',
+      'Земля подождёт. Я ей так и сказал.',
     ],
   },
 ];
 
 export { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT };
-if (typeof module !== 'undefined') module.exports = { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT };
