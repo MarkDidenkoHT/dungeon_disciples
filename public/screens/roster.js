@@ -915,6 +915,17 @@ export function renderRoster(root, { player }) {
 
     if (!isTutorialDone(player, 'second_building')) return;
 
+    // Self-heal: roster_equip is only marked when the player equips THROUGH the
+    // tutorial's sheet. A player who armed their hero any other way keeps the
+    // flag false forever, so the equip chain re-arms on every roster visit —
+    // long after onboarding, and it yanks the slider to the hero when it does.
+    // If the lesson is already moot (hero is armed) or onboarding has moved on,
+    // retire the step instead of teaching it again.
+    if (!isTutorialDone(player, 'roster_equip') &&
+        (isTutorialDone(player, 'spell_heal') || (hero && equippedItemFor(hero.id)))) {
+      markTutorialDone(player, 'roster_equip');
+    }
+
     // Equip step still pending → run the intro/equip chain as before.
     if (!isTutorialDone(player, 'roster_equip')) {
       if (!hero) return;
