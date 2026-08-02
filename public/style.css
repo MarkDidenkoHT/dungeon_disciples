@@ -2763,12 +2763,21 @@ button:active:not(:disabled) { opacity: 0.75; }
   border: 1px solid var(--border);
 }
 
+/* Faction-independent, so it lives here rather than in SCREEN_BACKGROUNDS
+   (utils.js), which keys every screen's art by faction. The gradient is a scrim
+   over the art — the grids and header sit on top of it and need the contrast. */
 .screen-battle-prep {
   padding: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background-image:
+    linear-gradient(180deg, rgba(6, 8, 12, 0.72) 0%, rgba(6, 8, 12, 0.55) 45%, rgba(6, 8, 12, 0.85) 100%),
+    url('/assets/screens/battle_prep_bg.jpeg');
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
 }
 
 .battle-arena {

@@ -790,7 +790,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const size     = getUnitSize(unit);
     const name     = getUnitName(unit);
     const portrait = getPortraitUrl(unit);
-    const isHero   = unit.id === heroId;
 
     const sampleCell = playerGrid.querySelector('.battle-cell') ||
                        root.querySelector('.battle-cell');
@@ -806,8 +805,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       'position:fixed', 'top:-9999px', 'left:-9999px',
       'pointer-events:none', 'z-index:9999',
       'border-radius:0', 'overflow:hidden',
-      `outline:2px solid ${isHero ? 'gold' : 'var(--accent)'}`,
-      `background:${isHero ? '#2a2a10' : '#1a2a1a'}`,
+      // No hero-specific colour: the hero is marked by holding the first slot,
+      // not by a gold tint (see .portrait-card / .battle-cell in style.css).
+      'outline:2px solid var(--accent)',
+      'background:#1a2a1a',
       'display:flex', 'flex-direction:column',
       'align-items:stretch', 'justify-content:flex-end',
       'opacity:0.85',
