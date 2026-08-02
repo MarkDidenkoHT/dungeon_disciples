@@ -999,7 +999,24 @@ export function renderRoster(root, { player }) {
     if (!slot) { startSpellTutorialOrEmbark(); return; }
     showTutorialSpotlight(player, 'roster_equipped', slot, {
       showContinue: true,
-      onAdvance: () => startSpellTutorialOrEmbark(),
+      onAdvance: () => showPassiveStackStep(rosterId),
+    });
+  }
+
+  // Taught right after the first equip, while the player is looking at the row
+  // where a unit's and its item's passives sit side by side. Ranks add and cap
+  // at 3 (see stackPassiveKeys in utils/passive-processor.js).
+  function showPassiveStackStep(rosterId) {
+    if (isTutorialDone(player, 'roster_passive_stack')) { startSpellTutorialOrEmbark(); return; }
+    const slide = track.children[current];
+    const row   = slide?.querySelector('.unit-abilities-row');
+    if (!row) { startSpellTutorialOrEmbark(); return; }
+    showTutorialSpotlight(player, 'roster_passive_stack', row, {
+      showContinue: true,
+      onAdvance: () => {
+        markTutorialDone(player, 'roster_passive_stack');
+        startSpellTutorialOrEmbark();
+      },
     });
   }
 

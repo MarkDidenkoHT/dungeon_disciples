@@ -731,6 +731,29 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }).join('');
   }
 
+  // Front/back columns, then loyalty — both shown once, then `done()` hands off
+  // to whatever step comes next. Each is skipped individually if already seen,
+  // so a player who quit halfway through resumes where they stopped.
+  function showFormationLessons(done) {
+    const showLoyalty = () => {
+      if (isTutorialDone(player, 'battle_prep_loyalty')) { done(); return; }
+      const counter = root.querySelector('#loyalty-counter');
+      if (!counter) { done(); return; }
+      showTutorialSpotlight(player, 'battle_prep_loyalty', counter, {
+        showContinue: true,
+        onAdvance: () => { markTutorialDone(player, 'battle_prep_loyalty'); done(); },
+      });
+    };
+
+    if (isTutorialDone(player, 'battle_prep_lines')) { showLoyalty(); return; }
+    const grid = root.querySelector('#player-grid');
+    if (!grid) { showLoyalty(); return; }
+    showTutorialSpotlight(player, 'battle_prep_lines', grid, {
+      showContinue: true,
+      onAdvance: () => { markTutorialDone(player, 'battle_prep_lines'); showLoyalty(); },
+    });
+  }
+
   function checkReady() {
     const heroPlaced   = heroId !== null && placedUnitIds().has(heroId);
     const btn = root.querySelector('#ready-btn');
@@ -755,8 +778,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         }
       }
     } else if (!isTutorialDone(player, 'battle_prep_start')) {
-      const heroCard = root.querySelector('.portrait-card--hero');
-      if (heroCard) showTutorialSpotlight(player, 'battle_prep_start', heroCard);
+      // First visit runs a short chain before the "place your hero" step: the
+      // two rules a new player cannot infer from the grid alone.
+      showFormationLessons(() => {
+        const heroCard = root.querySelector('.portrait-card--hero');
+        if (heroCard) showTutorialSpotlight(player, 'battle_prep_start', heroCard);
+      });
     }
   }
 

@@ -64,6 +64,36 @@ const TUTORIAL_STEPS = {
       text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение. Герой готов — вперёд, в первый бой.',
     },
   },
+  roster_passive_stack: {
+    en: {
+      title: 'Passives Stack',
+      text: 'Units and items both carry passives. When a unit and its gear share the same passive, the ranks add together — two sources of Regenerate 1 become Regenerate 2. Rank 3 is the ceiling, so pair gear with a unit that already has the passive you want to push.',
+    },
+    ru: {
+      title: 'Пассивки складываются',
+      text: 'Пассивные умения есть и у бойцов, и у предметов. Если умение совпадает, ранги складываются: два источника «Регенерации 1» дают «Регенерацию 2». Потолок — 3 ранг, поэтому подбирайте снаряжение к бойцу, у которого нужная пассивка уже есть.',
+    },
+  },
+  battle_prep_lines: {
+    en: {
+      title: 'Front and Back',
+      text: 'Your grid has two columns. The column facing the enemy is your front line and takes every melee attack; the back column stays out of reach until the whole front line falls. Put armor in front and your casters and archers behind it.',
+    },
+    ru: {
+      title: 'Передняя и задняя линия',
+      text: 'В вашем построении две колонки. Колонка, обращённая к врагу, — передняя линия, она принимает все ближние атаки; задняя колонка недосягаема, пока не падёт вся передняя. Ставьте броню вперёд, а магов и стрелков — за неё.',
+    },
+  },
+  battle_prep_loyalty: {
+    en: {
+      title: 'Loyalty',
+      text: 'Owning a unit is not the same as fielding one. Your hero always fights, but every follower costs loyalty, and this counter is your limit — large units take two. Build widely, then choose who marches; raise your hero\'s level to bring more of them at once.',
+    },
+    ru: {
+      title: 'Верность',
+      text: 'Иметь бойца и вести его в бой — не одно и то же. Герой сражается всегда, но каждый спутник стоит верности, и этот счётчик — ваш предел: крупные бойцы стоят двух. Стройте широко, но выбирайте, кто выступит; повышайте уровень героя, чтобы брать с собой больше воинов.',
+    },
+  },
   spell_revive: {
     en: {
       title: 'A Fallen Ally',
