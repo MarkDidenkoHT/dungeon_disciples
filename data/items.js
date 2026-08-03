@@ -302,8 +302,8 @@ const ITEM_DEFS = {
   },
   fire_staff: {
     key:          'fire_staff',
-    name:         "Orb Of Fire",
-    name_ru:      'Сфера Пламени',
+    name:         "Fire Staff",
+    name_ru:      'Посох Пламени',
     faction:      null,
     tag_required: 'caster',
     adds_tag:     null,
@@ -316,7 +316,7 @@ const ITEM_DEFS = {
   },
   burning_tyrant: {
     key:          'burning_tyrant',
-    name:         "Пылающий Тиран",
+    name:         "Burning Tyrant",
     name_ru:      'Пылающий Тиран',
     faction:      null,
     tag_required: 'caster',
