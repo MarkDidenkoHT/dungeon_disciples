@@ -6,7 +6,6 @@ import { bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
-import { getRespecOptions, getRespecCost, RESPEC_COST_PCT } from '../../data/buildings.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -43,6 +42,7 @@ export function renderCastle(root, { player }) {
   let heroMaxLevel       = 4;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
+  let respecCostPct      = 25;   // overwritten from /bootstrap
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
@@ -80,6 +80,7 @@ export function renderCastle(root, { player }) {
     thronePerks        = buildingsResp.throne_perks || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
+    respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     trophyInventory     = trophies || [];
     structuresRecord   = structures;
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
@@ -112,6 +113,32 @@ export function renderCastle(root, { player }) {
       }
     }
     return null;
+  }
+
+  // data/buildings.js is CommonJS (server-side only) and cannot be imported
+  // here — but /bootstrap already sends the whole pool table, so the respec
+  // rules are derived from that. Kept deliberately identical to
+  // getRespecOptions/getRespecCost in data/buildings.js, which the server
+  // enforces; this copy only decides what the UI offers.
+  function respecOptionsFor(buildingId) {
+    const pools = buildingPools?.[player.faction];
+    if (!pools) return [];
+    const current = getBuildingDef(player.faction, buildingId);
+    if (!current) return [];
+    const pool = pools[current.category] || [];
+    return pool.filter(b => b.id !== current.id && b.tier != null && b.tier === current.tier && b.unit_id);
+  }
+
+  function respecCostFor(buildingId, level) {
+    const def = getBuildingDef(player.faction, buildingId);
+    if (!def) return {};
+    const base = def.cost || (def.category === 'throne' ? throneUpgradeCosts[level] : null) || {};
+    const out = {};
+    for (const [item, amount] of Object.entries(base)) {
+      const scaled = Math.ceil(Number(amount) * respecCostPct / 100);
+      if (scaled > 0) out[item] = scaled;
+    }
+    return out;
   }
 
   function getUpgradePathsForBuilding(faction, def) {
@@ -320,13 +347,13 @@ export function renderCastle(root, { player }) {
     const state = structuresRecord.buildings_data[slot];
     if (!state?.building_id) return;
     const def     = getBuildingDef(player.faction, state.building_id);
-    const options = getRespecOptions(player.faction, state.building_id);
+    const options = respecOptionsFor(state.building_id);
     const isThrone = slot === 'slot_0';
     const ru = castleLang === 'ru';
 
     const optionCards = options.map(o => {
       const unit = getUnitByUnitId(o.unit_id);
-      const cost = getRespecCost(player.faction, o.id, state.level);
+      const cost = respecCostFor(o.id, state.level);
       const costStr = Object.entries(cost)
         .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace(/_/g, ' ')}`)
         .join(', ') || (ru ? 'бесплатно' : 'free');
@@ -342,8 +369,8 @@ export function renderCastle(root, { player }) {
       <div class="deconstruct-body">
         <p class="deconstruct-intro">
           ${ru
-            ? `Смена ветки того же уровня стоит ${RESPEC_COST_PCT}% цены нового здания. Опыт бойца сохраняется.`
-            : `Switching to another branch of the same tier costs ${RESPEC_COST_PCT}% of the new building's price. The unit keeps its XP.`}
+            ? `Смена ветки того же уровня стоит ${respecCostPct}% цены нового здания. Опыт бойца сохраняется.`
+            : `Switching to another branch of the same tier costs ${respecCostPct}% of the new building's price. The unit keeps its XP.`}
         </p>
         ${options.length
           ? `<div class="respec-options">${optionCards}</div>`

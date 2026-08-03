@@ -567,6 +567,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
         throne_perks:         THRONE_PERKS,
         mercenary_buildings:  MERCENARY_BUILDINGS,
+        respec_cost_pct:      RESPEC_COST_PCT,
       },
     });
   } catch (err) {
