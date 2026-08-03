@@ -1178,7 +1178,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'air', action_power: 12,
+      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg',
       xp: 100, passive: 'inspiration_initiative 1', ability: null,
     },
     red_mage: {
@@ -1189,7 +1189,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 15,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       xp: 400, passive: ['inspiration_initiative 1', 'burn 1'], ability: null,
     },
     ash_priest: {
@@ -1200,7 +1200,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 6,
-      damage_source: 'fire', action_power: 15,
+      damage_source: 'fire', action_power: 22, action_icon: 'fire_bolt.jpg',
       xp: 900, passive: ['inspiration_initiative 1', 'burn 2'], ability: null,
     },
     cinder_knight: {
@@ -1626,7 +1626,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
       xp: 400, passive: ['horde 1', 'regenerate 1'], ability: null,
     },
     blightwalker: {
@@ -1637,7 +1637,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25,
+      damage_source: null, action_power: 25, action_icon: 'mend_flesh.jpg',
       xp: 900, passive: ['horde 1', 'regenerate 1', 'undying 1'], ability: null,
     },
     adept: {
@@ -1648,7 +1648,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 0, life: 25, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 12,
+      damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg',
       xp: 100, passive: 'poison 1', ability: null,
     },
     blood_adept: {
@@ -1659,7 +1659,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 16,
+      damage_source: 'death', action_power: 16, action_icon: 'blood_bolt.jpg',
       xp: 400, passive: ['lifesteal 1', 'recuperate 1'], ability: 'exsanguinate 1',
     },
     crimson_mage: {
@@ -1670,7 +1670,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20,
+      damage_source: 'death', action_power: 20, action_icon: 'blood_bolt.jpg',
       xp: 900, passive: ['lifesteal 1', 'leech 1', 'vitality 1'], ability: 'exsanguinate 1',
     },
     blood_knight: {
@@ -1692,7 +1692,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
       xp: 400, passive: ['unending_servitude 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 1',
     },
     death_lord: {
@@ -1703,7 +1703,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
       xp: 400, passive: ['unending_servitude 1', 'reanimate 2', 'horde 1'], ability: 'raise_dead 2',
     },
     plague_scholar: {
@@ -1714,7 +1714,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 18,
+      damage_source: 'death', action_power: 18, action_icon: 'plague_bolt.jpg',
       xp: 400, passive: ['infect 1', 'regenerate 1'], ability: null,
     },
     plague_lord: {
@@ -1725,7 +1725,7 @@ const UNITS = {
       hp: 65, armor: 15, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25,
+      damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg',
       xp: 900, passive: ['infect 1', 'regenerate 1', 'horde 1'], ability: null,
     },
     communicant: {
@@ -1802,7 +1802,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10,
+      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg',
       xp: 800, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
@@ -1813,7 +1813,7 @@ const UNITS = {
       hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 15,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
       xp: 1800, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
