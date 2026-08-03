@@ -477,7 +477,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
+      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
       xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
@@ -488,7 +488,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 15, life: 35, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12, 
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
       xp: 100, passive: 'magic_attunement 1', ability: 'infernal_mandate 1',
     },
     nether_baron: {
@@ -499,7 +499,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
       xp: 400, passive: ['magic_attunement 1', 'undying 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
@@ -510,7 +510,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
       xp: 900, passive: ['magic_attunement 2', 'undying 1'], ability: 'infernal_mandate 3',
     },
     flame_spawn: {
@@ -936,7 +936,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20,
+      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg',
       xp: 900, passive: ['pierce 2', 'impale 1'], ability: null,
     },
     heavy_infantry: {
@@ -1003,7 +1003,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 40,
-      xp: 250, passive: ['unbreakable 2', 'protector 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
+      xp: 1800, passive: ['unbreakable 2', 'protector 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
     },
     siege_engine: {
       id: 'e32', f: 'e', t: 2,
@@ -1015,6 +1015,17 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'physical', action_power: 16,
       xp: 800, passive: ['unbreakable 2', 'shatter 1'], ability: null,  
+    },
+    siege_engine: {
+      id: 'e321', f: 'e', t: 3,
+      name: 'Siege Engine',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 125, armor: 20, initiative: 30,
+      resistances: { air: 5, fire: 30, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 20,
+      xp: 1800, passive: ['unbreakable 2', 'shatter 2'], ability: null,  
     },
     smith: {
       id: 'e6', f: 'e', t: 1,
@@ -1079,7 +1090,7 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 15,
+      damage_source: 'fire', action_power: 15, action_icon: 'flame_wave.jpg',
       xp: 900, passive: ['burn 2', 'scavenger 1'], ability: null,
     },
     blessed_soul: {
@@ -2252,7 +2263,7 @@ const UNITS = {
         hp: 50, armor: 10, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 10,
+        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg',
         xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
@@ -2263,7 +2274,7 @@ const UNITS = {
         hp: 55, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 15,
+        damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
         xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
@@ -2274,7 +2285,7 @@ const UNITS = {
         hp: 65, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20,
+        damage_source: 'physical', action_power: 20, action_icon: 'sacrifice.jpg',
         xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
       },
       wailing_ghost: {
