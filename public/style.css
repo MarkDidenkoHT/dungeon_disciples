@@ -179,6 +179,20 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 6px;
 }
 
+.hero-select-header {
+  flex-shrink: 0;
+  padding: 2px 0 0;
+}
+.hero-select-header h2 {
+  margin-bottom: 0;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+.hero-select-header .subtitle {
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+}
+
 .hero-card-wrap {
   flex: 1;
   min-height: 0;
@@ -5054,9 +5068,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .frame-action {
+  /* Derived from the branch cards' own sizing vars so the button and the
+     portraits it flanks are always exactly the same height. */
+  --portrait-card-h: clamp(64px, 10vh, 86px);
   flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
+  width: calc(var(--portrait-card-h) * 0.80);
+  height: var(--portrait-card-h);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5079,9 +5096,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   transform: scale(0.94);
 }
 
-.frame-action--confirm     { color: var(--accent); }
+.frame-action { color: var(--accent); }
+/* Deconstruct is the one action that gets a different colour, because it is the
+   destructive one; back / confirm / build all read as the same control. */
 .frame-action--deconstruct { color: var(--danger); }
-.frame-action--back        { color: var(--muted); }
 
 /* Keeps the picker centred when a slot offers no deconstruct (a fresh build). */
 .frame-action--spacer {

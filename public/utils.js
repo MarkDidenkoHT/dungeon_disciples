@@ -381,6 +381,73 @@ export function buildUnitCard(unit, opts = {}) {
     </div>`;
 }
 
+// Click-to-inspect for anything rendered by buildUnitCard: ability/passive icons,
+// the armor cell, the core stat column and the resistance column. Lives here so
+// every screen that shows a unit card (roster, registration, castle sheets)
+// explains the same numbers the same way instead of re-implementing it.
+// Returns true when the click was handled.
+export function handleUnitInspect(e, open) {
+  const abilityBtn = e.target.closest('.ability-icon:not([data-item-slot]):not([data-item-inspect])');
+  if (abilityBtn) {
+    const def = resolveAbility(abilityBtn.dataset.abilityKey);
+    if (!def) return true;
+    const parts = buildAbilityModalParts(def, abilityBtn.dataset.abilityType);
+    open(parts.title, parts.body, parts.badges);
+    return true;
+  }
+
+  const armorCell = e.target.closest('[data-armor]');
+  if (armorCell) {
+    const val = parseInt(armorCell.dataset.armor ?? '0', 10);
+    open('Armor', renderModalContent(`Armor: ${val}
+Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
+    return true;
+  }
+
+  const coreStat = e.target.closest('.core-stat');
+  if (coreStat) {
+    const label = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
+    const val   = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
+    const texts = {
+      HP:      `HP: ${val}
+Current hit points. Unit is defeated when HP reaches 0.`,
+      Init:    `Initiative: ${val}
+Determines turn order in combat. Higher acts first.`,
+      Power:   `Power: ${val}
+Base damage or healing output of the unit's action.`,
+      Action:  `Action: ${val}
+The type of action this unit performs each turn.`,
+      XP:      `Experience: ${val}
+Accumulated XP toward next level.`,
+      Lv:      `Level: ${val}
+The unit's tier. Higher tiers have stronger stats and abilities.`,
+      Balance: `Balance: ${val}
+Overall power rating, combining stats, resistances and abilities.`,
+    };
+    open(label, renderModalContent(texts[label] ?? `${label}: ${val}`));
+    return true;
+  }
+
+  const resistCell = e.target.closest('.resist-cell');
+  if (resistCell) {
+    if (resistCell.dataset.armor !== undefined) return true;
+    const label  = resistCell.getAttribute('title') || '';
+    const numVal = parseInt(resistCell.querySelector('.resist-val')?.textContent ?? '0', 10);
+    const text = numVal === 0
+      ? `${label} Resistance: 0
+No modifier to ${label.toLowerCase()} damage taken.`
+      : numVal > 0
+        ? `${label} Resistance: +${numVal}
+Reduces ${label.toLowerCase()} damage taken.`
+        : `${label} Resistance: ${numVal}
+Increases ${label.toLowerCase()} damage taken.`;
+    open(label, renderModalContent(text));
+    return true;
+  }
+
+  return false;
+}
+
 export function renderModalPill(label, modifier) {
   return `<span class="modal-header-pill modal-header-pill--${modifier}">${label}</span>`;
 }

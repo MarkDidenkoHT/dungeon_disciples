@@ -1,7 +1,7 @@
 import { api }      from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
-import { preloadAssets, buildUnitCard } from '../utils.js';
+import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet } from '../utils.js';
 import { playFactionTheme } from '../music.js';
 
 function lang(player) {
@@ -293,8 +293,10 @@ export function renderRegister(root, { player } = {}) {
 
     root.innerHTML = `
       <div class="screen screen-faction screen-hero-select">
-        <h2>${selectedFaction.label[L]}</h2>
-        <p class="subtitle">${UI_TEXT.chooseHero[L]}</p>
+        <div class="hero-select-header">
+          <h2>${selectedFaction.label[L]}</h2>
+          <p class="subtitle">${UI_TEXT.chooseHero[L]}</p>
+        </div>
 
         <div class="hero-card-wrap" id="hero-card-wrap">
           ${heroes.length ? heroCardHtml(heroes[0]) : ''}
@@ -309,7 +311,7 @@ export function renderRegister(root, { player } = {}) {
         <p id="reg-error" class="error hidden"></p>
 
         <div class="track-action-row hero-action-row">
-          <button class="frame-action frame-action--back" id="back-btn"
+          <button class="frame-action" id="back-btn"
                   title="${UI_TEXT.backBtn[L]}" aria-label="${UI_TEXT.backBtn[L]}">‹</button>
           <div class="prep-track-wrap branch-track-wrap">
             <div class="portrait-track" id="hero-portrait-track">
@@ -322,7 +324,7 @@ export function renderRegister(root, { player } = {}) {
                 </div>`).join('')}
             </div>
           </div>
-          <button class="frame-action frame-action--confirm" id="choose-hero-btn"
+          <button class="frame-action" id="choose-hero-btn"
                   title="${UI_TEXT.chooseBtn[L]}" aria-label="${UI_TEXT.chooseBtn[L]}">✓</button>
         </div>
       </div>
@@ -340,6 +342,11 @@ export function renderRegister(root, { player } = {}) {
     root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(card => {
       card.addEventListener('click', () => selectHero(Number(card.dataset.i)));
     });
+
+    // Stats, resistances, abilities and passives are all inspectable here, the
+    // same way they are in the roster — a player choosing a hero should be able
+    // to read what the numbers and icons mean before committing.
+    cardWrap.addEventListener('click', e => { handleUnitInspect(e, openSheet); });
 
     root.querySelector('#back-btn').addEventListener('click', showFactionStep);
     root.querySelector('#choose-hero-btn').addEventListener('click', () => {

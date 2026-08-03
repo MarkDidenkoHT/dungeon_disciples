@@ -14,7 +14,7 @@ import {
   renderModalContent, openSheet, closeSheet, openSubSheet, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
-  getActionLabel, itemName, itemRarity,
+  getActionLabel, itemName, itemRarity, handleUnitInspect,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -437,64 +437,9 @@ export function renderRoster(root, { player }) {
       return;
     }
 
-    const abilityBtn = e.target.closest('.ability-icon:not([data-item-slot]):not([data-item-inspect])');
-    if (abilityBtn) {
-      const key  = abilityBtn.dataset.abilityKey;
-      const type = abilityBtn.dataset.abilityType;
-      const def  = resolveAbility(key);
-      if (!def) return;
-      const parts = buildAbilityModalParts(def, type);
-      openDetailModal(parts.title, parts.body, parts.badges);
-      return;
-    }
-
-    const armorCell = e.target.closest('[data-armor]');
-    if (armorCell) {
-      const val = parseInt(armorCell.dataset.armor ?? '0', 10);
-      const bodyHtml = renderModalContent(`Armor: ${val}\nReduces physical damage taken. Each point of armor reduces damage by 1%.`);
-      openDetailModal('Armor', bodyHtml);
-      return;
-    }
-
-    const coreStat = e.target.closest('.core-stat');
-    if (coreStat) {
-      const label  = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
-      const val    = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
-      let text = '';
-      if (label === 'HP') {
-        text = `HP: ${val}\nCurrent hit points. Unit is defeated when HP reaches 0.`;
-      } else if (label === 'Init') {
-        text = `Initiative: ${val}\nDetermines turn order in combat. Higher acts first.`;
-      } else if (label === 'Power') {
-        text = `Power: ${val}\nBase damage or healing output of the unit's action.`;
-      } else if (label === 'Action') {
-        text = `Action: ${val}\nThe type of action this unit performs each turn.`;
-      } else if (label === 'XP') {
-        text = `Experience: ${val}\nAccumulated XP toward next level.`;
-      } else {
-        text = `${label}: ${val}`;
-      }
-      openDetailModal(label, renderModalContent(text));
-      return;
-    }
-
-    const resistCell = e.target.closest('.resist-cell');
-    if (resistCell) {
-      if (resistCell.dataset.armor !== undefined) return;
-      const label  = resistCell.getAttribute('title') || '';
-      const valEl  = resistCell.querySelector('.resist-val');
-      const numVal = parseInt(valEl?.textContent ?? '0', 10);
-      let text = '';
-      if (numVal === 0) {
-        text = `${label} Resistance: 0\nNo modifier to ${label.toLowerCase()} damage taken.`;
-      } else if (numVal > 0) {
-        text = `${label} Resistance: +${numVal}\nReduces ${label.toLowerCase()} damage taken.`;
-      } else {
-        text = `${label} Resistance: ${numVal}\nIncreases ${label.toLowerCase()} damage taken.`;
-      }
-      openDetailModal(label, renderModalContent(text));
-      return;
-    }
+    // Ability / armor / stat / resist inspection — shared with every other
+    // screen that renders a unit card (see handleUnitInspect in utils.js).
+    if (handleUnitInspect(e, openDetailModal)) return;
 
     const itemSlot = e.target.closest('[data-item-slot]');
     if (itemSlot) {
