@@ -16,6 +16,13 @@ const TIMELINE = [
   },
   {
     date: '',
+    title: { en: 'Castle animation and building images',
+             ru: 'Анимация замка и изображения строений' },
+    desc:  { en: 'ACastle animation and building images',
+             ru: 'Анимация замка и изображения строений' },
+  },
+  {
+    date: '',
     title: { en: 'PvP',
              ru: 'PvP' },
     desc:  { en: 'New embark region, ladder, party strength matchmaking!',
