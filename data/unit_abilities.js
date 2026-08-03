@@ -118,6 +118,15 @@ const UNIT_ABILITIES = {
     description: 'All allies gain +10 initiative.',
     params: { ally_initiative_bonus: 10 },
   },
+  'lions_roar 2': {
+    id: 'lions_roar 2',
+    name: "Lion's Roar",
+    rank: 2,
+    type: 'active',
+    target: 'self',
+    description: 'All allies gain +20 initiative.',
+    params: { ally_initiative_bonus: 10 },
+  },
   'pact 1': {
     id: 'pact 1',
     name: 'Pact',
