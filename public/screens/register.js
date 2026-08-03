@@ -8,10 +8,11 @@ function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
 }
 
+// Five example units per faction, chosen for the registration slides.
 const UNIT_ART = new Set([
   'e421', 'e21', 'e31', 'e111', 'e61',
   'd11', 'd41', 'd61', 'd311', 'd71',
-  'gs12', 'gs311', 'gs61', 'gs411', 'gs21'
+  'gs12', 'gs311', 'gs61', 'gs411', 'gs21',
 ]);
 
 const HERO_FLAVOR = {
@@ -58,7 +59,7 @@ const HERO_FLAVOR = {
 function getHighlights(factionKey) {
   return Object.values(UNITS[factionKey] ?? {})
     .filter(u => UNIT_ART.has(u.id))
-    .slice(0, 4);
+    .slice(0, 5);
 }
 
 const FACTIONS = [
@@ -179,13 +180,11 @@ export function renderRegister(root, { player } = {}) {
                 <!-- Example units get the same treatment as the roster: one
                      unit card at a time, a portrait track to move between them,
                      and the same tap-to-inspect on stats/abilities. -->
-                <div class="faction-example-card" data-faction="${f.id}">
-                  ${f.highlights.length ? buildUnitCard(f.highlights[0]) : ''}
-                </div>
+                <div class="faction-example-card" data-faction="${f.id}"></div>
                 <div class="prep-track-wrap branch-track-wrap">
                   <div class="portrait-track faction-example-track" data-faction="${f.id}">
                     ${f.highlights.map((h, i) => `
-                      <div class="portrait-card portrait-card--branch ${i === 0 ? 'portrait-card--selected' : ''}"
+                      <div class="portrait-card portrait-card--branch"
                            data-i="${i}" title="${h.name}">
                         <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
                              alt="${h.name}" onerror="this.style.display='none'">
@@ -238,16 +237,37 @@ export function renderRegister(root, { player } = {}) {
       const factionId = track.dataset.faction;
       const faction   = FACTIONS.find(f => f.id === factionId);
       const cardEl    = root.querySelector(`.faction-example-card[data-faction="${factionId}"]`);
+      let openIndex   = null;   // null = no card on show
+
+      function closeCard() {
+        openIndex = null;
+        if (cardEl) { cardEl.innerHTML = ''; cardEl.classList.remove('faction-example-card--open'); }
+        track.querySelectorAll('.portrait-card').forEach(c => c.classList.remove('portrait-card--selected'));
+      }
+
       track.querySelectorAll('.portrait-card').forEach(chip => {
         chip.addEventListener('click', () => {
           const i = Number(chip.dataset.i);
+          // Tapping the portrait that is already open closes it again — the
+          // slide is short and the card should not squat there permanently.
+          if (openIndex === i) { closeCard(); return; }
+          openIndex = i;
           track.querySelectorAll('.portrait-card').forEach((c, ci) =>
             c.classList.toggle('portrait-card--selected', ci === i));
           chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-          if (cardEl && faction?.highlights[i]) cardEl.innerHTML = buildUnitCard(faction.highlights[i]);
+          if (cardEl && faction?.highlights[i]) {
+            cardEl.innerHTML = buildUnitCard(faction.highlights[i]);
+            cardEl.classList.add('faction-example-card--open');
+            cardEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
         });
       });
-      cardEl?.addEventListener('click', e => { handleUnitInspect(e, openSheet); });
+
+      // Inspection inside the card; a tap on the card's empty margin closes it.
+      cardEl?.addEventListener('click', e => {
+        if (handleUnitInspect(e, openSheet)) return;
+        if (e.target === cardEl) closeCard();
+      });
     });
 
     root.querySelectorAll('.faction-choose-btn').forEach(btn => {
