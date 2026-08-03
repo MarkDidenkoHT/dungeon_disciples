@@ -270,7 +270,7 @@ export function renderRegister(root, { player } = {}) {
     } catch (err) {
       root.innerHTML = `
         <div class="screen screen-faction">
-          <button id="back-btn">${UI_TEXT.backBtn[L]}</button>
+          <button class="text-back-btn" id="back-btn">${UI_TEXT.backBtn[L]}</button>
           <p class="error">${err.message}</p>
         </div>
       `;

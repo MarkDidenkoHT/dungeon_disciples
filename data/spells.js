@@ -14,10 +14,8 @@
 // Counter-spells (Ward / Nihilism / Decay) negate the enemy's prepared spell when
 // its category matches theirs. Encounters are the PvE stand-in for an opposing
 // player, so `counters_category` is the same hook PvP will use later.
-
 const SPELLS = {
   empire: [
-    // ── Non-combat (throne 1) ────────────────────────────────────────────────
     {
       id: 'e_spell_1',
       name: 'Revival Prayer',
@@ -50,8 +48,6 @@ const SPELLS = {
       target_scope: 'single_ally',
       params: { heal_pct: 1 }
     },
-
-    // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────
     {
       id: 'e_spell_3',
       name: 'Holy Aegis',
@@ -76,7 +72,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'Anoint one ally as a martyr. 10% of damage taken by adjacent allies is redirected to the martyr.',
       description_ru: 'Помечает союзника мучеником. 10% урона, получаемого соседними союзниками, перенаправляется мученику.',
-      cost: { crystals: { Crystals_Life: 15, Crystals_Cold: 5 } },
+      cost: { crystals: { Crystals_Life: 10, Crystals_Cold: 5 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'single_ally',
@@ -91,14 +87,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'Select one ally to intercept attacks. Grant +25% intercept chance (stacks with the Protector passive) and +10 armor for the battle.',
       description_ru: 'Выберите союзника для перехвата атак. Даёт +25% шанса перехвата (складывается с пассивной «Защитник») и +10 брони на бой.',
-      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Life: 15, Crystals_Fire: 5 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'single_ally',
       params: { intercept_chance_pct: 25, armor_boost: 10 }
     },
-
-    // ── Debuffs (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'e_spell_9',
       name: 'Wrath of Heaven',
@@ -108,7 +102,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'At the start of round 3, every enemy takes 20 Life damage.',
       description_ru: 'В начале 3-го раунда каждый враг получает 20 урона Жизнью.',
-      cost: { crystals: { Crystals_Life: 10, Crystals_Fire: 5, rystals_Frost: 5 } },
+      cost: { crystals: { Crystals_Life: 10, Crystals_Fire: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -123,7 +117,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'Condemn the enemy host. All foes lose 10 Life resistance and 10 armor for 2 rounds.',
       description_ru: 'Осуждает вражеское войско. Все враги теряют 10 сопротивления Жизни и 10 брони на 2 раунда.',
-      cost: { crystals: { Crystals_Life: 50, Crystals_Frost: 20 } },
+      cost: { crystals: { Crystals_Life: 15, Crystals_Frost: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -138,14 +132,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'For 3 rounds, one random enemy buff is stripped at the start of every round.',
       description_ru: 'В течение 3 раундов в начале каждого раунда с врагов снимается одно случайное усиление.',
-      cost: { crystals: { Crystals_Life: 45, Crystals_Fire: 25 } },
+      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
       params: { dispel_per_round: { polarity: 'positive', count: 1, rounds: 3 } }
     },
-
-    // ── Special (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'e_spell_4',
       name: 'Mark of the Crusade',
@@ -155,7 +147,7 @@ const SPELLS = {
       type: 'trophy',
       description: 'Slain enemies yield trophies of their fallen.',
       description_ru: 'Поверженные враги оставляют трофеи.',
-      cost: { crystals: { Crystals_Life: 10, Crystals_Nature: 5 } },
+      cost: { crystals: { Crystals_Life: 15, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       class: 'utility',
       target_scope: 'none',
@@ -170,7 +162,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'At the start of round 3, all Holy allies heal for 10 HP per Holy ally on the field.',
       description_ru: 'В начале 3-го раунда все Святые союзники исцеляются на 10 HP за каждого Святого союзника на поле.',
-      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 5 } },
       effect_type: 'round_trigger_heal',
       class: 'boon',
       target_scope: 'tag_allies',
@@ -185,7 +177,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'If the enemy has prepared a debuff spell, it is negated before the battle begins.',
       description_ru: 'Если враг подготовил заклинание-ослабление, оно сводится на нет перед началом боя.',
-      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Life: 25, Crystals_Fire: 5 } },
       effect_type: 'counter',
       class: 'utility',
       target_scope: 'none',
@@ -194,7 +186,6 @@ const SPELLS = {
   ],
 
   choir_of_the_cursed: [
-    // ── Non-combat (throne 1) ────────────────────────────────────────────────
     {
       id: 'd_spell_1',
       name: 'Grave Resurrection',
@@ -227,8 +218,6 @@ const SPELLS = {
       target_scope: 'single_ally',
       params: { heal_pct: 1 }
     },
-
-    // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────
     {
       id: 'd_spell_3',
       name: 'Song of Frenzy',
@@ -253,7 +242,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'A warding hymn shields one ally. Grant +15 Air and +15 Frost resistance for the battle.',
       description_ru: 'Оградительный гимн защищает союзника. Даёт +15 сопротивления Воздуху и Холоду на бой.',
-      cost: { crystals: { Crystals_Fire: 20 } },
+      cost: { crystals: { Crystals_Fire: 15 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'single_ally',
@@ -268,14 +257,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'The chorus swells. All allies deal +10% damage for 2 rounds.',
       description_ru: 'Хор нарастает. Все союзники наносят на 10% больше урона в течение 2 раундов.',
-      cost: { crystals: { Crystals_Fire: 45 } },
+      cost: { crystals: { Crystals_Fire: 20 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'all_allies',
       params: { damage_boost: 0.10, duration_rounds: 2 }
     },
-
-    // ── Debuffs (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'd_spell_7',
       name: 'Song of Weakness',
@@ -285,7 +272,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'A sapping song. All enemies deal 10% less damage during round 1.',
       description_ru: 'Изнуряющая песнь. Все враги наносят на 10% меньше урона в течение 1-го раунда.',
-      cost: { crystals: { Crystals_Fire: 35, Crystals_Frost: 15 } },
+      cost: { crystals: { Crystals_Fire: 10, Crystals_Frost: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -300,7 +287,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'All enemies lose 15 Fire resistance and 5 armor for 2 rounds.',
       description_ru: 'Все враги теряют 15 сопротивления Огню и 5 брони на 2 раунда.',
-      cost: { crystals: { Crystals_Fire: 40, Crystals_Frost: 10 } },
+      cost: { crystals: { Crystals_Fire: 15, Crystals_Frost: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -315,14 +302,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'At the start of round 2, every enemy takes 15 Fire damage.',
       description_ru: 'В начале 2-го раунда каждый враг получает 15 урона Огнём.',
-      cost: { crystals: { Crystals_Fire: 55, Crystals_Frost: 20 } },
+      cost: { crystals: { Crystals_Fire: 20, Crystals_Frost: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
       params: { round_damage: { round: 2, amount: 15, damage_type: 'fire' } }
     },
-
-    // ── Special (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'd_spell_4',
       name: 'Harvest',
@@ -332,7 +317,7 @@ const SPELLS = {
       type: 'trophy',
       description: 'Slain enemies yield trophies of their fallen.',
       description_ru: 'Поверженные враги оставляют трофеи.',
-      cost: { crystals: { Crystals_Fire: 10, Crystals_Nature: 5 } },
+      cost: { crystals: { Crystals_Fire: 15, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       class: 'utility',
       target_scope: 'none',
@@ -347,7 +332,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'Despair smothers the field. NO unit — yours included — may use passive abilities during round 1.',
       description_ru: 'Отчаяние накрывает поле. НИ ОДИН боец — включая ваших — не может использовать пассивные способности в течение 1-го раунда.',
-      cost: { crystals: { Crystals_Fire: 50, Crystals_Nature: 20 } },
+      cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 5 } },
       effect_type: 'debuff',
       class: 'curse',
       target_scope: 'none',
@@ -362,7 +347,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'If the enemy has prepared a special spell, it is negated before the battle begins.',
       description_ru: 'Если враг подготовил особое заклинание, оно сводится на нет перед началом боя.',
-      cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 10 } },
+      cost: { crystals: { Crystals_Fire: 25, Crystals_Nature: 5 } },
       effect_type: 'counter',
       class: 'utility',
       target_scope: 'none',
@@ -371,7 +356,6 @@ const SPELLS = {
   ],
 
   grail_of_sorrow: [
-    // ── Non-combat (throne 1) ────────────────────────────────────────────────
     {
       id: 'g_spell_1',
       name: 'Forgiveness',
@@ -404,8 +388,6 @@ const SPELLS = {
       target_scope: 'single_ally',
       params: { heal_pct: 1 }
     },
-
-    // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────
     {
       id: 'g_spell_3',
       name: "Sorrow's Haste",
@@ -430,7 +412,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'Selected ally gains 5 HP and 2 armor, but loses 2 initiative, for each Zombie ally on the field.',
       description_ru: 'Выбранный союзник получает 5 HP и 2 брони, но теряет 2 инициативы за каждого союзника-Зомби на поле.',
-      cost: { crystals: { Crystals_Death: 15, Crystals_Fire: 5 } },
+      cost: { crystals: { Crystals_Death: 10, Crystals_Fire: 5 } },
       effect_type: 'tag_count_buff',
       class: 'buff',
       target_scope: 'single_ally',
@@ -445,14 +427,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'The rites hasten the host. All allies gain +10 initiative during round 1.',
       description_ru: 'Обряды подгоняют войско. Все союзники получают +10 инициативы в течение 1-го раунда.',
-      cost: { crystals: { Crystals_Death: 25, Crystals_Life: 10 } },
+      cost: { crystals: { Crystals_Death: 15, Crystals_Life: 5 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'all_allies',
       params: { initiative_boost: 10, duration_rounds: 1 }
     },
-
-    // ── Debuffs (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'g_spell_7',
       name: "Grail's Fury",
@@ -462,7 +442,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'All enemies lose 10 Death resistance for the first 2 rounds.',
       description_ru: 'Все враги теряют 10 сопротивления Смерти на первые 2 раунда.',
-      cost: { crystals: { Crystals_Death: 15, Crystals_Life: 15 } },
+      cost: { crystals: { Crystals_Death: 10, Crystals_Life: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -477,7 +457,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'At the start of round 2, every enemy is struck with Infect 2.',
       description_ru: 'В начале 2-го раунда каждый враг поражается Заразой 2.',
-      cost: { crystals: { Crystals_Death: 25, Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Death: 15, Crystals_Fire: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
@@ -492,14 +472,12 @@ const SPELLS = {
       type: 'preparation',
       description: 'At the start of round 1, every enemy takes 10 Death damage.',
       description_ru: 'В начале 1-го раунда каждый враг получает 10 урона Смертью.',
-      cost: { crystals: { Crystals_Death: 45, Crystals_Fire: 20 } },
+      cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 5 } },
       effect_type: 'debuff',
       class: 'debuff',
       target_scope: 'all_enemies',
       params: { round_damage: { round: 1, amount: 10, damage_type: 'death' } }
     },
-
-    // ── Special (throne 2 / 3 / 4) ───────────────────────────────────────────
     {
       id: 'g_spell_4',
       name: "Sorrow's Offering",
@@ -509,7 +487,7 @@ const SPELLS = {
       type: 'trophy',
       description: 'Slain enemies yield trophies of their fallen.',
       description_ru: 'Поверженные враги оставляют трофеи.',
-      cost: { crystals: { Crystals_Death: 10, Crystals_Nature: 5 } },
+      cost: { crystals: { Crystals_Death: 15, Crystals_Nature: 5 } },
       effect_type: 'trophy_gain',
       class: 'utility',
       target_scope: 'none',
@@ -524,7 +502,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'A funeral dirge stills the field. NO unit — yours included — may use active abilities during round 1.',
       description_ru: 'Панихида сковывает поле. НИ ОДИН боец — включая ваших — не может использовать активные способности в течение 1-го раунда.',
-      cost: { crystals: { Crystals_Death: 35, Crystals_Fire: 15 } },
+      cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 5 } },
       effect_type: 'debuff',
       class: 'curse',
       target_scope: 'none',
@@ -539,7 +517,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'If the enemy has prepared a buff spell, it is negated before the battle begins.',
       description_ru: 'Если враг подготовил заклинание-усиление, оно сводится на нет перед началом боя.',
-      cost: { crystals: { Crystals_Death: 20, Crystals_Fire: 10 } },
+      cost: { crystals: { Crystals_Death: 25, Crystals_Fire: 5 } },
       effect_type: 'counter',
       class: 'utility',
       target_scope: 'none',
@@ -547,19 +525,6 @@ const SPELLS = {
     },
   ],
 
-  // Convenience bucket for spells that only make sense on enemies (encounter
-  // design can also just point an encounter's spell_id at any existing faction
-  // spell in this file - see data/embark.js REGION_ENCOUNTERS[region][level]
-  // .spell_id / getEncounterSpellId - the lookup checks the whole SPELLS
-  // catalog, not just this array). One spell per encounter, same as the
-  // player's one-spell-per-battle rule - there is no per-unit caster. Not shown
-  // in the player-facing Spell Tome (spell_tome.js only reads
-  // SPELLS[player.faction]). Which spell is cast is never revealed to the
-  // player - only whether a cast happened.
-  //
-  // The encounter spell is the PvE stand-in for an opposing player's spell, so
-  // every entry needs a `category` - that is what Ward / Nihilism / Decay match
-  // against to negate it.
   enemies: [
     {
       id: 'enemy_spell_1',
@@ -612,7 +577,6 @@ const SPELLS = {
   ],
 };
 
-// Tab order for the Spell Tome, and the labels each tab shows.
 const SPELL_CATEGORIES = [
   { id: 'non_combat', name: 'Non-Combat', name_ru: 'Вне боя' },
   { id: 'buff',       name: 'Buffs',      name_ru: 'Усиления' },

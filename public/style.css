@@ -537,7 +537,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 .error  { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .hidden { display: none !important; }
 
-#back-btn {
+/* Plain text back button, used by the hero-load error state. This used to be an
+   ID rule (#back-btn), whose 1-0-0 specificity silently overrode the .frame-action
+   class on the hero-select back button — background, border, colour and padding
+   all came from here instead, which is why it did not match the button beside
+   the portraits. Class-based now, applied only where it is wanted. */
+.text-back-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--muted);
@@ -5069,8 +5074,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .frame-action {
   /* Derived from the branch cards' own sizing vars so the button and the
-     portraits it flanks are always exactly the same height. */
+     portraits it flanks are always exactly the same height. Every property the
+     global `button` rule sets is reset here, so a framed action never inherits
+     the app's default gold pill. */
   --portrait-card-h: clamp(64px, 10vh, 86px);
+  margin: 0;
+  align-self: center;
   flex: 0 0 auto;
   width: calc(var(--portrait-card-h) * 0.80);
   height: var(--portrait-card-h);
