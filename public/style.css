@@ -5061,38 +5061,56 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 0.5rem;
 }
 
-/* ── Sheet header actions ───────────────────────────────────────────────────
-   Build / upgrade and deconstruct live in the sheet header next to the close
-   button — same round shape and size, so the three read as one control group
-   and all sit within thumb reach at the top of the sheet. */
-.modal-action-btn {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  flex-shrink: 0;
+/* ── Castle sheet: action | branches | action ───────────────────────────────
+   Build sits left of the portrait picker, deconstruct right of it, so the whole
+   bottom strip is one row within thumb reach. Closing is the sheet's own ✕. */
+.castle-branch-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  font-family: inherit;
-  font-size: 0.9rem;
-  line-height: 1;
+  gap: 8px;
+  padding: 6px 2px 2px;
+}
+
+.castle-branch-row .branch-track-wrap {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.castle-action {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, transform 0.1s;
+  font-family: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  background-color: transparent;
+  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: transform 0.1s, filter 0.15s;
 }
 
-.modal-action-btn:active { transform: scale(0.92); }
-
-.modal-action-btn--confirm {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+.castle-action:active {
+  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  transform: scale(0.94);
 }
 
-.modal-action-btn--deconstruct {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+.castle-action--confirm     { color: var(--accent); }
+.castle-action--deconstruct { color: var(--danger); }
+
+/* Keeps the picker centred when a slot offers no deconstruct (a fresh build). */
+.castle-action--spacer {
+  background: none;
+  pointer-events: none;
 }
 
 /* Registration crest / hero track — the same portrait-card frame used across the

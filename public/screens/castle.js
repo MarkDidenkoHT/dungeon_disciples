@@ -194,49 +194,37 @@ export function renderCastle(root, { player }) {
       // Branch picker. An upgrade offers at most three paths, so they all fit as
       // portrait cards — the same frame art the roster, formation track and
       // initiative queue use — instead of arrows and dots that hide the choice.
-      const picker = slides.length > 1
-        ? `<div class="prep-track-wrap branch-track-wrap">
-             <div class="portrait-track" id="branch-track">
-               ${slides.map((slide, i) => `
-                 <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
-                      data-i="${i}" title="${slide.unit?.name || slide.buildingLabel || ''}">
-                   ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${slide.unit.name}" onerror="this.style.display='none'">` : ''}
-                   <div class="portrait-name">${slide.unit?.name || slide.buildingLabel || ''}</div>
-                 </div>`).join('')}
-             </div>
-           </div>`
-        : '';
+      // Build sits to the LEFT of the portraits, deconstruct to the RIGHT, so
+      // the whole bottom strip is one thumb-height row: act, choose, remove.
+      const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
+      const cards = slides.map((slide, i) => `
+        <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
+             data-i="${i}" title="${slide.unit?.name || slide.buildingLabel || ''}">
+          ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${slide.unit.name}" onerror="this.style.display='none'">` : ''}
+          <div class="portrait-name">${slide.unit?.name || slide.buildingLabel || ''}</div>
+        </div>`).join('');
+
       return `
         <div class="castle-unit-slider">
           <div class="castle-slider-track" id="slider-track">
             ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
           </div>
         </div>
-        ${picker}
-        <!-- One row of icon actions instead of a stack of labelled buttons:
-             confirm (build or upgrade), deconstruct, close. Titles carry the
-             wording so the meaning is still reachable on long-press/hover. -->
-        <div class="castle-action-row">
+        <div class="castle-branch-row">
           <button class="castle-action castle-action--confirm" id="slider-confirm"
-                  title="${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}"
-                  aria-label="${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}">
-            <span class="castle-action-glyph">${s.actionGlyph || '⚒'}</span>
-          </button>
+                  title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
+          <div class="prep-track-wrap branch-track-wrap">
+            <div class="portrait-track" id="branch-track">${cards}</div>
+          </div>
           ${opts.deconstructSlot
             ? `<button class="castle-action castle-action--deconstruct" id="slider-deconstruct"
                        title="${CASTLE_TEXT.deconstruct[castleLang]}"
-                       aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">
-                 <span class="castle-action-glyph">⛏</span>
-               </button>`
-            : ''}
-          <button class="castle-action castle-action--close" id="slider-close"
-                  title="${CASTLE_TEXT.close[castleLang]}"
-                  aria-label="${CASTLE_TEXT.close[castleLang]}">
-            <span class="castle-action-glyph">✕</span>
-          </button>
+                       aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>`
+            : '<span class="castle-action castle-action--spacer" aria-hidden="true"></span>'}
         </div>`;
     }
 
+    // The sheet's own ✕ is the only close control — no duplicate.
     openModal(title, renderSliderHtml(current));
 
     function attachAbilityListeners() {
@@ -284,7 +272,6 @@ export function renderCastle(root, { player }) {
       });
       sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
       sheetBody.querySelector('#slider-deconstruct')?.addEventListener('click', () => openDeconstructModal(opts.deconstructSlot));
-      sheetBody.querySelector('#slider-close')?.addEventListener('click', () => closeModal());
 
       attachAbilityListeners();
     }
