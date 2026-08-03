@@ -1,7 +1,7 @@
 import { api }      from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
-import { preloadAssets } from '../utils.js';
+import { preloadAssets, buildUnitCard } from '../utils.js';
 import { playFactionTheme } from '../music.js';
 
 function lang(player) {
@@ -280,39 +280,26 @@ export function renderRegister(root, { player } = {}) {
 
   function showHeroStep() {
     const hint = FIRST_RECRUIT_HINT[selectedFaction.id];
+    let heroIndex = 0;
+
+    // The hero is shown on the SAME card the roster uses, so what a player sees
+    // when choosing is exactly what they will see afterwards. The portrait track
+    // switches between them; Back sits left of it, Choose right of it.
+    function heroCardHtml(h) {
+      return `
+        ${buildUnitCard(h)}
+        <p class="hero-select-flavor">${HERO_FLAVOR[h.id]?.[L] ?? ''}</p>`;
+    }
 
     root.innerHTML = `
-      <div class="screen screen-faction">
-        <button id="back-btn">${UI_TEXT.backBtn[L]}</button>
+      <div class="screen screen-faction screen-hero-select">
         <h2>${selectedFaction.label[L]}</h2>
         <p class="subtitle">${UI_TEXT.chooseHero[L]}</p>
-        <div class="hero-select-list">
-          ${heroes.map(h => `
-            <div class="hero-select-card" data-id="${h.id}">
-              <img class="hero-select-art" src="/assets/character_art/${h.id}.png" alt="${h.name ?? h.id}" onerror="this.style.display='none'">
-              <div class="hero-select-body">
-                <h3>${h.name ?? h.id}</h3>
-                <p class="hero-select-flavor">${HERO_FLAVOR[h.id]?.[L] ?? ''}</p>
-                <p class="hero-select-stats">HP ${h.hp} · Armor ${h.armor} · Init ${h.initiative}</p>
-                ${h.passive ? `<p class="card-passive">${UI_TEXT.passive[L]}: ${(Array.isArray(h.passive) ? h.passive : [h.passive]).join(', ')}</p>` : ''}
-              </div>
-            </div>
-          `).join('')}
+
+        <div class="hero-card-wrap" id="hero-card-wrap">
+          ${heroes.length ? heroCardHtml(heroes[0]) : ''}
         </div>
 
-        <!-- The same bottom track again, here as a jump list for the hero
-             cards: tap a portrait to scroll its card into view. -->
-        <div class="prep-track-wrap register-track-wrap">
-          <div class="portrait-track" id="hero-portrait-track">
-            ${heroes.map((h, i) => `
-              <div class="portrait-card portrait-card--crest ${i === 0 ? 'portrait-card--selected' : ''}"
-                   data-id="${h.id}" title="${h.name ?? h.id}">
-                <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
-                     alt="${h.name ?? h.id}" onerror="this.style.display='none'">
-                <div class="portrait-name">${h.name ?? h.id}</div>
-              </div>`).join('')}
-          </div>
-        </div>
         ${hint ? `
           <div class="first-recruit-hint">
             <div class="first-recruit-hint-title">${UI_TEXT.firstRecruitTip[L]}</div>
@@ -320,28 +307,43 @@ export function renderRegister(root, { player } = {}) {
           </div>
         ` : ''}
         <p id="reg-error" class="error hidden"></p>
+
+        <div class="track-action-row hero-action-row">
+          <button class="frame-action frame-action--back" id="back-btn"
+                  title="${UI_TEXT.backBtn[L]}" aria-label="${UI_TEXT.backBtn[L]}">‹</button>
+          <div class="prep-track-wrap branch-track-wrap">
+            <div class="portrait-track" id="hero-portrait-track">
+              ${heroes.map((h, i) => `
+                <div class="portrait-card portrait-card--branch ${i === 0 ? 'portrait-card--selected' : ''}"
+                     data-i="${i}" title="${h.name ?? h.id}">
+                  <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
+                       alt="${h.name ?? h.id}" onerror="this.style.display='none'">
+                  <div class="portrait-name">${h.name ?? h.id}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+          <button class="frame-action frame-action--confirm" id="choose-hero-btn"
+                  title="${UI_TEXT.chooseBtn[L]}" aria-label="${UI_TEXT.chooseBtn[L]}">✓</button>
+        </div>
       </div>
     `;
 
-    root.querySelector('#back-btn').addEventListener('click', showFactionStep);
+    const cardWrap = root.querySelector('#hero-card-wrap');
 
-    // Portrait track scrolls to a hero's card and marks it; picking still
-    // happens on the card itself, so a tap here is never a commitment.
-    const heroCards = [...root.querySelectorAll('.hero-select-card')];
-    root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(chip => {
-      chip.addEventListener('click', () => {
-        root.querySelectorAll('#hero-portrait-track .portrait-card')
-            .forEach(c => c.classList.toggle('portrait-card--selected', c === chip));
-        heroCards.find(c => c.dataset.id === chip.dataset.id)
-          ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
+    function selectHero(i) {
+      heroIndex = i;
+      cardWrap.innerHTML = heroCardHtml(heroes[i]);
+      root.querySelectorAll('#hero-portrait-track .portrait-card').forEach((c, ci) =>
+        c.classList.toggle('portrait-card--selected', ci === i));
+    }
+
+    root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(card => {
+      card.addEventListener('click', () => selectHero(Number(card.dataset.i)));
     });
 
-    root.querySelectorAll('.hero-select-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const hero = heroes.find(h => h.id === card.dataset.id);
-        confirmSelection(hero);
-      });
+    root.querySelector('#back-btn').addEventListener('click', showFactionStep);
+    root.querySelector('#choose-hero-btn').addEventListener('click', () => {
+      if (heroes[heroIndex]) confirmSelection(heroes[heroIndex]);
     });
   }
 

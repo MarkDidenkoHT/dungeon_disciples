@@ -210,17 +210,17 @@ export function renderCastle(root, { player }) {
             ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
           </div>
         </div>
-        <div class="castle-branch-row">
-          <button class="castle-action castle-action--confirm" id="slider-confirm"
+        <div class="track-action-row">
+          <button class="frame-action frame-action--confirm" id="slider-confirm"
                   title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
           <div class="prep-track-wrap branch-track-wrap">
             <div class="portrait-track" id="branch-track">${cards}</div>
           </div>
           ${opts.deconstructSlot
-            ? `<button class="castle-action castle-action--deconstruct" id="slider-deconstruct"
+            ? `<button class="frame-action frame-action--deconstruct" id="slider-deconstruct"
                        title="${CASTLE_TEXT.deconstruct[castleLang]}"
                        aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>`
-            : '<span class="castle-action castle-action--spacer" aria-hidden="true"></span>'}
+            : '<span class="frame-action frame-action--spacer" aria-hidden="true"></span>'}
         </div>`;
     }
 

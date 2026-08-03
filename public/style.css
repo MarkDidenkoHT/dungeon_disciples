@@ -170,48 +170,27 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: pointer;
 }
 
-.hero-select-list {
+/* Hero selection now shows ONE unit card (the roster's own .unit-card) with the
+   portrait track choosing between heroes — the old list of small side-by-side
+   cards is gone. */
+.screen-hero-select {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
-.hero-select-card {
-  display: flex;
-  gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.hero-select-card:active {
-  border-color: var(--accent);
-}
-
-.hero-select-art {
-  flex-shrink: 0;
-  width: 84px;
-  height: 130px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-}
-
-.hero-select-body {
+.hero-card-wrap {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-.hero-select-body h3 {
-  color: var(--accent);
-  font-size: 1rem;
+.hero-action-row {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(8, 9, 12, 0.92), rgba(8, 9, 12, 0));
 }
 
 .hero-select-flavor {
@@ -219,11 +198,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--text);
   opacity: 0.85;
   line-height: 1.4;
-}
-
-.hero-select-stats {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 
 .first-recruit-hint {
@@ -5061,10 +5035,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 0.5rem;
 }
 
-/* ── Castle sheet: action | branches | action ───────────────────────────────
-   Build sits left of the portrait picker, deconstruct right of it, so the whole
-   bottom strip is one row within thumb reach. Closing is the sheet's own ✕. */
-.castle-branch-row {
+/* ── action | portrait track | action ───────────────────────────────────────
+   One thumb-height strip: a framed button on each side of a portrait picker.
+   Used by the castle upgrade sheet (build / deconstruct) and by hero selection
+   in registration (back / choose). */
+.track-action-row {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5072,13 +5047,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 6px 2px 2px;
 }
 
-.castle-branch-row .branch-track-wrap {
+.track-action-row .branch-track-wrap {
   flex: 1;
   min-width: 0;
   padding: 0;
 }
 
-.castle-action {
+.frame-action {
   flex: 0 0 auto;
   width: 52px;
   height: 52px;
@@ -5099,16 +5074,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: transform 0.1s, filter 0.15s;
 }
 
-.castle-action:active {
+.frame-action:active {
   background-image: url('/assets/icons/ui/bottom-nav-active.png');
   transform: scale(0.94);
 }
 
-.castle-action--confirm     { color: var(--accent); }
-.castle-action--deconstruct { color: var(--danger); }
+.frame-action--confirm     { color: var(--accent); }
+.frame-action--deconstruct { color: var(--danger); }
+.frame-action--back        { color: var(--muted); }
 
 /* Keeps the picker centred when a slot offers no deconstruct (a fresh build). */
-.castle-action--spacer {
+.frame-action--spacer {
   background: none;
   pointer-events: none;
 }
