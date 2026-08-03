@@ -281,6 +281,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const actionKey = unit?.unit_data?.action;
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
     if (key === 'sacrifice') return 'Sacrifice';
+    if (key === 'holy_shock') return 'Holy Shock';
     const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
     if (actionType === 'none') return 'Passive';
     if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return "Mother's Kiss";
@@ -323,13 +324,27 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return targets;
     }
 
+    // Holy Shock reaches both sides — tapping an ally mends, tapping an enemy
+    // strikes. Allies are added here; enemies fall through to the shared reach
+    // logic at the bottom, so melee reach stays in ONE place and keeps mirroring
+    // meleeCanReach() on the server.
+    const isHolyShock = actionKey === 'holy_shock';
+    if (isHolyShock) {
+      state.combatants
+        .filter(c => c.alive && c.side === actor.side && c.id !== actor.id)
+        .forEach(c => targets.add(c.id));
+    }
+
     if (forAbility) {
       const key    = actor.unit_data?.ability || actor.unit_data?.active_ability;
       const def    = key ? UNIT_ABILITIES[key] : null;
       const ttype  = def?.target ?? 'enemy';
       const tagReq = def?.params?.tag_required ?? null;
       let cands = [];
-      if      (ttype === 'self')       cands = [actor];
+      // 'any' — both sides are legal; the ability decides heal vs damage from
+      // the side of whoever is tapped (Holy Shock).
+      if      (ttype === 'any')        cands = state.combatants.filter(c => c.alive);
+      else if (ttype === 'self')       cands = [actor];
       else if (ttype === 'enemy')      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
       else if (ttype === 'ally')       cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
       else if (ttype === 'ally_any')   cands = state.combatants.filter(c => c.side === actor.side && c.alive);
@@ -341,7 +356,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return targets;
     }
 
-    if (isHeal) {
+    if (isHeal && !isHolyShock) {
       state.combatants.filter(c => c.side === actor.side && c.alive).forEach(c => targets.add(c.id));
       return targets;
     }

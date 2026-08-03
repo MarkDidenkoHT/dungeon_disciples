@@ -172,6 +172,7 @@ export function getActionLabel(actionKey) {
     repair:       'Repair',
     'mend flesh': 'Mend Flesh',
     sacrifice:    'Sacrifice',
+    holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
   };
   return map[k.toLowerCase()] || cap(k);
 }

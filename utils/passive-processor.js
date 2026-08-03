@@ -162,6 +162,32 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: p.inspiration_value, message: `${def.name} — +${p.inspiration_value}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
       }
     }
+    // Resistance aura: +N of one school to every living ally, the carrier
+    // included. Written into unit_data.resistances so calcDamage's existing
+    // resistance step picks it up with no special case. Guarded by a flag —
+    // on_battle_start can fire more than once for a revived unit, and this must
+    // not stack with itself.
+    if (p.resist_aura_school != null && p.resist_aura_value != null &&
+        !owner._flags[def.id + '_aura']) {
+      owner._flags[def.id + '_aura'] = true;
+      const school = p.resist_aura_school;
+      const allies = engine.combatants.filter(c => c.side === owner.side && c.alive);
+      for (const t of allies) {
+        if (!t.unit_data) continue;
+        const resists = { ...(t.unit_data.resistances || {}) };
+        resists[school] = (resists[school] || 0) + p.resist_aura_value;
+        t.unit_data = { ...t.unit_data, resistances: resists };
+      }
+      if (allies.length) {
+        engine.pushLog({
+          type: 'passive', passive: def.name,
+          actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetName: 'all allies', value: p.resist_aura_value,
+          message: `${def.name} — +${p.resist_aura_value} ${school} resistance to the party`,
+        });
+      }
+    }
+
     if (p.unity_bond === true && !owner._flags[def.id + '_bonded']) {
       owner._flags[def.id + '_bonded'] = true;
       const ownerRow = cellRow(owner.cellIndex);
@@ -687,6 +713,9 @@ function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
       cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1)
     );
   }
+  // 'any' — the ability itself decides what to do with whoever is picked
+  // (Holy Shock heals allies, damages enemies).
+  if (def.target === 'any')      return combatants.filter(c => c.alive);
   if (def.target === 'self')     return [actor];
   if (def.target === 'ally')     return combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
   if (def.target === 'ally_any') return combatants.filter(c => c.side === actor.side && c.alive);
@@ -725,6 +754,38 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${actor.unit_name} sacrifices ${cost} HP to strike ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
     }
   }
+  // Radiant Surge — the target's side decides the effect. Damage goes through the
+  // target's resistance for the declared school (life by default) and its armor
+  // is NOT applied: this is magic, same as Libation.
+  if ((p.radiant_surge_heal != null || p.radiant_surge_damage != null) && target) {
+    if (target.side === actor.side) {
+      const raw    = p.radiant_surge_heal ?? 0;
+      const factor = 1 - (target._healing_reduction ?? 0) / 100;
+      const heal   = Math.floor(Math.min(raw * factor * engine.fatigueHealMult(),
+                                         target.max_hp - target.battle_hp));
+      const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
+      target.battle_hp += heal;
+      engine.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
+      engine.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
+      engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id,
+        value: heal, heal: true, message: `${def.name} — mended ${target.unit_name} for ${heal}` });
+      engine.checkBark('heal_low_hp', actor, { target, preHealRatio });
+    } else {
+      const school   = p.radiant_surge_source || 'life';
+      const resist   = (target.unit_data?.resistances || {})[school] ?? 0;
+      const reduction = Math.max(0, Math.min(90, resist));
+      const dmg      = Math.max(1, Math.floor((p.radiant_surge_damage ?? 0) * (1 - reduction / 100)));
+      target.battle_hp = Math.max(0, target.battle_hp - dmg);
+      const dead = target.battle_hp <= 0;
+      if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
+      engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id,
+        value: dmg, heal: false, killed: dead,
+        message: `${def.name} — struck ${target.unit_name} for ${dmg} ${school} damage` });
+    }
+  }
+
   if (p.mothers_kiss === true && !actor._mothers_kiss) {
     actor._mothers_kiss = true;
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'self', message: `${def.name} — ${actor.unit_name} begins channeling Mother's Kiss each turn.` });

@@ -331,6 +331,21 @@ class BattleEngine {
     if (actionKey === 'sacrifice') {
       return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
     }
+
+    // Holy Shock is the only action that reaches BOTH sides: an ally is mended,
+    // an enemy is struck. Allies are filtered by the heal tag rules (a Construct
+    // or Zombie cannot be mended); enemies use the unit's normal reach.
+    if (actionKey === 'holy_shock') {
+      return this.combatants.filter(t => {
+        if (!t.alive || t._untargetable) return false;
+        if (t.side === actor.side) {
+          if (t.id === actor.id) return false;
+          return filterByTagRules([t], 'heal').length > 0;
+        }
+        const range = actor.unit_data?.range ?? 1;
+        return range === 1 ? this.meleeCanReach(actor, t) : true;
+      });
+    }
     return this.combatants.filter(t => {
       if (!t.alive) return false;
       if (t._untargetable) return false;
@@ -428,12 +443,18 @@ class BattleEngine {
     // when the AI drives it (the AI loop calls this with 'attack'). Without this,
     // enemy sacrifice-healers healed allies for free.
     if (actionType === 'attack' && actor.unit_data?.action === 'sacrifice') actionType = 'sacrifice';
+    // Holy Shock: whether this turn heals or hurts is decided by WHO was picked,
+    // not by the action. Pointed at an ally it runs the heal branch below; at an
+    // enemy it falls through to the ordinary attack path, so intercepts, parry,
+    // resistances and every on-hit passive behave exactly as for a normal strike.
+    const holyShockHeal = this.getActionKey(actor) === 'holy_shock' &&
+                          target && target.side === actor.side;
     if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
     if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
     if (!target) return false;
-    if (this.isHealer(actor)) {
+    if (this.isHealer(actor) || holyShockHeal) {
       if (actor._mothers_kiss) {
         return this.doMothersKiss(actor);
       }
@@ -1074,6 +1095,18 @@ class BattleEngine {
   // hit, then soft/low-HP ones.
   aiPickActionTarget(actor, targets) {
     if (!targets.length) return null;
+    // Holy Shock can go either way, so the AI decides by need: mend the most
+    // hurt ally once someone is meaningfully wounded, otherwise strike. Without
+    // this it would fall into the attacker branch and never heal.
+    if (this.getActionKey(actor) === 'holy_shock') {
+      const wounded = targets
+        .filter(c => c.side === actor.side && c.battle_hp / c.max_hp <= 0.6)
+        .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0];
+      if (wounded) return wounded;
+      const foes = targets.filter(c => c.side !== actor.side);
+      if (!foes.length) return targets[0] ?? null;
+      targets = foes; // fall through to the attacker scoring below
+    }
     if (this.aiIsHealer(actor)) {
       const wounded = targets.filter(c => c.battle_hp < c.max_hp);
       const pool    = wounded.length ? wounded : targets;
@@ -1109,6 +1142,16 @@ class BattleEngine {
     if (p.ally_drain_pct != null || p.libation_sacrifice_pct != null) {
       return targets.filter(c => c.id !== actor.id && c.battle_hp / c.max_hp > 0.5)
         .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
+    }
+    // Radiant Surge reads its target's side, so the AI picks by need: mend the
+    // worst-hurt ally when one is meaningfully wounded, otherwise strike.
+    if (p.radiant_surge_heal != null || p.radiant_surge_damage != null) {
+      const wounded = this.combatants
+        .filter(c => c.side === actor.side && c.alive && c.battle_hp / c.max_hp <= 0.6)
+        .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0];
+      if (wounded) return wounded;
+      const foes = targets.filter(c => c.side !== actor.side);
+      return foes.length ? this.aiPickActionTarget(actor, foes) : null;
     }
     // Heal-type ability — only if someone is wounded.
     if (p.lowest_ally_heal_pct != null || p.heal_pct != null || p.ally_heal != null) {
