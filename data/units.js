@@ -1993,7 +1993,7 @@ const UNITS = {
         hp: 55, armor: 20, initiative: 25,
         resistances: { air: 5, fire: 10, life: 50, death: 15, cold: 5, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 16,
+        damage_source: 'physical', action_power: 16, action_icon: 'aggrails_blessing.jpg',
         xp: 400, passive: ['aggrails_blessing 1', 'protector 1'], ability: 'sanctuary 1',
       },
       aggrails_champion: {
@@ -2004,7 +2004,7 @@ const UNITS = {
         hp: 70, armor: 25, initiative: 25,
         resistances: { air: 10, fire: 20, life: 50, death: 15, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 20,
+        damage_source: 'physical', action_power: 20, action_icon: 'aggrails_blessing.jpg',
         xp: 900, passive: ['aggrails_blessing 1', 'protector 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       initiate: {
