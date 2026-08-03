@@ -5152,3 +5152,16 @@ button:active:not(:disabled) { opacity: 0.75; }
   max-width: 100%;
   font-size: 0.5rem;
 }
+
+/* Faction example card: absent until a portrait is tapped, so the slide keeps
+   its description and Choose button reachable. Tapping the same portrait (or
+   the card's own margin) closes it again. */
+.faction-example-card:empty { display: none; }
+
+.faction-example-card--open {
+  max-height: 46vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.faction-example-card--open::-webkit-scrollbar { display: none; }

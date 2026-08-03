@@ -1,5167 +1,2351 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:      #111318;
-  --surface: #1c1f28;
-  --border:  #2e3240;
-  --accent:  #c8973a;
-  --danger:  #c84a3a;
-  --text:    #e8e4dc;
-  --muted:   #6b7080;
-  --radius:  8px;
-}
-
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-}
-
-#app {
-  height: 100%;
-}
-
-#shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 480px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-#content-root {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-h1, h2 { color: var(--accent); margin-bottom: 8px; }
-h1 { font-size: 2rem; }
-h2 { font-size: 1.4rem; }
-.subtitle { color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-input[type="text"] {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 1rem;
-  padding: 12px 14px;
-  outline: none;
-  width: 100%;
-}
-input[type="text"]:focus { border-color: var(--accent); }
-
-button {
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius);
-  color: #111;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  padding: 12px 20px;
-  transition: opacity 0.15s;
-}
-button:disabled { opacity: 0.45; cursor: not-allowed; }
-button:active:not(:disabled) { opacity: 0.75; }
-
-.tutorial-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 5000;
-  pointer-events: none;
-}
-
-.tutorial-blocker {
-  position: fixed;
-  background: rgba(6, 6, 10, 0.82);
-  pointer-events: auto;
-}
-
-.tutorial-ring {
-  position: fixed;
-  border-radius: 14px;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.25), 0 0 18px 4px rgba(200, 151, 58, 0.5);
-  pointer-events: none;
-  animation: tutorial-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes tutorial-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.25), 0 0 18px 4px rgba(200, 151, 58, 0.5); }
-  50%      { box-shadow: 0 0 0 8px rgba(200, 151, 58, 0.15), 0 0 26px 8px rgba(200, 151, 58, 0.65); }
-}
-
-.tutorial-bubble {
-  position: fixed;
-  z-index: 5001;
-  max-width: 260px;
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
-  pointer-events: none;
-}
-
-.tutorial-bubble::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-}
-
-.tutorial-bubble--below::before {
-  top: -16px;
-  border-bottom-color: var(--accent);
-}
-
-.tutorial-bubble--above::before {
-  bottom: -16px;
-  border-top-color: var(--accent);
-}
-
-.tutorial-bubble-title {
-  color: var(--accent);
-  font-weight: bold;
-  font-size: 0.95rem;
-  margin-bottom: 6px;
-}
-
-.tutorial-bubble-text {
-  color: var(--text);
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-/* Extra per-player line under the step text — currently the faction's
-   first-recruit advice on the `second_building` step. Set off from the copy
-   above it so it reads as advice rather than instruction. */
-.tutorial-bubble-hint {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(200, 151, 58, 0.28);
-  color: var(--text);
-  opacity: 0.88;
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
-/* The bubble itself is click-through; this button must not be. */
-.tutorial-bubble-btn {
-  pointer-events: auto;
-  display: block;
-  margin: 12px 0 0 auto;
-  padding: 6px 14px;
-  background: var(--accent);
-  color: #1a1408;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* Hero selection now shows ONE unit card (the roster's own .unit-card) with the
-   portrait track choosing between heroes — the old list of small side-by-side
-   cards is gone. */
-.screen-hero-select {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.hero-select-header {
-  flex-shrink: 0;
-  padding: 2px 0 0;
-}
-.hero-select-header h2 {
-  margin-bottom: 0;
-  font-size: 1.15rem;
-  line-height: 1.2;
-}
-.hero-select-header .subtitle {
-  margin-bottom: 4px;
-  font-size: 0.75rem;
-}
-
-.hero-card-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.hero-action-row {
-  flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, rgba(8, 9, 12, 0.92), rgba(8, 9, 12, 0));
-}
-
-.hero-select-flavor {
-  font-size: 0.78rem;
-  color: var(--text);
-  opacity: 0.85;
-  line-height: 1.4;
-}
-
-
-
-.screen-intro {
-  height: 100%;
-  flex: 1;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: flex-end;
-  overflow-y: auto;
-}
-
-.intro-content {
-  padding: 24px 16px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.intro-title {
-  font-size: 1.6rem;
-  color: var(--accent);
-  font-weight: bold;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-}
-
-.intro-text {
-  font-size: 0.88rem;
-  color: var(--text);
-  line-height: 1.55;
-  opacity: 0.9;
-}
-
-.intro-continue-btn {
-  margin-top: 8px;
-  width: 100%;
-}
-
-.screen-faction-slider {
-  position: relative;
-  height: 100%;
-  flex: 1;
-  overflow: hidden;
-  /* Column so the crest track can sit under the slider instead of over it. */
-  display: flex;
-  flex-direction: column;
-}
-
-.faction-slider {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  height: auto;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.faction-slider::-webkit-scrollbar {
-  display: none;
-}
-
-.faction-slide {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: flex-end;
-  overflow-y: auto;
-}
-
-.faction-slide-content {
-  padding: 12px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.faction-slide-title {
-  font-size: 1.7rem;
-  color: var(--accent);
-  font-weight: bold;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-}
-
-.faction-slide-tagline {
-  font-size: 0.95rem;
-  color: var(--text);
-  font-style: italic;
-  opacity: 0.9;
-}
-
-.faction-slide-desc {
-  font-size: 0.85rem;
-  color: var(--text);
-  line-height: 1.5;
-  opacity: 0.85;
-}
-
-.faction-slide-roster {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 0 4px 0;
-  scrollbar-width: none;
-}
-
-.faction-slide-roster::-webkit-scrollbar {
-  display: none;
-}
-
-.faction-roster-chip {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 90px;
-}
-
-.faction-roster-chip img {
-  width: 90px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.faction-roster-chip span {
-  font-size: 0.62rem;
-  color: var(--muted);
-  text-align: center;
-  line-height: 1.1;
-}
-
-.faction-choose-btn {
-  margin-top: 10px;
-  width: 100%;
-}
-
-.card--hero {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.card-hero-art {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.card-hero-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.loading-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100%;
-  /* background: radial-gradient(circle at 50% 40%, #1c1f28 0%, #0d0e12 100%); */
-  gap: 20px;
-}
-
-.loading-screen--fullbg {
-  background-size: cover;
-  background-position: center;
-  position: relative;
-  justify-content: flex-end;
-  padding-bottom: 48px;
-  gap: 0;
-}
-
-.loading-bg-overlay {
-  position: absolute;
-  inset: 0;
-  /* background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.92) 100%); */
-  pointer-events: none;
-}
-
-.loading-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 0 24px;
-  box-sizing: border-box;
-}
-
-.loading-flavour {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.6);
-  font-style: italic;
-  text-align: center;
-  max-width: 300px;
-  line-height: 1.5;
-  margin-bottom: 4px;
-}
-
-.loading-crest {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  animation: loading-pulse 1.6s ease-in-out infinite;
-}
-
-.loading-crest-icon {
-  width: 38px;
-  height: 38px;
-  object-fit: contain;
-  filter: brightness(0) saturate(100%) invert(70%) sepia(45%) saturate(500%) hue-rotate(360deg);
-}
-
-@keyframes loading-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 151, 58, 0.35); }
-  50%      { box-shadow: 0 0 0 10px rgba(200, 151, 58, 0); }
-}
-
-/* Anchored to the top of the loading screen (its parent is the flex column that
-   pushes everything else to the bottom). Same engraved-gold serif as the other
-   ornate headings — .formation-title / .result-outcome / .prep-side-label. */
-.loading-title {
-  position: absolute;
-  top: max(6vh, 28px);
-  left: 0;
-  right: 0;
-  z-index: 1;
-  text-align: center;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 700;
-  font-size: clamp(1.5rem, 7vw, 2.4rem);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
-}
-
-.loading-bar-track {
-  width: 84vw;
-  max-width: 460px;
-  height: 16px;
-  border-radius: 5px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.loading-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent), #e8b45a);
-  transition: width 0.2s ease-out;
-}
-
-.card-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  padding: 16px;
-  transition: border-color 0.15s;
-}
-.card:active { border-color: var(--accent); }
-.card h3 { color: var(--accent); margin-bottom: 4px; }
-.card p  { color: var(--muted); font-size: 0.9rem; }
-
-.placeholder { color: var(--muted); text-align: center; }
-
-.error  { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
-.hidden { display: none !important; }
-
-/* Plain text back button, used by the hero-load error state. This used to be an
-   ID rule (#back-btn), whose 1-0-0 specificity silently overrode the .frame-action
-   class on the hero-select back button — background, border, colour and padding
-   all came from here instead, which is why it did not match the button beside
-   the portraits. Class-based now, applied only where it is wanted. */
-.text-back-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.85rem;
-  padding: 6px 12px;
-  margin-bottom: 16px;
-  align-self: flex-start;
-}
-
-.bottom-nav {
-  display: flex;
-  flex-shrink: 0;
-  border-top: none;
-  height: 11vh;
-}
-
-.nav-btn {
-  flex: 1;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 4px;
-  cursor: pointer;
-  transition: filter 0.15s;
-}
-
-.nav-btn.active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
-}
-
-.nav-btn-icon {
-  width: auto;
-  height: 7vh;
-  object-fit: contain;
-  display: block;
-  filter: brightness(0.65) sepia(0.3);
-  transition: filter 0.15s;
-}
-
-.nav-btn-label {
-  font-size: 0.6rem;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-  transition: color 0.15s;
-}
-
-.nav-btn.active .nav-btn-icon {
-  filter: brightness(1) sepia(0.4) saturate(1.4);
-}
-
-.nav-btn.active .nav-btn-label {
-  color: var(--accent);
-}
-
-.nav-btn:active:not(:disabled) .nav-btn-icon {
-  filter: brightness(1.2);
-}
-
-.nav-btn.disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.nav-btn--locked {
-  position: relative;
-}
-
-.nav-btn--locked::after {
-  content: '🔒';
-  position: absolute;
-  top: 2px;
-  right: 18%;
-  font-size: 0.65rem;
-  filter: none;
-  opacity: 1;
-}
-
-.nav-btn:last-child { border-right: none; }
-.nav-btn.active  { color: var(--accent); }
-
-.confirm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.confirm-modal {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px 20px;
-  max-width: 300px;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.confirm-modal-text {
-  font-size: 0.95rem;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.5;
-}
-
-.confirm-modal-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.confirm-modal-btn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--surface);
-  color: var(--text);
-}
-
-.confirm-modal-btn--confirm {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
-}
-
-.nav-btn--battle-ready {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
-  animation: battle-ready-pulse 1.2s ease-in-out infinite;
-}
-
-.nav-btn--battle-ready .nav-btn-icon {
-  filter: brightness(1) sepia(0.4) saturate(1.8);
-}
-
-.nav-btn--battle-ready .nav-btn-label {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-@keyframes battle-ready-pulse {
-  0%, 100% { filter: brightness(1); }
-  50%       { filter: brightness(1.3); }
-}
-
-.loyalty-counter {
-  font-size: 0.65rem;
-  color: var(--muted);
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  margin-left: 4px;
-}
-
-.nav-btn-icon--pvp-fallback {
-  font-size: 1.6rem;
-  width: 64px;
-  height: 64px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  filter: brightness(0.65);
-  transition: filter 0.15s;
-}
-.nav-btn.active .nav-btn-icon--pvp-fallback {
-  filter: brightness(1);
-}
-
-.resource-bar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 4px 8px;
-  /* Ornate frame art stretched across the bar; --surface shows through as a
-     fallback until recource_bar.png is present. */
-  background-color: var(--surface);
-  background-image: url('/assets/icons/ui/recource_bar.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-  overflow: hidden;
-  position: relative;
-  z-index: 300;
-  max-height: 80px;
-  transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
-}
-
-/* Collapsed (slid up): used in battle prep until the spell sheet opens. Also
-   reclaims its vertical space so the arena isn't pushed down. */
-.resource-bar--collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-  border-bottom-width: 0;
-}
-
-.res-bar-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
-/* Timeline / errand slots. These are controls, not readouts, so they wear the
-   bottom-nav frame art instead of sitting bare among the resource numbers —
-   same button language as the nav bar, scaled to the resource strip. */
-.res-bar-btn {
-  /* Same frame art, icon treatment and press behaviour as .nav-btn — these are
-     controls sitting in a strip of readouts, and should look like the app's
-     other buttons rather than like a resource count. */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  color: var(--muted);
-  background-color: transparent;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  border-radius: 0;
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  transition: filter 0.15s, transform 0.1s;
-}
-
-.res-bar-btn .res-icon-img,
-.res-bar-btn img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  filter: brightness(0.65) sepia(0.3);
-  transition: filter 0.15s;
-}
-
-.res-bar-btn:not(:disabled):active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
-  transform: scale(0.94);
-}
-.res-bar-btn:not(:disabled):active .res-icon-img,
-.res-bar-btn:not(:disabled):active img { filter: none; }
-
-/* The errand slot is reserved but not yet wired up: same frame, dimmed. */
-.res-bar-placeholder {
-  cursor: default;
-  opacity: 0.45;
-}
-
-/* ── Timeline / roadmap modal ─────────────────────────────────────────────── */
-.timeline-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(40, 20, 60, 0.55), rgba(0, 0, 0, 0.82));
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 14px;
-  animation: timeline-fade 0.22s ease;
-}
-@keyframes timeline-fade { from { opacity: 0; } to { opacity: 1; } }
-.timeline-modal {
-  width: 100%;
-  max-width: 680px;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.02), transparent 140px),
-    var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-  animation: timeline-rise 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
-}
-@keyframes timeline-rise { from { transform: translateY(18px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
-.timeline-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(90deg, rgba(212, 175, 55, 0.10), transparent 70%);
-}
-.timeline-header::after {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
-  background: linear-gradient(90deg, var(--accent), transparent 60%);
-  opacity: 0.6;
-}
-.timeline-header-title {
-  font-weight: 800;
-  font-size: 1.35rem;
-  letter-spacing: 0.02em;
-  color: var(--text);
-  text-shadow: 0 1px 12px rgba(212, 175, 55, 0.25);
-}
-.timeline-close {
-  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
-  color: var(--muted); border-radius: 9px;
-  font-size: 1rem; cursor: pointer; width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s;
-}
-.timeline-close:hover { background: rgba(255, 255, 255, 0.10); color: var(--text); }
-.timeline-list { overflow-y: auto; padding: 20px 26px 26px; }
-
-.timeline-entry {
-  position: relative;
-  padding: 6px 0 26px 30px;
-  border-left: 2px solid var(--border);
-}
-.timeline-entry:last-child { border-left-color: transparent; padding-bottom: 4px; }
-.timeline-dot {
-  position: absolute;
-  left: -9px; top: 5px;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid var(--surface);
-  box-shadow: 0 0 0 2px var(--accent), 0 0 14px rgba(212, 175, 55, 0.7);
-}
-.timeline-body {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-}
-.timeline-date {
-  display: inline-block;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-.timeline-title {
-  font-weight: 800; color: var(--text); font-size: 1.15rem; line-height: 1.25;
-}
-.timeline-desc  { font-size: 0.9rem; color: var(--muted); margin-top: 6px; line-height: 1.55; }
-
-.timeline-sprites {
-  display: flex; gap: 22px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
-}
-.timeline-sprite-fig { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
-.timeline-sprite-fig figcaption {
-  font-size: 0.78rem; color: var(--text); font-weight: 600; letter-spacing: 0.02em;
-}
-.timeline-sprite {
-  width: 184px;
-  height: 184px;
-  border-radius: 14px;
-  background-size: 500% 500%;   /* 5×5 sheet */
-  background-repeat: no-repeat;
-  background-color: rgba(0, 0, 0, 0.25);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.45),
-    0 0 0 1px var(--border) inset,
-    0 0 30px rgba(212, 175, 55, 0.12) inset;
-}
-@media (max-width: 520px) {
-  .timeline-list { padding: 16px 16px 20px; }
-  .timeline-sprite { width: 150px; height: 150px; }
-  .timeline-header-title { font-size: 1.15rem; }
-}
-
-.res-bar-icon {
-  font-size: 0.82rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-.res-icon-img {
-  width: 40px;   /* was `40` — a missing unit, so the declaration was dropped */
-  height: 40px;
-  object-fit: contain;
-  display: block;
-  image-rendering: pixelated;
-}
-
-.res-bar-val {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-  min-width: 14px;
-}
-
-.res-bar-sep {
-  width: 1px;
-  height: 14px;
-  background: var(--border);
-  flex-shrink: 0;
-  margin: 0 2px;
-}
-
-.roster-trophy-bar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 4px 12px;
-  /* Same ornate frame art as the resource bar (fallback: --surface). */
-  background-color: var(--surface);
-  background-image: url('/assets/icons/ui/recource_bar.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  position: relative;
-  z-index: 300;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.roster-trophy-bar::-webkit-scrollbar { display: none; }
-
-.trophy-bar-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
-.trophy-bar-icon-wrap {
-  font-size: 0.82rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-.trophy-bar-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  display: block;
-  image-rendering: pixelated;
-}
-
-.trophy-bar-icon-fallback {
-  width: 40px;
-  height: 40px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.trophy-bar-val {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-  min-width: 14px;
-  text-align: center;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.72);
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  animation: overlay-in 0.18s ease;
-}
-
-.modal-overlay.hidden { display: none !important; }
-
-.modal-overlay--sub {
-  z-index: 150;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  animation: none;
-}
-
-.modal-overlay--sub .modal {
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
-}
-
-@keyframes overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.modal-title-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 1rem;
-  font-weight: bold;
-  color: var(--accent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.modal-header-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.modal-header-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 3px 9px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.modal-header-pill--active {
-  background: #2e1f06;
-  border: 1px solid #5a3e12;
-  color: #c9922a;
-}
-
-.modal-header-pill--passive {
-  background: #0c1e2e;
-  border: 1px solid #2e4e6a;
-  color: #5a9ec8;
-}
-
-.modal-header-pill--item {
-  background: #241a0c;
-  border: 1px solid #5a4420;
-  color: #c9a24a;
-}
-
-.modal-header-pill--rank {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: bold;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.modal-close-btn:active { color: var(--text); border-color: var(--muted); }
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-empty { color: var(--muted); font-size: 0.9rem; }
-
-.modal-level-badge {
-  background: var(--accent);
-  color: #111;
-  font-size: 0.78rem;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.modal-max-hint   { color: var(--muted); font-size: 0.75rem; }
-
-.modal-building-level-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 4px 0;
-}
-
-.modal-building-timer {
-  color: var(--accent);
-  font-size: 0.85rem;
-  margin-top: 4px;
-}
-
-.modal-building-option {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.modal-building-name { color: var(--text); font-weight: bold; }
-.modal-building-meta { color: var(--muted); font-size: 0.8rem; text-transform: capitalize; }
-.modal-building-unit { color: var(--accent); font-size: 0.8rem; }
-
-.unit-abilities-row {
-  display: flex;
-  gap: 7px;
-  justify-content: center;
-}
-
-.unit-abilities-icons {
-  display: flex;
-  gap: 6px;
-}
-
-.ability-icon {
-  background: #0e1219;
-  border: 1px solid #222d3e;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  color: inherit;
-  transition: border-color 0.15s, background 0.15s;
-  width: 7vh;
-  height: 7vh;
-  min-width: 0;
-  min-height: 0;
-  flex-shrink: 0;
-}
-
-.ability-icon:not([disabled]):active {
-  background: #141c2a;
-}
-
-.ability-icon--passive:not([disabled]) {
-  border-color: #2e4e6a;
-}
-
-.ability-icon--passive:not([disabled]):active {
-  border-color: #4a80aa;
-}
-
-.ability-icon--active:not([disabled]) {
-  border-color: #5a3e12;
-}
-
-.ability-icon--active:not([disabled]):active {
-  border-color: #c9922a;
-}
-
-.ability-icon--active.ability-icon--selected {
-  border-color: #c9922a;
-  background: #141c2a;
-}
-
-.ability-icon--passive.ability-icon--selected {
-  border-color: #4a80aa;
-  background: #141c2a;
-}
-
-.ability-icon--empty {
-  opacity: 0.2;
-  cursor: default;
-  pointer-events: none;
-}
-
-.ability-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-}
-
-.ability-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ability-modal-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ability-modal-icon {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-
-.ability-modal-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.ability-modal-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.ability-modal-type {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 2px 8px;
-  border-radius: 20px;
-  align-self: flex-start;
-}
-
-.ability-modal-type--active {
-  background: #2e1f06;
-  border: 1px solid #5a3e12;
-  color: #c9922a;
-}
-
-.ability-modal-type--passive {
-  background: #0c1e2e;
-  border: 1px solid #2e4e6a;
-  color: #5a9ec8;
-}
-
-.ability-modal-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.ability-modal-rank {
-  font-size: 0.75rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.ability-modal-desc {
-  font-size: 0.85rem;
-  color: var(--muted);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  margin: 0;
-}
-
-.unit-core-stats {
-  display: flex;
-  gap: 4px;
-}
-
-.core-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 5px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 4px 2px;
-  transition: background 0.15s;
-}
-
-.core-stat:active {
-  background: #1a2235;
-}
-
-.core-stat-label {
-  font-size: 0.52rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.core-stat-val {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.core-stat-val--action {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: capitalize;
-  text-align: center;
-}
-
-.unit-resists-grid {
-  display: flex;
-  gap: 2px;
-}
-
-.core-stat--levelup {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  width: 100%;
-  border-radius: 4px;
-  outline: 1px solid var(--accent);
-  animation: levelup-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes levelup-pulse {
-  0%, 100% { outline-color: var(--accent); }
-  50%       { outline-color: transparent; }
-}
-
-.resist-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: 1;
-  cursor: pointer;
-  border-radius: 4px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 3px 1px;
-  transition: background 0.15s;
-}
-
-.resist-cell:active {
-  background: #1a2235;
-}
-
-.resist-icon {
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
-.resist-val {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #7a8ea8;
-}
-
-.resist-val--pos { color: #6ec87e; }
-.resist-val--neg { color: #c86e6e; }
-
-.levelup-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-  position: relative;
-}
-
-.levelup-xp-bar {
-  flex: 1;
-  min-width: 0;
-  height: 4px;
-  background: #1a2235;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.levelup-xp-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.levelup-xp-label {
-  font-size: 0.62rem;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.hero-level-label {
-  font-size: 0.68rem;
-  color: var(--accent);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-}
-
-.levelup-btn {
-  padding: 4px 11px;
-  border-radius: 5px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-  font-family: inherit;
-}
-
-.levelup-btn--ready {
-  background: var(--accent);
-  color: #111;
-}
-
-.levelup-btn--ready:active { opacity: 0.8; }
-
-.levelup-btn--locked {
-  background: #1a2235;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.levelup-popup {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  right: 0;
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 0.65rem;
-  color: var(--text);
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  z-index: 20;
-  animation: bark-toast-in 0.15s ease-out;
-  pointer-events: none;
-}
-
-.screen-embark {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-.screen-embark::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 14, 20, 0.60);
-  pointer-events: none;
-  z-index: 0;
-}
-.screen-embark > * {
-  position: relative;
-  z-index: 1;
-}
-
-.embark-header-title {
-  padding: 12px 14px 4px;
-  font-size: 1rem;
-  font-weight: bold;
-  color: var(--text);
-}
-
-.embark-regions {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.embark-region-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.embark-card {
-  display: flex;
-  align-items: flex-end;
-  min-height: 120px;
-  background: var(--surface);
-  background-size: cover;
-  background-position: center;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  overflow: hidden;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.embark-card--disabled { opacity: 0.55; }
-.embark-card--active-region { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-
-.embark-card-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Text sits over the region art, so it's light with a soft shadow for contrast. */
-.embark-card-label { font-size: 1.05rem; font-weight: bold; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-.embark-card-desc  { font-size: 0.72rem; color: #d7dce6; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-.embark-card-crystal { font-size: 0.7rem; color: #f5c542; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
-
-.embark-card-badge {
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: var(--accent);
-  background: var(--bg);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 2px 6px;
-  flex-shrink: 0;
-}
-
-.embark-card-badge--soon { color: var(--muted); border-color: var(--muted); }
-
-.embark-level-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 0 2px 2px;
-}
-
-.embark-level-pip {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-family: inherit;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-  transition: border-color 0.12s, background 0.12s, color 0.12s;
-  flex-shrink: 0;
-}
-
-.embark-level-pip:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.embark-level-pip--selected {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
-  color: var(--accent);
-}
-
-/* Boss levels (3, 6) — red so the player knows a boss waits. */
-.embark-level-pip--boss {
-  border-color: #e0453f;
-  color: #ff7a72;
-  background: color-mix(in srgb, #e0453f 20%, var(--surface));
-}
-.embark-level-pip--boss:hover {
-  border-color: #ff6a62;
-  color: #ff9a92;
-}
-
-.embark-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.embark-header {
-  padding: 8px 14px 6px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.embark-header h2 {
-  font-size: 1rem;
-  margin-bottom: 0;
-}
-
-.embark-title {
-  font-size: 0.82rem;
-  font-weight: bold;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.embark-regions-grid {
-  padding: 6px 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.embark-controls {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.embark-march-row { padding: 10px 12px 6px; flex-shrink: 0; }
-
-.embark-march-btn {
-  width: 100%;
-  padding: 11px 16px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
-  letter-spacing: 0.02em;
-}
-
-.embark-card--coming-soon {
-  opacity: 0.5;
-  cursor: default;
-  pointer-events: none;
-}
-
-.embark-region-block--coming-soon .embark-level-row {
-  display: none;
-}
-
-.screen-settings {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.settings-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 24px 16px;
-  overflow-y: auto;
-}
-
-.settings-header {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.settings-row:last-child {
-  border-bottom: none;
-}
-
-.settings-label {
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.settings-value {
-  font-size: 0.85rem;
-  color: var(--muted);
-  text-transform: capitalize;
-}
-
-.settings-toggle {
-  padding: 5px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  min-width: 52px;
-  text-align: center;
-}
-
-.settings-toggle--on {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
-}
-
-.settings-section--danger {
-  border-color: #7a2b2b;
-  padding: 14px 16px;
-  gap: 10px;
-}
-
-.settings-danger-title {
-  font-size: 0.78rem;
-  color: #e07a7a;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700;
-}
-
-.settings-reset-btn {
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid #7a2b2b;
-  background: rgba(122, 43, 43, 0.15);
-  color: #e07a7a;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.settings-reset-btn:active {
-  background: rgba(122, 43, 43, 0.3);
-}
-
-.confirm-modal-btn--danger {
-  background: #7a2b2b;
-  border-color: #7a2b2b;
-  color: #fff;
-}
-
-.embark-march-btn:disabled {
-  background: var(--border);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.embark-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.embark-tab-btn {
-  flex: 1;
-  padding: 10px 4px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.embark-tab-btn.active   { color: var(--accent); border-bottom-color: var(--accent); }
-.embark-tab-btn.disabled { opacity: 0.4; cursor: not-allowed; }
-
-.embark-tab-content {
-  display: none;
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px 12px;
-}
-
-.embark-tab-content.active {
-  display: flex;
-  flex-direction: column;
-}
-
-.embark-unit-list { display: flex; flex-direction: column; gap: 6px; }
-
-.embark-unit-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.embark-unit-item.selected {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-}
-
-.embark-unit-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.embark-unit-name  { font-size: 0.85rem; font-weight: 600; color: var(--text); }
-.embark-unit-level { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
-
-.screen-roster {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-.screen-roster::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 14, 20, 0.55);
-  pointer-events: none;
-  z-index: 0;
-}
-.screen-roster > * {
-  position: relative;
-  z-index: 1;
-}
-
-.roster-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.roster-faction { font-size: 0.75rem; color: var(--muted); text-transform: capitalize; }
-.roster-hero    { font-size: 0.85rem; color: var(--accent); font-weight: bold; text-transform: capitalize; }
-.roster-counter { font-size: 0.75rem; color: var(--muted); }
-
-.roster-main {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.roster-slider-wrap {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.roster-track {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-.roster-slide {
-  flex: 0 0 100%;
-  width: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 6px;
-  box-sizing: border-box;
-}
-
-/* Roster at-a-glance strip — reuses the battle-prep portrait-card frame, with
-   an HP bar / dead badge added underneath so damaged and fallen units read in
-   one look. Cards are clickable and page the slider to that unit. */
-.roster-portrait-wrap {
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  padding: clamp(3px, 0.6vh, 8px) 10px;
-  /* Scrollbar chrome is hidden: the nav arrows/dots are the paging control,
-     and goTo() scrolls the active portrait into view. Swipe still works. */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.roster-portrait-wrap::-webkit-scrollbar { display: none; }
-
-/* Sizes are viewport-driven (clamped) so the strip shrinks on short screens
-   instead of pushing the unit card out of view. Everything inside the card is
-   derived from --portrait-card-h, so one value tunes the whole strip. */
-/* The art fills the whole inner panel of the frame; the HP bar is overlaid
-   along its bottom edge rather than taking a row of its own. */
-.portrait-card--roster {
-  --portrait-card-h: clamp(52px, 8vh, 74px);
-  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
-  height: var(--portrait-card-h);
-  width: calc(var(--portrait-card-h) * 0.80);
-  padding: var(--portrait-inset);
-  gap: 0;
-  cursor: pointer;
-  position: relative;
-}
-
-.portrait-card--roster .portrait-art-img,
-.portrait-card--roster .portrait-art {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-  border-radius: 2px;
-}
-
-.portrait-card--roster .portrait-hp-bar {
-  position: absolute;
-  left: var(--portrait-inset);
-  right: var(--portrait-inset);
-  bottom: var(--portrait-inset);
-  width: auto;
-}
-
-.portrait-card--roster .portrait-status--dead {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-}
-
-.portrait-hp-bar {
-  height: 5px;
-  border-radius: 2px;
-  background: rgba(0,0,0,0.6);
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
-}
-
-.portrait-hp-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.2s;
-}
-
-.portrait-hp-fill--ok       { background: #4caf50; }
-.portrait-hp-fill--damaged  { background: #d8b23a; }
-.portrait-hp-fill--critical { background: #d1483a; }
-
-.portrait-status--dead {
-  font-size: 0.6rem;
-  line-height: 1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-.portrait-card--roster.portrait-card--dead {
-  opacity: 0.75;
-  box-shadow: inset 0 0 0 2px rgba(209,72,58,0.6);
-}
-
-.portrait-card--roster.portrait-card--selected {
-  background-image: url('/assets/icons/ui/formation_highligt.png');
-}
-
-/* .roster-nav / .roster-dot rules removed — the roster pages via the portrait
-   strip and swipe; there are no arrows or dots. */
-
-
-.unit-card {
-  background: #000000;
-  border: 1px solid #2e3a50;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  display: flex;
-  flex-direction: column;
-}
-
-.unit-main-row {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-  padding: 4px;
-}
-
-.unit-core-stats--side {
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 64px;
-  justify-content: space-between;
-  align-self: stretch;
-}
-
-/* Tightened only for the roster card's side columns — .core-stat is shared with
-   the detail sheets, which have room to spare. */
-.unit-core-stats--side .core-stat {
-  flex: 1;
-  justify-content: center;
-  padding: 2px 2px;
-}
-
-.unit-core-stats--side .core-stat-label { font-size: 0.48rem; }
-.unit-core-stats--side .core-stat-val   { font-size: 0.78rem; }
-.unit-core-stats--side .core-stat-val--action { font-size: 0.56rem; }
-
-.unit-resists-grid--side {
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 48px;
-  justify-content: space-between;
-  align-self: stretch;
-}
-
-.unit-resists-grid--side .resist-cell {
-  flex: 1;
-  justify-content: center;
-}
-
-.unit-main-row .unit-portrait {
-  flex: 1;
-  min-width: 0;
-  height: 45vh;
-  border-radius: 10px;
-}
-
-.unit-portrait {
-  height: 45vh;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  align-self: center;
-  border-radius: 10px 10px 0 0;
-}
-
-.unit-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.unit-portrait-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0b0f18;
-  color: #2e3a50;
-  font-size: 0.75rem;
-  font-family: monospace;
-  text-align: center;
-  padding: 8px;
-  word-break: break-all;
-}
-
-.unit-identity-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 10px 5px;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75) 40%);
-  z-index: 2;
-}
-
-.unit-identity-main {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.unit-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #eaecf2;
-  line-height: 1.1;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-}
-
-.unit-identity-tags {
-  display: flex;
-  gap: 5px;
-}
-
-.unit-tag {
-  font-size: 0.6rem;
-  padding: 2px 7px;
-  border-radius: 20px;
-  background: #26200f;
-  border: 1px solid #54421a;
-  color: #c49a4a;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.unit-card--building {
-  align-items: center;
-  justify-content: center;
-  min-height: 45vh;
-  gap: 12px;
-}
-
-.building-card-icon {
-  font-size: 3rem;
-  opacity: 0.7;
-}
-
-.building-card-label {
-  color: var(--accent);
-  font-size: 1.1rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.unit-card--dead {
-  opacity: 0.6;
-  filter: grayscale(60%);
-}
-
-.unit-status-badge {
-  background: #c0392b;
-  color: #fff;
-  padding: 6px 8px;
-  border-radius: 8px;
-  display: inline-block;
-  margin: 8px 0;
-  font-weight: 600;
-}
-
-.unit-resurrect-row { margin: 8px 0; }
-.resurrect-btn {
-  background: linear-gradient(180deg,#2563eb,#1243b8);
-  color: #fff;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.resurrect-btn[disabled] { opacity: 0.6; cursor: default; }
-
-.unit-heal-row { margin: 8px 0; }
-.heal-btn {
-  background: linear-gradient(180deg,#16a34a,#0f7a37);
-  color: #fff;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.heal-btn[disabled] { opacity: 0.6; cursor: default; }
-
-.unit-dead-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.1rem;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-  pointer-events: none;
-  background: rgba(0,0,0,0.25);
-}
-
-.battle-cell--dead .battle-cell-portrait { filter: grayscale(60%) brightness(0.7); }
-.portrait-card--dead .portrait-art-img { filter: grayscale(60%) brightness(0.6); }
-
-
-.unit-info {
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.unit-slide-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.62rem;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  z-index: 3;
-}
-
-.unit-slide-badge--tl {
-  top: 8px;
-  right: 8px;
-  left: auto;
-}
-
-.unit-stat-diffs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.stat-diff-chip {
-  font-size: 0.68rem;
-  font-weight: bold;
-  padding: 2px 7px;
-  border-radius: 20px;
-}
-
-.stat-diff-chip.stat-diff--up {
-  background: color-mix(in srgb, #6fcf97 15%, transparent);
-  color: #6fcf97;
-  border: 1px solid #6fcf9740;
-}
-
-.stat-diff-chip.stat-diff--down {
-  background: color-mix(in srgb, #eb5757 15%, transparent);
-  color: #eb5757;
-  border: 1px solid #eb575740;
-}
-
-.unit-slide-desc {
-  font-size: 0.78rem;
-  color: #8a9bb0;
-  line-height: 1.5;
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.unit-core-stats--6 {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.screen-battle {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.init-queue {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 5px;
-  padding: 5px 8px;
-  overflow-x: auto;
-  flex-shrink: 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.init-queue::-webkit-scrollbar { display: none; }
-
-/* The queue reuses the formation portrait-card frame (and its lit variant for
-   whoever acts next), so the same art reads the same way in prep and in battle.
-   Only the size and the side strip are queue-specific. */
-.portrait-card--init {
-  --portrait-card-h: clamp(46px, 7vh, 62px);
-  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
-  height: var(--portrait-card-h);
-  width: calc(var(--portrait-card-h) * 0.80);
-  padding: var(--portrait-inset);
-  gap: 0;
-  position: relative;
-  cursor: default;
-}
-
-.portrait-card--init .portrait-art-img,
-.portrait-card--init .portrait-art {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-  border-radius: 2px;
-}
-
-.portrait-card--init .portrait-art {
-  background: var(--bg);
-  font-size: 1rem;
-}
-
-/* Which army the unit belongs to, along the bottom edge of the art. */
-.init-side-strip {
-  position: absolute;
-  left: var(--portrait-inset);
-  right: var(--portrait-inset);
-  bottom: var(--portrait-inset);
-  height: 3px;
-  border-radius: 2px;
-  background: var(--border);
-}
-.portrait-card--player .init-side-strip { background: var(--accent); }
-.portrait-card--enemy  .init-side-strip { background: #c84a3a; }
-
-.portrait-card--dead-init { opacity: 0.5; }
-
-.battle-log {
-  flex-shrink: 0;
-  padding: 6px 10px;
-  min-height: 68px;
-  max-height: 35vh;
-  overflow-y: auto;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.log-entry        { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
-.log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
-.log-entry--skip  { color: #444; }
-.log-entry--bark  { color: var(--accent); font-style: italic; }
-.log-entry--notice { color: #c9922a; text-align: center; font-style: italic; font-size: 0.7rem; }
-.log-entry--error { color: #c84a3a; font-style: italic; }
-.log-actor  { color: var(--text); }
-.log-target { color: #c8973a; }
-.log-resisted { color: var(--muted); font-size: 0.7em; }
-.log-val    { color: #c84a3a; font-weight: bold; }
-
-.action-panel {
-  flex-shrink: 0;
-  padding: 10px 12px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.action-panel--enemy { align-items: center; }
-.action-panel-label  { font-size: 0.72rem; color: var(--muted); }
-.action-panel-label strong { color: var(--text); }
-
-.action-btns { display: flex; gap: 6px; justify-content: center; }
-
-.action-btns .action-btn {
-  width: 65px;
-  height: 65px;
-  padding: 0;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--bg);
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.action-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--bg);
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.12s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.battle-action-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 5px;
-}
-
-.battle-action-ability-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 5px;
-}
-
-.action-btn:active       { background: #2a200a; }
-.action-btn--skip        { border-color: var(--muted); color: var(--muted); }
-.action-btn--cancel      { border-color: var(--danger); color: var(--danger); }
-.action-btn--disabled    { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
-
-.battle-cell--acting {
-  outline: 2px solid var(--accent) !important;
-  background: #2a200a !important;
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.battle-cell--targetable {
-  outline: 2px dashed #c84a3a !important;
-  background: #2a1010 !important;
-  cursor: pointer;
-}
-
-.battle-cell--targetable:active { background: #3a1818 !important; }
-.battle-cell--dead { opacity: 0.35; filter: grayscale(1); cursor: default; }
-
-/* ── Battle animations ───────────────────────────────────────────── */
-@keyframes anim-hit {
-  0%   { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0); background: transparent; }
-  20%  { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0.9); background: rgba(200, 60, 40, 0.25); }
-  100% { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0); background: transparent; }
-}
-@keyframes anim-death {
-  0%   { transform: translateX(0);    filter: grayscale(0); }
-  15%  { transform: translateX(-6px); }
-  30%  { transform: translateX(6px);  }
-  45%  { transform: translateX(-4px); }
-  60%  { transform: translateX(4px);  }
-  75%  { transform: translateX(-2px); }
-  90%  { transform: translateX(0);    filter: grayscale(0.5); }
-  100% { transform: translateX(0);    filter: grayscale(1); }
-}
-@keyframes anim-log-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.anim-hit   { animation: anim-hit   0.4s ease-out; }
-.anim-death { animation: anim-death 0.55s ease-out forwards; }
-.anim-log-in { animation: anim-log-in 0.2s ease-out; }
-.anim-actor-pulse { animation: pulse-acting 1.2s ease-in-out infinite; }
-
-@keyframes pulse-acting {
-  0%, 100% { box-shadow: 0 0 0 2px var(--accent); }
-  50%       { box-shadow: 0 0 0 5px var(--accent); }
-}
-
-.bc-hp-bar {
-  width: 100%;
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
-  margin-top: 2px;
-  overflow: hidden;
-}
-
-.bc-hp-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-/* --result-bg is set inline per battle (victory art vs a loading screen); the
-   rest of the layout belongs here, not in a style attribute. */
-.screen-battle-result {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-  background-image: var(--result-bg);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.result-pending { color: var(--muted); }
-.result-error   { color: var(--danger); }
-
-.ready-btn--result {
-  margin: 16px auto 0;
-  padding: 12px 32px;
-  font-size: 1rem;
-}
-
-/* One word at the head of the rewards panel - the old boxed banner and the
-   3rem emoji headline are gone; the victory art carries the moment. */
-.result-outcome {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  text-align: center;
-  padding-bottom: 10px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
-}
-
-.result-outcome--win  { color: var(--accent); }
-.result-outcome--loss { color: var(--danger); }
-
-.result-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-
-/* The victory art is the backdrop; the panel is a plain black block on top of
-   it, with no card chrome around it (see .result-content). */
-.result-content {
-  max-width: 500px;
-  width: 100%;
-  padding: 40px;
-  text-align: center;
-}
-
-.result-rewards {
-  margin: 24px 0;
-  text-align: left;
-  background: #000;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.result-reward-row {
-  display: flex;
-  gap: 10px;
-  font-size: 1rem;
-  color: var(--text);
-  align-items: center;
-}
-
-.result-reward-row span { color: var(--accent); font-weight: bold; }
-.result-log { font-size: 0.75rem; color: var(--muted); }
-
-/* Victory reward chips — icon-forward, wrapping grid. */
-.reward-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  justify-content: center;
-}
-.reward-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 8px 12px;
-}
-.reward-chip-icon { display: flex; align-items: center; font-size: 1.4rem; line-height: 1; }
-.reward-chip-icon .res-icon-img,
-.reward-chip-img { width: 28px; height: 28px; display: block; object-fit: contain; }
-.reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
-.reward-chip-label { color: #cfd6e2; font-size: 0.72rem; text-transform: capitalize; }
-.reward-unlock {
-  margin-top: 12px;
-  color: #6fe03a;
-  font-weight: bold;
-  text-align: center;
-}
-
-
-.battle-cell-portrait {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  border-radius: 4px;
-  display: block;
-  z-index: 0;
-}
-
-/* Status-effect icons pinned to the top of a unit's portrait (bleed/chill/burn/
-   poison). No z-index: painted after the portrait but before .battle-cell-info,
-   so they sit over the art while the name/HP still paint on top. */
-.bc-status-icons {
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  right: 2px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
-  pointer-events: none;
-  line-height: 1;
-}
-.bc-status-icon {
-  font-size: 9px;
-  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);
-}
-
-/* One-shot coloured pulse over the portrait when a DoT ticks. Inserted before
-   .battle-cell-info and given no z-index so the text stays legible above it. */
-.bc-status-flash {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: 4px;
-  opacity: 0;
-  animation: bc-status-flash 0.65s ease-out;
-}
-@keyframes bc-status-flash {
-  0%   { opacity: 0; }
-  22%  { opacity: 0.85; }
-  100% { opacity: 0; }
-}
-.bc-status-flash--burn   { background: radial-gradient(circle, rgba(255,130,25,0.95), rgba(255,60,0,0.35) 65%, transparent 85%); }
-.bc-status-flash--poison { background: radial-gradient(circle, rgba(130,235,60,0.9),  rgba(45,160,20,0.35) 65%, transparent 85%); }
-.bc-status-flash--bleed  { background: radial-gradient(circle, rgba(235,25,45,0.9),   rgba(140,0,10,0.35) 65%, transparent 85%); }
-.bc-status-flash--chill  { background: radial-gradient(circle, rgba(125,205,255,0.9), rgba(30,120,220,0.35) 65%, transparent 85%); }
-
-.detail-unit-portrait {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  object-fit: cover;
-  object-position: top center;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-}
-
-/* Faction-independent, so it lives here rather than in SCREEN_BACKGROUNDS
-   (utils.js), which keys every screen's art by faction. */
-.screen-battle-prep {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  background-image: url('/assets/screens/battle_prep_bg.jpeg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.battle-arena {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 95vw;
-  margin: 0 auto;
-}
-
-.battle-half {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 5px;
-  flex: 1;
-}
-
-.battle-half-label {
-  font-size: 0.62rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-/* One header bar across both grids: player stats | launch button | enemy stats.
-   Both sides share a single type scale so neither reads as the louder one. */
-.battle-prep-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 10px;
-  flex-shrink: 0;
-}
-
-.prep-side {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
-
-.prep-side-label {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 700;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.75));
-  white-space: nowrap;
-}
-
-.prep-side-stats {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1;
-}
-
-.prep-side-stats .loyalty-counter {
-  margin-left: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #ece3c8;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-}
-
-.prep-side-stats .army-power {
-  margin-left: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #f2d489;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-}
-
-.enemy-spell-indicator {
-  font-size: 0.85rem;
-  line-height: 1;
-  color: #c9922a;
-  text-shadow: 0 0 6px #c9922a, 0 0 2px #c9922a;
-}
-
-.battle-loyalty-hint {
-  font-size: 0.58rem;
-  color: var(--muted);
-  text-align: center;
-  padding: 1px 4px 2px;
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-}
-
-.battle-vs {
-  display: none;
-}
-
-.battle-grid-wrap {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 25px 20px 25px 20px;
-}
-
-.battle-grid-wrap::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('/assets/icons/ui/battle_grid.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.battle-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, 110px);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.battle-cell {
-  border-radius: 0;
-  border: none;
-  outline: 1px solid var(--border);
-  outline-offset: -1px;
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-end;
-  font-size: 0.6rem;
-  text-align: center;
-  box-sizing: border-box;
-  cursor: default;
-  position: relative;
-  overflow: hidden;
-  padding: 0;
-}
-
-.battle-cell--bark-active {
-  overflow: visible;
-  /* Above the battle HUD (resource-bar z-index 300) so a top-row unit's toast
-     isn't hidden behind it, but below modals/tutorial (1000+). */
-  z-index: 400;
-}
-
-.bark-toast {
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  transform: translateX(-50%);
-  margin-bottom: 6px;
-  max-width: 160px;
-  width: max-content;
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 0.62rem;
-  line-height: 1.3;
-  color: var(--text);
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  z-index: 9999;
-  pointer-events: none;
-  animation: bark-toast-in 0.18s ease-out;
-}
-
-.bark-toast::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--accent);
-}
-
-@keyframes bark-toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.battle-cell--fog {
-  color: var(--muted);
-  font-size: 0.6rem;
-}
-
-.battle-cell--enemy {
-  outline-color: #7a3a3a;
-  background: #2a1a1a;
-  cursor: pointer;
-}
-
-.battle-cell--enemy:active {
-  outline-color: #aa5a5a;
-}
-
-.battle-cell--placed {
-  outline-color: var(--accent);
-  background: #1a2a1a;
-  cursor: grab;
-  position: relative;
-  /* Let pointer-drag work on touch: without this the browser hijacks the
-     press-and-drag as a scroll/pan and fires pointercancel, so grid→grid drag
-     never starts on mobile (roster→grid already works via .portrait-card). */
-  touch-action: none;
-}
-
-.battle-cell--placed:active {
-  cursor: grabbing;
-}
-
-.battle-cell--hover {
-  background: #1a2a1a;
-  outline-color: var(--accent);
-}
-
-.battle-cell--dragging {
-  opacity: 0.4;
-}
-
-.battle-cell-name {
-  font-size: 0.52rem;
-  color: #fff;
-  line-height: 1.1;
-  text-align: center;
-  width: 100%;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.battle-cell-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 4px 4px;
-  background: linear-gradient(to top, rgba(0,0,0,0.80) 0%, transparent 100%);
-  z-index: 1;
-}
-
-.battle-cell-sub {
-  font-size: 0.48rem;
-  color: rgba(255,255,255,0.75);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-}
-
-.battle-cell-row-hint {
-  font-size: 0.5rem;
-  color: var(--muted);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.battle-cell-remove {
-  position: absolute;
-  top: 2px;
-  right: 3px;
-  font-size: 0.5rem;
-  color: var(--muted);
-  line-height: 1;
-}
-
-/* Sits in .battle-prep-header, in the gap between the two power readouts.
-   Art-only button: no chrome of its own, the PNG is the button. */
-.battle-prep-enter-btn {
-  flex-shrink: 0;
-  position: relative;
-  border: none;
-  background: none;
-  /* Padding is the tap target, not decoration - the art alone is a small hit
-     area for a thumb, and this is the screen's primary action. */
-  padding: 6px 10px;
-  margin: -6px -10px;
-  font-family: inherit;
-  font-size: 1.6rem;
-  color: var(--muted);
-  line-height: 0;
-  cursor: not-allowed;
-  /* Unplaced hero = not ready: drained and dim, so "ready" reads as the art
-     lighting up rather than as a colour change. */
-  filter: grayscale(85%) brightness(0.55);
-  opacity: 0.6;
-  transition: filter 0.25s, opacity 0.25s, transform 0.1s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.battle-prep-enter-btn img {
-  display: block;
-  width: clamp(58px, 17vw, 92px);
-  height: auto;
-  position: relative;
-  z-index: 1;
-}
-
-/* The glow is its own layer behind the art: a radial bloom that breathes, so
-   the light spills past the button's edges instead of tracing its alpha mask
-   the way a drop-shadow does. */
-.battle-prep-enter-btn::before {
-  content: '';
-  position: absolute;
-  inset: -18%;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(255, 214, 120, 0.55) 0%,
-    rgba(200, 151, 58, 0.32) 38%,
-    rgba(200, 151, 58, 0) 70%);
-  opacity: 0;
-  transition: opacity 0.25s;
-  pointer-events: none;
-}
-
-.battle-prep-enter-btn--ready {
-  cursor: pointer;
-  filter: drop-shadow(0 0 6px rgba(255, 200, 90, 0.55));
-  opacity: 1;
-}
-
-.battle-prep-enter-btn--ready::before {
-  opacity: 1;
-  animation: to-battle-bloom 2s ease-in-out infinite;
-}
-
-.battle-prep-enter-btn--ready:active {
-  transform: scale(0.93);
-  filter: drop-shadow(0 0 10px rgba(255, 214, 120, 0.9));
-}
-
-.battle-prep-enter-btn--ready:active::before { animation: none; opacity: 1; }
-
-@keyframes to-battle-bloom {
-  0%, 100% { opacity: 0.45; transform: scale(0.92); }
-  50%      { opacity: 1;    transform: scale(1.12); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .battle-prep-enter-btn--ready::before { animation: none; opacity: 0.8; }
-}
-
-.army-power {
-  font-size: 0.7rem;
-  color: var(--accent);
-  font-weight: 700;
-  margin-left: 6px;
-}
-
-/* Not a tab strip - there is only ever one section here, so this is a plain
-   caption over the portrait track. No borders, no surface fill. */
-.battle-prep-tabs {
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.battle-prep-tab-label {
-  padding: 6px 4px 2px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.battle-prep-tab-content {
-  display: none;
-  flex-shrink: 0;
-}
-
-.battle-prep-tab-content.active {
-  display: flex;
-  flex-direction: column;
-}
-
-.prep-track-wrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 8px 10px;
-  -webkit-overflow-scrolling: touch;
-  /* Scrollbar chrome is hidden everywhere a portrait track scrolls; swipe and
-     drag still work, and the bar itself was eating vertical space. */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.prep-track-wrap::-webkit-scrollbar { display: none; }
-
-.portrait-track,
-.spell-track {
-  display: flex;
-  flex-direction: row;
-  gap: 7px;
-  width: max-content;
-  align-items: flex-end;
-  transition: box-shadow 0.15s, background 0.15s;
-  border-radius: 8px;
-}
-
-.portrait-track--drop-target {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.track-empty-hint {
-  font-size: 0.72rem;
-  color: var(--muted);
-  padding: 0 4px;
-  align-self: center;
-}
-
-/* The whole card is wrapped in the ornate formation frame art; its content
-   (portrait, name, size) is inset with padding so it sits in the grey inner
-   panel, not on the border. background-color is a fallback until formation.png
-   exists. Hero/selected use a glow (box-shadow) since the art owns the border. */
-.portrait-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 62px;
-  height: 84px;
-  box-sizing: border-box;
-  /* top / sides / bottom padding ≈ the frame's border thickness */
-  padding: 11px 9px 12px;
-  cursor: grab;
-  flex-shrink: 0;
-  background-color: #14181f;
-  background-image: url('/assets/icons/ui/formation.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  user-select: none;
-  touch-action: none;
-}
-
-/* Selection swaps the frame art for its lit variant. The hero gets no special
-   highlight: they always occupy the first slot, which says it already. */
-.portrait-card:active,
-.portrait-card--selected {
-  background-image: url('/assets/icons/ui/formation_highligt.png');
-}
-
-.portrait-art {
-  width: 40px;
-  height: 40px;
-  border-radius: 3px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.portrait-art-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 3px;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
-  flex-shrink: 0;
-}
-
-.portrait-name {
-  font-size: 0.52rem;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.1;
-  max-width: 44px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-.portrait-size {
-  font-size: 0.48rem;
-  color: var(--muted);
-}
-
-.portrait-card--locked {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.spell-resources-bar {
-  display: flex;
-  gap: 10px;
-  padding: 6px 10px 0;
-  flex-shrink: 0;
-}
-
-.resource-item {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.resource-icon {
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-}
-
-.spell-icon-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: 58px;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 3px 4px;
-  background: var(--surface);
-  cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s;
-  position: relative;
-}
-
-.spell-icon-card:active {
-  border-color: var(--accent);
-}
-
-.spell-icon-card--disabled {
-  opacity: 0.4;
-}
-
-.spell-icon-card--used {
-  border-color: #4a6a4a;
-  background: #121f12;
-}
-
-.spell-icon-art {
-  width: 36px;
-  height: 36px;
-  border-radius: 5px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-}
-
-.spell-icon-name {
-  font-size: 0.52rem;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.1;
-  max-width: 54px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.spell-icon-cost {
-  font-size: 0.46rem;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
-.spell-icon-used-badge {
-  position: absolute;
-  top: 2px;
-  right: 3px;
-  font-size: 0.42rem;
-  color: #6aaa5a;
-  line-height: 1;
-}
-
-.detail-panel {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.detail-panel-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  font-size: 0.75rem;
-  text-align: center;
-}
-
-.detail-unit-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
-}
-
-.detail-unit-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
-}
-
-.detail-unit-badge {
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.detail-unit-badge--enemy {
-  border-color: #7a3a3a;
-  color: #c87070;
-}
-
-.detail-unit-badge--used {
-  border-color: #4a6a4a;
-  color: #6aaa5a;
-}
-
-.detail-unit-badge--locked {
-  border-color: var(--border);
-  color: var(--muted);
-}
-
-.detail-unit-tier {
-  font-size: 0.6rem;
-  color: var(--accent);
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.detail-spell-icon {
-  font-size: 1.2rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.detail-action {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.detail-action-label {
-  font-size: 0.6rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.detail-spell-desc {
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.detail-spell-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.detail-spell-cost {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.detail-spell-type {
-  font-size: 0.7rem;
-  color: var(--muted);
-  text-transform: capitalize;
-}
-
-.detail-use-btn {
-  align-self: flex-start;
-  padding: 8px 18px;
-  border-radius: 6px;
-  border: none;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.detail-use-btn:active {
-  opacity: 0.75;
-}
-
-.ready-btn {
-  flex-shrink: 0;
-  margin: 8px 14px 12px;
-  padding: 11px;
-  border-radius: 7px;
-  border: none;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.9rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.ready-btn:disabled {
-  opacity: 0.38;
-  cursor: default;
-}
-
-.screen-spelltome {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-}
-.screen-spelltome::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 14, 20, 0.60);
-  pointer-events: none;
-  z-index: 0;
-}
-.screen-spelltome > * {
-  position: relative;
-  z-index: 1;
-}
-
-.spelltome-main {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.tier-tabs {
-  flex-shrink: 0;
-  display: flex;
-  gap: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 14px;
-}
-
-.tier-tab {
-  flex: 1;
-  padding: 9px 0;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  transition: color 0.15s, border-color 0.15s;
-  margin-bottom: -1px;
-}
-
-.tier-tab--active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.spelltome-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.spells-slider-wrap {
-  flex-shrink: 0;
-  padding: 12px 14px;
-  padding-top: 50px;
-  transform: translateX(-4%);
-}
-
-.spells-slider {
-  display: flex;
-  gap: 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 2px;
-  flex-direction: column;
-  align-items: center;
-}
-
-.spells-slider::-webkit-scrollbar {
-  display: none;
-}
-
-.spell-card {
-  flex-shrink: 0;
-  width: 55vw;
-  max-width: 320px;
-  height: 16vh;
-  border-radius: 12px;
-  background: transparent;
-  border: none;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(2px, 0.8vh, 6px);
-  cursor: pointer;
-  transition: opacity 0.15s;
-  position: relative;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.spell-card:active {
-  opacity: 0.75;
-}
-
-.spell-card--active .spell-card-icon img {
-  filter: drop-shadow(0 0 6px var(--accent));
-}
-
-.spell-card--unaffordable {
-  opacity: 0.45;
-}
-
-.spell-card--locked {
-  opacity: 0.35;
-}
-
-.spell-card-learned-ring {
-  display: none;
-}
-
-.spell-card-lock-overlay {
-  display: none;
-}
-
-.spell-card-lock-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0.92;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.spell-card-icon {
-  width: clamp(60px, 10vh, 100px);
-  height: clamp(60px, 10vh, 100px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.spell-card-icon img:first-child {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.spell-card-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.spell-card-name {
-  font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-  font-weight: 700;
-  color: #1a1008;
-  text-align: center;
-  line-height: 1.3;
-  word-break: break-word;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: 0.02em;
-}
-
-.spell-card-cost {
-  display: none;
-}
-
-.spell-card-check {
-  display: none;
-}
-
-.spell-cost-item {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.spell-cost-item .res-icon-img {
-  width: 15px;
-  height: 15px;
-}
-
-.spell-modal-type {
-  display: inline-flex;
-  align-self: flex-start;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 4px;
-  padding: 2px 7px;
-}
-
-.spell-modal-type--buff {
-  color: #7eb8f7;
-  background: color-mix(in srgb, #7eb8f7 12%, transparent);
-  border: 1px solid color-mix(in srgb, #7eb8f7 25%, transparent);
-}
-
-.spell-modal-type--debuff {
-  color: #f77e7e;
-  background: color-mix(in srgb, #f77e7e 12%, transparent);
-  border: 1px solid color-mix(in srgb, #f77e7e 25%, transparent);
-}
-
-.spell-modal-type--resurrect {
-  color: #6ec87e;
-  background: color-mix(in srgb, #6ec87e 12%, transparent);
-  border: 1px solid color-mix(in srgb, #6ec87e 25%, transparent);
-}
-
-.spell-modal-desc {
-  font-size: 0.88rem;
-  color: var(--text);
-  line-height: 1.5;
-}
-
-.spell-detail-action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-top: 2px;
-}
-
-.spell-detail-status {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.spell-detail-status--learned { color: #6ec87e; }
-.spell-detail-status--locked  { color: var(--muted); }
-
-.research-btn-full {
-  padding: 9px 18px;
-  border-radius: 7px;
-  border: none;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-
-.research-btn-full:active {
-  opacity: 0.75;
-}
-
-.research-btn-full:disabled {
-  background: var(--border);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.research-feedback {
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-weight: 600;
-}
-
-.research-feedback--success {
-  color: #6ec87e;
-  background: #1a2e1a;
-  border: 1px solid #2e5e2e;
-}
-
-.research-feedback--error {
-  color: #c86e6e;
-  background: #2e1a1a;
-  border: 1px solid #5e2e2e;
-}
-
-.spells-empty {
-  padding: 20px 14px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.screen-castle {
-  padding: 0;
-  max-width: 100%;
-  justify-content: space-between;
-}
-
-.castle-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  overflow: hidden;
-}
-
-.castle-grounds {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.castle-grounds::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.castle-grid-wrap {
-  position: relative;
-  width: 100%;
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 4px;
-  max-width: 360px;
-}
-
-.outer-ring {
-  display: contents;
-}
-
-.outer-ring .castle-node {
-  width: 100%;
-  height: 100%;
-  background-image: url('/assets/icons/ui/building_slot_bg_highlight.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  min-height: 160px;
-  min-width: 100px;
-}
-
-.outer-ring .castle-node.castle-node--empty {
-  background-image: url('/assets/icons/ui/building_slot_bg.png');
-}
-
-.outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
-.outer-ring .castle-node:nth-child(2) { grid-column: 2; grid-row: 1; }
-.outer-ring .castle-node:nth-child(3) { grid-column: 3; grid-row: 1; }
-.outer-ring .castle-node:nth-child(4) { grid-column: 1; grid-row: 2; }
-.outer-ring .castle-node:nth-child(5) { grid-column: 3; grid-row: 2; }
-.outer-ring .castle-node:nth-child(6) { grid-column: 1; grid-row: 3; }
-.outer-ring .castle-node:nth-child(7) { grid-column: 2; grid-row: 3; }
-.outer-ring .castle-node:nth-child(8) { grid-column: 3; grid-row: 3; }
-
-.center-slot {
-  grid-column: 2;
-  grid-row: 2;
-  position: static;
-  transform: none;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  min-height: 130px;
-}
-
-.castle-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  padding: 3px;
-  text-align: center;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.castle-node--throne {
-  width: 100%;
-  height: 100%;
-  background-image: url('/assets/icons/ui/building_slot_bg.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.castle-node--production { border-color: #4a7a3a; }
-.castle-node--barracks   { border-color: #7a3a3a; }
-.castle-node--special        { border-color: #3a5a7a; }
-
-.castle-node--building {
-  border-color: var(--accent);
-  opacity: 0.8;
-}
-
-.castle-node--ready {
-  border-color: #6aaa5a;
-  box-shadow: 0 0 8px rgba(106, 170, 90, 0.3);
-}
-
-.castle-node--clickable { cursor: pointer; }
-
-.castle-node-icon  { font-size: 1rem; line-height: 1; }
-.castle-node-label {
-  font-size: 0.55rem;
-  color: var(--muted);
-  line-height: 1.2;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: normal;
-}
-.castle-node-level { font-size: 0.52rem; color: var(--accent); font-weight: bold; }
-.castle-node-timer { font-size: 0.65rem; }
-.castle-node-ready { font-size: 0.65rem; color: #6aaa5a; }
-.castle-node-hint  {
-  font-size: 0.48rem;
-  color: var(--accent);
-  margin-top: 1px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-.castle-node--throne .castle-node-icon  { font-size: 1.35rem; color: var(--accent); }
-.castle-node--throne .castle-node-label { font-size: 0.58rem; color: var(--accent); }
-
-.build-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.build-option {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.build-option-name {
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: var(--text);
-}
-
-.build-option-unit {
-  font-size: 0.8rem;
-  color: var(--accent);
-}
-
-.build-option-btn {
-  align-self: flex-start;
-  margin-top: 4px;
-  padding: 8px 18px;
-  font-size: 0.82rem;
-  border-radius: 6px;
-  background: var(--accent);
-  color: #111;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: opacity 0.15s;
-}
-
-.build-option-btn:active { opacity: 0.75; }
-
-.upgrade-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.upgrade-tab {
-  flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--muted);
-  font-size: 0.8rem;
-  padding: 7px 10px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.upgrade-tab--active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-.upgrade-body {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.upgrade-comparison {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 10px;
-  align-items: start;
-}
-
-.upgrade-stats-col {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  justify-content: center;
-  padding-top: 36px;
-}
-
-.cmp-stat-row {
-  display: grid;
-  grid-template-columns: 56px 28px 14px 1fr;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.75rem;
-}
-
-.cmp-stat-key   { color: var(--muted); font-size: 0.68rem; text-align: right; }
-.cmp-stat-cur   { color: var(--text); text-align: right; }
-.cmp-stat-arrow { color: var(--muted); text-align: center; }
-.cmp-stat-nxt   { color: var(--text); display: flex; align-items: center; gap: 3px; }
-
-.stat-diff        { font-size: 0.68rem; font-weight: bold; }
-.stat-diff--up    { color: #6fcf97; }
-.stat-diff--down  { color: #eb5757; }
-
-.upgrade-unit-card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.upgrade-unit-card--empty {
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-}
-
-.upgrade-unit-label  { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.upgrade-unit-name   { font-weight: bold; color: var(--accent); font-size: 0.92rem; }
-.upgrade-unit-type   { font-size: 0.72rem; color: var(--muted); text-transform: capitalize; }
-.upgrade-unit-unknown { color: var(--muted); font-size: 0.85rem; }
-
-.upgrade-unit-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 8px;
-}
-
-.upgrade-stat {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.76rem;
-}
-
-.upgrade-stat-label { color: var(--muted); }
-.upgrade-stat-val   { color: var(--text); font-weight: bold; }
-
-.upgrade-unit-res { display: flex; flex-wrap: wrap; gap: 3px; }
-
-.res-badge {
-  font-size: 0.62rem;
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-weight: bold;
-}
-
-.res-badge--pos {
-  background: color-mix(in srgb, #6fcf97 15%, transparent);
-  color: #6fcf97;
-  border: 1px solid #6fcf9740;
-}
-
-.res-badge--neg {
-  background: color-mix(in srgb, #eb5757 15%, transparent);
-  color: #eb5757;
-  border: 1px solid #eb575740;
-}
-
-.upgrade-unit-trait { font-size: 0.72rem; color: var(--text); }
-.trait-label { color: var(--accent); font-weight: bold; margin-right: 4px; font-size: 0.65rem; text-transform: uppercase; }
-
-.upgrade-confirm-btn {
-  width: 100%;
-  margin-top: 12px;
-  padding: 13px;
-  background: var(--accent);
-  color: #111;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: bold;
-  font-size: 0.92rem;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.upgrade-confirm-btn:active { opacity: 0.75; }
-
-.upgrade-no-paths  { display: flex; flex-direction: column; gap: 10px; }
-.upgrade-maxed     { color: var(--muted); font-size: 0.85rem; text-align: center; }
-
-.throne-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 4px 0;
-}
-
-.throne-level-display {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.03em;
-}
-
-.throne-level-num  { color: var(--accent); }
-.throne-level-next { color: #a8e06a; }
-
-.throne-desc {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin: 0;
-}
-
-/* Throne perk choice (level 2/3/4 branching boon). */
-.throne-perk-choice { display: flex; flex-direction: column; gap: 10px; }
-.throne-perk-intro  { font-size: 0.82rem; color: var(--muted); margin: 0 0 2px; text-align: center; }
-.throne-perk-card {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.throne-perk-card:hover  { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.throne-perk-card:active { transform: scale(0.99); }
-.throne-perk-label { font-weight: 700; color: #f2d489; font-size: 0.95rem; }
-.throne-perk-desc  { font-size: 0.78rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
-
-.throne-cost {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.throne-cost-item {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.throne-maxed {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-style: italic;
-  margin: 0;
-}
-
-.building-btn {
-  font-size: 0.82rem;
-  padding: 6px 12px;
-  margin-top: 4px;
-}
-
-.castle-unit-slider {
-  position: relative;
-  width: 100%;
-}
-
-.castle-slider-track {
-  width: 100%;
-  touch-action: pan-y;
-}
-
-.slider-arrow {
-  position: absolute;
-  top: 18vw;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: rgba(17, 19, 24, 0.82);
-  color: var(--text);
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  z-index: 4;
-  transition: border-color 0.15s, color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.slider-arrow:disabled { opacity: 0.22; cursor: default; }
-.slider-arrow:not(:disabled):active { border-color: var(--accent); color: var(--accent); }
-.slider-arrow--prev { left: 6px; }
-.slider-arrow--next { right: 6px; }
-
-.slider-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 0 4px;
-}
-
-.slider-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--border);
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.slider-dot--active {
-  background: var(--accent);
-  transform: scale(1.35);
-}
-
-.screen-pvp {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-.screen-pvp::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(11, 14, 20, 0.62);
-  pointer-events: none;
-  z-index: 0;
-}
-.screen-pvp > * {
-  position: relative;
-  z-index: 1;
-}
-
-.pvp-main {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.5rem;
-}
-
-.pvp-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  text-align: center;
-  max-width: 280px;
-}
-
-.pvp-placeholder-icon {
-  font-size: 3rem;
-  opacity: 0.5;
-}
-
-.pvp-placeholder-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.04em;
-}
-
-.pvp-placeholder-desc {
-  font-size: 0.875rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.prep-bottom-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 12px;
-  flex-shrink: 0;
-}
-
-.spells-fab {
-  flex-shrink: 0;
-  padding: 11px 14px;
-  border-radius: 7px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  position: relative;
-  transition: border-color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-
-.spells-fab:active {
-  background: #1a2a1a;
-  border-color: var(--accent);
-}
-
-.spells-fab-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.6rem;
-  font-weight: bold;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.prep-bottom-bar .ready-btn {
-  flex: 1;
-  margin: 0;
-}
-
-.spell-sheet-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.72);
-  z-index: 200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  animation: overlay-in 0.18s ease;
-}
-
-.spell-sheet-overlay.hidden {
-  display: none !important;
-}
-
-.spell-sheet {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-  width: 100%;
-  max-width: 480px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.spell-sheet-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  margin: 10px auto 0;
-  flex-shrink: 0;
-}
-
-.spell-sheet-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.spell-sheet-title {
-  font-size: 1rem;
-  font-weight: bold;
-  color: var(--accent);
-  flex: 1;
-}
-
-.spell-sheet-resources {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.spell-sheet-close {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: bold;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.spell-sheet-body {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.spell-sheet-empty {
-  color: var(--muted);
-  font-size: 0.82rem;
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.spell-list-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: default;
-  transition: background 0.15s;
-}
-
-.spell-list-row:last-child {
-  border-bottom: none;
-}
-
-.spell-list-row--disabled {
-  opacity: 0.45;
-}
-
-.spell-list-row--used {
-  background: rgba(106, 170, 90, 0.08);
-  border-left: 3px solid var(--accent);
-  padding-left: 13px;
-}
-
-.spell-list-icon {
-  flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.spell-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-  display: block;
-}
-
-.spell-list-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.spell-list-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.spell-list-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.spell-list-cost {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 0.72rem;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.spell-list-target {
-  font-size: 0.68rem;
-  color: var(--muted);
-}
-
-.spell-list-desc {
-  font-size: 0.72rem;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.spell-list-action {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding-top: 2px;
-}
-
-.spell-list-use-btn {
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: none;
-  background: var(--accent);
-  color: #111;
-  font-size: 0.78rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  white-space: nowrap;
-}
-
-.spell-list-use-btn:active {
-  opacity: 0.75;
-}
-
-.spell-list-undo-btn {
-  padding: 7px 12px;
-  border-radius: 6px;
-  border: 1px solid #4a6a4a;
-  background: transparent;
-  color: #6aaa5a;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.spell-list-locked {
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 4px 8px;
-}
-
-.spell-target-hint {
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.4;
-  padding: 8px 16px 4px;
-}
-
-.spell-target-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 8px 16px;
-}
-
-.spell-target-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px 6px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.spell-target-card:active {
-  border-color: var(--accent);
-  background: #1a2a1a;
-}
-
-.spell-target-portrait {
-  width: 46px;
-  height: 46px;
-  border-radius: 6px;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
-}
-
-.spell-target-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 6px;
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-}
-
-.spell-target-name {
-  font-size: 0.56rem;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.2;
-  max-width: 70px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.spell-target-sub {
-  font-size: 0.48rem;
-  color: var(--muted);
-}
-
-.spell-cast-cancel-btn {
-  margin: 4px 16px 12px;
-  padding: 10px;
-  border-radius: 7px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-
-.battle-cell-spell-dot {
-  position: absolute;
-  top: 3px;
-  left: 4px;
-  font-size: 0.48rem;
-  color: var(--accent);
-  line-height: 1;
-  z-index: 2;
-}
-/* ---------- Item equip slot (unit card abilities row) ---------- */
-.ability-icon--item {
-  border-color: #3a2e14;
-}
-/* Rarity tint on the equipped-item slot icon, matching the item cards. */
-.ability-icon--rarity-common { border-color: #16a34a; }
-.ability-icon--rarity-rare   { border-color: #2f74e0; }
-.ability-icon--rarity-epic   { border-color: #e8912a; }
-.ability-icon--rarity-mythic { border-color: #e0453f; }
-.ability-icon--item:not([disabled]):active {
-  border-color: #c9922a;
-}
-.ability-icon--item-empty {
-  opacity: 0.5;
-}
-.item-slot-plus {
-  font-size: 1.4rem;
-  color: var(--accent);
-  line-height: 1;
-}
-.item-slot-fallback {
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-/* ---------- Items modal ---------- */
-.items-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 60vh;
-  max-height: 60vh;
-}
-
-.items-search {
-  flex-shrink: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 0.9rem;
-  padding: 9px 12px;
-}
-.items-search:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.items-search::placeholder { color: var(--muted); }
-
-.items-filter-bar {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.items-filter-btn {
-  flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.items-filter-btn--active {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.items-slider {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-  flex: 1;
-  min-height: 0;
-  padding-bottom: 4px;
-}
-
-.item-card {
-  position: relative;
-  scroll-snap-align: start;
-  flex: 0 0 auto;
-  width: 62vw;
-  max-width: 220px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-  overflow-y: auto;
-}
-
-/* Rarity border colours. Placed after --equipped so rarity owns the border; the
-   equipped state is shown as a glow ring below instead of a border colour. */
-.item-card--rarity-common { border-color: #16a34a; }            /* green  */
-.item-card--rarity-rare   { border-color: #2f74e0; }            /* blue   */
-.item-card--rarity-epic   { border: 2px solid #e8912a; }        /* orange */
-.item-card--rarity-mythic { border: 2px solid #e0453f; }        /* red    */
-
-.item-card--equipped {
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.item-card--catalog {
-  opacity: 0.7;
-}
-
-/* Craftable-right-now catalog cards read at full strength and get an accent ring. */
-.item-card--catalog.item-card--available {
-  opacity: 1;
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.item-card--catalog .item-card-blocked {
-  color: var(--muted);
-}
-
-.item-card-unique {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #e0453f;
-  border: 1px solid #e0453f;
-  border-radius: 4px;
-  padding: 1px 5px;
-}
-
-.item-card-owned {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.item-card-icon {
-  width: 76px;
-  height: 76px;
-  border-radius: 8px;
-  background: #0e1219;
-  border: 1px solid #222d3e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.item-card-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.item-card-icon-fallback {
-  font-size: 1.6rem;
-}
-
-.item-card-name {
-  color: var(--text);
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-.item-card-tag {
-  font-size: 0.7rem;
-  color: var(--muted);
-}
-
-.item-card-tag--adds {
-  color: #c49a4a;
-}
-
-.item-card-stats {
-  font-size: 0.75rem;
-  color: var(--accent);
-}
-
-.item-action-btn {
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #fff;
-  margin-top: 4px;
-}
-
-.item-action-btn--equip {
-  background: linear-gradient(180deg,#2e7d32,#1b5e20);
-}
-
-.item-action-btn--equip[disabled] {
-  background: #333;
-  color: var(--muted);
-  cursor: default;
-}
-
-.item-action-btn--unequip {
-  background: linear-gradient(180deg,#8a2e2e,#5c1c1c);
-}
-
-.item-action-btn--craft {
-  background: linear-gradient(180deg,#2a5f8a,#1c3f5c);
-}
-
-.item-action-btn--craft[disabled] {
-  background: #333;
-  color: var(--muted);
-  cursor: default;
-}
-
-.item-cost {
-  font-size: 0.65rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.item-cost-part--short {
-  color: #c0392b;
-}
-
-.item-card-blocked {
-  font-size: 0.68rem;
-  color: #c0392b;
-}
-
-/* ── Deconstruction ─────────────────────────────────────────────────────────
-   Respec / demolish UI. Deliberately quieter than the upgrade button: these are
-   corrective actions, not the thing the player is meant to reach for. */
-.deconstruct-link {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  padding: 7px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--muted);
-  font-family: inherit;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.deconstruct-link:active { background: rgba(255, 255, 255, 0.05); }
-
-.deconstruct-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
-
-.deconstruct-intro {
-  font-size: 0.8rem;
-  color: var(--muted);
-  line-height: 1.4;
-  margin: 0;
-}
-
-.respec-options { display: flex; flex-direction: column; gap: 8px; }
-
-.respec-option {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-  padding: 9px 11px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  cursor: pointer;
-}
-.respec-option:active { border-color: var(--accent); }
-.respec-option-label { font-size: 0.9rem; font-weight: 700; color: var(--text); }
-.respec-option-sub   { font-size: 0.7rem; color: var(--muted); }
-.respec-option-cost  { font-size: 0.72rem; color: var(--accent); font-weight: 700; }
-
-.deconstruct-btn {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--danger);
-  background: rgba(200, 74, 58, 0.1);
-  color: var(--danger);
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.deconstruct-btn:active { background: rgba(200, 74, 58, 0.22); }
-
-.deconstruct-warn,
-.deconstruct-note {
-  font-size: 0.72rem;
-  color: var(--muted);
-  line-height: 1.4;
-  margin: 0;
-}
-.deconstruct-warn { color: var(--danger); opacity: 0.85; }
-
-/* Branch picker in the castle upgrade sheet: at most three paths, shown as
-   portrait cards (same frame + lit-selected art as the formation track) rather
-   than arrows and dots that hid the alternatives. */
-.branch-track-wrap {
-  padding: 6px 0 2px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.branch-track-wrap::-webkit-scrollbar { display: none; }
-
-.branch-track-wrap .portrait-track {
-  justify-content: center;
-  width: 100%;
-  gap: 10px;
-}
-
-.portrait-card--branch {
-  --portrait-card-h: clamp(64px, 10vh, 86px);
-  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
-  height: var(--portrait-card-h);
-  width: calc(var(--portrait-card-h) * 0.80);
-  padding: var(--portrait-inset);
-  gap: 1px;
-  cursor: pointer;
-}
-
-.portrait-card--branch .portrait-art-img {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  height: auto;
-  border-radius: 2px;
-}
-
-.portrait-card--branch .portrait-name {
-  max-width: 100%;
-  font-size: 0.5rem;
-}
-
-/* ── action | portrait track | action ───────────────────────────────────────
-   One thumb-height strip: a framed button on each side of a portrait picker.
-   Used by the castle upgrade sheet (build / deconstruct) and by hero selection
-   in registration (back / choose). */
-.track-action-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 6px 2px 2px;
-}
-
-.track-action-row .branch-track-wrap {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-}
-
-.frame-action {
-  /* Derived from the branch cards' own sizing vars so the button and the
-     portraits it flanks are always exactly the same height. Every property the
-     global `button` rule sets is reset here, so a framed action never inherits
-     the app's default gold pill. */
-  --portrait-card-h: clamp(64px, 10vh, 86px);
-  margin: 0;
-  align-self: center;
-  flex: 0 0 auto;
-  width: calc(var(--portrait-card-h) * 0.80);
-  height: var(--portrait-card-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 1.4rem;
-  line-height: 1;
-  background-color: transparent;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  transition: transform 0.1s, filter 0.15s;
-}
-
-.frame-action:active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
-  transform: scale(0.94);
-}
-
-.frame-action { color: var(--accent); }
-/* Deconstruct is the one action that gets a different colour, because it is the
-   destructive one; back / confirm / build all read as the same control. */
-.frame-action--deconstruct { color: var(--danger); }
-
-/* Keeps the picker centred when a slot offers no deconstruct (a fresh build). */
-.frame-action--spacer {
-  background: none;
-  pointer-events: none;
-}
-
-/* Registration crest / hero track — the same portrait-card frame used across the
-   game, sized larger since it is the primary chooser on these screens. */
-.register-track-wrap {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  flex-shrink: 0;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, rgba(8, 9, 12, 0.92), rgba(8, 9, 12, 0));
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.register-track-wrap::-webkit-scrollbar { display: none; }
-
-.register-track-wrap .portrait-track {
-  justify-content: center;
-  width: 100%;
-  gap: 12px;
-}
-
-.portrait-card--crest {
-  --portrait-card-h: clamp(72px, 12vh, 104px);
-  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
-  height: var(--portrait-card-h);
-  width: calc(var(--portrait-card-h) * 0.80);
-  padding: var(--portrait-inset);
-  gap: 1px;
-  cursor: pointer;
-}
-
-.portrait-card--crest .portrait-art-img {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  height: auto;
-  border-radius: 2px;
-  object-fit: cover;
-}
-
-.portrait-card--crest .portrait-name {
-  max-width: 100%;
-  font-size: 0.5rem;
-}
-
-/* Faction example card: absent until a portrait is tapped, so the slide keeps
-   its description and Choose button reachable. Tapping the same portrait (or
-   the card's own margin) closes it again. */
-.faction-example-card:empty { display: none; }
-
-.faction-example-card--open {
-  max-height: 46vh;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.faction-example-card--open::-webkit-scrollbar { display: none; }
+import { UNIT_ABILITIES } from './unit_abilities.js';
+
+const UNITS = {
+  choir_of_the_cursed: {
+    black_castellan: {
+      id: 'h_d_1',
+      name: 'Black Castellan',
+      f: 'd', t: 1, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 80, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg',
+      passive: 'rage 1', ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    black_castellan_path_a_t2: {
+      id: 'h_d_1_a2',
+      name: 'Black Castellan',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 95, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'inspiration_damage 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    black_castellan_path_a_t3: {
+      id: 'h_d_1_a3',
+      name: 'Black Castellan',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 110, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'inspiration_damage 2'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    black_castellan_path_a_t4: {
+      id: 'h_d_1_a41',
+      name: 'Black Castellan',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 125, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'inspiration_damage 2', 'command 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    black_castellan_path_a_t4_alt: {
+      id: 'h_d_1_a42',
+      name: 'Black Castellan',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 125, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'inspiration_damage 2', 'inspiration_max_hp 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    black_castellan_path_b_t2: {
+      id: 'h_d_1_b2',
+      name: 'Black Castellan',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 90, armor: 15, initiative: 45,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1'], ability: 'pact 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    black_castellan_path_b_t3: {
+      id: 'h_d_1_b3',
+      name: 'Black Castellan',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 100, armor: 20, initiative: 50,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: 'pact 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    black_castellan_path_b_t4: {
+      id: 'h_d_1_b41',
+      name: 'Black Castellan',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 110, armor: 25, initiative: 55,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 1', 'execute 2'], ability: 'pact 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    black_castellan_path_b_t4_alt: {
+      id: 'h_d_1_b42',
+      name: 'Black Castellan',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Knight', 'Demon'],
+      hp: 110, armor: 25, initiative: 55,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg',
+      passive: ['rage 1', 'blood_frenzy 2', 'execute 1'], ability: 'pact 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    choir_regent: {
+      id: 'h_d_2',
+      name: 'Choir Regent',
+      f: 'd', t: 1, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 50, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
+      passive: 'inspiration_damage 1', ability: 'rite_of_reclamation 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    choir_regent_path_a_t2: {
+      id: 'h_d_2_a2',
+      name: 'Choir Regent',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 55, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'vitality 1'], ability: 'rite_of_reclamation 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    choir_regent_path_a_t3: {
+      id: 'h_d_2_a3',
+      name: 'Choir Regent',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 60, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'vitality 2'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 900
+    },
+    choir_regent_path_a_t4: {
+      id: 'h_d_2_a41',
+      name: 'Choir Regent',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 70, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 2', 'vitality 2'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 1500
+    },
+    choir_regent_path_a_t4_alt: {
+      id: 'h_d_2_a42',
+      name: 'Choir Regent',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 121, armor: 4, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'vitality 2', 'inspiration_max_hp 1'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 1500
+    },
+    choir_regent_path_b_t2: {
+      id: 'h_d_2_b2',
+      name: 'Choir Regent',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 75, armor: 2, initiative: 35,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'command 1'], ability: 'rite_of_reclamation 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    choir_regent_path_b_t3: {
+      id: 'h_d_2_b3',
+      name: 'Choir Regent',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 90, armor: 3, initiative: 35,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'command 2'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 900
+    },
+    choir_regent_path_b_t4: {
+      id: 'h_d_2_b41',
+      name: 'Choir Regent',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 110, armor: 4, initiative: 35,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 2', 'command 2'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 1500
+    },
+    choir_regent_path_b_t4_alt: {
+      id: 'h_d_2_b42',
+      name: 'Choir Regent',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Demon', 'Court'],
+      hp: 110, armor: 4, initiative: 35,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['inspiration_damage 1', 'command 2'], ability: 'rite_of_reclamation 2',
+      building_slot: 'slot_0', xp: 1500
+    },
+    infernal_ascendant: {
+      id: 'h_d_3',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 1, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 50, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
+      passive: 'fellfire 1', ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    infernal_ascendant_path_a_t2: {
+      id: 'h_d_3_a2',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 60, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 1', 'dissipate 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    infernal_ascendant_path_a_t3: {
+      id: 'h_d_3_a3',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 2', 'dissipate 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    infernal_ascendant_path_a_t4: {
+      id: 'h_d_3_a41',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 80, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 2', 'dissipate 1', 'clear_shot 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    infernal_ascendant_path_a_t4_alt: {
+      id: 'h_d_3_a42',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 80, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 2', 'dissipate 2'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    infernal_ascendant_path_b_t2: {
+      id: 'h_d_3_b2',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 2, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 55, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 1', 'find_weakness 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    infernal_ascendant_path_b_t3: {
+      id: 'h_d_3_b3',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 3, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 60, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 1', 'find_weakness 2'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    infernal_ascendant_path_b_t4: {
+      id: 'h_d_3_b41',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 70, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 1', 'find_weakness 2', 'execute 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    infernal_ascendant_path_b_t4_alt: {
+      id: 'h_d_3_b42',
+      name: 'Infernal Ascendant',
+      f: 'd', t: 4, size: 'tile',
+      tags: ['Caster', 'Demon'],
+      hp: 65, armor: 15, initiative: 20,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg',
+      passive: ['fellfire 1', 'find_weakness 2', 'recuperate 1'], ability: 'mark_of_ash 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    imp: {
+      id: 'd1', f: 'd', t: 1,
+      name: 'Imp',
+      tags: ['Demon', 'Beast'],
+      size: 'column',
+      hp: 110, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg',
+      xp: 200, passive: ['rage 1', 'vengeance 1'], ability: 'pact 1',
+    },
+    tormentor: {
+      id: 'd11', f: 'd', t: 2,
+      name: 'Tormentor',
+      tags: ['Demon', 'Warrior'],
+      size: 'column',
+      hp: 130, armor: 0, initiative: 30,
+      resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg',
+      xp: 800, passive: ['rage 1', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
+    },
+    praetor: {
+      id: 'd111', f: 'd', t: 3,
+      name: 'Praetor',
+      tags: ['Demon', 'Warrior'],
+      size: 'column',
+      hp: 140, armor: 15, initiative: 30,
+      resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg',
+      xp: 1800, passive: ['rage 2', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
+    },
+    chorister: {
+      id: 'd12', f: 'd', t: 2,
+      name: 'Chorister',
+      tags: ['Demon', 'Caster'],
+      size: 'column',
+      hp: 130, armor: 0, initiative: 25,
+      resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 28, action_icon: 'fire_bolt.jpg',
+      xp: 800, passive: ['rage 1', 'vengeance 1', 'burn 1'], ability: 'pact 1',
+    },
+    chanter: {
+      id: 'd121', f: 'd', t: 3,
+      name: 'Chanter',
+      tags: ['Demon', 'Caster'],
+      size: 'column',
+      hp: 140, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 36, action_icon: 'fire_bolt.jpg',
+      xp: 1800, passive: ['rage 2', 'vengeance 1', 'burn 1'], ability: 'pact 1',
+    },
+    clay_gargoyle: {
+      id: 'd3', f: 'd', t: 1,
+      name: 'Clay Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'row',
+      hp: 60, armor: 30, initiative: 50,
+      resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg',
+      xp: 200, passive: ['unbreakable 1', 'aegis 1'], ability: null,
+    },
+    stone_gargoyle: {
+      id: 'd31', f: 'd', t: 2,
+      name: 'Stone Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'row',
+      hp: 80, armor: 35, initiative: 50,
+      resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg',
+      xp: 800, passive: ['unbreakable 1', 'aegis 1', 'execute 1'], ability: null,
+    },
+    onyx_gargoyle: {
+      id: 'd311', f: 'd', t: 3,
+      name: 'Onyx Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'row',
+      hp: 85, armor: 40, initiative: 50,
+      resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg',
+      xp: 1800, passive: ['unbreakable 1', 'aegis 1', 'execute 2'], ability: null,
+    },
+    quartz_gargoyle: {
+      id: 'd32', f: 'd', t: 2,
+      name: 'Quartz Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'row',
+      hp: 80, armor: 30, initiative: 50,
+      resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 16, action_icon: 'throw_stone.jpg',
+      xp: 800, passive: ['unbreakable 1', 'aegis 1', 'shatter 1'], ability: null,
+    },
+    azurite_gargoyle: {
+      id: 'd321', f: 'd', t: 3,
+      name: 'Azurite Gargoyle',
+      tags: ['Demon', 'Construct'],
+      size: 'row',
+      hp: 95, armor: 30, initiative: 50,
+      resistances: { air: 15, fire: 10, life: 10, death: 20, cold: 20, nature: 15 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg',
+      xp: 1800, passive: ['unbreakable 2', 'aegis 1', 'shatter 1'], ability: null,
+    },
+    heretic: {
+      id: 'd4', f: 'd', t: 1,
+      name: 'Heretic',
+      tags: ['Warrior', 'Demon'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg',
+      xp: 100, passive: 'rage 1', ability: null,
+    },
+    posessed: {
+      id: 'd41', f: 'd', t: 2,
+      name: 'Posessed',
+      tags: ['Warrior', 'Demon'],
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 40,
+      resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
+      xp: 400, passive: ['rage 1', 'blood_frenzy 1'], ability: null,
+    },
+    vessel: {
+      id: 'd411', f: 'd', t: 3,
+      name: 'Vessel',
+      tags: ['Warrior', 'Demon'],
+      size: 'tile',
+      hp: 65, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      xp: 900, passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: null,
+    },
+    pain_projector: {
+      id: 'd412', f: 'd', t: 3,
+      name: 'Pain Projector',
+      tags: ['Warrior', 'Demon'],
+      size: 'tile',
+      hp: 70, armor: 5, initiative: 10,
+      resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
+      action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
+      xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
+    },
+    peer: {
+      id: 'd6', f: 'd', t: 1,
+      name: 'Peer',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 15, life: 35, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
+      xp: 100, passive: ['magic_attunement 1', 'resist_aura_fire 1'], ability: 'infernal_mandate 1',
+    },
+    nether_baron: {
+      id: 'd61', f: 'd', t: 2,
+      name: 'Nether Baron',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      xp: 400, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'undying 1'], ability: 'infernal_mandate 2',
+    },
+    nether_lord: {
+      id: 'd611', f: 'd', t: 3,
+      name: 'Nether Lord',
+      tags: ['Court', 'Choir'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 10,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
+      xp: 900, passive: ['magic_attunement 2', 'resist_aura_fire 1', 'undying 1'], ability: 'infernal_mandate 3',
+    },
+    flame_spawn: {
+      id: 'd7', f: 'd', t: 1,
+      name: 'Flame Spawn',
+      tags: ['Demon', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 10,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'fire', action_power: 5, action_icon: 'fire_claw.jpg',
+      xp: 100, passive: 'volcanic_skin 1', ability: null,
+    },
+    blaze_spawn: {
+      id: 'd71', f: 'd', t: 2,
+      name: 'Blaze Spawn',
+      tags: ['Demon', 'Caster'],
+      size: 'tile',
+      hp: 70, armor: 5, initiative: 10,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg',
+      xp: 400, passive: ['volcanic_skin 1', 'last_verse 1'], ability: null,
+    },
+    inferno_spawn: {
+      id: 'd711', f: 'd', t: 3,
+      name: 'Inferno Spawn',
+      tags: ['Demon', 'Caster'],
+      size: 'tile',
+      hp: 75, armor: 10, initiative: 10,
+      resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg',
+      xp: 900, passive: ['volcanic_skin 2', 'last_verse 1'], ability: null,
+    },
+    cultist: {
+      id: 'd5', f: 'd', t: 1,
+      name: 'Cultist',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',
+      xp: 100, passive: 'burn 1', ability: 'mark_of_ash 1',
+    },  
+    choir_servant: {
+      id: 'd51', f: 'd', t: 2,
+      name: 'Choir Servant',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 45, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg',
+      xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
+    },
+    choir_ascendant: {
+      id: 'd511', f: 'd', t: 3,
+      name: 'Choir Ascendant',
+      tags: ['Caster', 'Demon'],
+      size: 'tile',
+      hp: 50, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg',
+      xp: 900, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
+    },
+  },
+
+  empire: {
+    paladin: {
+      id: 'h_e_1',
+      name: 'Paladin',
+      f: 'e', t: 1, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 80, armor: 20, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15, action_icon: 'holy_attack.jpg',
+      passive: 'mithrails_light 1', ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    paladin_path_a_t2: {
+      id: 'h_e_11',
+      name: 'Paladin',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 95, armor: 25, initiative: 45,
+      resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 18, action_icon: 'holy_attack.jpg',
+      passive: ['mithrails_light 1', 'protector 1'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    paladin_path_a_t3: {
+      id: 'h_e_111',
+      name: 'Paladin',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 120, armor: 25, initiative: 45,
+      resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg',
+      passive: ['mithrails_light 1', 'protector 2'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    paladin_path_a_t4: {
+      id: 'h_e_1111',
+      name: 'Paladin',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 125, armor: 30, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg',
+      passive: ['mithrails_light 2', 'protector 2'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    paladin_path_a_t4_alt: {
+      id: 'h_e_1112',
+      name: 'Paladin',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 135, armor: 25, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg',
+      passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    paladin_path_b_t2: {
+      id: 'h_e_12',
+      name: 'Paladin',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 90, armor: 20, initiative: 45,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 20, action_icon: 'holy_shock.jpg',
+      passive: ['mithrails_light 1', 'combat_veteran 1'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    paladin_path_b_t3: {
+      id: 'h_e_121',
+      name: 'Paladin',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 105, armor: 20, initiative: 50,
+      resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg',
+      passive: ['mithrails_light 2', 'combat_veteran 1'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    paladin_path_b_t4: {
+      id: 'h_e_1211',
+      name: 'Paladin',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 120, armor: 20, initiative: 50,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
+      passive: ['mithrails_light 2', 'combat_veteran 2'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    paladin_path_b_t4_alt: {
+      id: 'h_e_1212',
+      name: 'Paladin',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Knight', 'Holy'],
+      hp: 120, armor: 20, initiative: 50,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
+      passive: ['mithrails_light 2', 'combat_veteran 1', 'dissipate 1'], ability: 'cleanse 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    inquisitor: {
+      id: 'h_e_2',
+      name: 'Inquisitor',
+      f: 'e', t: 1, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 60, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 6, action_icon: 'judgement.jpg',
+      passive: 'vitality 1', ability: 'purge 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    inquisitor_path_a_t2: {
+      id: 'h_e_2_a2',
+      name: 'Inquisitor',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 65, armor: 5, initiative: 40,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', 'inspiration_damage 1'], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    inquisitor_path_a_t3: {
+      id: 'h_e_2_a3',
+      name: 'Inquisitor',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 65, armor: 5, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    inquisitor_path_a_t4: {
+      id: 'h_e_2_a41',
+      name: 'Inquisitor',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 75, armor: 5, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    inquisitor_path_a_t4_alt: {
+      id: 'h_e_2_a42',
+      name: 'Inquisitor',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 70, armor: 10, initiative: 40,
+      resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    inquisitor_path_b_t2: {
+      id: 'h_e_2_b2',
+      name: 'Inquisitor',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 75, armor: 6, initiative: 45,
+      resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 22, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', 'inspiration_initiative 1'], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    inquisitor_path_b_t3: {
+      id: 'h_e_2_b3',
+      name: 'Inquisitor',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 85, armor: 8, initiative: 50,
+      resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 27, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', ''], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    inquisitor_path_b_t4: {
+      id: 'h_e_2_b41',
+      name: 'Inquisitor',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 95, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 32, action_icon: 'judgement.jpg',
+      passive: ['vitality 1', ''], ability: 'purge 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    inquisitor_path_b_t4_alt: {
+      id: 'h_e_2_b42',
+      name: 'Inquisitor',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Caster', 'Holy'],
+      hp: 95, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'life', action_power: 32, action_icon: 'judgement.jpg',
+      passive: 'vitality 2', ability: 'purge 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    artificer: {
+      id: 'h_e_3',
+      name: 'Artificer',
+      f: 'e', t: 1, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 82, armor: 3, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 10 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null, 
+      building_slot: 'slot_0', xp: 100
+    },
+    artificer_path_a_t2: {
+      id: 'h_e_3_a2',
+      name: 'Artificer',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 98, armor: 4, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 400
+    },
+    artificer_path_a_t3: {
+      id: 'h_e_3_a3',
+      name: 'Artificer',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 118, armor: 4, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 900
+    },
+    artificer_path_a_t4: {
+      id: 'h_e_3_a41',
+      name: 'Artificer',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 142, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 1500
+    },
+    artificer_path_a_t4_alt: {
+      id: 'h_e_3_a42',
+      name: 'Artificer',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 142, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 1500
+    },
+    artificer_path_b_t2: {
+      id: 'h_e_3_b2',
+      name: 'Artificer',
+      f: 'e', t: 2, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 90, armor: 3, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 400
+    },
+    artificer_path_b_t3: {
+      id: 'h_e_3_b3',
+      name: 'Artificer',
+      f: 'e', t: 3, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 108, armor: 4, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 900
+    },
+    artificer_path_b_t4: {
+      id: 'h_e_3_b41',
+      name: 'Artificer',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 128, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 1500
+    },
+    artificer_path_b_t4_alt: {
+      id: 'h_e_3_b42',
+      name: 'Artificer',
+      f: 'e', t: 4, size: 'tile',
+      tags: ['Engineer', null],
+      hp: 128, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      passive: 'fortify 1', ability: null,
+      building_slot: 'slot_0', xp: 1500
+    },
+    conscript: {
+      id: 'e1', f: 'e', t: 1,
+      name: 'Conscript',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 45, armor: 10, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 10, action_icon: 'spear.jpg', action_animation: 'impale',
+      xp: 100, passive: 'impale 1', ability: null,
+    },
+    infantry: {
+      id: 'e11', f: 'e', t: 2,
+      name: 'Infantry',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 55, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 14, action_icon: 'spear.jpg', action_animation: 'impale',
+      xp: 400, passive: ['impale 1', 'protector 1'], ability: null,
+    },
+    crossbowman: {
+      id: 'e111', f: 'e', t: 3,
+      name: 'Crossbowman',
+      tags: ['Knight', 'Archer'],
+      size: 'tile',
+      hp: 70, armor: 10, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg',
+      xp: 900, passive: ['pierce 2', 'impale 1'], ability: null,
+    },
+    heavy_infantry: {
+      id: 'e112', f: 'e', t: 3,
+      name: 'Heavy Infantry',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 70, armor: 20, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale',
+      xp: 900, passive: ['impale 1', 'protector 1', 'iron_will 1'], ability: 'stun 1',
+    },
+    horseman: {
+      id: 'e12', f: 'e', t: 2,
+      name: 'Horseman',
+      tags: ['Knight', null],
+      size: 'row',
+      hp: 105, armor: 25, initiative: 50,
+      resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'spear.jpg', action_animation: 'impale',
+      xp: 800, passive: ['impale 2', 'iron_will 1'], ability: null,
+    },
+    cavalry: {
+      id: 'e121', f: 'e', t: 3,
+      name: 'Cavalry',
+      tags: ['Knight', null],
+      size: 'row',
+      hp: 125, armor: 25, initiative: 55,
+      resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 40, action_icon: 'spear.jpg', action_animation: 'impale',
+      xp: 1800, passive: ['impale 2', 'iron_will 1', 'inspiration_initiative 1'], ability: null,
+    },
+    sentinel: {
+      id: 'e3', f: 'e', t: 1,
+      name: 'Sentinel',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 90, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'iron_fist.jpg',
+      xp: 200, passive: 'unbreakable 2', ability: null,
+    },
+    iron_automaton: {
+      id: 'e31', f: 'e', t: 2,
+      name: 'Iron Automaton',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 105, armor: 25, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'iron_fist.jpg',
+      xp: 800, passive: ['unbreakable 2', 'protector 1'], ability: null,
+    },
+    golden_lion: {
+      id: 'e311', f: 'e', t: 3,
+      name: 'Golden Lion',
+      tags: ['Construct', 'Holy'],
+      size: 'column',
+      hp: 130, armor: 30, initiative: 55,
+      resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 35, action_icon: 'iron_fist.jpg',
+      xp: 1800, passive: ['unbreakable 2', 'protector 1', 'beacon_of_hope 1'], ability: 'lions_roar 2',
+    },
+    siege_engine: {
+      id: 'e32', f: 'e', t: 2,
+      name: 'Siege Engine',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 105, armor: 20, initiative: 30,
+      resistances: { air: 0, fire: 20, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 16, action_icon: 'mortar_shoot.jpg',
+      xp: 800, passive: ['unbreakable 2', 'shatter 1'], ability: null,  
+    },
+    siege_dreadnought: {
+      id: 'e321', f: 'e', t: 3,
+      name: 'Siege Dreadnought',
+      tags: ['Construct', null],
+      size: 'column',
+      hp: 125, armor: 20, initiative: 30,
+      resistances: { air: 0, fire: 30, life: 20, death: 20, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'physical', action_power: 20, action_icon: 'mortar_shoot.jpg',
+      xp: 1800, passive: ['unbreakable 2', 'shatter 2'], ability: null,  
+    },
+    smith: {
+      id: 'e6', f: 'e', t: 1,
+      name: 'Smith',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 40, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg',
+      xp: 100, passive: ['fortify 1', 'scavenger 1'], ability: null,
+    },
+    mechanic: {
+      id: 'e61', f: 'e', t: 2,
+      name: 'Mechanic',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 50, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      xp: 400, passive: ['fortify 1', 'scavenger 1'], ability: null,
+    },
+    master_mechanic: {
+      id: 'e611', f: 'e', t: 3,
+      name: 'Master Mechanic',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 55, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'repair', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      xp: 900, passive: ['fortify 2', 'scavenger 1'], ability: null,
+    },
+    rifleman: {
+      id: 'e62', f: 'e', t: 2,
+      name: 'Rifleman',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 55, armor: 10, initiative: 35,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 20, action_icon: 'musket_shoot.jpg',
+      xp: 400, passive: ['shatter 1', 'scavenger 1'], ability: null,
+    },
+    devastator: {
+      id: 'e621', f: 'e', t: 3,
+      name: 'Devastator',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 60, armor: 15, initiative: 35,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'musket_shoot.jpg',
+      xp: 900, passive: ['shatter 2', 'scavenger 1'], ability: null,
+    },
+    flamethrower: {
+      id: 'e622', f: 'e', t: 3,
+      name: 'Flamethrower',
+      tags: ['Engineer', null],
+      size: 'tile',
+      hp: 65, armor: 10, initiative: 40,
+      resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 15, action_icon: 'flame_wave.jpg',
+      xp: 900, passive: ['burn 2', 'scavenger 1'], ability: null,
+    },
+    blessed_soul: {
+      id: 'e7', f: 'e', t: 1,
+      name: 'Blessed Soul',
+      tags: ['Spirit', 'Holy'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 10,
+      resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
+      action: 'none', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 10,
+      xp: 100, passive: 'unity 1', ability: null,
+    },
+    mithrails_light: {
+      id: 'e71', f: 'e', t: 2,
+      name: 'Mithrails Light',
+      tags: ['Spirit', 'Holy'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 10,
+      resistances: { air: 16, fire: 16, life: 16, death: 16, cold: 16, nature: 16 },
+      action: 'none', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 16,
+      xp: 400, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
+    },
+    mithrails_will: {
+      id: 'e711', f: 'e', t: 3,
+      name: 'Mithrails Will',
+      tags: ['Spirit', 'Holy'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 10,
+      resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
+      action: 'none', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20,
+      xp: 900, passive: ['unity 1', 'light_of_dawn 2'], ability: null,
+    },
+    acolyte: {
+      id: 'e2', f: 'e', t: 1,
+      name: 'Acolyte',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      xp: 100, passive: 'field_medic 1', ability: null,
+    },
+    templar: {
+      id: 'e21', f: 'e', t: 2,
+      name: 'Templar',
+      tags: ['Knight', 'Holy'],
+      size: 'tile',
+      hp: 55, armor: 10, initiative: 30,
+      resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg',
+      xp: 400, passive: ['aegis 1', 'iron_will 1'], ability: 'sanctuary 1',
+    },
+    mithrails_champion: {
+      id: 'e211', f: 'e', t: 3,
+      name: 'Mithrails Champion',
+      tags: ['Knight', 'Holy'],
+      size: 'tile',
+      hp: 65, armor: 20, initiative: 30,
+      resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg',
+      xp: 900, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
+    },
+    priest: {
+      id: 'e22', f: 'e', t: 2,
+      name: 'Priest',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      xp: 400, passive: ['field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
+    },
+    ardent_priest: {
+      id: 'e221', f: 'e', t: 3,
+      name: 'Ardent Priest',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 55, armor: 5, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      xp: 900, passive: ['field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
+    },
+    apprentice: {
+      id: 'e4', f: 'e', t: 1,
+      name: 'Apprentice',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 30,
+      resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg',
+      xp: 100, passive: 'inspiration_initiative 1', ability: null,
+    },
+    red_mage: {
+      id: 'e41', f: 'e', t: 2,
+      name: 'Red Mage',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 30,
+      resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
+      xp: 400, passive: ['inspiration_initiative 1', 'burn 1'], ability: null,
+    },
+    ash_priest: {
+      id: 'e411', f: 'e', t: 3,
+      name: 'Ash Priest',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 30,
+      resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 6,
+      damage_source: 'fire', action_power: 22, action_icon: 'fire_bolt.jpg',
+      xp: 900, passive: ['inspiration_initiative 1', 'burn 2'], ability: null,
+    },
+    cinder_knight: {
+      id: 'e412', f: 'e', t: 3,
+      name: 'Cinder Knight',
+      tags: ['Caster', 'Knight'],
+      size: 'tile',
+      hp: 60, armor: 15, initiative: 45,
+      resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'fire', action_power: 35, action_icon: 'flame_sword.jpg',
+      xp: 900, passive: ['inspiration_initiative 1', 'regenerate 1', 'volcanic_skin 1'], ability: null,
+    },
+    blue_mage: {
+      id: 'e42', f: 'e', t: 2,
+      name: 'Blue Mage',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 45, armor: 5, initiative: 30,
+      resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
+      xp: 400, passive: ['resist_aura_cold 1', 'chill 1'], ability: null,
+    },
+    cryomancer: {
+      id: 'e421', f: 'e', t: 3,
+      name: 'Cryomancer',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 50, armor: 10, initiative: 30,
+      resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
+      xp: 900, passive: ['resist_aura_cold 1', 'chill 2'], ability: null,
+    },
+  },
+
+  grail_of_sorrow: {
+    mourning_prophet: {
+      id: 'h_g_1',
+      name: 'Mourning Prophet',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Vampire'],
+      hp: 75, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 15, action_icon: 'blood_pierce.jpg',
+      passive: 'duelist 1', ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    mourning_prophet_path_a_t2: {
+      id: 'h_g_1_a2',
+      name: 'Mourning Prophet',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Vampire'],
+      hp: 85, armor: 10, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'lifesteal 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    mourning_prophet_path_a_t3: {
+      id: 'h_g_1_a3',
+      name: 'Mourning Prophet',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Vampire'],
+      hp: 95, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'lifesteal 2'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    mourning_prophet_path_a_t4: {
+      id: 'h_g_1_a41',
+      name: 'Mourning Prophet',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Vampire'],
+      hp: 105, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'lifesteal 2', 'impale 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mourning_prophet_path_a_t4_alt: {
+      id: 'h_g_1_a42',
+      name: 'Mourning Prophet',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Vampire'],
+      hp: 115, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'lifesteal 2', 'inspiration_initiative 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mourning_prophet_path_b_t2: {
+      id: 'h_g_1_b2',
+      name: 'Mourning Prophet',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Vampire'],
+      hp: 75, armor: 15, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'communion 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    mourning_prophet_path_b_t3: {
+      id: 'h_g_1_b3',
+      name: 'Mourning Prophet',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Vampire'],
+      hp: 85, armor: 15, initiative: 40,
+      resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'communion 2'], ability: 'taunt 2',
+      building_slot: 'slot_0', xp: 900
+    },
+    mourning_prophet_path_b_t4: {
+      id: 'h_g_1_b41',
+      name: 'Mourning Prophet',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Vampire'],
+      hp: 90, armor: 15, initiative: 45,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'communion 2', 'lifesteal 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mourning_prophet_path_b_t4_alt: {
+      id: 'h_g_1_b42',
+      name: 'Mourning Prophet',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Vampire'],
+      hp: 95, armor: 15, initiative: 45,
+      resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
+      passive: ['duelist 1', 'communion 2', 'inspiration_damage 1'], ability: 'taunt 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    grail_warden: {
+      id: 'h_g_2',
+      name: 'Grail Warden',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 80, armor: 20, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg',
+      passive: 'horde 1', ability: 'shared_suffering 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    grail_warden_path_a_t2: {
+      id: 'h_g_2_a2',
+      name: 'Grail Warden',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 95, armor: 25, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg',
+      passive: ['horde 1', 'protector 1'], ability: 'shared_suffering 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    grail_warden_path_a_t3: {
+      id: 'h_g_2_a3',
+      name: 'Grail Warden',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 110, armor: 25, initiative: 35,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      passive: ['horde 2', 'protector 1'], ability: 'shared_suffering 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    grail_warden_path_a_t4: {
+      id: 'h_g_2_a41',
+      name: 'Grail Warden',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 125, armor: 30, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
+      passive: ['horde 2', 'protector 1', 'aura_of_decay 1'], ability: 'shared_suffering 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    grail_warden_path_a_t4_alt: {
+      id: 'h_g_2_a42',
+      name: 'Grail Warden',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 135, armor: 25, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg',
+      passive: ['horde 2', 'protector 1', 'thorns 1'], ability: 'shared_suffering 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    grail_warden_path_b_t2: {
+      id: 'h_g_2_b2',
+      name: 'Grail Warden',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 85, armor: 20, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
+      passive: ['horde 1', 'infect 1'], ability: 'grails_blessing 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    grail_warden_path_b_t3: {
+      id: 'h_g_2_b3',
+      name: 'Grail Warden',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 95, armor: 20, initiative: 45,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg',
+      passive: ['horde 1', 'infect 2'], ability: 'grails_blessing 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    grail_warden_path_b_t4: {
+      id: 'h_g_2_b41',
+      name: 'Grail Warden',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 110, armor: 20, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
+      passive: ['horde 1', 'infect 2', 'undying 1'], ability: 'grails_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    grail_warden_path_b_t4_alt: {
+      id: 'h_g_2_b42',
+      name: 'Grail Warden',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Knight', 'Zombie'],
+      hp: 110, armor: 20, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg',
+      passive: ['horde 2', 'infect 2'], ability: 'grails_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mothers_voice: {
+      id: 'h_g_3',
+      name: 'Mothers Voice',
+      f: 'g', t: 1, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 50, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg',
+      passive: 'sorrow 1', ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 100
+    },
+    mothers_voice_path_a_t2: {
+      id: 'h_g_3_a2',
+      name: 'Mothers Voice',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 60, armor: 0, initiative: 60,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg',
+      passive: ['sorrow 1', 'inspiration_initiative 1'], ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    mothers_voice_path_a_t3: {
+      id: 'h_g_3_a3',
+      name: 'Mothers Voice',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 70, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg',
+      passive: ['sorrow 1', 'inspiration_initiative 2'], ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    mothers_voice_path_a_t4: {
+      id: 'h_g_3_a41',
+      name: 'Mothers Voice',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 80, armor: 0, initiative: 70,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      passive: ['sorrow 1', 'inspiration_initiative 2', 'eternal_grief 1'], ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mothers_voice_path_a_t4_alt: {
+      id: 'h_g_3_a42',
+      name: 'Mothers Voice',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 80, armor: 0, initiative: 70,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      passive: ['sorrow 1', 'inspiration_initiative 2', 'renew 1'], ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mothers_voice_path_b_t2: {
+      id: 'h_g_3_b2',
+      name: 'Mothers Voice',
+      f: 'g', t: 2, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 55, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg',
+      passive: 'sorrow 1', ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 400
+    },
+    mothers_voice_path_b_t3: {
+      id: 'h_g_3_b3',
+      name: 'Mothers Voice',
+      f: 'g', t: 3, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 72, armor: 0, initiative: 60,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg',
+      passive: 'sorrow 1', ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 900
+    },
+    mothers_voice_path_b_t4: {
+      id: 'h_g_3_b41',
+      name: 'Mothers Voice',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 90, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      passive: 'sorrow 1', ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    mothers_voice_path_b_t4_alt: {
+      id: 'h_g_3_b42',
+      name: 'Mothers Voice',
+      f: 'g', t: 4, size: 'tile',
+      tags: ['Spirit', 'Caster'],
+      hp: 90, armor: 0, initiative: 65,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'ally', targets: 1, range: 3,
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      passive: 'sorrow 1', ability: 'mothers_blessing 1',
+      building_slot: 'slot_0', xp: 1500
+    },
+    zombie_risen: {
+      id: 'gs1', f: 'g', t: 1,
+      name: 'Risen',
+      tags: ['Zombie'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 15,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg',
+      xp: 100, passive: 'horde 1', ability: 'shared_suffering 1',
+    },
+    poisonous_ghoul: {
+      id: 'gs11', f: 'g', t: 2,
+      name: 'Poisonous Ghoul',
+      tags: ['Zombie'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg',
+      xp: 400, passive: ['horde 1', 'infect 1'], ability: 'shared_suffering 1',
+    },
+    plague_knight: {
+      id: 'gs111', f: 'g', t: 3,
+      name: 'Plague Knight',
+      tags: ['Zombie', 'Knight'],
+      size: 'tile',
+      hp: 75, armor: 15, initiative: 20,
+      resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg',
+      xp: 900, passive: ['horde 1', 'infect 1', 'poison 1'], ability: 'shared_suffering 1',
+    },
+    cannibal_ghoul: {
+      id: 'gs12', f: 'g', t: 2,
+      name: 'Cannibal Ghoul',
+      tags: ['Vampire', 'Zombie'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 35,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg',
+      xp: 400, passive: ['horde 1', 'lifesteal 1'], ability: 'shared_suffering 1',
+    },
+    abominate: {
+      id: 'gs121', f: 'g', t: 3,
+      name: 'Abominate',
+      tags: ['Vampire', 'Zombie'],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 40,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
+      xp: 900, passive: ['horde 1', 'lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
+    },
+    cesswalker: {
+      id: 'gs13', f: 'g', t: 2,
+      name: 'Cesswalker',
+      tags: ['Caster', 'Zombie'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
+      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
+      xp: 400, passive: ['horde 1', 'regenerate 1'], ability: null,
+    },
+    blightwalker: {
+      id: 'gs131', f: 'g', t: 3,
+      name: 'Blightwalker',
+      tags: ['Caster', 'Zombie'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
+      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25, action_icon: 'mend_flesh.jpg',
+      xp: 900, passive: ['horde 1', 'regenerate 1', 'undying 1'], ability: null,
+    },
+    adept: {
+      id: 'gs3', f: 'g', t: 1,
+      name: 'Adept',
+      tags: ['Caster'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 35,
+      resistances: { air: 0, fire: 0, life: 25, death: 25, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg',
+      xp: 100, passive: 'poison 1', ability: null,
+    },
+    blood_adept: {
+      id: 'gs31', f: 'g', t: 2,
+      name: 'Blood Adept',
+      tags: ['Vampire', 'Caster'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 16, action_icon: 'blood_bolt.jpg',
+      xp: 400, passive: ['lifesteal 1', 'recuperate 1'], ability: 'exsanguinate 1',
+    },
+    crimson_mage: {
+      id: 'gs312', f: 'g', t: 3,
+      name: 'Crimson Mage',
+      tags: ['Vampire', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'blood_bolt.jpg',
+      xp: 900, passive: ['lifesteal 1', 'leech 1', 'vitality 1'], ability: 'exsanguinate 1',
+    },
+    blood_knight: {
+      id: 'gs311', f: 'g', t: 3,
+      name: 'Blood Knight',
+      tags: ['Vampire', 'Knight'],
+      size: 'tile',
+      hp: 55, armor: 10, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg',
+      xp: 900, passive: ['lifesteal 1', 'dodge 1', 'bleed 1'], ability: 'exsanguinate 1',
+    },
+    necromancer: {
+      id: 'gs32', f: 'g', t: 2,
+      name: 'Necromancer',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
+      xp: 400, passive: ['unending_servitude 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 1',
+    },
+    death_lord: {
+      id: 'gs321', f: 'g', t: 3,
+      name: 'Death Lord',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
+      xp: 400, passive: ['unending_servitude 1', 'reanimate 2', 'horde 1'], ability: 'raise_dead 2',
+    },
+    plague_scholar: {
+      id: 'gs33', f: 'g', t: 2,
+      name: 'Plague Scholar',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 18, action_icon: 'plague_bolt.jpg',
+      xp: 400, passive: ['infect 1', 'regenerate 1'], ability: null,
+    },
+    plague_lord: {
+      id: 'gs33', f: 'g', t: 3,
+      name: 'Plague Lord',
+      tags: ['Zombie', 'Caster'],
+      size: 'tile',
+      hp: 65, armor: 15, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg',
+      xp: 900, passive: ['infect 1', 'regenerate 1', 'horde 1'], ability: null,
+    },
+    communicant: {
+      id: 'gs2', f: 'g', t: 1,
+      name: 'Communicant',
+      tags: ['Vampire', 'Holy'],
+      size: 'column',
+      hp: 90, armor: 10, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
+      xp: 200, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
+    },
+    crimson_communicant: {
+      id: 'gs21', f: 'g', t: 2,
+      name: 'Crimson Communicant',
+      tags: ['Vampire', 'Holy'],
+      size: 'column',
+      hp: 105, armor: 15, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 32, action_icon: 'blood_claw.jpg',
+      xp: 800, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
+    },
+    chosen: {
+      id: 'gs211', f: 'g', t: 3,
+      name: 'Chosen',
+      tags: ['Vampire', 'Holy'],
+      size: 'column',
+      hp: 130, armor: 15, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 40, action_icon: 'blood_claw.jpg',
+      xp: 1800, passive: ['sacrament 1', 'regenerate 2', 'lifesteal 1'], ability: 'libation 1',
+    },
+    husk_colossus: {
+      id: 'gs4', f: 'g', t: 1,
+      name: 'Husk Colossus',
+      tags: ['Zombie'],
+      size: 'row',
+      hp: 120, armor: 0, initiative: 20,
+      resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg',
+      xp: 200, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
+    },
+    grail_seraph: {
+      id: 'gs41', f: 'g', t: 2,
+      name: 'Grail Seraph',
+      tags: ['Zombie', 'Holy'],
+      size: 'row',
+      hp: 120, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg',
+      xp: 800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
+    },
+    grail_angel: {
+      id: 'gs411', f: 'g', t: 3,
+      name: 'Grail Angel',
+      tags: ['Zombie', 'Holy'],
+      size: 'row',
+      hp: 140, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg',
+      xp: 1800, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
+    },
+    sorrow_bearer: {
+      id: 'gs42', f: 'g', t: 2,
+      name: 'Sorrow Bearer',
+      tags: ['Zombie','Caster'],
+      size: 'row',
+      hp: 120, armor: 10, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'mend_flesh', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg',
+      xp: 800, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
+    },
+    sorrow_vessel: {
+      id: 'gs421', f: 'g', t: 3,
+      name: 'Sorrow Vessel',
+      tags: ['Zombie','Caster'],
+      size: 'row',
+      hp: 125, armor: 20, initiative: 20,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'mend_flesh', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
+      xp: 1800, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
+    },
+    grail_acolyte: {
+      id: 'gs5', f: 'g', t: 1,
+      name: 'Grail Acolyte',
+      tags: ['Vampire','Caster'],
+      size: 'tile',
+      hp: 45, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
+      xp: 100, passive: 'communion 1', ability: 'blood_craze 1',
+    },
+    grail_tender: {
+      id: 'gs51', f: 'g', t: 2,
+      name: 'Grail Tender',
+      tags: ['Vampire','Caster'],
+      size: 'tile',
+      hp: 50, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
+      xp: 400, passive: ['communion 1', 'inspiration_initiative 1'], ability: 'blood_craze 1',
+    },
+    grail_keeper: {
+      id: 'gs511', f: 'g', t: 3,
+      name: 'Grail Keeper',
+      tags: ['Vampire','Caster'],
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
+      xp: 900, passive: ['communion 1', 'inspiration_initiative 1', 'inspiration_damage 1'], ability: 'blood_craze 1',
+    },
+    grieving_servant: {
+      id: 'gs52', f: 'g', t: 2,
+      name: 'Grieving Servant',
+      tags: ['Vampire','Caster'],
+      size: 'tile',
+      hp: 55, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg',
+      xp: 400, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
+    },
+    grieving_custodian: {
+      id: 'gs521', f: 'g', t: 3,
+      name: 'Grieving Custodian',
+      tags: ['Vampire','Caster'],
+      size: 'tile',
+      hp: 65, armor: 0, initiative: 30,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
+      xp: 900, passive: ['communion 1', 'lifesteal 1', 'rage 1'], ability: 'blood_craze 1',
+    },
+    ghost: {
+      id: 'gs6', f: 'g', t: 1,
+      name: 'Ghost',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 40, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg',
+      xp: 100, passive: 'dodge 1', ability: 'terror 1',
+    },
+    specter: {
+      id: 'gs61', f: 'g', t: 2,
+      name: 'Specter',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
+      xp: 400, passive: ['dodge 1', 'slow 1'], ability: 'terror 1',
+    },
+    wraith: {
+      id: 'gs611', f: 'g', t: 3,
+      name: 'Wraith',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 55,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
+      xp: 900, passive: ['dodge 2', 'slow 1'], ability: 'terror 1',
+    },
+    apparition: {
+      id: 'gs62', f: 'g', t: 2,
+      name: 'Apparition',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 50, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
+      xp: 400, passive: ['dodge 1', 'dissipate 1'], ability: 'terror 1',
+    },
+    phantom: {
+      id: 'gs621', f: 'g', t: 3,
+      name: 'Phantom',
+      tags: ['Spirit', 'Caster'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 50,
+      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
+      xp: 900, passive: ['dodge 2', 'dissipate 1', ], ability: 'terror 1',
+    },
+  },
+
+  enemies: {
+    crimson_basilica: {
+      aggrails_herald: {
+        id: 'opb_e1', f: 'opb', t: 1,
+        name: 'Aggrails Herald',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 60, armor: 5, initiative: 50,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        xp: 100, passive: 'inspiration_damage 1', ability: 'lions_roar 1',
+      },
+      exalted_herald: {
+        id: 'opb_e11', f: 'opb', t: 2,
+        name: 'Exalted Herald',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 70, armor: 10, initiative: 50,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        xp: 400, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
+      },
+      exalted_evangelist: {
+        id: 'opb_e111', f: 'opb', t: 3,
+        name: 'Exalted Evangelist',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 105, armor: 15, initiative: 50,
+        resistances: { air: 5, fire: 10, life: 50, death: 10, cold: 5, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        xp: 900, passive: ['inspiration_damage 2', 'beacon_of_hope 1'], ability: 'lions_roar 1',
+      },
+      scarlet_recruit: {
+        id: 'opb_e2', f: 'opb', t: 1,
+        name: 'Recruit',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 45, armor: 10, initiative: 40,
+        resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: null, action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        xp: 100, passive: 'fanaticism 1', ability: null,
+      },
+      aggrails_devoted: {
+        id: 'opb_e21', f: 'opb', t: 2,
+        name: 'Aggrails Devoted',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 50, armor: 20, initiative: 25,
+        resistances: { air: 5, fire: 10, life: 40, death: 15, cold: 5, nature: 10 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 16, action_icon: 'aggrails_blessing.jpg',
+        xp: 400, passive: ['aggrails_blessing 1', 'protector 1'], ability: 'sanctuary 1',
+      },
+      aggrails_champion: {
+        id: 'opb_e211', f: 'opb', t: 3,
+        name: 'Aggrails Champion',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 60, armor: 25, initiative: 25,
+        resistances: { air: 10, fire: 20, life: 40, death: 15, cold: 10, nature: 10 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 20, action_icon: 'aggrails_blessing.jpg',
+        xp: 900, passive: ['aggrails_blessing 1', 'protector 1', 'aegis 1'], ability: 'sanctuary 1',
+      },
+      initiate: {
+        id: 'opb_e3', f: 'opb', t: 1,
+        name: 'Initiate',
+        tags: ['Caster', 'Holy'],
+        size: 'tile',
+        hp: 40, armor: 0, initiative: 20,
+        resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        xp: 100, passive: 'vitality 1', ability: 'infernal_mandate 1',
+      },
+      keeper_of_purity: {
+        id: 'opb_e31', f: 'opb', t: 2,
+        name: 'Keeper of Purity',
+        tags: ['Caster', 'Holy'],
+        size: 'tile',
+        hp: 50, armor: 0, initiative: 20,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        xp: 400, passive: 'vitality 2', ability: 'infernal_mandate 1',
+      },
+      high_keeper: {
+        id: 'opb_e311', f: 'opb', t: 3,
+        name: 'High Keeper',
+        tags: ['Caster', 'Holy'],
+        size: 'tile',
+        hp: 60, armor: 0, initiative: 20,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'heal', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        xp: 900, passive: 'vitality 2', ability: 'infernal_mandate 1',
+      },
+      crimson_scout: {
+        id: 'opb_e4', f: 'opb', t: 1,
+        name: 'Crimson Scout',
+        tags: ['Archer', 'Holy'],
+        size: 'tile',
+        hp: 45, armor: 0, initiative: 50,
+        resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg',
+        xp: 100, passive: 'bleed 1', ability: null,
+      },
+      crimson_hunter: {
+        id: 'opb_e41', f: 'opb', t: 2,
+        name: 'Crimson Hunter',
+        tags: ['Archer', 'Holy'],
+        size: 'tile',
+        hp: 55, armor: 0, initiative: 50,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg',
+        xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: null,
+      },
+      crimson_stalker: {
+        id: 'opb_e411', f: 'opb', t: 3,
+        name: 'Crimson Stalker',
+        tags: ['Archer', 'Holy'],
+        size: 'tile',
+        hp: 70, armor: 0, initiative: 50,
+        resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg',
+        xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
+      },
+      sister_aldra_1: {
+        id: 'opb_e5', f: 'opb', t: 2,
+        name: 'Sister Aldra',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 85, armor: 10, initiative: 50,
+        resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'physical', action_power: 10,
+        xp: 999, passive: 'bleed 2', ability: null,
+      },
+      sister_aldra_2: {
+        id: 'opb_e51', f: 'opb', t: 3,
+        name: 'Sister Aldra',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 125, armor: 15, initiative: 50,
+        resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'life', action_power: 15,
+        xp: 999, passive: ['bleed 2', 'recuperate 1'], ability: null,
+      },
+    },
+
+    glittering_abyss: {
+      cryostax: {
+        id: 'mv_e1', f: 'mv', t: 1,
+        name: 'Cryostax',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 40, armor: 10, initiative: 15,
+        resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 50, nature: 10 },
+        action: 'repair', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 10,
+        xp: 100, passive: 'fortify 1', ability: null,
+      },
+      glaciron: {
+        id: 'mv_e11', f: 'mv', t: 2,
+        name: 'Glacieron',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 45, armor: 15, initiative: 15,
+        resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 50, nature: 15 },
+        action: 'repair', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 15,
+        xp: 400, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
+      },
+      arctyx: {
+        id: 'mv_e111', f: 'mv', t: 3,
+        name: 'Arctyx',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 50, armor: 20, initiative: 15,
+        resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
+        action: 'repair', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 20,
+        xp: 900, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
+      },
+      frostshard: {
+        id: 'mv_e2', f: 'mv', t: 1,
+        name: 'Frostshard',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 35, armor: 15, initiative: 60,
+        resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 10,
+        xp: 100, passive: 'slow 1', ability: 'permafrost',
+      },
+      rime_splinter: {
+        id: 'mv_e21', f: 'mv', t: 2,
+        name: 'Rime Splinter',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 45, armor: 15, initiative: 60,
+        resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 14,
+        xp: 400, passive: ['slow 1', 'hungering_frost 1'], ability: 'permafrost',
+      },
+      glacial_prism: {
+        id: 'mv_e211', f: 'mv', t: 3,
+        name: 'Glacial Prism',
+        tags: ['Construct', 'Caster'],
+        size: 'tile',
+        hp: 50, armor: 20, initiative: 60,
+        resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 50, nature: 30 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 18,
+        xp: 900, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost',
+      },
+      сhillrock: {
+        id: 'mv_e3', f: 'mv', t: 1,
+        name: 'Сhillrock',
+        tags: ['Construct', 'Caster'],
+        size: 'row',
+        hp: 110, armor: 10, initiative: 20,
+        resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 12,
+        xp: 200, passive: ['protector 1', 'rimeguard 1'], ability: null,
+      },
+      rimewarden: {
+        id: 'mv_e31', f: 'mv', t: 2,
+        name: 'Rimewarden',
+        tags: ['Construct', 'Caster'],
+        size: 'row',
+        hp: 130, armor: 15, initiative: 20,
+        resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 16,
+        xp: 800, passive: ['protector 2', 'rimeguard 1'], ability: null,
+      },
+      glaciok: {
+        id: 'mv_e311', f: 'mv', t: 3,
+        name: 'Glaciok',
+        tags: ['Construct', 'Caster'],
+        size: 'row',
+        hp: 145, armor: 20, initiative: 20,
+        resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'cold', action_power: 20,
+        xp: 1800, passive: ['protector 2', 'rimeguard 2'], ability: null,
+      },
+      cryodrox: {
+        id: 'mv_e4', f: 'mv', t: 2,
+        name: 'Cryodrox',
+        tags: ['Construct', 'Caster'],
+        size: 'column',
+        hp: 180, armor: 25, initiative: 30,
+        resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 30, nature: 30 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'cold', action_power: 30,
+        xp: 999, passive: ['chill 1', 'dissipate 1'], ability: null,
+      },
+      cryodrox2: {
+        id: 'mv_e41', f: 'mv', t: 3,
+        name: 'Cryodrox',
+        tags: ['Construct', 'Caster'],
+        size: 'column',
+        hp: 240, armor: 25, initiative: 30,
+        resistances: { air: 40, fire: 40, life: 40, death: 40, cold: 40, nature: 40 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'cold', action_power: 40,
+        xp: 999, passive: ['chill 2', 'dissipate 1'], ability: null,
+      },
+    },
+
+    chamber_of_unrest: {
+      bone_knight: {
+        id: 'dm_e1', f: 'dm', t: 1,
+        name: 'Bone Knight',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 50, armor: 10, initiative: 25,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 10, action_icon: 'undead_sword.jpg',
+        xp: 90, passive: 'iron_will 1', ability: 'terror 1',
+      },
+      dread_knight: {
+        id: 'dm_e11', f: 'dm', t: 2,
+        name: 'Dread Knight',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 60, armor: 15, initiative: 25,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 14, action_icon: 'undead_sword.jpg',
+        xp: 280, passive: ['iron_will 1', 'infect 1'], ability: 'terror 1',
+      },
+      death_knight: {
+        id: 'dm_e111', f: 'dm', t: 3,
+        name: 'Death Knight',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 70, armor: 20, initiative: 25,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 18, action_icon: 'undead_sword.jpg',
+        xp: 510, passive: ['iron_will 1', 'infect 2'], ability: 'terror 2',
+      },
+      oathbound_martyr: {
+        id: 'dm_2', f: 'dm', t: 1,
+        name: 'Oathbound Martyr',
+        tags: ['Zombie', 'Knight'],
+        size: 'tile',
+        hp: 50, armor: 10, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg',
+        xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
+      },
+      oathsworn_martyr: {
+        id: 'dm_21', f: 'dm', t: 2,
+        name: 'Oathsworn Martyr',
+        tags: ['Zombie', 'Knight'],
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
+        xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
+      },
+      martyr_of_the_vow: {
+        id: 'dm_211', f: 'dm', t: 3,
+        name: 'Martyr of the Vow',
+        tags: ['Zombie', 'Knight'],
+        size: 'tile',
+        hp: 65, armor: 15, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
+        damage_source: 'physical', action_power: 20, action_icon: 'sacrifice.jpg',
+        xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
+      },
+      wailing_ghost: {
+        id: 'dm_e3', f: 'dm', t: 1,
+        name: 'Wailing Ghost',
+        tags: ['Ghost', 'Caster'],
+        size: 'tile',
+        hp: 45, armor: 0, initiative: 30,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg',
+        xp: 75, passive: 'chill 1', ability: null,
+      },
+      revenant: {
+        id: 'dm_e31', f: 'dm', t: 2,
+        name: 'Revenant',
+        tags: ['Ghost', 'Caster'],
+        size: 'tile',
+        hp: 55, armor: 0, initiative: 30,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 1,
+        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg',
+        xp: 260, passive: ['chill 1', 'sorrow 1'], ability: null,
+      },
+      soul_harvester: {
+        id: 'dm_e311', f: 'dm', t: 3,
+        name: 'Soul Harvester',
+        tags: ['Ghost', 'Caster'],
+        size: 'tile',
+        hp: 65, armor: 0, initiative: 30,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg',
+        xp: 480, passive: ['chill 2', 'sorrow 1'], ability: null,
+      },
+      malgrath_the_undying_1: {
+        id: 'dm_e4', f: 'dm', t: 2,
+        name: 'Malgrath the Undying',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 120, armor: 20, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 20,
+        xp: 1400, passive: ['iron_will 1', 'undying 1'], ability: null,
+      },
+      malgrath_the_undying_2: {
+        id: 'dm_e41', f: 'dm', t: 3,
+        name: 'Malgrath the Undying',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 150, armor: 20, initiative: 35,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 25,
+        xp: 1400, passive: ['iron_will 1', 'undying 1', 'aura_of_decay 1'], ability: null,
+      },
+    },
+  },
+};
+
+export { UNITS, UNIT_ABILITIES };
+if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
