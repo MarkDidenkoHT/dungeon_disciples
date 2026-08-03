@@ -290,11 +290,16 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   flex: 1;
   overflow: hidden;
+  /* Column so the crest track can sit under the slider instead of over it. */
+  display: flex;
+  flex-direction: column;
 }
 
 .faction-slider {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
@@ -386,32 +391,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .faction-choose-btn {
   margin-top: 10px;
   width: 100%;
-}
-
-.faction-slider-dots {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.faction-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  transition: background 0.2s, transform 0.2s;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.faction-dot--active {
-  background: var(--accent);
-  transform: scale(1.3);
 }
 
 .card--hero {
@@ -756,8 +735,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap: 0;
+  padding: 4px 8px;
   /* Ornate frame art stretched across the bar; --surface shows through as a
      fallback until recource_bar.png is present. */
   background-color: var(--surface);
@@ -796,10 +775,15 @@ button:active:not(:disabled) { opacity: 0.75; }
    bottom-nav frame art instead of sitting bare among the resource numbers —
    same button language as the nav bar, scaled to the resource strip. */
 .res-bar-btn {
+  /* Same frame art, icon treatment and press behaviour as .nav-btn — these are
+     controls sitting in a strip of readouts, and should look like the app's
+     other buttons rather than like a resource count. */
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   border: none;
-  padding: 2px;
+  padding: 4px;
   cursor: pointer;
   font-size: 1rem;
   color: var(--muted);
@@ -808,15 +792,18 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border-radius: 0;
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
   transition: filter 0.15s, transform 0.1s;
 }
 
-.res-bar-btn .res-icon-img {
-  width: 30px;
-  height: 30px;
-  filter: brightness(0.85) sepia(0.25);
+.res-bar-btn .res-icon-img,
+.res-bar-btn img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: brightness(0.65) sepia(0.3);
   transition: filter 0.15s;
 }
 
@@ -824,7 +811,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-image: url('/assets/icons/ui/bottom-nav-active.png');
   transform: scale(0.94);
 }
-.res-bar-btn:not(:disabled):active .res-icon-img { filter: none; }
+.res-bar-btn:not(:disabled):active .res-icon-img,
+.res-bar-btn:not(:disabled):active img { filter: none; }
 
 /* The errand slot is reserved but not yet wired up: same frame, dimmed. */
 .res-bar-placeholder {
@@ -1099,17 +1087,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
-}
-
-.modal::before {
-  content: '';
-  display: block;
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  margin: 10px auto 0;
-  flex-shrink: 0;
 }
 
 .modal-header {
@@ -5080,6 +5057,101 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .portrait-card--branch .portrait-name {
+  max-width: 100%;
+  font-size: 0.5rem;
+}
+
+/* ── Castle sheet action row ────────────────────────────────────────────────
+   Build / upgrade, deconstruct and close as one row of icon buttons instead of
+   a stack of full-width labelled ones. Same frame art as the nav buttons. */
+.castle-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 4px 4px;
+}
+
+.castle-action {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  background-color: transparent;
+  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: filter 0.15s, transform 0.1s;
+}
+
+.castle-action:active {
+  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  transform: scale(0.94);
+}
+
+.castle-action:disabled { opacity: 0.4; cursor: default; }
+
+.castle-action-glyph {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* The primary action is the wide one — it is what the sheet is for. */
+.castle-action--confirm {
+  flex: 1;
+  max-width: 190px;
+}
+.castle-action--confirm .castle-action-glyph { color: var(--accent); }
+.castle-action--deconstruct .castle-action-glyph { color: var(--danger); opacity: 0.85; }
+.castle-action--close .castle-action-glyph { color: var(--muted); }
+
+/* Registration crest / hero track — the same portrait-card frame used across the
+   game, sized larger since it is the primary chooser on these screens. */
+.register-track-wrap {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex-shrink: 0;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(8, 9, 12, 0.92), rgba(8, 9, 12, 0));
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.register-track-wrap::-webkit-scrollbar { display: none; }
+
+.register-track-wrap .portrait-track {
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.portrait-card--crest {
+  --portrait-card-h: clamp(72px, 12vh, 104px);
+  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
+  height: var(--portrait-card-h);
+  width: calc(var(--portrait-card-h) * 0.80);
+  padding: var(--portrait-inset);
+  gap: 1px;
+  cursor: pointer;
+}
+
+.portrait-card--crest .portrait-art-img {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.portrait-card--crest .portrait-name {
   max-width: 100%;
   font-size: 0.5rem;
 }

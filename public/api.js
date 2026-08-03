@@ -120,7 +120,7 @@ export async function refreshResourceBar(player) {
   // opens the roadmap modal (see public/timeline.js); the placeholder is a
   // reserved empty slot for later.
   bar.innerHTML = `
-    <button class="res-bar-item res-bar-btn res-bar-timeline" title="What's Next" aria-label="Roadmap">
+    <button class="res-bar-btn res-bar-timeline" title="What's Next" aria-label="Roadmap">
       <img src="/assets/icons/ui/timeline.png" class="res-icon-img" alt="Timeline" onerror="this.replaceWith(document.createTextNode('🕒'))">
     </button>
     <div class="res-bar-item"><span class="res-bar-icon">${GOLD_ICON}</span><span class="res-bar-val">${find('Gold').amount}</span></div>
@@ -130,7 +130,7 @@ export async function refreshResourceBar(player) {
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature"></span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost"></span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/air.png"   class="res-icon-img" alt="Air"></span><span class="res-bar-val">${find('Crystals_Air').amount}</span></div>
-    <button class="res-bar-item res-bar-btn res-bar-placeholder" disabled aria-hidden="true"></button>
+    <button class="res-bar-btn res-bar-placeholder" disabled aria-hidden="true"></button>
   `;
 }
 

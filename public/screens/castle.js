@@ -23,6 +23,8 @@ const CASTLE_TEXT = {
   upgradeCost: { en: (n, c) => `Upgrade → ${n} (${c})`, ru: (n, c) => `Улучшить → ${n} (${c})` },
   maxed:       { en: 'Maxed — No Upgrades',             ru: 'Максимальный уровень' },
   notEnough:   { en: 'Not enough trophies for this upgrade.', ru: 'Недостаточно трофеев для улучшения.' },
+  deconstruct: { en: 'Deconstruct',                           ru: 'Разобрать' },
+  close:       { en: 'Close',                                 ru: 'Закрыть' },
   confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
 };
 
@@ -211,10 +213,28 @@ export function renderCastle(root, { player }) {
           </div>
         </div>
         ${picker}
-        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}</button>
-        ${opts.deconstructSlot
-          ? `<button class="deconstruct-link" id="slider-deconstruct">${castleLang === 'ru' ? 'Разобрать…' : 'Deconstruct…'}</button>`
-          : ''}`;
+        <!-- One row of icon actions instead of a stack of labelled buttons:
+             confirm (build or upgrade), deconstruct, close. Titles carry the
+             wording so the meaning is still reachable on long-press/hover. -->
+        <div class="castle-action-row">
+          <button class="castle-action castle-action--confirm" id="slider-confirm"
+                  title="${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}"
+                  aria-label="${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}">
+            <span class="castle-action-glyph">${s.actionGlyph || '⚒'}</span>
+          </button>
+          ${opts.deconstructSlot
+            ? `<button class="castle-action castle-action--deconstruct" id="slider-deconstruct"
+                       title="${CASTLE_TEXT.deconstruct[castleLang]}"
+                       aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">
+                 <span class="castle-action-glyph">⛏</span>
+               </button>`
+            : ''}
+          <button class="castle-action castle-action--close" id="slider-close"
+                  title="${CASTLE_TEXT.close[castleLang]}"
+                  aria-label="${CASTLE_TEXT.close[castleLang]}">
+            <span class="castle-action-glyph">✕</span>
+          </button>
+        </div>`;
     }
 
     openModal(title, renderSliderHtml(current));
@@ -264,6 +284,7 @@ export function renderCastle(root, { player }) {
       });
       sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
       sheetBody.querySelector('#slider-deconstruct')?.addEventListener('click', () => openDeconstructModal(opts.deconstructSlot));
+      sheetBody.querySelector('#slider-close')?.addEventListener('click', () => closeModal());
 
       attachAbilityListeners();
     }

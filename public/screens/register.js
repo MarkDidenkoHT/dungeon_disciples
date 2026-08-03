@@ -91,6 +91,7 @@ const FACTIONS = [
       ru: 'Дисциплинированные рыцари, святые заклинатели и полевые инженеры стоят плечом к плечу за щитом и клятвой. Империя вознаграждает крепкий фронт и праведное возмездие.',
     },
     bg: '/assets/screens/empire.jpg',
+    crest: '/assets/crests/empire.jpg',
     highlights: getHighlights('empire'),
   },
   {
@@ -105,6 +106,7 @@ const FACTIONS = [
       ru: 'Демоны, марионетки и придворные интриганы служат иерархии, построенной на голоде и страхе. Хор процветает на исступлении, жертве и обращении силы врага против него самого.',
     },
     bg: '/assets/screens/choir.jpg',
+    crest: '/assets/crests/choir.jpg',
     highlights: getHighlights('choir_of_the_cursed'),
   },
   {
@@ -119,6 +121,7 @@ const FACTIONS = [
       ru: 'Восставшие мертвецы, осадные машины и скорбящие духи идут за реликвией, обещающей бесконечное воскрешение. Грааль изматывает врагов измором и нежитью.',
     },
     bg: '/assets/screens/grail.jpg',
+    crest: '/assets/crests/grail.jpg',
     highlights: getHighlights('grail_of_sorrow'),
   },
 ];
@@ -204,25 +207,36 @@ export function renderRegister(root, { player } = {}) {
             </div>
           `).join('')}
         </div>
-        <div class="faction-slider-dots" id="faction-slider-dots">
-          ${FACTIONS.map((f, i) => `<span class="faction-dot ${i === 0 ? 'faction-dot--active' : ''}" data-index="${i}"></span>`).join('')}
+        <!-- Same bottom track as the roster / formation / initiative queue, but
+             carrying faction crests instead of portraits. Replaces the dots,
+             which said "there are three" without saying which. -->
+        <div class="prep-track-wrap register-track-wrap">
+          <div class="portrait-track" id="faction-crest-track">
+            ${FACTIONS.map((f, i) => `
+              <div class="portrait-card portrait-card--crest ${i === 0 ? 'portrait-card--selected' : ''}"
+                   data-index="${i}" title="${f.label[L]}">
+                <img class="portrait-art-img" src="${f.crest}" alt="${f.label[L]}"
+                     onerror="this.style.display='none'">
+                <div class="portrait-name">${f.label[L]}</div>
+              </div>`).join('')}
+          </div>
         </div>
       </div>
     `;
 
     const slider = root.querySelector('#faction-slider');
-    const dots   = [...root.querySelectorAll('.faction-dot')];
+    const crests = [...root.querySelectorAll('#faction-crest-track .portrait-card')];
 
     slider.addEventListener('scroll', () => {
       const idx = Math.round(slider.scrollLeft / slider.clientWidth);
       if (idx === activeIndex) return;
       activeIndex = idx;
-      dots.forEach((d, i) => d.classList.toggle('faction-dot--active', i === idx));
+      crests.forEach((c, i) => c.classList.toggle('portrait-card--selected', i === idx));
     }, { passive: true });
 
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        const idx = Number(dot.dataset.index);
+    crests.forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = Number(card.dataset.index);
         slider.scrollTo({ left: idx * slider.clientWidth, behavior: 'smooth' });
       });
     });
@@ -248,7 +262,10 @@ export function renderRegister(root, { player } = {}) {
       const prefixMap = { empire: 'h_e_', choir_of_the_cursed: 'h_d_', grail_of_sorrow: 'h_g_' };
       const factionPrefix = prefixMap[selectedFaction.id] ?? 'h_e_';
       heroes = all.filter(h => h.id.startsWith(factionPrefix) && h.t === 1);
-      await preloadAssets(heroes.map(h => `/assets/character_art/${h.id}.png`));
+      await preloadAssets(heroes.flatMap(h => [
+        `/assets/character_art/${h.id}.png`,
+        `/assets/character_portraits/p_${h.id}.png`,
+      ]));
       showHeroStep();
     } catch (err) {
       root.innerHTML = `
@@ -282,6 +299,20 @@ export function renderRegister(root, { player } = {}) {
             </div>
           `).join('')}
         </div>
+
+        <!-- The same bottom track again, here as a jump list for the hero
+             cards: tap a portrait to scroll its card into view. -->
+        <div class="prep-track-wrap register-track-wrap">
+          <div class="portrait-track" id="hero-portrait-track">
+            ${heroes.map((h, i) => `
+              <div class="portrait-card portrait-card--crest ${i === 0 ? 'portrait-card--selected' : ''}"
+                   data-id="${h.id}" title="${h.name ?? h.id}">
+                <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
+                     alt="${h.name ?? h.id}" onerror="this.style.display='none'">
+                <div class="portrait-name">${h.name ?? h.id}</div>
+              </div>`).join('')}
+          </div>
+        </div>
         ${hint ? `
           <div class="first-recruit-hint">
             <div class="first-recruit-hint-title">${UI_TEXT.firstRecruitTip[L]}</div>
@@ -293,6 +324,18 @@ export function renderRegister(root, { player } = {}) {
     `;
 
     root.querySelector('#back-btn').addEventListener('click', showFactionStep);
+
+    // Portrait track scrolls to a hero's card and marks it; picking still
+    // happens on the card itself, so a tap here is never a commitment.
+    const heroCards = [...root.querySelectorAll('.hero-select-card')];
+    root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(chip => {
+      chip.addEventListener('click', () => {
+        root.querySelectorAll('#hero-portrait-track .portrait-card')
+            .forEach(c => c.classList.toggle('portrait-card--selected', c === chip));
+        heroCards.find(c => c.dataset.id === chip.dataset.id)
+          ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    });
 
     root.querySelectorAll('.hero-select-card').forEach(card => {
       card.addEventListener('click', () => {
