@@ -548,15 +548,23 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    const [resources, trophies, structRows, roster] = await Promise.all([
+    // Items ride along with the rest: roster, battle-prep and battle all need
+    // them, and fetching them here costs one extra parallel query instead of a
+    // separate round-trip per screen.
+    const player = await getPlayerByChatId(chat_id);
+    const [resources, trophies, structRows, roster, items] = await Promise.all([
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.resource`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.trophy`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      player
+        ? supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
+        : Promise.resolve([]),
     ]);
     res.json({
       resources,
       trophies,
+      items,
       structures: structRows[0] || null,
       roster,
       buildings: {

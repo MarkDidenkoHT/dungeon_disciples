@@ -1,4 +1,4 @@
-import { api, navigate } from '../api.js';
+import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
@@ -50,8 +50,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let rewardRequestInFlight = false;
   let fxInitialized = false;
 
+  // Items for the equipped-gear inspector. Served from the shared bootstrap
+  // cache — the battle screen no longer fetches its own copy.
   let items = [];
-  api(`/items?chat_id=${player.chat_id}`).then(data => { items = data || []; }).catch(() => {});
+  itemsCache.get(player.chat_id).then(data => { items = data || []; }).catch(() => {});
 
   function equippedItemFor(rosterId) {
     if (rosterId == null) return null;

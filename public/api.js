@@ -52,6 +52,13 @@ function makeCache(fetcher) {
     invalidate() {
       this.dirty = true;
     },
+    // invalidate + get as ONE operation. Two callers refreshing in the same tick
+    // (refreshResourceBar + refreshNavLock on every navigation) share a single
+    // request; awaiting them in sequence used to fire two full bootstraps.
+    refresh(...args) {
+      this.dirty = true;
+      return this.get(...args);
+    },
   };
 }
 
@@ -69,6 +76,12 @@ export const structuresCache = {
   get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.structures); },
   invalidate()  { bootstrapCache.invalidate(); },
 };
+// Same backing fetch again — /bootstrap now carries the player's items, so a
+// screen that needs roster + items + resources costs ONE request, not three.
+export const itemsCache = {
+  get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.items || []); },
+  invalidate()  { bootstrapCache.invalidate(); },
+};
 
 export function setActiveNav(screen) {
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => {
@@ -83,8 +96,7 @@ export async function refreshNavLock(player) {
   if (!nav || !player?.chat_id) return;
   let throneLevel = 0;
   try {
-    bootstrapCache.invalidate();
-    const boot = await bootstrapCache.get(player.chat_id);
+    const boot = await bootstrapCache.refresh(player.chat_id);
     throneLevel = boot.structures?.buildings_data?.slot_0?.level ?? 0;
   } catch {
     throneLevel = 0;
@@ -101,8 +113,7 @@ export async function refreshNavLock(player) {
 export async function refreshResourceBar(player) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;
-  bootstrapCache.invalidate();
-  const boot = await bootstrapCache.get(player.chat_id);
+  const boot = await bootstrapCache.refresh(player.chat_id);
   const inventory = boot.resources || [];
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
   // 9 slots total: [timeline] + gold + 6 crystals + [placeholder]. The timeline

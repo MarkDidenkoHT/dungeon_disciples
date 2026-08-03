@@ -1,4 +1,4 @@
-import { api, navigate, resourceCache, refreshResourceBar }  from '../api.js';
+import { api, navigate, resourceCache, refreshResourceBar, bootstrapCache }  from '../api.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
@@ -1203,12 +1203,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   (async () => {
     try {
-      const [rosterData, itemsData] = await Promise.all([
-        api(`/roster?chat_id=${player.chat_id}`),
-        api(`/items?chat_id=${player.chat_id}`).catch(() => []),
-      ]);
+      // /bootstrap carries roster AND items; the resource bar refresh that runs
+      // on navigation shares the same in-flight request, so this screen adds no
+      // extra round-trips of its own.
+      const boot = await bootstrapCache.get(player.chat_id);
+      const rosterData = boot.roster || [];
 
-      items = itemsData || [];
+      items = boot.items || [];
 
       roster = rosterData
         .map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }))

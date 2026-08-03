@@ -1,7 +1,7 @@
 import { api }              from '../api.js';
 import { navigate }         from '../api.js';
 import { refreshResourceBar } from '../api.js';
-import { resourceCache, structuresCache, bootstrapCache } from '../api.js';
+import { bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { SPELLS }           from '../../data/spells.js';
 import { UNIT_ABILITIES }   from '../../data/unit_abilities.js';
@@ -381,16 +381,11 @@ export function renderRoster(root, { player }) {
       lvlBtn.textContent = '…';
       try {
         await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
-        const [freshUnits, freshStruct] = await Promise.all([
-          api(`/roster?chat_id=${player.chat_id}`),
-          (structuresCache.invalidate(), structuresCache.get(player.chat_id).catch(() => null)),
-        ]);
-        // Sorted hero-first like every other refresh — the raw rows come back
-        // in insert order, which reshuffles the slider under the player.
-        units         = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-        buildingsData = freshStruct?.buildings_data || {};
-        refreshResourceBar(player).catch(() => {});
-        rerenderKeeping(rosterId);
+        // One /bootstrap covers roster, structures, items and resources; this
+        // used to be a /roster fetch plus a structures fetch plus a resource-bar
+        // refresh. applyBootstrap also sorts hero-first, so the slider order
+        // cannot drift.
+        await reloadAndRerender(rosterId);
       } catch (err) {
         lvlBtn.disabled    = false;
         lvlBtn.textContent = 'Level Up';
@@ -407,10 +402,7 @@ export function renderRoster(root, { player }) {
       resurrectBtn.textContent = 'Resurrecting…';
       try {
         await api('/roster/resurrect', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
-        const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
-        units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-        await refreshResourceBar(player).catch(() => {});
-        rerenderKeeping(rosterId);
+        await reloadAndRerender(rosterId);
         // Onboarding: revive done → move on to the heal step.
         if (spellTutorialActive && !isTutorialDone(player, 'spell_revive')) {
           markTutorialDone(player, 'spell_revive');
@@ -431,10 +423,7 @@ export function renderRoster(root, { player }) {
       healBtn.textContent = 'Healing…';
       try {
         await api('/roster/heal', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
-        const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
-        units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-        await refreshResourceBar(player).catch(() => {});
-        rerenderKeeping(rosterId);
+        await reloadAndRerender(rosterId);
         // Onboarding: heal done → the spell tutorial is complete, on to embark.
         if (spellTutorialActive && !isTutorialDone(player, 'spell_heal')) {
           markTutorialDone(player, 'spell_heal');
@@ -740,8 +729,9 @@ export function renderRoster(root, { player }) {
     // so equip/craft taps never fire. getSheetBody() always targets the main sheet.
     const body = getSheetBody();
 
+    // Items come from the shared bootstrap refresh now; this only repaints.
     async function refreshAndRerender() {
-      items = await api(`/items?chat_id=${player.chat_id}`).catch(() => items);
+      applyBootstrap(await bootstrapCache.refresh(player.chat_id));
       body.innerHTML = render();
     }
 
@@ -776,10 +766,8 @@ export function renderRoster(root, { player }) {
         equipBtn.textContent = 'Equipping…';
         try {
           await api('/items/equip', { chat_id: player.chat_id, roster_id: equipBtn.dataset.rosterId, item_id: equipBtn.dataset.itemId });
-          const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
-          units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-          await refreshAndRerender();
-          rerenderKeeping(equipBtn.dataset.rosterId);
+          await reloadAndRerender(equipBtn.dataset.rosterId);
+          body.innerHTML = render();   // repaint the open items sheet
           // Onboarding's last roster beat. Marked here, on the equip actually
           // succeeding, rather than on the tap that requested it.
           if (!isTutorialDone(player, 'roster_equip')) {
@@ -801,10 +789,8 @@ export function renderRoster(root, { player }) {
         const focusedId = units[current]?.id;
         try {
           await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
-          const freshUnits = await api(`/roster?chat_id=${player.chat_id}`);
-          units = freshUnits.slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
-          await refreshAndRerender();
-          rerenderKeeping(focusedId);
+          await reloadAndRerender(focusedId);
+          body.innerHTML = render();   // repaint the open items sheet
         } catch (err) {
           alert(err.message || 'Unequip failed');
           body.innerHTML = render();
@@ -1040,17 +1026,29 @@ export function renderRoster(root, { player }) {
     if (target) showTutorialSpotlight(player, 'roster_equip', target);
   }
 
-  async function load() {
-    const [boot, fetchedItems] = await Promise.all([
-      bootstrapCache.get(player.chat_id),
-      api(`/items?chat_id=${player.chat_id}`).catch(() => []),
-    ]);
-
+  // Every slice this screen needs — roster, items, structures, resources,
+  // trophies — comes from the single /bootstrap payload. Nothing here fetches
+  // a second endpoint.
+  function applyBootstrap(boot) {
     units         = (boot.roster || []).slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
     buildingsData = boot.structures?.buildings_data || {};
     upgradePaths  = boot.buildings?.upgrade_paths || {};
-    items         = fetchedItems || [];
+    items         = boot.items || [];
     resources     = [...(boot.resources || []), ...(boot.trophies || [])];
+    return boot;
+  }
+
+  // Post-mutation refresh: ONE request, then re-render keeping the same unit in
+  // view. Replaces the old "/roster + /items + refreshResourceBar" trio, which
+  // cost three round-trips for one equip.
+  async function reloadAndRerender(focusRosterId) {
+    applyBootstrap(await bootstrapCache.refresh(player.chat_id));
+    rerenderKeeping(focusRosterId);
+    refreshResourceBar(player).catch(() => {});
+  }
+
+  async function load() {
+    applyBootstrap(await bootstrapCache.get(player.chat_id));
 
     if (!units.length) {
       track.innerHTML = `<div class="roster-slide"><p class="placeholder">No units yet.</p></div>`;

@@ -64,6 +64,7 @@ export function renderCastle(root, { player }) {
   }
 
   let rosterCount = 0;
+  let rosterCache = [];   // from /bootstrap; no separate /roster fetch
 
   async function load() {
     const boot = await bootstrapCache.get(player.chat_id);
@@ -84,8 +85,22 @@ export function renderCastle(root, { player }) {
     trophyInventory     = trophies || [];
     structuresRecord   = structures;
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
+    rosterCache        = Array.isArray(roster) ? roster : [];
 
     renderBuildings();
+  }
+
+  // Single refresh path: /bootstrap holds resources, trophies, structures, roster
+  // and items, so every post-mutation update is ONE request rather than one per
+  // slice. refreshResourceBar shares the same in-flight fetch.
+  async function reloadFromBootstrap() {
+    const boot = await bootstrapCache.refresh(player.chat_id);
+    structuresRecord = boot.structures;
+    trophyInventory  = boot.trophies || [];
+    rosterCache      = boot.roster || [];
+    rosterCount      = rosterCache.length;
+    renderBuildings();
+    refreshResourceBar(player).catch(() => {});
   }
 
   function getBuildingDef(faction, buildingId) {
@@ -503,8 +518,8 @@ export function renderCastle(root, { player }) {
         .join(' + ');
     }
 
-    const roster = await api(`/roster?chat_id=${player.chat_id}`).catch(() => []);
-    const rosterEntry = roster.find(r => r.unit_data?.mercenary && r.unit_data?.mercenary_region === def.region && r.unit_data?.id === currentUnit?.id);
+    // Roster comes from the bootstrap payload the screen already loaded.
+    const rosterEntry = rosterCache.find(r => r.unit_data?.mercenary && r.unit_data?.mercenary_region === def.region && r.unit_data?.id === currentUnit?.id);
 
     openSliderModal(def.label,
       paths.map(path => {
@@ -653,10 +668,9 @@ export function renderCastle(root, { player }) {
         slot,
       });
       if (result.structures) structuresRecord = result.structures;
-      const trophies = await api(`/inventory?chat_id=${player.chat_id}&type=trophy`);
-      trophyInventory = trophies || [];
-      renderBuildings();
-      refreshResourceBar(player).catch(() => {});
+      // One refresh feeds trophies, roster AND the resource bar — /bootstrap
+      // carries all three, so there is nothing to fetch separately.
+      await reloadFromBootstrap();
     } catch (err) {
       console.error(err);
       alert(err.message || 'Recruit failed');
@@ -673,10 +687,9 @@ export function renderCastle(root, { player }) {
         roster_id,
       });
       if (result.structures) structuresRecord = result.structures;
-      const trophies = await api(`/inventory?chat_id=${player.chat_id}&type=trophy`);
-      trophyInventory = trophies || [];
-      renderBuildings();
-      refreshResourceBar(player).catch(() => {});
+      // One refresh feeds trophies, roster AND the resource bar — /bootstrap
+      // carries all three, so there is nothing to fetch separately.
+      await reloadFromBootstrap();
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');
