@@ -153,7 +153,7 @@ export function renderRegister(root, { player } = {}) {
   if (!player) {
     root.innerHTML = `
       <div class="screen screen-faction">
-        <h1>Dungeon Disciples</h1>
+        <h1>Shattered Crown</h1>
         <p class="subtitle">${UI_TEXT.openInTelegram[L]}</p>
       </div>
     `;

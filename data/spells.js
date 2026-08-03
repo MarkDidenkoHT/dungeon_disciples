@@ -48,7 +48,7 @@ const SPELLS = {
       class: 'boon',
       usage: 'roster',
       target_scope: 'single_ally',
-      params: { heal_pct: 0.5 }
+      params: { heal_pct: 1 }
     },
 
     // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────
@@ -225,7 +225,7 @@ const SPELLS = {
       class: 'boon',
       usage: 'roster',
       target_scope: 'single_ally',
-      params: { heal_pct: 0.5 }
+      params: { heal_pct: 1 }
     },
 
     // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────
@@ -402,7 +402,7 @@ const SPELLS = {
       class: 'boon',
       usage: 'roster',
       target_scope: 'single_ally',
-      params: { heal_pct: 0.5 }
+      params: { heal_pct: 1 }
     },
 
     // ── Buffs (throne 2 / 3 / 4) ─────────────────────────────────────────────

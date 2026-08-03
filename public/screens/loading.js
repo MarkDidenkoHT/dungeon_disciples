@@ -57,22 +57,20 @@ export function renderLoadingScreen(root) {
     <div class="loading-screen loading-screen--fullbg" style="background-image: url('${pick(LOADING_IMAGES)}')">
       <div class="loading-bg-overlay"></div>
       <div class="loading-content">
-        <div class="loading-title">Dungeon Disciples</div>
+        <div class="loading-title">Shattered Crown</div>
         <div class="loading-flavour">${pick(tips)}</div>
         <div class="loading-bar-track">
           <div class="loading-bar-fill" id="loading-bar-fill"></div>
         </div>
-        <div class="loading-pct" id="loading-pct">0%</div>
       </div>
     </div>
   `;
+  // The bar is the whole progress readout — no numeric percentage.
   const fill = root.querySelector('#loading-bar-fill');
-  const pct  = root.querySelector('#loading-pct');
   return {
     setProgress(p) {
       const clamped = Math.max(0, Math.min(1, p));
       fill.style.width = `${Math.round(clamped * 100)}%`;
-      pct.textContent  = `${Math.round(clamped * 100)}%`;
     },
   };
 }

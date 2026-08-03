@@ -515,9 +515,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .loading-bar-track {
-  width: 62vw;
-  max-width: 260px;
-  height: 6px;
+  width: 84vw;
+  max-width: 460px;
+  height: 8px;
   border-radius: 3px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -529,12 +529,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: 0%;
   background: linear-gradient(90deg, var(--accent), #e8b45a);
   transition: width 0.2s ease-out;
-}
-
-.loading-pct {
-  font-size: 0.75rem;
-  color: var(--muted);
-  letter-spacing: 0.05em;
 }
 
 .card-grid {
@@ -783,25 +777,44 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
-/* Timeline / placeholder slots — look like resource items but are buttons. */
+/* Timeline / errand slots. These are controls, not readouts, so they wear the
+   bottom-nav frame art instead of sitting bare among the resource numbers —
+   same button language as the nav bar, scaled to the resource strip. */
 .res-bar-btn {
   justify-content: center;
-  background: none;
+  align-items: center;
   border: none;
-  padding: 0;
+  padding: 2px;
   cursor: pointer;
   font-size: 1rem;
   color: var(--muted);
+  background-color: transparent;
+  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 0;
+  width: 46px;
+  height: 46px;
+  transition: filter 0.15s, transform 0.1s;
 }
-.res-bar-timeline { cursor: pointer; }
-.res-bar-timeline:active { transform: scale(0.92); }
+
+.res-bar-btn .res-icon-img {
+  width: 30px;
+  height: 30px;
+  filter: brightness(0.85) sepia(0.25);
+  transition: filter 0.15s;
+}
+
+.res-bar-btn:not(:disabled):active {
+  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  transform: scale(0.94);
+}
+.res-bar-btn:not(:disabled):active .res-icon-img { filter: none; }
+
+/* The errand slot is reserved but not yet wired up: same frame, dimmed. */
 .res-bar-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px dashed var(--border);
   cursor: default;
-  opacity: 0.4;
+  opacity: 0.45;
 }
 
 /* ── Timeline / roadmap modal ─────────────────────────────────────────────── */
@@ -933,7 +946,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-icon-img {
-  width: 40;
+  width: 40px;   /* was `40` — a missing unit, so the declaration was dropped */
   height: 40px;
   object-fit: contain;
   display: block;
@@ -2192,8 +2205,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   right: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 20px 10px 10px;
+  gap: 2px;
+  padding: 12px 10px 5px;
   background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75) 40%);
   z-index: 2;
 }
@@ -5016,3 +5029,42 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0;
 }
 .deconstruct-warn { color: var(--danger); opacity: 0.85; }
+
+/* Branch picker in the castle upgrade sheet: at most three paths, shown as
+   portrait cards (same frame + lit-selected art as the formation track) rather
+   than arrows and dots that hid the alternatives. */
+.branch-track-wrap {
+  padding: 6px 0 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.branch-track-wrap::-webkit-scrollbar { display: none; }
+
+.branch-track-wrap .portrait-track {
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.portrait-card--branch {
+  --portrait-card-h: clamp(64px, 10vh, 86px);
+  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
+  height: var(--portrait-card-h);
+  width: calc(var(--portrait-card-h) * 0.80);
+  padding: var(--portrait-inset);
+  gap: 1px;
+  cursor: pointer;
+}
+
+.portrait-card--branch .portrait-art-img {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 2px;
+}
+
+.portrait-card--branch .portrait-name {
+  max-width: 100%;
+  font-size: 0.5rem;
+}

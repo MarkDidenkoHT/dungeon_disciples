@@ -14,6 +14,18 @@ import {
   buildUnitCard, getActionLabel, buildAbilityModalParts,
 } from '../utils.js';
 
+// Castle copy that was still hardcoded English while the rest of the sheet
+// followed the player's language (the perk chooser and Deconstruct modal were
+// already localized, so the upgrade button read "Upgrade -> X" next to
+// "Разобрать...").
+const CASTLE_TEXT = {
+  upgradeTo:   { en: n => `Upgrade → ${n}`,             ru: n => `Улучшить → ${n}` },
+  upgradeCost: { en: (n, c) => `Upgrade → ${n} (${c})`, ru: (n, c) => `Улучшить → ${n} (${c})` },
+  maxed:       { en: 'Maxed — No Upgrades',             ru: 'Максимальный уровень' },
+  notEnough:   { en: 'Not enough trophies for this upgrade.', ru: 'Недостаточно трофеев для улучшения.' },
+  confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
+};
+
 const CASTLE_BACKGROUNDS = {
   empire:              '/assets/screens/empire.jpg',
   choir_of_the_cursed: '/assets/screens/choir.jpg',
@@ -112,6 +124,14 @@ export function renderCastle(root, { player }) {
     return null;
   }
 
+  // Same portrait convention as the roster / formation track.
+  function branchPortraitUrl(unit) {
+    const id = unit?.id;
+    if (!id) return '';
+    const portraitId = id.match(/^(h_[a-z]_\d)/)?.[1] ?? id;
+    return `/assets/character_portraits/p_${portraitId}.png`;
+  }
+
   function getUnitByUnitId(unitId) {
     if (!unitId || !UNITS) return null;
     const factions = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow'];
@@ -169,24 +189,29 @@ export function renderCastle(root, { player }) {
 
     function renderSliderHtml(idx) {
       const s = slides[idx];
-      const dots = slides.length > 1
-        ? `<div class="slider-dots">${slides.map((_, i) =>
-            `<span class="slider-dot${i === idx ? ' slider-dot--active' : ''}"></span>`
-          ).join('')}</div>`
-        : '';
-      const arrows = slides.length > 1
-        ? `<button class="slider-arrow slider-arrow--prev" id="slider-prev"${idx === 0 ? ' disabled' : ''}>&#x2039;</button>
-           <button class="slider-arrow slider-arrow--next" id="slider-next"${idx === slides.length - 1 ? ' disabled' : ''}>&#x203A;</button>`
+      // Branch picker. An upgrade offers at most three paths, so they all fit as
+      // portrait cards — the same frame art the roster, formation track and
+      // initiative queue use — instead of arrows and dots that hide the choice.
+      const picker = slides.length > 1
+        ? `<div class="prep-track-wrap branch-track-wrap">
+             <div class="portrait-track" id="branch-track">
+               ${slides.map((slide, i) => `
+                 <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
+                      data-i="${i}" title="${slide.unit?.name || slide.buildingLabel || ''}">
+                   ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${slide.unit.name}" onerror="this.style.display='none'">` : ''}
+                   <div class="portrait-name">${slide.unit?.name || slide.buildingLabel || ''}</div>
+                 </div>`).join('')}
+             </div>
+           </div>`
         : '';
       return `
         <div class="castle-unit-slider">
           <div class="castle-slider-track" id="slider-track">
             ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
           </div>
-          ${arrows}
-          ${dots}
         </div>
-        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || 'Confirm'}</button>
+        ${picker}
+        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || CASTLE_TEXT.confirm[castleLang]}</button>
         ${opts.deconstructSlot
           ? `<button class="deconstruct-link" id="slider-deconstruct">${castleLang === 'ru' ? 'Разобрать…' : 'Deconstruct…'}</button>`
           : ''}`;
@@ -228,11 +253,14 @@ export function renderCastle(root, { player }) {
         if (dx > 0 && current > 0)                  { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
 
-      sheetBody.querySelector('#slider-prev')?.addEventListener('click', () => {
-        if (current > 0) { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
-      });
-      sheetBody.querySelector('#slider-next')?.addEventListener('click', () => {
-        if (current < slides.length - 1) { current++; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
+      sheetBody.querySelectorAll('#branch-track .portrait-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const i = Number(card.dataset.i);
+          if (i === current) return;
+          current = i;
+          sheetBody.innerHTML = renderSliderHtml(current);
+          attach();
+        });
       });
       sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
       sheetBody.querySelector('#slider-deconstruct')?.addEventListener('click', () => openDeconstructModal(opts.deconstructSlot));
@@ -327,7 +355,7 @@ export function renderCastle(root, { player }) {
       const paths = getMercUpgradePaths(mercDef);
       if (!paths.length) {
         openSliderModal(mercDef.label,
-          [{ unit: getUnitByUnitId(mercDef.unit_id), buildingLabel: mercDef.label, confirmLabel: 'Maxed — No Upgrades' }],
+          [{ unit: getUnitByUnitId(mercDef.unit_id), buildingLabel: mercDef.label, confirmLabel: CASTLE_TEXT.maxed[castleLang] }],
           () => closeModal(),
           { deconstructSlot: slot }
         );
@@ -344,7 +372,7 @@ export function renderCastle(root, { player }) {
 
     if (!paths || paths.length === 0) {
       openSliderModal(def.label,
-        [{ unit: getUnitByUnitId(def.unit_id), buildingLabel: def.label, confirmLabel: 'Maxed — No Upgrades' }],
+        [{ unit: getUnitByUnitId(def.unit_id), buildingLabel: def.label, confirmLabel: CASTLE_TEXT.maxed[castleLang] }],
         () => closeModal(),
         { deconstructSlot: slot }
       );
@@ -527,7 +555,7 @@ export function renderCastle(root, { player }) {
         return {
           unit:           nextUnit,
           buildingLabel:  nextUnit?.name || path.label,
-          confirmLabel:   `Upgrade → ${nextUnit?.name || path.label} (${costLabel(path.cost)})`,
+          confirmLabel:   CASTLE_TEXT.upgradeCost[castleLang](nextUnit?.name || path.label, costLabel(path.cost)),
           compareUnit:    currentUnit,
           mercBuildingId: path.id,
           mercCost:       path.cost,
@@ -538,7 +566,7 @@ export function renderCastle(root, { player }) {
       s => {
         const cost  = s.mercCost || {};
         const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
-        if (short) { alert('Not enough trophies for this upgrade.'); return; }
+        if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
         performMercenaryUpgrade(s.mercBuildingId, slot, s.rosterId);
       },
       { deconstructSlot: slot }
@@ -554,7 +582,7 @@ export function renderCastle(root, { player }) {
         return {
           unit:          nextUnit,
           buildingLabel: nextUnit?.name || path.label,
-          confirmLabel:  `Upgrade → ${nextUnit?.name || path.label}`,
+          confirmLabel:  CASTLE_TEXT.upgradeTo[castleLang](nextUnit?.name || path.label),
           compareUnit:   currentUnit,
           buildingId:    path.building_id,
           slot,
