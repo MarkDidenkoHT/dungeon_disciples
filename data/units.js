@@ -489,7 +489,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 35, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg',
-      xp: 100, passive: 'magic_attunement 1', ability: 'infernal_mandate 1',
+      xp: 100, passive: ['magic_attunement 1', 'resist_aura_fire 1'], ability: 'infernal_mandate 1',
     },
     nether_baron: {
       id: 'd61', f: 'd', t: 2,
@@ -500,7 +500,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg',
-      xp: 400, passive: ['magic_attunement 1', 'undying 1'], ability: 'infernal_mandate 2',
+      xp: 400, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'undying 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
       id: 'd611', f: 'd', t: 3,
@@ -511,7 +511,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg',
-      xp: 900, passive: ['magic_attunement 2', 'undying 1'], ability: 'infernal_mandate 3',
+      xp: 900, passive: ['magic_attunement 2', 'resist_aura_fire 1', 'undying 1'], ability: 'infernal_mandate 3',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -649,8 +649,8 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 90, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 20, action_icon: 'holy_attack.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 20, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 1', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -661,8 +661,8 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_attack.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -673,8 +673,8 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'holy_attack.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -685,8 +685,8 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'holy_attack.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 1', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1155,8 +1155,8 @@ const UNITS = {
       size: 'tile',
       hp: 65, armor: 20, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg',
       xp: 900, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
     },
     priest: {
@@ -1234,7 +1234,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
-      xp: 400, passive: ['inspiration_initiative 1', 'chill 1'], ability: null,
+      xp: 400, passive: ['resist_aura_cold 1', 'chill 1'], ability: null,
     },
     cryomancer: {
       id: 'e421', f: 'e', t: 3,
@@ -1245,7 +1245,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_animation: 'frost_spell_impact',
-      xp: 900, passive: ['inspiration_initiative 1', 'chill 2'], ability: null,
+      xp: 900, passive: ['resist_aura_cold 1', 'chill 2'], ability: null,
     },
   },
 

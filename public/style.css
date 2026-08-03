@@ -4948,3 +4948,71 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 0.68rem;
   color: #c0392b;
 }
+
+/* ── Deconstruction ─────────────────────────────────────────────────────────
+   Respec / demolish UI. Deliberately quieter than the upgrade button: these are
+   corrective actions, not the thing the player is meant to reach for. */
+.deconstruct-link {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.deconstruct-link:active { background: rgba(255, 255, 255, 0.05); }
+
+.deconstruct-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+
+.deconstruct-intro {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.respec-options { display: flex; flex-direction: column; gap: 8px; }
+
+.respec-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.respec-option:active { border-color: var(--accent); }
+.respec-option-label { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.respec-option-sub   { font-size: 0.7rem; color: var(--muted); }
+.respec-option-cost  { font-size: 0.72rem; color: var(--accent); font-weight: 700; }
+
+.deconstruct-btn {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--danger);
+  background: rgba(200, 74, 58, 0.1);
+  color: var(--danger);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.deconstruct-btn:active { background: rgba(200, 74, 58, 0.22); }
+
+.deconstruct-warn,
+.deconstruct-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.deconstruct-warn { color: var(--danger); opacity: 0.85; }

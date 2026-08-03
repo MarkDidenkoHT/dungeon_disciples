@@ -6,6 +6,7 @@ import { bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
+import { getRespecOptions, getRespecCost, RESPEC_COST_PCT } from '../../data/buildings.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -121,7 +122,7 @@ export function renderCastle(root, { player }) {
     return def.upgrades.map(uid => ({ unit_id: uid, building_id: uid, label: uid }));
   }
 
-  function openSliderModal(title, slides, onConfirm) {
+  function openSliderModal(title, slides, onConfirm, opts = {}) {
     let current = 0;
 
     function renderSliderHtml(idx) {
@@ -143,7 +144,10 @@ export function renderCastle(root, { player }) {
           ${arrows}
           ${dots}
         </div>
-        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || 'Confirm'}</button>`;
+        <button class="upgrade-confirm-btn" id="slider-confirm">${s.confirmLabel || 'Confirm'}</button>
+        ${opts.deconstructSlot
+          ? `<button class="deconstruct-link" id="slider-deconstruct">${castleLang === 'ru' ? 'Разобрать…' : 'Deconstruct…'}</button>`
+          : ''}`;
     }
 
     openModal(title, renderSliderHtml(current));
@@ -189,6 +193,7 @@ export function renderCastle(root, { player }) {
         if (current < slides.length - 1) { current++; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
       sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
+      sheetBody.querySelector('#slider-deconstruct')?.addEventListener('click', () => openDeconstructModal(opts.deconstructSlot));
 
       attachAbilityListeners();
     }
@@ -281,7 +286,8 @@ export function renderCastle(root, { player }) {
       if (!paths.length) {
         openSliderModal(mercDef.label,
           [{ unit: getUnitByUnitId(mercDef.unit_id), buildingLabel: mercDef.label, confirmLabel: 'Maxed — No Upgrades' }],
-          () => closeModal()
+          () => closeModal(),
+          { deconstructSlot: slot }
         );
         return;
       }
@@ -297,12 +303,113 @@ export function renderCastle(root, { player }) {
     if (!paths || paths.length === 0) {
       openSliderModal(def.label,
         [{ unit: getUnitByUnitId(def.unit_id), buildingLabel: def.label, confirmLabel: 'Maxed — No Upgrades' }],
-        () => closeModal()
+        () => closeModal(),
+        { deconstructSlot: slot }
       );
       return;
     }
 
     openUpgradeModal(slot, def, paths);
+  }
+
+  // ── Deconstruction ────────────────────────────────────────────────────────
+  // Respec swaps the slot for a same-tier sibling at RESPEC_COST_PCT of its
+  // cost; Demolish empties it entirely. The throne is respec-only — a player
+  // without a throne has no hero. Both are server-validated; this is the UI.
+  function openDeconstructModal(slot) {
+    const state = structuresRecord.buildings_data[slot];
+    if (!state?.building_id) return;
+    const def     = getBuildingDef(player.faction, state.building_id);
+    const options = getRespecOptions(player.faction, state.building_id);
+    const isThrone = slot === 'slot_0';
+    const ru = castleLang === 'ru';
+
+    const optionCards = options.map(o => {
+      const unit = getUnitByUnitId(o.unit_id);
+      const cost = getRespecCost(player.faction, o.id, state.level);
+      const costStr = Object.entries(cost)
+        .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace(/_/g, ' ')}`)
+        .join(', ') || (ru ? 'бесплатно' : 'free');
+      return `
+        <button class="respec-option" data-building="${o.id}">
+          <span class="respec-option-label">${unit?.name || o.label}</span>
+          <span class="respec-option-sub">${o.label}</span>
+          <span class="respec-option-cost">${costStr}</span>
+        </button>`;
+    }).join('');
+
+    openModal(ru ? 'Разбор' : 'Deconstruct', `
+      <div class="deconstruct-body">
+        <p class="deconstruct-intro">
+          ${ru
+            ? `Смена ветки того же уровня стоит ${RESPEC_COST_PCT}% цены нового здания. Опыт бойца сохраняется.`
+            : `Switching to another branch of the same tier costs ${RESPEC_COST_PCT}% of the new building's price. The unit keeps its XP.`}
+        </p>
+        ${options.length
+          ? `<div class="respec-options">${optionCards}</div>`
+          : `<p class="modal-empty">${ru ? 'Нет вариантов того же уровня.' : 'No same-tier alternatives.'}</p>`}
+        ${isThrone
+          ? `<p class="deconstruct-note">${ru ? 'Трон нельзя снести.' : 'The throne cannot be demolished.'}</p>`
+          : `<button class="deconstruct-btn" id="deconstruct-clear">
+               ${ru ? 'Снести здание' : 'Demolish Building'}
+             </button>
+             <p class="deconstruct-warn">
+               ${ru
+                 ? 'Здание и его боец будут удалены безвозвратно. Снаряжение вернётся в хранилище. Возврата ресурсов нет.'
+                 : 'The building and its unit are destroyed for good. Equipped gear returns to your stash. Nothing is refunded.'}
+             </p>`}
+      </div>`);
+
+    getSheetBody()?.querySelectorAll('.respec-option').forEach(btn => {
+      btn.addEventListener('click', () => performRespec(slot, btn.dataset.building));
+    });
+    getSheetBody()?.querySelector('#deconstruct-clear')?.addEventListener('click', () => {
+      confirmAndClear(slot, def);
+    });
+  }
+
+  async function performRespec(slot, building_id) {
+    try {
+      const result = await api('/structures/respec', { chat_id: player.chat_id, slot, building_id });
+      structuresRecord = result.structures;
+      closeModal();
+      renderBuildings();
+      refreshResourceBar(player).catch(() => {});
+    } catch (err) {
+      alert(err.message || 'Respec failed');
+    }
+  }
+
+  function confirmAndClear(slot, def) {
+    const ru = castleLang === 'ru';
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-modal-text">
+          ${ru
+            ? `Снести «${def?.label ?? ''}»? Боец из этого здания будет удалён навсегда.`
+            : `Demolish ${def?.label ?? 'this building'}? Its unit is deleted permanently.`}
+        </div>
+        <div class="confirm-modal-actions">
+          <button class="confirm-modal-btn confirm-modal-btn--cancel">${ru ? 'Отмена' : 'Cancel'}</button>
+          <button class="confirm-modal-btn confirm-modal-btn--confirm">${ru ? 'Снести' : 'Demolish'}</button>
+        </div>
+      </div>`;
+    overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', async () => {
+      overlay.remove();
+      try {
+        const result = await api('/structures/clear', { chat_id: player.chat_id, slot });
+        structuresRecord = result.structures;
+        closeModal();
+        renderBuildings();
+        refreshNavLock(player).catch(() => {});
+      } catch (err) {
+        alert(err.message || 'Demolish failed');
+      }
+    });
+    document.body.appendChild(overlay);
   }
 
   function openBuildModal(slot) {
@@ -391,7 +498,8 @@ export function renderCastle(root, { player }) {
         const short = Object.entries(cost).some(([item, amt]) => trophyAmount(item) < amt);
         if (short) { alert('Not enough trophies for this upgrade.'); return; }
         performMercenaryUpgrade(s.mercBuildingId, slot, s.rosterId);
-      }
+      },
+      { deconstructSlot: slot }
     );
   }
 
@@ -410,7 +518,8 @@ export function renderCastle(root, { player }) {
           slot,
         };
       }),
-      s => performBuildingUpgrade(s.slot, s.buildingId)
+      s => performBuildingUpgrade(s.slot, s.buildingId),
+      { deconstructSlot: slot }
     );
   }
 

@@ -8,6 +8,7 @@ const path   = require('path');
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
 const { getEquipBlock } = require('../data/item_rules');
+const { RESPEC_COST_PCT, getRespecOptions, getRespecCost } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
@@ -813,6 +814,111 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     await Promise.all(updatePromises);
     const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
     res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Deconstruction ──────────────────────────────────────────────────────────
+// Respec: swap a slot's building for a sibling of the SAME category and tier,
+// for RESPEC_COST_PCT of the new building's cost. The slot keeps its level and
+// the unit it granted keeps its XP — only which unit it is changes. The throne
+// may be respecced (a different hero line at the same level) but never cleared.
+router.post('/structures/respec', requireAuth, async (req, res) => {
+  const { chat_id, slot, building_id } = req.body;
+  if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
+  try {
+    const [rows, playerRows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
+    ]);
+    if (!rows.length)       return res.status(404).json({ error: 'Structures not found' });
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+    const faction = playerRows[0].faction;
+    const record    = rows[0];
+    const buildings = record.buildings_data;
+    const current   = buildings[slot];
+    if (!current || !current.building_id) return res.status(400).json({ error: 'Nothing to respec in this slot' });
+
+    // The target must be an offered sibling — same category, same tier. This is
+    // the whole guard against respeccing into a higher tier for a quarter price.
+    const options = getRespecOptions(faction, current.building_id);
+    const target  = options.find(o => o.id === building_id);
+    if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
+
+    const cost = getRespecCost(faction, target.id, current.level);
+    const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    for (const [item, amount] of Object.entries(cost)) {
+      const key = item === 'gold' ? 'Gold' : item;
+      const row = inventory.find(r => r.item === key);
+      if (!row || Number(row.amount) < amount) return res.status(400).json({ error: `Not enough ${key}. Need ${amount}` });
+    }
+    for (const [item, amount] of Object.entries(cost)) {
+      const key = item === 'gold' ? 'Gold' : item;
+      const row = inventory.find(r => r.item === key);
+      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
+    }
+
+    buildings[slot] = { level: current.level, building_id: target.id };
+    const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
+
+    // Swap the unit this slot granted. XP survives the respec — the player is
+    // re-choosing a branch, not starting over — but HP is re-rolled from the new
+    // unit's definition, since max_hp differs between lines.
+    let swappedUnit = null;
+    if (target.unit_id) {
+      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const entry = rosterRows.find(r => r.unit_data?.building_slot === slot);
+      const newDef = getUnitByDataId(target.unit_id);
+      if (entry && newDef) {
+        const newHp = newDef.hp ?? entry.unit_data?.max_hp ?? 50;
+        const unit_data = {
+          ...entry.unit_data,
+          unit_id:    newDef.id,
+          max_hp:     newHp,
+          current_hp: Math.min(entry.unit_data?.current_hp ?? newHp, newHp),
+          alive:      entry.unit_data?.alive !== false,
+        };
+        await supabase(`/roster?id=eq.${entry.id}`, { method: 'PATCH', body: JSON.stringify({ unit_data }) });
+        swappedUnit = { roster_id: entry.id, unit_id: newDef.id };
+      }
+    }
+    res.json({ structures: updated[0], cost, swapped_unit: swappedUnit });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Clear: demolish a slot outright. The building AND the unit it granted are
+// gone; equipped items return to the player's stash rather than vanishing with
+// the unit. Nothing is refunded — the respec above is the cheap path, this is
+// the destructive one. Refused for the throne.
+router.post('/structures/clear', requireAuth, async (req, res) => {
+  const { chat_id, slot } = req.body;
+  if (!chat_id || !slot) return res.status(400).json({ error: 'chat_id and slot required' });
+  if (slot === 'slot_0') return res.status(400).json({ error: 'The throne cannot be demolished' });
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
+    const record    = rows[0];
+    const buildings = record.buildings_data;
+    const current   = buildings[slot];
+    if (!current || !current.building_id) return res.status(400).json({ error: 'That slot is already empty' });
+
+    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+    const doomed = rosterRows.filter(r => r.unit_data?.building_slot === slot && r.is_hero !== true);
+
+    // Strip gear first: an item whose owner is deleted would otherwise stay
+    // flagged as equipped by a roster id that no longer exists.
+    for (const entry of doomed) {
+      const items = await supabase(`/items?equipped_by=eq.${encodeURIComponent(entry.id)}&select=id`);
+      for (const item of items) await unequipItemFromRosterUnit(item, entry.id);
+      await supabase(`/roster?id=eq.${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
+    }
+
+    buildings[slot] = { level: 0, building_id: null };
+    const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
+    res.json({ structures: updated[0], removed_units: doomed.map(d => d.id) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

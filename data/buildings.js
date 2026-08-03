@@ -424,6 +424,51 @@ function getBuildingDef(faction, buildingId) {
   return null;
 }
 
+// ── Deconstruction ──────────────────────────────────────────────────────────
+// Two operations on an occupied slot:
+//   RESPEC  swap the building for a SIBLING — same category, same tier — so a
+//           player who took the wrong branch of an upgrade tree is not stuck
+//           with it. Costs RESPEC_COST_PCT of the new building's build cost.
+//   CLEAR   demolish the slot outright, freeing it for a different line. The
+//           throne is exempt: it can be respecced but never cleared, since a
+//           player without a throne has no hero and no game.
+const RESPEC_COST_PCT = 25;
+
+// Same category and same tier as `buildingId`, excluding itself. For the throne
+// this is the other branch at the current level (…_2_a <-> …_2_b).
+function getRespecOptions(faction, buildingId) {
+  const pools = BUILDING_POOLS[faction];
+  if (!pools) return [];
+  const current = getBuildingDef(faction, buildingId);
+  if (!current) return [];
+  const pool = pools[current.category] || [];
+  return pool.filter(b =>
+    b.id !== current.id &&
+    b.tier != null && b.tier === current.tier &&
+    b.unit_id // 'throne' itself is a placeholder with no unit and no tier
+  );
+}
+
+// A percentage of a cost map, rounded up so a respec is never free.
+function scaleCost(cost, pct) {
+  const out = {};
+  for (const [item, amount] of Object.entries(cost || {})) {
+    const scaled = Math.ceil(Number(amount) * pct / 100);
+    if (scaled > 0) out[item] = scaled;
+  }
+  return out;
+}
+
+// What a respec into `buildingId` costs. Throne buildings carry no `cost` of
+// their own — they are paid for through THRONE_UPGRADE_COSTS — so fall back to
+// the cost of the level the slot currently sits at.
+function getRespecCost(faction, buildingId, level) {
+  const def = getBuildingDef(faction, buildingId);
+  if (!def) return {};
+  const base = def.cost || (def.category === 'throne' ? THRONE_UPGRADE_COSTS[level] : null) || {};
+  return scaleCost(base, RESPEC_COST_PCT);
+}
+
 function emptyStructures() {
   const slots = { slot_0: { level: 0, building_id: null } };
   for (let i = 1; i <= 8; i++) {
@@ -669,4 +714,8 @@ module.exports = {
   getSpellCostReductionPct,
   getBuildingDef,
   emptyStructures,
+  RESPEC_COST_PCT,
+  getRespecOptions,
+  getRespecCost,
+  scaleCost,
 };
