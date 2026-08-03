@@ -9,9 +9,9 @@ function lang(player) {
 }
 
 const UNIT_ART = new Set([
-  'e1', 'e21', 'e3', 'e4', 'e6',
-  'd11', 'd41', 'd6', 'd31', 'd7',
-  'gs12', 'gs311', 'gs6',
+  'e421', 'e21', 'e31', 'e111', 'e61',
+  'd11', 'd41', 'd61', 'd311', 'd71',
+  'gs12', 'gs311', 'gs61', 'gs411', 'gs21'
 ]);
 
 const HERO_FLAVOR = {
@@ -53,28 +53,11 @@ const HERO_FLAVOR = {
   },
 };
 
-const FIRST_RECRUIT_HINT = {
-  empire: {
-    name: 'Conscript',
-    en: 'New to the Empire? Your first recruit should be a Conscript — sturdy enough to hold the front line while you learn the ropes. Casters and scouts hit hard, but they won\u2019t survive long without a shield ahead of them.',
-    ru: 'Впервые за Империю? Первым бойцом лучше взять Новобранца — он достаточно крепок, чтобы держать фронт, пока вы осваиваетесь. Заклинатели и разведчики бьют больно, но долго не проживут без щита впереди.',
-  },
-  choir_of_the_cursed: {
-    name: 'Clay Gargoyle',
-    en: 'New to the Choir? Your first recruit should be a Clay Gargoyle — its armor forgives early mistakes while you find your footing. The Choir\u2019s squishier servants are powerful, but easy to lose before they matter.',
-    ru: 'Впервые за Хор? Первым бойцом лучше взять Глиняную Горгулью — её броня прощает ранние ошибки, пока вы учитесь. Более хрупкие слуги Хора сильны, но их легко потерять раньше времени.',
-  },
-  grail_of_sorrow: {
-    name: 'Risen',
-    en: 'New to the Grail? Your first recruit should be a Risen — simple, resilient, and undemanding to field. Save the fragile spirits and casters for once you\u2019ve got a frontline to protect them.',
-    ru: 'Впервые за Грааль? Первым бойцом лучше взять Восставшего — простой, выносливый и неприхотливый боец. Хрупких духов и заклинателей приберегите до тех пор, пока не появится фронт для их защиты.',
-  },
-};
-
+// The faction slide shows these as real unit cards, so keep the whole
+// definition rather than just id + name.
 function getHighlights(factionKey) {
   return Object.values(UNITS[factionKey] ?? {})
     .filter(u => UNIT_ART.has(u.id))
-    .map(u => ({ id: u.id, name: u.name }))
     .slice(0, 4);
 }
 
@@ -147,7 +130,6 @@ const UI_TEXT = {
   chooseHero:     { en: 'Choose your hero', ru: 'Выберите героя' },
   loadingHeroes:  { en: 'Loading heroes…', ru: 'Загрузка героев…' },
   passive:        { en: 'Passive', ru: 'Пассивка' },
-  firstRecruitTip:{ en: 'First Recruit Tip', ru: 'Совет по первому найму' },
 };
 
 export function renderRegister(root, { player } = {}) {
@@ -194,13 +176,22 @@ export function renderRegister(root, { player } = {}) {
                 <div class="faction-slide-title">${f.label[L]}</div>
                 <div class="faction-slide-tagline">${f.tagline[L]}</div>
                 <div class="faction-slide-desc">${f.description[L]}</div>
-                <div class="faction-slide-roster">
-                  ${f.highlights.map(h => `
-                    <div class="faction-roster-chip">
-                      <img src="/assets/character_art/${h.id}.png" alt="${h.name}" onerror="this.style.display='none'">
-                      <span>${h.name}</span>
-                    </div>
-                  `).join('')}
+                <!-- Example units get the same treatment as the roster: one
+                     unit card at a time, a portrait track to move between them,
+                     and the same tap-to-inspect on stats/abilities. -->
+                <div class="faction-example-card" data-faction="${f.id}">
+                  ${f.highlights.length ? buildUnitCard(f.highlights[0]) : ''}
+                </div>
+                <div class="prep-track-wrap branch-track-wrap">
+                  <div class="portrait-track faction-example-track" data-faction="${f.id}">
+                    ${f.highlights.map((h, i) => `
+                      <div class="portrait-card portrait-card--branch ${i === 0 ? 'portrait-card--selected' : ''}"
+                           data-i="${i}" title="${h.name}">
+                        <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
+                             alt="${h.name}" onerror="this.style.display='none'">
+                        <div class="portrait-name">${h.name}</div>
+                      </div>`).join('')}
+                  </div>
                 </div>
                 <button class="faction-choose-btn" data-id="${f.id}">${UI_TEXT.chooseBtn[L]} ${f.label[L]}</button>
               </div>
@@ -241,6 +232,24 @@ export function renderRegister(root, { player } = {}) {
       });
     });
 
+    // Example-unit tracks: pick a portrait, its card replaces the one on show
+    // and the track scrolls it to centre. Inspection works on the card itself.
+    root.querySelectorAll('.faction-example-track').forEach(track => {
+      const factionId = track.dataset.faction;
+      const faction   = FACTIONS.find(f => f.id === factionId);
+      const cardEl    = root.querySelector(`.faction-example-card[data-faction="${factionId}"]`);
+      track.querySelectorAll('.portrait-card').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const i = Number(chip.dataset.i);
+          track.querySelectorAll('.portrait-card').forEach((c, ci) =>
+            c.classList.toggle('portrait-card--selected', ci === i));
+          chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+          if (cardEl && faction?.highlights[i]) cardEl.innerHTML = buildUnitCard(faction.highlights[i]);
+        });
+      });
+      cardEl?.addEventListener('click', e => { handleUnitInspect(e, openSheet); });
+    });
+
     root.querySelectorAll('.faction-choose-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         selectedFaction = FACTIONS.find(f => f.id === btn.dataset.id);
@@ -279,7 +288,6 @@ export function renderRegister(root, { player } = {}) {
   }
 
   function showHeroStep() {
-    const hint = FIRST_RECRUIT_HINT[selectedFaction.id];
     let heroIndex = 0;
 
     // The hero is shown on the SAME card the roster uses, so what a player sees
@@ -302,12 +310,6 @@ export function renderRegister(root, { player } = {}) {
           ${heroes.length ? heroCardHtml(heroes[0]) : ''}
         </div>
 
-        ${hint ? `
-          <div class="first-recruit-hint">
-            <div class="first-recruit-hint-title">${UI_TEXT.firstRecruitTip[L]}</div>
-            <div class="first-recruit-hint-text">${hint[L]}</div>
-          </div>
-        ` : ''}
         <p id="reg-error" class="error hidden"></p>
 
         <div class="track-action-row hero-action-row">

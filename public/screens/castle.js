@@ -3,7 +3,7 @@ import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
 import { bootstrapCache } from '../api.js';
-import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, firstRecruitHint } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { renderSpellTome }   from './spell_tome.js';
@@ -333,7 +333,10 @@ export function renderCastle(root, { player }) {
         .filter(s => s !== 'slot_0' && s !== 'slot_4' && !data[s]?.building_id)
         .sort()[0];
       const targetEl = emptySlot ? root.querySelector(`.castle-node[data-slot="${emptySlot}"]`) : null;
-      if (targetEl) showTutorialSpotlight(player, 'second_building', targetEl);
+      // The faction's "what to build first" advice rides along with this step —
+      // the moment the choice is actually in front of the player.
+      if (targetEl) showTutorialSpotlight(player, 'second_building', targetEl,
+        { extraText: firstRecruitHint(player) });
       else hideTutorial();
     } else {
       hideTutorial();

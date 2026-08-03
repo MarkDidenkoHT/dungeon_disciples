@@ -3,6 +3,29 @@ import { api } from './api.js';
 // Label for the bubble's dismiss button on informational steps (opts.showContinue).
 const CONTINUE_LABEL = { en: 'Got it', ru: 'Понятно' };
 
+// Faction-specific advice appended to the `second_building` step — the moment
+// the player is actually about to pick their first recruit. It used to sit on
+// the hero-selection screen, several steps too early to act on.
+const FIRST_RECRUIT_HINT = {
+  empire: {
+    en: 'New to the Empire? Your first recruit should be a Conscript — sturdy enough to hold the front line while you learn the ropes. Casters and scouts hit hard, but they won’t survive long without a shield ahead of them.',
+    ru: 'Впервые за Империю? Первым бойцом лучше взять Новобранца — он достаточно крепок, чтобы держать фронт, пока вы осваиваетесь. Заклинатели и разведчики бьют больно, но долго не проживут без щита впереди.',
+  },
+  choir_of_the_cursed: {
+    en: 'New to the Choir? Your first recruit should be a Clay Gargoyle — its armor forgives early mistakes while you find your footing. The Choir’s squishier servants are powerful, but easy to lose before they matter.',
+    ru: 'Впервые за Хор? Первым бойцом лучше взять Глиняную Горгулью — её броня прощает ранние ошибки, пока вы учитесь. Более хрупкие слуги Хора сильны, но их легко потерять раньше времени.',
+  },
+  grail_of_sorrow: {
+    en: 'New to the Grail? Your first recruit should be a Risen — simple, resilient, and undemanding to field. Save the fragile spirits and casters for once you’ve got a frontline to protect them.',
+    ru: 'Впервые за Грааль? Первым бойцом лучше взять Восставшего — простой, выносливый и неприхотливый боец. Хрупких духов и заклинателей приберегите до тех пор, пока не появится фронт для их защиты.',
+  },
+};
+
+export function firstRecruitHint(player) {
+  const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
+  return FIRST_RECRUIT_HINT[player?.faction]?.[L] ?? '';
+}
+
 const TUTORIAL_STEPS = {
   throne_upgrade: {
     en: {
@@ -197,6 +220,8 @@ export function hideTutorial() {
  * opts.padding      px of breathing room around the target (default 8)
  * opts.showContinue render a dismiss button in the bubble, for steps that only
  *                   explain something instead of asking for a specific tap
+ * opts.extraText    a second paragraph under the step copy, for advice that
+ *                   varies by player (e.g. the faction's first-recruit hint)
  * opts.onAdvance    called once, when the player taps the target (or the
  *                   continue button). Use it to chain the next step.
  */
@@ -237,6 +262,7 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   bubble.innerHTML = `
     <div class="tutorial-bubble-title">${copy.title}</div>
     <div class="tutorial-bubble-text">${copy.text}</div>
+    ${opts.extraText ? `<div class="tutorial-bubble-hint">${opts.extraText}</div>` : ''}
     ${opts.showContinue ? `<button class="tutorial-bubble-btn">${CONTINUE_LABEL[L]}</button>` : ''}
   `;
 
