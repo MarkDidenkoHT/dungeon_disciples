@@ -56,8 +56,10 @@ export function renderLoadingScreen(root) {
   root.innerHTML = `
     <div class="loading-screen loading-screen--fullbg" style="background-image: url('${pick(LOADING_IMAGES)}')">
       <div class="loading-bg-overlay"></div>
+      <!-- The title sits at the top of the screen, clear of the art's focal
+           point; the tip and progress bar stay anchored to the bottom. -->
+      <div class="loading-title">Shattered Crown</div>
       <div class="loading-content">
-        <div class="loading-title">Shattered Crown</div>
         <div class="loading-flavour">${pick(tips)}</div>
         <div class="loading-bar-track">
           <div class="loading-bar-fill" id="loading-bar-fill"></div>

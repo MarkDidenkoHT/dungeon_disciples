@@ -507,18 +507,33 @@ button:active:not(:disabled) { opacity: 0.75; }
   50%      { box-shadow: 0 0 0 10px rgba(200, 151, 58, 0); }
 }
 
+/* Anchored to the top of the loading screen (its parent is the flex column that
+   pushes everything else to the bottom). Same engraved-gold serif as the other
+   ornate headings — .formation-title / .result-outcome / .prep-side-label. */
 .loading-title {
-  font-size: 1.3rem;
-  color: var(--accent);
-  letter-spacing: 0.04em;
+  position: absolute;
+  top: max(6vh, 28px);
+  left: 0;
+  right: 0;
+  z-index: 1;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
 }
 
 .loading-bar-track {
   width: 84vw;
   max-width: 460px;
-  height: 8px;
-  border-radius: 3px;
+  height: 16px;
+  border-radius: 5px;
   background: var(--surface);
   border: 1px solid var(--border);
   overflow: hidden;
