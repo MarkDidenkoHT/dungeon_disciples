@@ -10,6 +10,7 @@ import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
+import { setUiLanguage } from './utils.js';
 
 import {
   api,
@@ -23,6 +24,27 @@ import {
 export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
 
 const app = document.getElementById('app');
+
+// Tooltips for the two resource-bar controls.
+const SHELL_TEXT = {
+  timeline: { en: "What's Next", ru: 'Что дальше' },
+  errands:  { en: 'Errands',     ru: 'Поручения' },
+};
+
+// The boot-time reconnect modal duplicated embark's, but in English only.
+const BOOT_TEXT = {
+  title:     { en: 'Unfinished Battle', ru: 'Незавершённый бой' },
+  body:      {
+    en: 'You have an unfinished battle in progress. Reconnect to continue, or abandon it.',
+    ru: 'У вас есть незавершённый бой. Вернитесь, чтобы продолжить, или бросьте его.',
+  },
+  warning:   {
+    en: 'Abandoning costs you the field: the fallen stay dead, and every survivor walks away at 1 HP.',
+    ru: 'Бросить бой — значит уступить поле: павшие остаются мёртвыми, а выжившие уходят с 1 HP.',
+  },
+  abandon:   { en: 'Abandon',   ru: 'Бросить' },
+  reconnect: { en: 'Reconnect', ru: 'Вернуться' },
+};
 
 const NAV_LABELS = {
   castle:   { en: 'Castle',   ru: 'Замок' },
@@ -46,12 +68,12 @@ function mountShell(player) {
            resource strip rather than inside it — the frame art is sized for
            resource slots and squeezed them flat. -->
       <div class="resource-bar-row" id="resource-bar-row">
-        <button class="res-bar-btn res-bar-timeline" title="What's Next" aria-label="Roadmap">
+        <button class="res-bar-btn res-bar-timeline" title="${SHELL_TEXT.timeline[L]}" aria-label="${SHELL_TEXT.timeline[L]}">
           <img src="/assets/icons/ui/timeline.png" class="res-icon-img" alt="Timeline"
                onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
         </button>
         <div class="resource-bar" id="resource-bar"></div>
-        <button class="res-bar-btn res-bar-errands" disabled title="Errands" aria-label="Errands"></button>
+        <button class="res-bar-btn res-bar-errands" disabled title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}"></button>
       </div>
       <div id="content-root"></div>
       <nav class="bottom-nav" id="bottom-nav">
@@ -96,6 +118,8 @@ function mountShell(player) {
 function navigate(screen, params = {}) {
   const { player } = params;
 
+  // Shared chrome (utils.js) has no player, so hand it the language here.
+  setUiLanguage(lang(player));
   hideTutorial();
   document.body.style.overflow = '';
 
@@ -174,21 +198,22 @@ function navigate(screen, params = {}) {
 setNavigate(navigate);
 
 function showReconnectModal(player, battle_id, battle_data) {
+  const BL = lang(player);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-sheet">
-      <div class="modal-header"><span class="modal-title">Unfinished Battle</span></div>
+      <div class="modal-header"><span class="modal-title">${BOOT_TEXT.title[BL]}</span></div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
         <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
-          You have an unfinished battle in progress. Reconnect to continue, or abandon it.
+          ${BOOT_TEXT.body[BL]}
         </div>
         <div style="color:var(--danger);font-size:.85rem;line-height:1.4;">
-          Abandoning costs you the field: the fallen stay dead, and every survivor walks away at 1 HP.
+          ${BOOT_TEXT.warning[BL]}
         </div>
         <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
-          <button id="boot-abandon-btn" class="action-btn action-btn--cancel">Abandon</button>
-          <button id="boot-reconnect-btn" class="action-btn">Reconnect</button>
+          <button id="boot-abandon-btn" class="action-btn action-btn--cancel">${BOOT_TEXT.abandon[BL]}</button>
+          <button id="boot-reconnect-btn" class="action-btn">${BOOT_TEXT.reconnect[BL]}</button>
         </div>
       </div>
     </div>

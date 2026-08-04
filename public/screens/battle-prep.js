@@ -18,6 +18,21 @@ import {
   spellName, spellDesc, withEquippedItem,
 } from '../utils.js';
 
+const BP_TEXT = {
+  undo:        { en: 'Undo',   ru: 'Отменить' },
+  use:         { en: 'Use',    ru: 'Применить' },
+  cancel:      { en: 'Cancel', ru: 'Отмена' },
+  hiddenSpell: { en: 'This group has a hidden spell prepared',
+                 ru: 'У этой группы заготовлено скрытое заклинание' },
+  goBack:      { en: 'Go Back', ru: 'Назад' },
+  continueOn:  { en: 'Continue', ru: 'Продолжить' },
+  undoFirst:   { en: 'Undo active spell first', ru: 'Сначала отмените активное заклинание' },
+  moreFollowers: {
+    en: 'You can take more followers into battle. Continue without them?',
+    ru: 'Вы можете взять в бой больше спутников. Продолжить без них?',
+  },
+};
+
 const BP_NAV_LABELS = {
   spells:      { en: 'Spells',      ru: 'Заклинания' },
   embark:      { en: 'Embark',      ru: 'Поход' },
@@ -126,7 +141,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <div class="prep-side prep-side--enemy">
           <span class="prep-side-label">Enemy Power</span>
           <span class="prep-side-stats">
-            <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="This group has a hidden spell prepared" style="display:none;">📖</span>
+            <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="${BP_TEXT.hiddenSpell[L]}" style="display:none;">📖</span>
             <span id="enemy-army-power" class="army-power"></span>
           </span>
         </div>
@@ -386,11 +401,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           </div>
           <div class="spell-list-action">
             ${used
-              ? `<button class="spell-list-undo-btn" data-undo-id="${spell.id}">Undo</button>`
+              ? `<button class="spell-list-undo-btn" data-undo-id="${spell.id}">${BP_TEXT.undo[L]}</button>`
               : spellSlotFull
-                ? `<span class="spell-list-locked">Undo active spell first</span>`
+                ? `<span class="spell-list-locked">${BP_TEXT.undoFirst[L]}</span>`
                 : affordable
-                  ? `<button class="spell-list-use-btn" data-use-id="${spell.id}">Use</button>`
+                  ? `<button class="spell-list-use-btn" data-use-id="${spell.id}">${BP_TEXT.use[L]}</button>`
                   : `<span class="spell-list-locked">✕</span>`
             }
           </div>
@@ -488,7 +503,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           `;
         }).join('')}
       </div>
-      <button class="spell-cast-cancel-btn" id="spell-cast-cancel">Cancel</button>
+      <button class="spell-cast-cancel-btn" id="spell-cast-cancel">${BP_TEXT.cancel[L]}</button>
     `;
 
     targetBody.querySelector('#spell-cast-cancel').addEventListener('click', () => {
@@ -1143,10 +1158,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         overlay.className = 'confirm-overlay';
         overlay.innerHTML = `
           <div class="confirm-modal">
-            <div class="confirm-modal-text">You can take more followers into battle. Continue without them?</div>
+            <div class="confirm-modal-text">${BP_TEXT.moreFollowers[L]}</div>
             <div class="confirm-modal-actions">
-              <button class="confirm-modal-btn confirm-modal-btn--cancel">Go Back</button>
-              <button class="confirm-modal-btn confirm-modal-btn--confirm">Continue</button>
+              <button class="confirm-modal-btn confirm-modal-btn--cancel">${BP_TEXT.goBack[L]}</button>
+              <button class="confirm-modal-btn confirm-modal-btn--confirm">${BP_TEXT.continueOn[L]}</button>
             </div>
           </div>`;
         overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });

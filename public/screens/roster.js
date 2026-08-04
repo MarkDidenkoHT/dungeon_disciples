@@ -18,7 +18,65 @@ import {
   getActionLabel, itemName, itemRarity, handleUnitInspect, CRYSTAL_ICONS, GOLD_ICON,
 } from '../utils.js';
 
+// Every button, tab and chip on this screen, in both languages. The roster had
+// no localisation at all — it was the largest screen still hardcoded to English
+// while the sheet chrome around it was translated.
+const RT = {
+  items:        { en: 'Items',            ru: 'Предметы' },
+  equip:        { en: 'Equip',            ru: 'Надеть' },
+  equipping:    { en: 'Equipping…',       ru: 'Надеваем…' },
+  unequip:      { en: 'Unequip',          ru: 'Снять' },
+  unequipping:  { en: 'Unequipping…',     ru: 'Снимаем…' },
+  craft:        { en: 'Craft',            ru: 'Создать' },
+  crafting:     { en: 'Crafting…',        ru: 'Создаём…' },
+  levelUp:      { en: 'Level Up',         ru: 'Повысить' },
+  resurrect:    { en: 'Resurrect',        ru: 'Воскресить' },
+  resurrecting: { en: 'Resurrecting…',    ru: 'Воскрешаем…' },
+  heal:         { en: 'Heal',             ru: 'Лечить' },
+  healing:      { en: 'Healing…',         ru: 'Лечим…' },
+  embark:       { en: 'Embark',           ru: 'В поход' },
+  // tabs + filters
+  tabEquippable:{ en: 'Equippable',       ru: 'Подходящие' },
+  tabOwned:     { en: 'Owned',            ru: 'В наличии' },
+  tabCraft:     { en: 'Craft',            ru: 'Создание' },
+  any:          { en: 'Any',              ru: 'Любая' },
+  common:       { en: 'Common',           ru: 'Обычные' },
+  rare:         { en: 'Rare',             ru: 'Редкие' },
+  epic:         { en: 'Epic',             ru: 'Эпические' },
+  mythic:       { en: 'Mythic',           ru: 'Мифические' },
+  all:          { en: 'All',              ru: 'Все' },
+  hp:           { en: 'HP',               ru: 'HP' },
+  armor:        { en: 'Armor',            ru: 'Броня' },
+  init:         { en: 'Init',             ru: 'Иниц.' },
+  power:        { en: 'Power',            ru: 'Сила' },
+  resist:       { en: 'Resist',           ru: 'Сопр.' },
+  passive:      { en: 'Passive',          ru: 'Пассивка' },
+  grantsTag:    { en: 'Grants Tag',       ru: 'Даёт метку' },
+  needsTag:     { en: 'Needs Tag',        ru: 'Нужна метка' },
+  craftableNow: { en: 'Craftable now',    ru: 'Можно создать' },
+  // states / messages
+  noMaterials:  { en: 'No materials',     ru: 'Без материалов' },
+  nothingMatches:{ en: 'Nothing matches these filters.', ru: 'Ничего не найдено по фильтрам.' },
+  unique:       { en: 'Unique',           ru: 'Уникальный' },
+  owned:        { en: 'Owned',            ru: 'В наличии' },
+  wrongFaction: { en: 'Wrong faction',    ru: 'Не та фракция' },
+  notEnough:    { en: 'Not enough resources', ru: 'Недостаточно ресурсов' },
+  uniqueOwned:  { en: 'Unique — already owned', ru: 'Уникальный — уже есть' },
+  equippedElse: { en: 'Equipped on another unit', ru: 'Надет на другом бойце' },
+  requiresTag:  { en: t => `Requires ${t} tag`, ru: t => `Требуется метка ${t}` },
+  maxLevel:     { en: 'Maximum Level Reached', ru: 'Максимальный уровень' },
+  cannotUpgrade:{ en: 'Cannot Upgrade',   ru: 'Улучшение недоступно' },
+  failEquip:    { en: 'Equip failed',     ru: 'Не удалось надеть' },
+  failUnequip:  { en: 'Unequip failed',   ru: 'Не удалось снять' },
+  failCraft:    { en: 'Craft failed',     ru: 'Не удалось создать' },
+  failLevel:    { en: 'Level up failed',  ru: 'Не удалось повысить' },
+  failRes:      { en: 'Resurrection failed', ru: 'Не удалось воскресить' },
+  failHeal:     { en: 'Heal failed',      ru: 'Не удалось вылечить' },
+};
+
 export function renderRoster(root, { player }) {
+  const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
+  const T = key => RT[key][L];
   applyBackground(root, player.faction, 'roster');
 
   root.innerHTML = `
@@ -143,7 +201,7 @@ export function renderRoster(root, { player }) {
     const resurrectButtonHtml = !alive && resurrectionSpell ? `
       <div class="unit-card-overlay">
         <button class="resurrect-btn" data-roster-id="${u.id}" data-spell-id="${resurrectionSpell.id}">
-          Resurrect (${resurrectionCost})
+          ${T('resurrect')} (${resurrectionCost})
         </button>
       </div>
     ` : '';
@@ -161,7 +219,7 @@ export function renderRoster(root, { player }) {
     const healButtonHtml = isDamaged && healSpell ? `
       <div class="unit-card-overlay unit-card-overlay--heal">
         <button class="heal-btn" data-roster-id="${u.id}" data-spell-id="${healSpell.id}">
-          Heal (${healCost})
+          ${T('heal')} (${healCost})
         </button>
       </div>
     ` : '';
@@ -209,7 +267,7 @@ export function renderRoster(root, { player }) {
     } else {
       levelUpHtml = `
         <div class="levelup-row">
-          <span class="hero-level-label">${isMaxTier ? 'Maximum Level Reached' : 'Cannot Upgrade'}</span>
+          <span class="hero-level-label">${isMaxTier ? T('maxLevel') : T('cannotUpgrade')}</span>
         </div>`;
     }
 
@@ -399,8 +457,8 @@ export function renderRoster(root, { player }) {
         await reloadAndRerender(rosterId);
       } catch (err) {
         lvlBtn.disabled    = false;
-        lvlBtn.textContent = 'Level Up';
-        alert(err.message || 'Level up failed');
+        lvlBtn.textContent = T('levelUp');
+        alert(err.message || T('failLevel'));
       }
       return;
     }
@@ -410,7 +468,7 @@ export function renderRoster(root, { player }) {
       const rosterId = resurrectBtn.dataset.rosterId;
       const spellId  = resurrectBtn.dataset.spellId;
       resurrectBtn.disabled    = true;
-      resurrectBtn.textContent = 'Resurrecting…';
+      resurrectBtn.textContent = T('resurrecting');
       try {
         await api('/roster/resurrect', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
         await reloadAndRerender(rosterId);
@@ -421,7 +479,7 @@ export function renderRoster(root, { player }) {
           showHealStep();
         }
       } catch (err) {
-        alert(err.message || 'Resurrection failed');
+        alert(err.message || T('failRes'));
       }
       return;
     }
@@ -431,7 +489,7 @@ export function renderRoster(root, { player }) {
       const rosterId = healBtn.dataset.rosterId;
       const spellId  = healBtn.dataset.spellId;
       healBtn.disabled    = true;
-      healBtn.textContent = 'Healing…';
+      healBtn.textContent = T('healing');
       try {
         await api('/roster/heal', { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
         await reloadAndRerender(rosterId);
@@ -443,7 +501,7 @@ export function renderRoster(root, { player }) {
           navigate('embark', { player });
         }
       } catch (err) {
-        alert(err.message || 'Heal failed');
+        alert(err.message || T('failHeal'));
       }
       return;
     }
@@ -486,10 +544,10 @@ export function renderRoster(root, { player }) {
 
     const ru = player?.settings?.language === 'ru';
     let reason = '';
-    if (!factionOk) reason = ru ? 'Не та фракция' : 'Wrong faction';
-    else if (!tagOk) reason = ru ? `Требуется метка ${stats.tag_required}` : `Requires ${stats.tag_required} tag`;
+    if (!factionOk) reason = T('wrongFaction');
+    else if (!tagOk) reason = RT.requiresTag[L](stats.tag_required);
     else if (block) reason = ru ? block.reason_ru : block.reason;
-    else if (equippedElsewhere) reason = ru ? 'Надет на другом бойце' : 'Equipped on another unit';
+    else if (equippedElsewhere) reason = T('equippedElse');
 
     return `
       <div class="item-card item-card--rarity-${itemRarity(item)} ${equippedHere ? 'item-card--equipped' : ''}">
@@ -502,8 +560,8 @@ export function renderRoster(root, { player }) {
         ${stats.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${stats.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
         ${equippedHere
-          ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${item.id}">Unequip</button>`
-          : `<button class="item-action-btn item-action-btn--equip" data-item-id="${item.id}" data-roster-id="${unit.id}" ${canEquip ? '' : 'disabled'}>Equip</button>`}
+          ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${item.id}">${T('unequip')}</button>`
+          : `<button class="item-action-btn item-action-btn--equip" data-item-id="${item.id}" data-roster-id="${unit.id}" ${canEquip ? '' : 'disabled'}>${T('equip')}</button>`}
         ${!canEquip && !equippedHere ? `<div class="item-card-blocked">${reason}</div>` : ''}
       </div>`;
   }
@@ -543,7 +601,7 @@ export function renderRoster(root, { player }) {
   // jumble. Empty groups are omitted rather than left as blank rows.
   function costChips(cost = {}, itemCost = {}) {
     const entries = [...Object.entries(cost), ...Object.entries(itemCost)];
-    if (!entries.length) return '<span class="mat-chip mat-chip--free">No materials</span>';
+    if (!entries.length) return `<span class="mat-chip mat-chip--free">${T('noMaterials')}</span>`;
 
     const isCurrency = key => key === 'Gold' || key.startsWith('Crystals_');
     const isItem     = key => !!ITEM_DEFS[key];
@@ -601,17 +659,17 @@ export function renderRoster(root, { player }) {
 
     // A short availability line: why you can (or can't) make this right now.
     let blocked = '';
-    if (uniqueOwned)       blocked = 'Unique — already owned';
-    else if (!factionOk)   blocked = 'Wrong faction';
-    else if (!canAfford)   blocked = 'Not enough resources';
+    if (uniqueOwned)       blocked = T('uniqueOwned');
+    else if (!factionOk)   blocked = T('wrongFaction');
+    else if (!canAfford)   blocked = T('notEnough');
 
     const ownedBadge = ownedCount > 0
-      ? `<div class="item-card-owned">${itemDef.unique ? 'Owned' : `Owned ×${ownedCount}`}</div>`
+      ? `<div class="item-card-owned">${itemDef.unique ? T('owned') : `${T('owned')} ×${ownedCount}`}</div>`
       : '';
 
     return `
       <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)} ${canCraft ? 'item-card--available' : ''}">
-        ${itemDef.unique ? '<div class="item-card-unique">Unique</div>' : ''}
+        ${itemDef.unique ? `<div class="item-card-unique">${T('unique')}</div>` : ''}
         <div class="item-card-icon">
           <img src="/assets/icons/items/${iconId}.png" alt="${itemName(itemDef, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
@@ -622,7 +680,7 @@ export function renderRoster(root, { player }) {
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
         <div class="item-cost">${costChips(cost, itemCost)}</div>
-        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>Craft</button>
+        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>${T('craft')}</button>
         ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
       </div>`;
   }
@@ -706,17 +764,17 @@ export function renderRoster(root, { player }) {
     // Two rows: numbers on one, qualities on the other. Seven chips on one line
     // did not fit on a phone.
     const STAT_FILTERS = [
-      ['all',           'All'],
-      ['hp',            'HP'],
-      ['armor',         'Armor'],
-      ['initiative',    'Init'],
-      ['action_power',  'Power'],
-      ['resist',        'Resist'],
+      ['all',           T('all')],
+      ['hp',            T('hp')],
+      ['armor',         T('armor')],
+      ['initiative',    T('init')],
+      ['action_power',  T('power')],
+      ['resist',        T('resist')],
     ];
     const TRAIT_FILTERS = [
-      ['passive',    'Passive'],
-      ['grants_tag', 'Grants Tag'],
-      ['needs_tag',  'Needs Tag'],
+      ['passive',    T('passive')],
+      ['grants_tag', T('grantsTag')],
+      ['needs_tag',  T('needsTag')],
     ];
 
     // stat_mods keys are hp / armor / initiative / action_power / <element>_resist.
@@ -773,7 +831,7 @@ export function renderRoster(root, { player }) {
 
     // The selector track — same portrait-card frame as the roster strip.
     function trackCards(list) {
-      if (!list.length) return '<span class="track-empty-hint">Nothing matches these filters</span>';
+      if (!list.length) return `<span class="track-empty-hint">${T('nothingMatches')}</span>`;
       return list.map((entry, i) => `
         <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${entryName(entry)}">
@@ -785,7 +843,7 @@ export function renderRoster(root, { player }) {
 
     // The one item on show, with room to lay it out properly.
     function detailCard(entry) {
-      if (!entry) return '<p class="placeholder">Nothing matches these filters.</p>';
+      if (!entry) return `<p class="placeholder">${T('nothingMatches')}</p>`;
       return entry.kind === 'blueprint'
         ? buildCatalogItemCard(entry.def, entry.owned, unit, unitTags)
         : buildItemCard(entry.item, unit, unitTags);
@@ -805,15 +863,15 @@ export function renderRoster(root, { player }) {
       return `
         <div class="items-modal">
           <div class="items-tabs">
-            ${tab('equippable', 'Equippable')}
-            ${tab('owned', 'Owned')}
-            ${tab('craft', 'Craft')}
+            ${tab('equippable', T('tabEquippable'))}
+            ${tab('owned', T('tabOwned'))}
+            ${tab('craft', T('tabCraft'))}
           </div>
 
           <div class="items-filters">
             <div class="items-filter-row" role="group" aria-label="Rarity">
-              ${rarityChip('all', 'Any')}
-              ${RARITIES.map(r => rarityChip(r, cap(r))).join('')}
+              ${rarityChip('all', T('any'))}
+              ${RARITIES.map(r => rarityChip(r, T(r))).join('')}
             </div>
             <!-- Numeric stats on their own row; the qualitative filters (passive,
                  tags) and the craft toggle sit below, so neither row overflows. -->
@@ -823,7 +881,7 @@ export function renderRoster(root, { player }) {
             <div class="items-filter-row" role="group" aria-label="Traits">
               ${TRAIT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
               ${filter === 'craft' ? `
-                <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">Craftable now</button>` : ''}
+                <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">${T('craftableNow')}</button>` : ''}
             </div>
           </div>
 
@@ -837,7 +895,7 @@ export function renderRoster(root, { player }) {
         </div>`;
     }
 
-    openSheet('Items', render());
+    openSheet(T('items'), render());
 
     const closeBtn = document.querySelector('.modal-close-btn');
     if (closeBtn) {
@@ -940,7 +998,7 @@ export function renderRoster(root, { player }) {
       const equipBtn = e.target.closest('.item-action-btn--equip');
       if (equipBtn && !equipBtn.disabled) {
         equipBtn.disabled    = true;
-        equipBtn.textContent = 'Equipping…';
+        equipBtn.textContent = T('equipping');
         try {
           await api('/items/equip', { chat_id: player.chat_id, roster_id: equipBtn.dataset.rosterId, item_id: equipBtn.dataset.itemId });
           await reloadAndRerender(equipBtn.dataset.rosterId);
@@ -953,7 +1011,7 @@ export function renderRoster(root, { player }) {
             showEquippedStep(equipBtn.dataset.rosterId);
           }
         } catch (err) {
-          alert(err.message || 'Equip failed');
+          alert(err.message || T('failEquip'));
           body.innerHTML = render();
         }
         return;
@@ -962,14 +1020,14 @@ export function renderRoster(root, { player }) {
       const unequipBtn = e.target.closest('.item-action-btn--unequip');
       if (unequipBtn) {
         unequipBtn.disabled    = true;
-        unequipBtn.textContent = 'Unequipping…';
+        unequipBtn.textContent = T('unequipping');
         const focusedId = units[current]?.id;
         try {
           await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
           await reloadAndRerender(focusedId);
           body.innerHTML = render();   // repaint the open items sheet
         } catch (err) {
-          alert(err.message || 'Unequip failed');
+          alert(err.message || T('failUnequip'));
           body.innerHTML = render();
         }
         return;
@@ -978,7 +1036,7 @@ export function renderRoster(root, { player }) {
       const craftBtn = e.target.closest('.item-action-btn--craft');
       if (craftBtn && !craftBtn.disabled) {
         craftBtn.disabled    = true;
-        craftBtn.textContent = 'Crafting…';
+        craftBtn.textContent = T('crafting');
         try {
           await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
           // Re-read from /bootstrap rather than trusting the craft response:
@@ -992,7 +1050,7 @@ export function renderRoster(root, { player }) {
           rerenderKeeping(rosterId);
           body.innerHTML = render();
         } catch (err) {
-          alert(err.message || 'Craft failed');
+          alert(err.message || T('failCraft'));
           body.innerHTML = render();
         }
         return;

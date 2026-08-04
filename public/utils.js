@@ -38,6 +38,24 @@ export function withEquippedItem(liveUnit, item) {
   return item ? applyItemModifiers(liveUnit, item.item_stats) : liveUnit;
 }
 
+// utils.js renders shared chrome for every screen but is handed no player, so
+// the current language is set once per navigation by main.js instead of being
+// threaded through every call site.
+let _uiLang = 'en';
+export function setUiLanguage(language) {
+  _uiLang = language === 'ru' ? 'ru' : 'en';
+}
+export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
+
+export const RESIST_LABELS = {
+  air:    { en: 'Air',    ru: 'Воздух' },
+  fire:   { en: 'Fire',   ru: 'Огонь'  },
+  nature: { en: 'Nature', ru: 'Природа'},
+  cold:   { en: 'Cold',   ru: 'Холод'  },
+  life:   { en: 'Life',   ru: 'Жизнь'  },
+  death:  { en: 'Death',  ru: 'Смерть' },
+};
+
 export const RESIST_ICONS = {
   air:    { icon: '🌬️', label: 'Air'    },
   fire:   { icon: '🔥', label: 'Fire'   },
@@ -266,7 +284,7 @@ export function renderUnitResistColumn(unit) {
   const armorVal = unit.armor ?? 0;
   const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
   const armorCell = `
-    <div class="resist-cell" title="Armor" data-armor="${armorVal}">
+    <div class="resist-cell" title="${uiText('Armor', 'Броня')}" data-armor="${armorVal}">
       <span class="resist-icon">🛡</span>
       <span class="resist-val ${armorCls}">${armorVal}</span>
     </div>`;
@@ -275,7 +293,7 @@ export function renderUnitResistColumn(unit) {
     const info = RESIST_ICONS[r];
     const val  = res[r] ?? 0;
     const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
-    return `<div class="resist-cell" title="${info.label}">
+    return `<div class="resist-cell" title="${RESIST_LABELS[r] ? uiText(RESIST_LABELS[r].en, RESIST_LABELS[r].ru) : info.label}">
       <span class="resist-icon">${info.icon}</span>
       <span class="resist-val ${cls}">${val}</span>
     </div>`;
@@ -304,7 +322,7 @@ export function renderItemSlotIcon(item, rosterId, opts = {}) {
   }
 
   return `
-    <button class="ability-icon ability-icon--item ability-icon--item-empty" data-item-slot data-roster-id="${rosterId}" title="Equip Item">
+    <button class="ability-icon ability-icon--item ability-icon--item-empty" data-item-slot data-roster-id="${rosterId}" title="${uiText('Equip Item', 'Надеть предмет')}">
       <span class="item-slot-plus">+</span>
     </button>`;
 }

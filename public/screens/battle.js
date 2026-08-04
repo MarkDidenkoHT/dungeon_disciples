@@ -27,7 +27,23 @@ function getPortraitUrl(unit, variant = 'default') {
   return `/assets/character_portraits/${prefix}_${portraitId}.png`;
 }
 
+// Result-screen copy. The rest of the battle UI is icons, so these are the only
+// strings on it — they were the last hardcoded English on the screen.
+const BT = {
+  victory:      { en: 'Victory',            ru: 'Победа' },
+  defeat:       { en: 'Defeat',             ru: 'Поражение' },
+  returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
+  calculating:  { en: 'Calculating rewards…', ru: 'Подсчёт наград…' },
+  noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
+  claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
+  saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
+  unlocked:     { en: n => `\u{1F513} Level ${n} unlocked!`, ru: n => `\u{1F513} Уровень ${n} открыт!` },
+  xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
+};
+
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
+  const BL = player?.settings?.language === 'ru' ? 'ru' : 'en';
+  const BTx = k => BT[k][BL];
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
@@ -929,9 +945,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       <div class="screen screen-battle-result" style="--result-bg: url('${bgImage}');">
         <div class="result-content">
           <div class="result-rewards" id="result-rewards">
-            <p class="result-pending">Calculating rewards…</p>
+            <p class="result-pending">${BTx('calculating')}</p>
           </div>
-          <button class="ready-btn ready-btn--result" id="back-to-castle" disabled>Return to Castle</button>
+          <button class="ready-btn ready-btn--result" id="back-to-castle" disabled>${BTx('returnCastle')}</button>
         </div>
       </div>
     `;
@@ -940,7 +956,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // 3rem emoji banner is gone. Every branch below prefixes it, including the
     // failure paths, so the player is always told how the battle ended.
     const outcomeHtml =
-      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? 'Victory' : 'Defeat'}</div>`;
+      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}</div>`;
 
     rewardRequestInFlight = true;
     try {
@@ -970,19 +986,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             ${result.gold    > 0 ? chip(GOLD_ICON, result.gold) : ''}
             ${result.crystal > 0 ? chip(CRYSTAL_ICONS[result.crystal_type] || '💎', result.crystal) : ''}
             ${result.crystal_bonus > 0 ? chip(CRYSTAL_ICONS[result.crystal_bonus_type] || '💎', result.crystal_bonus) : ''}
-            ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, 'XP each') : ''}
+            ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, BTx('xpEach')) : ''}
             ${trophies}
           </div>
-          ${result.progress_unlocked ? `<div class="reward-unlock">🔓 Level ${result.next_level} unlocked!</div>` : ''}
+          ${result.progress_unlocked ? `<div class="reward-unlock">${BT.unlocked[BL](result.next_level)}</div>` : ''}
         `;
       } else {
-        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">No rewards on defeat.</p>`;
+        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">${BTx('noRewards')}</p>`;
       }
     } catch (err) {
       const isAlreadyClaimed = /already claimed|already/i.test(err.message || '');
       root.querySelector('#result-rewards').innerHTML = outcomeHtml + (isAlreadyClaimed
-        ? '<p class="result-pending">Rewards already processed.</p>'
-        : `<p class="result-error">Failed to save rewards: ${err.message}</p>`);
+        ? `<p class="result-pending">${BTx('claimed')}</p>`
+        : `<p class="result-error">${BT.saveFailed[BL](err.message)}</p>`);
     } finally {
       rewardRequestInFlight = false;
     }

@@ -1134,7 +1134,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 100, passive: 'field_medic 1', ability: null,
     },
     templar: {
@@ -1167,7 +1167,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 400, passive: ['field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
@@ -1178,7 +1178,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 900, passive: ['field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
@@ -2015,7 +2015,7 @@ const UNITS = {
         hp: 40, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 100, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
@@ -2026,7 +2026,7 @@ const UNITS = {
         hp: 50, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 400, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
       high_keeper: {
@@ -2037,7 +2037,7 @@ const UNITS = {
         hp: 60, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal',
+        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 900, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
       crimson_scout: {
