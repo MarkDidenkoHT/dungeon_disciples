@@ -5018,9 +5018,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .branch-track-wrap::-webkit-scrollbar { display: none; }
 
+/* width:max-content + auto margins: the row CENTRES while the cards fit and
+   SCROLLS once they do not, instead of squashing them or letting them run under
+   the buttons. scroll-padding keeps a scrolled-to card clear of both edges. */
 .branch-track-wrap .portrait-track {
-  justify-content: center;
-  width: 100%;
+  justify-content: flex-start;
+  width: max-content;
+  margin: 0 auto;
   gap: 10px;
 }
 
@@ -5060,10 +5064,17 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .track-action-row .branch-track-wrap {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
-  padding: 0;
+  /* Its own scroll container, so cards pass under nothing but its own edges. */
+  overflow-x: auto;
+  padding: 0 4px;
+  scroll-padding-inline: 8px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
+
+.track-action-row .portrait-card--branch { scroll-snap-align: center; }
 
 .frame-action {
   /* Derived from the branch cards' own sizing vars so the button and the

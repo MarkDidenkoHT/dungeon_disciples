@@ -627,20 +627,18 @@
       return [];
     }
 
-    async function checkAssetExists(path) {
-      try {
-        // Try HEAD first
-        let response = await fetch(path, { method: 'HEAD' });
-        if (response.ok) return true;
-        // If HEAD fails, try a small GET range
-        response = await fetch(path, { 
-          method: 'GET', 
-          headers: { 'Range': 'bytes=0-0' } 
-        });
-        return response.ok || response.status === 206;
-      } catch {
-        return false;
+    async function checkAssetExists(path, retries = 2) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const response = await fetch(path, { method: 'HEAD' });
+          if (response.ok) return true;
+          if (response.status === 404 && i === retries) return false;
+          if (i < retries) await new Promise(r => setTimeout(r, 100 * (i + 1)));
+        } catch {
+          if (i < retries) await new Promise(r => setTimeout(r, 100 * (i + 1)));
+        }
       }
+      return false;
     }
 
     // ---- Unit asset checking ----
@@ -692,7 +690,6 @@
       const actionIcon = unit.data.action_icon;
       const action = unit.data.action;
       
-      // If unit has an action but no action_icon, mark as needs action icon
       if (action && !actionIcon) {
         actionIcons.push({ 
           name: action, 
@@ -705,7 +702,6 @@
         const exists = await checkAssetExists(path);
         actionIcons.push({ name: actionIcon, path, exists, needsAction: false });
       }
-      // If no action and no action_icon, don't add anything (N/A)
 
       const passiveIcons = [];
       const passives = extractPassiveNames(unit.data.passive);
@@ -994,7 +990,6 @@
       const abilityOk = asset.abilityIcons.length === 0 || asset.abilityIcons.every(a => a.exists);
       const passivesOk = asset.passiveIcons.length === 0 || asset.passiveIcons.every(p => p.exists);
       
-      // Action icon status: check if needs action icon, or if file exists
       let actionOk = true;
       let actionDisplay = '—';
       let actionCls = 'na';
@@ -1004,7 +999,6 @@
         const allExist = asset.actionIcons.every(a => a.exists);
         
         if (hasNeedsAction) {
-          // Unit has action but no action_icon assigned
           actionOk = false;
           actionDisplay = '⚠️';
           actionCls = 'warning';

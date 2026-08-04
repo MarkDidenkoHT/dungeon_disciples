@@ -285,6 +285,14 @@ export function renderCastle(root, { player }) {
         if (dx > 0 && current > 0)                  { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
       });
 
+      // The track scrolls like the roster strip: picking a branch slides it to
+      // the middle, so the choice is never left half-hidden behind a button.
+      const centreSelected = (behavior = 'smooth') => {
+        sheetBody.querySelector('#branch-track .portrait-card--selected')
+          ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+      };
+      centreSelected('auto');
+
       sheetBody.querySelectorAll('#branch-track .portrait-card').forEach(card => {
         card.addEventListener('click', () => {
           const i = Number(card.dataset.i);

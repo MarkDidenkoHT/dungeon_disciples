@@ -357,8 +357,12 @@ export function renderRegister(root, { player } = {}) {
     function selectHero(i) {
       heroIndex = i;
       cardWrap.innerHTML = heroCardHtml(heroes[i]);
-      root.querySelectorAll('#hero-portrait-track .portrait-card').forEach((c, ci) =>
-        c.classList.toggle('portrait-card--selected', ci === i));
+      root.querySelectorAll('#hero-portrait-track .portrait-card').forEach((c, ci) => {
+        c.classList.toggle('portrait-card--selected', ci === i);
+        // Same behaviour as the roster strip: the picked portrait slides to the
+        // middle rather than staying cut off at an edge.
+        if (ci === i) c.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      });
     }
 
     root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(card => {
