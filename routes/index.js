@@ -8,7 +8,7 @@ const path   = require('path');
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
 const { getEquipBlock } = require('../data/item_rules');
-const { RESPEC_COST_PCT, getRespecOptions, getRespecCost } = require('../data/buildings');
+const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
@@ -103,14 +103,23 @@ function makeItemRow(playerId, itemKey) {
   };
 }
 
+// Sized against data/buildings.js: a tier-1 large dwelling is 60 gold + 30
+// crystals and a small one is 40 + 20, so a new player can afford exactly one of
+// each. The faction's own crystal is topped up to STARTING_FACTION_CRYSTAL when
+// the faction is picked (this table is written before that choice exists).
+// 60 covers the worst case: a large and a small dwelling whose units BOTH use
+// the faction's own element, so the faction and element halves of the cost merge
+// (30 + 30). 25 of every other crystal covers the same worst case for an element
+// that is not the faction's (15 + 10).
+const STARTING_FACTION_CRYSTAL = 60;
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 200 },
-  { item_type: 'resource', item: 'Crystals_Life',   amount: 20  },
-  { item_type: 'resource', item: 'Crystals_Fire',   amount: 20  },
-  { item_type: 'resource', item: 'Crystals_Death',  amount: 20  },
-  { item_type: 'resource', item: 'Crystals_Nature', amount: 20  },
-  { item_type: 'resource', item: 'Crystals_Frost',  amount: 20  },
-  { item_type: 'resource', item: 'Crystals_Air',    amount: 20  },
+  { item_type: 'resource', item: 'Crystals_Life',   amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Fire',   amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Death',  amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Nature', amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Frost',  amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Air',    amount: 25  },
 ];
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
@@ -635,7 +644,17 @@ router.post('/player/faction', requireAuth, async (req, res) => {
         body: JSON.stringify({ faction, hero: hero_id, learned_spells: FACTION_STARTING_SPELLS[faction] || [] }),
       }),
       supabase('/roster', { method: 'POST', body: JSON.stringify(rosterEntries) }),
-      supabase('/resources', { method: 'POST', body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))) }),
+      // The faction's own crystal starts higher than the rest — dwellings are
+      // paid for in it, and 50 covers a tier-1 large (30) plus a small (20).
+      supabase('/resources', { method: 'POST', body: JSON.stringify(
+        STARTING_RESOURCES.map(r => ({
+          ...r,
+          chat_id,
+          amount: r.item === FACTION_CRYSTAL[faction]
+            ? Math.max(r.amount, STARTING_FACTION_CRYSTAL)
+            : r.amount,
+        }))
+      ) }),
       structuresWrite,
       ...(startingItems.length ? [supabase('/items', { method: 'POST', body: JSON.stringify(startingItems) })] : []),
     ]);
@@ -975,6 +994,29 @@ router.post('/structures/build', requireAuth, async (req, res) => {
         const goldRow   = inventory.find(r => r.item === 'Gold');
         if (!goldRow || goldRow.amount < cost.gold) return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
         await supabase(`/resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
+      }
+    }
+
+    // Dwellings cost gold + the faction's crystal (see applyBuildingCosts in
+    // data/buildings.js). This used to be declared on the building and never
+    // charged, so every barracks was free.
+    if (slotCategory !== 'throne') {
+      const cost = def.cost || {};
+      const wanted = Object.entries(cost)
+        .map(([item, amount]) => [item === 'gold' ? 'Gold' : item, Number(amount)])
+        .filter(([, amount]) => amount > 0);
+      if (wanted.length) {
+        const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+        for (const [item, amount] of wanted) {
+          const row = inventory.find(r => r.item === item);
+          if (!row || Number(row.amount) < amount) {
+            return res.status(400).json({ error: `Not enough ${item.replace('Crystals_', '')}. Need ${amount}` });
+          }
+        }
+        for (const [item, amount] of wanted) {
+          const row = inventory.find(r => r.item === item);
+          await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
+        }
       }
     }
 

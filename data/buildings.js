@@ -424,6 +424,97 @@ function getBuildingDef(faction, buildingId) {
   return null;
 }
 
+// ── Building costs ──────────────────────────────────────────────────────────
+// Unit dwellings are priced by a formula rather than per building, so a new
+// building never has to be balanced by hand:
+//
+//   tier N  ->  40 x N gold
+//            +  20 x N of the FACTION crystal      (the predictable floor)
+//            +  10 x N of the unit's OWN element   (so every crystal type has a
+//                                                   sink, not just the faction's)
+//   a dwelling whose unit occupies TWO cells (size 'row' / 'column') costs
+//   LARGE_UNIT_COST_MULT more of everything, because it is worth two of a small
+//   one on the field and eats two points of loyalty.
+//
+// The element comes from the unit's damage_source; a unit with none (physical or
+// null, e.g. most knights) pays the faction crystal only, and a unit whose
+// element IS the faction crystal simply pays the two amounts merged.
+//
+// Tier 1: small 40g + 20 faction + 10 element, large 60g + 30 + 15. See
+// STARTING_RESOURCES in routes/index.js — a new player can afford one of each.
+const BUILDING_COST_PER_TIER = { gold: 40, faction_crystals: 20, element_crystals: 10 };
+const LARGE_UNIT_COST_MULT   = 1.5;
+
+const FACTION_CRYSTAL = {
+  empire:              'Crystals_Life',
+  choir_of_the_cursed: 'Crystals_Fire',
+  grail_of_sorrow:     'Crystals_Death',
+};
+
+// data/units.js spells the cold element 'cold'; the resource is Crystals_Frost.
+const ELEMENT_CRYSTAL = {
+  fire:   'Crystals_Fire',
+  life:   'Crystals_Life',
+  death:  'Crystals_Death',
+  nature: 'Crystals_Nature',
+  cold:   'Crystals_Frost',
+  air:    'Crystals_Air',
+};
+
+let _unitIndex = null;
+function findUnitDef(unitId) {
+  if (!_unitIndex) {
+    _unitIndex = {};
+    try {
+      const { UNITS } = require('./units');
+      (function walk(node) {
+        if (!node || typeof node !== 'object') return;
+        if (node.id && (node.tags || node.hp)) { _unitIndex[node.id] = node; return; }
+        Object.values(node).forEach(walk);
+      })(UNITS);
+    } catch { _unitIndex = {}; }
+  }
+  return _unitIndex[unitId] || null;
+}
+
+function isLargeUnit(unitId) {
+  const size = findUnitDef(unitId)?.size ?? 'tile';
+  return size === 'row' || size === 'column';
+}
+
+function elementCrystalFor(unitId) {
+  const src = findUnitDef(unitId)?.damage_source;
+  return ELEMENT_CRYSTAL[String(src)] || null;
+}
+
+// Applied to every non-throne dwelling at module load. Throne buildings keep
+// THRONE_UPGRADE_COSTS; mercenary buildings keep their trophy costs.
+function applyBuildingCosts() {
+  for (const [faction, pools] of Object.entries(BUILDING_POOLS)) {
+    const factionCrystal = FACTION_CRYSTAL[faction];
+    for (const [category, list] of Object.entries(pools)) {
+      if (category === 'throne') continue;
+      for (const def of list) {
+        if (!def.unit_id || def.placeholder) continue;
+        const tier = def.tier ?? 1;
+        const mult = isLargeUnit(def.unit_id) ? LARGE_UNIT_COST_MULT : 1;
+        const scale = amount => Math.round(amount * tier * mult);
+
+        const cost = { gold: scale(BUILDING_COST_PER_TIER.gold) };
+        if (factionCrystal) cost[factionCrystal] = scale(BUILDING_COST_PER_TIER.faction_crystals);
+
+        const element = elementCrystalFor(def.unit_id);
+        if (element) {
+          // Same crystal on both counts (a Life-damage Empire unit) just adds up.
+          cost[element] = (cost[element] || 0) + scale(BUILDING_COST_PER_TIER.element_crystals);
+        }
+        def.cost = cost;
+      }
+    }
+  }
+}
+applyBuildingCosts();
+
 // ── Deconstruction ──────────────────────────────────────────────────────────
 // Two operations on an occupied slot:
 //   RESPEC  swap the building for a SIBLING — same category, same tier — so a
@@ -714,6 +805,9 @@ module.exports = {
   getSpellCostReductionPct,
   getBuildingDef,
   emptyStructures,
+  FACTION_CRYSTAL,
+  BUILDING_COST_PER_TIER,
+  LARGE_UNIT_COST_MULT,
   RESPEC_COST_PCT,
   getRespecOptions,
   getRespecCost,

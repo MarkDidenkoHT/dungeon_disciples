@@ -26,6 +26,8 @@ const CASTLE_TEXT = {
   deconstruct: { en: 'Deconstruct',                           ru: 'Разобрать' },
   close:       { en: 'Close',                                 ru: 'Закрыть' },
   confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
+  build:       { en: 'Build',                                 ru: 'Построить' },
+  cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -56,6 +58,7 @@ export function renderCastle(root, { player }) {
   let heroMaxLevel       = 4;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
+  let resourceInventory  = [];
   let respecCostPct      = 25;   // overwritten from /bootstrap
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
 
@@ -97,6 +100,7 @@ export function renderCastle(root, { player }) {
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     trophyInventory     = trophies || [];
+    resourceInventory   = inventory || [];
     structuresRecord   = structures;
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
     rosterCache        = Array.isArray(roster) ? roster : [];
@@ -111,6 +115,7 @@ export function renderCastle(root, { player }) {
     const boot = await bootstrapCache.refresh(player.chat_id);
     structuresRecord = boot.structures;
     trophyInventory  = boot.trophies || [];
+    resourceInventory = boot.resources || [];
     rosterCache      = boot.roster || [];
     rosterCount      = rosterCache.length;
     renderBuildings();
@@ -176,6 +181,25 @@ export function renderCastle(root, { player }) {
       if (scaled > 0) out[item] = scaled;
     }
     return out;
+  }
+
+  // Dwellings are paid for in gold + the faction's crystal now (see
+  // applyBuildingCosts in data/buildings.js), so the sheet has to say what a
+  // build costs and refuse to offer one the player cannot pay for.
+  function amountOf(item) {
+    const key = item === 'gold' ? 'Gold' : item;
+    const row = resourceInventory.find(r => r.item === key);
+    return row ? Number(row.amount) : 0;
+  }
+
+  function canAffordCost(cost) {
+    return Object.entries(cost || {}).every(([item, amt]) => amountOf(item) >= Number(amt));
+  }
+
+  function costLabelFor(cost) {
+    return Object.entries(cost || {})
+      .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace('Crystals_', '')}`)
+      .join(' + ');
   }
 
   function getUpgradePathsForBuilding(faction, def) {
@@ -527,17 +551,25 @@ export function renderCastle(root, { player }) {
     }
 
     openSliderModal(slot === 'slot_0' ? 'Begin Your Reign' : 'Choose Building',
-      available.map(b => ({
-        unit:          getUnitByUnitId(b.unit_id),
-        buildingLabel: b.label,
-        confirmLabel:  slot === 'slot_0' ? `Build ${b.label}` : `Build · ${b.label}`,
-        buildingId:    b.id,
-        placeholder:   !!b.placeholder,
-        slot,
-      })),
+      available.map(b => {
+        const costText = slot === 'slot_0' ? '' : costLabelFor(b.cost);
+        return {
+          unit:          getUnitByUnitId(b.unit_id),
+          buildingLabel: b.label,
+          confirmLabel:  costText
+            ? `${CASTLE_TEXT.build[castleLang]} · ${b.label} (${costText})`
+            : `${CASTLE_TEXT.build[castleLang]} ${b.label}`,
+          buildingId:    b.id,
+          placeholder:   !!b.placeholder,
+          cost:          b.cost,
+          affordable:    slot === 'slot_0' || b.placeholder || canAffordCost(b.cost),
+          slot,
+        };
+      }),
       s => {
         if (s.buildingId === 'mercenary_hall') { openMercenaryModal(slot); return; }
         if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
+        if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
       }
     );
@@ -590,16 +622,25 @@ export function renderCastle(root, { player }) {
     openSliderModal(def.label,
       paths.map(path => {
         const nextUnit = getUnitByUnitId(path.unit_id);
+        const nextDef  = getBuildingDef(player.faction, path.building_id);
+        const costText = costLabelFor(nextDef?.cost);
         return {
           unit:          nextUnit,
           buildingLabel: nextUnit?.name || path.label,
-          confirmLabel:  CASTLE_TEXT.upgradeTo[castleLang](nextUnit?.name || path.label),
+          confirmLabel:  costText
+            ? CASTLE_TEXT.upgradeCost[castleLang](nextUnit?.name || path.label, costText)
+            : CASTLE_TEXT.upgradeTo[castleLang](nextUnit?.name || path.label),
           compareUnit:   currentUnit,
           buildingId:    path.building_id,
+          cost:          nextDef?.cost,
+          affordable:    canAffordCost(nextDef?.cost),
           slot,
         };
       }),
-      s => performBuildingUpgrade(s.slot, s.buildingId),
+      s => {
+        if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
+        performBuildingUpgrade(s.slot, s.buildingId);
+      },
       { deconstructSlot: slot }
     );
   }
