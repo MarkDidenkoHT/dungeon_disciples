@@ -792,11 +792,11 @@ export async function light_of_dawn(cellEl) {
 // ── NEW EFFECTS ────────────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ── repair_gear — spinning gear descends, tightens onto the target, vibrates ───
-// The gear sprite from /assets/vfx/repair_gear.png orbits down from above and
-// "locks" onto the cell. During the tightening phase the cell vibrates. Then a
-// metallic orange shimmer pulses outward and the gear lifts away repaired.
-// Phases: descend (0–.30) → lock+vibrate (.30–.62) → shimmer (.58–.82) → lift (.78–1).
+// ── repair_gear — a gear forms on the unit, turns, and tightens ───────────────
+// The gear sprite from /assets/vfx/repair_gear.png fades in ON the cell (it does
+// not fall from off-screen), turns slowly while the target vibrates, then a
+// metallic orange shimmer pulses outward and the gear fades away.
+// Phases: form (0–.30) → turn+vibrate (.30–.62) → shimmer (.58–.82) → fade (.78–1).
 export async function repair_gear(cellEl) {
   console.log('[battle-fx] repair_gear START', cellEl?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
@@ -830,7 +830,8 @@ export async function repair_gear(cellEl) {
     ang: rand(0, TAU), speed: rand(0.6, 1.2), size: rand(1.5, 3.5),
   }));
 
-  await animate(1050, t => {
+  // 3x the original 1050ms: the gear should read as slow, deliberate work.
+  await animate(3150, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
@@ -845,28 +846,24 @@ export async function repair_gear(cellEl) {
     const shimmer  = clamp01((t - 0.58) / 0.24);
     const lift     = clamp01((t - 0.78) / 0.22);
 
-    // Gear rotation: fast spin on descend, decelerates to a halt at lock, then
-    // reverses slightly as if torqued, lifts spinning again.
-    const spinFast  = t * TAU * 6;
-    const spinSlow  = descend * TAU * 4 + lock * TAU * 0.5;
-    const spinLift  = lift * TAU * 3;
-    const gearRot   = lock < 1 ? spinSlow : spinSlow + spinLift;
+    // Rotation is a third of what it was, and continuous: the gear turns like a
+    // bolt being worked, not a saw blade. It slows further as it tightens.
+    const gearRot = descend * TAU * 0.55 + lock * TAU * 0.35 + lift * TAU * 0.2;
 
-    // Gear Y: starts above cell, drops to center, then lifts back up.
-    const dropY  = b.y - R * 2.5 + descend * (R * 2.5 + b.height * 0.15);
-    const liftY  = cy - lift * (R * 2.5 + b.height * 0.15 + b.y - b.y);
-    const gearY  = lock < 1 ? (descend < 1 ? dropY : cy) : cy - lift * R * 3;
-    const gearX  = cx;
+    // The gear FORMS on the unit — no drop from off-screen. It sits at the
+    // cell's centre for the whole effect and only scales/fades in and out.
+    const gearX = cx;
+    const gearY = cy;
 
     // Vibration of the target during lock phase: small random jitter.
     const vibrate = lock * (1 - shimmer) * 3.5;
     const vx = (Math.random() - 0.5) * vibrate;
     const vy = (Math.random() - 0.5) * vibrate;
 
-    // Gear alpha: fade in on descend, fade out on lift.
-    const gAlpha = lock < 0.05
-      ? descend
-      : lift > 0.8 ? (1 - (lift - 0.8) / 0.2) : 1;
+    // Materialises rather than arrives: alpha and scale both ease up during the
+    // form phase, and it dissolves in place at the end.
+    const gAlpha = lift > 0 ? (1 - lift) : descend;
+    const gScale = 0.75 + descend * 0.25 - lift * 0.15;
 
     // Draw procedural gear (always; sprite sits on top if loaded).
     gearG.clear();
@@ -875,11 +872,11 @@ export async function repair_gear(cellEl) {
       gearG.lineStyle(3, 0xffa040, lock * (1 - lock) * 4 * 0.6);
       gearG.drawCircle(cx + vx, cy + vy, R * (0.9 + (1 - lock) * 0.3));
     }
-    drawGear(gearG, gearX, gearY, R * 0.72, R * 0.52, 8, gearRot, 0xd4832a, gAlpha, 2.5);
+    drawGear(gearG, gearX, gearY, R * 0.72 * gScale, R * 0.52 * gScale, 8, gearRot, 0xd4832a, gAlpha, 2.5);
 
     // Sprite overlay (if loaded).
     if (gearSprite) {
-      const scale = (R * 1.44) / Math.max(gearSprite.texture.width, gearSprite.texture.height);
+      const scale = (R * 1.44 * gScale) / Math.max(gearSprite.texture.width, gearSprite.texture.height);
       gearSprite.position.set(gearX, gearY);
       gearSprite.rotation = gearRot;
       gearSprite.scale.set(scale, scale);
@@ -1719,6 +1716,10 @@ export async function blood_bolt(cellEl, opts = {}) {
 // ── arrow_shot — a loosed arrow flies from the actor to the target ────────────
 // Uses /assets/vfx/arrow.png, rotated to its flight path, with a shallow arc, a
 // short motion-blur trail, and a puff of dust where it lands.
+//
+// The art is drawn POINTING UP (tip at the top of the image), so every rotation
+// is offset by +90 degrees: an unrotated sprite faces -Y, while atan2 gives the
+// angle from +X. Without the offset the arrow flies sideways.
 export async function arrow_shot(cellEl, opts = {}) {
   console.log('[battle-fx] arrow_shot START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
@@ -1744,8 +1745,10 @@ export async function arrow_shot(cellEl, opts = {}) {
   // The arrow plus two fading ghosts behind it, for motion blur.
   const sprites = [0.18, 0.38, 1].map(alpha => {
     const sp = new PIXI.Sprite(texture);
-    sp.anchor.set(0.5, 0.5);
-    const scale = 46 / Math.max(texture.width, texture.height);
+    // Pivot nearer the tip (0.35 down the shaft) so the head leads through the
+    // arc instead of the whole arrow rotating about its middle.
+    sp.anchor.set(0.5, 0.35);
+    const scale = 52 / Math.max(texture.width, texture.height);
     sp.scale.set(scale);
     sp.alpha = alpha;
     layer.addChild(sp);
@@ -1781,7 +1784,7 @@ export async function arrow_shot(cellEl, opts = {}) {
     // Face the direction of travel, sampled slightly ahead, so the nose dips on
     // the way down instead of staying level.
     const [nx, ny] = posAt(Math.min(1, flight + 0.05));
-    const rot = Math.atan2(ny - ay, nx - ax);
+    const rot = Math.atan2(ny - ay, nx - ax) + Math.PI / 2;   // art points up
 
     const a = (t < 0.22 ? t / 0.22 : 1) * (1 - land);
     arrow.position.set(ax, ay);
