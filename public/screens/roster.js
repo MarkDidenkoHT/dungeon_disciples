@@ -137,8 +137,11 @@ export function renderRoster(root, { player }) {
           .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
           .join(', ')
       : '';
+    // Overlaid on the portrait rather than inserted into the card's flow: a row
+    // that appears and disappears with the unit's state shifts everything below
+    // it every time someone dies, is revived, or is healed.
     const resurrectButtonHtml = !alive && resurrectionSpell ? `
-      <div class="unit-resurrect-row">
+      <div class="unit-card-overlay">
         <button class="resurrect-btn" data-roster-id="${u.id}" data-spell-id="${resurrectionSpell.id}">
           Resurrect (${resurrectionCost})
         </button>
@@ -156,7 +159,7 @@ export function renderRoster(root, { player }) {
       : '';
     const isDamaged = alive && stored.current_hp != null && stored.max_hp != null && stored.current_hp < stored.max_hp;
     const healButtonHtml = isDamaged && healSpell ? `
-      <div class="unit-heal-row">
+      <div class="unit-card-overlay unit-card-overlay--heal">
         <button class="heal-btn" data-roster-id="${u.id}" data-spell-id="${healSpell.id}">
           Heal (${healCost})
         </button>
@@ -218,12 +221,14 @@ export function renderRoster(root, { player }) {
         <div class="unit-card ${alive ? '' : 'unit-card--dead'}">
           <div class="unit-main-row">
             ${coreHtml}
-            ${portraitHtml}
+            <div class="unit-portrait-wrap">
+              ${portraitHtml}
+              ${resurrectButtonHtml}
+              ${healButtonHtml}
+            </div>
             ${resistsHtml}
           </div>
           <div class="unit-info">
-            ${resurrectButtonHtml}
-            ${healButtonHtml}
             ${levelUpHtml}
             ${abilitiesHtml}
           </div>
@@ -530,18 +535,19 @@ export function renderRoster(root, { player }) {
     return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  // One chip per material: icon, have/need, and a short flag when you are short.
+  // One chip per material: icon + the amount REQUIRED, green when the player can
+  // cover it and red when they cannot. The have/need pair was redundant — the
+  // resource bar and trophy bar already show what is in the purse.
   function costChips(cost = {}, itemCost = {}) {
     const entries = [...Object.entries(cost), ...Object.entries(itemCost)];
     if (!entries.length) return '<span class="mat-chip mat-chip--free">No materials</span>';
     return entries.map(([key, amount]) => {
-      const have  = ownedAmount(key);
-      const short = have < amount;
+      const enough = ownedAmount(key) >= amount;
       return `
-        <button class="mat-chip ${short ? 'mat-chip--short' : ''}" data-material="${key}"
-                title="${materialName(key)} — ${have}/${amount}">
+        <button class="mat-chip ${enough ? 'mat-chip--ok' : 'mat-chip--short'}" data-material="${key}"
+                title="${materialName(key)} — ${ownedAmount(key)}/${amount}">
           <span class="mat-chip-icon">${materialIcon(key)}</span>
-          <span class="mat-chip-amt">${have}/${amount}</span>
+          <span class="mat-chip-amt">${amount}</span>
         </button>`;
     }).join('');
   }
@@ -797,9 +803,7 @@ export function renderRoster(root, { player }) {
             <div class="items-filter-row" role="group" aria-label="Traits">
               ${TRAIT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
               ${filter === 'craft' ? `
-                <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">
-                  ${readyOnly ? '\u2713 ' : ''}Craftable now
-                </button>` : ''}
+                <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">Craftable now</button>` : ''}
             </div>
           </div>
 
@@ -871,7 +875,8 @@ export function renderRoster(root, { player }) {
 
       const rarityBtn = e.target.closest('[data-rarity]');
       if (rarityBtn) {
-        rarity = rarityBtn.dataset.rarity;
+        // Tapping the active chip clears the filter rather than doing nothing.
+        rarity = rarity === rarityBtn.dataset.rarity ? 'all' : rarityBtn.dataset.rarity;
         body.querySelectorAll('[data-rarity]').forEach(b =>
           b.classList.toggle('items-chip--active', b.dataset.rarity === rarity));
         refreshList();
@@ -880,7 +885,7 @@ export function renderRoster(root, { player }) {
 
       const statBtn = e.target.closest('[data-stat]');
       if (statBtn) {
-        statFilter = statBtn.dataset.stat;
+        statFilter = statFilter === statBtn.dataset.stat ? 'all' : statBtn.dataset.stat;
         body.querySelectorAll('[data-stat]').forEach(b =>
           b.classList.toggle('items-chip--active', b.dataset.stat === statFilter));
         refreshList();

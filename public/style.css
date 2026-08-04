@@ -2134,7 +2134,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
 }
 
-.unit-main-row .unit-portrait {
+.unit-main-row .unit-portrait,
+.unit-portrait-wrap .unit-portrait {
   flex: 1;
   min-width: 0;
   height: 45vh;
@@ -2254,24 +2255,51 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 600;
 }
 
-.unit-resurrect-row { margin: 8px 0; }
+/* Heal / resurrect sit ON the portrait, centred, instead of occupying a row in
+   the card. As inline rows they appeared and vanished with the unit's state and
+   pushed everything below them — layout shift on every death, revive and heal. */
+.unit-portrait-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.unit-card-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;   /* only the button itself is clickable */
+  z-index: 3;
+}
+.unit-card-overlay > button { pointer-events: auto; }
+
+/* A wounded unit is still playable, so its button sits low and out of the way;
+   a dead one is not, so its button owns the middle of the card. */
+.unit-card-overlay--heal { align-items: flex-end; padding-bottom: 46px; }
+
 .resurrect-btn {
   background: linear-gradient(180deg,#2563eb,#1243b8);
   color: #fff;
   border: none;
-  padding: 8px 10px;
+  padding: 9px 14px;
   border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
   cursor: pointer;
 }
 .resurrect-btn[disabled] { opacity: 0.6; cursor: default; }
 
-.unit-heal-row { margin: 8px 0; }
 .heal-btn {
   background: linear-gradient(180deg,#16a34a,#0f7a37);
   color: #fff;
   border: none;
-  padding: 8px 10px;
+  padding: 9px 14px;
   border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
   cursor: pointer;
 }
 .heal-btn[disabled] { opacity: 0.6; cursor: default; }
@@ -4817,6 +4845,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .items-chip--rarity-mythic.items-chip--active  { border-color: #f59e0b; background: rgba(245, 158, 11, 0.14); }
 
 .items-chip--toggle { font-weight: 700; }
+/* No tick prefix: it changed the chip's width, nudging the row on every tap. */
 
 .items-slider {
   display: flex;
@@ -5223,9 +5252,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 .faction-example-card--open::-webkit-scrollbar { display: none; }
 
 /* ── Item sheet: one detail card + a selector track ─────────────────────────*/
+/* Fixed height, not flex: every item then occupies exactly the same box, so
+   moving through the track never resizes the sheet or shifts the track under
+   the player's thumb. Longer items scroll inside this box. */
 .item-detail {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  height: 40vh;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -5239,7 +5271,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 .item-detail .item-card {
   width: 100%;
   max-width: none;
-  flex: 0 0 auto;
+  flex: 1 0 auto;
+  min-height: 100%;
 }
 
 .items-track-wrap {
@@ -5297,10 +5330,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 700;
   cursor: pointer;
 }
+.mat-chip--ok    { color: #4ccb63; border-color: color-mix(in srgb, #4ccb63 45%, var(--border)); }
 .mat-chip--short { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
 .mat-chip--free  { color: var(--muted); border-style: dashed; cursor: default; }
 .mat-chip:active { border-color: var(--accent); }
 
+/* Fixed min-width so a 1 and a 100 make the same shape and the row never
+   re-wraps as amounts change. */
+.mat-chip-amt  { min-width: 1.6em; text-align: left; }
 .mat-chip-icon { display: flex; align-items: center; }
 .mat-chip-icon .res-icon-img,
 .mat-chip-img { width: 18px; height: 18px; object-fit: contain; display: block; }

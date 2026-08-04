@@ -554,7 +554,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',  action_animation: 'fire_spell_impact',
       xp: 100, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
@@ -565,7 +565,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_spell_impact',
       xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
@@ -576,7 +576,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg',
+      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_spell_impact',
       xp: 900, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
   },
@@ -1189,7 +1189,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg',
+      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'shock',
       xp: 100, passive: 'inspiration_initiative 1', ability: null,
     },
     red_mage: {
@@ -1582,7 +1582,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 15,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
       xp: 100, passive: 'horde 1', ability: 'shared_suffering 1',
     },
     poisonous_ghoul: {
@@ -1593,7 +1593,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg',
+      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
       xp: 400, passive: ['horde 1', 'infect 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
@@ -1604,7 +1604,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg',
+      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
       xp: 900, passive: ['horde 1', 'infect 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
@@ -1615,7 +1615,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg',
+      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg', action_sfx: 'claw_light',
       xp: 400, passive: ['horde 1', 'lifesteal 1'], ability: 'shared_suffering 1',
     },
     abominate: {
@@ -1626,7 +1626,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 40,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg', action_sfx: 'claw_light',
       xp: 900, passive: ['horde 1', 'lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
     },
     cesswalker: {
@@ -1659,7 +1659,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 0, life: 25, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg',
+      damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'shock',
       xp: 100, passive: 'poison 1', ability: null,
     },
     blood_adept: {
