@@ -671,9 +671,11 @@ export function renderRoster(root, { player }) {
       </div>
     `).join('');
 
-    const resourceBar = document.getElementById('resource-bar');
-    if (resourceBar) {
-      resourceBar.insertAdjacentElement('afterend', bar);
+    // After the whole row (timeline + strip + errands), not after the strip —
+    // otherwise the trophy bar would be laid out as a third column inside it.
+    const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
+    if (resourceRow) {
+      resourceRow.insertAdjacentElement('afterend', bar);
     }
   }
 

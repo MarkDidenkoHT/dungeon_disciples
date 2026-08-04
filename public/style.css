@@ -716,11 +716,24 @@ button:active:not(:disabled) { opacity: 0.75; }
   filter: brightness(1);
 }
 
+/* The row: control, strip, control. Only the middle element wears the frame. */
+.resource-bar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 4px;
+  padding: 3px 4px;
+  flex-shrink: 0;
+  transition: max-height 0.2s, opacity 0.2s, padding 0.2s;
+}
+
 .resource-bar {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  flex: 1;
+  min-width: 0;
   gap: 0;
   padding: 4px 8px;
   /* Ornate frame art stretched across the bar; --surface shows through as a
@@ -741,11 +754,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Collapsed (slid up): used in battle prep until the spell sheet opens. Also
    reclaims its vertical space so the arena isn't pushed down. */
+.resource-bar-row--collapsed,
 .resource-bar--collapsed {
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
   opacity: 0;
+  overflow: hidden;
   border-bottom-width: 0;
 }
 
@@ -779,7 +794,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-repeat: no-repeat;
   border-radius: 0;
   width: 52px;
-  height: 52px;
+  align-self: stretch;
   flex-shrink: 0;
   transition: filter 0.15s, transform 0.1s;
 }
@@ -801,6 +816,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .res-bar-btn:not(:disabled):active img { filter: none; }
 
 /* The errand slot is reserved but not yet wired up: same frame, dimmed. */
+.res-bar-errands,
 .res-bar-placeholder {
   cursor: default;
   opacity: 0.45;

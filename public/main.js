@@ -42,7 +42,17 @@ function mountShell(player) {
 
   app.innerHTML = `
     <div id="shell">
-      <div class="resource-bar" id="resource-bar"></div>
+      <!-- Timeline and errands are CONTROLS, so they sit beside the framed
+           resource strip rather than inside it — the frame art is sized for
+           resource slots and squeezed them flat. -->
+      <div class="resource-bar-row" id="resource-bar-row">
+        <button class="res-bar-btn res-bar-timeline" title="What's Next" aria-label="Roadmap">
+          <img src="/assets/icons/ui/timeline.png" class="res-icon-img" alt="Timeline"
+               onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
+        </button>
+        <div class="resource-bar" id="resource-bar"></div>
+        <button class="res-bar-btn res-bar-errands" disabled title="Errands" aria-label="Errands"></button>
+      </div>
       <div id="content-root"></div>
       <nav class="bottom-nav" id="bottom-nav">
         <button class="nav-btn" data-screen="castle">
@@ -76,9 +86,9 @@ function mountShell(player) {
     }
   });
 
-  // Resource bar is rebuilt on every navigation (refreshResourceBar), so delegate
-  // the timeline click from the container, which is mounted once.
-  document.getElementById('resource-bar').addEventListener('click', e => {
+  // The row is mounted once and never re-rendered (only the strip inside it is),
+  // so the timeline click is delegated from here.
+  document.getElementById('resource-bar-row').addEventListener('click', e => {
     if (e.target.closest('.res-bar-timeline')) openTimeline();
   });
 }
@@ -101,7 +111,7 @@ function navigate(screen, params = {}) {
 
   const isBattle = screen === 'battle';
   const navEl    = document.getElementById('bottom-nav');
-  const resBarEl = document.getElementById('resource-bar');
+  const resBarEl = document.getElementById('resource-bar-row');
   if (navEl) navEl.style.display = isBattle ? 'none' : '';
   if (resBarEl) {
     resBarEl.style.display = isBattle ? 'none' : '';

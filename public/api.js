@@ -116,13 +116,10 @@ export async function refreshResourceBar(player) {
   const boot = await bootstrapCache.refresh(player.chat_id);
   const inventory = boot.resources || [];
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
-  // 9 slots total: [timeline] + gold + 6 crystals + [placeholder]. The timeline
-  // opens the roadmap modal (see public/timeline.js); the placeholder is a
-  // reserved empty slot for later.
+  // Resources only — 7 slots: gold + 6 crystals. The timeline and errands
+  // buttons live OUTSIDE this element (see the resource-bar-row in main.js), so
+  // rebuilding the strip never touches them.
   bar.innerHTML = `
-    <button class="res-bar-btn res-bar-timeline" title="What's Next" aria-label="Roadmap">
-      <img src="/assets/icons/ui/timeline.png" class="res-icon-img" alt="Timeline" onerror="this.replaceWith(document.createTextNode('🕒'))">
-    </button>
     <div class="res-bar-item"><span class="res-bar-icon">${GOLD_ICON}</span><span class="res-bar-val">${find('Gold').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/life.png"   class="res-icon-img" alt="Life"></span><span class="res-bar-val">${find('Crystals_Life').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/fire.png"   class="res-icon-img" alt="Fire"></span><span class="res-bar-val">${find('Crystals_Fire').amount}</span></div>
@@ -130,7 +127,6 @@ export async function refreshResourceBar(player) {
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature"></span><span class="res-bar-val">${find('Crystals_Nature').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost"></span><span class="res-bar-val">${find('Crystals_Frost').amount}</span></div>
     <div class="res-bar-item"><span class="res-bar-icon"><img src="/assets/icons/recources/air.png"   class="res-icon-img" alt="Air"></span><span class="res-bar-val">${find('Crystals_Air').amount}</span></div>
-    <button class="res-bar-btn res-bar-placeholder" disabled aria-hidden="true"></button>
   `;
 }
 
