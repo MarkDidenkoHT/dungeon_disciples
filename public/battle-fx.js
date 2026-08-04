@@ -792,46 +792,33 @@ export async function light_of_dawn(cellEl) {
 // ── NEW EFFECTS ────────────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ── repair_gear — a gear forms on the unit, turns, and tightens ───────────────
-// The gear sprite from /assets/vfx/repair_gear.png fades in ON the cell (it does
-// not fall from off-screen), turns slowly while the target vibrates, then a
-// metallic orange shimmer pulses outward and the gear fades away.
-// Phases: form (0–.30) → turn+vibrate (.30–.62) → shimmer (.58–.82) → fade (.78–1).
-export async function repair_gear(cellEl) {
-  console.log('[battle-fx] repair_gear START', cellEl?.dataset?.id);
+// ── repair — a gear turns on the unit while it shudders back together ────────
+// Deliberately plain: the gear fades in ON the cell, turns, and fades out. The
+// glow ring, the shimmer pulse and the spark burst are gone — they read as
+// "circles happening" rather than as a repair. Vibration stays, because that is
+// what sells the work being done to the unit.
+export async function repair(cellEl) {
+  console.log('[battle-fx] repair START', cellEl?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
-  const dataId = cellEl.dataset.id;
+  const dataId  = cellEl.dataset.id;
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
-  const ADD = PIXI.BLEND_MODES.ADD;
+  const TAU     = Math.PI * 2;
 
-  const layer     = new PIXI.Container();
-  const glowLayer = new PIXI.Container();
-  glowLayer.filters = [new PIXI.BlurFilter(8)];
-  const gearG   = new PIXI.Graphics();          // procedural gear, no texture needed as fallback
-  const shimG   = new PIXI.Graphics(); shimG.blendMode = ADD;
-  const sparkG  = new PIXI.Graphics(); sparkG.blendMode = ADD;
-  glowLayer.addChild(shimG);
-  layer.addChild(glowLayer, sparkG, gearG);
+  const layer = new PIXI.Container();
+  const gearG = new PIXI.Graphics();   // fallback shape if the sprite is missing
+  layer.addChild(gearG);
   app.stage.addChild(layer);
 
-  // Try to load the sprite; fall back to procedural gear if missing.
   let gearSprite = null;
   try {
     const tex = await PIXI.Assets.load('/assets/vfx/repair_gear.png');
     gearSprite = new PIXI.Sprite(tex);
     gearSprite.anchor.set(0.5, 0.5);
     layer.addChild(gearSprite);
-  } catch { /* use procedural */ }
+  } catch { /* procedural gear carries it */ }
 
-  // Random sparks ejected at lock-in.
-  const TAU = Math.PI * 2;
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const sparks = Array.from({ length: 12 }, () => ({
-    ang: rand(0, TAU), speed: rand(0.6, 1.2), size: rand(1.5, 3.5),
-  }));
-
-  // 3x the original 1050ms: the gear should read as slow, deliberate work.
-  await animate(3150, t => {
+  const DURATION = 3150;
+  await animate(DURATION, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
@@ -840,73 +827,37 @@ export async function repair_gear(cellEl) {
     const cy = b.y + b.height / 2;
     const R  = Math.min(b.width, b.height) * 0.42;
 
-    // Phases
-    const descend  = clamp01(t / 0.30);
-    const lock     = clamp01((t - 0.30) / 0.32);
-    const shimmer  = clamp01((t - 0.58) / 0.24);
-    const lift     = clamp01((t - 0.78) / 0.22);
+    const formIn  = clamp01(t / 0.20);
+    const fadeOut = clamp01((t - 0.82) / 0.18);
 
-    // Rotation is a third of what it was, and continuous: the gear turns like a
-    // bolt being worked, not a saw blade. It slows further as it tightens.
-    const gearRot = descend * TAU * 0.55 + lock * TAU * 0.35 + lift * TAU * 0.2;
+    // One continuous turn, 50% quicker than before (1.65 turns over the effect).
+    const gearRot = t * TAU * 1.65;
 
-    // The gear FORMS on the unit — no drop from off-screen. It sits at the
-    // cell's centre for the whole effect and only scales/fades in and out.
-    const gearX = cx;
-    const gearY = cy;
+    // The unit shudders while the gear works, easing off as it finishes.
+    const shake = (1 - fadeOut) * formIn * 3;
+    const vx = (Math.random() - 0.5) * shake;
+    const vy = (Math.random() - 0.5) * shake;
 
-    // Vibration of the target during lock phase: small random jitter.
-    const vibrate = lock * (1 - shimmer) * 3.5;
-    const vx = (Math.random() - 0.5) * vibrate;
-    const vy = (Math.random() - 0.5) * vibrate;
+    const alpha = formIn * (1 - fadeOut);
+    const scale = 0.85 + formIn * 0.15;
 
-    // Materialises rather than arrives: alpha and scale both ease up during the
-    // form phase, and it dissolves in place at the end.
-    const gAlpha = lift > 0 ? (1 - lift) : descend;
-    const gScale = 0.75 + descend * 0.25 - lift * 0.15;
-
-    // Draw procedural gear (always; sprite sits on top if loaded).
     gearG.clear();
-    // Tightening glow ring under the gear during lock.
-    if (lock > 0 && lock < 1) {
-      gearG.lineStyle(3, 0xffa040, lock * (1 - lock) * 4 * 0.6);
-      gearG.drawCircle(cx + vx, cy + vy, R * (0.9 + (1 - lock) * 0.3));
+    if (!gearSprite) {
+      drawGear(gearG, cx + vx, cy + vy, R * 0.72 * scale, R * 0.52 * scale, 8, gearRot, 0xd4832a, alpha, 2.5);
     }
-    drawGear(gearG, gearX, gearY, R * 0.72 * gScale, R * 0.52 * gScale, 8, gearRot, 0xd4832a, gAlpha, 2.5);
 
-    // Sprite overlay (if loaded).
     if (gearSprite) {
-      const scale = (R * 1.44 * gScale) / Math.max(gearSprite.texture.width, gearSprite.texture.height);
-      gearSprite.position.set(gearX, gearY);
+      const sc = (R * 1.44 * scale) / Math.max(gearSprite.texture.width, gearSprite.texture.height);
+      gearSprite.position.set(cx + vx, cy + vy);
       gearSprite.rotation = gearRot;
-      gearSprite.scale.set(scale, scale);
-      gearSprite.alpha = gAlpha;
-    }
-
-    // Metallic shimmer pulse expanding outward at lock-in.
-    shimG.clear();
-    if (shimmer > 0) {
-      const sAlpha = shimmer < 0.5 ? shimmer / 0.5 : (1 - shimmer) / 0.5;
-      softGlow(shimG, cx, cy, R * (0.5 + shimmer * 1.4), 0xffb84d, 0.55 * sAlpha);
-      softGlow(shimG, cx, cy, R * (0.2 + shimmer * 0.8), 0xfff0c0, 0.35 * sAlpha);
-    }
-
-    // Metal sparks ejected when the gear locks.
-    sparkG.clear();
-    const sparkPhase = clamp01((t - 0.30) / 0.20); // short burst after lock
-    if (sparkPhase > 0 && sparkPhase < 1) {
-      for (const sp of sparks) {
-        const dist = R * sparkPhase * sp.speed;
-        const sx2 = cx + Math.cos(sp.ang) * dist;
-        const sy2 = cy + Math.sin(sp.ang) * dist;
-        softGlow(sparkG, sx2, sy2, sp.size * (1.2 - sparkPhase), 0xffe080, (1 - sparkPhase) * 0.9);
-      }
+      gearSprite.scale.set(sc, sc);
+      gearSprite.alpha = alpha;
     }
   });
 
   if (gearSprite) gearSprite.destroy();
   layer.destroy({ children: true });
-  console.log('[battle-fx] repair_gear END', dataId);
+  console.log('[battle-fx] repair END', dataId);
 }
 
 // ── cleanse — a purifying white-violet wash that expels dark impurity motes ────
@@ -1825,7 +1776,6 @@ export const EFFECTS = {
   shared_suffering,
   light_of_dawn,
   // ── new ──
-  repair_gear,
   cleanse,
   raise_dead,
   shield_bash,
@@ -1835,6 +1785,5 @@ export const EFFECTS = {
   haunt,
   blood_bolt,
   arrow_shot,
-  // `repair` is the unit's action name; repair_gear is the animation it plays.
-  repair: repair_gear,
+  repair,
 };

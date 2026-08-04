@@ -806,7 +806,7 @@ const UNITS = {
       hp: 82, armor: 3, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 10 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null, 
       building_slot: 'slot_0', xp: 100
     },
@@ -818,7 +818,7 @@ const UNITS = {
       hp: 98, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 400
     },
@@ -830,7 +830,7 @@ const UNITS = {
       hp: 118, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 900
     },
@@ -842,7 +842,7 @@ const UNITS = {
       hp: 142, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -854,7 +854,7 @@ const UNITS = {
       hp: 142, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -866,7 +866,7 @@ const UNITS = {
       hp: 90, armor: 3, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 400
     },
@@ -878,7 +878,7 @@ const UNITS = {
       hp: 108, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 900
     },
@@ -890,7 +890,7 @@ const UNITS = {
       hp: 128, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -902,7 +902,7 @@ const UNITS = {
       hp: 128, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -1035,7 +1035,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
       xp: 100, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     mechanic: {
@@ -1046,7 +1046,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
       xp: 400, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     master_mechanic: {
@@ -1057,7 +1057,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
       xp: 900, passive: ['fortify 2', 'scavenger 1'], ability: null,
     },
     rifleman: {
@@ -2106,7 +2106,7 @@ const UNITS = {
         hp: 40, armor: 10, initiative: 15,
         resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 50, nature: 10 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 10, action_animation: 'repair_gear',
+        damage_source: null, action_power: 10, action_animation: 'repair',
         xp: 100, passive: 'fortify 1', ability: null,
       },
       glaciron: {
@@ -2117,7 +2117,7 @@ const UNITS = {
         hp: 45, armor: 15, initiative: 15,
         resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 50, nature: 15 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15, action_animation: 'repair_gear',
+        damage_source: null, action_power: 15, action_animation: 'repair',
         xp: 400, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
       arctyx: {
@@ -2128,7 +2128,7 @@ const UNITS = {
         hp: 50, armor: 20, initiative: 15,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20, action_animation: 'repair_gear',
+        damage_source: null, action_power: 20, action_animation: 'repair',
         xp: 900, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {

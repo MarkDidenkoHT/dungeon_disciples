@@ -538,10 +538,17 @@ export function renderRoster(root, { player }) {
   // One chip per material: icon + the amount REQUIRED, green when the player can
   // cover it and red when they cannot. The have/need pair was redundant — the
   // resource bar and trophy bar already show what is in the purse.
+  // Grouped into three rows — currency, trophies, crafted ingredients — so a
+  // long cost reads as three short lines of like things instead of one wrapping
+  // jumble. Empty groups are omitted rather than left as blank rows.
   function costChips(cost = {}, itemCost = {}) {
     const entries = [...Object.entries(cost), ...Object.entries(itemCost)];
     if (!entries.length) return '<span class="mat-chip mat-chip--free">No materials</span>';
-    return entries.map(([key, amount]) => {
+
+    const isCurrency = key => key === 'Gold' || key.startsWith('Crystals_');
+    const isItem     = key => !!ITEM_DEFS[key];
+
+    const chip = ([key, amount]) => {
       const enough = ownedAmount(key) >= amount;
       return `
         <button class="mat-chip ${enough ? 'mat-chip--ok' : 'mat-chip--short'}" data-material="${key}"
@@ -549,7 +556,18 @@ export function renderRoster(root, { player }) {
           <span class="mat-chip-icon">${materialIcon(key)}</span>
           <span class="mat-chip-amt">${amount}</span>
         </button>`;
-    }).join('');
+    };
+
+    const groups = [
+      entries.filter(([k]) => isCurrency(k)),                            // gold + crystals
+      entries.filter(([k]) => !isCurrency(k) && !isItem(k)),             // trophies
+      entries.filter(([k]) => !isCurrency(k) && isItem(k)),              // crafted parts
+    ];
+
+    return groups
+      .filter(g => g.length)
+      .map(g => `<div class="mat-row">${g.map(chip).join('')}</div>`)
+      .join('');
   }
 
   function formatCost(cost = {}, itemCost = {}) {
