@@ -7,14 +7,15 @@ import { SPELLS }           from '../../data/spells.js';
 import { UNIT_ABILITIES }   from '../../data/unit_abilities.js';
 import { getEquipBlock }    from '../../data/item_rules.js';
 import { ITEM_DEFS }        from '../../data/items.js';
+import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, openSheet, closeSheet, openSubSheet, getSheetBody, applyBackground,
+  renderModalContent, openSheet, closeSheet, openSubSheet, closeSubSheet, getSubSheetBody, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
-  getActionLabel, itemName, itemRarity, handleUnitInspect,
+  getActionLabel, itemName, itemRarity, handleUnitInspect, CRYSTAL_ICONS, GOLD_ICON,
 } from '../utils.js';
 
 export function renderRoster(root, { player }) {
@@ -502,6 +503,49 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+  // Materials as tappable icons rather than a wall of text. Each chip carries
+  // the material key so the sheet can open a "where does this drop" detail.
+  function materialIcon(key) {
+    if (key === 'Gold') return GOLD_ICON;
+    if (CRYSTAL_ICONS[key]) return CRYSTAL_ICONS[key];
+    // Trophies share the resource icon folder; items use the item folder.
+    if (ITEM_DEFS[key]) {
+      const iconId = ITEM_DEFS[key].icon || ITEM_DEFS[key].key;
+      return `<img class="mat-chip-img" src="/assets/icons/items/${iconId}.png" alt="${key}" onerror="this.style.display='none'">`;
+    }
+    return `<img class="mat-chip-img" src="/assets/icons/recources/${key}.png" alt="${key}" onerror="this.style.display='none'">`;
+  }
+
+  function ownedAmount(key) {
+    if (ITEM_DEFS[key]) {
+      return items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === key && !it.equipped_by).length;
+    }
+    return resources.find(r => r.item === key)?.amount ?? 0;
+  }
+
+  function materialName(key) {
+    if (ITEM_DEFS[key]) return itemName(ITEM_DEFS[key], player);
+    if (key === 'Gold') return 'Gold';
+    if (key.startsWith('Crystals_')) return `${key.replace('Crystals_', '')} Crystals`;
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // One chip per material: icon, have/need, and a short flag when you are short.
+  function costChips(cost = {}, itemCost = {}) {
+    const entries = [...Object.entries(cost), ...Object.entries(itemCost)];
+    if (!entries.length) return '<span class="mat-chip mat-chip--free">No materials</span>';
+    return entries.map(([key, amount]) => {
+      const have  = ownedAmount(key);
+      const short = have < amount;
+      return `
+        <button class="mat-chip ${short ? 'mat-chip--short' : ''}" data-material="${key}"
+                title="${materialName(key)} — ${have}/${amount}">
+          <span class="mat-chip-icon">${materialIcon(key)}</span>
+          <span class="mat-chip-amt">${have}/${amount}</span>
+        </button>`;
+    }).join('');
+  }
+
   function formatCost(cost = {}, itemCost = {}) {
     const resParts = Object.entries(cost).map(([resName, amount]) => {
       const have    = resources.find(r => r.item === resName)?.amount ?? 0;
@@ -553,7 +597,7 @@ export function renderRoster(root, { player }) {
         ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
         ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
-        <div class="item-cost">${formatCost(cost, itemCost)}</div>
+        <div class="item-cost">${costChips(cost, itemCost)}</div>
         <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>Craft</button>
         ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
       </div>`;
@@ -626,12 +670,15 @@ export function renderRoster(root, { player }) {
     // by — what it does, how good it is, and whether it can be made right now.
     let filter     = 'equippable';   // 'equippable' | 'owned' | 'craft'
     let rarity     = 'all';          // 'all' | common | rare | epic | mythic
-    let statFilter = 'all';          // 'all' | hp | armor | initiative | action_power | resist | passive
+    let statFilter = 'all';          // see STAT_FILTERS / TRAIT_FILTERS
     let readyOnly  = false;          // craft tab: only what is affordable now
+    let selected   = 0;              // index into the current list
 
     const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
 
     const RARITIES = ['common', 'rare', 'epic', 'mythic'];
+    // Two rows: numbers on one, qualities on the other. Seven chips on one line
+    // did not fit on a phone.
     const STAT_FILTERS = [
       ['all',           'All'],
       ['hp',            'HP'],
@@ -639,13 +686,19 @@ export function renderRoster(root, { player }) {
       ['initiative',    'Init'],
       ['action_power',  'Power'],
       ['resist',        'Resist'],
-      ['passive',       'Passive'],
+    ];
+    const TRAIT_FILTERS = [
+      ['passive',    'Passive'],
+      ['grants_tag', 'Grants Tag'],
+      ['needs_tag',  'Needs Tag'],
     ];
 
     // stat_mods keys are hp / armor / initiative / action_power / <element>_resist.
     function matchesStat(stats) {
       if (statFilter === 'all') return true;
-      if (statFilter === 'passive') return !!stats?.passive;
+      if (statFilter === 'passive')    return !!stats?.passive;
+      if (statFilter === 'grants_tag') return !!stats?.adds_tag;
+      if (statFilter === 'needs_tag')  return !!stats?.tag_required;
       const mods = stats?.stat_mods || {};
       if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
       return Object.prototype.hasOwnProperty.call(mods, statFilter);
@@ -653,36 +706,63 @@ export function renderRoster(root, { player }) {
 
     const matchesRarity = stats => rarity === 'all' || itemRarity(stats) === rarity;
 
-    // Just the cards — recomputed on every filter change AND every keystroke.
-    // Kept separate from the chrome so live search can refresh the list without
-    // rebuilding (and stealing focus from) the search input.
-    function sliderCards() {
+    // The filtered list, as DATA. The big card and the selector track are two
+    // views of it, so they can never disagree about what is on screen.
+    //   craft tab -> ITEM_DEFS blueprints  { def, owned }
+    //   otherwise -> owned rows            { item }
+    function currentList() {
       if (filter === 'craft') {
-        const cards = Object.values(ITEM_DEFS)
+        return Object.values(ITEM_DEFS)
           // Other factions' items are never obtainable, so don't tease them.
           .filter(def => !def.faction || def.faction === player.faction)
           .filter(def => matchesRarity(def) && matchesStat(def))
           .filter(def => !readyOnly || canCraftNow(def))
-          .map(def => {
-            const ownedCount = items.filter(it => itemKeyOf(it) === def.key).length;
-            return buildCatalogItemCard(def, ownedCount, unit, unitTags);
-          });
-        return cards.length ? cards.join('') : `<p class="placeholder">Nothing matches these filters.</p>`;
+          .map(def => ({ kind: 'blueprint', def, owned: items.filter(it => itemKeyOf(it) === def.key).length }));
       }
+      return items
+        .filter(it => {
+          if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
+          if (filter === 'owned') return true;
+          const stats    = it.item_stats || {};
+          const factionOk = !stats.faction || stats.faction === player.faction;
+          const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+          const equippedHere = String(it.equipped_by) === String(rosterId);
+          return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
+        })
+        .map(it => ({ kind: 'item', item: it }));
+    }
 
-      const filtered = items.filter(it => {
-        if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
-        if (filter === 'owned') return true;
-        const stats    = it.item_stats || {};
-        const factionOk = !stats.faction || stats.faction === player.faction;
-        const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
-        const equippedHere = String(it.equipped_by) === String(rosterId);
-        return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
-      });
+    function entryStats(entry) {
+      return entry?.kind === 'blueprint' ? entry.def : (entry?.item?.item_stats || {});
+    }
 
-      return filtered.length
-        ? filtered.map(it => buildItemCard(it, unit, unitTags)).join('')
-        : `<p class="placeholder">Nothing matches these filters.</p>`;
+    function entryName(entry) {
+      return entry?.kind === 'blueprint' ? itemName(entry.def, player) : itemName(entry.item, player);
+    }
+
+    function entryIcon(entry) {
+      const stats = entryStats(entry);
+      return stats.icon || stats.key || 'item';
+    }
+
+    // The selector track — same portrait-card frame as the roster strip.
+    function trackCards(list) {
+      if (!list.length) return '<span class="track-empty-hint">Nothing matches these filters</span>';
+      return list.map((entry, i) => `
+        <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
+             data-i="${i}" title="${entryName(entry)}">
+          <img class="portrait-art-img" src="/assets/icons/items/${entryIcon(entry)}.png"
+               alt="${entryName(entry)}" onerror="this.style.display='none'">
+          ${entry.kind === 'blueprint' && entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : ''}
+        </div>`).join('');
+    }
+
+    // The one item on show, with room to lay it out properly.
+    function detailCard(entry) {
+      if (!entry) return '<p class="placeholder">Nothing matches these filters.</p>';
+      return entry.kind === 'blueprint'
+        ? buildCatalogItemCard(entry.def, entry.owned, unit, unitTags)
+        : buildItemCard(entry.item, unit, unitTags);
     }
 
     function render() {
@@ -692,6 +772,9 @@ export function renderRoster(root, { player }) {
         `<button class="items-chip items-chip--rarity-${id} ${rarity === id ? 'items-chip--active' : ''}" data-rarity="${id}">${label}</button>`;
       const statChip = (id, label) =>
         `<button class="items-chip ${statFilter === id ? 'items-chip--active' : ''}" data-stat="${id}">${label}</button>`;
+
+      const list = currentList();
+      if (selected >= list.length) selected = 0;
 
       return `
         <div class="items-modal">
@@ -706,18 +789,27 @@ export function renderRoster(root, { player }) {
               ${rarityChip('all', 'Any')}
               ${RARITIES.map(r => rarityChip(r, cap(r))).join('')}
             </div>
+            <!-- Numeric stats on their own row; the qualitative filters (passive,
+                 tags) and the craft toggle sit below, so neither row overflows. -->
             <div class="items-filter-row" role="group" aria-label="Stat">
               ${STAT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
             </div>
-            ${filter === 'craft' ? `
-              <div class="items-filter-row">
+            <div class="items-filter-row" role="group" aria-label="Traits">
+              ${TRAIT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
+              ${filter === 'craft' ? `
                 <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">
                   ${readyOnly ? '\u2713 ' : ''}Craftable now
-                </button>
-              </div>` : ''}
+                </button>` : ''}
+            </div>
           </div>
 
-          <div class="items-slider" id="items-slider">${sliderCards()}</div>
+          <!-- One item, shown properly, instead of a rail of clamped cards. The
+               track below is the selector, exactly like the roster strip. -->
+          <div class="item-detail" id="item-detail">${detailCard(list[selected])}</div>
+
+          <div class="prep-track-wrap items-track-wrap">
+            <div class="portrait-track" id="items-track">${trackCards(list)}</div>
+          </div>
         </div>`;
     }
 
@@ -750,11 +842,21 @@ export function renderRoster(root, { player }) {
       body.innerHTML = render();
     }
 
-    // Repaint only the card list, leaving the search input (and its focus/caret)
-    // untouched.
-    function refreshSlider() {
-      const slider = body.querySelector('#items-slider');
-      if (slider) slider.innerHTML = sliderCards();
+    // Repaint the detail card and the selector track together — they are two
+    // views of currentList() and must not drift apart.
+    function refreshList({ keepSelection = false } = {}) {
+      const list = currentList();
+      if (!keepSelection || selected >= list.length) selected = 0;
+      const detail = body.querySelector('#item-detail');
+      const track  = body.querySelector('#items-track');
+      if (detail) detail.innerHTML = detailCard(list[selected]);
+      if (track)  track.innerHTML  = trackCards(list);
+      centreSelectedItem('auto');
+    }
+
+    function centreSelectedItem(behavior = 'smooth') {
+      body.querySelector('#items-track .portrait-card--selected')
+        ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
     }
 
     body.addEventListener('click', async (e) => {
@@ -772,7 +874,7 @@ export function renderRoster(root, { player }) {
         rarity = rarityBtn.dataset.rarity;
         body.querySelectorAll('[data-rarity]').forEach(b =>
           b.classList.toggle('items-chip--active', b.dataset.rarity === rarity));
-        refreshSlider();
+        refreshList();
         return;
       }
 
@@ -781,13 +883,32 @@ export function renderRoster(root, { player }) {
         statFilter = statBtn.dataset.stat;
         body.querySelectorAll('[data-stat]').forEach(b =>
           b.classList.toggle('items-chip--active', b.dataset.stat === statFilter));
-        refreshSlider();
+        refreshList();
         return;
       }
 
       if (e.target.closest('#items-ready-toggle')) {
         readyOnly = !readyOnly;
         body.innerHTML = render();
+        return;
+      }
+
+      // Selector track: tap an item to show it, exactly like the roster strip.
+      const trackCard = e.target.closest('#items-track .portrait-card');
+      if (trackCard) {
+        selected = Number(trackCard.dataset.i);
+        const list = currentList();
+        body.querySelector('#item-detail').innerHTML = detailCard(list[selected]);
+        body.querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
+          c.classList.toggle('portrait-card--selected', ci === selected));
+        centreSelectedItem();
+        return;
+      }
+
+      // A material chip in the cost row — open its "where does this drop" sheet.
+      const matChip = e.target.closest('[data-material]');
+      if (matChip) {
+        openMaterialSheet(matChip.dataset.material);
         return;
       }
 
@@ -851,6 +972,46 @@ export function renderRoster(root, { player }) {
         }
         return;
       }
+    });
+  }
+
+  // Tapping a crafting material answers the only question a player has about it:
+  // where do I get more? Lists the regions that drop it and offers to take them
+  // there, with the regions flagged on arrival. Disabled when nothing drops it
+  // (crafted-only ingredients, for instance).
+  function openMaterialSheet(key) {
+    const regionIds = getRegionsForMaterial(key);
+    const L         = player?.settings?.language === 'ru' ? 'ru' : 'en';
+    const label     = materialName(key);
+    const have      = ownedAmount(key);
+
+    const regionRows = regionIds.map(id => {
+      const region = REGIONS.find(r => r.id === id);
+      const name   = region ? (L === 'ru' ? (region.label_ru || region.label) : region.label) : id;
+      return `<li class="mat-region">${name || id}</li>`;
+    }).join('');
+
+    openSubSheet(label, `
+      <div class="mat-sheet">
+        <div class="mat-sheet-head">
+          <span class="mat-sheet-icon">${materialIcon(key)}</span>
+          <span class="mat-sheet-have">${L === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
+        </div>
+        ${regionIds.length
+          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает в регионах:' : 'Drops in:'}</p>
+             <ul class="mat-region-list">${regionRows}</ul>`
+          : `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`}
+        <button class="mat-embark-btn" id="mat-embark-btn" data-material="${key}" ${regionIds.length ? '' : 'disabled'}>
+          ${L === 'ru' ? 'В поход' : 'Embark'}
+        </button>
+      </div>`);
+
+    getSubSheetBody()?.querySelector('#mat-embark-btn')?.addEventListener('click', () => {
+      if (!regionIds.length) return;
+      closeSubSheet();
+      closeSheet();
+      // embark.js flashes these region cards for a few seconds on arrival.
+      navigate('embark', { player, highlightRegions: regionIds, highlightMaterial: key });
     });
   }
 

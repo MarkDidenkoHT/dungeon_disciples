@@ -5221,3 +5221,138 @@ button:active:not(:disabled) { opacity: 0.75; }
   -ms-overflow-style: none;
 }
 .faction-example-card--open::-webkit-scrollbar { display: none; }
+
+/* ── Item sheet: one detail card + a selector track ─────────────────────────*/
+.item-detail {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.item-detail::-webkit-scrollbar { display: none; }
+
+/* The single card fills the sheet instead of being one of several clamped
+   cards on a rail — nothing is truncated any more. */
+.item-detail .item-card {
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+}
+
+.items-track-wrap {
+  flex-shrink: 0;
+  padding: 6px 0 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.items-track-wrap::-webkit-scrollbar { display: none; }
+.items-track-wrap .portrait-track { width: max-content; margin: 0 auto; gap: 8px; }
+
+.portrait-card--item {
+  --portrait-card-h: clamp(52px, 8vh, 68px);
+  --portrait-inset: calc(var(--portrait-card-h) * 0.12);
+  height: var(--portrait-card-h);
+  width: calc(var(--portrait-card-h) * 0.80);
+  padding: var(--portrait-inset);
+  position: relative;
+  cursor: pointer;
+}
+.portrait-card--item .portrait-art-img {
+  width: 100%; height: 100%; flex: 1; min-height: 0; border-radius: 2px; object-fit: contain;
+}
+
+/* Owned count on a craftable blueprint. */
+.item-track-owned {
+  position: absolute;
+  right: 1px; bottom: 1px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* ── Material chips: icons, not words, and each one is a control ────────────*/
+.item-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mat-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px 3px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.66rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mat-chip--short { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.mat-chip--free  { color: var(--muted); border-style: dashed; cursor: default; }
+.mat-chip:active { border-color: var(--accent); }
+
+.mat-chip-icon { display: flex; align-items: center; }
+.mat-chip-icon .res-icon-img,
+.mat-chip-img { width: 18px; height: 18px; object-fit: contain; display: block; }
+
+/* ── "Where does this drop" sheet ───────────────────────────────────────────*/
+.mat-sheet { display: flex; flex-direction: column; gap: 10px; padding: 2px; }
+
+.mat-sheet-head { display: flex; align-items: center; gap: 10px; }
+.mat-sheet-icon .res-icon-img,
+.mat-sheet-icon .mat-chip-img { width: 40px; height: 40px; }
+.mat-sheet-have { font-size: 0.85rem; color: var(--muted); }
+.mat-sheet-have strong { color: var(--text); }
+
+.mat-sheet-label { font-size: 0.78rem; color: var(--muted); }
+
+.mat-region-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.mat-region {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.mat-embark-btn {
+  margin-top: 2px;
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: rgba(200, 151, 58, 0.12);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mat-embark-btn:disabled {
+  border-color: var(--border);
+  background: none;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Regions that drop the material the player tapped, flagged on arrival. */
+.embark-card--highlight {
+  outline: 2px solid #4caf50;
+  outline-offset: -2px;
+  animation: embark-highlight-pulse 1s ease-in-out infinite;
+}
+
+@keyframes embark-highlight-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.55); }
+  50%      { box-shadow: 0 0 14px 3px rgba(76, 175, 80, 0.55); }
+}

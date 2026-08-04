@@ -82,7 +82,10 @@ function regionBgStyle(r) {
   return `background-image: linear-gradient(rgba(12,15,22,.60), rgba(12,15,22,.84)), url('/assets/embark/${r.id}.jpg');`;
 }
 
-export function renderEmbark(root, { player, activeCheck } = {}) {
+// `highlightRegions` arrives from the item sheet's material detail: the regions
+// that drop the material the player tapped. They flash green for a few seconds
+// on arrival, then settle — long enough to notice, short enough not to nag.
+export function renderEmbark(root, { player, activeCheck, highlightRegions, highlightMaterial } = {}) {
   applyBackground(root, player.faction, 'embark');
 
   const L = lang(player);
@@ -238,6 +241,19 @@ export function renderEmbark(root, { player, activeCheck } = {}) {
           </div>
         `;
       }).join('');
+
+      // Flag the regions carrying the material the player came here for.
+      if (Array.isArray(highlightRegions) && highlightRegions.length) {
+        const HIGHLIGHT_MS = 3000;
+        for (const id of highlightRegions) {
+          const card = root.querySelector(`.embark-card[data-id="${id}"]`);
+          if (!card) continue;
+          card.classList.add('embark-card--highlight');
+          setTimeout(() => card.classList.remove('embark-card--highlight'), HIGHLIGHT_MS);
+        }
+        const first = root.querySelector('.embark-card--highlight');
+        first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
         pip.addEventListener('click', async () => {

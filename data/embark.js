@@ -374,5 +374,39 @@ function getEncounterSpellId(region_id, level) {
   return REGION_ENCOUNTERS[region_id]?.[levelKey]?.spell_id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards };
+// ── Where does X drop? ──────────────────────────────────────────────────────
+// Reverse index over every region/level reward table: material -> region ids.
+// Used by the item sheet, so tapping a crafting ingredient can say where to go
+// and send the player to those regions on the embark map.
+// Materials are crystal resource names ('Crystals_Fire'), trophy ids
+// ('grave_dust') or 'Gold'.
+let _dropIndex = null;
+function buildDropIndex() {
+  const index = {};
+  const add = (material, regionId) => {
+    if (!material) return;
+    (index[material] = index[material] || new Set()).add(regionId);
+  };
+  for (const region of REGIONS) {
+    if (region.comingSoon) continue;
+    for (const key of Object.keys(REGION_ENCOUNTERS[region.id] || {})) {
+      const level = Number(String(key).replace('level_', ''));
+      if (!Number.isFinite(level)) continue;
+      const rw = getLevelRewards(region.id, level);
+      if (rw.gold) add('Gold', region.id);
+      for (const c of rw.crystals) add(c.type, region.id);
+      for (const t of rw.crystals_random.pool) add(t, region.id);
+      for (const t of rw.trophies) add(t.id, region.id);
+      for (const t of rw.spell_trophies) add(t.id, region.id);
+    }
+  }
+  return Object.fromEntries(Object.entries(index).map(([k, v]) => [k, [...v]]));
+}
+
+function getRegionsForMaterial(material) {
+  if (!_dropIndex) _dropIndex = buildDropIndex();
+  return _dropIndex[material] || [];
+}
+
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial };
