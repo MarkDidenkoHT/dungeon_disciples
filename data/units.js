@@ -936,7 +936,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg', action_animation: 'arrow_shot',
+      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
       xp: 900, passive: ['pierce 2', 'impale 1'], ability: null,
     },
     heavy_infantry: {
@@ -2048,7 +2048,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
+        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 100, passive: 'bleed 1', ability: null,
       },
       crimson_hunter: {
@@ -2059,7 +2059,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
+        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: null,
       },
       crimson_stalker: {
@@ -2070,7 +2070,7 @@ const UNITS = {
         hp: 70, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
+        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
       },
       sister_aldra_1: {

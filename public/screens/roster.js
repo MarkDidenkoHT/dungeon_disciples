@@ -526,8 +526,7 @@ export function renderRoster(root, { player }) {
     const cost         = itemDef.cost      || {};
     const itemCost     = itemDef.item_cost || {};
     const factionOk    = !itemDef.faction || itemDef.faction === player.faction;
-    const canAfford    = Object.entries(cost).every(([resName, amount]) => (resources.find(r => r.item === resName)?.amount ?? 0) >= amount) &&
-                         Object.entries(itemCost).every(([key, count]) => items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === key && !it.equipped_by).length >= count);
+    const canAfford    = hasCraftMaterials(itemDef);
     // Unique items you already own can never be re-crafted, no matter the cost.
     const uniqueOwned  = !!itemDef.unique && ownedCount > 0;
     const canCraft     = factionOk && canAfford && !uniqueOwned;
@@ -560,6 +559,25 @@ export function renderRoster(root, { player }) {
       </div>`;
   }
 
+
+  // Craftability, in one place: the catalog card's Craft button and the
+  // "Craftable now" filter must never disagree about what is makeable.
+  function hasCraftMaterials(itemDef) {
+    const cost     = itemDef.cost || {};
+    const itemCost = itemDef.item_cost || {};
+    const resourceOk = Object.entries(cost).every(([resName, amount]) =>
+      (resources.find(r => r.item === resName)?.amount ?? 0) >= amount);
+    const ingredientOk = Object.entries(itemCost).every(([key, count]) =>
+      items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === key && !it.equipped_by).length >= count);
+    return resourceOk && ingredientOk;
+  }
+
+  function canCraftNow(itemDef) {
+    if (itemDef.faction && itemDef.faction !== player.faction) return false;
+    const ownedCount = items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === itemDef.key).length;
+    if (itemDef.unique && ownedCount > 0) return false;
+    return hasCraftMaterials(itemDef);
+  }
 
   function showTrophyBar() {
     if (!resources.length) return;
@@ -603,11 +621,37 @@ export function renderRoster(root, { player }) {
     const def      = resolveUnitDef(unit);
     const unitTags = (def?.tags || []).filter(Boolean);
 
-    let filter = 'equippable'; // 'equippable' | 'owned' | 'craft'
-    let search = '';
+    // Filters replace the old free-text search: on a phone, picking from a short
+    // list of chips beats typing, and these are the axes a player actually sorts
+    // by — what it does, how good it is, and whether it can be made right now.
+    let filter     = 'equippable';   // 'equippable' | 'owned' | 'craft'
+    let rarity     = 'all';          // 'all' | common | rare | epic | mythic
+    let statFilter = 'all';          // 'all' | hp | armor | initiative | action_power | resist | passive
+    let readyOnly  = false;          // craft tab: only what is affordable now
 
-    const matchesSearch = name => !search || (name || '').toLowerCase().includes(search.toLowerCase());
-    const itemKeyOf     = it => it.item_stats?.key || it.item_stats?.icon;
+    const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
+
+    const RARITIES = ['common', 'rare', 'epic', 'mythic'];
+    const STAT_FILTERS = [
+      ['all',           'All'],
+      ['hp',            'HP'],
+      ['armor',         'Armor'],
+      ['initiative',    'Init'],
+      ['action_power',  'Power'],
+      ['resist',        'Resist'],
+      ['passive',       'Passive'],
+    ];
+
+    // stat_mods keys are hp / armor / initiative / action_power / <element>_resist.
+    function matchesStat(stats) {
+      if (statFilter === 'all') return true;
+      if (statFilter === 'passive') return !!stats?.passive;
+      const mods = stats?.stat_mods || {};
+      if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
+      return Object.prototype.hasOwnProperty.call(mods, statFilter);
+    }
+
+    const matchesRarity = stats => rarity === 'all' || itemRarity(stats) === rarity;
 
     // Just the cards — recomputed on every filter change AND every keystroke.
     // Kept separate from the chrome so live search can refresh the list without
@@ -617,16 +661,17 @@ export function renderRoster(root, { player }) {
         const cards = Object.values(ITEM_DEFS)
           // Other factions' items are never obtainable, so don't tease them.
           .filter(def => !def.faction || def.faction === player.faction)
-          .filter(def => matchesSearch(itemName(def, player)))
+          .filter(def => matchesRarity(def) && matchesStat(def))
+          .filter(def => !readyOnly || canCraftNow(def))
           .map(def => {
             const ownedCount = items.filter(it => itemKeyOf(it) === def.key).length;
             return buildCatalogItemCard(def, ownedCount, unit, unitTags);
           });
-        return cards.length ? cards.join('') : `<p class="placeholder">No items match.</p>`;
+        return cards.length ? cards.join('') : `<p class="placeholder">Nothing matches these filters.</p>`;
       }
 
       const filtered = items.filter(it => {
-        if (!matchesSearch(itemName(it, player))) return false;
+        if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
         if (filter === 'owned') return true;
         const stats    = it.item_stats || {};
         const factionOk = !stats.faction || stats.faction === player.faction;
@@ -637,21 +682,41 @@ export function renderRoster(root, { player }) {
 
       return filtered.length
         ? filtered.map(it => buildItemCard(it, unit, unitTags)).join('')
-        : `<p class="placeholder">No items to show.</p>`;
+        : `<p class="placeholder">Nothing matches these filters.</p>`;
     }
 
     function render() {
-      const chip = (id, label) =>
-        `<button class="items-filter-btn ${filter === id ? 'items-filter-btn--active' : ''}" data-filter="${id}">${label}</button>`;
+      const tab = (id, label) =>
+        `<button class="items-tab ${filter === id ? 'items-tab--active' : ''}" data-filter="${id}">${label}</button>`;
+      const rarityChip = (id, label) =>
+        `<button class="items-chip items-chip--rarity-${id} ${rarity === id ? 'items-chip--active' : ''}" data-rarity="${id}">${label}</button>`;
+      const statChip = (id, label) =>
+        `<button class="items-chip ${statFilter === id ? 'items-chip--active' : ''}" data-stat="${id}">${label}</button>`;
+
       return `
         <div class="items-modal">
-          <input class="items-search" id="items-search" type="search" placeholder="Search items…"
-                 value="${search.replace(/"/g, '&quot;')}" autocomplete="off">
-          <div class="items-filter-bar">
-            ${chip('equippable', 'Equippable')}
-            ${chip('owned', 'Owned')}
-            ${chip('craft', 'Craft')}
+          <div class="items-tabs">
+            ${tab('equippable', 'Equippable')}
+            ${tab('owned', 'Owned')}
+            ${tab('craft', 'Craft')}
           </div>
+
+          <div class="items-filters">
+            <div class="items-filter-row" role="group" aria-label="Rarity">
+              ${rarityChip('all', 'Any')}
+              ${RARITIES.map(r => rarityChip(r, cap(r))).join('')}
+            </div>
+            <div class="items-filter-row" role="group" aria-label="Stat">
+              ${STAT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
+            </div>
+            ${filter === 'craft' ? `
+              <div class="items-filter-row">
+                <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">
+                  ${readyOnly ? '\u2713 ' : ''}Craftable now
+                </button>
+              </div>` : ''}
+          </div>
+
           <div class="items-slider" id="items-slider">${sliderCards()}</div>
         </div>`;
     }
@@ -692,21 +757,37 @@ export function renderRoster(root, { player }) {
       if (slider) slider.innerHTML = sliderCards();
     }
 
-    body.addEventListener('input', (e) => {
-      if (e.target.id === 'items-search') {
-        search = e.target.value;
-        refreshSlider();
-      }
-    });
-
     body.addEventListener('click', async (e) => {
-      const filterBtn = e.target.closest('[data-filter]');
-      if (filterBtn) {
-        filter = filterBtn.dataset.filter;
-        // Update chip highlight + list in place so the search box survives.
-        body.querySelectorAll('.items-filter-btn').forEach(b =>
-          b.classList.toggle('items-filter-btn--active', b.dataset.filter === filter));
+      // Switching tabs changes which filter rows apply (Craftable-now only
+      // exists on the craft tab), so this one repaints the whole sheet.
+      const tabBtn = e.target.closest('[data-filter]');
+      if (tabBtn) {
+        filter = tabBtn.dataset.filter;
+        body.innerHTML = render();
+        return;
+      }
+
+      const rarityBtn = e.target.closest('[data-rarity]');
+      if (rarityBtn) {
+        rarity = rarityBtn.dataset.rarity;
+        body.querySelectorAll('[data-rarity]').forEach(b =>
+          b.classList.toggle('items-chip--active', b.dataset.rarity === rarity));
         refreshSlider();
+        return;
+      }
+
+      const statBtn = e.target.closest('[data-stat]');
+      if (statBtn) {
+        statFilter = statBtn.dataset.stat;
+        body.querySelectorAll('[data-stat]').forEach(b =>
+          b.classList.toggle('items-chip--active', b.dataset.stat === statFilter));
+        refreshSlider();
+        return;
+      }
+
+      if (e.target.closest('#items-ready-toggle')) {
+        readyOnly = !readyOnly;
+        body.innerHTML = render();
         return;
       }
 
@@ -753,11 +834,16 @@ export function renderRoster(root, { player }) {
         craftBtn.disabled    = true;
         craftBtn.textContent = 'Crafting…';
         try {
-          const result = await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
-          items     = result.items     || items;
-          resources = result.resources || resources;
+          await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
+          // Re-read from /bootstrap rather than trusting the craft response:
+          // that response updated this sheet's local `items`, but left the
+          // bootstrap cache holding the pre-craft list, so every other screen
+          // (and this one, after any later refresh) still showed the old
+          // inventory until a reload.
+          applyBootstrap(await bootstrapCache.refresh(player.chat_id));
           showTrophyBar();
           refreshResourceBar(player).catch(() => {});
+          rerenderKeeping(rosterId);
           body.innerHTML = render();
         } catch (err) {
           alert(err.message || 'Craft failed');

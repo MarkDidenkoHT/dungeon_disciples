@@ -152,13 +152,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return null;
   }
 
-  // Ability sound base name for an entry, if its ability def declares
-  // animation_sound. Keyed the same way as effectForEntry so the sound pairs
-  // with the animation. See public/sfx.js.
-  function soundForEntry(entry) {
+  // Sound for an entry, played alongside its animation. See public/sfx.js.
+  // Two sources, same folder (/assets/sfx/abilities/<name>.mp3):
+  //   passives/statuses -> the ability def's `animation_sound`
+  //   basic actions     -> the acting unit's `action_sfx` (data/units.js)
+  // A unit without action_sfx is simply silent, as before.
+  function soundForEntry(entry, actorCombatant) {
     if ((entry.type === 'passive' || entry.type === 'status') && entry.passive) {
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
       return def?.animation_sound || null;
+    }
+    if (entry.type === 'action' && actorCombatant) {
+      const raw = actorCombatant.unit_data?.action_sfx;
+      // Tolerate either 'arrow_shot' or 'arrow_shot.mp3' in the data.
+      return raw ? String(raw).replace(/\.mp3$/i, '') : null;
     }
     return null;
   }
@@ -213,7 +220,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           state.combatants.find(u => u.cellIndex === entry.actorCell)) ||
         null;
       const effectName = effectForEntry(entry, actor);
-      const abilitySound = soundForEntry(entry);
+      const abilitySound = soundForEntry(entry, actor);
       if (abilitySound) playAbilitySound(abilitySound);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {

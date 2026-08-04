@@ -4728,50 +4728,95 @@ button:active:not(:disabled) { opacity: 0.75; }
 .items-modal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  height: 60vh;
-  max-height: 60vh;
-}
-
-.items-search {
-  flex-shrink: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 0.9rem;
-  padding: 9px 12px;
-}
-.items-search:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.items-search::placeholder { color: var(--muted); }
-
-.items-filter-bar {
-  display: flex;
   gap: 8px;
+  height: 66vh;
+  max-height: 66vh;
+}
+
+/* ── Item sheet chrome ──────────────────────────────────────────────────────
+   Tabs pick WHAT is listed (equippable / owned / craftable); the chip rows below
+   narrow it by rarity and by what the item actually does. The free-text search
+   is gone: on a phone, tapping a short list of chips beats typing, and nobody
+   searches an inventory this size by name. */
+.items-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.items-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 8px 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.items-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.items-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   flex-shrink: 0;
 }
 
-.items-filter-btn {
-  flex: 1;
+.items-filter-row {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 1px;
+}
+.items-filter-row::-webkit-scrollbar { display: none; }
+
+.items-chip {
+  flex: 0 0 auto;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 999px;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-family: inherit;
+  font-size: 0.68rem;
   font-weight: 600;
-  padding: 8px 10px;
+  letter-spacing: 0.02em;
+  padding: 5px 11px;
   cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
 }
 
-.items-filter-btn--active {
-  color: var(--accent);
+.items-chip--active {
+  color: var(--text);
   border-color: var(--accent);
+  background: rgba(200, 151, 58, 0.14);
 }
+
+/* Rarity chips carry their own colour so the filter reads like the cards it
+   filters — same palette as .item-card--rarity-*. */
+.items-chip--rarity-common  { color: #16a34a; }
+.items-chip--rarity-rare    { color: #3b82f6; }
+.items-chip--rarity-epic    { color: #a855f7; }
+.items-chip--rarity-mythic  { color: #f59e0b; }
+.items-chip--rarity-common.items-chip--active  { border-color: #16a34a; background: rgba(22, 163, 74, 0.14); }
+.items-chip--rarity-rare.items-chip--active    { border-color: #3b82f6; background: rgba(59, 130, 246, 0.14); }
+.items-chip--rarity-epic.items-chip--active    { border-color: #a855f7; background: rgba(168, 85, 247, 0.14); }
+.items-chip--rarity-mythic.items-chip--active  { border-color: #f59e0b; background: rgba(245, 158, 11, 0.14); }
+
+.items-chip--toggle { font-weight: 700; }
 
 .items-slider {
   display: flex;
@@ -4790,8 +4835,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   position: relative;
   scroll-snap-align: start;
   flex: 0 0 auto;
-  width: 62vw;
-  max-width: 220px;
+  width: 46vw;
+  max-width: 190px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
