@@ -107,7 +107,13 @@ export function renderRoster(root, { player }) {
       }
     }
 
-    let canLevelUp = hasPath && currentXp >= xpRequired && upgradeReady;
+    // A hero levels through the throne, not a barracks, so hasPath (which is
+    // !isHero by construction) never covers it — heroCanLevel does. This has to
+    // be folded in HERE, because coreHtml is built a few lines below and it is
+    // the Lv cell that becomes the level-up button. The hero branch further down
+    // used to set canLevelUp AFTER coreHtml had already been rendered, so a hero
+    // that was fully eligible never got a button.
+    let canLevelUp = (hasPath && currentXp >= xpRequired && upgradeReady) || heroCanLevel;
 
     const equippedItem = equippedItemFor(u.id);
 
@@ -174,7 +180,6 @@ export function renderRoster(root, { player }) {
 
         const pct = xpRequired != null ? Math.min(100, Math.floor((currentXp / xpRequired) * 100)) : 100;
 
-        if (!blocked) canLevelUp = true;
 
         levelUpHtml = `
           <div class="levelup-row">
