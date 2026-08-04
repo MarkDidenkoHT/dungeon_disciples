@@ -627,17 +627,67 @@
       return [];
     }
 
-    async function checkAssetExists(path, retries = 2) {
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const response = await fetch(path, { method: 'HEAD' });
-          if (response.ok) return true;
-          if (response.status === 404 && i === retries) return false;
-          if (i < retries) await new Promise(r => setTimeout(r, 100 * (i + 1)));
-        } catch {
-          if (i < retries) await new Promise(r => setTimeout(r, 100 * (i + 1)));
+    // ---- Batch asset checking ----
+    const iconCache = new Map();
+
+    async function checkAssetsBatch(paths, batchSize = 20) {
+      const uniquePaths = [...new Set(paths)];
+      const results = {};
+      
+      // Check each path with retry
+      for (let i = 0; i < uniquePaths.length; i++) {
+        const path = uniquePaths[i];
+        if (iconCache.has(path)) {
+          results[path] = iconCache.get(path);
+          continue;
+        }
+        
+        let found = false;
+        for (let retry = 0; retry < 3; retry++) {
+          try {
+            const response = await fetch(path, { method: 'HEAD' });
+            if (response.ok) {
+              found = true;
+              break;
+            }
+            if (response.status === 404) break;
+            await new Promise(r => setTimeout(r, 50 * (retry + 1)));
+          } catch {
+            await new Promise(r => setTimeout(r, 50 * (retry + 1)));
+          }
+        }
+        iconCache.set(path, found);
+        results[path] = found;
+        
+        // Small delay between requests to avoid rate limiting
+        if (i % batchSize === 0 && i > 0) {
+          await new Promise(r => setTimeout(r, 10));
         }
       }
+      
+      return results;
+    }
+
+    async function checkAssetExists(path) {
+      if (iconCache.has(path)) return iconCache.get(path);
+      
+      for (let retry = 0; retry < 3; retry++) {
+        try {
+          const response = await fetch(path, { method: 'HEAD' });
+          if (response.ok) {
+            iconCache.set(path, true);
+            return true;
+          }
+          if (response.status === 404) {
+            iconCache.set(path, false);
+            return false;
+          }
+          await new Promise(r => setTimeout(r, 50 * (retry + 1)));
+        } catch {
+          await new Promise(r => setTimeout(r, 50 * (retry + 1)));
+        }
+      }
+      iconCache.set(path, false);
       return false;
     }
 
@@ -1670,8 +1720,10 @@
     }
 
     async function checkAllAssets(units) {
-      const promises = units.map(u => checkUnitAssets(u));
-      await Promise.all(promises);
+      // Check each unit's assets with caching
+      for (const unit of units) {
+        await checkUnitAssets(unit);
+      }
     }
 
     async function loadItemsFromProject() {
