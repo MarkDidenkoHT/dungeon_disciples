@@ -115,7 +115,7 @@
       background: #181c26;
       border: 1px solid #2b2f3d;
       border-radius: 14px;
-      width: 580px;
+      width: 620px;
       flex-shrink: 0;
       max-height: 75vh;
       overflow-y: auto;
@@ -615,7 +615,7 @@
       if (Array.isArray(passive)) {
         const names = [];
         passive.forEach(p => {
-          if (p && typeof p === 'string') {
+          if (p && typeof p === 'string' && p.trim() !== '') {
             const parts = p.split(' ');
             if (parts.length >= 1 && parts[0].length > 0) {
               names.push(parts[0]);
@@ -629,8 +629,15 @@
 
     async function checkAssetExists(path) {
       try {
-        const response = await fetch(path, { method: 'HEAD' });
-        return response.ok;
+        // Try HEAD first
+        let response = await fetch(path, { method: 'HEAD' });
+        if (response.ok) return true;
+        // If HEAD fails, try a small GET range
+        response = await fetch(path, { 
+          method: 'GET', 
+          headers: { 'Range': 'bytes=0-0' } 
+        });
+        return response.ok || response.status === 206;
       } catch {
         return false;
       }

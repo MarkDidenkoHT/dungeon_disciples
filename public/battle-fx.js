@@ -1484,6 +1484,331 @@ export async function poison_dart(cellEl, opts = {}) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── mend_flesh — the Grail's green counterpart to holy_heal ───────────────────
+// Sickly-green motes rise into the target and a seam of light knits shut, rather
+// than holy_heal's golden bloom: the Grail mends flesh, it does not bless it.
+export async function mend_flesh(cellEl) {
+  console.log('[battle-fx] mend_flesh START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const ADD  = PIXI.BLEND_MODES.ADD;
+
+  const motes = Array.from({ length: 14 }, () => ({
+    x: rand(-0.45, 0.45), rise: rand(0.55, 1.05), size: rand(2, 5),
+    wob: rand(-1, 1), delay: rand(0, 0.35),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const bloom = new PIXI.Graphics(); bloom.blendMode = ADD;
+  const moteG = new PIXI.Graphics(); moteG.blendMode = ADD;
+  const seamG = new PIXI.Graphics(); seamG.blendMode = ADD;
+  glowLayer.addChild(bloom, moteG, seamG);
+  layer.addChild(glowLayer);
+  app.stage.addChild(layer);
+
+  const DURATION = 820;
+  await animate(DURATION, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    const fade = t < 0.15 ? t / 0.15 : t > 0.75 ? (1 - t) / 0.25 : 1;
+
+    bloom.clear();
+    softGlow(bloom, cx, cy, R * 0.62, 0x9bff7a, 0.30 * fade);
+    softGlow(bloom, cx, cy, R * 0.38, 0xdcffc4, 0.42 * fade);
+
+    // Motes drift UP into the body and wink out as they arrive.
+    moteG.clear();
+    for (const m of motes) {
+      const mt = Math.max(0, (t - m.delay) / (1 - m.delay));
+      if (mt <= 0) continue;
+      const mx = cx + m.x * R + Math.sin(mt * 6 + m.wob) * R * 0.05;
+      const my = cy + R * 0.45 - mt * R * m.rise;
+      softGlow(moteG, mx, my, m.size * (1 - mt * 0.5), 0x7ee06a, 0.85 * (1 - mt) * fade);
+    }
+
+    // A closing seam of light across the middle — the wound knitting shut.
+    seamG.clear();
+    const seam = Math.max(0, Math.min(1, (t - 0.25) / 0.5));
+    if (seam > 0) {
+      const halfW = R * 0.42 * (1 - seam);
+      seamG.lineStyle(3, 0xdcffc4, (1 - seam) * 0.9 * fade);
+      seamG.moveTo(cx - halfW, cy);
+      seamG.lineTo(cx + halfW, cy);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] mend_flesh END', dataId);
+}
+
+// ── haunt — a pale soul rises off the target and passes through it ────────────
+// Grey-blue, slow, weightless: no impact, no burst. Wisps form low in the cell,
+// drift up through it, and the target is briefly washed cold.
+export async function haunt(cellEl, opts = {}) {
+  console.log('[battle-fx] haunt START', cellEl?.dataset?.id);
+  const target = opts.targetCell || cellEl;
+  if (!target || !app || !window.PIXI) return;
+  const dataId = target.dataset.id;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const TAU  = Math.PI * 2;
+  const ADD  = PIXI.BLEND_MODES.ADD;
+
+  const wisps = Array.from({ length: 3 }, (_, i) => ({
+    phase: rand(0, TAU), sway: rand(0.10, 0.22), delay: i * 0.12, scale: rand(0.7, 1.1),
+  }));
+  const embers = Array.from({ length: 10 }, () => ({
+    ang: rand(0, TAU), dist: rand(0.2, 0.6), rise: rand(0.4, 0.9), size: rand(1.5, 3.5),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const auraG  = new PIXI.Graphics(); auraG.blendMode  = ADD;
+  const wispG  = new PIXI.Graphics(); wispG.blendMode  = ADD;
+  const emberG = new PIXI.Graphics(); emberG.blendMode = ADD;
+  glowLayer.addChild(auraG, wispG, emberG);
+  layer.addChild(glowLayer);
+  app.stage.addChild(layer);
+
+  const DURATION = 1000;
+  await animate(DURATION, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    const fade = t < 0.18 ? t / 0.18 : t > 0.68 ? (1 - t) / 0.32 : 1;
+
+    // Cold wash over the whole cell.
+    auraG.clear();
+    softGlow(auraG, cx, cy, R * 0.70, 0x8fb6cc, 0.26 * fade);
+    softGlow(auraG, cx, cy, R * 0.42, 0xd8e8f2, 0.20 * fade);
+
+    // Wisps: rising teardrops that sway as they climb.
+    wispG.clear();
+    for (const w of wisps) {
+      const wt = Math.max(0, Math.min(1, (t - w.delay) / (0.85 - w.delay)));
+      if (wt <= 0) continue;
+      const wy = cy + R * 0.5 - wt * R * 1.05;
+      const wx = cx + Math.sin(wt * 5 + w.phase) * R * w.sway;
+      const a  = (1 - wt) * 0.85 * fade;
+      const rr = R * 0.16 * w.scale * (1 - wt * 0.35);
+      softGlow(wispG, wx, wy, rr * 1.6, 0x9fc4d8, a * 0.55);
+      softGlow(wispG, wx, wy, rr,       0xe8f4fb, a);
+      softGlow(wispG, wx, wy + rr * 1.5, rr * 0.55, 0x9fc4d8, a * 0.35);
+    }
+
+    // Ash-pale embers pulled off the body.
+    emberG.clear();
+    for (const e of embers) {
+      const ex = cx + Math.cos(e.ang) * R * e.dist;
+      const ey = cy + Math.sin(e.ang) * R * e.dist * 0.6 - t * R * e.rise;
+      softGlow(emberG, ex, ey, e.size * (1 - t * 0.4), 0xcfe4ef, 0.6 * (1 - t) * fade);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] haunt END', dataId);
+}
+
+// ── blood_bolt — a thrown clot of blood, arterial and wet ─────────────────────
+// Travels actor -> target like arcane_bolt, but heavy: it sags under its own
+// weight, drags a ribbon of droplets, and bursts into a falling spatter rather
+// than a clean nova.
+export async function blood_bolt(cellEl, opts = {}) {
+  console.log('[battle-fx] blood_bolt START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const trail   = Array.from({ length: 9 },  () => ({ lag: rand(0.04, 0.16), perp: rand(-1, 1), size: rand(1.5, 4) }));
+  const spatter = Array.from({ length: 16 }, () => ({ ang: rand(0, TAU), speed: rand(0.4, 1.15), size: rand(2, 5.5), drop: rand(0.2, 0.9) }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const chargeG = new PIXI.Graphics(); chargeG.blendMode = ADD;
+  const boltG   = new PIXI.Graphics();
+  const spatG   = new PIXI.Graphics();
+  glowLayer.addChild(chargeG);
+  layer.addChild(glowLayer, boltG, spatG);
+  app.stage.addChild(layer);
+
+  const DURATION = 880;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.5;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    const charge = clamp01(t / 0.26);
+    const travel = clamp01((t - 0.24) / 0.44);
+    const burst  = clamp01((t - 0.66) / 0.34);
+
+    const ang   = Math.atan2(dy - sy, dx - sx);
+    const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+
+    // Gathering: blood pools at the caster before it is thrown.
+    chargeG.clear();
+    if (travel === 0) {
+      softGlow(chargeG, sx, sy, R * 0.30 * charge, 0xff4a4a, 0.55 * charge);
+      softGlow(chargeG, sx, sy, R * 0.16 * charge, 0xffb0b0, 0.75 * charge);
+    }
+
+    // Flight: sags along the way, trailing droplets behind it.
+    boltG.clear();
+    if (travel > 0 && burst < 0.5) {
+      const sag = Math.sin(travel * Math.PI) * R * 0.22;
+      const bx  = lerp(sx, dx, travel);
+      const by  = lerp(sy, dy, travel) + sag;
+      const a   = 1 - burst * 2;
+
+      for (const p of trail) {
+        const pt = Math.max(0, travel - p.lag);
+        const px = lerp(sx, dx, pt) + perpX * p.perp * R * 0.05;
+        const py = lerp(sy, dy, pt) + Math.sin(pt * Math.PI) * R * 0.22 + perpY * p.perp * R * 0.05;
+        boltG.beginFill(0x8b0f14, 0.5 * a * (1 - p.lag * 4));
+        boltG.drawCircle(px, py, p.size * (1 - p.lag));
+        boltG.endFill();
+      }
+      boltG.beginFill(0xb01218, 0.95 * a);
+      boltG.drawCircle(bx, by, R * 0.11);
+      boltG.endFill();
+      boltG.beginFill(0xff6b6b, 0.85 * a);
+      boltG.drawCircle(bx - Math.cos(ang) * R * 0.02, by - Math.sin(ang) * R * 0.02, R * 0.05);
+      boltG.endFill();
+    }
+
+    // Impact: spatter that falls rather than expanding evenly.
+    spatG.clear();
+    if (burst > 0) {
+      const a = 1 - burst;
+      for (const sp of spatter) {
+        const dist = R * 0.9 * burst * sp.speed;
+        const px = dx + Math.cos(sp.ang) * dist;
+        const py = dy + Math.sin(sp.ang) * dist + burst * burst * R * sp.drop;
+        spatG.beginFill(0x9c1015, 0.85 * a);
+        spatG.drawCircle(px, py, sp.size * (1 - burst * 0.5));
+        spatG.endFill();
+      }
+      spatG.lineStyle(2.5 * a + 1, 0xd11d24, a * 0.8);
+      spatG.drawCircle(dx, dy, R * 0.18 + burst * R * 0.7);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] blood_bolt END', dataId);
+}
+
+// ── arrow_shot — a loosed arrow flies from the actor to the target ────────────
+// Uses /assets/vfx/arrow.png, rotated to its flight path, with a shallow arc, a
+// short motion-blur trail, and a puff of dust where it lands.
+export async function arrow_shot(cellEl, opts = {}) {
+  console.log('[battle-fx] arrow_shot START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+
+  let texture;
+  try {
+    texture = await PIXI.Assets.load('/assets/vfx/arrow.png');
+  } catch {
+    // No art present — draw nothing rather than throwing mid-battle.
+    layer.destroy({ children: true });
+    return;
+  }
+
+  // The arrow plus two fading ghosts behind it, for motion blur.
+  const sprites = [0.18, 0.38, 1].map(alpha => {
+    const sp = new PIXI.Sprite(texture);
+    sp.anchor.set(0.5, 0.5);
+    const scale = 46 / Math.max(texture.width, texture.height);
+    sp.scale.set(scale);
+    sp.alpha = alpha;
+    layer.addChild(sp);
+    return sp;
+  });
+  const [ghost1, ghost2, arrow] = sprites;
+
+  const dust  = Array.from({ length: 10 }, () => ({ ang: rand(0, TAU), speed: rand(0.3, 0.9), size: rand(1.5, 3.5) }));
+  const dustG = new PIXI.Graphics();
+  layer.addChild(dustG);
+
+  const DURATION = 620;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.8;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    // Draw (0–.22) holds the arrow at the shooter, then it flies.
+    const flight = clamp01((t - 0.22) / 0.58);
+    const land   = clamp01((t - 0.78) / 0.22);
+
+    const posAt = f => {
+      const arc = Math.sin(f * Math.PI) * R * 0.18;
+      return [lerp(sx, dx, f), lerp(sy, dy, f) - arc];
+    };
+    const [ax, ay] = posAt(flight);
+    // Face the direction of travel, sampled slightly ahead, so the nose dips on
+    // the way down instead of staying level.
+    const [nx, ny] = posAt(Math.min(1, flight + 0.05));
+    const rot = Math.atan2(ny - ay, nx - ax);
+
+    const a = (t < 0.22 ? t / 0.22 : 1) * (1 - land);
+    arrow.position.set(ax, ay);
+    arrow.rotation = rot;
+    arrow.alpha    = a;
+
+    const [g2x, g2y] = posAt(Math.max(0, flight - 0.06));
+    const [g1x, g1y] = posAt(Math.max(0, flight - 0.12));
+    ghost2.position.set(g2x, g2y); ghost2.rotation = rot; ghost2.alpha = a * 0.35;
+    ghost1.position.set(g1x, g1y); ghost1.rotation = rot; ghost1.alpha = a * 0.16;
+
+    // Impact dust.
+    dustG.clear();
+    if (land > 0) {
+      for (const p of dust) {
+        const dist = R * 0.5 * land * p.speed;
+        dustG.beginFill(0xd8cfbc, 0.5 * (1 - land));
+        dustG.drawCircle(dx + Math.cos(p.ang) * dist, dy + Math.sin(p.ang) * dist, p.size * (1 - land * 0.5));
+        dustG.endFill();
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] arrow_shot END', dataId);
+}
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -1503,4 +1828,10 @@ export const EFFECTS = {
   shield_bash,
   arcane_bolt,
   poison_dart,
+  mend_flesh,
+  haunt,
+  blood_bolt,
+  arrow_shot,
+  // `repair` is the unit's action name; repair_gear is the animation it plays.
+  repair: repair_gear,
 };

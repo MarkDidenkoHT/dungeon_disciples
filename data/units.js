@@ -674,7 +674,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 30, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -686,7 +686,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 30, action_icon: 'holy_shock.jpg',
       passive: ['mithrails_light 2', 'combat_veteran 1', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -806,7 +806,7 @@ const UNITS = {
       hp: 82, armor: 3, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 10 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null, 
       building_slot: 'slot_0', xp: 100
     },
@@ -818,7 +818,7 @@ const UNITS = {
       hp: 98, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 400
     },
@@ -830,7 +830,7 @@ const UNITS = {
       hp: 118, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 900
     },
@@ -842,7 +842,7 @@ const UNITS = {
       hp: 142, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -854,7 +854,7 @@ const UNITS = {
       hp: 142, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -866,7 +866,7 @@ const UNITS = {
       hp: 90, armor: 3, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 12 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 400
     },
@@ -878,7 +878,7 @@ const UNITS = {
       hp: 108, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 14 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 900
     },
@@ -890,7 +890,7 @@ const UNITS = {
       hp: 128, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -902,7 +902,7 @@ const UNITS = {
       hp: 128, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 17 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 30, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 30, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       passive: 'fortify 1', ability: null,
       building_slot: 'slot_0', xp: 1500
     },
@@ -936,7 +936,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'crossbow.jpg', action_animation: 'arrow_shot',
       xp: 900, passive: ['pierce 2', 'impale 1'], ability: null,
     },
     heavy_infantry: {
@@ -1035,7 +1035,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       xp: 100, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     mechanic: {
@@ -1046,7 +1046,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       xp: 400, passive: ['fortify 1', 'scavenger 1'], ability: null,
     },
     master_mechanic: {
@@ -1057,7 +1057,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg',
+      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair_gear',
       xp: 900, passive: ['fortify 2', 'scavenger 1'], ability: null,
     },
     rifleman: {
@@ -1474,7 +1474,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 100
     },
@@ -1486,7 +1486,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1498,7 +1498,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -1510,7 +1510,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2', 'eternal_grief 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1522,7 +1522,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 70,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2', 'renew 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1534,7 +1534,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1546,7 +1546,7 @@ const UNITS = {
       hp: 72, armor: 0, initiative: 60,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -1558,7 +1558,7 @@ const UNITS = {
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1570,7 +1570,7 @@ const UNITS = {
       hp: 90, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1636,8 +1636,8 @@ const UNITS = {
       size: 'tile',
       hp: 60, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
-      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
+      action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 400, passive: ['horde 1', 'regenerate 1'], ability: null,
     },
     blightwalker: {
@@ -1647,8 +1647,8 @@ const UNITS = {
       size: 'tile',
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
-      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'mend_flesh.jpg',
+      action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 25, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 900, passive: ['horde 1', 'regenerate 1', 'undying 1'], ability: null,
     },
     adept: {
@@ -1670,7 +1670,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 16, action_icon: 'blood_bolt.jpg',
+      damage_source: 'death', action_power: 16, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
       xp: 400, passive: ['lifesteal 1', 'recuperate 1'], ability: 'exsanguinate 1',
     },
     crimson_mage: {
@@ -1681,7 +1681,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'blood_bolt.jpg',
+      damage_source: 'death', action_power: 20, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
       xp: 900, passive: ['lifesteal 1', 'leech 1', 'vitality 1'], ability: 'exsanguinate 1',
     },
     blood_knight: {
@@ -1702,8 +1702,8 @@ const UNITS = {
       size: 'tile',
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
+      action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 400, passive: ['unending_servitude 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 1',
     },
     death_lord: {
@@ -1713,8 +1713,8 @@ const UNITS = {
       size: 'tile',
       hp: 65, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'mend_flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg',
+      action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 400, passive: ['unending_servitude 1', 'reanimate 2', 'horde 1'], ability: 'raise_dead 2',
     },
     plague_scholar: {
@@ -1812,8 +1812,8 @@ const UNITS = {
       size: 'row',
       hp: 120, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'mend_flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg',
+      action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 800, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
@@ -1823,8 +1823,8 @@ const UNITS = {
       size: 'row',
       hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'mend_flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg',
+      action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 1800, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
@@ -1890,7 +1890,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 100, passive: 'dodge 1', ability: 'terror 1',
     },
     specter: {
@@ -1901,7 +1901,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 400, passive: ['dodge 1', 'slow 1'], ability: 'terror 1',
     },
     wraith: {
@@ -1912,7 +1912,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 900, passive: ['dodge 2', 'slow 1'], ability: 'terror 1',
     },
     apparition: {
@@ -1923,7 +1923,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 400, passive: ['dodge 1', 'dissipate 1'], ability: 'terror 1',
     },
     phantom: {
@@ -1934,7 +1934,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg',
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 900, passive: ['dodge 2', 'dissipate 1', ], ability: 'terror 1',
     },
   },
@@ -2048,7 +2048,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg',
+        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
         xp: 100, passive: 'bleed 1', ability: null,
       },
       crimson_hunter: {
@@ -2059,7 +2059,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg',
+        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
         xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: null,
       },
       crimson_stalker: {
@@ -2070,7 +2070,7 @@ const UNITS = {
         hp: 70, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg',
+        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg', action_animation: 'arrow_shot',
         xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
       },
       sister_aldra_1: {
@@ -2106,7 +2106,7 @@ const UNITS = {
         hp: 40, armor: 10, initiative: 15,
         resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 50, nature: 10 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 10,
+        damage_source: null, action_power: 10, action_animation: 'repair_gear',
         xp: 100, passive: 'fortify 1', ability: null,
       },
       glaciron: {
@@ -2117,7 +2117,7 @@ const UNITS = {
         hp: 45, armor: 15, initiative: 15,
         resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 50, nature: 15 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15,
+        damage_source: null, action_power: 15, action_animation: 'repair_gear',
         xp: 400, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
       arctyx: {
@@ -2128,7 +2128,7 @@ const UNITS = {
         hp: 50, armor: 20, initiative: 15,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20,
+        damage_source: null, action_power: 20, action_animation: 'repair_gear',
         xp: 900, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {
@@ -2296,7 +2296,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg',
+        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt',
         xp: 75, passive: 'chill 1', ability: null,
       },
       revenant: {
@@ -2307,7 +2307,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 1,
-        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg',
+        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
         xp: 260, passive: ['chill 1', 'sorrow 1'], ability: null,
       },
       soul_harvester: {
@@ -2318,7 +2318,7 @@ const UNITS = {
         hp: 65, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg',
+        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
         xp: 480, passive: ['chill 2', 'sorrow 1'], ability: null,
       },
       malgrath_the_undying_1: {
