@@ -830,6 +830,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'all_allies',
     description: 'Heal all allies for 12 HP.',
+    animation_sound: 'holy_heal_2',
     params: { heal_flat: 12 },
   },
   'prayer_of_healing 2': {
@@ -839,6 +840,7 @@ const UNIT_ABILITIES = {
     type: 'active',
     target: 'all_allies',
     description: 'Heal all allies for 16 HP.',
+    animation_sound: 'holy_heal_2',
     params: { heal_flat: 16 },
   },
   'fanaticism 1': {

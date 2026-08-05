@@ -732,8 +732,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: 4px;
-  padding: 3px 4px;
+  gap: 0;
+  padding: 0;
   flex-shrink: 0;
   transition: max-height 0.2s, opacity 0.2s, padding 0.2s;
 }
@@ -803,16 +803,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border-radius: 0;
-  width: 52px;
-  align-self: stretch;
+  width: 60px;
+  height: 60px;
+  align-self: center;
   flex-shrink: 0;
   transition: filter 0.15s, transform 0.1s;
 }
 
 .res-bar-btn .res-icon-img,
 .res-bar-btn img {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   filter: brightness(0.65) sepia(0.3);
   transition: filter 0.15s;
@@ -3188,27 +3189,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin-left: 6px;
 }
 
-/* Not a tab strip - there is only ever one section here, so this is a plain
-   caption over the portrait track. No borders, no surface fill. */
-.battle-prep-tabs {
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.battle-prep-tab-label {
-  padding: 6px 4px 2px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
 .battle-prep-tab-content {
   display: none;
   flex-shrink: 0;
+  /* Pushed to the bottom of the screen so the track rests directly on the
+     bottom nav rather than floating with a gap under it. */
+  margin-top: auto;
 }
 
 .battle-prep-tab-content.active {
@@ -3219,12 +3205,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 .prep-track-wrap {
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 8px 10px;
+  padding: 8px 10px 0;
   -webkit-overflow-scrolling: touch;
   /* Scrollbar chrome is hidden everywhere a portrait track scrolls; swipe and
      drag still work, and the bar itself was eating vertical space. */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .prep-track-wrap::-webkit-scrollbar { display: none; }
@@ -3268,7 +3257,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 11px 9px 12px;
   cursor: grab;
   flex-shrink: 0;
-  background-color: #14181f;
+  /* background-color: #14181f; */
   background-image: url('/assets/icons/ui/formation.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
