@@ -2995,6 +2995,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 400;
 }
 
+/* The grid frame art (.battle-grid-wrap::after) paints at z-index 10 OVER the
+   grid, which sits at z-index 1 — and a cell's z-index only orders it within
+   the grid's own stacking context, so no value on the cell could lift a toast
+   above the frame. While a bark is showing, the grid itself is raised above the
+   frame; battle.js toggles this class with the toast. */
+.battle-grid--bark { z-index: 20; }
+
 .bark-toast {
   position: absolute;
   left: 50%;

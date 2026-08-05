@@ -1787,10 +1787,11 @@ export async function poison_dart(cellEl, opts = {}) {
   console.log('[battle-fx] poison_dart END', dataId);
 }
 
-// ── claw_strike — three raking gashes torn across the target ─────────────────
-// Drawn ON the target rather than as something thrown: three parallel slashes
-// sweep across in quick succession, each flashing white-hot then cooling to a
-// red tear, with a brief shake and a spray of torn light.
+// ── claw_strike — the classic three parallel slashes ────────────────────────
+// Three strokes at ONE angle, evenly spaced along the perpendicular, each swept
+// from start to end a beat apart. Every stroke is tapered — thin at both ends,
+// thick in the middle — by drawing it as a filled quad rather than a line, which
+// is what makes it read as a claw rather than three pen marks.
 export async function claw_strike(cellEl, opts = {}) {
   console.log('[battle-fx] claw_strike START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
   const target = opts.targetCell || cellEl;
@@ -1798,28 +1799,63 @@ export async function claw_strike(cellEl, opts = {}) {
   const dataId  = target.dataset.id;
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const rand    = (a, b) => a + Math.random() * (b - a);
-  const TAU     = Math.PI * 2;
   const ADD     = PIXI.BLEND_MODES.ADD;
 
-  // Three gashes, staggered, each slightly different in length and offset.
+  // One rake direction for all three, so they stay parallel: down-right.
+  const ANGLE   = Math.PI * 0.30;
+  const COS = Math.cos(ANGLE), SIN = Math.sin(ANGLE);
+  // Perpendicular, used to space the strokes apart.
+  const PX = -SIN, PY = COS;
+
+  // Middle stroke is the longest; the outer two trail it slightly.
   const GASHES = [
-    { delay: 0.00, off: -0.26, len: 0.86, tilt: -0.30 },
-    { delay: 0.09, off:  0.00, len: 1.00, tilt: -0.24 },
-    { delay: 0.18, off:  0.26, len: 0.82, tilt: -0.34 },
+    { offset: -1, delay: 0.00, len: 0.86, width: 0.030 },
+    { offset:  0, delay: 0.06, len: 1.00, width: 0.038 },
+    { offset:  1, delay: 0.12, len: 0.88, width: 0.030 },
   ];
-  const sparks = Array.from({ length: 14 }, () => ({
-    ang: rand(-0.9, 0.9), speed: rand(0.5, 1.2), size: rand(1.5, 3.5), delay: rand(0, 0.2),
+
+  const sparks = Array.from({ length: 12 }, () => ({
+    along: rand(-0.5, 0.5), out: rand(0.25, 0.8), size: rand(1.5, 3.5), delay: rand(0, 0.25),
   }));
 
   const layer     = new PIXI.Container();
   const glowLayer = new PIXI.Container();
   glowLayer.filters = [new PIXI.BlurFilter(5)];
-  const hotG   = new PIXI.Graphics(); hotG.blendMode   = ADD;   // the flash
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;   // hot bloom under the cuts
   const sparkG = new PIXI.Graphics(); sparkG.blendMode = ADD;
-  const tearG  = new PIXI.Graphics();                            // the wound
-  glowLayer.addChild(hotG, sparkG);
-  layer.addChild(tearG, glowLayer);
+  const cutG   = new PIXI.Graphics();                            // the cuts themselves
+  layer.addChild(glowLayer, cutG);
+  glowLayer.addChild(glowG, sparkG);
   app.stage.addChild(layer);
+
+  // A tapered stroke: a quad that swells to `w` at the middle and closes to a
+  // point at both ends, drawn from `t0` to `t1` along the stroke.
+  function drawTaperedSlash(g, x0, y0, x1, y1, w, color, alpha, reveal) {
+    if (alpha <= 0 || reveal <= 0) return;
+    const STEPS = 12;
+    const ex = x0 + (x1 - x0) * reveal;
+    const ey = y0 + (y1 - y0) * reveal;
+    const dx = ex - x0, dy = ey - y0;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;      // unit normal
+
+    g.beginFill(color, alpha);
+    g.moveTo(x0, y0);
+    // one side, widening then narrowing
+    for (let i = 1; i <= STEPS; i++) {
+      const f = i / STEPS;
+      const half = Math.sin(f * Math.PI) * w;
+      g.lineTo(x0 + dx * f + nx * half, y0 + dy * f + ny * half);
+    }
+    // back along the other side
+    for (let i = STEPS; i >= 1; i--) {
+      const f = i / STEPS;
+      const half = Math.sin(f * Math.PI) * w;
+      g.lineTo(x0 + dx * f - nx * half, y0 + dy * f - ny * half);
+    }
+    g.closePath();
+    g.endFill();
+  }
 
   const DURATION = 620;
   await animate(DURATION, t => {
@@ -1829,53 +1865,54 @@ export async function claw_strike(cellEl, opts = {}) {
 
     const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
     const R  = Math.min(b.width, b.height);
+    const reach  = R * 0.52;      // half-length of the middle stroke
+    const spread = R * 0.20;      // gap between strokes
 
-    // The whole cell jolts on the first contact, settling quickly.
-    const jolt = t < 0.35 ? (1 - t / 0.35) * 4 : 0;
+    // A short jolt as the first stroke lands.
+    const jolt = t < 0.30 ? (1 - t / 0.30) * 3.5 : 0;
     const jx = (Math.random() - 0.5) * jolt;
     const jy = (Math.random() - 0.5) * jolt;
 
-    hotG.clear();
-    tearG.clear();
+    cutG.clear();
+    glowG.clear();
 
     for (const g of GASHES) {
-      const gt = clamp01((t - g.delay) / 0.34);      // the rake itself
-      if (gt <= 0) continue;
-      const fadeOut = clamp01((t - g.delay - 0.34) / 0.30);
+      const st = clamp01((t - g.delay) / 0.26);           // sweep of this stroke
+      if (st <= 0) continue;
+      const fade = clamp01((t - g.delay - 0.30) / 0.34);  // then it cools away
+      const alpha = 1 - fade;
 
-      // Each gash is a diagonal line drawn from upper-left to lower-right,
-      // revealed progressively so it reads as being torn open.
-      const half = R * 0.46 * g.len;
-      const x0 = cx + jx - half;
-      const y0 = cy + jy - half * g.tilt - g.off * R * 0.5;
-      const x1 = cx + jx + half * gt;
-      const y1 = cy + jy + half * gt * g.tilt * -1 - g.off * R * 0.5 + half * gt * 0.55;
+      const ox = cx + jx + PX * spread * g.offset;
+      const oy = cy + jy + PY * spread * g.offset;
+      const half = reach * g.len;
+      const x0 = ox - COS * half, y0 = oy - SIN * half;
+      const x1 = ox + COS * half, y1 = oy + SIN * half;
 
-      // Cooling wound underneath.
-      tearG.lineStyle(Math.max(1, R * 0.035 * (1 - fadeOut * 0.6)), 0x9c1015, (1 - fadeOut) * 0.9);
-      tearG.moveTo(x0, y0);
-      tearG.lineTo(x1, y1);
+      // Bloom under the cut while it is fresh.
+      drawTaperedSlash(glowG, x0, y0, x1, y1, R * g.width * 2.1, 0xff5a5a, 0.5 * alpha, st);
+      // The cut: pale core over a red body.
+      drawTaperedSlash(cutG, x0, y0, x1, y1, R * g.width,        0xb01218, 0.95 * alpha, st);
+      drawTaperedSlash(cutG, x0, y0, x1, y1, R * g.width * 0.42, 0xffe3e3, 0.95 * alpha * (1 - fade * 0.5), st);
 
-      // White-hot leading edge while the stroke is still travelling.
-      if (gt < 1) {
-        hotG.lineStyle(Math.max(1, R * 0.02), 0xffd9d9, 0.95);
-        hotG.moveTo(lerpNum(x0, x1, 0.75), lerpNum(y0, y1, 0.75));
-        hotG.lineTo(x1, y1);
-        softGlow(hotG, x1, y1, R * 0.09, 0xff6b6b, 0.8);
+      // The leading tip glows while the stroke is still travelling.
+      if (st < 1) {
+        const tx = x0 + (x1 - x0) * st, ty = y0 + (y1 - y0) * st;
+        softGlow(glowG, tx, ty, R * 0.10, 0xffd0d0, 0.85);
       }
     }
 
-    // Torn light thrown off the wounds, downward-biased.
+    // Flecks thrown off along the rake, falling as they go.
     sparkG.clear();
-    const sprayT = clamp01((t - 0.12) / 0.5);
-    if (sprayT > 0) {
+    const spray = clamp01((t - 0.10) / 0.55);
+    if (spray > 0) {
       for (const sp of sparks) {
-        const st = clamp01((sprayT - sp.delay) / (1 - sp.delay));
-        if (st <= 0) continue;
-        const dist = R * 0.6 * st * sp.speed;
-        const px = cx + jx + Math.cos(sp.ang) * dist;
-        const py = cy + jy + Math.sin(sp.ang) * dist + st * st * R * 0.35;
-        softGlow(sparkG, px, py, sp.size * (1 - st * 0.5), 0xff8a8a, (1 - st) * 0.8);
+        const s2 = clamp01((spray - sp.delay) / (1 - sp.delay));
+        if (s2 <= 0) continue;
+        const bx = cx + jx + COS * reach * sp.along;
+        const by = cy + jy + SIN * reach * sp.along;
+        const px = bx + PX * R * sp.out * s2;
+        const py = by + PY * R * sp.out * s2 + s2 * s2 * R * 0.25;
+        softGlow(sparkG, px, py, sp.size * (1 - s2 * 0.5), 0xff8a8a, (1 - s2) * 0.8);
       }
     }
   });
@@ -1884,7 +1921,7 @@ export async function claw_strike(cellEl, opts = {}) {
   console.log('[battle-fx] claw_strike END', dataId);
 }
 
-function lerpNum(a, b, t) { return a + (b - a) * t; }
+
 
 export const EFFECTS = {
   mithrails_light,

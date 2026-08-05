@@ -124,6 +124,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
     if (!cell) return;
     cell.classList.add('battle-cell--bark-active');
+    // The grid has to come above its own frame art for the toast to be visible
+    // at all — see .battle-grid--bark in style.css.
+    const grid = cell.closest('.battle-grid');
+    grid?.classList.add('battle-grid--bark');
     const toast = document.createElement('div');
     toast.className = 'bark-toast';
     toast.textContent = text;
@@ -135,6 +139,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       dismissed = true;
       toast.remove();
       cell.classList.remove('battle-cell--bark-active');
+      // Only drop the grid back down once no other cell is still speaking.
+      if (grid && !grid.querySelector('.battle-cell--bark-active')) {
+        grid.classList.remove('battle-grid--bark');
+      }
       document.removeEventListener('click', dismiss, true);
       document.removeEventListener('touchstart', dismiss, true);
     };
