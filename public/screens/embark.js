@@ -21,9 +21,10 @@ const UI_TEXT = {
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
   levelAria:       { en: 'Level',     ru: 'Уровень' },
   // Guaranteed-crystal line; crystalName is already localized per region.
+  // Each region pays two fixed crystal types now — no random roll.
   guaranteed: (L, crystalName) => L === 'ru'
-    ? `Гарантировано: кристаллы ${crystalName} + 1 случайный`
-    : `Guaranteed: ${crystalName} Crystals + 1 random`,
+    ? `Кристаллы: ${crystalName}`
+    : `Crystals: ${crystalName}`,
 };
 
 // Levels that end in a boss fight — highlighted red on the level row.
@@ -40,8 +41,8 @@ const REGIONS = [
     icon: '🩸',
     description: 'A blood-soaked cathedral of the Aggrail faithful — zealous heralds, the devoted, and Sister Aldra, who bleeds for her god.',
     description_ru: 'Залитый кровью собор верных Аграилу — рьяные глашатаи, преданные и Сестра Алдра, что кровоточит во славу своего бога.',
-    crystal: 'Life',
-    crystal_ru: 'Жизни',
+    crystal: 'Life & Fire',
+    crystal_ru: 'Жизни и Огня',
   },
   {
     id: 'glittering_abyss',
@@ -50,8 +51,8 @@ const REGIONS = [
     icon: '💎',
     description: 'A frozen vault of living crystal — mending geodes, frost-shard casters, and the Prismatic Colossus that slumbers in the dark.',
     description_ru: 'Ледяная сокровищница живого кристалла — исцеляющие жеоды, заклинатели морозных осколков и Призматический колосс, дремлющий во тьме.',
-    crystal: 'Air',
-    crystal_ru: 'Воздуха',
+    crystal: 'Frost & Air',
+    crystal_ru: 'Мороза и Воздуха',
   },
   {
     id: 'chamber_of_unrest',
@@ -60,8 +61,8 @@ const REGIONS = [
     icon: '💀',
     description: 'Sunken crypts of the restless dead — cursed knights, shambling horrors, and Malgrath the Undying, who has already died once.',
     description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, бредущие ужасы и Малграт Неумирающий, что уже умирал однажды.',
-    crystal: 'Death',
-    crystal_ru: 'Смерти',
+    crystal: 'Death & Nature',
+    crystal_ru: 'Смерти и Природы',
   },
   {
     id: 'pvp',

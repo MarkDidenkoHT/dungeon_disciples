@@ -1001,7 +1001,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           <div class="reward-grid">
             ${result.gold    > 0 ? chip(GOLD_ICON, result.gold) : ''}
             ${result.crystal > 0 ? chip(CRYSTAL_ICONS[result.crystal_type] || '💎', result.crystal) : ''}
-            ${result.crystal_bonus > 0 ? chip(CRYSTAL_ICONS[result.crystal_bonus_type] || '💎', result.crystal_bonus) : ''}
             ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, BTx('xpEach')) : ''}
             ${trophies}
           </div>

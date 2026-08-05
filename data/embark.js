@@ -17,8 +17,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 15, xp: 30,
-        crystals:        [{ type: 'Crystals_Life', amount: 5 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Life', amount: 5 }, { type: 'Crystals_Fire', amount: 5 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 1 }],
         spell_trophies:  [{ id: 'aggrails_signet', amount: 1 }],
       },
@@ -33,14 +32,13 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 20, xp: 50,
-        crystals:        [{ type: 'Crystals_Life', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death', 'Crystals_Fire'], amount: 2 },
+        crystals:        [{ type: 'Crystals_Life', amount: 8 }, { type: 'Crystals_Fire', amount: 8 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 2 }],
         spell_trophies:  [{ id: 'aggrails_signet', amount: 1 }],
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_2',
+      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
@@ -49,8 +47,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 25, xp: 50,
-        crystals:        [{ type: 'Crystals_Life', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death', 'Crystals_Fire'], amount: 3 },
+        crystals:        [{ type: 'Crystals_Life', amount: 10 }, { type: 'Crystals_Fire', amount: 10 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 2 }],
         spell_trophies:  [{ id: 'shard_of_devotion', amount: 2 }],
       },
@@ -64,30 +61,27 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 30, xp: 60,
-        crystals:        [{ type: 'Crystals_Life', amount: 11 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death', 'Crystals_Fire'], amount: 4 },
+        crystals:        [{ type: 'Crystals_Life', amount: 11 }, { type: 'Crystals_Fire', amount: 11 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
         spell_trophies:  [{ id: 'aggrails_signet', amount: 2 }],
       },
     },
     level_5: {
-      spell_id: 'enemy_spell_7',
       enemies: [
-        { key: 'crimson_basilica.aggrails_devoted', cell: 2 },
+        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-        { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
-        { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
+        { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
+        { key: 'crimson_basilica.keeper_of_purity',         cell: 3 },
+        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
         gold: 35, xp: 70,
-        crystals:        [{ type: 'Crystals_Life', amount: 13 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death', 'Crystals_Fire'], amount: 5 },
+        crystals:        [{ type: 'Crystals_Life', amount: 13 }, { type: 'Crystals_Fire', amount: 13 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
         spell_trophies:  [{ id: 'aggrails_signet', amount: 2 }],
       },
     },
     level_6: {
-      spell_id: 'enemy_spell_6',
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'aegis_of_the_first_ward' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
@@ -97,8 +91,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 40, xp: 80,
-        crystals:        [{ type: 'Crystals_Life', amount: 14 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Death', 'Crystals_Fire'], amount: 6 },
+        crystals:        [{ type: 'Crystals_Life', amount: 14 }, { type: 'Crystals_Fire', amount: 14 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
         spell_trophies:  [{ id: 'shard_of_devotion', amount: 2 }],
       },
@@ -113,14 +106,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 15, xp: 30,
-        crystals:        [{ type: 'Crystals_Frost', amount: 6 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 6 }, { type: 'Crystals_Air', amount: 6 }],
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
     },
     level_2: {
-      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.сhillrock',  cell: 0 },
         { key: 'glittering_abyss.cryostax',  cell: 3 },
@@ -128,14 +119,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 20, xp: 40,
-        crystals:        [{ type: 'Crystals_Frost', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 2 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 8 }, { type: 'Crystals_Air', amount: 8 }],
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 2 },
         { key: 'glittering_abyss.cryostax',  cell: 1 },
@@ -143,8 +132,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 25, xp: 50,
-        crystals:        [{ type: 'Crystals_Frost', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Nature'], amount: 3 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 10 }, { type: 'Crystals_Air', amount: 10 }],
         trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'living_geode', amount: 1 }],
       },
@@ -157,8 +145,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 30, xp: 60,
-        crystals:        [{ type: 'Crystals_Death', amount: 11 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 4 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 11 }, { type: 'Crystals_Air', amount: 11 }],
         trophies:        [{ id: 'crystal_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -171,14 +158,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 35, xp: 70,
-        crystals:        [{ type: 'Crystals_Death', amount: 13 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 5 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 13 }, { type: 'Crystals_Air', amount: 13 }],
         trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
     },
     level_6: {
-      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.cryodrox2',      cell: 0 },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
@@ -187,8 +172,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 40, xp: 80,
-        crystals:        [{ type: 'Crystals_Death', amount: 14 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 6 },
+        crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
         trophies:        [{ id: 'crystal_dust', amount: 2 }],
         spell_trophies:  [{ id: 'living_geode', amount: 2 }],
       },
@@ -197,15 +181,13 @@ const REGION_ENCOUNTERS = {
 
   chamber_of_unrest: {
     level_1: {
-      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'chamber_of_unrest.bone_knight',   cell: 0 },
         { key: 'chamber_of_unrest.bone_knight',   cell: 4 },
       ],
       rewards: {
         gold: 15, xp: 30,
-        crystals:        [{ type: 'Crystals_Death', amount: 6 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 1 },
+        crystals:        [{ type: 'Crystals_Death', amount: 6 }, { type: 'Crystals_Nature', amount: 6 }],
         trophies:        [{ id: 'grave_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -218,14 +200,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 20, xp: 40,
-        crystals:        [{ type: 'Crystals_Death', amount: 8 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Frost', 'Crystals_Air'], amount: 2},
+        crystals:        [{ type: 'Crystals_Death', amount: 8 }, { type: 'Crystals_Nature', amount: 8 }],
         trophies:        [{ id: 'grave_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_4',
       enemies: [
         { key: 'chamber_of_unrest.bone_knight',            cell: 0 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
@@ -234,14 +214,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 25, xp: 50,
-        crystals:        [{ type: 'Crystals_Death', amount: 10 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 3 },
+        crystals:        [{ type: 'Crystals_Death', amount: 10 }, { type: 'Crystals_Nature', amount: 10 }],
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 1 }],
       },
     },
     level_4: {
-      spell_id: 'enemy_spell_4',
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
@@ -250,14 +228,12 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 30, xp: 60,
-        crystals:        [{ type: 'Crystals_Death', amount: 11 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 4 },
+        crystals:        [{ type: 'Crystals_Death', amount: 11 }, { type: 'Crystals_Nature', amount: 11 }],
         trophies:        [{ id: 'grave_dust', amount: 1 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
     },
     level_5: {
-      spell_id: 'enemy_spell_5',
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
@@ -266,8 +242,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 35, xp: 70,
-        crystals:        [{ type: 'Crystals_Death', amount: 13 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 5 },
+        crystals:        [{ type: 'Crystals_Death', amount: 13 }, { type: 'Crystals_Nature', amount: 13 }],
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
       },
@@ -282,8 +257,7 @@ const REGION_ENCOUNTERS = {
       ],
       rewards: {
         gold: 40, xp: 80,
-        crystals:        [{ type: 'Crystals_Death', amount: 14 }],
-        crystals_random: { pool: ['Crystals_Life', 'Crystals_Fire', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'], amount: 6 },
+        crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
         trophies:        [{ id: 'grave_dust', amount: 2 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 2 }],
       },
@@ -327,7 +301,6 @@ const REGIONS = [
 //     crystals: [{ type: 'Crystals_Life', amount: 8 }],
 //
 //     // The ONLY random element: one type is picked from this pool.
-//     crystals_random: { pool: ['Crystals_Fire', 'Crystals_Air'], amount: 1 },
 //
 //     // Basic shards — always drop on a win, no spell needed.
 //     trophies: [{ id: 'vial_of_pure_blood', amount: 1 }],
@@ -342,13 +315,11 @@ const REGIONS = [
 // these shards are the crafting inputs.
 function getLevelRewards(region_id, level) {
   const declared = REGION_ENCOUNTERS[region_id]?.[`level_${level}`]?.rewards ?? {};
-  const rnd      = declared.crystals_random ?? {};
   const asList   = v => (Array.isArray(v) ? v : []);
   return {
     gold: declared.gold ?? 0,
     xp:   declared.xp   ?? 0,
     crystals:        asList(declared.crystals),
-    crystals_random: { pool: asList(rnd.pool), amount: rnd.amount ?? 0 },
     trophies:        asList(declared.trophies),
     spell_trophies:  asList(declared.spell_trophies),
   };
@@ -404,7 +375,6 @@ function buildDropIndex() {
       const rw = getLevelRewards(region.id, level);
       if (rw.gold) add('Gold', region.id);
       for (const c of rw.crystals) add(c.type, region.id);
-      for (const t of rw.crystals_random.pool) add(t, region.id);
       for (const t of rw.trophies) add(t.id, region.id);
       for (const t of rw.spell_trophies) add(t.id, region.id);
     }
