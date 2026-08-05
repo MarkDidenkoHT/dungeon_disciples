@@ -5341,9 +5341,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 7px 3px 4px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
+  padding: 0;
+  border: none;
   background: var(--bg);
   color: var(--text);
   font-family: inherit;
@@ -5351,17 +5350,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 700;
   cursor: pointer;
 }
-.mat-chip--ok    { color: #4ccb63; border-color: color-mix(in srgb, #4ccb63 45%, var(--border)); }
-.mat-chip--short { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
-.mat-chip--free  { color: var(--muted); border-style: dashed; cursor: default; }
-.mat-chip:active { border-color: var(--accent); }
+.mat-chip--ok    { color: #4ccb63; }
+.mat-chip--short { color: var(--danger); }
+.mat-chip--free  { color: var(--muted); cursor: default; }
+.mat-chip:active { opacity: 0.6; }
 
 /* Fixed min-width so a 1 and a 100 make the same shape and the row never
    re-wraps as amounts change. */
 .mat-chip-amt  { min-width: 1.6em; text-align: left; }
 .mat-chip-icon { display: flex; align-items: center; }
 .mat-chip-icon .res-icon-img,
-.mat-chip-img { width: 18px; height: 18px; object-fit: contain; display: block; }
+.mat-chip-img { width: 24px; height: 24px; object-fit: contain; display: block; }
 
 /* ── "Where does this drop" sheet ───────────────────────────────────────────*/
 .mat-sheet { display: flex; flex-direction: column; gap: 10px; padding: 2px; }
@@ -5374,15 +5373,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .mat-sheet-label { font-size: 0.78rem; color: var(--muted); }
 
-.mat-region-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.mat-region {
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  font-size: 0.85rem;
-  color: var(--text);
-}
+/* One line — "Drops in: Glittering Abyss" — rather than a bulleted panel for
+   what is usually a single region. */
+.mat-regions { color: var(--text); font-weight: 600; }
 
 .mat-embark-btn {
   margin-top: 2px;
@@ -5428,7 +5421,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .item-detail .item-card {
   align-items: stretch;
   text-align: left;
-  gap: 10px;
 }
 
 .item-card-body {

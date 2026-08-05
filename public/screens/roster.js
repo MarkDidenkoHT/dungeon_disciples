@@ -740,10 +740,11 @@ export function renderRoster(root, { player }) {
     const canCraft     = factionOk && canAfford && !uniqueOwned;
 
     // A short availability line: why you can (or can't) make this right now.
+    // Only reasons the card cannot show any other way. "Not enough resources" is
+    // omitted: the disabled Craft button and the red cost chips already say it.
     let blocked = '';
-    if (uniqueOwned)       blocked = T('uniqueOwned');
-    else if (!factionOk)   blocked = T('wrongFaction');
-    else if (!canAfford)   blocked = T('notEnough');
+    if (uniqueOwned)     blocked = T('uniqueOwned');
+    else if (!factionOk) blocked = T('wrongFaction');
 
     const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
@@ -1171,11 +1172,10 @@ export function renderRoster(root, { player }) {
     const label     = materialName(key);
     const have      = ownedAmount(key);
 
-    const regionRows = regionIds.map(id => {
+    const regionNames = regionIds.map(id => {
       const region = REGIONS.find(r => r.id === id);
-      const name   = region ? (L === 'ru' ? (region.label_ru || region.label) : region.label) : id;
-      return `<li class="mat-region">${name || id}</li>`;
-    }).join('');
+      return (region ? (L === 'ru' ? (region.label_ru || region.label) : region.label) : id) || id;
+    }).join(', ');
 
     openSubSheet(label, `
       <div class="mat-sheet">
@@ -1184,8 +1184,7 @@ export function renderRoster(root, { player }) {
           <span class="mat-sheet-have">${L === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
         </div>
         ${regionIds.length
-          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает в регионах:' : 'Drops in:'}</p>
-             <ul class="mat-region-list">${regionRows}</ul>`
+          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает:' : 'Drops in:'} <span class="mat-regions">${regionNames}</span></p>`
           : `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`}
         <button class="mat-embark-btn" id="mat-embark-btn" data-material="${key}" ${regionIds.length ? '' : 'disabled'}>
           ${L === 'ru' ? 'В поход' : 'Embark'}
