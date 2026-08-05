@@ -72,7 +72,7 @@ const SPELLS = {
       type: 'preparation',
       description: 'Anoint one ally as a martyr. 10% of damage taken by adjacent allies is redirected to the martyr.',
       description_ru: 'Помечает союзника мучеником. 10% урона, получаемого соседними союзниками, перенаправляется мученику.',
-      cost: { crystals: { Crystals_Life: 10, Crystals_Cold: 5 } },
+      cost: { crystals: { Crystals_Life: 10, Crystals_Frost: 5 } },
       effect_type: 'buff',
       class: 'buff',
       target_scope: 'single_ally',
