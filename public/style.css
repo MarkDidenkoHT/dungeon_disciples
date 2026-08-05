@@ -5542,3 +5542,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   .item-card-stats, .item-card-tags { justify-content: center; }
   .item-passive { align-self: center; }
 }
+
+/* An unmet tag requirement is flagged on the chip that states it, instead of
+   being repeated as a sentence under the button. */
+.item-card-tag--unmet {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}

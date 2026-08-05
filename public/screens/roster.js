@@ -69,7 +69,6 @@ const RT = {
   notEnough:    { en: 'Not enough resources', ru: 'Недостаточно ресурсов' },
   uniqueOwned:  { en: 'Unique — already owned', ru: 'Уникальный — уже есть' },
   equippedElse: { en: 'Equipped on another unit', ru: 'Надет на другом бойце' },
-  requiresTag:  { en: t => `Requires ${t} tag`, ru: t => `Требуется метка ${t}` },
   maxLevel:     { en: 'Maximum Level Reached', ru: 'Максимальный уровень' },
   cannotUpgrade:{ en: 'Cannot Upgrade',   ru: 'Улучшение недоступно' },
   failEquip:    { en: 'Equip failed',     ru: 'Не удалось надеть' },
@@ -575,10 +574,14 @@ export function renderRoster(root, { player }) {
             </button>`;
   }
 
-  function itemTagsHtml(stats) {
+  // `unitTags` is passed when the card is shown against a specific unit, so an
+  // unmet requirement can be flagged on the chip itself rather than repeated as
+  // a sentence under the button.
+  function itemTagsHtml(stats, unitTags = null) {
     const ru = L === 'ru';
+    const unmet = stats.tag_required && Array.isArray(unitTags) && !unitTags.includes(stats.tag_required);
     return [
-      stats.tag_required ? `<span class="item-card-tag">${ru ? 'Требует' : 'Requires'}: ${stats.tag_required}</span>` : '',
+      stats.tag_required ? `<span class="item-card-tag ${unmet ? 'item-card-tag--unmet' : ''}">${ru ? 'Требует' : 'Requires'}: ${stats.tag_required}</span>` : '',
       stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${ru ? 'Даёт метку' : 'Grants tag'}: ${stats.adds_tag}</span>` : '',
     ].join('');
   }
@@ -611,9 +614,11 @@ export function renderRoster(root, { player }) {
     const canEquip       = factionOk && tagOk && !block && !equippedHere;
 
     const ru = player?.settings?.language === 'ru';
+    // Only reasons the card cannot state any other way. A missing tag is already
+    // written on the "Requires: X" chip — which turns red when the unit lacks it
+    // — so repeating it underneath the button said the same thing twice.
     let reason = '';
     if (!factionOk) reason = T('wrongFaction');
-    else if (!tagOk) reason = RT.requiresTag[L](stats.tag_required);
     else if (block) reason = ru ? block.reason_ru : block.reason;
     else if (equippedElsewhere) reason = T('equippedElse');
 
@@ -638,13 +643,13 @@ export function renderRoster(root, { player }) {
             <div class="item-card-name">${itemName(item, player)}</div>
             <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
             ${itemPassiveHtml(stats)}
-            <div class="item-card-tags">${itemTagsHtml(stats)}</div>
+            <div class="item-card-tags">${itemTagsHtml(stats, unitTags)}</div>
           </div>
         </div>
         ${equippedHere
           ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${item.id}">${T('unequip')}</button>`
           : `<button class="item-action-btn item-action-btn--equip" data-item-id="${item.id}" data-roster-id="${unit.id}" ${canEquip ? '' : 'disabled'}>${T('equip')}</button>`}
-        ${!canEquip && !equippedHere ? `<div class="item-card-blocked">${reason}</div>` : ''}
+        ${reason && !equippedHere ? `<div class="item-card-blocked">${reason}</div>` : ''}
       </div>`;
   }
 
