@@ -40,7 +40,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_1',
+      spell_id: 'enemy_spell_2',
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
@@ -71,12 +71,12 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_5: {
+      spell_id: 'enemy_spell_7',
       enemies: [
-        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-        { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-        { key: 'crimson_basilica.keeper_of_purity',         cell: 3 },
-        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 4 },
+        { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
       ],
       rewards: {
         gold: 35, xp: 70,
@@ -87,6 +87,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_6: {
+      spell_id: 'enemy_spell_6',
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'aegis_of_the_first_ward' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
@@ -119,6 +120,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_2: {
+      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.сhillrock',  cell: 0 },
         { key: 'glittering_abyss.cryostax',  cell: 3 },
@@ -133,6 +135,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
+      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 2 },
         { key: 'glittering_abyss.cryostax',  cell: 1 },
@@ -175,6 +178,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_6: {
+      spell_id: 'enemy_spell_3',
       enemies: [
         { key: 'glittering_abyss.cryodrox2',      cell: 0 },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
@@ -193,6 +197,7 @@ const REGION_ENCOUNTERS = {
 
   chamber_of_unrest: {
     level_1: {
+      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'chamber_of_unrest.bone_knight',   cell: 0 },
         { key: 'chamber_of_unrest.bone_knight',   cell: 4 },
@@ -220,6 +225,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
+      spell_id: 'enemy_spell_4',
       enemies: [
         { key: 'chamber_of_unrest.bone_knight',            cell: 0 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
@@ -235,6 +241,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_4: {
+      spell_id: 'enemy_spell_4',
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
@@ -250,6 +257,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_5: {
+      spell_id: 'enemy_spell_5',
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },

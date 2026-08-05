@@ -1498,6 +1498,34 @@ class BattleEngine {
       if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
       if (params.initiative_boost)     { c.initiative = (c.initiative || 40) + params.initiative_boost; revert.initiative = -params.initiative_boost; }
       if (params.initiative_reduction) c.initiative = Math.max(1, Math.floor((c.initiative || 40) * (1 - params.initiative_reduction)));
+      // Flat counterpart to initiative_reduction's percentage — "-5 initiative"
+      // rather than "-20% initiative". Only give back what was actually taken.
+      if (params.initiative_flat_reduction) {
+        const taken = Math.min((c.initiative || 40) - 1, params.initiative_flat_reduction);
+        c.initiative = Math.max(1, (c.initiative || 40) - taken);
+        revert.initiative = (revert.initiative || 0) + taken;
+      }
+      // Immediate damage, as opposed to round_damage's deferred tick. Physical
+      // damage is reduced by the target's armor (1% per point, as in
+      // calcDamageWithPassives); typed damage obeys the matching resistance.
+      if (params.damage_flat) {
+        const type = params.damage_type || 'physical';
+        let dmg;
+        if (type === 'physical') {
+          const armor = Math.max(0, (c.armor ?? 0) + (c.defend_armor_bonus || 0));
+          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - armor / 100)));
+        } else {
+          const resist = (c.unit_data?.resistances ?? c.resistances ?? {})[type] ?? 0;
+          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - resist / 100)));
+        }
+        c.battle_hp = Math.max(0, (c.battle_hp || 0) - dmg);
+        this.pushLog({
+          type: 'spell', targetName: c.unit_name, targetId: c.id, targetCell: c.cellIndex,
+          value: dmg, heal: false,
+          message: `${c.unit_name} takes ${dmg} ${type} damage`,
+        });
+        if (c.battle_hp <= 0 && c.alive) { c.alive = false; this.applyOnDeathPassives(c); }
+      }
       if (params.damage_boost)         { c._dmg_mult = (c._dmg_mult || 1) * (1 + params.damage_boost); revert.dmg_mult_div = (revert.dmg_mult_div || 1) * (1 + params.damage_boost); }
       if (params.damage_dealt_reduction_pct) {
         const factor = 1 - params.damage_dealt_reduction_pct / 100;
@@ -1530,6 +1558,7 @@ class BattleEngine {
       // like can strip them early — registerEffect's revert runs the same undo.
       if (duration && Object.keys(revert).length) {
         const polarity = params.resist_reduction || params.armor_flat_reduction || params.damage_dealt_reduction_pct
+          || params.initiative_flat_reduction
           ? 'negative' : 'positive';
         this.pendingRoundEffects.push({
           type:   'expire_modifier',
