@@ -58,11 +58,11 @@ const ITEM_DEFS = {
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { fire_resist: 8, death_resist: 8 },
-    passive:      'combat_veteran 1',
+    passive:      'radiance 1',
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,
-    cost:         { vial_of_pure_blood: 1, crystal_shard: 1, Gold: 60, Crystals_Life: 45 },
+    cost:         { vial_of_pure_blood: 3, crystal_shard: 3, Gold: 100, Crystals_Life: 45 },
     item_cost:    { iron_shield: 1, death_resistance_potion: 1, fire_resistance_potion: 1, veterans_medal: 1 },
   },
   might_of_the_pure: {

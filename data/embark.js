@@ -40,11 +40,12 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
+      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
-        { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
+        { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.sister_aldra_1',   cell: 3 , item_id: 'aldras_devotion'},
-        { key: 'crimson_basilica.initiate',         cell: 1 },
+        { key: 'crimson_basilica.initiate',         cell: 1},
       ],
       rewards: {
         gold: 25, xp: 50,
@@ -58,8 +59,8 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0, item_id: 'mace' },
-        { key: 'crimson_basilica.initiate',         cell: 3 },
-        { key: 'crimson_basilica.crimson_scout',   cell: 1 },
+        { key: 'crimson_basilica.initiate', cell: 3,  item_id: 'everliving_stalk' },
+        { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
         gold: 30, xp: 60,
@@ -74,7 +75,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-        { key: 'crimson_basilica.initiate',         cell: 3 },
+        { key: 'crimson_basilica.keeper_of_purity',         cell: 3 },
         { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
@@ -90,8 +91,8 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'aegis_of_the_first_ward' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.sister_aldra_2',   cell: 4, item_id: 'aldras_devotion'},
-        { key: 'crimson_basilica.keeper_of_purity', cell: 1 },
-        { key: 'crimson_basilica.crimson_hunter',   cell: 5 },
+        { key: 'crimson_basilica.high_keeper', cell: 1 },
+        { key: 'crimson_basilica.crimson_stalker',   cell: 5 },
       ],
       rewards: {
         gold: 40, xp: 80,
