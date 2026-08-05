@@ -955,7 +955,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 40px;
   object-fit: contain;
   display: block;
-  image-rendering: pixelated;
 }
 
 .res-bar-val {
@@ -1019,7 +1018,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 40px;
   object-fit: contain;
   display: block;
-  image-rendering: pixelated;
 }
 
 .trophy-bar-icon-fallback {
