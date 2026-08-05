@@ -20,6 +20,16 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --text:    #e8e4dc;
   --muted:   #6b7080;
   --radius:  8px;
+
+  /* Rarity is one palette used by EVERY item surface — card border, slot icon,
+     filter chip, rarity label. Three different sets of greens/blues/oranges had
+     drifted apart, and epic/mythic cards were 2px while common/rare were 1px,
+     so the same idea looked like four different systems. */
+  --rarity-common: #16a34a;
+  --rarity-rare:   #3b82f6;
+  --rarity-epic:   #a855f7;
+  --rarity-mythic: #f59e0b;
+  --rarity-border: 2px;
 }
 
 html, body {
@@ -4734,12 +4744,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* ---------- Item equip slot (unit card abilities row) ---------- */
 .ability-icon--item {
   border-color: #3a2e14;
+  /* Same border weight as the card, so a mythic reads the same on both. */
+  border-width: var(--rarity-border);
 }
 /* Rarity tint on the equipped-item slot icon, matching the item cards. */
-.ability-icon--rarity-common { border-color: #16a34a; }
-.ability-icon--rarity-rare   { border-color: #2f74e0; }
-.ability-icon--rarity-epic   { border-color: #e8912a; }
-.ability-icon--rarity-mythic { border-color: #e0453f; }
+.ability-icon--rarity-common { border-color: var(--rarity-common); }
+.ability-icon--rarity-rare   { border-color: var(--rarity-rare); }
+.ability-icon--rarity-epic   { border-color: var(--rarity-epic); }
+.ability-icon--rarity-mythic { border-color: var(--rarity-mythic); }
 .ability-icon--item:not([disabled]):active {
   border-color: #c9922a;
 }
@@ -4843,14 +4855,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Rarity chips carry their own colour so the filter reads like the cards it
    filters — same palette as .item-card--rarity-*. */
-.items-chip--rarity-common  { color: #16a34a; }
-.items-chip--rarity-rare    { color: #3b82f6; }
-.items-chip--rarity-epic    { color: #a855f7; }
-.items-chip--rarity-mythic  { color: #f59e0b; }
-.items-chip--rarity-common.items-chip--active  { border-color: #16a34a; background: rgba(22, 163, 74, 0.14); }
-.items-chip--rarity-rare.items-chip--active    { border-color: #3b82f6; background: rgba(59, 130, 246, 0.14); }
-.items-chip--rarity-epic.items-chip--active    { border-color: #a855f7; background: rgba(168, 85, 247, 0.14); }
-.items-chip--rarity-mythic.items-chip--active  { border-color: #f59e0b; background: rgba(245, 158, 11, 0.14); }
+.items-chip--rarity-common  { color: var(--rarity-common); }
+.items-chip--rarity-rare    { color: var(--rarity-rare); }
+.items-chip--rarity-epic    { color: var(--rarity-epic); }
+.items-chip--rarity-mythic  { color: var(--rarity-mythic); }
+.items-chip--rarity-common.items-chip--active  { border-color: var(--rarity-common); background: color-mix(in srgb, var(--rarity-common) 14%, transparent); }
+.items-chip--rarity-rare.items-chip--active    { border-color: var(--rarity-rare);   background: color-mix(in srgb, var(--rarity-rare) 14%, transparent); }
+.items-chip--rarity-epic.items-chip--active    { border-color: var(--rarity-epic);   background: color-mix(in srgb, var(--rarity-epic) 14%, transparent); }
+.items-chip--rarity-mythic.items-chip--active  { border-color: var(--rarity-mythic); background: color-mix(in srgb, var(--rarity-mythic) 14%, transparent); }
 
 .items-chip--toggle { font-weight: 700; }
 /* No tick prefix: it changed the chip's width, nudging the row on every tap. */
@@ -4886,12 +4898,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow-y: auto;
 }
 
-/* Rarity border colours. Placed after --equipped so rarity owns the border; the
-   equipped state is shown as a glow ring below instead of a border colour. */
-.item-card--rarity-common { border-color: #16a34a; }            /* green  */
-.item-card--rarity-rare   { border-color: #2f74e0; }            /* blue   */
-.item-card--rarity-epic   { border: 2px solid #e8912a; }        /* orange */
-.item-card--rarity-mythic { border: 2px solid #e0453f; }        /* red    */
+/* Rarity border. Placed after --equipped so rarity owns the border; the equipped
+   state is shown as a glow ring below instead of a border colour. Same width for
+   every rarity — thickness is not the signal, colour is. */
+.item-card--rarity-common { border: var(--rarity-border) solid var(--rarity-common); }
+.item-card--rarity-rare   { border: var(--rarity-border) solid var(--rarity-rare); }
+.item-card--rarity-epic   { border: var(--rarity-border) solid var(--rarity-epic); }
+.item-card--rarity-mythic { border: var(--rarity-border) solid var(--rarity-mythic); }
 
 .item-card--equipped {
   box-shadow: 0 0 0 2px var(--accent);
@@ -4911,18 +4924,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted);
 }
 
+/* Sits in the card's left rail under the rarity label (it used to be absolutely
+   positioned over the corner, from the old single-column layout). */
 .item-card-unique {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #e0453f;
-  border: 1px solid #e0453f;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
   border-radius: 4px;
-  padding: 1px 5px;
+  padding: 1px 6px;
 }
 
 .item-card-owned {
@@ -5458,10 +5470,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.item-card-rarity--common { color: #16a34a; }
-.item-card-rarity--rare   { color: #3b82f6; }
-.item-card-rarity--epic   { color: #a855f7; }
-.item-card-rarity--mythic { color: #f59e0b; }
+.item-card-rarity--common { color: var(--rarity-common); }
+.item-card-rarity--rare   { color: var(--rarity-rare); }
+.item-card-rarity--epic   { color: var(--rarity-epic); }
+.item-card-rarity--mythic { color: var(--rarity-mythic); }
 
 .item-card-count-line {
   font-size: 0.68rem;
