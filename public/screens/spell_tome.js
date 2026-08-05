@@ -184,11 +184,13 @@ export function renderSpellTome(root, { player }) {
     bindModalActions(spell);
   }
 
-  function showFeedback(msg, isError) {
+  // Failures only — success is communicated by the card's checkmark and the
+  // detail's "✓ Learned" status, so there is nothing left to announce.
+  function showFeedback(msg) {
     const el = getSheetBody().querySelector('#research-feedback');
     if (!el) return;
     el.textContent   = msg;
-    el.className     = `research-feedback ${isError ? 'research-feedback--error' : 'research-feedback--success'}`;
+    el.className     = 'research-feedback research-feedback--error';
     el.style.display = 'inline-block';
   }
 
@@ -207,15 +209,17 @@ export function renderSpellTome(root, { player }) {
         learnedSpells.push(spell.id);
         refreshResourceBar(player).catch(() => {});
         renderSlider();
+        // No success banner: refreshModalBody already swaps the button for the
+        // green "✓ Learned" status and the card gains its checkmark. Saying it a
+        // third time in words was noise.
         refreshModalBody(spell);
-        showFeedback('Spell learned!', false);
       } else {
-        showFeedback(result?.message || 'Research failed', true);
+        showFeedback(result?.message || (isRu ? 'Не удалось изучить' : 'Research failed'));
         const btn = getSheetBody().querySelector('#detail-research-btn');
         if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
       }
     } catch (err) {
-      showFeedback(err.message || 'Research failed', true);
+      showFeedback(err.message || (isRu ? 'Не удалось изучить' : 'Research failed'));
       const btn = getSheetBody().querySelector('#detail-research-btn');
       if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
     }

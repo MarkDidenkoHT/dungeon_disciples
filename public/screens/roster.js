@@ -54,6 +54,12 @@ const RT = {
   grantsTag:    { en: 'Grants Tag',       ru: 'Даёт метку' },
   needsTag:     { en: 'Needs Tag',        ru: 'Нужна метка' },
   craftableNow: { en: 'Craftable now',    ru: 'Можно создать' },
+  // Singular forms, for the rarity label on one card (the chips above are the
+  // plural "the common ones" / "the rare ones").
+  rarity_common: { en: 'Common', ru: 'Обычный' },
+  rarity_rare:   { en: 'Rare',   ru: 'Редкий' },
+  rarity_epic:   { en: 'Epic',   ru: 'Эпический' },
+  rarity_mythic: { en: 'Mythic', ru: 'Мифический' },
   // states / messages
   noMaterials:  { en: 'No materials',     ru: 'Без материалов' },
   nothingMatches:{ en: 'Nothing matches these filters.', ru: 'Ничего не найдено по фильтрам.' },
@@ -518,16 +524,78 @@ export function renderRoster(root, { player }) {
     }
   });
 
+  // Icons rather than words, reusing the character card's own glyphs: 🛡 for
+  // armor and the six RESIST_ICONS for resistances. HP / Power / Initiative have
+  // no icon on the character card (they are text labels in the stat column), so
+  // they get one here. The full wording stays on `title` for long-press.
+  const STAT_ICONS = {
+    hp:           { icon: '❤',  en: 'HP',         ru: 'HP' },
+    armor:        { icon: '🛡',  en: 'Armor',      ru: 'Броня' },
+    action_power: { icon: '⚔',  en: 'Power',      ru: 'Сила' },
+    initiative:   { icon: '⚡', en: 'Initiative', ru: 'Инициатива' },
+  };
+
+  function statChip(key, val) {
+    const sign = val >= 0 ? '+' : '';
+    const cls  = val >= 0 ? 'stat-chip--pos' : 'stat-chip--neg';
+
+    const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+    if (resistMatch) {
+      const r     = resistMatch[1];
+      const icon  = RESIST_ICONS[r]?.icon ?? '◆';
+      const label = `${cap(r)} ${L === 'ru' ? 'сопротивление' : 'Resist'}`;
+      return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+                <span class="stat-chip-icon">${icon}</span>${sign}${val}
+              </span>`;
+    }
+
+    const meta = STAT_ICONS[key];
+    const icon = meta?.icon ?? '◆';
+    const label = meta ? meta[L] : cap(key);
+    return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+              <span class="stat-chip-icon">${icon}</span>${sign}${val}
+            </span>`;
+  }
+
   function formatStatMods(statMods) {
-    statMods = statMods || {};
-    return Object.entries(statMods).map(([key, val]) => {
-      const sign = val >= 0 ? '+' : '';
-      if (key === 'hp')    return `${sign}${val} HP`;
-      if (key === 'armor') return `${sign}${val} Armor`;
-      const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
-      if (resistMatch) return `${sign}${val} ${cap(resistMatch[1])} Resist`;
-      return `${sign}${val} ${cap(key)}`;
-    }).join(', ');
+    const entries = Object.entries(statMods || {});
+    if (!entries.length) return '';
+    return entries.map(([key, val]) => statChip(key, val)).join('');
+  }
+
+  // The item's own passive, shown on the ITEM (it is no longer mixed into the
+  // unit's passive icons) and tappable for the full description.
+  function itemPassiveHtml(stats) {
+    const key = stats?.passive;
+    if (!key) return '';
+    const def = resolveAbility(key);
+    const label = def?.name || String(key).split(' ')[0].replace(/_/g, ' ');
+    return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
+              <span class="item-passive-icon">✦</span>${label}
+            </button>`;
+  }
+
+  function itemTagsHtml(stats) {
+    const ru = L === 'ru';
+    return [
+      stats.tag_required ? `<span class="item-card-tag">${ru ? 'Требует' : 'Requires'}: ${stats.tag_required}</span>` : '',
+      stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${ru ? 'Даёт метку' : 'Grants tag'}: ${stats.adds_tag}</span>` : '',
+    ].join('');
+  }
+
+  // Left rail shared by both card modes: art, rarity, unique, then the count or
+  // (for a single equipped copy) who is carrying it.
+  function itemAsideHtml(stats, { iconId, name, rarity, unique, countLine }) {
+    return `
+      <div class="item-card-aside">
+        <div class="item-card-icon">
+          <img src="/assets/icons/items/${iconId}.png" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+        </div>
+        <div class="item-card-rarity item-card-rarity--${rarity}">${T('rarity_' + rarity)}</div>
+        ${unique ? `<div class="item-card-unique">${T('unique')}</div>` : ''}
+        ${countLine ? `<div class="item-card-count-line">${countLine}</div>` : ''}
+      </div>`;
   }
 
   function buildItemCard(item, unit, unitTags, count = 1) {
@@ -549,16 +617,30 @@ export function renderRoster(root, { player }) {
     else if (block) reason = ru ? block.reason_ru : block.reason;
     else if (equippedElsewhere) reason = T('equippedElse');
 
+    // A stack says how many; a lone copy says who is carrying it, which is the
+    // question you actually have when an item is missing from a unit.
+    const holder = item.equipped_by != null
+      ? units.find(u => String(u.id) === String(item.equipped_by))
+      : null;
+    const holderName = holder ? (resolveUnitDef(holder)?.name ?? '') : '';
+    const countLine = count > 1
+      ? `×${count}`
+      : (holderName ? `${L === 'ru' ? 'у' : 'on'} ${holderName}` : '');
+
     return `
       <div class="item-card item-card--rarity-${itemRarity(item)} ${equippedHere ? 'item-card--equipped' : ''}">
-        <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${itemName(item, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+        <div class="item-card-body">
+          ${itemAsideHtml(stats, {
+            iconId, name: itemName(item, player), rarity: itemRarity(item),
+            unique: !!stats.unique, countLine,
+          })}
+          <div class="item-card-main">
+            <div class="item-card-name">${itemName(item, player)}</div>
+            <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
+            ${itemPassiveHtml(stats)}
+            <div class="item-card-tags">${itemTagsHtml(stats)}</div>
+          </div>
         </div>
-        <div class="item-card-name">${itemName(item, player)}${count > 1 ? ` <span class="item-card-count">x${count}</span>` : ''}</div>
-        ${stats.tag_required ? `<div class="item-card-tag">Requires: ${stats.tag_required}</div>` : ''}
-        ${stats.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${stats.adds_tag}</div>` : ''}
-        <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
         ${equippedHere
           ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${item.id}">${T('unequip')}</button>`
           : `<button class="item-action-btn item-action-btn--equip" data-item-id="${item.id}" data-roster-id="${unit.id}" ${canEquip ? '' : 'disabled'}>${T('equip')}</button>`}
@@ -663,22 +745,22 @@ export function renderRoster(root, { player }) {
     else if (!factionOk)   blocked = T('wrongFaction');
     else if (!canAfford)   blocked = T('notEnough');
 
-    const ownedBadge = ownedCount > 0
-      ? `<div class="item-card-owned">${itemDef.unique ? T('owned') : `${T('owned')} ×${ownedCount}`}</div>`
-      : '';
+    const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
     return `
       <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)} ${canCraft ? 'item-card--available' : ''}">
-        ${itemDef.unique ? `<div class="item-card-unique">${T('unique')}</div>` : ''}
-        <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${itemName(itemDef, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+        <div class="item-card-body">
+          ${itemAsideHtml(itemDef, {
+            iconId, name: itemName(itemDef, player), rarity: itemRarity(itemDef),
+            unique: !!itemDef.unique, countLine,
+          })}
+          <div class="item-card-main">
+            <div class="item-card-name">${itemName(itemDef, player)}</div>
+            <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
+            ${itemPassiveHtml(itemDef)}
+            <div class="item-card-tags">${itemTagsHtml(itemDef)}</div>
+          </div>
         </div>
-        <div class="item-card-name">${itemName(itemDef, player)}</div>
-        ${ownedBadge}
-        ${itemDef.tag_required ? `<div class="item-card-tag">Requires: ${itemDef.tag_required}</div>` : ''}
-        ${itemDef.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${itemDef.adds_tag}</div>` : ''}
-        <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
         <div class="item-cost">${costChips(cost, itemCost)}</div>
         <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>${T('craft')}</button>
         ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
@@ -995,6 +1077,17 @@ export function renderRoster(root, { player }) {
         body.querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
           c.classList.toggle('portrait-card--selected', ci === selected));
         centreSelectedItem();
+        return;
+      }
+
+      // The item's passive — same description modal the unit card uses.
+      const passiveBtn = e.target.closest('.item-passive');
+      if (passiveBtn) {
+        const def = resolveAbility(passiveBtn.dataset.abilityKey);
+        if (def) {
+          const parts = buildAbilityModalParts(def, 'passive');
+          openSubSheet(parts.title, parts.body, parts.badges);
+        }
         return;
       }
 
