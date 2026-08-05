@@ -438,8 +438,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
-    const equippedItem = c.side === 'player' ? equippedItemFor(c._rosterId) : null;
-    const itemSlotHtml  = c.side === 'player' ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player }) : '';
+    // The item slot is drawn for ANY combatant that carries one, not just the
+    // player's — enemies have none today, but PvP opponents will, and the slot
+    // is where an item's passive is explained (it is no longer duplicated among
+    // the unit's own three passive icons).
+    const equippedItem = equippedItemFor(c._rosterId);
+    const itemSlotHtml = equippedItem
+      ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
+      : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');
 
     return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml })}${statusHtml}</div>`;
   }

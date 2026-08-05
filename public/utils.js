@@ -47,6 +47,62 @@ export function setUiLanguage(language) {
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 
+// What each action actually does, in both languages. The Action stat used to
+// open a modal saying only "The type of action this unit performs each turn",
+// which told the player nothing about the difference between, say, Sacrifice and
+// Mend Flesh. Keys are normalised (lowercased, underscores -> spaces).
+export const ACTION_INFO = {
+  'attack': {
+    name: { en: 'Attack',  ru: 'Атака' },
+    desc: {
+      en: 'Strikes one enemy for the unit\'s Power. Melee units can only reach the enemy front line; ranged units reach anything.',
+      ru: 'Бьёт одного врага на величину Силы. Ближний бой достаёт только переднюю линию врага, дальнобойные — любого.',
+    },
+  },
+  'heal': {
+    name: { en: 'Heal',    ru: 'Лечение' },
+    desc: {
+      en: 'Restores HP to one ally, equal to the unit\'s Power. Cannot exceed the ally\'s maximum HP, and is weakened by battle fatigue in long fights.',
+      ru: 'Восстанавливает союзнику HP, равное Силе бойца. Не превышает максимум HP и слабеет от боевой усталости в долгих боях.',
+    },
+  },
+  'mend flesh': {
+    name: { en: 'Mend Flesh', ru: 'Врачевание плоти' },
+    desc: {
+      en: 'The Grail\'s form of healing: restores HP to one ally for the unit\'s Power. Construct and Zombie allies cannot be mended.',
+      ru: 'Исцеление Грааля: восстанавливает союзнику HP на величину Силы. Конструктов и зомби вылечить нельзя.',
+    },
+  },
+  'repair': {
+    name: { en: 'Repair',  ru: 'Ремонт' },
+    desc: {
+      en: 'Restores HP to one allied construct or machine, equal to the unit\'s Power.',
+      ru: 'Восстанавливает HP союзному конструкту или машине на величину Силы.',
+    },
+  },
+  'sacrifice': {
+    name: { en: 'Sacrifice', ru: 'Жертва' },
+    desc: {
+      en: 'Spends an ally\'s life to fuel the strike: the chosen ally loses HP and the enemy suffers for it.',
+      ru: 'Тратит жизнь союзника ради удара: выбранный союзник теряет HP, а враг расплачивается за это.',
+    },
+  },
+  'holy shock': {
+    name: { en: 'Holy Shock', ru: 'Священный разряд' },
+    desc: {
+      en: 'Reads its target: an ally is mended for the unit\'s Power, an enemy is struck for it. One action, either use.',
+      ru: 'Смотрит по цели: союзника лечит на величину Силы, врага бьёт на неё же. Одно действие — два применения.',
+    },
+  },
+  'none': {
+    name: { en: 'Passive',  ru: 'Пассивное' },
+    desc: {
+      en: 'This unit takes no action of its own. It contributes through its passives alone.',
+      ru: 'Этот боец не совершает собственных действий. Он полезен только своими пассивными умениями.',
+    },
+  },
+};
+
 export const RESIST_LABELS = {
   air:    { en: 'Air',    ru: 'Воздух' },
   fire:   { en: 'Fire',   ru: 'Огонь'  },
@@ -328,9 +384,14 @@ export function renderItemSlotIcon(item, rosterId, opts = {}) {
 }
 
 export function renderUnitAbilitiesRow(unit, opts = {}) {
-  const passiveKeys = Array.isArray(unit.passive)
-    ? unit.passive.filter(Boolean)
-    : (unit.passive ? [unit.passive] : []);
+  // native_passive is set by applyItemModifiers and holds what the unit had
+  // BEFORE its item's passive was folded in. Rendering unit.passive here meant a
+  // unit with three of its own plus an item's had four passives fighting over
+  // three slots, and the item's showed up twice — once here, once on the item.
+  const source = unit.native_passive ?? unit.passive;
+  const passiveKeys = Array.isArray(source)
+    ? source.filter(Boolean)
+    : (source ? [source] : []);
 
   const iconsHtml = [
     unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active')  : renderUnitAbilityIcon('', 'empty'),
@@ -426,6 +487,19 @@ Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
   if (coreStat) {
     const label = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
     const val   = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
+
+    // Action gets its own entry: what the action is and what it actually does.
+    if (label === 'Action') {
+      const key  = String(val).replace(/_/g, ' ').trim().toLowerCase();
+      const info = ACTION_INFO[key];
+      const title = info ? uiText(info.name.en, info.name.ru) : val;
+      const body  = info
+        ? uiText(info.desc.en, info.desc.ru)
+        : uiText(`${val}\nThe action this unit performs on its turn.`,
+                 `${val}\nДействие, которое боец совершает в свой ход.`);
+      open(title, renderModalContent(body));
+      return true;
+    }
     const texts = {
       HP:      `HP: ${val}
 Current hit points. Unit is defeated when HP reaches 0.`,

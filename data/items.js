@@ -775,6 +775,11 @@ function applyItemModifiers(unitData, itemStats) {
     }
   }
 
+  // The unit's OWN passives, before the item's is folded in. A unit can carry up
+  // to three natively and an item can add a fourth — the ability row only has
+  // three slots, and the item's passive belongs to the item, shown on the item.
+  const nativePassive = unitData.native_passive ?? unitData.passive;
+
   let passive = unitData.passive;
   if (itemStats.passive) {
     if (Array.isArray(passive)) passive = [...passive, itemStats.passive];
@@ -782,7 +787,7 @@ function applyItemModifiers(unitData, itemStats) {
     else                        passive = itemStats.passive;
   }
 
-  const out = { ...unitData, tags, armor, action_power, initiative, resistances, passive };
+  const out = { ...unitData, tags, armor, action_power, initiative, resistances, passive, native_passive: nativePassive };
   if (hpBonus) {
     if (typeof out.max_hp === 'number') out.max_hp = out.max_hp + hpBonus;
     if (typeof out.hp     === 'number') out.hp     = out.hp     + hpBonus;
