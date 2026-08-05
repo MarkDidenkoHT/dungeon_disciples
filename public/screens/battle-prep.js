@@ -15,6 +15,7 @@ import {
   renderModalContent, openSheet, closeSheet, getSheetBody,
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
+  itemFromDefKey, combatantItem,
   spellName, spellDesc, withEquippedItem,
 } from '../utils.js';
 
@@ -333,7 +334,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   function enemyDetailHtml(e) {
-    return buildUnitCard(e, { badge: 'Enemy' });
+    // Enemies carry items too — encounter slots in data/embark.js name an
+    // item_id, and getEncounter folds its stats in. Show the slot so the player
+    // can see (and read) what the thing facing them is wearing.
+    const enemyItem = itemFromDefKey(e.item_id);
+    const itemSlotHtml = enemyItem
+      ? renderItemSlotIcon(enemyItem, null, { interactive: false, player })
+      : '';
+    return buildUnitCard(e, { badge: 'Enemy', itemSlotHtml });
   }
 
   function spellTargetLabel(spell) {
@@ -1069,8 +1077,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const itemBtn = abilityBtn.closest('[data-item-inspect]');
     if (itemBtn) {
-      const rosterId = itemBtn.dataset.rosterId;
-      const item = equippedItemFor(rosterId);
+      // Either an owned row (player unit) or a blueprint key (enemy unit).
+      const item = itemBtn.dataset.itemKey
+        ? itemFromDefKey(itemBtn.dataset.itemKey)
+        : equippedItemFor(itemBtn.dataset.rosterId);
       if (!item) return;
       const parts = buildItemModalParts(item, player);
       openModal(parts.title, parts.body, parts.badges);

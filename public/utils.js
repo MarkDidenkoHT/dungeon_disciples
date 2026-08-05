@@ -358,6 +358,24 @@ export function renderUnitResistColumn(unit) {
   return `<div class="unit-resists-grid unit-resists-grid--side">${armorCell}${resistCells}</div>`;
 }
 
+// Enemies reference items by blueprint key (unit_data.item_id) rather than
+// owning a row in the items table. This wraps a blueprint so renderItemSlotIcon
+// and buildItemModalParts — both written against owned items — work unchanged.
+export function itemFromDefKey(key) {
+  const def = key ? ITEM_DEFS[key] : null;
+  if (!def) return null;
+  return { id: null, item_key: key, item_name: def.name, item_stats: def };
+}
+
+// The item a combatant is carrying, whichever side it is on: an owned row for
+// the player's units, a blueprint for an enemy's.
+export function combatantItem(unit, ownedLookup = null) {
+  const stored = unit?.unit_data ?? unit ?? {};
+  if (stored.item_id) return itemFromDefKey(stored.item_id);
+  const rosterId = unit?._rosterId ?? stored.roster_id ?? null;
+  return (rosterId != null && ownedLookup) ? ownedLookup(rosterId) : null;
+}
+
 export function renderItemSlotIcon(item, rosterId, opts = {}) {
   const { interactive = true, player = null } = opts;
   const triggerAttr = interactive ? 'data-item-slot' : 'data-item-inspect';
@@ -367,7 +385,7 @@ export function renderItemSlotIcon(item, rosterId, opts = {}) {
     const iconId = stats.icon || stats.key || 'item';
     const label  = itemName(item, player) || item.item_name || 'Item';
     return `
-      <button class="ability-icon ability-icon--item ability-icon--rarity-${itemRarity(item)}" ${triggerAttr} data-roster-id="${rosterId}" data-item-id="${item.id}" title="${label}">
+      <button class="ability-icon ability-icon--item ability-icon--rarity-${itemRarity(item)}" ${triggerAttr} data-roster-id="${rosterId ?? ''}" data-item-id="${item.id ?? ''}" data-item-key="${item.item_key ?? ''}" title="${label}">
         <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
         <span class="item-slot-fallback" style="display:none;">⚙</span>
       </button>`;

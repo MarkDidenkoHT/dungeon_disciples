@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts } from '../utils.js';
+import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -80,8 +80,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     document.addEventListener('click', e => {
       const itemBtn = e.target.closest('[data-item-inspect]');
       if (!itemBtn) return;
-      const rosterId = itemBtn.dataset.rosterId;
-      const item = equippedItemFor(rosterId);
+      // Blueprint key (enemy) or owned row (player).
+      const item = itemBtn.dataset.itemKey
+        ? itemFromDefKey(itemBtn.dataset.itemKey)
+        : equippedItemFor(itemBtn.dataset.rosterId);
       if (!item) return;
       const parts = buildItemModalParts(item, player);
       openSubSheet(parts.title, parts.body, parts.badges);
@@ -438,11 +440,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
-    // The item slot is drawn for ANY combatant that carries one, not just the
-    // player's — enemies have none today, but PvP opponents will, and the slot
-    // is where an item's passive is explained (it is no longer duplicated among
-    // the unit's own three passive icons).
-    const equippedItem = equippedItemFor(c._rosterId);
+    // Drawn for ANY combatant carrying an item. The player's units resolve
+    // through the owned-items table; enemies carry an item_id blueprint key from
+    // the encounter (see data/embark.js getEncounter), which is why keying only
+    // off _rosterId showed nothing on the enemy side.
+    const equippedItem = combatantItem(c, equippedItemFor);
     const itemSlotHtml = equippedItem
       ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
       : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');
