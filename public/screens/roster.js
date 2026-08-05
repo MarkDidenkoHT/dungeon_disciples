@@ -12,7 +12,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, openSheet, closeSheet, openSubSheet, closeSubSheet, getSubSheetBody, getSheetBody, applyBackground,
+  renderModalContent, openSheet, closeSheet, onSheetClose, openSubSheet, closeSubSheet, getSubSheetBody, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
   getActionLabel, itemName, itemRarity, handleUnitInspect, CRYSTAL_ICONS, GOLD_ICON,
@@ -530,7 +530,7 @@ export function renderRoster(root, { player }) {
     }).join(', ');
   }
 
-  function buildItemCard(item, unit, unitTags) {
+  function buildItemCard(item, unit, unitTags, count = 1) {
     const stats        = item.item_stats || {};
     const iconId        = stats.icon || stats.key || 'item';
     const equippedHere  = String(item.equipped_by) === String(unit.id);
@@ -555,7 +555,7 @@ export function renderRoster(root, { player }) {
           <img src="/assets/icons/items/${iconId}.png" alt="${itemName(item, player)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
-        <div class="item-card-name">${itemName(item, player)}</div>
+        <div class="item-card-name">${itemName(item, player)}${count > 1 ? ` <span class="item-card-count">x${count}</span>` : ''}</div>
         ${stats.tag_required ? `<div class="item-card-tag">Requires: ${stats.tag_required}</div>` : ''}
         ${stats.adds_tag     ? `<div class="item-card-tag item-card-tag--adds">Grants tag: ${stats.adds_tag}</div>` : ''}
         <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
@@ -803,17 +803,33 @@ export function renderRoster(root, { player }) {
           .filter(def => !readyOnly || canCraftNow(def))
           .map(def => ({ kind: 'blueprint', def, owned: items.filter(it => itemKeyOf(it) === def.key).length }));
       }
-      return items
-        .filter(it => {
-          if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
-          if (filter === 'owned') return true;
-          const stats    = it.item_stats || {};
-          const factionOk = !stats.faction || stats.faction === player.faction;
-          const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
-          const equippedHere = String(it.equipped_by) === String(rosterId);
-          return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
-        })
-        .map(it => ({ kind: 'item', item: it }));
+      const visible = items.filter(it => {
+        if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
+        if (filter === 'owned') return true;
+        const stats    = it.item_stats || {};
+        const factionOk = !stats.faction || stats.faction === player.faction;
+        const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+        const equippedHere = String(it.equipped_by) === String(rosterId);
+        return equippedHere || (factionOk && tagOk && (it.equipped_by == null));
+      });
+
+      // Five Padded Armors are one line reading "x5", not five identical cards
+      // to scroll past. Copies are grouped by blueprint key; equipping acts on
+      // the first free copy in the stack. An item equipped on THIS unit stays
+      // its own entry, because its card shows Unequip rather than Equip.
+      const stacks = new Map();
+      const out = [];
+      for (const it of visible) {
+        const equippedHere = String(it.equipped_by) === String(rosterId);
+        const key = itemKeyOf(it);
+        if (equippedHere || !key) { out.push({ kind: 'item', item: it, count: 1 }); continue; }
+        const stack = stacks.get(key);
+        if (stack) { stack.count += 1; stack.copies.push(it); continue; }
+        const entry = { kind: 'item', item: it, count: 1, copies: [it] };
+        stacks.set(key, entry);
+        out.push(entry);
+      }
+      return out;
     }
 
     function entryStats(entry) {
@@ -837,7 +853,9 @@ export function renderRoster(root, { player }) {
              data-i="${i}" title="${entryName(entry)}">
           <img class="portrait-art-img" src="/assets/icons/items/${entryIcon(entry)}.png"
                alt="${entryName(entry)}" onerror="this.style.display='none'">
-          ${entry.kind === 'blueprint' && entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : ''}
+          ${entry.kind === 'blueprint'
+            ? (entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : '')
+            : ((entry.count ?? 1) > 1 ? `<span class="item-track-owned">${entry.count}</span>` : '')}
         </div>`).join('');
     }
 
@@ -846,7 +864,7 @@ export function renderRoster(root, { player }) {
       if (!entry) return `<p class="placeholder">${T('nothingMatches')}</p>`;
       return entry.kind === 'blueprint'
         ? buildCatalogItemCard(entry.def, entry.owned, unit, unitTags)
-        : buildItemCard(entry.item, unit, unitTags);
+        : buildItemCard(entry.item, unit, unitTags, entry.count ?? 1);
     }
 
     function render() {
@@ -897,20 +915,12 @@ export function renderRoster(root, { player }) {
 
     openSheet(T('items'), render());
 
-    const closeBtn = document.querySelector('.modal-close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', hideTrophyBar, { once: true });
-    }
-
-    // Remove the trophy bar when the sheet is dismissed
-    const _sheetCloseObserver = new MutationObserver(() => {
-      const overlay = document.querySelector('.modal-overlay:not(.hidden):not(.modal-overlay--sub)');
-      if (!overlay) {
-        hideTrophyBar();
-        _sheetCloseObserver.disconnect();
-      }
-    });
-    _sheetCloseObserver.observe(document.body, { childList: true, subtree: true });
+    // The trophy bar belongs to this sheet, so it goes when the sheet does —
+    // however it is dismissed (✕, backdrop tap, or code calling closeSheet).
+    // The old MutationObserver watched for the overlay being REMOVED, but sheets
+    // are only ever hidden by class, so it never fired and the bar was left
+    // stranded over the roster.
+    onSheetClose(hideTrophyBar);
 
     // Bind to the MAIN sheet's body specifically. document.querySelector('.modal-body')
     // returns whichever sheet is first in the DOM — if a sub-sheet (ability/stat

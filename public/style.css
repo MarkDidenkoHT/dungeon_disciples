@@ -1,5 +1,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Mobile browsers paint a translucent blue box over a tapped element — and on
+   Android WebView over the IMAGES inside it — for ~150ms. On an icon-driven UI
+   that reads as the art flickering, so it is disabled globally; every control
+   here already has its own :active state. */
+* { -webkit-tap-highlight-color: transparent; }
+button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 :root {
   --bg:      #111318;
   --surface: #1c1f28;
@@ -742,7 +753,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-image: url('/assets/icons/ui/recource_bar.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: nowrap;
   overflow: hidden;
@@ -768,7 +778,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 0;
   flex-shrink: 0;
 }
 
@@ -951,14 +961,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-icon-img {
-  width: 40px;   /* was `40` — a missing unit, so the declaration was dropped */
-  height: 40px;
+  width: 35px;   /* was `40` — a missing unit, so the declaration was dropped */
+  height: 35px;
   object-fit: contain;
   display: block;
 }
 
 .res-bar-val {
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
@@ -5420,4 +5430,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 @keyframes embark-highlight-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.55); }
   50%      { box-shadow: 0 0 14px 3px rgba(76, 175, 80, 0.55); }
+}
+
+/* Stacked copies: one card reading "x3" instead of three identical cards. */
+.item-card-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
 }

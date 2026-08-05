@@ -641,10 +641,23 @@ export function openSheet(title, bodyHtml, badgesHtml = '') {
   document.body.style.overflow = 'hidden';
 }
 
+// Anything that decorates the screen while the sheet is open (the roster's
+// trophy bar) registers here. The sheet is hidden by toggling a class rather
+// than being removed, so watching the DOM for its removal never fires.
+const _sheetCloseHandlers = new Set();
+export function onSheetClose(fn) {
+  _sheetCloseHandlers.add(fn);
+  return () => _sheetCloseHandlers.delete(fn);
+}
+
 export function closeSheet() {
   if (!_sheetEl) return;
   _sheetEl.classList.add('hidden');
   document.body.style.overflow = '';
+  for (const fn of [..._sheetCloseHandlers]) {
+    _sheetCloseHandlers.delete(fn);
+    try { fn(); } catch {}
+  }
 }
 
 export function getSheetBody() {
