@@ -75,11 +75,10 @@ const REGIONS = [
   },
 ];
 
-// Region art as the card's full background, under a dark scrim so the overlaid
-// text stays readable. If the art is missing the browser just drops the image
-// layer and the scrim tints the card's base surface — no broken state.
+// Region art as the card's full background. The text over it carries its own
+// shadow (see .embark-card-label / -desc), so the art is shown clean.
 function regionBgStyle(r) {
-  return `background-image: linear-gradient(rgba(12,15,22,.60), rgba(12,15,22,.84)), url('/assets/embark/${r.id}.jpg');`;
+  return `background-image: url('/assets/embark/${r.id}.jpg');`;
 }
 
 // `highlightRegions` arrives from the item sheet's material detail: the regions

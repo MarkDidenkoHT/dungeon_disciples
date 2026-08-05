@@ -334,7 +334,7 @@ const UNITS = {
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg',
+      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 200, passive: ['rage 1', 'vengeance 1'], ability: 'pact 1',
     },
     tormentor: {
@@ -345,7 +345,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg',
+      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     praetor: {
@@ -356,7 +356,7 @@ const UNITS = {
       hp: 140, armor: 15, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg',
+      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 1800, passive: ['rage 2', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     chorister: {
@@ -521,7 +521,7 @@ const UNITS = {
       hp: 60, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 5, action_icon: 'fire_claw.jpg',
+      damage_source: 'fire', action_power: 5, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
       xp: 100, passive: 'volcanic_skin 1', ability: null,
     },
     blaze_spawn: {
@@ -532,7 +532,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg',
+      damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
       xp: 400, passive: ['volcanic_skin 1', 'last_verse 1'], ability: null,
     },
     inferno_spawn: {
@@ -543,7 +543,7 @@ const UNITS = {
       hp: 75, armor: 10, initiative: 10,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg',
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
       xp: 900, passive: ['volcanic_skin 2', 'last_verse 1'], ability: null,
     },
     cultist: {
@@ -1582,7 +1582,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 15,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 6, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 100, passive: 'horde 1', ability: 'shared_suffering 1',
     },
     poisonous_ghoul: {
@@ -1593,7 +1593,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
+      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 400, passive: ['horde 1', 'infect 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
@@ -1604,7 +1604,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg', action_sfx: 'claw_light',
+      damage_source: 'death', action_power: 15, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 900, passive: ['horde 1', 'infect 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
@@ -1615,7 +1615,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 400, passive: ['horde 1', 'lifesteal 1'], ability: 'shared_suffering 1',
     },
     abominate: {
@@ -1626,7 +1626,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 40,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 900, passive: ['horde 1', 'lifesteal 1', 'rage 1'], ability: 'shared_suffering 1',
     },
     cesswalker: {
@@ -1747,7 +1747,7 @@ const UNITS = {
       hp: 90, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 200, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
     },
     crimson_communicant: {
@@ -1758,7 +1758,7 @@ const UNITS = {
       hp: 105, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 32, action_icon: 'blood_claw.jpg',
+      damage_source: 'physical', action_power: 32, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 800, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
     },
     chosen: {
@@ -1769,7 +1769,7 @@ const UNITS = {
       hp: 130, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'blood_claw.jpg',
+      damage_source: 'physical', action_power: 40, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 1800, passive: ['sacrament 1', 'regenerate 2', 'lifesteal 1'], ability: 'libation 1',
     },
     husk_colossus: {
@@ -1780,7 +1780,7 @@ const UNITS = {
       hp: 120, armor: 0, initiative: 20,
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
       xp: 200, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
@@ -1791,7 +1791,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
       xp: 800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_angel: {
@@ -1802,7 +1802,7 @@ const UNITS = {
       hp: 140, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg',
+      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
       xp: 1800, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {

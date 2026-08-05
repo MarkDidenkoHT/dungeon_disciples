@@ -860,115 +860,7 @@ export async function repair(cellEl) {
   console.log('[battle-fx] repair END', dataId);
 }
 
-// ── cleanse — a purifying white-violet wash that expels dark impurity motes ────
-// Phases: rise (.0–.45) a luminous curtain of white-violet light sweeps upward
-// through the cell; eject (.25–.60) dark motes burst outward and dissolve;
-// seal (.55–1) a clean iridescent ring contracts inward and vanishes.
-export async function cleanse(cellEl) {
-  console.log('[battle-fx] cleanse START', cellEl?.dataset?.id);
-  if (!cellEl || !app || !window.PIXI) return;
-  const dataId = cellEl.dataset.id;
-  const TAU = Math.PI * 2;
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
-  const ADD = PIXI.BLEND_MODES.ADD;
 
-  // Stable impurity mote constants — they fly outward in fixed directions.
-  const motes = Array.from({ length: 14 }, () => ({
-    ang: rand(0, TAU), speed: rand(0.7, 1.3), size: rand(3, 7), delay: rand(0, 0.3),
-  }));
-  // Sparkle cross/star specks that appear in the clean wake.
-  const sparkles = Array.from({ length: 10 }, () => ({
-    fx: rand(0.1, 0.9), fy: rand(0.1, 0.85), phase: rand(0, 1), size: rand(2, 4),
-  }));
-
-  const layer     = new PIXI.Container();
-  const glowLayer = new PIXI.Container();
-  glowLayer.filters = [new PIXI.BlurFilter(7)];
-  const washG  = new PIXI.Graphics(); washG.blendMode  = ADD;
-  const moteG  = new PIXI.Graphics();                          // dark motes, normal blend
-  const sparkG = new PIXI.Graphics(); sparkG.blendMode = ADD;
-  const ringG  = new PIXI.Graphics();
-  glowLayer.addChild(washG, sparkG);
-  layer.addChild(glowLayer, moteG, ringG);
-  app.stage.addChild(layer);
-
-  await animate(950, t => {
-    const b = cellBoundsFor(dataId);
-    if (!b) { layer.visible = false; return; }
-    layer.visible = true;
-
-    const cx = b.x + b.width  / 2;
-    const cy = b.y + b.height / 2;
-    const R  = Math.min(b.width, b.height);
-
-    // ── Rising purification wash ──────────────────────────────────────────────
-    // A tall rectangle of violet-white light that rises from the bottom, like a
-    // wave of holy water washing the filth upward and off the top of the cell.
-    const rise   = clamp01(t / 0.45);
-    const washA  = rise < 0.8 ? rise / 0.8 : (1 - rise) / 0.2;
-    const washTop  = b.y + b.height * (1 - rise * 1.35); // sweeps past the top
-    const washBot  = b.y + b.height;
-    const washH    = Math.max(0, washBot - washTop);
-    washG.clear();
-    if (washH > 0) {
-      washG.beginFill(0xd4aaff, 0.38 * washA);
-      washG.drawRect(b.x, washTop, b.width, washH);
-      washG.endFill();
-      // Brighter leading edge — the crest of the wave.
-      washG.beginFill(0xffffff, 0.50 * washA);
-      washG.drawRect(b.x, washTop, b.width, Math.min(washH * 0.18, 8));
-      washG.endFill();
-    }
-
-    // ── Dark impurity motes ejected outward ───────────────────────────────────
-    moteG.clear();
-    for (const m of motes) {
-      const phase = clamp01((t - 0.25 - m.delay * 0.3) / 0.35);
-      if (phase <= 0) continue;
-      const dist = R * 0.85 * phase * m.speed;
-      const mx = cx + Math.cos(m.ang) * dist;
-      const my = cy + Math.sin(m.ang) * dist;
-      const mAlpha = (1 - phase) * 0.8;
-      moteG.beginFill(0x330044, mAlpha);
-      moteG.drawCircle(mx, my, m.size * (1 - phase * 0.5));
-      moteG.endFill();
-    }
-
-    // ── Clean sparkles that fill in after the wash passes ─────────────────────
-    sparkG.clear();
-    const sparkWindow = clamp01((t - 0.30) / 0.55);
-    if (sparkWindow > 0) {
-      for (const sp of sparkles) {
-        const twinkle = Math.abs(Math.sin(t * 8 + sp.phase * TAU));
-        const spAlpha = sparkWindow * (1 - clamp01((t - 0.72) / 0.28)) * twinkle;
-        const sx2 = b.x + sp.fx * b.width;
-        const sy2 = b.y + sp.fy * b.height;
-        softGlow(sparkG, sx2, sy2, sp.size, 0xe8d0ff, spAlpha * 0.9);
-        // Little cross flare
-        const arm = sp.size * 1.6;
-        sparkG.lineStyle(1, 0xffffff, spAlpha * 0.6);
-        sparkG.moveTo(sx2 - arm, sy2); sparkG.lineTo(sx2 + arm, sy2);
-        sparkG.moveTo(sx2, sy2 - arm); sparkG.lineTo(sx2, sy2 + arm);
-      }
-    }
-
-    // ── Sealing ring contracts inward ─────────────────────────────────────────
-    const seal = clamp01((t - 0.55) / 0.45);
-    ringG.clear();
-    if (seal > 0) {
-      const ringR = R * (1.1 - seal * 0.9); // starts large, contracts to 0.2R
-      const rAlpha = seal < 0.7 ? seal / 0.7 : (1 - seal) / 0.3;
-      ringG.lineStyle(3, 0xcc88ff, rAlpha * 0.85);
-      ringG.drawCircle(cx, cy, ringR);
-      ringG.lineStyle(1.5, 0xffffff, rAlpha * 0.5);
-      ringG.drawCircle(cx, cy, ringR * 0.88);
-    }
-  });
-
-  layer.destroy({ children: true });
-  console.log('[battle-fx] cleanse END', dataId);
-}
 
 // ── raise_dead — necrotic resurrection: ground-crack miasma, bone lightning ────
 // A dramatic three-phase resurrection sequence:
@@ -1326,109 +1218,7 @@ export async function arcane_bolt(cellEl, opts = {}) {
   console.log('[battle-fx] arcane_bolt END', dataId);
 }
 
-// ── poison_dart — a thin green dart streaks from caster to target, splatters ───
-// A tiny poisonous projectile with a trailing venom wake. On arrival it
-// splashes a toxic bloom and leaves a seeping green puddle that pulses.
-// Good for rogues, assassins, and poisoner units.
-export async function poison_dart(cellEl, opts = {}) {
-  console.log('[battle-fx] poison_dart START', cellEl?.dataset?.id);
-  if (!cellEl || !app || !window.PIXI) return;
-  const dataId   = cellEl.dataset.id;
-  const targetId = opts.targetCell?.dataset?.id || null;
-  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
-  const lerp     = (a, b, t) => a + (b - a) * t;
-  const ADD = PIXI.BLEND_MODES.ADD;
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const TAU = Math.PI * 2;
 
-  const splatter = Array.from({ length: 10 }, () => ({
-    ang: rand(0, TAU), speed: rand(0.4, 1.0), size: rand(3, 8), delay: rand(0, 0.15),
-  }));
-
-  const layer     = new PIXI.Container();
-  const glowLayer = new PIXI.Container();
-  glowLayer.filters = [new PIXI.BlurFilter(5)];
-  const dartG    = new PIXI.Graphics();                          // crisp dart — normal blend
-  const venomG   = new PIXI.Graphics(); venomG.blendMode   = ADD;
-  const splatterG= new PIXI.Graphics(); splatterG.blendMode = ADD;
-  const puddleG  = new PIXI.Graphics(); puddleG.blendMode  = ADD;
-  glowLayer.addChild(venomG, splatterG, puddleG);
-  layer.addChild(glowLayer, dartG);
-  app.stage.addChild(layer);
-
-  const DURATION = 700;
-  await animate(DURATION, t => {
-    const s = cellBoundsFor(dataId);
-    if (!s) { layer.visible = false; return; }
-    const d = targetId ? cellBoundsFor(targetId) : null;
-    layer.visible = true;
-
-    const sx = s.x + s.width  / 2, sy = s.y + s.height / 2;
-    const dx = d ? d.x + d.width  / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.5;
-    const dy = d ? d.y + d.height / 2 : sy;
-    const R  = Math.min(s.width, s.height);
-    const time = t * DURATION * 0.07;
-
-    const travel   = clamp01(t / 0.50);
-    const detonate = clamp01((t - 0.48) / 0.24);
-    const puddle   = clamp01((t - 0.62) / 0.38);
-
-    const ang  = Math.atan2(dy - sy, dx - sx);
-    const dirX = Math.cos(ang), dirY = Math.sin(ang);
-    const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
-    const dartLen = R * 0.28;
-
-    // Dart body: thin needle.
-    dartG.clear();
-    if (travel < 1 || detonate < 0.15) {
-      const tx2 = lerp(sx, dx, travel), ty2 = lerp(sy, dy, travel);
-      const dartA = detonate < 0.15 ? 1 - detonate / 0.15 : 0;
-      dartG.lineStyle(2.5, 0x22dd44, dartA);
-      dartG.moveTo(tx2 - dirX * dartLen, ty2 - dirY * dartLen);
-      dartG.lineTo(tx2 + dirX * dartLen * 0.4, ty2 + dirY * dartLen * 0.4);
-      // Tip glow
-      venomG.clear();
-      softGlow(venomG, tx2 + dirX * dartLen * 0.4, ty2 + dirY * dartLen * 0.4, dartLen * 0.3, 0x55ff66, dartA * 0.7);
-      // Venom trail behind.
-      const trailSegs = 6;
-      for (let i = 1; i <= trailSegs; i++) {
-        const frac = 1 - (i / trailSegs) * 0.35;
-        const trailT = Math.max(0, travel - i * 0.05);
-        const trailX = lerp(sx, dx, trailT);
-        const trailY = lerp(sy, dy, trailT);
-        softGlow(venomG, trailX, trailY, dartLen * 0.2 * (1 - i / trailSegs), 0x33cc44, dartA * 0.4 * frac);
-      }
-    } else {
-      venomG.clear();
-    }
-
-    // Splatter on arrival.
-    splatterG.clear();
-    if (detonate > 0) {
-      const flash = detonate < 0.5 ? detonate / 0.5 : (1 - detonate) / 0.5;
-      softGlow(splatterG, dx, dy, R * 0.4 * detonate, 0x44ff55, flash * 0.65);
-      for (const sp of splatter) {
-        const phase = clamp01((detonate - sp.delay) / 0.85);
-        if (phase <= 0) continue;
-        const dist = R * 0.65 * phase * sp.speed;
-        const spx = dx + Math.cos(sp.ang) * dist;
-        const spy = dy + Math.sin(sp.ang) * dist;
-        softGlow(splatterG, spx, spy, sp.size * (1.1 - phase * 0.6), 0x33cc44, (1 - phase) * 0.8);
-      }
-    }
-
-    // Seeping puddle that lingers and pulses.
-    puddleG.clear();
-    if (puddle > 0) {
-      const pulse = 0.7 + 0.3 * Math.sin(time * 1.8);
-      const pAlpha = puddle < 0.4 ? puddle / 0.4 : (1 - clamp01((t - 0.88) / 0.12));
-      softGlow(puddleG, dx, dy + R * 0.25, R * 0.38 * puddle * pulse, 0x22aa33, pAlpha * 0.5);
-    }
-  });
-
-  layer.destroy({ children: true });
-  console.log('[battle-fx] poison_dart END', dataId);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1763,6 +1553,339 @@ export async function arrow_shot(cellEl, opts = {}) {
   console.log('[battle-fx] arrow_shot END', dataId);
 }
 
+// ── cleanse — a POSITIVE dispel: the ally is unburdened ──────────────────────
+// Reads as relief, not as damage. Warm gold-white light pours down over the
+// unit, the debuffs crack and lift off as dark shards that rise and burn away,
+// and a clean halo settles. Nothing bursts outward and nothing is thrown AT the
+// target — the motion is downward light, then upward release.
+export async function cleanse(cellEl) {
+  console.log('[battle-fx] cleanse START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const TAU     = Math.PI * 2;
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  // The lifted afflictions: dark shards that peel off and rise, fading as they
+  // leave. They start ON the unit rather than flying at it.
+  const shards = Array.from({ length: 11 }, () => ({
+    x: rand(-0.42, 0.42), y: rand(-0.25, 0.35),
+    drift: rand(-0.18, 0.18), rise: rand(0.75, 1.35),
+    size: rand(2.5, 6), spin: rand(-3, 3), delay: rand(0, 0.30),
+  }));
+  // Motes of clean light falling INTO the unit, the counter-motion.
+  const blessings = Array.from({ length: 9 }, () => ({
+    x: rand(-0.40, 0.40), fall: rand(0.6, 1.1), size: rand(1.5, 3.5), delay: rand(0, 0.4),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const beamG  = new PIXI.Graphics(); beamG.blendMode  = ADD;
+  const blessG = new PIXI.Graphics(); blessG.blendMode = ADD;
+  const haloG  = new PIXI.Graphics(); haloG.blendMode  = ADD;
+  const shardG = new PIXI.Graphics();                    // dark, normal blend
+  glowLayer.addChild(beamG, blessG, haloG);
+  layer.addChild(glowLayer, shardG);
+  app.stage.addChild(layer);
+
+  const DURATION = 1000;
+  await animate(DURATION, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    const pour    = clamp01(t / 0.40);          // light descends
+    const release = clamp01((t - 0.25) / 0.55); // afflictions lift
+    const settle  = clamp01((t - 0.70) / 0.30); // halo closes
+    const fade    = t < 0.12 ? t / 0.12 : (t > 0.80 ? (1 - t) / 0.20 : 1);
+
+    // A shaft of warm light coming DOWN over the unit — the blessing arriving.
+    beamG.clear();
+    const beamW = R * 0.52 * pour;
+    const beamH = b.height * pour;
+    beamG.beginFill(0xfff3cd, 0.16 * fade);
+    beamG.drawRoundedRect(cx - beamW / 2, b.y, beamW, beamH, beamW * 0.4);
+    beamG.endFill();
+    softGlow(beamG, cx, cy - R * 0.1, R * 0.44 * pour, 0xffe9a8, 0.34 * fade);
+
+    // Clean motes settling into the unit.
+    blessG.clear();
+    for (const m of blessings) {
+      const mt = clamp01((t - m.delay) / (0.75 - m.delay));
+      if (mt <= 0) continue;
+      const mx = cx + m.x * R;
+      const my = b.y + (cy - b.y) * mt * m.fall;
+      softGlow(blessG, mx, my, m.size, 0xfff8e0, 0.75 * (1 - mt) * fade);
+    }
+
+    // Afflictions peeling off and rising away — they never travel toward the
+    // unit, so the effect cannot be mistaken for something being cast AT it.
+    shardG.clear();
+    for (const sh of shards) {
+      const st = clamp01((release - sh.delay) / (1 - sh.delay));
+      if (st <= 0) continue;
+      const sx = cx + sh.x * R + Math.sin(st * 5 + sh.spin) * R * 0.06 + sh.drift * R * st;
+      const sy = cy + sh.y * R - st * R * sh.rise;
+      const a  = (1 - st) * 0.85 * fade;
+      const sz = sh.size * (1 - st * 0.55);
+      shardG.beginFill(0x2a2233, a);
+      shardG.drawCircle(sx, sy, sz);
+      shardG.endFill();
+      // a thin bright edge, as if the light is burning them off
+      shardG.lineStyle(1, 0xffe9a8, a * 0.55);
+      shardG.drawCircle(sx, sy, sz * 1.5);
+      shardG.lineStyle(0);
+    }
+
+    // The halo that closes over a cleansed unit.
+    haloG.clear();
+    if (settle > 0) {
+      const hA = Math.sin(settle * Math.PI) * 0.9 * fade;
+      haloG.lineStyle(2.5, 0xfff3cd, hA);
+      haloG.drawEllipse(cx, cy - R * 0.30, R * 0.34 * (0.7 + settle * 0.3), R * 0.12);
+      softGlow(haloG, cx, cy - R * 0.30, R * 0.22, 0xffe9a8, hA * 0.5);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] cleanse END', dataId);
+}
+
+// ── poison_dart — a heavy glob of venom, not a needle ────────────────────────
+// Rewritten for weight: it winds up, travels slowly on a sagging arc with a fat
+// trailing tail, lands with a thud (impact ring + shockwave), throws a wide
+// splatter, and leaves a bubbling pool that drips.
+export async function poison_dart(cellEl, opts = {}) {
+  console.log('[battle-fx] poison_dart START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const tail     = Array.from({ length: 10 }, (_, i) => ({ lag: 0.03 + i * 0.022, size: rand(2.5, 6) }));
+  const splatter = Array.from({ length: 18 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.35, 1.15), size: rand(2.5, 7), drop: rand(0.3, 1.0),
+  }));
+  const bubbles  = Array.from({ length: 7 }, () => ({
+    x: rand(-0.30, 0.30), size: rand(2, 5), phase: rand(0, TAU), rate: rand(1.5, 3),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const auraG   = new PIXI.Graphics(); auraG.blendMode = ADD;
+  const globG   = new PIXI.Graphics();                     // the mass itself
+  const splatG  = new PIXI.Graphics();
+  const poolG   = new PIXI.Graphics();
+  const waveG   = new PIXI.Graphics();
+  glowLayer.addChild(auraG);
+  layer.addChild(glowLayer, poolG, globG, splatG, waveG);
+  app.stage.addChild(layer);
+
+  const DURATION = 1000;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.6;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    const wind   = clamp01(t / 0.24);            // gathers and swells
+    const travel = clamp01((t - 0.22) / 0.40);   // slow, heavy flight
+    const impact = clamp01((t - 0.60) / 0.16);   // the thud
+    const linger = clamp01((t - 0.66) / 0.34);   // pool + bubbling
+
+    const ang   = Math.atan2(dy - sy, dx - sx);
+    const time  = t * DURATION * 0.01;
+
+    // Wind-up: the glob swells at the caster, dripping before release.
+    auraG.clear();
+    if (travel === 0) {
+      softGlow(auraG, sx, sy, R * 0.34 * wind, 0x7bd83a, 0.55 * wind);
+      softGlow(auraG, sx, sy, R * 0.18 * wind, 0xd9ff9e, 0.7 * wind);
+    }
+
+    // Flight: sags under its own mass, fat tail, wobbling as it goes.
+    globG.clear();
+    if (travel > 0 && impact < 0.6) {
+      const sag = Math.sin(travel * Math.PI) * R * 0.30;
+      const gx  = lerp(sx, dx, travel);
+      const gy  = lerp(sy, dy, travel) + sag;
+      const a   = 1 - impact * 1.6;
+
+      for (const p of tail) {
+        const pt = Math.max(0, travel - p.lag);
+        const px = lerp(sx, dx, pt);
+        const py = lerp(sy, dy, pt) + Math.sin(pt * Math.PI) * R * 0.30;
+        globG.beginFill(0x3f7a16, 0.45 * a * (1 - p.lag * 3));
+        globG.drawCircle(px, py, p.size * (1 - p.lag * 1.5));
+        globG.endFill();
+      }
+      // The mass: a squashed blob, wobbling along its axis of travel.
+      const wob = 1 + Math.sin(time * 1.4) * 0.14;
+      globG.beginFill(0x4f9c1c, 0.95 * a);
+      globG.drawEllipse(gx, gy, R * 0.15 * wob, R * 0.13 / wob);
+      globG.endFill();
+      globG.beginFill(0xa8e85a, 0.9 * a);
+      globG.drawEllipse(gx - Math.cos(ang) * R * 0.02, gy - Math.sin(ang) * R * 0.02, R * 0.07, R * 0.06);
+      globG.endFill();
+    }
+
+    // Impact: a hard shockwave ring, the "thud".
+    waveG.clear();
+    if (impact > 0 && impact < 1) {
+      waveG.lineStyle(4 * (1 - impact) + 1, 0xd9ff9e, (1 - impact) * 0.9);
+      waveG.drawCircle(dx, dy, R * 0.15 + impact * R * 0.85);
+      waveG.lineStyle(2 * (1 - impact), 0x4f9c1c, (1 - impact) * 0.7);
+      waveG.drawCircle(dx, dy, R * 0.05 + impact * R * 0.55);
+    }
+
+    // Splatter thrown wide, falling as it flies.
+    splatG.clear();
+    if (impact > 0) {
+      const a = 1 - linger * 0.8;
+      for (const sp of splatter) {
+        const dist = R * 0.95 * impact * sp.speed;
+        const px = dx + Math.cos(sp.ang) * dist;
+        const py = dy + Math.sin(sp.ang) * dist * 0.75 + impact * impact * R * sp.drop * 0.5;
+        splatG.beginFill(0x3f7a16, 0.8 * a);
+        splatG.drawCircle(px, py, sp.size * (1 - impact * 0.35));
+        splatG.endFill();
+      }
+    }
+
+    // A pool that stays and bubbles under the target.
+    poolG.clear();
+    if (linger > 0) {
+      const a = (1 - linger) * 0.85;
+      poolG.beginFill(0x2f5c10, a);
+      poolG.drawEllipse(dx, dy + R * 0.30, R * 0.34 * (0.6 + linger * 0.4), R * 0.10);
+      poolG.endFill();
+      for (const bub of bubbles) {
+        const rise = (Math.sin(time * bub.rate + bub.phase) + 1) / 2;
+        poolG.beginFill(0x7bd83a, a * 0.8 * (1 - rise));
+        poolG.drawCircle(dx + bub.x * R, dy + R * 0.30 - rise * R * 0.16, bub.size * (1 - rise * 0.4));
+        poolG.endFill();
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] poison_dart END', dataId);
+}
+
+// ── claw_strike — three raking gashes torn across the target ─────────────────
+// Drawn ON the target rather than as something thrown: three parallel slashes
+// sweep across in quick succession, each flashing white-hot then cooling to a
+// red tear, with a brief shake and a spray of torn light.
+export async function claw_strike(cellEl, opts = {}) {
+  console.log('[battle-fx] claw_strike START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  const target = opts.targetCell || cellEl;
+  if (!target || !app || !window.PIXI) return;
+  const dataId  = target.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  // Three gashes, staggered, each slightly different in length and offset.
+  const GASHES = [
+    { delay: 0.00, off: -0.26, len: 0.86, tilt: -0.30 },
+    { delay: 0.09, off:  0.00, len: 1.00, tilt: -0.24 },
+    { delay: 0.18, off:  0.26, len: 0.82, tilt: -0.34 },
+  ];
+  const sparks = Array.from({ length: 14 }, () => ({
+    ang: rand(-0.9, 0.9), speed: rand(0.5, 1.2), size: rand(1.5, 3.5), delay: rand(0, 0.2),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const hotG   = new PIXI.Graphics(); hotG.blendMode   = ADD;   // the flash
+  const sparkG = new PIXI.Graphics(); sparkG.blendMode = ADD;
+  const tearG  = new PIXI.Graphics();                            // the wound
+  glowLayer.addChild(hotG, sparkG);
+  layer.addChild(tearG, glowLayer);
+  app.stage.addChild(layer);
+
+  const DURATION = 620;
+  await animate(DURATION, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    // The whole cell jolts on the first contact, settling quickly.
+    const jolt = t < 0.35 ? (1 - t / 0.35) * 4 : 0;
+    const jx = (Math.random() - 0.5) * jolt;
+    const jy = (Math.random() - 0.5) * jolt;
+
+    hotG.clear();
+    tearG.clear();
+
+    for (const g of GASHES) {
+      const gt = clamp01((t - g.delay) / 0.34);      // the rake itself
+      if (gt <= 0) continue;
+      const fadeOut = clamp01((t - g.delay - 0.34) / 0.30);
+
+      // Each gash is a diagonal line drawn from upper-left to lower-right,
+      // revealed progressively so it reads as being torn open.
+      const half = R * 0.46 * g.len;
+      const x0 = cx + jx - half;
+      const y0 = cy + jy - half * g.tilt - g.off * R * 0.5;
+      const x1 = cx + jx + half * gt;
+      const y1 = cy + jy + half * gt * g.tilt * -1 - g.off * R * 0.5 + half * gt * 0.55;
+
+      // Cooling wound underneath.
+      tearG.lineStyle(Math.max(1, R * 0.035 * (1 - fadeOut * 0.6)), 0x9c1015, (1 - fadeOut) * 0.9);
+      tearG.moveTo(x0, y0);
+      tearG.lineTo(x1, y1);
+
+      // White-hot leading edge while the stroke is still travelling.
+      if (gt < 1) {
+        hotG.lineStyle(Math.max(1, R * 0.02), 0xffd9d9, 0.95);
+        hotG.moveTo(lerpNum(x0, x1, 0.75), lerpNum(y0, y1, 0.75));
+        hotG.lineTo(x1, y1);
+        softGlow(hotG, x1, y1, R * 0.09, 0xff6b6b, 0.8);
+      }
+    }
+
+    // Torn light thrown off the wounds, downward-biased.
+    sparkG.clear();
+    const sprayT = clamp01((t - 0.12) / 0.5);
+    if (sprayT > 0) {
+      for (const sp of sparks) {
+        const st = clamp01((sprayT - sp.delay) / (1 - sp.delay));
+        if (st <= 0) continue;
+        const dist = R * 0.6 * st * sp.speed;
+        const px = cx + jx + Math.cos(sp.ang) * dist;
+        const py = cy + jy + Math.sin(sp.ang) * dist + st * st * R * 0.35;
+        softGlow(sparkG, px, py, sp.size * (1 - st * 0.5), 0xff8a8a, (1 - st) * 0.8);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] claw_strike END', dataId);
+}
+
+function lerpNum(a, b, t) { return a + (b - a) * t; }
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -1781,6 +1904,7 @@ export const EFFECTS = {
   shield_bash,
   arcane_bolt,
   poison_dart,
+  claw_strike,
   mend_flesh,
   haunt,
   blood_bolt,
