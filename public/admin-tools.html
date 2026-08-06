@@ -427,6 +427,23 @@
     .rarity-rare { color: #4c9aff; }
     .rarity-epic { color: #b47cff; }
     .rarity-mythic { color: #f5c542; }
+    .item-balance-score {
+      background: #1b1f2b;
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      border: 1px solid #2f3548;
+    }
+    .item-balance-score .score-val {
+      font-weight: 700;
+      color: #f5c542;
+    }
+    .item-balance-score .cost-val {
+      color: #7bdf9a;
+    }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -634,7 +651,6 @@
       const uniquePaths = [...new Set(paths)];
       const results = {};
       
-      // Check each path with retry
       for (let i = 0; i < uniquePaths.length; i++) {
         const path = uniquePaths[i];
         if (iconCache.has(path)) {
@@ -659,7 +675,6 @@
         iconCache.set(path, found);
         results[path] = found;
         
-        // Small delay between requests to avoid rate limiting
         if (i % batchSize === 0 && i > 0) {
           await new Promise(r => setTimeout(r, 10));
         }
@@ -824,6 +839,66 @@
       return unit.vitality + unit.dps;
     }
 
+    // ---- Item Balance Score ----
+    function calculateItemBalanceScore(item) {
+      const mods = item.stat_mods || {};
+      let score = 0;
+      
+      // HP: 1.5 weight
+      if (mods.hp) score += mods.hp * 1.5;
+      
+      // Action Power: 2 weight
+      if (mods.action_power) score += mods.action_power * 2;
+      
+      // Initiative: 2 weight
+      if (mods.initiative) score += mods.initiative * 2;
+      
+      // Armor: 1 weight
+      if (mods.armor) score += mods.armor * 1;
+      
+      // Resistances: 1 weight each
+      const resistTypes = ['air_resist', 'fire_resist', 'nature_resist', 'cold_resist', 'life_resist', 'death_resist'];
+      resistTypes.forEach(resType => {
+        if (mods[resType]) score += mods[resType] * 1;
+      });
+      
+      // Adds tag: 3 weight
+      if (item.adds_tag) score += 3;
+      
+      // Passive: 5 weight
+      if (item.passive) score += 5;
+      
+      return score;
+    }
+
+    function calculateItemCostTotal(item) {
+      let total = 0;
+      
+      // Base resource costs (Gold and Crystals)
+      const cost = item.cost || {};
+      if (cost.Gold) total += cost.Gold;
+      
+      // Crystal costs
+      const crystalKeys = ['Crystals_Air', 'Crystals_Fire', 'Crystals_Nature', 'Crystals_Frost', 'Crystals_Life', 'Crystals_Death'];
+      crystalKeys.forEach(key => {
+        if (cost[key]) total += cost[key] * 0.5; // Crystals worth half of Gold per unit
+      });
+      
+      // Special resources (shards, dust, etc.)
+      const specialResources = ['crystal_shard', 'crystal_dust', 'living_geode', 'vial_of_pure_blood', 'grave_dust', 'shard_of_might', 'shard_of_devotion', 'aggrails_signet'];
+      specialResources.forEach(res => {
+        if (cost[res]) total += cost[res] * 5;
+      });
+      
+      // Item costs (crafting from other items)
+      const itemCost = item.item_cost || {};
+      Object.values(itemCost).forEach(qty => {
+        total += qty * 10; // Each item ingredient costs 10 Gold equivalent
+      });
+      
+      return Math.round(total);
+    }
+
     // ---- Flatten units ----
     function flattenUnits(units) {
       const result = [];
@@ -872,20 +947,25 @@
       for (const key in items) {
         const data = items[key];
         if (typeof data !== 'object' || !data) continue;
-        result.push({
+        const item = {
           key: key,
           data: data,
           name: data.name || key,
           faction: data.faction || null,
           rarity: data.rarity || 'common',
           tag_required: data.tag_required || null,
+          adds_tag: data.adds_tag || null,
           stat_mods: data.stat_mods || {},
           passive: data.passive || null,
           cost: data.cost || {},
           item_cost: data.item_cost || {},
           icon: data.icon || null,
           unique: data.unique || false
-        });
+        };
+        // Calculate balance score
+        item.balanceScore = calculateItemBalanceScore(item);
+        item.totalCost = calculateItemCostTotal(item);
+        result.push(item);
       }
       return result;
     }
@@ -1297,15 +1377,20 @@
           
           const statStr = Object.entries(item.stat_mods).map(([k,v]) => `${k}+${v}`).join(' ');
           const passiveStr = item.passive ? `p:${item.passive}` : '';
-          const costStr = Object.entries(item.cost).map(([k,v]) => `${k}:${v}`).join(' ');
+          
+          // Balance score and cost display
+          const balanceDisplay = item.balanceScore ? 
+            `<span class="item-balance-score">⚖️ <span class="score-val">${item.balanceScore}</span> | 💰 <span class="cost-val">${item.totalCost}</span></span>` : '';
           
           html += `<div class="item-row" data-key="${item.key}">
             <input type="checkbox" ${checked}>
             <span class="iname">${item.name}</span>
             <span class="irarity ${rarityClass}">${item.rarity || 'common'}</span>
             ${item.tag_required ? `<span class="ifaction">req:${item.tag_required}</span>` : ''}
+            ${item.adds_tag ? `<span class="ifaction">+${item.adds_tag}</span>` : ''}
             ${statStr ? `<span class="istats">${statStr}</span>` : ''}
             ${passiveStr ? `<span class="istats">${passiveStr}</span>` : ''}
+            ${balanceDisplay}
             ${iconStatus}
           </div>`;
         });
@@ -1436,6 +1521,7 @@
       { label: 'Faction', get: d => d.faction || 'global', numeric: false },
       { label: 'Rarity', get: d => d.rarity, numeric: false },
       { label: 'Tag Required', get: d => d.tag_required || '—', numeric: false },
+      { label: 'Adds Tag', get: d => d.adds_tag || '—', numeric: false },
       { label: 'Unique', get: d => d.unique ? 'Yes' : 'No', numeric: false },
       { label: 'HP', get: d => d.stat_mods?.hp, numeric: true, higherBetter: true },
       { label: 'Armor', get: d => d.stat_mods?.armor, numeric: true, higherBetter: true },
@@ -1446,8 +1532,12 @@
       { label: 'Nature Resist', get: d => d.stat_mods?.nature_resist, numeric: true, higherBetter: true },
       { label: 'Life Resist', get: d => d.stat_mods?.life_resist, numeric: true, higherBetter: true },
       { label: 'Death Resist', get: d => d.stat_mods?.death_resist, numeric: true, higherBetter: true },
+      { label: 'Air Resist', get: d => d.stat_mods?.air_resist, numeric: true, higherBetter: true },
       { label: 'Passive', get: d => d.passive || '—', numeric: false },
+      { label: 'Balance Score', get: d => d.balanceScore || 0, numeric: true, higherBetter: true, score: true },
+      { label: 'Total Cost', get: d => d.totalCost || 0, numeric: true, higherBetter: false },
       { label: 'Cost', get: d => Object.entries(d.cost || {}).map(([k,v]) => `${k}:${v}`).join(', ') || '—', numeric: false },
+      { label: 'Item Cost', get: d => Object.entries(d.item_cost || {}).map(([k,v]) => `${k}:${v}`).join(', ') || '—', numeric: false },
     ];
 
     function renderItemCompare() {
@@ -1457,7 +1547,19 @@
         return;
       }
 
-      let html = '<table><thead><tr><th class="stat-label">Stat</th>';
+      // Summary: best balance score and cost efficiency
+      let summaryHtml = `<div class="score-section">`;
+      const sortedByScore = [...items].sort((a,b) => b.balanceScore - a.balanceScore);
+      const sortedByCost = [...items].sort((a,b) => a.totalCost - b.totalCost);
+      
+      summaryHtml += `<div class="score-item"><span class="label">⚖️ Best Balance</span>
+        <span class="value high">${sortedByScore[0].name} (${sortedByScore[0].balanceScore})</span></div>`;
+      summaryHtml += `<div class="score-item"><span class="label">💰 Cheapest</span>
+        <span class="value total">${sortedByCost[0].name} (${sortedByCost[0].totalCost})</span></div>`;
+      summaryHtml += `</div>`;
+
+      let html = summaryHtml;
+      html += '<table><thead><tr><th class="stat-label">Stat</th>';
       items.forEach(item => {
         const icon = itemIconCache.get(item.key);
         const iconStatus = icon ? (icon.exists ? '✅' : '❌') : '⏳';
@@ -1469,11 +1571,27 @@
       html += '</tr></thead><tbody>';
 
       ITEM_STAT_ROWS.forEach(row => {
-        const values = items.map(item => row.get(item.data));
+        const values = items.map(item => row.get(item));
+        // For numeric rows, find best/worst
+        let bestVal = null, worstVal = null;
+        if (row.numeric) {
+          const nums = values.filter(v => typeof v === 'number' && !isNaN(v));
+          if (nums.length > 1) {
+            const sorted = [...nums].sort((a,b)=>a-b);
+            bestVal = row.higherBetter === false ? sorted[0] : sorted[sorted.length-1];
+            worstVal = row.higherBetter === false ? sorted[sorted.length-1] : sorted[0];
+          }
+        }
         html += `<tr><td class="stat-label">${row.label}</td>`;
-        values.forEach(v => {
-          const display = (v === null || v === undefined || v === '') ? '—' : v;
-          html += `<td>${display}</td>`;
+        values.forEach((v, idx) => {
+          let cls = '';
+          if (row.numeric && typeof v === 'number' && !isNaN(v) && bestVal !== null && bestVal !== worstVal) {
+            if (v === bestVal) cls = 'best';
+            else if (v === worstVal) cls = 'worst';
+          }
+          if (row.score && typeof v === 'number') cls += ' score-high';
+          const display = (v === null || v === undefined || v === '') ? '—' : (typeof v === 'number' ? v : v);
+          html += `<td class="${cls}">${display}</td>`;
         });
         html += '</tr>';
       });
@@ -1565,13 +1683,16 @@
           faction: item.faction,
           rarity: item.rarity,
           tag_required: item.tag_required,
+          adds_tag: item.adds_tag,
           unique: item.unique,
           stat_mods: item.stat_mods,
           passive: item.passive,
           cost: item.cost,
           item_cost: item.item_cost,
           icon: item.icon,
-          icon_exists: icon ? icon.exists : false
+          icon_exists: icon ? icon.exists : false,
+          balance_score: item.balanceScore,
+          total_cost: item.totalCost
         };
       });
 
@@ -1720,7 +1841,6 @@
     }
 
     async function checkAllAssets(units) {
-      // Check each unit's assets with caching
       for (const unit of units) {
         await checkUnitAssets(unit);
       }

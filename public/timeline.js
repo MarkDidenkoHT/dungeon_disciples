@@ -18,8 +18,15 @@ const TIMELINE = [
     date: '',
     title: { en: 'Castle animation and building images',
              ru: 'Анимация замка и изображения строений' },
-    desc:  { en: 'ACastle animation and building images',
+    desc:  { en: 'Castle animation and building images',
              ru: 'Анимация замка и изображения строений' },
+  },
+  {
+    date: '',
+    title: { en: 'New characters and upgrade branches',
+             ru: 'Новые персонажи и пути развития' },
+    desc:  { en: null,
+             ru: null },
   },
   {
     date: '',
