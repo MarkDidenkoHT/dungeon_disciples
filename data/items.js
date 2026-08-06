@@ -43,11 +43,11 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { hp: 3, armor: 3, cold_resist: 5 },
+    stat_mods:    { hp: 2, armor: 2, cold_resist: 5 },
     passive:      'unbreakable 1',
     icon:         'crystal_shield',
     rarity:       'epic',
-    cost:         { crystal_shard: 1, Gold: 150, Crystals_Frost: 30 },
+    cost:         { crystal_shard: 1, Gold: 100, Crystals_Frost: 20 },
     item_cost:    { iron_shield: 1, cold_resistance_potion: 1 },
   },
   aegis_of_the_first_ward: {
@@ -134,7 +134,7 @@ const ITEM_DEFS = {
     passive:      'inspiration_max_hp 1',
     icon:         'codex_aeternum',
     rarity:       'rare',
-    cost:         { Gold: 25, Crystals_Life: 25, Crystals_Nature: 25 },
+    cost:         { Gold: 20, Crystals_Life: 20, Crystals_Nature: 20 },
     item_cost:    { padded_armor: 1 },
   },
   codex_militarum: {
@@ -148,7 +148,7 @@ const ITEM_DEFS = {
     passive:      'inspiration_damage 1',
     icon:         'codex_militarum',
     rarity:       'rare',
-    cost:         { Gold: 70, Crystals_Life: 25, Crystals_Air: 10 },
+    cost:         { Gold: 50, Crystals_Life: 15, Crystals_Air: 10 },
     item_cost:    { crude_sword: 1}
   },
   court_regalia: {
@@ -187,13 +187,13 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'demon',
-    stat_mods:    { armor: 3, hp: 5, death_resist: 5, life_resist: 5 },
+    stat_mods:    { armor: 3, hp: 3, death_resist: 5 },
     passive:      'fortify 1',
     icon:         'aldras_devotion',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Life: 50, Crystals_Death: 50 },
-    item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
+    cost:         { shard_of_devotion: 10, Gold: 100, Crystals_Life: 50, Crystals_Death: 50 },
+    item_cost:    { iron_armor: 1, death_resistance_potion: 1 },
   },
   shroud_of_the_fallen: {
     key:          'shroud_of_the_fallen',
@@ -248,7 +248,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'iron_armor',
     rarity:       'rare',
-    cost:         { Gold: 50 },
+    cost:         { Gold: 60, Crystals_Nature: 10, Crystals_Air: 10 },
     item_cost:    { padded_armor: 1 },
   },
   rimeheart: {
@@ -258,7 +258,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { armor: 3, hp: 5, cold_resist: 5 },
+    stat_mods:    { armor: 2, hp: 3, cold_resist: 5 },
     passive:      'rimeguard 1',
     icon:         'rimeheart',
     rarity:       'epic',
@@ -276,7 +276,7 @@ const ITEM_DEFS = {
     passive:      'regenerate 1',
     icon:         'everliving_stalk',
     rarity:       'epic',
-    cost:         { Gold: 30, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 20 },
+    cost:         { Gold: 100, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 30 },
   },
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
@@ -289,7 +289,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'fire_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Fire: 25 },
+    cost:         { Gold: 25, Crystals_Fire: 10 },
   },
   orb_of_fire: {
     key:          'orb_of_fire',
@@ -312,11 +312,11 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Caster',
     adds_tag:     null,
-    stat_mods:    { fire_resist: 5 },
+    stat_mods:    { fire_resist: 10 },
     passive:      'burn 2',
     icon:         'fire_staff',
     rarity:       'epic',
-    cost:         { Gold: 50, Crystals_Fire: 25, aggrails_signet: 1 },
+    cost:         { Gold: 30, Crystals_Fire: 20, aggrails_signet: 1 },
     item_cost:    { fire_resistance_potion: 1, orb_of_fire: 1 },
   },
   burning_tyrant: {
@@ -438,7 +438,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'iron_sword',
     rarity:       'rare',
-    cost:         { Gold: 50, Crystals_Fire: 25, Crystals_Nature: 20 },
+    cost:         { Gold: 50, Crystals_Fire: 15, Crystals_Nature: 10 },
     item_cost:    { crude_sword: 1 },
   },
   crystal_sword: {
@@ -454,7 +454,7 @@ const ITEM_DEFS = {
     icon:         'crystal_sword',
     rarity:       'epic',
     unique:       true,
-    cost:         { crystal_shard: 1, Gold: 100, Crystals_Air: 25, Crystals_Frost: 25 },
+    cost:         { crystal_shard: 1, Gold: 50, Crystals_Air: 15, Crystals_Frost: 15 },
     item_cost:    { iron_sword: 1 },
   },
   forbidden_vow: {
@@ -470,7 +470,7 @@ const ITEM_DEFS = {
     icon:         'forbidden_vow',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 100, Crystals_Air: 25, Crystals_Frost: 25 },
+    cost:         { grave_dust: 2, Gold: 25, Crystals_Nature: 10 },
     item_cost:    { iron_sword: 1, poisonous_dagger: 1 },
   },
   burning_fury: {
@@ -500,7 +500,7 @@ const ITEM_DEFS = {
     icon:         'mace',
     rarity:       'common',
     unique:       true,
-    cost:         { Gold: 25, Crystals_Death: 10, Crystals_Air: 10 },
+    cost:         { Gold: 30, Crystals_Death: 5, Crystals_Air: 5 },
   },
   morning_star: {
     key:          'morning_star',
@@ -579,13 +579,13 @@ const ITEM_DEFS = {
     faction:      'grail_of_sorrow',
     tag_required: 'Caster',
     adds_tag:     'Vampire',
-    stat_mods:    { action_power: 3, hp: 3 },
+    stat_mods:    { action_power: 4, hp: 4 },
     passive:      'bleed 2',
     icon:         'staff_of_thaumaturgy',
     rarity:       'mythic',
     unique:       true,
     cost:         { vial_of_pure_blood: 5, Gold: 250 },
-    item_cost:    { seal_of_power: 2, orb_of_pure_blood: 2 },
+    item_cost:    { seal_of_power: 1, orb_of_pure_blood: 2 },
   },
   grovekeeper_staff: {
     key:          'grovekeeper_staff',
@@ -599,7 +599,7 @@ const ITEM_DEFS = {
     icon:         'grovekeeper_staff',
     rarity:       'rare',
     unique:       true,
-    cost:         { vial_of_pure_blood: 1, Gold: 25 },
+    cost:         { vial_of_pure_blood: 1, Gold: 50, Crystals_Nature: 25 },
     item_cost:    { seal_of_power: 1 },
   },
   poisonous_dagger: {
@@ -636,12 +636,12 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Skeleton',
-    stat_mods:    { hp: 3, armor: 5 },
+    stat_mods:    { hp: 2, armor: 3 },
     passive:      'undying 1',
     icon:         'bone_barrier',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 1, shard_of_might: 1, shard_of_devotion: 1, Gold: 250 },
+    cost:         { grave_dust: 1, shard_of_might: 1, shard_of_devotion: 1, Gold: 200 },
     item_cost:    { iron_armor: 1 },
   },
   veil_of_discord: {
@@ -670,7 +670,7 @@ const ITEM_DEFS = {
     passive:      'dodge 1',
     icon:         'cloak_of_evasion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Air: 10, Crystals_Nature: 10  },
+    cost:         { Gold: 30, Crystals_Air: 5, Crystals_Nature: 5  },
   },
   travelers_bedroll: {
     key:          'travelers_bedroll',
@@ -684,7 +684,7 @@ const ITEM_DEFS = {
     icon:         'travelers_bedroll',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Life: 25, Crystals_Nature: 25 },
+    cost:         { Gold: 50, Crystals_Life: 25, Crystals_Nature: 25 },
   },
   veterans_medal: {
     key:          'veterans_medal',
@@ -698,7 +698,7 @@ const ITEM_DEFS = {
     icon:         'veterans_medal',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Fire: 25, Crystals_Death: 25 },
+    cost:         { Gold: 50, Crystals_Fire: 25, Crystals_Death: 25 },
   },
   shackle_of_servitude: {
     key:          'shackle_of_servitude',
@@ -712,7 +712,7 @@ const ITEM_DEFS = {
     icon:         'shackle_of_servitude',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Death: 25, Crystals_Death: 25 },
+    cost:         { Gold: 50, Crystals_Life: 25, Crystals_Death: 25 },
   },
   scavengers_satchel: {
     key:          'scavengers_satchel',
@@ -726,7 +726,7 @@ const ITEM_DEFS = {
     icon:         'scavengers_satchel',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Nature: 25, Crystals_Air: 25 },
+    cost:         { Gold: 50, Crystals_Nature: 25, Crystals_Air: 25 },
   },
   attuned_focus: {
     key:          'attuned_focus',
@@ -740,7 +740,7 @@ const ITEM_DEFS = {
     icon:         'attuned_focus',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Air: 25, Crystals_Frost: 25 },
+    cost:         { Gold: 50, Crystals_Air: 25, Crystals_Frost: 25 },
   },
 };
 
