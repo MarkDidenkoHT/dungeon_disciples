@@ -161,8 +161,8 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'court_regalia',
     rarity:       'rare',
-    cost:         { vial_of_pure_blood: 1, Gold: 50 },
-    item_cost:    { life_charm: 1},
+    cost:         { vial_of_pure_blood: 1, Gold: 50, Crystals_Fire: 20 },
+    item_cost:    { life_charm: 2},
   },
   dragon_skin: {
     key:          'dragon_skin',

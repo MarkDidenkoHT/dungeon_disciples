@@ -421,7 +421,7 @@
     .item-balance {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       font-size: 12px;
       font-weight: 600;
       padding: 2px 8px;
@@ -853,6 +853,9 @@
       'mythic': { scoreMin: 20, costMax: 200 }
     };
 
+    const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
+    const TROPHIES = ['crystal_shard', 'crystal_dust', 'living_geode', 'vial_of_pure_blood', 'grave_dust', 'shard_of_might', 'shard_of_devotion', 'aggrails_signet'];
+
     // ---- Item Balance Score ----
     function calculateItemBalanceScore(item) {
       const mods = item.stat_mods || {};
@@ -880,18 +883,21 @@
       let total = 0;
       
       const cost = item.cost || {};
+      
+      // Gold: 1 point each
       if (cost.Gold) total += cost.Gold;
       
-      const crystalKeys = ['Crystals_Air', 'Crystals_Fire', 'Crystals_Nature', 'Crystals_Frost', 'Crystals_Life', 'Crystals_Death'];
-      crystalKeys.forEach(key => {
+      // Crystals: 2 points each
+      ALL_CRYSTALS.forEach(key => {
         if (cost[key]) total += cost[key] * 2;
       });
       
-      const specialResources = ['crystal_shard', 'crystal_dust', 'living_geode', 'vial_of_pure_blood', 'grave_dust', 'shard_of_might', 'shard_of_devotion', 'aggrails_signet'];
-      specialResources.forEach(res => {
+      // Trophies: 5 points each
+      TROPHIES.forEach(res => {
         if (cost[res]) total += cost[res] * 5;
       });
       
+      // Item costs (crafting from other items): 10 points each
       const itemCost = item.item_cost || {};
       Object.values(itemCost).forEach(qty => {
         total += qty * 10;
@@ -1381,7 +1387,6 @@
           const balanced = scoreOk && costOk;
           const balanceClass = balanced ? 'balanced' : 'unbalanced';
           
-          // Display: score/targetScore · cost/targetCost
           const balanceHtml = `
             <span class="item-balance ${balanceClass}">
               <span class="score">${item.balanceScore}/${threshold.scoreMin}</span>
