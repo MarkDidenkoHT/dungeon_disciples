@@ -417,16 +417,18 @@
     .rarity-rare { color: #4c9aff; }
     .rarity-epic { color: #b47cff; }
     .rarity-mythic { color: #f5c542; }
+
     .item-balance {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       font-size: 12px;
       font-weight: 600;
       padding: 2px 8px;
       border-radius: 12px;
       border: 1px solid #2f3548;
       background: #1a1d27;
+      font-family: monospace;
     }
     .item-balance .score {
       color: #f5c542;
@@ -436,11 +438,6 @@
     }
     .item-balance .sep {
       color: #4a4f66;
-    }
-    .item-balance .expected {
-      color: #6a708b;
-      font-size: 10px;
-      font-weight: 400;
     }
     .item-balance.balanced {
       border-color: #2a6a3a;
@@ -452,10 +449,7 @@
     }
     .item-balance .flag {
       font-size: 11px;
-      margin-left: 2px;
     }
-    .item-balance .flag.over { color: #7bdf9a; }
-    .item-balance .flag.under { color: #f67a7a; }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -864,34 +858,19 @@
       const mods = item.stat_mods || {};
       let score = 0;
       
-      // HP: 1.5 weight
       if (mods.hp) score += mods.hp * 1.5;
-      
-      // Action Power: 2 weight
       if (mods.action_power) score += mods.action_power * 2;
-      
-      // Initiative: 2 weight
       if (mods.initiative) score += mods.initiative * 2;
-      
-      // Armor: 1 weight
       if (mods.armor) score += mods.armor * 1;
       
-      // Resistances: 1 weight each
       const resistTypes = ['air_resist', 'fire_resist', 'nature_resist', 'cold_resist', 'life_resist', 'death_resist'];
       resistTypes.forEach(resType => {
         if (mods[resType]) score += mods[resType] * 1;
       });
       
-      // Adds tag: 3 weight
       if (item.adds_tag) score += 3;
-      
-      // Passive: 5 weight
       if (item.passive) score += 5;
-      
-      // Penalty: Tag Required (-0.5)
       if (item.tag_required) score -= 0.5;
-      
-      // Penalty: Faction Required (-0.5)
       if (item.faction) score -= 0.5;
       
       return Math.round(score * 10) / 10;
@@ -900,44 +879,25 @@
     function calculateItemCostTotal(item) {
       let total = 0;
       
-      // Base resource costs (Gold and Crystals)
       const cost = item.cost || {};
       if (cost.Gold) total += cost.Gold;
       
-      // Crystal costs - 2x Gold value
       const crystalKeys = ['Crystals_Air', 'Crystals_Fire', 'Crystals_Nature', 'Crystals_Frost', 'Crystals_Life', 'Crystals_Death'];
       crystalKeys.forEach(key => {
         if (cost[key]) total += cost[key] * 2;
       });
       
-      // Special resources (shards, dust, etc.)
       const specialResources = ['crystal_shard', 'crystal_dust', 'living_geode', 'vial_of_pure_blood', 'grave_dust', 'shard_of_might', 'shard_of_devotion', 'aggrails_signet'];
       specialResources.forEach(res => {
         if (cost[res]) total += cost[res] * 5;
       });
       
-      // Item costs (crafting from other items)
       const itemCost = item.item_cost || {};
       Object.values(itemCost).forEach(qty => {
-        total += qty * 10; // Each item ingredient costs 10 Gold equivalent
+        total += qty * 10;
       });
       
       return Math.round(total);
-    }
-
-    function checkItemBalance(item) {
-      const rarity = item.rarity || 'common';
-      const threshold = RARITY_THRESHOLDS[rarity];
-      if (!threshold) return { balanced: true, over: false, under: false };
-      
-      const scoreOk = item.balanceScore >= threshold.scoreMin;
-      const costOk = item.totalCost <= threshold.costMax;
-      
-      return {
-        balanced: scoreOk && costOk,
-        over: item.balanceScore > threshold.scoreMin * 1.5 && item.totalCost < threshold.costMax * 0.5,
-        under: item.balanceScore < threshold.scoreMin * 0.5 || item.totalCost > threshold.costMax * 1.5
-      };
     }
 
     // ---- Flatten units ----
@@ -1003,10 +963,8 @@
           icon: data.icon || null,
           unique: data.unique || false
         };
-        // Calculate balance score
         item.balanceScore = calculateItemBalanceScore(item);
         item.totalCost = calculateItemCostTotal(item);
-        item.balanceCheck = checkItemBalance(item);
         result.push(item);
       }
       return result;
@@ -1343,17 +1301,9 @@
         }
       });
 
-      let balanced = 0, unbalanced = 0;
-      flatItems.forEach(item => {
-        if (item.balanceCheck && item.balanceCheck.balanced) balanced++;
-        else if (item.balanceCheck) unbalanced++;
-      });
-
       return `
         <div class="stat-item"><span class="label">Ic</span> <span class="count ${ok === total ? 'ok' : 'missing'}">${ok}/${total}</span></div>
         <div class="stat-item"><span class="label">Items</span> <span class="count">${flatItems.length}</span></div>
-        <div class="stat-item"><span class="label">⚖️ Balanced</span> <span class="count ok">${balanced}</span></div>
-        <div class="stat-item"><span class="label">⚖️ Unbalanced</span> <span class="count missing">${unbalanced}</span></div>
       `;
     }
 
@@ -1426,20 +1376,20 @@
           const iconStatus = renderItemIconStatus(item);
           
           const threshold = RARITY_THRESHOLDS[item.rarity] || RARITY_THRESHOLDS['common'];
-          const balanceCheck = item.balanceCheck || { balanced: true, over: false, under: false };
+          const scoreOk = item.balanceScore >= threshold.scoreMin;
+          const costOk = item.totalCost <= threshold.costMax;
+          const balanced = scoreOk && costOk;
+          const balanceClass = balanced ? 'balanced' : 'unbalanced';
           
-          let balanceHtml = '';
-          if (item.balanceScore !== undefined && item.totalCost !== undefined) {
-            const flagText = balanceCheck.balanced ? '✅' : (balanceCheck.over ? '⬆️' : (balanceCheck.under ? '⬇️' : ''));
-            const balanceClass = balanceCheck.balanced ? 'balanced' : 'unbalanced';
-            
-            balanceHtml = `<span class="item-balance ${balanceClass}">
-              <span class="score">${item.balanceScore}</span>
-              <span class="sep">/</span>
-              <span class="cost">${item.totalCost}</span>
-              ${flagText ? `<span class="flag ${balanceCheck.over ? 'over' : 'under'}">${flagText}</span>` : ''}
-            </span>`;
-          }
+          // Display: score/targetScore · cost/targetCost
+          const balanceHtml = `
+            <span class="item-balance ${balanceClass}">
+              <span class="score">${item.balanceScore}/${threshold.scoreMin}</span>
+              <span class="sep">·</span>
+              <span class="cost">${item.totalCost}/${threshold.costMax}</span>
+              ${balanced ? '✅' : '❌'}
+            </span>
+          `;
           
           html += `<div class="item-row" data-key="${item.key}">
             <input type="checkbox" ${checked}>
@@ -1591,7 +1541,6 @@
       { label: 'Passive', get: d => d.passive || '—', numeric: false },
       { label: 'Balance Score', get: d => d.balanceScore || 0, numeric: true, higherBetter: true, score: true },
       { label: 'Total Cost', get: d => d.totalCost || 0, numeric: true, higherBetter: false },
-      { label: 'Balanced?', get: d => d.balanceCheck && d.balanceCheck.balanced ? '✅' : (d.balanceCheck && d.balanceCheck.over ? '⬆️ OVER' : (d.balanceCheck && d.balanceCheck.under ? '⬇️ UNDER' : '—')), numeric: false },
       { label: 'Cost', get: d => Object.entries(d.cost || {}).map(([k,v]) => `${k}:${v}`).join(', ') || '—', numeric: false },
       { label: 'Item Cost', get: d => Object.entries(d.item_cost || {}).map(([k,v]) => `${k}:${v}`).join(', ') || '—', numeric: false },
     ];
@@ -1606,15 +1555,11 @@
       let summaryHtml = `<div class="score-section">`;
       const sortedByScore = [...items].sort((a,b) => b.balanceScore - a.balanceScore);
       const sortedByCost = [...items].sort((a,b) => a.totalCost - b.totalCost);
-      const balancedCount = items.filter(item => item.balanceCheck && item.balanceCheck.balanced).length;
-      const unbalancedCount = items.length - balancedCount;
       
       summaryHtml += `<div class="score-item"><span class="label">⚖️ Best Balance</span>
         <span class="value high">${sortedByScore[0].name} (${sortedByScore[0].balanceScore})</span></div>`;
       summaryHtml += `<div class="score-item"><span class="label">💰 Cheapest</span>
         <span class="value total">${sortedByCost[0].name} (${sortedByCost[0].totalCost})</span></div>`;
-      summaryHtml += `<div class="score-item"><span class="label">⚖️ Balanced</span>
-        <span class="value" style="color:#7bdf9a;">${balancedCount}/${items.length}</span></div>`;
       summaryHtml += `</div>`;
 
       let html = summaryHtml;
@@ -1622,9 +1567,11 @@
       items.forEach(item => {
         const icon = itemIconCache.get(item.key);
         const iconStatus = icon ? (icon.exists ? '✅' : '❌') : '⏳';
-        const balanceFlag = item.balanceCheck && !item.balanceCheck.balanced ? 
-          (item.balanceCheck.over ? ' ⬆️' : (item.balanceCheck.under ? ' ⬇️' : '')) : '';
-        html += `<th>${item.name}${balanceFlag}<br><span class="pill">${item.key}</span><br>
+        const threshold = RARITY_THRESHOLDS[item.rarity] || RARITY_THRESHOLDS['common'];
+        const scoreOk = item.balanceScore >= threshold.scoreMin;
+        const costOk = item.totalCost <= threshold.costMax;
+        const balanced = scoreOk && costOk;
+        html += `<th>${item.name} ${balanced ? '✅' : '❌'}<br><span class="pill">${item.key}</span><br>
           <button class="remove-btn" data-key="${item.key}" title="remove">✕</button>
           <div style="margin-top:4px;font-size:10px;">Ic: ${iconStatus}</div>
         </th>`;
@@ -1737,6 +1684,7 @@
 
       const jsonData = items.map(item => {
         const icon = itemIconCache.get(item.key);
+        const threshold = RARITY_THRESHOLDS[item.rarity] || RARITY_THRESHOLDS['common'];
         return {
           key: item.key,
           name: item.name,
@@ -1752,8 +1700,9 @@
           icon: item.icon,
           icon_exists: icon ? icon.exists : false,
           balance_score: item.balanceScore,
+          balance_target: threshold.scoreMin,
           total_cost: item.totalCost,
-          balanced: item.balanceCheck ? item.balanceCheck.balanced : true
+          cost_target: threshold.costMax
         };
       });
 
