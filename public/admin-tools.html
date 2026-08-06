@@ -168,16 +168,6 @@
       text-transform: capitalize;
       flex-shrink: 0;
     }
-    .item-row .icost {
-      color: #f5c542;
-      font-size: 11px;
-      flex-shrink: 0;
-    }
-    .item-row .istats {
-      color: #7bdf9a;
-      font-size: 11px;
-      flex-shrink: 0;
-    }
     .asset-status {
       display: inline-flex;
       gap: 2px;
@@ -427,45 +417,45 @@
     .rarity-rare { color: #4c9aff; }
     .rarity-epic { color: #b47cff; }
     .rarity-mythic { color: #f5c542; }
-    .item-balance-score {
-      background: #1b1f2b;
-      border-radius: 12px;
-      padding: 4px 10px;
+    .item-balance {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
       border: 1px solid #2f3548;
+      background: #1a1d27;
     }
-    .item-balance-score .score-val {
-      font-weight: 700;
+    .item-balance .score {
       color: #f5c542;
     }
-    .item-balance-score .cost-val {
+    .item-balance .cost {
       color: #7bdf9a;
     }
-    .item-balance-score .penalty {
-      color: #f67a7a;
-      font-weight: 700;
+    .item-balance .sep {
+      color: #4a4f66;
     }
-    .item-balance-score .expected {
+    .item-balance .expected {
       color: #6a708b;
       font-size: 10px;
+      font-weight: 400;
     }
-    .item-balance-score.balanced {
+    .item-balance.balanced {
       border-color: #2a6a3a;
       background: #1a2a22;
     }
-    .item-balance-score.unbalanced {
+    .item-balance.unbalanced {
       border-color: #6a2a3a;
       background: #2a1a22;
     }
-    .item-balance-score .flag {
-      font-weight: 700;
-      font-size: 12px;
+    .item-balance .flag {
+      font-size: 11px;
+      margin-left: 2px;
     }
-    .item-balance-score .flag.over { color: #7bdf9a; }
-    .item-balance-score .flag.under { color: #f67a7a; }
+    .item-balance .flag.over { color: #7bdf9a; }
+    .item-balance .flag.under { color: #f67a7a; }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -1353,7 +1343,6 @@
         }
       });
 
-      // Count balanced vs unbalanced
       let balanced = 0, unbalanced = 0;
       flatItems.forEach(item => {
         if (item.balanceCheck && item.balanceCheck.balanced) balanced++;
@@ -1439,28 +1428,16 @@
           const threshold = RARITY_THRESHOLDS[item.rarity] || RARITY_THRESHOLDS['common'];
           const balanceCheck = item.balanceCheck || { balanced: true, over: false, under: false };
           
-          let balanceDisplay = '';
+          let balanceHtml = '';
           if (item.balanceScore !== undefined && item.totalCost !== undefined) {
-            let flagText = '';
-            let flagClass = '';
-            if (balanceCheck.balanced) {
-              flagText = '✅';
-              flagClass = '';
-            } else if (balanceCheck.over) {
-              flagText = '⬆️ OVER';
-              flagClass = 'over';
-            } else if (balanceCheck.under) {
-              flagText = '⬇️ UNDER';
-              flagClass = 'under';
-            }
-            
+            const flagText = balanceCheck.balanced ? '✅' : (balanceCheck.over ? '⬆️' : (balanceCheck.under ? '⬇️' : ''));
             const balanceClass = balanceCheck.balanced ? 'balanced' : 'unbalanced';
             
-            balanceDisplay = `<span class="item-balance-score ${balanceClass}">
-              <span class="score-val">${item.balanceScore}</span>
-              <span class="cost-val">${item.totalCost}</span>
-              <span class="expected">(${threshold.scoreMin}/${threshold.costMax})</span>
-              ${flagText ? `<span class="flag ${flagClass}">${flagText}</span>` : ''}
+            balanceHtml = `<span class="item-balance ${balanceClass}">
+              <span class="score">${item.balanceScore}</span>
+              <span class="sep">/</span>
+              <span class="cost">${item.totalCost}</span>
+              ${flagText ? `<span class="flag ${balanceCheck.over ? 'over' : 'under'}">${flagText}</span>` : ''}
             </span>`;
           }
           
@@ -1468,7 +1445,7 @@
             <input type="checkbox" ${checked}>
             <span class="iname">${item.name}</span>
             <span class="irarity ${rarityClass}">${item.rarity || 'common'}</span>
-            ${balanceDisplay}
+            ${balanceHtml}
             ${iconStatus}
           </div>`;
         });
@@ -1626,7 +1603,6 @@
         return;
       }
 
-      // Summary: best balance score and cost efficiency
       let summaryHtml = `<div class="score-section">`;
       const sortedByScore = [...items].sort((a,b) => b.balanceScore - a.balanceScore);
       const sortedByCost = [...items].sort((a,b) => a.totalCost - b.totalCost);
@@ -1657,7 +1633,6 @@
 
       ITEM_STAT_ROWS.forEach(row => {
         const values = items.map(item => row.get(item));
-        // For numeric rows, find best/worst
         let bestVal = null, worstVal = null;
         if (row.numeric) {
           const nums = values.filter(v => typeof v === 'number' && !isNaN(v));
