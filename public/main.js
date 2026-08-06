@@ -110,8 +110,11 @@ function mountShell(player) {
 
   // The row is mounted once and never re-rendered (only the strip inside it is),
   // so the timeline click is delegated from here.
+  // openTimeline reads the language off the player it is given — called bare it
+  // fell back to English forever. Settings mutates player.settings in place, so
+  // this closed-over reference stays current across language switches.
   document.getElementById('resource-bar-row').addEventListener('click', e => {
-    if (e.target.closest('.res-bar-timeline')) openTimeline();
+    if (e.target.closest('.res-bar-timeline')) openTimeline(player);
   });
 }
 
