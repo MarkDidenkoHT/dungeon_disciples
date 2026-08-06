@@ -477,7 +477,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
+      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
       xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
@@ -1949,7 +1949,7 @@ const UNITS = {
         hp: 60, armor: 5, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 100, passive: 'inspiration_damage 1', ability: 'lions_roar 1',
       },
       exalted_herald: {
@@ -1961,7 +1961,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing',
-        xp: 400, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1',
+        xp: 400, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1', action_sfx: 'sword_slash',
       },
       exalted_evangelist: {
         id: 'opb_e111', f: 'opb', t: 3,
@@ -1971,8 +1971,8 @@ const UNITS = {
         hp: 105, armor: 15, initiative: 50,
         resistances: { air: 5, fire: 10, life: 50, death: 10, cold: 5, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing',
-        xp: 900, passive: ['inspiration_damage 2', 'beacon_of_hope 1'], ability: 'lions_roar 2',
+        damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 900, passive: ['inspiration_damage 2', 'beacon_of_hope 1'], ability: 'lions_roar 2', 
       },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,
@@ -1982,7 +1982,7 @@ const UNITS = {
         hp: 45, armor: 10, initiative: 40,
         resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: null, action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing',
+        damage_source: null, action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 100, passive: 'fanaticism 1', ability: null,
       },
       aggrails_devoted: {
@@ -2106,7 +2106,7 @@ const UNITS = {
         hp: 40, armor: 10, initiative: 15,
         resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 50, nature: 10 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 10, action_animation: 'repair',
+        damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
         xp: 100, passive: 'fortify 1', ability: null,
       },
       glaciron: {
@@ -2117,7 +2117,7 @@ const UNITS = {
         hp: 45, armor: 15, initiative: 15,
         resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 50, nature: 15 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15, action_animation: 'repair',
+        damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
         xp: 400, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
       arctyx: {
@@ -2128,7 +2128,7 @@ const UNITS = {
         hp: 50, armor: 20, initiative: 15,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20, action_animation: 'repair',
+        damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
         xp: 900, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {
@@ -2139,7 +2139,7 @@ const UNITS = {
         hp: 35, armor: 15, initiative: 60,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 10,
+        damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg',
         xp: 100, passive: 'slow 1', ability: 'permafrost',
       },
       rime_splinter: {
@@ -2150,7 +2150,7 @@ const UNITS = {
         hp: 45, armor: 15, initiative: 60,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 14,
+        damage_source: 'cold', action_power: 14, action_icon: 'frost_shard.jpg',
         xp: 400, passive: ['slow 1', 'hungering_frost 1'], ability: 'permafrost',
       },
       glacial_prism: {
@@ -2161,7 +2161,7 @@ const UNITS = {
         hp: 50, armor: 20, initiative: 60,
         resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 50, nature: 30 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 18,
+        damage_source: 'cold', action_power: 18, action_icon: 'frost_shard.jpg',
         xp: 900, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost',
       },
       сhillrock: {
@@ -2230,7 +2230,7 @@ const UNITS = {
         hp: 50, armor: 10, initiative: 25,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 10, action_icon: 'undead_sword.jpg',
+        damage_source: 'death', action_power: 10, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 90, passive: 'iron_will 1', ability: 'terror 1',
       },
       dread_knight: {
@@ -2241,7 +2241,7 @@ const UNITS = {
         hp: 60, armor: 15, initiative: 25,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 14, action_icon: 'undead_sword.jpg',
+        damage_source: 'death', action_power: 14, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 280, passive: ['iron_will 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
@@ -2252,7 +2252,7 @@ const UNITS = {
         hp: 70, armor: 20, initiative: 25,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 18, action_icon: 'undead_sword.jpg',
+        damage_source: 'death', action_power: 18, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 510, passive: ['iron_will 1', 'infect 2'], ability: 'terror 2',
       },
       oathbound_martyr: {
@@ -2263,7 +2263,7 @@ const UNITS = {
         hp: 50, armor: 10, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg',
+        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
         xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
@@ -2274,7 +2274,7 @@ const UNITS = {
         hp: 55, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg',
+        damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
         xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
@@ -2285,7 +2285,7 @@ const UNITS = {
         hp: 65, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20, action_icon: 'sacrifice.jpg',
+        damage_source: 'physical', action_power: 20, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
         xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
       },
       wailing_ghost: {
