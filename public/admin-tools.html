@@ -444,6 +444,10 @@
     .item-balance-score .cost-val {
       color: #7bdf9a;
     }
+    .item-balance-score .penalty {
+      color: #f67a7a;
+      font-weight: 700;
+    }
     @media (max-width: 800px) {
       .layout { flex-direction: column; }
       .list-panel { width: 100%; max-height: 40vh; }
@@ -868,7 +872,13 @@
       // Passive: 5 weight
       if (item.passive) score += 5;
       
-      return score;
+      // Penalty: Tag Required (-0.5)
+      if (item.tag_required) score -= 0.5;
+      
+      // Penalty: Faction Required (-0.5)
+      if (item.faction) score -= 0.5;
+      
+      return Math.round(score * 10) / 10;
     }
 
     function calculateItemCostTotal(item) {
@@ -878,10 +888,10 @@
       const cost = item.cost || {};
       if (cost.Gold) total += cost.Gold;
       
-      // Crystal costs
+      // Crystal costs - now 2x Gold value (previously 0.5x)
       const crystalKeys = ['Crystals_Air', 'Crystals_Fire', 'Crystals_Nature', 'Crystals_Frost', 'Crystals_Life', 'Crystals_Death'];
       crystalKeys.forEach(key => {
-        if (cost[key]) total += cost[key] * 0.5; // Crystals worth half of Gold per unit
+        if (cost[key]) total += cost[key] * 2;
       });
       
       // Special resources (shards, dust, etc.)
@@ -1379,8 +1389,19 @@
           const passiveStr = item.passive ? `p:${item.passive}` : '';
           
           // Balance score and cost display
-          const balanceDisplay = item.balanceScore ? 
-            `<span class="item-balance-score">⚖️ <span class="score-val">${item.balanceScore}</span> | 💰 <span class="cost-val">${item.totalCost}</span></span>` : '';
+          let balanceDisplay = '';
+          if (item.balanceScore !== undefined) {
+            const penaltyParts = [];
+            if (item.tag_required) penaltyParts.push('tag');
+            if (item.faction) penaltyParts.push('faction');
+            const penaltyStr = penaltyParts.length > 0 ? ` (${penaltyParts.join('+')} -0.5)` : '';
+            
+            balanceDisplay = `<span class="item-balance-score">
+              ⚖️ <span class="score-val">${item.balanceScore}</span>
+              ${penaltyStr}
+              | 💰 <span class="cost-val">${item.totalCost}</span>
+            </span>`;
+          }
           
           html += `<div class="item-row" data-key="${item.key}">
             <input type="checkbox" ${checked}>
