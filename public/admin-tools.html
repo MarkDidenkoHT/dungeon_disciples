@@ -591,6 +591,7 @@
     let selectedItems = new Set();
     let assetCache = new Map();
     let itemIconCache = new Map();
+    let costCache = new Map();
 
     // ---- Tab switching ----
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -848,9 +849,9 @@
     // ---- Rarity thresholds ----
     const RARITY_THRESHOLDS = {
       'common': { scoreMin: 5, costMax: 50 },
-      'rare': { scoreMin: 10, costMax: 100 },
-      'epic': { scoreMin: 15, costMax: 150 },
-      'mythic': { scoreMin: 20, costMax: 200 }
+      'rare': { scoreMin: 10, costMax: 150 },
+      'epic': { scoreMin: 15, costMax: 200 },
+      'mythic': { scoreMin: 20, costMax: 250 }
     };
 
     const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
@@ -879,9 +880,20 @@
       return Math.round(score * 10) / 10;
     }
 
-    function calculateItemCostTotal(item) {
-      let total = 0;
+    function calculateItemCost(itemKey, items, visited = new Set()) {
+      if (costCache.has(itemKey)) return costCache.get(itemKey);
       
+      // Prevent infinite recursion
+      if (visited.has(itemKey)) {
+        console.warn('Circular dependency detected:', itemKey);
+        return 0;
+      }
+      visited.add(itemKey);
+      
+      const item = items[itemKey];
+      if (!item) return 0;
+      
+      let total = 0;
       const cost = item.cost || {};
       
       // Gold: 1 point each
@@ -897,13 +909,15 @@
         if (cost[res]) total += cost[res] * 5;
       });
       
-      // Item costs (crafting from other items): 10 points each
+      // Item costs: FULL cost of ingredients (recursive)
       const itemCost = item.item_cost || {};
-      Object.values(itemCost).forEach(qty => {
-        total += qty * 10;
-      });
+      for (const [ingredientKey, quantity] of Object.entries(itemCost)) {
+        const ingredientCost = calculateItemCost(ingredientKey, items, visited);
+        total += ingredientCost * quantity;
+      }
       
-      return Math.round(total);
+      costCache.set(itemKey, total);
+      return total;
     }
 
     // ---- Flatten units ----
@@ -970,9 +984,15 @@
           unique: data.unique || false
         };
         item.balanceScore = calculateItemBalanceScore(item);
-        item.totalCost = calculateItemCostTotal(item);
         result.push(item);
       }
+      
+      // Calculate costs AFTER all items are flattened (so we have full item map)
+      costCache.clear();
+      result.forEach(item => {
+        item.totalCost = calculateItemCost(item.key, items);
+      });
+      
       return result;
     }
 
