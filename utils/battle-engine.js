@@ -371,16 +371,30 @@ class BattleEngine {
     const side       = t.side;
     const frontCol   = side === 'enemy' ? 0 : 1;
     const backCol    = side === 'enemy' ? 1 : 0;
-    const frontAlive = this.combatants.some(c => c.side === side && c.alive && cellCol(c.cellIndex) === frontCol);
+    // Column tests go through the FOOTPRINT, not the anchor cell. A large 'row'
+    // unit spans both columns, but its anchor sits in only one of them — testing
+    // the anchor alone made a row unit anchored in the back column read as "no
+    // front-column defender", which exposed the real backline to melee.
+    const occupiesCol = (c, col) => this.getFootprint(c).some(cell => cellCol(cell) === col);
+    const frontAlive = this.combatants.some(c => c.side === side && c.alive && occupiesCol(c, frontCol));
     const reachableCol = frontAlive ? frontCol : backCol;
-    if (cellCol(t.cellIndex) !== reachableCol) return false;
+    if (!occupiesCol(t, reachableCol)) return false;
 
-    const actorRow = cellRow(actor.cellIndex);
-    const colUnits = this.combatants.filter(c => c.side === side && c.alive && cellCol(c.cellIndex) === reachableCol);
-    const tDist    = Math.abs(cellRow(t.cellIndex) - actorRow);
-    const hasAdjacent = colUnits.some(c => Math.abs(cellRow(c.cellIndex) - actorRow) <= 1);
+    // Row distance is measured footprint-to-footprint for the same reason: a
+    // 'column' unit covers two rows, so the closest of its rows is what a melee
+    // attacker actually stands next to, and a large attacker reaches from any
+    // row it occupies.
+    const actorRows = this.getFootprint(actor).map(cellRow);
+    const rowDist = c => {
+      const rows = this.getFootprint(c).map(cellRow);
+      return Math.min(...rows.flatMap(r => actorRows.map(ar => Math.abs(r - ar))));
+    };
+
+    const colUnits = this.combatants.filter(c => c.side === side && c.alive && occupiesCol(c, reachableCol));
+    const tDist    = rowDist(t);
+    const hasAdjacent = colUnits.some(c => rowDist(c) <= 1);
     if (hasAdjacent) return tDist <= 1;
-    const minDist = Math.min(...colUnits.map(c => Math.abs(cellRow(c.cellIndex) - actorRow)));
+    const minDist = Math.min(...colUnits.map(rowDist));
     return tDist === minDist;
   }
   calcDamage(actor, target) {
@@ -625,15 +639,20 @@ class BattleEngine {
     this.applyDoTs(target);
   }
   resolveProtectorIntercept(actor, target) {
-    const targetCol = cellCol(target.cellIndex);
-    const targetRow = cellRow(target.cellIndex);
     const frontCol  = target.side === 'enemy' ? 0 : 1;
     const backCol   = target.side === 'enemy' ? 1 : 0;
-    if (targetCol !== backCol) return target;
+    // Footprint-based, matching meleeCanReach: a large 'row' target already
+    // stands in the front column and so cannot be protected from behind, and a
+    // large protector shields every row it actually covers.
+    const targetCells = this.getFootprint(target);
+    const targetRows  = new Set(targetCells.map(cellRow));
+    if (!targetCells.some(cell => cellCol(cell) === backCol)) return target;
+    if (targetCells.some(cell => cellCol(cell) === frontCol)) return target;
     const protectors = this.combatants.filter(c => {
       if (!c.alive || c.side !== target.side || c.id === target.id) return false;
-      if (cellCol(c.cellIndex) !== frontCol) return false;
-      if (cellRow(c.cellIndex) !== targetRow) return false;
+      const cells = this.getFootprint(c);
+      if (!cells.some(cell => cellCol(cell) === frontCol)) return false;
+      if (!cells.some(cell => targetRows.has(cellRow(cell)))) return false;
       const defs = this.resolveAllPassiveDefs(c);
       const interceptDef  = defs.find(d => d.trigger === 'intercept');
       const passiveChance = interceptDef?.params?.intercept_chance_pct ?? 0;
