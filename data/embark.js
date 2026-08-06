@@ -387,5 +387,21 @@ function getRegionsForMaterial(material) {
   return _dropIndex[material] || [];
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial };
+// ── Where a faction should be sent first ────────────────────────────────────
+// Derived from the reward tables rather than hardcoded: a faction is pointed at
+// whichever region drops the crystal its buildings are paid for in. If those
+// rewards are retuned, this follows automatically.
+const FACTION_CRYSTAL_FOR_REGION = {
+  empire:              'Crystals_Life',
+  choir_of_the_cursed: 'Crystals_Fire',
+  grail_of_sorrow:     'Crystals_Death',
+};
+
+function getFactionHomeRegion(faction) {
+  const crystal = FACTION_CRYSTAL_FOR_REGION[faction];
+  const regions = crystal ? getRegionsForMaterial(crystal) : [];
+  return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
+}
+
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };

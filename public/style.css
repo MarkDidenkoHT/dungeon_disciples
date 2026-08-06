@@ -211,6 +211,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Fill the screen so the action row can sit ON the bottom edge instead of
+     wherever the card happens to end. */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .hero-select-header {
@@ -235,6 +240,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .hero-action-row {
   flex-shrink: 0;
+  margin-top: auto;   /* pinned to the bottom of the screen */
   position: sticky;
   bottom: 0;
   padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
@@ -2591,6 +2597,25 @@ button:active:not(:disabled) { opacity: 0.75; }
 .action-btn--skip        { border-color: var(--muted); color: var(--muted); }
 .action-btn--cancel      { border-color: var(--danger); color: var(--danger); }
 .action-btn--disabled    { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
+
+/* The action you are currently aiming. Without this nothing on screen says
+   whether the taps you are about to make will attack or cast. Declared AFTER
+   --disabled because an armed button is also disabled (it cannot be re-pressed)
+   and must still read as the live one. */
+.action-btn--armed.action-btn--disabled,
+.action-btn--armed {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(200, 151, 58, 0.16);
+  box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.35), 0 0 14px rgba(200, 151, 58, 0.45);
+  animation: action-armed-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes action-armed-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.30), 0 0 10px rgba(200, 151, 58, 0.30); }
+  50%      { box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.55), 0 0 18px rgba(200, 151, 58, 0.60); }
+}
 
 .battle-cell--acting {
   outline: 2px solid var(--accent) !important;

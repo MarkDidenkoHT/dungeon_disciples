@@ -767,7 +767,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         ? '<span style="color:var(--muted)">Enemy is acting…</span>'
         : `<strong>${actor.unit_name}</strong>`;
 
-    ui.mainBtn.className = `action-btn ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
+    // While a target is being picked, the button that started it stays lit —
+    // otherwise nothing on screen says whether you are aiming an attack or an
+    // ability, and the only way to find out is to tap a unit and see.
+    const armed = selectingTarget ? pendingAction : null;
+    ui.mainBtn.className = `action-btn ${armed === 'attack' ? 'action-btn--armed' : ''} ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
     if (actionIcon) {
       ui.mainBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/${actionIcon}" alt="${actionLabel}" onerror="this.style.display='none'"><span class="battle-action-icon-fallback" style="display:none">${actionLabel}</span>`;
@@ -775,7 +779,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ui.mainBtn.textContent = actionLabel;
     }
 
-    ui.abilityBtn.className = `action-btn ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
+    ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
     ui.abilityBtn.innerHTML = renderAbilityButtonContent(actor, abilityName);
     ui.abilityBtn.title = abilityName;

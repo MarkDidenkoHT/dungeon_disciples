@@ -103,17 +103,24 @@ function makeItemRow(playerId, itemKey) {
   };
 }
 
-// Sized against data/buildings.js: a tier-1 large dwelling is 60 gold + 30
-// crystals and a small one is 40 + 20, so a new player can afford exactly one of
-// each. The faction's own crystal is topped up to STARTING_FACTION_CRYSTAL when
-// the faction is picked (this table is written before that choice exists).
+// Sized against data/buildings.js AND the throne track, because the throne is
+// part of the opening too:
+//   throne level 1   free (the tutorial's first tap)
+//   one large dwelling  60 gold + 30 crystals
+//   one small dwelling  40 gold + 20 crystals
+//   throne level 2     150 gold   <- gates the hero's first level-up
+// 200 gold covered the dwellings and left the player 50 short of the throne,
+// stuck farming 15-gold level-1 runs before their hero could advance. 300 covers
+// the whole opening with a little slack.
+// The faction's own crystal is topped up to STARTING_FACTION_CRYSTAL when the
+// faction is picked (this table is written before that choice exists).
 // 60 covers the worst case: a large and a small dwelling whose units BOTH use
 // the faction's own element, so the faction and element halves of the cost merge
 // (30 + 30). 25 of every other crystal covers the same worst case for an element
 // that is not the faction's (15 + 10).
 const STARTING_FACTION_CRYSTAL = 60;
 const STARTING_RESOURCES = [
-  { item_type: 'resource', item: 'Gold',            amount: 200 },
+  { item_type: 'resource', item: 'Gold',            amount: 300 },
   { item_type: 'resource', item: 'Crystals_Life',   amount: 25  },
   { item_type: 'resource', item: 'Crystals_Fire',   amount: 25  },
   { item_type: 'resource', item: 'Crystals_Death',  amount: 25  },
@@ -496,6 +503,9 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       throw new Error(`Failed to delete resources: ${verifyBeforeInsert.length} records remain`);
     }
 
+    // Seeded so a reset player who never reaches faction select still reads a
+    // sane bar. /player/faction deletes these and re-seeds with the faction
+    // crystal bonus, so this set is provisional — do not treat it as final.
     await supabase('/resources', {
       method: 'POST',
       body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
@@ -637,6 +647,14 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     const structuresWrite = existingStruct.length
       ? supabase(`/structures?id=eq.${existingStruct[0].id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: structures }) })
       : supabase('/structures', { method: 'POST', body: JSON.stringify({ chat_id, buildings_data: structures }) });
+
+    // Wipe any existing resource rows before seeding. /player/reset already
+    // seeds a starting set, so without this a reset -> pick-faction cycle left
+    // TWO rows per resource. Every reader here uses .find(), which takes the
+    // first match, so one row would be spent while its stale twin survived and
+    // resurfaced later — the "resources aren't deleted on restart" bug.
+    // Deleting here also makes this endpoint idempotent on its own.
+    await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
 
     const [updated] = await Promise.all([
       supabase(`/players?id=eq.${player_id}`, {
