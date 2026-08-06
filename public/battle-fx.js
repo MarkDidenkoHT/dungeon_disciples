@@ -1922,6 +1922,197 @@ export async function claw_strike(cellEl, opts = {}) {
 }
 
 
+// ── frost_claw — the same three-stroke rake, but cold ───────────────────────
+// Deliberately NOT a recolour of claw_strike. A fire claw is an impact: it
+// flashes hottest on contact and cools away. A frost claw is the opposite —
+// the cut lands pale and thin, then the cold KEEPS working after the strike:
+// rime crawls out along each gash and crystals bloom at the ends while the
+// wound itself dims. So the strokes fade early and the frost peaks late.
+export async function frost_claw(cellEl, opts = {}) {
+  console.log('[battle-fx] frost_claw START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  const target = opts.targetCell || cellEl;
+  if (!target || !app || !window.PIXI) return;
+  const dataId  = target.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  // Raked the other way from claw_strike (down-LEFT) so the two read as
+  // different attacks when a unit has both.
+  const ANGLE = Math.PI * 0.70;
+  const COS = Math.cos(ANGLE), SIN = Math.sin(ANGLE);
+  const PX = -SIN, PY = COS;
+
+  const GASHES = [
+    { offset: -1, delay: 0.00, len: 0.88, width: 0.026 },
+    { offset:  0, delay: 0.05, len: 1.00, width: 0.034 },
+    { offset:  1, delay: 0.10, len: 0.90, width: 0.026 },
+  ];
+
+  // Shards fly out and DRIFT — barely any gravity, unlike the fire claw's
+  // flecks, so they hang in the air and settle rather than fall.
+  const shards = Array.from({ length: 14 }, () => ({
+    along: rand(-0.6, 0.6), out: rand(0.3, 0.95), size: rand(2.0, 4.5),
+    delay: rand(0, 0.3), spin: rand(-3, 3), tilt: rand(0, Math.PI),
+  }));
+
+  // Rime crystals that grow along the middle gash after the cut lands.
+  const rime = Array.from({ length: 10 }, () => ({
+    along: rand(-0.85, 0.85), side: Math.random() < 0.5 ? -1 : 1,
+    len: rand(0.06, 0.15), delay: rand(0.18, 0.5), tilt: rand(-0.5, 0.5),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;
+  const shardG = new PIXI.Graphics(); shardG.blendMode = ADD;
+  const cutG   = new PIXI.Graphics();
+  const rimeG  = new PIXI.Graphics(); rimeG.blendMode  = ADD;
+  layer.addChild(glowLayer, cutG, rimeG);
+  glowLayer.addChild(glowG, shardG);
+  app.stage.addChild(layer);
+
+  // Same tapered quad as claw_strike — thin at both ends, swelling in the
+  // middle — which is what makes a stroke read as a claw rather than a line.
+  function drawTaperedSlash(g, x0, y0, x1, y1, w, color, alpha, reveal) {
+    if (alpha <= 0 || reveal <= 0) return;
+    const STEPS = 12;
+    const ex = x0 + (x1 - x0) * reveal;
+    const ey = y0 + (y1 - y0) * reveal;
+    const dx = ex - x0, dy = ey - y0;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+
+    g.beginFill(color, alpha);
+    g.moveTo(x0, y0);
+    for (let i = 1; i <= STEPS; i++) {
+      const f = i / STEPS;
+      const half = Math.sin(f * Math.PI) * w;
+      g.lineTo(x0 + dx * f + nx * half, y0 + dy * f + ny * half);
+    }
+    for (let i = STEPS; i >= 1; i--) {
+      const f = i / STEPS;
+      const half = Math.sin(f * Math.PI) * w;
+      g.lineTo(x0 + dx * f - nx * half, y0 + dy * f - ny * half);
+    }
+    g.closePath();
+    g.endFill();
+  }
+
+  // An angular splinter rather than a round spark — ice does not glow soft.
+  function drawShard(g, x, y, size, tilt, color, alpha) {
+    if (alpha <= 0 || size <= 0) return;
+    const c = Math.cos(tilt), s = Math.sin(tilt);
+    const pt = (ax, ay) => [x + ax * c - ay * s, y + ax * s + ay * c];
+    const [ax, ay] = pt(size * 2.0, 0);
+    const [bx, by] = pt(0, size * 0.55);
+    const [dx2, dy2] = pt(-size * 2.0, 0);
+    const [ex, ey] = pt(0, -size * 0.55);
+    g.beginFill(color, alpha);
+    g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(dx2, dy2); g.lineTo(ex, ey);
+    g.closePath(); g.endFill();
+  }
+
+  const DURATION = 760;   // longer than the fire claw: the frost outlives the cut
+  await animate(DURATION, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    const reach  = R * 0.52;
+    const spread = R * 0.20;
+
+    // A brief shiver, softer and shorter than the fire claw's jolt.
+    const jolt = t < 0.22 ? (1 - t / 0.22) * 2.2 : 0;
+    const jx = (Math.random() - 0.5) * jolt;
+    const jy = (Math.random() - 0.5) * jolt;
+
+    cutG.clear();
+    glowG.clear();
+    rimeG.clear();
+
+    // Cold gathers just before the first stroke connects.
+    if (t < 0.2) softGlow(glowG, cx, cy, R * 0.42 * (1 - t / 0.2), 0x9fe8ff, 0.28 * (1 - t / 0.2));
+
+    let midGash = null;
+    for (const g of GASHES) {
+      const st = clamp01((t - g.delay) / 0.24);
+      if (st <= 0) continue;
+      // Fades sooner than the fire claw — the wound goes dull while the rime
+      // keeps spreading over it.
+      const fade  = clamp01((t - g.delay - 0.22) / 0.46);
+      const alpha = 1 - fade;
+
+      const ox = cx + jx + PX * spread * g.offset;
+      const oy = cy + jy + PY * spread * g.offset;
+      const half = reach * g.len;
+      const x0 = ox - COS * half, y0 = oy - SIN * half;
+      const x1 = ox + COS * half, y1 = oy + SIN * half;
+      if (g.offset === 0) midGash = { x0, y0, x1, y1, st };
+
+      // Cold bloom: deep glacial blue, dimmer than the fire claw's bloom.
+      drawTaperedSlash(glowG, x0, y0, x1, y1, R * g.width * 2.3, 0x4db8ff, 0.42 * alpha, st);
+      // The cut: icy blue body under a white-blue core.
+      drawTaperedSlash(cutG, x0, y0, x1, y1, R * g.width,        0x1d6fa8, 0.95 * alpha, st);
+      drawTaperedSlash(cutG, x0, y0, x1, y1, R * g.width * 0.40, 0xeafaff, 0.95 * alpha * (1 - fade * 0.4), st);
+
+      if (st < 1) {
+        const tx = x0 + (x1 - x0) * st, ty = y0 + (y1 - y0) * st;
+        softGlow(glowG, tx, ty, R * 0.09, 0xd6f4ff, 0.9);
+      }
+    }
+
+    // Rime creeping out of the middle gash — the part that says "frost".
+    if (midGash) {
+      const nx = -SIN, ny = COS;
+      for (const rc of rime) {
+        const rt = clamp01((t - rc.delay) / 0.3);
+        if (rt <= 0) continue;
+        const rFade = clamp01((t - 0.72) / 0.28);
+        const a = (1 - rFade) * 0.85;
+        if (a <= 0) continue;
+        const bx = cx + jx + COS * reach * rc.along;
+        const by = cy + jy + SIN * reach * rc.along;
+        const gl = R * rc.len * rt;
+        const dx3 = nx * rc.side + COS * rc.tilt;
+        const dy3 = ny * rc.side + SIN * rc.tilt;
+        const dl  = Math.hypot(dx3, dy3) || 1;
+        rimeG.lineStyle(Math.max(1, R * 0.012), 0xcdefff, a);
+        rimeG.moveTo(bx, by);
+        rimeG.lineTo(bx + dx3 / dl * gl, by + dy3 / dl * gl);
+        // little barb, so it reads as a crystal and not a hair
+        const bl = gl * 0.45;
+        rimeG.moveTo(bx + dx3 / dl * gl * 0.6, by + dy3 / dl * gl * 0.6);
+        rimeG.lineTo(bx + dx3 / dl * gl * 0.6 + COS * bl, by + dy3 / dl * gl * 0.6 + SIN * bl);
+        rimeG.lineStyle(0);
+      }
+    }
+
+    // Shards: thrown out along the rake, drifting and slowing to a stop.
+    shardG.clear();
+    const spray = clamp01((t - 0.08) / 0.6);
+    if (spray > 0) {
+      for (const sp of shards) {
+        const s2 = clamp01((spray - sp.delay) / (1 - sp.delay));
+        if (s2 <= 0) continue;
+        const ease = 1 - Math.pow(1 - s2, 2.2);       // decelerating drift
+        const bx = cx + jx + COS * reach * sp.along;
+        const by = cy + jy + SIN * reach * sp.along;
+        const px = bx + PX * R * sp.out * ease;
+        const py = by + PY * R * sp.out * ease + s2 * s2 * R * 0.06;   // barely falls
+        drawShard(shardG, px, py, sp.size * (1 - s2 * 0.45),
+                  sp.tilt + sp.spin * s2, 0xd8f4ff, (1 - s2) * 0.9);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] frost_claw END', dataId);
+}
+
 
 export const EFFECTS = {
   mithrails_light,
@@ -1935,13 +2126,13 @@ export const EFFECTS = {
   sacrifice,
   shared_suffering,
   light_of_dawn,
-  // ── new ──
   cleanse,
   raise_dead,
   shield_bash,
   arcane_bolt,
   poison_dart,
   claw_strike,
+  frost_claw,
   mend_flesh,
   haunt,
   blood_bolt,

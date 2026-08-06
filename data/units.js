@@ -2172,7 +2172,7 @@ const UNITS = {
         hp: 110, armor: 10, initiative: 20,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 12,
+        damage_source: 'cold', action_power: 12, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 200, passive: ['protector 1', 'rimeguard 1'], ability: null,
       },
       rimewarden: {
@@ -2183,7 +2183,7 @@ const UNITS = {
         hp: 130, armor: 15, initiative: 20,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 16,
+        damage_source: 'cold', action_power: 16, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 800, passive: ['protector 2', 'rimeguard 1'], ability: null,
       },
       glaciok: {
@@ -2194,7 +2194,7 @@ const UNITS = {
         hp: 145, armor: 20, initiative: 20,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'cold', action_power: 20,
+        damage_source: 'cold', action_power: 20, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 1800, passive: ['protector 2', 'rimeguard 2'], ability: null,
       },
       cryodrox: {
@@ -2205,7 +2205,7 @@ const UNITS = {
         hp: 180, armor: 25, initiative: 30,
         resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 30, nature: 30 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'cold', action_power: 30,
+        damage_source: 'cold', action_power: 30, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 999, passive: ['chill 1', 'dissipate 1'], ability: null,
       },
       cryodrox2: {
@@ -2216,7 +2216,7 @@ const UNITS = {
         hp: 240, armor: 25, initiative: 30,
         resistances: { air: 40, fire: 40, life: 40, death: 40, cold: 40, nature: 40 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'cold', action_power: 40,
+        damage_source: 'cold', action_power: 40, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 999, passive: ['chill 2', 'dissipate 1'], ability: null,
       },
     },
