@@ -3309,17 +3309,16 @@ button:active:not(:disabled) { opacity: 0.75; }
    frame. */
 .battle-grid--bark { z-index: 20; }
 
-/* The bark FLOATS above the portrait rather than sitting inside it. Drawn as a
-   caption band across the tile's lower edge it read as part of the portrait art
-   — something the unit was wearing, not something it was saying. Lifting it clear
-   of the tile is the whole fix; the original size was right, so the width stays
-   tied to the cell and only the anchor moved.
+/* Centred ON the portrait, not above it. As a caption band across the tile's
+   lower edge it read as part of the portrait art; floated above the tile it sat
+   too far from the speaker (and drifted off the top row entirely). Over the
+   middle of the portrait it reads as that unit speaking.
    The rounded pill shape is what makes it read as speech. */
 .bark-toast {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(100% + 5px);   /* clear of the tile's top edge, not inside it */
+  top: 50%;
+  transform: translate(-50%, -50%);
   /* Sized to the LINE, not to the cell. Clamped to the cell width it turned into
      a tall narrow column of two-word lines; a bark is one spoken sentence and
      should read as one. Overflowing the tile is fine and expected here. */
@@ -3340,12 +3339,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   animation: bark-toast-in 0.18s ease-out;
 }
 
-/* Rises INTO place from below, toward the portrait it belongs to. The centring
-   translateX has to be carried through both keyframes, or the toast snaps a
-   half-width sideways the moment the animation ends. */
+/* Settles up into place. BOTH centring offsets have to be carried through every
+   keyframe — transform is doing the positioning here, so dropping either one
+   snaps the toast a half-size sideways or downward as the animation ends. */
 @keyframes bark-toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 5px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
 .battle-cell--fog {
