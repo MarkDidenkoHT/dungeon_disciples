@@ -247,12 +247,13 @@ export function renderRoster(root, { player }) {
     // Overlaid on the portrait rather than inserted into the card's flow: a row
     // that appears and disappears with the unit's state shifts everything below
     // it every time someone dies, is revived, or is healed.
+    // Just the BUTTON here - all of these share one overlay (see actionOverlayHtml
+    // below), which is what keeps the favor button stacked directly above the
+    // spell button instead of the two being positioned independently.
     const resurrectButtonHtml = !alive && resurrectionSpell ? `
-      <div class="unit-card-overlay">
         <button class="resurrect-btn" data-roster-id="${u.id}" data-spell-id="${resurrectionSpell.id}">
           ${T('resurrect')} (${resurrectionCost})
         </button>
-      </div>
     ` : '';
 
     // Heal is an out-of-combat spell (roster only), usable on a living but
@@ -269,26 +270,38 @@ export function renderRoster(root, { player }) {
     // Divine favor: the ad-funded alternative to the two spells above. Offered
     // whenever a unit is dead or hurt, INCLUDING when the player cannot afford
     // (or has not learned) the spell — that gap is the whole point of it.
-    // Sits in the same overlay as the spell buttons so nothing below shifts.
+    // Two compact lines so it stays inside the portrait: a long faction label
+    // like 'Devotion to Mithrail' on one row overran onto the stat columns.
     const favorLabel = (FAVOR_LABELS[player.faction] || FAVOR_FALLBACK)[L];
     const favorNeeded = !alive || isDamaged;
     const favorButtonHtml = favorNeeded ? `
-      <div class="unit-card-overlay unit-card-overlay--favor">
         <button class="favor-btn${favorRemaining <= 0 ? ' favor-btn--spent' : ''}"
                 data-roster-id="${u.id}"
                 ${favorRemaining <= 0 ? 'disabled' : ''}>
-          <span class="favor-btn-ad">${T('adBadge')}</span>
-          <span class="favor-btn-label">${favorLabel}</span>
+          <span class="favor-btn-top">
+            <span class="favor-btn-ad">${T('adBadge')}</span>
+            <span class="favor-btn-label">${favorLabel}</span>
+          </span>
           <span class="favor-btn-left">${favorRemaining > 0 ? T('favorLeft')(favorRemaining) : T('favorNoneUI')}</span>
         </button>
-      </div>
     ` : '';
 
     const healButtonHtml = isDamaged && healSpell ? `
-      <div class="unit-card-overlay unit-card-overlay--heal">
         <button class="heal-btn" data-roster-id="${u.id}" data-spell-id="${healSpell.id}">
           ${T('heal')} (${healCost})
         </button>
+    ` : '';
+
+    // ONE overlay holding favor + spell, stacked. Separately positioned overlays
+    // could not express "favor sits directly above the heal button" without
+    // hardcoding an offset that breaks the moment either button changes height.
+    // A dead unit's button owns the middle of the card; a wounded one is still
+    // playable, so its buttons sit low and out of the way.
+    const actionOverlayHtml = (favorButtonHtml || resurrectButtonHtml || healButtonHtml) ? `
+      <div class="unit-card-overlay unit-card-overlay--actions ${alive ? 'unit-card-overlay--heal' : ''}">
+        ${favorButtonHtml}
+        ${resurrectButtonHtml}
+        ${healButtonHtml}
       </div>
     ` : '';
 
@@ -349,9 +362,7 @@ export function renderRoster(root, { player }) {
             ${coreHtml}
             <div class="unit-portrait-wrap">
               ${portraitHtml}
-              ${resurrectButtonHtml}
-              ${healButtonHtml}
-              ${favorButtonHtml}
+              ${actionOverlayHtml}
             </div>
             ${resistsHtml}
           </div>

@@ -2393,6 +2393,16 @@ button:active:not(:disabled) { opacity: 0.75; }
    a dead one is not, so its button owns the middle of the card. */
 .unit-card-overlay--heal { align-items: flex-end; padding-bottom: 46px; }
 
+/* Favor + spell share one overlay and stack, favor on top. Column order in the
+   markup IS the visual order, so there is no offset to maintain when either
+   button changes size. The side padding keeps both clear of the stat columns. */
+.unit-card-overlay--actions {
+  flex-direction: column;
+  gap: 7px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 .resurrect-btn {
   background: linear-gradient(180deg,#2563eb,#1243b8);
   color: #fff;
@@ -2418,23 +2428,32 @@ button:active:not(:disabled) { opacity: 0.75; }
 .heal-btn[disabled] { opacity: 0.6; cursor: default; }
 
 /* ── Divine favor (rewarded ad) ────────────────────────────────────────────
-   Pinned to the bottom of the portrait, under the spell buttons — it is the
-   fallback when a spell is unaffordable, so it must not compete with one. */
-.unit-card-overlay--favor { align-items: flex-end; padding-bottom: 8px; }
-
+   Sits directly above the spell button (same overlay, column order) — it is the
+   fallback when a spell is unaffordable, so it reads as secondary but stays in
+   the same place. Two stacked lines and a hard width cap: as a single row with
+   a long faction label it ran off the portrait and over the stat columns. */
 .favor-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 1px;
+  max-width: 100%;
   background: rgba(10, 12, 16, 0.88);
   border: 1px solid var(--accent);
   color: var(--text);
-  padding: 6px 10px;
+  padding: 4px 9px;
   border-radius: 8px;
-  font-size: 0.72rem;
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6);
   cursor: pointer;
+  overflow: hidden;
+}
+.favor-btn-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
 }
 /* Required, not decorative: the player has to know this is an ad BEFORE they
    tap it. Never hide this to make the button tidier. */
@@ -2442,15 +2461,26 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
   background: var(--accent);
   color: #111;
-  font-size: 0.58rem;
+  font-size: 0.52rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
 }
-.favor-btn-label { white-space: nowrap; }
-.favor-btn-left  { color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
+.favor-btn-label {
+  font-size: 0.68rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;   /* ellipsis rather than wrapping, so height never shifts */
+}
+.favor-btn-left {
+  color: var(--muted);
+  font-size: 0.56rem;
+  white-space: nowrap;
+  line-height: 1.2;
+}
 .favor-btn--spent { opacity: 0.55; cursor: default; border-color: var(--border); }
 .favor-btn--spent .favor-btn-ad { background: var(--muted); }
 
