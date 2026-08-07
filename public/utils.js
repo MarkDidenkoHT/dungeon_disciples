@@ -674,8 +674,12 @@ function ensureSubSheet() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay modal-overlay--sub hidden';
+  // `modal--card` opts this panel out of the bottom-sheet presentation: it is a
+  // floating card, not an edge-docked sheet, so it must not inherit .modal's
+  // slide-up-from-the-bottom entrance. Stated as its own class rather than left
+  // to an override so nothing added to .modal later can drag the slide back in.
   overlay.innerHTML = `
-    <div class="modal">
+    <div class="modal modal--card">
       <div class="modal-header">
         <span class="modal-title-text"></span>
         <div class="modal-header-badges"></div>
