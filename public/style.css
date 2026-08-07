@@ -1081,32 +1081,36 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .modal-overlay.hidden { display: none !important; }
 
+/* The detail panel (inspecting an ability from inside a building/unit sheet) is
+   deliberately NOT a second bottom sheet. Docked to the same edge as the sheet
+   that opened it, it could only either cover that sheet or push it upward —
+   and pushing it is the jump you see the moment the panel appears. Floating it
+   at the top instead means the base sheet never moves at all: nothing under it
+   is re-laid-out, and it stays fully readable below the panel. */
 .modal-overlay--sub {
   z-index: 150;
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   animation: none;
+  align-items: flex-start;
+  padding: 12px;
 }
 
 .modal-overlay--sub .modal {
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
-  /* Capped so the detail panel can never claim the whole screen and leave the
-     sheet it came from with nowhere to sit. */
-  max-height: 55vh;
+  /* A floating card, not an edge-docked sheet: rounded and bordered all round. */
+  border-radius: 16px;
+  border-bottom: 1px solid var(--border);
+  max-width: 420px;
+  max-height: 60vh;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  /* Overrides .modal's sheet-up slide, which is meant for an edge-docked panel. */
+  animation: sub-card-in 0.16s ease-out;
 }
 
-/* Set by syncSheetStack() in public/utils.js while a sub-sheet is open: the base
-   sheet slides up by the sub-sheet's height so both stay on screen, stacked,
-   instead of the sub-sheet covering the one that opened it.
-
-   Transform only — deliberately no max-height here. Resizing the base sheet
-   would reflow its contents (the castle building slider, a unit's stat list)
-   and that reflow is exactly the layout shift this is supposed to avoid. A
-   transform is composited: the sheet moves, nothing inside it is re-laid-out. */
-.modal-overlay--stacked .modal {
-  transform: translateY(calc(-1 * var(--sub-sheet-h, 0px)));
-  transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+@keyframes sub-card-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes overlay-in {
