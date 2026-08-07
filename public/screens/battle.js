@@ -172,7 +172,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Passive entries use effect_name from the ability definition.
   // Action entries use the actor's action string.
   function effectForEntry(entry, actorCombatant) {
-    if (entry.type === 'passive' && entry.passive) {
+    // 'intercept' is a passive as far as animation goes — it just carries its own
+    // log type (see resolveProtectorIntercept in utils/battle-engine.js). Without
+    // it here, Protector resolved to no effect at all and never animated despite
+    // being correctly wired in data/unit_abilities.js.
+    if ((entry.type === 'passive' || entry.type === 'intercept') && entry.passive) {
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
       if (def?.effect_name) return def.effect_name;
     }
@@ -313,6 +317,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           // mends an ally or strikes an enemy) — an effect should never have to
           // deduce that from which cell it happened to be anchored on.
           if (cell) await EFFECTS[effectName](cell, { isEnemy, targetCell, isHeal: isHealAction });
+        } else if (entry.type === 'intercept') {
+          // Anchors on the INTERCEPTOR, not the unit it saved: the shield goes up
+          // over the protector who stepped in. Its log entry carries no targetId
+          // anyway (only actorId + targetCell), so the passive path below would
+          // have found no cell to draw on even once the effect resolved.
+          if (actorCell) await EFFECTS[effectName](actorCell);
         } else {
           // Passive animations anchor to the target cell
           if (targetCell) await EFFECTS[effectName](targetCell);
