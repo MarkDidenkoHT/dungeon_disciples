@@ -234,7 +234,7 @@ export function renderCastle(root, { player }) {
             ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
           </div>
         </div>
-        <div class="track-action-row">
+        <div class="track-action-row track-action-row--framed">
           <button class="frame-action frame-action--confirm" id="slider-confirm"
                   title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
           <div class="prep-track-wrap branch-track-wrap">

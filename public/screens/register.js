@@ -332,7 +332,7 @@ export function renderRegister(root, { player } = {}) {
 
         <p id="reg-error" class="error hidden"></p>
 
-        <div class="track-action-row hero-action-row">
+        <div class="track-action-row hero-action-row track-action-row--framed">
           <button class="frame-action" id="back-btn"
                   title="${UI_TEXT.backBtn[L]}" aria-label="${UI_TEXT.backBtn[L]}">‹</button>
           <div class="prep-track-wrap branch-track-wrap">

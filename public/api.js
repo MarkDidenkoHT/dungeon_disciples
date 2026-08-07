@@ -33,29 +33,51 @@ function makeCache(fetcher) {
     data: null,
     dirty: true,
     _inflight: null,
+    // Bumped whenever a caller declares the cached data dead. A response issued
+    // under an older epoch is answered to whoever asked for it but is NOT
+    // allowed to become the cached value — it predates a write we know about.
+    _epoch: 0,
+    _tickOpen: false,
     async get(...args) {
       if (!this.dirty && this.data) return this.data;
       if (this._inflight) return this._inflight;
-      this._inflight = fetcher(...args)
+      const epoch = this._epoch;
+      const p = fetcher(...args)
         .then(result => {
-          this.data     = result;
-          this.dirty    = false;
-          this._inflight = null;
+          if (this._inflight === p) this._inflight = null;
+          if (epoch === this._epoch) {
+            this.data  = result;
+            this.dirty = false;
+          }
           return result;
         })
         .catch(err => {
-          this._inflight = null;
+          if (this._inflight === p) this._inflight = null;
           throw err;
         });
-      return this._inflight;
+      this._inflight = p;
+      return p;
     },
     invalidate() {
       this.dirty = true;
+      this._epoch++;
     },
-    // invalidate + get as ONE operation. Two callers refreshing in the same tick
-    // (refreshResourceBar + refreshNavLock on every navigation) share a single
-    // request; awaiting them in sequence used to fire two full bootstraps.
+    // "Something changed — read it back." A request already in flight was issued
+    // BEFORE that change, so adopting it hands back pre-write state: craft an
+    // item and the response that arrives is the inventory without it, cached as
+    // if it were fresh. So a refresh abandons the in-flight request and starts
+    // its own.
+    //
+    // Callers in the SAME tick still share one request, which is what keeps a
+    // single navigation (refreshResourceBar + refreshNavLock, main.js:152) to
+    // one /bootstrap rather than two.
     refresh(...args) {
+      if (!this._tickOpen) {
+        this._tickOpen = true;
+        Promise.resolve().then(() => { this._tickOpen = false; });
+        this._epoch++;
+        this._inflight = null;
+      }
       this.dirty = true;
       return this.get(...args);
     },

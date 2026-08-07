@@ -5221,6 +5221,31 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .track-action-row .portrait-card--branch { scroll-snap-align: center; }
 
+/* Build and deconstruct belong INSIDE the framed panel that holds the upgrade
+   portraits, not flanking it from the outside: the art spans the whole row so
+   the three controls read as one object — build, portraits, deconstruct.
+   The art moves up to the row; the inner wrapper keeps the horizontal scrolling
+   (the buttons must stay put while the cards move under them) but gives up its
+   own copy of the background, which would otherwise paint a second time behind
+   the portraits. Used by the castle's build/upgrade slider and the register
+   screen's hero picker — the two rows built to this shape. */
+.track-action-row--framed {
+  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* Padding longhands rather than the shorthand: .hero-action-row sets its own
+     padding-bottom to clear the safe-area inset, and a shorthand here would
+     silently drop it on a notched phone. */
+  padding-top: 6px;
+  padding-right: 6px;
+  padding-left: 6px;
+  gap: 4px;
+}
+
+.track-action-row--framed .prep-track-wrap {
+  background-image: none;
+}
+
 .frame-action {
   /* Derived from the branch cards' own sizing vars so the button and the
      portraits it flanks are always exactly the same height. Every property the
