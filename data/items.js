@@ -308,7 +308,7 @@ const ITEM_DEFS = {
     name:         "Orb Of Fire",
     name_ru:      'Сфера Пламени',
     faction:      null,
-    tag_required: null,
+    tag_required: 'Caster',
     adds_tag:     null,
     stat_mods:    { fire_resist: 5 },
     passive:      'burn 1',

@@ -142,6 +142,19 @@ export const CRYSTAL_ICONS = {
 
 export const GOLD_ICON = '<img src="/assets/icons/recources/gold.png" class="res-icon-img" alt="Gold">';
 
+// The resource strip's slots, in the order they are drawn. Anything that has to
+// line up COLUMN-WISE with that strip — the build-cost bar under it — renders
+// from this same list, so the two can never drift out of step.
+export const RESOURCE_BAR_SLOTS = [
+  { key: 'Gold',            label: 'Gold',   icon: GOLD_ICON },
+  { key: 'Crystals_Life',   label: 'Life',   icon: CRYSTAL_ICONS.Crystals_Life },
+  { key: 'Crystals_Fire',   label: 'Fire',   icon: CRYSTAL_ICONS.Crystals_Fire },
+  { key: 'Crystals_Death',  label: 'Death',  icon: CRYSTAL_ICONS.Crystals_Death },
+  { key: 'Crystals_Nature', label: 'Nature', icon: CRYSTAL_ICONS.Crystals_Nature },
+  { key: 'Crystals_Frost',  label: 'Frost',  icon: CRYSTAL_ICONS.Crystals_Frost },
+  { key: 'Crystals_Air',    label: 'Air',    icon: CRYSTAL_ICONS.Crystals_Air },
+];
+
 export const SCREEN_BACKGROUNDS = {
   roster: {
     empire:              '/assets/screens/empire.jpg',

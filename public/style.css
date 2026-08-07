@@ -812,6 +812,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
+/* Equal-width columns rather than content-width ones. The cost bar below has to
+   line up slot for slot with this strip, and content-width slots drift the
+   moment one number is wider than the other ("1250" gold above, "40" below). */
+.resource-bar .res-bar-item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Timeline / errand slots. These are controls, not readouts, so they wear the
    bottom-nav frame art instead of sitting bare among the resource numbers —
    same button language as the nav bar, scaled to the resource strip. */
@@ -1012,6 +1020,60 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--border);
   flex-shrink: 0;
   margin: 0 2px;
+}
+
+/* ── Build / upgrade cost bar ────────────────────────────────────────────────
+   Slides in under the resource strip (same slot the roster's trophy bar uses)
+   while a build or upgrade is being chosen. It repeats the strip's geometry
+   exactly — same ghost buttons at both ends, same .resource-bar inner box, same
+   seven equal columns — so the amount you must PAY sits directly beneath the
+   amount you HAVE, and the comparison is a glance down a column. */
+.cost-bar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cost-bar {
+  /* Shorter than the strip above: this is a readout of one line of numbers, so
+     it does not need the full slot height. */
+  padding: 2px 8px;
+  max-height: none;
+  z-index: 299;   /* directly beneath the resource bar's 300 */
+}
+
+/* Reserves exactly the width of the timeline / errands buttons flanking the
+   strip above. Without these the columns would all sit one button to the left. */
+.cost-bar-ghost {
+  background: none;
+  visibility: hidden;
+  pointer-events: none;
+  height: auto;
+}
+
+.cost-bar-item .res-icon-img {
+  width: 18px;
+  height: 18px;
+}
+
+.cost-bar-item .res-bar-val {
+  font-size: 0.58rem;
+}
+
+/* A column this build does not charge for. Kept in place, near-invisible, so
+   every other column stays under its counterpart above. */
+.cost-bar-item--idle {
+  opacity: 0.22;
+}
+
+.cost-bar-item--ok    .res-bar-val { color: var(--text); }
+.cost-bar-item--short .res-bar-val { color: var(--danger); }
+/* The one you cannot pay is the whole point of the bar — make it findable. */
+.cost-bar-item--short .res-icon-img {
+  filter: drop-shadow(0 0 3px var(--danger));
 }
 
 .roster-trophy-bar {

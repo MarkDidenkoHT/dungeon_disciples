@@ -10,7 +10,7 @@ import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
-  openSubSheet, closeSubSheet, getSubSheetBody, cap,
+  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
 } from '../utils.js';
 
@@ -202,6 +202,83 @@ export function renderCastle(root, { player }) {
       .join(' + ');
   }
 
+  // ── Cost bar ────────────────────────────────────────────────────────────────
+  // What a build or upgrade costs used to live only in the confirm button's
+  // tooltip, which on a phone means nowhere. This is a second strip that slides
+  // in directly under the resource bar (the slot the roster's trophy bar uses)
+  // and mirrors it column for column: the gold you need sits under the gold you
+  // have, fire crystals under fire crystals. Reading down a column answers
+  // "can I afford this?" without any arithmetic.
+  //
+  // Costs are keyed 'gold' + 'Crystals_*' (data/buildings.js) — mercenary
+  // upgrades are priced in trophies instead, which have no column in the strip
+  // above, so those are appended after the seven fixed slots.
+  const COST_BAR_ID = 'castle-cost-bar';
+
+  function hideCostBar() {
+    document.getElementById(COST_BAR_ID)?.remove();
+  }
+
+  function showCostBar(cost) {
+    hideCostBar();
+    const entries = Object.entries(cost || {}).filter(([, amt]) => Number(amt) > 0);
+    if (!entries.length) return;
+
+    const resourceRow = document.getElementById('resource-bar-row');
+    if (!resourceRow) return;
+
+    // 'gold' in a cost map is the same resource as 'Gold' in the strip above.
+    const required = {};
+    for (const [item, amt] of entries) {
+      const key = item === 'gold' ? 'Gold' : item;
+      required[key] = (required[key] || 0) + Number(amt);
+    }
+
+    // The seven aligned slots. A slot with nothing to pay still renders, dimmed,
+    // so every column keeps its position under the strip above.
+    const slotHtml = (iconHtml, key, label, need) => {
+      const have  = amountOf(key);
+      const short = have < need;
+      return `<div class="res-bar-item cost-bar-item ${short ? 'cost-bar-item--short' : 'cost-bar-item--ok'}"
+                   title="${label}: ${castleLang === 'ru' ? `нужно ${need}, есть ${have}` : `need ${need}, have ${have}`}">
+                <span class="res-bar-icon">${iconHtml}</span>
+                <span class="res-bar-val">${need}</span>
+              </div>`;
+    };
+
+    const slots = RESOURCE_BAR_SLOTS.map(slot => {
+      const need = required[slot.key] ?? 0;
+      if (!need) {
+        return `<div class="res-bar-item cost-bar-item cost-bar-item--idle">
+                  <span class="res-bar-icon">${slot.icon}</span>
+                  <span class="res-bar-val">·</span>
+                </div>`;
+      }
+      return slotHtml(slot.icon, slot.key, slot.label, need);
+    }).join('');
+
+    // Trophy costs (mercenary upgrades) have no column above to line up with.
+    const extras = Object.entries(required)
+      .filter(([key]) => !RESOURCE_BAR_SLOTS.some(s => s.key === key))
+      .map(([key, need]) => {
+        const name = key.replace(/_/g, ' ');
+        const icon = `<img src="/assets/icons/recources/${key}.png" class="res-icon-img" alt="${name}" onerror="this.style.visibility='hidden'">`;
+        return slotHtml(icon, key, name, need);
+      }).join('');
+
+    const bar = document.createElement('div');
+    bar.id = COST_BAR_ID;
+    bar.className = 'cost-bar-row';
+    // The two ghost cells stand in for the timeline / errands buttons that flank
+    // the strip above. Without them this bar would start at the screen edge and
+    // every column would sit one button-width to the left.
+    bar.innerHTML = `
+      <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>
+      <div class="resource-bar cost-bar">${slots}${extras}</div>
+      <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>`;
+    resourceRow.insertAdjacentElement('afterend', bar);
+  }
+
   function getUpgradePathsForBuilding(faction, def) {
     if (!def || !def.upgrades || def.upgrades.length === 0) return [];
     const factionPaths = upgradePaths[faction] || {};
@@ -250,6 +327,10 @@ export function renderCastle(root, { player }) {
 
     // The sheet's own ✕ is the only close control — no duplicate.
     openModal(title, renderSliderHtml(current));
+    // The cost belongs to the SELECTED slide, so it is refreshed on every branch
+    // change alongside the card, and torn down with the sheet however it closes.
+    showCostBar(slides[current]?.cost ?? slides[current]?.mercCost);
+    onSheetClose(hideCostBar);
 
     function attachAbilityListeners() {
       getSheetBody().querySelectorAll('.ability-icon:not([disabled])').forEach(btn => {
@@ -262,6 +343,16 @@ export function renderCastle(root, { player }) {
           openAbilityModal(parts.title, parts.body, parts.badges);
         });
       });
+    }
+
+    // Every path that changes the selected branch goes through here, so the card
+    // and the cost bar under the resource strip can never disagree about which
+    // building is being priced.
+    function showSlide(i) {
+      current = i;
+      getSheetBody().innerHTML = renderSliderHtml(current);
+      showCostBar(slides[current]?.cost ?? slides[current]?.mercCost);
+      attach();
     }
 
     function attach() {
@@ -281,8 +372,8 @@ export function renderCastle(root, { player }) {
         const dy = e.changedTouches[0].clientY - touchStartY;
         touchStartX = null;
         if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 40) return;
-        if (dx < 0 && current < slides.length - 1) { current++; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
-        if (dx > 0 && current > 0)                  { current--; sheetBody.innerHTML = renderSliderHtml(current); attach(); }
+        if (dx < 0 && current < slides.length - 1) showSlide(current + 1);
+        else if (dx > 0 && current > 0)            showSlide(current - 1);
       });
 
       // The track scrolls like the roster strip: picking a branch slides it to
@@ -297,9 +388,7 @@ export function renderCastle(root, { player }) {
         card.addEventListener('click', () => {
           const i = Number(card.dataset.i);
           if (i === current) return;
-          current = i;
-          sheetBody.innerHTML = renderSliderHtml(current);
-          attach();
+          showSlide(i);
         });
       });
       sheetBody.querySelector('#slider-confirm')?.addEventListener('click', () => onConfirm(slides[current]));
