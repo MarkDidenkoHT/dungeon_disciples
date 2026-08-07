@@ -221,7 +221,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'mothers_gift',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Death: 10 },
+    cost:         { Gold: 30, Crystals_Death: 10 },
   },
   padded_armor: {
     key:          'padded_armor',
@@ -288,7 +288,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'fire_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Fire: 25 },
+    cost:         { Gold: 30, Crystals_Fire: 10 },
   },
   orb_of_fire: {
     key:          'orb_of_fire',
@@ -357,7 +357,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'death_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Death: 10 },
+    cost:         { Gold: 30, Crystals_Death: 10 },
   },
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
@@ -370,7 +370,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'cold_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Frost: 10 },
+    cost:         { Gold: 30, Crystals_Frost: 10 },
   },
   life_resistance_potion: {
     key:          'life_resistance_potion',
@@ -383,7 +383,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'life_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Life: 10 },
+    cost:         { Gold: 30, Crystals_Life: 10 },
   },
   nature_resistance_potion: {
     key:          'nature_resistance_potion',
@@ -396,7 +396,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'nature_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Nature: 10 },
+    cost:         { Gold: 30, Crystals_Nature: 10 },
   },
   air_resistance_potion: {
     key:          'air_resistance_potion',
@@ -409,7 +409,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'air_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Air: 10 },
+    cost:         { Gold: 30, Crystals_Air: 10 },
   },
   crude_sword: {
     key:          'crude_sword',
@@ -499,7 +499,7 @@ const ITEM_DEFS = {
     icon:         'mace',
     rarity:       'common',
     unique:       true,
-    cost:         { Gold: 25, Crystals_Death: 10, Crystals_Air: 10 },
+    cost:         { Gold: 30, Crystals_Death: 5, Crystals_Air: 5 },
   },
   morning_star: {
     key:          'morning_star',
@@ -554,7 +554,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'life_charm',
     rarity:       'common',
-    cost:         { Crystals_Life: 10, Crystals_Death: 10 },
+    cost:         { Gold: 10, Crystals_Life: 10, Crystals_Death: 10 },
   },
   orb_of_pure_blood: {
     key:          'orb_of_pure_blood',
@@ -612,7 +612,7 @@ const ITEM_DEFS = {
     passive:      'poison 1',
     icon:         'poisonous_dagger',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Nature: 25  },
+    cost:         { Gold: 30, Crystals_Nature: 10  },
   },
   frost_lance: {
     key:          'frost_lance',
@@ -669,7 +669,7 @@ const ITEM_DEFS = {
     passive:      'dodge 1',
     icon:         'cloak_of_evasion',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Air: 10, Crystals_Nature: 10  },
+    cost:         { Gold: 10, Crystals_Air: 10, Crystals_Nature: 10  },
   },
   travelers_bedroll: {
     key:          'travelers_bedroll',
