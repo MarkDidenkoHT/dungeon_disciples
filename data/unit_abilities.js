@@ -906,15 +906,18 @@ const UNIT_ABILITIES = {
     trigger: 'on_take_damage',
     description: 'After taking damage, gain +3 armor or resistance to that damage type for the rest of the round.',
     params: { resist_gain: 3, duration_rounds: 1, match_damage_type: true },
+    effect_name: 'aegis',
   },
   'aegis 2': {
-    id: 'aegis 1',
+    // id and rank were both copied from rank 1 and left unchanged.
+    id: 'aegis 2',
     name: 'Aegis',
-    rank: 1,
+    rank: 2,
     type: 'passive',
     trigger: 'on_take_damage',
     description: 'After taking damage, gain +4 armor or resistance to that damage type for the rest of the round.',
     params: { resist_gain: 4, duration_rounds: 1, match_damage_type: true },
+    effect_name: 'aegis',
   },
   'terror 1': {
     id: 'terror 1',

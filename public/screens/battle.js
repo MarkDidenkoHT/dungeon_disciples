@@ -322,7 +322,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           // over the protector who stepped in. Its log entry carries no targetId
           // anyway (only actorId + targetCell), so the passive path below would
           // have found no cell to draw on even once the effect resolved.
-          if (actorCell) await EFFECTS[effectName](actorCell);
+          // fromCell is the ATTACKER (sourceId), so the shield can face the blow.
+          if (actorCell) await EFFECTS[effectName](actorCell, { fromCell: sourceCell });
         } else {
           // Passive animations anchor to the target cell
           if (targetCell) await EFFECTS[effectName](targetCell);
@@ -656,12 +657,33 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return entry.dot_kind || null;
   }
 
+  // Aegis is a STACKING state, not a one-off: each hit adds armor (or a resist
+  // matching the damage type) for the rest of the round. The proc flash lives in
+  // battle-fx.js; this drives the standing ward drawn on the cell, which has to
+  // survive re-renders and outlive any single animation.
+  // Both shapes are read because buffs are nested in the snapshot but flat on
+  // live combatants (same as _mothers_kiss elsewhere in this file).
+  function aegisLevelFor(occ) {
+    const armor   = occ._aegis_armor   ?? occ.buffs?._aegis_armor   ?? 0;
+    const resists = occ._aegis_resists ?? occ.buffs?._aegis_resists ?? {};
+    const total   = Number(armor) +
+      Object.values(resists).reduce((s, v) => s + (Number(v) || 0), 0);
+    // resist_gain is 3-4 per proc, so /3 approximates the stack count. Capped at
+    // 4 so a long round cannot bloom the cell into something unreadable.
+    return total > 0 ? Math.min(4, Math.max(1, Math.round(total / 3))) : 0;
+  }
+
   function patchCell(cellEl, occ, actor, validTargetKeys) {
     const isActor  = actor?.id === occ.id;
     const isTarget = validTargetKeys.has(occ.id);
     const hpPct    = occ.battle_hp / occ.max_hp;
 
-    let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
+    // Same stacking ward as in renderSide. It has to be recomputed HERE too:
+    // patchCell rewrites className wholesale, so without this a cell that was
+    // patched rather than re-rendered would silently lose its Aegis ward mid-round.
+    const aegisLevel = aegisLevelFor(occ);
+
+    let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
     if (isActor)               cls += ' battle-cell--acting anim-actor-pulse';
     else if (isTarget)         cls += ' battle-cell--targetable';
     else if (selectedCombatant?.id === occ.id) cls += ' battle-cell--selected';
@@ -672,6 +694,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (cellEl.classList.contains(ac)) cls += ` ${ac}`;
     }
     cellEl.className = cls;
+    if (aegisLevel) cellEl.style.setProperty('--aegis-level', aegisLevel);
+    else            cellEl.style.removeProperty('--aegis-level');
 
     const sub = cellEl.querySelector('.battle-cell-sub');
     if (sub) {
@@ -728,7 +752,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const hpPct      = occ.battle_hp / occ.max_hp;
         const portraitUrl = getPortraitUrl(occ, 'grid');
 
-        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
+        const aegisLevel = aegisLevelFor(occ);   // see aegisLevelFor above
+
+        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
         if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
@@ -736,7 +762,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         else                      cls += ' battle-cell--enemy';
 
         html.push(`
-          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
+          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
             <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
             <div class="battle-cell-info">

@@ -663,7 +663,11 @@ class BattleEngine {
       const spellChance   = protector.intercept_bonus_pct ?? 0;
       const chance = (passiveChance + spellChance) / 100;
       if (Math.random() < chance) {
-        this.pushLog({ type: 'intercept', passive: interceptDef?.name || 'Vow of Protection', actorId: protector.id, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex });
+        // sourceId/sourceCell = the ATTACKER. The entry already named the
+        // protector (actor) and the ally it saved (target), but not who the blow
+        // came from — and the shield has to face that direction to read as a
+        // block rather than a generic aura.
+        this.pushLog({ type: 'intercept', passive: interceptDef?.name || 'Vow of Protection', actorId: protector.id, actorName: protector.unit_name, actorCell: protector.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, sourceId: actor.id, sourceCell: actor.cellIndex });
         return protector;
       }
     }

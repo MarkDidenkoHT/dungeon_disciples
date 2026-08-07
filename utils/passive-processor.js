@@ -587,7 +587,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
           owner._aegis_resists[damageSource] = (owner._aegis_resists[damageSource] ?? 0) + p.resist_gain;
         }
       }
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.resist_gain });
+      // targetId is required for the animation to find a cell to draw on — the
+      // client's passive dispatch looks the target up by id, not by cell index
+      // (a player and an enemy routinely share a cell index). Without it Aegis
+      // logged correctly but never animated.
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetId: owner.id, targetCell: owner.cellIndex, value: p.resist_gain });
     }
   }
   if (trigger === 'on_receive_ally_buff' && owner === target) {

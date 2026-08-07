@@ -3347,6 +3347,40 @@ button:active:not(:disabled) { opacity: 0.75; }
   to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
+/* ── Aegis: the standing ward ───────────────────────────────────────────────
+   The proc FLASH is a PIXI effect; this is the STATE it leaves behind. Drawn in
+   CSS on the cell rather than on the canvas because it has to persist between
+   animations and survive re-renders — a PIXI layer is torn down when its effect
+   ends. --aegis-level (1-4) is set by battle.js from the unit's accumulated
+   armor/resist, so the ward visibly hardens as the round wears on. */
+.battle-cell--aegis {
+  --aegis-i: var(--aegis-level, 1);
+  position: relative;
+}
+.battle-cell--aegis::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 4;   /* over the portrait, under the status icons and bark */
+  border: calc(1px + var(--aegis-i) * 0.5px) solid
+          rgba(138, 192, 255, calc(0.30 + var(--aegis-i) * 0.15));
+  box-shadow:
+    inset 0 0 calc(var(--aegis-i) * 4px) rgba(138, 192, 255, calc(0.10 + var(--aegis-i) * 0.07)),
+          0 0 calc(var(--aegis-i) * 3px) rgba(106, 160, 255, calc(0.12 + var(--aegis-i) * 0.08));
+  animation: aegis-breathe 2.4s ease-in-out infinite;
+}
+/* Alive, but only just — a ward that pulsed hard would compete with the acting
+   unit's own highlight every single turn. */
+@keyframes aegis-breathe {
+  0%, 100% { opacity: 0.78; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-cell--aegis::before { animation: none; }
+}
+
 .battle-cell--fog {
   color: var(--muted);
   font-size: 0.6rem;

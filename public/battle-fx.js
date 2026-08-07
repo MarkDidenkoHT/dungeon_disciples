@@ -494,39 +494,167 @@ export async function holy_heal(cellEl) {
 }
 
 // ── protector ──────────────────────────────────────────────────────────────────
-export async function protector(cellEl) {
-  console.log('[battle-fx] protector START', cellEl?.dataset?.id);
+export async function protector(cellEl, opts = {}) {
+  console.log('[battle-fx] protector START', cellEl?.dataset?.id, 'from:', opts.fromCell?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
-  const dataId = cellEl.dataset.id;
-  const layer  = new PIXI.Container();
+  const dataId  = cellEl.dataset.id;
+  const fromId  = opts.fromCell?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const PALE = 0xdff0ff;
+  const BLUE = 0x8ac0ff;
+  const DEEP = 0x3a7fd0;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;
+  const domeG  = new PIXI.Graphics();
+  const sparkG = new PIXI.Graphics(); sparkG.blendMode = ADD;
+  layer.addChild(glowLayer, domeG);
+  glowLayer.addChild(glowG, sparkG);
   app.stage.addChild(layer);
 
-  const shield = new PIXI.Graphics();
-  layer.addChild(shield);
+  // Sparks fly back along the incoming line, as if the blow skidded off.
+  const sparks = Array.from({ length: 12 }, () => ({
+    spread: rand(-0.7, 0.7), dist: rand(0.4, 1.1), size: rand(1.5, 3.4), delay: rand(0, 0.18),
+  }));
 
-  await animate(700, t => {
+  await animate(620, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
-    const cx = b.x + b.width  / 2;
+    const cx = b.x + b.width / 2;
     const cy = b.y + b.height / 2;
-    const r  = Math.min(b.width, b.height) * 0.55;
+    const R  = Math.min(b.width, b.height);
 
-    const scale  = t < 0.2 ? t / 0.2 : t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
-    const alpha  = t < 0.15 ? t / 0.15 : t > 0.7 ? Math.max(0, 1 - (t - 0.7) / 0.3) : 1;
+    // Facing: toward the attacker if we know where it stood, else straight up.
+    // A symmetrical dome reads as an aura; a shield ANGLED at the blow reads as
+    // an interception, which is what this passive actually did.
+    let ax = 0, ay = -1;
+    const ab = fromId ? cellBoundsFor(fromId) : null;
+    if (ab) {
+      const dx = (ab.x + ab.width / 2) - cx;
+      const dy = (ab.y + ab.height / 2) - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      ax = dx / len; ay = dy / len;
+    }
+    const facing = Math.atan2(ay, ax);
 
-    shield.clear();
-    shield.lineStyle(6, 0x88ccff, 0.25 * alpha);
-    shield.arc(cx, cy, r * scale * 1.15, Math.PI, 0);
-    shield.lineStyle(3, 0xaaddff, 0.9 * alpha);
-    shield.arc(cx, cy, r * scale, Math.PI, 0);
-    shield.moveTo(cx - r * scale, cy);
-    shield.lineTo(cx + r * scale, cy);
+    const rise  = clamp01(t / 0.18);            // shield snaps up
+    const decay = clamp01((t - 0.42) / 0.58);
+    const a     = 1 - decay;
+    const r     = R * 0.62 * (0.85 + rise * 0.15);
+
+    glowG.clear(); domeG.clear(); sparkG.clear();
+
+    // The dome: an arc centred on the facing direction, not a full circle.
+    const HALF = Math.PI * 0.55;
+    const impact = Math.sin(clamp01(t / 0.3) * Math.PI);   // flares as it takes the hit
+
+    glowG.lineStyle(R * 0.13, DEEP, 0.45 * a * rise);
+    glowG.arc(cx, cy, r * 1.06, facing - HALF, facing + HALF);
+    domeG.lineStyle(R * 0.055, BLUE, 0.95 * a * rise);
+    domeG.arc(cx, cy, r, facing - HALF, facing + HALF);
+    domeG.lineStyle(R * 0.02, PALE, a * rise);
+    domeG.arc(cx, cy, r * 0.94, facing - HALF, facing + HALF);
+    domeG.lineStyle(0);
+
+    // Ribs fanning out from the unit to the rim — reads as a braced shield
+    // rather than a bubble.
+    const RIBS = 5;
+    for (let i = 0; i < RIBS; i++) {
+      const f  = (i / (RIBS - 1)) * 2 - 1;         // -1..1 across the arc
+      const an = facing + f * HALF * 0.92;
+      domeG.lineStyle(R * 0.016, PALE, 0.5 * a * rise);
+      domeG.moveTo(cx + Math.cos(an) * r * 0.34, cy + Math.sin(an) * r * 0.34);
+      domeG.lineTo(cx + Math.cos(an) * r * 0.99, cy + Math.sin(an) * r * 0.99);
+      domeG.lineStyle(0);
+    }
+
+    // Bright bloom at the point of contact, dead centre of the facing.
+    const px = cx + ax * r, py = cy + ay * r;
+    softGlow(glowG, px, py, R * 0.30 * impact, PALE, 0.9 * a);
+    softGlow(glowG, cx, cy, R * 0.22 * rise,   BLUE, 0.35 * a);
+
+    // Deflected sparks, thrown BACK the way the blow came from.
+    const spray = clamp01((t - 0.06) / 0.5);
+    if (spray > 0) {
+      for (const sp of sparks) {
+        const s2 = clamp01((spray - sp.delay) / (1 - sp.delay));
+        if (s2 <= 0) continue;
+        const an = facing + sp.spread;
+        const d  = r + R * sp.dist * s2;
+        softGlow(sparkG, cx + Math.cos(an) * d, cy + Math.sin(an) * d,
+                 sp.size * (1 - s2 * 0.5), PALE, (1 - s2) * 0.85);
+      }
+    }
   });
 
   layer.destroy({ children: true });
   console.log('[battle-fx] protector END', dataId);
+}
+
+// ── aegis ──────────────────────────────────────────────────
+// The IMPACT half of Aegis: a hard-edged rectangular ward snaps out along the
+// cell's own border the moment the passive procs. The persistent part - the
+// ward growing brighter as stacks build - is CSS on the cell itself
+// (.battle-cell--aegis in style.css), because it has to survive re-renders and
+// outlive any one animation. This is the flash; that is the state.
+export async function aegis(cellEl) {
+  console.log('[battle-fx] aegis START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const EDGE = 0x9ac4ff;
+  const PALE = 0xd0e8ff;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(4)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const ringG = new PIXI.Graphics();
+  layer.addChild(glowLayer, ringG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(460, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    const a  = 1 - t;
+
+    glowG.clear(); ringG.clear();
+
+    // Expands OUTWARD from the unit's own outline, so it reads as the unit's
+    // armour hardening rather than something arriving from elsewhere.
+    const grow = 1 + t * 0.30;
+    const w = b.width * grow, h = b.height * grow;
+    const rad = Math.min(w, h) * 0.14;
+
+    ringG.lineStyle(Math.max(1, R * 0.045 * (1 - t * 0.6)), EDGE, 0.9 * a);
+    ringG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
+    ringG.lineStyle(Math.max(1, R * 0.015), PALE, 0.7 * a);
+    ringG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
+    ringG.lineStyle(0);
+
+    glowG.lineStyle(R * 0.10, EDGE, 0.4 * a);
+    glowG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
+    glowG.lineStyle(0);
+    // A short inward flash on the unit at the moment it hardens.
+    if (t < 0.35) softGlow(glowG, cx, cy, R * 0.4 * (1 - t / 0.35), PALE, 0.35 * (1 - t / 0.35));
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] aegis END', dataId);
 }
 
 // ── sacrifice ──────────────────────────────────────────────────────────────────
@@ -2444,6 +2572,7 @@ export const EFFECTS = {
   frost_claw,
   holy_shock,
   fellfire,
+  aegis,
   mend_flesh,
   haunt,
   blood_bolt,
