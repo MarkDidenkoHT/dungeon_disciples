@@ -247,7 +247,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'iron_armor',
     rarity:       'rare',
-    cost:         { Gold: 40, Crystals_Frost: 15, Crystals_Fire; 15 },
+    cost:         { Gold: 40, Crystals_Frost: 15, Crystals_Fire: 15 },
     item_cost:    { padded_armor: 1 },
   },
   rimeheart: {
