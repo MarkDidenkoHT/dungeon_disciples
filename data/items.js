@@ -47,7 +47,7 @@ const ITEM_DEFS = {
     passive:      'unbreakable 1',
     icon:         'crystal_shield',
     rarity:       'epic',
-    cost:         { crystal_shard: 1, Gold: 150, Crystals_Frost: 30 },
+    cost:         { crystal_shard: 1, Gold: 50, Crystals_Frost: 25 },
     item_cost:    { iron_shield: 1, cold_resistance_potion: 1 },
   },
   aegis_of_the_first_ward: {
@@ -92,7 +92,7 @@ const ITEM_DEFS = {
     icon:         'sanctified_bulwark',
     rarity:       'epic',
     unique:       true,
-    cost:         { aggrails_signet: 2, Gold: 80, Crystals_Life: 25, Crystals_Frost: 25  },
+    cost:         { aggrails_signet: 2  },
     item_cost:    { iron_armor: 1, codex_militarum: 1 },
   },
   sanctified_guardian: {
@@ -207,7 +207,7 @@ const ITEM_DEFS = {
     icon:         'shroud_of_the_fallen',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 100, Crystals_Death: 25 },
+    cost:         { grave_dust: 2, Gold: 50, Crystals_Death: 20 },
     item_cost:    { iron_armor: 1, mothers_gift: 1 },
   },
   mothers_gift: {
@@ -262,7 +262,7 @@ const ITEM_DEFS = {
     icon:         'rimeheart',
     rarity:       'epic',
     cost:         { Gold: 50, Crystals_Frost: 25 },
-    item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
+    item_cost:    { iron_armor: 1, cold_resistance_potion: 1 },
   },
   everliving_stalk: {
     key:          'everliving_stalk',
@@ -453,7 +453,7 @@ const ITEM_DEFS = {
     icon:         'crystal_sword',
     rarity:       'epic',
     unique:       true,
-    cost:         { crystal_shard: 1, Gold: 100, Crystals_Air: 25, Crystals_Frost: 25 },
+    cost:         { crystal_shard: 1, Gold: 75, Crystals_Air: 20, Crystals_Frost: 20 },
     item_cost:    { iron_sword: 1 },
   },
   forbidden_vow: {
@@ -484,7 +484,7 @@ const ITEM_DEFS = {
     icon:         'burning_fury',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Air: 5, Crystals_Frost: 5 },
+    cost:         { Gold: 90, Crystals_Air: 15, Crystals_Frost: 15 },
     item_cost:    { iron_sword: 1 },
   },
   mace: {
@@ -640,7 +640,7 @@ const ITEM_DEFS = {
     icon:         'bone_barrier',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 1, shard_of_might: 1, shard_of_devotion: 1, Gold: 250 },
+    cost:         { grave_dust: 2, shard_of_might: 1, shard_of_devotion: 1, Gold: 125 },
     item_cost:    { iron_armor: 1 },
   },
   veil_of_discord: {
@@ -655,7 +655,7 @@ const ITEM_DEFS = {
     icon:         'veil_of_discord',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 125 },
+    cost:         { grave_dust: 2, Gold: 90 },
     item_cost:    { cold_resistance_potion: 1, air_resistance_potion: 1, life_resistance_potion: 2 },
   },
   cloak_of_evasion: {
