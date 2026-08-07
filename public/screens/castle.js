@@ -716,11 +716,21 @@ export function renderCastle(root, { player }) {
   function openUpgradeModal(slot, def, paths) {
     const currentUnit = getUnitByUnitId(def.unit_id);
 
+    // The throne — i.e. every hero upgrade — is priced by the LEVEL it moves to,
+    // not by the building it becomes: applyBuildingCosts in data/buildings.js
+    // skips throne entries, so nextDef.cost is undefined for all of them. That is
+    // why a hero upgrade showed no cost anywhere and read as free. This mirrors
+    // POST /structures/build, which charges THRONE_UPGRADE_COSTS[nextLevel].
+    const isThrone   = def.category === 'throne';
+    const nextLevel  = (structuresRecord.buildings_data[slot]?.level ?? 0) + 1;
+    const throneCost = isThrone ? (throneUpgradeCosts[nextLevel] || null) : null;
+
     openSliderModal(def.label,
       paths.map(path => {
         const nextUnit = getUnitByUnitId(path.unit_id);
         const nextDef  = getBuildingDef(player.faction, path.building_id);
-        const costText = costLabelFor(nextDef?.cost);
+        const cost     = isThrone ? throneCost : nextDef?.cost;
+        const costText = costLabelFor(cost);
         return {
           unit:          nextUnit,
           buildingLabel: nextUnit?.name || path.label,
@@ -729,8 +739,8 @@ export function renderCastle(root, { player }) {
             : CASTLE_TEXT.upgradeTo[castleLang](nextUnit?.name || path.label),
           compareUnit:   currentUnit,
           buildingId:    path.building_id,
-          cost:          nextDef?.cost,
-          affordable:    canAffordCost(nextDef?.cost),
+          cost,
+          affordable:    canAffordCost(cost),
           slot,
         };
       }),

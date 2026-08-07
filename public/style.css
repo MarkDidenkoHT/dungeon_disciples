@@ -1037,11 +1037,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
+/* Deliberately inherits .resource-bar's padding and icon size unchanged. Making
+   this bar shorter squashes the frame art (background-size: 100% 100%) into a
+   different-looking strip and breaks the illusion that it is the same bar
+   repeated — which is the whole point of the alignment. */
 .cost-bar {
-  /* Shorter than the strip above: this is a readout of one line of numbers, so
-     it does not need the full slot height. */
-  padding: 2px 8px;
-  max-height: none;
   z-index: 299;   /* directly beneath the resource bar's 300 */
 }
 
@@ -1052,15 +1052,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   visibility: hidden;
   pointer-events: none;
   height: auto;
-}
-
-.cost-bar-item .res-icon-img {
-  width: 18px;
-  height: 18px;
-}
-
-.cost-bar-item .res-bar-val {
-  font-size: 0.58rem;
 }
 
 /* A column this build does not charge for. Kept in place, near-invisible, so
