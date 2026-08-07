@@ -54,6 +54,13 @@ const RT = {
   grantsTag:    { en: 'Grants Tag',       ru: 'Даёт метку' },
   needsTag:     { en: 'Needs Tag',        ru: 'Нужна метка' },
   craftableNow: { en: 'Craftable now',    ru: 'Можно создать' },
+  // Dropdown labels. The rarity and stat filters are <select>s now, so their
+  // options have room for full words — no abbreviations needed in either
+  // language, and the three chip rows collapse to one.
+  filterRarity: { en: 'Rarity',           ru: 'Редкость' },
+  filterStat:   { en: 'Stat',             ru: 'Фильтр' },
+  groupStats:   { en: 'Stats',            ru: 'Характеристики' },
+  groupTraits:  { en: 'Traits',           ru: 'Свойства' },
   // Singular forms, for the rarity label on one card (the chips above are the
   // plural "the common ones" / "the rare ones").
   rarity_common: { en: 'Common', ru: 'Обычный' },
@@ -855,8 +862,9 @@ export function renderRoster(root, { player }) {
     const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
 
     const RARITIES = ['common', 'rare', 'epic', 'mythic'];
-    // Two rows: numbers on one, qualities on the other. Seven chips on one line
-    // did not fit on a phone.
+    // Both lists feed the ONE stat dropdown: STAT_FILTERS under "Stats",
+    // TRAIT_FILTERS under "Traits". Entry 0 must stay the 'all' option — the
+    // dropdown lifts it out as the ungrouped default (STAT_FILTERS.slice(1)).
     const STAT_FILTERS = [
       ['all',           T('all')],
       ['hp',            T('hp')],
@@ -964,10 +972,8 @@ export function renderRoster(root, { player }) {
     function render() {
       const tab = (id, label) =>
         `<button class="items-tab ${filter === id ? 'items-tab--active' : ''}" data-filter="${id}">${label}</button>`;
-      const rarityChip = (id, label) =>
-        `<button class="items-chip items-chip--rarity-${id} ${rarity === id ? 'items-chip--active' : ''}" data-rarity="${id}">${label}</button>`;
-      const statChip = (id, label) =>
-        `<button class="items-chip ${statFilter === id ? 'items-chip--active' : ''}" data-stat="${id}">${label}</button>`;
+      const opt = (id, label, current) =>
+        `<option value="${id}"${current === id ? ' selected' : ''}>${label}</option>`;
 
       const list = currentList();
       if (selected >= list.length) selected = 0;
@@ -980,18 +986,30 @@ export function renderRoster(root, { player }) {
             ${tab('craft', T('tabCraft'))}
           </div>
 
+          <!-- Three rows of chips became two dropdowns on one row. Chips forced
+               every option to be on screen at once, which is what pushed the
+               Russian labels off the right edge; a <select> shows one. The stat
+               and trait filters are ONE setting (statFilter), which is why they
+               share a dropdown rather than sitting in two — picking a trait has
+               always cleared the stat, and grouped options say so. -->
           <div class="items-filters">
-            <div class="items-filter-row" role="group" aria-label="Rarity">
-              ${rarityChip('all', T('any'))}
-              ${RARITIES.map(r => rarityChip(r, T(r))).join('')}
-            </div>
-            <!-- Numeric stats on their own row; the qualitative filters (passive,
-                 tags) and the craft toggle sit below, so neither row overflows. -->
-            <div class="items-filter-row" role="group" aria-label="Stat">
-              ${STAT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
-            </div>
-            <div class="items-filter-row" role="group" aria-label="Traits">
-              ${TRAIT_FILTERS.map(([id, label]) => statChip(id, label)).join('')}
+            <div class="items-filter-row items-filter-row--selects">
+              <select class="items-select items-select--rarity-${rarity}"
+                      id="items-rarity-select" aria-label="${T('filterRarity')}">
+                ${opt('all', T('any'), rarity)}
+                ${RARITIES.map(r => opt(r, T(r), rarity)).join('')}
+              </select>
+
+              <select class="items-select" id="items-stat-select" aria-label="${T('filterStat')}">
+                ${opt('all', T('all'), statFilter)}
+                <optgroup label="${T('groupStats')}">
+                  ${STAT_FILTERS.slice(1).map(([id, label]) => opt(id, label, statFilter)).join('')}
+                </optgroup>
+                <optgroup label="${T('groupTraits')}">
+                  ${TRAIT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
+                </optgroup>
+              </select>
+
               ${filter === 'craft' ? `
                 <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">${T('craftableNow')}</button>` : ''}
             </div>
@@ -1045,6 +1063,26 @@ export function renderRoster(root, { player }) {
         ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
     }
 
+    // Rarity and stat/trait are dropdowns, so they report through `change`, not
+    // `click`. Only the list is repainted — re-rendering the whole sheet would
+    // rebuild the <select> the player just used and, on mobile, fight the
+    // native picker closing.
+    body.addEventListener('change', (e) => {
+      const sel = e.target.closest('select');
+      if (!sel) return;
+      if (sel.id === 'items-rarity-select') {
+        rarity = sel.value;
+        // Keeps the closed select tinted with the rarity it is showing.
+        sel.className = `items-select items-select--rarity-${rarity}`;
+        refreshList();
+        return;
+      }
+      if (sel.id === 'items-stat-select') {
+        statFilter = sel.value;
+        refreshList();
+      }
+    });
+
     body.addEventListener('click', async (e) => {
       // Switching tabs changes which filter rows apply (Craftable-now only
       // exists on the craft tab), so this one repaints the whole sheet.
@@ -1052,25 +1090,6 @@ export function renderRoster(root, { player }) {
       if (tabBtn) {
         filter = tabBtn.dataset.filter;
         body.innerHTML = render();
-        return;
-      }
-
-      const rarityBtn = e.target.closest('[data-rarity]');
-      if (rarityBtn) {
-        // Tapping the active chip clears the filter rather than doing nothing.
-        rarity = rarity === rarityBtn.dataset.rarity ? 'all' : rarityBtn.dataset.rarity;
-        body.querySelectorAll('[data-rarity]').forEach(b =>
-          b.classList.toggle('items-chip--active', b.dataset.rarity === rarity));
-        refreshList();
-        return;
-      }
-
-      const statBtn = e.target.closest('[data-stat]');
-      if (statBtn) {
-        statFilter = statFilter === statBtn.dataset.stat ? 'all' : statBtn.dataset.stat;
-        body.querySelectorAll('[data-stat]').forEach(b =>
-          b.classList.toggle('items-chip--active', b.dataset.stat === statFilter));
-        refreshList();
         return;
       }
 

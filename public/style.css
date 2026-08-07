@@ -4966,6 +4966,63 @@ button:active:not(:disabled) { opacity: 0.75; }
 .items-chip--toggle { font-weight: 700; }
 /* No tick prefix: it changed the chip's width, nudging the row on every tap. */
 
+/* Rarity and stat/trait are dropdowns rather than chip rows. A chip row has to
+   show every option at once, which is what pushed the longer Russian labels off
+   the right edge; a select shows one and keeps the rest in the native picker.
+   Styled to read as a wider sibling of .items-chip. */
+.items-filter-row--selects {
+  gap: 8px;
+  padding: 2px 8px 3px;
+  align-items: center;
+}
+
+.items-select {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 5px 26px 5px 12px;
+  cursor: pointer;
+  /* Native chevron replaced so the control matches the app in both themes and
+     on iOS, which otherwise draws its own and ignores the border radius. */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: right 13px center, right 9px center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.items-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* The options themselves are drawn by the OS: without an explicit background
+   the list renders white-on-white in a dark app on several Android builds. */
+.items-select option,
+.items-select optgroup {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* The closed rarity select carries the colour of what it is showing, the way
+   the rarity chips used to — same palette as .item-card--rarity-*. */
+.items-select--rarity-common  { color: var(--rarity-common); border-color: var(--rarity-common); }
+.items-select--rarity-rare    { color: var(--rarity-rare);   border-color: var(--rarity-rare); }
+.items-select--rarity-epic    { color: var(--rarity-epic);   border-color: var(--rarity-epic); }
+.items-select--rarity-mythic  { color: var(--rarity-mythic); border-color: var(--rarity-mythic); }
+
 .items-slider {
   display: flex;
   align-items: stretch;
