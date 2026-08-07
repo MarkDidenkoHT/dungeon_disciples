@@ -1199,6 +1199,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: "This unit's attacks also deal 20% of their damage to every burning enemy.",
     params: { fellfire_pct: 20 },
+    effect_name: 'fellfire',
   },
   'fellfire 2': {
     id: 'fellfire 2',
@@ -1208,6 +1209,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: "This unit's attacks also deal 30% of their damage to every burning enemy.",
     params: { fellfire_pct: 30 },
+    effect_name: 'fellfire',
   },
   'hungering_frost': {
     id: 'hungering_frost 1',

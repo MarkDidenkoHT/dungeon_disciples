@@ -2114,6 +2114,315 @@ export async function frost_claw(cellEl, opts = {}) {
 }
 
 
+// ── holy_shock — one action, two faces ─────────────────────────────────────
+// The only action in the game that branches: pointed at an enemy it strikes,
+// at an ally it mends (see the holy_shock branch in utils/battle-engine.js).
+// Both halves share a palette and a halo ring so they read as the same power
+// with opposite intent — judgement coming DOWN, mercy rising UP.
+//
+// opts.isHeal is passed by the dispatcher in screens/battle.js. Do not try to
+// infer it from which cell was handed in: for a heal the caller anchors on the
+// target, for a strike on the actor, and that is not a contract worth relying
+// on silently.
+export async function holy_shock(cellEl, opts = {}) {
+  console.log('[battle-fx] holy_shock START', cellEl?.dataset?.id, 'heal:', opts.isHeal === true);
+  if (!cellEl || !app || !window.PIXI) return;
+  const heal    = opts.isHeal === true;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const GOLD  = 0xffe08a;
+  const WHITE = 0xfffdf2;
+  const DEEP  = 0xffb03a;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;
+  const boltG  = new PIXI.Graphics(); boltG.blendMode  = ADD;
+  const ringG  = new PIXI.Graphics(); ringG.blendMode  = ADD;
+  const flashG = new PIXI.Graphics(); flashG.blendMode = ADD;   // full-canvas white-out
+  layer.addChild(glowLayer, boltG, ringG, flashG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  // Motes: rising for a mend, falling embers of light for a strike.
+  const motes = Array.from({ length: 14 }, () => ({
+    ax: rand(-0.42, 0.42), delay: rand(0, 0.45), size: rand(1.5, 3.4), speed: rand(0.7, 1.3),
+  }));
+
+  // A forked bolt: a jagged path with a couple of dead-end branches. Seeded once
+  // so the shape holds still across ticks instead of reshuffling every frame.
+  const SEGMENTS = 9;
+  const jitter   = Array.from({ length: SEGMENTS + 1 }, () => rand(-1, 1));
+  const branches = [
+    { at: 0.42, len: 0.30, dir: rand(-1, 1), j: Array.from({ length: 4 }, () => rand(-1, 1)) },
+    { at: 0.68, len: 0.24, dir: rand(-1, 1), j: Array.from({ length: 4 }, () => rand(-1, 1)) },
+  ];
+
+  function drawBolt(g, x0, y0, x1, y1, width, color, alpha, reveal) {
+    if (alpha <= 0 || reveal <= 0) return;
+    const dx = x1 - x0, dy = y1 - y0;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const spread = len * 0.06;
+
+    const pointAt = f => {
+      const idx = Math.min(SEGMENTS, Math.floor(f * SEGMENTS));
+      // Pinned at both ends, loosest in the middle — a bolt that wanders away
+      // from its own target reads as a mistake.
+      const wobble = Math.sin(f * Math.PI) * jitter[idx] * spread;
+      return [x0 + dx * f + nx * wobble, y0 + dy * f + ny * wobble];
+    };
+
+    g.lineStyle(width, color, alpha);
+    let [px, py] = pointAt(0);
+    g.moveTo(px, py);
+    for (let i = 1; i <= SEGMENTS; i++) {
+      const f = (i / SEGMENTS) * reveal;
+      const [qx, qy] = pointAt(f);
+      g.lineTo(qx, qy);
+    }
+    // Forks, drawn only once the trunk has passed their root.
+    for (const b of branches) {
+      if (reveal < b.at) continue;
+      const [bx, by] = pointAt(b.at);
+      g.moveTo(bx, by);
+      for (let i = 1; i <= 4; i++) {
+        const f = i / 4;
+        g.lineTo(
+          bx + dx * b.len * f + nx * (b.dir * spread * 2.2 * f) + nx * b.j[i - 1] * spread * 0.5,
+          by + dy * b.len * f + ny * (b.dir * spread * 2.2 * f) + ny * b.j[i - 1] * spread * 0.5,
+        );
+      }
+    }
+    g.lineStyle(0);
+  }
+
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || dataId;
+  const DURATION = heal ? 720 : 640;
+
+  await animate(DURATION, t => {
+    const tb = cellBoundsFor(heal ? dataId : targetId);
+    const ab = cellBoundsFor(heal ? dataId : dataId);
+    if (!tb || !ab) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+    const R  = Math.min(tb.width, tb.height);
+
+    glowG.clear(); boltG.clear(); ringG.clear(); flashG.clear();
+
+    if (!heal) {
+      // ── STRIKE ──────────────────────────────────────────────────────────
+      // Comes down from above the target rather than across from the actor:
+      // this is life damage, judgement, not a thrown projectile.
+      const sx = tx, sy = tb.y - R * 1.5;
+      const strike = clamp01(t / 0.22);          // bolt lands fast
+      const decay  = clamp01((t - 0.26) / 0.5);
+      const a      = 1 - decay;
+
+      drawBolt(glowG, sx, sy, tx, ty, R * 0.16, DEEP,  0.55 * a, strike);
+      drawBolt(boltG, sx, sy, tx, ty, R * 0.055, GOLD, 0.95 * a, strike);
+      drawBolt(boltG, sx, sy, tx, ty, R * 0.022, WHITE, a,       strike);
+
+      // Full-canvas white-out on contact. The PIXI canvas is an overlay ABOVE
+      // the DOM grid, so a stage filter would only tint the effects layer —
+      // washing the whole battlefield takes an actual full-screen quad.
+      const flash = t < 0.10 ? (t / 0.10) : clamp01(1 - (t - 0.10) / 0.20);
+      if (strike >= 1 && flash > 0) {
+        flashG.beginFill(WHITE, 0.42 * flash);
+        flashG.drawRect(0, 0, app.screen.width, app.screen.height);
+        flashG.endFill();
+      }
+
+      // Ring of light punching outward from the point of impact.
+      if (strike >= 1) {
+        const rt = clamp01((t - 0.14) / 0.6);
+        const rr = R * (0.15 + rt * 0.85);
+        ringG.lineStyle(Math.max(1, R * 0.05 * (1 - rt)), GOLD, (1 - rt) * 0.9);
+        ringG.drawCircle(tx, ty, rr);
+        ringG.lineStyle(0);
+        softGlow(glowG, tx, ty, R * 0.34 * (1 - rt * 0.5), WHITE, (1 - rt) * 0.75);
+      }
+
+      for (const m of motes) {
+        const s = clamp01((t - m.delay) / 0.55);
+        if (s <= 0) continue;
+        const px = tx + m.ax * R;
+        const py = ty + s * s * R * 0.5 * m.speed;    // sparks fall away
+        softGlow(glowG, px, py, m.size * (1 - s * 0.5), GOLD, (1 - s) * 0.8);
+      }
+    } else {
+      // ── MEND ────────────────────────────────────────────────────────────
+      // Same palette, inverted motion: a steady column settles onto the ally
+      // and motes rise out of it. No white-out — a heal fires most turns and
+      // should not seize the screen the way a judgement does.
+      const fall = clamp01(t / 0.35);
+      const hold = clamp01(1 - (t - 0.5) / 0.5);
+
+      const colW = R * 0.34;
+      const top  = tb.y - R * 1.2;
+      const botY = ty + R * 0.1;
+      const yNow = top + (botY - top) * fall;
+      glowG.beginFill(GOLD, 0.20 * hold);
+      glowG.drawRect(tx - colW / 2, top, colW, Math.max(0, yNow - top));
+      glowG.endFill();
+      glowG.beginFill(WHITE, 0.30 * hold);
+      glowG.drawRect(tx - colW / 4, top, colW / 2, Math.max(0, yNow - top));
+      glowG.endFill();
+
+      softGlow(glowG, tx, ty, R * 0.38 * fall, WHITE, 0.7 * hold);
+
+      // The shared halo — same ring as the strike, opening gently instead of
+      // snapping out, so both halves read as one power.
+      const rt = clamp01((t - 0.2) / 0.7);
+      if (rt > 0) {
+        ringG.lineStyle(Math.max(1, R * 0.035), GOLD, (1 - rt) * 0.85);
+        ringG.drawCircle(tx, ty, R * (0.2 + rt * 0.55));
+        ringG.lineStyle(0);
+      }
+
+      for (const m of motes) {
+        const s = clamp01((t - m.delay) / 0.6);
+        if (s <= 0) continue;
+        const px = tx + m.ax * R;
+        const py = ty - s * R * 0.75 * m.speed;       // motes rise
+        softGlow(glowG, px, py, m.size * (1 - s * 0.4), WHITE, (1 - s) * 0.85);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] holy_shock END', dataId);
+}
+
+// ── fellfire — one strike, every burning enemy ─────────────────────────────
+// A fan-out effect: the passive splashes damage to EVERY already-burning enemy
+// at once, so this fires once for the whole group rather than once per victim
+// (see FAN_OUT_FX in screens/battle.js). opts.targetCells carries every cell.
+//
+// Ash-black cores with ember edges, deliberately unlike the clean orange of an
+// ordinary burn — this is fire that answers to someone.
+export async function fellfire(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] fellfire START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !targetCells.length || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const EMBER = 0xff7a1e;
+  const HOT   = 0xffd08a;
+  const ASH   = 0x2a1408;
+
+  const originId = originCellEl.dataset.id;
+  // Seeded per target so each whip has its own arc and its own embers, but they
+  // all run on the SAME clock — the point of the fan-out is simultaneity.
+  const arcs = targetCells.map(c => ({
+    id:    c.dataset.id,
+    bow:   rand(0.18, 0.42) * (Math.random() < 0.5 ? -1 : 1),  // which way the arc bends
+    delay: rand(0, 0.10),                                       // a hair of stagger, not a queue
+    embers: Array.from({ length: 9 }, () => ({
+      ang: rand(0, Math.PI * 2), dist: rand(0.2, 0.7), size: rand(1.6, 3.6), d: rand(0, 0.2),
+    })),
+  })).filter(a => a.id);
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const whipG = new PIXI.Graphics();                    // ash core, NOT additive
+  const hotG  = new PIXI.Graphics(); hotG.blendMode  = ADD;
+  layer.addChild(glowLayer, whipG, hotG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  // Quadratic bezier, so the fire arcs across the field instead of ruling a
+  // straight line between two cells.
+  const bez = (p0, p1, p2, f) => {
+    const m = 1 - f;
+    return [m * m * p0[0] + 2 * m * f * p1[0] + f * f * p2[0],
+            m * m * p0[1] + 2 * m * f * p1[1] + f * f * p2[1]];
+  };
+
+  function drawWhip(g, p0, p1, p2, reveal, width, color, alpha) {
+    if (alpha <= 0 || reveal <= 0) return;
+    const STEPS = 20;
+    g.lineStyle(width, color, alpha);
+    let [px, py] = bez(p0, p1, p2, 0);
+    g.moveTo(px, py);
+    for (let i = 1; i <= STEPS; i++) {
+      const [qx, qy] = bez(p0, p1, p2, (i / STEPS) * reveal);
+      g.lineTo(qx, qy);
+    }
+    g.lineStyle(0);
+  }
+
+  await animate(700, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+    glowG.clear(); whipG.clear(); hotG.clear();
+
+    for (const arc of arcs) {
+      const tb = cellBoundsFor(arc.id);
+      if (!tb) continue;
+      const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+      const R  = Math.min(tb.width, tb.height);
+
+      const local  = clamp01((t - arc.delay) / (1 - arc.delay));
+      const travel = clamp01(local / 0.34);            // whip reaches out
+      const burn   = clamp01((local - 0.30) / 0.70);   // then the victim ignites
+      const fade   = clamp01((local - 0.42) / 0.58);
+
+      // Control point pushed off the midpoint's perpendicular.
+      const mx = (ox + tx) / 2, my = (oy + ty) / 2;
+      const dx = tx - ox, dy = ty - oy;
+      const ctrl = [mx - dy * arc.bow, my + dx * arc.bow];
+      const p0 = [ox, oy], p2 = [tx, ty];
+
+      const a = 1 - fade;
+      if (a > 0) {
+        drawWhip(glowG, p0, ctrl, p2, travel, R * 0.20, EMBER, 0.45 * a);
+        drawWhip(whipG, p0, ctrl, p2, travel, R * 0.085, ASH,  0.92 * a);
+        drawWhip(hotG,  p0, ctrl, p2, travel, R * 0.034, EMBER, 0.95 * a);
+        drawWhip(hotG,  p0, ctrl, p2, travel, R * 0.014, HOT,   a);
+      }
+
+      // The head of the whip while it is still travelling.
+      if (travel < 1) {
+        const [hx, hy] = bez(p0, ctrl, p2, travel);
+        softGlow(glowG, hx, hy, R * 0.13, HOT, 0.9);
+      }
+
+      // Ignition: a flare on the victim, then embers thrown off it.
+      if (burn > 0) {
+        const flare = Math.sin(clamp01(burn / 0.35) * Math.PI);
+        softGlow(glowG, tx, ty, R * 0.42 * flare, EMBER, 0.8 * flare);
+        softGlow(glowG, tx, ty, R * 0.20 * flare, HOT,   0.9 * flare);
+
+        for (const e of arc.embers) {
+          const s = clamp01((burn - e.d) / (1 - e.d));
+          if (s <= 0) continue;
+          const px = tx + Math.cos(e.ang) * R * e.dist * s;
+          const py = ty + Math.sin(e.ang) * R * e.dist * s - s * s * R * 0.22;  // embers lift
+          softGlow(hotG, px, py, e.size * (1 - s * 0.55), EMBER, (1 - s) * 0.85);
+        }
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] fellfire END');
+}
+
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -2133,6 +2442,8 @@ export const EFFECTS = {
   poison_dart,
   claw_strike,
   frost_claw,
+  holy_shock,
+  fellfire,
   mend_flesh,
   haunt,
   blood_bolt,

@@ -650,7 +650,7 @@ const UNITS = {
       hp: 90, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
       passive: ['resist_aura_death 1', 'beacon_of_hope 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -662,7 +662,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -674,7 +674,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
       passive: ['resist_aura_death 2', 'beacon_of_hope 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -686,7 +686,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'chain 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1156,7 +1156,7 @@ const UNITS = {
       hp: 65, armor: 20, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg',
+      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
       xp: 900, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
     },
     priest: {

@@ -15,6 +15,15 @@ const COLS = 2;
 // two-cell effects in battle-fx.js.
 const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
 
+// Effects that hit MANY cells at once — EFFECTS[name](originCell, { targetCells }).
+// The engine logs one entry per victim (fellfire splashes every burning enemy,
+// see utils/passive-processor.js), and playback awaits each animation in turn,
+// so left alone these would play one after another and read as separate events
+// rather than the single simultaneous burst the mechanic actually is. Each run
+// of consecutive entries from the same actor is collapsed into one play; the
+// individual LOG LINES are untouched, only the animation is deduplicated.
+const FAN_OUT_FX = new Set(['fellfire']);
+
 function cellIndex(row, col) { return row * COLS + col; }
 
 function getPortraitUrl(unit, variant = 'default') {
@@ -204,7 +213,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // update in sync with the animation rather than all at once at the end.
   async function playbackSequence(newEntries) {
     console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
-    for (const entry of newEntries) {
+    // Indices whose animation has already been covered by a fan-out play. Their
+    // log lines still print — only the duplicate animation is skipped.
+    const fanOutCovered = new Set();
+    for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
+      const entry = newEntries[entryIdx];
       // Track position in the log
       if (entry.id != null) lastLogId = entry.id;
       // Append this log line to the visible battle log
@@ -265,7 +278,27 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           : null;
         const isEnemy = actor?.side === 'enemy';
 
-        if (SRC_TARGET_FX.has(effectName)) {
+        if (FAN_OUT_FX.has(effectName)) {
+          // Collapse the consecutive run of entries this actor produced for the
+          // same passive, and play once against every victim. Grouping by RUN
+          // rather than by name means two separate triggers in one batch still
+          // animate twice, as they should.
+          if (!fanOutCovered.has(entryIdx)) {
+            const cells = [];
+            for (let j = entryIdx; j < newEntries.length; j++) {
+              const e = newEntries[j];
+              if (e.type !== entry.type || e.passive !== entry.passive ||
+                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) break;
+              fanOutCovered.add(j);
+              const c = e.targetId
+                ? document.querySelector(`.battle-cell[data-id="${e.targetId}"]`)
+                : null;
+              if (c) cells.push(c);
+            }
+            const origin = actorCell || cells[0];
+            if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells });
+          }
+        } else if (SRC_TARGET_FX.has(effectName)) {
           // Two-cell effects: life/blood flows between a source and a target.
           // communion carries an explicit sourceId (the drained enemy); the
           // others originate on the acting unit, so fall back to the actor cell.
@@ -276,7 +309,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const cell = isHealAction ? targetCell : (actorCell || targetCell);
           console.log('[battle] action routing: isHeal', isHealAction, 'targetCell', !!targetCell, 'actorCell', !!actorCell, 'using', isHealAction ? 'target' : 'actor');
           // targetCell lets directional attack animations (e.g. impale) aim from actor to target.
-          if (cell) await EFFECTS[effectName](cell, { isEnemy, targetCell });
+          // isHeal is passed explicitly for actions that branch on it (holy_shock
+          // mends an ally or strikes an enemy) — an effect should never have to
+          // deduce that from which cell it happened to be anchored on.
+          if (cell) await EFFECTS[effectName](cell, { isEnemy, targetCell, isHeal: isHealAction });
         } else {
           // Passive animations anchor to the target cell
           if (targetCell) await EFFECTS[effectName](targetCell);
@@ -682,12 +718,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const hpPct      = occ.battle_hp / occ.max_hp;
         const portraitUrl = getPortraitUrl(occ, 'grid');
 
-        // A 'row' unit fills both columns, so its bark can stay centred; a tile
-        // unit sits in one column and its bark has to open inward. The column is
-        // stamped on the element because DOM order does NOT track it — shadowed
-        // cells are skipped above and spanning cells eat two grid slots, so
-        // nth-child parity would be wrong for anything after a large unit.
-        let cls = `battle-cell ${colSpan > 1 ? 'battle-cell--wide' : ''} ${!occ.alive ? 'battle-cell--dead' : ''}`;
+        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
         if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
@@ -695,7 +726,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         else                      cls += ' battle-cell--enemy';
 
         html.push(`
-          <div class="${cls}" data-id="${occ.id}" data-col="${c}" style="${spanStyle}">
+          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
             <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
             <div class="battle-cell-info">
