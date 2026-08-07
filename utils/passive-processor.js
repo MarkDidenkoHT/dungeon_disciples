@@ -234,8 +234,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: heal });
       if (actual > 0) engine.fireHealTriggers(owner, owner, actual);
     }
-    // Bleed, chill, and Recuperate's deferred damage are status ticks any unit
-    // can carry, so they run unconditionally in engine.applyTurnStartDoTs — not
+    // Bleed, burn, poison, chill, Renew and Recuperate's deferred damage are
+    // ticks any unit can carry, so they run in engine.applyTurnStartTicks — not
     // here, where the block only executes for units that own an on_turn_start
     // passive. Only genuine passives (regen above, light_of_dawn below) belong here.
     if (p.light_of_dawn === true) {

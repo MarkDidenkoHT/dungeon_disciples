@@ -448,7 +448,7 @@ class BattleEngine {
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
     this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
     if (opts.turnStart !== false) {
-      this.applyTurnStartDoTs(actor);
+      this.applyTurnStartTicks(actor);
       // If the unit bled/chilled out at the start of its own turn, it doesn't act.
       if (!actor.alive) { actor.acted_this_round = true; return this.afterAction(actor); }
     }
@@ -577,7 +577,6 @@ class BattleEngine {
       } else {
         this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
       }
-      this.applyDoTs(target);
     }
     actor.acted_this_round = true;
     return this.afterAction(actor);
@@ -611,7 +610,6 @@ class BattleEngine {
     const { dmg, rawDmg } = this.calcDamage(actor, target);
     if (dmg <= 0) {
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
-      this.applyDoTs(target);
       return;
     }
 
@@ -636,7 +634,6 @@ class BattleEngine {
     } else {
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
     }
-    this.applyDoTs(target);
   }
   resolveProtectorIntercept(actor, target) {
     const frontCol  = target.side === 'enemy' ? 0 : 1;
@@ -773,12 +770,15 @@ class BattleEngine {
     return matching;
   }
 
-  // Turn-start damage-over-time ticks that any unit can be afflicted with,
-  // regardless of its own passives: bleed, chill, and Recuperate's deferred hit.
-  // These used to live in the passive processor's on_turn_start branch, which
-  // only ran if the *victim* happened to own an on_turn_start passive — so on
-  // most units they silently never fired. Runs once at the acting unit's turn.
-  applyTurnStartDoTs(unit) {
+  // Every over-time tick a unit can be carrying, damage or heal, resolved in one
+  // place at the start of that unit's own turn: withering, Recuperate's deferred
+  // hit, bleed, chill, burn, poison, and Renew. None of them depend on the unit's
+  // own passives. Two things used to split this up: the passive processor's
+  // on_turn_start branch only ran for units that happened to own an on_turn_start
+  // passive (so on most units bleed/chill silently never fired), and burn, poison
+  // and Renew ticked from applyDoTs the moment the carrier was struck — which for
+  // burn and poison meant firing immediately on the turn they were applied.
+  applyTurnStartTicks(unit) {
     if (!unit || !unit.alive) return;
     const tick = (amount, passive, actorName, extra = {}) => {
       unit.battle_hp = Math.max(0, unit.battle_hp - amount);
@@ -818,38 +818,39 @@ class BattleEngine {
       tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
       this.clearEffect(unit, 'chill');
     }
-  }
-  applyDoTs(unit) {
-    if (!unit.alive) return;
-    // Burn (dot_dmg) — the accumulated burn ticks once, then clears unless it was
-    // made permanent (Mark of Ash).
-    if (unit.dot_dmg > 0) {
+    // Burn (dot_dmg) — "deals X% of damage to target on their next turn", which
+    // is exactly this moment. Clears after ticking unless made permanent (Mark
+    // of Ash).
+    if (unit.alive && unit.dot_dmg > 0) {
       const dotSourceKey = unit._dot_source_key ?? null;
       const dotRank = dotSourceKey && this.ABILITIES
         ? (this.ABILITIES[dotSourceKey]?.rank ?? 1)
         : 1;
-      const dotDmg = Math.max(dotRank, unit.dot_dmg);
-      unit.battle_hp = Math.max(0, unit.battle_hp - dotDmg);
-      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '💀', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dotDmg, heal: false, dot_kind: 'burn' });
-      if (unit._dot_permanent > 0 && unit.alive) { unit.dot_dmg = unit._dot_permanent; }
-      else { unit.dot_dmg = 0; unit._dot_type = null; this.clearEffect(unit, 'dot'); }
-      if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
+      const d = Math.max(dotRank, unit.dot_dmg);
+      unit.dot_dmg = 0;
+      tick(d, 'Burn', '🔥', { dot_kind: 'burn' });
+      if (unit.alive && unit._dot_permanent > 0) unit.dot_dmg = unit._dot_permanent;
+      else { unit._dot_type = null; this.clearEffect(unit, 'dot'); }
     }
-    // Poison (_poison_dmg) — independent of burn; the accumulated poison ticks
-    // once, then clears.
+    // Poison (_poison_dmg) — an independent slot from burn (a unit can carry
+    // both), same turn-start timing. Ticks once, then clears.
     if (unit.alive && unit._poison_dmg > 0) {
       const psnKey  = unit._poison_source_key ?? null;
       const psnRank = psnKey && this.ABILITIES ? (this.ABILITIES[psnKey]?.rank ?? 1) : 1;
-      const psnDmg  = Math.max(psnRank, unit._poison_dmg);
-      unit.battle_hp = Math.max(0, unit.battle_hp - psnDmg);
-      this.pushLog({ type: 'passive', passive: 'DoT', actorName: '☠️', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: psnDmg, heal: false, dot_kind: 'poison' });
-      unit._poison_dmg = 0; unit._poison_source_key = null; this.clearEffect(unit, 'poison');
-      if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
+      const p = Math.max(psnRank, unit._poison_dmg);
+      unit._poison_dmg = 0;
+      unit._poison_source_key = null;
+      tick(p, 'Poison', '☠️', { dot_kind: 'poison' });
+      this.clearEffect(unit, 'poison');
     }
-    if (unit._hot > 0) {
+    // Renew (_hot) — the heal-over-time ticks on the same schedule as the damage
+    // ones: once, at the start of the healed unit's own turn. It used to tick
+    // whenever the unit happened to be struck. Last in the order, so a unit the
+    // afflictions above just killed doesn't heal out of its own death.
+    if (unit.alive && unit._hot > 0) {
       const actual = Math.min(Math.floor(unit._hot * this.fatigueHealMult()), unit.max_hp - unit.battle_hp);
       unit.battle_hp += actual;
-      this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetCell: unit.cellIndex, value: actual, heal: true });
+      this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
       this.clearEffect(unit, 'hot');
       if (actual > 0) this.fireHealTriggers(unit, unit, actual);
@@ -1226,7 +1227,7 @@ class BattleEngine {
       // Turn-start DoTs tick once here, before whichever branch this enemy takes
       // (ability/skip/none/attack all bypass executeAction's own tick — see the
       // { turnStart: false } on the attack branch below).
-      this.applyTurnStartDoTs(actor);
+      this.applyTurnStartTicks(actor);
       if (!actor.alive) { actor.acted_this_round = true; newLog.push(...this.log.slice(before)); continue; }
       if (actor._unity_host_id != null || actor._invulnerable) {
         this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });

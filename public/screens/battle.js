@@ -1031,6 +1031,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     renderResult(state.winner);
   } else {
     render();
+    // A freshly created battle already contains round 1's opening enemy turns:
+    // POST /battle/create runs engine.runAiTurns() before responding, so every
+    // enemy faster than the player has acted by the time this screen mounts.
+    // render() dumped those entries straight into the log as static text, which
+    // is why round 1 was the one round whose enemy attacks never animated.
+    // Replay them here instead. Reconnects keep the plain dump — that log is
+    // history the player has already watched.
+    if (!reconnect && Array.isArray(logs) && logs.length) {
+      processing = true;               // blocks input + the realtime handler during playback
+      if (ui?.battleLog) ui.battleLog.innerHTML = '';
+      playbackSequence(logs)
+        .catch(err => console.error('Initial playback failed:', err))
+        .finally(() => { processing = false; render(); });
+    }
   }
 
   if (battle_id && player?.chat_id && !state?.done) {
