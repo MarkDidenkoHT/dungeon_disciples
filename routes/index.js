@@ -145,7 +145,7 @@ const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1',
 const HERO_STARTING_UNITS = {
   h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
   h_e_2: { building_id: 'conscript_barracks',         unit_id: 'e1',  slot: 'slot_4' },
-  h_e_3: { building_id: 'sentinel_forge', unit_id: 'e3',  slot: 'slot_4' },
+  h_e_3: { building_id: 'golden_forge', unit_id: 'e5',  slot: 'slot_4' },
   h_d_1: { building_id: 'peer_court',        unit_id: 'd6',  slot: 'slot_4' },
   h_d_2: { building_id: 'imp_den',        unit_id: 'd1',  slot: 'slot_4' },
   h_d_3: { building_id: 'flame_spawn_pit',        unit_id: 'd7',  slot: 'slot_4' },
@@ -201,6 +201,15 @@ function getUnitByDataId(unitDataId) {
     if (found) return found;
   }
   return null;
+}
+
+// Enemy/mercenary units are keyed by name slug (e.g. `bone_knight`), not by their
+// `id` (`dm_e1`), so mercenary building defs — which reference the id — must look
+// the template up by scanning the region rather than indexing into it.
+function findEnemyUnit(region, unitId) {
+  const pool = UNITS.enemies?.[region];
+  if (!pool) return null;
+  return Object.values(pool).find(u => u?.id === unitId) || null;
 }
 
 async function consumeCrystalCosts(chat_id, crystals) {
@@ -1803,6 +1812,11 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     const slots  = record.buildings_data || {};
     if (slots[slot]?.building_id && slots[slot].building_id !== 'mercenary_hall') return res.status(400).json({ error: 'Slot already occupied' });
 
+    // Resolve the template before spending anything, so a data gap can never
+    // charge the player and then fail.
+    const unitTemplate = findEnemyUnit(bDef.region, bDef.unit_id);
+    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
+
     const cost = bDef.cost || {};
     for (const [item, required] of Object.entries(cost)) {
       const row = inventoryRows.find(r => r.item === item);
@@ -1815,10 +1829,6 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
       if (!row) continue;
       await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
     }
-
-    const { UNITS } = require('../data/units');
-    const unitTemplate = UNITS.enemies?.[bDef.region]?.[bDef.unit_id];
-    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
 
     slots[slot] = { level: 1, building_id: mercenary_building_id };
     const [updatedStruct, inserted] = await Promise.all([
@@ -1866,6 +1876,11 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Slot does not contain a mercenary' });
     }
 
+    // Resolve the template before spending anything, so a data gap can never
+    // charge the player and then fail.
+    const unitTemplate = findEnemyUnit(bDef.region, bDef.unit_id);
+    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
+
     const cost = bDef.cost || {};
     for (const [item, required] of Object.entries(cost)) {
       const row = inventoryRows.find(r => r.item === item);
@@ -1878,10 +1893,6 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       if (!row) continue;
       await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
     }
-
-    const { UNITS } = require('../data/units');
-    const unitTemplate = UNITS.enemies?.[bDef.region]?.[bDef.unit_id];
-    if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
 
     const oldUnitData = rosterRows[0].unit_data || {};
     const newUnitData = {

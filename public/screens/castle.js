@@ -279,12 +279,20 @@ export function renderCastle(root, { player }) {
     resourceRow.insertAdjacentElement('afterend', bar);
   }
 
+  // `def.upgrades` lists the BUILDING ids this building can become — the same
+  // shape MERCENARY_BUILDINGS uses, and kept in sync with UNIT_UPGRADE_PATHS.
+  // The path table is preferred because it carries the unit each branch grants;
+  // the fallback resolves the building defs directly so an entry missing from
+  // the path table still yields a usable branch instead of a dead end.
   function getUpgradePathsForBuilding(faction, def) {
     if (!def || !def.upgrades || def.upgrades.length === 0) return [];
     const factionPaths = upgradePaths[faction] || {};
     const paths = factionPaths[def.unit_id];
     if (paths && paths.length > 0) return paths;
-    return def.upgrades.map(uid => ({ unit_id: uid, building_id: uid, label: uid }));
+    return def.upgrades
+      .map(bid => getBuildingDef(faction, bid))
+      .filter(Boolean)
+      .map(d => ({ unit_id: d.unit_id, building_id: d.id, label: d.label }));
   }
 
   function openSliderModal(title, slides, onConfirm, opts = {}) {
