@@ -652,9 +652,6 @@ export function onSheetClose(fn) {
 
 export function closeSheet() {
   if (!_sheetEl) return;
-  // A detail sheet without the sheet it was opened from is an orphan, so the
-  // base sheet's close button takes both down.
-  if (_subSheetEl) _subSheetEl.classList.add('hidden');
   _sheetEl.classList.add('hidden');
   document.body.style.overflow = '';
   for (const fn of [..._sheetCloseHandlers]) {
@@ -674,12 +671,8 @@ function ensureSubSheet() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay modal-overlay--sub hidden';
-  // `modal--card` opts this panel out of the bottom-sheet presentation: it is a
-  // floating card, not an edge-docked sheet, so it must not inherit .modal's
-  // slide-up-from-the-bottom entrance. Stated as its own class rather than left
-  // to an override so nothing added to .modal later can drag the slide back in.
   overlay.innerHTML = `
-    <div class="modal modal--card">
+    <div class="modal">
       <div class="modal-header">
         <span class="modal-title-text"></span>
         <div class="modal-header-badges"></div>
@@ -697,9 +690,6 @@ function ensureSubSheet() {
   return overlay;
 }
 
-// The sub-sheet is a floating card pinned to the top of the screen, not a second
-// bottom sheet (see .modal-overlay--sub in style.css). Nothing here touches the
-// base sheet's geometry, so opening a detail panel moves nothing on screen.
 export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
   overlay.querySelector('.modal-title-text').textContent = title;

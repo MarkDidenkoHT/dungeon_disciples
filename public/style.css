@@ -1081,38 +1081,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .modal-overlay.hidden { display: none !important; }
 
-/* The detail panel (inspecting an ability from inside a building/unit sheet) is
-   deliberately NOT a second bottom sheet. Docked to the same edge as the sheet
-   that opened it, it could only either cover that sheet or push it upward —
-   and pushing it is the jump you see the moment the panel appears. Floating it
-   at the top instead means the base sheet never moves at all: nothing under it
-   is re-laid-out, and it stays fully readable below the panel. */
 .modal-overlay--sub {
   z-index: 150;
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   animation: none;
-  align-items: flex-start;
-  padding: 12px;
 }
 
-/* A floating card, not an edge-docked sheet: rounded and bordered all round, and
-   it fades in place instead of running .modal's sheet-up slide. Nothing about
-   this panel travels from the bottom of the screen, and nothing else on screen
-   moves when it appears. */
-.modal.modal--card {
-  border-radius: 16px;
-  border-bottom: 1px solid var(--border);
-  max-width: 420px;
-  max-height: 60vh;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  animation: sub-card-in 0.16s ease-out;
-}
-
-@keyframes sub-card-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.modal-overlay--sub .modal {
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
 }
 
 @keyframes overlay-in {
