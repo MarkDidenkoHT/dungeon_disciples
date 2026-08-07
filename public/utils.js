@@ -702,6 +702,10 @@ function ensureSubSheet() {
 // them in the column: lift the base sheet by the sub-sheet's height so the two
 // read as one panel split in half, base on top, detail below. Called on every
 // open/close of either sheet and on resize, since the lift is a pixel value.
+// The lift is a pure transform and nothing about the base sheet's box changes:
+// capping its height instead would reflow whatever it holds (the castle's
+// building slider, a unit's stat list), which is a layout shift the player sees
+// as the content jumping the moment the detail panel opens.
 function syncSheetStack() {
   if (!_sheetEl) return;
   const baseModal = _sheetEl.querySelector('.modal');
@@ -714,7 +718,12 @@ function syncSheetStack() {
     return;
   }
   const subModal = _subSheetEl.querySelector('.modal');
-  baseModal.style.setProperty('--sub-sheet-h', `${subModal ? subModal.offsetHeight : 0}px`);
+  const subH     = subModal ? subModal.offsetHeight : 0;
+  // Both sheets sit on the bottom edge, so the free space above the base sheet
+  // is all the travel there is. Lifting further would push its header off the
+  // top of the screen — worse than the overlap this is fixing.
+  const room = Math.max(0, window.innerHeight - baseModal.offsetHeight);
+  baseModal.style.setProperty('--sub-sheet-h', `${Math.min(subH, room)}px`);
   _sheetEl.classList.add('modal-overlay--stacked');
 }
 
