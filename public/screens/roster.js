@@ -34,6 +34,27 @@ const RT = {
   resurrecting: { en: 'Resurrecting…',    ru: 'Воскрешаем…' },
   heal:         { en: 'Heal',             ru: 'Лечить' },
   healing:      { en: 'Healing…',         ru: 'Лечим…' },
+  // Divine favor (rewarded ad). The button carries the faction's own name for
+  // it (see FAVOR_LABELS), but always alongside an "Ad" marker — disguising an
+  // ad as a plain game action is the pattern that gets stores upset.
+  adBadge:      { en: 'Ad',               ru: 'Реклама' },
+  favorLeft:    { en: n => `${n} left today`,        ru: n => `Осталось сегодня: ${n}` },
+  favorNoneUI:  { en: 'No favors left today',        ru: 'Сегодня милостей больше нет' },
+  favorWatching:{ en: 'Your prayer is heard…',       ru: 'Молитва услышана…' },
+  favorCancel:  { en: 'Cancel',           ru: 'Отмена' },
+  favorFailed:  { en: 'The favor was not granted.',  ru: 'Милость не была дарована.' },
+  // Keyed by the `code` the favor endpoints send, so the player never sees the
+  // server's English developer strings. Anything unmapped falls back to
+  // favorFailed rather than leaking the raw message.
+  favorErrors: {
+    favor_cap:        { en: 'No favors left today. Come back tomorrow.', ru: 'На сегодня милостей больше нет. Возвращайтесь завтра.' },
+    favor_not_needed: { en: 'This unit needs no favor.',                 ru: 'Этому бойцу милость не нужна.' },
+    favor_none:       { en: 'No favor in progress.',                     ru: 'Нет активной молитвы.' },
+    favor_expired:    { en: 'The moment passed — try again.',            ru: 'Момент упущен — попробуйте снова.' },
+    favor_early:      { en: 'The ad has not finished.',                  ru: 'Реклама ещё не досмотрена.' },
+    favor_no_unit:    { en: 'Unit not found.',                           ru: 'Боец не найден.' },
+  },
+  favorPlaceholder: { en: 'Advertisement placeholder', ru: 'Место для рекламы' },
   embark:       { en: 'Embark',           ru: 'В поход' },
   // tabs + filters
   tabEquippable:{ en: 'Equippable',       ru: 'Подходящие' },
@@ -86,6 +107,17 @@ const RT = {
   failHeal:     { en: 'Heal failed',      ru: 'Не удалось вылечить' },
 };
 
+// Each faction petitions its own god. The mechanic is identical — only the name
+// changes — so this is presentation, not behaviour.
+const FAVOR_LABELS = {
+  // Dative case in RU — the prayer is addressed TO the god:
+  // Митраил → Митраилю, Агграил → Агграилю, Асталот → Асталоту.
+  empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилю' },
+  choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилю' },
+  grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталоту' },
+};
+const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
+
 export function renderRoster(root, { player }) {
   const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const T = key => RT[key][L];
@@ -119,6 +151,10 @@ export function renderRoster(root, { player }) {
   let items         = [];
   let resources     = [];
   let progress      = {};   // { region_id: next_playable_level } — gates the craft catalog
+  // Divine favors left today. The server is the authority — this is only what
+  // the button prints, and every claim is re-checked against the daily cap.
+  let favorRemaining = 0;
+  let favorSeconds   = 15;
 
   function equippedItemFor(rosterId) {
     return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
@@ -229,6 +265,25 @@ export function renderRoster(root, { player }) {
           .join(', ')
       : '';
     const isDamaged = alive && stored.current_hp != null && stored.max_hp != null && stored.current_hp < stored.max_hp;
+
+    // Divine favor: the ad-funded alternative to the two spells above. Offered
+    // whenever a unit is dead or hurt, INCLUDING when the player cannot afford
+    // (or has not learned) the spell — that gap is the whole point of it.
+    // Sits in the same overlay as the spell buttons so nothing below shifts.
+    const favorLabel = (FAVOR_LABELS[player.faction] || FAVOR_FALLBACK)[L];
+    const favorNeeded = !alive || isDamaged;
+    const favorButtonHtml = favorNeeded ? `
+      <div class="unit-card-overlay unit-card-overlay--favor">
+        <button class="favor-btn${favorRemaining <= 0 ? ' favor-btn--spent' : ''}"
+                data-roster-id="${u.id}"
+                ${favorRemaining <= 0 ? 'disabled' : ''}>
+          <span class="favor-btn-ad">${T('adBadge')}</span>
+          <span class="favor-btn-label">${favorLabel}</span>
+          <span class="favor-btn-left">${favorRemaining > 0 ? T('favorLeft')(favorRemaining) : T('favorNoneUI')}</span>
+        </button>
+      </div>
+    ` : '';
+
     const healButtonHtml = isDamaged && healSpell ? `
       <div class="unit-card-overlay unit-card-overlay--heal">
         <button class="heal-btn" data-roster-id="${u.id}" data-spell-id="${healSpell.id}">
@@ -296,6 +351,7 @@ export function renderRoster(root, { player }) {
               ${portraitHtml}
               ${resurrectButtonHtml}
               ${healButtonHtml}
+              ${favorButtonHtml}
             </div>
             ${resistsHtml}
           </div>
@@ -516,6 +572,12 @@ export function renderRoster(root, { player }) {
       } catch (err) {
         alert(err.message || T('failHeal'));
       }
+      return;
+    }
+
+    const favorBtn = e.target.closest('.favor-btn');
+    if (favorBtn && !favorBtn.disabled) {
+      await runFavor(favorBtn.dataset.rosterId);
       return;
     }
 
@@ -1448,7 +1510,88 @@ export function renderRoster(root, { player }) {
     items         = boot.items || [];
     resources     = [...(boot.resources || []), ...(boot.trophies || [])];
     progress      = boot.progress || {};
+    favorRemaining = boot.favor?.remaining ?? 0;
+    favorSeconds   = boot.favor?.seconds ?? favorSeconds;
     return boot;
+  }
+
+  // ── Divine favor ──────────────────────────────────────────────────────────
+  // /favor/start reserves the view and returns a single-use token; the ad plays;
+  // /favor/claim redeems it. The countdown below is a PLACEHOLDER standing in
+  // for a real network's completion callback — when the SDK lands, only the
+  // "wait for the ad to finish" step is replaced. It is not a security control:
+  // the server independently checks the elapsed time before granting anything.
+  // Translated message for a favor failure. Never surfaces err.message — that
+  // string is English-only and written for a developer, not a player.
+  function favorError(err) {
+    return RT.favorErrors[err?.code]?.[L] || T('favorFailed');
+  }
+
+  async function runFavor(rosterId) {
+    let started;
+    try {
+      started = await api('/favor/start', { chat_id: player.chat_id, roster_id: rosterId });
+    } catch (err) {
+      alert(favorError(err));
+      return;
+    }
+
+    const completed = await playAdPlaceholder(started.seconds ?? favorSeconds);
+    if (!completed) return;   // cancelled — the token is simply left unclaimed
+
+    try {
+      const res = await api('/favor/claim', { chat_id: player.chat_id, token: started.token });
+      favorRemaining = res.remaining ?? Math.max(0, favorRemaining - 1);
+      await reloadAndRerender(rosterId);
+    } catch (err) {
+      alert(favorError(err));
+    }
+  }
+
+  // Resolves true if the "ad" ran to completion, false if the player backed out.
+  function playAdPlaceholder(seconds) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'favor-overlay';
+      overlay.innerHTML = `
+        <div class="favor-modal">
+          <div class="favor-modal-ad">
+            <span class="favor-modal-adbadge">${T('adBadge')}</span>
+            <span class="favor-modal-adtext">${T('favorPlaceholder')}</span>
+          </div>
+          <div class="favor-modal-title">${T('favorWatching')}</div>
+          <div class="favor-modal-bar"><div class="favor-modal-fill"></div></div>
+          <div class="favor-modal-count">${seconds}</div>
+          <button class="favor-modal-cancel">${T('favorCancel')}</button>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const fill  = overlay.querySelector('.favor-modal-fill');
+      const count = overlay.querySelector('.favor-modal-count');
+      const endAt = Date.now() + seconds * 1000;
+
+      let done = false;
+      const finish = ok => {
+        if (done) return;
+        done = true;
+        clearInterval(timer);
+        overlay.remove();
+        resolve(ok);
+      };
+
+      // Driven off wall-clock rather than a tick count, so a backgrounded tab
+      // (which throttles intervals) doesn't leave the bar stuck behind the
+      // server's own timer.
+      const timer = setInterval(() => {
+        const leftMs = endAt - Date.now();
+        const left   = Math.max(0, Math.ceil(leftMs / 1000));
+        count.textContent = left;
+        fill.style.width  = `${Math.min(100, 100 - (leftMs / (seconds * 1000)) * 100)}%`;
+        if (leftMs <= 0) finish(true);
+      }, 100);
+
+      overlay.querySelector('.favor-modal-cancel').addEventListener('click', () => finish(false));
+    });
   }
 
   // Post-mutation refresh: ONE request, then re-render keeping the same unit in

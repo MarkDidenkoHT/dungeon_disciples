@@ -239,8 +239,10 @@ async function unequipItemFromRosterUnit(item, rosterId) {
 
 async function getPlayerByChatId(chat_id) {
   // `progress` rides along for the craft gate (data/items.js `requires`), which
-  // both /bootstrap and /items/craft read off this same lookup.
-  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress&limit=1`);
+  // both /bootstrap and /items/craft read off this same lookup. `timezone` and
+  // `adds_daily_view` are what /bootstrap needs to report the remaining daily
+  // favors — the day rollover is computed from the player's local date.
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view&limit=1`);
   return rows[0] || null;
 }
 
@@ -603,6 +605,14 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         mercenary_buildings:  MERCENARY_BUILDINGS,
         respec_cost_pct:      RESPEC_COST_PCT,
       },
+      // How many divine favors (rewarded ads) are left today, so the roster can
+      // label the button without its own round-trip. Read-only — spending still
+      // goes through /favor/start + /favor/claim.
+      favor: {
+        remaining: player ? Math.max(0, FAVOR_DAILY_CAP - favorRecordFor(player).count) : 0,
+        cap:       FAVOR_DAILY_CAP,
+        seconds:   FAVOR_AD_SECONDS,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -797,6 +807,183 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 
     const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
     res.json({ success: true, roster: updated[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Divine favor (rewarded ad) ─────────────────────────────────────────────
+// A player watches an ad and one unit is revived (at 1 HP) or healed to full.
+// Revival is deliberately WORSE than the resurrection spell so the spell keeps
+// a reason to exist.
+//
+// Two-step by design, and it must stay that way. The client is never trusted to
+// say "the ad finished, do the thing": /favor/start stamps the start time
+// server-side and hands back a single-use token, /favor/claim checks the clock
+// and the token before anything happens. A client-side countdown is a devtools
+// tweak away from being zero, and the API is reachable without the UI at all.
+// The placeholder is MORE forgeable than a real SDK, not less.
+//
+// Swapping in a real ad network later replaces the timing check in /favor/claim
+// with the network's completion callback. Nothing else about this shape moves.
+const FAVOR_AD_SECONDS   = 15;
+const FAVOR_DAILY_CAP    = 3;
+const FAVOR_PENDING_TTL_MS = 10 * 60 * 1000;  // an abandoned view stops blocking
+
+// The player's LOCAL calendar day, from the timezone recorded at login. Day
+// rollover cannot come from the client — the date is a request away from being
+// whatever the player wants it to be.
+function playerLocalDate(timezone) {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone || 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+  } catch {
+    // An unknown/garbage timezone string must not take the endpoint down.
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+  }
+}
+
+// Reads adds_daily_view, rolling it over when the player's local day has moved
+// on. Returns the record for today, never null.
+function favorRecordFor(player) {
+  const today = playerLocalDate(player.timezone);
+  const rec   = player.adds_daily_view || {};
+  if (rec.date !== today) return { date: today, count: 0, pending: null };
+  return { date: today, count: Number(rec.count) || 0, pending: rec.pending || null };
+}
+
+// What a favor would do for this unit, or null if it needs nothing.
+function favorKindFor(unitData) {
+  if (unitData.alive === false) return 'revive';
+  const max = Number(unitData.max_hp ?? 0);
+  const cur = Number(unitData.current_hp ?? max);
+  if (max > 0 && cur < max) return 'heal';
+  return null;
+}
+
+async function loadFavorPlayer(chat_id) {
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,timezone,adds_daily_view&limit=1`);
+  return rows[0] || null;
+}
+
+function writeFavorRecord(chat_id, record) {
+  return supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ adds_daily_view: record }),
+  });
+}
+
+router.post('/favor/start', requireAuth, async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
+  try {
+    const player = await loadFavorPlayer(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    // Scoped by chat_id as well as id, so a roster_id from another account is
+    // simply not found rather than actionable.
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found', code: 'favor_no_unit' });
+
+    const kind = favorKindFor(rosterRows[0].unit_data || {});
+    if (!kind) return res.status(400).json({ error: 'Unit needs no favor', code: 'favor_not_needed' });
+
+    const record = favorRecordFor(player);
+    if (record.count >= FAVOR_DAILY_CAP) {
+      return res.status(429).json({ error: 'Daily favor limit reached', code: 'favor_cap', remaining: 0, cap: FAVOR_DAILY_CAP });
+    }
+
+    // Overwrites any previous pending view: starting a new one abandons the old,
+    // so a half-watched ad can never be banked and claimed later.
+    const token = crypto.randomUUID();
+    record.pending = { token, roster_id: String(roster_id), kind, started_at: Date.now() };
+    await writeFavorRecord(chat_id, record);
+
+    res.json({
+      token,
+      kind,
+      seconds:   FAVOR_AD_SECONDS,
+      remaining: FAVOR_DAILY_CAP - record.count,
+      cap:       FAVOR_DAILY_CAP,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/favor/claim', requireAuth, async (req, res) => {
+  const { chat_id, token } = req.body;
+  if (!chat_id || !token) return res.status(400).json({ error: 'chat_id and token required' });
+  try {
+    const player = await loadFavorPlayer(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    // Recomputed, so a view started just before local midnight lands in the new
+    // day's allowance rather than double-spending the old one.
+    const record  = favorRecordFor(player);
+    const pending = record.pending;
+    if (!pending || pending.token !== token) {
+      return res.status(400).json({ error: 'No favor in progress', code: 'favor_none' });
+    }
+
+    const elapsedMs = Date.now() - Number(pending.started_at || 0);
+    if (elapsedMs > FAVOR_PENDING_TTL_MS) {
+      record.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(400).json({ error: 'Favor expired — start again', code: 'favor_expired' });
+    }
+    // The actual gate. 750ms of slack absorbs clock skew and round-trip time
+    // without opening a window worth exploiting.
+    if (elapsedMs < FAVOR_AD_SECONDS * 1000 - 750) {
+      return res.status(400).json({ error: 'Ad not finished', code: 'favor_early' });
+    }
+    if (record.count >= FAVOR_DAILY_CAP) {
+      record.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(429).json({ error: 'Daily favor limit reached', code: 'favor_cap', remaining: 0, cap: FAVOR_DAILY_CAP });
+    }
+
+    // Re-read rather than trusting what was true at /favor/start — the unit may
+    // have been healed, revived or killed in between.
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found', code: 'favor_no_unit' });
+
+    const unitData = rosterRows[0].unit_data || {};
+    const kind     = favorKindFor(unitData);
+    if (!kind) {
+      // Nothing left to grant. Burn the token but do NOT spend a daily use.
+      record.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(400).json({ error: 'Unit needs no favor', code: 'favor_not_needed' });
+    }
+
+    // Revive lands at 1 HP; heal fills. Revival stays strictly worse than the
+    // resurrection spell, which restores and costs crystals.
+    const maxHp = Number(unitData.max_hp ?? 0);
+    const newUnitData = kind === 'revive'
+      ? { ...unitData, alive: true, current_hp: 1 }
+      : { ...unitData, current_hp: maxHp };
+
+    await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: newUnitData }),
+    });
+
+    record.count  += 1;
+    record.pending = null;
+    await writeFavorRecord(chat_id, record);
+
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    res.json({
+      success:   true,
+      kind,
+      roster:    updated[0],
+      remaining: FAVOR_DAILY_CAP - record.count,
+      cap:       FAVOR_DAILY_CAP,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

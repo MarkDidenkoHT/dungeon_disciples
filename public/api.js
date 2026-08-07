@@ -24,7 +24,14 @@ export async function api(path, body = null) {
     throw new Error(text.trim() || `HTTP ${res.status}`);
   }
   console.log('[API] response', { path: `/api${path}`, status: res.status, data });
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  if (!res.ok) {
+    // `error` is an English developer string. When the endpoint also sends a
+    // stable `code`, it rides along so callers can show a translated message
+    // instead of surfacing the raw English to the player.
+    const err = new Error(data.error || `HTTP ${res.status}`);
+    if (data.code) err.code = data.code;
+    throw err;
+  }
   return data;
 }
 

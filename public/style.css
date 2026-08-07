@@ -2417,6 +2417,116 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .heal-btn[disabled] { opacity: 0.6; cursor: default; }
 
+/* ── Divine favor (rewarded ad) ────────────────────────────────────────────
+   Pinned to the bottom of the portrait, under the spell buttons — it is the
+   fallback when a spell is unaffordable, so it must not compete with one. */
+.unit-card-overlay--favor { align-items: flex-end; padding-bottom: 8px; }
+
+.favor-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(10, 12, 16, 0.88);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  cursor: pointer;
+}
+/* Required, not decorative: the player has to know this is an ad BEFORE they
+   tap it. Never hide this to make the button tidier. */
+.favor-btn-ad {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #111;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.favor-btn-label { white-space: nowrap; }
+.favor-btn-left  { color: var(--muted); font-size: 0.62rem; white-space: nowrap; }
+.favor-btn--spent { opacity: 0.55; cursor: default; border-color: var(--border); }
+.favor-btn--spent .favor-btn-ad { background: var(--muted); }
+
+.favor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.favor-modal {
+  width: 100%;
+  max-width: 340px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+/* Stands in for the ad network's own view. When the real SDK lands this box is
+   what it replaces — everything around it stays. */
+.favor-modal-ad {
+  position: relative;
+  height: 150px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.favor-modal-adbadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--accent);
+  color: #111;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.favor-modal-adtext { color: var(--muted); font-size: 0.75rem; }
+.favor-modal-title  { color: #fff; font-size: 0.9rem; margin-bottom: 10px; }
+.favor-modal-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+}
+.favor-modal-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.favor-modal-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 8px 0 12px;
+  font-variant-numeric: tabular-nums;   /* the digit must not jiggle as it ticks */
+}
+.favor-modal-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .unit-dead-overlay {
   position: absolute;
   inset: 0;
