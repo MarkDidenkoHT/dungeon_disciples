@@ -1384,7 +1384,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     const levelDef = region.difficulties?.[`level_${level}`];
     if (!levelDef) return res.status(404).json({ error: 'Level not found' });
     const rewards = levelDef.rewards;
-    const result  = { xp_granted: 0, gold: 0, crystal: 0, progress_unlocked: false };
+    const result  = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false };
     if (won) {
       const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
       const updateItem = async (itemName, amount) => {
@@ -1482,6 +1482,13 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         : 0;
       result.xp_granted = xpEach;
 
+      // Per-unit XP detail for the victory screen. The single xp_granted figure
+      // says how much each recipient got but not WHO got it — and the recipient
+      // list is not obvious (the fallen can earn via Unending Servitude, and the
+      // rest of the party earns nothing). Reporting the actual post-award total
+      // also lets the client draw each unit's progress toward its next tier.
+      const xpAwards = [];
+
       await Promise.all(participantRows.map(async (row) => {
         const rosterId = String(row.id);
         let unitData  = row.unit_data || {};
@@ -1490,6 +1497,13 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         if (xpEach > 0 && xpRecipients.includes(rosterId)) {
           unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpEach };
           changed  = true;
+          xpAwards.push({
+            roster_id:  rosterId,
+            unit_id:    unitData.unit_id,
+            xp_gained:  xpEach,
+            current_xp: unitData.current_xp,
+            alive:      unitData.alive !== false,
+          });
         }
 
         if (embarkBonus.heal_pct > 0 && unitData.alive !== false) {
@@ -1505,6 +1519,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         if (!changed) return;
         await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
       }));
+      // Stable order — Promise.all resolution order is not meaningful, and the
+      // victory list should not reshuffle between runs.
+      result.xp_awards = xpAwards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));
       const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
       if (playerRows.length) {
         const progress     = playerRows[0].progress || {};

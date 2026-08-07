@@ -39,6 +39,10 @@ const BT = {
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
   unlocked:     { en: n => `\u{1F513} Level ${n} unlocked!`, ru: n => `\u{1F513} Уровень ${n} открыт!` },
   xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
+  // Per-unit XP block on the victory screen.
+  xpGained:       { en: 'Experience',        ru: 'Опыт' },
+  maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
+  readyToUpgrade: { en: 'Ready to upgrade',  ru: 'Готов к улучшению' },
 };
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
@@ -678,7 +682,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const hpPct      = occ.battle_hp / occ.max_hp;
         const portraitUrl = getPortraitUrl(occ, 'grid');
 
-        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''}`;
+        // A 'row' unit fills both columns, so its bark can stay centred; a tile
+        // unit sits in one column and its bark has to open inward. The column is
+        // stamped on the element because DOM order does NOT track it — shadowed
+        // cells are skipped above and spanning cells eat two grid slots, so
+        // nth-child parity would be wrong for anything after a large unit.
+        let cls = `battle-cell ${colSpan > 1 ? 'battle-cell--wide' : ''} ${!occ.alive ? 'battle-cell--dead' : ''}`;
         if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
@@ -686,7 +695,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         else                      cls += ' battle-cell--enemy';
 
         html.push(`
-          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}">
+          <div class="${cls}" data-id="${occ.id}" data-col="${c}" style="${spanStyle}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
             <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
             <div class="battle-cell-info">
@@ -1008,14 +1017,51 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           ? crystalEntries.map(([type, amt]) =>
               chip(CRYSTAL_ICONS[type] || '💎', amt, type.replace(/^Crystals_/, ''))).join('')
           : (result.crystal > 0 ? chip('💎', result.crystal) : '');
+        // Per-unit XP: who actually earned, and how close it now is to its next
+        // tier. The old single "+N XP each" chip hid both — the earner list is
+        // not obvious (the fallen can still earn through Unending Servitude, and
+        // non-participants earn nothing), and a bare number says nothing about
+        // progress. Falls back to the flat chip for a pre-xp_awards payload.
+        const xpRows = (result.xp_awards || []).map(a => {
+          const def      = resolveUnitDef({ unit_data: { unit_id: a.unit_id } });
+          const portrait = getPortraitUrl({ unit_data: { unit_id: a.unit_id } });
+          const name     = def?.name || a.unit_id;
+          const required = def?.xp ?? null;
+          const cur      = a.current_xp ?? 0;
+          // def.xp is the XP needed to upgrade; null means the unit is max tier
+          // and has nothing left to fill a bar toward.
+          const pct      = required ? Math.min(100, Math.floor((cur / required) * 100)) : 100;
+          const ready    = required != null && cur >= required;
+          const meta     = required == null ? BTx('maxTier')
+                         : ready            ? BTx('readyToUpgrade')
+                         : `${cur} / ${required}`;
+          return `
+            <div class="reward-xp-row${a.alive ? '' : ' reward-xp-row--fallen'}">
+              ${portrait ? `<img class="reward-xp-portrait" src="${portrait}" alt="${name}" onerror="this.style.visibility='hidden'">` : '<span class="reward-xp-portrait"></span>'}
+              <div class="reward-xp-body">
+                <div class="reward-xp-top">
+                  <span class="reward-xp-name">${name}</span>
+                  <span class="reward-xp-gain">+${a.xp_gained}</span>
+                </div>
+                <div class="reward-xp-bar"><div class="reward-xp-fill${ready ? ' reward-xp-fill--ready' : ''}" style="width:${pct}%"></div></div>
+                <div class="reward-xp-meta${ready ? ' reward-xp-meta--ready' : ''}">${meta}</div>
+              </div>
+            </div>`;
+        }).join('');
+
         rewardsEl.innerHTML = `
           ${outcomeHtml}
           <div class="reward-grid">
             ${result.gold > 0 ? chip(GOLD_ICON, result.gold) : ''}
             ${crystals}
-            ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, BTx('xpEach')) : ''}
+            ${!xpRows && result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, BTx('xpEach')) : ''}
             ${trophies}
           </div>
+          ${xpRows ? `
+            <div class="reward-xp-block">
+              <div class="reward-xp-head">${BTx('xpGained')}</div>
+              ${xpRows}
+            </div>` : ''}
           ${result.progress_unlocked ? `<div class="reward-unlock">${BT.unlocked[BL](result.next_level)}</div>` : ''}
         `;
       } else {

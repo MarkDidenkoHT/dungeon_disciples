@@ -2843,6 +2843,72 @@ button:active:not(:disabled) { opacity: 0.75; }
 .reward-chip-img { width: 28px; height: 28px; display: block; object-fit: contain; }
 .reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
 .reward-chip-label { color: #cfd6e2; font-size: 0.72rem; text-transform: capitalize; }
+/* ── Per-unit XP on the victory screen ─────────────────────────────────────
+   Portrait, name, what this unit earned, and how close that leaves it to its
+   next tier. Sized off the reward chips above so the panel reads as one list
+   rather than two stacked components. */
+.reward-xp-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reward-xp-head {
+  color: #cfd6e2;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.reward-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 6px 10px 6px 6px;
+}
+/* Earned it while dead (Unending Servitude) — dimmed so the list still reads
+   as "who fought" at a glance without hiding the award. */
+.reward-xp-row--fallen .reward-xp-portrait { filter: grayscale(70%) brightness(0.7); }
+.reward-xp-portrait {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+.reward-xp-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.reward-xp-top  { display: flex; align-items: baseline; gap: 8px; }
+.reward-xp-name {
+  flex: 1;
+  min-width: 0;
+  color: #fff;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reward-xp-gain { color: #ffd700; font-weight: bold; font-size: 0.82rem; flex-shrink: 0; }
+.reward-xp-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+}
+.reward-xp-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+.reward-xp-fill--ready { background: #6fe03a; }
+.reward-xp-meta { color: var(--muted); font-size: 0.66rem; }
+.reward-xp-meta--ready { color: #6fe03a; }
+
 .reward-unlock {
   margin-top: 12px;
   color: #6fe03a;
@@ -3080,32 +3146,68 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 0;
 }
 
-/* battle.js still toggles .battle-cell--bark-active and .battle-grid--bark while
-   a unit is speaking, and the dismiss logic reads them to tell whether any cell
-   is still mid-bark. They carry no styling any more: both existed only to punch
-   the toast out through the cell's overflow and lift the grid above its own
-   frame art, which a toast drawn INSIDE the portrait doesn't need. */
+/* battle.js toggles .battle-cell--bark-active and .battle-grid--bark while a
+   unit is speaking, and the dismiss logic reads them to tell whether any cell is
+   still mid-bark. They are load-bearing again: the toast is now allowed to be
+   WIDER than its portrait tile, so it has to punch out through the cell's
+   overflow and the grid has to sit above its own frame art. */
+.battle-cell--bark-active {
+  overflow: visible;   /* the cell clips by default; a wide bark must escape it */
+  z-index: 21;         /* over its neighbours, and over .battle-grid-wrap::after */
+}
 
-/* The bark sits inside the portrait tile, as a caption band across its lower
-   edge — it no longer floats above the cell and over its neighbours. */
+/* .battle-grid sits at z-index 1, under the frame art in .battle-grid-wrap::after
+   (z-index 10). A cell's own z-index cannot escape that stacking context, so the
+   GRID has to be lifted while anyone is speaking or the bark renders behind the
+   frame. */
+.battle-grid--bark { z-index: 20; }
+
+/* The bark is anchored to the portrait it belongs to but is not bound by its
+   width — a cell is far too narrow for a line of dialogue at a readable size.
+   It centres on the tile and grows outward from there, capped so it can't run
+   off the grid. */
 .bark-toast {
   position: absolute;
-  left: 3px;
-  right: 3px;
   bottom: 3px;
-  max-height: calc(100% - 6px);
+  width: max-content;
+  min-width: calc(100% - 6px);
+  /* The grid is only two columns wide, so EVERY cell is an edge cell — a
+     centred wide toast would hang off the screen. Each bark is anchored to its
+     own outer edge and grows INWARD instead (see the column rules below), so
+     195% is the widest it can be while still landing inside the grid. */
+  max-width: 195%;
   overflow: hidden;
-  background: rgba(17, 19, 24, 0.92);
+  background: rgba(17, 19, 24, 0.94);
   border: 1px solid var(--accent);
   border-radius: 8px;
-  padding: 4px 6px;
-  font-size: 0.55rem;
-  line-height: 1.25;
+  padding: 5px 8px;
+  font-size: 0.68rem;
+  line-height: 1.3;
   color: var(--text);
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  text-wrap: balance;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.6);
   pointer-events: none;
   animation: bark-toast-in 0.18s ease-out;
+}
+
+/* Left column opens to the right, right column opens to the left, so a wide
+   bark always grows into the grid and never off the screen. Keyed off data-col
+   (stamped in battle.js) rather than nth-child, because skipped shadow cells and
+   span-2 cells make DOM order an unreliable guide to the real column.
+   Anchoring by edge instead of centring also keeps the animation a plain
+   translateY — no transform is doing layout work, so nothing snaps sideways
+   when the keyframes finish. */
+.battle-cell[data-col="0"] > .bark-toast { left: 3px;  right: auto; }
+.battle-cell[data-col="1"] > .bark-toast { right: 3px; left: auto; }
+
+/* A 'row' unit already spans the full grid width, so its bark just fills the
+   tile — there is no room to widen into and nothing to anchor against. */
+.battle-cell--wide > .bark-toast {
+  left: 3px;
+  right: 3px;
+  width: auto;
+  max-width: none;
 }
 
 @keyframes bark-toast-in {
@@ -5467,8 +5569,12 @@ button:active:not(:disabled) { opacity: 0.75; }
    moving through the track never resizes the sheet or shifts the track under
    the player's thumb. Longer items scroll inside this box. */
 .item-detail {
-  flex: 0 0 auto;
-  height: 40vh;
+  /* Grows to absorb whatever the sheet has spare, so the selector track below
+     is pushed onto the bottom edge instead of floating directly under a fixed
+     40vh card with dead space beneath it. min-height:0 lets it actually shrink
+     inside the flex column rather than overflowing. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -5492,6 +5598,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   --track-card-h: clamp(52px, 8vh, 68px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
+  /* Pinned to the bottom edge of the sheet — thumb-reachable, and it stays put
+     regardless of how tall the detail card above it happens to be. */
+  margin-top: auto;
   flex-shrink: 0;
   padding: 6px 0 0;
   scrollbar-width: none;
