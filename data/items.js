@@ -6,6 +6,8 @@
 //                 By convention every epic/mythic item is unique; commons and
 //                 rares are stackable. Flip per-item as balance needs.
 //   cost/item_cost resource + item-ingredient cost to craft.
+//   requires      embark progress the craft is gated behind. Omit for the
+//                 rarity default; see the craft gating block below ITEM_DEFS.
 //
 // Equip restrictions (checked in data/item_rules.js, enforced by
 // POST /items/equip and mirrored by the roster UI):
@@ -35,6 +37,13 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100, Crystals_Frost: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
+    // Example of a per-item gate overriding the rarity default (see the craft
+    // gating block below ITEM_DEFS): every ingredient comes out of the Abyss, so
+    // going deep there unlocks it early — otherwise it waits on a full clear.
+    requires:     [
+      { region: 'glittering_abyss',  level: 4 },
+      { region: 'chamber_of_unrest', level: 6 },
+    ],
   },
   crystal_shield: {
     key:          'crystal_shield',
@@ -222,6 +231,8 @@ const ITEM_DEFS = {
     icon:         'mothers_gift',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Death: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   padded_armor: {
     key:          'padded_armor',
@@ -289,6 +300,8 @@ const ITEM_DEFS = {
     icon:         'fire_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Fire: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   orb_of_fire: {
     key:          'orb_of_fire',
@@ -371,6 +384,8 @@ const ITEM_DEFS = {
     icon:         'cold_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Frost: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   life_resistance_potion: {
     key:          'life_resistance_potion',
@@ -384,6 +399,8 @@ const ITEM_DEFS = {
     icon:         'life_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Life: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   nature_resistance_potion: {
     key:          'nature_resistance_potion',
@@ -397,6 +414,8 @@ const ITEM_DEFS = {
     icon:         'nature_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Nature: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   air_resistance_potion: {
     key:          'air_resistance_potion',
@@ -410,6 +429,8 @@ const ITEM_DEFS = {
     icon:         'air_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Air: 10 },
+    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
+    requires:     { region: 'any', level: 1 },
   },
   crude_sword: {
     key:          'crude_sword',
@@ -820,6 +841,86 @@ const ITEM_DEFS = {
   },
 };
 
+// ── Craft gating ─────────────────────────────────────────────────────────────
+// Not every blueprint should be makeable on day one. A craft can require that
+// the player has CLEARED a given level of a given embark region.
+//
+// Declare it on the item as `requires`:
+//
+//   requires: { region: 'crimson_basilica', level: 3 }   // one condition
+//   requires: { region: 'any',              level: 2 }   // any single region
+//   requires: [                                          // ANY of these (OR)
+//     { region: 'crimson_basilica', level: 3 },
+//     { region: 'glittering_abyss', level: 5 },
+//   ]
+//
+// `level: 3` means "level 3 of that region has been beaten". Regions run 1..6.
+// `requires: null` on an item forces it ungated regardless of the rarity default
+// below. Omit the field entirely and the rarity default applies.
+//
+// Both the roster catalog and POST /items/craft call meetsCraftRequirements(),
+// so the Craft button and the server can never disagree. The server is the
+// authority; the client uses it to disable the button and say what is missing.
+const CRAFT_REGION_LABELS = {
+  crimson_basilica:  { en: 'Crimson Basilica',  ru: 'Багровая базилика' },
+  glittering_abyss:  { en: 'Glittering Abyss',  ru: 'Мерцающая бездна' },
+  chamber_of_unrest: { en: 'Chamber of Unrest', ru: 'Чертог беспокойства' },
+};
+
+// The default gate for an item that declares no `requires` of its own. Tuning
+// these four lines re-gates the whole catalog at once; a per-item `requires`
+// always wins over them. Commons stay open so a new player has a starting kit.
+const CRAFT_GATE_BY_RARITY = {
+  common: null,
+  rare:   { region: 'any', level: 2 },
+  epic:   { region: 'any', level: 4 },
+  mythic: { region: 'any', level: 6 },
+};
+
+// Normalises whatever an item declared into a flat list of {region, level}.
+// An empty list means "craftable from the start".
+function craftRequirements(itemDef) {
+  if (!itemDef) return [];
+  const raw = Object.prototype.hasOwnProperty.call(itemDef, 'requires')
+    ? itemDef.requires
+    : CRAFT_GATE_BY_RARITY[itemDef.rarity];
+  if (!raw) return [];
+  return (Array.isArray(raw) ? raw : [raw])
+    .filter(r => r && r.region && Number(r.level) > 0)
+    .map(r => ({ region: r.region, level: Number(r.level) }));
+}
+
+// `progress` is the player's { region_id: next_playable_level } map — beating
+// level N writes N+1 (see POST /battle/complete), and a region never played is
+// absent, which reads as level 1 playable / nothing cleared.
+function clearedLevel(progress, regionId) {
+  return Math.max(0, Number(progress?.[regionId] ?? 1) - 1);
+}
+
+function meetsCraftRequirements(itemDef, progress) {
+  const reqs = craftRequirements(itemDef);
+  if (!reqs.length) return true;
+  // Any single satisfied condition unlocks the craft.
+  return reqs.some(r => r.region === 'any'
+    ? Object.keys(CRAFT_REGION_LABELS).some(id => clearedLevel(progress, id) >= r.level)
+    : clearedLevel(progress, r.region) >= r.level);
+}
+
+// One line for the card and the server's error: "Requires Crimson Basilica lv. 3
+// or Glittering Abyss lv. 5". Empty string when the item is ungated.
+function craftRequirementText(itemDef, lang = 'en') {
+  const reqs = craftRequirements(itemDef);
+  if (!reqs.length) return '';
+  const L = lang === 'ru' ? 'ru' : 'en';
+  const anyLabel = L === 'ru' ? 'любой регион' : 'any region';
+  const parts = reqs.map(r => {
+    const label = r.region === 'any' ? anyLabel : (CRAFT_REGION_LABELS[r.region]?.[L] || r.region);
+    return L === 'ru' ? `${label}, ур. ${r.level}` : `${label} lv. ${r.level}`;
+  });
+  const joined = parts.join(L === 'ru' ? ' или ' : ' or ');
+  return L === 'ru' ? `Требуется пройти: ${joined}` : `Requires clearing ${joined}`;
+}
+
 // Applies every modifier an item grants (hp, armor, action_power, initiative,
 // resistances, added tag, granted passive) on top of a unit_data object.
 //
@@ -883,5 +984,13 @@ function applyItemModifiers(unitData, itemStats) {
   return out;
 }
 
-export { ITEM_DEFS, applyItemModifiers };
-if (typeof module !== 'undefined') module.exports = { ITEM_DEFS, applyItemModifiers };
+export {
+  ITEM_DEFS, applyItemModifiers,
+  CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
+  craftRequirements, meetsCraftRequirements, craftRequirementText,
+};
+if (typeof module !== 'undefined') module.exports = {
+  ITEM_DEFS, applyItemModifiers,
+  CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
+  craftRequirements, meetsCraftRequirements, craftRequirementText,
+};

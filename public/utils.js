@@ -639,6 +639,7 @@ export function openSheet(title, bodyHtml, badgesHtml = '') {
   overlay.querySelector('.modal-body').innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+  syncSheetStack();
 }
 
 // Anything that decorates the screen while the sheet is open (the roster's
@@ -652,7 +653,12 @@ export function onSheetClose(fn) {
 
 export function closeSheet() {
   if (!_sheetEl) return;
+  // A detail sheet without the sheet it was opened from is an orphan, so the
+  // base sheet's close button takes both down.
+  if (_subSheetEl) _subSheetEl.classList.add('hidden');
   _sheetEl.classList.add('hidden');
+  _sheetEl.classList.remove('modal-overlay--stacked');
+  _sheetEl.querySelector('.modal')?.style.removeProperty('--sub-sheet-h');
   document.body.style.overflow = '';
   for (const fn of [..._sheetCloseHandlers]) {
     _sheetCloseHandlers.delete(fn);
@@ -690,17 +696,46 @@ function ensureSubSheet() {
   return overlay;
 }
 
+// Both sheets are bottom-anchored panels of the same width, so an open sub-sheet
+// sits exactly on top of the sheet that opened it — inspecting a building's
+// ability hid the building modal behind it. Instead of stacking them in z, stack
+// them in the column: lift the base sheet by the sub-sheet's height so the two
+// read as one panel split in half, base on top, detail below. Called on every
+// open/close of either sheet and on resize, since the lift is a pixel value.
+function syncSheetStack() {
+  if (!_sheetEl) return;
+  const baseModal = _sheetEl.querySelector('.modal');
+  if (!baseModal) return;
+  const subOpen = _subSheetEl && !_subSheetEl.classList.contains('hidden')
+                  && !_sheetEl.classList.contains('hidden');
+  if (!subOpen) {
+    _sheetEl.classList.remove('modal-overlay--stacked');
+    baseModal.style.removeProperty('--sub-sheet-h');
+    return;
+  }
+  const subModal = _subSheetEl.querySelector('.modal');
+  baseModal.style.setProperty('--sub-sheet-h', `${subModal ? subModal.offsetHeight : 0}px`);
+  _sheetEl.classList.add('modal-overlay--stacked');
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', syncSheetStack);
+}
+
 export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
   overlay.querySelector('.modal-title-text').textContent = title;
   overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
   overlay.querySelector('.modal-body').innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
+  // Measured after the class flip so the sub-sheet has a real height to read.
+  syncSheetStack();
 }
 
 export function closeSubSheet() {
   if (!_subSheetEl) return;
   _subSheetEl.classList.add('hidden');
+  syncSheetStack();
 }
 
 export function getSubSheetBody() {

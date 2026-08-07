@@ -23,7 +23,7 @@ const {
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler } = require('../utils/telegram');
-const { ITEM_DEFS, applyItemModifiers } = require('../data/items');
+const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
@@ -236,7 +236,9 @@ async function unequipItemFromRosterUnit(item, rosterId) {
 }
 
 async function getPlayerByChatId(chat_id) {
-  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction&limit=1`);
+  // `progress` rides along for the craft gate (data/items.js `requires`), which
+  // both /bootstrap and /items/craft read off this same lookup.
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress&limit=1`);
   return rows[0] || null;
 }
 
@@ -586,6 +588,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       items,
       structures: structRows[0] || null,
       roster,
+      // Embark progress rides along so the roster's craft catalog can gate
+      // blueprints (data/items.js `requires`) without a second round-trip.
+      progress: player?.progress || {},
       buildings: {
         pools:                BUILDING_POOLS,
         slot_categories:      SLOT_CATEGORIES,
@@ -1809,6 +1814,12 @@ router.post('/items/craft', requireAuth, async (req, res) => {
 
     if (itemDef.faction && itemDef.faction !== player.faction) {
       return res.status(400).json({ error: 'This item cannot be crafted by your faction' });
+    }
+
+    // Progress gate. The roster catalog disables the button for the same reason,
+    // but the check has to live here too — this route is the authority.
+    if (!meetsCraftRequirements(itemDef, player.progress || {})) {
+      return res.status(400).json({ error: `Locked — ${craftRequirementText(itemDef)}` });
     }
 
     const cost     = itemDef.cost      || {};

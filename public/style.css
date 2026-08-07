@@ -1091,6 +1091,18 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .modal-overlay--sub .modal {
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  /* Capped so the detail panel can never claim the whole screen and leave the
+     sheet it came from with nowhere to sit. */
+  max-height: 55vh;
+}
+
+/* Set by syncSheetStack() in public/utils.js while a sub-sheet is open: the base
+   sheet slides up by exactly the sub-sheet's height so both stay on screen,
+   stacked, instead of the sub-sheet covering the one that opened it. */
+.modal-overlay--stacked .modal {
+  transform: translateY(calc(-1 * var(--sub-sheet-h, 0px)));
+  max-height: calc(92vh - var(--sub-sheet-h, 0px));
+  transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1), max-height 0.2s ease;
 }
 
 @keyframes overlay-in {
@@ -1105,6 +1117,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-radius: 16px 16px 0 0;
   width: 100%;
   max-width: 480px;
+  max-height: 92vh;   /* .modal-body is flex:1 + overflow-y:auto — it needs a bound to scroll against */
   display: flex;
   flex-direction: column;
   overflow: hidden;

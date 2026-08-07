@@ -6,7 +6,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone }
 import { SPELLS }           from '../../data/spells.js';
 import { UNIT_ABILITIES }   from '../../data/unit_abilities.js';
 import { getEquipBlock }    from '../../data/item_rules.js';
-import { ITEM_DEFS }        from '../../data/items.js';
+import { ITEM_DEFS, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
 import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -111,6 +111,7 @@ export function renderRoster(root, { player }) {
   let upgradePaths  = {};
   let items         = [];
   let resources     = [];
+  let progress      = {};   // { region_id: next_playable_level } — gates the craft catalog
 
   function equippedItemFor(rosterId) {
     return items.find(it => String(it.equipped_by) === String(rosterId)) || null;
@@ -740,9 +741,12 @@ export function renderRoster(root, { player }) {
     const itemCost     = itemDef.item_cost || {};
     const factionOk    = !itemDef.faction || itemDef.faction === player.faction;
     const canAfford    = hasCraftMaterials(itemDef);
+    // Embark progress gate (data/items.js `requires`). Locked blueprints stay in
+    // the catalog on purpose — they read as goals, not as items you don't have.
+    const unlocked     = meetsCraftRequirements(itemDef, progress);
     // Unique items you already own can never be re-crafted, no matter the cost.
     const uniqueOwned  = !!itemDef.unique && ownedCount > 0;
-    const canCraft     = factionOk && canAfford && !uniqueOwned;
+    const canCraft     = factionOk && unlocked && canAfford && !uniqueOwned;
 
     // A short availability line: why you can (or can't) make this right now.
     // Only reasons the card cannot show any other way. "Not enough resources" is
@@ -750,6 +754,7 @@ export function renderRoster(root, { player }) {
     let blocked = '';
     if (uniqueOwned)     blocked = T('uniqueOwned');
     else if (!factionOk) blocked = T('wrongFaction');
+    else if (!unlocked)  blocked = `🔒 ${craftRequirementText(itemDef, L)}`;
 
     const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
@@ -788,6 +793,7 @@ export function renderRoster(root, { player }) {
 
   function canCraftNow(itemDef) {
     if (itemDef.faction && itemDef.faction !== player.faction) return false;
+    if (!meetsCraftRequirements(itemDef, progress)) return false;
     const ownedCount = items.filter(it => (it.item_stats?.key || it.item_stats?.icon) === itemDef.key).length;
     if (itemDef.unique && ownedCount > 0) return false;
     return hasCraftMaterials(itemDef);
@@ -1422,6 +1428,7 @@ export function renderRoster(root, { player }) {
     upgradePaths  = boot.buildings?.upgrade_paths || {};
     items         = boot.items || [];
     resources     = [...(boot.resources || []), ...(boot.trophies || [])];
+    progress      = boot.progress || {};
     return boot;
   }
 
