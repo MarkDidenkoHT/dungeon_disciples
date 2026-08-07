@@ -2551,6 +2551,151 @@ export async function fellfire(originCellEl, opts = {}) {
 }
 
 
+// ── fire_bolt — the Choir's signature ranged attack ────────────────────────
+// Deliberately NOT another clean projectile. arrow_shot and blood_bolt both
+// travel as a tidy head with a tail; fire is heavier and dirtier — it GUTTERS on
+// the way (the core flickers rather than holding steady), sheds dark smoke that
+// lingers behind it instead of fading with the trail, and bursts rather than
+// punching through. Smoke is drawn non-additively so it reads as an obstruction;
+// only the flame itself is additive.
+export async function fire_bolt(cellEl, opts = {}) {
+  console.log('[battle-fx] fire_bolt START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  if (!targetId) return;   // nothing to aim at; a bolt with no target is meaningless
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const CORE  = 0xfff0c0;
+  const FLAME = 0xff8a1e;
+  const DEEP  = 0xd63a08;
+  const SMOKE = 0x2b2118;
+
+  // Smoke puffs are seeded along the flight path and STAY where they were born,
+  // so the bolt leaves a trail hanging in the air behind it.
+  const puffs = Array.from({ length: 10 }, (_, i) => ({
+    at:   (i + 0.5) / 10,
+    perp: rand(-0.5, 0.5),
+    size: rand(0.10, 0.22),
+    rise: rand(0.15, 0.5),
+  }));
+  const embers = Array.from({ length: 16 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.35, 1.1), size: rand(1.6, 4), delay: rand(0, 0.18),
+  }));
+  // Per-frame guttering, seeded so the flicker is consistent frame to frame.
+  const flickSeed = rand(0, TAU);
+
+  const layer      = new PIXI.Container();
+  const glowLayer  = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const smokeLayer = new PIXI.Container();
+  smokeLayer.filters = [new PIXI.BlurFilter(4)];
+  const smokeG = new PIXI.Graphics();                   // NOT additive: smoke occludes
+  const glowG  = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const boltG  = new PIXI.Graphics(); boltG.blendMode = ADD;
+  layer.addChild(smokeLayer, glowLayer, boltG);
+  smokeLayer.addChild(smokeG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(660, t => {
+    const ab = cellBoundsFor(dataId);
+    const tb = cellBoundsFor(targetId);
+    if (!ab || !tb) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ax = ab.x + ab.width / 2, ay = ab.y + ab.height / 2;
+    const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+    const R  = Math.min(tb.width, tb.height);
+
+    // A shallow arc, so it lobs rather than tracking a ruler line.
+    const dx = tx - ax, dy = ty - ay;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const arc = R * 0.30;
+    const pointAt = f => [
+      ax + dx * f + nx * Math.sin(f * Math.PI) * arc,
+      ay + dy * f + ny * Math.sin(f * Math.PI) * arc,
+    ];
+
+    const CHARGE = 0.16, FLIGHT = 0.52;
+    const charge = clamp01(t / CHARGE);
+    const travel = clamp01((t - CHARGE) / (FLIGHT - CHARGE));
+    const impact = clamp01((t - FLIGHT) / (1 - FLIGHT));
+
+    smokeG.clear(); glowG.clear(); boltG.clear();
+
+    // Gathering at the caster before release.
+    if (t < CHARGE) {
+      const g = Math.sin(charge * Math.PI * 0.5);
+      softGlow(glowG, ax, ay, R * 0.20 * g, FLAME, 0.75 * g);
+      softGlow(glowG, ax, ay, R * 0.09 * g, CORE,  0.9 * g);
+    }
+
+    // In flight.
+    if (t >= CHARGE && travel < 1) {
+      const [hx, hy] = pointAt(travel);
+      // Guttering: the flame's size wavers as it flies instead of holding steady.
+      const gutter = 0.78 + 0.22 * Math.sin(t * 34 + flickSeed);
+
+      softGlow(glowG, hx, hy, R * 0.30 * gutter, DEEP,  0.55);
+      softGlow(glowG, hx, hy, R * 0.19 * gutter, FLAME, 0.85);
+      softGlow(boltG, hx, hy, R * 0.085 * gutter, CORE, 1.0);
+
+      // A short lick of flame stretched back along the direction of travel.
+      const back = 0.055;
+      const [bx, by] = pointAt(Math.max(0, travel - back));
+      boltG.lineStyle(R * 0.055 * gutter, FLAME, 0.75);
+      boltG.moveTo(bx, by); boltG.lineTo(hx, hy);
+      boltG.lineStyle(0);
+    }
+
+    // Smoke: every puff the bolt has already passed stays put and drifts upward.
+    for (const p of puffs) {
+      if (travel < p.at) continue;
+      const age = clamp01((travel - p.at) / 0.75 + impact * 0.5);
+      const [px, py] = pointAt(p.at);
+      smokeG.beginFill(SMOKE, 0.34 * (1 - age));
+      smokeG.drawCircle(
+        px + nx * R * p.perp * 0.30,
+        py + ny * R * p.perp * 0.30 - age * R * p.rise,
+        R * p.size * (0.6 + age * 1.1),
+      );
+      smokeG.endFill();
+    }
+
+    // Impact: bloom, scorch ring, embers thrown outward.
+    if (impact > 0) {
+      const flare = Math.sin(clamp01(impact / 0.3) * Math.PI);
+      softGlow(glowG, tx, ty, R * 0.62 * flare, DEEP,  0.7);
+      softGlow(glowG, tx, ty, R * 0.36 * flare, FLAME, 0.9);
+      softGlow(boltG, tx, ty, R * 0.16 * flare, CORE,  1.0);
+
+      const rr = R * (0.2 + impact * 0.7);
+      boltG.lineStyle(Math.max(1, R * 0.05 * (1 - impact)), FLAME, (1 - impact) * 0.8);
+      boltG.drawCircle(tx, ty, rr);
+      boltG.lineStyle(0);
+
+      for (const e of embers) {
+        const s = clamp01((impact - e.delay) / (1 - e.delay));
+        if (s <= 0) continue;
+        const d = R * e.speed * s;
+        softGlow(boltG,
+          tx + Math.cos(e.ang) * d,
+          ty + Math.sin(e.ang) * d + s * s * R * 0.22,   // embers arc down as they die
+          e.size * (1 - s * 0.6), FLAME, (1 - s) * 0.85);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] fire_bolt END', dataId);
+}
+
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -2576,6 +2721,7 @@ export const EFFECTS = {
   mend_flesh,
   haunt,
   blood_bolt,
+  fire_bolt,
   arrow_shot,
   repair,
 };
