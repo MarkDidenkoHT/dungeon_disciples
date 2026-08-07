@@ -114,11 +114,13 @@ function makeItemRow(playerId, itemKey) {
 // the whole opening with a little slack.
 // The faction's own crystal is topped up to STARTING_FACTION_CRYSTAL when the
 // faction is picked (this table is written before that choice exists).
-// 60 covers the worst case: a large and a small dwelling whose units BOTH use
-// the faction's own element, so the faction and element halves of the cost merge
-// (30 + 30). 25 of every other crystal covers the same worst case for an element
-// that is not the faction's (15 + 10).
-const STARTING_FACTION_CRYSTAL = 60;
+// 60 covered the worst case exactly: a large and a small dwelling whose units
+// BOTH use the faction's own element, so the faction and element halves of the
+// cost merge (30 + 30). Exactly-enough left no room to make a single different
+// choice, so it is 80 — the same worst case plus slack. 25 of every other
+// crystal covers the same worst case for an element that is not the faction's
+// (15 + 10).
+const STARTING_FACTION_CRYSTAL = 80;
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 300 },
   { item_type: 'resource', item: 'Crystals_Life',   amount: 25  },
@@ -1418,15 +1420,21 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
       await updateItem('Gold', goldPayout);
       result.gold = goldPayout;
+      // Reported per type, the way trophies are — a level paying 14 Fire and 14
+      // Life is two different rewards, and collapsing them to "28 💎" hid both
+      // which elements dropped and how much of each.
       const crystalMult = 1 + embarkBonus.crystal_pct / 100;
+      const crystalsGained = {};
       let crystalTotal = 0;
       for (const { type, amount } of tuned.crystals) {
         if (!type || !amount) continue;
         const amt = Math.round(amount * crystalMult);
         await updateItem(type, amt);
+        crystalsGained[type] = (crystalsGained[type] || 0) + amt;
         crystalTotal += amt;
       }
-      result.crystal = crystalTotal;
+      result.crystals_gained = crystalsGained;   // { Crystals_Fire: 14, … }
+      result.crystal         = crystalTotal;     // kept: the summed total
 
       // Two independent trophy tracks that COMBINE: `trophies` always drop on a
       // win; `spell_trophies` are granted on top when a trophy_gain spell was cast.

@@ -1000,11 +1000,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const trophyIcon = id => `<img class="reward-chip-img" src="/assets/icons/recources/${id}.png" alt="${id.replace(/_/g, ' ')}">`;
         const trophies = Object.entries(result.trophies_gained || {})
           .map(([id, amt]) => chip(trophyIcon(id), amt, id.replace(/_/g, ' '))).join('');
+        // One chip per crystal type, each with its own element icon. Falls back
+        // to the old summed chip only for a reward payload from before the
+        // server started reporting crystals_gained.
+        const crystalEntries = Object.entries(result.crystals_gained || {}).filter(([, amt]) => amt > 0);
+        const crystals = crystalEntries.length
+          ? crystalEntries.map(([type, amt]) =>
+              chip(CRYSTAL_ICONS[type] || '💎', amt, type.replace(/^Crystals_/, ''))).join('')
+          : (result.crystal > 0 ? chip('💎', result.crystal) : '');
         rewardsEl.innerHTML = `
           ${outcomeHtml}
           <div class="reward-grid">
-            ${result.gold    > 0 ? chip(GOLD_ICON, result.gold) : ''}
-            ${result.crystal > 0 ? chip(CRYSTAL_ICONS[result.crystal_type] || '💎', result.crystal) : ''}
+            ${result.gold > 0 ? chip(GOLD_ICON, result.gold) : ''}
+            ${crystals}
             ${result.xp_granted > 0 ? chip('⭐', `${result.xp_granted}`, BTx('xpEach')) : ''}
             ${trophies}
           </div>

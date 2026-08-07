@@ -1,6 +1,10 @@
 import { api } from '../api.js';
 import { preloadAssets } from '../utils.js';
 
+// Shown in the corner of the loading screen so a player reporting a bug can say
+// which build they were on. Bump this on every release.
+export const GAME_VERSION = '0.121';
+
 const LOADING_IMAGES = [
   '/assets/loading_screens/loading1.jpg',
   '/assets/loading_screens/loading2.jpg',
@@ -65,6 +69,7 @@ export function renderLoadingScreen(root) {
           <div class="loading-bar-fill" id="loading-bar-fill"></div>
         </div>
       </div>
+      <div class="loading-version">v${GAME_VERSION}</div>
     </div>
   `;
   // The bar is the whole progress readout — no numeric percentage.
