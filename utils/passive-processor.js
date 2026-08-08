@@ -1,5 +1,23 @@
 function cellRow(i) { return Math.floor(i / 2); }
 function cellCol(i) { return i % 2; }
+
+// The ONE way a passive takes hit points off a unit.
+//
+// Invulnerability (Unity's bonded guardian) was checked only on the two direct
+// attack paths in battle-engine.js, so every INDIRECT source went straight
+// through it: splash, chain, on-death AoE, thorns, decay auras, radiance. A unit
+// that "cannot be targeted and is invulnerable" was still losing HP to anything
+// that picked its victims by iterating the board instead of by selecting a
+// target. Routing every reduction through here closes all of them at once.
+//
+// Returns the damage actually dealt, so callers that log or check for a kill
+// report what really happened rather than what they intended.
+function hurt(unit, amount) {
+  if (!unit || !unit.alive || unit._invulnerable) return 0;
+  const before = unit.battle_hp;
+  unit.battle_hp = Math.max(0, before - amount);
+  return before - unit.battle_hp;
+}
 function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
   const key = type === 'active'
     ? (unit.unit_data?.ability || unit.unit_data?.active_ability)
@@ -264,7 +282,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       if (frontEnemy) {
         const dmgAmt = p.light_of_dawn_dmg ?? 15;
-        frontEnemy.battle_hp = Math.max(0, frontEnemy.battle_hp - dmgAmt);
+        hurt(frontEnemy, dmgAmt);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
       }
@@ -298,7 +316,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (enemies.length > 0) {
         const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
         const extra = Math.max(1, Math.floor(dmg * p.lowest_enemy_dmg_pct / 100));
-        lowest.battle_hp = Math.max(0, lowest.battle_hp - extra);
+        hurt(lowest, extra);
         if (lowest.battle_hp <= 0) { lowest.alive = false; engine.applyOnDeathPassives(lowest); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
       }
@@ -378,7 +396,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (target._stacks[key] >= p.stacks_needed) {
         target._stacks[key] = 0;
         const burst = Math.max(1, p.stack_burst_damage - target.armor);
-        target.battle_hp = Math.max(0, target.battle_hp - burst);
+        hurt(target, burst);
         if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
       }
@@ -402,7 +420,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       if (behind) {
         const splash = Math.floor(dmg * p.behind_splash_pct / 100);
-        behind.battle_hp = Math.max(0, behind.battle_hp - splash);
+        hurt(behind, splash);
         if (behind.battle_hp <= 0) { behind.alive = false; engine.applyOnDeathPassives(behind); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
@@ -414,7 +432,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       for (const b of burning) {
         const splash = Math.max(1, Math.floor(dmg * p.fellfire_pct / 100));
-        b.battle_hp = Math.max(0, b.battle_hp - splash);
+        hurt(b, splash);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: b.unit_name, targetId: b.id, targetCell: b.cellIndex, value: splash, heal: false });
         if (b.battle_hp <= 0) {
           b.alive = false;
@@ -442,7 +460,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       for (let i = 0; i < count; i++) {
         const chainTarget = shuffled[i];
         const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
-        chainTarget.battle_hp = Math.max(0, chainTarget.battle_hp - chainDmg);
+        hurt(chainTarget, chainDmg);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
         if (chainTarget.battle_hp <= 0) {
           chainTarget.alive = false;
@@ -475,7 +493,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_hit_received' && owner === target && dmg > 0) {
     if (p.reflect_pct != null) {
       const reflect = Math.floor(dmg * p.reflect_pct / 100);
-      actor.battle_hp = Math.max(0, actor.battle_hp - reflect);
+      hurt(actor, reflect);
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
@@ -485,13 +503,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
         Math.abs(cellRow(c.cellIndex) - cellRow(owner.cellIndex)) <= (p.range ?? 1)
       );
       for (const adj of adjacent) {
-        adj.battle_hp = Math.max(0, adj.battle_hp - p.adjacent_aoe_damage);
+        hurt(adj, p.adjacent_aoe_damage);
         if (adj.battle_hp <= 0) { adj.alive = false; engine.applyOnDeathPassives(adj); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: p.adjacent_aoe_damage, heal: false });
       }
     }
     if (p.retaliation_damage != null) {
-      actor.battle_hp = Math.max(0, actor.battle_hp - p.retaliation_damage);
+      hurt(actor, p.retaliation_damage);
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: p.retaliation_damage, heal: false });
     }
@@ -531,7 +549,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.death_aoe_damage != null) {
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
-        e.battle_hp = Math.max(0, e.battle_hp - p.death_aoe_damage);
+        hurt(e, p.death_aoe_damage);
         if (e.battle_hp <= 0) e.alive = false;
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: p.death_aoe_damage, heal: false });
       }
@@ -567,7 +585,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           Math.abs(cellRow(c.cellIndex) - ownerRow) <= 1
         );
         for (const e of adjEnemies) {
-          e.battle_hp = Math.max(0, e.battle_hp - radDmg);
+          hurt(e, radDmg);
           engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: radDmg, heal: false });
           if (e.battle_hp <= 0) { e.alive = false; engine.applyOnDeathPassives(e); }
         }
@@ -755,7 +773,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       actor.battle_hp -= cost;
       const armor = Math.max(0, target.armor ?? 0);
       const dmg = Math.max(1, Math.floor(cost * (1 - armor / 100)));
-      target.battle_hp = Math.max(0, target.battle_hp - dmg);
+      hurt(target, dmg);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${actor.unit_name} sacrifices ${cost} HP to strike ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
@@ -783,7 +801,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       const resist   = (target.unit_data?.resistances || {})[school] ?? 0;
       const reduction = Math.max(0, Math.min(90, resist));
       const dmg      = Math.max(1, Math.floor((p.radiant_surge_damage ?? 0) * (1 - reduction / 100)));
-      target.battle_hp = Math.max(0, target.battle_hp - dmg);
+      hurt(target, dmg);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
       engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
@@ -939,7 +957,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {
     const armor = Math.max(0, target.armor ?? 0);
     const dmg = Math.max(1, Math.floor(p.damage_flat * (1 - armor / 100)));
-    target.battle_hp = Math.max(0, target.battle_hp - dmg);
+    hurt(target, dmg);
     const dead = target.battle_hp <= 0;
     if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — smote ${target.unit_name} for ${dmg}`, value: dmg, heal: false });

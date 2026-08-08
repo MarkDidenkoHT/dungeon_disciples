@@ -515,7 +515,7 @@ class BattleEngine {
         if (duelistDef && cellRow(actor.cellIndex) === cellRow(target.cellIndex) && cellCol(actor.cellIndex) === (actor.side === 'enemy' ? 0 : 1)) {
           const p = duelistDef.params;
           const preemptDmg = Math.max(1, Math.floor(this.calcDamage(target, actor).dmg * p.preemptive_strike_pct / 100));
-          actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
+          if (!actor._invulnerable) actor.battle_hp = Math.max(0, actor.battle_hp - preemptDmg);
           const actorDied = actor.battle_hp <= 0;
           this.pushLog({ type: 'passive', passive: duelistDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
           if (actorDied) {
@@ -689,6 +689,9 @@ class BattleEngine {
     for (const martyr of martyrs) {
       const redirected = Math.floor(dmg * martyr.martyrdom_pct / 100);
       if (redirected <= 0) continue;
+      // An invulnerable martyr cannot absorb the blow, so the damage must stay
+      // with its original target rather than vanishing into a unit that ignores it.
+      if (martyr._invulnerable) continue;
       remaining -= redirected;
       martyr.battle_hp = Math.max(0, martyr.battle_hp - redirected);
       const dead = martyr.battle_hp <= 0;
@@ -784,6 +787,14 @@ class BattleEngine {
   // burn and poison meant firing immediately on the turn they were applied.
   applyTurnStartTicks(unit) {
     if (!unit || !unit.alive) return;
+    // An invulnerable unit (Unity's bonded guardian) takes nothing from a
+    // damage-over-time tick either. This was the one damage route that ignored
+    // invulnerability outright: burn/bleed/chill/poison and the withering tick
+    // never pass through the attack paths that check it, so a guardian that
+    // should be untouchable was bleeding out on its own turn.
+    // Skipped entirely rather than logged as zero — a tick that cannot land is
+    // not an event worth a line in the battle log.
+    if (unit._invulnerable) return;
     const tick = (amount, passive, actorName, extra = {}) => {
       unit.battle_hp = Math.max(0, unit.battle_hp - amount);
       this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: amount, heal: false, ...extra });
@@ -1064,6 +1075,7 @@ class BattleEngine {
         // non-physical attack does (see calcDamageWithPassives).
         const resist = (unit.unit_data?.resistances ?? unit.resistances ?? {})[effect.damage_type] ?? 0;
         const dmg    = Math.max(1, Math.floor(effect.amount * (1 - resist / 100)));
+        if (unit._invulnerable) continue;   // Unity guardian: spells cannot touch it either
         unit.battle_hp = Math.max(0, unit.battle_hp - dmg);
         this.pushLog({ type: 'spell', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dmg, heal: false, message: `${unit.unit_name} takes ${dmg} ${effect.damage_type} damage` });
         if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }

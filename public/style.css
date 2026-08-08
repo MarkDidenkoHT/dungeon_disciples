@@ -4628,7 +4628,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/assets/icons/ui/building_slot2.png');
+  background-image: url('/assets/icons/ui/building_slot1.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   pointer-events: none;
