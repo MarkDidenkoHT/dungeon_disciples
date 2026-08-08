@@ -150,8 +150,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       </div>
 
       <div class="battle-prep-tab-content active" id="tab-formation">
-        <div class="prep-track-wrap">
-          <div class="portrait-track" id="portrait-track"></div>
+        <div class="prep-track-row">
+          <button class="prep-track-arrow" id="track-prev" data-track-scroll="-1" aria-label="Scroll left" hidden>‹</button>
+          <div class="prep-track-wrap" id="prep-track-wrap">
+            <div class="portrait-track" id="portrait-track"></div>
+          </div>
+          <button class="prep-track-arrow" id="track-next" data-track-scroll="1" aria-label="Scroll right" hidden>›</button>
         </div>
       </div>
 
@@ -898,6 +902,36 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  // The cards keep touch-action: none so drag-to-grid survives on iOS, which
+  // also means the track cannot be swiped. These arrows are the way to reach
+  // units that do not fit on screen; they hide themselves when everything fits
+  // or when the track is already at that end.
+  function updateTrackArrows() {
+    const wrap = root.querySelector('#prep-track-wrap');
+    const prev = root.querySelector('#track-prev');
+    const next = root.querySelector('#track-next');
+    if (!wrap || !prev || !next) return;
+    const overflow = wrap.scrollWidth - wrap.clientWidth;
+    if (overflow <= 1) { prev.hidden = true; next.hidden = true; return; }
+    prev.hidden = wrap.scrollLeft <= 1;
+    next.hidden = wrap.scrollLeft >= overflow - 1;
+  }
+
+  function attachTrackArrows() {
+    const wrap = root.querySelector('#prep-track-wrap');
+    if (!wrap || wrap.dataset.arrowsBound) return;
+    wrap.dataset.arrowsBound = '1';
+    root.querySelectorAll('[data-track-scroll]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // One card plus its gap, so a tap advances by a whole portrait.
+        const card = wrap.querySelector('.portrait-card');
+        const step = (card ? card.offsetWidth + 7 : 69) * Number(btn.dataset.trackScroll);
+        wrap.scrollBy({ left: step, behavior: 'smooth' });
+      });
+    });
+    wrap.addEventListener('scroll', updateTrackArrows, { passive: true });
+  }
+
   function fullRefresh() {
     renderPlayerGrid();
     renderPortraitTrack();
@@ -906,6 +940,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     updateLoyaltyHint();
     checkReady();
     flushPositionBark();
+    attachTrackArrows();
+    updateTrackArrows();
   }
 
   let activeGhost    = null;
@@ -1066,29 +1102,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return pointerDragging && (activePointerId === null || e.pointerId === activePointerId);
   }
 
-  // A press on a portrait card that has not yet resolved into either a drag or
-  // a scroll. See the card's pointerdown handler.
-  let pendingCardPress = null;
-  const DRAG_THRESHOLD_PX = 8;
-
-  // Passive: this listener must never block the browser's own panning, which is
-  // the whole point of deferring the drag.
-  document.addEventListener('pointermove', e => {
-    if (!pendingCardPress || pointerDragging) return;
-    if (e.pointerId !== pendingCardPress.pointerId) return;
-
-    const dx = e.clientX - pendingCardPress.x;
-    const dy = e.clientY - pendingCardPress.y;
-    if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;   // not yet a gesture
-
-    // Mostly sideways: it is a scroll. Drop the press and let the browser pan.
-    if (Math.abs(dx) > Math.abs(dy)) { pendingCardPress = null; return; }
-
-    const press = pendingCardPress;
-    pendingCardPress = null;
-    press.card.setPointerCapture(press.pointerId);
-    startPointerDrag(press.unit, null, e.clientX, e.clientY, press.pointerId);
-  }, { passive: true });
 
   document.addEventListener('pointermove', e => {
     if (!isDragPointer(e)) return;
@@ -1119,15 +1132,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }, { passive: false });
 
   document.addEventListener('pointerup', e => {
-    // A press that ended without ever crossing the threshold was a tap, not a
-    // drag — release it so it cannot arm a later gesture.
-    if (pendingCardPress && e.pointerId === pendingCardPress.pointerId) pendingCardPress = null;
     if (!isDragPointer(e)) return;
     finishPointerDrag(e.clientX, e.clientY);
   });
 
   document.addEventListener('pointercancel', e => {
-    if (pendingCardPress && e.pointerId === pendingCardPress.pointerId) pendingCardPress = null;
     if (isDragPointer(e)) cancelPointerDrag();
   });
 
@@ -1226,17 +1235,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       if (card.classList.contains('portrait-card--locked')) return;
 
-      // Deliberately does NOT start the drag yet, and does NOT preventDefault.
-      // Grabbing the pointer here meant every touch on a card became a drag, and
-      // the drag's pointermove calls preventDefault — so a sideways swipe could
-      // never scroll the track to reach units that did not fit on screen. The
-      // press is recorded and the direction of the first real movement decides:
-      // mostly horizontal hands off to the browser (scroll), mostly vertical
-      // becomes a drag to the grid. Grid cells keep the old immediate-grab path
-      // because the grid does not scroll.
+      // Grabs the pointer immediately, and the card keeps touch-action: none.
+      // A direction-threshold version (defer the drag, let sideways swipes
+      // scroll) works on Android but is broken on iOS: Safari fires
+      // pointercancel as soon as touch-action permits a pan in that axis, which
+      // lands before the threshold resolves and kills the drag outright. The
+      // track is scrolled by the arrow buttons instead.
       card.addEventListener('pointerdown', e => {
         if (!e.isPrimary || pointerDragging) return;
-        pendingCardPress = { unit: u, card, pointerId: e.pointerId, x: e.clientX, y: e.clientY };
+        e.preventDefault();
+        card.setPointerCapture(e.pointerId);
+        startPointerDrag(u, null, e.clientX, e.clientY, e.pointerId);
       });
 
       card.addEventListener('click', e => {

@@ -3642,6 +3642,33 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .prep-track-wrap::-webkit-scrollbar { display: none; }
 
+/* The arrows flank the scroller and sit on the same framed art, so the three
+   read as one tray. They exist because the cards cannot give up touch-action
+   (see .portrait-card) and therefore swallow any swipe that starts on them. */
+.prep-track-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+.prep-track-row .prep-track-wrap { flex: 1; min-width: 0; }
+
+.prep-track-arrow {
+  flex: 0 0 auto;
+  width: 26px;
+  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-size: cover;
+  border: none;
+  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;   /* a tap target, never a drag surface */
+  opacity: 0.85;
+}
+.prep-track-arrow:active { opacity: 1; }
+.prep-track-arrow[hidden] { display: none; }
+
 .portrait-track,
 .spell-track {
   display: flex;
@@ -3693,13 +3720,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: 100% 100%;
   background-repeat: no-repeat;
   user-select: none;
-  /* pan-x, NOT none. `none` killed every horizontal swipe that started on a
-     card, so a track holding more units than fit on screen could not be
-     scrolled to reach them — the only way to see the rest was to place one.
-     pan-x hands sideways gestures to the browser (scroll the track) while
-     vertical movement stays ours, which is the direction a unit is dragged to
-     the grid anyway since the grid sits above the track. */
-  touch-action: pan-x;
+  /* Must stay `none`. pan-x lets iOS Safari claim the gesture and fire
+     pointercancel, which kills drag-to-grid on iPhone entirely. The track is
+     scrolled with the arrow buttons (.prep-track-arrow) instead. */
+  touch-action: none;
 }
 
 /* Selection swaps the frame art for its lit variant. The hero gets no special
