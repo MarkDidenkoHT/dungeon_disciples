@@ -394,6 +394,83 @@ function makeUnitData(unitId, buildingSlot) {
   };
 }
 
+// ── Automatic level-up ──────────────────────────────────────────────────────
+// A unit that has both the XP and the building it needs has nothing left to
+// decide, so making the player find it in the roster and press a button is just
+// bookkeeping. This runs after a victory awards XP, and again whenever a
+// building is raised, so whichever half arrives second completes the upgrade.
+//
+// DELIBERATELY CONSERVATIVE — it only ever fires when the outcome is certain:
+//   * the building standing in the unit's slot must actually support the
+//     upgrade (unlike the manual endpoint, which lets a single-path unit
+//     advance with nothing built);
+//   * a branch the player has not committed to is never guessed. An ambiguous
+//     tree is left for them to choose in the roster.
+function buildingSupportsUpgrade(faction, path, buildingId) {
+  if (!buildingId) return false;
+  if (buildingId === path.building_id) return true;
+  // Built PAST this tier already — the slot leads to the same place.
+  const built = getBuildingDef(faction, buildingId);
+  return !!built?.unit_id && upgradeReaches(faction, path.unit_id, built.unit_id);
+}
+
+// Returns the new unit_data, or null when the unit cannot advance right now.
+function resolveAutoLevelUp(row, buildingsData) {
+  const unitData = row?.unit_data || {};
+  const currentUnitId = unitData.unit_id;
+  if (!currentUnitId) return null;
+
+  const faction = getFactionForUnit(currentUnitId);
+  if (!faction) return null;
+  const paths = (UNIT_UPGRADE_PATHS[faction] || {})[currentUnitId];
+  if (!paths || !paths.length) return null;
+
+  const def = getUnitByDataId(currentUnitId);
+  const xpRequired = def?.xp;
+  if (xpRequired == null || (unitData.current_xp ?? 0) < xpRequired) return null;
+
+  const buildingSlot = unitData.building_slot || null;
+  if (!buildingSlot) return null;
+  const currentBuildingId = buildingsData?.[buildingSlot]?.building_id || null;
+
+  if (row.is_hero) {
+    const currentTier = def.t ?? 1;
+    const throneLevel = buildingsData?.['slot_0']?.level ?? 0;
+    if (currentTier >= HERO_MAX_LEVEL) return null;
+    if (currentTier >= throneLevel) return null;   // throne must lead the hero
+  }
+
+  const candidates = upgradeBranchCandidates(faction, paths, currentBuildingId);
+  if (candidates.length !== 1) return null;        // ambiguous or nothing fits
+  const path = candidates[0];
+  if (!buildingSupportsUpgrade(faction, path, currentBuildingId)) return null;
+
+  const nextDef = getUnitByDataId(path.unit_id);
+  if (!nextDef) return null;
+
+  const newUnitData = makeUnitData(nextDef.id, buildingSlot);
+  newUnitData.current_xp = unitData.current_xp ?? 0;
+  const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
+  if (oldHp > 0) newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
+  newUnitData.alive = unitData.alive !== false;
+  return { unitData: newUnitData, from: currentUnitId, to: path.unit_id };
+}
+
+// Runs resolveAutoLevelUp over a set of roster rows and persists whatever
+// advanced. Returns the list of upgrades for the client to report.
+async function applyAutoLevelUps(rows, buildingsData) {
+  const upgraded = [];
+  await Promise.all((rows || []).map(async row => {
+    const result = resolveAutoLevelUp(row, buildingsData);
+    if (!result) return;
+    await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, {
+      method: 'PATCH', body: JSON.stringify({ unit_data: result.unitData }),
+    });
+    upgraded.push({ roster_id: String(row.id), from: result.from, to: result.to });
+  }));
+  return upgraded;
+}
+
 router.post('/login', async (req, res) => {
   const { initData, timezone } = req.body;
   if (!initData) return res.status(400).json({ error: 'initData required' });
@@ -1308,7 +1385,25 @@ router.post('/structures/build', requireAuth, async (req, res) => {
         await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot), is_hero: false }]) });
       }
     }
-    res.json(updated[0]);
+
+    // The other half of the auto level-up: a unit may have been sitting on
+    // enough XP for a while, waiting only on this building. Upgrading the slot
+    // is what unblocks it, so check now rather than making the player go to the
+    // roster and press a button that can only have one outcome. Scoped to the
+    // occupants of this slot (plus the hero, whom the throne gates).
+    let autoLeveled = [];
+    try {
+      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const affected = (rosterRows || []).filter(r =>
+        r.unit_data?.building_slot === slot || (r.is_hero && slotCategory === 'throne'));
+      autoLeveled = await applyAutoLevelUps(affected, buildings);
+    } catch (err) {
+      // Never fail the build over this — the building itself is already saved,
+      // and the player can still level up by hand.
+      console.error('auto level-up after build failed:', err.message);
+    }
+
+    res.json({ ...updated[0], auto_level_ups: autoLeveled });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1656,7 +1751,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         .filter(u => u.side === 'player' && u._rosterId != null)
         .map(u => String(u._rosterId));
       const participantRows = participantIds.length
-        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data`)
+        // is_hero rides along for the post-battle auto level-up, which gates the
+        // hero on the throne's level.
+        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data,is_hero`)
         : [];
       const embarkItems = await getItemsByRosterIds(participantIds);
       const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
@@ -1741,6 +1838,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       // rest of the party earns nothing). Reporting the actual post-award total
       // also lets the client draw each unit's progress toward its next tier.
       const xpAwards = [];
+      // Every participant's FINAL unit_data, fed to the auto level-up pass below.
+      const postXpRows = [];
 
       await Promise.all(participantRows.map(async (row) => {
         const rosterId = String(row.id);
@@ -1769,9 +1868,18 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           }
         }
 
+        // Kept regardless of `changed` — a unit may already have been over the
+        // threshold and merely waiting on a building.
+        postXpRows.push({ id: row.id, unit_data: unitData, is_hero: row.is_hero });
         if (!changed) return;
         await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
       }));
+
+      // Anything the XP award just pushed over its threshold levels up now,
+      // provided its building already supports the upgrade and the branch is
+      // unambiguous. Runs AFTER the XP patches so it sees the new totals.
+      result.auto_level_ups = await applyAutoLevelUps(postXpRows, structForPerks[0]?.buildings_data);
+
       // Stable order — Promise.all resolution order is not meaningful, and the
       // victory list should not reshuffle between runs.
       result.xp_awards = xpAwards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));

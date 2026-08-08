@@ -4598,6 +4598,27 @@ button:active:not(:disabled) { opacity: 0.75; }
 .castle-node--clickable { cursor: pointer; }
 
 .castle-node-icon  { font-size: 1rem; line-height: 1; }
+/* A slot exists to house a unit, so that unit's portrait fills the node and the
+   glyph is dropped. The label has to stay readable over arbitrary art, hence
+   the gradient scrim behind the text rather than a flat tint over the whole
+   image (which would wash the portrait out). */
+.castle-node--portrait {
+  position: relative;
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+  justify-content: flex-end;
+}
+.castle-node--portrait::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 42%, rgba(0,0,0,0.05) 100%);
+  pointer-events: none;
+}
+.castle-node--portrait > * { position: relative; z-index: 1; }
+.castle-node--portrait .castle-node-label { color: var(--text); font-weight: 700; }
+
 .castle-node-label {
   font-size: 0.55rem;
   color: var(--muted);

@@ -422,9 +422,21 @@ export function renderCastle(root, { player }) {
     const throneLevel = throneState?.level ?? 0;
     const throneMaxed = throneLevel >= heroMaxLevel;
 
+    // The unit a slot houses IS what the slot is for, so its portrait carries
+    // the node instead of a generic glyph. Falls back to the glyph when there is
+    // no unit (empty slot) or no art for it — see .castle-node--portrait, which
+    // lays a gradient over the image to keep the label legible.
+    const nodeBackground = unitId => {
+      const unit = unitId ? getUnitByUnitId(unitId) : null;
+      const url  = unit ? branchPortraitUrl(unit) : '';
+      return url ? ` style="background-image:url('${url}')"` : '';
+    };
+    const throneDef  = throneState?.building_id ? getBuildingDef(player.faction, throneState.building_id) : null;
+    const throneBg   = nodeBackground(throneDef?.unit_id);
+
     root.querySelector('#center-slot').innerHTML = `
-      <div class="castle-node castle-node--throne castle-node--clickable" data-slot="slot_0">
-        <div class="castle-node-icon">♛</div>
+      <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
+        ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
         <div class="castle-node-label">Throne</div>
         <div class="castle-node-level">Lv ${throneLevel}</div>
         ${!throneMaxed ? `<div class="castle-node-hint">Upgrade</div>` : ''}
@@ -439,12 +451,17 @@ export function renderCastle(root, { player }) {
         const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
         const isEmpty    = !state.building_id;
         const hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
-        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : ''].filter(Boolean).join(' ');
+        // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
+        // pool, so both are consulted before giving up on a portrait.
+        const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
+        const bg         = nodeBackground((def || mercDef)?.unit_id);
+        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : '', bg ? 'castle-node--portrait' : '']
+          .filter(Boolean).join(' ');
 
         return `
-          <div class="${classes}" data-slot="${slot}">
-            <div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>
-            <div class="castle-node-label">${def ? def.label : (isEmpty ? 'Build' : 'Empty')}</div>
+          <div class="${classes}" data-slot="${slot}"${bg}>
+            ${bg ? '' : `<div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>`}
+            <div class="castle-node-label">${def ? def.label : (mercDef ? mercDef.label : (isEmpty ? 'Build' : 'Empty'))}</div>
             ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
             ${!isEmpty && hasUpgrade ? `<div class="castle-node-hint">Upgrade</div>` : ''}
           </div>`;
