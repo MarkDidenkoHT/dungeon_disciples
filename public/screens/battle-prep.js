@@ -615,18 +615,40 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return true;
   }
 
+  // Each unit gets to object ONCE per prep session. Without this it speaks on
+  // every offending placement, including the intermediate drops of a shuffle,
+  // which turns a helpful nudge into nagging. Cleared only when the screen is
+  // rebuilt, so the hint still returns on the next battle.
+  const positionBarkSpoken = new Set();
+
   // A unit whose footprint does not include its preferred column objects. Large
   // 2-wide units span both columns and so never object — see position_barks.js.
   function queuePositionBark(unit, cells, anchor) {
-    if (player?.settings?.barks_enabled === false) return;
-    const def = resolveUnitDef(unit);
+    const def     = resolveUnitDef(unit);
     const prefers = derivePrefPosition(def);
+    const cols    = cells.map(cellCol);
+    const bark    = prefers ? pickPositionBark(def, prefers) : null;
+    // TEMPORARY DIAGNOSTIC — remove once the trigger is confirmed working.
+    console.log('[pos-bark]', {
+      unit:      def?.name ?? unit.unit_data?.unit_id,
+      range:     def?.range,
+      prefers,
+      cols,
+      satisfied: isPositionSatisfied(prefers, cols),
+      alreadySpoke: positionBarkSpoken.has(String(unit.id)),
+      barksEnabled: player?.settings?.barks_enabled !== false,
+      lang: L,
+      gotLine: !!bark,
+    });
+
+    if (player?.settings?.barks_enabled === false) return;
+    if (positionBarkSpoken.has(String(unit.id))) return;
     if (!prefers) return;
-    if (isPositionSatisfied(prefers, cells.map(cellCol))) return;
-    const bark = pickPositionBark(def, prefers);
+    if (isPositionSatisfied(prefers, cols)) return;
     if (!bark) return;
     const text = L === 'en' ? bark.text : bark.text_ru;
     if (!text) return;
+    positionBarkSpoken.add(String(unit.id));
     pendingPositionBark = { anchor, text };
   }
 
@@ -642,6 +664,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const { anchor, text } = pendingPositionBark;
     pendingPositionBark = null;
     const cell = root.querySelector(`#player-grid [data-i="${anchor}"]`);
+    // TEMPORARY DIAGNOSTIC — remove once the trigger is confirmed working.
+    console.log('[pos-bark] flush', { anchor, text, cellFound: !!cell });
     if (!cell) return;
 
     root.querySelectorAll('.prep-bark-toast').forEach(t => t.remove());
