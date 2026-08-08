@@ -654,42 +654,52 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ui.battleInfo.innerHTML = `<p class="binfo-empty">${BTx('infoNoActor')}</p>`;
       return;
     }
-    const ud       = actor.unit_data || {};
-    const dmgMult  = actor.buffs?._dmg_mult ?? 1;
-    const rawPower = Number(ud.action_power ?? 0);
-    const power    = Math.floor(rawPower * dmgMult);
-    const powerStr = dmgMult !== 1
-      ? `${power} <span class="binfo-calc">(${rawPower} x${dmgMult.toFixed(2)})</span>`
-      : `${power}`;
-
-    const abilityKey = ud.ability || ud.active_ability;
-    const def        = abilityKey ? (resolveAbility(abilityKey) || UNIT_ABILITIES[abilityKey]) : null;
-    const abName     = def ? (BL === 'ru' ? (def.name_ru || def.name) : def.name) : null;
-    const abDesc     = def ? (BL === 'ru' ? (def.description_ru || def.description) : def.description) : null;
-
+    const ud      = actor.unit_data || {};
     const healPct = fatigueHealPct();
+
+    // ONE section, for whatever is currently selected — not a dump of everything
+    // the unit can do. The ability button arms 'ability'; anything else means
+    // the basic action, which is what is armed by default.
+    const showingAbility = pendingAction === 'ability';
+
+    let head, bodyHtml;
+    if (showingAbility) {
+      const abilityKey = ud.ability || ud.active_ability;
+      const def        = abilityKey ? (resolveAbility(abilityKey) || UNIT_ABILITIES[abilityKey]) : null;
+      if (def) {
+        const abName = BL === 'ru' ? (def.name_ru || def.name) : def.name;
+        const abDesc = BL === 'ru' ? (def.description_ru || def.description) : def.description;
+        head = `${BTx('infoAbility')} — ${abName}`;
+        bodyHtml = `
+          ${abDesc ? `<p class="binfo-desc">${abDesc}</p>` : ''}
+          ${paramRows(def, actor)}
+          ${actor.used_active ? `<div class="binfo-note">${BTx('infoUsed')}</div>` : ''}`;
+      } else {
+        head = BTx('infoAbility');
+        bodyHtml = `<p class="binfo-empty">${BTx('infoNoAbility')}</p>`;
+      }
+    } else {
+      const dmgMult  = actor.buffs?._dmg_mult ?? 1;
+      const rawPower = Number(ud.action_power ?? 0);
+      const power    = Math.floor(rawPower * dmgMult);
+      const powerStr = dmgMult !== 1
+        ? `${power} <span class="binfo-calc">(${rawPower} x${dmgMult.toFixed(2)})</span>`
+        : `${power}`;
+      head = `${BTx('infoAction')} — ${getActionLabel(actor)}`;
+      bodyHtml = `
+        ${infoRow(BTx('infoPower'), powerStr)}
+        ${ud.damage_source ? infoRow(BTx('infoType'), ud.damage_source) : ''}
+        ${infoRow(BTx('infoRange'), String(ud.range ?? 1))}
+        ${infoRow(BTx('infoTargets'), String(ud.targets ?? 1))}`;
+    }
 
     ui.battleInfo.innerHTML = `
       <div class="binfo">
         <div class="binfo-unit">${actor.unit_name}</div>
-
         <div class="binfo-section">
-          <div class="binfo-head">${BTx('infoAction')} — ${getActionLabel(actor)}</div>
-          ${infoRow(BTx('infoPower'), powerStr)}
-          ${ud.damage_source ? infoRow(BTx('infoType'), ud.damage_source) : ''}
-          ${infoRow(BTx('infoRange'), String(ud.range ?? 1))}
-          ${infoRow(BTx('infoTargets'), String(ud.targets ?? 1))}
+          <div class="binfo-head">${head}</div>
+          ${bodyHtml}
         </div>
-
-        <div class="binfo-section">
-          <div class="binfo-head">${BTx('infoAbility')}${abName ? ` — ${abName}` : ''}</div>
-          ${def ? `
-            ${abDesc ? `<p class="binfo-desc">${abDesc}</p>` : ''}
-            ${paramRows(def, actor)}
-            ${actor.used_active ? `<div class="binfo-note">${BTx('infoUsed')}</div>` : ''}
-          ` : `<p class="binfo-empty">${BTx('infoNoAbility')}</p>`}
-        </div>
-
         ${healPct < 100 ? `<div class="binfo-note binfo-note--warn">${BT.infoFatigue[BL](healPct)}</div>` : ''}
       </div>`;
   }

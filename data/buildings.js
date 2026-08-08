@@ -487,24 +487,33 @@ function upgradeReaches(faction, fromUnitId, targetUnitId) {
 //
 // So: exact match first (the ordinary case), otherwise the branch whose line
 // LEADS to whatever is built. The unit still advances one tier at a time.
-function resolveUpgradeBranch(faction, paths, buildingId) {
-  if (!paths || !paths.length) return null;
-  if (paths.length === 1) return paths[0];   // no branch to disambiguate
-  if (!buildingId) return null;
+// Every branch that is consistent with what is standing in the slot. Usually
+// zero or one; more than one means the player genuinely has a choice to make.
+//
+// The hero trees MERGE — both tier-2 Paladin branches continue into the same
+// tier-3 units — so a tier-3 cathedral cannot say which tier-2 kit was wanted,
+// and those kits differ (Protector vs Beacon of Hope). Guessing would silently
+// pick a build for the player, so both are returned and the caller asks.
+function upgradeBranchCandidates(faction, paths, buildingId) {
+  if (!paths || !paths.length) return [];
+  if (paths.length === 1) return [paths[0]];   // no branch to disambiguate
+  if (!buildingId) return [];
 
   const exact = paths.find(p => p.building_id === buildingId);
-  if (exact) return exact;
+  if (exact) return [exact];
 
   const built = getBuildingDef(faction, buildingId);
-  if (!built || !built.unit_id) return null;
+  if (!built || !built.unit_id) return [];
 
-  // Only when EXACTLY ONE branch leads there. The hero trees merge — both
-  // tier-2 Paladin branches continue into the same tier-3 units — so a tier-3
-  // cathedral cannot say which tier-2 kit was wanted, and those kits differ
-  // (Protector vs Beacon of Hope). Guessing would silently pick a build for the
-  // player; leaving it unresolved makes them choose, which is the honest answer.
-  const reaching = paths.filter(p => upgradeReaches(faction, p.unit_id, built.unit_id));
-  return reaching.length === 1 ? reaching[0] : null;
+  return paths.filter(p => upgradeReaches(faction, p.unit_id, built.unit_id));
+}
+
+// The unambiguous branch, or null when the player still has to choose. Callers
+// that can ask should use upgradeBranchCandidates instead of treating null as
+// "cannot upgrade" — that is what left an overbuilt hero permanently stuck.
+function resolveUpgradeBranch(faction, paths, buildingId) {
+  const candidates = upgradeBranchCandidates(faction, paths, buildingId);
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 // ── Building costs ──────────────────────────────────────────────────────────
@@ -889,6 +898,7 @@ module.exports = {
   getBuildingDef,
   upgradeReaches,
   resolveUpgradeBranch,
+  upgradeBranchCandidates,
   emptyStructures,
   FACTION_CRYSTAL,
   BUILDING_COST_PER_TIER,

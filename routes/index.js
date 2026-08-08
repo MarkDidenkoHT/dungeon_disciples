@@ -1041,7 +1041,13 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       // Accepts a building further UP the branch, not just the immediate next
       // one - see resolveUpgradeBranch in data/buildings.js. Building the tier-3
       // barracks over a tier-1 unit used to leave that unit unupgradable.
-      const candidates = upgradeBranchCandidates(faction, paths, currentBuildingId);
+      // Guarded: if data/buildings.js is older than this file (they are deployed
+      // by hand), upgradeBranchCandidates is undefined and calling it throws a
+      // 500 instead of answering. Fall back to the single-branch resolver, which
+      // has existed for far longer.
+      const candidates = typeof upgradeBranchCandidates === 'function'
+        ? upgradeBranchCandidates(faction, paths, currentBuildingId)
+        : [resolveUpgradeBranch(faction, paths, currentBuildingId)].filter(Boolean);
 
       // More than one branch fits what is built (the hero trees merge, so a
       // tier-3 cathedral is reached from either tier-2 kit). The player picks,
@@ -2035,12 +2041,25 @@ router.post('/items/equip', requireAuth, async (req, res) => {
     // stats; every consumer derives base + item via applyItemModifiers.
     await supabase(`/items?id=eq.${item_id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) });
 
-    const [updatedRoster, updatedItems] = await Promise.all([
+    const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`),
       supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
-    res.json({ success: true, roster: updatedRoster[0], items: updatedItems });
+    // This SELECT can answer from a replica that has not caught up with the
+    // PATCHes above, handing back the item still unequipped. The client caches
+    // that list and redraws the character block from it, so the stat changes
+    // simply never appear. Reconcile against what we KNOW happened instead.
+    const unequippedIds = new Set(
+      currentlyEquipped.filter(o => String(o.id) !== String(item_id)).map(o => String(o.id))
+    );
+    const items = (Array.isArray(readItems) ? readItems : []).map(r => {
+      if (String(r.id) === String(item_id))   return { ...r, equipped_by: roster_id };
+      if (unequippedIds.has(String(r.id)))    return { ...r, equipped_by: null };
+      return r;
+    });
+
+    res.json({ success: true, roster: updatedRoster[0], items });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2060,12 +2079,19 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
 
     await unequipItemFromRosterUnit(item, item.equipped_by);
 
-    const [updatedRoster, updatedItems] = await Promise.all([
+    const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero`),
       supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
-    res.json({ success: true, roster: updatedRoster[0], items: updatedItems });
+    // Same read-after-write reconciliation as /items/equip: the replica can
+    // still show the item as equipped, leaving the character block showing
+    // stats the unit no longer has.
+    const items = (Array.isArray(readItems) ? readItems : []).map(r =>
+      String(r.id) === String(item_id) ? { ...r, equipped_by: null } : r
+    );
+
+    res.json({ success: true, roster: updatedRoster[0], items });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -3756,6 +3756,24 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin-top: auto;
 }
 
+/* The unit track must survive a viewport shorter than the layout wants — on iOS
+   in full-size app mode the shell can end up taller than what is actually on
+   screen, and because .screen-battle-prep is overflow:hidden the track was
+   simply pushed past the fold and vanished, with nothing to scroll it back.
+   The ARENA gives up the space instead: it may shrink, and its rows collapse
+   with it, so the track (flex-shrink: 0, with its own min-height) always keeps
+   its place on screen. Scoped to prep — the battle screen sizes differently. */
+.screen-battle-prep .battle-arena {
+  flex-shrink: 1;
+  min-height: 0;
+}
+.screen-battle-prep .battle-grid {
+  grid-template-rows: repeat(3, minmax(0, 110px));
+}
+.screen-battle-prep .battle-grid-wrap {
+  min-height: 0;
+}
+
 .battle-prep-tab-content.active {
   display: flex;
   flex-direction: column;
