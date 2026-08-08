@@ -219,20 +219,45 @@ export function resolveAbility(key) {
     || null;
 }
 
+// Ability text in the viewer's language. The translations live beside the
+// English on the definition itself (name_ru / description_ru in
+// data/unit_abilities.js) rather than in a separate table, so a new ability
+// carries its own translation and cannot drift out of sync with its key.
+// Falls back to English rather than showing a blank, so an untranslated entry
+// is merely untranslated instead of invisible.
+export function abilityName(def) {
+  if (!def) return '';
+  return (_uiLang === 'ru' && def.name_ru) || def.name || '';
+}
+export function abilityDescription(def) {
+  if (!def) return '';
+  return (_uiLang === 'ru' && def.description_ru) || def.description || '';
+}
+
+// Stat names shown under a passive's description. Kept short: these sit in a
+// comma-separated run, not full sentences.
+const STAT_LABELS = {
+  hp:              { en: 'HP',              ru: 'HP' },
+  hp_regen:        { en: 'HP regen/turn',   ru: 'HP реген/ход' },
+  initiative:      { en: 'Initiative',      ru: 'Инициатива' },
+  armor:           { en: 'Armor',           ru: 'Броня' },
+  armor_reduction: { en: 'Armor reduction', ru: 'Снижение брони' },
+};
+
 export function buildStatDescription(def, type) {
   const parts = [];
-  if (def.description) parts.push(def.description);
+  const desc = abilityDescription(def);
+  if (desc) parts.push(desc);
   if (type === 'passive' && def.stats) {
     const statLines = Object.entries(def.stats).map(([stat, val]) => {
       const sign = val >= 0 ? '+' : '';
-      if (stat === 'hp')              return `${sign}${val} HP`;
-      if (stat === 'hp_regen')        return `${sign}${val} HP regen/turn`;
-      if (stat === 'initiative')      return `${sign}${val} Initiative`;
-      if (stat === 'armor')           return `${sign}${val} Armor`;
-      if (stat === 'armor_reduction') return `${val} Armor reduction`;
+      const known = STAT_LABELS[stat];
+      // armor_reduction is already negative in the data — no sign prefix.
+      if (known) return `${stat === 'armor_reduction' ? '' : sign}${val} ${known[_uiLang] || known.en}`;
       if (stat.includes('resist')) {
         const resistType = stat.replace('_resist', '');
-        return `${sign}${val} ${cap(resistType)} resist`;
+        const label = RESIST_LABELS?.[resistType]?.[_uiLang] || cap(resistType);
+        return `${sign}${val} ${label} ${uiText('resist', 'сопр.')}`;
       }
       return `${sign}${val} ${cap(stat)}`;
     });
@@ -276,7 +301,7 @@ export function renderUnitAbilityIcon(key, type) {
       data-ability-type="${type}"
       ${isEmpty ? 'disabled' : ''}
     >
-      ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'">` : ''}
+      ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${abilityName(def)}" onerror="this.style.visibility='hidden'">` : ''}
     </button>`;
 }
 
@@ -576,20 +601,23 @@ export function renderModalPill(label, modifier) {
 }
 
 export function buildAbilityModalParts(def, type) {
-  const typeLabel = type === 'passive' ? 'Passive' : 'Active';
+  const typeLabel = type === 'passive' ? uiText('Passive', 'Пассивная') : uiText('Active', 'Активная');
   const badges = `
     ${renderModalPill(typeLabel, type)}
-    ${def.rank ? renderModalPill(`Rank ${def.rank}`, 'rank') : ''}
+    ${def.rank ? renderModalPill(uiText(`Rank ${def.rank}`, `Ранг ${def.rank}`), 'rank') : ''}
   `;
-  const description = buildStatDescription(def, type) || 'No details available.';
+  const description = buildStatDescription(def, type) || uiText('No details available.', 'Описание отсутствует.');
+  // The icon file is keyed off the English id, NOT the display name — the id is
+  // the stable identifier and does not change with language.
   const fileKey = def.id ? def.id.replace(/\s+/g, '_').replace(/_\d+$/, '') : '';
   const imgSrc  = fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+  const name    = abilityName(def);
   const body = `
     <div class="ability-modal-content">
-      ${imgSrc ? `<div class="ability-modal-icon"><img src="${imgSrc}" alt="${def.name}" onerror="this.style.visibility='hidden'"></div>` : ''}
+      ${imgSrc ? `<div class="ability-modal-icon"><img src="${imgSrc}" alt="${name}" onerror="this.style.visibility='hidden'"></div>` : ''}
       <div class="ability-modal-desc">${description}</div>
     </div>`;
-  return { title: def.name, badges, body };
+  return { title: name, badges, body };
 }
 
 export function buildItemModalParts(item, player) {
