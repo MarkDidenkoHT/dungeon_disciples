@@ -7,6 +7,11 @@ const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
+
+// TEMPORARY BUILD MARKER — runs at import time, before any gameplay logic.
+// If this line is absent from the console, the browser is running a cached
+// battle-prep.js and no amount of placement will log anything.
+console.log('[battle-prep] BUILD MARKER: position-barks v1 loaded');
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import {
