@@ -755,16 +755,39 @@ export function mountModal(root) {
   };
 }
 
-export function preloadAssets(urls, onProgress) {
-  const unique = [...new Set(urls)];
-  let loaded = 0;
-  const total = unique.length;
+// Fetches through a fixed-size pool rather than starting every request at once.
+// The old version was Promise.all over the whole list, which handed the browser
+// ~486 images in one go: it can only open a handful of connections per host, so
+// the rest queue anyway, but the progress bar jumps around and slow images can
+// stall behind a burst. A pool keeps the pipe full without the pile-up.
+const PRELOAD_CONCURRENCY = 8;
+
+export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENCY) {
+  const unique = [...new Set(urls)].filter(Boolean);
+  const total  = unique.length;
   if (total === 0) { onProgress?.(1); return Promise.resolve(); }
-  return Promise.all(unique.map(url => new Promise(resolve => {
+
+  let loaded = 0;
+  let next   = 0;
+
+  const loadOne = url => new Promise(resolve => {
     const img = new Image();
+    // Resolve on error too: a missing asset must not hold the loading screen
+    // hostage — it shows as a gap in the UI, which is the honest outcome.
     const done = () => { loaded++; onProgress?.(loaded / total); resolve(); };
-    img.onload  = done;
+    img.onload = done;
     img.onerror = done;
     img.src = url;
-  })));
+  });
+
+  const worker = async () => {
+    while (next < total) {
+      const i = next++;
+      await loadOne(unique[i]);
+    }
+  };
+
+  return Promise.all(
+    Array.from({ length: Math.min(concurrency, total) }, worker)
+  );
 }

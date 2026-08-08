@@ -82,21 +82,43 @@ export function renderLoadingScreen(root) {
   };
 }
 
+// Manifest groups the player must WAIT for, because they are on screen the
+// moment the game opens: chrome icons, resource icons, ability/spell icons and
+// the screen backdrops, plus the portraits used by every roster and battle tile.
+const CRITICAL_GROUPS = ['ui', 'recources', 'spells', 'abilities', 'screens', 'character_portraits'];
+// Everything else is fetched quietly AFTER the game is interactive. In practice
+// that is `character_art` — the full-body art, ~19 MB of the ~27 MB total, and
+// none of it is visible until a unit card is opened.
 export async function runPreload(root) {
   const { setProgress } = renderLoadingScreen(root);
   const start = Date.now();
 
-  let assetUrls = [];
+  let critical = [];
+  let deferred = [];
   try {
     const manifest = await api('/assets-manifest');
-    assetUrls = Object.values(manifest).flat();
+    for (const [group, urls] of Object.entries(manifest)) {
+      (CRITICAL_GROUPS.includes(group) ? critical : deferred).push(...urls);
+    }
   } catch {
-    assetUrls = [];
+    critical = [];
+    deferred = [];
   }
 
-  await preloadAssets(assetUrls, setProgress);
+  await preloadAssets(critical, setProgress);
+
+  // Warm the rest in the background at low concurrency, so it competes with
+  // neither the first render nor the player's first API calls. Deliberately not
+  // awaited — nothing on screen is waiting for it.
+  if (deferred.length) {
+    setTimeout(() => { preloadAssets(deferred, null, 3).catch(() => {}); }, 1500);
+  }
 
   const elapsed = Date.now() - start;
+  // A floor, so the art and the tip are actually readable rather than a flash.
+  // Was 4500ms, which a returning player with a warm cache sat through for no
+  // reason; the preload itself is now much shorter, so this is mostly what the
+  // launch costs.
   const minDuration = 4500;
   if (elapsed < minDuration) await new Promise(r => setTimeout(r, minDuration - elapsed));
 }
