@@ -7,6 +7,15 @@ const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
+
+// The ability/item inspect handler has to be on `document`, because these icons
+// also appear inside the body-level modal sheet, which is outside the screen
+// root. That makes it outlive this screen twice over: it kept firing on OTHER
+// screens' ability icons (in the castle it re-opened the MAIN sheet, wiping the
+// building slider's content), and a new copy was added on every render. Holding
+// it in a module ref lets each render replace the previous one, and the screen
+// check below stops it acting once battle prep is gone.
+let abilityInspectHandler = null;
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import {
@@ -1204,7 +1213,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   });
 
-  document.addEventListener('click', e => {
+  if (abilityInspectHandler) document.removeEventListener('click', abilityInspectHandler);
+  abilityInspectHandler = e => {
+    // Battle prep may no longer be the screen on show — see the module ref above.
+    if (!document.querySelector('.screen-battle-prep')) return;
     const abilityBtn = e.target.closest('.ability-icon');
     if (!abilityBtn) return;
 
@@ -1226,7 +1238,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (!def) return;
     const parts = buildAbilityModalParts(def, type);
     openModal(parts.title, parts.body, parts.badges);
-  });
+  };
+  document.addEventListener('click', abilityInspectHandler);
 
   function attachPortraitEvents() {
     root.querySelectorAll('.portrait-card').forEach(card => {
