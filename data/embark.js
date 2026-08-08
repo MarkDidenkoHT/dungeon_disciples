@@ -191,9 +191,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'chamber_of_unrest.bone_knight',      cell: 0, item_id: 'iron_armor' },
+        { key: 'chamber_of_unrest.bone_knight',      cell: 0 },
         { key: 'chamber_of_unrest.bone_knight',      cell: 4 },
-        { key: 'chamber_of_unrest.oathbound_martyr', cell: 3, item_id: 'everliving_stalk' },
+        { key: 'chamber_of_unrest.oathbound_martyr', cell: 3 },
       ],
       rewards: {
         gold: 20, xp: 40,

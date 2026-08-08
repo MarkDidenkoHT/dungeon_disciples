@@ -431,9 +431,17 @@ function getSpellCostReductionPct(throne_perks) {
 
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
-  if (!factionPools) return null;
-  for (const pool of Object.values(factionPools)) {
-    const found = pool.find(b => b.id === buildingId);
+  if (factionPools) {
+    for (const pool of Object.values(factionPools)) {
+      const found = pool.find(b => b.id === buildingId);
+      if (found) return found;
+    }
+  }
+  // Mercenary halls live in their own table, but they flow through the SAME
+  // upgrade resolver as faction dwellings, so they have to be findable here or
+  // every branch check involving a mercenary comes back empty.
+  for (const list of Object.values(MERCENARY_BUILDINGS)) {
+    const found = list.find(b => b.id === buildingId);
     if (found) return found;
   }
   return null;
@@ -865,6 +873,27 @@ const MERCENARY_BUILDINGS = {
     { id: 'cu_soul_harvester', label: 'Soul Harvester', region: 'chamber_of_unrest', unit_id: 'dm_e311', tier: 3, upgrades: [],                     cost: { grave_dust: 5, rusted_shackle: 3 } },
   ],
 };
+
+// Mercenaries advance by exactly the same rules as faction units: reach the XP
+// threshold, have the building that supports the next tier, level up. That only
+// holds if they go through the SAME table and the same resolver, so their tree —
+// which is declared once in MERCENARY_BUILDINGS via each hall's `upgrades` — is
+// projected into UNIT_UPGRADE_PATHS here under its region key rather than being
+// written out a second time and left to drift.
+//
+// The region key acts as the "faction" for these units: getFactionForUnit finds
+// it by scanning this table, and getBuildingDef above already falls back to
+// MERCENARY_BUILDINGS, so every branch check resolves without a special case.
+for (const [region, halls] of Object.entries(MERCENARY_BUILDINGS)) {
+  const byId  = new Map(halls.map(h => [h.id, h]));
+  const paths = {};
+  for (const hall of halls) {
+    const next = (hall.upgrades || []).map(id => byId.get(id)).filter(Boolean);
+    if (!next.length) continue;
+    paths[hall.unit_id] = next.map(n => ({ unit_id: n.unit_id, building_id: n.id, label: n.label }));
+  }
+  if (Object.keys(paths).length) UNIT_UPGRADE_PATHS[region] = paths;
+}
 
 module.exports = {
   BUILDING_POOLS,

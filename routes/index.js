@@ -195,8 +195,19 @@ function validateTelegramInitData(initData) {
 }
 
 function getUnitByDataId(unitDataId) {
-  for (const factionPool of Object.values(UNITS)) {
+  for (const [key, factionPool] of Object.entries(UNITS)) {
     if (typeof factionPool !== 'object' || Array.isArray(factionPool)) continue;
+    // `enemies` nests one level deeper (region -> slug -> unit), so a flat scan
+    // silently missed every mercenary. That is why a mercenary's definition
+    // could not be found by id, and with it its `xp` threshold and stats.
+    if (key === 'enemies') {
+      for (const regionPool of Object.values(factionPool)) {
+        if (typeof regionPool !== 'object') continue;
+        const hit = Object.values(regionPool).find(u => u?.id === unitDataId);
+        if (hit) return hit;
+      }
+      continue;
+    }
     const found = Object.values(factionPool).find(u => u?.id === unitDataId);
     if (found) return found;
   }
@@ -1998,17 +2009,19 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     slots[slot] = { level: 1, building_id: mercenary_building_id };
     const [updatedStruct, inserted] = await Promise.all([
       supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: slots }) }),
+      // The SAME roster shape every other unit uses. This used to spread the
+      // whole template (`...unitTemplate`), which left the row with no `unit_id`
+      // and no `building_slot` — the two fields every shared helper keys off —
+      // so mercenaries fell out of upgrade-path resolution, level-up and the
+      // auto level-up entirely. `mercenary` / `mercenary_region` ride alongside
+      // as extras, not as a replacement for the standard fields.
       supabase('/roster', { method: 'POST', body: JSON.stringify({
         chat_id:   String(chat_id),
         is_hero:   false,
         unit_data: {
-          ...unitTemplate,
+          ...makeUnitData(unitTemplate.id, slot),
           mercenary:        true,
           mercenary_region: bDef.region,
-          alive:            true,
-          current_hp:       unitTemplate.hp,
-          current_xp:       0,
-          tier:             bDef.tier,
         },
       }), headers: { Prefer: 'return=representation' } }),
     ]);
@@ -2059,26 +2072,33 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
     }
 
-    const oldUnitData = rosterRows[0].unit_data || {};
-    const newUnitData = {
-      ...unitTemplate,
-      mercenary:        true,
-      mercenary_region: bDef.region,
-      alive:            oldUnitData.alive !== false,
-      current_hp:       Math.min(unitTemplate.hp, oldUnitData.current_hp ?? unitTemplate.hp),
-      current_xp:       oldUnitData.current_xp ?? 0,
-      tier:             bDef.tier,
-    };
-
+    // Upgrades the BUILDING only — it no longer swaps the unit out. This used to
+    // hand the player a new tier the moment they could pay for it, which is not
+    // how any other unit works: everywhere else the building is the prerequisite
+    // and the unit still has to earn the XP. The unit now advances through the
+    // ordinary path (auto below, or the roster's Level Up button), so a
+    // mercenary and a faction unit obey identical rules.
     slots[slot] = { level: bDef.tier, building_id: mercenary_building_id };
+    const updatedStruct = await supabase(`/structures?id=eq.${record.id}`, {
+      method: 'PATCH', body: JSON.stringify({ buildings_data: slots }),
+    });
 
-    const [updatedStruct] = await Promise.all([
-      supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: slots }) }),
-      supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
-    ]);
+    // Same courtesy as /structures/build: if this was the last thing the unit
+    // was waiting on, finish the job now.
+    let autoLeveled = [];
+    try {
+      autoLeveled = await applyAutoLevelUps(rosterRows, slots);
+    } catch (err) {
+      console.error('auto level-up after mercenary upgrade failed:', err.message);
+    }
 
     const updatedRoster = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
-    res.json({ success: true, structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct, roster_entry: updatedRoster[0] });
+    res.json({
+      success: true,
+      structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct,
+      roster_entry: updatedRoster[0],
+      auto_level_ups: autoLeveled,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

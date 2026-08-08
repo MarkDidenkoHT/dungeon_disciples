@@ -154,6 +154,7 @@ export function renderRoster(root, { player }) {
   let buildingsData = {};
   let upgradePaths  = {};
   let buildingPools = {};   // faction -> category -> [building defs]; maps a built building back to the unit it makes
+  let mercBuildings = {};   // region -> [mercenary hall defs]; same job, separate table
   let items         = [];
   let resources     = [];
   let progress      = {};   // { region_id: next_playable_level } — gates the craft catalog
@@ -179,6 +180,11 @@ export function renderRoster(root, { player }) {
         const found = (list || []).find(b => b.id === buildingId);
         if (found) return found.unit_id || null;
       }
+    }
+    // Mirrors getBuildingDef's mercenary fallback on the server.
+    for (const list of Object.values(mercBuildings)) {
+      const found = (list || []).find(b => b.id === buildingId);
+      if (found) return found.unit_id || null;
     }
     return null;
   }
@@ -291,8 +297,13 @@ export function renderRoster(root, { player }) {
     const heroXpMet    = xpRequired == null || currentXp >= xpRequired;
     const heroCanLevel = isHero && !heroMaxed && throneLevel > tier && heroXpMet;
 
-    const isMaxTier = !isHero && xpRequired === null && !Object.values(upgradePaths).some(fp => fp[unitId]);
-    const hasPath   = !isHero && !isMaxTier && xpRequired !== null;
+    // Max tier is "nothing to upgrade INTO", not "no xp value". Top-tier units
+    // still carry an `xp` number, so keying off that offered a Level Up button
+    // the server could only reject. Mercenaries make this visible: their tier-3
+    // units have xp too.
+    const unitPathExists = Object.values(upgradePaths).some(fp => fp[unitId]);
+    const isMaxTier = !isHero && !unitPathExists;
+    const hasPath   = !isHero && unitPathExists && xpRequired !== null;
 
     let upgradeReady        = true;
     let upgradeBuildingHint = '';
@@ -1691,6 +1702,10 @@ export function renderRoster(root, { player }) {
     buildingsData = boot.structures?.buildings_data || {};
     upgradePaths  = boot.buildings?.upgrade_paths || {};
     buildingPools = boot.buildings?.pools || {};
+    // Mercenary halls are a separate table but resolve through the same branch
+    // logic, so unitIdForBuilding has to be able to see them too — otherwise a
+    // mercenary's slot building maps to no unit and its upgrade never resolves.
+    mercBuildings = boot.buildings?.mercenary_buildings || {};
     items         = boot.items || [];
     resources     = [...(boot.resources || []), ...(boot.trophies || [])];
     progress      = boot.progress || {};
