@@ -375,7 +375,7 @@ const ITEM_DEFS = {
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
     name:         "Cold Resistance Potion",
-    name_ru:      'Зелье Защиты От Холодоа',
+    name_ru:      'Зелье Защиты От Холода',
     faction:      null,
     tag_required: null,
     adds_tag:     null,

@@ -1186,9 +1186,12 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'self',
-    description: 'Each turn, sacrifice HP to heal all allies. Lasts until end of battle.',
-    description_ru: "Каждый ход жертвует HP, чтобы исцелить всех союзников. Действует до конца боя.",
-    params: { mothers_blessing: true },
+    description: 'Each turn, sacrifice 10% of maximum HP to heal every ally for that amount. Lasts until end of battle.',
+    description_ru: "Каждый ход жертвует 10% максимального здоровья, исцеляя каждого союзника на эту величину. Действует до конца боя.",
+    // The sacrificed HP IS the heal, so the ability scales with the caster's own
+    // pool instead of needing a second number to balance. It never self-kills:
+    // the tick stops while the caster is at or below the cost.
+    params: { mothers_blessing: true, mothers_blessing_hp_cost_pct: 10 },
   },
   'radiance 1': {
     id: 'radiance 1',
@@ -1333,7 +1336,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'Adjacent allies in the same column gain increased damage.',
-    description_ru: "Соседние союзники в том же столбце получают повышенный урон.",
+    description_ru: "Соседние союзники в том же столбце наносят повышенный урон.",
     params: { inspiration_stat: 'damage', inspiration_value: 3 },
   },
   'inspiration_damage 2': {
@@ -1344,7 +1347,7 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'Adjacent allies in the same column gain increased damage.',
-    description_ru: "Соседние союзники в том же столбце получают повышенный урон.",
+    description_ru: "Соседние союзники в том же столбце наносят повышенный урон.",
     params: { inspiration_stat: 'damage', inspiration_value: 5 },
   },
   'sacrament 1': {

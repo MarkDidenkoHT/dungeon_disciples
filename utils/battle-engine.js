@@ -801,6 +801,32 @@ class BattleEngine {
       const d = unit._deferred_dmg; unit._deferred_dmg = 0;
       tick(d, 'Recuperate (deferred)', '⏳');
     }
+    // Mother's Blessing — the caster pays a slice of her own maximum HP and
+    // every living ally is healed for that amount. Lives here rather than in a
+    // passive because it is an ACTIVE that leaves a standing effect; the flag is
+    // raised in executeActiveAbility. The cost is skipped (not fatal) while it
+    // would drop her to 0, so the ability can never kill its own caster.
+    if (unit.alive && unit._mothers_blessing) {
+      const pct  = unit._mothers_blessing_pct ?? 10;
+      const cost = Math.max(1, Math.floor(unit.max_hp * pct / 100));
+      if (unit.battle_hp > cost) {
+        unit.battle_hp -= cost;
+        const heal = Math.max(1, Math.floor(cost * this.fatigueHealMult()));
+        const allies = this.combatants.filter(c => c.side === unit.side && c.alive);
+        for (const a of allies) {
+          const actual = Math.min(heal, a.max_hp - a.battle_hp);
+          if (actual <= 0) continue;
+          a.battle_hp += actual;
+          this.fireHealTriggers(unit, a, actual);
+        }
+        this.pushLog({
+          type: 'passive', passive: "Mother's Blessing",
+          actorName: unit.unit_name, actorCell: unit.cellIndex,
+          targetName: 'all allies', value: heal, heal: true,
+          message: `${unit.unit_name} sacrifices ${cost} HP — every ally mended for ${heal}`,
+        });
+      }
+    }
     if (unit.alive && unit._bleed_dmg > 0) {
       const bleedSourceKey = unit._bleed_source_key ?? null;
       const bleedRank = bleedSourceKey && this.ABILITIES
@@ -1025,7 +1051,10 @@ class BattleEngine {
             const healed = Math.min(healAmt, c.max_hp - c.battle_hp);
             if (healed > 0) c.battle_hp += healed;
           }
-          this.pushLog({ type: 'spell', spell: effect.name, targetName: `all ${effect.tag} allies`, value: healAmt, heal: true, message: `${effect.name} — all ${effect.tag} allies heal for ${healAmt} (${tagged.length} ${effect.tag} on the field)` });
+          // targetId anchors the animation. light_of_dawn paints a screen-wide
+          // band across the anchor's row, so any healed ally is a fine anchor —
+          // but without one the client has no cell and plays nothing.
+          this.pushLog({ type: 'spell', spell: effect.name, targetName: `all ${effect.tag} allies`, targetId: tagged[0]?.id ?? null, targetCell: tagged[0]?.cellIndex, value: healAmt, heal: true, effect_name: effect.effect_name || null, message: `${effect.name} — all ${effect.tag} allies heal for ${healAmt} (${tagged.length} ${effect.tag} on the field)` });
         }
       }
       else if (effect.type === 'round_damage') {
@@ -1300,6 +1329,10 @@ class BattleEngine {
           _flags:              c._flags,
           _granted_buffs:      c._granted_buffs,
           _deferred_dmg:       c._deferred_dmg,
+          // Standing effect from an active — must survive a reload or the
+          // caster silently stops paying and healing mid-battle.
+          _mothers_blessing:     c._mothers_blessing,
+          _mothers_blessing_pct: c._mothers_blessing_pct,
           _debuff_reduction:   c._debuff_reduction,
           _healing_reduction:  c._healing_reduction,
           _dmg_mult:           c._dmg_mult,
@@ -1380,6 +1413,8 @@ class BattleEngine {
       c._flags             = b._flags             || {};
       c._granted_buffs     = b._granted_buffs     || [];
       c._deferred_dmg      = b._deferred_dmg      ?? 0;
+      c._mothers_blessing     = b._mothers_blessing     ?? false;
+      c._mothers_blessing_pct = b._mothers_blessing_pct ?? 10;
       c._debuff_reduction  = b._debuff_reduction  ?? 0;
       c._healing_reduction = b._healing_reduction ?? 0;
       c._dmg_mult          = b._dmg_mult          ?? 1;

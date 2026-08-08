@@ -9,7 +9,7 @@ const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, resolveUpgradeBranch, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
   getActiveBattle,
@@ -999,7 +999,9 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
 });
 
 router.post('/roster/levelup', requireAuth, async (req, res) => {
-  const { chat_id, roster_id } = req.body;
+  // target_unit_id is optional: only sent to break a tie between branches that
+  // are all consistent with the building standing in the slot.
+  const { chat_id, roster_id, target_unit_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
     const [rosterRows, structRows] = await Promise.all([
@@ -1039,8 +1041,44 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       // Accepts a building further UP the branch, not just the immediate next
       // one - see resolveUpgradeBranch in data/buildings.js. Building the tier-3
       // barracks over a tier-1 unit used to leave that unit unupgradable.
-      const matched = resolveUpgradeBranch(faction, paths, currentBuildingId);
-      if (!matched) return res.status(400).json({ error: `Build ${paths.map(p => p.label).join(' or ')} first to choose an upgrade path` });
+      const candidates = upgradeBranchCandidates(faction, paths, currentBuildingId);
+
+      // More than one branch fits what is built (the hero trees merge, so a
+      // tier-3 cathedral is reached from either tier-2 kit). The player picks,
+      // and sends the pick back as target_unit_id. Validated against the
+      // candidates so this can never be used to jump to an arbitrary unit.
+      const chosen = target_unit_id
+        ? candidates.find(p => p.unit_id === target_unit_id)
+        : null;
+      if (target_unit_id && !chosen) {
+        return res.status(400).json({ error: `${target_unit_id} is not a valid upgrade for this unit right now` });
+      }
+
+      const matched = chosen || (candidates.length === 1 ? candidates[0] : null);
+      if (!matched && candidates.length > 1) {
+        // Answerable: hand back the options rather than a dead end.
+        return res.status(400).json({
+          error: 'Choose an upgrade path',
+          code: 'upgrade_branch_choice',
+          slot: buildingSlot,
+          slot_building: currentBuildingId || null,
+          choices: candidates.map(p => ({ unit_id: p.unit_id, building_id: p.building_id, label: p.label })),
+        });
+      }
+      if (!matched) {
+        // Name what is actually standing there. "Build X or Y first" is baffling
+        // when the player HAS built one — the usual causes are the building
+        // sitting in a different slot from the unit, or an ambiguous one that
+        // several branches lead to, and the message should let them tell which.
+        const builtDef = currentBuildingId ? getBuildingDef(faction, currentBuildingId) : null;
+        const standing = builtDef ? `"${builtDef.label}"` : 'nothing';
+        return res.status(400).json({
+          error: `This unit's slot (${buildingSlot}) holds ${standing}. Build ${paths.map(p => p.label).join(' or ')} in THAT slot to choose an upgrade path.`,
+          code: 'upgrade_branch_unresolved',
+          slot: buildingSlot,
+          slot_building: currentBuildingId || null,
+        });
+      }
       path = matched;
     }
     const nextDef = getUnitByDataId(path.unit_id);
@@ -2108,15 +2146,27 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       headers: { Prefer: 'return=representation' },
     });
 
-    const [updatedItems, updatedResources] = await Promise.all([
+    const [readItems, updatedResources] = await Promise.all([
       supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
 
+    // This SELECT can answer from a replica that has not caught up with the
+    // INSERT and DELETEs just issued, so it is reconciled against what we KNOW
+    // happened rather than trusted outright. Without this the crafted item is
+    // missing from the list the client caches, so no other recipe counts it as
+    // an ingredient until a reload — and consumed ingredients can linger and be
+    // counted twice.
+    const newRow    = Array.isArray(inserted) ? inserted[0] : inserted;
+    const consumed  = new Set(ingredientRows.map(it => String(it.id)));
+    const items     = (Array.isArray(readItems) ? readItems : [])
+      .filter(r => !consumed.has(String(r.id)));
+    if (newRow?.id && !items.some(r => String(r.id) === String(newRow.id))) items.push(newRow);
+
     res.json({
       success:   true,
-      item:      Array.isArray(inserted) ? inserted[0] : inserted,
-      items:     updatedItems,
+      item:      newRow,
+      items,
       resources: updatedResources,
     });
   } catch (err) {

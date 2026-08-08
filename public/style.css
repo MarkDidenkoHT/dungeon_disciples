@@ -48,7 +48,25 @@ html, body {
 #shell {
   display: flex;
   flex-direction: column;
+  /* On iOS, 100vh is the LARGE viewport — it deliberately ignores the browser
+     and Telegram chrome. In full-size app mode the shell is therefore taller
+     than the area actually on screen, and everything below the fold (the unit
+     card holder in roster and battle prep) is pushed out of sight with no
+     scrollbar to reveal it, because the inner containers are overflow:hidden.
+     Each line overrides the one above it where supported:
+       100vh  — last-resort fallback
+       100dvh — the real visible height, tracked as chrome shows/hides
+       Telegram's own stable height — authoritative inside a Mini App. */
   height: 100vh;
+  height: 100dvh;
+  height: var(--tg-viewport-stable-height, 100dvh);
+  /* Full-size mode lets Telegram's header and the system status bar overlay the
+     page. These insets keep the top and bottom of the layout clear of them.
+     Both sources are consulted: the Telegram vars exist only on newer clients,
+     env() only when the page opts into the safe area — whichever is larger
+     wins, and both resolve to 0px when absent. */
+  padding-top: max(var(--tg-content-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+  padding-bottom: max(var(--tg-content-safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
   max-width: 480px;
   margin: 0 auto;
   width: 100%;
@@ -1154,6 +1172,32 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .modal-overlay.hidden { display: none !important; }
+
+/* Upgrade-path picker, shown when several branches fit the building already
+   standing in the slot (the hero trees merge, so a tier-3 cathedral is reached
+   from either tier-2 kit and the choice cannot be guessed). */
+.branch-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.branch-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.branch-choice:hover { border-color: var(--accent); background: rgba(255, 255, 255, 0.07); }
+.branch-choice-name { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+.branch-choice-sub  { font-size: 0.75rem; color: var(--muted); }
 
 .modal-overlay--sub {
   z-index: 150;
@@ -5758,11 +5802,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .frame-action {
-  /* Derived from the branch cards' own sizing vars so the button and the
-     portraits it flanks are always exactly the same height. Every property the
-     global `button` rule sets is reset here, so a framed action never inherits
-     the app's default gold pill. */
-  --portrait-card-h: clamp(64px, 10vh, 86px);
+  /* Must equal .portrait-card's height EXACTLY. That rule is a fixed 62x84px,
+     not a viewport-derived clamp, so deriving this from clamp(64px, 10vh, 86px)
+     only lined up when 10vh happened to land on 84 — at every other height the
+     build and deconstruct buttons sat short or tall against the portraits they
+     flank. Every property the global `button` rule sets is reset here, so a
+     framed action never inherits the app's default gold pill. */
+  --portrait-card-h: 84px;
   margin: 0;
   align-self: center;
   flex: 0 0 auto;
@@ -5976,7 +6022,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 .mat-chip-amt  { min-width: 1.6em; text-align: left; }
 .mat-chip-icon { display: flex; align-items: center; }
 .mat-chip-icon .res-icon-img,
-.mat-chip-img { width: 24px; height: 24px; object-fit: contain; display: block; }
+/* Ingredient icons read as the main content of the cost row, not as footnotes —
+   at 24px the art was unidentifiable and the counts were guesswork. */
+.mat-chip-img { width: 38px; height: 38px; object-fit: contain; display: block; }
+.mat-chip { font-size: 0.78rem; gap: 5px; }
+.mat-chip .res-icon-img { width: 38px; height: 38px; object-fit: contain; }
+.mat-row { gap: 12px; }
+
+/* The ingredient's own cost, shown inside its sheet so the player can see what
+   making it would take before committing. */
+.mat-sheet-cost { display: flex; flex-direction: column; gap: 6px; }
 
 /* ── "Where does this drop" sheet ───────────────────────────────────────────*/
 .mat-sheet { display: flex; flex-direction: column; gap: 10px; padding: 2px; }

@@ -971,6 +971,22 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} loses ${reduction} initiative for ${p.duration_rounds} rounds`, value: reduction });
     }
   }
+  // Mother's Blessing — a STANDING effect, not a one-shot. Activating it only
+  // raises the flag; the sacrifice-and-heal itself runs from the engine's
+  // turn-start ticks (see applyTurnStartTicks) so it keeps firing every turn
+  // until the battle ends. The param was declared but never read by anything,
+  // which is why using the ability appeared to do nothing at all.
+  if (p.mothers_blessing === true) {
+    if (!actor._mothers_blessing) {
+      actor._mothers_blessing = true;
+      actor._mothers_blessing_pct = p.mothers_blessing_hp_cost_pct ?? 10;
+      engine.pushLog({
+        type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetName: actor.unit_name, targetCell: actor.cellIndex,
+        message: `${def.name} — ${actor.unit_name} offers herself; every ally is mended each turn.`,
+      });
+    }
+  }
   if (p.taunt === true && target && def.target === 'enemy_front') {
     target._taunted_by_id = actor.id;
     target._actives_locked = true;

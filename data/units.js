@@ -1747,7 +1747,7 @@ const UNITS = {
       hp: 90, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 150, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
     },
     crimson_communicant: {
@@ -1758,7 +1758,7 @@ const UNITS = {
       hp: 105, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 32, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 24, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 720, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
     },
     chosen: {
@@ -1769,7 +1769,7 @@ const UNITS = {
       hp: 130, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
       xp: 1800, passive: ['sacrament 1', 'regenerate 2', 'lifesteal 1'], ability: 'libation 1',
     },
     husk_colossus: {

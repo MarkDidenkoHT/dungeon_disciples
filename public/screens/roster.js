@@ -30,6 +30,11 @@ const RT = {
   craft:        { en: 'Craft',            ru: 'Создать' },
   crafting:     { en: 'Crafting…',        ru: 'Создаём…' },
   levelUp:      { en: 'Level Up',         ru: 'Повысить' },
+  choosePath:   { en: 'Choose an upgrade path', ru: 'Выберите путь развития' },
+  choosePathHint: {
+    en: 'Your building supports more than one path. Pick the one to advance along.',
+    ru: 'Ваше здание поддерживает несколько путей. Выберите, по какому развиваться.',
+  },
   resurrect:    { en: 'Resurrect',        ru: 'Воскресить' },
   resurrecting: { en: 'Resurrecting…',    ru: 'Воскрешаем…' },
   heal:         { en: 'Heal',             ru: 'Лечить' },
@@ -198,18 +203,58 @@ export function renderRoster(root, { player }) {
   // Matching only the immediate next building then reports "build X first" for a
   // building they have already paid for, so a branch that LEADS to what is built
   // counts too. The unit still advances one tier per level-up.
-  function resolveBranch(paths, buildingId) {
-    if (!paths || !paths.length) return null;
-    if (paths.length === 1) return paths[0];
-    if (!buildingId) return null;
+  // Every branch consistent with what is built. Two or more means the player
+  // has a real choice (the hero trees merge), which is ASKED rather than
+  // guessed — see openBranchChoice. Returning null for that case is what left
+  // an overbuilt hero permanently unable to level.
+  function branchCandidates(paths, buildingId) {
+    if (!paths || !paths.length) return [];
+    if (paths.length === 1) return [paths[0]];
+    if (!buildingId) return [];
     const exact = paths.find(p => p.building_id === buildingId);
-    if (exact) return exact;
+    if (exact) return [exact];
     const builtUnit = unitIdForBuilding(buildingId);
-    if (!builtUnit) return null;
-    // Exactly one branch, or none — see resolveUpgradeBranch in data/buildings.js
-    // for why an ambiguous match must not be guessed.
-    const reaching = paths.filter(p => upgradeReaches(p.unit_id, builtUnit));
-    return reaching.length === 1 ? reaching[0] : null;
+    if (!builtUnit) return [];
+    return paths.filter(p => upgradeReaches(p.unit_id, builtUnit));
+  }
+
+  function resolveBranch(paths, buildingId) {
+    const candidates = branchCandidates(paths, buildingId);
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  // Asked when several branches fit the building that is standing there — the
+  // kits differ (Protector vs Beacon of Hope), so this must not be guessed.
+  function openBranchChoice(choices, onPick, onCancel) {
+    const cards = choices.map(c => {
+      const def  = unitDefById(c.unit_id);
+      const name = def?.name ?? c.unit_id;
+      return `
+        <button class="branch-choice" data-unit-id="${c.unit_id}">
+          <span class="branch-choice-name">${name}</span>
+          <span class="branch-choice-sub">${c.label}</span>
+        </button>`;
+    }).join('');
+
+    openSheet(T('choosePath'), `
+      <p class="modal-empty" style="margin-bottom:10px">${T('choosePathHint')}</p>
+      <div class="branch-choice-list">${cards}</div>`);
+
+    let picked = false;
+    getSheetBody().querySelectorAll('.branch-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        picked = true;
+        const choice = choices.find(c => c.unit_id === btn.dataset.unitId);
+        closeSheet();
+        if (choice) onPick(choice);
+      });
+    });
+    // Dismissed without choosing: put the level-up button back.
+    onSheetClose(() => { if (!picked) onCancel?.(); });
+  }
+
+  function unitDefById(unitId) {
+    return resolveUnitDef({ unit_data: { unit_id: unitId } });
   }
 
   function buildCard(u) {
@@ -259,8 +304,11 @@ export function renderRoster(root, { player }) {
       if (unitPaths.length > 1) {
         const slot           = stored.building_slot;
         const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
-        const matched        = resolveBranch(unitPaths, slotBuildingId);
-        upgradeReady         = !!matched;
+        // Ready when at least one branch fits. Several fitting is a question to
+        // ask at press time, not a reason to withhold the button — that is what
+        // stranded units whose slot was built past their tier.
+        const candidates     = branchCandidates(unitPaths, slotBuildingId);
+        upgradeReady         = candidates.length > 0;
         if (!upgradeReady) upgradeBuildingHint = `Requires: ${unitPaths.map(p => p.label).join(' or ')}`;
       }
     }
@@ -585,16 +633,39 @@ export function renderRoster(root, { player }) {
       const rosterId = lvlBtn.dataset.rosterId;
       lvlBtn.disabled    = true;
       lvlBtn.textContent = '…';
-      try {
-        await api('/roster/levelup', { chat_id: player.chat_id, roster_id: rosterId });
+      const restoreBtn = () => {
+        lvlBtn.disabled    = false;
+        lvlBtn.textContent = T('levelUp');
+      };
+      const doLevelUp = async targetUnitId => {
+        const body = { chat_id: player.chat_id, roster_id: rosterId };
+        if (targetUnitId) body.target_unit_id = targetUnitId;
+        await api('/roster/levelup', body);
         // One /bootstrap covers roster, structures, items and resources; this
         // used to be a /roster fetch plus a structures fetch plus a resource-bar
         // refresh. applyBootstrap also sorts hero-first, so the slider order
         // cannot drift.
         await reloadAndRerender(rosterId);
+      };
+      try {
+        await doLevelUp(null);
       } catch (err) {
-        lvlBtn.disabled    = false;
-        lvlBtn.textContent = T('levelUp');
+        // Several branches fit what is built (the hero trees merge), so the
+        // server handed back the options instead of refusing. Ask, then retry
+        // with the pick.
+        const choices = err?.data?.choices;
+        if (err?.code === 'upgrade_branch_choice' && Array.isArray(choices) && choices.length) {
+          openBranchChoice(choices, async pick => {
+            try {
+              await doLevelUp(pick.unit_id);
+            } catch (err2) {
+              restoreBtn();
+              alert(err2.message || T('failLevel'));
+            }
+          }, restoreBtn);
+          return;
+        }
+        restoreBtn();
         alert(err.message || T('failLevel'));
       }
       return;
@@ -1253,9 +1324,11 @@ export function renderRoster(root, { player }) {
       }
 
       // A material chip in the cost row — open its "where does this drop" sheet.
+      // The catalog's repaint is handed over so a craft started from that sheet
+      // can refresh the card behind it.
       const matChip = e.target.closest('[data-material]');
       if (matChip) {
-        openMaterialSheet(matChip.dataset.material);
+        openMaterialSheet(matChip.dataset.material, () => { body.innerHTML = render(); });
         return;
       }
 
@@ -1334,11 +1407,15 @@ export function renderRoster(root, { player }) {
   // where do I get more? Lists the regions that drop it and offers to take them
   // there, with the regions flagged on arrival. Disabled when nothing drops it
   // (crafted-only ingredients, for instance).
-  function openMaterialSheet(key) {
+  function openMaterialSheet(key, onCrafted = null) {
     const regionIds = getRegionsForMaterial(key);
     const L         = player?.settings?.language === 'ru' ? 'ru' : 'en';
     const label     = materialName(key);
     const have      = ownedAmount(key);
+    // An ingredient that is itself a craftable item can be made right here,
+    // instead of making the player back out and hunt for it in the catalog.
+    const ingredientDef = ITEM_DEFS[key] || null;
+    const canMake       = ingredientDef ? canCraftNow(ingredientDef) : false;
 
     const regionNames = regionIds.map(id => {
       const region = REGIONS.find(r => r.id === id);
@@ -1354,10 +1431,40 @@ export function renderRoster(root, { player }) {
         ${regionIds.length
           ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает:' : 'Drops in:'} <span class="mat-regions">${regionNames}</span></p>`
           : `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`}
+        ${ingredientDef ? `
+          <div class="mat-sheet-cost">${costChips(ingredientDef.cost || {}, ingredientDef.item_cost || {})}</div>
+          <button class="mat-embark-btn" id="mat-craft-btn" ${canMake ? '' : 'disabled'}>
+            ${T('craft')}
+          </button>` : ''}
         <button class="mat-embark-btn" id="mat-embark-btn" data-material="${key}" ${regionIds.length ? '' : 'disabled'}>
           ${L === 'ru' ? 'В поход' : 'Embark'}
         </button>
       </div>`);
+
+    getSubSheetBody()?.querySelector('#mat-craft-btn')?.addEventListener('click', async e => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = T('crafting');
+      try {
+        const crafted = await api('/items/craft', { chat_id: player.chat_id, item_key: key });
+        // Same read-after-write reasoning as the catalog's Craft button: use what
+        // the endpoint already read back rather than firing another /bootstrap.
+        const rows   = crafted.resources || [];
+        const merged = crafted.items ? bootstrapCache.patch(cur => ({
+          items:     crafted.items,
+          resources: rows.length ? rows.filter(r => r.item_type === 'resource') : cur.resources,
+          trophies:  rows.length ? rows.filter(r => r.item_type === 'trophy')   : cur.trophies,
+        })) : null;
+        applyBootstrap(merged || await bootstrapCache.refresh(player.chat_id));
+        refreshResourceBar(player).catch(() => {});
+        closeSubSheet();
+        onCrafted?.();       // repaint the catalog card that sent us here
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = T('craft');
+        alert(err.message || T('failCraft'));
+      }
+    });
 
     getSubSheetBody()?.querySelector('#mat-embark-btn')?.addEventListener('click', () => {
       if (!regionIds.length) return;
