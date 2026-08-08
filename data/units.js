@@ -807,7 +807,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: 'fortify 1', ability: null, 
+      passive: 'fortify 1', ability: 'reforge 1', 
       building_slot: 'slot_0', xp: 75
     },
     artificer_path_a_t2: {
@@ -819,7 +819,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 1', 'resist_aura_air 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 360
     },
     artificer_path_a_t3: {
@@ -831,7 +831,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_air 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 900
     },
     artificer_path_a_t4: {
@@ -843,7 +843,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_air 1', ], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 1500
     },
     artificer_path_a_t4_alt: {
@@ -855,7 +855,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_air 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 1500
     },
     artificer_path_b_t2: {
@@ -867,7 +867,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 1', 'resist_aura_cold 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 360
     },
     artificer_path_b_t3: {
@@ -879,7 +879,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_cold 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 900
     },
     artificer_path_b_t4: {
@@ -891,7 +891,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_cold 1', 'command 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 1500
     },
     artificer_path_b_t4_alt: {
@@ -903,7 +903,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1'], ability: null,
+      passive: ['fortify 2', 'resist_aura_cold 1', 'inspiration_initiative 1'], ability: 'reforge 1',
       building_slot: 'slot_0', xp: 1500
     },
     conscript: {
@@ -1035,8 +1035,8 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 75, passive: ['fortify 1', 'scavenger 1'], ability: null,
+      damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
+      xp: 75, passive: ['fortify 1', 'scavenger 1'], ability: 'reforge 1',
     },
     mechanic: {
       id: 'e61', f: 'e', t: 2,
@@ -1046,8 +1046,8 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 360, passive: ['fortify 1', 'scavenger 1'], ability: null,
+      damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
+      xp: 360, passive: ['fortify 1', 'scavenger 1'], ability: 'reforge 1',
     },
     master_mechanic: {
       id: 'e611', f: 'e', t: 3,
@@ -1057,8 +1057,8 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 900, passive: ['fortify 2', 'scavenger 1'], ability: null,
+      damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
+      xp: 900, passive: ['fortify 2', 'scavenger 1'], ability: 'reforge 1',
     },
     rifleman: {
       id: 'e62', f: 'e', t: 2,

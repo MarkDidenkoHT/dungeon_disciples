@@ -54,6 +54,17 @@ const UNIT_ABILITIES = {
     description_ru: "Воскрешает союзную нежить с 50% HP.",
     params: { resurrect_hp_pct: 50, tag_required: 'Zombie' },
   },
+  'reforge 1': {
+    id: 'reforge 1',
+    name: 'Reforge',
+    name_ru: "Перековка",
+    rank: 1,
+    type: 'active',
+    target: 'ally_dead',
+    description: 'Resurrects a friendly construct unit with 25% HP.',
+    description_ru: "Воскрешает союзного конструкта с 25% HP.",
+    params: { resurrect_hp_pct: 25, tag_required: 'Construct' },
+  },
   'redemption 1': {
     id: 'redemption 1',
     name: 'Redemption',
