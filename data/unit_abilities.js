@@ -1214,7 +1214,7 @@ const UNIT_ABILITIES = {
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     description_ru: "В начале хода этого юнита исцеляет союзника прямо впереди и наносит урон врагу прямо впереди.",
     params: { light_of_dawn: true, light_of_dawn_heal: 5, light_of_dawn_dmg: 5 },
-    effect_name: 'holy_heal',
+    effect_name: 'light_of_dawn',
   },
   'light_of_dawn 2': {
     id: 'light_of_dawn 2',
@@ -1226,7 +1226,7 @@ const UNIT_ABILITIES = {
     description: 'At the start of this unit\'s turn, heals the ally directly in front and deals damage to the enemy directly in front.',
     description_ru: "В начале хода этого юнита исцеляет союзника прямо впереди и наносит урон врагу прямо впереди.",
     params: { light_of_dawn: true, light_of_dawn_heal: 8, light_of_dawn_dmg: 8 },
-    effect_name: 'holy_heal',
+    effect_name: 'light_of_dawn',
   },
   'eternal_grief 1': {
     id: 'eternal_grief 1',

@@ -272,7 +272,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (healAmt > 0) {
           frontAlly.battle_hp += healAmt;
           engine.fireHealTriggers(owner, frontAlly, healAmt);
-          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontAlly.unit_name, targetCell: frontAlly.cellIndex, value: healAmt, heal: true });
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontAlly.unit_name, targetId: frontAlly.id, targetCell: frontAlly.cellIndex, value: healAmt, heal: true });
         }
       }
       const frontEnemyCol = ownerCol === 0 ? 0 : 1;
@@ -283,7 +283,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (frontEnemy) {
         const dmgAmt = p.light_of_dawn_dmg ?? 15;
         hurt(frontEnemy, dmgAmt);
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetId: frontEnemy.id, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
       }
     }

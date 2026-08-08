@@ -867,48 +867,92 @@ export async function shared_suffering(casterCellEl, allyCellEl) {
 }
 
 // ── light_of_dawn ──────────────────────────────────────────────────────────────
+// ── light_of_dawn — dawn breaks on the unit ────────────────────────────────
+// The passive fires once at the unit's turn start and does two things at the
+// same moment: it mends the ally in front and burns the enemy in front. The
+// engine logs those as two entries, which would otherwise play this twice, so
+// the effect is listed in FAN_OUT_FX (screens/battle.js) purely to collapse the
+// run into ONE play. It is anchored on the caster and draws one animation — it
+// does not care how many entries were collapsed or what each of them did.
+//
+// The old version was a full-screen band with sweeping rays that touched no
+// unit at all, and was unreachable anyway (both defs pointed at holy_heal).
 export async function light_of_dawn(cellEl) {
   console.log('[battle-fx] light_of_dawn START', cellEl?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
-  const dataId = cellEl.dataset.id;
-  const rand = (a, b) => a + Math.random() * (b - a);
+  const dataId  = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
 
-  const rays = Array.from({ length: 6 }, (_, i) => ({ frac: (i + 0.5) / 6 + rand(-0.05, 0.05), w: rand(0.05, 0.11), phase: rand(0, 1) }));
+  const GOLD  = 0xffe08a;
+  const WHITE = 0xfffdf2;
 
-  const layer = new PIXI.Container();
-  const band  = new PIXI.Graphics(); band.blendMode = PIXI.BLEND_MODES.ADD;
-  const rayG  = new PIXI.Graphics(); rayG.blendMode = PIXI.BLEND_MODES.ADD;
-  band.filters = [new PIXI.BlurFilter(4)];
-  layer.addChild(band, rayG);
+  // Motes lifting off the unit as the light rises.
+  const motes = Array.from({ length: 14 }, () => ({
+    ax: rand(-0.45, 0.45), delay: rand(0, 0.4), size: rand(1.4, 3.4), speed: rand(0.7, 1.3),
+  }));
+  // Uneven sunburst spokes, so the ring reads as light rather than as a circle.
+  const spokes = Array.from({ length: 14 }, (_, i) => ({
+    ang: (i / 14) * Math.PI * 2, len: rand(0.75, 1.25),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const rayG  = new PIXI.Graphics(); rayG.blendMode  = ADD;
+  layer.addChild(glowLayer, rayG);
+  glowLayer.addChild(glowG);
   app.stage.addChild(layer);
 
-  await animate(1100, t => {
+  await animate(760, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
-    const W  = app.screen.width;
-    const y  = b.y;
-    const h  = b.height * 0.85;
-    const alpha = t < 0.25 ? t / 0.25 : t < 0.6 ? 1 : Math.max(0, 1 - (t - 0.6) / 0.4);
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
 
-    band.clear();
-    band.beginFill(0xffe6a0, 0.30 * alpha); band.drawRect(0, y - h * 0.25, W, h * 1.5); band.endFill();
-    band.beginFill(0xfff2c8, 0.45 * alpha); band.drawRect(0, y, W, h); band.endFill();
+    glowG.clear(); rayG.clear();
 
-    rayG.clear();
-    const sweep = t * 0.15;
-    for (const r of rays) {
-      const cx = ((r.frac + sweep + r.phase) % 1) * W;
-      const rw = r.w * W;
-      const flick = 0.5 + 0.5 * Math.sin(t * 6 + r.phase * 6);
-      rayG.beginFill(0xfff0c0, 0.16 * alpha * flick);
-      rayG.moveTo(cx, y - h * 0.2);
-      rayG.lineTo(cx + rw, y - h * 0.2);
-      rayG.lineTo(cx + rw - h * 0.4, y + h * 1.1);
-      rayG.lineTo(cx - h * 0.4, y + h * 1.1);
-      rayG.closePath();
-      rayG.endFill();
+    const rise = clamp01(t / 0.28);            // the light comes up
+    const fade = 1 - clamp01((t - 0.5) / 0.5); // then it goes
+
+    // A horizon line across the tile, widening as dawn breaks.
+    const halfW = R * 0.75 * rise;
+    glowG.beginFill(GOLD, 0.24 * fade);
+    glowG.drawRect(cx - halfW, cy - R * 0.10, halfW * 2, R * 0.20);
+    glowG.endFill();
+    rayG.lineStyle(Math.max(1, R * 0.022), WHITE, 0.8 * fade * rise);
+    rayG.moveTo(cx - halfW, cy);
+    rayG.lineTo(cx + halfW, cy);
+    rayG.lineStyle(0);
+
+    // The bloom sitting on the unit.
+    softGlow(glowG, cx, cy, R * 0.46 * rise, GOLD,  0.55 * fade);
+    softGlow(glowG, cx, cy, R * 0.22 * rise, WHITE, 0.75 * fade);
+
+    // Sunburst spokes reaching out, uneven so it does not read as a plain ring.
+    const st = clamp01((t - 0.1) / 0.6);
+    if (st > 0) {
+      for (const s of spokes) {
+        const inner = R * 0.26 * st;
+        const outer = R * (0.34 + 0.5 * st) * s.len;
+        rayG.lineStyle(Math.max(1, R * 0.014), GOLD, (1 - st) * 0.7 * fade);
+        rayG.moveTo(cx + Math.cos(s.ang) * inner, cy + Math.sin(s.ang) * inner);
+        rayG.lineTo(cx + Math.cos(s.ang) * outer, cy + Math.sin(s.ang) * outer);
+      }
+      rayG.lineStyle(0);
+    }
+
+    // Motes rising off the unit.
+    for (const m of motes) {
+      const s = clamp01((t - m.delay) / 0.6);
+      if (s <= 0) continue;
+      softGlow(glowG, cx + m.ax * R, cy - s * R * 0.8 * m.speed,
+               m.size * (1 - s * 0.4), WHITE, (1 - s) * 0.85 * fade);
     }
   });
 
