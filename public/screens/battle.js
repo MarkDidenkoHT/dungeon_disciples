@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem } from '../utils.js';
+import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -614,11 +614,27 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <div class="init-queue" id="init-queue"></div>
         <div class="action-panel">
           <div class="action-panel-label" id="action-panel-label"></div>
+          <!-- Each button is an icon tile with its role caption BELOW the tile,
+               outside the button's own border. The captions are fixed words and
+               never change, so they are written once here rather than rebuilt
+               on every render. -->
           <div class="action-btns">
-            <button class="action-btn" id="btn-main" data-battle-action="main"></button>
-            <button class="action-btn" id="btn-ability" data-battle-action="ability"></button>
-            <button class="action-btn" id="btn-defend" data-battle-action="defend"></button>
-            <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
+            <div class="action-slot">
+              <button class="action-btn" id="btn-main" data-battle-action="main"></button>
+              <span class="action-slot-label">${BTx('btnAction')}</span>
+            </div>
+            <div class="action-slot">
+              <button class="action-btn" id="btn-ability" data-battle-action="ability"></button>
+              <span class="action-slot-label">${BTx('btnAbility')}</span>
+            </div>
+            <div class="action-slot">
+              <button class="action-btn" id="btn-defend" data-battle-action="defend"></button>
+              <span class="action-slot-label">${BTx('btnDefend')}</span>
+            </div>
+            <div class="action-slot">
+              <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
+              <span class="action-slot-label">${BTx('btnCancel')}</span>
+            </div>
           </div>
         </div>
         <div class="battle-log-bar">
@@ -906,36 +922,35 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // ability, and the only way to find out is to tap a unit and see.
     const armed = selectingTarget ? pendingAction : null;
 
-    // Each button carries its ROLE as a caption, plus its icon. The icon still
-    // shows WHAT the action is (the unit's own action art, its ability art);
-    // the caption says which button this is, and never changes.
-    const btnFace = (iconSrc, label, altText, iconClass = 'battle-action-icon-img') => `
-      ${iconSrc ? `<img class="${iconClass}" src="${iconSrc}" alt="${altText}" onerror="this.style.display='none'">` : ''}
-      <span class="action-btn__label">${label}</span>`;
+    // Only the icon goes INSIDE the button — the role caption is a sibling
+    // below the tile (see .action-slot in the shell markup above). The icon says
+    // what the action is; the caption says which button it is.
+    const btnFace = (iconSrc, altText, iconClass = 'battle-action-icon-img') =>
+      iconSrc ? `<img class="${iconClass}" src="${iconSrc}" alt="${altText}" onerror="this.style.display='none'">` : '';
 
     // No longer disabled while a target is being picked: with the basic action
     // armed by default that would mean it is permanently greyed out. Tapping it
     // now switches back from Ability.
     ui.mainBtn.className = `action-btn ${armed === 'attack' ? 'action-btn--armed' : ''} ${isEnemyTurn || processing || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
-    ui.mainBtn.innerHTML = btnFace(actionIcon ? `/assets/icons/actions/${actionIcon}` : null, BTx('btnAction'), actionLabel);
+    ui.mainBtn.innerHTML = btnFace(actionIcon ? `/assets/icons/actions/${actionIcon}` : null, actionLabel);
     ui.mainBtn.title = actionLabel;   // the actual action name lives here
 
     ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
-    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), BTx('btnAbility'), abilityName, 'battle-action-ability-icon');
+    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), abilityName, 'battle-action-ability-icon');
     ui.abilityBtn.title = abilityName;
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
-    ui.defendBtn.innerHTML = btnFace('/assets/icons/actions/defend.jpg', BTx('btnDefend'), BTx('btnDefend'));
+    ui.defendBtn.innerHTML = btnFace('/assets/icons/actions/defend.jpg', BTx('btnDefend'));
 
     // Only meaningful once something OTHER than the default is selected —
     // cancelling the default would just re-arm it, so there is nothing to undo.
     const canCancel = armed === 'ability' && !isEnemyTurn && !processing;
     ui.cancelBtn.className = `action-btn action-btn--cancel ${!canCancel ? 'action-btn--disabled' : ''}`;
     ui.cancelBtn.disabled = !canCancel;
-    ui.cancelBtn.innerHTML = btnFace('/assets/icons/actions/cancel.jpg', BTx('btnCancel'), BTx('btnCancel'));
+    ui.cancelBtn.innerHTML = btnFace('/assets/icons/actions/cancel.jpg', BTx('btnCancel'));
 
     if (!processing) {
       ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
@@ -1016,6 +1031,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   function attachEvents() {
     if (ui?.screen?._battleHandlersAttached) return;
+
+    // The unit sheet lives on document.body, NOT inside ui.screen, so clicks in
+    // it never reached the handler below — tapping an ability in a battle unit
+    // card did nothing at all. Inspection is delegated from the sheet body
+    // itself, which utils.js reuses across opens, so one listener covers every
+    // unit card the battle ever shows. Descriptions open in the SUB-sheet, so
+    // they layer over the unit card instead of replacing it.
+    const sheetBody = getSheetBody();
+    if (sheetBody && !sheetBody._battleInspectAttached) {
+      sheetBody._battleInspectAttached = true;
+      sheetBody.addEventListener('click', e => { handleUnitInspect(e, openSubSheet); });
+    }
 
     ui.screen.addEventListener('click', event => {
       const actionBtn = event.target.closest('[data-battle-action]');
