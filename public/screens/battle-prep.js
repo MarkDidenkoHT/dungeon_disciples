@@ -834,6 +834,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   let activeGhost    = null;
   let pointerDragging = false;
+  // Id of the pointer that owns the current drag. A touch screen happily
+  // delivers a second pointerdown (second finger, or a palm brushing another
+  // card) while the first is still down; without this, that second press
+  // started a fresh drag and orphaned the first ghost in the DOM forever —
+  // a fixed-position, pointer-events:none card stuck on screen. Every drag
+  // handler below ignores pointers that are not the owner.
+  let activePointerId = null;
 
   function makeDragGhost(unit) {
     const size     = getUnitSize(unit);
@@ -908,10 +915,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return null;
   }
 
-  function startPointerDrag(unit, fromCell, clientX, clientY) {
+  function startPointerDrag(unit, fromCell, clientX, clientY, pointerId = null) {
+    // Never leak a previous ghost, whatever state we were left in.
+    removeGhost();
+    clearHover();
     dragUnit        = unit;
     dragFromCell    = fromCell;
     pointerDragging = true;
+    activePointerId = pointerId;
     activeGhost     = makeDragGhost(unit);
     moveGhost(clientX, clientY);
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -932,6 +943,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     clearHover();
     removeGhost();
     pointerDragging = false;
+    activePointerId = null;
 
     const cell     = cellFromPoint(clientX, clientY);
     const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
@@ -966,6 +978,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     clearHover();
     removeGhost();
     pointerDragging = false;
+    activePointerId = null;
     dragUnit        = null;
     dragFromCell    = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -973,8 +986,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (track) track.classList.remove('portrait-track--drop-target');
   }
 
+  function isDragPointer(e) {
+    return pointerDragging && (activePointerId === null || e.pointerId === activePointerId);
+  }
+
   document.addEventListener('pointermove', e => {
-    if (!pointerDragging) return;
+    if (!isDragPointer(e)) return;
     e.preventDefault();
     moveGhost(e.clientX, e.clientY);
 
@@ -1002,12 +1019,20 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }, { passive: false });
 
   document.addEventListener('pointerup', e => {
-    if (!pointerDragging) return;
+    if (!isDragPointer(e)) return;
     finishPointerDrag(e.clientX, e.clientY);
   });
 
-  document.addEventListener('pointercancel', () => {
-    if (pointerDragging) cancelPointerDrag();
+  document.addEventListener('pointercancel', e => {
+    if (isDragPointer(e)) cancelPointerDrag();
+  });
+
+  // Safety net: if the element holding pointer capture is removed from the DOM
+  // mid-drag, some mobile browsers stop delivering pointermove/pointerup to it
+  // and no pointercancel arrives either — the drag would hang with its ghost on
+  // screen. lostpointercapture still fires, so tear the drag down there.
+  document.addEventListener('lostpointercapture', e => {
+    if (isDragPointer(e)) cancelPointerDrag();
   });
 
   const playerGrid = root.querySelector('#player-grid');
@@ -1016,6 +1041,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     playerGrid.querySelectorAll('.battle-cell--placed').forEach(cell => {
       cell.addEventListener('pointerdown', e => {
         if (e.target.closest('[data-remove]')) return;
+        if (!e.isPrimary || pointerDragging) return;
         e.preventDefault();
         const anchor = Number(cell.dataset.i);
         const occ    = occupied[anchor];
@@ -1023,7 +1049,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         const unit = roster.find(u => u.id === occ.unitId);
         if (!unit) return;
         cell.setPointerCapture(e.pointerId);
-        startPointerDrag(unit, anchor, e.clientX, e.clientY);
+        startPointerDrag(unit, anchor, e.clientX, e.clientY, e.pointerId);
       });
     });
   }
@@ -1097,9 +1123,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (card.classList.contains('portrait-card--locked')) return;
 
       card.addEventListener('pointerdown', e => {
+        if (!e.isPrimary || pointerDragging) return;
         e.preventDefault();
         card.setPointerCapture(e.pointerId);
-        startPointerDrag(u, null, e.clientX, e.clientY);
+        startPointerDrag(u, null, e.clientX, e.clientY, e.pointerId);
       });
 
       card.addEventListener('click', e => {
