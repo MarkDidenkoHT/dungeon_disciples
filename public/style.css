@@ -2668,6 +2668,21 @@ button:active:not(:disabled) { opacity: 0.75; }
   left: auto;
 }
 
+/* A stat's change from an equipped item, sitting against the number itself.
+   Replaces the old chip row below the card (.unit-stat-diffs), where the reader
+   had to match a label back to the stat it referred to. Superscript-ish and
+   small: the base number stays the thing you read first. */
+.core-stat-delta {
+  font-size: 0.62em;
+  font-weight: 700;
+  margin-left: 2px;
+  vertical-align: super;
+  line-height: 1;
+  white-space: nowrap;
+}
+.core-stat-delta--up   { color: #6fe03a; }
+.core-stat-delta--down { color: var(--danger); }
+
 .unit-stat-diffs {
   display: flex;
   flex-wrap: wrap;
@@ -4628,7 +4643,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/assets/icons/ui/building_slot1.png');
+  background-image: url('/assets/icons/ui/building_slot2.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   pointer-events: none;

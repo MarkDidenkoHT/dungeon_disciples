@@ -23,7 +23,7 @@ const {
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler } = require('../utils/telegram');
-const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
+const { ITEM_DEFS, applyItemModifiers, effectiveItemStats, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
@@ -99,6 +99,13 @@ function makeItemRow(playerId, itemKey) {
       passive:      def.passive,
       icon:         def.icon,
       unique:       def.unique ?? false,
+      // Equip restrictions were missing from this snapshot, so no owned item
+      // ever enforced them. Behaviour is now resolved through
+      // effectiveItemStats (data/items.js), which covers rows written before
+      // this line existed — these are recorded for completeness, not relied on.
+      blocked_tags:    def.blocked_tags,
+      blocked_actions: def.blocked_actions,
+      rarity:          def.rarity,
     },
   };
 }
@@ -2133,7 +2140,10 @@ router.post('/items/equip', requireAuth, async (req, res) => {
 
     const item        = itemRows[0];
     const rosterEntry = rosterRows[0];
-    const stats        = item.item_stats || {};
+    // Resolved from the catalog, not the stored snapshot — the row is missing
+    // blocked_tags entirely (see effectiveItemStats in data/items.js), so equip
+    // restrictions were never enforced on an owned item.
+    const stats        = effectiveItemStats(item.item_stats);
 
     if (stats.faction && stats.faction !== player.faction) {
       return res.status(400).json({ error: 'This item cannot be equipped by your faction' });
@@ -2317,11 +2327,23 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       .filter(r => !consumed.has(String(r.id)));
     if (newRow?.id && !items.some(r => String(r.id) === String(newRow.id))) items.push(newRow);
 
+    // The resource rows can lag the same way the item list can, leaving the bar
+    // showing the pre-craft amounts. Corrected against the deductions actually
+    // issued above, and only where a row still reads at its old value.
+    const resources = (Array.isArray(updatedResources) ? updatedResources : []).map(r => {
+      const spent = cost[r.item];
+      if (!spent) return r;
+      const charged = inventoryRows.find(x => String(x.id) === String(r.id));
+      return (charged && Number(r.amount) === Number(charged.amount))
+        ? { ...r, amount: Number(charged.amount) - spent }
+        : r;
+    });
+
     res.json({
       success:   true,
       item:      newRow,
       items,
-      resources: updatedResources,
+      resources,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

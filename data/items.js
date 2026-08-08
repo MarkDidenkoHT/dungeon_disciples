@@ -375,7 +375,7 @@ const ITEM_DEFS = {
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
     name:         "Cold Resistance Potion",
-    name_ru:      'Зелье Защиты От Холода',
+    name_ru:      'Зелье Защиты От Холодоа',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -984,13 +984,30 @@ function applyItemModifiers(unitData, itemStats) {
   return out;
 }
 
+// The `item_stats` written onto an owned item row is a SNAPSHOT taken when the
+// item was made, and it is not a complete one: makeItemRow never copied
+// `blocked_tags`, so the three items that use it (Crystal Exoskeleton, Shroud of
+// the Fallen, Forbidden Vow) had their restriction silently ignored by BOTH the
+// client's equip check and the server's. A snapshot also goes stale the moment a
+// definition is retuned.
+//
+// So behaviour is resolved from the catalog by key, with the stored row as the
+// fallback for anything the catalog no longer knows about. Existing rows pick up
+// definition changes for free, and no migration is needed.
+function effectiveItemStats(stats) {
+  if (!stats) return {};
+  const key = stats.key || stats.icon;
+  const def = key ? ITEM_DEFS[key] : null;
+  return def ? { ...stats, ...def } : stats;
+}
+
 export {
-  ITEM_DEFS, applyItemModifiers,
+  ITEM_DEFS, applyItemModifiers, effectiveItemStats,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ITEM_DEFS, applyItemModifiers,
+  ITEM_DEFS, applyItemModifiers, effectiveItemStats,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };

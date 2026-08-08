@@ -350,12 +350,25 @@ export function calcUnitPower(unit) {
   return Math.round(vitality + dps);
 }
 
+// A stat's change against the comparison unit, rendered NEXT TO the number it
+// belongs to. These used to be a separate chip row below the card ("HP +5",
+// "Armor +5"), which made the reader match a label to a stat by name; put
+// against the value, the same information needs no matching at all.
+function statDelta(unit, compareUnit, key) {
+  if (!compareUnit) return '';
+  const diff = (Number(unit[key]) || 0) - (Number(compareUnit[key]) || 0);
+  if (!diff) return '';
+  const cls = diff > 0 ? 'core-stat-delta--up' : 'core-stat-delta--down';
+  return `<span class="core-stat-delta ${cls}">${diff > 0 ? '+' : ''}${diff}</span>`;
+}
+
 export function renderUnitCoreStatsColumn(unit, opts = {}) {
   const actionLabel = getActionLabel(unit.action);
   const power       = unit.action_power ?? unit.action?.value ?? '—';
   const unitPower   = calcUnitPower(unit);
   const tier        = unit.t ?? unit.tier ?? '—';
-  const { canLevelUp = false, rosterId = null } = opts;
+  const { canLevelUp = false, rosterId = null, compareUnit = null } = opts;
+  const d = key => statDelta(unit, compareUnit, key);
 
   const lvCell = canLevelUp && rosterId
     ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-roster-id="${rosterId}"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></button>`
@@ -364,32 +377,40 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
   return `
     <div class="unit-core-stats unit-core-stats--side">
       ${lvCell}
-      <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
-      <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
-      <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
+      <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}${d('hp')}</span></div>
+      <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}${d('initiative')}</span></div>
+      <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}${d('action_power')}</span></div>
       <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
 }
 
-export function renderUnitResistColumn(unit) {
+export function renderUnitResistColumn(unit, opts = {}) {
+  const { compareUnit = null } = opts;
   const res      = unit.resistances || {};
+  const cmpRes   = compareUnit?.resistances || {};
   const armorVal = unit.armor ?? 0;
   const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
+  // Same treatment as the core stats: the change sits against the number it
+  // belongs to rather than in a separate chip row.
   const armorCell = `
     <div class="resist-cell" title="${uiText('Armor', 'Броня')}" data-armor="${armorVal}">
       <span class="resist-icon">🛡</span>
-      <span class="resist-val ${armorCls}">${armorVal}</span>
+      <span class="resist-val ${armorCls}">${armorVal}${statDelta(unit, compareUnit, 'armor')}</span>
     </div>`;
 
   const resistCells = RESIST_ORDER.map(r => {
     const info = RESIST_ICONS[r];
     const val  = res[r] ?? 0;
     const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+    const diff = compareUnit ? val - (cmpRes[r] ?? 0) : 0;
+    const deltaHtml = diff
+      ? `<span class="core-stat-delta ${diff > 0 ? 'core-stat-delta--up' : 'core-stat-delta--down'}">${diff > 0 ? '+' : ''}${diff}</span>`
+      : '';
     return `<div class="resist-cell" title="${RESIST_LABELS[r] ? uiText(RESIST_LABELS[r].en, RESIST_LABELS[r].ru) : info.label}">
       <span class="resist-icon">${info.icon}</span>
-      <span class="resist-val ${cls}">${val}</span>
+      <span class="resist-val ${cls}">${val}${deltaHtml}</span>
     </div>`;
   }).join('');
 
@@ -504,12 +525,11 @@ export function buildUnitCard(unit, opts = {}) {
   return `
     <div class="unit-card">
       <div class="unit-main-row">
-        ${renderUnitCoreStatsColumn(unit)}
+        ${renderUnitCoreStatsColumn(unit, { compareUnit })}
         ${renderUnitPortrait(unit, { badge })}
-        ${renderUnitResistColumn(unit)}
+        ${renderUnitResistColumn(unit, { compareUnit })}
       </div>
       <div class="unit-info">
-        ${renderUnitStatDiffs(unit, compareUnit)}
         ${descHtml}
         ${renderUnitAbilitiesRow(unit, { itemSlotHtml })}
       </div>
