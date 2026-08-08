@@ -17,7 +17,18 @@ app.use(express.json());
 // re-fetch ~27 MB of art on every launch. Not `immutable`: filenames are not
 // content-hashed, so replacing an image has to be able to take effect — a day
 // is the compromise between that and the bandwidth.
-const staticOpts = { maxAge: '1d' };
+// ...with one exception: CODE. Art can go stale for a day without anyone
+// noticing, but a cached .js/.css means a deployed fix simply does not arrive —
+// the browser keeps running yesterday's module and never asks for a new one.
+// `no-cache` does not mean "do not store", it means "revalidate before use", so
+// these still cost only a 304 when unchanged.
+const CODE_FILE = /\.(?:js|mjs|css|html)$/i;
+const staticOpts = {
+  maxAge: '1d',
+  setHeaders(res, filePath) {
+    if (CODE_FILE.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+  },
+};
 app.use('/data', express.static(path.join(__dirname, 'data'), staticOpts));
 app.use(express.static(path.join(__dirname, 'public'), staticOpts));
 
