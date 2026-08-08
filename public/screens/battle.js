@@ -50,6 +50,14 @@ const BT = {
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
   unlocked:     { en: n => `\u{1F513} Level ${n} unlocked!`, ru: n => `\u{1F513} Уровень ${n} открыт!` },
   xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
+  // The four action buttons are labelled by ROLE, always these four words —
+  // never the unit's action name. "Mend Flesh" / "Repair" / "Holy Shock" told
+  // the player what the unit does but not which button they were looking at,
+  // and the word changed every turn as the actor changed.
+  btnAction:    { en: 'Action',             ru: 'Действие' },
+  btnAbility:   { en: 'Ability',            ru: 'Способность' },
+  btnDefend:    { en: 'Defend',             ru: 'Защита' },
+  btnCancel:    { en: 'Cancel',             ru: 'Отмена' },
   // Per-unit XP block on the victory screen.
   xpGained:       { en: 'Experience',        ru: 'Опыт' },
   maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
@@ -113,16 +121,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return map;
   }
 
-  function renderAbilityButtonContent(actor, fallbackLabel) {
+  // Icon art for the actor's active ability, or null when it has none / has no
+  // art. The BUTTON's caption is the fixed word "Ability" either way — this only
+  // supplies the picture above it.
+  function abilityIconSrc(actor) {
     const abilityKey = actor?.unit_data?.ability || actor?.unit_data?.active_ability;
     const def = resolveAbility(abilityKey);
     const fileKey = abilityKey ? abilityKey.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-    const imgSrc = def && fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
-
-    if (imgSrc) {
-      return `<img class="battle-action-ability-icon" src="${imgSrc}" alt="${def.name || fallbackLabel}" onerror="this.style.display='none'">`;
-    }
-    return `<span class="action-btn__label">${fallbackLabel}</span>`;
+    return def && fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
   }
 
   // Localized bark text. For a non-English language, returns ONLY that language's
@@ -829,6 +835,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const actionIcon   = actor?.unit_data?.action_icon ?? null;
     const isNoneAction = actor && (typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type === 'none' : false);
 
+    // The basic action is armed the moment it becomes your turn: valid targets
+    // are lit straight away and a unit can be attacked in one tap instead of
+    // two. Choosing Ability is the only thing that changes it, and Cancel drops
+    // back here rather than to a dead "nothing selected" state.
+    //
+    // Done in render() rather than at each turn transition on purpose — this is
+    // the one place every path passes through (turn start, action resolved,
+    // reconnect, snapshot refresh), so there is no route that can land on an
+    // unarmed player turn.
+    if (!isEnemyTurn && !processing && actor && !pendingAction && !isNoneAction) {
+      selectingTarget = actor;
+      pendingAction   = 'attack';
+    }
+
     const validTargetKeys = new Set();
     if (selectingTarget && pendingAction) {
       getValidTargetIds(selectingTarget, pendingAction === 'ability').forEach(id => validTargetKeys.add(id));
@@ -885,26 +905,37 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // otherwise nothing on screen says whether you are aiming an attack or an
     // ability, and the only way to find out is to tap a unit and see.
     const armed = selectingTarget ? pendingAction : null;
-    ui.mainBtn.className = `action-btn ${armed === 'attack' ? 'action-btn--armed' : ''} ${isEnemyTurn || processing || selectingTarget || isNoneAction ? 'action-btn--disabled' : ''}`;
+
+    // Each button carries its ROLE as a caption, plus its icon. The icon still
+    // shows WHAT the action is (the unit's own action art, its ability art);
+    // the caption says which button this is, and never changes.
+    const btnFace = (iconSrc, label, altText, iconClass = 'battle-action-icon-img') => `
+      ${iconSrc ? `<img class="${iconClass}" src="${iconSrc}" alt="${altText}" onerror="this.style.display='none'">` : ''}
+      <span class="action-btn__label">${label}</span>`;
+
+    // No longer disabled while a target is being picked: with the basic action
+    // armed by default that would mean it is permanently greyed out. Tapping it
+    // now switches back from Ability.
+    ui.mainBtn.className = `action-btn ${armed === 'attack' ? 'action-btn--armed' : ''} ${isEnemyTurn || processing || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
-    if (actionIcon) {
-      ui.mainBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/${actionIcon}" alt="${actionLabel}" onerror="this.style.display='none'"><span class="battle-action-icon-fallback" style="display:none">${actionLabel}</span>`;
-    } else {
-      ui.mainBtn.textContent = actionLabel;
-    }
+    ui.mainBtn.innerHTML = btnFace(actionIcon ? `/assets/icons/actions/${actionIcon}` : null, BTx('btnAction'), actionLabel);
+    ui.mainBtn.title = actionLabel;   // the actual action name lives here
 
     ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
-    ui.abilityBtn.innerHTML = renderAbilityButtonContent(actor, abilityName);
+    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), BTx('btnAbility'), abilityName, 'battle-action-ability-icon');
     ui.abilityBtn.title = abilityName;
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
-    ui.defendBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/defend.jpg" alt="Defend" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><span style="display:none">Defend</span>`;
+    ui.defendBtn.innerHTML = btnFace('/assets/icons/actions/defend.jpg', BTx('btnDefend'), BTx('btnDefend'));
 
-    ui.cancelBtn.className = `action-btn action-btn--cancel ${!selectingTarget ? 'action-btn--disabled' : ''}`;
-    ui.cancelBtn.disabled = !selectingTarget;
-    ui.cancelBtn.innerHTML = `<img class="battle-action-icon-img" src="/assets/icons/actions/cancel.jpg" alt="Cancel" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><span style="display:none">✕</span>`;
+    // Only meaningful once something OTHER than the default is selected —
+    // cancelling the default would just re-arm it, so there is nothing to undo.
+    const canCancel = armed === 'ability' && !isEnemyTurn && !processing;
+    ui.cancelBtn.className = `action-btn action-btn--cancel ${!canCancel ? 'action-btn--disabled' : ''}`;
+    ui.cancelBtn.disabled = !canCancel;
+    ui.cancelBtn.innerHTML = btnFace('/assets/icons/actions/cancel.jpg', BTx('btnCancel'), BTx('btnCancel'));
 
     if (!processing) {
       ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
