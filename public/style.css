@@ -2671,6 +2671,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 0;
   position: relative;
   overflow: hidden;
+  background-image: url('/assets/screens/battle_prep_bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Sits between the arena and the action panel, so it needs breathing room on
@@ -2686,6 +2690,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   scrollbar-width: none;
   -ms-overflow-style: none;
   border-bottom: 1px solid var(--border);
+  /* Same framed panel art the prep track uses, so the queue reads as a physical
+     tray rather than a strip of cards floating on the battle background. */
+  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 .init-queue::-webkit-scrollbar { display: none; }
 
@@ -3684,7 +3693,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: 100% 100%;
   background-repeat: no-repeat;
   user-select: none;
-  touch-action: none;
+  /* pan-x, NOT none. `none` killed every horizontal swipe that started on a
+     card, so a track holding more units than fit on screen could not be
+     scrolled to reach them — the only way to see the rest was to place one.
+     pan-x hands sideways gestures to the browser (scroll the track) while
+     vertical movement stays ours, which is the direction a unit is dragged to
+     the grid anyway since the grid sits above the track. */
+  touch-action: pan-x;
 }
 
 /* Selection swaps the frame art for its lit variant. The hero gets no special

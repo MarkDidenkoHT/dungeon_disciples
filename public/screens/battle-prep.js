@@ -7,11 +7,6 @@ const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
-
-// TEMPORARY BUILD MARKER — runs at import time, before any gameplay logic.
-// If this line is absent from the console, the browser is running a cached
-// battle-prep.js and no amount of placement will log anything.
-console.log('[battle-prep] BUILD MARKER: position-barks v1 loaded');
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import {
@@ -629,27 +624,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   // A unit whose footprint does not include its preferred column objects. Large
   // 2-wide units span both columns and so never object — see position_barks.js.
   function queuePositionBark(unit, cells, anchor) {
-    const def     = resolveUnitDef(unit);
-    const prefers = derivePrefPosition(def);
-    const cols    = cells.map(cellCol);
-    const bark    = prefers ? pickPositionBark(def, prefers) : null;
-    // TEMPORARY DIAGNOSTIC — remove once the trigger is confirmed working.
-    console.log('[pos-bark]', {
-      unit:      def?.name ?? unit.unit_data?.unit_id,
-      range:     def?.range,
-      prefers,
-      cols,
-      satisfied: isPositionSatisfied(prefers, cols),
-      alreadySpoke: positionBarkSpoken.has(String(unit.id)),
-      barksEnabled: player?.settings?.barks_enabled !== false,
-      lang: L,
-      gotLine: !!bark,
-    });
-
     if (player?.settings?.barks_enabled === false) return;
     if (positionBarkSpoken.has(String(unit.id))) return;
+    const def     = resolveUnitDef(unit);
+    const prefers = derivePrefPosition(def);
     if (!prefers) return;
+    const cols = cells.map(cellCol);
     if (isPositionSatisfied(prefers, cols)) return;
+    const bark = pickPositionBark(def, prefers);
     if (!bark) return;
     const text = L === 'en' ? bark.text : bark.text_ru;
     if (!text) return;
@@ -669,8 +651,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const { anchor, text } = pendingPositionBark;
     pendingPositionBark = null;
     const cell = root.querySelector(`#player-grid [data-i="${anchor}"]`);
-    // TEMPORARY DIAGNOSTIC — remove once the trigger is confirmed working.
-    console.log('[pos-bark] flush', { anchor, text, cellFound: !!cell });
     if (!cell) return;
 
     root.querySelectorAll('.prep-bark-toast').forEach(t => t.remove());
@@ -1086,6 +1066,30 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return pointerDragging && (activePointerId === null || e.pointerId === activePointerId);
   }
 
+  // A press on a portrait card that has not yet resolved into either a drag or
+  // a scroll. See the card's pointerdown handler.
+  let pendingCardPress = null;
+  const DRAG_THRESHOLD_PX = 8;
+
+  // Passive: this listener must never block the browser's own panning, which is
+  // the whole point of deferring the drag.
+  document.addEventListener('pointermove', e => {
+    if (!pendingCardPress || pointerDragging) return;
+    if (e.pointerId !== pendingCardPress.pointerId) return;
+
+    const dx = e.clientX - pendingCardPress.x;
+    const dy = e.clientY - pendingCardPress.y;
+    if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;   // not yet a gesture
+
+    // Mostly sideways: it is a scroll. Drop the press and let the browser pan.
+    if (Math.abs(dx) > Math.abs(dy)) { pendingCardPress = null; return; }
+
+    const press = pendingCardPress;
+    pendingCardPress = null;
+    press.card.setPointerCapture(press.pointerId);
+    startPointerDrag(press.unit, null, e.clientX, e.clientY, press.pointerId);
+  }, { passive: true });
+
   document.addEventListener('pointermove', e => {
     if (!isDragPointer(e)) return;
     e.preventDefault();
@@ -1115,11 +1119,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }, { passive: false });
 
   document.addEventListener('pointerup', e => {
+    // A press that ended without ever crossing the threshold was a tap, not a
+    // drag — release it so it cannot arm a later gesture.
+    if (pendingCardPress && e.pointerId === pendingCardPress.pointerId) pendingCardPress = null;
     if (!isDragPointer(e)) return;
     finishPointerDrag(e.clientX, e.clientY);
   });
 
   document.addEventListener('pointercancel', e => {
+    if (pendingCardPress && e.pointerId === pendingCardPress.pointerId) pendingCardPress = null;
     if (isDragPointer(e)) cancelPointerDrag();
   });
 
@@ -1218,11 +1226,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       if (card.classList.contains('portrait-card--locked')) return;
 
+      // Deliberately does NOT start the drag yet, and does NOT preventDefault.
+      // Grabbing the pointer here meant every touch on a card became a drag, and
+      // the drag's pointermove calls preventDefault — so a sideways swipe could
+      // never scroll the track to reach units that did not fit on screen. The
+      // press is recorded and the direction of the first real movement decides:
+      // mostly horizontal hands off to the browser (scroll), mostly vertical
+      // becomes a drag to the grid. Grid cells keep the old immediate-grab path
+      // because the grid does not scroll.
       card.addEventListener('pointerdown', e => {
         if (!e.isPrimary || pointerDragging) return;
-        e.preventDefault();
-        card.setPointerCapture(e.pointerId);
-        startPointerDrag(u, null, e.clientX, e.clientY, e.pointerId);
+        pendingCardPress = { unit: u, card, pointerId: e.pointerId, x: e.clientX, y: e.clientY };
       });
 
       card.addEventListener('click', e => {
