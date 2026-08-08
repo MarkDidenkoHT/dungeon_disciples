@@ -2806,11 +2806,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .battle-log-toggle:hover { color: var(--accent); }
 
+/* Takes every pixel the arena and action panel leave behind, instead of being
+   capped at 35vh with dead space under it. flex-basis 0 + min-height 0 is what
+   lets it actually shrink and scroll inside the fixed-height battle column. */
 .battle-log {
-  flex-shrink: 0;
-  padding: 6px 10px;
+  flex: 1 1 0;
   min-height: 68px;
-  max-height: 35vh;
+  padding: 6px 10px;
   overflow-y: auto;
   background: var(--bg);
   border-top: none;   /* .battle-log-bar carries the divider now */
@@ -2821,10 +2823,69 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Expanded, the log takes the height back from the arena rather than growing
    the page — the battle screen is a fixed-height column. */
-.battle-log--expanded {
-  max-height: 70vh;
-  min-height: 40vh;
+/* The log now fills the column by default, so this only tips the balance
+   further its way rather than setting a fixed height (a hard min-height here
+   would overflow the fixed-height battle screen on a short phone). */
+.battle-log--expanded { flex-grow: 3; }
+
+/* ── Ability info panel ─────────────────────────────────────────────────────*/
+/* Occupies the same slot as the log; the fifth action button swaps them. */
+.battle-info {
+  flex: 1 1 0;
+  min-height: 68px;
+  padding: 8px 12px;
+  overflow-y: auto;
+  background: var(--bg);
 }
+.battle-info.hidden,
+.battle-log.hidden,
+.battle-log-bar.hidden { display: none; }
+
+.binfo { display: flex; flex-direction: column; gap: 10px; }
+.binfo-unit {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--text);
+}
+.binfo-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.binfo-head {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.binfo-desc {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.binfo-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+  padding: 2px 0;
+}
+.binfo-k { color: var(--muted); text-transform: capitalize; }
+.binfo-v { color: var(--text); font-weight: 700; text-align: right; }
+/* The derived figure, so it reads as a consequence of the number before it. */
+.binfo-calc { color: var(--accent); font-weight: 600; }
+.binfo-empty { margin: 0; font-size: 0.8rem; color: var(--muted); }
+.binfo-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.binfo-note--warn { color: var(--danger); font-style: normal; font-weight: 600; }
+
+.action-btn-glyph { font-size: 1.5rem; line-height: 1; color: var(--accent); }
 
 .log-entry        { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
 .log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
@@ -2851,7 +2912,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .action-panel-label  { font-size: 0.72rem; color: var(--muted); }
 .action-panel-label strong { color: var(--text); }
 
-.action-btns { display: flex; gap: 6px; justify-content: center; }
+.action-btns { display: flex; gap: 6px; justify-content: center; width: 100%; }
 
 /* One control = an icon TILE plus a caption underneath it. The caption sits
    outside the button so the tile stays a clean square of art and the border
@@ -2861,7 +2922,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  flex-shrink: 0;
+  /* Shares the row with the other four rather than holding a fixed width, so
+     five tiles fit on a narrow screen. */
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Always visible, always one of four fixed words - never the action's own name.
@@ -2882,8 +2946,13 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .action-btns .action-btn {
-  width: 65px;
-  height: 65px;
+  /* Five tiles now, not four. At a fixed 65px they came to ~349px with the gaps
+     and ran off a narrow phone, so they share the row instead: square, capped
+     at the old size, shrinking only when there is not enough width. */
+  width: 100%;
+  max-width: 65px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   padding: 0;
   border-radius: 6px;
   border: 1px solid var(--accent);

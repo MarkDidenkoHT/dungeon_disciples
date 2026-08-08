@@ -41,6 +41,19 @@ function getPortraitUrl(unit, variant = 'default') {
 const BT = {
   expandLog:    { en: 'Expand log',         ru: 'Развернуть журнал' },
   collapseLog:  { en: 'Collapse log',       ru: 'Свернуть журнал' },
+  btnInfo:      { en: 'Info',               ru: 'Инфо' },
+  showInfo:     { en: 'Show ability info',  ru: 'Показать информацию' },
+  showLog:      { en: 'Show combat log',    ru: 'Показать журнал боя' },
+  infoAction:   { en: 'Action',             ru: 'Действие' },
+  infoAbility:  { en: 'Ability',            ru: 'Способность' },
+  infoNoAbility:{ en: 'This unit has no active ability.', ru: 'У этого юнита нет активной способности.' },
+  infoNoActor:  { en: 'No unit is acting.', ru: 'Сейчас никто не ходит.' },
+  infoPower:    { en: 'Power',              ru: 'Сила' },
+  infoRange:    { en: 'Range',              ru: 'Дальность' },
+  infoTargets:  { en: 'Targets',            ru: 'Цели' },
+  infoType:     { en: 'Type',               ru: 'Тип' },
+  infoUsed:     { en: 'Already used this battle', ru: 'Уже использована в этом бою' },
+  infoFatigue:  { en: n => `Battle fatigue: healing at ${n}%`, ru: n => `Усталость боя: лечение на ${n}%` },
   victory:      { en: 'Victory',            ru: 'Победа' },
   defeat:       { en: 'Defeat',             ru: 'Поражение' },
   returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
@@ -71,6 +84,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
   let pendingAction    = null;
+  // The bottom panel shows one of two things: the combat log, or a breakdown of
+  // the acting unit's action and ability with the numbers resolved against that
+  // unit. The fifth action button swaps between them.
+  let panelMode        = 'log';   // 'log' | 'info'
   let selectedCombatant = null;
   let processing       = false;
   let prevState        = null;   // snapshot before each render, used for diff-based animations
@@ -594,6 +611,106 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return '';
   }
 
+  // ── Ability info panel ──────────────────────────────────────────────────────
+  // Mirrors BATTLE_FATIGUE in utils/battle-engine.js. Duplicated rather than
+  // imported because that module is CommonJS and server-side; if the engine's
+  // numbers change, change these too.
+  const FATIGUE = { start: 5, perRound: 10, maxPct: 50 };
+
+  function fatigueHealPct() {
+    const over = (state.round ?? 1) - FATIGUE.start;
+    if (over <= 0) return 100;
+    return 100 - Math.min(FATIGUE.maxPct, over * FATIGUE.perRound);
+  }
+
+  const infoRow = (k, v) =>
+    `<div class="binfo-row"><span class="binfo-k">${k}</span><span class="binfo-v">${v}</span></div>`;
+
+  // Params are shown resolved: a percentage-of-HP cost is worth nothing to a
+  // player as "10%", so the absolute figure for THIS unit is worked out too.
+  function paramRows(def, actor) {
+    const p     = def?.params || {};
+    const maxHp = actor.max_hp ?? actor.unit_data?.hp ?? 0;
+    const rows  = [];
+    for (const [key, val] of Object.entries(p)) {
+      if (val == null || typeof val === 'boolean' || typeof val === 'object') continue;
+      const label = key.replace(/_/g, ' ');
+      if (typeof val === 'number' && /pct$/.test(key)) {
+        const hpish = /hp|heal|cost|sacrifice|drain/.test(key);
+        rows.push(infoRow(label, hpish && maxHp
+          ? `${val}% <span class="binfo-calc">= ${Math.max(1, Math.floor(maxHp * val / 100))} HP</span>`
+          : `${val}%`));
+      } else {
+        rows.push(infoRow(label, String(val)));
+      }
+    }
+    return rows.join('');
+  }
+
+  function renderBattleInfo() {
+    if (!ui?.battleInfo) return;
+    const actor = currentActor();
+    if (!actor) {
+      ui.battleInfo.innerHTML = `<p class="binfo-empty">${BTx('infoNoActor')}</p>`;
+      return;
+    }
+    const ud       = actor.unit_data || {};
+    const dmgMult  = actor.buffs?._dmg_mult ?? 1;
+    const rawPower = Number(ud.action_power ?? 0);
+    const power    = Math.floor(rawPower * dmgMult);
+    const powerStr = dmgMult !== 1
+      ? `${power} <span class="binfo-calc">(${rawPower} x${dmgMult.toFixed(2)})</span>`
+      : `${power}`;
+
+    const abilityKey = ud.ability || ud.active_ability;
+    const def        = abilityKey ? (resolveAbility(abilityKey) || UNIT_ABILITIES[abilityKey]) : null;
+    const abName     = def ? (BL === 'ru' ? (def.name_ru || def.name) : def.name) : null;
+    const abDesc     = def ? (BL === 'ru' ? (def.description_ru || def.description) : def.description) : null;
+
+    const healPct = fatigueHealPct();
+
+    ui.battleInfo.innerHTML = `
+      <div class="binfo">
+        <div class="binfo-unit">${actor.unit_name}</div>
+
+        <div class="binfo-section">
+          <div class="binfo-head">${BTx('infoAction')} — ${getActionLabel(actor)}</div>
+          ${infoRow(BTx('infoPower'), powerStr)}
+          ${ud.damage_source ? infoRow(BTx('infoType'), ud.damage_source) : ''}
+          ${infoRow(BTx('infoRange'), String(ud.range ?? 1))}
+          ${infoRow(BTx('infoTargets'), String(ud.targets ?? 1))}
+        </div>
+
+        <div class="binfo-section">
+          <div class="binfo-head">${BTx('infoAbility')}${abName ? ` — ${abName}` : ''}</div>
+          ${def ? `
+            ${abDesc ? `<p class="binfo-desc">${abDesc}</p>` : ''}
+            ${paramRows(def, actor)}
+            ${actor.used_active ? `<div class="binfo-note">${BTx('infoUsed')}</div>` : ''}
+          ` : `<p class="binfo-empty">${BTx('infoNoAbility')}</p>`}
+        </div>
+
+        ${healPct < 100 ? `<div class="binfo-note binfo-note--warn">${BT.infoFatigue[BL](healPct)}</div>` : ''}
+      </div>`;
+  }
+
+  // Swaps which of the two bottom panels is on show, and re-labels the button
+  // with what it will do NEXT.
+  function applyPanelMode() {
+    if (!ui?.battleInfo) return;
+    const info = panelMode === 'info';
+    ui.battleInfo.classList.toggle('hidden', !info);
+    ui.battleLog.classList.toggle('hidden', info);
+    ui.logToggle?.parentElement?.classList.toggle('hidden', info);
+    if (ui.panelBtn) {
+      ui.panelBtn.title = info ? BTx('showLog') : BTx('showInfo');
+      ui.panelBtn.setAttribute('aria-label', ui.panelBtn.title);
+      ui.panelBtn.classList.toggle('action-btn--armed', info);
+      ui.panelBtn.innerHTML = `<span class="action-btn-glyph">${info ? '📜' : 'ℹ'}</span>`;
+    }
+    if (info) renderBattleInfo();
+  }
+
   function ensureShell() {
     if (ui?.screen) return ui;
 
@@ -635,12 +752,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
               <span class="action-slot-label">${BTx('btnCancel')}</span>
             </div>
+            <div class="action-slot">
+              <button class="action-btn action-btn--panel" id="btn-panel" data-battle-action="panel"></button>
+              <span class="action-slot-label">${BTx('btnInfo')}</span>
+            </div>
           </div>
         </div>
         <div class="battle-log-bar">
           <button class="battle-log-toggle" id="battle-log-toggle" aria-expanded="false"></button>
         </div>
         <div class="battle-log" id="battle-log"></div>
+        <div class="battle-info hidden" id="battle-info"></div>
       </div>
     `;
 
@@ -655,6 +777,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       defendBtn: root.querySelector('#btn-defend'),
       cancelBtn: root.querySelector('#btn-cancel'),
       battleLog: root.querySelector('#battle-log'),
+      battleInfo: root.querySelector('#battle-info'),
+      panelBtn: root.querySelector('#btn-panel'),
       logToggle: root.querySelector('#battle-log-toggle'),
     };
 
@@ -673,6 +797,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       applyLogToggle();
     });
     applyLogToggle();
+    applyPanelMode();
 
     attachEvents();
     return ui;
@@ -952,9 +1077,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.cancelBtn.disabled = !canCancel;
     ui.cancelBtn.innerHTML = btnFace('/assets/icons/actions/cancel.jpg', BTx('btnCancel'));
 
+    // A glyph, not an icon tile: there is no art for this action, and an <img>
+    // that 404s would leave the button blank. Shows what the panel will switch
+    // TO, matching the title set in applyPanelMode.
+    // Never disabled — reading what an ability does is useful on the enemy's
+    // turn too, and while an action is resolving.
+    ui.panelBtn.innerHTML = `<span class="action-btn-glyph">${panelMode === 'info' ? '📜' : 'ℹ'}</span>`;
+    ui.panelBtn.classList.toggle('action-btn--armed', panelMode === 'info');
+
     if (!processing) {
       ui.battleLog.innerHTML = (state.log || []).slice().reverse().map(formatLogEntry).join('');
     }
+    // Whoever is acting has changed, so the breakdown has to follow.
+    if (panelMode === 'info') renderBattleInfo();
 
     const battleHost = root.querySelector('.screen-battle') || root;
     if (!fxInitialized) {
@@ -1048,6 +1183,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actionBtn = event.target.closest('[data-battle-action]');
       if (actionBtn) {
         const action = actionBtn.dataset.battleAction;
+        // Handled before the turn guard below: reading what an ability does is
+        // just as useful on the enemy's turn, or while an action resolves.
+        if (action === 'panel') {
+          panelMode = panelMode === 'info' ? 'log' : 'info';
+          applyPanelMode();
+          return;
+        }
         const actor = currentActor();
         if (!actor || actor.side === 'enemy' || processing) return;
         closeStatsModal();
