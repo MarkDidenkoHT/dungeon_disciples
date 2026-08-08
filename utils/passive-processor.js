@@ -81,13 +81,15 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
       for (const a of allies) { a.battle_hp += p.ally_max_hp_bonus; a.max_hp += p.ally_max_hp_bonus; }
       engine.recordGrantedBuff(owner, 'max_hp', allies, p.ally_max_hp_bonus);
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_max_hp_bonus });
+      // `stat` marks this as a stat grant, not a heal — without it the client's
+      // log renderer defaults to "healed" (entry.heal !== false).
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_max_hp_bonus, heal: false, stat: 'max HP' });
     }
     if (p.ally_armor_bonus != null) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
       for (const a of allies) { a.armor += p.ally_armor_bonus; }
       engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus });
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
     }
     if (p.hp_per_tagged_unit != null && p.tag_required != null) {
       const tagCount = engine.combatants.filter(c =>
@@ -183,6 +185,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           type: 'passive', passive: def.name,
           actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
           targetName: 'all allies', value: p.resist_aura_value,
+          heal: false, stat: `${school} resistance`,
           message: `${def.name} — +${p.resist_aura_value} ${school} resistance to the party`,
         });
       }

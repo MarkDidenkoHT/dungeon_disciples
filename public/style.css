@@ -590,7 +590,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-shrink: 0;
   border-top: none;
-  height: 11vh;
+  height: 10vh;
 }
 
 .nav-btn {
@@ -616,7 +616,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .nav-btn-icon {
   width: auto;
-  height: 7vh;
+  height: 5vh;
   object-fit: contain;
   display: block;
   filter: brightness(0.65) sepia(0.3);
@@ -2673,16 +2673,20 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow: hidden;
 }
 
+/* Sits between the arena and the action panel, so it needs breathing room on
+   both sides plus a rule to separate it from the buttons below. */
 .init-queue {
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   gap: 5px;
-  padding: 5px 8px;
+  padding: 8px 8px 10px;
+  margin-top: 6px;
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  border-bottom: 1px solid var(--border);
 }
 .init-queue::-webkit-scrollbar { display: none; }
 

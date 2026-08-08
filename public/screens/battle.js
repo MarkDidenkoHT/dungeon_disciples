@@ -536,6 +536,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'passive') {
       const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
       const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
+      // A stat grant (armor / resistance / max HP) is neither a heal nor a hit.
+      // `stat` names it; without that flag the entry would fall through to the
+      // heal wording, which is how buff auras came to read as "healed for 3".
+      if (entry.stat) {
+        return `<div class="log-entry log-entry--passive">
+          <span class="log-actor">${entry.actorName}</span>${actorLoc}
+          <span class="log-passive"> ${entry.passive}</span>
+          granted
+          <span class="log-target"> ${entry.targetName}</span>${targetLoc}
+          <span class="log-val-heal">+${entry.value}</span> ${entry.stat}
+        </div>`;
+      }
       const isHeal    = entry.heal !== false;
       return `<div class="log-entry log-entry--passive">
         <span class="log-actor">${entry.actorName}</span>${actorLoc}
@@ -575,7 +587,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     root.innerHTML = `
       <div class="screen screen-battle">
-        <div class="init-queue" id="init-queue"></div>
         <div class="battle-arena">
           <div class="battle-half battle-half--player">
             <div class="battle-grid-wrap">
@@ -588,6 +599,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             </div>
           </div>
         </div>
+        <div class="init-queue" id="init-queue"></div>
         <div class="action-panel">
           <div class="action-panel-label" id="action-panel-label"></div>
           <div class="action-btns">
