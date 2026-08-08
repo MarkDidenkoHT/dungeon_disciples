@@ -202,7 +202,7 @@ const UNIT_ABILITIES = {
   },
   'grails_blessing 1': {
     id: 'grails_blessing 1',
-    name: "Grail's lessing",
+    name: "Grail's Blessing",
     name_ru: "Благословение Грааля",
     rank: 1,
     type: 'active',

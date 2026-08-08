@@ -980,7 +980,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'iron_fist.jpg',
+      damage_source: 'physical', action_power: 22, action_icon: 'iron_fist.jpg',
       xp: 150, passive: 'unbreakable 2', ability: null,
     },
     iron_automaton: {
@@ -1002,7 +1002,7 @@ const UNITS = {
       hp: 130, armor: 30, initiative: 55,
       resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 35, action_icon: 'iron_fist.jpg',
+      damage_source: 'physical', action_power: 36, action_icon: 'iron_fist.jpg',
       xp: 1800, passive: ['unbreakable 2', 'protector 1', 'beacon_of_hope 1'], ability: 'lions_roar 2',
     },
     siege_engine: {

@@ -15,42 +15,46 @@ const UNIT_ART = new Set([
   'gs12', 'gs311', 'gs61', 'gs411', 'gs21',
 ]);
 
+// One short paragraph per hero: what they DO, and which two pieces of their kit
+// combo. Deliberately no numbers — stats are on the card right above this text,
+// and repeating them there wastes the only lines a new player actually reads.
+// Every ability named here is verified against data/unit_abilities.js.
 const HERO_FLAVOR = {
   h_e_1: {
-    en: 'A sworn shield of the Empire, first to the front and last to fall back. Where the Paladin’s mace falls the light answers, mending a wounded ally even as it breaks the wicked.',
-    ru: 'Верный щит Империи, первый в атаке и последний в отступлении. Там, где опускается булава Паладина, отвечает свет — исцеляя раненого союзника и сокрушая нечестивых.',
+    en: 'Holds the line, and cleans it. Mithrail’s Light keeps him standing where the fighting is worst, and Cleanse strips bleed, burn and poison off an ally.',
+    ru: 'Держит строй — и очищает его. Свет Митраила удерживает его там, где бой всего тяжелее, а Очищение снимает с союзника кровотечение, горение и яд.',
   },
   h_e_2: {
-    en: 'An Inquisitor of the Holy Order, whose condemnation falls as searing light across the whole enemy line. Their unwavering presence steels the faithful, hardening every ally against the trials to come.',
-    ru: 'Инквизитор Святого Ордена, чей приговор обрушивается жгучим светом на весь вражеский строй. Непоколебимое присутствие Инквизитора укрепляет верных, закаляя каждого союзника перед грядущими испытаниями.',
+    en: 'Judgement, on everyone at once. His attack falls across the whole enemy formation. Vitality strengthens every ally; Purge tears the blessings off an enemy. Keep him behind the wall.',
+    ru: 'Приговор — всем сразу. Его атака обрушивается на весь вражеский строй. Живучесть укрепляет каждого союзника, а Изгнание срывает с врага все благословения. Держите его за стеной.',
   },
   h_e_3: {
-    en: 'A master Artificer of the Empire, tending the armored ranks from just behind the line. Every ally marches out better-plated for their craft, and in these hands broken things do not stay broken for long.',
-    ru: 'Мастер-механик Империи, что чинит латников прямо из-за линии фронта. Благодаря такому ремеслу каждый союзник выходит в бой в лучшей броне, а в этих руках сломанное недолго остаётся сломанным.',
+    en: 'Keeps the wall standing. Repairs allies from range, and Fortify armors the whole party. He has no active ability — his turn is upkeep, and the line lives or dies on it.',
+    ru: 'Держит стену целой. Чинит союзников на расстоянии, а Укрепление даёт броню всему отряду. Активной способности у него нет — его ход это работа, и на ней держится весь строй.',
   },
   h_d_1: {
-    en: 'A castellan bound to infernal service, commanding the Choir\u2019s knights with cold authority — an unmoving wall that dares the enemy to strike anywhere but here.',
-    ru: 'Кастелян, связанный адской службой, холодно командующий рыцарями Хора, — недвижимая стена, что заставляет врага бить куда угодно, только не сюда.',
+    en: 'Wants to be hit. Taunt drags the enemy in front onto him; Rage turns every wound into fury. The taunt is how you feed the passive.',
+    ru: 'Хочет, чтобы били его. Провокация тянет врага напротив на него, а Ярость обращает каждую рану в силу. Провокация — это то, чем вы кормите пассивку.',
   },
   h_d_2: {
-    en: 'A regent of the demon court, whose ambition burns hotter than the throne beneath them. Their command sharpens every ally’s strike, and the abyss yields its dead back at their word.',
-    ru: 'Регент демонического двора, чьи амбиции горячее самого трона. Приказ Регента оттачивает удары каждого союзника, а бездна по его слову возвращает своих мертвецов.',
+    en: 'Rules from the back. Inspiration lifts the allies beside him, and Rite of Reclamation calls a fallen demon back to the field. He commands; he does not brawl.',
+    ru: 'Правит из тыла. Вдохновение усиливает союзников рядом, а Обряд возвращения поднимает павшего демона обратно в бой. Он командует, а не дерётся.',
   },
   h_d_3: {
-    en: 'An ascendant caster touched by the abyss, wielding fire it has not yet learned to fear. What it sets alight it keeps burning, and every ember left behind only feeds the next.',
-    ru: 'Возносящийся заклинатель, тронутый бездной, владеющий огнём, которого ещё не научился бояться. Что он поджёг — то горит без конца, и каждый оставленный уголёк лишь питает следующий.',
+    en: 'Sets the field alight. Mark of Ash makes a burn permanent, and Fellfire splashes every burning enemy each time he strikes. Burn one — after that, everything he does hits everyone.',
+    ru: 'Поджигает поле. Печать пепла делает горение постоянным, а Злое пламя задевает каждого горящего врага при каждом его ударе. Подожгите одного — дальше всё, что он делает, бьёт по всем.',
   },
   h_g_1: {
-    en: 'A prophet who mourns the living as though they were already lost. Draw close and the Mourning Prophet strikes first, drinking deep before a blade can ever fall.',
-    ru: 'Пророк, оплакивающий живых так, будто они уже потеряны. Подойди ближе — и Скорбящий Пророк ударит первым, испив досыта прежде, чем опустится клинок.',
+    en: 'Invites the blow, answers first. Taunt goads the enemy in front into striking at him, and Duelist lands his blow first — a kill cancels their attack outright.',
+    ru: 'Зовёт удар и отвечает первым. Провокация вынуждает врага напротив бить именно его, а Дуэлянт наносит удар раньше — и если враг падёт, его атака отменяется.',
   },
   h_g_2: {
-    en: 'A warden sworn to the Grail, standing watch over the undying faithful. The more of the dead that march at their side, the harder the Warden is to put down.',
-    ru: 'Страж, присягнувший Граалю, охраняющий нестареющих верных. Чем больше мертвецов идёт рядом, тем труднее свалить Стража.',
+    en: 'Stronger the more dead you bring. Horde hardens him for every Zombie at his side, and Shared Suffering spreads what he takes across the party.',
+    ru: 'Тем сильнее, чем больше мертвецов вы привели. Орда закаляет его за каждого зомби рядом, а Разделённое страдание распределяет полученный урон по всему отряду.',
   },
   h_g_3: {
-    en: 'A spirit who speaks with a mother\u2019s voice, though she died before the Grail was ever found. Her sorrow mends the wounded and drags the enemy down into a slow, mournful crawl.',
-    ru: 'Дух, говорящий голосом матери, хотя она умерла ещё до обретения Грааля. Её скорбь исцеляет раненых и тянет врагов в тоскливое оцепенение.',
+    en: 'Moves before anyone else. Sorrow drags the speed out of every enemy on the field, and Mother’s Blessing spends her own life each turn to keep the party standing.',
+    ru: 'Ходит раньше всех. Скорбь вытягивает скорость из каждого врага на поле, а Благословение Матери каждый ход тратит её собственную жизнь, чтобы отряд устоял.',
   },
 };
 
@@ -62,17 +66,22 @@ function getHighlights(factionKey) {
     .slice(0, 5);
 }
 
+// The three factions all want the same thing — the shards of the Shattered
+// Crown, broken in the war for Ilmenar. Each description names a god, a place
+// and a reason, because "what do they want and why can't they share it" is what
+// makes the choice mean anything. Faction IDS are unchanged: these are display
+// labels only, and the ids are written into save data.
 const FACTIONS = [
   {
     id: 'empire',
-    label: { en: 'The Empire', ru: 'Империя' },
+    label: { en: 'Aurex', ru: 'Аурекс' },
     tagline: {
-      en: 'Defenders of the realm, forged in honor.',
-      ru: 'Защитники королевства, закалённые честью.',
+      en: 'The lion does not tire.',
+      ru: 'Лев не знает усталости.',
     },
     description: {
-      en: 'Disciplined knights, holy casters, and battlefield engineers stand together behind shield and oath. The Empire rewards a steady front line and righteous retribution.',
-      ru: 'Дисциплинированные рыцари, святые заклинатели и полевые инженеры стоят плечом к плечу за щитом и клятвой. Империя вознаграждает крепкий фронт и праведное возмездие.',
+      en: 'Aurex kept its faith when the crown broke: Mithrail, the golden lion, rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs in Aurexian hands.',
+      ru: 'Аурекс сохранил веру, когда корона раскололась: Митраил, золотой лев, вознаграждает тех, кто держит строй. Его рыцари, жрецы и инженеры бьются как одна стена — в броне, освящённые и уверенные, что каждый осколок принадлежит Аурексу.',
     },
     bg: '/assets/screens/empire.jpg',
     crest: '/assets/crests/empire.jpg',
@@ -80,14 +89,14 @@ const FACTIONS = [
   },
   {
     id: 'choir_of_the_cursed',
-    label: { en: 'Choir of the Cursed', ru: 'Хор Проклятых' },
+    label: { en: 'The Choir', ru: 'Хор' },
     tagline: {
-      en: 'Creatures of darkness, bound by ambition.',
-      ru: 'Порождения тьмы, объединённые амбициями.',
+      en: 'They asked, and something beneath answered.',
+      ru: 'Они воззвали — и нечто снизу ответило.',
     },
     description: {
-      en: 'Demons, puppets, and courtly schemers serve a hierarchy built on hunger and dread. The Choir thrives on frenzy, sacrifice, and turning enemy strength against itself.',
-      ru: 'Демоны, марионетки и придворные интриганы служат иерархии, построенной на голоде и страхе. Хор процветает на исступлении, жертве и обращении силы врага против него самого.',
+      en: 'When the court of Cinderhold wanted more than its borders could give, it called downward, and Aggrail replied. The bargain made lords into demons and a court into a choir. They do not seek the crown’s shards. They are collecting what was promised.',
+      ru: 'Когда двору Пепельного Чертога стало мало собственных границ, он воззвал вниз — и Агграил ответил. Сделка обратила владык в демонов, а двор — в хор. Они не ищут осколки короны. Они забирают обещанное.',
     },
     bg: '/assets/screens/choir.jpg',
     crest: '/assets/crests/choir.jpg',
@@ -95,14 +104,14 @@ const FACTIONS = [
   },
   {
     id: 'grail_of_sorrow',
-    label: { en: 'Grail of Sorrow', ru: 'Грааль Скорби' },
+    label: { en: 'The Grail', ru: 'Грааль' },
     tagline: {
-      en: 'The undying faithful, bound to the sacred grail.',
-      ru: 'Нестареющие верные, связанные со священным Граалем.',
+      en: 'One second. That was all it took.',
+      ru: 'Одна секунда. Этого хватило.',
     },
     description: {
-      en: 'The risen dead, siege constructs, and grieving spirits march for a relic that promises resurrection without end. The Grail wears down its foes through attrition and undeath.',
-      ru: 'Восставшие мертвецы, осадные машины и скорбящие духи идут за реликвией, обещающей бесконечное воскрешение. Грааль изматывает врагов измором и нежитью.',
+      en: 'In the war for Ilmenar, its scholars cast a spell to carry their people forward — an error in the translation carried them too far. In a single second the city and everyone in it aged into rot. Now two answers divide them: accept the rot, or hold it back with the blood and living essence of others.',
+      ru: 'В войне за Ильменар его учёные сотворили заклинание, чтобы продвинуть свой народ вперёд, — ошибка в переводе унесла их слишком далеко. За одну секунду город и все в нём истлели. Теперь их разделяют два ответа: принять тлен или сдерживать его кровью и живой сутью других.',
     },
     bg: '/assets/screens/grail.jpg',
     crest: '/assets/crests/grail.jpg',

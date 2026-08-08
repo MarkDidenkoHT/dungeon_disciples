@@ -30,10 +30,10 @@ const TIMELINE = [
   },
   {
     date: '',
-    title: { en: 'PvP',
-             ru: 'PvP' },
-    desc:  { en: 'New embark region, ladder, party strength matchmaking!',
-             ru: 'Новый регион, рейтинговая лестница и подбор противников по силе отряда!' },
+    title: { en: 'Crown Shards — live PvP',
+             ru: 'Осколки короны — живой PvP' },
+    desc:  { en: 'Duel other players in real time, matched by party strength. Every victory counts toward your faction, not just your own rank.',
+             ru: 'Дуэли с другими игроками в реальном времени, подбор по силе отряда. Каждая победа идёт в зачёт вашей фракции, а не только вашего личного ранга.' },
   },
   {
     date: '',
@@ -48,10 +48,10 @@ const TIMELINE = [
   },
   {
     date: '',
-    title: { en: 'Dominion and first season!',
-             ru: 'Доминион и первый сезон!' },
-    desc:  { en: 'Global faction progress system! All players contribute to their faction goal for the season! Seasonal rewards! New seasonal daily errands!',
-             ru: 'Глобальный прогресс фракций! Все игроки вносят вклад в цель сезона! Сезонные награды и новые ежедневные поручения!' },
+    title: { en: 'The first season',
+             ru: 'Первый сезон' },
+    desc:  { en: 'The crown broke in the war for Ilmenar, and its shards fell across the world. Every duel you win adds to your faction’s standing — when the season closes, the leading faction claims a shard and keeps it. Seasonal rewards and new daily errands.',
+             ru: 'Корона раскололась в войне за Ильменар, и её осколки разлетелись по миру. Каждая ваша победа в дуэли добавляется к счёту фракции — когда сезон завершается, ведущая фракция забирает осколок себе. Сезонные награды и новые ежедневные поручения.' },
   },
   {
     date: '',

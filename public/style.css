@@ -2410,11 +2410,28 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding-right: 10px;
 }
 
+/* Resurrect, Heal and the favor button are ONE control stack, so they share a
+   footprint. Sized here rather than on each button: the three have different
+   internals (one line vs two, plain text vs badge + label) and would otherwise
+   drift apart every time one of them changed. Because they stack vertically,
+   a difference in width reads as a mistake rather than a hierarchy. */
+.unit-card-overlay--actions > button {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 200px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+}
+
+/* Size (width / min-height / padding) is owned by .unit-card-overlay--actions
+   above so all three action buttons match — only the skin lives here. */
 .resurrect-btn {
   background: linear-gradient(180deg,#2563eb,#1243b8);
   color: #fff;
   border: none;
-  padding: 9px 14px;
   border-radius: 8px;
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6);
@@ -2426,7 +2443,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: linear-gradient(180deg,#16a34a,#0f7a37);
   color: #fff;
   border: none;
-  padding: 9px 14px;
   border-radius: 8px;
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6);
@@ -2440,15 +2456,13 @@ button:active:not(:disabled) { opacity: 0.75; }
    the same place. Two stacked lines and a hard width cap: as a single row with
    a long faction label it ran off the portrait and over the stat columns. */
 .favor-btn {
-  display: flex;
+  /* Column, unlike the single-line spell buttons — but the same footprint,
+     which comes from .unit-card-overlay--actions. */
   flex-direction: column;
-  align-items: center;
   gap: 1px;
-  max-width: 100%;
   background: rgba(10, 12, 16, 0.88);
   border: 1px solid var(--accent);
   color: var(--text);
-  padding: 4px 9px;
   border-radius: 8px;
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6);
@@ -4741,10 +4755,31 @@ button:active:not(:disabled) { opacity: 0.75; }
   letter-spacing: 0.04em;
 }
 
+/* The hook, in the faction's own voice — brighter than the explanation under
+   it so the story lands before the mechanics do. */
+.pvp-placeholder-lead {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.45;
+  font-style: italic;
+}
+
 .pvp-placeholder-desc {
   font-size: 0.875rem;
   color: var(--muted);
   line-height: 1.5;
+}
+
+/* Kept last and quiet: this is a roadmap screen, not a feature. */
+.pvp-placeholder-soon {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 3px 12px;
+  opacity: 0.85;
 }
 
 .prep-bottom-bar {

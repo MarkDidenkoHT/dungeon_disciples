@@ -273,7 +273,14 @@ export function renderRoster(root, { player }) {
     // Two compact lines so it stays inside the portrait: a long faction label
     // like 'Devotion to Mithrail' on one row overran onto the stat columns.
     const favorLabel = (FAVOR_LABELS[player.faction] || FAVOR_FALLBACK)[L];
-    const favorNeeded = !alive || isDamaged;
+    // Hidden for the whole of onboarding. The spell tutorial exists to teach
+    // Resurrect and Heal on exactly the unit this button would fix in one tap —
+    // offering the shortcut there teaches players to skip the mechanic being
+    // taught, and puts an ad in front of someone who has not seen the game yet.
+    // Gated on the persisted flag as well as the live one, so it stays hidden
+    // between the screen mounting and the tutorial actually starting.
+    const onboarding  = spellTutorialActive || !isTutorialDone(player, 'spell_heal');
+    const favorNeeded = (!alive || isDamaged) && !onboarding;
     const favorButtonHtml = favorNeeded ? `
         <button class="favor-btn${favorRemaining <= 0 ? ' favor-btn--spent' : ''}"
                 data-roster-id="${u.id}"
