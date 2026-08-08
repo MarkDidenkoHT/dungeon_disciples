@@ -9,7 +9,7 @@ const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, resolveUpgradeBranch, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const {
   getActiveBattle,
@@ -1036,7 +1036,10 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     } else {
       if (!buildingSlot) return res.status(400).json({ error: 'Unit has no building slot assigned; cannot determine upgrade path' });
       const currentBuildingId = structRows[0].buildings_data[buildingSlot]?.building_id;
-      const matched = paths.find(p => p.building_id === currentBuildingId);
+      // Accepts a building further UP the branch, not just the immediate next
+      // one - see resolveUpgradeBranch in data/buildings.js. Building the tier-3
+      // barracks over a tier-1 unit used to leave that unit unupgradable.
+      const matched = resolveUpgradeBranch(faction, paths, currentBuildingId);
       if (!matched) return res.status(400).json({ error: `Build ${paths.map(p => p.label).join(' or ')} first to choose an upgrade path` });
       path = matched;
     }
@@ -1056,8 +1059,17 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       const buildings = structRows[0].buildings_data;
       const slotState = buildings[buildingSlot];
       if (slotState) {
-        buildings[buildingSlot] = { ...slotState, building_id: path.building_id };
-        updatePromises.push(supabase(`/structures?id=eq.${structRows[0].id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) }));
+        // Move the building forward WITH the unit, but never backwards. When the
+        // player has already built past this tier, overwriting building_id with
+        // the branch's own building would silently demolish the higher tier they
+        // paid for.
+        const builtDef  = getBuildingDef(faction, slotState.building_id);
+        const targetDef = getBuildingDef(faction, path.building_id);
+        const aheadAlready = builtDef && targetDef && (builtDef.tier ?? 1) >= (targetDef.tier ?? 1);
+        if (!aheadAlready) {
+          buildings[buildingSlot] = { ...slotState, building_id: path.building_id };
+          updatePromises.push(supabase(`/structures?id=eq.${structRows[0].id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) }));
+        }
       }
     }
     await Promise.all(updatePromises);
@@ -1412,6 +1424,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
             tag:                  params.tag_required,
             heal_per_tagged_unit: params.heal_per_tagged_unit,
             name:                 spellDef.name,
+            effect_name:          spellDef.effect_name || null,
           });
         }
 

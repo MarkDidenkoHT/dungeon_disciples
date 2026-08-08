@@ -148,6 +148,7 @@ export function renderRoster(root, { player }) {
 
   let buildingsData = {};
   let upgradePaths  = {};
+  let buildingPools = {};   // faction -> category -> [building defs]; maps a built building back to the unit it makes
   let items         = [];
   let resources     = [];
   let progress      = {};   // { region_id: next_playable_level } — gates the craft catalog
@@ -161,6 +162,55 @@ export function renderRoster(root, { player }) {
   }
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
+
+  // Mirrors resolveUpgradeBranch / upgradeReaches in data/buildings.js, which is
+  // the server-side authority. Duplicated rather than imported because
+  // data/buildings.js is CommonJS-only; the client sees the same tables through
+  // /bootstrap (buildings.pools / buildings.upgrade_paths).
+  function unitIdForBuilding(buildingId) {
+    if (!buildingId) return null;
+    for (const pools of Object.values(buildingPools)) {
+      for (const list of Object.values(pools || {})) {
+        const found = (list || []).find(b => b.id === buildingId);
+        if (found) return found.unit_id || null;
+      }
+    }
+    return null;
+  }
+
+  function upgradeReaches(fromUnitId, targetUnitId) {
+    if (!fromUnitId || !targetUnitId) return false;
+    const seen = new Set();
+    const stack = [fromUnitId];
+    while (stack.length) {
+      const id = stack.pop();
+      if (id === targetUnitId) return true;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      for (const factionPaths of Object.values(upgradePaths)) {
+        for (const p of factionPaths[id] || []) stack.push(p.unit_id);
+      }
+    }
+    return false;
+  }
+
+  // A player can build the tier-3 barracks while the unit in it is still tier 1.
+  // Matching only the immediate next building then reports "build X first" for a
+  // building they have already paid for, so a branch that LEADS to what is built
+  // counts too. The unit still advances one tier per level-up.
+  function resolveBranch(paths, buildingId) {
+    if (!paths || !paths.length) return null;
+    if (paths.length === 1) return paths[0];
+    if (!buildingId) return null;
+    const exact = paths.find(p => p.building_id === buildingId);
+    if (exact) return exact;
+    const builtUnit = unitIdForBuilding(buildingId);
+    if (!builtUnit) return null;
+    // Exactly one branch, or none — see resolveUpgradeBranch in data/buildings.js
+    // for why an ambiguous match must not be guessed.
+    const reaching = paths.filter(p => upgradeReaches(p.unit_id, builtUnit));
+    return reaching.length === 1 ? reaching[0] : null;
+  }
 
   function buildCard(u) {
     const stored   = u.unit_data || {};
@@ -209,7 +259,7 @@ export function renderRoster(root, { player }) {
       if (unitPaths.length > 1) {
         const slot           = stored.building_slot;
         const slotBuildingId = slot ? buildingsData[slot]?.building_id : null;
-        const matched        = unitPaths.find(p => p.building_id === slotBuildingId);
+        const matched        = resolveBranch(unitPaths, slotBuildingId);
         upgradeReady         = !!matched;
         if (!upgradeReady) upgradeBuildingHint = `Requires: ${unitPaths.map(p => p.label).join(' or ')}`;
       }
@@ -1533,6 +1583,7 @@ export function renderRoster(root, { player }) {
     units         = (boot.roster || []).slice().sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
     buildingsData = boot.structures?.buildings_data || {};
     upgradePaths  = boot.buildings?.upgrade_paths || {};
+    buildingPools = boot.buildings?.pools || {};
     items         = boot.items || [];
     resources     = [...(boot.resources || []), ...(boot.trophies || [])];
     progress      = boot.progress || {};

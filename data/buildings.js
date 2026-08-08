@@ -457,6 +457,56 @@ function getBuildingDef(faction, buildingId) {
   return null;
 }
 
+// Is `targetUnitId` anywhere downstream of `fromUnitId` on the upgrade tree
+// (or the same unit)? Used to recognise a branch the player has already
+// committed to by building further up it.
+function upgradeReaches(faction, fromUnitId, targetUnitId) {
+  if (!fromUnitId || !targetUnitId) return false;
+  const paths = UNIT_UPGRADE_PATHS[faction] || {};
+  const seen  = new Set();
+  const stack = [fromUnitId];
+  while (stack.length) {
+    const id = stack.pop();
+    if (id === targetUnitId) return true;
+    if (seen.has(id)) continue;      // guards against a cycle in the data
+    seen.add(id);
+    for (const p of paths[id] || []) stack.push(p.unit_id);
+  }
+  return false;
+}
+
+// Which branch should a unit advance along, given the building actually standing
+// in its slot?
+//
+// Buildings and units advance a tier at a time, but NOT in lockstep: a player
+// can build the tier-3 barracks while the unit living there is still tier 1.
+// Matching the slot's building id against the immediate next step then fails —
+// the slot holds "Crimson Mage Tower" (tier 3) while the tier-1 Adept's only
+// options are the three tier-2 buildings — and the unit becomes unupgradable
+// despite the player having overbuilt for it.
+//
+// So: exact match first (the ordinary case), otherwise the branch whose line
+// LEADS to whatever is built. The unit still advances one tier at a time.
+function resolveUpgradeBranch(faction, paths, buildingId) {
+  if (!paths || !paths.length) return null;
+  if (paths.length === 1) return paths[0];   // no branch to disambiguate
+  if (!buildingId) return null;
+
+  const exact = paths.find(p => p.building_id === buildingId);
+  if (exact) return exact;
+
+  const built = getBuildingDef(faction, buildingId);
+  if (!built || !built.unit_id) return null;
+
+  // Only when EXACTLY ONE branch leads there. The hero trees merge — both
+  // tier-2 Paladin branches continue into the same tier-3 units — so a tier-3
+  // cathedral cannot say which tier-2 kit was wanted, and those kits differ
+  // (Protector vs Beacon of Hope). Guessing would silently pick a build for the
+  // player; leaving it unresolved makes them choose, which is the honest answer.
+  const reaching = paths.filter(p => upgradeReaches(faction, p.unit_id, built.unit_id));
+  return reaching.length === 1 ? reaching[0] : null;
+}
+
 // ── Building costs ──────────────────────────────────────────────────────────
 // Unit dwellings are priced by a formula rather than per building, so a new
 // building never has to be balanced by hand:
@@ -837,6 +887,8 @@ module.exports = {
   getThronePerkEmbarkBonuses,
   getSpellCostReductionPct,
   getBuildingDef,
+  upgradeReaches,
+  resolveUpgradeBranch,
   emptyStructures,
   FACTION_CRYSTAL,
   BUILDING_COST_PER_TIER,

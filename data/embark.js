@@ -112,7 +112,6 @@ const REGION_ENCOUNTERS = {
     level_2: {
       enemies: [
         { key: 'glittering_abyss.сhillrock',  cell: 0 },
-        { key: 'glittering_abyss.cryostax',  cell: 3 },
         { key: 'glittering_abyss.frostshard',  cell: 3 },
       ],
       rewards: {
