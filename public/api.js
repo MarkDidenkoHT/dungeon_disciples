@@ -88,6 +88,29 @@ function makeCache(fetcher) {
       this.dirty = true;
       return this.get(...args);
     },
+    // "I already have the new state — here it is." For a write whose response
+    // carries the updated rows (craft, equip, unequip all return the full item
+    // list), this is strictly better than refresh(): no second round-trip, and
+    // no window in which that read can answer with pre-write data. The write
+    // endpoint read the rows back itself, so this is the freshest view there is.
+    //
+    // Returns the merged bootstrap, or null when nothing is cached yet — the
+    // caller should fall back to refresh() in that case, since there is no base
+    // object to merge into.
+    //
+    // `partial` may be an object or a function of the current data.
+    patch(partial) {
+      if (!this.data) return null;
+      const next = typeof partial === 'function' ? partial(this.data) : partial;
+      if (!next || typeof next !== 'object') return this.data;
+      this.data = { ...this.data, ...next };
+      // Anything already in flight was issued BEFORE this write, so it must not
+      // be allowed to land on top of what we just applied.
+      this._epoch++;
+      this._inflight = null;
+      this.dirty = false;
+      return this.data;
+    },
   };
 }
 

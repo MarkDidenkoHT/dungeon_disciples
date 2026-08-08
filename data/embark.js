@@ -23,9 +23,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_2: {
-      spell_id: 'enemy_spell_1',
       enemies: [
-        { key: 'crimson_basilica.crimson_scout',    cell: 1 },
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 0 },
         { key: 'crimson_basilica.initiate',         cell: 3, item_id: 'fire_resistance_potion' },

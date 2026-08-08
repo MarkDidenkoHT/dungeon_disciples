@@ -1214,8 +1214,8 @@ export function renderRoster(root, { player }) {
         equipBtn.disabled    = true;
         equipBtn.textContent = T('equipping');
         try {
-          await api('/items/equip', { chat_id: player.chat_id, roster_id: equipBtn.dataset.rosterId, item_id: equipBtn.dataset.itemId });
-          await reloadAndRerender(equipBtn.dataset.rosterId);
+          const equipped = await api('/items/equip', { chat_id: player.chat_id, roster_id: equipBtn.dataset.rosterId, item_id: equipBtn.dataset.itemId });
+          await reloadAndRerender(equipBtn.dataset.rosterId, equipped);
           body.innerHTML = render();   // repaint the open items sheet
           // Onboarding's last roster beat. Marked here, on the equip actually
           // succeeding, rather than on the tap that requested it.
@@ -1237,8 +1237,8 @@ export function renderRoster(root, { player }) {
         unequipBtn.textContent = T('unequipping');
         const focusedId = units[current]?.id;
         try {
-          await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
-          await reloadAndRerender(focusedId);
+          const unequipped = await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
+          await reloadAndRerender(focusedId, unequipped);
           body.innerHTML = render();   // repaint the open items sheet
         } catch (err) {
           alert(err.message || T('failUnequip'));
@@ -1252,13 +1252,21 @@ export function renderRoster(root, { player }) {
         craftBtn.disabled    = true;
         craftBtn.textContent = T('crafting');
         try {
-          await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
-          // Re-read from /bootstrap rather than trusting the craft response:
-          // that response updated this sheet's local `items`, but left the
-          // bootstrap cache holding the pre-craft list, so every other screen
-          // (and this one, after any later refresh) still showed the old
-          // inventory until a reload.
-          applyBootstrap(await bootstrapCache.refresh(player.chat_id));
+          const crafted = await api('/items/craft', { chat_id: player.chat_id, item_key: craftBtn.dataset.craftKey });
+          // Apply what the craft endpoint ALREADY read back, rather than firing
+          // a second /bootstrap and hoping it sees the insert. That extra read
+          // is what made a freshly crafted item need a reload to appear: it can
+          // answer from a replica that has not caught up with the write, and the
+          // pre-craft list it returns is then cached as if it were current.
+          // /bootstrap splits resources by item_type; the craft response returns
+          // both kinds in one list, so it is split the same way here.
+          const rows  = crafted.resources || [];
+          const merged = crafted.items ? bootstrapCache.patch(cur => ({
+            items:     crafted.items,
+            resources: rows.length ? rows.filter(r => r.item_type === 'resource') : cur.resources,
+            trophies:  rows.length ? rows.filter(r => r.item_type === 'trophy')   : cur.trophies,
+          })) : null;
+          applyBootstrap(merged || await bootstrapCache.refresh(player.chat_id));
           showTrophyBar();
           refreshResourceBar(player).catch(() => {});
           rerenderKeeping(rosterId);
@@ -1615,8 +1623,23 @@ export function renderRoster(root, { player }) {
   // Post-mutation refresh: ONE request, then re-render keeping the same unit in
   // view. Replaces the old "/roster + /items + refreshResourceBar" trio, which
   // cost three round-trips for one equip.
-  async function reloadAndRerender(focusRosterId) {
-    applyBootstrap(await bootstrapCache.refresh(player.chat_id));
+  // `known` is a write response that already contains the updated rows (items /
+  // roster). Applying it beats re-reading: no extra round-trip, and no chance of
+  // the read answering with pre-write state. Falls back to a real refresh when
+  // nothing usable was passed or the cache has no base to merge into.
+  async function reloadAndRerender(focusRosterId, known = null) {
+    let merged = null;
+    if (known?.items) {
+      merged = bootstrapCache.patch(cur => ({
+        items: known.items,
+        // equip/unequip return the single roster row they touched; splice it
+        // into the cached roster rather than refetching the whole list.
+        roster: known.roster
+          ? (cur.roster || []).map(r => (String(r.id) === String(known.roster.id) ? known.roster : r))
+          : cur.roster,
+      }));
+    }
+    applyBootstrap(merged || await bootstrapCache.refresh(player.chat_id));
     rerenderKeeping(focusRosterId);
     refreshResourceBar(player).catch(() => {});
   }
