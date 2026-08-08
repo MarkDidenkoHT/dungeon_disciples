@@ -39,6 +39,8 @@ function getPortraitUrl(unit, variant = 'default') {
 // Result-screen copy. The rest of the battle UI is icons, so these are the only
 // strings on it — they were the last hardcoded English on the screen.
 const BT = {
+  expandLog:    { en: 'Expand log',         ru: 'Развернуть журнал' },
+  collapseLog:  { en: 'Collapse log',       ru: 'Свернуть журнал' },
   victory:      { en: 'Victory',            ru: 'Победа' },
   defeat:       { en: 'Defeat',             ru: 'Поражение' },
   returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
@@ -172,6 +174,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Passive entries use effect_name from the ability definition.
   // Action entries use the actor's action string.
   function effectForEntry(entry, actorCombatant) {
+    // An entry may name its own effect outright. Spells take this path: they log
+    // as type 'spell', which none of the branches below match, so without it a
+    // spell could never animate however well its FX was authored.
+    if (entry.effect_name) return entry.effect_name;
     // 'intercept' is a passive as far as animation goes — it just carries its own
     // log type (see resolveProtectorIntercept in utils/battle-engine.js). Without
     // it here, Protector resolved to no effect at all and never animated despite
@@ -609,6 +615,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
           </div>
         </div>
+        <div class="battle-log-bar">
+          <button class="battle-log-toggle" id="battle-log-toggle" aria-expanded="false"></button>
+        </div>
         <div class="battle-log" id="battle-log"></div>
       </div>
     `;
@@ -624,7 +633,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       defendBtn: root.querySelector('#btn-defend'),
       cancelBtn: root.querySelector('#btn-cancel'),
       battleLog: root.querySelector('#battle-log'),
+      logToggle: root.querySelector('#battle-log-toggle'),
     };
+
+    // Expand/collapse the log. The battle screen is a fixed-height column, so
+    // the log otherwise gets whatever is left after the arena — about four
+    // lines on a phone, which is not enough to read back a turn.
+    const applyLogToggle = () => {
+      const expanded = ui.battleLog.classList.contains('battle-log--expanded');
+      ui.logToggle.textContent = expanded ? '▼' : '▲';
+      ui.logToggle.title = expanded ? BT.collapseLog[BL] : BT.expandLog[BL];
+      ui.logToggle.setAttribute('aria-label', ui.logToggle.title);
+      ui.logToggle.setAttribute('aria-expanded', String(expanded));
+    };
+    ui.logToggle?.addEventListener('click', () => {
+      ui.battleLog.classList.toggle('battle-log--expanded');
+      applyLogToggle();
+    });
+    applyLogToggle();
 
     attachEvents();
     return ui;

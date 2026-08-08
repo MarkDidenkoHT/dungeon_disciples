@@ -6,6 +6,7 @@ import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
+import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import {
@@ -605,7 +606,72 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const normAnchor = cells[0];
     cells.forEach(c => { occupied[c] = { unitId: unit.id, anchor: normAnchor, size }; });
+
+    // Formation hint. Queued rather than shown here because the grid is about to
+    // be re-rendered by fullRefresh(), which would destroy the toast's cell.
+    // Every placement path funnels through placeUnit, so this covers drag-drop,
+    // tap-to-place and grid-to-grid moves alike.
+    queuePositionBark(unit, cells, normAnchor);
     return true;
+  }
+
+  // A unit whose footprint does not include its preferred column objects. Large
+  // 2-wide units span both columns and so never object — see position_barks.js.
+  function queuePositionBark(unit, cells, anchor) {
+    if (player?.settings?.barks_enabled === false) return;
+    const def = resolveUnitDef(unit);
+    const prefers = derivePrefPosition(def);
+    if (!prefers) return;
+    if (isPositionSatisfied(prefers, cells.map(cellCol))) return;
+    const bark = pickPositionBark(def, prefers);
+    if (!bark) return;
+    const text = L === 'en' ? bark.text : bark.text_ru;
+    if (!text) return;
+    pendingPositionBark = { anchor, text };
+  }
+
+  let pendingPositionBark = null;
+
+  function flushPositionBark() {
+    // A re-render destroys any live toast (and its cell) but leaves the grid
+    // raised above its frame art, so drop that back down when nothing is talking.
+    root.querySelectorAll('.battle-grid--bark').forEach(g => {
+      if (!g.querySelector('.battle-cell--bark-active')) g.classList.remove('battle-grid--bark');
+    });
+    if (!pendingPositionBark) return;
+    const { anchor, text } = pendingPositionBark;
+    pendingPositionBark = null;
+    const cell = root.querySelector(`#player-grid [data-i="${anchor}"]`);
+    if (!cell) return;
+
+    root.querySelectorAll('.prep-bark-toast').forEach(t => t.remove());
+    // Same escape hatch the battle screen uses: the cell clips by default and
+    // the grid sits under its own frame art, so both classes are load-bearing
+    // for the toast to be visible at all (see .battle-cell--bark-active).
+    const grid = cell.closest('.battle-grid');
+    cell.classList.add('battle-cell--bark-active');
+    grid?.classList.add('battle-grid--bark');
+
+    const toast = document.createElement('div');
+    toast.className = 'bark-toast prep-bark-toast';
+    toast.textContent = text;
+    cell.appendChild(toast);
+
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      toast.remove();
+      cell.classList.remove('battle-cell--bark-active');
+      if (grid && !grid.querySelector('.battle-cell--bark-active')) {
+        grid.classList.remove('battle-grid--bark');
+      }
+      clearTimeout(timer);
+      document.removeEventListener('pointerdown', dismiss, true);
+    };
+    const timer = setTimeout(dismiss, 4000);
+    // Deferred so the pointerup that placed the unit does not instantly close it.
+    setTimeout(() => document.addEventListener('pointerdown', dismiss, true), 0);
   }
 
   function updateLoyaltyHint() {
@@ -830,6 +896,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     attachGridDragEvents();
     updateLoyaltyHint();
     checkReady();
+    flushPositionBark();
   }
 
   let activeGhost    = null;

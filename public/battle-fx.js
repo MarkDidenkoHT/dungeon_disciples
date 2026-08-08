@@ -945,7 +945,7 @@ export async function repair(cellEl) {
     layer.addChild(gearSprite);
   } catch { /* procedural gear carries it */ }
 
-  const DURATION = 3150;
+  const DURATION = 788;
   await animate(DURATION, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }

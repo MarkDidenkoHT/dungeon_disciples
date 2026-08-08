@@ -2680,8 +2680,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: row;
   align-items: flex-end;
   gap: 5px;
-  padding: 8px 8px 10px;
-  margin-top: 6px;
+  padding: 0 8px 10px;
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -2733,6 +2732,27 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .portrait-card--dead-init { opacity: 0.5; }
 
+/* Slim handle above the log. Sits outside .battle-log because entries prepend
+   (newest first), so a button inside would be pushed down by every new line. */
+.battle-log-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.battle-log-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 3px 26px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.battle-log-toggle:hover { color: var(--accent); }
+
 .battle-log {
   flex-shrink: 0;
   padding: 6px 10px;
@@ -2740,10 +2760,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   max-height: 35vh;
   overflow-y: auto;
   background: var(--bg);
-  border-top: 1px solid var(--border);
+  border-top: none;   /* .battle-log-bar carries the divider now */
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* Expanded, the log takes the height back from the arena rather than growing
+   the page — the battle screen is a fixed-height column. */
+.battle-log--expanded {
+  max-height: 70vh;
+  min-height: 40vh;
 }
 
 .log-entry        { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
