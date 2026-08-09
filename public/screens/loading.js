@@ -3,7 +3,7 @@ import { preloadAssets } from '../utils.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.127';
+export const GAME_VERSION = '0.128';
 
 const LOADING_IMAGES = [
   '/assets/loading_screens/loading1.jpg',
@@ -19,19 +19,19 @@ const LOADING_IMAGES = [
 const LOADING_TIPS = {
   en: [
     'Characters in back line cannot be damaged by melee attacks while there is at least one character in front line.',
-    'Many characters have interactions and abilities based on ally tags. Inspect and learn character abilities in Roster tab.',
+    'Many characters have interactions and abilities based on ally tags. Tap a building in your castle to inspect the unit standing in it.',
     "Don't forget to check on health of your characters before embarking!",
     'Some units occupy two tiles - a row, or a column. These units require 2 loyalty.',
-    'Items can be crafted and equipped in the Roster tab.',
+    'Items are crafted in the Items tab, and equipped from the item slot on a unit in your castle.',
     'Loyalty is your hero stat that is tied to hero level. It allows taking more characters in combat.',
     'Some equippable items provide unique bonuses - like tags or abilities.',
   ],
   ru: [
     'Персонажи на задней линии не могут получать урон от ближних атак, пока на передней линии есть хотя бы один персонаж.',
-    'Многие персонажи имеют взаимодействия и способности, основанные на метках союзников. Изучайте способности персонажей во вкладке Отряд.',
+    'Многие персонажи имеют взаимодействия и способности, основанные на метках союзников. Коснитесь здания в замке, чтобы осмотреть стоящего в нём бойца.',
     'Не забывайте проверять здоровье персонажей перед отправлением в поход!',
     'Некоторые юниты занимают две клетки — ряд или колонку. Такие юниты требуют 2 единицы лояльности.',
-    'Предметы можно создавать и надевать во вкладке Отряд.',
+    'Предметы создаются во вкладке «Предметы», а надеваются через слот снаряжения бойца в замке.',
     'Лояльность — характеристика героя, связанная с его уровнем. Она позволяет брать больше персонажей в бой.',
     'Некоторые предметы дают уникальные бонусы - такие как тэги или способности.',
   ],

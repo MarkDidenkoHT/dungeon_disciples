@@ -47,14 +47,17 @@ const TUTORIAL_STEPS = {
       text: 'Один герой не выиграет каждую битву. Постройте здание здесь, чтобы набрать второго бойца.',
     },
   },
+  // Kept under the roster_* keys so players mid-onboarding do not repeat steps
+  // they have already completed — the copy moved to the castle, the flags did
+  // not. Every one of these now plays out on a castle slot.
   roster_intro: {
     en: {
       title: 'Your Troops',
-      text: 'This is your roster. Inspect any unit here, level them up once they have earned enough experience, and equip them with items.',
+      text: 'Every building houses one unit. Tap this one to inspect its unit — check its stats and abilities, upgrade it, and equip it with items.',
     },
     ru: {
-      title: 'Ваш отряд',
-      text: 'Это ваш отряд. Здесь можно осмотреть любого бойца, повысить его уровень, когда он накопит достаточно опыта, и снарядить предметами.',
+      title: 'Ваши войска',
+      text: 'В каждом здании живёт один боец. Коснитесь этого здания, чтобы осмотреть его бойца: характеристики и способности, улучшение и снаряжение.',
     },
   },
   roster_equip_slot: {
@@ -70,21 +73,21 @@ const TUTORIAL_STEPS = {
   roster_equip: {
     en: {
       title: 'Arm Your Hero',
-      text: 'Here is everything this unit can wear. Padded Armor grants +5 HP — tap Equip to put it on.',
+      text: 'Everything this unit can wear is on the strip below — tap an icon to look at it. Padded Armor grants +5 HP; tap Equip to put it on.',
     },
     ru: {
       title: 'Снарядите героя',
-      text: 'Здесь всё, что может носить этот боец. Стёганый доспех даёт +5 к здоровью — нажмите Equip, чтобы надеть его.',
+      text: 'Всё, что может носить этот боец, — на полосе внизу: коснитесь значка, чтобы рассмотреть предмет. Стёганый доспех даёт +5 к здоровью — нажмите «Надеть».',
     },
   },
   roster_equipped: {
     en: {
       title: 'Armor Equipped',
-      text: 'The armor now fills your hero\'s slot and its +5 HP is already counted in their health. Tap the slot any time to swap gear. Your hero is ready — on to your first battle.',
+      text: 'The armor now fills your hero\'s slot and its +5 HP is already counted in their health. Tap the slot any time to swap gear — new gear is made in the Items tab below.',
     },
     ru: {
       title: 'Доспех надет',
-      text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение. Герой готов — вперёд, в первый бой.',
+      text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение, — новое создаётся во вкладке «Предметы» внизу.',
     },
   },
   roster_passive_stack: {

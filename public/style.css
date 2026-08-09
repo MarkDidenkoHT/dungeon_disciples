@@ -1243,8 +1243,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px 12px;
-  border-bottom: 1px solid var(--border);
+  padding: 8px;
   flex-shrink: 0;
 }
 
@@ -1327,7 +1326,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -5920,7 +5918,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .deconstruct-link:active { background: rgba(255, 255, 255, 0.05); }
 
-.deconstruct-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+/* Carries its own inset now that .modal-body has none — this sheet is words and
+   buttons, which must not sit against the frame. */
+.deconstruct-body { display: flex; flex-direction: column; gap: 12px; padding: 8px; }
 
 .deconstruct-intro {
   font-size: 0.8rem;
@@ -5928,25 +5928,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1.4;
   margin: 0;
 }
-
-.respec-options { display: flex; flex-direction: column; gap: 8px; }
-
-.respec-option {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-  padding: 9px 11px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  cursor: pointer;
-}
-.respec-option:active { border-color: var(--accent); }
-.respec-option-label { font-size: 0.9rem; font-weight: 700; color: var(--text); }
-.respec-option-sub   { font-size: 0.7rem; color: var(--muted); }
-.respec-option-cost  { font-size: 0.72rem; color: var(--accent); font-weight: 700; }
 
 .deconstruct-btn {
   padding: 10px;
@@ -5960,6 +5941,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: pointer;
 }
 .deconstruct-btn:active { background: rgba(200, 74, 58, 0.22); }
+
+/* Respec is not destruction — the unit keeps its XP — so it does not wear the
+   danger colour that Demolish does. */
+.deconstruct-btn--respec {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent);
+}
+.deconstruct-btn--respec:active { background: rgba(255, 255, 255, 0.09); }
 
 .deconstruct-warn,
 .deconstruct-note {
@@ -6035,7 +6025,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   min-width: 0;
   /* Its own scroll container, so cards pass under nothing but its own edges. */
   overflow-x: auto;
-  padding: 0 4px;
+  padding: 0;
   scroll-padding-inline: 8px;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
