@@ -2508,7 +2508,10 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* A wounded unit is still playable, so its button sits low and out of the way;
    a dead one is not, so its button owns the middle of the card. */
-.unit-card-overlay--heal { align-items: flex-end; padding-bottom: 46px; }
+/* Inherits align-items:center from .unit-card-overlay — the buttons sit in the
+   middle of the card for a wounded unit as well as a dead one. The bottom
+   padding stays, lifting them clear of the card's own bottom row. */
+.unit-card-overlay--heal { padding-bottom: 46px; }
 
 /* Favor + spell share one overlay and stack, favor on top. Column order in the
    markup IS the visual order, so there is no offset to maintain when either
@@ -6034,13 +6037,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .frame-action {
-  /* Must equal .portrait-card's height EXACTLY. That rule is a fixed 62x84px,
-     not a viewport-derived clamp, so deriving this from clamp(64px, 10vh, 86px)
-     only lined up when 10vh happened to land on 84 — at every other height the
-     build and deconstruct buttons sat short or tall against the portraits they
-     flank. Every property the global `button` rule sets is reset here, so a
-     framed action never inherits the app's default gold pill. */
-  --portrait-card-h: 84px;
+  /* Must equal the height of the portrait cards it flanks EXACTLY. This was a
+     hardcoded 84px, which only matched .portrait-card--branch when 10vh
+     happened to land on 84 — at every other viewport height the build and
+     deconstruct buttons sat short or tall against the portraits. Sharing the
+     one expression (and the same --track-card-h override) is what makes them
+     agree at every height instead of at one.
+     Every property the global `button` rule sets is reset here, so a framed
+     action never inherits the app's default gold pill. */
+  --portrait-card-h: var(--track-card-h, clamp(64px, 10vh, 86px));
   margin: 0;
   align-self: center;
   flex: 0 0 auto;
