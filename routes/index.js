@@ -1488,11 +1488,14 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
       const row = inventory.find(r => r.item === key);
       if (!row || Number(row.amount) < amount) return res.status(400).json({ error: `Not enough ${key}. Need ${amount}` });
     }
-    for (const [item, amount] of Object.entries(cost)) {
+    // Together, not one after another: these are independent rows, and a build
+    // costing gold + two crystals was three sequential trips to Supabase before
+    // the player saw anything happen.
+    await Promise.all(Object.entries(cost).map(([item, amount]) => {
       const key = item === 'gold' ? 'Gold' : item;
       const row = inventory.find(r => r.item === key);
-      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
-    }
+      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
+    }));
 
     buildings[slot] = { level: current.level, building_id: target.id };
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
@@ -1620,10 +1623,10 @@ router.post('/structures/build', requireAuth, async (req, res) => {
             return res.status(400).json({ error: `Not enough ${item.replace('Crystals_', '')}. Need ${amount}` });
           }
         }
-        for (const [item, amount] of wanted) {
+        await Promise.all(wanted.map(([item, amount]) => {
           const row = inventory.find(r => r.item === item);
-          await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
-        }
+          return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
+        }));
       }
     }
 
@@ -2060,14 +2063,14 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           if (id && amount) granted[id] = (granted[id] || 0) + amount;
         }
       }
-      for (const [id, amount] of Object.entries(granted)) {
+      // Trophies land together — a six-trophy haul was six sequential writes on
+      // the victory screen, which is precisely where the player is waiting.
+      await Promise.all(Object.entries(granted).map(([id, amount]) => {
         const trophyRow = inventoryRows.find(r => r.item === id);
-        if (trophyRow) {
-          await supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + amount }) });
-        } else {
-          await supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: id, amount }) });
-        }
-      }
+        return trophyRow
+          ? supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + amount }) })
+          : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: id, amount }) });
+      }));
       if (Object.keys(granted).length) {
         result.trophies_gained = granted;             // { trophy_id: amount }
         result.trophy_gained   = Object.keys(granted)[0]; // legacy single-id field
@@ -2248,11 +2251,11 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
       if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
     }
 
-    for (const [item, required] of Object.entries(cost)) {
+    await Promise.all(Object.entries(cost).map(([item, required]) => {
       const row = inventoryRows.find(r => r.item === item);
-      if (!row) continue;
-      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }
+      if (!row) return null;
+      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }));
 
     slots[slot] = { level: 1, building_id: mercenary_building_id };
     const [updatedStruct, inserted] = await Promise.all([
@@ -2314,11 +2317,11 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
     }
 
-    for (const [item, required] of Object.entries(cost)) {
+    await Promise.all(Object.entries(cost).map(([item, required]) => {
       const row = inventoryRows.find(r => r.item === item);
-      if (!row) continue;
-      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }
+      if (!row) return null;
+      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }));
 
     // Upgrades the BUILDING only — it no longer swaps the unit out. This used to
     // hand the player a new tier the moment they could pay for it, which is not
@@ -2532,10 +2535,10 @@ router.post('/items/craft', requireAuth, async (req, res) => {
     }
 
     // Deduct resource costs
-    for (const [resName, required] of Object.entries(cost)) {
+    await Promise.all(Object.entries(cost).map(([resName, required]) => {
       const row = inventoryRows.find(r => r.item === resName);
-      await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }
+      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
+    }));
 
     // Consume item ingredients
     await Promise.all(ingredientRows.map(it =>

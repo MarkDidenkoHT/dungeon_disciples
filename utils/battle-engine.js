@@ -1377,6 +1377,31 @@ class BattleEngine {
       } else {
         this.executeAction(actor, decision.target, 'attack', { turnStart: false }); // already ticked at loop top
       }
+
+      // THE TURN MUST ADVANCE. Every branch above is supposed to end with the
+      // actor either dead or flagged acted_this_round, but executeAction has one
+      // path that returns without doing either — `if (!target) return false`,
+      // reachable the moment an action type or a unit's data does not line up
+      // with what chooseAiAction produced. currentActor() would then hand back
+      // this same unit forever: an infinite loop inside a request, which does
+      // not throw, does not time out on its own, and pins the worker until the
+      // platform kills it. The battle is simply gone.
+      //
+      // So: if the actor is still standing and still owed a turn, take it. The
+      // unit forfeits its action, the fight continues, and the log says so.
+      if (actor.alive && !actor.acted_this_round) {
+        console.error('[battle] AI turn produced no action', {
+          unit: actor.unit_name, cell: actor.cellIndex, decision: decision?.type,
+          action: actor.unit_data?.action, hasTarget: !!decision?.target,
+        });
+        this.pushLog({
+          type: 'skip', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+          message: `${actor.unit_name} hesitates.`,
+        });
+        actor.acted_this_round = true;
+        this.afterAction(actor);
+      }
+
       newLog.push(...this.log.slice(before));
     }
     return newLog;
