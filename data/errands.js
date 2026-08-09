@@ -450,7 +450,26 @@ function scaleReward(errand, throneLevel, tierOverride = null) {
 
 const ERRANDS_BY_ID = Object.fromEntries(ERRANDS.map(e => [e.id, e]));
 
-module.exports = {
+// Dual export, same as data/units.js: the browser imports this file as an ES
+// module and routes/index.js `require`s it. One of the two forms is always the
+// wrong one, so both are provided — without the `export` the client throws
+// "does not provide an export named ERRANDS_BY_ID" at load.
+export {
+  ERRANDS,
+  ERRANDS_BY_ID,
+  THRONE_TIER,
+  TIER_STAT_MULT,
+  TIER_REWARD_MULT,
+  throneTier,
+  maxRankOf,
+  unitProfile,
+  resolveRequirement,
+  unitMeets,
+  scaleReward,
+  baseKey,
+};
+
+if (typeof module !== 'undefined') module.exports = {
   ERRANDS,
   ERRANDS_BY_ID,
   THRONE_TIER,
