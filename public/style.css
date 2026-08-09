@@ -1160,6 +1160,11 @@ button:active:not(:disabled) { opacity: 0.75; }
 .modal-overlay {
   position: fixed;
   inset: 0;
+  /* Stops short of the bottom nav so the tab bar stays visible AND clickable
+     while a sheet is open — tapping a tab closes the sheet and goes there (see
+     the nav handler in main.js). Screens with no nav (battle, register) set the
+     variable to 0 so the sheet reaches the bottom edge as before. */
+  bottom: var(--sheet-bottom, 0px);
   background: rgba(0, 0, 0, 0.72);
   z-index: 100;
   display: flex;
@@ -2097,6 +2102,43 @@ button:active:not(:disabled) { opacity: 0.75; }
 .screen-roster > * {
   position: relative;
   z-index: 1;
+}
+
+/* ── Items screen ───────────────────────────────────────────────────────────
+   The craft catalog used to be the third tab of a sheet, so .items-modal is
+   sized for one (70vh). As a screen of its own it simply fills what the nav and
+   resource bar leave; everything else about it is unchanged. */
+.screen-items {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.screen-items::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 20, 0.55);
+  pointer-events: none;
+  z-index: 0;
+}
+.screen-items > * {
+  position: relative;
+  z-index: 1;
+}
+.items-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 6px;
+}
+.screen-items .items-modal {
+  height: auto;
+  max-height: none;
+  flex: 1;
+  min-height: 0;
 }
 
 .roster-topbar {

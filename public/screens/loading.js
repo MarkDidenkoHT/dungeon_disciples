@@ -3,7 +3,7 @@ import { preloadAssets } from '../utils.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.126';
+export const GAME_VERSION = '0.127';
 
 const LOADING_IMAGES = [
   '/assets/loading_screens/loading1.jpg',

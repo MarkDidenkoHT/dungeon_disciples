@@ -10,7 +10,7 @@ import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
-import { setUiLanguage } from './utils.js';
+import { setUiLanguage, closeSheet, closeSubSheet } from './utils.js';
 
 import {
   api,
@@ -108,6 +108,11 @@ function mountShell(player) {
   document.getElementById('bottom-nav').addEventListener('click', e => {
     const btn = e.target.closest('.nav-btn');
     if (btn && !btn.classList.contains('disabled')) {
+      // The nav sits below any open sheet rather than under it, so a tab is
+      // always reachable — pressing one dismisses whatever is open and goes
+      // there, instead of leaving a sheet from the previous screen floating.
+      closeSubSheet();
+      closeSheet();
       navigate(btn.dataset.screen, { player });
     }
   });
@@ -130,8 +135,14 @@ function navigate(screen, params = {}) {
   hideTutorial();
   document.body.style.overflow = '';
 
+  // How far off the bottom edge a sheet stops: the height of the bottom nav
+  // wherever there is one, 0 where there isn't (see .modal-overlay).
+  const setSheetBottom = px =>
+    document.documentElement.style.setProperty('--sheet-bottom', px);
+
   if (screen === 'register') {
     shellMounted = false;
+    setSheetBottom('0px');
     app.innerHTML = '';
     renderRegister(app, params);
     return;
@@ -144,6 +155,9 @@ function navigate(screen, params = {}) {
   const navEl    = document.getElementById('bottom-nav');
   const resBarEl = document.getElementById('resource-bar-row');
   if (navEl) navEl.style.display = isBattle ? 'none' : '';
+  // Measured rather than hardcoded to 10vh: the nav is styled in vh, and a
+  // stale value would leave a gap under the sheet if that ever changes.
+  setSheetBottom(isBattle ? '0px' : `${navEl?.offsetHeight || 0}px`);
   if (resBarEl) {
     resBarEl.style.display = isBattle ? 'none' : '';
     // Battle prep hides the bar by default; it slides down only while the spell
