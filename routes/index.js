@@ -1167,6 +1167,10 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       roster_id:   String(roster_id),
       unit_id:     row.unit_data?.unit_id ?? null,
       unit_name:   resolveRosterDef(row)?.name ?? null,
+      // Carried on the row so the edge function can name the errand in the bot
+      // message without importing data/errands.js (it is CommonJS, and Deno
+      // would have to reimplement the lookup to read it).
+      title:       def.title,
       tier:        offer.tier,
       hours:       def.hours,
       started_at:  new Date(now).toISOString(),
