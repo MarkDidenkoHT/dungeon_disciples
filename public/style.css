@@ -4766,12 +4766,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   text-align: center;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  /* Sits UNDER every background-image on this element (background-color always
-     paints beneath background-image), so it is the floor the portrait and the
-     slot art are composited onto. Needed once the portrait switched to
-     `contain`: the image no longer fills the node, and without this the frame
-     would be matted against whatever shows through from behind. */
-  background-color: var(--bg);
+  /* NO background-color here. It used to sit on every node as a floor for the
+     portrait, but an EMPTY slot draws its frame art with `contain` and does not
+     clip its background — so the colour painted the node's full rectangle while
+     the art only covered the arch inside it, and the block spilled out past the
+     frame on every side. The floor belongs to the portrait variant alone, which
+     clips it to the content box (see .castle-node--portrait). */
   padding: 3px;
   /* Anchor for the HP bar / dead marker, which are absolutely positioned. The
      portrait variant sets this too, but a glyph-only node needs it as well. */
@@ -4837,6 +4837,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 9px;
   background-origin: content-box;
   background-clip: content-box;
+  /* The floor the portrait is composited onto. `contain` means the image does
+     not fill the node, so without this the letterboxed strips would show the
+     castle grounds through the frame's window. Clipped to the content box by
+     the two lines above, which is what keeps it inside the frame — the reason
+     it cannot live on the base .castle-node. */
+  background-color: var(--bg);
 }
 .castle-node--portrait::before {
   content: '';

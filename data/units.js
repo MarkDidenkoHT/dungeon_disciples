@@ -1937,11 +1937,6 @@ const UNITS = {
       damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
       xp: 800, passive: ['sorrow 1', 'dissipate 2', ], ability: 'terror 1',
     },
-    // The Mothers Voice starting line: a melee spirit, unlike every other Ghost
-    // (Spirit + Knight rather than Spirit + Caster), so the hero that cannot
-    // hold a line is given something that can. Straight chain, no branch.
-    // Named as adjective + rank so the three read as one family and as a
-    // promotion, the way Ghost -> Specter -> Wraith does.
     pale_maiden: {
       id: 'gs7', f: 'g', t: 1,
       name: 'Pale Maiden',
@@ -1973,7 +1968,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 6, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
-      xp: 300, passive: ['fear 1', 'eternal_grief 1'], ability: null,
+      xp: 300, passive: ['fear 1', 'unending_servitude 1', 'eternal_grief 1'], ability: null,
     },
     pale_abbess: {
       id: 'gs721', f: 'g', t: 3,
@@ -1984,7 +1979,7 @@ const UNITS = {
       resistances: { air: 20, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 9, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
-      xp: 800, passive: ['fear 2', 'eternal_grief 1'], ability: null,
+      xp: 800, passive: ['fear 2', 'unending_servitude 1', 'eternal_grief 1'], ability: null,
     },
     pale_matriarch: {
       id: 'gs711', f: 'g', t: 3,
