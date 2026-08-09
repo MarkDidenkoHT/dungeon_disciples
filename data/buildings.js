@@ -520,25 +520,128 @@ function resolveUpgradeBranch(faction, paths, buildingId) {
 }
 
 // ── Building costs ──────────────────────────────────────────────────────────
-// Unit dwellings are priced by a formula rather than per building, so a new
-// building never has to be balanced by hand:
+// DECLARED PER BUILDING, on purpose. Costs used to be derived — "base x tier",
+// plus a crystal picked from the unit's damage_source — which had two problems:
+// a unit with no element (physical or null, i.e. most knights) paid nothing
+// but its faction crystal, and no cost written in this file could survive,
+// because the formula overwrote every def.cost at load. Both are gone: what is
+// written below is what a building costs, and it can be edited freely.
 //
-//   tier N  ->  40 x N gold
-//            +  20 x N of the FACTION crystal      (the predictable floor)
-//            +  10 x N of the unit's OWN element   (so every crystal type has a
-//                                                   sink, not just the faction's)
-//   a dwelling whose unit occupies TWO cells (size 'row' / 'column') costs
-//   LARGE_UNIT_COST_MULT more of everything, because it is worth two of a small
-//   one on the field and eats two points of loyalty.
+// The seed values follow one rule, which is worth keeping to when adding a
+// building but is NOT enforced anywhere:
 //
-// The element comes from the unit's damage_source; a unit with none (physical or
-// null, e.g. most knights) pays the faction crystal only, and a unit whose
-// element IS the faction crystal simply pays the two amounts merged.
+//   gold      tier 1  40    tier 2  60    tier 3  96
+//   MAIN      the faction's own crystal — Life (Empire), Fire (Choir),
+//             Death (Grail):  20 / 30 / 48
+//   MIXED     one or two OTHER crystals at 5 / 8 / 12 each, so every crystal
+//             type has a sink. Seeded from the unit's own damage element first,
+//             then its strongest resistances; a unit with neither got one
+//             picked off its id so it is still charged something.
+//   a dwelling whose unit occupies TWO cells ('row' / 'column') is x1.5 on
+//   everything — it is worth two of a small one and eats two loyalty.
 //
-// Tier 1: small 40g + 20 faction + 10 element, large 60g + 30 + 15. See
-// STARTING_RESOURCES in routes/index.js — a new player can afford one of each.
-const BUILDING_COST_PER_TIER = { gold: 40, faction_crystals: 20, element_crystals: 10 };
-const LARGE_UNIT_COST_MULT   = 1.5;
+// Tier 2 sits 25% under the old formula's 80/40/20 and tier 3 20% under its
+// 120/60/30; the upper tiers were pricing players out. STARTING_RESOURCES in
+// routes/index.js still covers one tier-1 dwelling.
+const BUILDING_COSTS = {
+  // ── empire ────────────────────────────────────────────────────
+  conscript_barracks:            { gold: 40, Crystals_Life: 20, Crystals_Air: 5 },
+  infantry_barracks:             { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
+  crossbow_range:                { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
+  heavy_barracks:                { gold: 96, Crystals_Life: 48, Crystals_Death: 12, Crystals_Frost: 12 },
+  cavalry_stables:               { gold: 90, Crystals_Life: 45, Crystals_Frost: 12, Crystals_Nature: 12 },
+  knights_stables:               { gold: 144, Crystals_Life: 72, Crystals_Frost: 18, Crystals_Nature: 18 },
+  sentinel_forge:                { gold: 60, Crystals_Life: 30, Crystals_Death: 8, Crystals_Frost: 8 },
+  automaton_lab:                 { gold: 90, Crystals_Life: 45, Crystals_Death: 12, Crystals_Frost: 12 },
+  golden_lion_lab:               { gold: 144, Crystals_Life: 72, Crystals_Death: 18, Crystals_Air: 18 },
+  siege_workshop:                { gold: 90, Crystals_Life: 45, Crystals_Fire: 12, Crystals_Death: 12 },
+  siege_dreadnought_workshop:    { gold: 144, Crystals_Life: 72, Crystals_Fire: 18, Crystals_Death: 18 },
+  smith_workshop:                { gold: 40, Crystals_Life: 20, Crystals_Fire: 5, Crystals_Nature: 5 },
+  mechanic_den:                  { gold: 60, Crystals_Life: 30, Crystals_Fire: 8, Crystals_Nature: 8 },
+  mechanic_den_2:                { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
+  rifleman_range:                { gold: 60, Crystals_Life: 30, Crystals_Fire: 8, Crystals_Nature: 8 },
+  devastator_post:               { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
+  flamethrower_post:             { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
+  acolyte_shrine:                { gold: 40, Crystals_Life: 20, Crystals_Nature: 5 },
+  sun_temple:                    { gold: 60, Crystals_Life: 30, Crystals_Death: 8, Crystals_Nature: 8 },
+  mithrails_champion_keep:       { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Fire: 12 },
+  priest_shrine:                 { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
+  ardent_shrine:                 { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
+  blessed_soul_shrine:           { gold: 40, Crystals_Life: 20, Crystals_Air: 5, Crystals_Fire: 5 },
+  mithrails_light_temple:        { gold: 60, Crystals_Life: 30, Crystals_Air: 8, Crystals_Fire: 8 },
+  mithrails_will_temple:         { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Fire: 12 },
+  mage_tower:                    { gold: 40, Crystals_Life: 20, Crystals_Air: 5, Crystals_Fire: 5 },
+  red_mage_tower:                { gold: 60, Crystals_Life: 30, Crystals_Fire: 8, Crystals_Air: 8 },
+  ash_sanctum:                   { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Air: 12 },
+  cinder_forge:                  { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Air: 12 },
+  blue_mage_tower:               { gold: 60, Crystals_Life: 30, Crystals_Frost: 8, Crystals_Air: 8 },
+  cryomancer_tower:              { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Frost: 12 },
+
+  // ── choir_of_the_cursed ───────────────────────────────────────
+  imp_den:                       { gold: 60, Crystals_Fire: 30, Crystals_Nature: 8 },
+  tormentor_pit:                 { gold: 90, Crystals_Fire: 45, Crystals_Air: 12, Crystals_Death: 12 },
+  praetor_pit:                   { gold: 144, Crystals_Fire: 72, Crystals_Air: 18, Crystals_Death: 18 },
+  chorister_chamber:             { gold: 90, Crystals_Fire: 45, Crystals_Death: 12 },
+  chanter_chamber:               { gold: 144, Crystals_Fire: 72, Crystals_Death: 18 },
+  gargoyle_roost:                { gold: 60, Crystals_Fire: 30, Crystals_Air: 8, Crystals_Life: 8 },
+  stone_gargoyle_den:            { gold: 90, Crystals_Fire: 45, Crystals_Air: 12, Crystals_Life: 12 },
+  onyx_gargoyle_den:             { gold: 144, Crystals_Fire: 72, Crystals_Air: 18, Crystals_Death: 18 },
+  quartz_gargoyle_den:           { gold: 90, Crystals_Fire: 45, Crystals_Death: 12, Crystals_Frost: 12 },
+  azurite_gargoyle_den:          { gold: 144, Crystals_Fire: 72, Crystals_Frost: 18, Crystals_Death: 18 },
+  heretic_pit:                   { gold: 40, Crystals_Fire: 20, Crystals_Life: 5 },
+  possessed_pit:                 { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
+  vessel_altar:                  { gold: 96, Crystals_Fire: 48, Crystals_Death: 12 },
+  pain_projector_den:            { gold: 96, Crystals_Fire: 48, Crystals_Death: 12 },
+  peer_court:                    { gold: 40, Crystals_Fire: 20, Crystals_Life: 5 },
+  nether_baron_hall:             { gold: 60, Crystals_Fire: 30, Crystals_Life: 8 },
+  nether_lord_hall:              { gold: 96, Crystals_Fire: 48, Crystals_Life: 12 },
+  flame_spawn_pit:               { gold: 40, Crystals_Fire: 20, Crystals_Death: 5 },
+  greater_flame_spawn_pit:       { gold: 60, Crystals_Fire: 30, Crystals_Frost: 8 },
+  inferno_spawn_pit:             { gold: 96, Crystals_Fire: 48, Crystals_Life: 12 },
+  cultist_shrine:                { gold: 40, Crystals_Fire: 20, Crystals_Life: 5 },
+  choir_servant_shrine:          { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
+  choir_ascendant_shrine:        { gold: 96, Crystals_Fire: 48, Crystals_Life: 12, Crystals_Death: 12 },
+
+  // ── grail_of_sorrow ───────────────────────────────────────────
+  zombie_pit:                    { gold: 40, Crystals_Death: 20, Crystals_Air: 5, Crystals_Frost: 5 },
+  ghoul_pit:                     { gold: 60, Crystals_Death: 30, Crystals_Air: 8, Crystals_Frost: 8 },
+  plague_knight_barrow:          { gold: 96, Crystals_Death: 48, Crystals_Nature: 12, Crystals_Air: 12 },
+  cannibal_pit:                  { gold: 60, Crystals_Death: 30, Crystals_Air: 8, Crystals_Frost: 8 },
+  abomination_vat:               { gold: 96, Crystals_Death: 48, Crystals_Air: 12, Crystals_Frost: 12 },
+  cesswalker_mire:               { gold: 60, Crystals_Death: 30, Crystals_Air: 8, Crystals_Nature: 8 },
+  blightwalker_mire:             { gold: 96, Crystals_Death: 48, Crystals_Air: 12, Crystals_Nature: 12 },
+  communicant_chapel:            { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
+  crimson_communicant_chapel:    { gold: 90, Crystals_Death: 45, Crystals_Nature: 12 },
+  chosen_chapel:                 { gold: 144, Crystals_Death: 72, Crystals_Life: 18 },
+  adept_crypt:                   { gold: 40, Crystals_Death: 20, Crystals_Life: 5 },
+  blood_adept_chamber:           { gold: 60, Crystals_Death: 30, Crystals_Air: 8 },
+  crimson_mage_tower:            { gold: 96, Crystals_Death: 48, Crystals_Nature: 12 },
+  blood_knight_crypt:            { gold: 96, Crystals_Death: 48, Crystals_Life: 12 },
+  necromancer_crypt:             { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
+  death_lord_crypt:              { gold: 96, Crystals_Death: 48, Crystals_Life: 12 },
+  plague_scholar_lab:            { gold: 60, Crystals_Death: 30, Crystals_Nature: 8 },
+  plague_lord_lab:               { gold: 96, Crystals_Death: 48, Crystals_Nature: 12 },
+  colossus_barrow:               { gold: 60, Crystals_Death: 30, Crystals_Air: 8, Crystals_Fire: 8 },
+  seraph_shrine:                 { gold: 90, Crystals_Death: 45, Crystals_Frost: 12, Crystals_Nature: 12 },
+  grail_angel_shrine:            { gold: 144, Crystals_Death: 72, Crystals_Frost: 18, Crystals_Nature: 18 },
+  chalice_vault:                 { gold: 90, Crystals_Death: 45, Crystals_Fire: 12 },
+  sorrow_vessel_vault:           { gold: 144, Crystals_Death: 72, Crystals_Fire: 18 },
+  grail_acolyte_chamber:         { gold: 40, Crystals_Death: 20, Crystals_Air: 5 },
+  grail_tender_chamber:          { gold: 60, Crystals_Death: 30, Crystals_Fire: 8, Crystals_Frost: 8 },
+  grail_keeper_chamber:          { gold: 96, Crystals_Death: 48, Crystals_Fire: 12, Crystals_Frost: 12 },
+  grieving_servant_chamber:      { gold: 60, Crystals_Death: 30, Crystals_Nature: 8 },
+  grieving_custodian_chamber:    { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
+  ghost_manor:                   { gold: 40, Crystals_Death: 20, Crystals_Air: 5 },
+  specter_hall:                  { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
+  wraith_hall:                   { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
+  apparition_mist:               { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
+  phantom_mist:                  { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
+  pale_maiden_barrow:            { gold: 40, Crystals_Death: 20, Crystals_Frost: 5 },
+  pale_dame_barrow:              { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
+  pale_matriarch_barrow:         { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
+  pale_votaress_chantry:         { gold: 60, Crystals_Death: 30, Crystals_Frost: 8, Crystals_Air: 8 },
+  pale_abbess_chantry:           { gold: 96, Crystals_Death: 48, Crystals_Air: 12, Crystals_Frost: 12 },
+};
 
 const FACTION_CRYSTAL = {
   empire:              'Crystals_Life',
@@ -546,64 +649,16 @@ const FACTION_CRYSTAL = {
   grail_of_sorrow:     'Crystals_Death',
 };
 
-// data/units.js spells the cold element 'cold'; the resource is Crystals_Frost.
-const ELEMENT_CRYSTAL = {
-  fire:   'Crystals_Fire',
-  life:   'Crystals_Life',
-  death:  'Crystals_Death',
-  nature: 'Crystals_Nature',
-  cold:   'Crystals_Frost',
-  air:    'Crystals_Air',
-};
-
-let _unitIndex = null;
-function findUnitDef(unitId) {
-  if (!_unitIndex) {
-    _unitIndex = {};
-    try {
-      const { UNITS } = require('./units');
-      (function walk(node) {
-        if (!node || typeof node !== 'object') return;
-        if (node.id && (node.tags || node.hp)) { _unitIndex[node.id] = node; return; }
-        Object.values(node).forEach(walk);
-      })(UNITS);
-    } catch { _unitIndex = {}; }
-  }
-  return _unitIndex[unitId] || null;
-}
-
-function isLargeUnit(unitId) {
-  const size = findUnitDef(unitId)?.size ?? 'tile';
-  return size === 'row' || size === 'column';
-}
-
-function elementCrystalFor(unitId) {
-  const src = findUnitDef(unitId)?.damage_source;
-  return ELEMENT_CRYSTAL[String(src)] || null;
-}
-
-// Applied to every non-throne dwelling at module load. Throne buildings keep
-// THRONE_UPGRADE_COSTS; mercenary buildings keep their trophy costs.
+// Applied at module load. A building with no entry above keeps whatever cost it
+// declares inline; only the throne (THRONE_UPGRADE_COSTS) and the mercenary
+// halls (trophy costs) are deliberately absent from the table.
 function applyBuildingCosts() {
-  for (const [faction, pools] of Object.entries(BUILDING_POOLS)) {
-    const factionCrystal = FACTION_CRYSTAL[faction];
+  for (const pools of Object.values(BUILDING_POOLS)) {
     for (const [category, list] of Object.entries(pools)) {
       if (category === 'throne') continue;
       for (const def of list) {
-        if (!def.unit_id || def.placeholder) continue;
-        const tier = def.tier ?? 1;
-        const mult = isLargeUnit(def.unit_id) ? LARGE_UNIT_COST_MULT : 1;
-        const scale = amount => Math.round(amount * tier * mult);
-
-        const cost = { gold: scale(BUILDING_COST_PER_TIER.gold) };
-        if (factionCrystal) cost[factionCrystal] = scale(BUILDING_COST_PER_TIER.faction_crystals);
-
-        const element = elementCrystalFor(def.unit_id);
-        if (element) {
-          // Same crystal on both counts (a Life-damage Empire unit) just adds up.
-          cost[element] = (cost[element] || 0) + scale(BUILDING_COST_PER_TIER.element_crystals);
-        }
-        def.cost = cost;
+        const cost = BUILDING_COSTS[def.id];
+        if (cost) def.cost = { ...cost };
       }
     }
   }
@@ -925,8 +980,7 @@ module.exports = {
   upgradeBranchCandidates,
   emptyStructures,
   FACTION_CRYSTAL,
-  BUILDING_COST_PER_TIER,
-  LARGE_UNIT_COST_MULT,
+  BUILDING_COSTS,
   RESPEC_COST_PCT,
   getRespecOptions,
   getRespecCost,
