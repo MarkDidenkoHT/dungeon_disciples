@@ -17,6 +17,7 @@ import {
   handleUnitInspect,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
+import { errandRosterIds } from '../errands.js';
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -70,6 +71,7 @@ const CASTLE_TEXT = {
   equippedElse:{ en: 'Equipped on another unit',              ru: 'Надет на другом бойце' },
   nothingMatches:{ en: 'Nothing matches these filters.',      ru: 'Ничего не найдено по фильтрам.' },
   equippedOn:  { en: 'on',                                    ru: 'у' },
+  onErrand:    { en: 'Away on an errand',                     ru: 'В пути по поручению' },
   // Divine favor: the ad-funded alternative to Resurrect / Heal. Each faction
   // petitions its own god — the mechanic is identical, only the name changes,
   // so FAVOR_LABELS is presentation, not behaviour. The "Ad" marker is never
@@ -144,6 +146,10 @@ export function renderCastle(root, { player }) {
   // equipping happens here rather than on a separate roster screen.
   let itemsCache  = [];
   // Divine favor budget, from /bootstrap — same source the roster reads.
+  // Roster ids that are away on an errand — the castle node marks them, since
+  // they vanish from battle prep and would otherwise just be missing.
+  let errandAwayIds = new Set();
+
   let favorRemaining = 0;
   let favorSeconds   = 15;
 
@@ -185,6 +191,12 @@ export function renderCastle(root, { player }) {
     favorSeconds       = boot.favor?.seconds ?? favorSeconds;
 
     renderBuildings();
+
+    // Not awaited: who is out on an errand only decides a marker, and blocking
+    // the whole castle on it would be paying for a badge.
+    errandRosterIds(player.chat_id)
+      .then(ids => { errandAwayIds = ids; renderBuildings(); })
+      .catch(() => {});
   }
 
   // Single refresh path: /bootstrap holds resources, trophies, structures, roster
@@ -510,6 +522,11 @@ export function renderCastle(root, { player }) {
   function nodeHpBar(slot) {
     const u = rosterUnitForSlot(slot);
     if (!u) return '';
+    // Out on an errand: the slot is occupied but the unit is not home, and it
+    // will not appear in battle prep. Say so here or it just goes missing.
+    if (errandAwayIds.has(String(u.id))) {
+      return `<div class="castle-node-errand" title="${CASTLE_TEXT.onErrand[castleLang]}">✉</div>`;
+    }
     const stored = u.unit_data || {};
     const cur    = stored.current_hp;
     const max    = stored.max_hp;
@@ -832,9 +849,9 @@ export function renderCastle(root, { player }) {
   const FAVOR_LABELS = {
     // Dative case in RU — the prayer is addressed TO the god:
     // Митраил → Митраилю, Агграил → Агграилю, Асталот → Асталоту.
-    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилу' },
-    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилу' },
-    grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталот' },
+    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилю' },
+    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилю' },
+    grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталоту' },
   };
   const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
   const FAVOR_ERRORS = {

@@ -1900,4 +1900,4 @@ class BattleEngine {
     this.pushLog({ type: 'bark', actorId: owner.id, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: pool[idx], text_ru: poolRu[idx] });
   }
 }
-module.exports = { BattleEngine };
+module.exports = { BattleEngine, getAbilities };

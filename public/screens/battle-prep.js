@@ -1,4 +1,5 @@
 import { api, navigate, resourceCache, refreshResourceBar, bootstrapCache }  from '../api.js';
+import { errandRosterIds } from '../errands.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
@@ -1391,7 +1392,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       items = boot.items || [];
 
+      // A unit away on an errand is not in the castle to be fielded. That IS
+      // the cost of an errand — it cannot fail, so the absence is the whole
+      // trade. Filtered rather than shown-and-disabled: a formation slot it can
+      // never fill today is just a puzzle piece that does not exist.
+      const awayIds = await errandRosterIds(player.chat_id);
       roster = rosterData
+        .filter(u => !awayIds.has(String(u.id)))
         .map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }))
         .sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
 

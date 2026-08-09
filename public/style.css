@@ -900,8 +900,66 @@ button:active:not(:disabled) { opacity: 0.75; }
 .res-bar-btn:not(:disabled):active .res-icon-img,
 .res-bar-btn:not(:disabled):active img { filter: none; }
 
-/* The errand slot is reserved but not yet wired up: same frame, dimmed. */
-.res-bar-errands,
+/* ── Errands ────────────────────────────────────────────────────────────────
+   The button is live now. It sits quiet by default and glows only when there is
+   something to DO — an offer waiting, or a unit home with its reward. A daily
+   system that always glows teaches players to ignore it. */
+.res-bar-errands--ready {
+  opacity: 1;
+  animation: errand-ready 2.4s ease-in-out infinite;
+}
+@keyframes errand-ready {
+  0%, 100% { filter: drop-shadow(0 0 2px var(--accent)); }
+  50%      { filter: drop-shadow(0 0 9px var(--accent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .res-bar-errands--ready { animation: none; filter: drop-shadow(0 0 5px var(--accent)); }
+}
+
+.errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+.errand-title { font-size: 1rem; font-weight: 700; color: var(--accent); }
+.errand-desc  { font-size: 0.82rem; color: var(--text); line-height: 1.45; margin: 0; opacity: 0.9; }
+.errand-section-label {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); margin-top: 2px;
+}
+.errand-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.errand-req-chip, .errand-reward-chip {
+  font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+}
+.errand-req-chip {
+  background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border);
+}
+.errand-reward-chip {
+  background: color-mix(in srgb, #6fcf97 15%, transparent);
+  color: #6fcf97; border: 1px solid #6fcf9740;
+}
+.errand-away {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.errand-away-who   { font-weight: 700; color: var(--text); }
+.errand-away-state { font-size: 0.74rem; color: var(--muted); }
+.errand-track-wrap { --track-card-h: clamp(58px, 9vh, 76px); --portrait-card-h: var(--track-card-h); }
+.errand-btn {
+  padding: 11px; border-radius: 8px; border: 1px solid var(--accent);
+  background: rgba(200,151,58,0.12); color: var(--accent);
+  font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+.errand-btn:disabled { opacity: 0.4; cursor: default; }
+.errand-btn:not(:disabled):active { background: rgba(200,151,58,0.26); }
+
+/* A unit that is away cannot be fielded — shown, but plainly out of play. */
+.portrait-card--on-errand { opacity: 0.4; filter: grayscale(0.7); cursor: not-allowed; }
+
+/* Marker on the castle node of a unit that is away. Same slot as the HP bar,
+   which that unit does not need while it is out. */
+.castle-node-errand {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: var(--accent); text-shadow: 0 0 8px rgba(0,0,0,0.8); z-index: 3;
+}
+
 .res-bar-placeholder {
   cursor: default;
   opacity: 0.45;

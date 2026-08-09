@@ -10,7 +10,8 @@ const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require(
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
-const { BattleEngine } = require('../utils/battle-engine');
+const { BattleEngine, getAbilities } = require('../utils/battle-engine');
+const ERR = require('../data/errands');
 const {
   getActiveBattle,
   getBattleState,
@@ -974,6 +975,241 @@ function writeFavorRecord(chat_id, record) {
     body: JSON.stringify({ adds_daily_view: record }),
   });
 }
+
+// ── Errands ─────────────────────────────────────────────────────────────────
+// A daily solo task for one non-hero unit. Errands cannot fail; the cost is that
+// the unit is away until it returns.
+//
+// THIS SERVICE DOES NOT COMPLETE ERRANDS. Everything past the start belongs to
+// the Supabase edge functions: they finish the row, apply whatever it granted,
+// and notify the player through the bot. What lives here is the offer, the
+// start, and reading back a finished row so the player can SEE the result.
+//
+// Storage is the existing `errands` table — nothing was added to `roster` or
+// `players`:
+//   player       chat_id (FK)
+//   errand       the errand id from data/errands.js
+//   errand_data  jsonb, written on start (below) and extended on completion by
+//                the edge function
+//   active       true while the unit is out; the edge function flips it false
+//
+// The OFFER is not stored at all. It is derived from (chat_id + local date), so
+// it is identical on every request that day — no reroll by refreshing — and it
+// costs no column and no write.
+const ERRAND_TABLE = '/errands';
+
+function throneLevelOf(structures) {
+  return structures?.buildings_data?.slot_0?.level ?? 0;
+}
+
+// Unit defs live in data/units.js keyed by faction; a roster row only carries
+// unit_id, so the def is looked up the way the client's resolveUnitDef does.
+let _errandUnitIndex = null;
+function unitDefById(unitId) {
+  if (!_errandUnitIndex) {
+    _errandUnitIndex = {};
+    (function walk(node) {
+      if (!node || typeof node !== 'object') return;
+      if (node.id && (node.tags || node.hp)) { _errandUnitIndex[node.id] = node; return; }
+      Object.values(node).forEach(walk);
+    })(UNITS);
+  }
+  return _errandUnitIndex[unitId] || null;
+}
+const resolveRosterDef = row => unitDefById(row?.unit_data?.unit_id);
+
+// Deterministic per player per day, so the same offer survives a refresh and a
+// bug is reproducible.
+function dailySeed(chat_id, date) {
+  const s = `${chat_id}|${date}`;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// The completability rule: only errands SOME free unit actually satisfies are
+// eligible, so an offer can never be a dead end.
+function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, abilities, lastErrandId = null }) {
+  if (!freeRows.length) return null;
+
+  const profiles = freeRows.map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }));
+  const pool = ERR.ERRANDS.filter(e => e.faction === faction);
+
+  // Try the throne's own tier first, then step DOWN. A throne-2 player whose
+  // units are all tier 1 has only rank-1 passives; demanding rank 2 of them left
+  // whole factions with nothing offerable from throne 2 onward. The errand
+  // should be as hard as the roster can answer, not as hard as the throne says.
+  let eligible = [];
+  let tier = ERR.throneTier(throneLevel);
+  for (; tier >= 1; tier--) {
+    eligible = [];
+    for (const errand of pool) {
+      const resolved = ERR.resolveRequirement(errand, throneLevel, abilities, tier);
+      const who = profiles.filter(p => ERR.unitMeets(p.profile, resolved));
+      if (who.length) eligible.push({ errand, resolved, candidates: who.map(p => String(p.row.id)) });
+    }
+    if (eligible.length) break;
+  }
+  if (!eligible.length) return null;
+
+  // Don't hand back the last errand run while another one fits.
+  const fresh = eligible.filter(e => e.errand.id !== lastErrandId);
+  const from  = fresh.length ? fresh : eligible;
+
+  const pick = from[dailySeed(chat_id, date) % from.length];
+  return {
+    errand_id:   pick.errand.id,
+    tier,
+    requirement: pick.resolved,
+    reward:      ERR.scaleReward(pick.errand, throneLevel, tier),
+    hours:       pick.errand.hours,
+    candidates:  pick.candidates,
+  };
+}
+
+// Rows this player has, newest first. `active` separates "out" from "finished".
+async function errandRowsFor(chat_id) {
+  return supabase(`${ERRAND_TABLE}?player=eq.${encodeURIComponent(chat_id)}&order=created_at.desc&limit=20`);
+}
+
+// GET /errands — the offer, whatever is running, and any finished errand the
+// player has not been shown yet.
+router.get('/errands', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const [structRows, roster, rows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+      errandRowsFor(chat_id),
+    ]);
+
+    const active = rows.filter(r => r.active);
+    // Finished but not yet acknowledged. The edge function ends the errand and
+    // the bot announces it; this is what the player sees when they come back in.
+    const unseen = rows.filter(r => !r.active && !r.errand_data?.seen);
+
+    // One at a time: a second errand while one is out would let a player empty
+    // the roster and then be unable to embark, which is the opposite of a draw.
+    let offer = null;
+    if (!active.length) {
+      const busyIds = new Set(active.map(r => String(r.errand_data?.roster_id)));
+      const freeRows = roster.filter(r =>
+        r.is_hero !== true && r.unit_data?.alive !== false && !busyIds.has(String(r.id)));
+      offer = pickErrandFor({
+        chat_id,
+        faction: player.faction,
+        throneLevel: throneLevelOf(structRows[0]),
+        freeRows,
+        date: playerLocalDate(player.timezone),
+        abilities: await getAbilities(),
+        lastErrandId: rows[0]?.errand ?? null,
+      });
+    }
+
+    res.json({
+      offer,
+      active: active.map(r => ({ id: r.id, errand_id: r.errand, ...r.errand_data })),
+      finished: unseen.map(r => ({ id: r.id, errand_id: r.errand, ...r.errand_data })),
+      definitions: ERR.ERRANDS,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /errands/start — send a unit. Re-derives the offer rather than trusting
+// the client: it is deterministic, so this is the same object the player saw.
+router.post('/errands/start', requireAuth, async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const [structRows, roster, rows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+      errandRowsFor(chat_id),
+    ]);
+    if (rows.some(r => r.active)) {
+      return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
+    }
+
+    const throneLevel = throneLevelOf(structRows[0]);
+    const freeRows = roster.filter(r => r.is_hero !== true && r.unit_data?.alive !== false);
+    const offer = pickErrandFor({
+      chat_id,
+      faction: player.faction,
+      throneLevel,
+      freeRows,
+      date: playerLocalDate(player.timezone),
+      abilities: await getAbilities(),
+      lastErrandId: rows[0]?.errand ?? null,
+    });
+    if (!offer) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
+
+    const row = roster.find(r => String(r.id) === String(roster_id));
+    if (!row) return res.status(404).json({ error: 'Unit not found' });
+    if (row.is_hero === true) return res.status(400).json({ error: 'The hero cannot run errands', code: 'errand_hero' });
+    if (!offer.candidates.includes(String(roster_id))) {
+      return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });
+    }
+
+    const def  = ERR.ERRANDS_BY_ID[offer.errand_id];
+    const now  = Date.now();
+    // Everything the edge function needs to finish this without re-deriving it,
+    // and everything the client needs to render it.
+    const errand_data = {
+      roster_id:   String(roster_id),
+      unit_id:     row.unit_data?.unit_id ?? null,
+      unit_name:   resolveRosterDef(row)?.name ?? null,
+      tier:        offer.tier,
+      hours:       def.hours,
+      started_at:  new Date(now).toISOString(),
+      ends_at:     new Date(now + def.hours * 3600 * 1000).toISOString(),
+      requirement: offer.requirement,
+      // What the errand is WORTH. The edge function applies it and may write
+      // back what it actually granted; this stays as the promise that was made.
+      reward:      offer.reward,
+    };
+
+    const inserted = await supabase(ERRAND_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({ player: String(chat_id), errand: def.id, errand_data, active: true }),
+      headers: { Prefer: 'return=representation' },
+    });
+
+    res.json({ success: true, errand: Array.isArray(inserted) ? inserted[0] : inserted });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /errands/seen — the player has been shown the result. Marks the finished
+// row acknowledged so it stops reappearing. Display bookkeeping only: it grants
+// nothing and never touches `active`.
+router.post('/errands/seen', requireAuth, async (req, res) => {
+  const { chat_id, errand_row_id } = req.body;
+  if (!chat_id || !errand_row_id) return res.status(400).json({ error: 'chat_id and errand_row_id required' });
+  try {
+    const rows = await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(errand_row_id)}&player=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ error: 'Errand not found' });
+    if (row.active) return res.status(400).json({ error: 'That errand is still running', code: 'errand_active' });
+
+    await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(errand_row_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ errand_data: { ...(row.errand_data || {}), seen: true } }),
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post('/favor/start', requireAuth, async (req, res) => {
   const { chat_id, roster_id } = req.body;

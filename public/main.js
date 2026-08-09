@@ -9,6 +9,7 @@ import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
+import { openErrandsSheet, refreshErrandButton } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 import { setUiLanguage, closeSheet, closeSubSheet } from './utils.js';
 
@@ -77,7 +78,7 @@ function mountShell(player) {
                onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
         </button>
         <div class="resource-bar" id="resource-bar"></div>
-        <button class="res-bar-btn res-bar-errands" disabled title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}"></button>
+        <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}"></button>
       </div>
       <div id="content-root"></div>
       <nav class="bottom-nav" id="bottom-nav">
@@ -124,6 +125,7 @@ function mountShell(player) {
   // this closed-over reference stays current across language switches.
   document.getElementById('resource-bar-row').addEventListener('click', e => {
     if (e.target.closest('.res-bar-timeline')) openTimeline(player);
+    if (e.target.closest('.res-bar-errands'))  openErrandsSheet(player);
   });
 }
 
@@ -169,6 +171,7 @@ function navigate(screen, params = {}) {
   if (player && !isBattle) {
     refreshResourceBar(player).catch(() => {});
     refreshNavLock(player).catch(() => {});
+    refreshErrandButton(player).catch(() => {});
   }
 
   const root = document.getElementById('content-root');
