@@ -1725,7 +1725,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 18, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart',
+      damage_source: 'death', action_power: 18, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
       xp: 360, passive: ['infect 1', 'regenerate 1'], ability: null,
     },
     plague_lord: {
@@ -1736,7 +1736,7 @@ const UNITS = {
       hp: 65, armor: 15, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart',
+      damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
       xp: 900, passive: ['infect 1', 'regenerate 1', 'horde 1'], ability: null,
     },
     communicant: {

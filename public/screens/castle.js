@@ -190,9 +190,14 @@ export function renderCastle(root, { player }) {
   // Single refresh path: /bootstrap holds resources, trophies, structures, roster
   // and items, so every post-mutation update is ONE request rather than one per
   // slice. refreshResourceBar shares the same in-flight fetch.
-  async function reloadFromBootstrap() {
+  // `knownStructures` is the structures row a write just returned. /bootstrap can
+  // answer from a replica that has not caught up with that write, so where the
+  // caller already holds the post-write row it wins — it cannot be behind — and
+  // the cache is corrected to match, so the next screen to read it agrees.
+  async function reloadFromBootstrap(knownStructures = null) {
     const boot = await bootstrapCache.refresh(player.chat_id);
-    structuresRecord = boot.structures;
+    if (knownStructures) bootstrapCache.patch(() => ({ structures: knownStructures }));
+    structuresRecord = knownStructures || boot.structures;
     trophyInventory  = boot.trophies || [];
     resourceInventory = boot.resources || [];
     rosterCache      = boot.roster || [];
@@ -1559,10 +1564,11 @@ export function renderCastle(root, { player }) {
   async function performRespec(slot, building_id) {
     try {
       const result = await api('/structures/respec', { chat_id: player.chat_id, slot, building_id });
-      structuresRecord = result.structures;
       closeModal();
-      renderBuildings();
-      refreshResourceBar(player).catch(() => {});
+      // Respec replaces the UNIT standing in the slot, so the roster is stale
+      // here for the same reason it is after a build — the node would keep the
+      // old portrait until the screen was re-mounted.
+      await reloadFromBootstrap(result.structures);
     } catch (err) {
       alert(err.message || 'Respec failed');
     }
@@ -1589,9 +1595,10 @@ export function renderCastle(root, { player }) {
       overlay.remove();
       try {
         const result = await api('/structures/clear', { chat_id: player.chat_id, slot });
-        structuresRecord = result.structures;
         closeModal();
-        renderBuildings();
+        // Demolishing deletes the slot's unit and returns its gear to the stash,
+        // so roster and items are both stale — not just the structures.
+        await reloadFromBootstrap(result.structures);
         refreshNavLock(player).catch(() => {});
       } catch (err) {
         alert(err.message || 'Demolish failed');
@@ -1773,7 +1780,6 @@ export function renderCastle(root, { player }) {
         building_id,
         perk,
       });
-      structuresRecord = updated;
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so
@@ -1781,11 +1787,17 @@ export function renderCastle(root, { player }) {
         // units live in these slots now, so it stays here — reloading first so
         // the new unit and its gear are actually in rosterCache/itemsCache when
         // renderBuildings starts the chain.
-        await reloadFromBootstrap();
+        await reloadFromBootstrap(updated);
         return;
       }
-      renderBuildings();
-      refreshResourceBar(player).catch(() => {});
+      // A build changes the ROSTER, not just the structures: raising a dwelling
+      // spawns its unit, and the server auto-levels any unit that was only
+      // waiting on this building (applyAutoLevelUps in routes/index.js). This
+      // used to re-render off the stale rosterCache, so the unit kept its old
+      // level until the player switched tabs — at which point the screen
+      // re-mounted against a cache that refreshResourceBar had since refreshed,
+      // and the level-up appeared to arrive late. Read the new roster here.
+      await reloadFromBootstrap(updated);
       refreshNavLock(player).catch(() => {});
     } catch (err) {
       console.error(err);
@@ -1842,10 +1854,11 @@ export function renderCastle(root, { player }) {
         mercenary_building_id,
         slot,
       });
-      if (result.structures) structuresRecord = result.structures;
       // One refresh feeds trophies, roster AND the resource bar — /bootstrap
-      // carries all three, so there is nothing to fetch separately.
-      await reloadFromBootstrap();
+      // carries all three, so there is nothing to fetch separately. The
+      // structures row from the write is handed over so the reload cannot
+      // replace it with a pre-write read.
+      await reloadFromBootstrap(result.structures || null);
     } catch (err) {
       console.error(err);
       alert(err.message || 'Recruit failed');
@@ -1861,10 +1874,11 @@ export function renderCastle(root, { player }) {
         slot,
         roster_id,
       });
-      if (result.structures) structuresRecord = result.structures;
       // One refresh feeds trophies, roster AND the resource bar — /bootstrap
-      // carries all three, so there is nothing to fetch separately.
-      await reloadFromBootstrap();
+      // carries all three, so there is nothing to fetch separately. The
+      // structures row from the write is handed over so the reload cannot
+      // replace it with a pre-write read.
+      await reloadFromBootstrap(result.structures || null);
     } catch (err) {
       console.error(err);
       alert(err.message || 'Upgrade failed');

@@ -1673,7 +1673,13 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     if (!engine.done) {
       let next = engine.currentActor();
       while (next && next.side === 'player' && (next._unity_host_id != null || next._invulnerable)) {
-        engine.fireTrigger('on_turn_start', { actor: next, target: next, dmg: 0, dying: null });
+        // executeAction fires on_turn_start itself (see battle-engine.js), so
+        // firing it here as well ran every on_turn_start passive TWICE for
+        // exactly these units. Light of Dawn made it visible — the units that
+        // carry it also carry Unity (data/units.js), so they always take this
+        // path, and it healed and burnt twice every turn. The AI loop's version
+        // of this branch calls doNone directly, which does NOT fire the
+        // trigger, which is why it needs its own call and this one does not.
         engine.executeAction(next, null, 'none');
         if (engine.done) break;
         engine.runAiTurns();
