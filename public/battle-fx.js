@@ -3032,6 +3032,7 @@ export const EFFECTS = {
   light_of_dawn,
   radiance,
   mothers_blessing,
+  pale_embrace: mothers_blessing,
   cleanse,
   raise_dead,
   shield_bash,

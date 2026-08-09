@@ -208,9 +208,13 @@ const BUILDING_POOLS = {
       { id: 'phantom_mist', label: 'Phantom Mist', category: 'barracks', tier: 3, unit_id: 'gs621', upgrades: [] },
       // Sorrow Maiden line — Mothers Voice starts with this one raised (see
       // HERO_STARTING_UNITS in routes/index.js). A single chain, no branch.
-      { id: 'pale_maiden_barrow',    label: 'Pale Maiden Barrow',    category: 'barracks', tier: 1, unit_id: 'gs7',   upgrades: ['pale_dame_barrow'],      cost: { gold: 50 } },
+      { id: 'pale_maiden_barrow',    label: 'Pale Maiden Barrow',    category: 'barracks', tier: 1, unit_id: 'gs7',   upgrades: ['pale_dame_barrow', 'pale_votaress_chantry'], cost: { gold: 50 } },
       { id: 'pale_dame_barrow',      label: 'Pale Dame Barrow',      category: 'barracks', tier: 2, unit_id: 'gs71',  upgrades: ['pale_matriarch_barrow'], cost: { gold: 100 } },
       { id: 'pale_matriarch_barrow', label: 'Pale Matriarch Barrow', category: 'barracks', tier: 3, unit_id: 'gs711', upgrades: [] },
+      // The mender branch. A chantry is where masses are sung for the dead,
+      // which is what this half of the line is for.
+      { id: 'pale_votaress_chantry', label: 'Pale Votaress Chantry', category: 'barracks', tier: 2, unit_id: 'gs72',  upgrades: ['pale_abbess_chantry'],   cost: { gold: 100 } },
+      { id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry',   category: 'barracks', tier: 3, unit_id: 'gs721', upgrades: [] },
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
@@ -369,8 +373,10 @@ const UNIT_UPGRADE_PATHS = {
     gs52: [{ unit_id: 'gs521', building_id: 'grieving_custodian_chamber', label: 'Grieving Custodian Chamber' }],
     gs61: [{ unit_id: 'gs611', building_id: 'wraith_hall', label: 'Wraith Hall' }],
     gs62: [{ unit_id: 'gs621', building_id: 'phantom_mist', label: 'Phantom Mist' }],
-    gs7:  [{ unit_id: 'gs71',  building_id: 'pale_dame_barrow',      label: 'Pale Dame Barrow' }],
+    gs7:  [{ unit_id: 'gs71',  building_id: 'pale_dame_barrow',      label: 'Pale Dame Barrow' },
+           { unit_id: 'gs72',  building_id: 'pale_votaress_chantry', label: 'Pale Votaress Chantry' }],
     gs71: [{ unit_id: 'gs711', building_id: 'pale_matriarch_barrow', label: 'Pale Matriarch Barrow' }],
+    gs72: [{ unit_id: 'gs721', building_id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry' }],
   },
 };
 

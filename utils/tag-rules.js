@@ -8,6 +8,10 @@ const TAG_RULES = {
   'mend flesh': {
    targetRequireTags: ['Zombie'],
   },
+  // The Grail's mend for the bodiless: only a Spirit can be embraced.
+  pale_embrace: {
+    targetRequireTags: ['Spirit'],
+  },
 }
 
 function unitHasTag(unit, tag) {

@@ -1010,6 +1010,25 @@ export function renderCastle(root, { player }) {
     const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
     const liveUnit = rosterUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
 
+    // The card was showing the BLUEPRINT's numbers: full HP whatever state the
+    // unit was really in, and `XP 720` — which is the XP this tier COSTS, not
+    // what the unit has earned. Both live on the roster row, so they are derived
+    // here the way the roster screen derived them, item bonus included.
+    const progress = rosterUnit ? (() => {
+      const stored    = rosterUnit.unit_data || {};
+      const baseMaxHp = stored.max_hp != null ? stored.max_hp : (baseUnit?.hp ?? null);
+      const derived   = withEquippedItem(
+        { max_hp: baseMaxHp ?? 0, current_hp: stored.current_hp ?? baseMaxHp ?? 0 }, item);
+      // xp on a unit def is what the NEXT tier costs; a top-tier unit has one
+      // too, so "can it still advance" is decided by the upgrade paths, not by
+      // whether the number exists.
+      const xpRequired = paths && paths.length ? (baseUnit?.xp ?? null) : null;
+      return {
+        hp: baseMaxHp == null ? null : { cur: derived.current_hp, max: derived.max_hp },
+        xp: { cur: stored.current_xp ?? 0, req: xpRequired ?? 0, maxed: !xpRequired },
+      };
+    })() : null;
+
     const itemSlotHtml = rosterUnit
       ? renderItemSlotIcon(item, rosterUnit.id, { player })
       : '';
@@ -1023,7 +1042,7 @@ export function renderCastle(root, { player }) {
     const bodyHtml = `
       <div id="slot-sheet-root">
       <div class="castle-unit-card-wrap">
-        ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml })}
+        ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml, progress })}
         ${actionOverlayHtml}
       </div>
       <div class="track-action-row track-action-row--framed">

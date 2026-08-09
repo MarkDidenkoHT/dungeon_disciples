@@ -1661,6 +1661,26 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
+/* HP / XP bars inside a unit card (see renderUnitProgressRow). Reuses the
+   roster's .levelup-row track so the two screens read identically; only the
+   leading key and the HP colouring are new. */
+.unit-progress-row { margin: 2px 0; }
+
+.unit-progress-key {
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  min-width: 18px;
+}
+
+/* Same thresholds and colours the portrait strips use, so a unit that looks
+   critical on the castle node looks critical on its card too. */
+.unit-hp-fill--ok       { background: #4caf50; }
+.unit-hp-fill--damaged  { background: #d8b23a; }
+.unit-hp-fill--critical { background: #d1483a; }
+
 .hero-level-label {
   font-size: 0.68rem;
   color: var(--accent);

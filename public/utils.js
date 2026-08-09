@@ -80,6 +80,13 @@ export const ACTION_INFO = {
       ru: 'Восстанавливает HP союзному конструкту или машине на величину Силы.',
     },
   },
+  'pale_embrace': {
+    name: { en: 'Pale Embrace', ru: 'Бледные объятия' },
+    desc: {
+      en: 'Gathers the dead to her: mends every Spirit ally at once for the unit\'s Power. Nothing that still has a body can be embraced.',
+      ru: 'Собирает мёртвых к себе: разом исцеляет всех союзников-духов на величину Силы. Тех, у кого ещё есть тело, обнять нельзя.',
+    },
+  },
   'sacrifice': {
     name: { en: 'Sacrifice', ru: 'Жертва' },
     desc: {
@@ -285,6 +292,7 @@ export function getActionLabel(actionKey) {
     'mend flesh': 'Mend Flesh',
     sacrifice:    'Sacrifice',
     holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
+    pale_embrace: 'Pale Embrace',
   };
   return map[k.toLowerCase()] || cap(k);
 }
@@ -520,8 +528,56 @@ export function renderUnitStatDiffs(unit, compareUnit) {
   return chips.length ? `<div class="unit-stat-diffs">${chips.join('')}</div>` : '';
 }
 
+// HP and XP as BARS, the way the roster showed them. A blueprint (a building
+// being previewed, a branch being compared) has neither, so this renders only
+// what it is given: pass `progress: { hp: { cur, max }, xp: { cur, req } }`.
+//
+// The XP bar is the one that answers "how close is this unit to levelling", a
+// question the flat "XP 720" in the stat column never could — 720 of what?
+export function renderUnitProgressRow(progress) {
+  if (!progress) return '';
+  const rows = [];
+
+  const hp = progress.hp;
+  if (hp && hp.max > 0) {
+    const pct     = Math.max(0, Math.min(100, (hp.cur / hp.max) * 100));
+    // Same thresholds as the portrait strips: critical at a third or less.
+    const state   = pct <= 33 ? 'critical' : (hp.cur < hp.max ? 'damaged' : 'ok');
+    rows.push(`
+      <div class="levelup-row unit-progress-row">
+        <span class="unit-progress-key">HP</span>
+        <div class="levelup-xp-bar">
+          <div class="levelup-xp-fill unit-hp-fill--${state}" style="width:${pct}%"></div>
+        </div>
+        <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
+      </div>`);
+  }
+
+  const xp = progress.xp;
+  if (xp && xp.req > 0) {
+    const pct = Math.max(0, Math.min(100, (xp.cur / xp.req) * 100));
+    rows.push(`
+      <div class="levelup-row unit-progress-row">
+        <span class="unit-progress-key">XP</span>
+        <div class="levelup-xp-bar">
+          <div class="levelup-xp-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
+      </div>`);
+  } else if (xp && xp.cur != null) {
+    // Top tier: there is nothing left to advance into, so a bar would be a lie.
+    rows.push(`
+      <div class="levelup-row unit-progress-row">
+        <span class="unit-progress-key">XP</span>
+        <span class="levelup-xp-label">${xp.cur}${xp.maxed ? ` · ${uiText('Max tier', 'Макс. уровень')}` : ''}</span>
+      </div>`);
+  }
+
+  return rows.join('');
+}
+
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', progress = null } = opts;
 
   if (!unit) {
     return `
@@ -543,6 +599,7 @@ export function buildUnitCard(unit, opts = {}) {
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
+        ${renderUnitProgressRow(progress)}
         ${renderUnitStatDiffs(unit, compareUnit)}
         ${descHtml}
         ${renderUnitAbilitiesRow(unit, { itemSlotHtml })}

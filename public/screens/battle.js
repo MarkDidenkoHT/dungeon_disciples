@@ -25,7 +25,7 @@ const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
 // radiance is here for both reasons at once: it fires on EVERY adjacent enemy
 // when the unit is healed, and the light leaves the caster for all of them in
 // the same instant.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing']);
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace']);
 
 function cellIndex(row, col) { return row * COLS + col; }
 
@@ -572,9 +572,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // field and only the server refused the tap: Repair offered flesh it cannot
   // touch, Heal offered Constructs, Mend Flesh offered the living.
   const TARGET_TAG_RULES = {
-    heal:         { exclude: ['Construct', 'Zombie'] },
-    repair:       { require: ['Construct'] },
-    'mend flesh': { require: ['Zombie'] },
+    heal:           { exclude: ['Construct', 'Zombie'] },
+    repair:         { require: ['Construct'] },
+    'mend flesh':   { require: ['Zombie'] },
+    pale_embrace:   { require: ['Spirit'] },
   };
 
   function passesTagRules(unit, actionKey) {

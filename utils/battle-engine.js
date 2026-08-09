@@ -478,15 +478,24 @@ class BattleEngine {
       if (actor._mothers_kiss) {
         return this.doMothersKiss(actor);
       }
-      const raw    = this.calcHeal(actor);
-      const factor = 1 - (target._healing_reduction ?? 0) / 100;
-      const heal   = Math.floor(Math.min(raw * factor * this.fatigueHealMult(), target.max_hp - target.battle_hp));
-      const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
-      target.battle_hp += heal;
-      this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
-      this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
-      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
-      this.checkBark('heal_low_hp', actor, { target, preHealRatio });
+      // Multi-target menders (unit_data.targets > 1) mend every valid ally at
+      // once, mirroring the multi-target attack branch below — Pale Embrace is
+      // the first of them. getValidTargets has already applied the action's tag
+      // rules, so a Spirit-only mend reaches Spirits and nobody else.
+      //
+      // Holy Shock is excluded on purpose: its heal half is aimed at ONE ally by
+      // the player's tap, and it is not a `targets`-driven action.
+      const maxHealTargets = holyShockHeal ? 1 : Math.max(1, Number(actor.unit_data?.targets ?? 1));
+      if (maxHealTargets > 1) {
+        const list = this.getValidTargets(actor).slice(0, maxHealTargets);
+        for (const tgt of list) {
+          if (!actor.alive) break;
+          if (tgt.alive) this.healTarget(actor, tgt);
+        }
+        actor.acted_this_round = true;
+        return this.afterAction(actor);
+      }
+      this.healTarget(actor, target);
     } else {
       // Multi-target attackers (unit_data.targets > 1) strike every valid target
       // at once — an AoE hit, e.g. the Gargoyles' targets:6 sweeps the whole
@@ -587,6 +596,23 @@ class BattleEngine {
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
+  // Mends ONE ally. Split out of executeAction so a multi-target mender and a
+  // single-target one heal by exactly the same rules — fatigue, the target's
+  // healing reduction, the overheal clamp and the heal triggers.
+  healTarget(actor, target) {
+    if (!target || !target.alive) return 0;
+    const raw    = this.calcHeal(actor);
+    const factor = 1 - (target._healing_reduction ?? 0) / 100;
+    const heal   = Math.floor(Math.min(raw * factor * this.fatigueHealMult(), target.max_hp - target.battle_hp));
+    const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
+    target.battle_hp += heal;
+    this.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
+    this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
+    this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
+    this.checkBark('heal_low_hp', actor, { target, preHealRatio });
+    return heal;
+  }
+
   // Applies one physical/typed strike from actor to a single target: protector
   // intercept, per-target dodge, damage, martyrdom/recuperate, and all on-hit
   // triggers. Does NOT set acted_this_round or call afterAction — the caller owns

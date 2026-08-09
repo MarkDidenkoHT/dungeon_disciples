@@ -1251,6 +1251,17 @@ const UNIT_ABILITIES = {
     description_ru: "Соседние враги наносят на 10% меньше физического урона.",
     params: { adjacent_physical_dmg_reduction_pct: 10, range: 1 },
   },
+  'fear 1': {
+    id: 'fear 1',
+    name: 'Fear',
+    name_ru: "Страх",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent enemies deal 15% less physical damage.',
+    description_ru: "Соседние враги наносят на 15% меньше физического урона.",
+    params: { adjacent_physical_dmg_reduction_pct: 15, range: 1 },
+  },
   'sorrow 1': {
     id: 'sorrow 1',
     name: 'Sorrow',
