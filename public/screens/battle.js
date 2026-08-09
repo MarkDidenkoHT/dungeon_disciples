@@ -542,6 +542,33 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       .sort((a, b) => b.initiative - a.initiative)[0] ?? null;
   }
 
+  // Mirrors TAG_RULES / filterByTagRules in utils/tag-rules.js, which the server
+  // enforces. Duplicated rather than imported because that module is CommonJS
+  // and server-side — same reason as FATIGUE below. If the rules there change,
+  // change these too.
+  //
+  // Highlighting ignored them entirely, so a mender lit up every ally on the
+  // field and only the server refused the tap: Repair offered flesh it cannot
+  // touch, Heal offered Constructs, Mend Flesh offered the living.
+  const TARGET_TAG_RULES = {
+    heal:         { exclude: ['Construct', 'Zombie'] },
+    repair:       { require: ['Construct'] },
+    'mend flesh': { require: ['Zombie'] },
+  };
+
+  function passesTagRules(unit, actionKey) {
+    // Action ids are not written consistently in data/units.js ('mend flesh',
+    // 'Mend flesh', 'Mend Flesh' all appear), and the server lowercases before
+    // looking the rules up. Do the same, or two of those three spellings match
+    // no rule and filter nothing.
+    const rules = TARGET_TAG_RULES[String(actionKey ?? '').toLowerCase()];
+    if (!rules) return true;
+    const tags = unit?.unit_data?.tags ?? unit?.tags ?? [];
+    if (rules.require && !rules.require.some(t => tags.includes(t))) return false;
+    if (rules.exclude && rules.exclude.some(t => tags.includes(t))) return false;
+    return true;
+  }
+
   function getValidTargetIds(actor, forAbility) {
     if (!actor || !state) return new Set();
     const targets = new Set();
@@ -561,7 +588,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const isHolyShock = actionKey === 'holy_shock';
     if (isHolyShock) {
       state.combatants
-        .filter(c => c.alive && c.side === actor.side && c.id !== actor.id)
+        // Mending, so the heal rules apply: Holy Shock cannot mend a Construct
+        // or a Zombie either. Matches getValidTargets in battle-engine.js, which
+        // filters this branch by the 'heal' rules specifically.
+        .filter(c => c.alive && c.side === actor.side && c.id !== actor.id && passesTagRules(c, 'heal'))
         .forEach(c => targets.add(c.id));
     }
 
@@ -587,7 +617,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     if (isHeal && !isHolyShock) {
-      state.combatants.filter(c => c.side === actor.side && c.alive).forEach(c => targets.add(c.id));
+      state.combatants
+        .filter(c => c.side === actor.side && c.alive && passesTagRules(c, actionKey))
+        .forEach(c => targets.add(c.id));
       return targets;
     }
 
