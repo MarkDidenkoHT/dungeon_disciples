@@ -6,7 +6,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone }
 import { SPELLS }           from '../../data/spells.js';
 import { UNIT_ABILITIES }   from '../../data/unit_abilities.js';
 import { getEquipBlock }    from '../../data/item_rules.js';
-import { ITEM_DEFS, effectiveItemStats, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
+import { ITEM_DEFS, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
 import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -830,9 +830,7 @@ export function renderRoster(root, { player }) {
     const tagOk          = !stats.tag_required || unitTags.includes(stats.tag_required);
     // Incoherent pairings (a bleed-on-hit relic on a unit that only heals) are
     // refused with the reason spelled out — see data/item_rules.js.
-    // Catalog-resolved, same as the server — otherwise the button offers an
-    // equip the server will refuse (or hides one it would allow).
-    const block          = getEquipBlock(effectiveItemStats(stats), resolveUnitDef(unit), UNIT_ABILITIES);
+    const block          = getEquipBlock(stats, resolveUnitDef(unit), UNIT_ABILITIES);
     const canEquip       = factionOk && tagOk && !block && !equippedHere;
 
     const ru = player?.settings?.language === 'ru';
@@ -1561,7 +1559,7 @@ export function renderRoster(root, { player }) {
     const unitTags = (def?.tags || []).filter(Boolean);
     return (!stats.faction || stats.faction === player.faction)
         && (!stats.tag_required || unitTags.includes(stats.tag_required))
-        && !getEquipBlock(effectiveItemStats(stats), def, UNIT_ABILITIES);
+        && !getEquipBlock(stats, def, UNIT_ABILITIES);
   }
 
   function runRosterTutorial() {
