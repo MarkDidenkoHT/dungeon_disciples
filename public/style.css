@@ -2814,6 +2814,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 4px;
 }
 
+/* Targets and Range hang off the Action cell as a side delta, like every other
+   stat's. Both carry a label ("Targets +5"), so unlike the single-number deltas
+   they may need two lines — hence the stack. */
+.stat-delta--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.15;
+}
+
+.stat-delta-line { white-space: nowrap; }
+
 .stat-diff-chip {
   font-size: 0.68rem;
   font-weight: bold;

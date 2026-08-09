@@ -367,6 +367,12 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
   const diffs = unitStatDiffs(unit, compareUnit);
   const delta = key => statDeltaHtml(diffs[key], 'right');
 
+  // Targets and Range have no stat cell of their own, and both qualify the
+  // ACTION rather than the unit — so they hang off the Action cell exactly the
+  // way HP's or Power's delta hangs off its own cell, instead of floating loose
+  // under the card as facts about nothing.
+  const actionDelta = renderUnitStatDiffs(unit, compareUnit);
+
   const lvCell = canLevelUp && rosterId
     ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-roster-id="${rosterId}"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></button>`
     : `<div class="core-stat"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></div>`;
@@ -377,7 +383,7 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
-      <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
+      <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
@@ -515,17 +521,23 @@ function statDeltaHtml(entry, side) {
 }
 
 // Only the diffs with no cell of their own (Targets, Range). The rest are drawn
-// against their stat by the two column renderers.
+// against their stat by the two column renderers; these hang off the Action cell
+// the same way, as a side delta — see the caller in renderUnitCoreStatsColumn.
 export function renderUnitStatDiffs(unit, compareUnit) {
   const diffs = unitStatDiffs(unit, compareUnit);
   const chips = STAT_DIFF_MAP
     .filter(s => !ANCHORED_DIFF_KEYS.has(s.key) && diffs[s.key])
     .map(s => {
       const d = diffs[s.key];
-      const cls = d.diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
-      return `<span class="stat-diff-chip ${cls}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
+      const dir = d.diff > 0 ? 'up' : 'down';
+      return `<span class="stat-delta-line stat-delta--${dir}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
     });
-  return chips.length ? `<div class="unit-stat-diffs">${chips.join('')}</div>` : '';
+  // Same anchor and backdrop as statDeltaHtml's single-number deltas, so it sits
+  // beside the cell rather than in the card's flow. Two lines when both Targets
+  // and Range moved, which is why the labels ride along.
+  return chips.length
+    ? `<span class="stat-delta stat-delta--right stat-delta--stack">${chips.join('')}</span>`
+    : '';
 }
 
 // HP and XP as BARS, the way the roster showed them. A blueprint (a building
@@ -600,7 +612,6 @@ export function buildUnitCard(unit, opts = {}) {
       </div>
       <div class="unit-info">
         ${renderUnitProgressRow(progress)}
-        ${renderUnitStatDiffs(unit, compareUnit)}
         ${descHtml}
         ${renderUnitAbilitiesRow(unit, { itemSlotHtml })}
       </div>

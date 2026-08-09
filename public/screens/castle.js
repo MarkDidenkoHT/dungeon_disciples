@@ -832,9 +832,9 @@ export function renderCastle(root, { player }) {
   const FAVOR_LABELS = {
     // Dative case in RU — the prayer is addressed TO the god:
     // Митраил → Митраилю, Агграил → Агграилю, Асталот → Асталоту.
-    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилю' },
-    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилю' },
-    grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталоту' },
+    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилу' },
+    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилу' },
+    grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталот' },
   };
   const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
   const FAVOR_ERRORS = {
