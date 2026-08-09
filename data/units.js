@@ -650,7 +650,7 @@ const UNITS = {
       hp: 90, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
+      damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 1', 'beacon_of_hope 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -662,7 +662,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
+      damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -674,7 +674,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -686,7 +686,7 @@ const UNITS = {
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
+      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'chain 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -698,7 +698,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 6, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 6, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: 'vitality 1', ability: 'purge 1',
       building_slot: 'slot_0', xp: 75
     },
@@ -710,7 +710,7 @@ const UNITS = {
       hp: 65, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 1', 'inspiration_damage 1'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -722,7 +722,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 1', 'inspiration_damage 2'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -734,7 +734,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 1', 'inspiration_damage 2', 'dissipate 1'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -746,7 +746,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 1', 'inspiration_damage 2', 'execute 1'], ability: 'purge 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -758,7 +758,7 @@ const UNITS = {
       hp: 75, armor: 6, initiative: 45,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 1', 'aegis 1'], ability: 'redemption 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -770,7 +770,7 @@ const UNITS = {
       hp: 85, armor: 8, initiative: 50,
       resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 2', 'aegis 1'], ability: 'redemption 2',
       building_slot: 'slot_0', xp: 900
     },
@@ -782,7 +782,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 2', 'aegis 1', 'light_of_dawn 1'], ability: 'redemption 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -794,7 +794,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg',
+      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_sfx: 'divine_spell',
       passive: ['vitality 2', 'aegis 1', 'beacon_of_hope 1'], ability: 'redemption 2',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1156,7 +1156,7 @@ const UNITS = {
       hp: 65, armor: 20, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock',
+      damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       xp: 900, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
     },
     priest: {

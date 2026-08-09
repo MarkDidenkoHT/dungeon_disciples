@@ -911,7 +911,7 @@ export async function light_of_dawn(cellEl, opts = {}) {
   glowLayer.addChild(glowG);
   app.stage.addChild(layer);
 
-  await animate(900, t => {
+  await animate(1125, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
@@ -936,7 +936,9 @@ export async function light_of_dawn(cellEl, opts = {}) {
     const right   = Math.min(W, cx + half);
 
     // The band itself: a wide soft body with a hard bright core along its axis.
-    const bodyH = R * 0.78;
+    // Deliberately taller than the row it travels down — the light spills over
+    // the neighbouring ranks rather than sitting inside one lane of tiles.
+    const bodyH = R * 2.34;
     glowG.beginFill(GOLD, 0.20 * fade);
     glowG.drawRect(left, cy - bodyH / 2, right - left, bodyH);
     glowG.endFill();
@@ -944,9 +946,11 @@ export async function light_of_dawn(cellEl, opts = {}) {
     glowG.drawRect(left, cy - bodyH * 0.22, right - left, bodyH * 0.44);
     glowG.endFill();
 
-    rayG.lineStyle(Math.max(1.5, R * 0.05), WHITE, 0.85 * fade);
+    // Core and rails scale with the body, so widening the band thickens the
+    // whole beam instead of leaving a hairline down a broad glow.
+    rayG.lineStyle(Math.max(1.5, R * 0.15), WHITE, 0.85 * fade);
     rayG.moveTo(left, cy); rayG.lineTo(right, cy);
-    rayG.lineStyle(Math.max(1, R * 0.014), GOLD, 0.55 * fade);
+    rayG.lineStyle(Math.max(1, R * 0.042), GOLD, 0.55 * fade);
     rayG.moveTo(left, cy - bodyH / 2); rayG.lineTo(right, cy - bodyH / 2);
     rayG.moveTo(left, cy + bodyH / 2); rayG.lineTo(right, cy + bodyH / 2);
     rayG.lineStyle(0);
@@ -954,8 +958,8 @@ export async function light_of_dawn(cellEl, opts = {}) {
     // The two leading edges, bright while they travel and gone once they land.
     if (reach < 1) {
       const edge = (1 - reach) * 0.9 * fade;
-      softGlow(glowG, left,  cy, R * 0.42, WHITE, edge);
-      softGlow(glowG, right, cy, R * 0.42, WHITE, edge);
+      softGlow(glowG, left,  cy, bodyH * 0.5, WHITE, edge);
+      softGlow(glowG, right, cy, bodyH * 0.5, WHITE, edge);
     }
 
     // Lances of light standing in the band, each lighting up only once the wave
@@ -974,8 +978,8 @@ export async function light_of_dawn(cellEl, opts = {}) {
 
     // The source: the light is born on the caster, so it stays the brightest
     // point on the row.
-    softGlow(glowG, cx, cy, R * 0.5, GOLD,  0.6 * fade);
-    softGlow(glowG, cx, cy, R * 0.26, WHITE, 0.9 * fade);
+    softGlow(glowG, cx, cy, bodyH * 0.55, GOLD,  0.6 * fade);
+    softGlow(glowG, cx, cy, R * 0.34,     WHITE, 0.9 * fade);
 
     // Each unit the passive actually touched gets its own bloom, timed to when
     // the wave arrives — that is what ties the band to who was healed or burnt.

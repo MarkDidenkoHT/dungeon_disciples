@@ -323,8 +323,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             const cells = [];
             for (let j = entryIdx; j < newEntries.length; j++) {
               const e = newEntries[j];
+              // Skips PAST foreign entries rather than stopping at them. The
+              // run is rarely unbroken: light_of_dawn heals an ally and burns an
+              // enemy, and the heal fires its own on-healed triggers, whose log
+              // lines land between the two — so a strict run collapsed nothing
+              // and the effect played once per victim. The cost is that two
+              // genuine triggers of the same passive by the same actor in one
+              // batch now animate once; none of these passives can fire twice
+              // in a batch (turn start, or a single heal event).
               if (e.type !== entry.type || e.passive !== entry.passive ||
-                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) break;
+                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) continue;
               fanOutCovered.add(j);
               const c = e.targetId
                 ? document.querySelector(`.battle-cell[data-id="${e.targetId}"]`)
