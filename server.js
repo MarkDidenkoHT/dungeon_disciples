@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 const routes = require('./routes/index');
 
 const app = express();
@@ -49,6 +50,52 @@ const staticOpts = NO_CACHE
       },
     };
 if (NO_CACHE) console.log('Static caching DISABLED (dev mode)');
+
+// ── Build-versioned asset URLs ──────────────────────────────────────────────
+// Cache headers alone were not enough. Telegram's WebView keeps its own asset
+// store and does not reliably honour revalidation, so a deploy would land on
+// Render, serve correctly to a normal browser, and STILL replay yesterday's
+// style.css inside Telegram — with no Ctrl+F5 available to break out of it.
+// Worse, entries cached before `no-store` shipped stay cached: a header change
+// cannot evict what is already stored.
+//
+// So the fix is to stop asking for the same URL twice. Every build serves its
+// code from a path nobody has requested before, which a cache cannot possibly
+// have a stale copy of. RENDER_GIT_COMMIT changes on every Render deploy; the
+// boot timestamp is the local fallback.
+const BUILD_ID = (process.env.RENDER_GIT_COMMIT || '').slice(0, 8) || Date.now().toString(36);
+console.log('Build id:', BUILD_ID);
+
+// The nesting (/v/:build/public/... rather than /v/:build/...) is load-bearing,
+// not decoration. Modules import across the public/data boundary with paths
+// like `../../data/units.js` from public/screens/. That needs TWO real
+// directory levels above the importer to climb, or the specifier resolves off
+// the top of the versioned prefix and lands on an unversioned path.
+app.use('/v/:build/public', express.static(path.join(__dirname, 'public'), staticOpts));
+app.use('/v/:build/data',   express.static(path.join(__dirname, 'data'),   staticOpts));
+
+// index.html is rewritten in flight to point at the current build, and is the
+// one response that must NEVER be cached under any setting — a stored copy
+// would pin an old BUILD_ID permanently and defeat the whole mechanism.
+// `<base>` only redirects the RELATIVE refs (style.css, main.js and the module
+// graph below them). Root-absolute URLs are untouched, which is why /assets/…
+// in the CSS and /api/… in api.js keep working off the plain mounts below.
+const INDEX_FILE = path.join(__dirname, 'public', 'index.html');
+app.get(['/', '/index.html'], (req, res, next) => {
+  fs.readFile(INDEX_FILE, 'utf8', (err, html) => {
+    if (err) return next(err);
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'text/html; charset=utf-8',
+    });
+    res.send(html.replace(/<head>/i, `<head>\n  <base href="/v/${BUILD_ID}/public/">`));
+  });
+});
+
+// Unversioned mounts stay: they serve /assets/… (referenced absolutely from the
+// CSS) and keep any direct link to the old paths working.
 app.use('/data', express.static(path.join(__dirname, 'data'), staticOpts));
 app.use(express.static(path.join(__dirname, 'public'), staticOpts));
 
