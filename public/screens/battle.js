@@ -25,7 +25,7 @@ const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
 // radiance is here for both reasons at once: it fires on EVERY adjacent enemy
 // when the unit is healed, and the light leaves the caster for all of them in
 // the same instant.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance']);
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing']);
 
 function cellIndex(row, col) { return row * COLS + col; }
 
@@ -245,6 +245,33 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return null;
   }
 
+  // Two entries belong to the same play: same kind of event, same source.
+  function sameFxGroup(a, b) {
+    return a.type === b.type && a.passive === b.passive && a.ability === b.ability &&
+           a.actorName === b.actorName && a.actorCell === b.actorCell;
+  }
+
+  // Where a group of simultaneous entries has to STOP.
+  //
+  // Grouping skips past foreign entries rather than stopping at the first one —
+  // a hit fires triggers whose log lines land between the victims, and Light of
+  // Dawn's heal and burn are split by exactly that. But a batch can span several
+  // ROUNDS (the AI loop keeps going until it is your turn again), so the same
+  // actor really can act twice inside one batch. Scanning blindly to the end
+  // then swallowed the second volley into the first: six strikes across two
+  // rounds animated as one burst of three, and the second round drew nothing.
+  //
+  // So: a round boundary closes a group, and so does anybody ACTING — including
+  // this same actor acting again. Side-effect entries (passives, barks, statuses)
+  // still do not, which is what keeps the interleaved-trigger case working.
+  function closesFxGroup(e, entry) {
+    if (e.type === 'round') return true;
+    if (e.type === 'action' || e.type === 'ability' || e.type === 'spell') {
+      return !sameFxGroup(e, entry);
+    }
+    return false;
+  }
+
   // Where ONE entry's animation is anchored and what it is handed, for the
   // effects that draw on a single cell. Returns a `run` to call (so several can
   // be started together) and a `key` identifying what it will draw — two
@@ -371,16 +398,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             const cells = [];
             for (let j = entryIdx; j < newEntries.length; j++) {
               const e = newEntries[j];
-              // Skips PAST foreign entries rather than stopping at them. The
-              // run is rarely unbroken: light_of_dawn heals an ally and burns an
-              // enemy, and the heal fires its own on-healed triggers, whose log
-              // lines land between the two — so a strict run collapsed nothing
-              // and the effect played once per victim. The cost is that two
-              // genuine triggers of the same passive by the same actor in one
-              // batch now animate once; none of these passives can fire twice
-              // in a batch (turn start, or a single heal event).
-              if (e.type !== entry.type || e.passive !== entry.passive ||
-                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) continue;
+              // Skips PAST foreign entries rather than stopping at them (the run
+              // is rarely unbroken — see closesFxGroup for what does end it).
+              if (j !== entryIdx && closesFxGroup(e, entry)) break;
+              if (!sameFxGroup(e, entry)) continue;
               fxCovered.add(j);
               const c = e.targetId
                 ? document.querySelector(`.battle-cell[data-id="${e.targetId}"]`)
@@ -409,11 +430,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             const e = newEntries[j];
             if (j !== entryIdx) {
               // Same event, same source. Foreign entries are skipped past rather
-              // than stopping the scan, for the same reason as the fan-out above:
-              // a hit fires triggers whose log lines land between the victims.
-              if (e.type !== entry.type || e.passive !== entry.passive ||
-                  e.ability !== entry.ability ||
-                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) continue;
+              // than stopping the scan, for the same reason as the fan-out above
+              // — but a round boundary or somebody acting ends the group, or a
+              // second volley later in the batch would be swallowed into this one.
+              if (closesFxGroup(e, entry)) break;
+              if (!sameFxGroup(e, entry)) continue;
               if (effectForEntry(e, actor) !== effectName) continue;
             }
             const call = singleEffectCall(e, effectName, actor, actorCell);

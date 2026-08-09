@@ -1950,7 +1950,7 @@ const UNITS = {
       hp: 45, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 70, passive: ['dodge 1', 'unending_servitude 1'], ability: 'terror 1',
     },
     pale_dame: {
@@ -1961,7 +1961,7 @@ const UNITS = {
       hp: 55, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 300, passive: ['dodge 2', 'unending_servitude 1'], ability: 'terror 1',
     },
     pale_matriarch: {
@@ -1972,7 +1972,7 @@ const UNITS = {
       hp: 55, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 16, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 800, passive: ['dodge 2', 'unending_servitude 1', 'resist_aura_air 1'], ability: 'terror 1',
     },
   },

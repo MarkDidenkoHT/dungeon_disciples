@@ -267,6 +267,10 @@
     // Effects that use (sourceCellEl, targetCellEl) positional signature
     // rather than (cellEl, opts) — currently only communion and shared_suffering.
     const SOURCE_TARGET = new Set(['communion', 'shared_suffering']);
+    // Fan-out effects take their victims as a LIST (see FAN_OUT_FX in
+    // screens/battle.js). Handed only a `targetCell` they have nothing to draw
+    // to and bail out silently, which looks like a broken effect in here.
+    const FAN_OUT = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing']);
 
     function cellEl(key) { return key ? document.querySelector(`.battle-cell[data-id="${key}"]`) : null; }
 
@@ -290,6 +294,8 @@
         if (SOURCE_TARGET.has(key)) {
           if (!target) { setStatus(`${key} needs a target (Target mode).`); return; }
           await fn(caster, target);
+        } else if (FAN_OUT.has(key)) {
+          await fn(caster, { targetCells: target ? [target] : [], isEnemy });
         } else {
           await fn(caster, { targetCell: target, isEnemy });
         }

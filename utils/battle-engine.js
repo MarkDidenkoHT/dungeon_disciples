@@ -829,19 +829,35 @@ class BattleEngine {
       if (unit.battle_hp > cost) {
         unit.battle_hp -= cost;
         const heal = Math.max(1, Math.floor(cost * this.fatigueHealMult()));
-        const allies = this.combatants.filter(c => c.side === unit.side && c.alive);
+        // The caster is NOT among them. She is paying the cost, and healing her
+        // for the same amount she just spent made the sacrifice cost nothing
+        // (better than nothing, in fact: she paid a slice of max HP and got the
+        // full heal back, so a wounded caster gained HP by "sacrificing").
+        const allies = this.combatants.filter(c => c.side === unit.side && c.alive && c.id !== unit.id);
+        // The cost, stated once and on its own — it happens whether or not
+        // anybody had room to be healed. No targetId, so it draws nothing.
+        this.pushLog({
+          type: 'passive', passive: "Mother's Blessing",
+          actorId: unit.id, actorName: unit.unit_name, actorCell: unit.cellIndex,
+          targetName: 'all allies', value: cost, heal: false,
+          message: `${unit.unit_name} sacrifices ${cost} HP`,
+        });
+        // Then one entry per ally actually mended. Each carries targetId, which
+        // is what the animation collects to draw a soul to every one of them —
+        // and they are one simultaneous play, not a queue (see FAN_OUT_FX).
         for (const a of allies) {
           const actual = Math.min(heal, a.max_hp - a.battle_hp);
           if (actual <= 0) continue;
           a.battle_hp += actual;
           this.fireHealTriggers(unit, a, actual);
+          this.pushLog({
+            type: 'passive', passive: "Mother's Blessing",
+            actorId: unit.id, actorName: unit.unit_name, actorCell: unit.cellIndex,
+            targetId: a.id, targetName: a.unit_name, targetCell: a.cellIndex,
+            value: actual, heal: true,
+            message: `${a.unit_name} is mended for ${actual}`,
+          });
         }
-        this.pushLog({
-          type: 'passive', passive: "Mother's Blessing",
-          actorName: unit.unit_name, actorCell: unit.cellIndex,
-          targetName: 'all allies', value: heal, heal: true,
-          message: `${unit.unit_name} sacrifices ${cost} HP — every ally mended for ${heal}`,
-        });
       }
     }
     if (unit.alive && unit._bleed_dmg > 0) {

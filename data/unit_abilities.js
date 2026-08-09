@@ -1065,12 +1065,16 @@ const UNIT_ABILITIES = {
     description_ru: "Получает +30% к урону каждый раз, когда погибает союзный юнит.",
     params: { dmg_bonus_pct: 30 },
   },
+  // ── Four actives added together; none is assigned to a unit yet. Drop one on
+  // a unit with `ability: 'volley 1'` (etc.) in data/units.js to field it.
   'frost_armor 1': {
     id: 'frost_armor 1',
     name: 'Frost Armor',
     name_ru: "Ледяная броня",
     rank: 1,
     type: 'active',
+    // ally_any rather than ally: a unit can sheathe ITSELF in ice, which is the
+    // obvious use for a defensive buff.
     target: 'ally_any',
     description: 'Sheathe an ally in ice: +15 armor and +20 cold resistance for 2 rounds.',
     description_ru: "Покрывает союзника льдом: +15 брони и +20 сопротивления холоду на 2 раунда.",
@@ -1097,6 +1101,8 @@ const UNIT_ABILITIES = {
     name_ru: "Залп",
     rank: 1,
     type: 'active',
+    // Hits everyone regardless of who is tapped — same shape as the all_allies
+    // heals. The tap is only what arms the ability.
     target: 'all_enemies',
     description: 'Loose a volley: 6 physical damage to every enemy.',
     description_ru: "Залп: 6 физического урона всем врагам.",
@@ -1200,6 +1206,7 @@ const UNIT_ABILITIES = {
     effect_name: 'aegis',
   },
   'aegis 2': {
+    // id and rank were both copied from rank 1 and left unchanged.
     id: 'aegis 2',
     name: 'Aegis',
     name_ru: "Эгида",
@@ -1268,17 +1275,21 @@ const UNIT_ABILITIES = {
   },
   'mothers_blessing 1': {
     id: 'mothers_blessing 1',
-    name: "Mother's BLessing",
+    name: "Mother's Blessing",
     name_ru: "Благословение Матери",
     rank: 1,
     type: 'active',
     target: 'self',
-    description: 'Each turn, sacrifice 10% of maximum HP to heal every ally for that amount. Lasts until end of battle.',
-    description_ru: "Каждый ход жертвует 10% максимального здоровья, исцеляя каждого союзника на эту величину. Действует до конца боя.",
+    description: 'Each turn, sacrifice 10% of maximum HP to heal every OTHER ally for that amount. Lasts until end of battle.',
+    description_ru: "Каждый ход жертвует 10% максимального здоровья, исцеляя каждого союзника, кроме себя, на эту величину. Действует до конца боя.",
     // The sacrificed HP IS the heal, so the ability scales with the caster's own
     // pool instead of needing a second number to balance. It never self-kills:
     // the tick stops while the caster is at or below the cost.
     params: { mothers_blessing: true, mothers_blessing_hp_cost_pct: 10 },
+    // The per-turn tick logs as a PASSIVE (it is a standing effect, not the cast
+    // itself), so the animation is resolved through this name — see
+    // effectForEntry in screens/battle.js, which looks the def up by passive name.
+    effect_name: 'mothers_blessing',
   },
   'radiance 1': {
     id: 'radiance 1',

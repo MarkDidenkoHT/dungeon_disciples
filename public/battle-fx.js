@@ -1009,6 +1009,127 @@ export async function light_of_dawn(cellEl, opts = {}) {
   console.log('[battle-fx] light_of_dawn END', dataId);
 }
 
+// ── mothers_blessing — her own life, given away as souls ──────────────────
+// The caster spends a slice of her own maximum HP every turn and every other
+// ally is mended for it. So this is not a heal that arrives from nowhere: a pale
+// grey soul is drawn OUT of her (she dims as it leaves) and drifts to each ally,
+// where it settles and sinks in. Grey rather than gold on purpose — the Grail
+// mends with the dead, and the cost should read as a cost.
+//
+// Listed in FAN_OUT_FX: the engine logs one entry per ally mended, and they are
+// one gift, not a queue.
+export async function mothers_blessing(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] mothers_blessing START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const SOUL = 0xc3c9d6;   // pale grey, faintly blue
+  const WISP = 0xeef1f6;   // near-white core
+  const originId = originCellEl.dataset.id;
+
+  const souls = targetCells.map(c => ({
+    id:    c.dataset?.id,
+    delay: rand(0, 0.14),
+    // Each soul takes its own lazy arc — they drift, they do not fly.
+    bow:   rand(0.12, 0.34) * (Math.random() < 0.5 ? -1 : 1),
+    wob:   rand(1.4, 2.6),
+    motes: Array.from({ length: 7 }, () => ({
+      ang: rand(0, Math.PI * 2), dist: rand(0.2, 0.6), size: rand(1.2, 2.8), d: rand(0, 0.25),
+    })),
+  })).filter(s => s.id && s.id !== originId);
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const lineG = new PIXI.Graphics(); lineG.blendMode = ADD;
+  layer.addChild(glowLayer, lineG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  const bez = (p0, p1, p2, f) => {
+    const m = 1 - f;
+    return [m * m * p0[0] + 2 * m * f * p1[0] + f * f * p2[0],
+            m * m * p0[1] + 2 * m * f * p1[1] + f * f * p2[1]];
+  };
+
+  await animate(1000, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ox = ob.x + ob.width / 2;
+    const oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
+
+    glowG.clear(); lineG.clear();
+
+    // The cost, first: the light is pulled INWARD and the caster dims as it
+    // goes, rather than blooming the way a healer does.
+    const draw  = clamp01(t / 0.22);
+    const spend = 1 - clamp01((t - 0.18) / 0.3);
+    softGlow(glowG, ox, oy, R * (0.5 - 0.22 * draw), SOUL, 0.5 * spend);
+    softGlow(glowG, ox, oy, R * (0.24 - 0.1 * draw), WISP, 0.7 * spend);
+    // A thin ring closing on her as the life is taken.
+    lineG.lineStyle(Math.max(1, R * 0.02), SOUL, (1 - draw) * 0.5);
+    lineG.drawCircle(ox, oy, R * (0.62 - 0.3 * draw));
+    lineG.lineStyle(0);
+
+    for (const soul of souls) {
+      const tb = cellBoundsFor(soul.id);
+      if (!tb) continue;
+      const tx = tb.x + tb.width / 2;
+      const ty = tb.y + tb.height / 2;
+
+      const travel = clamp01((t - 0.2 - soul.delay) / 0.42);
+      if (travel <= 0) continue;
+
+      // Bowed path with a slow wobble across it, so it drifts like something
+      // carried rather than fired.
+      const mx = (ox + tx) / 2 + (ty - oy) * soul.bow;
+      const my = (oy + ty) / 2 - (tx - ox) * soul.bow;
+      const [px, py] = bez([ox, oy], [mx, my], [tx, ty], travel);
+      const sway = Math.sin(travel * Math.PI * soul.wob) * R * 0.07;
+
+      // The soul itself, and the faint trail it leaves behind.
+      const alive = 1 - clamp01((travel - 0.8) / 0.2);
+      softGlow(glowG, px + sway, py, R * 0.17, WISP, 0.85 * alive);
+      softGlow(glowG, px + sway, py, R * 0.30, SOUL, 0.45 * alive);
+
+      const [qx, qy] = bez([ox, oy], [mx, my], [tx, ty], Math.max(0, travel - 0.16));
+      lineG.lineStyle(Math.max(1, R * 0.03), SOUL, 0.35 * alive);
+      lineG.moveTo(qx, qy); lineG.lineTo(px + sway, py);
+      lineG.lineStyle(0);
+
+      // Arrival: it settles over the ally and sinks in, with a few motes lifting
+      // off as it does.
+      const land = clamp01((t - 0.56 - soul.delay) / 0.42);
+      if (land <= 0) continue;
+      const settle = 1 - land;
+      softGlow(glowG, tx, ty, R * (0.2 + 0.28 * land), SOUL, settle * 0.7);
+      softGlow(glowG, tx, ty, R * (0.1 + 0.14 * land), WISP, settle * 0.9);
+      lineG.lineStyle(Math.max(1, R * 0.018), WISP, settle * 0.45);
+      lineG.drawCircle(tx, ty, R * (0.18 + 0.42 * land));
+      lineG.lineStyle(0);
+      for (const m of soul.motes) {
+        const s = clamp01((land - m.d) / 0.7);
+        if (s <= 0) continue;
+        softGlow(glowG,
+          tx + Math.cos(m.ang) * R * m.dist * s,
+          ty + Math.sin(m.ang) * R * m.dist * s - s * R * 0.25,
+          m.size * (1 - s * 0.5), WISP, (1 - s) * 0.7);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] mothers_blessing END', originId);
+}
+
 // ── radiance — holy backlash, caster → each adjacent enemy ────────────────
 // Fires when the unit is HEALED: the light it soaks up spills back out and
 // scorches the enemies beside it. So it reads as a lance thrown from the caster
@@ -2910,6 +3031,7 @@ export const EFFECTS = {
   shared_suffering,
   light_of_dawn,
   radiance,
+  mothers_blessing,
   cleanse,
   raise_dead,
   shield_bash,
