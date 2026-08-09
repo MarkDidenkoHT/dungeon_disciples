@@ -39,9 +39,21 @@ const TIER_REWARD_MULT = { 1: 1,   2: 1.6,  3: 2.4 };
 //                 action_any   the unit's action must be one of these
 //                 stat         minimum stats, scaled by TIER_STAT_MULT
 //   reward        xp_self      XP to the unit that went
-//                 xp_roster    XP to every OTHER non-hero unit at home
+//                 xp_roster    a POOL of XP split between everyone left at home,
+//                              exactly as a battle splits its XP between the
+//                              units that fought (see /battle/reward). Paying it
+//                              per-unit instead made a five-unit roster earn
+//                              more from one errand than from a whole battle.
 //                 heal_pct     % of max HP the unit returns healed by
 //                 resources    flat resource grant, scaled by TIER_REWARD_MULT
+//
+// SCALE — what these numbers are measured against:
+//   one unit's share of a battle   10 XP (level 1) to 26 XP (level 6)
+//   a level-6 battle               40 gold
+//   a tier-1 dwelling              40 gold + 20 faction crystal
+//   XP to advance a tier-1 unit    50-75      a tier-2 unit  300-360
+// An errand is a no-risk daily costing one unit's day, so it pays about one
+// battle share — not four, which is what the first pass at these numbers did.
 const ERRANDS = [
   // ── EMPIRE ────────────────────────────────────────────────────────────────
   {
@@ -50,7 +62,7 @@ const ERRANDS = [
     desc:  { en: 'The low gate has stood unmanned since the levy marched. Stand it for a day and the quarter sleeps.',
              ru: 'Нижние врата пусты с тех пор, как ополчение ушло. Постойте там день — и квартал будет спать спокойно.' },
     requires: { passive_any: ['protector', 'fortify', 'unbreakable', 'aegis', 'iron_will'], stat: { armor: 18 } },
-    reward: { xp_self: 70, resources: { Gold: 45 } },
+    reward: { xp_self: 10, resources: { Gold: 30 } },
   },
   {
     id: 'emp_shield_wall', faction: 'empire', hours: 12,
@@ -58,7 +70,7 @@ const ERRANDS = [
     desc:  { en: 'Farmhands with spears. Teach them where to put the shield and they may live through the season.',
              ru: 'Крестьяне с копьями. Научите их держать щит — и они переживут этот сезон.' },
     requires: { passive_any: ['protector', 'fortify', 'unbreakable', 'aegis', 'iron_will'] },
-    reward: { xp_self: 40, xp_roster: 25 },
+    reward: { xp_self: 6, xp_roster: 18 },
   },
   {
     id: 'emp_apothecary', faction: 'empire', hours: 8,
@@ -67,7 +79,7 @@ const ERRANDS = [
              ru: 'У аптекаря раненых больше, чем рук. Ваши подойдут.' },
     requires: { passive_any: ['field_medic', 'renew', 'mithrails_light', 'beacon_of_hope', 'light_of_dawn', 'radiance'],
                 action_any: ['heal', 'holy_shock'], stat: { action_power: 10 } },
-    reward: { xp_self: 60, heal_pct: 40, resources: { Crystals_Life: 12 } },
+    reward: { xp_self: 10, heal_pct: 40, resources: { Crystals_Life: 8 } },
   },
   {
     id: 'emp_vigil', faction: 'empire', hours: 10,
@@ -75,7 +87,7 @@ const ERRANDS = [
     desc:  { en: 'Sit the night with those who will not see morning. It is not healing. It is not nothing.',
              ru: 'Просидите ночь с теми, кто не увидит утра. Это не исцеление. Но и не пустое.' },
     requires: { passive_any: ['field_medic', 'renew', 'mithrails_light', 'beacon_of_hope', 'light_of_dawn', 'radiance'] },
-    reward: { xp_self: 55, xp_roster: 15, heal_pct: 25 },
+    reward: { xp_self: 10, xp_roster: 8, heal_pct: 25 },
   },
   {
     id: 'emp_traitor_hunt', faction: 'empire', hours: 10,
@@ -83,7 +95,7 @@ const ERRANDS = [
     desc:  { en: 'A quartermaster sold the road schedules. He runs fast, and he knows the alleys.',
              ru: 'Интендант продал расписание обозов. Бегает он быстро и знает все переулки.' },
     requires: { passive_any: ['pierce', 'impale', 'shatter', 'execute', 'chain'], stat: { initiative: 45 } },
-    reward: { xp_self: 80, resources: { Gold: 55 } },
+    reward: { xp_self: 14, resources: { Gold: 35 } },
   },
   {
     id: 'emp_proving', faction: 'empire', hours: 6,
@@ -91,7 +103,7 @@ const ERRANDS = [
     desc:  { en: 'Recruits need something to fail against. Be that thing, gently.',
              ru: 'Новобранцам нужно, обо что обломаться. Станьте этим — но помягче.' },
     requires: { passive_any: ['pierce', 'impale', 'shatter', 'execute', 'chain'] },
-    reward: { xp_self: 45, xp_roster: 20 },
+    reward: { xp_self: 6, xp_roster: 14 },
   },
   {
     id: 'emp_ward_stones', faction: 'empire', hours: 12,
@@ -99,7 +111,7 @@ const ERRANDS = [
     desc:  { en: 'The stones along the north road have weathered blank. Whatever they were keeping out has noticed.',
              ru: 'Камни вдоль северной дороги стёрлись до гладкости. То, что они удерживали, это заметило.' },
     requires: { passive_any: ['resist_aura_air', 'resist_aura_cold', 'resist_aura_death', 'volcanic_skin', 'chill', 'burn'] },
-    reward: { xp_self: 65, resources: { Crystals_Air: 10, Crystals_Frost: 10 } },
+    reward: { xp_self: 14, resources: { Crystals_Air: 7, Crystals_Frost: 7 } },
   },
   {
     id: 'emp_cold_survey', faction: 'empire', hours: 8,
@@ -107,7 +119,7 @@ const ERRANDS = [
     desc:  { en: 'Walk the boundary where the frost stops and mark where it has moved. Someone must, and it cannot be a soft one.',
              ru: 'Пройдите по границе, где кончается иней, и отметьте, куда она сместилась. Кто-то должен — и не из мягких.' },
     requires: { passive_any: ['resist_aura_air', 'resist_aura_cold', 'resist_aura_death', 'volcanic_skin', 'chill', 'burn'] },
-    reward: { xp_self: 50, resources: { Crystals_Frost: 14 } },
+    reward: { xp_self: 10, resources: { Crystals_Frost: 9 } },
   },
   {
     id: 'emp_forage', faction: 'empire', hours: 6,
@@ -115,7 +127,7 @@ const ERRANDS = [
     desc:  { en: 'Two weeks of rain on the old field. Whatever is left is worth more than it looks.',
              ru: 'Две недели дождя над старым полем. То, что уцелело, стоит больше, чем кажется.' },
     requires: { passive_any: ['scavenger', 'vitality', 'regenerate', 'dissipate'] },
-    reward: { xp_self: 35, resources: { Gold: 70 } },
+    reward: { xp_self: 6, resources: { Gold: 45 } },
   },
   {
     id: 'emp_long_march', faction: 'empire', hours: 14,
@@ -123,7 +135,7 @@ const ERRANDS = [
     desc:  { en: 'Four days of road, no escort, no stopping. Send someone who does not tire and does not talk.',
              ru: 'Четыре дня пути, без охраны и остановок. Отправьте того, кто не устаёт и не болтает.' },
     requires: { passive_any: ['scavenger', 'vitality', 'regenerate', 'dissipate'] },
-    reward: { xp_self: 75, resources: { Gold: 40, Crystals_Life: 8 } },
+    reward: { xp_self: 16, resources: { Gold: 28, Crystals_Life: 6 } },
   },
   {
     id: 'emp_muster_call', faction: 'empire', hours: 10,
@@ -131,7 +143,7 @@ const ERRANDS = [
     desc:  { en: 'Ride the villages and put steel in their spines. They answer to a voice they know.',
              ru: 'Объехать деревни и вернуть людям твёрдость. Они отзовутся на знакомый голос.' },
     requires: { passive_any: ['command', 'inspiration_damage', 'inspiration_initiative', 'unity', 'beacon_of_hope'] },
-    reward: { xp_self: 40, xp_roster: 35 },
+    reward: { xp_self: 6, xp_roster: 20 },
   },
   {
     id: 'emp_court_witness', faction: 'empire', hours: 8,
@@ -139,7 +151,7 @@ const ERRANDS = [
     desc:  { en: 'A land dispute the crown would rather settle quietly. Your word carries; go and spend it.',
              ru: 'Земельный спор, который корона предпочла бы уладить тихо. Ваше слово весомо — потратьте его.' },
     requires: { passive_any: ['command', 'inspiration_damage', 'inspiration_initiative', 'unity', 'beacon_of_hope'] },
-    reward: { xp_self: 55, resources: { Gold: 60 } },
+    reward: { xp_self: 10, resources: { Gold: 40 } },
   },
 
   // ── CHOIR OF THE CURSED ───────────────────────────────────────────────────
@@ -149,7 +161,7 @@ const ERRANDS = [
     desc:  { en: 'The pyres must burn from dusk to dawn, and something must stand in the heat to feed them.',
              ru: 'Костры должны гореть от заката до рассвета, и кто-то должен стоять в жаре и питать их.' },
     requires: { passive_any: ['fellfire', 'burn', 'volcanic_skin', 'last_verse', 'resist_aura_fire'] },
-    reward: { xp_self: 60, resources: { Crystals_Fire: 16 } },
+    reward: { xp_self: 10, resources: { Crystals_Fire: 10 } },
   },
   {
     id: 'cho_forge_vigil', faction: 'choir_of_the_cursed', hours: 12,
@@ -157,7 +169,7 @@ const ERRANDS = [
     desc:  { en: 'The great forge cannot be banked and cannot be left. Stand where no one else can stand.',
              ru: 'Великий горн нельзя ни притушить, ни оставить. Встаньте там, где не выстоит никто другой.' },
     requires: { passive_any: ['fellfire', 'burn', 'volcanic_skin', 'last_verse', 'resist_aura_fire'], stat: { hp: 45 } },
-    reward: { xp_self: 75, resources: { Crystals_Fire: 10, Gold: 35 } },
+    reward: { xp_self: 14, resources: { Crystals_Fire: 7, Gold: 25 } },
   },
   {
     id: 'cho_pit_fights', faction: 'choir_of_the_cursed', hours: 6,
@@ -165,7 +177,7 @@ const ERRANDS = [
     desc:  { en: 'The pits pay well and ask nothing but that you keep getting up. A day of it, then.',
              ru: 'Ямы платят щедро и просят лишь одного — вставать снова. Значит, день в яме.' },
     requires: { passive_any: ['rage', 'blood_frenzy', 'vengeance', 'execute', 'find_weakness'] },
-    reward: { xp_self: 65, resources: { Gold: 75 } },
+    reward: { xp_self: 8, resources: { Gold: 45 } },
   },
   {
     id: 'cho_debt_collection', faction: 'choir_of_the_cursed', hours: 8,
@@ -173,7 +185,7 @@ const ERRANDS = [
     desc:  { en: 'Three names on the list have stopped paying. Only one of them needs to be made an example of.',
              ru: 'Трое в списке перестали платить. Показательным нужно сделать лишь одного.' },
     requires: { passive_any: ['rage', 'blood_frenzy', 'vengeance', 'execute', 'find_weakness'], stat: { action_power: 12 } },
-    reward: { xp_self: 70, resources: { Gold: 55 } },
+    reward: { xp_self: 12, resources: { Gold: 35 } },
   },
   {
     id: 'cho_read_the_choir', faction: 'choir_of_the_cursed', hours: 10,
@@ -181,7 +193,7 @@ const ERRANDS = [
     desc:  { en: 'The younger voices learn faster when something that has burned reads it aloud.',
              ru: 'Молодые голоса учатся быстрее, когда читает тот, кто уже горел.' },
     requires: { passive_any: ['magic_attunement', 'inspiration_damage', 'inspiration_max_hp', 'command'] },
-    reward: { xp_self: 40, xp_roster: 35 },
+    reward: { xp_self: 6, xp_roster: 20 },
   },
   {
     id: 'cho_copy_the_liturgy', faction: 'choir_of_the_cursed', hours: 12,
@@ -189,7 +201,7 @@ const ERRANDS = [
     desc:  { en: 'Half the verses survive. The other half must be remembered correctly, and the cost of error is loud.',
              ru: 'Уцелела половина стихов. Вторую надо вспомнить верно — цена ошибки громкая.' },
     requires: { passive_any: ['magic_attunement', 'inspiration_damage', 'inspiration_max_hp', 'command'] },
-    reward: { xp_self: 70, resources: { Crystals_Fire: 12, Gold: 30 } },
+    reward: { xp_self: 14, resources: { Crystals_Fire: 8, Gold: 22 } },
   },
   {
     id: 'cho_hold_the_stair', faction: 'choir_of_the_cursed', hours: 10,
@@ -198,7 +210,7 @@ const ERRANDS = [
              ru: 'Нечто в подземелье выучило лестницу. Его нужно лишь не пустить до рассвета.' },
     requires: { passive_any: ['unbreakable', 'fortify', 'aegis', 'undying', 'recuperate', 'regenerate', 'vitality'],
                 stat: { hp: 50 } },
-    reward: { xp_self: 75, heal_pct: 30, resources: { Gold: 40 } },
+    reward: { xp_self: 12, heal_pct: 30, resources: { Gold: 28 } },
   },
   {
     id: 'cho_bear_the_reliquary', faction: 'choir_of_the_cursed', hours: 14,
@@ -206,7 +218,7 @@ const ERRANDS = [
     desc:  { en: 'It is heavier than it looks and it does not want to be carried. Do not put it down.',
              ru: 'Он тяжелее, чем кажется, и не желает, чтобы его несли. Не ставьте его на землю.' },
     requires: { passive_any: ['unbreakable', 'fortify', 'aegis', 'undying', 'recuperate', 'regenerate', 'vitality'] },
-    reward: { xp_self: 80, resources: { Crystals_Fire: 14 } },
+    reward: { xp_self: 16, resources: { Crystals_Fire: 9 } },
   },
   {
     id: 'cho_count_the_watchfires', faction: 'choir_of_the_cursed', hours: 6,
@@ -215,7 +227,7 @@ const ERRANDS = [
              ru: 'Залягте на гребне и сосчитайте огни на той стороне. Вернитесь с числом, а не с рассказом.' },
     requires: { passive_any: ['clear_shot', 'dissipate', 'resist_aura_cold', 'resist_aura_fire', 'find_weakness'],
                 stat: { initiative: 40 } },
-    reward: { xp_self: 55, resources: { Gold: 45 } },
+    reward: { xp_self: 8, resources: { Gold: 32 } },
   },
   {
     id: 'cho_salt_the_ford', faction: 'choir_of_the_cursed', hours: 8,
@@ -223,7 +235,7 @@ const ERRANDS = [
     desc:  { en: 'Make the crossing hate whoever tries it next. Quietly, and without being seen doing it.',
              ru: 'Сделайте переправу ненавистной для следующего. Тихо и незаметно.' },
     requires: { passive_any: ['clear_shot', 'dissipate', 'resist_aura_cold', 'resist_aura_fire', 'find_weakness'] },
-    reward: { xp_self: 50, xp_roster: 15, resources: { Crystals_Fire: 8 } },
+    reward: { xp_self: 8, xp_roster: 8, resources: { Crystals_Fire: 5 } },
   },
   {
     id: 'cho_break_the_siege_camp', faction: 'choir_of_the_cursed', hours: 12,
@@ -231,7 +243,7 @@ const ERRANDS = [
     desc:  { en: 'Their engines are timber and rope and confidence. Ruin whichever burns best.',
              ru: 'Их машины — дерево, верёвки и уверенность. Испортите то, что горит лучше.' },
     requires: { passive_any: ['fellfire', 'burn', 'rage', 'execute', 'vengeance'], stat: { action_power: 14 } },
-    reward: { xp_self: 90, resources: { Gold: 50, Crystals_Fire: 10 } },
+    reward: { xp_self: 16, resources: { Gold: 32, Crystals_Fire: 6 } },
   },
   {
     id: 'cho_walk_the_ash', faction: 'choir_of_the_cursed', hours: 10,
@@ -239,7 +251,7 @@ const ERRANDS = [
     desc:  { en: 'Nothing grows there and nothing should be alive in it. Bring back what you find in the ash.',
              ru: 'Там ничего не растёт и ничто не должно быть живым. Принесите то, что найдёте в пепле.' },
     requires: { passive_any: ['volcanic_skin', 'resist_aura_fire', 'undying', 'vitality', 'regenerate'] },
-    reward: { xp_self: 60, resources: { Crystals_Fire: 12, Gold: 35 } },
+    reward: { xp_self: 12, resources: { Crystals_Fire: 8, Gold: 22 } },
   },
 
   // ── GRAIL OF SORROW ───────────────────────────────────────────────────────
@@ -249,7 +261,7 @@ const ERRANDS = [
     desc:  { en: 'The dead do not tire and do not ask why the trench must be that long.',
              ru: 'Мёртвые не устают и не спрашивают, зачем ров такой длинный.' },
     requires: { passive_any: ['horde', 'reanimate', 'unending_servitude', 'undying', 'sorrow'] },
-    reward: { xp_self: 45, resources: { Gold: 65 } },
+    reward: { xp_self: 8, resources: { Gold: 42 } },
   },
   {
     id: 'gra_walk_the_procession', faction: 'grail_of_sorrow', hours: 12,
@@ -257,7 +269,7 @@ const ERRANDS = [
     desc:  { en: 'A day of slow walking and slower singing. The living take heart from seeing it done properly.',
              ru: 'День медленного шага и ещё более медленного пения. Живые крепнут, видя, что всё сделано как должно.' },
     requires: { passive_any: ['horde', 'reanimate', 'unending_servitude', 'undying', 'sorrow'] },
-    reward: { xp_self: 35, xp_roster: 35 },
+    reward: { xp_self: 6, xp_roster: 20 },
   },
   {
     id: 'gra_foul_the_wells', faction: 'grail_of_sorrow', hours: 10,
@@ -265,7 +277,7 @@ const ERRANDS = [
     desc:  { en: 'Not enough to kill. Enough that the garrison drinks and then cannot hold a spear steady.',
              ru: 'Не насмерть. Ровно настолько, чтобы гарнизон напился и не удержал копьё.' },
     requires: { passive_any: ['infect', 'poison', 'bleed', 'aura_of_decay', 'death_mark'] },
-    reward: { xp_self: 70, resources: { Crystals_Nature: 12, Gold: 35 } },
+    reward: { xp_self: 12, resources: { Crystals_Nature: 8, Gold: 22 } },
   },
   {
     id: 'gra_tend_the_rot', faction: 'grail_of_sorrow', hours: 8,
@@ -273,7 +285,7 @@ const ERRANDS = [
     desc:  { en: 'It has to be turned, fed and kept from spreading past its wall. It resents all three.',
              ru: 'Его нужно вскапывать, кормить и не пускать за стену. Он противится всему троему.' },
     requires: { passive_any: ['infect', 'poison', 'bleed', 'aura_of_decay', 'death_mark'] },
-    reward: { xp_self: 55, resources: { Crystals_Death: 12, Crystals_Nature: 8 } },
+    reward: { xp_self: 10, resources: { Crystals_Death: 8, Crystals_Nature: 5 } },
   },
   {
     id: 'gra_bleed_the_chalice', faction: 'grail_of_sorrow', hours: 10,
@@ -281,7 +293,7 @@ const ERRANDS = [
     desc:  { en: 'The rite needs a full chalice by dawn and a donor who can spare it and keep standing.',
              ru: 'К рассвету обряду нужна полная чаша и тот, кто может её наполнить и устоять.' },
     requires: { passive_any: ['lifesteal', 'leech', 'communion', 'sacrament', 'duelist'] },
-    reward: { xp_self: 65, resources: { Crystals_Death: 14 } },
+    reward: { xp_self: 12, resources: { Crystals_Death: 9 } },
   },
   {
     id: 'gra_settle_the_debt', faction: 'grail_of_sorrow', hours: 8,
@@ -289,7 +301,7 @@ const ERRANDS = [
     desc:  { en: 'Two houses, one grievance, and a rite that ends it. Someone has to hold the knife.',
              ru: 'Два дома, одна обида и обряд, что кладёт ей конец. Кто-то должен держать нож.' },
     requires: { passive_any: ['lifesteal', 'leech', 'communion', 'sacrament', 'duelist'], stat: { action_power: 12 } },
-    reward: { xp_self: 75, resources: { Gold: 55 } },
+    reward: { xp_self: 12, resources: { Gold: 35 } },
   },
   {
     id: 'gra_haunt_the_road', faction: 'grail_of_sorrow', hours: 6,
@@ -297,7 +309,7 @@ const ERRANDS = [
     desc:  { en: 'Stand where the road bends and be seen once. The tolls collect themselves after that.',
              ru: 'Встаньте на повороте дороги и покажитесь один раз. Дальше пошлина соберётся сама.' },
     requires: { passive_any: ['fear', 'dodge', 'slow', 'dissipate', 'eternal_grief'] },
-    reward: { xp_self: 50, resources: { Gold: 70 } },
+    reward: { xp_self: 8, resources: { Gold: 45 } },
   },
   {
     id: 'gra_follow_the_envoy', faction: 'grail_of_sorrow', hours: 10,
@@ -305,7 +317,7 @@ const ERRANDS = [
     desc:  { en: 'Four days behind him, never closer than a field, and not once seen.',
              ru: 'Четыре дня позади него, не ближе поля — и ни разу не попасться на глаза.' },
     requires: { passive_any: ['fear', 'dodge', 'slow', 'dissipate', 'eternal_grief'], stat: { initiative: 45 } },
-    reward: { xp_self: 80, resources: { Gold: 40, Crystals_Air: 8 } },
+    reward: { xp_self: 14, resources: { Gold: 26, Crystals_Air: 5 } },
   },
   {
     id: 'gra_stand_the_barrow', faction: 'grail_of_sorrow', hours: 12,
@@ -314,7 +326,7 @@ const ERRANDS = [
              ru: 'Расхитители могил ходят по трое и быстро отступают, если дверь не пуста.' },
     requires: { passive_any: ['protector', 'thorns', 'recuperate', 'regenerate', 'vitality',
                               'resist_aura_air', 'resist_aura_cold', 'resist_aura_fire'], stat: { armor: 15 } },
-    reward: { xp_self: 70, heal_pct: 30, resources: { Gold: 45 } },
+    reward: { xp_self: 12, heal_pct: 30, resources: { Gold: 28 } },
   },
   {
     id: 'gra_carry_the_reliquary', faction: 'grail_of_sorrow', hours: 14,
@@ -323,7 +335,7 @@ const ERRANDS = [
              ru: 'Он плачет всю дорогу, и его нельзя ставить на неосвящённую землю.' },
     requires: { passive_any: ['protector', 'thorns', 'recuperate', 'regenerate', 'vitality',
                               'resist_aura_air', 'resist_aura_cold', 'resist_aura_fire'] },
-    reward: { xp_self: 85, resources: { Crystals_Death: 12, Gold: 30 } },
+    reward: { xp_self: 16, resources: { Crystals_Death: 8, Gold: 20 } },
   },
   {
     id: 'gra_run_down_the_deserter', faction: 'grail_of_sorrow', hours: 8,
@@ -332,7 +344,7 @@ const ERRANDS = [
              ru: 'Он унёс реликвию. Реликвия вернётся — он не обязан.' },
     requires: { passive_any: ['impale', 'rage', 'inspiration_damage', 'inspiration_initiative', 'duelist'],
                 stat: { initiative: 40 } },
-    reward: { xp_self: 75, resources: { Gold: 50 } },
+    reward: { xp_self: 12, resources: { Gold: 32 } },
   },
   {
     id: 'gra_teach_the_choirlings', faction: 'grail_of_sorrow', hours: 10,
@@ -340,7 +352,7 @@ const ERRANDS = [
     desc:  { en: 'They have the faith and none of the footwork. One of those can be taught in a day.',
              ru: 'Веры у них хватает, а вот выучки нет. За день можно поправить одно из двух.' },
     requires: { passive_any: ['impale', 'rage', 'inspiration_damage', 'inspiration_initiative', 'duelist'] },
-    reward: { xp_self: 40, xp_roster: 30 },
+    reward: { xp_self: 6, xp_roster: 18 },
   },
 ];
 

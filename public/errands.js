@@ -25,7 +25,7 @@ const ET = {
   gained:      { en: 'Brought home',           ru: 'Принесено' },
   gotIt:       { en: 'Good',                   ru: 'Отлично' },
   xpSelf:      { en: 'XP',                     ru: 'Опыт' },
-  xpRoster:    { en: 'XP to everyone at home', ru: 'Опыт всем оставшимся' },
+  xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
   healed:      { en: 'HP restored',            ru: 'Восстановлено HP' },
   hours:       { en: 'h',                      ru: 'ч' },
   orAny:       { en: 'or',                     ru: 'или' },
