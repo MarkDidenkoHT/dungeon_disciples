@@ -2211,6 +2211,31 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 1.1rem;
 }
 
+/* Castle slot equivalent of the .portrait-card--roster rule above. The shared
+   .portrait-hp-bar carries only height and colour — its WIDTH comes from being
+   stretched by a positioned rule like this one, so without it the bar collapses
+   to 0 inside the node's centred flex column. Inset matches the frame padding
+   so the bar sits inside the border art, and z-index clears the ::after frame
+   (z-index 2) which would otherwise cover it. */
+.castle-node .portrait-hp-bar {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  width: auto;
+  z-index: 3;
+}
+
+.castle-node .portrait-status--dead {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  z-index: 3;
+}
+
 .portrait-hp-bar {
   height: 5px;
   border-radius: 2px;
@@ -2475,6 +2500,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 3;
 }
 .unit-card-overlay > button { pointer-events: auto; }
+
+/* The castle slot sheet reuses .unit-card-overlay, which is position:absolute
+   with inset:0 — it needs a positioned ancestor or it would escape to the
+   viewport. The roster card provides one; buildUnitCard's output does not. */
+.castle-unit-card-wrap { position: relative; }
 
 /* A wounded unit is still playable, so its button sits low and out of the way;
    a dead one is not, so its button owns the middle of the card. */
@@ -4602,7 +4632,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 2px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  padding: 3px;
   text-align: center;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -4612,6 +4641,10 @@ button:active:not(:disabled) { opacity: 0.75; }
      `contain`: the image no longer fills the node, and without this the frame
      would be matted against whatever shows through from behind. */
   background-color: var(--bg);
+  padding: 3px;
+  /* Anchor for the HP bar / dead marker, which are absolutely positioned. The
+     portrait variant sets this too, but a glyph-only node needs it as well. */
+  position: relative;
 }
 
 .castle-node--throne {
@@ -4662,6 +4695,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-position: center;
   background-repeat: no-repeat;
   justify-content: flex-end;
+  /* The frame art is drawn by ::after across the node's FULL box, so a portrait
+     painted across that same box runs underneath the border and out to the
+     node's edges. Clipping the portrait AND its backing colour to the content
+     box holds both inside the frame's window; the padding is the frame's
+     visual thickness. ::after is a separate box, so the frame itself still
+     spans the node edge-to-edge.
+     Portrait nodes only — an empty slot uses its frame art AS the background,
+     which has to keep the full box or the frame would shrink inside itself. */
+  padding: 9px;
+  background-origin: content-box;
+  background-clip: content-box;
 }
 .castle-node--portrait::before {
   content: '';

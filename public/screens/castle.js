@@ -6,6 +6,7 @@ import { bootstrapCache } from '../api.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, firstRecruitHint } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
+import { SPELLS }            from '../../data/spells.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -37,6 +38,21 @@ const CASTLE_TEXT = {
   noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
   wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
   requires:    { en: 'Requires',                              ru: 'Требует' },
+  // Divine favor: the ad-funded alternative to Resurrect / Heal. Each faction
+  // petitions its own god — the mechanic is identical, only the name changes,
+  // so FAVOR_LABELS is presentation, not behaviour. The "Ad" marker is never
+  // dropped: disguising an ad as a prayer is the one thing this must not do.
+  adBadge:     { en: 'Ad',                                    ru: 'Реклама' },
+  favorLeft:   { en: n => `${n} left today`,                  ru: n => `Осталось сегодня: ${n}` },
+  favorNoneUI: { en: 'No favors left today',                  ru: 'Сегодня милостей больше нет' },
+  favorWatching:{ en: 'Your prayer is heard…',                ru: 'Молитва услышана…' },
+  favorCancel: { en: 'Cancel',                                ru: 'Отмена' },
+  favorFailed: { en: 'Favor failed',                          ru: 'Милость не получена' },
+  favorPlaceholder: { en: 'Advertisement placeholder',        ru: 'Место для рекламы' },
+  resurrect:   { en: 'Resurrect',                             ru: 'Воскресить' },
+  resurrecting:{ en: 'Resurrecting…',                         ru: 'Воскрешаем…' },
+  heal:        { en: 'Heal',                                  ru: 'Лечить' },
+  healing:     { en: 'Healing…',                              ru: 'Лечим…' },
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
 };
 
@@ -95,6 +111,9 @@ export function renderCastle(root, { player }) {
   // Owned item rows. A castle slot now manages the unit that stands in it, so
   // equipping happens here rather than on a separate roster screen.
   let itemsCache  = [];
+  // Divine favor budget, from /bootstrap — same source the roster reads.
+  let favorRemaining = 0;
+  let favorSeconds   = 15;
 
   // A building slot and the unit occupying it are linked by unit_data.building_slot,
   // written by makeUnitData when the building raises the unit. That is what makes
@@ -130,6 +149,8 @@ export function renderCastle(root, { player }) {
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
     rosterCache        = Array.isArray(roster) ? roster : [];
     itemsCache         = boot.items || [];
+    favorRemaining     = boot.favor?.remaining ?? 0;
+    favorSeconds       = boot.favor?.seconds ?? favorSeconds;
 
     renderBuildings();
   }
@@ -145,6 +166,8 @@ export function renderCastle(root, { player }) {
     rosterCache      = boot.roster || [];
     rosterCount      = rosterCache.length;
     itemsCache       = boot.items || [];
+    favorRemaining   = boot.favor?.remaining ?? favorRemaining;
+    favorSeconds     = boot.favor?.seconds ?? favorSeconds;
     renderBuildings();
     refreshResourceBar(player).catch(() => {});
   }
@@ -443,6 +466,30 @@ export function renderCastle(root, { player }) {
       .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
   }
 
+  // HP bar for the unit standing in a slot. Same markup, classes and thresholds
+  // as the roster portrait strip (portrait-hp-bar / portrait-hp-fill--<state>,
+  // critical at <=33%), so the two read identically — a slot with no occupant
+  // shows nothing rather than an empty bar.
+  function nodeHpBar(slot) {
+    const u = rosterUnitForSlot(slot);
+    if (!u) return '';
+    const stored = u.unit_data || {};
+    const cur    = stored.current_hp;
+    const max    = stored.max_hp;
+    if (cur == null || max == null || max <= 0) return '';
+
+    const alive = stored.alive !== false;
+    if (!alive) return `<div class="portrait-status portrait-status--dead">💀</div>`;
+
+    const pct     = Math.max(0, Math.min(100, Math.round((cur / max) * 100)));
+    const damaged = cur < max;
+    const state   = pct <= 33 ? 'critical' : (damaged ? 'damaged' : 'ok');
+    return `
+      <div class="portrait-hp-bar" title="${cur}/${max}">
+        <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+      </div>`;
+  }
+
   function renderBuildings() {
     const data        = structuresRecord.buildings_data;
     const throneState = data['slot_0'];
@@ -464,8 +511,7 @@ export function renderCastle(root, { player }) {
     root.querySelector('#center-slot').innerHTML = `
       <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
         ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
-        <div class="castle-node-label">Throne</div>
-        <div class="castle-node-level">Lv ${throneLevel}</div>
+        ${nodeHpBar('slot_0')}
       </div>`;
 
     // buildings_data also carries non-slot keys (throne_perks); only slot_N
@@ -487,8 +533,7 @@ export function renderCastle(root, { player }) {
         return `
           <div class="${classes}" data-slot="${slot}"${bg}>
             ${bg ? '' : `<div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>`}
-            <div class="castle-node-label">${def ? def.label : (mercDef ? mercDef.label : (isEmpty ? 'Build' : 'Empty'))}</div>
-            ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
+            ${nodeHpBar(slot)}
           </div>`;
       }).join('');
 
@@ -528,6 +573,164 @@ export function renderCastle(root, { player }) {
     return def.upgrades.map(uid => pool.find(b => b.id === uid)).filter(Boolean);
   }
 
+  const FAVOR_LABELS = {
+    // Dative case in RU — the prayer is addressed TO the god:
+    // Митраил → Митраилю, Агграил → Агграилю, Асталот → Асталоту.
+    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилю' },
+    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилю' },
+    grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталоту' },
+  };
+  const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
+  const FAVOR_ERRORS = {
+    favor_cap:        { en: 'No favors left today. Come back tomorrow.', ru: 'На сегодня милостей больше нет. Возвращайтесь завтра.' },
+    favor_not_needed: { en: 'This unit needs no favor.',                 ru: 'Этому бойцу милость не нужна.' },
+    favor_none:       { en: 'No favor in progress.',                     ru: 'Нет активной молитвы.' },
+    favor_expired:    { en: 'The moment passed — try again.',            ru: 'Момент упущен — попробуйте снова.' },
+    favor_early:      { en: 'The ad has not finished.',                  ru: 'Реклама ещё не досмотрена.' },
+    favor_no_unit:    { en: 'Unit not found.',                           ru: 'Боец не найден.' },
+  };
+
+  function favorError(err) {
+    return FAVOR_ERRORS[err?.code]?.[castleLang] || CASTLE_TEXT.favorFailed[castleLang];
+  }
+
+  async function runFavor(slot, rosterId) {
+    let started;
+    try {
+      started = await api('/favor/start', { chat_id: player.chat_id, roster_id: rosterId });
+    } catch (err) {
+      alert(favorError(err));
+      return;
+    }
+
+    const completed = await playAdPlaceholder(started.seconds ?? favorSeconds);
+    if (!completed) return;   // cancelled — the token is simply left unclaimed
+
+    try {
+      const res = await api('/favor/claim', { chat_id: player.chat_id, token: started.token });
+      favorRemaining = res.remaining ?? Math.max(0, favorRemaining - 1);
+      await reloadFromBootstrap();
+      openSlotUnitSheet(slot);
+    } catch (err) {
+      alert(favorError(err));
+    }
+  }
+
+  // Resolves true if the "ad" ran to completion, false if the player backed out.
+  function playAdPlaceholder(seconds) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'favor-overlay';
+      overlay.innerHTML = `
+        <div class="favor-modal">
+          <div class="favor-modal-ad">
+            <span class="favor-modal-adbadge">${CASTLE_TEXT.adBadge[castleLang]}</span>
+            <span class="favor-modal-adtext">${CASTLE_TEXT.favorPlaceholder[castleLang]}</span>
+          </div>
+          <div class="favor-modal-title">${CASTLE_TEXT.favorWatching[castleLang]}</div>
+          <div class="favor-modal-bar"><div class="favor-modal-fill"></div></div>
+          <div class="favor-modal-count">${seconds}</div>
+          <button class="favor-modal-cancel">${CASTLE_TEXT.favorCancel[castleLang]}</button>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const fill  = overlay.querySelector('.favor-modal-fill');
+      const count = overlay.querySelector('.favor-modal-count');
+      const endAt = Date.now() + seconds * 1000;
+
+      let done = false;
+      const finish = ok => {
+        if (done) return;
+        done = true;
+        clearInterval(timer);
+        overlay.remove();
+        resolve(ok);
+      };
+
+      // Driven off wall-clock rather than a tick count, so a backgrounded tab
+      // (which throttles intervals) doesn't leave the bar stuck behind the
+      // server's own timer.
+      const timer = setInterval(() => {
+        const leftMs = endAt - Date.now();
+        const left   = Math.max(0, Math.ceil(leftMs / 1000));
+        count.textContent = left;
+        fill.style.width  = `${Math.min(100, 100 - (leftMs / (seconds * 1000)) * 100)}%`;
+        if (leftMs <= 0) finish(true);
+      }, 100);
+
+      overlay.querySelector('.favor-modal-cancel').addEventListener('click', () => finish(false));
+    });
+  }
+
+  // Resurrect / Heal, lifted from the roster screen unchanged: the same two
+  // spells (resurrect = a roster-usage single-ally spell, heal = an effect_type
+  // 'heal' single-ally one), the same crystal cost formatting, the same
+  // .unit-card-overlay--actions markup, and the same /roster/resurrect and
+  // /roster/heal endpoints. Divine favor is deliberately NOT copied — it is
+  // gated on the roster's onboarding state, which does not exist here.
+  function spellCostLabel(spell) {
+    return spell
+      ? Object.entries(spell.cost?.crystals || {})
+          .filter(([, amt]) => amt > 0)
+          .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
+          .join(', ')
+      : '';
+  }
+
+  function unitActionOverlay(rosterUnit) {
+    const stored = rosterUnit.unit_data || {};
+    const alive  = stored.alive !== false;
+    const isDamaged = alive && stored.current_hp != null && stored.max_hp != null
+                   && stored.current_hp < stored.max_hp;
+
+    const resurrectionSpell = SPELLS[player.faction]?.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
+    const healSpell         = SPELLS[player.faction]?.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
+
+    // Offered whenever a unit is dead or hurt, INCLUDING when the player cannot
+    // afford (or has not learned) the spell — that gap is the whole point of it.
+    // Hidden for the whole of onboarding: the spell tutorial exists to teach
+    // Resurrect and Heal on exactly the unit this button would fix in one tap,
+    // so offering the shortcut there teaches players to skip the mechanic being
+    // taught, and puts an ad in front of someone who has not seen the game yet.
+    const onboarding  = !isTutorialDone(player, 'spell_heal');
+    const favorNeeded = (!alive || isDamaged) && !onboarding;
+    const favorLabel  = (FAVOR_LABELS[player.faction] || FAVOR_FALLBACK)[castleLang];
+    const favorHtml = favorNeeded ? `
+        <button class="favor-btn${favorRemaining <= 0 ? ' favor-btn--spent' : ''}"
+                data-roster-id="${rosterUnit.id}"
+                ${favorRemaining <= 0 ? 'disabled' : ''}>
+          <span class="favor-btn-top">
+            <span class="favor-btn-ad">${CASTLE_TEXT.adBadge[castleLang]}</span>
+            <span class="favor-btn-label">${favorLabel}</span>
+          </span>
+          <span class="favor-btn-left">${favorRemaining > 0
+            ? CASTLE_TEXT.favorLeft[castleLang](favorRemaining)
+            : CASTLE_TEXT.favorNoneUI[castleLang]}</span>
+        </button>` : '';
+
+    const resurrectHtml = !alive && resurrectionSpell ? `
+        <button class="resurrect-btn" data-roster-id="${rosterUnit.id}" data-spell-id="${resurrectionSpell.id}">
+          ${CASTLE_TEXT.resurrect[castleLang]} (${spellCostLabel(resurrectionSpell)})
+        </button>` : '';
+
+    const healHtml = isDamaged && healSpell ? `
+        <button class="heal-btn" data-roster-id="${rosterUnit.id}" data-spell-id="${healSpell.id}">
+          ${CASTLE_TEXT.heal[castleLang]} (${spellCostLabel(healSpell)})
+        </button>` : '';
+
+    if (!favorHtml && !resurrectHtml && !healHtml) return '';
+    // ONE overlay holding favor + spell, stacked, so favor sits directly above
+    // the spell button instead of the two being positioned independently.
+    // A dead unit's button owns the middle of the card; a wounded one is still
+    // playable, so --heal drops its buttons low and out of the way.
+    return `
+      <div class="unit-card-overlay unit-card-overlay--actions ${alive ? 'unit-card-overlay--heal' : ''}">
+        ${favorHtml}
+        ${resurrectHtml}
+        ${healHtml}
+      </div>`;
+  }
+
   // ── Slot unit sheet ───────────────────────────────────────────────────────
   // Tapping a built slot used to drop straight into the upgrade branch picker.
   // It now opens the UNIT standing in that slot — its real roster row, with the
@@ -556,13 +759,17 @@ export function renderCastle(root, { player }) {
       : '';
 
     const canUpgrade = paths && paths.length > 0;
+    const actionOverlayHtml = rosterUnit ? unitActionOverlay(rosterUnit) : '';
     // Wrapper is not cosmetic: openSheet only replaces the body's innerHTML, so
     // the body element itself survives across opens and a listener bound to it
     // would accumulate — re-opening the sheet twice would fire equip twice.
     // Binding to this div instead ties the listener's life to the content.
     const bodyHtml = `
       <div id="slot-sheet-root">
-      ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml })}
+      <div class="castle-unit-card-wrap">
+        ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml })}
+        ${actionOverlayHtml}
+      </div>
       <div class="track-action-row track-action-row--framed">
         ${canUpgrade
           ? `<button class="frame-action frame-action--confirm" id="slot-upgrade"
@@ -582,6 +789,31 @@ export function renderCastle(root, { player }) {
 
       const itemSlot = e.target.closest('[data-item-slot]');
       if (itemSlot) { openSlotItemPicker(slot, itemSlot.dataset.rosterId); return; }
+
+      const favorBtn = e.target.closest('.favor-btn:not([disabled])');
+      if (favorBtn) { runFavor(slot, favorBtn.dataset.rosterId); return; }
+
+      const resurrectBtn = e.target.closest('.resurrect-btn');
+      const healBtn      = e.target.closest('.heal-btn');
+      if (resurrectBtn || healBtn) {
+        const btn  = resurrectBtn || healBtn;
+        const path = resurrectBtn ? '/roster/resurrect' : '/roster/heal';
+        btn.disabled    = true;
+        btn.textContent = resurrectBtn
+          ? CASTLE_TEXT.resurrecting[castleLang]
+          : CASTLE_TEXT.healing[castleLang];
+        api(path, {
+          chat_id: player.chat_id,
+          roster_id: btn.dataset.rosterId,
+          spell_id: btn.dataset.spellId,
+        })
+          .then(async () => { await reloadFromBootstrap(); openSlotUnitSheet(slot); })
+          .catch(err => {
+            btn.disabled = false;
+            openAbilityModal(def.label, renderModalContent(err?.message || 'Failed.'));
+          });
+        return;
+      }
     });
 
     body?.querySelector('#slot-upgrade')?.addEventListener('click', () => {
