@@ -4601,8 +4601,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* A slot exists to house a unit, so that unit's portrait fills the node and the
    glyph is dropped. The label has to stay readable over arbitrary art, hence
    the gradient scrim behind the text rather than a flat tint over the whole
-   image (which would wash the portrait out). */
-.castle-node--portrait {
+   image (which would wash the portrait out).
+
+   Doubled class (.castle-node.castle-node--portrait) is deliberate, not a typo:
+   `.outer-ring .castle-node` above sets background-size: contain / position:
+   center at two-class specificity. A single `.castle-node--portrait` loses to
+   it, so the portrait was being drawn contained and centred inside the frame —
+   a small floating crop that reads as "the portrait feature is broken" even
+   though the image had loaded fine. Matching that specificity is what makes
+   cover/top actually apply. */
+.castle-node.castle-node--portrait {
   position: relative;
   background-size: cover;
   background-position: top center;
