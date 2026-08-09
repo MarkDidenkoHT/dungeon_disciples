@@ -1216,6 +1216,7 @@ const UNIT_ABILITIES = {
     description_ru: "В начале хода этого юнита исцеляет союзника прямо впереди и наносит урон врагу прямо впереди.",
     params: { light_of_dawn: true, light_of_dawn_heal: 5, light_of_dawn_dmg: 5 },
     effect_name: 'light_of_dawn',
+    animation_sound: 'lesser_divine_spell',
   },
   'light_of_dawn 2': {
     id: 'light_of_dawn 2',
@@ -1228,6 +1229,7 @@ const UNIT_ABILITIES = {
     description_ru: "В начале хода этого юнита исцеляет союзника прямо впереди и наносит урон врагу прямо впереди.",
     params: { light_of_dawn: true, light_of_dawn_heal: 8, light_of_dawn_dmg: 8 },
     effect_name: 'light_of_dawn',
+    animation_sound: 'lesser_divine_spell',
   },
   'eternal_grief 1': {
     id: 'eternal_grief 1',

@@ -245,13 +245,59 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return null;
   }
 
+  // Where ONE entry's animation is anchored and what it is handed, for the
+  // effects that draw on a single cell. Returns a `run` to call (so several can
+  // be started together) and a `key` identifying what it will draw — two
+  // entries with the same key would paint the same animation over itself.
+  // Returns null when there is no cell to draw on.
+  function singleEffectCall(entry, effectName, actor, actorCell) {
+    const fn = EFFECTS[effectName];
+    if (!fn) return null;
+    const targetCell = entry.targetId
+      ? document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`)
+      : null;
+    const sourceCell = entry.sourceId
+      ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
+      : null;
+    const isEnemy = actor?.side === 'enemy';
+    const id = el => el?.dataset?.id ?? '';
+
+    if (entry.type === 'action') {
+      const isHeal = entry.heal === true;
+      // A heal is drawn ON the unit mended; a strike is drawn on the attacker
+      // and aimed at the target, which is what lets impale and the like point
+      // the right way.
+      const cell = isHeal ? targetCell : (actorCell || targetCell);
+      if (!cell) return null;
+      return {
+        key: `${id(cell)}>${id(targetCell)}`,
+        run: () => fn(cell, { isEnemy, targetCell, isHeal }),
+      };
+    }
+    if (entry.type === 'intercept') {
+      // Anchors on the INTERCEPTOR, not the unit it saved: the shield goes up
+      // over the protector who stepped in. fromCell is the ATTACKER, so the
+      // shield can face the blow.
+      if (!actorCell) return null;
+      return {
+        key: `${id(actorCell)}<${id(sourceCell)}`,
+        run: () => fn(actorCell, { fromCell: sourceCell }),
+      };
+    }
+    // Passives and everything else are drawn on whoever they happened to.
+    if (!targetCell) return null;
+    return { key: id(targetCell), run: () => fn(targetCell) };
+  }
+
   // Patches local state incrementally from a single log entry so HP bars
   // update in sync with the animation rather than all at once at the end.
   async function playbackSequence(newEntries) {
     console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
-    // Indices whose animation has already been covered by a fan-out play. Their
-    // log lines still print — only the duplicate animation is skipped.
-    const fanOutCovered = new Set();
+    // Indices whose animation has already been covered by an earlier play —
+    // either a fan-out, or a simultaneous volley (see below). Their log lines
+    // still print and their HP still lands; only the repeat animation and its
+    // repeat sound are skipped.
+    const fxCovered = new Set();
     for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
       const entry = newEntries[entryIdx];
       // Track position in the log
@@ -300,7 +346,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         null;
       const effectName = effectForEntry(entry, actor);
       const abilitySound = soundForEntry(entry, actor);
-      if (abilitySound) playAbilitySound(abilitySound);
+      // An entry already covered by an earlier play is a repeat of something the
+      // player has just seen AND heard — four splash victims fired the same clip
+      // four times over itself.
+      if (abilitySound && !fxCovered.has(entryIdx)) playAbilitySound(abilitySound);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
         const targetCell = entry.targetId
@@ -312,14 +361,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const actorCell = actor
           ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
           : null;
-        const isEnemy = actor?.side === 'enemy';
 
         if (FAN_OUT_FX.has(effectName)) {
           // Collapse the consecutive run of entries this actor produced for the
           // same passive, and play once against every victim. Grouping by RUN
           // rather than by name means two separate triggers in one batch still
           // animate twice, as they should.
-          if (!fanOutCovered.has(entryIdx)) {
+          if (!fxCovered.has(entryIdx)) {
             const cells = [];
             for (let j = entryIdx; j < newEntries.length; j++) {
               const e = newEntries[j];
@@ -333,7 +381,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               // in a batch (turn start, or a single heal event).
               if (e.type !== entry.type || e.passive !== entry.passive ||
                   e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) continue;
-              fanOutCovered.add(j);
+              fxCovered.add(j);
               const c = e.targetId
                 ? document.querySelector(`.battle-cell[data-id="${e.targetId}"]`)
                 : null;
@@ -348,25 +396,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           // others originate on the acting unit, so fall back to the actor cell.
           const src = sourceCell || actorCell;
           if (src) await EFFECTS[effectName](src, targetCell);
-        } else if (entry.type === 'action') {
-          const isHealAction = entry.heal === true;
-          const cell = isHealAction ? targetCell : (actorCell || targetCell);
-          console.log('[battle] action routing: isHeal', isHealAction, 'targetCell', !!targetCell, 'actorCell', !!actorCell, 'using', isHealAction ? 'target' : 'actor');
-          // targetCell lets directional attack animations (e.g. impale) aim from actor to target.
-          // isHeal is passed explicitly for actions that branch on it (holy_shock
-          // mends an ally or strikes an enemy) — an effect should never have to
-          // deduce that from which cell it happened to be anchored on.
-          if (cell) await EFFECTS[effectName](cell, { isEnemy, targetCell, isHeal: isHealAction });
-        } else if (entry.type === 'intercept') {
-          // Anchors on the INTERCEPTOR, not the unit it saved: the shield goes up
-          // over the protector who stepped in. Its log entry carries no targetId
-          // anyway (only actorId + targetCell), so the passive path below would
-          // have found no cell to draw on even once the effect resolved.
-          // fromCell is the ATTACKER (sourceId), so the shield can face the blow.
-          if (actorCell) await EFFECTS[effectName](actorCell, { fromCell: sourceCell });
-        } else {
-          // Passive animations anchor to the target cell
-          if (targetCell) await EFFECTS[effectName](targetCell);
+        } else if (!fxCovered.has(entryIdx)) {
+          // A single-target effect that landed on SEVERAL units at once — a
+          // splash, a cleave, a multi-target action, an aura tick — is logged
+          // once per victim. Awaiting each in turn played one strike, then
+          // another, then another, which reads as three separate events when the
+          // mechanic was one. Every entry in this batch that resolves to the
+          // same effect from the same actor is collected and played TOGETHER.
+          const plays  = [];
+          const drawn  = new Set();
+          for (let j = entryIdx; j < newEntries.length; j++) {
+            const e = newEntries[j];
+            if (j !== entryIdx) {
+              // Same event, same source. Foreign entries are skipped past rather
+              // than stopping the scan, for the same reason as the fan-out above:
+              // a hit fires triggers whose log lines land between the victims.
+              if (e.type !== entry.type || e.passive !== entry.passive ||
+                  e.ability !== entry.ability ||
+                  e.actorName !== entry.actorName || e.actorCell !== entry.actorCell) continue;
+              if (effectForEntry(e, actor) !== effectName) continue;
+            }
+            const call = singleEffectCall(e, effectName, actor, actorCell);
+            fxCovered.add(j);
+            if (!call) continue;
+            // Two entries drawing the same animation on the same cell toward the
+            // same target would just paint it over itself.
+            if (drawn.has(call.key)) continue;
+            drawn.add(call.key);
+            plays.push(call.run);
+          }
+          if (plays.length) await Promise.all(plays.map(run => run()));
         }
       }
 
