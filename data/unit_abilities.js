@@ -1203,6 +1203,7 @@ const UNIT_ABILITIES = {
     description: 'When this unit is healed, deals damage equal to 25% of the amount healed to adjacent enemies.',
     description_ru: "Когда этот юнит исцеляется, наносит соседним врагам урон, равный 25% исцелённого количества.",
     params: { radiance_pct: 25 },
+    effect_name: 'radiance',
   },
   'light_of_dawn 1': {
     id: 'light_of_dawn 1',

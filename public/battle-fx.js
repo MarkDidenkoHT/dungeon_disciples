@@ -866,18 +866,18 @@ export async function shared_suffering(casterCellEl, allyCellEl) {
   console.log('[battle-fx] shared_suffering END', dstId);
 }
 
-// ── light_of_dawn ──────────────────────────────────────────────────────────────
-// ── light_of_dawn — dawn breaks on the unit ────────────────────────────────
-// The passive fires once at the unit's turn start and does two things at the
-// same moment: it mends the ally in front and burns the enemy in front. The
-// engine logs those as two entries, which would otherwise play this twice, so
-// the effect is listed in FAN_OUT_FX (screens/battle.js) purely to collapse the
-// run into ONE play. It is anchored on the caster and draws one animation — it
-// does not care how many entries were collapsed or what each of them did.
+// ── light_of_dawn — holy light down the whole row, out from the caster ─────
+// The passive fires at the unit's turn start and reaches along its ROW: it
+// mends the ally in front and burns the enemy in front, across both grids. So
+// the light is drawn as a band down that row — dawn breaking along the rank,
+// racing outward from the caster in both directions — rather than as a bloom
+// sitting on one tile.
 //
-// The old version was a full-screen band with sweeping rays that touched no
-// unit at all, and was unreachable anyway (both defs pointed at holy_heal).
-export async function light_of_dawn(cellEl) {
+// The engine logs one entry per unit touched, which would otherwise play this
+// once per entry, so the effect is listed in FAN_OUT_FX (screens/battle.js) to
+// collapse the run into ONE play. The collapsed targets arrive as
+// opts.targetCells and are used to pulse each unit as the wave passes over it.
+export async function light_of_dawn(cellEl, opts = {}) {
   console.log('[battle-fx] light_of_dawn START', cellEl?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
   const dataId  = cellEl.dataset.id;
@@ -888,14 +888,153 @@ export async function light_of_dawn(cellEl) {
   const GOLD  = 0xffe08a;
   const WHITE = 0xfffdf2;
 
-  // Motes lifting off the unit as the light rises.
-  const motes = Array.from({ length: 14 }, () => ({
-    ax: rand(-0.45, 0.45), delay: rand(0, 0.4), size: rand(1.4, 3.4), speed: rand(0.7, 1.3),
+  const targetIds = (opts.targetCells || [])
+    .map(c => c?.dataset?.id).filter(id => id && id !== dataId);
+
+  // Motes drifting UP off the band, seeded across its whole width so the light
+  // reads as a volume rather than a painted rectangle.
+  const motes = Array.from({ length: 26 }, () => ({
+    ax: rand(-1, 1), ay: rand(-0.35, 0.35), delay: rand(0, 0.45),
+    size: rand(1.2, 3.2), speed: rand(0.5, 1.1),
   }));
-  // Uneven sunburst spokes, so the ring reads as light rather than as a circle.
-  const spokes = Array.from({ length: 14 }, (_, i) => ({
-    ang: (i / 14) * Math.PI * 2, len: rand(0.75, 1.25),
+  // Bright lances standing in the beam, at fixed fractions of its width.
+  const lances = Array.from({ length: 9 }, () => ({
+    at: rand(-1, 1), w: rand(0.5, 1.4), delay: rand(0, 0.3),
   }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const rayG  = new PIXI.Graphics(); rayG.blendMode  = ADD;
+  layer.addChild(glowLayer, rayG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(900, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    // The row runs the full width of the battlefield — both grids — so the band
+    // is measured off the stage, not off the cell.
+    const W  = app.screen?.width || (b.x + b.width) * 2;
+
+    glowG.clear(); rayG.clear();
+
+    // Out from the caster: the leading edge races to the ends of the row, then
+    // the whole band holds lit for a beat before it goes.
+    const reach = clamp01(t / 0.34);
+    const ease  = 1 - Math.pow(1 - reach, 3);     // fast out of the caster, easing at the ends
+    const fade  = 1 - clamp01((t - 0.55) / 0.45);
+    const maxHalf = Math.max(cx, W - cx);         // far enough to cover the longer side
+    const half    = maxHalf * ease;
+    const left    = Math.max(0, cx - half);
+    const right   = Math.min(W, cx + half);
+
+    // The band itself: a wide soft body with a hard bright core along its axis.
+    const bodyH = R * 0.78;
+    glowG.beginFill(GOLD, 0.20 * fade);
+    glowG.drawRect(left, cy - bodyH / 2, right - left, bodyH);
+    glowG.endFill();
+    glowG.beginFill(WHITE, 0.16 * fade);
+    glowG.drawRect(left, cy - bodyH * 0.22, right - left, bodyH * 0.44);
+    glowG.endFill();
+
+    rayG.lineStyle(Math.max(1.5, R * 0.05), WHITE, 0.85 * fade);
+    rayG.moveTo(left, cy); rayG.lineTo(right, cy);
+    rayG.lineStyle(Math.max(1, R * 0.014), GOLD, 0.55 * fade);
+    rayG.moveTo(left, cy - bodyH / 2); rayG.lineTo(right, cy - bodyH / 2);
+    rayG.moveTo(left, cy + bodyH / 2); rayG.lineTo(right, cy + bodyH / 2);
+    rayG.lineStyle(0);
+
+    // The two leading edges, bright while they travel and gone once they land.
+    if (reach < 1) {
+      const edge = (1 - reach) * 0.9 * fade;
+      softGlow(glowG, left,  cy, R * 0.42, WHITE, edge);
+      softGlow(glowG, right, cy, R * 0.42, WHITE, edge);
+    }
+
+    // Lances of light standing in the band, each lighting up only once the wave
+    // has reached where it stands.
+    for (const l of lances) {
+      // Anchored to the row, not to the wavefront: each one stands where it
+      // stands and only lights up once the light has swept past it.
+      const x = cx + l.at * maxHalf;
+      if (x < left || x > right) continue;
+      const s = clamp01((t - l.delay) / 0.5);
+      rayG.lineStyle(Math.max(1, R * 0.03 * l.w), WHITE, s * (1 - s) * 2.2 * fade);
+      rayG.moveTo(x, cy - bodyH * 0.62);
+      rayG.lineTo(x, cy + bodyH * 0.62);
+    }
+    rayG.lineStyle(0);
+
+    // The source: the light is born on the caster, so it stays the brightest
+    // point on the row.
+    softGlow(glowG, cx, cy, R * 0.5, GOLD,  0.6 * fade);
+    softGlow(glowG, cx, cy, R * 0.26, WHITE, 0.9 * fade);
+
+    // Each unit the passive actually touched gets its own bloom, timed to when
+    // the wave arrives — that is what ties the band to who was healed or burnt.
+    for (const id of targetIds) {
+      const tb = cellBoundsFor(id);
+      if (!tb) continue;
+      const tx = tb.x + tb.width / 2;
+      const ty = tb.y + tb.height / 2;
+      const arrive = Math.abs(tx - cx) / Math.max(1, Math.max(cx, W - cx));
+      const s = clamp01((t - arrive * 0.34) / 0.4);
+      if (s <= 0) continue;
+      softGlow(glowG, tx, ty, R * (0.25 + 0.3 * s), WHITE, (1 - s) * 0.9 * fade);
+    }
+
+    // Motes lifting off the band.
+    for (const m of motes) {
+      const s = clamp01((t - m.delay) / 0.65);
+      if (s <= 0) continue;
+      const mx = cx + m.ax * maxHalf;
+      if (mx < left || mx > right) continue;
+      softGlow(glowG, mx, cy + m.ay * bodyH - s * R * 0.7 * m.speed,
+               m.size * (1 - s * 0.4), WHITE, (1 - s) * 0.8 * fade);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] light_of_dawn END', dataId);
+}
+
+// ── radiance — holy backlash, caster → each adjacent enemy ────────────────
+// Fires when the unit is HEALED: the light it soaks up spills back out and
+// scorches the enemies beside it. So it reads as a lance thrown from the caster
+// to each victim, not as something happening on the victim alone — the caster
+// blooms first, the lances travel, and each target takes a burst on arrival.
+//
+// Listed in FAN_OUT_FX: the engine logs one entry per adjacent enemy, and they
+// are all one simultaneous flash of light, not a queue.
+export async function radiance(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] radiance START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const GOLD  = 0xffd873;
+  const WHITE = 0xfffdf2;
+
+  const originId = originCellEl.dataset.id;
+  // Seeded per target: each lance gets its own sparks and a hair of stagger, so
+  // they read as one burst rather than as a drilled volley.
+  const beams = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.08),
+    sparks: Array.from({ length: 8 }, () => ({
+      ang: rand(0, Math.PI * 2), dist: rand(0.25, 0.8), size: rand(1.4, 3.2), d: rand(0, 0.18),
+    })),
+  })).filter(b => b.id && b.id !== originId);
 
   const layer     = new PIXI.Container();
   const glowLayer = new PIXI.Container();
@@ -906,58 +1045,72 @@ export async function light_of_dawn(cellEl) {
   glowLayer.addChild(glowG);
   app.stage.addChild(layer);
 
-  await animate(760, t => {
-    const b = cellBoundsFor(dataId);
-    if (!b) { layer.visible = false; return; }
+  await animate(720, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
     layer.visible = true;
 
-    const cx = b.x + b.width / 2;
-    const cy = b.y + b.height / 2;
-    const R  = Math.min(b.width, b.height);
+    const ox = ob.x + ob.width / 2;
+    const oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
 
     glowG.clear(); rayG.clear();
 
-    const rise = clamp01(t / 0.28);            // the light comes up
-    const fade = 1 - clamp01((t - 0.5) / 0.5); // then it goes
+    const fade = 1 - clamp01((t - 0.6) / 0.4);
 
-    // A horizon line across the tile, widening as dawn breaks.
-    const halfW = R * 0.75 * rise;
-    glowG.beginFill(GOLD, 0.24 * fade);
-    glowG.drawRect(cx - halfW, cy - R * 0.10, halfW * 2, R * 0.20);
-    glowG.endFill();
-    rayG.lineStyle(Math.max(1, R * 0.022), WHITE, 0.8 * fade * rise);
-    rayG.moveTo(cx - halfW, cy);
-    rayG.lineTo(cx + halfW, cy);
+    // The caster gathers the light before any of it leaves — a halo that swells
+    // early and thins as the lances take it away.
+    const gather = clamp01(t / 0.22);
+    softGlow(glowG, ox, oy, R * 0.5 * gather, GOLD,  0.65 * fade);
+    softGlow(glowG, ox, oy, R * 0.24 * gather, WHITE, 0.95 * fade);
+    rayG.lineStyle(Math.max(1, R * 0.03), WHITE, gather * (1 - gather) * 2.4);
+    rayG.drawCircle(ox, oy, R * (0.3 + 0.45 * gather));
     rayG.lineStyle(0);
 
-    // The bloom sitting on the unit.
-    softGlow(glowG, cx, cy, R * 0.46 * rise, GOLD,  0.55 * fade);
-    softGlow(glowG, cx, cy, R * 0.22 * rise, WHITE, 0.75 * fade);
+    for (const beam of beams) {
+      const tb = cellBoundsFor(beam.id);
+      if (!tb) continue;
+      const tx = tb.x + tb.width / 2;
+      const ty = tb.y + tb.height / 2;
 
-    // Sunburst spokes reaching out, uneven so it does not read as a plain ring.
-    const st = clamp01((t - 0.1) / 0.6);
-    if (st > 0) {
-      for (const s of spokes) {
-        const inner = R * 0.26 * st;
-        const outer = R * (0.34 + 0.5 * st) * s.len;
-        rayG.lineStyle(Math.max(1, R * 0.014), GOLD, (1 - st) * 0.7 * fade);
-        rayG.moveTo(cx + Math.cos(s.ang) * inner, cy + Math.sin(s.ang) * inner);
-        rayG.lineTo(cx + Math.cos(s.ang) * outer, cy + Math.sin(s.ang) * outer);
-      }
+      // Straight lance: holy light does not arc. It leaves once the caster has
+      // gathered, and its tail is drawn in behind the head.
+      const travel = clamp01((t - 0.18 - beam.delay) / 0.3);
+      if (travel <= 0) continue;
+      const headX = ox + (tx - ox) * travel;
+      const headY = oy + (ty - oy) * travel;
+      const tail  = Math.max(0, travel - 0.35);
+      const tailX = ox + (tx - ox) * tail;
+      const tailY = oy + (ty - oy) * tail;
+
+      rayG.lineStyle(Math.max(1.5, R * 0.055), WHITE, 0.9 * fade);
+      rayG.moveTo(tailX, tailY); rayG.lineTo(headX, headY);
+      rayG.lineStyle(Math.max(1, R * 0.11), GOLD, 0.35 * fade);
+      rayG.moveTo(tailX, tailY); rayG.lineTo(headX, headY);
       rayG.lineStyle(0);
-    }
+      softGlow(glowG, headX, headY, R * 0.2, WHITE, 0.8 * fade);
 
-    // Motes rising off the unit.
-    for (const m of motes) {
-      const s = clamp01((t - m.delay) / 0.6);
-      if (s <= 0) continue;
-      softGlow(glowG, cx + m.ax * R, cy - s * R * 0.8 * m.speed,
-               m.size * (1 - s * 0.4), WHITE, (1 - s) * 0.85 * fade);
+      // Landing: the burst on the enemy, and the sparks thrown off it.
+      const hit = clamp01((t - 0.48 - beam.delay) / 0.42);
+      if (hit <= 0) continue;
+      softGlow(glowG, tx, ty, R * (0.28 + 0.34 * hit), GOLD,  (1 - hit) * 0.85);
+      softGlow(glowG, tx, ty, R * (0.14 + 0.2 * hit),  WHITE, (1 - hit) * 0.95);
+      rayG.lineStyle(Math.max(1, R * 0.022), WHITE, (1 - hit) * 0.7);
+      rayG.drawCircle(tx, ty, R * (0.2 + 0.5 * hit));
+      rayG.lineStyle(0);
+      for (const s of beam.sparks) {
+        const sp = clamp01((hit - s.d) / 0.6);
+        if (sp <= 0) continue;
+        softGlow(glowG,
+          tx + Math.cos(s.ang) * R * s.dist * sp,
+          ty + Math.sin(s.ang) * R * s.dist * sp,
+          s.size * (1 - sp * 0.5), WHITE, (1 - sp) * 0.9);
+      }
     }
   });
 
   layer.destroy({ children: true });
-  console.log('[battle-fx] light_of_dawn END', dataId);
+  console.log('[battle-fx] radiance END', originId);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2752,6 +2905,7 @@ export const EFFECTS = {
   sacrifice,
   shared_suffering,
   light_of_dawn,
+  radiance,
   cleanse,
   raise_dead,
   shield_bash,

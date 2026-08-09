@@ -586,7 +586,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
         );
         for (const e of adjEnemies) {
           hurt(e, radDmg);
-          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetCell: e.cellIndex, value: radDmg, heal: false });
+          // targetId is what the client resolves the victim's cell by — a player
+          // and an enemy routinely share a cellIndex, so the cell alone cannot
+          // find it, and without this Radiance logged correctly but never
+          // animated. actorId anchors the beam on the caster it leaves from.
+          engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: radDmg, heal: false });
           if (e.battle_hp <= 0) { e.alive = false; engine.applyOnDeathPassives(e); }
         }
       }

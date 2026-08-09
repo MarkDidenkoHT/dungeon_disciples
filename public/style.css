@@ -161,7 +161,18 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.5);
   pointer-events: none;
+  /* Last-resort guard on a short screen: a bubble taller than the viewport
+     scrolls inside itself rather than pushing its dismiss button out of reach. */
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
+
+/* Scrolling needs pointer events, but an ACTION step's bubble must stay
+   transparent to taps — it can sit over the control the player has to press.
+   Only informational steps take events, and those already block the target
+   behind the ring, so nothing is lost. */
+.tutorial-bubble--dismissible { pointer-events: auto; }
 
 .tutorial-bubble::before {
   content: '';

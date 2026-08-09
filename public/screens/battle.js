@@ -22,7 +22,10 @@ const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
 // rather than the single simultaneous burst the mechanic actually is. Each run
 // of consecutive entries from the same actor is collapsed into one play; the
 // individual LOG LINES are untouched, only the animation is deduplicated.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn']);
+// radiance is here for both reasons at once: it fires on EVERY adjacent enemy
+// when the unit is healed, and the light leaves the caster for all of them in
+// the same instant.
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance']);
 
 function cellIndex(row, col) { return row * COLS + col; }
 

@@ -261,7 +261,7 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   const ringHits = opts.showContinue ? 'auto' : 'none';
 
   const bubble = document.createElement('div');
-  bubble.className = 'tutorial-bubble';
+  bubble.className = `tutorial-bubble${opts.showContinue ? ' tutorial-bubble--dismissible' : ''}`;
   bubble.innerHTML = `
     <div class="tutorial-bubble-title">${copy.title}</div>
     <div class="tutorial-bubble-text">${copy.text}</div>
@@ -296,17 +296,38 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
     // set here rather than as a one-off inline style.
     ring.style.cssText   = `top:${hole.top}px; left:${hole.left}px; width:${hole.right - hole.left}px; height:${hole.bottom - hole.top}px; pointer-events:${ringHits};`;
 
-    const spaceBelow = vh - hole.bottom;
-    const placeBelow = spaceBelow > 140;
+    // Which side the bubble goes on is decided by whether it actually FITS
+    // there, measured against its own height — not by a fixed 140px guess. A
+    // target low on the screen (the item slot on a sheet) left ~140px below it,
+    // enough to pass the old test but not enough for the bubble, so it was
+    // placed below and its "Got it" button ran off the bottom edge unreachable.
+    const GAP = 16;
+    const EDGE = 12;
+    const bubbleRect = bubble.getBoundingClientRect();
+    const spaceBelow = vh - hole.bottom - GAP - EDGE;
+    const spaceAbove = hole.top - GAP - EDGE;
+
+    let placeBelow;
+    if (bubbleRect.height <= spaceBelow)      placeBelow = true;
+    else if (bubbleRect.height <= spaceAbove) placeBelow = false;
+    else placeBelow = spaceBelow >= spaceAbove;   // fits neither: take the roomier side
+
     bubble.classList.remove('tutorial-bubble--below', 'tutorial-bubble--above');
     bubble.classList.add(placeBelow ? 'tutorial-bubble--below' : 'tutorial-bubble--above');
 
-    const bubbleRect = bubble.getBoundingClientRect();
     let bubbleLeft = hole.left + (hole.right - hole.left) / 2 - bubbleRect.width / 2;
-    bubbleLeft = Math.max(12, Math.min(bubbleLeft, vw - bubbleRect.width - 12));
-    const bubbleTop = placeBelow ? hole.bottom + 16 : hole.top - bubbleRect.height - 16;
+    bubbleLeft = Math.max(EDGE, Math.min(bubbleLeft, vw - bubbleRect.width - EDGE));
+
+    // Clamped against BOTH edges. The dismiss button sits at the bubble's
+    // bottom, so overflowing the bottom of the viewport strands the player with
+    // no way onward — the clamp pulls the bubble back over its target rather
+    // than letting that happen.
+    let bubbleTop = placeBelow ? hole.bottom + GAP : hole.top - bubbleRect.height - GAP;
+    bubbleTop = Math.min(bubbleTop, vh - bubbleRect.height - EDGE);
+    bubbleTop = Math.max(EDGE, bubbleTop);
+
     bubble.style.left = `${bubbleLeft}px`;
-    bubble.style.top  = `${Math.max(12, bubbleTop)}px`;
+    bubble.style.top  = `${bubbleTop}px`;
   }
 
   layout();
