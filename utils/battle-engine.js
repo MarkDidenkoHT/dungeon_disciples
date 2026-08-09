@@ -155,6 +155,12 @@ class BattleEngine {
       _terror_rounds:     0,
       _sanctuary_rounds:  0,
       _sanctuary_resist:  null,
+      _frost_armor_rounds: 0,
+      _frost_armor_armor:  0,
+      _frost_armor_resist: 0,
+      _frost_armor_school: null,
+      _stone_form_rounds:  0,
+      _stone_form_armor:   0,
       _parry_available:   false,
       _aegis_armor:       0,
       _aegis_resists:     {},
@@ -983,6 +989,30 @@ class BattleEngine {
     if (this.getActingOrder().length === 0) this.advanceRound();
     return true;
   }
+  // Both of these hand back exactly what was granted, so a re-cast (which
+  // refreshes rather than stacks) and the round timer running out take the same
+  // path and neither can leave a unit permanently buffed.
+  expireFrostArmor(unit) {
+    if (!unit) return;
+    if (unit._frost_armor_armor) unit.armor = Math.max(0, (unit.armor ?? 0) - unit._frost_armor_armor);
+    const res = unit.unit_data?.resistances ?? unit.resistances;
+    if (res && unit._frost_armor_school && unit._frost_armor_resist) {
+      const school = unit._frost_armor_school;
+      res[school] = Math.max(0, (res[school] ?? 0) - unit._frost_armor_resist);
+    }
+    unit._frost_armor_rounds = 0;
+    unit._frost_armor_armor  = 0;
+    unit._frost_armor_resist = 0;
+    unit._frost_armor_school = null;
+  }
+
+  expireStoneForm(unit) {
+    if (!unit) return;
+    if (unit._stone_form_armor) unit.armor = Math.max(0, (unit.armor ?? 0) - unit._stone_form_armor);
+    unit._stone_form_rounds = 0;
+    unit._stone_form_armor  = 0;
+  }
+
   advanceRound() {
     for (const c of this.combatants) {
       c.acted_this_round   = false;
@@ -1011,6 +1041,16 @@ class BattleEngine {
           }
           c._sanctuary_resist = null;
         }
+      }
+
+      if (c._frost_armor_rounds > 0) {
+        c._frost_armor_rounds--;
+        if (c._frost_armor_rounds === 0) this.expireFrostArmor(c);
+      }
+
+      if (c._stone_form_rounds > 0) {
+        c._stone_form_rounds--;
+        if (c._stone_form_rounds === 0) this.expireStoneForm(c);
       }
 
       if (c._aegis_armor) { c.armor = Math.max(0, c.armor - c._aegis_armor); c._aegis_armor = 0; }
@@ -1353,6 +1393,14 @@ class BattleEngine {
           _terror_rounds:      c._terror_rounds,
           _sanctuary_rounds:   c._sanctuary_rounds,
           _sanctuary_resist:   c._sanctuary_resist,
+          // Timed armor buffs. Without these the round counter resets on every
+          // reload and the armor they granted is never handed back.
+          _frost_armor_rounds: c._frost_armor_rounds ?? 0,
+          _frost_armor_armor:  c._frost_armor_armor  ?? 0,
+          _frost_armor_resist: c._frost_armor_resist ?? 0,
+          _frost_armor_school: c._frost_armor_school ?? null,
+          _stone_form_rounds:  c._stone_form_rounds  ?? 0,
+          _stone_form_armor:   c._stone_form_armor   ?? 0,
           _parry_available:    c._parry_available,
           _aegis_armor:        c._aegis_armor,
           _aegis_resists:      c._aegis_resists,
@@ -1435,6 +1483,12 @@ class BattleEngine {
       c._terror_rounds     = b._terror_rounds     ?? 0;
       c._sanctuary_rounds  = b._sanctuary_rounds  ?? 0;
       c._sanctuary_resist  = b._sanctuary_resist  ?? null;
+      c._frost_armor_rounds = b._frost_armor_rounds ?? 0;
+      c._frost_armor_armor  = b._frost_armor_armor  ?? 0;
+      c._frost_armor_resist = b._frost_armor_resist ?? 0;
+      c._frost_armor_school = b._frost_armor_school ?? null;
+      c._stone_form_rounds  = b._stone_form_rounds  ?? 0;
+      c._stone_form_armor   = b._stone_form_armor   ?? 0;
       c._parry_available   = b._parry_available   ?? false;
       c._aegis_armor       = b._aegis_armor       ?? 0;
       c._aegis_resists     = b._aegis_resists     || {};

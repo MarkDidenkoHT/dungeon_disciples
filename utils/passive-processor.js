@@ -944,6 +944,132 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
   }
 
+  // ── Frost Armor ───────────────────────────────────────────────────────────
+  // Armor plus one school of resistance, for a couple of rounds. Both are added
+  // to the live stats and given back by advanceRound — the same shape Sanctuary
+  // uses, kept separate because this touches ONE resist rather than all six.
+  if (p.frost_armor_armor != null && target) {
+    const armorAmt  = p.frost_armor_armor;
+    const resistAmt = p.frost_armor_resist ?? 0;
+    const school    = p.frost_armor_resist_type || 'cold';
+    // Stacking a second cast would leak the first one's bonuses (only one
+    // amount can be given back), so a re-cast refreshes rather than adds.
+    if (target._frost_armor_rounds > 0) engine.expireFrostArmor(target);
+
+    target.armor = (target.armor ?? 0) + armorAmt;
+    const res = target.unit_data?.resistances ?? target.resistances;
+    if (res && resistAmt) res[school] = (res[school] ?? 0) + resistAmt;
+
+    target._frost_armor_rounds = p.duration_rounds ?? 2;
+    target._frost_armor_armor  = armorAmt;
+    target._frost_armor_resist = resistAmt;
+    target._frost_armor_school = school;
+
+    const resPath = target.unit_data?.resistances ? 'unit_data.resistances' : 'resistances';
+    engine.registerEffect(target, {
+      key: 'frost_armor', name: def.name, polarity: 'positive', dispellable: def.dispellable === true,
+      restore: { armor: -armorAmt, [`${resPath}.${school}`]: -resistAmt },
+      clear:   { _frost_armor_rounds: 0, _frost_armor_armor: 0, _frost_armor_resist: 0, _frost_armor_school: null },
+    });
+    engine.recordGrantedBuff(actor, 'armor', [target], armorAmt);
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: armorAmt, heal: false, stat: 'armor',
+      message: `${def.name} — +${armorAmt} armor and +${resistAmt} ${school} resist for ${p.duration_rounds ?? 2} rounds` });
+    engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
+  }
+
+  // ── Volley ────────────────────────────────────────────────────────────────
+  // Everyone on the other side, whoever was tapped. One log entry per enemy, so
+  // the client plays the arrows against all of them at once.
+  if (p.volley_damage != null) {
+    const enemies = combatants.filter(c => c.side !== actor.side && c.alive && !c._invulnerable);
+    for (const e of enemies) {
+      const armor = Math.max(0, e.armor ?? 0);
+      const dmg   = Math.max(1, Math.floor(p.volley_damage * (1 - armor / 100)));
+      hurt(e, dmg);
+      const dead = e.battle_hp <= 0;
+      if (dead) { e.alive = false; engine.applyOnDeathPassives(e); }
+      engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetId: e.id, targetName: e.unit_name, targetCell: e.cellIndex,
+        value: dmg, heal: false, killed: dead,
+        message: `${def.name} — struck ${e.unit_name} for ${dmg}` });
+    }
+    if (!enemies.length) {
+      engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetName: 'all enemies', message: `${def.name} — nothing left to shoot at` });
+    }
+  }
+
+  // ── Stone Form ────────────────────────────────────────────────────────────
+  // Self-buff: armor for a couple of rounds, and a chunk of health back at once.
+  if (p.stone_form_armor != null) {
+    const armorAmt = p.stone_form_armor;
+    if (actor._stone_form_rounds > 0) engine.expireStoneForm(actor);
+
+    actor.armor = (actor.armor ?? 0) + armorAmt;
+    actor._stone_form_rounds = p.duration_rounds ?? 2;
+    actor._stone_form_armor  = armorAmt;
+    engine.registerEffect(actor, {
+      key: 'stone_form', name: def.name, polarity: 'positive', dispellable: def.dispellable === true,
+      restore: { armor: -armorAmt },
+      clear:   { _stone_form_rounds: 0, _stone_form_armor: 0 },
+    });
+    engine.recordGrantedBuff(actor, 'armor', [actor], armorAmt);
+
+    // The mend goes through the normal heal path: fatigue weakens it, a healing
+    // reduction on the unit applies, and it cannot overheal.
+    const pct    = p.stone_form_heal_pct ?? 0;
+    const factor = 1 - ((actor._healing_reduction ?? 0) / 100);
+    const healed = Math.min(
+      Math.floor(actor.max_hp * pct / 100 * factor * engine.fatigueHealMult()),
+      actor.max_hp - actor.battle_hp);
+    if (healed > 0) actor.battle_hp += healed;
+
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: actor.id, targetName: actor.unit_name, targetCell: actor.cellIndex,
+      value: healed, heal: true,
+      message: `${def.name} — +${armorAmt} armor for ${p.duration_rounds ?? 2} rounds, mended ${healed}` });
+    if (healed > 0) engine.fireHealTriggers(actor, actor, healed);
+  }
+
+  // ── Furious Strike ────────────────────────────────────────────────────────
+  // A harder version of the unit's own attack, paid for in blood. Routed
+  // through engine.strikeTarget rather than reimplemented, so armor, resists,
+  // dodge, Protector intercepts, martyrdom and every on-hit passive behave
+  // exactly as they do for a normal swing.
+  if (p.furious_strike_pct != null && target) {
+    const mult = p.furious_strike_pct / 100;
+    // The boost is captured as a DELTA and taken back off afterwards, rather
+    // than saving and restoring the multiplier: passives that fire during the
+    // swing (Rage on a retaliation, a kill bonus) also write to _dmg_mult, and
+    // restoring a saved value would wipe what they earned.
+    const boost = (actor._dmg_mult ?? 1) * (mult - 1);
+    actor._dmg_mult = (actor._dmg_mult ?? 1) + boost;
+
+    const before = target.battle_hp;
+    engine.strikeTarget(actor, target);
+    const dealt = Math.max(0, before - target.battle_hp);
+
+    actor._dmg_mult = Math.max(0, (actor._dmg_mult ?? 1) - boost);
+
+    const recoil = Math.floor(dealt * (p.furious_strike_recoil_pct ?? 0) / 100);
+    if (recoil > 0 && actor.alive) {
+      actor.battle_hp = Math.max(0, actor.battle_hp - recoil);
+      engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetId: actor.id, targetName: actor.unit_name, targetCell: actor.cellIndex,
+        value: recoil, heal: false,
+        message: `${def.name} — ${actor.unit_name} takes ${recoil} recoil` });
+      // The recoil is DAMAGE TAKEN, so it wakes the same passives a blow would —
+      // Rage in particular, which is the point of hurting yourself on purpose.
+      // (A unit carrying both Rage and a retaliation passive will also retaliate
+      // against itself here; that is what "taking damage" means to those two.)
+      engine.fireTrigger('on_hit_received', { actor, target: actor, dmg: recoil, dying: null });
+      engine.fireTrigger('on_take_damage',  { actor, target: actor, dmg: recoil, dying: null });
+      if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
+    }
+  }
+
   if (p.all_resist_bonus != null && target && def.target === 'ally') {
     const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
     const res = target.unit_data?.resistances ?? target.resistances;

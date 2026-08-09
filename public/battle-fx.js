@@ -938,7 +938,7 @@ export async function light_of_dawn(cellEl, opts = {}) {
     // The band itself: a wide soft body with a hard bright core along its axis.
     // Deliberately taller than the row it travels down — the light spills over
     // the neighbouring ranks rather than sitting inside one lane of tiles.
-    const bodyH = R * 2.34;
+    const bodyH = R * 1.76;
     glowG.beginFill(GOLD, 0.20 * fade);
     glowG.drawRect(left, cy - bodyH / 2, right - left, bodyH);
     glowG.endFill();
@@ -948,9 +948,9 @@ export async function light_of_dawn(cellEl, opts = {}) {
 
     // Core and rails scale with the body, so widening the band thickens the
     // whole beam instead of leaving a hairline down a broad glow.
-    rayG.lineStyle(Math.max(1.5, R * 0.15), WHITE, 0.85 * fade);
+    rayG.lineStyle(Math.max(1.5, R * 0.113), WHITE, 0.85 * fade);
     rayG.moveTo(left, cy); rayG.lineTo(right, cy);
-    rayG.lineStyle(Math.max(1, R * 0.042), GOLD, 0.55 * fade);
+    rayG.lineStyle(Math.max(1, R * 0.032), GOLD, 0.55 * fade);
     rayG.moveTo(left, cy - bodyH / 2); rayG.lineTo(right, cy - bodyH / 2);
     rayG.moveTo(left, cy + bodyH / 2); rayG.lineTo(right, cy + bodyH / 2);
     rayG.lineStyle(0);

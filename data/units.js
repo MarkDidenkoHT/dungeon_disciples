@@ -390,7 +390,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg',
-      xp: 150, passive: ['unbreakable 1', 'aegis 1'], ability: null,
+      xp: 150, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
       id: 'd31', f: 'd', t: 2,
@@ -401,7 +401,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg',
-      xp: 720, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: null,
+      xp: 720, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
       id: 'd311', f: 'd', t: 3,
@@ -412,7 +412,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg',
-      xp: 1800, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: null,
+      xp: 1800, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
       id: 'd32', f: 'd', t: 2,
@@ -423,7 +423,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'physical', action_power: 16, action_icon: 'throw_stone.jpg',
-      xp: 720, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_cold 1'], ability: null,
+      xp: 720, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
       id: 'd321', f: 'd', t: 3,
@@ -434,7 +434,7 @@ const UNITS = {
       resistances: { air: 15, fire: 10, life: 10, death: 20, cold: 25, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg',
-      xp: 1800, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 2'], ability: null,
+      xp: 1800, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     heretic: {
       id: 'd4', f: 'd', t: 1,
@@ -445,7 +445,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg',
-      xp: 75, passive: 'rage 1', ability: null,
+      xp: 75, passive: 'rage 1', ability: 'furious_strike 1',
     },
     posessed: {
       id: 'd41', f: 'd', t: 2,
@@ -456,7 +456,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg',
-      xp: 360, passive: ['rage 1', 'blood_frenzy 1'], ability: null,
+      xp: 360, passive: ['rage 1', 'blood_frenzy 1'], ability: 'furious_strike 1',
     },
     vessel: {
       id: 'd411', f: 'd', t: 3,
@@ -467,7 +467,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg',
-      xp: 900, passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: null,
+      xp: 900, passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: 'furious_strike 1',
     },
     pain_projector: {
       id: 'd412', f: 'd', t: 3,
@@ -1135,7 +1135,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 55, passive: ['renew 1', 'field_medic 1'], ability: null,
+      xp: 55, passive: ['renew 1', 'field_medic 1'], ability: 'prayer_of_healing 1',
     },
     templar: {
       id: 'e21', f: 'e', t: 2,
@@ -1234,7 +1234,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_sfx: 'frost_spell_impact',
-      xp: 360, passive: ['resist_aura_cold 1', 'chill 1'], ability: null,
+      xp: 360, passive: ['resist_aura_cold 1', 'chill 1'], ability: 'frost_armor 1',
     },
     cryomancer: {
       id: 'e421', f: 'e', t: 3,
@@ -1245,7 +1245,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_sfx: 'frost_spell_impact',
-      xp: 900, passive: ['resist_aura_cold 1', 'chill 2'], ability: null,
+      xp: 900, passive: ['resist_aura_cold 1', 'chill 2'], ability: 'frost_armor 2',
     },
   },
 
@@ -2049,7 +2049,7 @@ const UNITS = {
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 100, passive: 'bleed 1', ability: null,
+        xp: 100, passive: 'bleed 1', ability: 'volley 1',
       },
       crimson_hunter: {
         id: 'opb_e41', f: 'opb', t: 2,
@@ -2060,7 +2060,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: null,
+        xp: 400, passive: ['bleed 1', 'clear_shot 1'], ability: 'volley 1',
       },
       crimson_stalker: {
         id: 'opb_e411', f: 'opb', t: 3,
@@ -2071,7 +2071,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: null,
+        xp: 900, passive: ['bleed 2', 'clear_shot 1'], ability: 'volley 2',
       },
       sister_aldra_1: {
         id: 'opb_e5', f: 'opb', t: 2,
@@ -2306,7 +2306,7 @@ const UNITS = {
         size: 'tile',
         hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
-        action: 'attack', target_type: 'enemy', targets: 6, range: 1,
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
         xp: 260, passive: ['chill 1', 'sorrow 1'], ability: null,
       },

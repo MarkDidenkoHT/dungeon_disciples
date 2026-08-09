@@ -232,7 +232,7 @@ const REGION_ENCOUNTERS = {
     },
     level_5: {
       enemies: [
-        { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
@@ -247,7 +247,7 @@ const REGION_ENCOUNTERS = {
     level_6: {
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
-        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
         { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2 },
