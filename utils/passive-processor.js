@@ -579,9 +579,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.radiance_pct != null) {
       const radDmg = Math.floor(dmg * p.radiance_pct / 100);
       if (radDmg > 0) {
+        // ADJACENT, not "everyone across the way". Row proximity alone was the
+        // whole test, and with three rows that reaches every row from the
+        // middle one and both columns besides — i.e. the entire enemy team.
+        // An enemy can only be beside this unit if it stands in its own FRONT
+        // column (the two grids face each other: player col 1 meets enemy col
+        // 0, same as target: 'enemy_front' in getAbilityTargets below), and in
+        // this unit's row or one either side of it.
         const ownerRow = cellRow(owner.cellIndex);
         const adjEnemies = engine.combatants.filter(c =>
           c.side !== owner.side && c.alive &&
+          cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1) &&
           Math.abs(cellRow(c.cellIndex) - ownerRow) <= 1
         );
         for (const e of adjEnemies) {
