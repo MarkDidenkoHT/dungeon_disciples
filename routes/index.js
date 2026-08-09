@@ -151,7 +151,9 @@ const HERO_STARTING_UNITS = {
   h_d_3: { building_id: 'flame_spawn_pit',        unit_id: 'd7',  slot: 'slot_4' },
   h_g_1: { building_id: 'communicant_chapel',         unit_id: 'gs2', slot: 'slot_4' },
   h_g_2: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
-  h_g_3: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
+  // Mothers Voice is a ranged caster with no line of its own, so it opens with
+  // the Pale Maiden — the one Ghost that fights in melee.
+  h_g_3: { building_id: 'pale_maiden_barrow', unit_id: 'gs7', slot: 'slot_4' },
 };
 
 function supabase(path, options = {}) {

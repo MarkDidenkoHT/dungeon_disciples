@@ -100,7 +100,6 @@ const REGION_ENCOUNTERS = {
     level_1: {
       enemies: [
         { key: 'glittering_abyss.сhillrock',  cell: 0 },
-        { key: 'glittering_abyss.cryostax',  cell: 3 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -111,8 +110,9 @@ const REGION_ENCOUNTERS = {
     },
     level_2: {
       enemies: [
-        { key: 'glittering_abyss.сhillrock',  cell: 0 },
-        { key: 'glittering_abyss.frostshard',  cell: 3 },
+        { key: 'glittering_abyss.frostshard',  cell: 1 },
+        { key: 'glittering_abyss.cryostax',  cell: 3 },
+        { key: 'glittering_abyss.frostshard',  cell: 5 },
       ],
       rewards: {
         gold: 20, xp: 40,
@@ -124,8 +124,7 @@ const REGION_ENCOUNTERS = {
     level_3: {
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 2 },
-        { key: 'glittering_abyss.cryostax',  cell: 1 },
-        { key: 'glittering_abyss.frostshard',  cell: 3 },
+        { key: 'glittering_abyss.сhillrock',  cell: 1 },
       ],
       rewards: {
         gold: 25, xp: 50,

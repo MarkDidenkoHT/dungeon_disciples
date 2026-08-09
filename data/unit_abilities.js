@@ -254,9 +254,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 25 bonus death damage.',
-    description_ru: "Каждое попадание накладывает заряд Печати смерти. При 3 зарядах цель получает 25 дополнительного урона смертью.",
-    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 25, damage_type: 'death' },
+    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 15 bonus death damage.',
+    description_ru: "Каждое попадание накладывает заряд Печати смерти. При 3 зарядах цель получает 15 дополнительного урона смертью.",
+    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 15, damage_type: 'death' },
   },
   'death_mark 2': {
     id: 'death_mark 2',
@@ -265,9 +265,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 40 bonus death damage.',
-    description_ru: "Каждое попадание накладывает заряд Печати смерти. При 3 зарядах цель получает 40 дополнительного урона смертью.",
-    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 40, damage_type: 'death' },
+    description: 'Each hit applies a stack of Death Mark. At 3 stacks, target takes 25 bonus death damage.',
+    description_ru: "Каждое попадание накладывает заряд Печати смерти. При 3 зарядах цель получает 25 дополнительного урона смертью.",
+    params: { stack_key: 'death_mark', stacks_needed: 3, stack_burst_damage: 25, damage_type: 'death' },
   },
   'impale 1': {
     id: 'impale 1',
@@ -1200,7 +1200,6 @@ const UNIT_ABILITIES = {
     effect_name: 'aegis',
   },
   'aegis 2': {
-    // id and rank were both copied from rank 1 and left unchanged.
     id: 'aegis 2',
     name: 'Aegis',
     name_ru: "Эгида",
