@@ -13,7 +13,7 @@ const COLS = 2;
 // — because something (life, blood) travels between the acting unit and its
 // target. Everything else is single-cell / (cell, opts). Keep in sync with the
 // two-cell effects in battle-fx.js.
-const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice']);
+const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice', 'terror']);
 
 // Effects that hit MANY cells at once — EFFECTS[name](originCell, { targetCells }).
 // The engine logs one entry per victim (fellfire splashes every burning enemy,

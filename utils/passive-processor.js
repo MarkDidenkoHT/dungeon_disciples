@@ -12,6 +12,22 @@ function cellCol(i) { return i % 2; }
 //
 // Returns the damage actually dealt, so callers that log or check for a kill
 // report what really happened rather than what they intended.
+// How much a damage-over-time effect applies for, floored at the effect's RANK.
+//
+// A percentage of a small hit rounds to nothing — a Ghost's 6-damage attack
+// applying "Poison (0/turn)". Worse than cosmetic: every tick is gated on the
+// stored amount being > 0, so a 0 application registered the status icon and
+// then never ticked at all. Rank is the floor, so Poison 1 always costs at
+// least 1 a turn and Poison 2 at least 2, however weak the hit that applied it.
+//
+// The tick sites in battle-engine.js floor by rank as well. That stays as a
+// safety net for anything stored before this existed (a battle in progress
+// across a deploy), but the value is correct at APPLICATION now — which is what
+// the log line quotes, and what decides whether the effect ticks at all.
+function dotAmount(dmg, pct, def) {
+  return Math.max(def?.rank ?? 1, Math.floor(dmg * pct / 100));
+}
+
 function hurt(unit, amount) {
   if (!unit || !unit.alive || unit._invulnerable) return 0;
   const before = unit.battle_hp;
@@ -334,7 +350,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // Burn and Poison are now INDEPENDENT damage-over-time effects on separate
       // slots (burn -> dot_dmg, poison -> _poison_dmg), so a unit can carry both
       // at once. Each new hit STACKS onto whatever is already there.
-      const add      = Math.floor(dmg * p.dot_dmg_pct / 100);
+      const add      = dotAmount(dmg, p.dot_dmg_pct, def);
       const isPoison = (def.name || '').toLowerCase() === 'poison';
       if (isPoison) {
         target._poison_dmg = (target._poison_dmg ?? 0) + add;
@@ -355,22 +371,24 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
     }
     if (p.bleed_dmg_pct != null) {
-      target._bleed_dmg = (target._bleed_dmg ?? 0) + Math.floor(dmg * p.bleed_dmg_pct / 100); // stacks
+      const add = dotAmount(dmg, p.bleed_dmg_pct, def);
+      target._bleed_dmg = (target._bleed_dmg ?? 0) + add; // stacks
       target._bleed_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
         clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
       });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: Math.floor(dmg * p.bleed_dmg_pct / 100) });
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
     }
     if (p.chill_dmg_pct != null) {
-      target._chill_dmg = (target._chill_dmg ?? 0) + Math.floor(dmg * p.chill_dmg_pct / 100); // stacks
+      const add = dotAmount(dmg, p.chill_dmg_pct, def);
+      target._chill_dmg = (target._chill_dmg ?? 0) + add; // stacks
       target._chill_source_key = abilityKey;
       engine.registerEffect(target, {
         key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
         clear: { _chill_dmg: 0, _chill_source_key: null },
       });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: Math.floor(dmg * p.chill_dmg_pct / 100) });
+      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
     }
     if (p.armor_shred != null) {
       const reduction = target._debuff_reduction ?? 0;
@@ -1114,7 +1132,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.physical_dmg_reduction_pct != null && target && def.target === 'enemy') {
     target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
     target._terror_rounds = p.duration_rounds ?? 2;
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — -${p.physical_dmg_reduction_pct}% physical dmg for ${p.duration_rounds} rounds` });
+    // actorId + targetId are what the client resolves the two cells by (a player
+    // and an enemy routinely share a cellIndex, so the cell alone cannot find
+    // one). Without them Terror logged correctly and drew nothing.
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — -${p.physical_dmg_reduction_pct}% physical dmg for ${p.duration_rounds} rounds` });
   }
   if (p.stun_initiative_reduction_pct != null && target && def.target === 'enemy') {
     const actorRange = actor.unit_data?.range ?? actor.unit_data?.action?.range ?? 1;

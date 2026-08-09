@@ -1009,6 +1009,141 @@ export async function light_of_dawn(cellEl, opts = {}) {
   console.log('[battle-fx] light_of_dawn END', dataId);
 }
 
+// ── terror — dread rolled onto one enemy ──────────────────────────────────
+// Terror does not wound: it takes 30% of what the target can hit for, for two
+// rounds. So nothing here reads as an impact. A pall gathers on the caster, a
+// low wave of darkness rolls out across the field, and where it lands the enemy
+// is wrapped and CLENCHED — tendrils drawing inward, pale wisps fleeing upward
+// off it (whatever nerve it had, leaving).
+//
+// Drawn dark rather than bright: the shroud is a plain (non-additive) fill, and
+// only the rim and the wisps are additive, so the target genuinely dims instead
+// of lighting up the way every damaging effect does.
+export async function terror(sourceCellEl, targetCellEl) {
+  console.log('[battle-fx] terror START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
+  if (!sourceCellEl || !targetCellEl || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const DREAD = 0x1b1226;   // near-black violet, the pall itself
+  const BRUISE= 0x5b3a7a;   // the rim of the wave
+  const PALE  = 0xc9b6e0;   // sickly lavender — the wisps fleeing
+
+  const srcId = sourceCellEl.dataset.id;
+  const dstId = targetCellEl.dataset.id;
+
+  // Tendrils clawing inward on the target, each with its own reach and kink.
+  const tendrils = Array.from({ length: 11 }, (_, i) => ({
+    ang:  (i / 11) * Math.PI * 2 + rand(-0.15, 0.15),
+    len:  rand(0.8, 1.25),
+    kink: rand(-0.3, 0.3),
+    d:    rand(0, 0.18),
+  }));
+  // What little courage it had, going up.
+  const wisps = Array.from({ length: 9 }, () => ({
+    ax: rand(-0.5, 0.5), size: rand(1.2, 3), speed: rand(0.6, 1.2), d: rand(0, 0.35),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;   // rim + wisps
+  const darkG = new PIXI.Graphics();                          // the pall, NOT additive
+  const lineG = new PIXI.Graphics(); lineG.blendMode = ADD;
+  layer.addChild(darkG, glowLayer, lineG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(880, t => {
+    const sb = cellBoundsFor(srcId);
+    const tb = cellBoundsFor(dstId);
+    if (!sb || !tb) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const sx = sb.x + sb.width / 2;
+    const sy = sb.y + sb.height / 2;
+    const tx = tb.x + tb.width / 2;
+    const ty = tb.y + tb.height / 2;
+    const R  = Math.min(tb.width, tb.height);
+
+    glowG.clear(); darkG.clear(); lineG.clear();
+
+    const ang  = Math.atan2(ty - sy, tx - sx);
+    const dist = Math.hypot(tx - sx, ty - sy);
+
+    // 1. The caster gathers it — darkness swells and is held.
+    const gather = clamp01(t / 0.2);
+    const holding = 1 - clamp01((t - 0.2) / 0.3);
+    darkG.beginFill(DREAD, 0.55 * gather * holding);
+    darkG.drawCircle(sx, sy, R * 0.42 * gather);
+    darkG.endFill();
+    lineG.lineStyle(Math.max(1, R * 0.02), BRUISE, gather * (1 - gather) * 2.2);
+    lineG.drawCircle(sx, sy, R * (0.5 - 0.2 * gather));
+    lineG.lineStyle(0);
+
+    // 2. A low wave rolls across — an ARC facing the target, not a projectile.
+    const travel = clamp01((t - 0.16) / 0.34);
+    if (travel > 0 && travel < 1) {
+      const waveR  = dist * (1 - Math.pow(1 - travel, 2));   // fast out, easing in
+      const spread = 0.55 + 0.25 * travel;                   // widens as it goes
+      const thick  = R * 0.20;
+      const a0 = ang - spread, a1 = ang + spread;
+      const fade = 1 - travel * 0.35;
+
+      darkG.beginFill(DREAD, 0.5 * fade);
+      darkG.moveTo(sx + Math.cos(a0) * (waveR + thick), sy + Math.sin(a0) * (waveR + thick));
+      darkG.arc(sx, sy, waveR + thick, a0, a1);
+      darkG.arc(sx, sy, Math.max(0, waveR - thick), a1, a0, true);
+      darkG.closePath();
+      darkG.endFill();
+
+      lineG.lineStyle(Math.max(1, R * 0.03), BRUISE, 0.75 * fade);
+      lineG.moveTo(sx + Math.cos(a0) * waveR, sy + Math.sin(a0) * waveR);
+      lineG.arc(sx, sy, waveR, a0, a1);
+      lineG.lineStyle(0);
+    }
+
+    // 3. It lands, and closes on the target.
+    const hit = clamp01((t - 0.44) / 0.56);
+    if (hit <= 0) return;
+    const grip = 1 - hit;                       // the shroud tightens as it fades
+
+    darkG.beginFill(DREAD, 0.72 * grip);
+    darkG.drawCircle(tx, ty, R * (0.62 - 0.22 * hit));
+    darkG.endFill();
+
+    for (const td of tendrils) {
+      const s = clamp01((hit - td.d) / 0.6);
+      if (s <= 0) continue;
+      const outer = R * (0.95 - 0.35 * s) * td.len;
+      const inner = R * 0.22;
+      const mx = tx + Math.cos(td.ang + td.kink) * (outer + inner) / 2;
+      const my = ty + Math.sin(td.ang + td.kink) * (outer + inner) / 2;
+      lineG.lineStyle(Math.max(1, R * 0.028 * (1 - s * 0.5)), BRUISE, (1 - s) * 0.8);
+      lineG.moveTo(tx + Math.cos(td.ang) * outer, ty + Math.sin(td.ang) * outer);
+      lineG.quadraticCurveTo(mx, my, tx + Math.cos(td.ang) * inner, ty + Math.sin(td.ang) * inner);
+    }
+    lineG.lineStyle(0);
+
+    // A rim, so the shroud has an edge against a dark portrait.
+    lineG.lineStyle(Math.max(1, R * 0.022), BRUISE, grip * 0.6);
+    lineG.drawCircle(tx, ty, R * (0.62 - 0.22 * hit));
+    lineG.lineStyle(0);
+
+    for (const w of wisps) {
+      const s = clamp01((hit - w.d) / 0.65);
+      if (s <= 0) continue;
+      softGlow(glowG, tx + w.ax * R, ty - s * R * 0.8 * w.speed,
+               w.size * (1 - s * 0.4), PALE, (1 - s) * 0.75);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] terror END', dstId);
+}
+
 // ── mothers_blessing — her own life, given away as souls ──────────────────
 // The caster spends a slice of her own maximum HP every turn and every other
 // ally is mended for it. So this is not a heal that arrives from nowhere: a pale
@@ -3031,7 +3166,11 @@ export const EFFECTS = {
   shared_suffering,
   light_of_dawn,
   radiance,
+  terror,
   mothers_blessing,
+  // Pale Embrace is the same picture by design: one pale soul sent to every
+  // ally mended, from a caster who is spending herself. Aliased rather than
+  // copied so the two can never drift apart.
   pale_embrace: mothers_blessing,
   cleanse,
   raise_dead,

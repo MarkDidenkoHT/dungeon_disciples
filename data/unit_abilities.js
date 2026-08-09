@@ -1228,6 +1228,7 @@ const UNIT_ABILITIES = {
     description: 'Reduce target enemy\'s physical damage dealt by 30% for 2 rounds.',
     description_ru: "Снижает наносимый вражеской целью физический урон на 30% на 2 раунда.",
     params: { physical_dmg_reduction_pct: 30, duration_rounds: 2 },
+    effect_name: 'terror',
   },
   'terror 2': {
     id: 'terror 2',
@@ -1239,6 +1240,7 @@ const UNIT_ABILITIES = {
     description: 'Reduce target enemy\'s physical damage dealt by 30% for 2 rounds.',
     description_ru: "Снижает наносимый вражеской целью физический урон на 30% на 2 раунда.",
     params: { physical_dmg_reduction_pct: 40, duration_rounds: 2 },
+    effect_name: 'terror',
   },
   'fear 1': {
     id: 'fear 1',
@@ -1251,11 +1253,11 @@ const UNIT_ABILITIES = {
     description_ru: "Соседние враги наносят на 10% меньше физического урона.",
     params: { adjacent_physical_dmg_reduction_pct: 10, range: 1 },
   },
-  'fear 1': {
-    id: 'fear 1',
+  'fear 2': {
+    id: 'fear 2',
     name: 'Fear',
     name_ru: "Страх",
-    rank: 1,
+    rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
     description: 'Adjacent enemies deal 15% less physical damage.',
