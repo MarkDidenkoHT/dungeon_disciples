@@ -22,13 +22,33 @@ app.use(express.json());
 // the browser keeps running yesterday's module and never asks for a new one.
 // `no-cache` does not mean "do not store", it means "revalidate before use", so
 // these still cost only a 304 when unchanged.
+//
+// While the game is in active development the art churns as fast as the code
+// does, and a Telegram WebView gives the player no way to force a reload — so
+// the whole 1d story is switched off unless we are explicitly in production.
+// Set NODE_ENV=production (or NO_CACHE=0) to get the bandwidth saving back.
 const CODE_FILE = /\.(?:js|mjs|css|html)$/i;
-const staticOpts = {
-  maxAge: '1d',
-  setHeaders(res, filePath) {
-    if (CODE_FILE.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
-  },
-};
+const NO_CACHE = process.env.NO_CACHE
+  ? process.env.NO_CACHE !== '0'
+  : process.env.NODE_ENV !== 'production';
+const staticOpts = NO_CACHE
+  ? {
+      etag: false,
+      lastModified: false,
+      maxAge: 0,
+      setHeaders(res) {
+        res.setHeader('Cache-Control', 'no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      },
+    }
+  : {
+      maxAge: '1d',
+      setHeaders(res, filePath) {
+        if (CODE_FILE.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+      },
+    };
+if (NO_CACHE) console.log('Static caching DISABLED (dev mode)');
 app.use('/data', express.static(path.join(__dirname, 'data'), staticOpts));
 app.use(express.static(path.join(__dirname, 'public'), staticOpts));
 
