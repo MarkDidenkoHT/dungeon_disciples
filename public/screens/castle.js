@@ -38,6 +38,38 @@ const CASTLE_TEXT = {
   noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
   wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
   requires:    { en: 'Requires',                              ru: 'Требует' },
+  // Item picker chrome. Same two axes the old roster sheet filtered on — what
+  // the item does and how good it is — minus the craft tab, which now lives on
+  // the Items screen.
+  tabEquippable:{ en: 'Equippable',                           ru: 'Подходящие' },
+  tabOwned:    { en: 'Owned',                                 ru: 'В наличии' },
+  filterRarity:{ en: 'Rarity',                                ru: 'Редкость' },
+  filterStat:  { en: 'Stat',                                  ru: 'Фильтр' },
+  groupStats:  { en: 'Stats',                                 ru: 'Характеристики' },
+  groupTraits: { en: 'Traits',                                ru: 'Свойства' },
+  any:         { en: 'Any',                                   ru: 'Любая' },
+  all:         { en: 'All',                                   ru: 'Все' },
+  common:      { en: 'Common',                                ru: 'Обычные' },
+  rare:        { en: 'Rare',                                  ru: 'Редкие' },
+  epic:        { en: 'Epic',                                  ru: 'Эпические' },
+  mythic:      { en: 'Mythic',                                ru: 'Мифические' },
+  rarity_common:{ en: 'Common',                               ru: 'Обычный' },
+  rarity_rare: { en: 'Rare',                                  ru: 'Редкий' },
+  rarity_epic: { en: 'Epic',                                  ru: 'Эпический' },
+  rarity_mythic:{ en: 'Mythic',                               ru: 'Мифический' },
+  statHp:      { en: 'HP',                                    ru: 'HP' },
+  statArmor:   { en: 'Armor',                                 ru: 'Броня' },
+  statInit:    { en: 'Init',                                  ru: 'Иниц.' },
+  statPower:   { en: 'Power',                                 ru: 'Сила' },
+  statResist:  { en: 'Resist',                                ru: 'Сопр.' },
+  traitPassive:{ en: 'Passive',                               ru: 'Пассивка' },
+  traitGrants: { en: 'Grants Tag',                            ru: 'Даёт метку' },
+  traitNeeds:  { en: 'Needs Tag',                             ru: 'Нужна метка' },
+  unique:      { en: 'Unique',                                ru: 'Уникальный' },
+  grantsTag:   { en: 'Grants tag',                            ru: 'Даёт метку' },
+  equippedElse:{ en: 'Equipped on another unit',              ru: 'Надет на другом бойце' },
+  nothingMatches:{ en: 'Nothing matches these filters.',      ru: 'Ничего не найдено по фильтрам.' },
+  equippedOn:  { en: 'on',                                    ru: 'у' },
   // Divine favor: the ad-funded alternative to Resurrect / Heal. Each faction
   // petitions its own god — the mechanic is identical, only the name changes,
   // so FAVOR_LABELS is presentation, not behaviour. The "Ad" marker is never
@@ -826,37 +858,181 @@ export function renderCastle(root, { player }) {
   // ── Item equipping, in the castle ─────────────────────────────────────────
   // Lives here rather than on the roster screen: the castle slot is now the
   // unit's home, and the roster is being turned into a dedicated item tab.
+  // Item art, stat chips, passive and tag chips — the same card the roster
+  // showed. An item is chosen by what it DOES, and a name alone says none of it.
+  const ITEM_STAT_ICONS = {
+    hp:           { icon: '❤',  en: 'HP',         ru: 'HP' },
+    armor:        { icon: '🛡',  en: 'Armor',      ru: 'Броня' },
+    action_power: { icon: '⚔',  en: 'Power',      ru: 'Сила' },
+    initiative:   { icon: '⚡', en: 'Initiative', ru: 'Инициатива' },
+  };
+
+  function itemStatChip(key, val) {
+    const sign = val >= 0 ? '+' : '';
+    const cls  = val >= 0 ? 'stat-chip--pos' : 'stat-chip--neg';
+
+    const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+    if (resistMatch) {
+      const r     = resistMatch[1];
+      const icon  = RESIST_ICONS[r]?.icon ?? '◆';
+      const label = `${cap(r)} ${castleLang === 'ru' ? 'сопротивление' : 'Resist'}`;
+      return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+                <span class="stat-chip-icon">${icon}</span>${sign}${val}
+              </span>`;
+    }
+
+    const meta  = ITEM_STAT_ICONS[key];
+    const icon  = meta?.icon ?? '◆';
+    const label = meta ? meta[castleLang] : cap(key);
+    return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+              <span class="stat-chip-icon">${icon}</span>${sign}${val}
+            </span>`;
+  }
+
+  function itemStatModsHtml(statMods) {
+    return Object.entries(statMods || {}).map(([k, v]) => itemStatChip(k, v)).join('');
+  }
+
+  function itemPassiveHtml(stats) {
+    const key = stats?.passive;
+    if (!key) return '';
+    const def   = resolveAbility(key);
+    const label = def?.name || String(key).split(' ')[0].replace(/_/g, ' ');
+    return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
+              <span class="item-passive-icon">✦</span>${label}
+            </button>`;
+  }
+
+  // `unitTags` marks an unmet requirement on the chip itself, so the reason line
+  // underneath never has to repeat it.
+  function itemTagsHtml(stats, unitTags = null) {
+    const unmet = stats.tag_required && Array.isArray(unitTags) && !unitTags.includes(stats.tag_required);
+    return [
+      stats.tag_required ? `<span class="item-card-tag ${unmet ? 'item-card-tag--unmet' : ''}">${CASTLE_TEXT.requires[castleLang]}: ${stats.tag_required}</span>` : '',
+      stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${CASTLE_TEXT.grantsTag[castleLang]}: ${stats.adds_tag}</span>` : '',
+    ].join('');
+  }
+
+  // ── Item equipping, in the castle ─────────────────────────────────────────
+  // Lives here rather than on the roster screen: the castle slot is now the
+  // unit's home, and the roster tab has become a dedicated item screen. Crafting
+  // is deliberately absent — this sheet only decides what the unit wears.
   function openSlotItemPicker(slot, rosterId) {
     const unit = rosterCache.find(u => String(u.id) === String(rosterId));
     if (!unit) return;
 
-    const def      = resolveUnitDef(unit);
-    const unitTags = (def?.tags || []).filter(Boolean);
-    // Everything not already worn by somebody else, plus whatever this unit has
-    // on right now (so it can be taken off from the same list).
-    const candidates = itemsCache.filter(it =>
-      it.equipped_by == null || String(it.equipped_by) === String(rosterId));
+    const unitDef  = resolveUnitDef(unit);
+    const unitTags = (unitDef?.tags || []).filter(Boolean);
 
-    const cards = candidates.map(it => {
-      const stats     = it.item_stats || {};
-      const here      = String(it.equipped_by) === String(rosterId);
+    let filter     = 'equippable';   // 'equippable' | 'owned'
+    let rarity     = 'all';
+    let statFilter = 'all';
+    let selected   = 0;
+
+    const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
+    const RARITIES  = ['common', 'rare', 'epic', 'mythic'];
+    const STAT_FILTERS = [
+      ['hp',           CASTLE_TEXT.statHp[castleLang]],
+      ['armor',        CASTLE_TEXT.statArmor[castleLang]],
+      ['initiative',   CASTLE_TEXT.statInit[castleLang]],
+      ['action_power', CASTLE_TEXT.statPower[castleLang]],
+      ['resist',       CASTLE_TEXT.statResist[castleLang]],
+    ];
+    const TRAIT_FILTERS = [
+      ['passive',    CASTLE_TEXT.traitPassive[castleLang]],
+      ['grants_tag', CASTLE_TEXT.traitGrants[castleLang]],
+      ['needs_tag',  CASTLE_TEXT.traitNeeds[castleLang]],
+    ];
+
+    function matchesStat(stats) {
+      if (statFilter === 'all') return true;
+      if (statFilter === 'passive')    return !!stats?.passive;
+      if (statFilter === 'grants_tag') return !!stats?.adds_tag;
+      if (statFilter === 'needs_tag')  return !!stats?.tag_required;
+      const mods = stats?.stat_mods || {};
+      if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
+      return Object.prototype.hasOwnProperty.call(mods, statFilter);
+    }
+
+    const matchesRarity = it => rarity === 'all' || itemRarity(it) === rarity;
+
+    // The filtered list, as DATA — the big card and the selector track are two
+    // views of it, so they cannot disagree about what is on screen.
+    function currentList() {
+      const visible = itemsCache.filter(it => {
+        if (!matchesRarity(it) || !matchesStat(it.item_stats)) return false;
+        if (filter === 'owned') return true;
+        const stats     = it.item_stats || {};
+        const factionOk = !stats.faction || stats.faction === player.faction;
+        const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+        const here      = String(it.equipped_by) === String(rosterId);
+        return here || (factionOk && tagOk && it.equipped_by == null);
+      });
+
+      // Five Padded Armors are one entry reading ×5, not five identical cards.
+      // A worn copy stays its own entry — its card names its carrier, or offers
+      // Unequip, and neither can be merged into a stack.
+      const stacks = new Map();
+      const out = [];
+      for (const it of visible) {
+        const key = itemKeyOf(it);
+        if (it.equipped_by != null || !key) { out.push({ item: it, count: 1 }); continue; }
+        const stack = stacks.get(key);
+        if (stack) { stack.count += 1; continue; }
+        const entry = { item: it, count: 1 };
+        stacks.set(key, entry);
+        out.push(entry);
+      }
+      return out;
+    }
+
+    function itemCard(entry) {
+      if (!entry) return `<p class="placeholder">${CASTLE_TEXT.nothingMatches[castleLang]}</p>`;
+      const it     = entry.item;
+      const stats  = it.item_stats || {};
+      const iconId = stats.icon || stats.key || 'item';
+      const here   = String(it.equipped_by) === String(rosterId);
+      const elsewhere = it.equipped_by != null && !here;
       const factionOk = !stats.faction || stats.faction === player.faction;
       const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
       // Incoherent pairings are refused with the reason spelled out, matching
       // what POST /items/equip enforces server-side (data/item_rules.js).
-      const block     = getEquipBlock(stats, def, UNIT_ABILITIES);
-      const canEquip  = factionOk && tagOk && !block && !here;
+      const block     = getEquipBlock(stats, unitDef, UNIT_ABILITIES);
+      const canEquip  = factionOk && tagOk && !block && !here && !elsewhere;
 
+      // Only reasons the card cannot state any other way — a missing tag is
+      // already written on the red "Requires: X" chip.
       let reason = '';
-      if (!factionOk)   reason = CASTLE_TEXT.wrongFaction[castleLang];
-      else if (block)   reason = castleLang === 'ru' ? block.reason_ru : block.reason;
-      else if (!tagOk)  reason = `${CASTLE_TEXT.requires[castleLang]}: ${stats.tag_required}`;
+      if (!factionOk)     reason = CASTLE_TEXT.wrongFaction[castleLang];
+      else if (block)     reason = castleLang === 'ru' ? block.reason_ru : block.reason;
+      else if (elsewhere) reason = CASTLE_TEXT.equippedElse[castleLang];
+
+      const holder = elsewhere
+        ? rosterCache.find(u => String(u.id) === String(it.equipped_by))
+        : null;
+      const holderName = holder ? (resolveUnitDef(holder)?.name ?? '') : '';
+      const countLine  = entry.count > 1
+        ? `×${entry.count}`
+        : (holderName ? `${CASTLE_TEXT.equippedOn[castleLang]} ${holderName}` : '');
 
       return `
         <div class="item-card item-card--rarity-${itemRarity(it)} ${here ? 'item-card--equipped' : ''}">
           <div class="item-card-body">
+            <div class="item-card-aside">
+              <div class="item-card-icon">
+                <img src="/assets/icons/items/${iconId}.png" alt="${itemName(it, player)}"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+              </div>
+              <div class="item-card-rarity item-card-rarity--${itemRarity(it)}">${CASTLE_TEXT['rarity_' + itemRarity(it)][castleLang]}</div>
+              ${stats.unique ? `<div class="item-card-unique">${CASTLE_TEXT.unique[castleLang]}</div>` : ''}
+              ${countLine ? `<div class="item-card-count-line">${countLine}</div>` : ''}
+            </div>
             <div class="item-card-main">
               <div class="item-card-name">${itemName(it, player)}</div>
+              <div class="item-card-stats">${itemStatModsHtml(stats.stat_mods)}</div>
+              ${itemPassiveHtml(stats)}
+              <div class="item-card-tags">${itemTagsHtml(stats, unitTags)}</div>
             </div>
           </div>
           ${here
@@ -864,16 +1040,146 @@ export function renderCastle(root, { player }) {
             : `<button class="item-action-btn item-action-btn--equip" data-item-id="${it.id}" data-roster-id="${rosterId}" ${canEquip ? '' : 'disabled'}>${CASTLE_TEXT.equip[castleLang]}</button>`}
           ${reason && !here ? `<div class="item-card-blocked">${reason}</div>` : ''}
         </div>`;
-    }).join('');
+    }
 
-    // Same reason as the main sheet: bind to fresh content, not the reused body.
-    openSubSheet(
-      CASTLE_TEXT.itemsTitle[castleLang],
-      `<div id="slot-item-root">${cards || `<p class="modal-empty">${CASTLE_TEXT.noItems[castleLang]}</p>`}</div>`
-    );
+    function trackCards(list) {
+      if (!list.length) return `<span class="track-empty-hint">${CASTLE_TEXT.nothingMatches[castleLang]}</span>`;
+      return list.map((entry, i) => {
+        const stats = entry.item.item_stats || {};
+        const icon  = stats.icon || stats.key || 'item';
+        const name  = itemName(entry.item, player);
+        return `
+          <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
+               data-i="${i}" title="${name}">
+            <img class="portrait-art-img" src="/assets/icons/items/${icon}.png" alt="${name}"
+                 onerror="this.style.display='none'">
+            ${entry.count > 1 ? `<span class="item-track-owned">${entry.count}</span>` : ''}
+          </div>`;
+      }).join('');
+    }
 
-    const body = getSubSheetBody()?.querySelector('#slot-item-root');
-    body?.addEventListener('click', async e => {
+    function render() {
+      const tab = (id, label) =>
+        `<button class="items-tab ${filter === id ? 'items-tab--active' : ''}" data-filter="${id}">${label}</button>`;
+      const opt = (id, label, cur) =>
+        `<option value="${id}"${cur === id ? ' selected' : ''}>${label}</option>`;
+
+      const list = currentList();
+      if (selected >= list.length) selected = 0;
+
+      if (!itemsCache.length) {
+        return `<div id="slot-item-root"><p class="modal-empty">${CASTLE_TEXT.noItems[castleLang]}</p></div>`;
+      }
+
+      return `
+        <div class="items-modal" id="slot-item-root">
+          <div class="items-tabs">
+            ${tab('equippable', CASTLE_TEXT.tabEquippable[castleLang])}
+            ${tab('owned', CASTLE_TEXT.tabOwned[castleLang])}
+          </div>
+
+          <div class="items-filters">
+            <div class="items-filter-row items-filter-row--selects">
+              <select class="items-select items-select--rarity-${rarity}"
+                      id="items-rarity-select" aria-label="${CASTLE_TEXT.filterRarity[castleLang]}">
+                ${opt('all', CASTLE_TEXT.any[castleLang], rarity)}
+                ${RARITIES.map(r => opt(r, CASTLE_TEXT[r][castleLang], rarity)).join('')}
+              </select>
+
+              <select class="items-select" id="items-stat-select" aria-label="${CASTLE_TEXT.filterStat[castleLang]}">
+                ${opt('all', CASTLE_TEXT.all[castleLang], statFilter)}
+                <optgroup label="${CASTLE_TEXT.groupStats[castleLang]}">
+                  ${STAT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
+                </optgroup>
+                <optgroup label="${CASTLE_TEXT.groupTraits[castleLang]}">
+                  ${TRAIT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="item-detail" id="item-detail">${itemCard(list[selected])}</div>
+
+          <div class="prep-track-wrap items-track-wrap">
+            <div class="portrait-track" id="items-track">${trackCards(list)}</div>
+          </div>
+        </div>`;
+    }
+
+    // The shell is not cosmetic: openSubSheet only replaces the body's
+    // innerHTML, so the body element itself survives across opens and listeners
+    // bound to it would accumulate — re-opening this picker twice would fire
+    // equip twice. Binding to a wrapper created fresh per open ties the
+    // listeners' life to the content, and repaint() only ever swaps what is
+    // INSIDE the shell, so the wrapper (and its listeners) survive a repaint.
+    openSubSheet(CASTLE_TEXT.itemsTitle[castleLang], `<div id="slot-item-shell">${render()}</div>`);
+
+    const shell   = getSubSheetBody()?.querySelector('#slot-item-shell');
+    const rootEl  = () => shell?.querySelector('#slot-item-root');
+    const repaint = () => { if (shell) shell.innerHTML = render(); };
+
+    function centreSelected(behavior = 'smooth') {
+      rootEl()?.querySelector('#items-track .portrait-card--selected')
+        ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+    }
+
+    // Repaint the detail card and the selector track together — two views of
+    // currentList(), so they must not drift apart.
+    function refreshList() {
+      const list = currentList();
+      if (selected >= list.length) selected = 0;
+      const el = rootEl();
+      const detail = el?.querySelector('#item-detail');
+      const track  = el?.querySelector('#items-track');
+      if (detail) detail.innerHTML = itemCard(list[selected]);
+      if (track)  track.innerHTML  = trackCards(list);
+      centreSelected('auto');
+    }
+
+    shell?.addEventListener('change', e => {
+      const sel = e.target.closest('select');
+      if (!sel) return;
+      if (sel.id === 'items-rarity-select') {
+        rarity = sel.value;
+        // Keeps the closed select tinted with the rarity it is showing.
+        sel.className = `items-select items-select--rarity-${rarity}`;
+        selected = 0;
+        refreshList();
+        return;
+      }
+      if (sel.id === 'items-stat-select') {
+        statFilter = sel.value;
+        selected = 0;
+        refreshList();
+      }
+    });
+
+    shell?.addEventListener('click', async e => {
+      const tabBtn = e.target.closest('[data-filter]');
+      if (tabBtn) { filter = tabBtn.dataset.filter; selected = 0; repaint(); return; }
+
+      const trackCard = e.target.closest('#items-track .portrait-card');
+      if (trackCard) {
+        selected = Number(trackCard.dataset.i);
+        const list = currentList();
+        rootEl().querySelector('#item-detail').innerHTML = itemCard(list[selected]);
+        rootEl().querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
+          c.classList.toggle('portrait-card--selected', ci === selected));
+        centreSelected();
+        return;
+      }
+
+      // The item's passive — same description modal the unit card uses.
+      const passiveBtn = e.target.closest('.item-passive');
+      if (passiveBtn) {
+        const def = resolveAbility(passiveBtn.dataset.abilityKey);
+        if (def) {
+          const parts = buildAbilityModalParts(def, 'passive');
+          openAbilityModal(parts.title, parts.body, parts.badges);
+        }
+        return;
+      }
+
       const equipBtn   = e.target.closest('.item-action-btn--equip:not([disabled])');
       const unequipBtn = e.target.closest('.item-action-btn--unequip');
       if (!equipBtn && !unequipBtn) return;

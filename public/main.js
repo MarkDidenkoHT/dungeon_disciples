@@ -1,6 +1,6 @@
 import { renderRegister }   from './screens/register.js';
 import { renderCastle }     from './screens/castle.js';
-import { renderRoster }     from './screens/roster.js';
+import { renderItems }      from './screens/items.js';
 import { renderEmbark }     from './screens/embark.js';
 import { renderSettings, lang } from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
@@ -48,7 +48,11 @@ const BOOT_TEXT = {
 
 const NAV_LABELS = {
   castle:   { en: 'Castle',   ru: 'Замок' },
-  roster:   { en: 'Roster',   ru: 'Отряд' },
+  // The roster tab is the ITEMS tab now: unit management moved onto the castle
+  // slot that owns the unit, and what is left of the roster screen is the item
+  // stash and forge. The route key stays 'roster' so onboarding, nav locks and
+  // deep links keep working while the screen is being retired.
+  roster:   { en: 'Items',    ru: 'Предметы' },
   embark:   { en: 'Embark',   ru: 'Поход' },
   spells:   { en: 'Spells',   ru: 'Заклинания' },
   settings: { en: 'Settings', ru: 'Настройки' },
@@ -178,6 +182,12 @@ function navigate(screen, params = {}) {
     if (embarkNav._battlePrepHandler) { embarkNav.removeEventListener('click', embarkNav._battlePrepHandler, true); delete embarkNav._battlePrepHandler; }
   }
 
+  // Screen-owned strips that live OUTSIDE #content-root (the items screen's
+  // trophy bar, the castle's cost bar) are not cleared by emptying the root, so
+  // they would follow the player onto the next screen.
+  document.getElementById('roster-trophy-bar')?.remove();
+  document.getElementById('castle-cost-bar')?.remove();
+
   root.innerHTML = '';
   root.style.backgroundImage    = '';
   root.style.backgroundSize     = '';
@@ -187,7 +197,7 @@ function navigate(screen, params = {}) {
 
   switch (screen) {
     case 'castle':      renderCastle(root, params);     break;
-    case 'roster':      renderRoster(root, params);     break;
+    case 'roster':      renderItems(root, params);      break;
     case 'embark':      renderEmbark(root, params);     break;
     case 'battle-prep': renderBattlePrep(root, params); break;
     case 'battle':      renderBattle(root, params);     break;
