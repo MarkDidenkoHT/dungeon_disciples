@@ -1705,7 +1705,29 @@ class BattleEngine {
     return targets;
   }
 
+  // Every entry carries the HP the field is left on once that event has
+  // resolved, so the client can move the numbers as it plays each entry rather
+  // than snapping every bar at the end of the whole exchange (which read as
+  // "my spell did nothing until the enemy had taken its turn").
+  //
+  // Only what CHANGED since the previous entry is stamped, and the values are
+  // absolute, not deltas — so a replay lands on the right numbers no matter
+  // where it starts, and an entry nothing died or bled for costs nothing.
   pushLog(entry) {
+    try {
+      if (!this._hpSeen) this._hpSeen = {};
+      const hp = {};
+      for (const c of this.combatants || []) {
+        if (c?.id == null) continue;
+        if (this._hpSeen[c.id] !== c.battle_hp) {
+          hp[c.id] = c.battle_hp;
+          this._hpSeen[c.id] = c.battle_hp;
+        }
+      }
+      if (Object.keys(hp).length) entry.hp = hp;
+    } catch {
+      // Never let bookkeeping break combat resolution.
+    }
     this.log.push(entry);
   }
 

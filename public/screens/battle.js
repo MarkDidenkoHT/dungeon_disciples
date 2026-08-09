@@ -369,8 +369,53 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           if (targetCell) await EFFECTS[effectName](targetCell);
         }
       }
+
+      // The result of THIS entry, applied now that its animation has finished.
+      // Without it nothing on the board moved until the whole exchange had been
+      // played and render() ran at the end — so a spell appeared to leave the
+      // enemy at full health right through the enemy's own turn, and every bar
+      // on the field then snapped at once.
+      applyEntryHp(entry);
     }
     console.log('[battle] playbackSequence END');
+  }
+
+  // Moves the HP text and bar for whatever the entry changed. Values are the
+  // absolute HP the server left each unit on (see pushLog in battle-engine.js),
+  // so this cannot drift out of step with the authoritative state — and the
+  // render() at the end of the turn reconciles anything not covered here
+  // (shields, status icons, buffs).
+  function applyEntryHp(entry) {
+    const hp = entry?.hp;
+    if (!hp) return;
+    for (const [id, value] of Object.entries(hp)) {
+      const occ = (state.combatants || []).find(c => String(c.id) === String(id));
+      if (!occ) continue;
+      const cellEl = document.querySelector(`.battle-cell[data-id="${id}"]`);
+      if (!cellEl) continue;
+
+      const maxHp = occ.max_hp || 1;
+      const cur   = Math.max(0, Math.min(value, maxHp));
+      const pct   = cur / maxHp;
+      const dead  = cur <= 0;
+
+      const sub = cellEl.querySelector('.battle-cell-sub');
+      // A shield is not HP and is not stamped here, so the shield chip is left
+      // exactly as it was rather than being rewritten from stale state.
+      if (sub) {
+        if (dead) sub.innerHTML = '💀';
+        else {
+          const shieldChip = sub.innerHTML.match(/🛡\d+/);
+          sub.innerHTML = `${cur}/${maxHp}${shieldChip ? ` ${shieldChip[0]}` : ''}`;
+        }
+      }
+      const fill = cellEl.querySelector('.bc-hp-fill');
+      if (fill) {
+        fill.style.width      = `${Math.max(0, pct * 100)}%`;
+        fill.style.background = hpColor(pct);
+      }
+      cellEl.classList.toggle('battle-cell--dead', dead);
+    }
   }
 
   function triggerAnim(el, cls) {
