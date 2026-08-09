@@ -61,10 +61,29 @@ if (NO_CACHE) console.log('Static caching DISABLED (dev mode)');
 //
 // So the fix is to stop asking for the same URL twice. Every build serves its
 // code from a path nobody has requested before, which a cache cannot possibly
-// have a stale copy of. RENDER_GIT_COMMIT changes on every Render deploy; the
-// boot timestamp is the local fallback.
-const BUILD_ID = (process.env.RENDER_GIT_COMMIT || '').slice(0, 8) || Date.now().toString(36);
-console.log('Build id:', BUILD_ID);
+// have a stale copy of.
+//
+// Three sources, in order of preference:
+//   BUILD_TAG          - set it by hand in Render's env vars if you want to
+//                        control the value; nothing else has to change.
+//   RENDER_GIT_COMMIT  - injected by Render for git-backed services, so it
+//                        changes on every push with no action needed. It is NOT
+//                        listed in the dashboard's env-var table (that shows
+//                        only user-defined vars), so absence there proves
+//                        nothing — the boot log below is what tells you.
+//   boot timestamp     - always works, but changes on every restart rather than
+//                        every deploy, so clients re-fetch code more often than
+//                        strictly necessary. Correct, just wasteful.
+const BUILD_ID =
+  (process.env.BUILD_TAG || '').trim() ||
+  (process.env.RENDER_GIT_COMMIT || '').slice(0, 8) ||
+  Date.now().toString(36);
+const BUILD_ID_SOURCE = process.env.BUILD_TAG
+  ? 'BUILD_TAG'
+  : process.env.RENDER_GIT_COMMIT
+    ? 'RENDER_GIT_COMMIT'
+    : 'boot timestamp (fallback)';
+console.log(`Build id: ${BUILD_ID}  [from ${BUILD_ID_SOURCE}]`);
 
 // The nesting (/v/:build/public/... rather than /v/:build/...) is load-bearing,
 // not decoration. Modules import across the public/data boundary with paths

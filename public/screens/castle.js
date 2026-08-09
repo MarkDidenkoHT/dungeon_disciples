@@ -439,7 +439,6 @@ export function renderCastle(root, { player }) {
         ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
         <div class="castle-node-label">Throne</div>
         <div class="castle-node-level">Lv ${throneLevel}</div>
-        ${!throneMaxed ? `<div class="castle-node-hint">Upgrade</div>` : ''}
       </div>`;
 
     // buildings_data also carries non-slot keys (throne_perks); only slot_N
@@ -463,7 +462,6 @@ export function renderCastle(root, { player }) {
             ${bg ? '' : `<div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>`}
             <div class="castle-node-label">${def ? def.label : (mercDef ? mercDef.label : (isEmpty ? 'Build' : 'Empty'))}</div>
             ${state.level > 0 ? `<div class="castle-node-level">Lv ${state.level}</div>` : ''}
-            ${!isEmpty && hasUpgrade ? `<div class="castle-node-hint">Upgrade</div>` : ''}
           </div>`;
       }).join('');
 

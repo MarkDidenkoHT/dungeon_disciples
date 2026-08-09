@@ -355,7 +355,9 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
   const power       = unit.action_power ?? unit.action?.value ?? '—';
   const unitPower   = calcUnitPower(unit);
   const tier        = unit.t ?? unit.tier ?? '—';
-  const { canLevelUp = false, rosterId = null } = opts;
+  const { canLevelUp = false, rosterId = null, compareUnit = null } = opts;
+  const diffs = unitStatDiffs(unit, compareUnit);
+  const delta = key => statDeltaHtml(diffs[key], 'right');
 
   const lvCell = canLevelUp && rosterId
     ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-roster-id="${rosterId}"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></button>`
@@ -364,23 +366,25 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
   return `
     <div class="unit-core-stats unit-core-stats--side">
       ${lvCell}
-      <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span></div>
-      <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span></div>
-      <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span></div>
+      <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
+      <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
+      <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
       <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span></div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
 }
 
-export function renderUnitResistColumn(unit) {
+export function renderUnitResistColumn(unit, compareUnit = null) {
   const res      = unit.resistances || {};
   const armorVal = unit.armor ?? 0;
   const armorCls = armorVal > 0 ? 'resist-val--pos' : '';
+  const diffs    = unitStatDiffs(unit, compareUnit);
   const armorCell = `
     <div class="resist-cell" title="${uiText('Armor', 'Броня')}" data-armor="${armorVal}">
       <span class="resist-icon">🛡</span>
       <span class="resist-val ${armorCls}">${armorVal}</span>
+      ${statDeltaHtml(diffs.armor, 'left')}
     </div>`;
 
   const resistCells = RESIST_ORDER.map(r => {
@@ -466,20 +470,50 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
     </div>`;
 }
 
+const STAT_DIFF_MAP = [
+  { label: 'HP',      key: 'hp'           },
+  { label: 'Armor',   key: 'armor'        },
+  { label: 'Init',    key: 'initiative'   },
+  { label: 'Power',   key: 'action_power' },
+  { label: 'Targets', key: 'targets'      },
+  { label: 'Range',   key: 'range'        },
+];
+
+// Which diffs get pinned to a stat cell, and which cell renders them. Anything
+// NOT listed here has no cell to sit beside and falls through to the chip row —
+// see renderUnitStatDiffs.
+const ANCHORED_DIFF_KEYS = new Set(['hp', 'initiative', 'action_power', 'armor']);
+
+// Keyed by stat, so a renderer can ask "is there a delta for this cell?"
+// instead of the diffs being pre-baked into one detached row.
+export function unitStatDiffs(unit, compareUnit) {
+  if (!unit || !compareUnit) return {};
+  const out = {};
+  for (const s of STAT_DIFF_MAP) {
+    const diff = (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0);
+    if (diff !== 0) out[s.key] = { label: s.label, diff };
+  }
+  return out;
+}
+
+// `side` is which way the badge hangs off its cell: the left stat column pushes
+// its deltas right, the right column pushes them left, so both land over the
+// portrait between the columns rather than widening the card.
+function statDeltaHtml(entry, side) {
+  if (!entry) return '';
+  const dir = entry.diff > 0 ? 'up' : 'down';
+  const sign = entry.diff > 0 ? '+' : '';
+  return `<span class="stat-delta stat-delta--${side} stat-delta--${dir}">${sign}${entry.diff}</span>`;
+}
+
+// Only the diffs with no cell of their own (Targets, Range). The rest are drawn
+// against their stat by the two column renderers.
 export function renderUnitStatDiffs(unit, compareUnit) {
-  if (!compareUnit) return '';
-  const STAT_MAP = [
-    { label: 'HP',      key: 'hp'           },
-    { label: 'Armor',   key: 'armor'        },
-    { label: 'Init',    key: 'initiative'   },
-    { label: 'Power',   key: 'action_power' },
-    { label: 'Targets', key: 'targets'      },
-    { label: 'Range',   key: 'range'        },
-  ];
-  const chips = STAT_MAP
-    .map(s => ({ label: s.label, diff: (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0) }))
-    .filter(d => d.diff !== 0)
-    .map(d => {
+  const diffs = unitStatDiffs(unit, compareUnit);
+  const chips = STAT_DIFF_MAP
+    .filter(s => !ANCHORED_DIFF_KEYS.has(s.key) && diffs[s.key])
+    .map(s => {
+      const d = diffs[s.key];
       const cls = d.diff > 0 ? 'stat-diff--up' : 'stat-diff--down';
       return `<span class="stat-diff-chip ${cls}">${d.label} ${d.diff > 0 ? '+' : ''}${d.diff}</span>`;
     });
@@ -504,9 +538,9 @@ export function buildUnitCard(unit, opts = {}) {
   return `
     <div class="unit-card">
       <div class="unit-main-row">
-        ${renderUnitCoreStatsColumn(unit)}
+        ${renderUnitCoreStatsColumn(unit, { compareUnit })}
         ${renderUnitPortrait(unit, { badge })}
-        ${renderUnitResistColumn(unit)}
+        ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
         ${renderUnitStatDiffs(unit, compareUnit)}

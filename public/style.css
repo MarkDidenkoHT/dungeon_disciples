@@ -2298,6 +2298,42 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
 }
 
+/* Upgrade-comparison deltas, pinned to the stat they belong to instead of
+   collected in a detached chip row — reading "+20" beside the HP cell needs no
+   cross-referencing. They hang OUT of their column and over the portrait, so
+   the columns need a stacking context: the portrait follows the left column in
+   the DOM and would otherwise paint on top of anything spilling into it. */
+.unit-core-stats--side,
+.unit-resists-grid--side {
+  position: relative;
+  z-index: 2;
+}
+
+.core-stat,
+.resist-cell { position: relative; }
+
+.stat-delta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.6rem;
+  font-weight: bold;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 2px 5px;
+  border-radius: 20px;
+  /* Sits over arbitrary portrait art, so it carries its own backdrop rather
+     than relying on whatever happens to be behind it. */
+  background: rgba(0, 0, 0, 0.62);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.stat-delta--right { left: calc(100% + 3px); }
+.stat-delta--left  { right: calc(100% + 3px); }
+.stat-delta--up    { color: #6fcf97; }
+.stat-delta--down  { color: #eb5757; }
+
 .unit-main-row .unit-portrait,
 .unit-portrait-wrap .unit-portrait {
   flex: 1;
@@ -4570,6 +4606,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   text-align: center;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  /* Sits UNDER every background-image on this element (background-color always
+     paints beneath background-image), so it is the floor the portrait and the
+     slot art are composited onto. Needed once the portrait switched to
+     `contain`: the image no longer fills the node, and without this the frame
+     would be matted against whatever shows through from behind. */
+  background-color: var(--bg);
 }
 
 .castle-node--throne {
@@ -4612,8 +4654,12 @@ button:active:not(:disabled) { opacity: 0.75; }
    cover/top actually apply. */
 .castle-node.castle-node--portrait {
   position: relative;
-  background-size: cover;
-  background-position: top center;
+  /* `contain`, not `cover`: the whole portrait has to be visible inside the
+     frame rather than cropped to fill it. The node's background-color shows
+     through in the letterboxed strips, and overflow:hidden on .castle-node
+     keeps the image from ever painting past the frame. */
+  background-size: contain;
+  background-position: center;
   background-repeat: no-repeat;
   justify-content: flex-end;
 }
@@ -6347,7 +6393,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 /* An unmet tag requirement is flagged on the chip that states it, instead of
-   being repeated as a sentence under the button. */ 
+   being repeated as a sentence under the button. */
 .item-card-tag--unmet {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
