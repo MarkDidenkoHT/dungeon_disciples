@@ -604,6 +604,15 @@ export function renderCastle(root, { player }) {
   // veteran reviving a unit in normal play.
   let spellTutorialActive = false;
 
+  // Raised while an action handler is driving the chain itself. Every mutation
+  // ends in reloadFromBootstrap → renderBuildings → runCastleOnboarding, so
+  // without this the gate restarts the chain from its own idea of where the
+  // player is, at the same moment the handler is advancing it — two steps race,
+  // and the loser anchors its spotlight to an element the winner has already
+  // re-rendered away (a detached node measures as a zero-size hole, which reads
+  // as the tutorial covering the screen and going nowhere).
+  let onboardingBusy = false;
+
   function heroRosterUnit() {
     return rosterCache.find(u => u.is_hero === true) || null;
   }
@@ -651,6 +660,7 @@ export function renderCastle(root, { player }) {
   }
 
   function runCastleOnboarding() {
+    if (onboardingBusy) return;
     if (!isTutorialDone(player, 'second_building')) { hideTutorial(); return; }
     const hero = heroRosterUnit();
 
@@ -1043,33 +1053,48 @@ export function renderCastle(root, { player }) {
         btn.textContent = resurrectBtn
           ? CASTLE_TEXT.resurrecting[castleLang]
           : CASTLE_TEXT.healing[castleLang];
+        // Onboarding: revive done → on to the heal step; heal done → the spell
+        // lesson is over and the player is ready to embark. Gated on
+        // spellTutorialActive so a veteran reviving a unit in normal play never
+        // gets a spotlight. Both are read BEFORE the await and marked before the
+        // reload, because reloadFromBootstrap re-runs the onboarding gate and it
+        // would otherwise see the step as still pending and restart it.
+        const teachingRevive = spellTutorialActive && !!resurrectBtn && !isTutorialDone(player, 'spell_revive');
+        const teachingHeal   = spellTutorialActive && !!healBtn      && !isTutorialDone(player, 'spell_heal');
+        if (teachingRevive || teachingHeal) onboardingBusy = true;
+
         api(path, {
           chat_id: player.chat_id,
           roster_id: btn.dataset.rosterId,
           spell_id: btn.dataset.spellId,
         })
           .then(async () => {
+            if (teachingRevive) markTutorialDone(player, 'spell_revive');
+            if (teachingHeal)   markTutorialDone(player, 'spell_heal');
             await reloadFromBootstrap();
-            openSlotUnitSheet(slot);
-            // Onboarding: revive done → on to the heal step; heal done → the
-            // spell lesson is over and the player is ready to embark. Gated on
-            // spellTutorialActive so a veteran reviving a unit in normal play
-            // never gets a spotlight.
-            if (!spellTutorialActive) return;
-            if (resurrectBtn && !isTutorialDone(player, 'spell_revive')) {
-              markTutorialDone(player, 'spell_revive');
-              hideTutorial();
-              showHealStep();
-            } else if (healBtn && !isTutorialDone(player, 'spell_heal')) {
-              markTutorialDone(player, 'spell_heal');
+
+            if (teachingHeal) {
               spellTutorialActive = false;
+              onboardingBusy      = false;
               hideTutorial();
               closeModal();
               navigate('embark', { player });
+              return;
+            }
+
+            openSlotUnitSheet(slot);
+            if (teachingRevive) {
+              // The revived unit is wounded, so the heal step targets the same
+              // slot — hide the spotlight anchored to the button that just
+              // vanished with the re-render before pointing at the new one.
+              hideTutorial();
+              onboardingBusy = false;
+              showHealStep();
             }
           })
           .catch(err => {
-            btn.disabled = false;
+            btn.disabled   = false;
+            onboardingBusy = false;
             openAbilityModal(def.label, renderModalContent(err?.message || 'Failed.'));
           });
         return;
@@ -1419,6 +1444,7 @@ export function renderCastle(root, { player }) {
       // onboarding gate — but the step is only marked once the equip has really
       // succeeded, never on the tap that requested it.
       const teachingEquip = !!equipBtn && !isTutorialDone(player, 'roster_equip');
+      if (teachingEquip) onboardingBusy = true;
       try {
         if (equipBtn) {
           await api('/items/equip', {
@@ -1434,10 +1460,12 @@ export function renderCastle(root, { player }) {
         openSlotUnitSheet(slot);   // re-open so the card shows the new loadout
         if (teachingEquip) {
           markTutorialDone(player, 'roster_equip');
-          afterSheetSettles(() => showEquippedStep(equipBtn.dataset.rosterId));
+          const rosterId = equipBtn.dataset.rosterId;
+          afterSheetSettles(() => { onboardingBusy = false; showEquippedStep(rosterId); });
         }
       } catch (err) {
-        btn.disabled = false;
+        btn.disabled   = false;
+        onboardingBusy = false;
         openAbilityModal(CASTLE_TEXT.itemsTitle[castleLang],
           renderModalContent(err?.message || 'Failed.'));
       }
