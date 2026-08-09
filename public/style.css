@@ -5975,6 +5975,16 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 4px;
 }
 
+/* Stands in for the upgrade button on a maxed building, so the action row keeps
+   its shape instead of the deconstruct button sliding across to fill the gap. */
+.castle-slot-maxed {
+  flex: 1;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--muted);
+  align-self: center;
+}
+
 .track-action-row--framed .prep-track-wrap {
   background-image: none;
 }

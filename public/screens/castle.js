@@ -12,7 +12,10 @@ import {
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
+  renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
+  handleUnitInspect,
 } from '../utils.js';
+import { getEquipBlock } from '../../data/item_rules.js';
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -27,6 +30,13 @@ const CASTLE_TEXT = {
   close:       { en: 'Close',                                 ru: 'Закрыть' },
   confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
   build:       { en: 'Build',                                 ru: 'Построить' },
+  upgrade:     { en: 'Upgrade',                               ru: 'Улучшить' },
+  equip:       { en: 'Equip',                                 ru: 'Надеть' },
+  unequip:     { en: 'Unequip',                               ru: 'Снять' },
+  itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
+  noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
+  wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
+  requires:    { en: 'Requires',                              ru: 'Требует' },
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
 };
 
@@ -82,6 +92,21 @@ export function renderCastle(root, { player }) {
 
   let rosterCount = 0;
   let rosterCache = [];   // from /bootstrap; no separate /roster fetch
+  // Owned item rows. A castle slot now manages the unit that stands in it, so
+  // equipping happens here rather than on a separate roster screen.
+  let itemsCache  = [];
+
+  // A building slot and the unit occupying it are linked by unit_data.building_slot,
+  // written by makeUnitData when the building raises the unit. That is what makes
+  // the slot addressable as a UNIT rather than as a blueprint.
+  function rosterUnitForSlot(slot) {
+    return rosterCache.find(u => u?.unit_data?.building_slot === slot) || null;
+  }
+
+  function equippedItemFor(rosterId) {
+    if (rosterId == null) return null;
+    return itemsCache.find(it => String(it.equipped_by) === String(rosterId)) || null;
+  }
 
   async function load() {
     const boot = await bootstrapCache.get(player.chat_id);
@@ -104,6 +129,7 @@ export function renderCastle(root, { player }) {
     structuresRecord   = structures;
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
     rosterCache        = Array.isArray(roster) ? roster : [];
+    itemsCache         = boot.items || [];
 
     renderBuildings();
   }
@@ -118,6 +144,7 @@ export function renderCastle(root, { player }) {
     resourceInventory = boot.resources || [];
     rosterCache      = boot.roster || [];
     rosterCount      = rosterCache.length;
+    itemsCache       = boot.items || [];
     renderBuildings();
     refreshResourceBar(player).catch(() => {});
   }
@@ -501,40 +528,151 @@ export function renderCastle(root, { player }) {
     return def.upgrades.map(uid => pool.find(b => b.id === uid)).filter(Boolean);
   }
 
+  // ── Slot unit sheet ───────────────────────────────────────────────────────
+  // Tapping a built slot used to drop straight into the upgrade branch picker.
+  // It now opens the UNIT standing in that slot — its real roster row, with the
+  // item it carries — and upgrading is a deliberate second step behind its own
+  // button. The slot is the unit's home, so this is where you manage it.
+  function openSlotUnitSheet(slot) {
+    const state = structuresRecord.buildings_data[slot];
+    if (!state?.building_id) return;
+
+    const mercDef = getMercBuildingDef(state.building_id);
+    const def     = mercDef || getBuildingDef(player.faction, state.building_id);
+    if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
+
+    const paths = mercDef ? getMercUpgradePaths(mercDef) : getUpgradePathsForBuilding(player.faction, def);
+    const rosterUnit = rosterUnitForSlot(slot);
+    const item       = rosterUnit ? equippedItemFor(rosterUnit.id) : null;
+
+    // Prefer the roster row: it carries current HP/XP and can hold an item. A
+    // slot with no occupant yet (building raised, unit not spawned) still shows
+    // the blueprint so the sheet is never empty.
+    const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
+    const liveUnit = rosterUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
+
+    const itemSlotHtml = rosterUnit
+      ? renderItemSlotIcon(item, rosterUnit.id, { player })
+      : '';
+
+    const canUpgrade = paths && paths.length > 0;
+    // Wrapper is not cosmetic: openSheet only replaces the body's innerHTML, so
+    // the body element itself survives across opens and a listener bound to it
+    // would accumulate — re-opening the sheet twice would fire equip twice.
+    // Binding to this div instead ties the listener's life to the content.
+    const bodyHtml = `
+      <div id="slot-sheet-root">
+      ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml })}
+      <div class="track-action-row track-action-row--framed">
+        ${canUpgrade
+          ? `<button class="frame-action frame-action--confirm" id="slot-upgrade"
+                     title="${CASTLE_TEXT.upgrade[castleLang]}" aria-label="${CASTLE_TEXT.upgrade[castleLang]}">⚒</button>`
+          : `<span class="castle-slot-maxed">${CASTLE_TEXT.maxed[castleLang]}</span>`}
+        <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
+                title="${CASTLE_TEXT.deconstruct[castleLang]}" aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
+      </div>
+      </div>`;
+
+    openModal(def.label, bodyHtml);
+
+    const body = getSheetBody()?.querySelector('#slot-sheet-root');
+    body?.addEventListener('click', e => {
+      // Stat / ability / resist inspection, same as every other unit card.
+      if (handleUnitInspect(e, openAbilityModal)) return;
+
+      const itemSlot = e.target.closest('[data-item-slot]');
+      if (itemSlot) { openSlotItemPicker(slot, itemSlot.dataset.rosterId); return; }
+    });
+
+    body?.querySelector('#slot-upgrade')?.addEventListener('click', () => {
+      if (mercDef) openMercUpgradeModal(slot, mercDef, paths);
+      else         openUpgradeModal(slot, def, paths);
+    });
+    body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
+  }
+
+  // ── Item equipping, in the castle ─────────────────────────────────────────
+  // Lives here rather than on the roster screen: the castle slot is now the
+  // unit's home, and the roster is being turned into a dedicated item tab.
+  function openSlotItemPicker(slot, rosterId) {
+    const unit = rosterCache.find(u => String(u.id) === String(rosterId));
+    if (!unit) return;
+
+    const def      = resolveUnitDef(unit);
+    const unitTags = (def?.tags || []).filter(Boolean);
+    // Everything not already worn by somebody else, plus whatever this unit has
+    // on right now (so it can be taken off from the same list).
+    const candidates = itemsCache.filter(it =>
+      it.equipped_by == null || String(it.equipped_by) === String(rosterId));
+
+    const cards = candidates.map(it => {
+      const stats     = it.item_stats || {};
+      const here      = String(it.equipped_by) === String(rosterId);
+      const factionOk = !stats.faction || stats.faction === player.faction;
+      const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+      // Incoherent pairings are refused with the reason spelled out, matching
+      // what POST /items/equip enforces server-side (data/item_rules.js).
+      const block     = getEquipBlock(stats, def, UNIT_ABILITIES);
+      const canEquip  = factionOk && tagOk && !block && !here;
+
+      let reason = '';
+      if (!factionOk)   reason = CASTLE_TEXT.wrongFaction[castleLang];
+      else if (block)   reason = castleLang === 'ru' ? block.reason_ru : block.reason;
+      else if (!tagOk)  reason = `${CASTLE_TEXT.requires[castleLang]}: ${stats.tag_required}`;
+
+      return `
+        <div class="item-card item-card--rarity-${itemRarity(it)} ${here ? 'item-card--equipped' : ''}">
+          <div class="item-card-body">
+            <div class="item-card-main">
+              <div class="item-card-name">${itemName(it, player)}</div>
+            </div>
+          </div>
+          ${here
+            ? `<button class="item-action-btn item-action-btn--unequip" data-item-id="${it.id}">${CASTLE_TEXT.unequip[castleLang]}</button>`
+            : `<button class="item-action-btn item-action-btn--equip" data-item-id="${it.id}" data-roster-id="${rosterId}" ${canEquip ? '' : 'disabled'}>${CASTLE_TEXT.equip[castleLang]}</button>`}
+          ${reason && !here ? `<div class="item-card-blocked">${reason}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    // Same reason as the main sheet: bind to fresh content, not the reused body.
+    openSubSheet(
+      CASTLE_TEXT.itemsTitle[castleLang],
+      `<div id="slot-item-root">${cards || `<p class="modal-empty">${CASTLE_TEXT.noItems[castleLang]}</p>`}</div>`
+    );
+
+    const body = getSubSheetBody()?.querySelector('#slot-item-root');
+    body?.addEventListener('click', async e => {
+      const equipBtn   = e.target.closest('.item-action-btn--equip:not([disabled])');
+      const unequipBtn = e.target.closest('.item-action-btn--unequip');
+      if (!equipBtn && !unequipBtn) return;
+
+      const btn = equipBtn || unequipBtn;
+      btn.disabled = true;
+      try {
+        if (equipBtn) {
+          await api('/items/equip', {
+            chat_id: player.chat_id,
+            roster_id: equipBtn.dataset.rosterId,
+            item_id: equipBtn.dataset.itemId,
+          });
+        } else {
+          await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
+        }
+        await reloadFromBootstrap();
+        closeSubSheet();
+        openSlotUnitSheet(slot);   // re-open so the card shows the new loadout
+      } catch (err) {
+        btn.disabled = false;
+        openAbilityModal(CASTLE_TEXT.itemsTitle[castleLang],
+          renderModalContent(err?.message || 'Failed.'));
+      }
+    });
+  }
+
   async function handleSlotClick(slot) {
     const state = structuresRecord.buildings_data[slot];
     if (!state || !state.building_id) { openBuildModal(slot); return; }
-
-    const mercDef = getMercBuildingDef(state.building_id);
-    if (mercDef) {
-      const paths = getMercUpgradePaths(mercDef);
-      if (!paths.length) {
-        openSliderModal(mercDef.label,
-          [{ unit: getUnitByUnitId(mercDef.unit_id), buildingLabel: mercDef.label, confirmLabel: CASTLE_TEXT.maxed[castleLang] }],
-          () => closeModal(),
-          { deconstructSlot: slot }
-        );
-        return;
-      }
-      openMercUpgradeModal(slot, mercDef, paths);
-      return;
-    }
-
-    const def = getBuildingDef(player.faction, state.building_id);
-    if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
-
-    const paths = getUpgradePathsForBuilding(player.faction, def);
-
-    if (!paths || paths.length === 0) {
-      openSliderModal(def.label,
-        [{ unit: getUnitByUnitId(def.unit_id), buildingLabel: def.label, confirmLabel: CASTLE_TEXT.maxed[castleLang] }],
-        () => closeModal(),
-        { deconstructSlot: slot }
-      );
-      return;
-    }
-
-    openUpgradeModal(slot, def, paths);
+    openSlotUnitSheet(slot);
   }
 
   // ── Deconstruction ────────────────────────────────────────────────────────
