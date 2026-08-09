@@ -671,12 +671,56 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Mirrors BATTLE_FATIGUE in utils/battle-engine.js. Duplicated rather than
   // imported because that module is CommonJS and server-side; if the engine's
   // numbers change, change these too.
-  const FATIGUE = { start: 5, perRound: 10, maxPct: 50 };
+  const FATIGUE = {
+    start: 5, perRound: 10, maxPct: 50,
+    witherStart: 10,
+    // The Withering does a flat 5% of max HP a turn — it does not ramp
+    // mechanically. The aura ramps anyway, over this many rounds, because what
+    // the player needs to feel is the pressure ACCUMULATING: every round spent
+    // here has cost more than the last.
+    witherRampRounds: 6,
+  };
 
   function fatigueHealPct() {
     const over = (state.round ?? 1) - FATIGUE.start;
     if (over <= 0) return 100;
     return 100 - Math.min(FATIGUE.maxPct, over * FATIGUE.perRound);
+  }
+
+  // ── Attrition aura ─────────────────────────────────────────────────────────
+  // Battle Fatigue and the Withering were invisible: two lines in the log as
+  // each phase opened, and nothing afterwards. A player watching heals shrink
+  // had no way to connect that to the round counter. Both phases now light the
+  // grid frames — amber as healing weakens, deep red once the field itself
+  // starts killing — and both deepen as the rounds pile up, so the pressure is
+  // legible without reading anything.
+  //
+  // Returned as 0..1 intensities rather than classes so the two can stack: in
+  // the late game both are lit at once, which is exactly the situation.
+  function attritionLevels() {
+    const round = state?.round ?? 1;
+
+    const overFatigue = round - FATIGUE.start;
+    const warm = overFatigue <= 0 ? 0
+      : Math.min(FATIGUE.maxPct, overFatigue * FATIGUE.perRound) / FATIGUE.maxPct;
+
+    const overWither = round - FATIGUE.witherStart;
+    const dire = overWither <= 0 ? 0
+      : Math.min(1, overWither / FATIGUE.witherRampRounds);
+
+    return { warm, dire };
+  }
+
+  function applyAttritionAura() {
+    const arena = root.querySelector('.battle-arena');
+    if (!arena) return;
+    const { warm, dire } = attritionLevels();
+    arena.style.setProperty('--attrition-warm', warm.toFixed(2));
+    arena.style.setProperty('--attrition-dire', dire.toFixed(2));
+    // Only used to gate the pulse animation — the glow itself is driven by the
+    // two variables above, and is invisible on its own when both are 0.
+    arena.classList.toggle('battle-arena--fatigued',  warm > 0);
+    arena.classList.toggle('battle-arena--withering', dire > 0);
   }
 
   const infoRow = (k, v) =>
@@ -1083,6 +1127,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
       `;
     }).join('');
+
+    // Both attrition phases are keyed off the round, so this is refreshed
+    // wherever the board is — turn transitions, reconnects, snapshot updates.
+    applyAttritionAura();
 
     for (const side of ['player', 'enemy']) {
       const gridEl = side === 'player' ? ui.playerGrid : ui.enemyGrid;

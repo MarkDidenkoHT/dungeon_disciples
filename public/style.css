@@ -3567,6 +3567,50 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 25px 20px 25px 20px;
 }
 
+/* ── Attrition aura ─────────────────────────────────────────────────────────
+   Battle Fatigue and the Withering are the clock on every fight, and until now
+   they announced themselves with one line in the log and then ran invisibly.
+   Both grids burn from their frames inward: amber as healing weakens, deep red
+   once the field starts killing outright. Intensity comes from the two
+   variables battle.js sets on .battle-arena (0..1 each), so the glow deepens
+   with every round and the two STACK — late in a long fight both are lit.
+   At 0 the shadows compute to zero blur and full transparency, so a fresh
+   battle pays nothing for this. */
+.battle-grid-wrap::before {
+  content: '';
+  position: absolute;
+  /* Just inside the frame art, so the light reads as coming off the frame
+     rather than as a rectangle drawn over the board. */
+  inset: 6px;
+  pointer-events: none;
+  /* Above the frame (z-index 10) — the frame is what is glowing. */
+  z-index: 11;
+  box-shadow:
+    inset 0 0 calc(var(--attrition-warm, 0) * 26px) calc(var(--attrition-warm, 0) * 5px)
+      rgba(196, 88, 16, calc(var(--attrition-warm, 0) * 0.55)),
+    inset 0 0 calc(var(--attrition-dire, 0) * 36px) calc(var(--attrition-dire, 0) * 8px)
+      rgba(146, 18, 18, calc(var(--attrition-dire, 0) * 0.78));
+  /* Long, so a round tick reads as the pressure deepening rather than as a
+     state flipping. */
+  transition: box-shadow 0.8s ease;
+}
+
+/* Only while something is actually burning — an idle element must not animate. */
+.battle-arena--fatigued .battle-grid-wrap::before {
+  animation: attrition-breathe 3.4s ease-in-out infinite;
+}
+.battle-arena--withering .battle-grid-wrap::before {
+  animation: attrition-breathe 2s ease-in-out infinite;
+}
+@keyframes attrition-breathe {
+  0%, 100% { opacity: 0.72; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-arena--fatigued .battle-grid-wrap::before,
+  .battle-arena--withering .battle-grid-wrap::before { animation: none; }
+}
+
 .battle-grid-wrap::after {
   content: '';
   position: absolute;
