@@ -1,5 +1,5 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, resolveUnitDef, cap, resolveAbility, abilityName } from './utils.js';
+import { openSheet, getSheetBody, resolveUnitDef } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
@@ -14,9 +14,10 @@ const ET = {
   none:        { en: 'Nothing today',          ru: 'Сегодня ничего' },
   noneDesc:    { en: 'No errand is waiting. Come back tomorrow — or free up a unit, if the one you sent is still away.',
                  ru: 'Поручений нет. Возвращайтесь завтра — или дождитесь того, кого уже отправили.' },
-  requires:    { en: 'Requires',               ru: 'Требуется' },
   reward:      { en: 'Reward',                 ru: 'Награда' },
-  sendWho:     { en: 'Who goes?',              ru: 'Кого отправить?' },
+  // The requirement is not spelled out any more — the roster track below IS the
+  // answer, and it is filtered to exactly the units that qualify.
+  sendWho:     { en: 'Units capable of this errand', ru: 'Кто справится с поручением' },
   send:        { en: 'Send',                   ru: 'Отправить' },
   sending:     { en: 'Sending…',               ru: 'Отправляем…' },
   away:        { en: 'Away',                   ru: 'В пути' },
@@ -26,10 +27,11 @@ const ET = {
   gotIt:       { en: 'Good',                   ru: 'Отлично' },
   xpSelf:      { en: 'XP',                     ru: 'Опыт' },
   xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
-  healed:      { en: 'HP restored',            ru: 'Восстановлено HP' },
   hours:       { en: 'h',                      ru: 'ч' },
+  brings:      { en: 'brings',                 ru: 'принесёт' },
+  bothTags:    { en: 'A unit with both tags brings both halves.',
+                 ru: 'Кто носит оба тега — принесёт обе половины.' },
   howLong:     { en: 'How long?',               ru: 'Насколько?' },
-  orAny:       { en: 'or',                     ru: 'или' },
   failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
 };
 
@@ -44,46 +46,22 @@ function untilText(iso) {
   return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
 }
 
-// A requirement is a list of ~15 acceptable passives, which as text was a wall
-// of words nobody read. As icons it is the same row the player already scans on
-// a unit card, so "do I have one of these?" is answered by matching pictures.
-// The name stays on the tooltip; the rank rides the corner the way it does in
-// the unit sheet.
-function passiveIcon(p) {
-  const base = String(p.passive);
-  const def  = resolveAbility(p.rank > 1 ? `${base} ${p.rank}` : base) || resolveAbility(base);
-  const name = abilityName(def) || cap(base.replace(/_/g, ' '));
-  const label = p.rank > 1 ? `${name} ${p.rank}` : name;
+// Errand art lives in /assets/icons/errands, named on the definition. The art is
+// authored separately from the code, so a missing file must not leave a broken
+// image in the sheet — the banner removes itself instead.
+function errandArtHtml(def) {
+  if (!def?.art) return '';
   return `
-    <span class="errand-req-icon" title="${label}">
-      <img src="/assets/icons/abilities/${base}.jpg" alt="${label}"
-           onerror="this.replaceWith(document.createTextNode('${label.replace(/'/g, '')}'))">
-      ${p.rank > 1 ? `<span class="errand-req-rank">${p.rank}</span>` : ''}
-    </span>`;
-}
-
-function requirementHtml(req = {}) {
-  const bits = [];
-  if (req.passive_any?.length) {
-    // No "or" between them — a row of icons already reads as a set of options,
-    // and fifteen separators put the wall of text straight back.
-    bits.push(`<div class="errand-req-icons">${req.passive_any.map(passiveIcon).join('')}</div>`);
-  }
-  if (req.action_any?.length) {
-    bits.push(`<span class="errand-req-chip">${req.action_any.map(a => cap(a.replace(/_/g, ' '))).join(` ${T('orAny')} `)}</span>`);
-  }
-  for (const [stat, val] of Object.entries(req.stat || {})) {
-    bits.push(`<span class="errand-req-chip">${cap(stat.replace(/_/g, ' '))} ${val}+</span>`);
-  }
-  return bits.join('');
+    <div class="errand-art">
+      <img src="/assets/icons/errands/${def.art}" alt=""
+           onerror="this.closest('.errand-art').remove()">
+    </div>`;
 }
 
 function rewardHtml(reward = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
   if (reward.xp_roster) bits.push(`<span class="errand-reward-chip">+${reward.xp_roster} ${T('xpRoster')}</span>`);
-  if (reward.heal_pct)  bits.push(`<span class="errand-reward-chip">${reward.heal_pct}% ${T('healed')}</span>`);
-  if (reward.healed)    bits.push(`<span class="errand-reward-chip">+${reward.healed} HP</span>`);
   for (const [item, amount] of Object.entries(reward.resources || {})) {
     bits.push(`<span class="errand-reward-chip">+${amount} ${item.replace('Crystals_', '')}</span>`);
   }
@@ -134,6 +112,7 @@ export async function openErrandsSheet(player) {
       const shown = done.granted || done.reward || {};
       body.innerHTML = `
         <div class="errand-sheet">
+          ${errandArtHtml(def)}
           <div class="errand-title">${T('backHome')}</div>
           <p class="errand-desc">${done.unit_name ? `<strong>${done.unit_name}</strong> — ` : ''}${def?.title?.[lang] ?? done.errand_id}</p>
           <div class="errand-section-label">${T('gained')}</div>
@@ -160,6 +139,7 @@ export async function openErrandsSheet(player) {
       const left = active.ends_at ? untilText(active.ends_at) : null;
       body.innerHTML = `
         <div class="errand-sheet">
+          ${errandArtHtml(def)}
           <div class="errand-title">${def?.title?.[lang] ?? active.errand_id}</div>
           <p class="errand-desc">${def?.desc?.[lang] ?? ''}</p>
           <div class="errand-away">
@@ -178,18 +158,22 @@ export async function openErrandsSheet(player) {
       const rows = (bootstrapCache.data?.roster || [])
         .filter(r => state.offer.candidates.includes(String(r.id)));
 
-      // Priced by the server, one entry per allowed trip length.
-      const durations = state.offer.durations
-        ?? [{ hours: state.offer.hours, mult: 1, reward: state.offer.reward }];
-      const picked = durations.find(d => d.hours === chosenHours) ?? durations[0];
+      // Priced by the server, one entry per allowed trip length. Each entry
+      // carries the two tag halves rather than one merged total, because what a
+      // given unit earns depends on which of the two tags it has.
+      const durations = state.offer.durations ?? [];
+      const picked    = durations.find(d => d.hours === chosenHours) ?? durations[0] ?? { hours: state.offer.hours, parts: [] };
+      const parts     = picked.parts ?? [];
+      // Which tags the selected unit actually has, so the sheet can say what
+      // THIS one would bring instead of leaving the player to work it out.
+      const chosenTags = state.offer.candidate_tags?.[String(chosen)] ?? [];
+      const earned     = parts.filter(p => chosenTags.includes(p.tag));
 
       body.innerHTML = `
         <div class="errand-sheet">
+          ${errandArtHtml(def)}
           <div class="errand-title">${def?.title?.[lang] ?? state.offer.errand_id}</div>
           <p class="errand-desc">${def?.desc?.[lang] ?? ''}</p>
-
-          <div class="errand-section-label">${T('requires')}</div>
-          <div class="errand-chips">${requirementHtml(state.offer.requirement)}</div>
 
           <div class="errand-section-label">${T('howLong')}</div>
           <div class="errand-durations" id="errand-durations">
@@ -202,7 +186,14 @@ export async function openErrandsSheet(player) {
           </div>
 
           <div class="errand-section-label">${T('reward')}</div>
-          <div class="errand-chips">${rewardHtml(picked.reward)}</div>
+          <div class="errand-parts">
+            ${parts.map(p => `
+              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
+                <span class="unit-tag">${p.tag}</span>
+                <span class="errand-chips">${rewardHtml(p.reward)}</span>
+              </div>`).join('')}
+          </div>
+          <p class="errand-note">${T('bothTags')}</p>
 
           <div class="errand-section-label">${T('sendWho')}</div>
           <div class="prep-track-wrap errand-track-wrap">
@@ -210,6 +201,10 @@ export async function openErrandsSheet(player) {
               ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}
             </div>
           </div>
+          ${earned.length ? `<div class="errand-chips errand-chips--earned">
+            <span class="errand-earned-label">${T('brings')}</span>
+            ${earned.map(p => rewardHtml(p.reward)).join('')}
+          </div>` : ''}
 
           <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
         </div>`;
@@ -227,9 +222,10 @@ export async function openErrandsSheet(player) {
         const card = e.target.closest('.portrait-card');
         if (!card) return;
         chosen = card.dataset.rosterId;
-        body.querySelectorAll('#errand-track .portrait-card').forEach(c =>
-          c.classList.toggle('portrait-card--selected', c.dataset.rosterId === chosen));
-        body.querySelector('#errand-send').disabled = false;
+        // Full re-render: which halves are highlighted, and the "brings" line
+        // under the track, both follow the selected unit's tags.
+        render();
+        return;
       });
 
       body.querySelector('#errand-send')?.addEventListener('click', async e => {

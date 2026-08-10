@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require(
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
-const { BattleEngine, getAbilities } = require('../utils/battle-engine');
+const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
   getActiveBattle,
@@ -504,6 +504,12 @@ router.post('/login', async (req, res) => {
       });
       let activeRec = null;
       try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
+      // The errand offer is minted here, once per player, rather than derived on
+      // every read of /errands — see ensureErrandOffer. It refuses to create a
+      // second while one is offered or running, so logging in repeatedly cannot
+      // reroll or stack errands. Never fatal: a player who cannot get an offer
+      // (no structures yet, empty roster) still logs in.
+      try { await ensureErrandOffer(chat_id, updated[0]); } catch (e) {}
       return res.json({
         player: updated[0],
         session_token,
@@ -1029,52 +1035,141 @@ function dailySeed(chat_id, date) {
 
 // The completability rule: only errands SOME free unit actually satisfies are
 // eligible, so an offer can never be a dead end.
-function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, abilities, lastErrandId = null }) {
+//
+// The pick is deterministic per player per day (dailySeed), which mattered when
+// the offer was derived on every read. It is now derived ONCE and stored (see
+// ensureErrandOffer), so the seed is really only a tie-breaker — but it is kept
+// because it makes a bad pick reproducible.
+function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, lastErrandId = null }) {
   if (!freeRows.length) return null;
 
   const profiles = freeRows.map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }));
   const pool = ERR.ERRANDS.filter(e => e.faction === faction);
+  const tier = ERR.throneTier(throneLevel);
 
-  // Try the throne's own tier first, then step DOWN. A throne-2 player whose
-  // units are all tier 1 has only rank-1 passives; demanding rank 2 of them left
-  // whole factions with nothing offerable from throne 2 onward. The errand
-  // should be as hard as the roster can answer, not as hard as the throne says.
-  let eligible = [];
-  let tier = ERR.throneTier(throneLevel);
-  for (; tier >= 1; tier--) {
-    eligible = [];
-    for (const errand of pool) {
-      const resolved = ERR.resolveRequirement(errand, throneLevel, abilities, tier);
-      const who = profiles.filter(p => ERR.unitMeets(p.profile, resolved));
-      if (who.length) eligible.push({ errand, resolved, candidates: who.map(p => String(p.row.id)) });
-    }
-    if (eligible.length) break;
+  const eligible = [];
+  for (const errand of pool) {
+    const resolved = ERR.resolveRequirement(errand);
+    if (profiles.some(p => ERR.unitMeets(p.profile, resolved))) eligible.push({ errand, resolved });
   }
   if (!eligible.length) return null;
 
   // Don't hand back the last errand run while another one fits.
   const fresh = eligible.filter(e => e.errand.id !== lastErrandId);
   const from  = fresh.length ? fresh : eligible;
+  const pick  = from[dailySeed(chat_id, date) % from.length];
 
-  const pick = from[dailySeed(chat_id, date) % from.length];
-  // Every duration is priced here rather than on the client, so the sheet only
-  // ever displays numbers the server would actually pay out.
+  return { errand_id: pick.errand.id, tier, requirement: pick.resolved };
+}
+
+// Who on the roster can take this offer RIGHT NOW, and what each of them would
+// bring back. Recomputed on every read rather than stored with the offer: the
+// roster changes under a standing offer (a unit dies, a new one is recruited, an
+// item grants a tag), and a stale candidate list would either hide a legal unit
+// or offer one that no longer qualifies.
+function errandCandidates(offer, freeRows) {
+  const def = ERR.ERRANDS_BY_ID[offer.errand_id];
+  if (!def) return [];
+  return freeRows
+    .map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }))
+    .filter(p => ERR.unitMeets(p.profile, offer.requirement))
+    .map(p => ({ roster_id: String(p.row.id), tags: p.profile.tags }));
+}
+
+// The whole offer as the client needs it: the errand, every duration priced, and
+// what each tag half pays. Per-unit totals are NOT precomputed — the sheet shows
+// the two halves and the player works out that a dual-tag unit takes both.
+function offerPayload(offer, freeRows, throneLevel) {
+  const def = ERR.ERRANDS_BY_ID[offer.errand_id];
+  if (!def) return null;
   const durations = ERR.DURATIONS.map(d => ({
-    hours:  d.hours,
-    mult:   d.mult,
-    reward: ERR.scaleReward(pick.errand, throneLevel, tier, d.hours),
+    hours: d.hours,
+    mult:  d.mult,
+    parts: ERR.rewardParts(def, throneLevel, offer.tier, d.hours),
   }));
+  const cands = errandCandidates(offer, freeRows);
   return {
-    errand_id:   pick.errand.id,
-    tier,
-    requirement: pick.resolved,
+    errand_id:   offer.errand_id,
+    tier:        offer.tier,
+    requirement: offer.requirement,
     durations,
-    // The default trip, kept as `reward`/`hours` so anything already reading
-    // those two fields (the away card, the bot) still finds them.
-    reward:      durations[0].reward,
     hours:       durations[0].hours,
-    candidates:  pick.candidates,
+    // Roster ids only, so the existing client filter keeps working; the tag
+    // detail rides alongside for the "what would this one bring?" line.
+    candidates:      cands.map(c => c.roster_id),
+    candidate_tags:  Object.fromEntries(cands.map(c => [c.roster_id, c.tags])),
   };
+}
+
+// Free = on the roster, alive, not the hero, not already out on an errand.
+function freeRosterRows(roster, activeRows) {
+  const busy = new Set(activeRows.map(r => String(r.errand_data?.roster_id)));
+  return roster.filter(r =>
+    r.is_hero !== true && r.unit_data?.alive !== false && !busy.has(String(r.id)));
+}
+
+// ── The offer is a ROW, not a derivation ────────────────────────────────────
+// It used to be recomputed from (chat_id + date) on every request, which meant
+// /errands/start had to re-derive it and trust that it matched what the player
+// was shown. Now the offer is written once — at login — and start only ever
+// reads it back. Consequences that are the point of the change:
+//   * there is at most ONE offer row per player, so an offer cannot be farmed by
+//     calling start repeatedly or by racing two clients
+//   * the errand a player is holding cannot change under them mid-session
+//   * start validates against stored server state instead of against input
+//
+// Row states, all on the same `errands` table:
+//   offered   active=false, errand_data.offered=true   waiting to be taken
+//   running   active=true                              unit is out
+//   finished  active=false, no `offered` flag          edge function ended it
+async function ensureErrandOffer(chat_id, player) {
+  const [structRows, roster, rows] = await Promise.all([
+    supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+    errandRowsFor(chat_id),
+  ]);
+
+  const active  = rows.filter(r => r.active);
+  const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+
+  // One at a time. A second errand while one is out would let a player empty the
+  // roster and then be unable to embark, which is the opposite of a draw.
+  if (active.length) return { rows, active, offerRow: null, roster, structRows };
+  // Already holding an offer: hand back the oldest and never mint a second. If a
+  // race did write two, this consistently picks the same one and the extra is
+  // simply never shown.
+  if (offered.length) {
+    const offerRow = offered.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0];
+    return { rows, active, offerRow, roster, structRows };
+  }
+
+  const offer = pickErrandFor({
+    chat_id,
+    faction: player.faction,
+    throneLevel: throneLevelOf(structRows[0]),
+    freeRows: freeRosterRows(roster, active),
+    date: playerLocalDate(player.timezone),
+    lastErrandId: rows[0]?.errand ?? null,
+  });
+  if (!offer) return { rows, active, offerRow: null, roster, structRows };
+
+  const inserted = await supabase(ERRAND_TABLE, {
+    method: 'POST',
+    body: JSON.stringify({
+      player: String(chat_id),
+      errand: offer.errand_id,
+      errand_data: {
+        offered:     true,
+        tier:        offer.tier,
+        requirement: offer.requirement,
+        offered_at:  new Date().toISOString(),
+      },
+      active: false,
+    }),
+    headers: { Prefer: 'return=representation' },
+  });
+  const offerRow = Array.isArray(inserted) ? inserted[0] : inserted;
+  return { rows: [offerRow, ...rows], active, offerRow, roster, structRows };
 }
 
 // Rows this player has, newest first. `active` separates "out" from "finished".
@@ -1082,8 +1177,11 @@ async function errandRowsFor(chat_id) {
   return supabase(`${ERRAND_TABLE}?player=eq.${encodeURIComponent(chat_id)}&order=created_at.desc&limit=20`);
 }
 
-// GET /errands — the offer, whatever is running, and any finished errand the
-// player has not been shown yet.
+// GET /errands — the standing offer, whatever is running, and any finished
+// errand the player has not been shown yet. Creating the offer here as well as
+// at login is deliberate: a player whose session predates the offer row, or
+// whose roster only just became able to answer one, still gets theirs — and
+// ensureErrandOffer refuses to mint a second either way.
 router.get('/errands', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
@@ -1091,34 +1189,20 @@ router.get('/errands', requireAuth, async (req, res) => {
     const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const [structRows, roster, rows] = await Promise.all([
-      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
-      errandRowsFor(chat_id),
-    ]);
+    const { rows, active, offerRow, roster, structRows } = await ensureErrandOffer(chat_id, player);
 
-    const active = rows.filter(r => r.active);
     // Finished but not yet acknowledged. The edge function ends the errand and
     // the bot announces it; this is what the player sees when they come back in.
-    const unseen = rows.filter(r => !r.active && !r.errand_data?.seen);
+    // An OFFERED row is also `active: false`, so it has to be excluded here or
+    // an untaken offer would be reported as a completed one.
+    const unseen = rows.filter(r => !r.active && !r.errand_data?.offered && !r.errand_data?.seen);
 
-    // One at a time: a second errand while one is out would let a player empty
-    // the roster and then be unable to embark, which is the opposite of a draw.
-    let offer = null;
-    if (!active.length) {
-      const busyIds = new Set(active.map(r => String(r.errand_data?.roster_id)));
-      const freeRows = roster.filter(r =>
-        r.is_hero !== true && r.unit_data?.alive !== false && !busyIds.has(String(r.id)));
-      offer = pickErrandFor({
-        chat_id,
-        faction: player.faction,
-        throneLevel: throneLevelOf(structRows[0]),
-        freeRows,
-        date: playerLocalDate(player.timezone),
-        abilities: await getAbilities(),
-        lastErrandId: rows[0]?.errand ?? null,
-      });
-    }
+    const offer = offerRow
+      ? offerPayload(
+          { errand_id: offerRow.errand, ...offerRow.errand_data },
+          freeRosterRows(roster, active),
+          throneLevelOf(structRows[0]))
+      : null;
 
     res.json({
       offer,
@@ -1131,8 +1215,9 @@ router.get('/errands', requireAuth, async (req, res) => {
   }
 });
 
-// POST /errands/start — send a unit. Re-derives the offer rather than trusting
-// the client: it is deterministic, so this is the same object the player saw.
+// POST /errands/start — send a unit on the standing offer. The offer is read
+// back from its row; the request only says WHO goes and for HOW LONG, and both
+// are validated. Nothing about the errand or its reward comes from the client.
 router.post('/errands/start', requireAuth, async (req, res) => {
   const { chat_id, roster_id, hours } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
@@ -1145,41 +1230,47 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
       errandRowsFor(chat_id),
     ]);
-    if (rows.some(r => r.active)) {
+    const active = rows.filter(r => r.active);
+    if (active.length) {
       return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
     }
 
-    const throneLevel = throneLevelOf(structRows[0]);
-    const freeRows = roster.filter(r => r.is_hero !== true && r.unit_data?.alive !== false);
-    const offer = pickErrandFor({
-      chat_id,
-      faction: player.faction,
-      throneLevel,
-      freeRows,
-      date: playerLocalDate(player.timezone),
-      abilities: await getAbilities(),
-      lastErrandId: rows[0]?.errand ?? null,
-    });
-    if (!offer) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
+    const offerRow = rows
+      .filter(r => !r.active && r.errand_data?.offered)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0];
+    if (!offerRow) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
+
+    const offer = { errand_id: offerRow.errand, ...offerRow.errand_data };
+    const def   = ERR.ERRANDS_BY_ID[offer.errand_id];
+    if (!def) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
 
     const row = roster.find(r => String(r.id) === String(roster_id));
     if (!row) return res.status(404).json({ error: 'Unit not found' });
     if (row.is_hero === true) return res.status(400).json({ error: 'The hero cannot run errands', code: 'errand_hero' });
-    if (!offer.candidates.includes(String(roster_id))) {
+    if (row.unit_data?.alive === false) {
+      return res.status(400).json({ error: 'That unit cannot go', code: 'errand_requirement' });
+    }
+
+    const profile = ERR.unitProfile(row, resolveRosterDef);
+    if (!ERR.unitMeets(profile, offer.requirement)) {
       return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });
     }
 
-    const def  = ERR.ERRANDS_BY_ID[offer.errand_id];
-    const now  = Date.now();
+    const throneLevel = throneLevelOf(structRows[0]);
+    const now         = Date.now();
     // The client sends which trip it picked; an unknown value resolves to the
     // shortest one, so the duration multiplier can never be forged.
     const duration = ERR.durationFor(hours);
+
     // Everything the edge function needs to finish this without re-deriving it,
-    // and everything the client needs to render it.
+    // and everything the client needs to render it. The reward is computed from
+    // the tags THIS unit has — a unit carrying both of the errand's tags earns
+    // both halves, one carrying a single tag earns one.
     const errand_data = {
       roster_id:   String(roster_id),
       unit_id:     row.unit_data?.unit_id ?? null,
       unit_name:   resolveRosterDef(row)?.name ?? null,
+      unit_tags:   profile.tags,
       // Carried on the row so the edge function can name the errand in the bot
       // message without importing data/errands.js (it is CommonJS, and Deno
       // would have to reimplement the lookup to read it).
@@ -1189,19 +1280,28 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       started_at:  new Date(now).toISOString(),
       ends_at:     new Date(now + duration.hours * 3600 * 1000).toISOString(),
       requirement: offer.requirement,
-      // What the errand is WORTH at the duration that was chosen. The edge
-      // function applies it and may write back what it actually granted; this
-      // stays as the promise that was made.
-      reward:      ERR.scaleReward(def, throneLevel, offer.tier, duration.hours),
+      // What the errand is WORTH. The edge function applies it and may write
+      // back what it actually granted; this stays as the promise that was made.
+      reward:      ERR.rewardForTags(def, profile.tags, throneLevel, offer.tier, duration.hours),
     };
 
-    const inserted = await supabase(ERRAND_TABLE, {
-      method: 'POST',
-      body: JSON.stringify({ player: String(chat_id), errand: def.id, errand_data, active: true }),
+    // The offer row BECOMES the running errand — it is not a second row. That is
+    // what keeps "one errand per player" true no matter how the endpoint is
+    // called: there was one row, and now it is busy.
+    const updated = await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(offerRow.id)}&active=is.false`, {
+      method: 'PATCH',
+      body: JSON.stringify({ errand_data, active: true }),
       headers: { Prefer: 'return=representation' },
     });
+    const startedRow = Array.isArray(updated) ? updated[0] : updated;
+    // The `active=is.false` filter is the race guard: a second start that lands
+    // after the first matches no row and comes back empty rather than
+    // overwriting a unit that is already out.
+    if (!startedRow) {
+      return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
+    }
 
-    res.json({ success: true, errand: Array.isArray(inserted) ? inserted[0] : inserted });
+    res.json({ success: true, errand: startedRow });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

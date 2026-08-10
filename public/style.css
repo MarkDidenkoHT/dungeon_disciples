@@ -927,30 +927,42 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted); margin-top: 2px;
 }
 .errand-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.errand-req-chip, .errand-reward-chip {
-  font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
-}
-.errand-req-chip {
-  background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border);
-}
 .errand-reward-chip {
+  font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
   background: color-mix(in srgb, #6fcf97 15%, transparent);
   color: #6fcf97; border: 1px solid #6fcf9740;
 }
-/* Requirements are shown as the same ability icons the unit sheet uses, so the
-   player matches pictures instead of reading fifteen passive names. */
-.errand-req-icons { display: flex; flex-wrap: wrap; gap: 4px; }
-.errand-req-icon {
-  position: relative; width: 30px; height: 30px; border-radius: 6px; overflow: hidden;
-  border: 1px solid var(--border); background: rgba(255,255,255,0.05);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.55rem; color: var(--muted); text-align: center; line-height: 1;
+/* Errand art. Wide banner rather than a square icon: it sits above the title and
+   sets the scene, and it is cropped rather than letterboxed so art of slightly
+   different proportions still fills the strip. */
+.errand-art {
+  width: 100%;
+  aspect-ratio: 5 / 2;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
-.errand-req-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.errand-req-rank {
-  position: absolute; right: 1px; bottom: 0;
-  font-size: 0.6rem; font-weight: 700; color: var(--accent);
-  text-shadow: 0 0 3px #000, 0 0 3px #000;
+.errand-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* One row per tag half. The halves are shown separately, and dimmed until the
+   selected unit actually carries that tag, because "which of these two do I
+   earn?" is the choice the player is making when they pick who goes. */
+.errand-parts { display: flex; flex-direction: column; gap: 5px; }
+.errand-part {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 7px; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+  opacity: 0.55;
+}
+.errand-part--earned {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: rgba(200,151,58,0.10);
+}
+.errand-note { font-size: 0.68rem; color: var(--muted); margin: 0; }
+.errand-chips--earned { align-items: center; }
+.errand-earned-label {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
 }
 
 /* Longer trips pay more per errand and less per hour, so the multiplier is
@@ -2389,6 +2401,48 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: auto;
   z-index: 3;
 }
+
+/* HP over XP in one strip. The wrapper takes the positioning the HP bar had on
+   its own, and the child rule above is neutralised inside it — otherwise both
+   bars would be absolutely positioned to the same bottom inset and overlap. */
+.castle-node-bars {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.castle-node-bars .portrait-hp-bar {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: auto;
+}
+
+/* Thinner than the HP bar on purpose: HP is the urgent one, XP is a glance. */
+.portrait-xp-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0,0,0,0.6);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+}
+
+.portrait-xp-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+/* Nothing left to advance to — a full bar in a muted colour, so it reads as
+   "done" rather than as one XP short of an upgrade. */
+.portrait-xp-bar--maxed { background: color-mix(in srgb, var(--accent) 35%, transparent); }
 
 .castle-node .portrait-status--dead {
   position: absolute;
@@ -4780,13 +4834,20 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow: hidden;
 }
 
+/* The grounds now TAKE the leftover height instead of being sized by the nodes
+   inside them. Previously the 3x3 grid was fixed at 160px a row (~500px), the
+   nodes drew their portrait art with `contain` inside those boxes, and whatever
+   the art did not fill became dead space at the top and bottom of the screen —
+   about a fifth of it, and 5-7vh of overflow on a short viewport. */
 .castle-grounds {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 0;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   position: relative;
   overflow: hidden;
 }
@@ -4798,15 +4859,21 @@ button:active:not(:disabled) { opacity: 0.75; }
   pointer-events: none;
 }
 
+/* Height-first: the grid fills the space the grounds give it and derives its
+   width from the node art's 100x160 proportion (3 columns : 3 rows = 5/8), so
+   the castle always lands inside one screen. Width still caps at 360px on a
+   wide viewport, and the aspect ratio then gives back the extra height. */
 .castle-grid-wrap {
   position: relative;
-  width: 100%;
-  flex-shrink: 0;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 5 / 8;
+  max-width: min(360px, 100%);
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 4px;
-  max-width: 360px;
 }
 
 .outer-ring {
@@ -4820,8 +4887,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  min-height: 160px;
-  min-width: 100px;
+  /* The grid row IS the size now; a min-height here would put the overflow back. */
+  min-height: 0;
+  min-width: 0;
 }
 
 .outer-ring .castle-node.castle-node--empty {
@@ -4845,7 +4913,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: 100%;
   height: 100%;
   z-index: 2;
-  min-height: 130px;
+  min-height: 0;
 }
 
 .castle-node {

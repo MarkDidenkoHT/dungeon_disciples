@@ -519,6 +519,43 @@ export function renderCastle(root, { player }) {
   // as the roster portrait strip (portrait-hp-bar / portrait-hp-fill--<state>,
   // critical at <=33%), so the two read identically — a slot with no occupant
   // shows nothing rather than an empty bar.
+  // XP toward the unit's next tier, in the same strip as the HP bar so "who is
+  // nearly ready to upgrade" is answerable without opening a single node. `xp`
+  // on a unit def is what the NEXT tier COSTS, and a top-tier unit still carries
+  // one — so a unit with no upgrade path is shown as maxed (a full, quiet bar)
+  // rather than as progress toward nothing. Same derivation as the node sheet.
+  function nodeXpBar(u) {
+    const stored = u.unit_data || {};
+    const def    = resolveUnitDef(u);
+    if (!def) return '';
+
+    const slotDef = getBuildingDefForUnit(def.id);
+    const hasPath = slotDef ? getUpgradePathsForBuilding(player.faction, slotDef).length > 0 : false;
+    const req     = hasPath ? (def.xp ?? 0) : 0;
+    const cur     = stored.current_xp ?? 0;
+    if (!req) return `<div class="portrait-xp-bar portrait-xp-bar--maxed" title="MAX"></div>`;
+
+    const pct = Math.max(0, Math.min(100, Math.round((cur / req) * 100)));
+    return `
+      <div class="portrait-xp-bar" title="XP ${cur}/${req}">
+        <div class="portrait-xp-fill" style="width:${pct}%"></div>
+      </div>`;
+  }
+
+  // The building whose unit this is, so the XP bar can ask whether that unit has
+  // anywhere left to upgrade to.
+  function getBuildingDefForUnit(unitId) {
+    if (!unitId || !buildingPools) return null;
+    for (const list of Object.values(buildingPools[player.faction] || {})) {
+      if (!Array.isArray(list)) continue;
+      const hit = list.find(d => d.unit_id === unitId);
+      if (hit) return hit;
+    }
+    // Mercenaries live in their own table, same as everywhere else that resolves
+    // a slot's building.
+    return Object.values(mercenaryBuildings || {}).find(d => d?.unit_id === unitId) || null;
+  }
+
   function nodeHpBar(slot) {
     const u = rosterUnitForSlot(slot);
     if (!u) return '';
@@ -538,9 +575,14 @@ export function renderCastle(root, { player }) {
     const pct     = Math.max(0, Math.min(100, Math.round((cur / max) * 100)));
     const damaged = cur < max;
     const state   = pct <= 33 ? 'critical' : (damaged ? 'damaged' : 'ok');
+    // Both bars share one absolutely-positioned strip; stacking them separately
+    // would have each fight the same bottom inset.
     return `
-      <div class="portrait-hp-bar" title="${cur}/${max}">
-        <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+      <div class="castle-node-bars">
+        <div class="portrait-hp-bar" title="${cur}/${max}">
+          <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+        </div>
+        ${nodeXpBar(u)}
       </div>`;
   }
 
@@ -847,8 +889,8 @@ export function renderCastle(root, { player }) {
   }
 
   const FAVOR_LABELS = {
-    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилу' },
-    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилу' },
+    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраил' },
+    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграил' },
     grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталот' },
   };
   const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
