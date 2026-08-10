@@ -1861,6 +1861,14 @@ class BattleEngine {
     return Array.isArray(tags) ? tags.filter(Boolean) : [];
   }
 
+  // The unit definition's faction code: 'e' Empire, 'g' Grail, 'd' Choir, plus
+  // the enemy pools ('dm' bone knights, 'mv' frost things, 'opb' heralds).
+  // Rides on unit_data for the same reason tags do — routes/index.js spreads the
+  // whole def into unit_data before the row ever reaches the engine.
+  barkFaction(unit) {
+    return unit?.unit_data?.f ?? unit?.f ?? null;
+  }
+
   // Returns the filter's specificity score, or -1 if the unit does not match.
   // An absent filter matches anything at score 0.
   barkFilterScore(filter, unit) {
@@ -1870,6 +1878,17 @@ class BattleEngine {
     if (filter.name != null) {
       if (unit.unit_name !== filter.name) return -1;
       score += 100; // a named rule must always beat any tag combination
+    }
+    // Faction outranks any single tag (+3 vs +2) because it is the thing that
+    // decides the VOICE: Knight, Holy, Spirit, Zombie and Construct all span
+    // several factions, and an Empire zealot and a Grail mourner cannot share
+    // lines. A unit whose def carries no faction fails every faction rule and
+    // falls through to the neutral tag rule instead of borrowing a voice.
+    if (filter.faction != null) {
+      const want = Array.isArray(filter.faction) ? filter.faction : [filter.faction];
+      const own  = this.barkFaction(unit);
+      if (!own || !want.includes(own)) return -1;
+      score += 3;
     }
     const tags = this.barkTags(unit);
     const wanted = filter.tags ?? (filter.tag != null ? [filter.tag] : []);

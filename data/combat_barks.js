@@ -62,11 +62,13 @@ const HEAL_BARK_THRESHOLD_PCT = 25;
 const COMBAT_BARKS = [
   // ===========================================================================
   // GRAIL OF SORROW - VAMPIRES
-  // Old blood, older grief. They kill the way a physician works: precisely, and
-  // without appetite for it. Blood is a sacrament they are tired of taking.
+  // NOT old blood. They are barely a decade dead - collateral of a time spell
+  // that went wrong - and they remember being alive well enough for it to hurt.
+  // They kill the way a physician works: precisely, and without appetite for it.
+  // Blood is a sacrament they have not yet got used to taking.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Demon' },
+    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
     lines: [
       'Your blood is smoke. There is nothing in you to mourn.',
       'Burnt through. Even your veins were sold.',
@@ -83,7 +85,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Knight' },
+    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Knight' },
     lines: [
       'Iron does not answer for the man inside it.',
       'You swore to a house that is already dust.',
@@ -100,7 +102,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Holy' },
+    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
       'Your god is listening. He simply will not come.',
       'I prayed once, in your language. It changed nothing.',
@@ -117,7 +119,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Zombie' },
+    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Zombie' },
     lines: [
       'Rest. You have carried this long enough.',
       'We were one house once. I have not forgotten.',
@@ -132,7 +134,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire' }, target: { tag: 'Construct' },
+    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Construct' },
     lines: [
       'Nothing in you to grieve. It makes the work quicker.',
       'No blood, no name, no rest owed to you.',
@@ -147,7 +149,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire' }, target: { tag: 'Holy' },
+    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
       'He died certain. That is a mercy I was never given.',
       'Your god has him now. Ask what took so long.',
@@ -162,7 +164,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire' }, target: { tag: 'Demon' },
+    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
     lines: [
       'A debt closed. Not mine, but closed.',
       'It ends as smoke. There is nothing to bury.',
@@ -175,7 +177,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire' },
+    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
       'Close his eyes. We are not animals.',
       'One more name I will keep, and no one will ask for.',
@@ -190,7 +192,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Vampire' },
+    trigger: 'death', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
       'At last. I had begun to think it would not come.',
       'Do not carry me home. There is no home.',
@@ -210,7 +212,7 @@ const COMBAT_BARKS = [
   // Slow, patient, sorry. They remember being people, and it does not help.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Zombie' }, target: { tag: 'Holy' },
+    trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
       'We were buried in your ground. We came back through it.',
       'You blessed this field once. It did not hold.',
@@ -223,7 +225,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Zombie' },
+    trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
       'We do not tire. That is the whole of the sorrow.',
       'Stand aside. We would rather not.',
@@ -238,7 +240,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Zombie' },
+    trigger: 'kill', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
       'Down. Now you know the weight.',
       'Leave him. The ground takes its own.',
@@ -251,7 +253,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Zombie' },
+    trigger: 'death', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
       'Finally. Let me stay down.',
       'I remembered my name near the end. I would rather not have.',
@@ -271,7 +273,7 @@ const COMBAT_BARKS = [
   // once. Retagged to Skeleton, which is the real tag.)
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Skeleton' },
+    trigger: 'attack', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
     lines: [
       'I kept the oath. I did not keep the rest of me.',
       'You will be this light one day. It is no worse.',
@@ -286,7 +288,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Skeleton' },
+    trigger: 'kill', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
     lines: [
       'Another kept waiting. He will learn patience.',
       'Marked. The roll of the dead is longer than yours.',
@@ -305,7 +307,7 @@ const COMBAT_BARKS = [
   // are the Grail's ghosts - unfinished, quiet, sorry to be here at all.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Spirit', not: ['Holy'] },
+    trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
     lines: [
       'I am only finishing what was interrupted.',
       'You cannot wound what is already the wound.',
@@ -320,7 +322,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Spirit', not: ['Holy'] }, target: { tag: 'Holy' },
+    trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] }, target: { tag: 'Holy' },
     lines: [
       'Your light passes through. Everything does.',
       'I was consecrated too. Look what it bought.',
@@ -333,7 +335,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Spirit', not: ['Holy'] },
+    trigger: 'death', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
     lines: [
       'Oh. It was this simple all along.',
       'Do not follow me. There is very little here.',
@@ -364,7 +366,7 @@ const COMBAT_BARKS = [
   // Militant, stoic, unhurried. Nothing here is triumphant; it is work.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Demon' },
     lines: [
       'You were let in. We are the ones who close the door.',
       'No bargain. No terms. Down.',
@@ -381,22 +383,22 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Vampire' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Vampire' },
     lines: [
       'Your grief is not our concern. Your teeth are.',
-      'You had centuries to stop. You did not.',
+      'Ten years to repent, and you spent them feeding.',
       'We do not hate you. We simply do not yield.',
       'Sorrow is no defence. Step back or fall.',
     ],
     lines_ru: [
       'Твоё горе — не наша забота. Твои клыки — наша.',
-      'У тебя были века, чтобы остановиться. Ты не остановился.',
+      'Десять лет на покаяние — и ты кормился.',
       'Мы не ненавидим тебя. Мы просто не уступаем.',
       'Скорбь — не защита. Отступи или пади.',
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Skeleton' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
     lines: [
       'You were a soldier once. Stand down and be buried properly.',
       'Rest is not a favour. It is an order.',
@@ -409,7 +411,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Zombie' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Zombie' },
     lines: [
       'This is not cruelty. This is the burial they were denied.',
       'Steady. Aim for what holds it up.',
@@ -422,7 +424,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Holy' }, target: { tag: 'Spirit' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Spirit' },
     lines: [
       'Whatever holds you, I will cut it. Then go.',
       'You are late for your own funeral.',
@@ -435,7 +437,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Demon' },
+    trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Demon' },
     lines: [
       'Sent back. Note the hour.',
       'One door shut. There are others.',
@@ -448,7 +450,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Holy' }, target: { tag: 'Skeleton' },
+    trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
     lines: [
       'Buried. Late, but buried.',
       'Rest, soldier. Your watch is relieved.',
@@ -461,7 +463,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Holy' },
+    trigger: 'death', actor: { tag: 'Holy', faction: ['e', 'opb'] },
     lines: [
       'Hold the line. Mine is finished.',
       'No last words. Close the gap.',
@@ -476,12 +478,115 @@ const COMBAT_BARKS = [
     ],
   },
 
+  // Empire-only, so MITHRAIL is never put in the mouth of the Aggrail cult that
+  // shares the Holy tag ('opb'). Same score as the shared rules above, so for an
+  // Empire unit these simply pool together and the god turns up some of the time
+  // rather than every line.
+  {
+    trigger: 'attack', actor: { tag: 'Holy', faction: 'e' },
+    lines: [
+      'Mithrail sees the work. Do it properly.',
+      'By his light, and by my hand.',
+      'His light does not negotiate. Neither do I.',
+    ],
+    lines_ru: [
+      'Митраил видит работу. Делай её как должно.',
+      'Его светом и моей рукой.',
+      'Его свет не торгуется. И я тоже.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Holy', faction: 'e' },
+    lines: [
+      'Mithrail. The line. In that order.',
+      'His light was enough. I was not.',
+    ],
+    lines_ru: [
+      'Митраил. Строй. Именно в таком порядке.',
+      'Его света хватило. Меня — нет.',
+    ],
+  },
+
+  // ===========================================================================
+  // GRAIL OF SORROW - THE FAITHFUL (Holy)
+  // The Communicants, Seraphs and Chosen carry the same office as the Empire's
+  // priesthood and none of its certainty. They tend Astaloth's children knowing
+  // they ARE her children - the thing the Empire burns. The Mother grieves for
+  // what was done TO them, so she is spoken of as watching and keeping, never
+  // as the author of it.
+  // ===========================================================================
+  {
+    trigger: 'attack', actor: { tag: 'Holy', faction: 'g' }, target: { tag: 'Holy' },
+    lines: [
+      'You would burn us for surviving. We only wanted to be buried.',
+      'Your god closed the door. Ours came looking for us.',
+      'We were faithful too. It made no difference.',
+    ],
+    lines_ru: [
+      'Вы сожгли бы нас за то, что мы уцелели. Мы хотели лишь быть погребёнными.',
+      'Ваш бог закрыл дверь. Наша — пошла нас искать.',
+      'Мы тоже были верны. Это ничего не изменило.',
+    ],
+  },
+  {
+    trigger: 'attack', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'Mother sees this. She does not look away.',
+      'I bless what is left of them. Someone has to.',
+      'Forgive me. I was taught to mend, not to do this.',
+    ],
+    lines_ru: [
+      'Мать это видит. Она не отводит глаз.',
+      'Я благословляю то, что от них осталось. Кто-то должен.',
+      'Простите меня. Меня учили исцелять, а не этому.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'Rest. That is more than we were given.',
+      'Mother keeps them now. She keeps everyone.',
+      'One more to grieve for. I will remember the face.',
+    ],
+    lines_ru: [
+      'Покойся. Нам и того не досталось.',
+      'Теперь их хранит Мать. Она хранит всех.',
+      'Ещё одна утрата. Я запомню лицо.',
+    ],
+  },
+  {
+    trigger: 'death', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'Mother... I am coming back to you.',
+      'Ten years borrowed. I am grateful for them.',
+      'Do not mourn. I have had enough mourning for both of us.',
+    ],
+    lines_ru: [
+      'Мать... я возвращаюсь к тебе.',
+      'Десять лет взаймы. Я благодарен за них.',
+      'Не скорбите. Я отскорбел за нас обоих.',
+    ],
+  },
+  {
+    trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'Stay. I have lost enough of us.',
+      'Mother is not finished with you.',
+      'I cannot give you life. I can give you a little longer.',
+    ],
+    lines_ru: [
+      'Останься. Я потерял уже достаточно наших.',
+      'Мать с тобой ещё не закончила.',
+      'Я не верну тебе жизнь. Но дам немного времени.',
+    ],
+  },
+
   // ===========================================================================
   // EMPIRE - THE ORDERS (Knight)
   // The `not` gate keeps Grail and Choir knights out of the Empire's voice.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] },
+    trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] },
     lines: [
       'Hold. Step. Hold.',
       'Nothing clever. Just forward.',
@@ -498,7 +603,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
+    trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
     lines: [
       'I have no interest in what you are offering.',
       'Shield up. It burns; it does not break through.',
@@ -511,7 +616,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Knight', not: ['Skeleton', 'Zombie'] },
+    trigger: 'death', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie'] },
     lines: [
       'Someone take the left. Now.',
       'Do not carry me. Carry the line.',
@@ -560,7 +665,7 @@ const COMBAT_BARKS = [
   // Tradesmen at war. Dry, procedural, quietly proud of the equipment.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Engineer' },
+    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
       'Ranged, sighted, done. Next.',
       'Powder is cheaper than courage and works further out.',
@@ -575,7 +680,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Construct' },
+    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Construct' },
     lines: [
       'Poor work. Whoever built you cut the joints.',
       'I have repaired better and scrapped worse.',
@@ -588,7 +693,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Engineer' }, target: { tag: 'Demon' },
+    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Demon' },
     lines: [
       'Sulphur and hot iron. I work with both daily.',
       'You are not unnatural. You are poorly contained.',
@@ -601,7 +706,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Engineer' },
+    trigger: 'kill', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
       'Down. Log it.',
       'The instrument performed as intended.',
@@ -614,7 +719,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Engineer' },
+    trigger: 'death', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
       'The plans are in the third case. Do not lose them.',
       'Do not let them take the gun.',
@@ -632,7 +737,7 @@ const COMBAT_BARKS = [
   // Imperial machines. Flat and procedural; they claim no personality.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Construct', not: ['Demon'] },
+    trigger: 'attack', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
     lines: [
       'Target acknowledged. Proceeding.',
       'No fatigue. No fear. Continue.',
@@ -647,7 +752,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Construct', not: ['Demon'] },
+    trigger: 'kill', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
     lines: [
       'Target ended. Awaiting next.',
       'Efficient. Reloading.',
@@ -660,7 +765,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Construct', not: ['Demon'] },
+    trigger: 'death', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
     lines: [
       'Frame failing. Salvage the core.',
       'This unit is spent. Others remain.',
@@ -673,7 +778,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Archer' },
+    trigger: 'attack', actor: { tag: 'Archer', faction: 'e' },
     lines: [
       'Ranged and marked.',
       'The wind is steady. So am I.',
@@ -686,7 +791,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Archer' },
+    trigger: 'kill', actor: { tag: 'Archer', faction: 'e' },
     lines: [
       'Down at range. Next mark.',
       'One shaft, one man. As trained.',
@@ -704,7 +809,7 @@ const COMBAT_BARKS = [
   // Everything is a transaction, and they intend to collect. Greed, not glee.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
+    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
       'Your god pays nothing. Mine pays in advance.',
       'Faith is the one currency no one will exchange for you.',
@@ -721,7 +826,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Knight' },
+    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Knight' },
     lines: [
       'That armour is worth more than the man wearing it.',
       'You serve for wages. I serve for shares.',
@@ -736,7 +841,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Vampire' },
+    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Vampire' },
     lines: [
       'All that grief, and not one thing to show for it.',
       'You inherited. I earned. That is the difference.',
@@ -751,7 +856,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Caster' },
+    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Caster' },
     lines: [
       'Power on loan. I hold the note.',
       'You rent what I own outright.',
@@ -764,7 +869,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Demon' }, target: { tag: 'Construct' },
+    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Construct' },
     lines: [
       'No soul in it. Nothing worth collecting.',
       'Scrap value only. Disappointing.',
@@ -777,7 +882,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Demon' }, target: { tag: 'Holy' },
+    trigger: 'kill', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
       'Collected. He argued the terms to the end.',
       'His god declined to match my offer.',
@@ -790,7 +895,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Demon' },
+    trigger: 'kill', actor: { tag: 'Demon', faction: 'd' },
     lines: [
       'Mine. Note it against my share.',
       'Paid in full, and early.',
@@ -805,7 +910,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'death', actor: { tag: 'Demon' },
+    trigger: 'death', actor: { tag: 'Demon', faction: 'd' },
     lines: [
       'My share - someone see that it is held.',
       'This was not the agreement.',
@@ -825,7 +930,7 @@ const COMBAT_BARKS = [
   // The ones who own the contracts rather than sign them.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Court' },
+    trigger: 'attack', actor: { tag: 'Court', faction: 'd' },
     lines: [
       'I do not fight. I foreclose.',
       'You are standing on something that belongs to me.',
@@ -840,7 +945,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Court' }, target: { tag: 'Holy' },
+    trigger: 'attack', actor: { tag: 'Court', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
       'Your order took my money for three hundred years.',
       'Piety is the cheapest thing your church sells.',
@@ -853,7 +958,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Choir' },
+    trigger: 'attack', actor: { tag: 'Choir', faction: 'd' },
     lines: [
       'Every voice in the Choir is paid. Yours is not.',
       'Sing or settle. I accept either.',
@@ -866,7 +971,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'kill', actor: { tag: 'Choir' },
+    trigger: 'kill', actor: { tag: 'Choir', faction: 'd' },
     lines: [
       'Added to the chord. He sings for me now.',
       'A voice acquired. Cheaply.',
@@ -1054,7 +1159,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Holy' },
+    trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: ['e', 'opb'] },
     lines: [
       'Hold on. That is an order.',
       'Pressure here. Do not look at it.',
@@ -1069,7 +1174,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Vampire' },
+    trigger: 'heal_low_hp', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
       'Not you. Not while I can prevent it.',
       'I have buried enough of this house.',
@@ -1082,7 +1187,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Demon' },
+    trigger: 'heal_low_hp', actor: { tag: 'Demon', faction: 'd' },
     lines: [
       'You are worth more standing. Stand.',
       'I am not spending this for nothing. Earn it.',
@@ -1095,7 +1200,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Engineer' },
+    trigger: 'heal_low_hp', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
       'Bleeding stopped. Do not test the seal.',
       'Patched. It will hold if you do not run.',
@@ -1108,7 +1213,7 @@ const COMBAT_BARKS = [
     ],
   },
   {
-    trigger: 'heal_low_hp', actor: { tag: 'Zombie' },
+    trigger: 'heal_low_hp', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
       'Stay on this side a while longer.',
       'I know the other road. Not yet.',

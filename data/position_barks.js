@@ -196,13 +196,6 @@ const POSITION_BARKS = [
     ],
   },
   {
-    // Neutral fallback for a Holy unit whose def carries no faction.
-    //
-    // The second line used to be "Faith does not stop a spear" — which is a
-    // holy unit conceding that its god is insufficient, i.e. heresy in its own
-    // mouth. The complaint is now about REACH, not about faith failing: from
-    // the back the blessing covers the whole line, from the front it covers one
-    // corpse.
     prefers: 'back', actor: { tag: 'Holy' },
     lines: [
       'I can shield the line or stand in it. Not both.',
@@ -225,19 +218,19 @@ const POSITION_BARKS = [
     prefers: 'back', actor: { tag: 'Vampire' },
     lines: [
       'Astaloth wont see my pain from here.',
-      'Ten years dead, and I still reach for a pulse.',
+      'This is not the place for me.',
     ],
     lines_ru: [
       'Отсюда Асталот не увидит мою боль.',
-      'Десять лет мёртв, а всё ищу свой пульс.',
+      'Это не мое место.',
     ],
     ok: [
       'Mother watches over me.',
-      'Here I can be what I am now.',
+      'Agreed.',
     ],
     ok_ru: [
       'Мать смотрит за мной.',
-      'Здесь я могу быть тем, кто я теперь.',
+      'Так лучше.',
     ],
   },
   {
@@ -320,28 +313,6 @@ const POSITION_BARKS = [
     ],
   },
   {
-    // The Choir proper — the singers, not the buyers. Where the Court quotes
-    // contracts, these quote scripture, and half of it is in a tongue the
-    // player is not meant to understand.
-    prefers: 'back', actor: { tag: 'Choir' },
-    lines: [
-      'Vaa moreth an-suul... not from this corner.',
-      'The First Song needs room to swell. Give it room.',
-    ],
-    lines_ru: [
-      'Ваа морет ан-суул... только не из этого угла.',
-      'Первой Песни нужно место, чтобы разрастись. Дайте его.',
-    ],
-    ok: [
-      'Vaa moreth an-suul. Yes.',
-      'Now it swells.',
-    ],
-    ok_ru: [
-      'Ваа морет ан-суул. Да.',
-      'Теперь она разрастается.',
-    ],
-  },
-  {
     prefers: 'back', actor: { tag: 'Demon' },
     lines: [
       'They will not hear my song from here.',
@@ -409,11 +380,11 @@ const POSITION_BARKS = [
     prefers: 'front', actor: { tag: 'Knight', faction: 'g' },
     lines: [
       'I swore this while I was still breathing. It still holds.',
-      'Put me in front. I have already died once.',
+      'Put me in front.',
     ],
     lines_ru: [
       'Я клялся, когда ещё дышал. Клятва в силе.',
-      'Поставьте меня вперёд. Я уже умирал однажды.',
+      'Поставь меня вперёд.',
     ],
     ok: [
       'Mother heard it. It holds.',
@@ -429,20 +400,20 @@ const POSITION_BARKS = [
     // by vow: he is here because the terms say front rank pays better.
     prefers: 'front', actor: { tag: 'Knight', faction: 'd' },
     lines: [
-      'My terms say front rank. Honour them.',
+      'The verse said front rank...',
       'I am owed a place where the blood is.',
     ],
     lines_ru: [
-      'По моим условиям — первый ряд. Соблюдайте их.',
+      'В этих строках пелось про первые ряды...',
       'Мне причитается место, где есть кровь.',
     ],
     ok: [
       'The terms are met.',
-      'The Song is paid. Now I collect.',
+      'Lets proceed.',
     ],
     ok_ru: [
       'Условия соблюдены.',
-      'Песнь оплачена. Теперь я взыщу.',
+      'Приступим.',
     ],
   },
   {
