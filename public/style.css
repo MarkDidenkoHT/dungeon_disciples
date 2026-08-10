@@ -4970,7 +4970,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-position: center;
   background-origin: content-box;
   background-clip: content-box;
-  padding: 9px;
+  padding: var(--node-frame-inset);
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -4995,6 +4995,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .castle-node {
+  /* The frame art's own transparent window, measured off building_slot1.png:
+     the hole starts 7.1% in from each side, 12.8% down from the top (the crown
+     ornament) and 4.3% up from the bottom. Padding percentages always resolve
+     against WIDTH, so the vertical figures are re-expressed against the node's
+     0.62 width:height — 12.8% of height is 20.6% of width, 4.3% is 6.9%.
+     A flat 9px was wrong in both directions: the portrait ran ~10px UNDER the
+     top ornament and sat ~2px inside the window on the sides, which is what
+     made it look both clipped and slightly too small for its frame. */
+  --node-frame-inset: 20.6% 7.1% 6.9%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5075,7 +5084,7 @@ button:active:not(:disabled) { opacity: 0.75; }
      spans the node edge-to-edge.
      Portrait nodes only — an empty slot uses its frame art AS the background,
      which has to keep the full box or the frame would shrink inside itself. */
-  padding: 9px;
+  padding: var(--node-frame-inset);
   background-origin: content-box;
   background-clip: content-box;
   /* The floor the portrait is composited onto. `contain` means the image does
