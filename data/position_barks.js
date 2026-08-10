@@ -236,20 +236,20 @@ const POSITION_BARKS = [
   {
     prefers: 'back', actor: { tag: 'Spirit', faction: 'g' },
     lines: [
-      'Ten years ago I had a body for this.',
-      'Hold me back. Mother would not want me spent here.',
+      'I cannot hold anything here.',
+      'Not the front. Please.',
     ],
     lines_ru: [
-      'Десять лет назад у меня было для этого тело.',
-      'Придержите меня. Мать не хотела бы, чтобы меня тратили здесь.',
+      'Здесь мне ничего не удержать.',
+      'Только не в первый ряд. Прошу.',
     ],
     ok: [
-      'Here I can last.',
-      'Thank you. I will not fade yet.',
+      'Better.',
+      'Yes. Here.',
     ],
     ok_ru: [
-      'Здесь я продержусь.',
-      'Спасибо. Я ещё не растаю.',
+      'Так лучше.',
+      'Да. Здесь.',
     ],
   },
   {
@@ -257,40 +257,40 @@ const POSITION_BARKS = [
     // the Empire register — dutiful and flat, not mournful.
     prefers: 'back', actor: { tag: 'Spirit', faction: 'e' },
     lines: [
-      'I stood in the line once. I cannot hold it now.',
-      'What is left of me serves better behind.',
+      'I am no wall. Put one here.',
+      'Wrong post. Send me back.',
     ],
     lines_ru: [
-      'Когда-то я стоял в строю. Теперь мне его не удержать.',
-      'То, что от меня осталось, полезнее сзади.',
+      'Я не стена. Поставьте сюда стену.',
+      'Не мой пост. Отправьте меня назад.',
     ],
     ok: [
-      'Mithrail keeps the line. I keep watch.',
-      'This will serve.',
+      'Better. I can watch from here.',
+      'Post accepted.',
     ],
     ok_ru: [
-      'Митраил держит строй. Я несу дозор.',
-      'Так сгодится.',
+      'Так лучше. Отсюда я вижу всё.',
+      'Пост принят.',
     ],
   },
   {
     // Neutral fallback for a Spirit with no faction on its def.
     prefers: 'back', actor: { tag: 'Spirit' },
     lines: [
-      'I am barely here as it is. Do not spend me first.',
-      'What remains of me is not enough to hold the line.',
+      'I am too thin for the front.',
+      'Move me back.',
     ],
     lines_ru: [
-      'Меня и так едва хватает. Не тратьте меня первым.',
-      'Того, что от меня осталось, не хватит, чтобы держать строй.',
+      'Я слишком тонок для первого ряда.',
+      'Отодвиньте меня назад.',
     ],
     ok: [
-      'I will last longer here.',
-      'What is left of me is enough for this.',
+      'Better here.',
+      'Now I can help.',
     ],
     ok_ru: [
-      'Здесь меня хватит надольше.',
-      'На это того, что осталось, хватит.',
+      'Здесь лучше.',
+      'Теперь я пригожусь.',
     ],
   },
   {
@@ -478,19 +478,19 @@ const POSITION_BARKS = [
     prefers: 'front', actor: { tag: 'Holy', faction: 'g' },
     lines: [
       'Let me stand where they fall. I know that place.',
-      'I have been dead. It holds nothing for me now.',
+      'I cannot reach them from back here.',
     ],
     lines_ru: [
       'Дайте встать там, где они падают. Мне это место знакомо.',
-      'Я уже был мёртв. Теперь в этом нет ничего страшного.',
+      'Отсюда мне до них не дотянуться.',
     ],
     ok: [
       'Then let them come.',
-      'Mother is watching. I am ready.',
+      'Now I reach them.',
     ],
     ok_ru: [
       'Пусть теперь приходят.',
-      'Мать смотрит. Я готов.',
+      'Теперь дотянусь.',
     ],
   },
   {
