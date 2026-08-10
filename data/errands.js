@@ -1,335 +1,275 @@
-import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
-import { ERRANDS_BY_ID } from '../data/errands.js';
-import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
-
 // ── Errands ─────────────────────────────────────────────────────────────────
-// The daily draw. One non-hero unit goes out and is unavailable until it comes
-// back; errands cannot fail, so this sheet never has to explain odds or risk.
+// A solo task for ONE non-hero unit. The unit leaves the roster for the errand's
+// duration and comes back with the reward; there is no failure roll and no
+// outcome to survive. The whole cost is the absence — a unit on an errand cannot
+// embark, so the player trades that unit's next few hours for what it brings.
 //
-// COMPLETION IS NOT OURS. The Supabase edge functions finish the errand, apply
-// what it granted and notify the player through the bot. Everything here is
-// offer -> send -> show what came back.
-const ET = {
-  title:       { en: 'Errands',                ru: 'Поручения' },
-  none:        { en: 'Nothing today',          ru: 'Сегодня ничего' },
-  noneDesc:    { en: 'No errand is waiting. Come back tomorrow — or free up a unit, if the one you sent is still away.',
-                 ru: 'Поручений нет. Возвращайтесь завтра — или дождитесь того, кого уже отправили.' },
-  reward:      { en: 'Reward',                 ru: 'Награда' },
-  send:        { en: 'Send',                   ru: 'Отправить' },
-  sending:     { en: 'Sending…',               ru: 'Отправляем…' },
-  away:        { en: 'Away',                   ru: 'В пути' },
-  returns:     { en: 'Returns in',             ru: 'Вернётся через' },
-  backHome:    { en: 'Home again',             ru: 'Вернулся домой' },
-  gained:      { en: 'Brought home',           ru: 'Принесено' },
-  gotIt:       { en: 'Good',                   ru: 'Отлично' },
-  xpSelf:      { en: 'XP',                     ru: 'Опыт' },
-  xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
-  hours:       { en: 'h',                      ru: 'ч' },
-  failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
+// REQUIREMENTS ARE TAGS, NOT PASSIVES
+// A passive is a per-unit detail; a tag is what the unit IS. There are only six
+// or seven tags in a faction against ~60 passives, so a tag requirement is
+// something a player can hold in their head, and "who can go?" is answered by
+// looking at a unit, not by reading a list. It also gives item-granted tags
+// somewhere to matter: a unit is read through unit_data first (see unitProfile),
+// so a third tag hung on a unit by its item counts here exactly like a native one.
+//
+// TWO TAGS, TWO PARTS
+// Every errand names two tags and pays one reward part per tag. A unit qualifies
+// by having EITHER tag and earns only the part(s) it actually matches — so the
+// unit carrying both tags brings both halves home, and that is the interesting
+// choice in the sheet. The pool the parts are drawn from is deliberately small:
+// XP for the unit, gold, or one faction-appropriate crystal.
+//
+// COMPLETABILITY
+// Nothing here guarantees an errand is offerable. That is enforced when the
+// offer is CREATED (see ensureErrandOffer in routes/index.js): the server filters
+// to errands some free unit really satisfies, so a player is never shown a task
+// their roster cannot do.
+const THRONE_TIER = { 0: 1, 1: 1, 2: 2, 3: 3, 4: 3 };
+
+// Throne 1 pays the base rate, throne 2 doubles it, throne 3+ quadruples it —
+// 20 XP, 40, 80 for a two-hour trip. The errand pool itself does not get richer
+// as the game goes on; the throne is the only thing that moves the rate.
+const TIER_REWARD_MULT = { 1: 1, 2: 2, 3: 4 };
+
+// ── Duration ────────────────────────────────────────────────────────────────
+// The player picks how long the unit is gone. Longer is better per errand but
+// worse per hour (2h pays 10/h, 6h pays 6.7/h), so the short trip is right when
+// the unit is wanted for an embark and the long one is right overnight. There is
+// no failure roll, so this choice IS the errand's decision.
+const DURATIONS = [
+  { hours: 2, mult: 1 },
+  { hours: 4, mult: 1.5 },
+  { hours: 6, mult: 2 },
+];
+const DEFAULT_HOURS = 2;
+
+// Server and client both resolve a requested duration through this, so an
+// arbitrary `hours` in a request body cannot buy a multiplier.
+function durationFor(hours) {
+  return DURATIONS.find(d => d.hours === Number(hours)) ?? DURATIONS[0];
+}
+
+// ── Definition shape ────────────────────────────────────────────────────────
+//   id       unique key, referenced by the errand row
+//   faction  which faction may be offered it
+//   art      file in /assets/icons/errands; missing art degrades to no image
+//   parts    exactly two, one per tag:
+//              tag     the unit tag this half is for
+//              reward  what that half pays — xp_self, xp_roster, or resources
+//
+// SCALE — what these numbers are measured against:
+//   one unit's share of a battle   10 XP (level 1) to 26 XP (level 6)
+//   a level-6 battle               40 gold
+//   XP to advance a tier-1 unit    50-75      a tier-2 unit  300-360
+// One part at throne 1 for two hours is about one battle share. A unit matching
+// both tags doubles that, the throne multiplies it (x2, x4) and so does the trip
+// length (x1, x1.5, x2) — so the ceiling is a dual-tag unit at throne 3 for six
+// hours, which is 160 XP and 160 gold.
+const PART_XP    = 20;
+const PART_GOLD  = 20;
+const PART_CRYST = 6;
+
+const ERRANDS = [
+  // ── EMPIRE ────────────────────────────────────────────────────────────────
+  {
+    id: 'emp_gate_watch', faction: 'empire', art: 'empire_errand_1.jpg',
+    title: { en: 'Watch on the Low Gate',        ru: 'Стража у Нижних врат' },
+    desc:  { en: 'The low gate has stood unmanned since the levy marched. Stand it, and the quarter sleeps.',
+             ru: 'Нижние врата пусты с тех пор, как ополчение ушло. Постойте там — и квартал будет спать спокойно.' },
+    parts: [
+      { tag: 'Knight',    reward: { xp_self: PART_XP } },
+      { tag: 'Construct', reward: { resources: { Gold: PART_GOLD } } },
+    ],
+  },
+  {
+    id: 'emp_armoury_commission', faction: 'empire', art: 'empire_errand_2.jpg',
+    title: { en: "The Armoury's Commission",     ru: 'Заказ оружейной' },
+    desc:  { en: 'The armoury is behind on a crown order and paying anyone who can hold a file steady.',
+             ru: 'Оружейная не поспевает с королевским заказом и платит любому, кто твёрдо держит напильник.' },
+    parts: [
+      { tag: 'Engineer', reward: { resources: { Gold: PART_GOLD } } },
+      { tag: 'Spirit',   reward: { xp_self: PART_XP } },
+    ],
+  },
+  {
+    id: 'emp_prayer_to_mithrail', faction: 'empire', art: 'empire_errand_3.jpg',
+    title: { en: 'Prayer to Mithrail',           ru: 'Молитва Митраилу' },
+    desc:  { en: 'The dawn office needs a voice that carries and a hand that can hold the light steady through it.',
+             ru: 'Рассветной службе нужен голос, который слышно, и рука, что удержит свет до конца.' },
+    parts: [
+      { tag: 'Caster', reward: { xp_self: PART_XP } },
+      { tag: 'Holy',   reward: { resources: { Crystals_Life: PART_CRYST } } },
+    ],
+  },
+
+  // ── CHOIR OF THE CURSED ───────────────────────────────────────────────────
+  {
+    id: 'cho_forge_vigil', faction: 'choir_of_the_cursed', art: 'choir_errand_1.jpg',
+    title: { en: 'Vigil at the Forge Mouth',     ru: 'Бдение у зева горна' },
+    desc:  { en: 'The great forge cannot be banked and cannot be left. Stand where nothing else can stand.',
+             ru: 'Великий горн нельзя ни притушить, ни оставить. Встаньте там, где не выстоит никто другой.' },
+    parts: [
+      { tag: 'Demon',     reward: { xp_self: PART_XP } },
+      { tag: 'Construct', reward: { resources: { Gold: PART_GOLD } } },
+    ],
+  },
+  {
+    id: 'cho_throne_song', faction: 'choir_of_the_cursed', art: 'choir_errand_2.jpg',
+    title: { en: 'A Song in the Throne Room',    ru: 'Песнь в тронном зале' },
+    desc:  { en: 'The court wants the old verse sung where it was written. Sing it badly and the court remembers.',
+             ru: 'Двор желает услышать старый стих там, где он был написан. Спойте плохо — двор запомнит.' },
+    parts: [
+      { tag: 'Choir', reward: { xp_self: PART_XP } },
+      { tag: 'Court', reward: { resources: { Crystals_Fire: PART_CRYST } } },
+    ],
+  },
+  {
+    id: 'cho_gifts_of_aggrail', faction: 'choir_of_the_cursed', art: 'choir_errand_3.jpg',
+    title: { en: 'Gather the Gifts of Aggrail',  ru: 'Собрать дары Агграила' },
+    desc:  { en: 'What the faithful leave at the shrines is owed upward. Collect it, and count it honestly.',
+             ru: 'Оставленное верующими у святилищ принадлежит выше. Соберите — и сочтите честно.' },
+    parts: [
+      { tag: 'Caster',  reward: { resources: { Gold: PART_GOLD } } },
+      { tag: 'Warrior', reward: { xp_self: PART_XP } },
+    ],
+  },
+
+  // ── GRAIL OF SORROW ───────────────────────────────────────────────────────
+  {
+    id: 'gra_tend_the_fallen', faction: 'grail_of_sorrow', art: 'grail_errand_1.jpg',
+    title: { en: 'Tend to the Fallen',           ru: 'Позаботиться о павших' },
+    desc:  { en: 'Carry the fallen to the house of rot before the sun does the work badly. It is heavy, and nobody thanks you.',
+             ru: 'Отнесите павших в дом гнили, прежде чем солнце сделает это скверно. Ноша тяжела, и никто не поблагодарит.' },
+    parts: [
+      { tag: 'Zombie', reward: { xp_self: PART_XP } },
+      { tag: 'Knight', reward: { resources: { Gold: PART_GOLD } } },
+    ],
+  },
+  {
+    id: 'gra_lost_souls', faction: 'grail_of_sorrow', art: 'grail_errand_2.jpg',
+    title: { en: 'Help the Lost Souls Home',     ru: 'Проводить заблудшие души' },
+    desc:  { en: 'They are still walking the road they died on. Someone has to go out and tell them the way.',
+             ru: 'Они всё ещё бредут дорогой, на которой умерли. Кто-то должен выйти и указать им путь.' },
+    parts: [
+      { tag: 'Spirit', reward: { xp_self: PART_XP } },
+      { tag: 'Caster', reward: { resources: { Crystals_Death: PART_CRYST } } },
+    ],
+  },
+  {
+    id: 'gra_fill_the_chalice', faction: 'grail_of_sorrow', art: 'grail_errand_3.jpg',
+    title: { en: 'Fill the Lesser Chalice',      ru: 'Наполнить малую чашу' },
+    desc:  { en: 'The rite needs a full chalice by dawn, and someone who can take it from another and still walk home.',
+             ru: 'К рассвету обряду нужна полная чаша — и тот, кто возьмёт её у другого и сам дойдёт домой.' },
+    parts: [
+      { tag: 'Vampire', reward: { resources: { Gold: PART_GOLD } } },
+      { tag: 'Holy',    reward: { xp_self: PART_XP } },
+    ],
+  },
+];
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function throneTier(throneLevel) {
+  return THRONE_TIER[Math.max(0, Math.min(4, Number(throneLevel) || 0))] ?? 1;
+}
+
+// Everything a roster row brings to a requirement check. `resolveDef` is passed
+// in so this file needs no import of units.js (the client already has one).
+// unit_data wins over the definition: that is where a tag granted by an item, or
+// any other per-unit change, would live.
+function unitProfile(row, resolveDef) {
+  const stored = row?.unit_data || {};
+  const def    = resolveDef ? resolveDef(row) : null;
+  const raw    = stored.tags ?? def?.tags ?? [];
+  const list   = (Array.isArray(raw) ? raw : [raw]).filter(Boolean).map(String);
+  return { tags: list };
+}
+
+// The two tags an errand accepts, in the order their reward parts are listed.
+function errandTags(errand) {
+  return (errand?.parts || []).map(p => p.tag);
+}
+
+// What this errand demands, resolved into the shape that is snapshotted onto the
+// errand row so the UI can still explain it after the fact.
+function resolveRequirement(errand) {
+  return { tags_any: errandTags(errand) };
+}
+
+function unitMeets(profile, resolved) {
+  const want = resolved?.tags_any || [];
+  if (!want.length) return true;
+  return want.some(t => profile.tags.includes(t));
+}
+
+function scaleAmount(n, mult) { return Math.round(n * mult); }
+
+// Merge the parts a unit has EARNED into one reward object. A unit matching both
+// tags gets both halves; a unit matching one gets one. Tier and duration
+// multiply what comes out, never which parts apply.
+function rewardForTags(errand, tags, throneLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+  const tier = tierOverride ?? throneTier(throneLevel);
+  const mult = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(hours).mult;
+  const have = (tags || []).filter(Boolean).map(String);
+
+  const out = {};
+  for (const part of errand.parts || []) {
+    if (!have.includes(part.tag)) continue;
+    const r = part.reward || {};
+    if (r.xp_self)   out.xp_self   = (out.xp_self   ?? 0) + scaleAmount(r.xp_self, mult);
+    if (r.xp_roster) out.xp_roster = (out.xp_roster ?? 0) + scaleAmount(r.xp_roster, mult);
+    for (const [k, v] of Object.entries(r.resources || {})) {
+      out.resources = out.resources || {};
+      out.resources[k] = (out.resources[k] ?? 0) + scaleAmount(v, mult);
+    }
+  }
+  return out;
+}
+
+// Every part priced on its own, for the sheet: the player sees which tag pays
+// what BEFORE choosing who goes, which is the whole point of the two-part split.
+function rewardParts(errand, throneLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+  return (errand.parts || []).map(p => ({
+    tag:    p.tag,
+    reward: rewardForTags(errand, [p.tag], throneLevel, tierOverride, hours),
+  }));
+}
+
+const ERRANDS_BY_ID = Object.fromEntries(ERRANDS.map(e => [e.id, e]));
+
+// Dual export, same as data/units.js: the browser imports this file as an ES
+// module and routes/index.js `require`s it. One of the two forms is always the
+// wrong one, so both are provided — without the `export` the client throws
+// "does not provide an export named ERRANDS_BY_ID" at load.
+export {
+  ERRANDS,
+  ERRANDS_BY_ID,
+  THRONE_TIER,
+  TIER_REWARD_MULT,
+  DURATIONS,
+  DEFAULT_HOURS,
+  durationFor,
+  throneTier,
+  unitProfile,
+  errandTags,
+  resolveRequirement,
+  unitMeets,
+  rewardForTags,
+  rewardParts,
 };
 
-let lang = 'en';
-const T = k => ET[k][lang];
-
-function untilText(iso) {
-  const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return null;
-  const mins  = Math.ceil(ms / 60000);
-  const hours = Math.floor(mins / 60);
-  return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
-}
-
-// Art, name and description are ONE block: the name rides the top of the image
-// and the text the bottom, so the three of them cost the vertical space of the
-// image alone. Art lives in /assets/icons/errands and is authored separately, so
-// a missing file drops back to plain text rather than leaving a broken image.
-// The name is set on the SHEET HEADER (setSheetTitle) rather than drawn over the
-// art, so it is not printed twice; the description keeps the foot of the image.
-function errandHeaderHtml(def, desc) {
-  const art = def?.art
-    ? `<img class="errand-art-img" src="/assets/icons/errands/${def.art}" alt=""
-            onerror="this.closest('.errand-header').classList.add('errand-header--noart')">`
-    : '';
-  return `
-    <div class="errand-header ${art ? '' : 'errand-header--noart'}">
-      ${art}
-      ${desc ? `<p class="errand-desc">${desc}</p>` : ''}
-    </div>`;
-}
-
-// Gold and crystals use the SAME icons as the resource strip, so a reward reads
-// as "that thing at the top of my screen" without translating a word. XP has no
-// resource icon — it is not a resource — so it keeps its short label.
-function resourceIcon(key) {
-  return key === 'Gold' ? GOLD_ICON : (CRYSTAL_ICONS[key] ?? '');
-}
-
-function rewardHtml(reward = {}) {
-  const bits = [];
-  if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
-  if (reward.xp_roster) bits.push(`<span class="errand-reward-chip">+${reward.xp_roster} ${T('xpRoster')}</span>`);
-  for (const [item, amount] of Object.entries(reward.resources || {})) {
-    const icon = resourceIcon(item);
-    bits.push(`<span class="errand-reward-chip" title="${item.replace('Crystals_', '')}">+${amount}${
-      icon || ` ${item.replace('Crystals_', '')}`}</span>`);
-  }
-  return bits.join('');
-}
-
-function unitCardHtml(row, selected) {
-  const def  = resolveUnitDef(row);
-  const name = def?.name ?? row.unit_data?.unit_id ?? '';
-  const id   = def?.id ?? '';
-  const portraitId = String(id).match(/^(h_[a-z]_\d)/)?.[1] ?? id;
-  return `
-    <div class="portrait-card portrait-card--errand ${selected ? 'portrait-card--selected' : ''}"
-         data-roster-id="${row.id}" title="${name}">
-      <img class="portrait-art-img" src="/assets/character_portraits/p_${portraitId}.png"
-           alt="${name}" onerror="this.style.display='none'">
-      <div class="portrait-name">${name}</div>
-    </div>`;
-}
-
-export async function openErrandsSheet(player) {
-  lang = player?.settings?.language === 'ru' ? 'ru' : 'en';
-  openSheet(T('title'), `<p class="modal-empty">…</p>`);
-
-  let state  = null;
-  let chosen = null;
-  // The trip length the player picked. Defaults to the shortest — the cheapest
-  // commitment is the safe default when the unit may be wanted for an embark.
-  let chosenHours = null;
-
-  async function load() {
-    state  = await api(`/errands?chat_id=${player.chat_id}`);
-    chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
-    chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
-    render();
-  }
-
-  function render() {
-    const body = getSheetBody();
-    if (!body) return;
-
-    // 1. Something finished. The bot already said so; this is the payoff screen.
-    const done = state?.finished?.[0];
-    if (done) {
-      const def = ERRANDS_BY_ID[done.errand_id];
-      // `granted` is whatever the edge function actually awarded; fall back to
-      // the reward that was promised at start if it wrote nothing.
-      const shown = done.granted || done.reward || {};
-      // The errand is over, so the header says so and the errand's own name goes
-      // in the line under the art with whoever ran it.
-      setSheetTitle(T('backHome'));
-      body.innerHTML = `
-        <div class="errand-sheet">
-          ${errandHeaderHtml(def,
-            `${done.unit_name ? `<strong>${done.unit_name}</strong> — ` : ''}${def?.title?.[lang] ?? done.errand_id}`)}
-          <div class="errand-section-label">${T('gained')}</div>
-          <div class="errand-chips">${rewardHtml(shown)}</div>
-          <button class="errand-btn" id="errand-ack">${T('gotIt')}</button>
-        </div>`;
-      body.querySelector('#errand-ack')?.addEventListener('click', async e => {
-        e.currentTarget.disabled = true;
-        try {
-          await api('/errands/seen', { chat_id: player.chat_id, errand_row_id: done.id });
-          await bootstrapCache.refresh(player.chat_id);
-          refreshResourceBar(player).catch(() => {});
-        } catch { /* acknowledging is cosmetic; never block on it */ }
-        await load();
-        refreshErrandButton(player).catch(() => {});
-      });
-      return;
-    }
-
-    // 2. A unit is out.
-    const active = state?.active?.[0];
-    if (active) {
-      const def  = ERRANDS_BY_ID[active.errand_id];
-      const left = active.ends_at ? untilText(active.ends_at) : null;
-      setSheetTitle(def?.title?.[lang] ?? active.errand_id);
-      body.innerHTML = `
-        <div class="errand-sheet">
-          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
-          <div class="errand-away">
-            <span class="errand-away-who">${active.unit_name ?? ''}</span>
-            <span class="errand-away-state">${left ? `${T('returns')} ${left}` : T('away')}</span>
-          </div>
-          <div class="errand-section-label">${T('reward')}</div>
-          <div class="errand-chips">${rewardHtml(active.reward)}</div>
-        </div>`;
-      return;
-    }
-
-    // 3. An offer is waiting.
-    if (state?.offer) {
-      const def  = ERRANDS_BY_ID[state.offer.errand_id];
-      const rows = (bootstrapCache.data?.roster || [])
-        .filter(r => state.offer.candidates.includes(String(r.id)));
-
-      // Priced by the server, one entry per allowed trip length. Each entry
-      // carries the two tag halves rather than one merged total, because what a
-      // given unit earns depends on which of the two tags it has.
-      const durations = state.offer.durations ?? [];
-      const picked    = durations.find(d => d.hours === chosenHours) ?? durations[0] ?? { hours: state.offer.hours, parts: [] };
-      const parts     = picked.parts ?? [];
-      // Which tags the selected unit has: the halves it earns are the lit ones,
-      // which is the whole explanation the sheet needs to give.
-      const chosenTags = state.offer.candidate_tags?.[String(chosen)] ?? [];
-
-      setSheetTitle(def?.title?.[lang] ?? state.offer.errand_id);
-      body.innerHTML = `
-        <div class="errand-sheet">
-          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
-
-          <div class="errand-parts">
-            ${parts.map(p => `
-              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
-                <span class="unit-tag">${p.tag}</span>
-                <span class="errand-chips">${rewardHtml(p.reward)}</span>
-              </div>`).join('')}
-          </div>
-
-          <div class="errand-durations" id="errand-durations">
-            ${durations.map(d => `
-              <button class="errand-duration ${d.hours === picked.hours ? 'errand-duration--selected' : ''}"
-                      data-hours="${d.hours}">
-                <span class="errand-duration-time">${d.hours}${T('hours')}</span>
-                <span class="errand-duration-mult">x${d.mult}</span>
-              </button>`).join('')}
-          </div>
-
-          <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
-
-          <div class="prep-track-wrap errand-track-wrap">
-            <div class="portrait-track" id="errand-track">
-              ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}
-            </div>
-          </div>
-        </div>`;
-
-      // Re-renders rather than patching in place: the reward chips below have to
-      // change with the pick, and they are the whole point of offering a choice.
-      body.querySelector('#errand-durations')?.addEventListener('click', e => {
-        const btn = e.target.closest('.errand-duration');
-        if (!btn) return;
-        chosenHours = Number(btn.dataset.hours);
-        render();
-      });
-
-      body.querySelector('#errand-track')?.addEventListener('click', e => {
-        const card = e.target.closest('.portrait-card');
-        if (!card) return;
-        chosen = card.dataset.rosterId;
-        // Full re-render: which reward halves are lit follows the selected
-        // unit's tags.
-        render();
-        return;
-      });
-
-      body.querySelector('#errand-send')?.addEventListener('click', async e => {
-        const btn = e.currentTarget;
-        btn.disabled = true;
-        btn.textContent = T('sending');
-        try {
-          await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen, hours: chosenHours });
-          _awayCache = null;                 // that unit is out now
-          await load();
-          refreshErrandButton(player).catch(() => {});
-        } catch (err) {
-          btn.disabled = false;
-          btn.textContent = T('send');
-          alert(err.message || T('failed'));
-        }
-      });
-      return;
-    }
-
-    // 4. Nothing to do. No errand to name, so the header keeps the generic one.
-    setSheetTitle(T('title'));
-    body.innerHTML = `
-      <div class="errand-sheet errand-sheet--padded">
-        <div class="errand-title">${T('none')}</div>
-        <p class="errand-desc">${T('noneDesc')}</p>
-      </div>`;
-  }
-
-  await load();
-}
-
-// Which roster ids are away right now. Cached for a few seconds because both
-// battle prep and the castle ask on mount and they must not disagree — and
-// neither should pay a round-trip the other already made.
-let _awayCache = null;
-let _awayAt    = 0;
-const AWAY_TTL_MS = 5000;
-
-export async function errandRosterIds(chat_id) {
-  if (_awayCache && Date.now() - _awayAt < AWAY_TTL_MS) return _awayCache;
-  try {
-    const state = await api(`/errands?chat_id=${chat_id}`);
-    _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));
-    _awayAt    = Date.now();
-  } catch {
-    // Never let this hide the whole roster — on failure, nobody is away.
-    _awayCache = new Set();
-    _awayAt    = Date.now();
-  }
-  return _awayCache;
-}
-
-// ── The errand system is LOCKED until the first battle is over ──────────────
-// A new player has one or two units and a tutorial telling them to go and
-// fight. Offering to send one of those units away for six hours in the middle
-// of that is a trap, so nothing about errands exists — no button, no sheet —
-// until they have finished a battle and know what a unit is FOR.
-// `battle_done` is written by the battle result screen (see screens/battle.js).
-export function errandsUnlocked(player) {
-  return isTutorialDone(player, 'battle_done');
-}
-
-// Runs on every navigation, does something exactly once: the first time the
-// player is back in the castle after a battle, the errand button they have
-// never seen before is spotlighted and explained, then the sheet is opened for
-// them. Two steps — what errands are, and the cost of sending someone.
-export function maybeShowErrandsIntro(player) {
-  if (!errandsUnlocked(player)) return;
-  if (isTutorialDone(player, 'errands_intro')) return;
-  const btn = document.querySelector('.res-bar-errands');
-  if (!btn) return;
-
-  showTutorialSpotlight(player, 'errands_intro', btn, {
-    showContinue: true,
-    onAdvance: () => {
-      showTutorialSpotlight(player, 'errands_away', btn, {
-        showContinue: true,
-        onAdvance: () => {
-          markTutorialDone(player, 'errands_intro');
-          openErrandsSheet(player);
-        },
-      });
-    },
-  });
-}
-
-// The button in the resource row. It glows when there is something to DO — an
-// offer waiting, or a unit home with its result. A daily system that always
-// glows teaches players to ignore it.
-export async function refreshErrandButton(player) {
-  const btn = document.querySelector('.res-bar-errands');
-  if (!btn || !player?.chat_id) return;
-  // Locked: the button is not merely quiet, it is not there. Re-checked on every
-  // refresh rather than at mount, because the unlock lands mid-session — the
-  // player returns from their first battle and the shell is already up.
-  btn.classList.toggle('res-bar-btn--hidden', !errandsUnlocked(player));
-  if (!errandsUnlocked(player)) return;
-  try {
-    const state = await api(`/errands?chat_id=${player.chat_id}`);
-    _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));
-    _awayAt    = Date.now();
-    btn.classList.toggle('res-bar-errands--ready', !!state.offer || !!(state.finished || []).length);
-  } catch {
-    // Never let this take the shell down; the button just stays quiet.
-  }
-}
+if (typeof module !== 'undefined') module.exports = {
+  ERRANDS,
+  ERRANDS_BY_ID,
+  THRONE_TIER,
+  TIER_REWARD_MULT,
+  DURATIONS,
+  DEFAULT_HOURS,
+  durationFor,
+  throneTier,
+  unitProfile,
+  errandTags,
+  resolveRequirement,
+  unitMeets,
+  rewardForTags,
+  rewardParts,
+};
