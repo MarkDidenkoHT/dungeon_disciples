@@ -4947,10 +4947,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 .outer-ring .castle-node {
   width: 100%;
   height: 100%;
-  background-image: url('/assets/icons/ui/building_slot_bg_highlight.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
+  /* Flat fill, not slot art. The ornate frame comes from ::after; a second
+     framed image underneath it was just a smaller frame inside the first. */
+  background-color: var(--bg);
   /* The grid row IS the size now; a min-height here would put the overflow back.
      A MAX height is different: it stops the nodes stretching on a tall screen,
      and 152px is the 160 that fit, less the 5% trim. */
@@ -4965,9 +4964,7 @@ button:active:not(:disabled) { opacity: 0.75; }
    box instead — the two arts carry different internal margins, so the empty
    frame read as a smaller node even though both boxes measured identically. */
 .outer-ring .castle-node.castle-node--empty {
-  background-image: url('/assets/icons/ui/building_slot_bg.png');
-  background-size: cover;
-  background-position: center;
+  background-color: var(--surface);
   background-origin: content-box;
   background-clip: content-box;
   padding: var(--node-frame-inset);
@@ -4995,15 +4992,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .castle-node {
-  /* The frame art's own transparent window, measured off building_slot1.png:
-     the hole starts 7.1% in from each side, 12.8% down from the top (the crown
-     ornament) and 4.3% up from the bottom. Padding percentages always resolve
-     against WIDTH, so the vertical figures are re-expressed against the node's
-     0.62 width:height — 12.8% of height is 20.6% of width, 4.3% is 6.9%.
-     A flat 9px was wrong in both directions: the portrait ran ~10px UNDER the
-     top ornament and sat ~2px inside the window on the sides, which is what
-     made it look both clipped and slightly too small for its frame. */
-  --node-frame-inset: 20.6% 7.1% 6.9%;
+  /* Inset to the frame art's border thickness, measured off building_slot1.png:
+     its transparent window starts 7.1% in from each side and 4.3% up from the
+     bottom (6.9% of WIDTH — percentage padding always resolves against the
+     inline axis, and the node is 0.62 wide-to-tall).
+     The top deliberately does NOT use the art's 12.8% crown inset. Reserving
+     that left a bare strip of node colour above the portrait wherever the crown
+     is transparent; the portrait now runs up under the ornament, which paints
+     over it at z-index 2. */
+  --node-frame-inset: 7.1% 7.1% 6.9%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5029,10 +5026,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .castle-node--throne {
   width: 100%;
   height: 100%;
-  background-image: url('/assets/icons/ui/building_slot_bg.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: var(--bg);
 }
 
 .castle-node--production { border-color: #4a7a3a; }
