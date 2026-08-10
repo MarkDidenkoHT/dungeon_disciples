@@ -1561,7 +1561,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt',
-      passive: ['sorrow 1', 'death_mark 1'], ability: 'terror 1',
+      passive: ['sorrow 1', 'death_mark 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 360
     },
     mothers_voice_path_b_t3: {
@@ -1573,7 +1573,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt',
-      passive: ['sorrow 1', 'death_mark 2'], ability: 'terror 1',
+      passive: ['sorrow 1', 'death_mark 2'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 900
     },
     mothers_voice_path_b_t4: {
@@ -1585,7 +1585,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
-      passive: ['sorrow 1', 'death_mark 2', 'inspiration_damage 1'], ability: 'terror 1',
+      passive: ['sorrow 1', 'death_mark 2', 'inspiration_damage 1'], ability: 'temothers_blessingrror 1',
       building_slot: 'slot_0', xp: 1500
     },
     mothers_voice_path_b_t4_alt: {
@@ -1597,7 +1597,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
-      passive: ['sorrow 1', 'death_mark 2', 'dissipate 1'], ability: 'terror 1',
+      passive: ['sorrow 1', 'death_mark 2', 'dissipate 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
     zombie_risen: {

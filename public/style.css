@@ -4929,9 +4929,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   width: auto;
   aspect-ratio: 5 / 8;
-  /* Three 152px rows plus the two gaps: the grid stops growing where the nodes
+  /* Three 150px rows plus the two gaps: the grid stops growing where the nodes
      do, instead of stretching and leaving slack inside each cell. */
-  max-height: calc(152px * 3 + 8px);
+  max-height: calc(150px * 3 + 8px);
   max-width: min(360px, 100%);
   margin: 0 auto;
   display: grid;
@@ -4956,15 +4956,21 @@ button:active:not(:disabled) { opacity: 0.75; }
      and 152px is the 160 that fit, less the 5% trim. */
   min-height: 0;
   min-width: 0;
-  max-height: 152px;
+  max-height: 150px;
 }
 
-/* An empty slot draws its frame as a background rather than through ::after, so
-   without this it sized to the art's own proportions and came out smaller than
-   an occupied node beside it. `100% 100%` makes both frames the same box. */
+/* An empty slot is the SAME object as an occupied one with nothing in it, so it
+   wears the same frame (::after, below) and puts its niche art in the same
+   window the portrait uses. It used to draw a different image across its whole
+   box instead — the two arts carry different internal margins, so the empty
+   frame read as a smaller node even though both boxes measured identically. */
 .outer-ring .castle-node.castle-node--empty {
   background-image: url('/assets/icons/ui/building_slot_bg.png');
-  background-size: 100% 100%;
+  background-size: cover;
+  background-position: center;
+  background-origin: content-box;
+  background-clip: content-box;
+  padding: 9px;
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -4985,7 +4991,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   z-index: 2;
   min-height: 0;
-  max-height: 152px;
+  max-height: 150px;
 }
 
 .castle-node {
@@ -5051,11 +5057,13 @@ button:active:not(:disabled) { opacity: 0.75; }
    cover/top actually apply. */
 .castle-node.castle-node--portrait {
   position: relative;
-  /* `contain`, not `cover`: the whole portrait has to be visible inside the
-     frame rather than cropped to fill it. The node's background-color shows
-     through in the letterboxed strips, and overflow:hidden on .castle-node
-     keeps the image from ever painting past the frame. */
-  background-size: contain;
+  /* `cover`, not `contain`. The portraits are 2:3 and the frame's window is
+     narrower than that, so `contain` scaled them to the window's WIDTH and left
+     a dead strip of backing colour above and below — the portrait read as
+     slightly too small for its frame. `cover` fills the window and crops the
+     sides instead; overflow:hidden plus the content-box clip below keep it from
+     ever painting past the frame. */
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   justify-content: flex-end;
@@ -5093,7 +5101,8 @@ button:active:not(:disabled) { opacity: 0.75; }
    never takes a click, so the whole node stays one tap target.
    100% 100% rather than cover: this is a border, and it has to meet the node's
    edges exactly instead of being cropped to preserve its aspect ratio. */
-.castle-node--portrait::after {
+.castle-node--portrait::after,
+.outer-ring .castle-node--empty::after {
   content: '';
   position: absolute;
   inset: 0;
