@@ -907,6 +907,12 @@ button:active:not(:disabled) { opacity: 0.75; }
    The button is live now. It sits quiet by default and glows only when there is
    something to DO — an offer waiting, or a unit home with its reward. A daily
    system that always glows teaches players to ignore it. */
+/* Errands do not exist for a player who has not finished a battle yet — the
+   button is removed from the strip rather than disabled, so there is nothing to
+   wonder about. `display: none` (not visibility) so the resource strip closes
+   up around it. */
+.res-bar-btn--hidden { display: none; }
+
 .res-bar-errands--ready {
   opacity: 1;
   animation: errand-ready 2.4s ease-in-out infinite;

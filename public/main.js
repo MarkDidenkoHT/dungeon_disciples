@@ -9,7 +9,7 @@ import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
-import { openErrandsSheet, refreshErrandButton } from './errands.js';
+import { openErrandsSheet, refreshErrandButton, errandsUnlocked, maybeShowErrandsIntro } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 import { setUiLanguage, closeSheet, closeSubSheet } from './utils.js';
 
@@ -78,7 +78,10 @@ function mountShell(player) {
                onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
         </button>
         <div class="resource-bar" id="resource-bar"></div>
-        <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}"></button>
+        <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}">
+          <img src="/assets/icons/ui/errand.png" class="res-icon-img" alt="Errands"
+               onerror="this.replaceWith(document.createTextNode('\u{2709}'))">
+        </button>
       </div>
       <div id="content-root"></div>
       <!-- Icons-only nav, on trial. The labels are commented out rather than
@@ -128,7 +131,9 @@ function mountShell(player) {
   // this closed-over reference stays current across language switches.
   document.getElementById('resource-bar-row').addEventListener('click', e => {
     if (e.target.closest('.res-bar-timeline')) openTimeline(player);
-    if (e.target.closest('.res-bar-errands'))  openErrandsSheet(player);
+    // Guarded as well as hidden: the button is only display:none before the
+    // first battle, and a hidden control should not be openable by any route.
+    if (e.target.closest('.res-bar-errands') && errandsUnlocked(player)) openErrandsSheet(player);
   });
 }
 
@@ -174,7 +179,14 @@ function navigate(screen, params = {}) {
   if (player && !isBattle) {
     refreshResourceBar(player).catch(() => {});
     refreshNavLock(player).catch(() => {});
-    refreshErrandButton(player).catch(() => {});
+    // The intro waits for the refresh: the button it points at is hidden until
+    // that call unhides it, and spotlighting a display:none element measures a
+    // zero-size hole. Only the castle gets it — it is where the player lands
+    // after a battle, and an unrelated screen is the wrong place to be taught
+    // a new system.
+    refreshErrandButton(player)
+      .then(() => { if (screen === 'castle') maybeShowErrandsIntro(player); })
+      .catch(() => {});
   }
 
   const root = document.getElementById('content-root');

@@ -1,6 +1,7 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
 import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
+import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
 // The daily draw. One non-hero unit goes out and is unavailable until it comes
@@ -278,12 +279,51 @@ export async function errandRosterIds(chat_id) {
   return _awayCache;
 }
 
+// ── The errand system is LOCKED until the first battle is over ──────────────
+// A new player has one or two units and a tutorial telling them to go and
+// fight. Offering to send one of those units away for six hours in the middle
+// of that is a trap, so nothing about errands exists — no button, no sheet —
+// until they have finished a battle and know what a unit is FOR.
+// `battle_done` is written by the battle result screen (see screens/battle.js).
+export function errandsUnlocked(player) {
+  return isTutorialDone(player, 'battle_done');
+}
+
+// Runs on every navigation, does something exactly once: the first time the
+// player is back in the castle after a battle, the errand button they have
+// never seen before is spotlighted and explained, then the sheet is opened for
+// them. Two steps — what errands are, and the cost of sending someone.
+export function maybeShowErrandsIntro(player) {
+  if (!errandsUnlocked(player)) return;
+  if (isTutorialDone(player, 'errands_intro')) return;
+  const btn = document.querySelector('.res-bar-errands');
+  if (!btn) return;
+
+  showTutorialSpotlight(player, 'errands_intro', btn, {
+    showContinue: true,
+    onAdvance: () => {
+      showTutorialSpotlight(player, 'errands_away', btn, {
+        showContinue: true,
+        onAdvance: () => {
+          markTutorialDone(player, 'errands_intro');
+          openErrandsSheet(player);
+        },
+      });
+    },
+  });
+}
+
 // The button in the resource row. It glows when there is something to DO — an
 // offer waiting, or a unit home with its result. A daily system that always
 // glows teaches players to ignore it.
 export async function refreshErrandButton(player) {
   const btn = document.querySelector('.res-bar-errands');
   if (!btn || !player?.chat_id) return;
+  // Locked: the button is not merely quiet, it is not there. Re-checked on every
+  // refresh rather than at mount, because the unlock lands mid-session — the
+  // player returns from their first battle and the shell is already up.
+  btn.classList.toggle('res-bar-btn--hidden', !errandsUnlocked(player));
+  if (!errandsUnlocked(player)) return;
   try {
     const state = await api(`/errands?chat_id=${player.chat_id}`);
     _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));

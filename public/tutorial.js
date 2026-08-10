@@ -180,6 +180,32 @@ const TUTORIAL_STEPS = {
       text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать. Также можно использовать способность или защиту.',
     },
   },
+  // Shown once, the first time the player opens the app after finishing a
+  // battle — the errand button stays hidden until then (see errandsUnlocked in
+  // errands.js), so this step is also the moment it appears. The warning is the
+  // important half: an errand takes a unit off the board, and a player who sends
+  // their only frontliner out for six hours and then cannot embark has been
+  // ambushed by a feature, not taught one.
+  errands_intro: {
+    en: {
+      title: 'Errands',
+      text: 'Word comes in from beyond the walls: work that needs one soldier, not an army. Send a unit out and it returns with XP, gold or crystals — no fighting, no risk of losing anyone. Each errand asks for two unit tags and pays a reward for each; a unit carrying both brings both halves home.',
+    },
+    ru: {
+      title: 'Поручения',
+      text: 'Из-за стен приходят вести: есть дела, для которых нужен один боец, а не армия. Отправьте бойца — он вернётся с опытом, золотом или кристаллами. Ни боя, ни риска кого-то потерять. Каждое поручение требует два тега бойца и платит за каждый; тот, кто носит оба, принесёт обе половины.',
+    },
+  },
+  errands_away: {
+    en: {
+      title: 'They Will Be Gone',
+      text: 'Careful: a unit on an errand leaves your roster for the whole duration — 2, 4 or 6 hours — and cannot embark until it comes back. The longer the trip, the better the pay. Never send the unit you need for your next battle.',
+    },
+    ru: {
+      title: 'Его не будет на месте',
+      text: 'Внимание: боец на поручении покидает отряд на весь срок — 2, 4 или 6 часов — и до возвращения не сможет пойти в поход. Чем дольше поручение, тем выше плата. Не отправляйте того, кто нужен вам в следующем бою.',
+    },
+  },
 };
 
 let activeCleanup = null;

@@ -1491,6 +1491,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
     const survivorIds = survivors.map(c => c._rosterId).filter(Boolean);
 
+    // The player has now seen a battle through, win or lose. This is what
+    // unlocks errands (see errandsUnlocked in errands.js) — sending a unit away
+    // for hours only makes sense once you know what having one is worth. Set on
+    // defeat too: the lesson landed either way.
+    markTutorialDone(player, 'battle_done');
+
     // Victory shows the player's faction art (/assets/victory_screens/victory_<c|e|g>.jpg);
     // defeat keeps a random loading screen.
     const FACTION_LETTER = { empire: 'e', choir_of_the_cursed: 'c', grail_of_sorrow: 'g' };
