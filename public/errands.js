@@ -25,7 +25,6 @@ const ET = {
   xpSelf:      { en: 'XP',                     ru: 'Опыт' },
   xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
   hours:       { en: 'h',                      ru: 'ч' },
-  brings:      { en: 'brings',                 ru: 'принесёт' },
   failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
 };
 
@@ -40,15 +39,20 @@ function untilText(iso) {
   return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
 }
 
-// Errand art lives in /assets/icons/errands, named on the definition. The art is
-// authored separately from the code, so a missing file must not leave a broken
-// image in the sheet — the banner removes itself instead.
-function errandArtHtml(def) {
-  if (!def?.art) return '';
+// Art, name and description are ONE block: the name rides the top of the image
+// and the text the bottom, so the three of them cost the vertical space of the
+// image alone. Art lives in /assets/icons/errands and is authored separately, so
+// a missing file drops back to plain text rather than leaving a broken image.
+function errandHeaderHtml(def, title, desc) {
+  const art = def?.art
+    ? `<img class="errand-art-img" src="/assets/icons/errands/${def.art}" alt=""
+            onerror="this.closest('.errand-header').classList.add('errand-header--noart')">`
+    : '';
   return `
-    <div class="errand-art">
-      <img src="/assets/icons/errands/${def.art}" alt=""
-           onerror="this.closest('.errand-art').remove()">
+    <div class="errand-header ${art ? '' : 'errand-header--noart'}">
+      ${art}
+      <div class="errand-title">${title}</div>
+      ${desc ? `<p class="errand-desc">${desc}</p>` : ''}
     </div>`;
 }
 
@@ -115,9 +119,8 @@ export async function openErrandsSheet(player) {
       const shown = done.granted || done.reward || {};
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandArtHtml(def)}
-          <div class="errand-title">${T('backHome')}</div>
-          <p class="errand-desc">${done.unit_name ? `<strong>${done.unit_name}</strong> — ` : ''}${def?.title?.[lang] ?? done.errand_id}</p>
+          ${errandHeaderHtml(def, T('backHome'),
+            `${done.unit_name ? `<strong>${done.unit_name}</strong> — ` : ''}${def?.title?.[lang] ?? done.errand_id}`)}
           <div class="errand-section-label">${T('gained')}</div>
           <div class="errand-chips">${rewardHtml(shown)}</div>
           <button class="errand-btn" id="errand-ack">${T('gotIt')}</button>
@@ -142,9 +145,7 @@ export async function openErrandsSheet(player) {
       const left = active.ends_at ? untilText(active.ends_at) : null;
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandArtHtml(def)}
-          <div class="errand-title">${def?.title?.[lang] ?? active.errand_id}</div>
-          <p class="errand-desc">${def?.desc?.[lang] ?? ''}</p>
+          ${errandHeaderHtml(def, def?.title?.[lang] ?? active.errand_id, def?.desc?.[lang] ?? '')}
           <div class="errand-away">
             <span class="errand-away-who">${active.unit_name ?? ''}</span>
             <span class="errand-away-state">${left ? `${T('returns')} ${left}` : T('away')}</span>
@@ -167,18 +168,14 @@ export async function openErrandsSheet(player) {
       const durations = state.offer.durations ?? [];
       const picked    = durations.find(d => d.hours === chosenHours) ?? durations[0] ?? { hours: state.offer.hours, parts: [] };
       const parts     = picked.parts ?? [];
-      // Which tags the selected unit actually has, so the sheet can say what
-      // THIS one would bring instead of leaving the player to work it out.
+      // Which tags the selected unit has: the halves it earns are the lit ones,
+      // which is the whole explanation the sheet needs to give.
       const chosenTags = state.offer.candidate_tags?.[String(chosen)] ?? [];
-      const earned     = parts.filter(p => chosenTags.includes(p.tag));
 
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandArtHtml(def)}
-          <div class="errand-title">${def?.title?.[lang] ?? state.offer.errand_id}</div>
-          <p class="errand-desc">${def?.desc?.[lang] ?? ''}</p>
+          ${errandHeaderHtml(def, def?.title?.[lang] ?? state.offer.errand_id, def?.desc?.[lang] ?? '')}
 
-          <div class="errand-section-label">${T('reward')}</div>
           <div class="errand-parts">
             ${parts.map(p => `
               <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
@@ -196,19 +193,13 @@ export async function openErrandsSheet(player) {
               </button>`).join('')}
           </div>
 
-          <!-- The track sits at the BOTTOM, directly above Send: the sheet reads
-               top to bottom as what/what it pays/how long/who goes/go. -->
+          <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
+
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">
               ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}
             </div>
           </div>
-          ${earned.length ? `<div class="errand-chips errand-chips--earned">
-            <span class="errand-earned-label">${T('brings')}</span>
-            ${earned.map(p => rewardHtml(p.reward)).join('')}
-          </div>` : ''}
-
-          <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
         </div>`;
 
       // Re-renders rather than patching in place: the reward chips below have to
@@ -224,8 +215,8 @@ export async function openErrandsSheet(player) {
         const card = e.target.closest('.portrait-card');
         if (!card) return;
         chosen = card.dataset.rosterId;
-        // Full re-render: which halves are highlighted, and the "brings" line
-        // under the track, both follow the selected unit's tags.
+        // Full re-render: which reward halves are lit follows the selected
+        // unit's tags.
         render();
         return;
       });

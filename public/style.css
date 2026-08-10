@@ -935,18 +935,53 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* Errand art. Wide banner rather than a square icon: it sits above the title and
    sets the scene, and it is cropped rather than letterboxed so art of slightly
    different proportions still fills the strip. */
-.errand-art {
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-}
-.errand-art img {
-  max-width: 200px;
-  max-height: 200px;
+/* Art, name and description in ONE block instead of three stacked ones: the
+   name sits on top of the image and the description along its foot, both over a
+   gradient so they stay legible whatever the art does. Costs the height of the
+   image and nothing more. */
+.errand-header {
+  position: relative;
+  width: 200px;
+  max-width: 100%;
+  margin: 0 auto;
   border-radius: 8px;
   border: 1px solid var(--border);
-  object-fit: cover;
+  overflow: hidden;
+}
+.errand-art-img {
   display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+}
+.errand-header .errand-title,
+.errand-header .errand-desc {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px 8px;
+  z-index: 1;
+}
+.errand-header .errand-title {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+}
+.errand-header .errand-desc {
+  bottom: 0;
+  font-size: 0.68rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+/* No art (missing file, or a definition without one): the overlay has nothing to
+   sit on, so the block falls back to plain stacked text. */
+.errand-header--noart { width: 100%; border: none; }
+.errand-header--noart .errand-art-img { display: none; }
+.errand-header--noart .errand-title,
+.errand-header--noart .errand-desc {
+  position: static;
+  background: none;
+  padding: 0;
 }
 
 /* The two tag halves sit SIDE BY SIDE — they are alternatives, and a column read
@@ -955,7 +990,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .errand-parts { display: flex; flex-direction: row; gap: 6px; }
 .errand-part {
   flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 5px;
   padding: 6px 5px; border-radius: 8px;
   border: 1px solid var(--border); background: rgba(255,255,255,0.03);
   opacity: 0.55;
@@ -965,14 +1000,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   background: rgba(200,151,58,0.10);
 }
-.errand-chips--earned { align-items: center; }
 /* Reward chips carry resource art now, so the icon has to sit on the text
    baseline instead of stretching the chip. */
 .errand-reward-chip { display: inline-flex; align-items: center; gap: 3px; }
 .errand-reward-chip .res-icon-img { width: 14px; height: 14px; object-fit: contain; }
-.errand-earned-label {
-  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
-}
 
 /* Longer trips pay more per errand and less per hour, so the multiplier is
    shown on the button — the trade has to be visible to be a choice. */
