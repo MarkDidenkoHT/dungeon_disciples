@@ -2454,12 +2454,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* HP over XP in one strip. The wrapper takes the positioning the HP bar had on
    its own, and the child rule above is neutralised inside it — otherwise both
    bars would be absolutely positioned to the same bottom inset and overlap. */
+/* Sits ABOVE the frame art (::after, z-index 2) and clear of its bottom
+   moulding, which is where the bars were getting lost. Taller and outlined,
+   because 5px of dark bar on dark ornate metal reads as nothing at node size. */
 .castle-node-bars {
   position: absolute;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  z-index: 3;
+  left: 11px;
+  right: 11px;
+  bottom: 13px;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2475,11 +2478,20 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Thinner than the HP bar on purpose: HP is the urgent one, XP is a glance. */
 .portrait-xp-bar {
-  height: 3px;
+  height: 4px;
   border-radius: 2px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.75);
   overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
+}
+
+/* Inside a castle node both bars need the same outline treatment — without it
+   they disappear into the frame art behind them. */
+.castle-node-bars .portrait-hp-bar,
+.castle-node-bars .portrait-xp-bar {
+  height: 5px;
+  background: rgba(0,0,0,0.75);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
 }
 
 .portrait-xp-fill {
@@ -4912,6 +4924,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   width: auto;
   aspect-ratio: 5 / 8;
+  /* Three 152px rows plus the two gaps: the grid stops growing where the nodes
+     do, instead of stretching and leaving slack inside each cell. */
+  max-height: calc(152px * 3 + 8px);
   max-width: min(360px, 100%);
   margin: 0 auto;
   display: grid;
@@ -4931,13 +4946,20 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  /* The grid row IS the size now; a min-height here would put the overflow back. */
+  /* The grid row IS the size now; a min-height here would put the overflow back.
+     A MAX height is different: it stops the nodes stretching on a tall screen,
+     and 152px is the 160 that fit, less the 5% trim. */
   min-height: 0;
   min-width: 0;
+  max-height: 152px;
 }
 
+/* An empty slot draws its frame as a background rather than through ::after, so
+   without this it sized to the art's own proportions and came out smaller than
+   an occupied node beside it. `100% 100%` makes both frames the same box. */
 .outer-ring .castle-node.castle-node--empty {
   background-image: url('/assets/icons/ui/building_slot_bg.png');
+  background-size: 100% 100%;
 }
 
 .outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -4958,6 +4980,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   z-index: 2;
   min-height: 0;
+  max-height: 152px;
 }
 
 .castle-node {
@@ -5049,11 +5072,12 @@ button:active:not(:disabled) { opacity: 0.75; }
      it cannot live on the base .castle-node. */
   background-color: var(--bg);
 }
+/* No scrim: it was darkening the bottom of every portrait to carry a label that
+   is no longer drawn there, and taking the HP/XP bars down with it. */
 .castle-node--portrait::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 42%, rgba(0,0,0,0.05) 100%);
   pointer-events: none;
 }
 .castle-node--portrait > * { position: relative; z-index: 1; }
