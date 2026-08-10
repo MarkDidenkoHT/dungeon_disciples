@@ -29,6 +29,24 @@ app.use(express.json());
 // the whole 1d story is switched off unless we are explicitly in production.
 // Set NODE_ENV=production (or NO_CACHE=0) to get the bandwidth saving back.
 const CODE_FILE = /\.(?:js|mjs|css|html)$/i;
+
+// ── Heavy art: cached hard, on purpose, in dev as well as production ─────────
+// These three folders are the bandwidth. Every roster/castle/battle screen pulls
+// dozens of portraits and item icons, they are the largest files we serve, and
+// unlike UI chrome they are effectively append-only: new units and items get NEW
+// filenames, existing art almost never changes under the same name.
+//
+// So they opt out of the no-store dev rule entirely and get a month of
+// `immutable` — the client is told never to even ask again. That is the whole
+// point: a revalidation is still a round trip per image, and with a hundred
+// images on screen the 304s alone are the slow part on mobile.
+//
+// The cost of that deal: REPLACING art in place will not reach anyone who has
+// already loaded it, for up to a month. Rename the file instead (d6.png →
+// d6_v2.png) — a new URL cannot be served from a cache, and it is why the
+// filename convention here is worth keeping.
+const ART_PATH = /[\\/]assets[\\/](?:character_art|character_portraits|character_sprites|crests|icons[\\/](?:items|abilities|spells|recources))[\\/]/i;
+const ART_CACHE = 'public, max-age=2592000, immutable';
 const NO_CACHE = process.env.NO_CACHE
   ? process.env.NO_CACHE !== '0'
   : process.env.NODE_ENV !== 'production';
@@ -37,7 +55,12 @@ const staticOpts = NO_CACHE
       etag: false,
       lastModified: false,
       maxAge: 0,
-      setHeaders(res) {
+      setHeaders(res, filePath) {
+        // Art is exempt from the dev kill-switch — see ART_PATH above.
+        if (ART_PATH.test(filePath)) {
+          res.setHeader('Cache-Control', ART_CACHE);
+          return;
+        }
         res.setHeader('Cache-Control', 'no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
@@ -46,6 +69,7 @@ const staticOpts = NO_CACHE
   : {
       maxAge: '1d',
       setHeaders(res, filePath) {
+        if (ART_PATH.test(filePath)) return res.setHeader('Cache-Control', ART_CACHE);
         if (CODE_FILE.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
       },
     };
