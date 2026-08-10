@@ -1265,7 +1265,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 6px;
   padding: 4px 12px;
   /* Same ornate frame art as the resource bar (fallback: --surface). */
-  /* background-color: var(--surface); */
+  background-color: var(--surface);
   background-image: url('/assets/icons/ui/recource_bar.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -2455,9 +2455,14 @@ button:active:not(:disabled) { opacity: 0.75; }
    its own, and the child rule above is neutralised inside it — otherwise both
    bars would be absolutely positioned to the same bottom inset and overlap. */
 /* Sits ABOVE the frame art (::after, z-index 2) and clear of its bottom
-   moulding, which is where the bars were getting lost. Taller and outlined,
-   because 5px of dark bar on dark ornate metal reads as nothing at node size. */
-.castle-node-bars {
+   moulding. Outlined and 5px tall, because a thin translucent bar on dark
+   ornate metal reads as nothing at node size.
+   The doubled class is REQUIRED, not decoration: `.castle-node--portrait > *`
+   below sets `position: relative; z-index: 1` on every child at specificity
+   0,1,1. A lone `.castle-node-bars` (0,1,0) loses to it, and the strip then
+   lays out as a zero-width flex child buried under the frame — which is
+   exactly how these bars went missing. */
+.castle-node .castle-node-bars {
   position: absolute;
   left: 11px;
   right: 11px;
@@ -6078,7 +6083,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 8px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
