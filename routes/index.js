@@ -23,7 +23,7 @@ const {
   getBattleLogsSince,
 } = require('../utils/realtime');
 const { SPELLS } = require('../data/spells');
-const { telegramWebhookHandler } = require('../utils/telegram');
+const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 
@@ -531,6 +531,10 @@ router.post('/login', async (req, res) => {
     });
     let activeRec = null;
     try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
+    // Deliberately not awaited: the admin ping is bookkeeping, and a slow or
+    // failing Telegram API must not delay (or fail) the player's first login.
+    notifyAdminNewPlayer(created[0]).catch(err =>
+      console.error('Admin new-player notify failed:', err.message));
     res.json({
       player: created[0],
       session_token,

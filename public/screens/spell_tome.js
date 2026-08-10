@@ -2,10 +2,29 @@ import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
 
+// Every user-facing string in this screen, in the same shape the other screens
+// use (CASTLE_TEXT and friends) so there is one place to add a language.
+const TOME_TEXT = {
+  research:      { en: 'Research Spell',        ru: 'Изучить заклинание' },
+  noCrystals:    { en: 'Not enough crystals',   ru: 'Недостаточно кристаллов' },
+  researchFail:  { en: 'Research failed',       ru: 'Не удалось изучить' },
+  emptyCategory: { en: 'No spells in this category.', ru: 'Нет заклинаний в этой категории.' },
+  throneRequired: {
+    en: tier => `🔒 Throne level ${tier} required`,
+    ru: tier => `🔒 Требуется тронный зал ${tier} уровня`,
+  },
+  types: {
+    buff:      { en: 'Buff',      ru: 'Усиление' },
+    debuff:    { en: 'Debuff',    ru: 'Ослабление' },
+    resurrect: { en: 'Resurrect', ru: 'Воскрешение' },
+  },
+};
+
 export function renderSpellTome(root, { player }) {
   applyBackground(root, player.faction, 'spells');
 
   const isRu = player?.settings?.language === 'ru';
+  const lang = isRu ? 'ru' : 'en';
 
   root.innerHTML = `
     <div class="screen screen-spelltome">
@@ -72,7 +91,7 @@ export function renderSpellTome(root, { player }) {
       .sort((a, b) => a.tier - b.tier);
 
     if (!catSpells.length) {
-      slider.innerHTML = `<div class="spells-empty">${isRu ? 'Нет заклинаний в этой категории.' : 'No spells in this category.'}</div>`;
+      slider.innerHTML = `<div class="spells-empty">${TOME_TEXT.emptyCategory[lang]}</div>`;
       return;
     }
 
@@ -127,29 +146,31 @@ export function renderSpellTome(root, { player }) {
     const tierUnlocked = throneLevel >= spell.tier;
     const canResearch  = tierUnlocked && !isLearned && affordable;
 
-    let actionHtml;
-    if (isLearned) {
-      actionHtml = `<span class="spell-detail-status spell-detail-status--learned">✓ Learned</span>`;
-    } else if (!tierUnlocked) {
-      actionHtml = `<span class="spell-detail-status spell-detail-status--locked">🔒 Throne level ${spell.tier} required</span>`;
-    } else {
-      actionHtml = `
+    // A learned spell has nothing left to act on: no button to press and no
+    // failure to report, so the whole action row (and the feedback slot inside
+    // it) is dropped rather than rendered holding a redundant "✓ Learned" —
+    // the card's checkmark and ring already say it.
+    let actionHtml = '';
+    if (!isLearned) {
+      actionHtml = tierUnlocked
+        ? `
         <button class="research-btn-full" id="detail-research-btn" ${canResearch ? '' : 'disabled'}>
-          ${canResearch ? 'Research Spell' : 'Not enough crystals'}
+          ${canResearch ? TOME_TEXT.research[lang] : TOME_TEXT.noCrystals[lang]}
         </button>
-      `;
+      `
+        : `<span class="spell-detail-status spell-detail-status--locked">${TOME_TEXT.throneRequired[lang](spell.tier)}</span>`;
     }
 
-    const typeLabels = { buff: 'Buff', debuff: 'Debuff', resurrect: 'Resurrect' };
-    const typeLabel  = typeLabels[spell.effect_type] || cap(spell.effect_type || '');
+    const typeLabel = TOME_TEXT.types[spell.effect_type]?.[lang] || cap(spell.effect_type || '');
 
     return `
       <div class="spell-modal-type spell-modal-type--${spell.effect_type}">${typeLabel}</div>
       <div class="spell-modal-desc">${spellDesc(spell, player)}</div>
+      ${isLearned ? '' : `
       <div class="spell-detail-action">
         ${actionHtml}
         <div class="research-feedback" id="research-feedback" style="display:none"></div>
-      </div>
+      </div>`}
     `;
   }
 
@@ -214,12 +235,12 @@ export function renderSpellTome(root, { player }) {
         // third time in words was noise.
         refreshModalBody(spell);
       } else {
-        showFeedback(result?.message || (isRu ? 'Не удалось изучить' : 'Research failed'));
+        showFeedback(result?.message || TOME_TEXT.researchFail[lang]);
         const btn = getSheetBody().querySelector('#detail-research-btn');
-        if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
+        if (btn) { btn.disabled = false; btn.textContent = TOME_TEXT.research[lang]; }
       }
     } catch (err) {
-      showFeedback(err.message || (isRu ? 'Не удалось изучить' : 'Research failed'));
+      showFeedback(err.message || TOME_TEXT.researchFail[lang]);
       const btn = getSheetBody().querySelector('#detail-research-btn');
       if (btn) { btn.disabled = false; btn.textContent = 'Research Spell'; }
     }

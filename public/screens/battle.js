@@ -78,6 +78,17 @@ const BT = {
   xpGained:       { en: 'Experience',        ru: 'Опыт' },
   maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
   readyToUpgrade: { en: 'Ready to upgrade',  ru: 'Готов к улучшению' },
+  // Unit detail panel: the generic action labels shown when a unit has no named
+  // ability, plus the two empty/failure states of the panel itself.
+  actSacrifice:  { en: 'Sacrifice',     ru: 'Жертва' },
+  actHolyShock:  { en: 'Holy Shock',    ru: 'Священный удар' },
+  actMothersKiss:{ en: "Mother's Kiss", ru: 'Поцелуй матери' },
+  actPassive:    { en: 'Passive',       ru: 'Пассивная' },
+  actHeal:       { en: 'Heal',          ru: 'Лечение' },
+  actAttack:     { en: 'Attack',        ru: 'Атака' },
+  passiveNone:   { en: 'None',          ru: 'Нет' },
+  tapForStats:   { en: 'Tap a unit to see stats', ru: 'Нажмите на юнита, чтобы увидеть характеристики' },
+  noUnitData:    { en: 'Unit data unavailable',   ru: 'Данные юнита недоступны' },
 };
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
@@ -531,20 +542,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function getActionLabel(unit) {
     const actionKey = unit?.unit_data?.action;
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
-    if (key === 'sacrifice') return 'Sacrifice';
-    if (key === 'holy_shock') return 'Holy Shock';
+    if (key === 'sacrifice') return BTx('actSacrifice');
+    if (key === 'holy_shock') return BTx('actHolyShock');
     const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
-    if (actionType === 'none') return 'Passive';
-    if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return "Mother's Kiss";
+    if (actionType === 'none') return BTx('actPassive');
+    if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return BTx('actMothersKiss');
     const tt = unit?.unit_data?.target_type || unit?.unit_data?.action?.target_type;
-    return tt === 'ally' ? 'Heal' : 'Attack';
+    return tt === 'ally' ? BTx('actHeal') : BTx('actAttack');
   }
 
   function getPassiveName(unit) {
     const p = unit?.unit_data?.passive || unit?.unit_data?.passive_ability;
-    if (!p) return 'None';
+    if (!p) return BTx('passiveNone');
     if (Array.isArray(p)) {
-      return p.filter(Boolean).map(k => k.split(' ')[0].replace(/_/g, ' ')).join(', ') || 'None';
+      return p.filter(Boolean).map(k => k.split(' ')[0].replace(/_/g, ' ')).join(', ') || BTx('passiveNone');
     }
     const name = typeof p === 'string' ? p : (p.name || p.id || '');
     return name.split(' ')[0].replace(/_/g, ' ');
@@ -672,9 +683,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   function unitStatsHtml(c) {
-    if (!c) return `<div class="battle-unit-detail-empty">Tap a unit to see stats</div>`;
+    if (!c) return `<div class="battle-unit-detail-empty">${BTx('tapForStats')}</div>`;
     const def = resolveUnitDef(c);
-    if (!def) return `<div class="battle-unit-detail-empty">Unit data unavailable</div>`;
+    if (!def) return `<div class="battle-unit-detail-empty">${BTx('noUnitData')}</div>`;
 
     const liveUnit = {
       ...def,

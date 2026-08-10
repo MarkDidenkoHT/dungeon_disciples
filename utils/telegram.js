@@ -41,6 +41,35 @@ async function sendTelegramMessage(chatId, text, extra = {}) {
   }
 }
 
+// ── Admin notification ───────────────────────────────────────────────────────
+// Fired once per genuinely new account (the isNew branch of /login). Silent and
+// non-fatal by design: no ADMIN_CHAT_ID set means the feature is simply off, and
+// a Telegram outage must never take a player's registration down with it — the
+// caller does not await this.
+const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
+
+// The username and first name come from Telegram and go into an HTML-parsed
+// message, so they are escaped. A player called "<b>" would otherwise break the
+// markup, and Telegram rejects the whole send when the HTML does not parse.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+async function notifyAdminNewPlayer(player) {
+  if (!ADMIN_CHAT_ID) return;
+  const name   = escapeHtml(player?.first_name || 'Unknown');
+  const handle = player?.username ? `@${escapeHtml(player.username)}` : '—';
+  const lang   = escapeHtml(player?.settings?.language || '?');
+  await sendTelegramMessage(
+    ADMIN_CHAT_ID,
+    `🆕 <b>New player</b>\n` +
+    `Name: ${name}\n` +
+    `Username: ${handle}\n` +
+    `chat_id: <code>${escapeHtml(player?.chat_id)}</code>\n` +
+    `Language: ${lang}`,
+  );
+}
+
 async function handleTelegramUpdate(update) {
   const msg = update?.message;
   if (!msg || typeof msg.text !== 'string' || !msg.text.startsWith('/start')) return;
@@ -59,4 +88,4 @@ function telegramWebhookHandler(req, res) {
   handleTelegramUpdate(req.body).catch(err => console.error('Telegram webhook error:', err.message));
 }
 
-module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang };
+module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer };

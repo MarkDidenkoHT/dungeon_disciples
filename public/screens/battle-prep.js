@@ -50,6 +50,28 @@ const BP_TEXT = {
     en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle.`,
     ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой.`,
   },
+  yourPower:    { en: 'Your Power',   ru: 'Ваша сила' },
+  enemyPower:   { en: 'Enemy Power',  ru: 'Сила врага' },
+  spellsTitle:  { en: 'Spells',       ru: 'Заклинания' },
+  chooseTarget: { en: 'Choose Target', ru: 'Выберите цель' },
+  dead:         { en: 'Dead / unavailable', ru: 'Мёртв / недоступен' },
+  hero:         { en: '★ Hero',       ru: '★ Герой' },
+  enemy:        { en: 'Enemy',        ru: 'Враг' },
+  toBattle:     { en: 'To Battle',    ru: 'В бой' },
+  close:        { en: 'Close',        ru: 'Закрыть' },
+  scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
+  scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
+  // Target scopes. The two tag_* forms interpolate a tag name that comes from
+  // the data files in English, so the Russian keeps it as-is rather than
+  // pretending to decline a word it does not have a translation for.
+  scopes: {
+    all_allies:   { en: 'All allies',   ru: 'Все союзники' },
+    all_enemies:  { en: 'All enemies',  ru: 'Все враги' },
+    single_ally:  { en: 'Single ally',  ru: 'Один союзник' },
+    single_enemy: { en: 'Single enemy', ru: 'Один враг' },
+  },
+  tagAllies:  { en: tag => `All allied ${tag}s`, ru: tag => `Все союзные: ${tag}` },
+  tagEnemies: { en: tag => `All enemy ${tag}s`,  ru: tag => `Все враги: ${tag}` },
 };
 
 // How far below the enemy's power the player's army may be before the warning
@@ -150,20 +172,20 @@ export function renderBattlePrep(root, { player, region_id, level }) {
            use the same type scale so neither one shouts. -->
       <div class="battle-prep-header">
         <div class="prep-side prep-side--player">
-          <span class="prep-side-label">Your Power</span>
+          <span class="prep-side-label">${BP_TEXT.yourPower[L]}</span>
           <span class="prep-side-stats">
             <span id="loyalty-counter" class="loyalty-counter"></span>
             <span id="player-army-power" class="army-power"></span>
           </span>
         </div>
 
-        <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="To Battle">
-          <img src="/assets/icons/ui/to_battle.png" alt="To Battle"
+        <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="${BP_TEXT.toBattle[L]}">
+          <img src="/assets/icons/ui/to_battle.png" alt="${BP_TEXT.toBattle[L]}"
                onerror="this.replaceWith(document.createTextNode('⚔'))">
         </button>
 
         <div class="prep-side prep-side--enemy">
-          <span class="prep-side-label">Enemy Power</span>
+          <span class="prep-side-label">${BP_TEXT.enemyPower[L]}</span>
           <span class="prep-side-stats">
             <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="${BP_TEXT.hiddenSpell[L]}" style="display:none;">📖</span>
             <span id="enemy-army-power" class="army-power"></span>
@@ -173,11 +195,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       <div class="battle-prep-tab-content active" id="tab-formation">
         <div class="prep-track-row">
-          <button class="prep-track-arrow" id="track-prev" data-track-scroll="-1" aria-label="Scroll left" hidden>‹</button>
+          <button class="prep-track-arrow" id="track-prev" data-track-scroll="-1" aria-label="${BP_TEXT.scrollLeft[L]}" hidden>‹</button>
           <div class="prep-track-wrap" id="prep-track-wrap">
             <div class="portrait-track" id="portrait-track"></div>
           </div>
-          <button class="prep-track-arrow" id="track-next" data-track-scroll="1" aria-label="Scroll right" hidden>›</button>
+          <button class="prep-track-arrow" id="track-next" data-track-scroll="1" aria-label="${BP_TEXT.scrollRight[L]}" hidden>›</button>
         </div>
       </div>
 
@@ -187,8 +209,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="spell-sheet" id="spell-sheet">
         <div class="spell-sheet-handle"></div>
         <div class="spell-sheet-header">
-          <span class="spell-sheet-title">Spells</span>
-          <button class="spell-sheet-close" id="spell-sheet-close" aria-label="Close">✕</button>
+          <span class="spell-sheet-title">${BP_TEXT.spellsTitle[L]}</span>
+          <button class="spell-sheet-close" id="spell-sheet-close" aria-label="${BP_TEXT.close[L]}">✕</button>
         </div>
         <!-- Non-combat spells are roster-only, so that tab is omitted here. -->
         <div class="tier-tabs" id="spell-sheet-tier-tabs">
@@ -204,8 +226,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       <div class="spell-sheet" id="spell-target-sheet">
         <div class="spell-sheet-handle"></div>
         <div class="spell-sheet-header">
-          <span class="spell-sheet-title" id="spell-target-title">Choose Target</span>
-          <button class="spell-sheet-close" id="spell-target-close" aria-label="Close">✕</button>
+          <span class="spell-sheet-title" id="spell-target-title">${BP_TEXT.chooseTarget[L]}</span>
+          <button class="spell-sheet-close" id="spell-target-close" aria-label="${BP_TEXT.close[L]}">✕</button>
         </div>
         <div class="spell-sheet-body" id="spell-target-body"></div>
       </div>
@@ -364,8 +386,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const maxHp     = baseMaxHp == null ? '—' : derived.max_hp;
 
     const liveUnit = { ...def, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
-    const badge    = isHero ? '★ Hero' : sizeLabel(getUnitSize(unit));
-    const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">Dead / unavailable</div>`;
+    const badge    = isHero ? BP_TEXT.hero[L] : sizeLabel(getUnitSize(unit));
+    const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">${BP_TEXT.dead[L]}</div>`;
     const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false, player });
 
     return buildUnitCard(liveUnit, { badge, itemSlotHtml }) + deadHtml;
@@ -379,17 +401,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const itemSlotHtml = enemyItem
       ? renderItemSlotIcon(enemyItem, null, { interactive: false, player })
       : '';
-    return buildUnitCard(e, { badge: 'Enemy', itemSlotHtml });
+    return buildUnitCard(e, { badge: BP_TEXT.enemy[L], itemSlotHtml });
   }
 
   function spellTargetLabel(spell) {
     const scope = spell.target_scope || 'unknown';
-    if (scope === 'all_allies') return 'All allies';
-    if (scope === 'all_enemies') return 'All enemies';
-    if (scope === 'single_ally') return 'Single ally';
-    if (scope === 'single_enemy') return 'Single enemy';
-    if (scope === 'tag_allies' && spell.params?.tag) return `All allied ${spell.params.tag}s`;
-    if (scope === 'tag_enemies' && spell.params?.tag) return `All enemy ${spell.params.tag}s`;
+    if (BP_TEXT.scopes[scope]) return BP_TEXT.scopes[scope][L];
+    if (scope === 'tag_allies' && spell.params?.tag) return BP_TEXT.tagAllies[L](spell.params.tag);
+    if (scope === 'tag_enemies' && spell.params?.tag) return BP_TEXT.tagEnemies[L](spell.params.tag);
     return scope.replace(/_/g, ' ');
   }
 

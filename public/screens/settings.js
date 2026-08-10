@@ -25,6 +25,7 @@ const UI_TEXT = {
   resetConfirm: { en: 'Reset Everything', ru: 'Сбросить всё' },
   resetting:   { en: 'Resetting…', ru: 'Сброс…' },
   resetFailed: { en: 'Failed to reset progress', ru: 'Не удалось сбросить прогресс' },
+  saveFailed:  { en: 'Failed to save setting', ru: 'Не удалось сохранить настройку' },
 };
 
 export function renderSettings(root, { player }) {
@@ -110,7 +111,7 @@ export function renderSettings(root, { player }) {
       musicBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       musicBtn.classList.toggle('settings-toggle--on', !next);
       setMusicEnabled(!next);
-      alert(err.message || 'Failed to save setting');
+      alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });
 
@@ -129,7 +130,7 @@ export function renderSettings(root, { player }) {
     } catch (err) {
       notifBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       notifBtn.classList.toggle('settings-toggle--on', !next);
-      alert(err.message || 'Failed to save setting');
+      alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });
 
@@ -148,7 +149,7 @@ export function renderSettings(root, { player }) {
     } catch (err) {
       barksBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       barksBtn.classList.toggle('settings-toggle--on', !next);
-      alert(err.message || 'Failed to save setting');
+      alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });
 
@@ -167,7 +168,7 @@ export function renderSettings(root, { player }) {
       navigate('settings', { player });
     } catch (err) {
       langBtn.disabled = false;
-      alert(err.message || 'Failed to save setting');
+      alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });
 

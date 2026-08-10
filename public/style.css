@@ -4806,6 +4806,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   letter-spacing: 0.05em;
   border-radius: 4px;
   padding: 2px 7px;
+  margin: 2px 0 2px 5px;
 }
 
 .spell-modal-type--buff {
@@ -4830,11 +4831,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 0.88rem;
   color: var(--text);
   line-height: 1.5;
+  padding: 4px;
 }
 
 .spell-detail-action {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
   padding-top: 2px;
@@ -4849,6 +4852,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .spell-detail-status--locked  { color: var(--muted); }
 
 .research-btn-full {
+  margin-bottom: 5px;
   padding: 9px 18px;
   border-radius: 7px;
   border: none;
