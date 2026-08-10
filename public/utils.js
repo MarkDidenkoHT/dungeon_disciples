@@ -45,6 +45,17 @@ export function unitName(unit, player) {
   return src?.name || unit.unit_name || '';
 }
 
+// Localized building label. Buildings use `label`/`label_ru` rather than
+// `name`/`name_ru`, and they reach the client as JSON from /bootstrap, so this
+// only has to pick a field. Falls back to English for the same reason unitName
+// does: a nameless slot in the castle reads as a bug, not as a missing string.
+export function buildingLabel(def, player) {
+  if (!def) return '';
+  const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
+  if (lang === 'ru') return def.label_ru || def.label || '';
+  return def.label || '';
+}
+
 // Rarity slug for an item (common/rare/epic/mythic), resolved from ITEM_DEFS by
 // key since owned rows don't store it. Drives the coloured card/slot border.
 export function itemRarity(item) {

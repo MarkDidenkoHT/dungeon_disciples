@@ -14,7 +14,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName,
+  handleUnitInspect, unitName, buildingLabel,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds } from '../errands.js';
@@ -391,7 +391,7 @@ export function renderCastle(root, { player }) {
     return def.upgrades
       .map(bid => getBuildingDef(faction, bid))
       .filter(Boolean)
-      .map(d => ({ unit_id: d.unit_id, building_id: d.id, label: d.label }));
+      .map(d => ({ unit_id: d.unit_id, building_id: d.id, label: buildingLabel(d) }));
   }
 
   function openSliderModal(title, slides, onConfirm, opts = {}) {
@@ -407,7 +407,7 @@ export function renderCastle(root, { player }) {
       const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
       const cards = slides.map((slide, i) => `
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
-             data-i="${i}" title="${slide.unit?.name || slide.buildingLabel || ''}">
+             data-i="${i}" title="${unitName(slide.unit) || slide.buildingLabel || ''}">
           ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${unitName(slide.unit)}" onerror="this.style.display='none'">` : ''}
           <div class="portrait-name">${unitName(slide.unit) || slide.buildingLabel || ''}</div>
         </div>`).join('');
@@ -1106,7 +1106,7 @@ export function renderCastle(root, { player }) {
     const bodyHtml = `
       <div id="slot-sheet-root">
       <div class="castle-unit-card-wrap">
-        ${buildUnitCard(liveUnit, { buildingLabel: def.label, itemSlotHtml, progress })}
+        ${buildUnitCard(liveUnit, { buildingLabel: buildingLabel(def), itemSlotHtml, progress })}
         ${actionOverlayHtml}
       </div>
       <div class="track-action-row track-action-row--framed">
@@ -1119,7 +1119,7 @@ export function renderCastle(root, { player }) {
       </div>
       </div>`;
 
-    openModal(def.label, bodyHtml);
+    openModal(buildingLabel(def), bodyHtml);
 
     const body = getSheetBody()?.querySelector('#slot-sheet-root');
     body?.addEventListener('click', e => {
@@ -1183,7 +1183,7 @@ export function renderCastle(root, { player }) {
           .catch(err => {
             btn.disabled   = false;
             onboardingBusy = false;
-            openAbilityModal(def.label, renderModalContent(err?.message || 'Failed.'));
+            openAbilityModal(buildingLabel(def), renderModalContent(err?.message || 'Failed.'));
           });
         return;
       }
@@ -1624,7 +1624,7 @@ export function renderCastle(root, { player }) {
         const unit     = getUnitByUnitId(o.unit_id);
         const cost     = respecCostFor(o.id, level);
         const costText = costLabelFor(cost);
-        const name     = unit?.name || o.label;
+        const name     = unitName(unit) || buildingLabel(o);
         return {
           unit,
           buildingLabel: name,
@@ -1665,8 +1665,8 @@ export function renderCastle(root, { player }) {
       <div class="confirm-modal">
         <div class="confirm-modal-text">
           ${ru
-            ? `Снести «${def?.label ?? ''}»? Боец из этого здания будет удалён навсегда.`
-            : `Demolish ${def?.label ?? 'this building'}? Its unit is deleted permanently.`}
+            ? `Снести «${buildingLabel(def)}»? Боец из этого здания будет удалён навсегда.`
+            : `Demolish ${buildingLabel(def) || 'this building'}? Its unit is deleted permanently.`}
         </div>
         <div class="confirm-modal-actions">
           <button class="confirm-modal-btn confirm-modal-btn--cancel">${ru ? 'Отмена' : 'Cancel'}</button>
@@ -1728,10 +1728,10 @@ export function renderCastle(root, { player }) {
         const costText = slot === 'slot_0' ? '' : costLabelFor(b.cost);
         return {
           unit:          getUnitByUnitId(b.unit_id),
-          buildingLabel: b.label,
+          buildingLabel: buildingLabel(b),
           confirmLabel:  costText
-            ? `${CASTLE_TEXT.build[castleLang]} · ${b.label} (${costText})`
-            : `${CASTLE_TEXT.build[castleLang]} ${b.label}`,
+            ? `${CASTLE_TEXT.build[castleLang]} · ${buildingLabel(b)} (${costText})`
+            : `${CASTLE_TEXT.build[castleLang]} ${buildingLabel(b)}`,
           buildingId:    b.id,
           placeholder:   !!b.placeholder,
           cost:          b.cost,
@@ -1765,13 +1765,13 @@ export function renderCastle(root, { player }) {
     // Roster comes from the bootstrap payload the screen already loaded.
     const rosterEntry = rosterCache.find(r => r.unit_data?.mercenary && r.unit_data?.mercenary_region === def.region && r.unit_data?.id === currentUnit?.id);
 
-    openSliderModal(def.label,
+    openSliderModal(buildingLabel(def),
       paths.map(path => {
         const nextUnit = getUnitByUnitId(path.unit_id);
         return {
           unit:           nextUnit,
-          buildingLabel:  nextUnit?.name || path.label,
-          confirmLabel:   CASTLE_TEXT.upgradeCost[castleLang](nextUnit?.name || path.label, costLabel(path.cost)),
+          buildingLabel:  unitName(nextUnit) || buildingLabel(path),
+          confirmLabel:   CASTLE_TEXT.upgradeCost[castleLang](unitName(nextUnit) || buildingLabel(path), costLabel(path.cost)),
           compareUnit:    currentUnit,
           mercBuildingId: path.id,
           mercCost:       path.cost,
@@ -1801,7 +1801,7 @@ export function renderCastle(root, { player }) {
     const nextLevel  = (structuresRecord.buildings_data[slot]?.level ?? 0) + 1;
     const throneCost = isThrone ? (throneUpgradeCosts[nextLevel] || null) : null;
 
-    openSliderModal(def.label,
+    openSliderModal(buildingLabel(def),
       paths.map(path => {
         const nextUnit = getUnitByUnitId(path.unit_id);
         const nextDef  = getBuildingDef(player.faction, path.building_id);
@@ -1809,10 +1809,10 @@ export function renderCastle(root, { player }) {
         const costText = costLabelFor(cost);
         return {
           unit:          nextUnit,
-          buildingLabel: nextUnit?.name || path.label,
+          buildingLabel: unitName(nextUnit) || buildingLabel(path),
           confirmLabel:  costText
-            ? CASTLE_TEXT.upgradeCost[castleLang](nextUnit?.name || path.label, costText)
-            : CASTLE_TEXT.upgradeTo[castleLang](nextUnit?.name || path.label),
+            ? CASTLE_TEXT.upgradeCost[castleLang](unitName(nextUnit) || buildingLabel(path), costText)
+            : CASTLE_TEXT.upgradeTo[castleLang](unitName(nextUnit) || buildingLabel(path)),
           compareUnit:   currentUnit,
           buildingId:    path.building_id,
           cost,
@@ -1890,7 +1890,7 @@ export function renderCastle(root, { player }) {
 
   function openPlaceholderModal(buildingId) {
     const def   = getBuildingDef(player.faction, buildingId);
-    const label = def?.label || 'Building';
+    const label = buildingLabel(def) || 'Building';
     openModal(label, `
       <div class="throne-modal">
         <div class="throne-level-display">${label}</div>
@@ -1919,8 +1919,8 @@ export function renderCastle(root, { player }) {
     openSliderModal('Mercenary Hall',
       affordable.map(b => ({
         unit:          getUnitByUnitId(b.unit_id),
-        buildingLabel: b.label,
-        confirmLabel:  `Recruit · ${b.label} (${costLabel(b.cost)})`,
+        buildingLabel: buildingLabel(b),
+        confirmLabel:  `Recruit · ${buildingLabel(b)} (${costLabel(b.cost)})`,
         mercBuildingId: b.id,
         mercCost:       b.cost,
         slot,
