@@ -26,6 +26,25 @@ export function itemName(item, player) {
   return def?.name ?? item.name ?? item.item_name ?? '';
 }
 
+// Localized unit name. Accepts a unit DEFINITION, a roster row, or a battle
+// combatant — anything carrying `name`/`name_ru`, or a `unit_data` that does.
+//
+// DELIBERATELY UNLIKE spellName/itemName: this one falls back to English when a
+// translation is missing. Those two return blank on purpose, so an untranslated
+// spell is obvious rather than silently English — but a unit name is a label on
+// a portrait, a grid cell, a battle log line and a bark header. Blanking it does
+// not read as "missing translation", it reads as a broken card. Every unit in
+// data/units.js currently carries name_ru, so the fallback should never fire;
+// it exists so that adding a unit and forgetting its translation costs a stray
+// English word rather than an anonymous portrait.
+export function unitName(unit, player) {
+  if (!unit) return '';
+  const src  = unit.name || unit.name_ru ? unit : (unit.unit_data || unit);
+  const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
+  if (lang === 'ru') return src?.name_ru || src?.name || unit.unit_name || '';
+  return src?.name || unit.unit_name || '';
+}
+
 // Rarity slug for an item (common/rare/epic/mythic), resolved from ITEM_DEFS by
 // key since owned rows don't store it. Drives the coloured card/slot border.
 export function itemRarity(item) {
@@ -324,7 +343,7 @@ export function renderUnitPortrait(unit, opts = {}) {
     <div class="unit-portrait">
       <img
         src="${portrait}"
-        alt="${unit.name}"
+        alt="${unitName(unit)}"
         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
       >
       <div class="unit-portrait-fallback" style="display:none;">
@@ -332,7 +351,7 @@ export function renderUnitPortrait(unit, opts = {}) {
       </div>
       <div class="unit-identity-bar">
         <div class="unit-identity-main">
-          <span class="unit-name">${unit.name}</span>
+          <span class="unit-name">${unitName(unit)}</span>
           ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
         </div>
         <div class="unit-identity-tags">

@@ -9,7 +9,7 @@ import {
   resolveUnitDef, resolveAbility,
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
-  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON,
+  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
 } from '../utils.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
@@ -172,7 +172,7 @@ export function renderItems(root, { player }) {
     const holder = item.equipped_by != null
       ? units.find(u => String(u.id) === String(item.equipped_by))
       : null;
-    const holderName = holder ? (resolveUnitDef(holder)?.name ?? '') : '';
+    const holderName = holder ? unitName(resolveUnitDef(holder)) : '';
     const countLine  = count > 1
       ? `×${count}`
       : (holderName ? `${T('equippedOn')} ${holderName}` : T('free'));

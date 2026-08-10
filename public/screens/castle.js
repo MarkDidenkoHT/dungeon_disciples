@@ -14,7 +14,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect,
+  handleUnitInspect, unitName,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds } from '../errands.js';
@@ -408,8 +408,8 @@ export function renderCastle(root, { player }) {
       const cards = slides.map((slide, i) => `
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${slide.unit?.name || slide.buildingLabel || ''}">
-          ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${slide.unit.name}" onerror="this.style.display='none'">` : ''}
-          <div class="portrait-name">${slide.unit?.name || slide.buildingLabel || ''}</div>
+          ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${unitName(slide.unit)}" onerror="this.style.display='none'">` : ''}
+          <div class="portrait-name">${unitName(slide.unit) || slide.buildingLabel || ''}</div>
         </div>`).join('');
 
       return `

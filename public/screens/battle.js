@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem } from '../utils.js';
+import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -94,6 +94,12 @@ const BT = {
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
   const BL = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const BTx = k => BT[k][BL];
+
+  // A combatant's `unit_name` is the ENGLISH name the server stamped on it when
+  // the battle was created, so it cannot be shown to a Russian player as-is.
+  // Resolve the definition and translate; fall back to the stored name if the
+  // def cannot be found (an older snapshot, a unit that has since been renamed).
+  const cName = c => (c ? (unitName(resolveUnitDef(c)) || c.unit_name || '') : '');
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
@@ -920,7 +926,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.battleInfo.innerHTML = `
       <div class="binfo">
-        <div class="binfo-unit">${actor.unit_name}</div>
+        <div class="binfo-unit">${cName(actor)}</div>
         <div class="binfo-section">
           <div class="binfo-head">${head}</div>
           ${bodyHtml}
@@ -1183,10 +1189,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
         html.push(`
           <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}">
-            ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${occ.unit_name}" onerror="this.style.display='none'">` : ''}
+            ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${cName(occ)}" onerror="this.style.display='none'">` : ''}
             <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
             <div class="battle-cell-info">
-              <span class="battle-cell-name">${occ.unit_name}</span>
+              <span class="battle-cell-name">${cName(occ)}</span>
               ${occ.alive
                 ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
                 : `<span class="battle-cell-sub">💀</span>`}
@@ -1243,9 +1249,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return `
         <div class="portrait-card portrait-card--init portrait-card--${side}
                     ${isActive ? 'portrait-card--selected' : ''}"
-             title="${c.unit_name}">
+             title="${cName(c)}">
           ${portrait
-            ? `<img class="portrait-art-img" src="${portrait}" alt="${c.unit_name}" onerror="this.style.display='none'">`
+            ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
             : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
           }
           <div class="init-side-strip"></div>
@@ -1279,7 +1285,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ? '<span style="color:var(--muted)">Processing…</span>'
       : isEnemyTurn
         ? '<span style="color:var(--muted)">Enemy is acting…</span>'
-        : `<strong>${actor.unit_name}</strong>`;
+        : `<strong>${cName(actor)}</strong>`;
 
     // While a target is being picked, the button that started it stays lit —
     // otherwise nothing on screen says whether you are aiming an attack or an
@@ -1575,7 +1581,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const xpRows = (result.xp_awards || []).map(a => {
           const def      = resolveUnitDef({ unit_data: { unit_id: a.unit_id } });
           const portrait = getPortraitUrl({ unit_data: { unit_id: a.unit_id } });
-          const name     = def?.name || a.unit_id;
+          const name     = unitName(def) || a.unit_id;
           const required = def?.xp ?? null;
           const cur      = a.current_xp ?? 0;
           // def.xp is the XP needed to upgrade; null means the unit is max tier

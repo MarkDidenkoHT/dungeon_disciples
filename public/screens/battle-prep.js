@@ -27,7 +27,7 @@ import {
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
   itemFromDefKey, combatantItem,
-  spellName, spellDesc, withEquippedItem,
+  spellName, spellDesc, withEquippedItem, unitName,
 } from '../utils.js';
 
 const BP_TEXT = {
@@ -138,7 +138,8 @@ function sizeRowSpan(size) { return SIZE_META[size]?.rowSpan ?? 1; }
 function sizeColSpan(size) { return SIZE_META[size]?.colSpan ?? 1; }
 
 function getUnitName(unit) {
-  return resolveUnitDef(unit)?.name ?? unit.unit_data?.unit_id ?? '?';
+  const def = resolveUnitDef(unit);
+  return (def ? unitName(def) : '') || unit.unit_data?.unit_id || '?';
 }
 
 function getLoyalty(heroUnit) {
@@ -1280,7 +1281,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const unit = roster.find(u => u.id === occ.unitId);
       if (unit) {
         const def  = resolveUnitDef(unit);
-        const name = def?.name ?? unit.unit_data?.unit_id ?? 'Unit';
+        const name = unitName(def) || unit.unit_data?.unit_id || 'Unit';
         showDetail(name, unitDetailHtml(unit));
       }
       return;
