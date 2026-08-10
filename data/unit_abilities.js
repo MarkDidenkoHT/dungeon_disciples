@@ -507,6 +507,19 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { intercept_chance_pct: 40 },
   },
+  'protector 3': {
+    id: 'protector 3',
+    effect_name: 'protector',
+    name: 'Protector',
+    name_ru: "Защитник",
+    rank: 3,
+    type: 'passive',
+    trigger: 'intercept',
+    description: '50% chance to intercept a single-target attack aimed at an ally in the back row behind this unit.',
+    description_ru: "50% шанс перехватить одиночную атаку, нацеленную на союзника в заднем ряду позади этого юнита.",
+    dispellable: false,
+    params: { intercept_chance_pct: 50 },
+  },
   'execute 1': {
     id: 'execute 1',
     name: 'Execute',
@@ -580,9 +593,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +4 HP and +1 armor for each Zombie ally on the field.',
-    description_ru: "В начале боя получает +4 HP и +1 брони за каждого союзного зомби на поле.",
-    params: { tag_required: 'Zombie', hp_per_tagged_unit: 4, armor_per_tagged_unit: 1 },
+    description: 'At battle start, gain +3 HP and +1 armor for each Zombie ally on the field.',
+    description_ru: "В начале боя получает +3 HP и +1 брони за каждого союзного зомби на поле.",
+    params: { tag_required: 'Zombie', hp_per_tagged_unit: 3, armor_per_tagged_unit: 1 },
   },
   'iron_will 1': {
     id: 'iron_will 1',
@@ -710,7 +723,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit_received',
     description: 'When hit adjacent enemies take 5 cold damage.',
     description_ru: "При получении удара соседние враги получают 5 урона холодом.",
-    params: { adjacent_aoe_damage: 3, damage_type: 'cold', range: 1 },
+    params: { adjacent_aoe_damage: 5, damage_type: 'cold', range: 1 },
   },
   'thorns 1': {
     id: 'thorns 1',
@@ -843,9 +856,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Chains to 1 additional random enemy for 50% damage.',
-    description_ru: "Перескакивает ещё на 1 случайного врага с 50% урона.",
-    params: { chain_targets: 1, chain_damage_reduction_pct: 50 },
+    description: 'Chains to 1 additional random enemy for 25% damage.',
+    description_ru: "Перескакивает ещё на 1 случайного врага с 25% урона.",
+    params: { chain_targets: 1, chain_damage_reduction_pct: 25 },
   },
   'chain 2': {
     id: 'chain 2',
@@ -855,9 +868,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Chains to 2 additional random enemies for 60% damage.',
-    description_ru: "Перескакивает ещё на 2 случайных врагов с 60% урона.",
-    params: { chain_targets: 2, chain_damage_reduction_pct: 40 },
+    description: 'Chains to 2 additional random enemies for 30% damage.',
+    description_ru: "Перескакивает ещё на 2 случайных врагов с 30% урона.",
+    params: { chain_targets: 2, chain_damage_reduction_pct: 30 },
   },
   'chain 3': {
     id: 'chain 3',
@@ -866,9 +879,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Chains to 2 additional random enemies for 70% damage.',
-    description_ru: "Перескакивает ещё на 2 случайных врагов с 70% урона.",
-    params: { chain_targets: 2, chain_damage_reduction_pct: 30 },
+    description: 'Chains to 3 additional random enemies for 35% damage.',
+    description_ru: "Перескакивает ещё на 3 случайных врагов с 35% урона.",
+    params: { chain_targets: 3, chain_damage_reduction_pct: 35 },
   },
   'dissipate 1': {
     id: 'dissipate 1',
@@ -877,9 +890,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: "Reduces target's resistance to the attacker's damage type by 15%.",
-    description_ru: "Снижает сопротивление цели к типу урона атакующего на 15%.",
-    params: { dissipate_resistance_pct: 15 },
+    description: "Reduces target's resistance to the attacker's damage type by 10%.",
+    description_ru: "Снижает сопротивление цели к типу урона атакующего на 10%.",
+    params: { dissipate_resistance_pct: 10 },
   },
   'rage 1': {
     id: 'rage 1',
@@ -1065,16 +1078,12 @@ const UNIT_ABILITIES = {
     description_ru: "Получает +30% к урону каждый раз, когда погибает союзный юнит.",
     params: { dmg_bonus_pct: 30 },
   },
-  // ── Four actives added together; none is assigned to a unit yet. Drop one on
-  // a unit with `ability: 'volley 1'` (etc.) in data/units.js to field it.
   'frost_armor 1': {
     id: 'frost_armor 1',
     name: 'Frost Armor',
     name_ru: "Ледяная броня",
     rank: 1,
     type: 'active',
-    // ally_any rather than ally: a unit can sheathe ITSELF in ice, which is the
-    // obvious use for a defensive buff.
     target: 'ally_any',
     description: 'Sheathe an ally in ice: +15 armor and +20 cold resistance for 2 rounds.',
     description_ru: "Покрывает союзника льдом: +15 брони и +20 сопротивления холоду на 2 раунда.",
@@ -1101,8 +1110,6 @@ const UNIT_ABILITIES = {
     name_ru: "Залп",
     rank: 1,
     type: 'active',
-    // Hits everyone regardless of who is tapped — same shape as the all_allies
-    // heals. The tap is only what arms the ability.
     target: 'all_enemies',
     description: 'Loose a volley: 6 physical damage to every enemy.',
     description_ru: "Залп: 6 физического урона всем врагам.",
@@ -1206,7 +1213,6 @@ const UNIT_ABILITIES = {
     effect_name: 'aegis',
   },
   'aegis 2': {
-    // id and rank were both copied from rank 1 and left unchanged.
     id: 'aegis 2',
     name: 'Aegis',
     name_ru: "Эгида",
@@ -1295,13 +1301,7 @@ const UNIT_ABILITIES = {
     target: 'self',
     description: 'Each turn, sacrifice 10% of maximum HP to heal every OTHER ally for that amount. Lasts until end of battle.',
     description_ru: "Каждый ход жертвует 10% максимального здоровья, исцеляя каждого союзника, кроме себя, на эту величину. Действует до конца боя.",
-    // The sacrificed HP IS the heal, so the ability scales with the caster's own
-    // pool instead of needing a second number to balance. It never self-kills:
-    // the tick stops while the caster is at or below the cost.
     params: { mothers_blessing: true, mothers_blessing_hp_cost_pct: 10 },
-    // The per-turn tick logs as a PASSIVE (it is a standing effect, not the cast
-    // itself), so the animation is resolved through this name — see
-    // effectForEntry in screens/battle.js, which looks the def up by passive name.
     effect_name: 'mothers_blessing',
   },
   'radiance 1': {
@@ -1787,14 +1787,6 @@ const UNIT_ABILITIES = {
     description_ru: "Успешный поход приносит на 15% больше кристаллов.",
     params: { embark_crystal_bonus_pct: 15 },
   },
-
-  // ---------------------------------------------------------------------------
-  // RESISTANCE AURAS — one line per spell school. The carrier shields the whole
-  // party (itself included) against that school for the battle. Applied once at
-  // battle start, like Inspiration; the bonus is added to unit_data.resistances,
-  // so it feeds straight into calcDamage's resistance step. Ranks follow the
-  // usual 1/2/3 curve and stack with each other via stackPassiveKeys.
-  // ---------------------------------------------------------------------------
   'resist_aura_air 1': {
     id: 'resist_aura_air 1',
     name: 'Gale Ward',
@@ -1993,15 +1985,6 @@ const UNIT_ABILITIES = {
     description_ru: "Каждый союзник получает +9 сопротивления смерти на весь бой.",
     params: { resist_aura_school: 'death', resist_aura_value: 9 },
   },
-
-  // ---------------------------------------------------------------------------
-  // RADIANT SURGE — an ACTIVE that reads its target: a wounded ally is mended,
-  // an enemy is struck with life-school damage (so Life resistance applies).
-  // Uses target: 'any'; see getAbilityTargets in utils/passive-processor.js and
-  // getValidTargetIds in public/screens/battle.js. Not to be confused with the
-  // holy_shock ACTION (data/units.js `action`), which is the same idea as a
-  // unit's basic attack rather than a once-per-battle active.
-  // ---------------------------------------------------------------------------
   'radiant_surge 1': {
     id: 'radiant_surge 1',
     name: 'Radiant Surge',
