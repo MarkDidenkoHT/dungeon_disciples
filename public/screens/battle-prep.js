@@ -840,18 +840,18 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const isSelected = dragUnit?.id === u.id;
       const unitCost   = (getUnitSize(u) === 'row' || getUnitSize(u) === 'column') ? 2 : 1;
       const locked     = !isHero && loyaltyLeft < unitCost;
+      // `name` survives as the portrait's alt text and tooltip; the card itself
+      // no longer prints it, nor the size — both were repeating what the
+      // portrait and the frame already say.
       const name       = getUnitName(u);
-      const size       = getUnitSize(u);
       const portraitUrl = getPortraitUrl(u);
       return `
         <div class="portrait-card
                     ${isHero     ? 'portrait-card--hero'     : ''}
                     ${isSelected ? 'portrait-card--selected' : ''}
                     ${locked     ? 'portrait-card--locked'   : ''}"
-             data-id="${u.id}">
+             data-id="${u.id}" title="${name}">
           ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
-          <div class="portrait-name">${name}</div>
-          <div class="portrait-size">${sizeLabel(size)}</div>
         </div>
       `;
     }).join('');

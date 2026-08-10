@@ -816,9 +816,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   min-width: 0;
   gap: 0;
   padding: 4px 8px;
-  /* Ornate frame art stretched across the bar; --surface shows through as a
-     fallback until recource_bar.png is present. */
-  background-color: var(--surface);
+  /* Ornate frame art stretched across the bar. No fallback colour behind it —
+     the art is present, and the flat block showed through its edges. */
   background-image: url('/assets/icons/ui/recource_bar.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -881,7 +880,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-repeat: no-repeat;
   border-radius: 0;
   width: 60px;
-  height: 60px;
+  height: 70px;
   align-self: center;
   flex-shrink: 0;
   transition: filter 0.15s, transform 0.1s;
@@ -907,11 +906,10 @@ button:active:not(:disabled) { opacity: 0.75; }
    The button is live now. It sits quiet by default and glows only when there is
    something to DO — an offer waiting, or a unit home with its reward. A daily
    system that always glows teaches players to ignore it. */
-/* Errands do not exist for a player who has not finished a battle yet — the
-   button is removed from the strip rather than disabled, so there is nothing to
-   wonder about. `display: none` (not visibility) so the resource strip closes
-   up around it. */
-.res-bar-btn--hidden { display: none; }
+/* Errands are locked until the first battle is finished — the button sits there
+   dimmed and unpressable rather than vanishing, so the strip does not change
+   shape when it unlocks. */
+.res-bar-btn:disabled { opacity: 0.35; cursor: default; }
 
 .res-bar-errands--ready {
   opacity: 1;
@@ -4261,9 +4259,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  width: 62px;
-  height: 84px;
+  /* No gap: the card is the portrait inside its frame now, nothing to space. */
+  width: 65px;
+  height: 90px;
   box-sizing: border-box;
   /* top / sides / bottom padding ≈ the frame's border thickness */
   padding: 11px 9px 12px;
@@ -4300,8 +4298,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .portrait-art-img {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 70px;
   border-radius: 3px;
   object-fit: cover;
   object-position: top center;
@@ -4319,11 +4317,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   text-overflow: ellipsis;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-.portrait-size {
-  font-size: 0.48rem;
-  color: var(--muted);
 }
 
 .portrait-card--locked {

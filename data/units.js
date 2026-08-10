@@ -579,6 +579,28 @@ const UNITS = {
       damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 700, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
+        choir_servant: {
+      id: 'd51', f: 'd', t: 2,
+      name: 'Choir Servant',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 45, armor: 5, initiative: 30,
+      resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      xp: 300, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
+    },
+    choir_ascendant: {
+      id: 'd511', f: 'd', t: 3,
+      name: 'Choir Ascendant',
+      tags: ['Caster', 'Demon'],
+      size: 'tile',
+      hp: 50, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      xp: 700, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
+    },
   },
 
   empire: {

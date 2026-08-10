@@ -87,7 +87,6 @@ function unitCardHtml(row, selected) {
          data-roster-id="${row.id}" title="${name}">
       <img class="portrait-art-img" src="/assets/character_portraits/p_${portraitId}.png"
            alt="${name}" onerror="this.style.display='none'">
-      <div class="portrait-name">${name}</div>
     </div>`;
 }
 
@@ -319,11 +318,13 @@ export function maybeShowErrandsIntro(player) {
 export async function refreshErrandButton(player) {
   const btn = document.querySelector('.res-bar-errands');
   if (!btn || !player?.chat_id) return;
-  // Locked: the button is not merely quiet, it is not there. Re-checked on every
-  // refresh rather than at mount, because the unlock lands mid-session — the
-  // player returns from their first battle and the shell is already up.
-  btn.classList.toggle('res-bar-btn--hidden', !errandsUnlocked(player));
-  if (!errandsUnlocked(player)) return;
+  // Locked before the first battle: the button stays in the strip and is simply
+  // disabled, so the player can see there is something there to come back to.
+  // Re-checked on every refresh rather than at mount, because the unlock lands
+  // mid-session — the player returns from their first battle and the shell is
+  // already up.
+  btn.disabled = !errandsUnlocked(player);
+  if (btn.disabled) return;
   try {
     const state = await api(`/errands?chat_id=${player.chat_id}`);
     _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));
