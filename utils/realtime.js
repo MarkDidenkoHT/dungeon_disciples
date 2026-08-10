@@ -51,6 +51,32 @@ async function updateBattleState(battle_id, battle_data) {
   return updated[0] || null;
 }
 
+// Atomically claim a finished battle for payout. This is closeBattleState with
+// one crucial difference: the `battle_active=eq.true` filter makes the write
+// itself the guard, so the database decides the winner of a race rather than the
+// application.
+//
+// Postgres evaluates the WHERE and applies the UPDATE under one row lock, so of
+// two concurrent callers exactly one gets a row back and the other gets [].
+// `Prefer: return=representation` (see supabaseService) is what makes that
+// visible to us — without it PostgREST answers 204 and the caller cannot tell
+// whether it won.
+//
+// Reading `battle_active` and closing the battle later is NOT equivalent: every
+// await between the read and the write is a window in which a second request
+// passes the same check and pays the same reward out twice. A double-tap on the
+// victory screen, or a client retry on a dropped connection, is enough.
+async function claimBattleState(battle_id) {
+  const claimed = await supabaseService(
+    `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}&battle_active=eq.true`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ battle_active: false }),
+    }
+  );
+  return claimed[0] || null;
+}
+
 async function closeBattleState(battle_id) {
   const updated = await supabaseService(
     `/battle_state?battle_id=eq.${encodeURIComponent(battle_id)}`,
@@ -91,6 +117,7 @@ module.exports = {
   getBattleState,
   createBattleState,
   updateBattleState,
+  claimBattleState,
   closeBattleState,
   appendBattleLogEntries,
   getBattleLogs,

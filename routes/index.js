@@ -17,6 +17,7 @@ const {
   getBattleState,
   createBattleState,
   updateBattleState,
+  claimBattleState,
   closeBattleState,
   appendBattleLogEntries,
   getBattleLogs,
@@ -2101,6 +2102,23 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
     if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
 
+    // CLAIM THE BATTLE BEFORE PAYING ANYTHING OUT.
+    //
+    // The battle_active check above is necessary but not sufficient: everything
+    // below it awaits — roster persistence, resource reads, resource writes, XP
+    // — and every one of those awaits is a window in which a second request
+    // passes the same check and pays the same rewards out again. The battle used
+    // to be closed at the very END of this handler, so that window was the whole
+    // handler. A double-tap on the victory screen or a client retry duplicated
+    // the payout.
+    //
+    // claimBattleState flips battle_active to false with the filter
+    // `battle_active=eq.true` in the same statement, so Postgres decides the
+    // winner under a row lock: exactly one caller gets a row back, everyone else
+    // gets null and stops here having paid out nothing.
+    const claimed = await claimBattleState(battle_id);
+    if (!claimed) return res.status(400).json({ error: 'Rewards already claimed' });
+
     await persistBattleRosterState(chat_id, record.battle_data);
 
     const { region_id, level } = record.battle_data;
@@ -2275,7 +2293,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       }
     }
 
-    await closeBattleState(battle_id);
+    // Already closed by the claim above — closing again here would be harmless
+    // but misleading, since it would read as the point where the battle ends.
 
     res.json(result);
   } catch (err) {
