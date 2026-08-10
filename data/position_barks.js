@@ -26,24 +26,55 @@
 //   Empire (Knight / Holy / Engineer / Construct / Archer / Warrior) — militant
 //     and zealous to the edge of xenophobia. Duty, oath and the line held.
 //     Everything outside the Empire is unclean by default. Stoic, never
-//     triumphant: they do not boast, they report.
+//     triumphant: they do not boast, they report. Their god is MITHRAIL, and
+//     faith is not a comfort to them — it is a weapon that works. An Empire
+//     unit never concedes that faith is insufficient; that is heresy in its
+//     own mouth. It says faith is needed ELSEWHERE, or needed whole.
 //   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton ) — NOT ancient.
 //     They are barely a decade dead, the collateral of a time spell that went
-//     wrong, and Astaloth mourns what became of his worshippers. So the register
+//     wrong, and ASTALOTH mourns what became of his worshippers. So the register
 //     is recent grief and confusion, not centuries of practised menace: they
 //     remember being alive, and the memory is fresh enough to hurt. Never
 //     cunning, never gloating — a vampire here is a frightened person who has
 //     only just learned what they are now.
+//     ASTALOTH IS FEMALE — the Mother, and "Mother" is used interchangeably with
+//     her name. She is a grieving parent, not a captor: what happened to them
+//     was done TO her children, not BY her. So she watches, keeps, shelters and
+//     mourns. She never takes, spends, leaves short or withholds — a line like
+//     "Astaloth left me so little" makes her the author of their state, which is
+//     the opposite of the faction's whole premise.
 //   Choir of the Cursed (Demon / Court / Choir / Beast) — born out of song, and
 //     it shows: everything is music, terms, debt and appetite. Greedy, evil and
 //     genuinely CUNNING — they bargain, they read the contract back to you, they
-//     let someone cheaper bleed first.
+//     let someone cheaper bleed first. Their scripture is THE FIRST SONG, and
+//     they lapse into a tongue nobody else speaks mid-sentence — the words are
+//     deliberately untranslated, and are transliterated the same way in both
+//     languages so the strangeness survives the translation.
 //
 // Filters and specificity match combat_barks.js: `name` (+100) beats any tag
 // rule, `tag`/`tags` score +2 each, `not` is a gate worth nothing. Ties pool
 // together and one line is picked at random. `lines` and `lines_ru` must stay
 // the same length and order — the client shows the viewer's language with no
 // English fallback.
+//
+// FACTION (`actor.faction`) — matches the unit definition's `f` field:
+//   'e' Empire, 'g' Grail of Sorrow, 'd' Choir of the Cursed. Accepts a single
+//   code or an array. Worth +3, so a faction rule always outranks the plain tag
+//   rule it sits beside.
+//
+//   This is NOT decoration: three tags span more than one faction, and the
+//   voices are incompatible.
+//     Knight     — e, g and d. An Empire knight is a zealot; a Grail knight is
+//                  a dead man keeping a promise he made while breathing; a
+//                  Choir knight is a contractor. The Empire lines were being
+//                  put in all three mouths.
+//     Holy       — e and g. Empire holy burns the unclean. Grail holy IS the
+//                  unclean, and mourns it.
+//     Spirit     — e and g.
+//     Construct  — e and d, but "I was built to be struck" fits both, so it
+//                  stays a single tag rule.
+//   Every faction-split tag keeps a plain tag-only rule as a fallback, written
+//   neutrally, because a handful of unit defs carry no `f` at all.
 //
 // FOLLOW-UP (`ok` / `ok_ru`)
 //   What the unit says once the player MOVES IT to where it wanted to be. Same
@@ -125,44 +156,132 @@ const POSITION_BARKS = [
     ],
   },
   {
+    prefers: 'back', actor: { tag: 'Holy', faction: 'e' },
+    lines: [
+      'The blessing dies with me. Put steel where the blows land.',
+      'Mithrail speaks through me, not through my corpse.',
+    ],
+    lines_ru: [
+      'Благословение умрёт вместе со мной. Поставьте под удар другого.',
+      'Митраил говорит через меня, а не через мой труп.',
+    ],
+    ok: [
+      'Now it reaches all of them.',
+      'Good. Let the faithful hear it.',
+    ],
+    ok_ru: [
+      'Теперь оно дойдёт до всех.',
+      'Хорошо. Пусть верные услышат.',
+    ],
+  },
+  {
+    // Grail holy: the same office, the wrong side of it. They bless the dead
+    // because they ARE the dead — no zeal, only duty carried out of habit.
+    prefers: 'back', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'I tend the fallen. I cannot tend them while falling.',
+      'Let me do this from behind. It is all I am still good for.',
+    ],
+    lines_ru: [
+      'Я забочусь о павших. Я не смогу этого, падая сам.',
+      'Позвольте делать это сзади. Больше я ни на что не гожусь.',
+    ],
+    ok: [
+      'Mother sees it done.',
+      'Here I can still work.',
+    ],
+    ok_ru: [
+      'Мать видит, что дело сделано.',
+      'Здесь я ещё пригожусь.',
+    ],
+  },
+  {
+    // Neutral fallback for a Holy unit whose def carries no faction.
+    //
+    // The second line used to be "Faith does not stop a spear" — which is a
+    // holy unit conceding that its god is insufficient, i.e. heresy in its own
+    // mouth. The complaint is now about REACH, not about faith failing: from
+    // the back the blessing covers the whole line, from the front it covers one
+    // corpse.
     prefers: 'back', actor: { tag: 'Holy' },
     lines: [
       'I can shield the line or stand in it. Not both.',
-      'Faith does not stop a spear. Put someone here who can.',
+      'From behind, my faith covers all of them. Here it covers one.',
     ],
     lines_ru: [
       'Я могу защищать строй или стоять в нём. Но не одновременно.',
-      'Вера не остановит копьё. Поставьте сюда того, кто остановит.',
+      'Сзади моя вера укроет всех. Здесь — только одного.',
     ],
     ok: [
       'Then I shield it. Go.',
-      'Steel in front, faith behind. As it should be.',
+      'Now it covers them all.',
     ],
     ok_ru: [
       'Тогда я укрою его. Идите.',
-      'Сталь впереди, вера позади. Как и должно.',
+      'Теперь она укрывает всех.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Vampire' },
     lines: [
       'Astaloth wont see my pain from here.',
-      'I still flinch. Put me where it is not seen.',
+      'Ten years dead, and I still reach for a pulse.',
     ],
     lines_ru: [
       'Отсюда Асталот не увидит мою боль.',
-      'Я всё ещё вздрагиваю. Поставьте туда, где не видно.',
+      'Десять лет мёртв, а всё ищу свой пульс.',
     ],
     ok: [
       'Mother watches over me.',
-      'No one is watching now.',
+      'Here I can be what I am now.',
     ],
     ok_ru: [
       'Мать смотрит за мной.',
-      'Теперь никто не смотрит.',
+      'Здесь я могу быть тем, кто я теперь.',
     ],
   },
   {
+    prefers: 'back', actor: { tag: 'Spirit', faction: 'g' },
+    lines: [
+      'Ten years ago I had a body for this.',
+      'Hold me back. Mother would not want me spent here.',
+    ],
+    lines_ru: [
+      'Десять лет назад у меня было для этого тело.',
+      'Придержите меня. Мать не хотела бы, чтобы меня тратили здесь.',
+    ],
+    ok: [
+      'Here I can last.',
+      'Thank you. I will not fade yet.',
+    ],
+    ok_ru: [
+      'Здесь я продержусь.',
+      'Спасибо. Я ещё не растаю.',
+    ],
+  },
+  {
+    // Empire spirit: a soldier who kept reporting for duty after dying. Still
+    // the Empire register — dutiful and flat, not mournful.
+    prefers: 'back', actor: { tag: 'Spirit', faction: 'e' },
+    lines: [
+      'I stood in the line once. I cannot hold it now.',
+      'What is left of me serves better behind.',
+    ],
+    lines_ru: [
+      'Когда-то я стоял в строю. Теперь мне его не удержать.',
+      'То, что от меня осталось, полезнее сзади.',
+    ],
+    ok: [
+      'Mithrail keeps the line. I keep watch.',
+      'This will serve.',
+    ],
+    ok_ru: [
+      'Митраил держит строй. Я несу дозор.',
+      'Так сгодится.',
+    ],
+  },
+  {
+    // Neutral fallback for a Spirit with no faction on its def.
     prefers: 'back', actor: { tag: 'Spirit' },
     lines: [
       'I am barely here as it is. Do not spend me first.',
@@ -184,20 +303,42 @@ const POSITION_BARKS = [
   {
     prefers: 'back', actor: { tag: 'Court' },
     lines: [
-      'I did not buy this rank to die in the first exchange.',
-      'Others were made for this row. Cheaper ones. Louder ones.',
+      'Read the contract. My name is not in the front rank.',
+      'Rhaa sollan ti — my part was bought, and it is not this one.',
     ],
     lines_ru: [
-      'Я покупал не тот чин, чтобы погибнуть при первом же размене.',
-      'Для этого ряда созданы другие. Подешевле. Погромче.',
+      'Перечитайте договор. Моего имени в первом ряду нет.',
+      'Рхаа соллан ти — мою партию купили, и она не эта.',
     ],
     ok: [
-      'Now the terms suit me.',
-      'Let the cheap ones earn their keep.',
+      'Now the terms are honoured.',
+      'Now I sing the part I was paid for.',
     ],
     ok_ru: [
-      'Вот теперь условия меня устраивают.',
-      'Пусть дешёвые отрабатывают своё.',
+      'Вот теперь условия соблюдены.',
+      'Теперь я пою ту партию, за которую заплачено.',
+    ],
+  },
+  {
+    // The Choir proper — the singers, not the buyers. Where the Court quotes
+    // contracts, these quote scripture, and half of it is in a tongue the
+    // player is not meant to understand.
+    prefers: 'back', actor: { tag: 'Choir' },
+    lines: [
+      'Vaa moreth an-suul... not from this corner.',
+      'The First Song needs room to swell. Give it room.',
+    ],
+    lines_ru: [
+      'Ваа морет ан-суул... только не из этого угла.',
+      'Первой Песни нужно место, чтобы разрастись. Дайте его.',
+    ],
+    ok: [
+      'Vaa moreth an-suul. Yes.',
+      'Now it swells.',
+    ],
+    ok_ru: [
+      'Ваа морет ан-суул. Да.',
+      'Теперь она разрастается.',
     ],
   },
   {
@@ -212,7 +353,7 @@ const POSITION_BARKS = [
     ],
     ok: [
       'Now they will hear every word.',
-      'Here. Yes. HERE.',
+      'Да.',
     ],
     ok_ru: [
       'Теперь они услышат каждое слово.',
@@ -244,7 +385,7 @@ const POSITION_BARKS = [
   // WANTS THE FRONT COLUMN — parked in the back, out of reach
   // ===========================================================================
   {
-    prefers: 'front', actor: { tag: 'Knight' },
+    prefers: 'front', actor: { tag: 'Knight', faction: 'e' },
     lines: [
       'The oath was to protect at all cost.',
       'Their kind should not exist. Let me begin.',
@@ -255,11 +396,73 @@ const POSITION_BARKS = [
     ],
     ok: [
       'Now I can keep it.',
-      'Good. I begin here.',
+      'Mithrail wills it. I begin here.',
     ],
     ok_ru: [
       'Теперь я смогу её сдержать.',
-      'Хорошо. Начну отсюда.',
+      'На то воля Митраила. Начну отсюда.',
+    ],
+  },
+  {
+    // Grail knight — skeleton knights and the like. Same oath, sworn while they
+    // still had a pulse, and kept out of habit rather than zeal.
+    prefers: 'front', actor: { tag: 'Knight', faction: 'g' },
+    lines: [
+      'I swore this while I was still breathing. It still holds.',
+      'Put me in front. I have already died once.',
+    ],
+    lines_ru: [
+      'Я клялся, когда ещё дышал. Клятва в силе.',
+      'Поставьте меня вперёд. Я уже умирал однажды.',
+    ],
+    ok: [
+      'Mother heard it. It holds.',
+      'Let it be quicker this time.',
+    ],
+    ok_ru: [
+      'Мать её слышала. Она в силе.',
+      'Пусть в этот раз будет быстрее.',
+    ],
+  },
+  {
+    // Choir knight — the Black Castellan and company. A knight by contract, not
+    // by vow: he is here because the terms say front rank pays better.
+    prefers: 'front', actor: { tag: 'Knight', faction: 'd' },
+    lines: [
+      'My terms say front rank. Honour them.',
+      'I am owed a place where the blood is.',
+    ],
+    lines_ru: [
+      'По моим условиям — первый ряд. Соблюдайте их.',
+      'Мне причитается место, где есть кровь.',
+    ],
+    ok: [
+      'The terms are met.',
+      'The Song is paid. Now I collect.',
+    ],
+    ok_ru: [
+      'Условия соблюдены.',
+      'Песнь оплачена. Теперь я взыщу.',
+    ],
+  },
+  {
+    // Neutral fallback for a Knight with no faction on its def.
+    prefers: 'front', actor: { tag: 'Knight' },
+    lines: [
+      'Put me in the front line.',
+      'I cannot reach a thing from here.',
+    ],
+    lines_ru: [
+      'Поставьте меня в первый ряд.',
+      'Отсюда я ни до кого не дотянусь.',
+    ],
+    ok: [
+      'Now I can reach them.',
+      'Better.',
+    ],
+    ok_ru: [
+      'Теперь я до них дотянусь.',
+      'Так лучше.',
     ],
   },
   {
@@ -301,7 +504,26 @@ const POSITION_BARKS = [
     ],
   },
   {
-    prefers: 'front', actor: { tag: 'Holy' },
+    prefers: 'front', actor: { tag: 'Holy', faction: 'g' },
+    lines: [
+      'Let me stand where they fall. I know that place.',
+      'I have been dead. It holds nothing for me now.',
+    ],
+    lines_ru: [
+      'Дайте встать там, где они падают. Мне это место знакомо.',
+      'Я уже был мёртв. Теперь в этом нет ничего страшного.',
+    ],
+    ok: [
+      'Then let them come.',
+      'Mother is watching. I am ready.',
+    ],
+    ok_ru: [
+      'Пусть теперь приходят.',
+      'Мать смотрит. Я готов.',
+    ],
+  },
+  {
+    prefers: 'front', actor: { tag: 'Holy', faction: 'e' },
     lines: [
       'Let me see what passes for fury among their kind!',
       'Let my faith be our shield!',
@@ -339,6 +561,25 @@ const POSITION_BARKS = [
     ],
   },
   {
+    prefers: 'front', actor: { tag: 'Choir' },
+    lines: [
+      'The First Song is sung at the throat, not from the back of the room.',
+      'Sollaa ver miin — closer. CLOSER.',
+    ],
+    lines_ru: [
+      'Первую Песнь поют у горла, а не из глубины зала.',
+      'Соллаа вер миин — ближе. БЛИЖЕ.',
+    ],
+    ok: [
+      'Now it is sung properly.',
+      'Sollaa ver miin. Yes.',
+    ],
+    ok_ru: [
+      'Вот теперь она спета как надо.',
+      'Соллаа вер миин. Да.',
+    ],
+  },
+  {
     prefers: 'front', actor: { tag: 'Zombie' },
     lines: [
       'Forward... not... here...',
@@ -368,11 +609,11 @@ const POSITION_BARKS = [
       'Поставьте меня в первый ряд. Пусть тупят клинки.',
     ],
     ok: [
-      'Let them try to break it.',
+      'Mother keeps the rest of me safe.',
       'Their blades will dull on me.',
     ],
     ok_ru: [
-      'Пусть попробуют сломать.',
+      'Остальное Мать хранит.',
       'Их клинки затупятся об меня.',
     ],
   },
@@ -440,6 +681,13 @@ function ruleScore(rule, def) {
   if (f.name != null) {
     if (def?.name !== f.name) return -1;
     score += 100;
+  }
+  if (f.faction != null) {
+    // A unit def with no `f` can never satisfy a faction rule — it falls through
+    // to the neutral tag rule instead of being handed someone else's voice.
+    const wanted = Array.isArray(f.faction) ? f.faction : [f.faction];
+    if (!def?.f || !wanted.includes(def.f)) return -1;
+    score += 3;
   }
   if (f.tag != null) {
     if (!tags.includes(f.tag)) return -1;
