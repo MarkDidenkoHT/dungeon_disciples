@@ -619,7 +619,18 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-shrink: 0;
   border-top: none;
+  /* Must use the SAME height source as #shell (see the comment there). This was
+     10vh, and vh is the large viewport — it ignores the Telegram/browser chrome
+     that #shell's --tg-viewport-stable-height accounts for. The nav therefore
+     measured 10% of a taller box than the one it lives in, and ran off the
+     bottom of the visible area. Each line overrides the one above where
+     supported, mirroring #shell exactly. */
   height: 10vh;
+  height: 10dvh;
+  height: calc(var(--tg-viewport-stable-height, 100dvh) * 0.1);
+  /* A floor so the icons stay legible on a short viewport, where 10% of the
+     height is not enough to draw the nav art. */
+  min-height: 52px;
 }
 
 .nav-btn {
@@ -4926,17 +4937,13 @@ button:active:not(:disabled) { opacity: 0.75; }
    wide viewport, and the aspect ratio then gives back the extra height. */
 .castle-grid-wrap {
   position: relative;
-  /* Width-driven, not height-driven. A fixed 150px row cap used to stop the grid
-     at ~460px tall no matter how much room the grounds had, and the leftover
-     (a third of the screen on a tall phone) went to dead space above and below.
-     The grid now takes the full width it is allowed and derives its height from
-     the node art's 100x160 proportion, so each cell still matches the art
-     exactly — no letterboxing inside the nodes, no slack outside them. */
-  width: 100%;
-  height: auto;
+  height: 100%;
+  width: auto;
   aspect-ratio: 5 / 8;
-  /* Only bites on a short/wide viewport, where the ratio would overflow. */
-  max-height: 100%;
+  /* Three 150px rows plus the two gaps: the grid stops growing where the nodes
+     do, instead of stretching and leaving slack inside each cell. */
+  max-height: calc(150px * 3 + 8px);
+  max-width: min(360px, 100%);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4955,11 +4962,11 @@ button:active:not(:disabled) { opacity: 0.75; }
      framed image underneath it was just a smaller frame inside the first. */
   background-color: var(--bg);
   /* The grid row IS the size now; a min-height here would put the overflow back.
-     No max-height either — the wrap's aspect-ratio already keeps every cell at
-     the art's 5/8 proportion, and capping the row just recreated the dead space
-     above and below the castle. */
+     A MAX height is different: it stops the nodes stretching on a tall screen,
+     and 152px is the 160 that fit, less the 5% trim. */
   min-height: 0;
   min-width: 0;
+  max-height: 150px;
 }
 
 /* An empty slot is the SAME object as an occupied one with nothing in it, so it
@@ -4992,6 +4999,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   z-index: 2;
   min-height: 0;
+  max-height: 150px;
 }
 
 .castle-node {
