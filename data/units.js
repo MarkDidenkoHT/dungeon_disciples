@@ -477,7 +477,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+      damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
       xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
@@ -1134,7 +1134,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 55, passive: ['renew 1', 'field_medic 1'], ability: 'prayer_of_healing 1',
     },
     templar: {
@@ -1167,7 +1167,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 300, passive: ['renew 1','field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
@@ -1178,7 +1178,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 800, passive: ['renew 1', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     apprentice: {
@@ -1637,7 +1637,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 12, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 360, passive: ['horde 1', 'regenerate 1'], ability: null,
     },
     blightwalker: {
@@ -1648,7 +1648,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'Mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 25, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 900, passive: ['horde 1', 'regenerate 1', 'undying 1'], ability: null,
     },
     adept: {
@@ -1703,7 +1703,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 12, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 360, passive: ['unending_servitude 1', 'reanimate 1', 'horde 1'], ability: 'raise_dead 1',
     },
     death_lord: {
@@ -1714,7 +1714,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 400, passive: ['unending_servitude 1', 'reanimate 2', 'horde 1'], ability: 'raise_dead 2',
     },
     plague_scholar: {
@@ -1967,7 +1967,7 @@ const UNITS = {
       hp: 50, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 6, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 5, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
       xp: 300, passive: ['fear 1', 'unending_servitude 1', 'eternal_grief 1'], ability: null,
     },
     pale_abbess: {
@@ -1978,7 +1978,7 @@ const UNITS = {
       hp: 55, armor: 20, initiative: 50,
       resistances: { air: 20, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 9, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
       xp: 800, passive: ['fear 2', 'unending_servitude 1', 'eternal_grief 1'], ability: null,
     },
     pale_matriarch: {
@@ -2125,7 +2125,7 @@ const UNITS = {
         hp: 40, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 100, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
@@ -2136,7 +2136,7 @@ const UNITS = {
         hp: 50, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 15, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 400, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
       high_keeper: {
@@ -2147,7 +2147,7 @@ const UNITS = {
         hp: 60, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 900, passive: 'vitality 2', ability: 'infernal_mandate 1',
       },
       crimson_scout: {
@@ -2384,7 +2384,7 @@ const UNITS = {
         hp: 55, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+        damage_source: 'physical', action_power: 14, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
         xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
@@ -2395,7 +2395,7 @@ const UNITS = {
         hp: 65, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+        damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
         xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
       },
       wailing_ghost: {

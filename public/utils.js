@@ -784,6 +784,14 @@ export function openSheet(title, bodyHtml, badgesHtml = '') {
   document.body.style.overflow = 'hidden';
 }
 
+// Retitle a sheet that is already open. Sheets are opened before their content
+// has loaded, so a sheet whose title IS its content (the errand sheet is named
+// after the errand) has to set it once it knows.
+export function setSheetTitle(title) {
+  const el = _sheetEl?.querySelector('.modal-title-text');
+  if (el) el.textContent = title;
+}
+
 // Anything that decorates the screen while the sheet is open (the roster's
 // trophy bar) registers here. The sheet is hidden by toggling a class rather
 // than being removed, so watching the DOM for its removal never fires.

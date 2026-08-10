@@ -1,5 +1,5 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
+import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
@@ -43,7 +43,9 @@ function untilText(iso) {
 // and the text the bottom, so the three of them cost the vertical space of the
 // image alone. Art lives in /assets/icons/errands and is authored separately, so
 // a missing file drops back to plain text rather than leaving a broken image.
-function errandHeaderHtml(def, title, desc) {
+// The name is set on the SHEET HEADER (setSheetTitle) rather than drawn over the
+// art, so it is not printed twice; the description keeps the foot of the image.
+function errandHeaderHtml(def, desc) {
   const art = def?.art
     ? `<img class="errand-art-img" src="/assets/icons/errands/${def.art}" alt=""
             onerror="this.closest('.errand-header').classList.add('errand-header--noart')">`
@@ -51,7 +53,6 @@ function errandHeaderHtml(def, title, desc) {
   return `
     <div class="errand-header ${art ? '' : 'errand-header--noart'}">
       ${art}
-      <div class="errand-title">${title}</div>
       ${desc ? `<p class="errand-desc">${desc}</p>` : ''}
     </div>`;
 }
@@ -117,9 +118,12 @@ export async function openErrandsSheet(player) {
       // `granted` is whatever the edge function actually awarded; fall back to
       // the reward that was promised at start if it wrote nothing.
       const shown = done.granted || done.reward || {};
+      // The errand is over, so the header says so and the errand's own name goes
+      // in the line under the art with whoever ran it.
+      setSheetTitle(T('backHome'));
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandHeaderHtml(def, T('backHome'),
+          ${errandHeaderHtml(def,
             `${done.unit_name ? `<strong>${done.unit_name}</strong> — ` : ''}${def?.title?.[lang] ?? done.errand_id}`)}
           <div class="errand-section-label">${T('gained')}</div>
           <div class="errand-chips">${rewardHtml(shown)}</div>
@@ -143,9 +147,10 @@ export async function openErrandsSheet(player) {
     if (active) {
       const def  = ERRANDS_BY_ID[active.errand_id];
       const left = active.ends_at ? untilText(active.ends_at) : null;
+      setSheetTitle(def?.title?.[lang] ?? active.errand_id);
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandHeaderHtml(def, def?.title?.[lang] ?? active.errand_id, def?.desc?.[lang] ?? '')}
+          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
           <div class="errand-away">
             <span class="errand-away-who">${active.unit_name ?? ''}</span>
             <span class="errand-away-state">${left ? `${T('returns')} ${left}` : T('away')}</span>
@@ -172,9 +177,10 @@ export async function openErrandsSheet(player) {
       // which is the whole explanation the sheet needs to give.
       const chosenTags = state.offer.candidate_tags?.[String(chosen)] ?? [];
 
+      setSheetTitle(def?.title?.[lang] ?? state.offer.errand_id);
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandHeaderHtml(def, def?.title?.[lang] ?? state.offer.errand_id, def?.desc?.[lang] ?? '')}
+          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
 
           <div class="errand-parts">
             ${parts.map(p => `
@@ -239,9 +245,10 @@ export async function openErrandsSheet(player) {
       return;
     }
 
-    // 4. Nothing to do.
+    // 4. Nothing to do. No errand to name, so the header keeps the generic one.
+    setSheetTitle(T('title'));
     body.innerHTML = `
-      <div class="errand-sheet">
+      <div class="errand-sheet errand-sheet--padded">
         <div class="errand-title">${T('none')}</div>
         <p class="errand-desc">${T('noneDesc')}</p>
       </div>`;

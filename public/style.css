@@ -919,7 +919,18 @@ button:active:not(:disabled) { opacity: 0.75; }
   .res-bar-errands--ready { animation: none; filter: drop-shadow(0 0 5px var(--accent)); }
 }
 
-.errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+/* No padding on the sheet: the art is meant to run edge to edge. The rows that
+   DO need breathing room carry their own inline padding (see .errand-parts /
+   .errand-durations), and the text-only empty state opts back in. */
+.errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 0; }
+.errand-sheet--padded { padding: 10px; }
+/* Everything that is not the art keeps the inset the sheet used to give it. */
+.errand-sheet > .errand-btn,
+.errand-sheet > .errand-chips,
+.errand-sheet > .errand-section-label,
+.errand-sheet > .errand-away,
+.errand-sheet > .errand-track-wrap { margin-left: 10px; margin-right: 10px; }
+.errand-header--noart { padding: 0 10px; }
 .errand-title { font-size: 1rem; font-weight: 700; color: var(--accent); }
 .errand-desc  { font-size: 0.82rem; color: var(--text); line-height: 1.45; margin: 0; opacity: 0.9; }
 .errand-section-label {
@@ -954,21 +965,17 @@ button:active:not(:disabled) { opacity: 0.75; }
   max-height: 200px;
   object-fit: cover;
 }
-.errand-header .errand-title,
+/* The description rides the foot of the art over a scrim, so it costs no height
+   of its own. The errand's NAME is the sheet header (setSheetTitle) and is not
+   drawn here — printing it twice was the whole problem. */
 .errand-header .errand-desc {
   position: absolute;
   left: 0;
   right: 0;
+  bottom: 0;
   margin: 0;
   padding: 6px 8px;
   z-index: 1;
-}
-.errand-header .errand-title {
-  top: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-}
-.errand-header .errand-desc {
-  bottom: 0;
   font-size: 0.68rem;
   background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
 }
@@ -977,7 +984,6 @@ button:active:not(:disabled) { opacity: 0.75; }
    sit on, so the block falls back to plain stacked text. */
 .errand-header--noart { width: 100%; border: none; }
 .errand-header--noart .errand-art-img { display: none; }
-.errand-header--noart .errand-title,
 .errand-header--noart .errand-desc {
   position: static;
   background: none;
@@ -987,7 +993,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* The two tag halves sit SIDE BY SIDE — they are alternatives, and a column read
    as a list of things you get. Each is dimmed until the selected unit actually
    carries that tag, so picking who goes lights up what they bring. */
-.errand-parts { display: flex; flex-direction: row; gap: 6px; }
+.errand-parts { display: flex; flex-direction: row; gap: 6px; padding: 0 10px; }
 .errand-part {
   flex: 1;
   display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 5px;
@@ -1007,7 +1013,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* Longer trips pay more per errand and less per hour, so the multiplier is
    shown on the button — the trade has to be visible to be a choice. */
-.errand-durations { display: flex; gap: 6px; }
+.errand-durations { display: flex; gap: 6px; padding: 0 10px; }
 .errand-duration {
   flex: 1; display: flex; flex-direction: row; align-items: center;
   justify-content: center; gap: 4px;
