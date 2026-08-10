@@ -924,12 +924,13 @@ button:active:not(:disabled) { opacity: 0.75; }
    .errand-durations), and the text-only empty state opts back in. */
 .errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 0; }
 .errand-sheet--padded { padding: 10px; }
-/* Everything that is not the art keeps the inset the sheet used to give it. */
+/* Everything that is not the art or the track keeps the inset the sheet used to
+   give it. The track is a scroll strip and stays full width — insetting it just
+   stops the cards short of the edge. */
 .errand-sheet > .errand-btn,
 .errand-sheet > .errand-chips,
 .errand-sheet > .errand-section-label,
-.errand-sheet > .errand-away,
-.errand-sheet > .errand-track-wrap { margin-left: 10px; margin-right: 10px; }
+.errand-sheet > .errand-away { margin-left: 10px; margin-right: 10px; }
 .errand-header--noart { padding: 0 10px; }
 .errand-title { font-size: 1rem; font-weight: 700; color: var(--accent); }
 .errand-desc  { font-size: 0.82rem; color: var(--text); line-height: 1.45; margin: 0; opacity: 0.9; }
@@ -938,11 +939,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted); margin-top: 2px;
 }
 .errand-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.errand-reward-chip {
-  font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
-  background: color-mix(in srgb, #6fcf97 15%, transparent);
-  color: #6fcf97; border: 1px solid #6fcf9740;
-}
+/* No pill: the resource icon carries the chip now, and a border and green fill
+   around it was framing art that already reads on its own. */
+.errand-reward-chip { font-size: 0.7rem; font-weight: 700; padding: 3px 9px; }
 /* Errand art. Wide banner rather than a square icon: it sits above the title and
    sets the scene, and it is cropped rather than letterboxed so art of slightly
    different proportions still fills the strip. */
@@ -997,7 +996,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .errand-part {
   flex: 1;
   display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 5px;
-  padding: 6px 5px; border-radius: 8px;
+  border-radius: 8px;
   border: 1px solid var(--border); background: rgba(255,255,255,0.03);
   opacity: 0.55;
 }
@@ -1006,10 +1005,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   background: rgba(200,151,58,0.10);
 }
-/* Reward chips carry resource art now, so the icon has to sit on the text
-   baseline instead of stretching the chip. */
+/* Reward chips carry resource art at its normal .res-icon-img size — same as
+   the resource strip — so the chip only has to line the icon up with the text. */
 .errand-reward-chip { display: inline-flex; align-items: center; gap: 3px; }
-.errand-reward-chip .res-icon-img { width: 14px; height: 14px; object-fit: contain; }
 
 /* Longer trips pay more per errand and less per hour, so the multiplier is
    shown on the button — the trade has to be visible to be a choice. */
