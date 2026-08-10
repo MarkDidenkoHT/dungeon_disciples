@@ -215,6 +215,15 @@ const BUILDING_POOLS = {
       // which is what this half of the line is for.
       { id: 'pale_votaress_chantry', label: 'Pale Votaress Chantry', category: 'barracks', tier: 2, unit_id: 'gs72',  upgrades: ['pale_abbess_chantry'],   cost: { gold: 100 } },
       { id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry',   category: 'barracks', tier: 3, unit_id: 'gs721', upgrades: [] },
+      // Mother's Tear line. A font is the basin the tears are collected in.
+      { id: 'mothers_tear_font',     label: "Mother's Tear Font",    category: 'barracks', tier: 1, unit_id: 'gs8',   upgrades: ['mothers_sorrow_font', 'mothers_vigil_reliquary'], cost: { gold: 50 } },
+      // The greedy branch — vitality, it just drinks deeper.
+      { id: 'mothers_sorrow_font',   label: "Mother's Sorrow Font",  category: 'barracks', tier: 2, unit_id: 'gs81',  upgrades: ['mothers_grief_font'], cost: { gold: 100 } },
+      { id: 'mothers_grief_font',    label: "Mother's Grief Font",   category: 'barracks', tier: 3, unit_id: 'gs811', upgrades: [], cost: { gold: 200 } },
+      // The protective branch — a reliquary shelters what it holds, which is
+      // what the nature resist aura does for the horde around it.
+      { id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary",  category: 'barracks', tier: 2, unit_id: 'gs82',  upgrades: ['mothers_shroud_reliquary'], cost: { gold: 100 } },
+      { id: 'mothers_shroud_reliquary', label: "Mother's Shroud Reliquary", category: 'barracks', tier: 3, unit_id: 'gs821', upgrades: [], cost: { gold: 200 } },
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
@@ -377,6 +386,10 @@ const UNIT_UPGRADE_PATHS = {
            { unit_id: 'gs72',  building_id: 'pale_votaress_chantry', label: 'Pale Votaress Chantry' }],
     gs71: [{ unit_id: 'gs711', building_id: 'pale_matriarch_barrow', label: 'Pale Matriarch Barrow' }],
     gs72: [{ unit_id: 'gs721', building_id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry' }],
+    gs8:  [{ unit_id: 'gs81',  building_id: 'mothers_sorrow_font',      label: "Mother's Sorrow Font" },
+           { unit_id: 'gs82',  building_id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary" }],
+    gs81: [{ unit_id: 'gs811', building_id: 'mothers_grief_font',       label: "Mother's Grief Font" }],
+    gs82: [{ unit_id: 'gs821', building_id: 'mothers_shroud_reliquary', label: "Mother's Shroud Reliquary" }],
   },
 };
 

@@ -2003,9 +2003,9 @@ const UNITS = {
       damage_source: 'death', action_power: 8,
       xp: 125, passive: ['horde 1', 'lifesteal 1'], ability: 'mothers_blessing 1',
     },
-    mothers_tear1: {
+    mothers_sorrow: {
       id: 'gs81', f: 'g', t: 2,
-      name: '',
+      name: "Mother's Sorrow",
       tags: ['Zombie', 'Vampire'],
       size: 'tile',
       hp: 50, armor: 5, initiative: 30,
@@ -2014,9 +2014,9 @@ const UNITS = {
       damage_source: 'death', action_power: 12,
       xp: 450, passive: ['horde 1', 'lifesteal 1', 'vitality 1'], ability: 'mothers_blessing 1',
     },
-    mothers_tear11: {
+    mothers_grief: {
       id: 'gs811', f: 'g', t: 3,
-      name: '',
+      name: "Mother's Grief",
       tags: ['Zombie', 'Vampire'],
       size: 'tile',
       hp: 60, armor: 5, initiative: 30,
@@ -2025,9 +2025,9 @@ const UNITS = {
       damage_source: 'death', action_power: 16,
       xp: 1000, passive: ['horde 1', 'lifesteal 1', 'vitality 2'], ability: 'mothers_blessing 1',
     },
-    mothers_tear2: {
+    mothers_vigil: {
       id: 'gs82', f: 'g', t: 2,
-      name: '',
+      name: "Mother's Vigil",
       tags: ['Zombie', 'Vampire'],
       size: 'tile',
       hp: 50, armor: 5, initiative: 30,
@@ -2036,9 +2036,9 @@ const UNITS = {
       damage_source: 'death', action_power: 12,
       xp: 450, passive: ['horde 1', 'lifesteal 1', 'resist_aura_nature 1'], ability: 'mothers_blessing 1',
     },
-    mothers_tear21: {
+    mothers_shroud: {
       id: 'gs821', f: 'g', t: 3,
-      name: '',
+      name: "Mother's Shroud",
       tags: ['Zombie', 'Vampire'],
       size: 'tile',
       hp: 60, armor: 5, initiative: 30,
