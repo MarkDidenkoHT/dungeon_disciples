@@ -74,8 +74,8 @@ const ERRANDS = [
   {
     id: 'emp_gate_watch', faction: 'empire', art: 'empire_errand_1.jpg',
     title: { en: 'Watch on the Low Gate',        ru: 'Стража у Нижних врат' },
-    desc:  { en: 'The low gate has stood unmanned since the levy marched. Stand it, and the quarter sleeps.',
-             ru: 'Нижние врата пусты с тех пор, как ополчение ушло. Постойте там — и квартал будет спать спокойно.' },
+    desc:  { en: 'The low gate has had no one on it since the levy marched out. Stand there a while and the whole quarter sleeps easier.',
+             ru: 'С ухода ополчения у Нижних врат никто не стоит. Постойте там — и весь квартал будет спать спокойнее.' },
     parts: [
       { tag: 'Knight',    reward: { xp_self: PART_XP } },
       { tag: 'Construct', reward: { resources: { Gold: PART_GOLD } } },
@@ -84,8 +84,8 @@ const ERRANDS = [
   {
     id: 'emp_armoury_commission', faction: 'empire', art: 'empire_errand_2.jpg',
     title: { en: "The Armoury's Commission",     ru: 'Заказ оружейной' },
-    desc:  { en: 'The armoury is behind on a crown order and paying anyone who can hold a file steady.',
-             ru: 'Оружейная не поспевает с королевским заказом и платит любому, кто твёрдо держит напильник.' },
+    desc:  { en: 'The armoury is late on a crown order and paying good coin to anyone whose hands do not shake.',
+             ru: 'Оружейная не поспевает с королевским заказом и щедро платит всякому, у кого не дрожат руки.' },
     parts: [
       { tag: 'Engineer', reward: { resources: { Gold: PART_GOLD } } },
       { tag: 'Spirit',   reward: { xp_self: PART_XP } },
@@ -93,9 +93,9 @@ const ERRANDS = [
   },
   {
     id: 'emp_prayer_to_mithrail', faction: 'empire', art: 'empire_errand_3.jpg',
-    title: { en: 'Prayer to Mithrail',           ru: 'Молитва Митраилю' },
-    desc:  { en: 'The dawn office needs a voice that carries and a hand that can hold the light steady through it.',
-             ru: 'Рассветной службе нужен голос, который слышно, и рука, что удержит свет до конца.' },
+    title: { en: 'Prayer to Mithrail',           ru: 'Молитва Митраилу' },
+    desc:  { en: 'The dawn service needs a voice that carries to the back of the nave, and a hand steady enough to hold the light through all of it.',
+             ru: 'Рассветной службе нужен голос, слышный до последнего ряда, и рука, что удержит свет до конца обряда.' },
     parts: [
       { tag: 'Caster', reward: { xp_self: PART_XP } },
       { tag: 'Holy',   reward: { resources: { Crystals_Life: PART_CRYST } } },
@@ -106,8 +106,8 @@ const ERRANDS = [
   {
     id: 'cho_forge_vigil', faction: 'choir_of_the_cursed', art: 'choir_errand_1.jpg',
     title: { en: 'Vigil at the Forge Mouth',     ru: 'Бдение у зева горна' },
-    desc:  { en: 'The great forge cannot be banked and cannot be left. Stand where nothing else can stand.',
-             ru: 'Великий горн нельзя ни притушить, ни оставить. Встаньте там, где не выстоит никто другой.' },
+    desc:  { en: 'The great forge cannot be damped down and cannot be left alone. Stand where nothing else would last an hour.',
+             ru: 'Великий горн нельзя ни притушить, ни оставить без присмотра. Встаньте там, где другой не выдержал бы и часа.' },
     parts: [
       { tag: 'Demon',     reward: { xp_self: PART_XP } },
       { tag: 'Construct', reward: { resources: { Gold: PART_GOLD } } },
@@ -116,8 +116,8 @@ const ERRANDS = [
   {
     id: 'cho_throne_song', faction: 'choir_of_the_cursed', art: 'choir_errand_2.jpg',
     title: { en: 'A Song in the Throne Room',    ru: 'Песнь в тронном зале' },
-    desc:  { en: 'The court wants the old verse sung where it was written. Sing it badly and the court remembers.',
-             ru: 'Двор желает услышать старый стих там, где он был написан. Спойте плохо — двор запомнит.' },
+    desc:  { en: 'The court wants the old verse sung in the room where it was written. Sing it badly and the court will remember you for it.',
+             ru: 'Двор желает услышать старый стих в том самом зале, где его написали. Спойте скверно — двор этого не забудет.' },
     parts: [
       { tag: 'Choir', reward: { xp_self: PART_XP } },
       { tag: 'Court', reward: { resources: { Crystals_Fire: PART_CRYST } } },
@@ -126,8 +126,8 @@ const ERRANDS = [
   {
     id: 'cho_gifts_of_aggrail', faction: 'choir_of_the_cursed', art: 'choir_errand_3.jpg',
     title: { en: 'Gather the Gifts of Aggrail',  ru: 'Собрать дары Агграила' },
-    desc:  { en: 'What the faithful leave at the shrines is owed upward. Collect it, and count it honestly.',
-             ru: 'Оставленное верующими у святилищ принадлежит выше. Соберите — и сочтите честно.' },
+    desc:  { en: 'Whatever the faithful leave at the shrines belongs higher up. Collect it, carry it back, and count it honestly.',
+             ru: 'Всё, что верующие оставляют у святилищ, принадлежит тем, кто выше. Соберите, принесите и сочтите честно.' },
     parts: [
       { tag: 'Caster',  reward: { resources: { Gold: PART_GOLD } } },
       { tag: 'Warrior', reward: { xp_self: PART_XP } },
@@ -138,8 +138,8 @@ const ERRANDS = [
   {
     id: 'gra_tend_the_fallen', faction: 'grail_of_sorrow', art: 'grail_errand_1.jpg',
     title: { en: 'Tend to the Fallen',           ru: 'Позаботиться о павших' },
-    desc:  { en: 'Carry the fallen to the house of rot before the sun does the work badly. It is heavy, and nobody thanks you.',
-             ru: 'Отнесите павших в дом гнили, прежде чем солнце сделает это скверно. Ноша тяжела, и никто не поблагодарит.' },
+    desc:  { en: 'The fallen must reach the house of rot before the sun gets to them first. It is heavy work, and no one will thank you for it.',
+             ru: 'Павших нужно донести до дома гнили раньше, чем до них доберётся солнце. Работа тяжёлая, и никто за неё не поблагодарит.' },
     parts: [
       { tag: 'Zombie', reward: { xp_self: PART_XP } },
       { tag: 'Knight', reward: { resources: { Gold: PART_GOLD } } },
@@ -148,8 +148,8 @@ const ERRANDS = [
   {
     id: 'gra_lost_souls', faction: 'grail_of_sorrow', art: 'grail_errand_2.jpg',
     title: { en: 'Help the Lost Souls Home',     ru: 'Проводить заблудшие души' },
-    desc:  { en: 'They are still walking the road they died on. Someone has to go out and tell them the way.',
-             ru: 'Они всё ещё бредут дорогой, на которой умерли. Кто-то должен выйти и указать им путь.' },
+    desc:  { en: 'They are still walking the road they died on, back and forth, and they will not stop until someone goes out and shows them the way home.',
+             ru: 'Они всё ещё бродят по дороге, на которой погибли, и не остановятся, пока кто-нибудь не выйдет и не укажет им путь домой.' },
     parts: [
       { tag: 'Spirit', reward: { xp_self: PART_XP } },
       { tag: 'Caster', reward: { resources: { Crystals_Death: PART_CRYST } } },
@@ -158,8 +158,8 @@ const ERRANDS = [
   {
     id: 'gra_fill_the_chalice', faction: 'grail_of_sorrow', art: 'grail_errand_3.jpg',
     title: { en: 'Fill the Lesser Chalice',      ru: 'Наполнить малую чашу' },
-    desc:  { en: 'The rite needs a full chalice by dawn, and someone who can take it from another and still walk home.',
-             ru: 'К рассвету обряду нужна полная чаша — и тот, кто возьмёт её у другого и сам дойдёт домой.' },
+    desc:  { en: 'The rite needs a full chalice by dawn — and someone who can take that much from another and still walk home on their own feet.',
+             ru: 'К рассвету обряду нужна полная чаша — и тот, кто возьмёт столько у другого и сам вернётся домой на своих ногах.' },
     parts: [
       { tag: 'Vampire', reward: { resources: { Gold: PART_GOLD } } },
       { tag: 'Holy',    reward: { xp_self: PART_XP } },

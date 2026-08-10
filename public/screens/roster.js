@@ -115,11 +115,12 @@ const RT = {
 // Each faction petitions its own god. The mechanic is identical — only the name
 // changes — so this is presentation, not behaviour.
 const FAVOR_LABELS = {
-  // Dative case in RU — the prayer is addressed TO the god:
-  // Митраил → Митраилю, Агграил → Агграилю, Асталот → Асталоту.
-  empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилю' },
-  choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилю' },
-  grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталоту' },
+  // Dative case in RU — the prayer is addressed TO the god. Hard stem, so the
+  // ending is -у: Митраил → Митраилу, Агграил → Агграилу. Асталот is FEMININE
+  // and does not decline at all — «Плач Асталот», never «Асталоту».
+  empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилу' },
+  choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилу' },
+  grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталот' },
 };
 const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
 

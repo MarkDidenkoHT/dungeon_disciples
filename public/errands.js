@@ -1,5 +1,5 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, resolveUnitDef } from './utils.js';
+import { openSheet, getSheetBody, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
@@ -15,9 +15,6 @@ const ET = {
   noneDesc:    { en: 'No errand is waiting. Come back tomorrow — or free up a unit, if the one you sent is still away.',
                  ru: 'Поручений нет. Возвращайтесь завтра — или дождитесь того, кого уже отправили.' },
   reward:      { en: 'Reward',                 ru: 'Награда' },
-  // The requirement is not spelled out any more — the roster track below IS the
-  // answer, and it is filtered to exactly the units that qualify.
-  sendWho:     { en: 'Units capable of this errand', ru: 'Кто справится с поручением' },
   send:        { en: 'Send',                   ru: 'Отправить' },
   sending:     { en: 'Sending…',               ru: 'Отправляем…' },
   away:        { en: 'Away',                   ru: 'В пути' },
@@ -29,9 +26,6 @@ const ET = {
   xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
   hours:       { en: 'h',                      ru: 'ч' },
   brings:      { en: 'brings',                 ru: 'принесёт' },
-  bothTags:    { en: 'A unit with both tags brings both halves.',
-                 ru: 'Кто носит оба тега — принесёт обе половины.' },
-  howLong:     { en: 'How long?',               ru: 'Насколько?' },
   failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
 };
 
@@ -58,12 +52,21 @@ function errandArtHtml(def) {
     </div>`;
 }
 
+// Gold and crystals use the SAME icons as the resource strip, so a reward reads
+// as "that thing at the top of my screen" without translating a word. XP has no
+// resource icon — it is not a resource — so it keeps its short label.
+function resourceIcon(key) {
+  return key === 'Gold' ? GOLD_ICON : (CRYSTAL_ICONS[key] ?? '');
+}
+
 function rewardHtml(reward = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
   if (reward.xp_roster) bits.push(`<span class="errand-reward-chip">+${reward.xp_roster} ${T('xpRoster')}</span>`);
   for (const [item, amount] of Object.entries(reward.resources || {})) {
-    bits.push(`<span class="errand-reward-chip">+${amount} ${item.replace('Crystals_', '')}</span>`);
+    const icon = resourceIcon(item);
+    bits.push(`<span class="errand-reward-chip" title="${item.replace('Crystals_', '')}">+${amount}${
+      icon || ` ${item.replace('Crystals_', '')}`}</span>`);
   }
   return bits.join('');
 }
@@ -175,7 +178,15 @@ export async function openErrandsSheet(player) {
           <div class="errand-title">${def?.title?.[lang] ?? state.offer.errand_id}</div>
           <p class="errand-desc">${def?.desc?.[lang] ?? ''}</p>
 
-          <div class="errand-section-label">${T('howLong')}</div>
+          <div class="errand-section-label">${T('reward')}</div>
+          <div class="errand-parts">
+            ${parts.map(p => `
+              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
+                <span class="unit-tag">${p.tag}</span>
+                <span class="errand-chips">${rewardHtml(p.reward)}</span>
+              </div>`).join('')}
+          </div>
+
           <div class="errand-durations" id="errand-durations">
             ${durations.map(d => `
               <button class="errand-duration ${d.hours === picked.hours ? 'errand-duration--selected' : ''}"
@@ -185,17 +196,8 @@ export async function openErrandsSheet(player) {
               </button>`).join('')}
           </div>
 
-          <div class="errand-section-label">${T('reward')}</div>
-          <div class="errand-parts">
-            ${parts.map(p => `
-              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
-                <span class="unit-tag">${p.tag}</span>
-                <span class="errand-chips">${rewardHtml(p.reward)}</span>
-              </div>`).join('')}
-          </div>
-          <p class="errand-note">${T('bothTags')}</p>
-
-          <div class="errand-section-label">${T('sendWho')}</div>
+          <!-- The track sits at the BOTTOM, directly above Send: the sheet reads
+               top to bottom as what/what it pays/how long/who goes/go. -->
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">
               ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}

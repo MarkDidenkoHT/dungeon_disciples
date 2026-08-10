@@ -889,8 +889,10 @@ export function renderCastle(root, { player }) {
   }
 
   const FAVOR_LABELS = {
-    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраил' },
-    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграил' },
+    // Same declension rule as the roster copy: dative -у for the two masculine
+    // names, and Асталот (feminine) stays as it is.
+    empire:              { en: 'Devotion to Mithrail', ru: 'Молитва Митраилу' },
+    choir_of_the_cursed: { en: 'Song to Aggrail',      ru: 'Песнь Агграилу' },
     grail_of_sorrow:     { en: 'Dirge to Astaloth',    ru: 'Плач Асталот' },
   };
   const FAVOR_FALLBACK = { en: 'Ask for a favor', ru: 'Просить о милости' };
