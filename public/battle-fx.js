@@ -3183,6 +3183,10 @@ export const EFFECTS = {
   fellfire,
   aegis,
   mend_flesh,
+  // Song of Ash is a mend, so it borrows the mend picture rather than shipping a
+  // near-identical one. Aliased, not copied, so the two cannot drift apart —
+  // same arrangement as pale_embrace above.
+  song_of_ash: mend_flesh,
   haunt,
   blood_bolt,
   fire_bolt,

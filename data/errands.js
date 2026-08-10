@@ -29,7 +29,7 @@ const THRONE_TIER = { 0: 1, 1: 1, 2: 2, 3: 3, 4: 3 };
 // Throne 1 pays the base rate, throne 2 doubles it, throne 3+ quadruples it —
 // 20 XP, 40, 80 for a two-hour trip. The errand pool itself does not get richer
 // as the game goes on; the throne is the only thing that moves the rate.
-const TIER_REWARD_MULT = { 1: 1, 2: 2, 3: 4 };
+const TIER_REWARD_MULT = { 1: 1, 2: 1.5, 3: 2 };
 
 // ── Duration ────────────────────────────────────────────────────────────────
 // The player picks how long the unit is gone. Longer is better per errand but

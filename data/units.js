@@ -477,7 +477,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
       xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
@@ -579,27 +579,31 @@ const UNITS = {
       damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 700, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
-        choir_servant: {
-      id: 'd51', f: 'd', t: 2,
-      name: 'Choir Servant',
+    // The Cultist's other road: instead of learning to throw fire, this branch
+    // learns to sing over the burned. Song of Ash mends DEMONS only — see
+    // TAG_RULES in utils/tag-rules.js — so it is a mender that can do nothing
+    // for the Choir's Constructs or its Court, and everything for its Demons.
+    ash_cantor: {
+      id: 'd52', f: 'd', t: 2,
+      name: 'Ash Cantor',
       tags: ['Caster', null],
       size: 'tile',
       hp: 45, armor: 5, initiative: 30,
-      resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 300, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
+      resistances: { air: 5, fire: 30, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      xp: 300, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'mark_of_ash 1',
     },
-    choir_ascendant: {
-      id: 'd511', f: 'd', t: 3,
-      name: 'Choir Ascendant',
+    ash_precentor: {
+      id: 'd521', f: 'd', t: 3,
+      name: 'Ash Precentor',
       tags: ['Caster', 'Demon'],
       size: 'tile',
-      hp: 50, armor: 10, initiative: 30,
-      resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 700, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
+      hp: 55, armor: 5, initiative: 30,
+      resistances: { air: 10, fire: 35, life: 25, death: 0, cold: 0, nature: 0 },
+      action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      xp: 700, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'mark_of_ash 1',
     },
   },
 

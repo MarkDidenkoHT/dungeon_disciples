@@ -132,9 +132,13 @@ const BUILDING_POOLS = {
       { id: 'flame_spawn_pit',   label: 'Flame Spawn Pit',   category: 'barracks', tier: 1, unit_id: 'd7',  upgrades: ['greater_flame_spawn_pit'],          cost: { gold: 50 } },
       { id: 'greater_flame_spawn_pit', label: 'Greater Flame Spawn Pit', category: 'barracks', tier: 2, unit_id: 'd71', upgrades: ['inferno_spawn_pit'], cost: { gold: 100 } },
       { id: 'inferno_spawn_pit', label: 'Inferno Spawn Pit', category: 'barracks', tier: 3, unit_id: 'd711', upgrades: [] },
-      { id: 'cultist_shrine',    label: 'Cultist Shrine',    category: 'barracks', tier: 1, unit_id: 'd5',  upgrades: ['choir_servant_shrine'],          cost: { gold: 50 } },
+      { id: 'cultist_shrine',    label: 'Cultist Shrine',    category: 'barracks', tier: 1, unit_id: 'd5',  upgrades: ['choir_servant_shrine', 'ash_cantor_chancel'], cost: { gold: 50 } },
       { id: 'choir_servant_shrine', label: 'Choir Servant Shrine', category: 'barracks', tier: 2, unit_id: 'd51', upgrades: ['choir_ascendant_shrine'],       cost: { gold: 100 } },
       { id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', category: 'barracks', tier: 3, unit_id: 'd511', upgrades: [] },
+      // The mender branch off the Cultist. A chancel is where the choir stands
+      // to sing, which is what this half of the line does instead of burning.
+      { id: 'ash_cantor_chancel',    label: 'Ash Cantor Chancel',    category: 'barracks', tier: 2, unit_id: 'd52',  upgrades: ['ash_precentor_chancel'], cost: { gold: 100 } },
+      { id: 'ash_precentor_chancel', label: 'Ash Precentor Chancel', category: 'barracks', tier: 3, unit_id: 'd521', upgrades: [] },
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', category: 'special', unit_id: null },
@@ -300,7 +304,8 @@ const UNIT_UPGRADE_PATHS = {
           { unit_id: 'd412', building_id: 'pain_projector_den', label: 'Pain Projector Den' }],
     d6:  [{ unit_id: 'd61', building_id: 'nether_baron_hall', label: 'Nether Baron Hall' }],
     d7:  [{ unit_id: 'd71', building_id: 'greater_flame_spawn_pit', label: 'Greater Flame Spawn Pit' }],
-    d5:  [{ unit_id: 'd51', building_id: 'choir_servant_shrine', label: 'Choir Servant Shrine' }],
+    d5:  [{ unit_id: 'd51', building_id: 'choir_servant_shrine', label: 'Choir Servant Shrine' },
+          { unit_id: 'd52', building_id: 'ash_cantor_chancel',   label: 'Ash Cantor Chancel' }],
     h_d_1:    [{ unit_id: 'h_d_1_a2', building_id: 'warlord_keep_2_a', label: 'Warlord Keep II A' },
                { unit_id: 'h_d_1_b2', building_id: 'warlord_keep_2_b', label: 'Warlord Keep II B' }],
     h_d_1_a2: [{ unit_id: 'h_d_1_a3', building_id: 'warlord_keep_3_a', label: 'Warlord Keep III A' }],
@@ -328,6 +333,7 @@ const UNIT_UPGRADE_PATHS = {
     d61: [{ unit_id: 'd611', building_id: 'nether_lord_hall', label: 'Nether Lord Hall' }],
     d71: [{ unit_id: 'd711', building_id: 'inferno_spawn_pit', label: 'Inferno Spawn Pit' }],
     d51: [{ unit_id: 'd511', building_id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine' }],
+    d52: [{ unit_id: 'd521', building_id: 'ash_precentor_chancel',  label: 'Ash Precentor Chancel' }],
   },
 
   grail_of_sorrow: {
@@ -614,6 +620,10 @@ const BUILDING_COSTS = {
   cultist_shrine:                { gold: 40, Crystals_Fire: 20, Crystals_Life: 5 },
   choir_servant_shrine:          { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
   choir_ascendant_shrine:        { gold: 96, Crystals_Fire: 48, Crystals_Life: 12, Crystals_Death: 12 },
+  // Priced against the shrine branch it forks from; the Life crystal is heavier
+  // because this half mends instead of burns.
+  ash_cantor_chancel:            { gold: 60, Crystals_Fire: 30, Crystals_Life: 12, Crystals_Air: 5 },
+  ash_precentor_chancel:         { gold: 96, Crystals_Fire: 48, Crystals_Life: 18, Crystals_Air: 8 },
 
   // ── grail_of_sorrow ───────────────────────────────────────────
   zombie_pit:                    { gold: 40, Crystals_Death: 20, Crystals_Air: 5, Crystals_Frost: 5 },

@@ -12,6 +12,11 @@ const TAG_RULES = {
   pale_embrace: {
     targetRequireTags: ['Spirit'],
   },
+  // The Choir's mend. The song is in a tongue only the damned answer to, so it
+  // reaches Demons and nothing else — not the Court, not the Constructs.
+  song_of_ash: {
+    targetRequireTags: ['Demon'],
+  },
 }
 
 function unitHasTag(unit, tag) {

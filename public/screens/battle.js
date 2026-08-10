@@ -576,6 +576,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     repair:         { require: ['Construct'] },
     'mend flesh':   { require: ['Zombie'] },
     pale_embrace:   { require: ['Spirit'] },
+    song_of_ash:    { require: ['Demon'] },
   };
 
   function passesTagRules(unit, actionKey) {
