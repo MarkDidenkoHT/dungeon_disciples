@@ -643,9 +643,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-image: url('/assets/icons/ui/bottom-nav-active.png');
 }
 
+/* Icons-only nav (labels commented out in main.js): the icon takes the row the
+   label used to occupy instead of leaving the bar half empty. Restore 5vh if
+   the labels come back. */
 .nav-btn-icon {
   width: auto;
-  height: 5vh;
+  height: 6.4vh;
   object-fit: contain;
   display: block;
   filter: brightness(0.65) sepia(0.3);
@@ -934,6 +937,38 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: color-mix(in srgb, #6fcf97 15%, transparent);
   color: #6fcf97; border: 1px solid #6fcf9740;
 }
+/* Requirements are shown as the same ability icons the unit sheet uses, so the
+   player matches pictures instead of reading fifteen passive names. */
+.errand-req-icons { display: flex; flex-wrap: wrap; gap: 4px; }
+.errand-req-icon {
+  position: relative; width: 30px; height: 30px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.55rem; color: var(--muted); text-align: center; line-height: 1;
+}
+.errand-req-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.errand-req-rank {
+  position: absolute; right: 1px; bottom: 0;
+  font-size: 0.6rem; font-weight: 700; color: var(--accent);
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+
+/* Longer trips pay more per errand and less per hour, so the multiplier is
+   shown on the button — the trade has to be visible to be a choice. */
+.errand-durations { display: flex; gap: 6px; }
+.errand-duration {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 7px 4px; border-radius: 8px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); color: var(--text);
+  font-family: inherit; cursor: pointer;
+}
+.errand-duration-time { font-size: 0.82rem; font-weight: 700; }
+.errand-duration-mult { font-size: 0.66rem; color: var(--muted); }
+.errand-duration--selected {
+  border-color: var(--accent); background: rgba(200,151,58,0.14); color: var(--accent);
+}
+.errand-duration--selected .errand-duration-mult { color: var(--accent); }
+
 .errand-away {
   display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;

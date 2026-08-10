@@ -81,26 +81,29 @@ function mountShell(player) {
         <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}"></button>
       </div>
       <div id="content-root"></div>
+      <!-- Icons-only nav, on trial. The labels are commented out rather than
+           deleted so the text version is one revert away; every reader of
+           .nav-btn-label is null-guarded, so their absence is not a crash. -->
       <nav class="bottom-nav" id="bottom-nav">
-        <button class="nav-btn" data-screen="castle">
+        <button class="nav-btn" data-screen="castle" title="${NAV_LABELS.castle[L]}" aria-label="${NAV_LABELS.castle[L]}">
           <img class="nav-btn-icon" src="/assets/icons/ui/castle.png" alt="">
-          <span class="nav-btn-label">${NAV_LABELS.castle[L]}</span>
+          <!-- <span class="nav-btn-label">${NAV_LABELS.castle[L]}</span> -->
         </button>
-        <button class="nav-btn" data-screen="roster">
+        <button class="nav-btn" data-screen="roster" title="${NAV_LABELS.roster[L]}" aria-label="${NAV_LABELS.roster[L]}">
           <img class="nav-btn-icon" src="/assets/icons/ui/roster.png" alt="">
-          <span class="nav-btn-label">${NAV_LABELS.roster[L]}</span>
+          <!-- <span class="nav-btn-label">${NAV_LABELS.roster[L]}</span> -->
         </button>
-        <button class="nav-btn" data-screen="embark">
+        <button class="nav-btn" data-screen="embark" title="${NAV_LABELS.embark[L]}" aria-label="${NAV_LABELS.embark[L]}">
           <img class="nav-btn-icon" src="/assets/icons/ui/embark.png" alt="">
-          <span class="nav-btn-label">${NAV_LABELS.embark[L]}</span>
+          <!-- <span class="nav-btn-label">${NAV_LABELS.embark[L]}</span> -->
         </button>
-        <button class="nav-btn" data-screen="spells">
+        <button class="nav-btn" data-screen="spells" title="${NAV_LABELS.spells[L]}" aria-label="${NAV_LABELS.spells[L]}">
           <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
-          <span class="nav-btn-label">${NAV_LABELS.spells[L]}</span>
+          <!-- <span class="nav-btn-label">${NAV_LABELS.spells[L]}</span> -->
         </button>
-        <button class="nav-btn" data-screen="settings">
+        <button class="nav-btn" data-screen="settings" title="${NAV_LABELS.settings[L]}" aria-label="${NAV_LABELS.settings[L]}">
           <img class="nav-btn-icon" src="/assets/icons/ui/settings.png" alt="" onerror="this.style.display='none';">
-          <span class="nav-btn-label">${NAV_LABELS.settings[L]}</span>
+          <!-- <span class="nav-btn-label">${NAV_LABELS.settings[L]}</span> -->
         </button>
       </nav>
     </div>
@@ -178,23 +181,30 @@ function navigate(screen, params = {}) {
 
   const L = lang(player);
 
+  // Titles are set alongside the labels: the shell is mounted once, so a
+  // language switch has to reach the nav that is already on screen — and with
+  // the labels commented out the title is the only text there is.
+  const setNavText = (btn, text) => {
+    if (!btn) return;
+    const label = btn.querySelector('.nav-btn-label');
+    if (label) label.textContent = text;
+    btn.title = text;
+    btn.setAttribute('aria-label', text);
+  };
+
   ['castle', 'roster', 'settings'].forEach(screen => {
-    const btn = document.querySelector(`.nav-btn[data-screen="${screen}"]`);
-    const label = btn?.querySelector('.nav-btn-label');
-    if (label) label.textContent = NAV_LABELS[screen][L];
+    setNavText(document.querySelector(`.nav-btn[data-screen="${screen}"]`), NAV_LABELS[screen][L]);
   });
 
   const spellsNav = document.querySelector('.nav-btn[data-screen="spells"]');
   const embarkNav = document.querySelector('.nav-btn[data-screen="embark"]');
 
   if (spellsNav) {
-    const label = spellsNav.querySelector('.nav-btn-label');
-    if (label) label.textContent = NAV_LABELS.spells[L];
+    setNavText(spellsNav, NAV_LABELS.spells[L]);
     if (spellsNav._battlePrepHandler) { spellsNav.removeEventListener('click', spellsNav._battlePrepHandler, true); delete spellsNav._battlePrepHandler; }
   }
   if (embarkNav) {
-    const label = embarkNav.querySelector('.nav-btn-label');
-    if (label) label.textContent = NAV_LABELS.embark[L];
+    setNavText(embarkNav, NAV_LABELS.embark[L]);
     embarkNav.classList.remove('nav-btn--battle-ready');
     if (embarkNav._battlePrepHandler) { embarkNav.removeEventListener('click', embarkNav._battlePrepHandler, true); delete embarkNav._battlePrepHandler; }
   }

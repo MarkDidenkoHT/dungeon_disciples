@@ -1,5 +1,5 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, resolveUnitDef, cap } from './utils.js';
+import { openSheet, getSheetBody, resolveUnitDef, cap, resolveAbility, abilityName } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ const ET = {
   xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
   healed:      { en: 'HP restored',            ru: 'Восстановлено HP' },
   hours:       { en: 'h',                      ru: 'ч' },
+  howLong:     { en: 'How long?',               ru: 'Насколько?' },
   orAny:       { en: 'or',                     ru: 'или' },
   failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
 };
@@ -43,15 +44,30 @@ function untilText(iso) {
   return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
 }
 
-function passiveLabel(p) {
-  const name = cap(String(p.passive).replace(/_/g, ' '));
-  return p.rank > 1 ? `${name} ${p.rank}` : name;
+// A requirement is a list of ~15 acceptable passives, which as text was a wall
+// of words nobody read. As icons it is the same row the player already scans on
+// a unit card, so "do I have one of these?" is answered by matching pictures.
+// The name stays on the tooltip; the rank rides the corner the way it does in
+// the unit sheet.
+function passiveIcon(p) {
+  const base = String(p.passive);
+  const def  = resolveAbility(p.rank > 1 ? `${base} ${p.rank}` : base) || resolveAbility(base);
+  const name = abilityName(def) || cap(base.replace(/_/g, ' '));
+  const label = p.rank > 1 ? `${name} ${p.rank}` : name;
+  return `
+    <span class="errand-req-icon" title="${label}">
+      <img src="/assets/icons/abilities/${base}.jpg" alt="${label}"
+           onerror="this.replaceWith(document.createTextNode('${label.replace(/'/g, '')}'))">
+      ${p.rank > 1 ? `<span class="errand-req-rank">${p.rank}</span>` : ''}
+    </span>`;
 }
 
 function requirementHtml(req = {}) {
   const bits = [];
   if (req.passive_any?.length) {
-    bits.push(`<span class="errand-req-chip">${req.passive_any.map(passiveLabel).join(` ${T('orAny')} `)}</span>`);
+    // No "or" between them — a row of icons already reads as a set of options,
+    // and fifteen separators put the wall of text straight back.
+    bits.push(`<div class="errand-req-icons">${req.passive_any.map(passiveIcon).join('')}</div>`);
   }
   if (req.action_any?.length) {
     bits.push(`<span class="errand-req-chip">${req.action_any.map(a => cap(a.replace(/_/g, ' '))).join(` ${T('orAny')} `)}</span>`);
@@ -94,10 +110,14 @@ export async function openErrandsSheet(player) {
 
   let state  = null;
   let chosen = null;
+  // The trip length the player picked. Defaults to the shortest — the cheapest
+  // commitment is the safe default when the unit may be wanted for an embark.
+  let chosenHours = null;
 
   async function load() {
     state  = await api(`/errands?chat_id=${player.chat_id}`);
     chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
+    chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
     render();
   }
 
@@ -158,6 +178,11 @@ export async function openErrandsSheet(player) {
       const rows = (bootstrapCache.data?.roster || [])
         .filter(r => state.offer.candidates.includes(String(r.id)));
 
+      // Priced by the server, one entry per allowed trip length.
+      const durations = state.offer.durations
+        ?? [{ hours: state.offer.hours, mult: 1, reward: state.offer.reward }];
+      const picked = durations.find(d => d.hours === chosenHours) ?? durations[0];
+
       body.innerHTML = `
         <div class="errand-sheet">
           <div class="errand-title">${def?.title?.[lang] ?? state.offer.errand_id}</div>
@@ -166,10 +191,20 @@ export async function openErrandsSheet(player) {
           <div class="errand-section-label">${T('requires')}</div>
           <div class="errand-chips">${requirementHtml(state.offer.requirement)}</div>
 
-          <div class="errand-section-label">${T('reward')}</div>
-          <div class="errand-chips">${rewardHtml(state.offer.reward)}</div>
+          <div class="errand-section-label">${T('howLong')}</div>
+          <div class="errand-durations" id="errand-durations">
+            ${durations.map(d => `
+              <button class="errand-duration ${d.hours === picked.hours ? 'errand-duration--selected' : ''}"
+                      data-hours="${d.hours}">
+                <span class="errand-duration-time">${d.hours}${T('hours')}</span>
+                <span class="errand-duration-mult">x${d.mult}</span>
+              </button>`).join('')}
+          </div>
 
-          <div class="errand-section-label">${T('sendWho')} · ${state.offer.hours}${T('hours')}</div>
+          <div class="errand-section-label">${T('reward')}</div>
+          <div class="errand-chips">${rewardHtml(picked.reward)}</div>
+
+          <div class="errand-section-label">${T('sendWho')}</div>
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">
               ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}
@@ -178,6 +213,15 @@ export async function openErrandsSheet(player) {
 
           <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
         </div>`;
+
+      // Re-renders rather than patching in place: the reward chips below have to
+      // change with the pick, and they are the whole point of offering a choice.
+      body.querySelector('#errand-durations')?.addEventListener('click', e => {
+        const btn = e.target.closest('.errand-duration');
+        if (!btn) return;
+        chosenHours = Number(btn.dataset.hours);
+        render();
+      });
 
       body.querySelector('#errand-track')?.addEventListener('click', e => {
         const card = e.target.closest('.portrait-card');
@@ -193,7 +237,7 @@ export async function openErrandsSheet(player) {
         btn.disabled = true;
         btn.textContent = T('sending');
         try {
-          await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen });
+          await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen, hours: chosenHours });
           _awayCache = null;                 // that unit is out now
           await load();
           refreshErrandButton(player).catch(() => {});

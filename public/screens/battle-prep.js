@@ -289,7 +289,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   const spellsNavBtn = document.querySelector('.nav-btn[data-screen="spells"]');
   if (spellsNavBtn) {
-    spellsNavBtn.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.castSpell[L];
+    // The nav is icons-only right now, so the label may not exist — the title is
+    // what actually carries "Cast Spell" to the player. Both are set so this
+    // still reads correctly if the labels come back.
+    const bpLabel = spellsNavBtn.querySelector('.nav-btn-label');
+    if (bpLabel) bpLabel.textContent = BP_NAV_LABELS.castSpell[L];
+    spellsNavBtn.title = BP_NAV_LABELS.castSpell[L];
+    spellsNavBtn.setAttribute('aria-label', BP_NAV_LABELS.castSpell[L]);
     spellsNavBtn._battlePrepHandler = (e) => { e.stopImmediatePropagation(); openSpellSheet(); };
     spellsNavBtn.addEventListener('click', spellsNavBtn._battlePrepHandler, true);
   }
@@ -298,7 +304,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function restoreNavLabels() {
     const s = document.querySelector('.nav-btn[data-screen="spells"]');
     if (s) {
-      s.querySelector('.nav-btn-label').textContent = BP_NAV_LABELS.spells[L];
+      const sLabel = s.querySelector('.nav-btn-label');
+      if (sLabel) sLabel.textContent = BP_NAV_LABELS.spells[L];
+      s.title = BP_NAV_LABELS.spells[L];
+      s.setAttribute('aria-label', BP_NAV_LABELS.spells[L]);
       if (s._battlePrepHandler) { s.removeEventListener('click', s._battlePrepHandler, true); delete s._battlePrepHandler; }
     }
   }
@@ -306,9 +315,17 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
 
   function updateSpellsBadge() {
-    const spellsNav = document.querySelector('.nav-btn[data-screen="spells"] .nav-btn-label');
-    if (!spellsNav) return;
-    spellsNav.textContent = selectedSpells.length > 0 ? `${BP_NAV_LABELS.castSpell[L]} (${selectedSpells.length})` : BP_NAV_LABELS.castSpell[L];
+    const text = selectedSpells.length > 0
+      ? `${BP_NAV_LABELS.castSpell[L]} (${selectedSpells.length})`
+      : BP_NAV_LABELS.castSpell[L];
+    const btn = document.querySelector('.nav-btn[data-screen="spells"]');
+    if (!btn) return;
+    // With the labels off, the count lives on the button's title instead of
+    // vanishing entirely.
+    const label = btn.querySelector('.nav-btn-label');
+    if (label) label.textContent = text;
+    btn.title = text;
+    btn.setAttribute('aria-label', text);
   }
 
   function showDetail(title, html) {

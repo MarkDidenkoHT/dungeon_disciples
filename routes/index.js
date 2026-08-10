@@ -1057,12 +1057,22 @@ function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, abilitie
   const from  = fresh.length ? fresh : eligible;
 
   const pick = from[dailySeed(chat_id, date) % from.length];
+  // Every duration is priced here rather than on the client, so the sheet only
+  // ever displays numbers the server would actually pay out.
+  const durations = ERR.DURATIONS.map(d => ({
+    hours:  d.hours,
+    mult:   d.mult,
+    reward: ERR.scaleReward(pick.errand, throneLevel, tier, d.hours),
+  }));
   return {
     errand_id:   pick.errand.id,
     tier,
     requirement: pick.resolved,
-    reward:      ERR.scaleReward(pick.errand, throneLevel, tier),
-    hours:       pick.errand.hours,
+    durations,
+    // The default trip, kept as `reward`/`hours` so anything already reading
+    // those two fields (the away card, the bot) still finds them.
+    reward:      durations[0].reward,
+    hours:       durations[0].hours,
     candidates:  pick.candidates,
   };
 }
@@ -1124,7 +1134,7 @@ router.get('/errands', requireAuth, async (req, res) => {
 // POST /errands/start — send a unit. Re-derives the offer rather than trusting
 // the client: it is deterministic, so this is the same object the player saw.
 router.post('/errands/start', requireAuth, async (req, res) => {
-  const { chat_id, roster_id } = req.body;
+  const { chat_id, roster_id, hours } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
     const player = await getPlayerByChatId(chat_id);
@@ -1161,6 +1171,9 @@ router.post('/errands/start', requireAuth, async (req, res) => {
 
     const def  = ERR.ERRANDS_BY_ID[offer.errand_id];
     const now  = Date.now();
+    // The client sends which trip it picked; an unknown value resolves to the
+    // shortest one, so the duration multiplier can never be forged.
+    const duration = ERR.durationFor(hours);
     // Everything the edge function needs to finish this without re-deriving it,
     // and everything the client needs to render it.
     const errand_data = {
@@ -1172,13 +1185,14 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       // would have to reimplement the lookup to read it).
       title:       def.title,
       tier:        offer.tier,
-      hours:       def.hours,
+      hours:       duration.hours,
       started_at:  new Date(now).toISOString(),
-      ends_at:     new Date(now + def.hours * 3600 * 1000).toISOString(),
+      ends_at:     new Date(now + duration.hours * 3600 * 1000).toISOString(),
       requirement: offer.requirement,
-      // What the errand is WORTH. The edge function applies it and may write
-      // back what it actually granted; this stays as the promise that was made.
-      reward:      offer.reward,
+      // What the errand is WORTH at the duration that was chosen. The edge
+      // function applies it and may write back what it actually granted; this
+      // stays as the promise that was made.
+      reward:      ERR.scaleReward(def, throneLevel, offer.tier, duration.hours),
     };
 
     const inserted = await supabase(ERRAND_TABLE, {

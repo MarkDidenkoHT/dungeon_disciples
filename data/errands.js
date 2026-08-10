@@ -6,10 +6,9 @@
 //
 // WHY THE REQUIREMENTS ARE GROUPS
 // An errand asks for a KIND of soldier ("someone who can hold a line"), not one
-// exact passive. Written per-passive this file would need ~172 entries — 61 base
-// passives across three factions — most of them near-duplicate flavour. Grouping
-// gets every passive covered at least twice by ~12 errands a faction, each of
-// which can actually be written properly. See scripts checking coverage.
+// exact passive. There are three errands per faction, one per role — the one who
+// holds, the one who teaches, the one who takes — so each group has to be wide
+// enough that most of a faction's roster answers at least one of the three.
 //
 // COMPLETABILITY
 // Nothing here guarantees an errand is offerable. That is enforced at SELECTION
@@ -29,12 +28,32 @@ const THRONE_TIER = { 0: 1, 1: 1, 2: 2, 3: 3, 4: 3 };
 // against the real roster before an errand is offered, so growth can never
 // produce something unachievable — it just narrows who qualifies.
 const TIER_STAT_MULT   = { 1: 1,   2: 1.35, 3: 1.7 };
-const TIER_REWARD_MULT = { 1: 1,   2: 1.6,  3: 2.4 };
+// Throne 1 pays 20 XP for the plain errand, throne 2 pays 40, throne 3+ pays 80.
+// The throne is the only thing that moves the base rate; the errand pool itself
+// does not get richer as the game goes on.
+const TIER_REWARD_MULT = { 1: 1,   2: 2,    3: 4 };
+
+// ── Duration ────────────────────────────────────────────────────────────────
+// The player picks how long the unit is gone. Longer is better per errand but
+// worse per hour (2h pays 10/h, 6h pays 6.7/h), so the short trip is the right
+// call when the unit is wanted for an embark and the long one is right overnight.
+// There is no failure roll, so this choice IS the errand's decision.
+const DURATIONS = [
+  { hours: 2, mult: 1 },
+  { hours: 4, mult: 1.5 },
+  { hours: 6, mult: 2 },
+];
+const DEFAULT_HOURS = 2;
+
+// Server and client both resolve a requested duration through this, so an
+// arbitrary `hours` in a request body cannot buy a multiplier.
+function durationFor(hours) {
+  return DURATIONS.find(d => d.hours === Number(hours)) ?? DURATIONS[0];
+}
 
 // ── Definition shape ────────────────────────────────────────────────────────
 //   id            unique key, referenced by roster.errand.errand_id
 //   faction       which faction may be offered it
-//   hours         how long the unit is away
 //   requires      passive_any  one of these base passives (rank scales by throne)
 //                 action_any   the unit's action must be one of these
 //                 stat         minimum stats, scaled by TIER_STAT_MULT
@@ -52,307 +71,129 @@ const TIER_REWARD_MULT = { 1: 1,   2: 1.6,  3: 2.4 };
 //   a level-6 battle               40 gold
 //   a tier-1 dwelling              40 gold + 20 faction crystal
 //   XP to advance a tier-1 unit    50-75      a tier-2 unit  300-360
-// An errand is a no-risk daily costing one unit's day, so it pays about one
-// battle share — not four, which is what the first pass at these numbers did.
+// An errand is a no-risk daily costing one unit's time, so the 2h/throne-1 rate
+// is about one battle share — 20 XP, or 20 gold, or 6 crystal. Everything above
+// that comes from the throne (x2, x4) and the duration the player picks
+// (x1, x1.5, x2), so the ceiling is 160 XP for a throne-3 player who gives up a
+// unit for six hours.
+//
+// THREE PER FACTION, ONE PER ROLE. Every faction gets the same three shapes so
+// the choice reads the same everywhere, and only the flavour is faction-owned:
+//   the WATCH    someone who endures  -> pays the unit that went (XP, healing)
+//   the TEACHING someone others hear  -> pays the roster left at home
+//   the TAKING   someone who hunts    -> pays materials (gold, crystal)
 const ERRANDS = [
   // ── EMPIRE ────────────────────────────────────────────────────────────────
+  // The Empire's errands are civic duty: a watch kept, a levy drilled, a debt
+  // to the crown collected.
   {
-    id: 'emp_gate_watch', faction: 'empire', hours: 8,
+    id: 'emp_gate_watch', faction: 'empire',
     title: { en: 'Watch on the Low Gate',        ru: 'Стража у Нижних врат' },
-    desc:  { en: 'The low gate has stood unmanned since the levy marched. Stand it for a day and the quarter sleeps.',
-             ru: 'Нижние врата пусты с тех пор, как ополчение ушло. Постойте там день — и квартал будет спать спокойно.' },
-    requires: { passive_any: ['protector', 'fortify', 'unbreakable', 'aegis', 'iron_will'], stat: { armor: 18 } },
-    reward: { xp_self: 10, resources: { Gold: 30 } },
+    desc:  { en: 'The low gate has stood unmanned since the levy marched. Stand it, and the quarter sleeps.',
+             ru: 'Нижние врата пусты с тех пор, как ополчение ушло. Постойте там — и квартал будет спать спокойно.' },
+    requires: { passive_any: ['protector', 'fortify', 'unbreakable', 'aegis', 'iron_will', 'taunt',
+                              'thorns', 'stone_form', 'parry', 'reforge',
+                              'resist_aura_air', 'resist_aura_cold', 'resist_aura_death'] },
+    reward: { xp_self: 20, heal_pct: 25 },
   },
   {
-    id: 'emp_shield_wall', faction: 'empire', hours: 12,
+    id: 'emp_drill_the_levy', faction: 'empire',
     title: { en: 'Drill the Levy',               ru: 'Учения ополчения' },
     desc:  { en: 'Farmhands with spears. Teach them where to put the shield and they may live through the season.',
              ru: 'Крестьяне с копьями. Научите их держать щит — и они переживут этот сезон.' },
-    requires: { passive_any: ['protector', 'fortify', 'unbreakable', 'aegis', 'iron_will'] },
-    reward: { xp_self: 6, xp_roster: 18 },
-  },
-  {
-    id: 'emp_apothecary', faction: 'empire', hours: 8,
-    title: { en: 'The Apothecary\'s Hands',      ru: 'Руки аптекаря' },
-    desc:  { en: 'The apothecary has more wounded than hands. Yours will do.',
-             ru: 'У аптекаря раненых больше, чем рук. Ваши подойдут.' },
-    requires: { passive_any: ['field_medic', 'renew', 'mithrails_light', 'beacon_of_hope', 'light_of_dawn', 'radiance'],
-                action_any: ['heal', 'holy_shock'], stat: { action_power: 10 } },
-    reward: { xp_self: 10, heal_pct: 40, resources: { Crystals_Life: 8 } },
-  },
-  {
-    id: 'emp_vigil', faction: 'empire', hours: 10,
-    title: { en: 'Vigil for the Dying',          ru: 'Бдение над умирающими' },
-    desc:  { en: 'Sit the night with those who will not see morning. It is not healing. It is not nothing.',
-             ru: 'Просидите ночь с теми, кто не увидит утра. Это не исцеление. Но и не пустое.' },
-    requires: { passive_any: ['field_medic', 'renew', 'mithrails_light', 'beacon_of_hope', 'light_of_dawn', 'radiance'] },
-    reward: { xp_self: 10, xp_roster: 8, heal_pct: 25 },
-  },
-  {
-    id: 'emp_traitor_hunt', faction: 'empire', hours: 10,
-    title: { en: 'Hunt a Traitor',               ru: 'Охота на предателя' },
-    desc:  { en: 'A quartermaster sold the road schedules. He runs fast, and he knows the alleys.',
-             ru: 'Интендант продал расписание обозов. Бегает он быстро и знает все переулки.' },
-    requires: { passive_any: ['pierce', 'impale', 'shatter', 'execute', 'chain'], stat: { initiative: 45 } },
-    reward: { xp_self: 14, resources: { Gold: 35 } },
-  },
-  {
-    id: 'emp_proving', faction: 'empire', hours: 6,
-    title: { en: 'The Proving Yard',             ru: 'Двор испытаний' },
-    desc:  { en: 'Recruits need something to fail against. Be that thing, gently.',
-             ru: 'Новобранцам нужно, обо что обломаться. Станьте этим — но помягче.' },
-    requires: { passive_any: ['pierce', 'impale', 'shatter', 'execute', 'chain'] },
-    reward: { xp_self: 6, xp_roster: 14 },
-  },
-  {
-    id: 'emp_ward_stones', faction: 'empire', hours: 12,
-    title: { en: 'Re-cut the Ward Stones',       ru: 'Перерезать камни-обереги' },
-    desc:  { en: 'The stones along the north road have weathered blank. Whatever they were keeping out has noticed.',
-             ru: 'Камни вдоль северной дороги стёрлись до гладкости. То, что они удерживали, это заметило.' },
-    requires: { passive_any: ['resist_aura_air', 'resist_aura_cold', 'resist_aura_death', 'volcanic_skin', 'chill', 'burn'] },
-    reward: { xp_self: 14, resources: { Crystals_Air: 7, Crystals_Frost: 7 } },
-  },
-  {
-    id: 'emp_cold_survey', faction: 'empire', hours: 8,
-    title: { en: 'Survey the Frost Line',        ru: 'Обход границы мороза' },
-    desc:  { en: 'Walk the boundary where the frost stops and mark where it has moved. Someone must, and it cannot be a soft one.',
-             ru: 'Пройдите по границе, где кончается иней, и отметьте, куда она сместилась. Кто-то должен — и не из мягких.' },
-    requires: { passive_any: ['resist_aura_air', 'resist_aura_cold', 'resist_aura_death', 'volcanic_skin', 'chill', 'burn'] },
-    reward: { xp_self: 10, resources: { Crystals_Frost: 9 } },
-  },
-  {
-    id: 'emp_forage', faction: 'empire', hours: 6,
-    title: { en: 'Strip the Battlefield',        ru: 'Обобрать поле боя' },
-    desc:  { en: 'Two weeks of rain on the old field. Whatever is left is worth more than it looks.',
-             ru: 'Две недели дождя над старым полем. То, что уцелело, стоит больше, чем кажется.' },
-    requires: { passive_any: ['scavenger', 'vitality', 'regenerate', 'dissipate'] },
-    reward: { xp_self: 6, resources: { Gold: 45 } },
-  },
-  {
-    id: 'emp_long_march', faction: 'empire', hours: 14,
-    title: { en: 'Carry the Long Dispatch',      ru: 'Донести дальнюю депешу' },
-    desc:  { en: 'Four days of road, no escort, no stopping. Send someone who does not tire and does not talk.',
-             ru: 'Четыре дня пути, без охраны и остановок. Отправьте того, кто не устаёт и не болтает.' },
-    requires: { passive_any: ['scavenger', 'vitality', 'regenerate', 'dissipate'] },
-    reward: { xp_self: 16, resources: { Gold: 28, Crystals_Life: 6 } },
-  },
-  {
-    id: 'emp_muster_call', faction: 'empire', hours: 10,
-    title: { en: 'Call the Muster',              ru: 'Созыв ополчения' },
-    desc:  { en: 'Ride the villages and put steel in their spines. They answer to a voice they know.',
-             ru: 'Объехать деревни и вернуть людям твёрдость. Они отзовутся на знакомый голос.' },
-    requires: { passive_any: ['command', 'inspiration_damage', 'inspiration_initiative', 'unity', 'beacon_of_hope'] },
+    requires: { passive_any: ['command', 'unity', 'inspiration_damage', 'inspiration_initiative',
+                              'inspiration_armor', 'inspiration_max_hp', 'lions_roar', 'combat_veteran',
+                              'field_medic', 'renew', 'prayer_of_healing', 'radiance', 'light_of_dawn',
+                              'beacon_of_hope', 'mithrails_light', 'cleanse', 'sanctuary', 'redemption'] },
     reward: { xp_self: 6, xp_roster: 20 },
   },
   {
-    id: 'emp_court_witness', faction: 'empire', hours: 8,
-    title: { en: 'Stand Witness at Court',       ru: 'Свидетельство при дворе' },
-    desc:  { en: 'A land dispute the crown would rather settle quietly. Your word carries; go and spend it.',
-             ru: 'Земельный спор, который корона предпочла бы уладить тихо. Ваше слово весомо — потратьте его.' },
-    requires: { passive_any: ['command', 'inspiration_damage', 'inspiration_initiative', 'unity', 'beacon_of_hope'] },
-    reward: { xp_self: 10, resources: { Gold: 40 } },
+    id: 'emp_traitor_hunt', faction: 'empire',
+    title: { en: 'Hunt a Traitor',               ru: 'Охота на предателя' },
+    desc:  { en: 'A quartermaster sold the road schedules. He runs fast, he knows the alleys, and the crown pays on delivery.',
+             ru: 'Интендант продал расписание обозов. Бегает он быстро, переулки знает, а корона платит по доставке.' },
+    requires: { passive_any: ['pierce', 'impale', 'shatter', 'execute', 'chain', 'volley', 'clear_shot',
+                              'find_weakness', 'duelist', 'furious_strike', 'stun', 'purge',
+                              'magic_attunement', 'radiant_surge', 'mark_of_ash', 'scavenger'],
+                stat: { initiative: 35 } },
+    reward: { xp_self: 8, resources: { Gold: 20, Crystals_Life: 4 } },
   },
 
   // ── CHOIR OF THE CURSED ───────────────────────────────────────────────────
+  // The Choir's errands are all appetite and oath: fire that must be fed, a
+  // verse that must be taught correctly, a debt taken in person.
   {
-    id: 'cho_kindle_pyres', faction: 'choir_of_the_cursed', hours: 8,
-    title: { en: 'Kindle the Night Pyres',       ru: 'Разжечь ночные костры' },
-    desc:  { en: 'The pyres must burn from dusk to dawn, and something must stand in the heat to feed them.',
-             ru: 'Костры должны гореть от заката до рассвета, и кто-то должен стоять в жаре и питать их.' },
-    requires: { passive_any: ['fellfire', 'burn', 'volcanic_skin', 'last_verse', 'resist_aura_fire'] },
-    reward: { xp_self: 10, resources: { Crystals_Fire: 10 } },
-  },
-  {
-    id: 'cho_forge_vigil', faction: 'choir_of_the_cursed', hours: 12,
+    id: 'cho_forge_vigil', faction: 'choir_of_the_cursed',
     title: { en: 'Vigil at the Forge Mouth',     ru: 'Бдение у зева горна' },
-    desc:  { en: 'The great forge cannot be banked and cannot be left. Stand where no one else can stand.',
+    desc:  { en: 'The great forge cannot be banked and cannot be left. Stand where nothing else can stand.',
              ru: 'Великий горн нельзя ни притушить, ни оставить. Встаньте там, где не выстоит никто другой.' },
-    requires: { passive_any: ['fellfire', 'burn', 'volcanic_skin', 'last_verse', 'resist_aura_fire'], stat: { hp: 45 } },
-    reward: { xp_self: 14, resources: { Crystals_Fire: 7, Gold: 25 } },
+    requires: { passive_any: ['fellfire', 'burn', 'volcanic_skin', 'resist_aura_fire', 'mark_of_ash',
+                              'last_verse', 'undying', 'unbreakable', 'fortify', 'aegis', 'taunt',
+                              'stone_form', 'recuperate', 'regenerate', 'vitality', 'pact'],
+                stat: { hp: 40 } },
+    reward: { xp_self: 20, heal_pct: 25 },
   },
   {
-    id: 'cho_pit_fights', faction: 'choir_of_the_cursed', hours: 6,
-    title: { en: 'Take the Pit Purse',           ru: 'Забрать кошель ямы' },
-    desc:  { en: 'The pits pay well and ask nothing but that you keep getting up. A day of it, then.',
-             ru: 'Ямы платят щедро и просят лишь одного — вставать снова. Значит, день в яме.' },
-    requires: { passive_any: ['rage', 'blood_frenzy', 'vengeance', 'execute', 'find_weakness'] },
-    reward: { xp_self: 8, resources: { Gold: 45 } },
+    id: 'cho_read_the_choir', faction: 'choir_of_the_cursed',
+    title: { en: 'Read to the Choir',            ru: 'Читать Хору' },
+    desc:  { en: 'The younger voices learn the verse faster when something that has already burned for it reads aloud.',
+             ru: 'Молодые голоса заучивают стих быстрее, когда читает тот, кто за него уже горел.' },
+    requires: { passive_any: ['command', 'unity', 'inspiration_damage', 'inspiration_initiative',
+                              'inspiration_armor', 'inspiration_max_hp', 'magic_attunement',
+                              'infernal_mandate', 'fanaticism', 'shared_suffering', 'last_verse',
+                              'combat_veteran', 'dissipate', 'clear_shot'] },
+    reward: { xp_self: 6, xp_roster: 20 },
   },
   {
-    id: 'cho_debt_collection', faction: 'choir_of_the_cursed', hours: 8,
+    id: 'cho_debt_collection', faction: 'choir_of_the_cursed',
     title: { en: 'Collect What Is Owed',         ru: 'Взыскать долг' },
     desc:  { en: 'Three names on the list have stopped paying. Only one of them needs to be made an example of.',
              ru: 'Трое в списке перестали платить. Показательным нужно сделать лишь одного.' },
-    requires: { passive_any: ['rage', 'blood_frenzy', 'vengeance', 'execute', 'find_weakness'], stat: { action_power: 12 } },
-    reward: { xp_self: 12, resources: { Gold: 35 } },
-  },
-  {
-    id: 'cho_read_the_choir', faction: 'choir_of_the_cursed', hours: 10,
-    title: { en: 'Read to the Choir',            ru: 'Читать Хору' },
-    desc:  { en: 'The younger voices learn faster when something that has burned reads it aloud.',
-             ru: 'Молодые голоса учатся быстрее, когда читает тот, кто уже горел.' },
-    requires: { passive_any: ['magic_attunement', 'inspiration_damage', 'inspiration_max_hp', 'command'] },
-    reward: { xp_self: 6, xp_roster: 20 },
-  },
-  {
-    id: 'cho_copy_the_liturgy', faction: 'choir_of_the_cursed', hours: 12,
-    title: { en: 'Copy the Burnt Liturgy',       ru: 'Переписать сожжённую литургию' },
-    desc:  { en: 'Half the verses survive. The other half must be remembered correctly, and the cost of error is loud.',
-             ru: 'Уцелела половина стихов. Вторую надо вспомнить верно — цена ошибки громкая.' },
-    requires: { passive_any: ['magic_attunement', 'inspiration_damage', 'inspiration_max_hp', 'command'] },
-    reward: { xp_self: 14, resources: { Crystals_Fire: 8, Gold: 22 } },
-  },
-  {
-    id: 'cho_hold_the_stair', faction: 'choir_of_the_cursed', hours: 10,
-    title: { en: 'Hold the Undercroft Stair',    ru: 'Держать лестницу подземелья' },
-    desc:  { en: 'Something in the undercroft has learned the stair. It only has to be denied until dawn.',
-             ru: 'Нечто в подземелье выучило лестницу. Его нужно лишь не пустить до рассвета.' },
-    requires: { passive_any: ['unbreakable', 'fortify', 'aegis', 'undying', 'recuperate', 'regenerate', 'vitality'],
-                stat: { hp: 50 } },
-    reward: { xp_self: 12, heal_pct: 30, resources: { Gold: 28 } },
-  },
-  {
-    id: 'cho_bear_the_reliquary', faction: 'choir_of_the_cursed', hours: 14,
-    title: { en: 'Bear the Reliquary',           ru: 'Нести реликварий' },
-    desc:  { en: 'It is heavier than it looks and it does not want to be carried. Do not put it down.',
-             ru: 'Он тяжелее, чем кажется, и не желает, чтобы его несли. Не ставьте его на землю.' },
-    requires: { passive_any: ['unbreakable', 'fortify', 'aegis', 'undying', 'recuperate', 'regenerate', 'vitality'] },
-    reward: { xp_self: 16, resources: { Crystals_Fire: 9 } },
-  },
-  {
-    id: 'cho_count_the_watchfires', faction: 'choir_of_the_cursed', hours: 6,
-    title: { en: 'Count the Watchfires',         ru: 'Сосчитать сторожевые огни' },
-    desc:  { en: 'Lie on the ridge and count what burns on the far side. Come back with a number, not a story.',
-             ru: 'Залягте на гребне и сосчитайте огни на той стороне. Вернитесь с числом, а не с рассказом.' },
-    requires: { passive_any: ['clear_shot', 'dissipate', 'resist_aura_cold', 'resist_aura_fire', 'find_weakness'],
-                stat: { initiative: 40 } },
-    reward: { xp_self: 8, resources: { Gold: 32 } },
-  },
-  {
-    id: 'cho_salt_the_ford', faction: 'choir_of_the_cursed', hours: 8,
-    title: { en: 'Salt the Ford',                ru: 'Засолить брод' },
-    desc:  { en: 'Make the crossing hate whoever tries it next. Quietly, and without being seen doing it.',
-             ru: 'Сделайте переправу ненавистной для следующего. Тихо и незаметно.' },
-    requires: { passive_any: ['clear_shot', 'dissipate', 'resist_aura_cold', 'resist_aura_fire', 'find_weakness'] },
-    reward: { xp_self: 8, xp_roster: 8, resources: { Crystals_Fire: 5 } },
-  },
-  {
-    id: 'cho_break_the_siege_camp', faction: 'choir_of_the_cursed', hours: 12,
-    title: { en: 'Foul the Siege Camp',          ru: 'Испортить осадный лагерь' },
-    desc:  { en: 'Their engines are timber and rope and confidence. Ruin whichever burns best.',
-             ru: 'Их машины — дерево, верёвки и уверенность. Испортите то, что горит лучше.' },
-    requires: { passive_any: ['fellfire', 'burn', 'rage', 'execute', 'vengeance'], stat: { action_power: 14 } },
-    reward: { xp_self: 16, resources: { Gold: 32, Crystals_Fire: 6 } },
-  },
-  {
-    id: 'cho_walk_the_ash', faction: 'choir_of_the_cursed', hours: 10,
-    title: { en: 'Walk the Ash Fields',          ru: 'Пройти пепельные поля' },
-    desc:  { en: 'Nothing grows there and nothing should be alive in it. Bring back what you find in the ash.',
-             ru: 'Там ничего не растёт и ничто не должно быть живым. Принесите то, что найдёте в пепле.' },
-    requires: { passive_any: ['volcanic_skin', 'resist_aura_fire', 'undying', 'vitality', 'regenerate'] },
-    reward: { xp_self: 12, resources: { Crystals_Fire: 8, Gold: 22 } },
+    requires: { passive_any: ['rage', 'blood_frenzy', 'blood_craze', 'vengeance', 'execute', 'impale',
+                              'find_weakness', 'duelist', 'furious_strike', 'stun', 'exsanguinate',
+                              'thorns', 'terror', 'fear', 'pierce', 'chain'],
+                stat: { action_power: 8 } },
+    reward: { xp_self: 8, resources: { Gold: 20, Crystals_Fire: 4 } },
   },
 
   // ── GRAIL OF SORROW ───────────────────────────────────────────────────────
+  // No labour errands here. The Grail does not need a trench dug — it needs the
+  // rites kept, the novices taught, and the chalice filled.
   {
-    id: 'gra_dig_the_trench', faction: 'grail_of_sorrow', hours: 8,
-    title: { en: 'Dig the Long Trench',          ru: 'Копать длинный ров' },
-    desc:  { en: 'The dead do not tire and do not ask why the trench must be that long.',
-             ru: 'Мёртвые не устают и не спрашивают, зачем ров такой длинный.' },
-    requires: { passive_any: ['horde', 'reanimate', 'unending_servitude', 'undying', 'sorrow'] },
-    reward: { xp_self: 8, resources: { Gold: 42 } },
+    id: 'gra_stand_the_barrow', faction: 'grail_of_sorrow',
+    title: { en: 'Stand the Barrow Door',        ru: 'Стоять у двери кургана' },
+    desc:  { en: 'Grave-robbers work in threes and lose their nerve quickly when the door is not empty. Be the reason it is not empty.',
+             ru: 'Расхитители могил ходят по трое и быстро теряют смелость, если дверь не пуста. Станьте причиной, по которой она не пуста.' },
+    requires: { passive_any: ['horde', 'reanimate', 'raise_dead', 'unending_servitude', 'undying',
+                              'sorrow', 'eternal_grief', 'fear', 'terror', 'dodge', 'slow', 'dissipate',
+                              'protector', 'thorns', 'recuperate', 'regenerate', 'vitality', 'taunt',
+                              'resist_aura_air', 'resist_aura_cold', 'resist_aura_fire',
+                              'resist_aura_nature', 'resist_aura_life'] },
+    reward: { xp_self: 20, heal_pct: 25 },
   },
   {
-    id: 'gra_walk_the_procession', faction: 'grail_of_sorrow', hours: 12,
-    title: { en: 'Walk the Mourning Procession', ru: 'Пройти в траурной процессии' },
-    desc:  { en: 'A day of slow walking and slower singing. The living take heart from seeing it done properly.',
-             ru: 'День медленного шага и ещё более медленного пения. Живые крепнут, видя, что всё сделано как должно.' },
-    requires: { passive_any: ['horde', 'reanimate', 'unending_servitude', 'undying', 'sorrow'] },
+    id: 'gra_teach_the_novices', faction: 'grail_of_sorrow',
+    title: { en: 'Lead the Mourning Rite',       ru: 'Вести обряд скорби' },
+    desc:  { en: 'The novices have the grief and none of the form. One of those can be taught in an evening.',
+             ru: 'Скорби у послушников довольно, а вот выучки нет. За вечер можно поправить одно из двух.' },
+    requires: { passive_any: ['command', 'unity', 'inspiration_damage', 'inspiration_initiative',
+                              'inspiration_armor', 'inspiration_max_hp', 'grails_blessing',
+                              'mothers_blessing', 'aggrails_blessing', 'communion', 'sacrament',
+                              'libation', 'prayer_of_healing', 'rite_of_reclamation', 'sorrow',
+                              'magic_attunement', 'combat_veteran'] },
     reward: { xp_self: 6, xp_roster: 20 },
   },
   {
-    id: 'gra_foul_the_wells', faction: 'grail_of_sorrow', hours: 10,
-    title: { en: 'Foul the Border Wells',        ru: 'Отравить пограничные колодцы' },
-    desc:  { en: 'Not enough to kill. Enough that the garrison drinks and then cannot hold a spear steady.',
-             ru: 'Не насмерть. Ровно настолько, чтобы гарнизон напился и не удержал копьё.' },
-    requires: { passive_any: ['infect', 'poison', 'bleed', 'aura_of_decay', 'death_mark'] },
-    reward: { xp_self: 12, resources: { Crystals_Nature: 8, Gold: 22 } },
-  },
-  {
-    id: 'gra_tend_the_rot', faction: 'grail_of_sorrow', hours: 8,
-    title: { en: 'Tend the Rot Garden',          ru: 'Ухаживать за садом гнили' },
-    desc:  { en: 'It has to be turned, fed and kept from spreading past its wall. It resents all three.',
-             ru: 'Его нужно вскапывать, кормить и не пускать за стену. Он противится всему троему.' },
-    requires: { passive_any: ['infect', 'poison', 'bleed', 'aura_of_decay', 'death_mark'] },
-    reward: { xp_self: 10, resources: { Crystals_Death: 8, Crystals_Nature: 5 } },
-  },
-  {
-    id: 'gra_bleed_the_chalice', faction: 'grail_of_sorrow', hours: 10,
+    id: 'gra_fill_the_chalice', faction: 'grail_of_sorrow',
     title: { en: 'Fill the Lesser Chalice',      ru: 'Наполнить малую чашу' },
-    desc:  { en: 'The rite needs a full chalice by dawn and a donor who can spare it and keep standing.',
-             ru: 'К рассвету обряду нужна полная чаша и тот, кто может её наполнить и устоять.' },
-    requires: { passive_any: ['lifesteal', 'leech', 'communion', 'sacrament', 'duelist'] },
-    reward: { xp_self: 12, resources: { Crystals_Death: 9 } },
-  },
-  {
-    id: 'gra_settle_the_debt', faction: 'grail_of_sorrow', hours: 8,
-    title: { en: 'Settle a Blood Debt',          ru: 'Уладить кровный долг' },
-    desc:  { en: 'Two houses, one grievance, and a rite that ends it. Someone has to hold the knife.',
-             ru: 'Два дома, одна обида и обряд, что кладёт ей конец. Кто-то должен держать нож.' },
-    requires: { passive_any: ['lifesteal', 'leech', 'communion', 'sacrament', 'duelist'], stat: { action_power: 12 } },
-    reward: { xp_self: 12, resources: { Gold: 35 } },
-  },
-  {
-    id: 'gra_haunt_the_road', faction: 'grail_of_sorrow', hours: 6,
-    title: { en: 'Haunt the Toll Road',          ru: 'Пугать на платной дороге' },
-    desc:  { en: 'Stand where the road bends and be seen once. The tolls collect themselves after that.',
-             ru: 'Встаньте на повороте дороги и покажитесь один раз. Дальше пошлина соберётся сама.' },
-    requires: { passive_any: ['fear', 'dodge', 'slow', 'dissipate', 'eternal_grief'] },
-    reward: { xp_self: 8, resources: { Gold: 45 } },
-  },
-  {
-    id: 'gra_follow_the_envoy', faction: 'grail_of_sorrow', hours: 10,
-    title: { en: 'Follow the Envoy',             ru: 'Проследить за посланником' },
-    desc:  { en: 'Four days behind him, never closer than a field, and not once seen.',
-             ru: 'Четыре дня позади него, не ближе поля — и ни разу не попасться на глаза.' },
-    requires: { passive_any: ['fear', 'dodge', 'slow', 'dissipate', 'eternal_grief'], stat: { initiative: 45 } },
-    reward: { xp_self: 14, resources: { Gold: 26, Crystals_Air: 5 } },
-  },
-  {
-    id: 'gra_stand_the_barrow', faction: 'grail_of_sorrow', hours: 12,
-    title: { en: 'Stand the Barrow Door',        ru: 'Стоять у двери кургана' },
-    desc:  { en: 'Grave-robbers work in threes and give up quickly when the door is not empty.',
-             ru: 'Расхитители могил ходят по трое и быстро отступают, если дверь не пуста.' },
-    requires: { passive_any: ['protector', 'thorns', 'recuperate', 'regenerate', 'vitality',
-                              'resist_aura_air', 'resist_aura_cold', 'resist_aura_fire'], stat: { armor: 15 } },
-    reward: { xp_self: 12, heal_pct: 30, resources: { Gold: 28 } },
-  },
-  {
-    id: 'gra_carry_the_reliquary', faction: 'grail_of_sorrow', hours: 14,
-    title: { en: 'Carry the Sorrow Vessel',      ru: 'Нести сосуд скорби' },
-    desc:  { en: 'It weeps the whole way and it must not be set down on unconsecrated ground.',
-             ru: 'Он плачет всю дорогу, и его нельзя ставить на неосвящённую землю.' },
-    requires: { passive_any: ['protector', 'thorns', 'recuperate', 'regenerate', 'vitality',
-                              'resist_aura_air', 'resist_aura_cold', 'resist_aura_fire'] },
-    reward: { xp_self: 16, resources: { Crystals_Death: 8, Gold: 20 } },
-  },
-  {
-    id: 'gra_run_down_the_deserter', faction: 'grail_of_sorrow', hours: 8,
-    title: { en: 'Run Down the Deserter',        ru: 'Догнать дезертира' },
-    desc:  { en: 'He took a relic with him. The relic comes back; he is not required to.',
-             ru: 'Он унёс реликвию. Реликвия вернётся — он не обязан.' },
-    requires: { passive_any: ['impale', 'rage', 'inspiration_damage', 'inspiration_initiative', 'duelist'],
-                stat: { initiative: 40 } },
-    reward: { xp_self: 12, resources: { Gold: 32 } },
-  },
-  {
-    id: 'gra_teach_the_choirlings', faction: 'grail_of_sorrow', hours: 10,
-    title: { en: 'Drill the Novices',            ru: 'Учения послушников' },
-    desc:  { en: 'They have the faith and none of the footwork. One of those can be taught in a day.',
-             ru: 'Веры у них хватает, а вот выучки нет. За день можно поправить одно из двух.' },
-    requires: { passive_any: ['impale', 'rage', 'inspiration_damage', 'inspiration_initiative', 'duelist'] },
-    reward: { xp_self: 6, xp_roster: 18 },
+    desc:  { en: 'The rite needs a full chalice by dawn, and a donor who can take it from someone else and still walk home.',
+             ru: 'К рассвету обряду нужна полная чаша — и тот, кто возьмёт её у другого и сам дойдёт домой.' },
+    requires: { passive_any: ['lifesteal', 'leech', 'exsanguinate', 'bleed', 'death_mark', 'infect',
+                              'poison', 'aura_of_decay', 'noxious_death', 'communion', 'sacrament',
+                              'libation', 'duelist', 'execute', 'impale', 'rage', 'find_weakness',
+                              'scavenger'],
+                stat: { action_power: 8 } },
+    reward: { xp_self: 8, resources: { Gold: 20, Crystals_Death: 4 } },
   },
 ];
 
@@ -445,9 +286,12 @@ function unitMeets(profile, resolved) {
 // Reward follows the tier the errand was actually SET at, not the throne — an
 // errand that stepped down to tier 1 because the roster is young pays tier-1
 // rates. Otherwise stepping down would be free difficulty relief.
-function scaleReward(errand, throneLevel, tierOverride = null) {
+// `hours` is the duration the player chose; it multiplies on top of the tier
+// (2h x1, 4h x1.5, 6h x2). An unknown value falls back to the shortest trip
+// rather than erroring, so a stale client can never mint a better rate.
+function scaleReward(errand, throneLevel, tierOverride = null, hours = DEFAULT_HOURS) {
   const tier = tierOverride ?? throneTier(throneLevel);
-  const m    = TIER_REWARD_MULT[tier] ?? 1;
+  const m    = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(hours).mult;
   const r    = errand.reward || {};
   const out  = {};
   if (r.xp_self)   out.xp_self   = Math.round(r.xp_self * m);
@@ -472,6 +316,9 @@ export {
   THRONE_TIER,
   TIER_STAT_MULT,
   TIER_REWARD_MULT,
+  DURATIONS,
+  DEFAULT_HOURS,
+  durationFor,
   throneTier,
   maxRankOf,
   unitProfile,
@@ -487,6 +334,9 @@ if (typeof module !== 'undefined') module.exports = {
   THRONE_TIER,
   TIER_STAT_MULT,
   TIER_REWARD_MULT,
+  DURATIONS,
+  DEFAULT_HOURS,
+  durationFor,
   throneTier,
   maxRankOf,
   unitProfile,
