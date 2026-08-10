@@ -565,9 +565,14 @@ export function renderCastle(root, { player }) {
       return `<div class="castle-node-errand" title="${CASTLE_TEXT.onErrand[castleLang]}">✉</div>`;
     }
     const stored = u.unit_data || {};
-    const cur    = stored.current_hp;
-    const max    = stored.max_hp;
-    if (cur == null || max == null || max <= 0) return '';
+    // max_hp is not always written onto the roster row — for a unit that has
+    // never been damaged it can be absent, and requiring it here meant the whole
+    // strip silently rendered nothing. The definition's hp is the fallback, the
+    // same one the node sheet uses; current_hp defaults to full for the same
+    // reason.
+    const max = stored.max_hp ?? resolveUnitDef(u)?.hp ?? null;
+    const cur = stored.current_hp ?? max;
+    if (max == null || max <= 0 || cur == null) return '';
 
     const alive = stored.alive !== false;
     if (!alive) return `<div class="portrait-status portrait-status--dead">💀</div>`;

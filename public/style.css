@@ -1265,7 +1265,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 6px;
   padding: 4px 12px;
   /* Same ornate frame art as the resource bar (fallback: --surface). */
-  background-color: var(--surface);
+  /* background-color: var(--surface); */
   background-image: url('/assets/icons/ui/recource_bar.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -6054,7 +6054,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;

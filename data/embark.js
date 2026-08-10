@@ -12,7 +12,7 @@ const REGION_ENCOUNTERS = {
   crimson_basilica: {
     level_1: {
       enemies: [
-        { key: 'crimson_basilica.aggrails_herald', cell: 2, item_id: 'padded_armor' },
+        { key: 'crimson_basilica.aggrails_herald', cell: 2 },
         { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
       ],
       rewards: {

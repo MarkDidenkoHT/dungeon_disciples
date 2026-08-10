@@ -43,7 +43,19 @@ const BP_TEXT = {
     en: 'You can take more followers into battle. Continue without them?',
     ru: 'Вы можете взять в бой больше спутников. Продолжить без них?',
   },
+  // Shown when the placed army is meaningfully weaker than what it is walking
+  // into. The numbers are the same ⚔ totals already on screen, repeated here so
+  // the warning is checkable rather than just ominous.
+  weakerArmy: {
+    en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle.`,
+    ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой.`,
+  },
 };
+
+// How far below the enemy's power the player's army may be before the warning
+// fires. Below 10% the two sides read as an even match and a prompt every time
+// would be noise.
+const WEAK_ARMY_RATIO = 0.9;
 
 const BP_NAV_LABELS = {
   spells:      { en: 'Spells',      ru: 'Заклинания' },
@@ -768,18 +780,29 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const playerPowerEl = root.querySelector('#player-army-power');
     if (playerPowerEl) {
-      const placed = Object.values(occupied).filter(o => o && o.anchor !== undefined);
-      const total  = placed.reduce((sum, occ) => {
-        const u = roster.find(r => r.id === occ.unitId);
-        if (!u) return sum;
-        const def = resolveUnitDef(u) || {};
-        // Army power must count the worn item's stats too.
-        const withItem = withEquippedItem(
-          { ...def, hp: u.unit_data?.max_hp ?? def.hp }, equippedItemFor(u.id));
-        return sum + calcUnitPower(withItem);
-      }, 0);
+      const total = playerArmyPower();
       playerPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
     }
+  }
+
+  // The ⚔ totals. Pulled out of the two render functions because the pre-battle
+  // strength warning has to compare exactly the numbers the player is looking
+  // at — computing it a second way would eventually disagree with the display.
+  function playerArmyPower() {
+    const placed = Object.values(occupied).filter(o => o && o.anchor !== undefined);
+    return placed.reduce((sum, occ) => {
+      const u = roster.find(r => r.id === occ.unitId);
+      if (!u) return sum;
+      const def = resolveUnitDef(u) || {};
+      // Army power must count the worn item's stats too.
+      const withItem = withEquippedItem(
+        { ...def, hp: u.unit_data?.max_hp ?? def.hp }, equippedItemFor(u.id));
+      return sum + calcUnitPower(withItem);
+    }, 0);
+  }
+
+  function enemyArmyPower() {
+    return enemies.reduce((sum, e) => sum + calcUnitPower(e), 0);
   }
 
   function renderEnemyGrid() {
@@ -812,7 +835,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     const enemyPowerEl = root.querySelector('#enemy-army-power');
     if (enemyPowerEl) {
-      const total = enemies.reduce((sum, e) => sum + calcUnitPower(e), 0);
+      const total = enemyArmyPower();
       enemyPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
     }
 
@@ -1321,6 +1344,25 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  // Go-or-go-back prompt on the way into a battle. Resolves true to continue.
+  function askBeforeBattle(text) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.innerHTML = `
+        <div class="confirm-modal">
+          <div class="confirm-modal-text">${text}</div>
+          <div class="confirm-modal-actions">
+            <button class="confirm-modal-btn confirm-modal-btn--cancel">${BP_TEXT.goBack[L]}</button>
+            <button class="confirm-modal-btn confirm-modal-btn--confirm">${BP_TEXT.continueOn[L]}</button>
+          </div>
+        </div>`;
+      overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
+      overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', () => { overlay.remove(); resolve(true); });
+      document.body.appendChild(overlay);
+    });
+  }
+
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
@@ -1333,23 +1375,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return cost <= loyaltyLeft;
     });
 
-    if (hasUnplacedFollowers) {
-      const confirmed = await new Promise(resolve => {
-        const overlay = document.createElement('div');
-        overlay.className = 'confirm-overlay';
-        overlay.innerHTML = `
-          <div class="confirm-modal">
-            <div class="confirm-modal-text">${BP_TEXT.moreFollowers[L]}</div>
-            <div class="confirm-modal-actions">
-              <button class="confirm-modal-btn confirm-modal-btn--cancel">${BP_TEXT.goBack[L]}</button>
-              <button class="confirm-modal-btn confirm-modal-btn--confirm">${BP_TEXT.continueOn[L]}</button>
-            </div>
-          </div>`;
-        overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
-        overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', () => { overlay.remove(); resolve(true); });
-        document.body.appendChild(overlay);
-      });
-      if (!confirmed) return;
+    if (hasUnplacedFollowers && !await askBeforeBattle(BP_TEXT.moreFollowers[L])) return;
+
+    // Strength check, after the followers prompt: a player who just chose to
+    // leave units at home should be told what that costs them, and one who is
+    // outmatched even with everyone placed still needs to hear it. Both are
+    // warnings, not blocks — a deliberate underdog run is allowed.
+    const myPower    = playerArmyPower();
+    const theirPower = enemyArmyPower();
+    if (theirPower > 0 && myPower < theirPower * WEAK_ARMY_RATIO) {
+      if (!await askBeforeBattle(BP_TEXT.weakerArmy[L](myPower, theirPower))) return;
     }
 
     // The button is art (see .battle-prep-enter-btn) - never write textContent

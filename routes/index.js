@@ -124,12 +124,12 @@ function makeItemRow(playerId, itemKey) {
 const STARTING_FACTION_CRYSTAL = 80;
 const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Gold',            amount: 300 },
-  { item_type: 'resource', item: 'Crystals_Life',   amount: 25  },
-  { item_type: 'resource', item: 'Crystals_Fire',   amount: 25  },
-  { item_type: 'resource', item: 'Crystals_Death',  amount: 25  },
-  { item_type: 'resource', item: 'Crystals_Nature', amount: 25  },
-  { item_type: 'resource', item: 'Crystals_Frost',  amount: 25  },
-  { item_type: 'resource', item: 'Crystals_Air',    amount: 25  },
+  { item_type: 'resource', item: 'Crystals_Life',   amount: 50  },
+  { item_type: 'resource', item: 'Crystals_Fire',   amount: 50  },
+  { item_type: 'resource', item: 'Crystals_Death',  amount: 50  },
+  { item_type: 'resource', item: 'Crystals_Nature', amount: 50  },
+  { item_type: 'resource', item: 'Crystals_Frost',  amount: 50  },
+  { item_type: 'resource', item: 'Crystals_Air',    amount: 50  },
 ];
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
@@ -145,15 +145,13 @@ const HERO_IDS = ['h_e_1', 'h_e_2', 'h_e_3', 'h_d_1', 'h_d_2', 'h_d_3', 'h_g_1',
 
 const HERO_STARTING_UNITS = {
   h_e_1: { building_id: 'acolyte_shrine',     unit_id: 'e2',  slot: 'slot_4' },
-  h_e_2: { building_id: 'conscript_barracks',         unit_id: 'e1',  slot: 'slot_4' },
-  h_e_3: { building_id: 'sentinel_forge', unit_id: 'e3',  slot: 'slot_4' },
-  h_d_1: { building_id: 'peer_court',        unit_id: 'd6',  slot: 'slot_4' },
-  h_d_2: { building_id: 'imp_den',        unit_id: 'd1',  slot: 'slot_4' },
-  h_d_3: { building_id: 'flame_spawn_pit',        unit_id: 'd7',  slot: 'slot_4' },
-  h_g_1: { building_id: 'communicant_chapel',         unit_id: 'gs2', slot: 'slot_4' },
+  h_e_2: { building_id: 'conscript_barracks', unit_id: 'e1',  slot: 'slot_4' },
+  h_e_3: { building_id: 'sentinel_forge',     unit_id: 'e3',  slot: 'slot_4' },
+  h_d_1: { building_id: 'peer_court',         unit_id: 'd6',  slot: 'slot_4' },
+  h_d_2: { building_id: 'imp_den',            unit_id: 'd1',  slot: 'slot_4' },
+  h_d_3: { building_id: 'flame_spawn_pit',    unit_id: 'd7',  slot: 'slot_4' },
+  h_g_1: { building_id: 'communicant_chapel', unit_id: 'gs2', slot: 'slot_4' },
   h_g_2: { building_id: 'zombie_pit',         unit_id: 'gs1', slot: 'slot_4' },
-  // Mothers Voice is a ranged caster with no line of its own, so it opens with
-  // the Pale Maiden — the one Ghost that fights in melee.
   h_g_3: { building_id: 'pale_maiden_barrow', unit_id: 'gs7', slot: 'slot_4' },
 };
 
