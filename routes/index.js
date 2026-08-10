@@ -62,6 +62,26 @@ function generateSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// ── Error contract ──────────────────────────────────────────────────────────
+// EXPECTED failures (the unit is busy, the battle is already claimed) carry a
+// stable `code` alongside the English `error`. The code is the part the client
+// is allowed to branch on; the prose is for humans and may be reworded or
+// translated at any time.
+//
+// This matters because the client was branching on the PROSE — see
+// `/already claimed|already/i.test(err.message)` in screens/battle.js. That makes
+// a server-side rewording a silent client bug: no error, no log, just a victory
+// screen that starts showing a failure. Codes make that link explicit.
+//
+// UNEXPECTED failures (a thrown exception) must not hand the player raw
+// `err.message`: it is usually Supabase/Postgres text, it is always English, and
+// it leaks internals. The detail goes to the server log where it is useful; the
+// player gets a stable code the client can translate.
+function serverError(res, err, where = '') {
+  console.error(`[500]${where ? ' ' + where : ''}:`, err?.message || err);
+  return res.status(500).json({ error: 'Server error', code: 'internal' });
+}
+
 async function requireAuth(req, res, next) {
   const token = req.headers['x-session-token'];
   const chatId = (req.body && req.body.chat_id) || req.query.chat_id;
@@ -71,7 +91,7 @@ async function requireAuth(req, res, next) {
     if (!rows.length || rows[0].session_token !== token) return res.status(401).json({ error: 'Unauthorized' });
     next();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 }
 
@@ -545,7 +565,7 @@ router.post('/login', async (req, res) => {
       battle_data: activeRec ? activeRec.battle_data : null,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -561,7 +581,7 @@ router.get('/player', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -580,7 +600,7 @@ router.post('/player/settings', requireAuth, async (req, res) => {
     });
     res.json(updated[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -655,7 +675,7 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('Reset error:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -674,7 +694,7 @@ router.post('/player/tutorials', requireAuth, async (req, res) => {
     });
     res.json(updated[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -724,7 +744,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -749,7 +769,7 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     if (!existing.length) return res.status(404).json({ error: 'Player not found' });
     if (existing[0].faction) return res.status(400).json({ error: 'Faction already chosen' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return serverError(res, err);
   }
   const startingUnit = HERO_STARTING_UNITS[hero_id];
   const structures   = emptyStructures();
@@ -804,7 +824,7 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     ]);
     res.json({ player: updated[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -817,7 +837,7 @@ router.get('/inventory', requireAuth, async (req, res) => {
     const rows = await supabase(url);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -828,7 +848,7 @@ router.get('/roster', requireAuth, async (req, res) => {
     const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -866,7 +886,7 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
     const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
     res.json({ success: true, roster: updated[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -917,7 +937,7 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
     const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
     res.json({ success: true, roster: updated[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1214,7 +1234,7 @@ router.get('/errands', requireAuth, async (req, res) => {
       definitions: ERR.ERRANDS,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1306,7 +1326,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
 
     res.json({ success: true, errand: startedRow });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1328,7 +1348,7 @@ router.post('/errands/seen', requireAuth, async (req, res) => {
     });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1366,7 +1386,7 @@ router.post('/favor/start', requireAuth, async (req, res) => {
       cap:       FAVOR_DAILY_CAP,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1441,7 +1461,7 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
       cap:       FAVOR_DAILY_CAP,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1567,7 +1587,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
     res.json(updated[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1640,7 +1660,7 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     }
     res.json({ structures: updated[0], cost, swapped_unit: swappedUnit });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1675,7 +1695,7 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
     res.json({ structures: updated[0], removed_units: doomed.map(d => d.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1778,7 +1798,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
 
     res.json({ ...updated[0], auto_level_ups: autoLeveled });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 router.get('/regions', (req, res) => {
@@ -1793,7 +1813,7 @@ router.get('/progress', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json(rows[0].progress || {});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1805,7 +1825,7 @@ router.get('/battle/active', requireAuth, async (req, res) => {
     if (!record) return res.json({ active: false });
     res.json({ active: true, battle_id: record.battle_id, battle_data: record.battle_data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1837,7 +1857,7 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       level:     bd.level,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -1855,7 +1875,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
   if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
   try {
     const existing = await getActiveBattle(chat_id);
-    if (existing) return res.status(400).json({ error: 'A battle is already in progress' });
+    if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
     const rosterRows = await supabase(
       `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
     );
@@ -1986,7 +2006,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     }
     res.json({ record, state: engine.getSnapshot(), logs: initialLogs });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2067,7 +2087,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2086,7 +2106,7 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     await closeBattleState(battle_id);
     res.json({ success: true, abandoned });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2097,10 +2117,10 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
   }
   try {
     const record = await getBattleState(battle_id);
-    if (!record) return res.status(404).json({ error: 'Battle not found' });
-    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player' });
-    if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed' });
-    if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet' });
+    if (!record) return res.status(404).json({ error: 'Battle not found', code: 'battle_not_found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Battle does not belong to this player', code: 'battle_forbidden' });
+    if (!record.battle_active) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
+    if (!record.battle_data?.done) return res.status(400).json({ error: 'Battle is not finished yet', code: 'battle_unfinished' });
 
     // CLAIM THE BATTLE BEFORE PAYING ANYTHING OUT.
     //
@@ -2117,7 +2137,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // winner under a row lock: exactly one caller gets a row back, everyone else
     // gets null and stops here having paid out nothing.
     const claimed = await claimBattleState(battle_id);
-    if (!claimed) return res.status(400).json({ error: 'Rewards already claimed' });
+    if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
 
     await persistBattleRosterState(chat_id, record.battle_data);
 
@@ -2298,7 +2318,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2310,7 +2330,7 @@ router.get('/spells/research', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json({ researched_spells: rows[0].learned_spells || [] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2349,7 +2369,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ learned_spells: newLearned }) });
     res.json({ success: true, learned_spells: newLearned });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2413,7 +2433,7 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     ]);
     res.json({ success: true, structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct, roster_entry: Array.isArray(inserted) ? inserted[0] : inserted });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2486,7 +2506,7 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       auto_level_ups: autoLeveled,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2499,7 +2519,7 @@ router.get('/items', requireAuth, async (req, res) => {
     const rows = await supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2575,7 +2595,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
 
     res.json({ success: true, roster: updatedRoster[0], items });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2607,7 +2627,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
 
     res.json({ success: true, roster: updatedRoster[0], items });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -2710,7 +2730,7 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       resources: updatedResources,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 

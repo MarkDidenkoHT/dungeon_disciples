@@ -1,4 +1,4 @@
-import { RESOURCE_BAR_SLOTS } from './utils.js';
+import { RESOURCE_BAR_SLOTS, uiText } from './utils.js';
 
 let _sessionToken = null;
 
@@ -30,6 +30,15 @@ export async function api(path, body = null) {
     // instead of surfacing the raw English to the player.
     const err = new Error(data.error || `HTTP ${res.status}`);
     if (data.code) err.code = data.code;
+    // An unexpected server failure now answers with a stable code instead of the
+    // raw exception text (see serverError in routes/index.js). Several screens
+    // put err.message straight in front of the player via alert(), so translate
+    // this one here rather than in each of them — the real detail is in the
+    // server log, and 'Server error' told a Russian player nothing anyway.
+    if (data.code === 'internal') {
+      err.message = uiText('Something went wrong. Please try again.',
+                           'Что-то пошло не так. Попробуйте ещё раз.');
+    }
     throw err;
   }
   return data;

@@ -1466,7 +1466,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       // here means the embark guard was bypassed (hand-dismissed modal, direct
       // navigation), so send the player back to embark, which puts the
       // reconnect-or-abandon choice in front of them.
-      if (/already in progress/i.test(err.message || '')) {
+      // Code, not prose — see the same change in screens/battle.js. The regex
+      // stays as a deploy-window fallback only.
+      if (err.code === 'battle_in_progress' || /already in progress/i.test(err.message || '')) {
         navigate('embark', { player });
         return;
       }

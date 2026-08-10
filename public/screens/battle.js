@@ -1618,7 +1618,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">${BTx('noRewards')}</p>`;
       }
     } catch (err) {
-      const isAlreadyClaimed = /already claimed|already/i.test(err.message || '');
+      // Branch on the CODE, not the prose. This used to read
+      // `/already claimed|already/i.test(err.message)`, which meant any rewording
+      // of the server's message turned a graceful "already claimed" into a red
+      // error on the victory screen — silently, with nothing in the logs. The
+      // regex is kept only as a fallback for a client running against an older
+      // server during a deploy, and can go once that window has passed.
+      const isAlreadyClaimed = err.code === 'battle_rewards_claimed'
+        || /already claimed/i.test(err.message || '');
       root.querySelector('#result-rewards').innerHTML = outcomeHtml + (isAlreadyClaimed
         ? `<p class="result-pending">${BTx('claimed')}</p>`
         : `<p class="result-error">${BT.saveFailed[BL](err.message)}</p>`);
