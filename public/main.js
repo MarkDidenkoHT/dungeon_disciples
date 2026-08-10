@@ -60,6 +60,10 @@ const NAV_LABELS = {
 };
 
 let shellMounted = false;
+// The screen currently rendered into #content-root. Only the nav bar consults
+// it (see the click handler below) — a programmatic navigate() to the screen you
+// are already on is always a deliberate reload and must still run.
+let currentScreen = null;
 
 function mountShell(player) {
   if (shellMounted) return;
@@ -115,6 +119,15 @@ function mountShell(player) {
   document.getElementById('bottom-nav').addEventListener('click', e => {
     const btn = e.target.closest('.nav-btn');
     if (btn && !btn.classList.contains('disabled')) {
+      // Tapping the tab you are already on used to tear the screen down and
+      // rebuild it — a visible flash plus a wasted /bootstrap, for no change.
+      // Sheets still close, so the tap is not inert: it dismisses whatever is
+      // open, which is what pressing the current tab is expected to do.
+      if (btn.dataset.screen === currentScreen) {
+        closeSubSheet();
+        closeSheet();
+        return;
+      }
       // The nav sits below any open sheet rather than under it, so a tab is
       // always reachable — pressing one dismisses whatever is open and goes
       // there, instead of leaving a sheet from the previous screen floating.
@@ -152,6 +165,7 @@ function navigate(screen, params = {}) {
 
   if (screen === 'register') {
     shellMounted = false;
+    currentScreen = 'register';
     setSheetBottom('0px');
     app.innerHTML = '';
     renderRegister(app, params);
@@ -233,6 +247,8 @@ function navigate(screen, params = {}) {
   root.style.backgroundPosition = '';
   root.style.backgroundRepeat   = '';
   root.style.backgroundColor    = '';
+
+  currentScreen = screen;
 
   switch (screen) {
     case 'castle':      renderCastle(root, params);     break;

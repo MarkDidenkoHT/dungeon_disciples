@@ -35,10 +35,20 @@ export async function api(path, body = null) {
   return data;
 }
 
+// How long a clean cache entry is trusted without asking the server again.
+// Not a correctness mechanism — every write already invalidates or patches, so
+// the cache is exact for anything THIS client did. It exists for the state that
+// changes without us: a build or errand finishing on a server timer, or the
+// player acting from a second device. Short enough that a stale timer is never
+// visible for long, long enough that castle → roster → castle is one request
+// instead of three.
+const CACHE_TTL_MS = 15000;
+
 function makeCache(fetcher) {
   return {
     data: null,
     dirty: true,
+    _at: 0,
     _inflight: null,
     // Bumped whenever a caller declares the cached data dead. A response issued
     // under an older epoch is answered to whoever asked for it but is NOT
@@ -46,7 +56,8 @@ function makeCache(fetcher) {
     _epoch: 0,
     _tickOpen: false,
     async get(...args) {
-      if (!this.dirty && this.data) return this.data;
+      const fresh = Date.now() - this._at < CACHE_TTL_MS;
+      if (!this.dirty && this.data && fresh) return this.data;
       if (this._inflight) return this._inflight;
       const epoch = this._epoch;
       const p = fetcher(...args)
@@ -55,6 +66,7 @@ function makeCache(fetcher) {
           if (epoch === this._epoch) {
             this.data  = result;
             this.dirty = false;
+            this._at   = Date.now();
           }
           return result;
         })
@@ -109,6 +121,9 @@ function makeCache(fetcher) {
       this._epoch++;
       this._inflight = null;
       this.dirty = false;
+      // A patch carries post-write state straight from the endpoint, so this is
+      // the freshest the cache ever gets — restart the TTL from here.
+      this._at = Date.now();
       return this.data;
     },
   };
@@ -148,7 +163,11 @@ export async function refreshNavLock(player) {
   if (!nav || !player?.chat_id) return;
   let throneLevel = 0;
   try {
-    const boot = await bootstrapCache.refresh(player.chat_id);
+    // get(), not refresh(): this runs on EVERY navigation, and forcing a round
+    // trip here meant tab-switching cost a /bootstrap each time even though
+    // nothing had changed. Writes invalidate the cache themselves, and the TTL
+    // covers server-side changes, so the cached copy is trustworthy.
+    const boot = await bootstrapCache.get(player.chat_id);
     throneLevel = boot.structures?.buildings_data?.slot_0?.level ?? 0;
   } catch {
     throneLevel = 0;
@@ -165,7 +184,7 @@ export async function refreshNavLock(player) {
 export async function refreshResourceBar(player) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;
-  const boot = await bootstrapCache.refresh(player.chat_id);
+  const boot = await bootstrapCache.get(player.chat_id);
   const inventory = boot.resources || [];
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
   // Resources only — 7 slots: gold + 6 crystals, drawn from RESOURCE_BAR_SLOTS so

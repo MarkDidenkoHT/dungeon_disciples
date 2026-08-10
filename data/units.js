@@ -329,7 +329,7 @@ const UNITS = {
     imp: {
       id: 'd1', f: 'd', t: 1,
       name: 'Imp',
-      tags: ['Demon', 'Beast'],
+      tags: ['Demon', 'Warrior'],
       size: 'column',
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },

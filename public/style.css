@@ -85,6 +85,23 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  /* Tab switching empties #content-root and rebuilds it, so the new screen
+     appears in one hard cut — the "flash" between two tabs. Fading it in over
+     ~160px of nothing costs no layout work and reads as a transition rather
+     than a glitch. Deliberately entry-only: an exit animation would have to
+     delay the teardown, which makes the switch measurably slower to respond. */
+  animation: screen-in 0.16s ease-out both;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Motion is a preference, not a decoration: honour the system setting. The
+   screen still appears, just without the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .screen { animation: none; }
 }
 
 h1, h2 { color: var(--accent); margin-bottom: 8px; }

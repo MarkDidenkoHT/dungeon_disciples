@@ -47,23 +47,23 @@ const POSITION_BARKS = [
     lines: [
       'Not sure about this. I have no armour to speak of.',
       'Put steel in front of me, or this will be a short battle.',
-      'I need distance to work. Here I only bleed.',
+      'Cant concentrate here.',
     ],
     lines_ru: [
       'Сомневаюсь. Брони на мне почти нет.',
       'Поставьте кого-нибудь со сталью впереди, иначе бой выйдет коротким.',
-      'Мне нужно расстояние для работы. Здесь я только истеку кровью.',
+      'Тут я не сконцентрируюсь.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Archer' },
     lines: [
-      'A bow is no good at arm\'s length. Send me back.',
+      'A bow is no good at arm\'s length.',
       'I cannot draw with a blade at my throat.',
       'Give me the rear rank and I will clear the field.',
     ],
     lines_ru: [
-      'Лук бесполезен на расстоянии вытянутой руки. Верните меня назад.',
+      'Лук бесполезен на расстоянии вытянутой руки.',
       'Я не натяну тетиву с клинком у горла.',
       'Дайте мне задний ряд, и я расчищу поле.',
     ],
@@ -73,12 +73,12 @@ const POSITION_BARKS = [
     lines: [
       'I mend the line. I am not meant to be the line.',
       'My hands are for repairs, not for holding ground.',
-      'Set me behind the armour and I will keep it standing.',
+      'Set me behind a construct and I will keep it standing.',
     ],
     lines_ru: [
       'Я чиню строй. Я не должен быть строем.',
       'Мои руки для починки, а не для удержания позиции.',
-      'Поставьте меня за бронёй — и я не дам ей рухнуть.',
+      'Поставьте меня за конструктом, и я не дам ему рухнуть.',
     ],
   },
   {
@@ -111,13 +111,11 @@ const POSITION_BARKS = [
     prefers: 'back', actor: { tag: 'Spirit' },
     lines: [
       'I am barely here as it is. Do not spend me first.',
-      'Put something solid ahead of me. I am not.',
-      'I have died once in a front rank. It was enough.',
+      'What remains of me is not enough to hold the line.',
     ],
     lines_ru: [
       'Меня и так едва хватает. Не тратьте меня первым.',
-      'Поставьте впереди что-нибудь плотное. Я — нет.',
-      'Я уже умирал в первом ряду. Мне хватило.',
+      'Чего осталось от меня не хватит для передовой.',
     ],
   },
   {
@@ -135,13 +133,11 @@ const POSITION_BARKS = [
     prefers: 'back', actor: { tag: 'Court' },
     lines: [
       'I did not buy this rank to die in the first exchange.',
-      'You are wasting an expensive asset. That is your coin, not mine.',
-      'Others were made for this row. I was made for the one behind it.',
+      'Others were made for this row.',
     ],
     lines_ru: [
       'Я покупал не тот чин, чтобы погибнуть при первом же размене.',
-      'Вы транжирите дорогое имущество. Это ваши деньги, не мои.',
-      'Другие созданы для этого ряда. Я — для того, что за ним.',
+      'Другие созданы для этого ряда.',
     ],
   },
   {
@@ -224,23 +220,12 @@ const POSITION_BARKS = [
   {
     prefers: 'front', actor: { tag: 'Holy' },
     lines: [
-      'Let me take the first blow. I can bear it.',
-      'Put me in the front line. Shield them with me.',
+      'Let me see what passes for fury among their kind!',
+      'Let my faith be our shield!',
     ],
     lines_ru: [
       'Позвольте мне принять первый удар. Я выдержу.',
-      'Поставьте меня в первый ряд. Прикройте их мной.',
-    ],
-  },
-  {
-    prefers: 'front', actor: { tag: 'Beast' },
-    lines: [
-      'Let me at them. I cannot bite from back here.',
-      'Chain me in front or do not bring me at all.',
-    ],
-    lines_ru: [
-      'Пустите меня к ним. Отсюда я не укушу.',
-      'Приковывайте меня впереди — или не берите вовсе.',
+      'Позволь моей вере быть нашим щитом!',
     ],
   },
   {
@@ -257,12 +242,12 @@ const POSITION_BARKS = [
   {
     prefers: 'front', actor: { tag: 'Zombie' },
     lines: [
-      'Forward. I do not mind what lands on me.',
-      'Put me in the front line. I have little left to lose.',
+      'Forward... not... here...',
+      'Not... here...',
     ],
     lines_ru: [
-      'Вперёд. Мне всё равно, что в меня попадёт.',
-      'Поставьте меня в первый ряд. Мне уже почти нечего терять.',
+      'Вперёд... не... сюда...',
+      'Не... сюда...',
     ],
   },
   {
