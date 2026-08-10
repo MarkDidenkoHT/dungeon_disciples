@@ -249,6 +249,9 @@ function navigate(screen, params = {}) {
   root.style.backgroundColor    = '';
 
   currentScreen = screen;
+  // Lets CSS target a single screen without every screen paying for it — see
+  // #content-root[data-screen="castle"] in style.css.
+  root.dataset.screen = screen;
 
   switch (screen) {
     case 'castle':      renderCastle(root, params);     break;

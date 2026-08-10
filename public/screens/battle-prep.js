@@ -683,21 +683,41 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   // rebuilt, so the hint still returns on the next battle.
   const positionBarkSpoken = new Set();
 
+  // unitId -> the acknowledgement owed to that unit, i.e. the `ok` line paired
+  // with the exact complaint it made (position_barks.js keeps them index-matched).
+  // Only a unit that actually objected is owed one: a unit dropped straight into
+  // the right cell says nothing rather than congratulating the player for it.
+  const positionOkOwed = new Map();
+
   // A unit whose footprint does not include its preferred column objects. Large
   // 2-wide units span both columns and so never object — see position_barks.js.
   function queuePositionBark(unit, cells, anchor) {
     if (player?.settings?.barks_enabled === false) return;
-    if (positionBarkSpoken.has(String(unit.id))) return;
     const def     = resolveUnitDef(unit);
     const prefers = derivePrefPosition(def);
     if (!prefers) return;
     const cols = cells.map(cellCol);
-    if (isPositionSatisfied(prefers, cols)) return;
+    const id   = String(unit.id);
+
+    // Correctly placed: pay off the acknowledgement if one is owed. Deleted as
+    // it is spoken, so shuffling a unit in and out of the right column cannot
+    // farm the same line twice.
+    if (isPositionSatisfied(prefers, cols)) {
+      const owed = positionOkOwed.get(id);
+      if (!owed) return;
+      positionOkOwed.delete(id);
+      pendingPositionBark = { anchor, text: owed, ok: true };
+      return;
+    }
+
+    if (positionBarkSpoken.has(id)) return;
     const bark = pickPositionBark(def, prefers);
     if (!bark) return;
     const text = L === 'en' ? bark.text : bark.text_ru;
     if (!text) return;
-    positionBarkSpoken.add(String(unit.id));
+    positionBarkSpoken.add(id);
+    const okText = L === 'en' ? bark.ok : bark.ok_ru;
+    if (okText) positionOkOwed.set(id, okText);
     pendingPositionBark = { anchor, text };
   }
 
@@ -710,7 +730,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (!g.querySelector('.battle-cell--bark-active')) g.classList.remove('battle-grid--bark');
     });
     if (!pendingPositionBark) return;
-    const { anchor, text } = pendingPositionBark;
+    const { anchor, text, ok } = pendingPositionBark;
     pendingPositionBark = null;
     const cell = root.querySelector(`#player-grid [data-i="${anchor}"]`);
     if (!cell) return;
@@ -724,7 +744,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     grid?.classList.add('battle-grid--bark');
 
     const toast = document.createElement('div');
-    toast.className = 'bark-toast prep-bark-toast';
+    // The acknowledgement is tinted differently: the player needs to read at a
+    // glance that the unit is now content, not complaining again.
+    toast.className = `bark-toast prep-bark-toast${ok ? ' prep-bark-toast--ok' : ''}`;
     toast.textContent = text;
     cell.appendChild(toast);
 

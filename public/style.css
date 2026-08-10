@@ -78,6 +78,17 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Castle only. The castle grid is a fixed 458px tall and centres itself in
+   whatever height it is given, so on a tall phone it floated in the middle of a
+   very large box. Capping the screen pulls it up and gives the rest of the
+   layout the room back.
+   Scoped deliberately: applied to every screen it also shortened battle prep,
+   whose unit track pins itself to the BOTTOM of the screen — the track then
+   stopped 20vh above the nav with dead space between them. navigate() stamps
+   data-screen on #content-root. */
+#content-root[data-screen="castle"] {
   max-height: 80vh;
 }
 
@@ -649,6 +660,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   /* A floor so the icons stay legible on a short viewport, where 10% of the
      height is not enough to draw the nav art. */
   min-height: 52px;
+  /* Pinned to the bottom of the shell. #content-root is capped at 80vh, so on a
+     tall screen the content above ends before the viewport does — without this
+     the nav follows it up and leaves a dead strip underneath, which is what the
+     battle-prep screen was showing. `auto` eats that leftover instead. */
+  margin-top: auto;
 }
 
 .nav-btn {
@@ -3971,6 +3987,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   box-shadow: 0 3px 10px rgba(0,0,0,0.65);
   pointer-events: none;
   animation: bark-toast-in 0.18s ease-out;
+}
+
+/* The formation FOLLOW-UP — the unit acknowledging it is now where it wanted to
+   be. Green rather than the accent gold, so a glance says "settled" instead of
+   "still complaining"; everything else about the shape is deliberately the same,
+   since it is the same voice speaking. */
+.prep-bark-toast--ok {
+  border-color: #6aaa5a;
+  color: #d6ebd0;
 }
 
 /* Settles up into place. BOTH centring offsets have to be carried through every
