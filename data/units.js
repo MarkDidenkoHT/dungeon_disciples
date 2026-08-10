@@ -483,7 +483,7 @@ const UNITS = {
     peer: {
       id: 'd6', f: 'd', t: 1,
       name: 'Peer',
-      tags: ['Court', 'Choir'],
+      tags: ['Court', 'Caster'],
       size: 'tile',
       hp: 40, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 15, life: 35, death: 0, cold: 0, nature: 0 },
@@ -494,7 +494,7 @@ const UNITS = {
     nether_baron: {
       id: 'd61', f: 'd', t: 2,
       name: 'Nether Baron',
-      tags: ['Court', 'Choir'],
+      tags: ['Court', 'Caster'],
       size: 'tile',
       hp: 50, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
@@ -505,7 +505,7 @@ const UNITS = {
     nether_lord: {
       id: 'd611', f: 'd', t: 3,
       name: 'Nether Lord',
-      tags: ['Court', 'Choir'],
+      tags: ['Court', 'Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 10,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
@@ -2427,7 +2427,7 @@ const UNITS = {
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,
         name: 'Wailing Ghost',
-        tags: ['Ghost', 'Caster'],
+        tags: ['Spirit', 'Caster'],
         size: 'tile',
         hp: 45, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
@@ -2438,7 +2438,7 @@ const UNITS = {
       revenant: {
         id: 'dm_e31', f: 'dm', t: 2,
         name: 'Revenant',
-        tags: ['Ghost', 'Caster'],
+        tags: ['Spirit', 'Caster'],
         size: 'tile',
         hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
@@ -2449,7 +2449,7 @@ const UNITS = {
       soul_harvester: {
         id: 'dm_e311', f: 'dm', t: 3,
         name: 'Soul Harvester',
-        tags: ['Ghost', 'Caster'],
+        tags: ['Spirit', 'Caster'],
         size: 'tile',
         hp: 65, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },

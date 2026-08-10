@@ -23,18 +23,43 @@
 //   isPositionSatisfied() below — the caller passes the footprint columns.
 //
 // VOICE — the same three registers as data/combat_barks.js:
-//   Empire (Knight / Holy / Engineer / Construct / Archer) — militant, stoic,
-//     understated. Duty and discipline; never triumphant.
-//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton / Ghost) — mourning,
-//     melancholic. Grief carried rather than performed.
-//   Choir of the Cursed (Demon / Court / Choir / Beast) — greedy, self-serving.
-//     Everything is a price, a debt, a share owed to them.
+//   Empire (Knight / Holy / Engineer / Construct / Archer / Warrior) — militant
+//     and zealous to the edge of xenophobia. Duty, oath and the line held.
+//     Everything outside the Empire is unclean by default. Stoic, never
+//     triumphant: they do not boast, they report.
+//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton ) — NOT ancient.
+//     They are barely a decade dead, the collateral of a time spell that went
+//     wrong, and Astaloth mourns what became of his worshippers. So the register
+//     is recent grief and confusion, not centuries of practised menace: they
+//     remember being alive, and the memory is fresh enough to hurt. Never
+//     cunning, never gloating — a vampire here is a frightened person who has
+//     only just learned what they are now.
+//   Choir of the Cursed (Demon / Court / Choir / Beast) — born out of song, and
+//     it shows: everything is music, terms, debt and appetite. Greedy, evil and
+//     genuinely CUNNING — they bargain, they read the contract back to you, they
+//     let someone cheaper bleed first.
 //
 // Filters and specificity match combat_barks.js: `name` (+100) beats any tag
 // rule, `tag`/`tags` score +2 each, `not` is a gate worth nothing. Ties pool
 // together and one line is picked at random. `lines` and `lines_ru` must stay
 // the same length and order — the client shows the viewer's language with no
 // English fallback.
+//
+// FOLLOW-UP (`ok` / `ok_ru`)
+//   What the unit says once the player MOVES IT to where it wanted to be. Same
+//   length and order as `lines`, and index-matched to it on purpose: ok[i]
+//   answers lines[i], so the archer who could not draw with a blade at their
+//   throat says they can draw now — not a generic "thank you". pickPositionBark
+//   returns both halves in one object, so the caller holds the matching reply
+//   without having to track which line index was rolled.
+//
+//   These are deliberately SHORTER than the complaint. A complaint is an
+//   argument; an acknowledgement is a grunt. Anything longer reads as the unit
+//   making a speech about being stood in the right place.
+//
+//   The caller decides WHEN to use it. Only a unit that actually complained has
+//   anything to acknowledge — a unit dropped straight into the right cell should
+//   stay silent rather than congratulate the player for doing nothing.
 
 // `prefers` is the preference that was VIOLATED. A unit that wants the back
 // column but was placed in front draws from the `prefers: 'back'` rules.
@@ -45,14 +70,20 @@ const POSITION_BARKS = [
   {
     prefers: 'back', actor: { tag: 'Caster' },
     lines: [
-      'Not sure about this. I have no armour to speak of.',
-      'Put steel in front of me, or this will be a short battle.',
       'Cant concentrate here.',
+      'This is not the best place for me.',
     ],
     lines_ru: [
-      'Сомневаюсь. Брони на мне почти нет.',
-      'Поставьте кого-нибудь со сталью впереди, иначе бой выйдет коротким.',
       'Тут я не сконцентрируюсь.',
+      'Это не лучшее место для меня.',
+    ],
+    ok: [
+      'Better. I can think now.',
+      'This will do.',
+    ],
+    ok_ru: [
+      'Так лучше. Теперь я могу думать.',
+      'Вот это подойдёт.',
     ],
   },
   {
@@ -60,25 +91,37 @@ const POSITION_BARKS = [
     lines: [
       'A bow is no good at arm\'s length.',
       'I cannot draw with a blade at my throat.',
-      'Give me the rear rank and I will clear the field.',
     ],
     lines_ru: [
       'Лук бесполезен на расстоянии вытянутой руки.',
       'Я не натяну тетиву с клинком у горла.',
-      'Дайте мне задний ряд, и я расчищу поле.',
+    ],
+    ok: [
+      'Now I have the length for it.',
+      'Now I can draw.',
+    ],
+    ok_ru: [
+      'Теперь есть где размахнуться.',
+      'Теперь я натяну тетиву.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Engineer' },
     lines: [
-      'I mend the line. I am not meant to be the line.',
-      'My hands are for repairs, not for holding ground.',
+      'I work with tools better from the back.',
       'Set me behind a construct and I will keep it standing.',
     ],
     lines_ru: [
-      'Я чиню строй. Я не должен быть строем.',
-      'Мои руки для починки, а не для удержания позиции.',
+      'Я лучше управляюсь с инструментам с заднего ряда.',
       'Поставьте меня за конструктом, и я не дам ему рухнуть.',
+    ],
+    ok: [
+      'Good. My hands are free.',
+      'It will not fall while I am here.',
+    ],
+    ok_ru: [
+      'Хорошо. Руки свободны.',
+      'Пока я здесь, он не рухнет.',
     ],
   },
   {
@@ -86,25 +129,37 @@ const POSITION_BARKS = [
     lines: [
       'I can shield the line or stand in it. Not both.',
       'Faith does not stop a spear. Put someone here who can.',
-      'Let me tend them from behind. That is the work I was given.',
     ],
     lines_ru: [
       'Я могу защищать строй или стоять в нём. Но не одновременно.',
       'Вера не остановит копьё. Поставьте сюда того, кто остановит.',
-      'Позвольте мне помогать им сзади. Это и есть моя работа.',
+    ],
+    ok: [
+      'Then I shield it. Go.',
+      'Steel in front, faith behind. As it should be.',
+    ],
+    ok_ru: [
+      'Тогда я укрою его. Идите.',
+      'Сталь впереди, вера позади. Как и должно.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Vampire' },
     lines: [
-      'I have survived centuries by not standing here.',
-      'Age has taught me patience, not recklessness. Move me back.',
-      'I would rather not spend this body tonight.',
+      'Astaloth wont see my pain from here.',
+      'I still flinch. Put me where it is not seen.',
     ],
     lines_ru: [
-      'Я пережил столетия именно потому, что не стоял здесь.',
-      'Годы научили меня терпению, а не безрассудству. Отведите меня назад.',
-      'Мне бы не хотелось тратить это тело сегодня.',
+      'Отсюда Асталот не увидит мою боль.',
+      'Я всё ещё вздрагиваю. Поставьте туда, где не видно.',
+    ],
+    ok: [
+      'Mother watches over me.',
+      'No one is watching now.',
+    ],
+    ok_ru: [
+      'Мать смотрит за мной.',
+      'Теперь никто не смотрит.',
     ],
   },
   {
@@ -115,63 +170,73 @@ const POSITION_BARKS = [
     ],
     lines_ru: [
       'Меня и так едва хватает. Не тратьте меня первым.',
-      'Чего осталось от меня не хватит для передовой.',
+      'Того, что от меня осталось, не хватит, чтобы держать строй.',
     ],
-  },
-  {
-    prefers: 'back', actor: { tag: 'Ghost' },
-    lines: [
-      'I am barely here as it is. Do not spend me first.',
-      'The front rank is for the solid. I have not been solid in years.',
+    ok: [
+      'I will last longer here.',
+      'What is left of me is enough for this.',
     ],
-    lines_ru: [
-      'Меня и так едва хватает. Не тратьте меня первым.',
-      'Первый ряд — для плотных. Я не был плотным уже много лет.',
+    ok_ru: [
+      'Здесь меня хватит надольше.',
+      'На это того, что осталось, хватит.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Court' },
     lines: [
       'I did not buy this rank to die in the first exchange.',
-      'Others were made for this row.',
+      'Others were made for this row. Cheaper ones. Louder ones.',
     ],
     lines_ru: [
       'Я покупал не тот чин, чтобы погибнуть при первом же размене.',
-      'Другие созданы для этого ряда.',
+      'Для этого ряда созданы другие. Подешевле. Погромче.',
     ],
-  },
-  {
-    prefers: 'back', actor: { tag: 'Choir' },
-    lines: [
-      'My voice carries from anywhere. My throat does not.',
-      'Spend the cheap ones here. I am owed better.',
+    ok: [
+      'Now the terms suit me.',
+      'Let the cheap ones earn their keep.',
     ],
-    lines_ru: [
-      'Мой голос доносится откуда угодно. Моё горло — нет.',
-      'Тратьте здесь дешёвых. Мне причитается лучшее.',
+    ok_ru: [
+      'Вот теперь условия меня устраивают.',
+      'Пусть дешёвые отрабатывают своё.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Demon' },
     lines: [
-      'I deal in prices, not in wounds. Move me back.',
-      'You will owe me twice if I stand here.',
+      'They will not hear my song from here.',
+      'NOT HERE!',
     ],
     lines_ru: [
-      'Я торгую ценами, а не ранами. Отодвиньте меня назад.',
-      'Если я встану здесь, вы задолжаете мне вдвойне.',
+      'Отсюда они не услышат мою песню.',
+      'НЕ СЮДА!',
+    ],
+    ok: [
+      'Now they will hear every word.',
+      'Here. Yes. HERE.',
+    ],
+    ok_ru: [
+      'Теперь они услышат каждое слово.',
+      'Да.',
     ],
   },
   {
     // Generic catch-all so a ranged unit with no matching tag still speaks.
     prefers: 'back',
     lines: [
-      'Not sure about this. I fight better from the back.',
+      'Not sure about this.',
       'I need room between me and them.',
     ],
     lines_ru: [
-      'Сомневаюсь. Мне лучше сражаться сзади.',
+      'Сомневаюсь в этом.',
       'Мне нужно расстояние между мной и ними.',
+    ],
+    ok: [
+      'Yes. This is better.',
+      'Now I have room.',
+    ],
+    ok_ru: [
+      'Да. Так лучше.',
+      'Теперь есть простор.',
     ],
   },
 
@@ -181,40 +246,58 @@ const POSITION_BARKS = [
   {
     prefers: 'front', actor: { tag: 'Knight' },
     lines: [
-      'Put me in the front line. I cannot reach a thing from here.',
-      'The oath was to stand between them and you. Let me stand.',
-      'This is not my place. Forward.',
+      'The oath was to protect at all cost.',
+      'Their kind should not exist. Let me begin.',
     ],
     lines_ru: [
-      'Поставьте меня в первый ряд. Отсюда я ни до кого не дотянусь.',
-      'Я клялся встать между ними и вами. Дайте мне встать.',
-      'Это не моё место. Вперёд.',
+      'Я клялся защищать любой ценой.',
+      'Их род не должен существовать. Дайте начать.',
+    ],
+    ok: [
+      'Now I can keep it.',
+      'Good. I begin here.',
+    ],
+    ok_ru: [
+      'Теперь я смогу её сдержать.',
+      'Хорошо. Начну отсюда.',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Warrior' },
     lines: [
-      'Put me in the front line. My blade does not carry this far.',
       'I did not come here to watch.',
-      'Move me up. I am no use behind armour.',
+      'Forward. I want them ended!',
     ],
     lines_ru: [
-      'Поставьте меня в первый ряд. Мой клинок так далеко не достаёт.',
       'Я пришёл сюда не смотреть.',
-      'Двиньте меня вперёд. За бронёй от меня нет толку.',
+      'Вперёд. Я хочу покончить с ними!',
+    ],
+    ok: [
+      'Now I fight!',
+      'They end today!',
+    ],
+    ok_ru: [
+      'Теперь сразимся!',
+      'Сегодня им конец!',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Construct' },
     lines: [
-      'I was built to be struck. Put me where the blows land.',
-      'Plating this heavy is wasted in the second rank.',
+      'I was built to be struck.',
       'Forward. That is the whole of my purpose.',
     ],
     lines_ru: [
-      'Меня построили, чтобы принимать удары. Поставьте туда, куда они приходятся.',
-      'Такая броня во втором ряду пропадает впустую.',
+      'Меня построили, чтобы принимать удары.',
       'Вперёд. В этом всё моё назначение.',
+    ],
+    ok: [
+      'Let them strike.',
+      'Purpose served.',
+    ],
+    ok_ru: [
+      'Пусть бьют.',
+      'Назначение исполнено.',
     ],
   },
   {
@@ -224,30 +307,54 @@ const POSITION_BARKS = [
       'Let my faith be our shield!',
     ],
     lines_ru: [
-      'Позвольте мне принять первый удар. Я выдержу.',
+      'Дай взглянуть что они зовут яростью!',
       'Позволь моей вере быть нашим щитом!',
+    ],
+    ok: [
+      'Witness Mithrails light!',
+      'The shield stands here!',
+    ],
+    ok_ru: [
+      'Узрите свет Митраила!',
+      'Щит стоит здесь!',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Demon' },
     lines: [
-      'I am paid in blood and there is none back here.',
-      'Put me in front. I collect at close range.',
+      'I want to paint next song in their blood.',
+      'Aggra mo naaa.. what? WHAT? NOT HERE!',
     ],
     lines_ru: [
-      'Мне платят кровью, а здесь её нет.',
-      'Поставьте меня вперёд. Я взыскиваю вблизи.',
+      'Я хочу нарисовать следущую песнь их кровью!',
+      'Аггра мо нааа... что? ЧТО? НЕ СЮДА!',
+    ],
+    ok: [
+      'Close enough...',
+      'Qeraa an moreee... yes. HERE.',
+    ],
+    ok_ru: [
+      'Достаточно близко...',
+      'Кераа ан морэээ... да. ЗДЕСЬ.',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Zombie' },
     lines: [
       'Forward... not... here...',
-      'Not... here...',
+      'Not... here...'
     ],
     lines_ru: [
       'Вперёд... не... сюда...',
-      'Не... сюда...',
+      'Не... сюда...'
+    ],
+    ok: [
+      'Forward... yes... here...',
+      'Here... good...',
+    ],
+    ok_ru: [
+      'Да... сюда...',
+      'Хорошо...',
     ],
   },
   {
@@ -260,17 +367,33 @@ const POSITION_BARKS = [
       'Вперёд. Во мне уже нечему ломаться.',
       'Поставьте меня в первый ряд. Пусть тупят клинки.',
     ],
+    ok: [
+      'Let them try to break it.',
+      'Their blades will dull on me.',
+    ],
+    ok_ru: [
+      'Пусть попробуют сломать.',
+      'Их клинки затупятся об меня.',
+    ],
   },
   {
     // Generic catch-all for a range-1 unit with no matching tag.
     prefers: 'front',
     lines: [
-      'Put me in the front line. I cannot reach from here.',
-      'Move me forward. I am wasted back here.',
+      'Put me in the front line.',
+      'Move me forward.',
     ],
     lines_ru: [
-      'Поставьте меня в первый ряд. Отсюда мне не дотянуться.',
-      'Двиньте меня вперёд. Здесь я пропадаю зря.',
+      'Поставьте меня в первый ряд.',
+      'Двиньте меня вперёд.',
+    ],
+    ok: [
+      'Now I can reach them.',
+      'Better.',
+    ],
+    ok_ru: [
+      'Теперь я до них дотянусь.',
+      'Так лучше.',
     ],
   },
 ];
@@ -329,7 +452,12 @@ function ruleScore(rule, def) {
   return score;
 }
 
-// Returns { text, text_ru } or null when the unit has nothing to say.
+// Returns { text, text_ru, ok, ok_ru } or null when the unit has nothing to say.
+//
+// `ok`/`ok_ru` are the reply to THIS line, not a random one from the rule — the
+// caller shows `text` on the bad placement and keeps the object, then shows `ok`
+// if and when the player fixes it. Falls back to '' where a rule has no
+// follow-up defined, same as the language fallback below.
 function pickPositionBark(def, prefers) {
   if (!def || !prefers) return null;
   const scored = [];
@@ -345,7 +473,12 @@ function pickPositionBark(def, prefers) {
   if (!pool.length) return null;
   const rule = pool[Math.floor(Math.random() * pool.length)];
   const i    = Math.floor(Math.random() * rule.lines.length);
-  return { text: rule.lines[i], text_ru: rule.lines_ru?.[i] ?? '' };
+  return {
+    text:    rule.lines[i],
+    text_ru: rule.lines_ru?.[i] ?? '',
+    ok:      rule.ok?.[i] ?? '',
+    ok_ru:   rule.ok_ru?.[i] ?? '',
+  };
 }
 
 export {
