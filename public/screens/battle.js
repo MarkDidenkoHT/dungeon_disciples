@@ -694,26 +694,59 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const def = resolveUnitDef(c);
     if (!def) return `<div class="battle-unit-detail-empty">${BTx('noUnitData')}</div>`;
 
+    // The card is drawn from the LIVE combatant, not the blueprint: armor,
+    // initiative and resistances are mutated in place by buffs, and damage
+    // scales through _dmg_mult rather than by rewriting the power stat. The
+    // blueprint values captured at battle start (_base_stats) become the
+    // comparison unit, so every buffed stat renders with its own +/- delta the
+    // same way a roster comparison does.
+    const base       = c._base_stats || {};
+    const basePower  = base.action_power ?? def.action_power ?? def.action?.value ?? 0;
+    const livePower  = Math.floor(basePower * (c._dmg_mult ?? 1));
+    const liveArmor  = (c.armor ?? def.armor ?? 0) + (c.defend_armor_bonus || 0);
+
     const liveUnit = {
       ...def,
-      hp:         `${c.battle_hp}/${c.max_hp}`,
-      armor:      c.armor ?? def.armor ?? 0,
-      initiative: c.initiative ?? def.initiative ?? '—',
-      resistances: c.unit_data?.resistances ?? def.resistances ?? {},
+      hp:           `${c.battle_hp}/${c.max_hp}`,
+      armor:        liveArmor,
+      initiative:   c.initiative ?? def.initiative ?? '—',
+      action_power: livePower,
+      resistances:  c.unit_data?.resistances ?? def.resistances ?? {},
+    };
+
+    const baseUnit = {
+      armor:        base.armor ?? def.armor ?? 0,
+      initiative:   base.initiative ?? def.initiative ?? 0,
+      action_power: basePower,
+      resistances:  base.resistances ?? def.resistances ?? {},
     };
 
     const badge = c.side === 'player' ? 'Ally' : 'Enemy';
-    const shield = (c.buffs || []).find(b => b.type === 'shield');
-    const burn   = (c.debuffs || []).find(b => b.type === 'burn');
-    const poison = (c.debuffs || []).find(b => b.type === 'poison');
 
-    const statusChips = [
-      !c.alive ? `<span class="stat-diff-chip stat-diff--down">💀 Dead</span>` : '',
-      shield ? `<span class="stat-diff-chip stat-diff--up">🛡 Shield ${shield.value}</span>` : '',
-      burn   ? `<span class="stat-diff-chip stat-diff--down">🔥 Burn ${burn.value}</span>`   : '',
-      poison ? `<span class="stat-diff-chip stat-diff--down">☠️ Poison ${poison.value}</span>` : '',
-    ].filter(Boolean).join('');
+    // Everything the engine registers as a dispellable effect already carries a
+    // display name and a polarity, so the chip row is generated from that list
+    // rather than from a hand-maintained set of known buff names.
+    const chip = (cls, text) => `<span class="stat-diff-chip stat-diff--${cls}">${text}</span>`;
+    const effectChips = (c._effects || []).map(e =>
+      chip(e.polarity === 'positive' ? 'up' : 'down', e.name || e.key));
 
+    // Damage-over-time and stack counters live outside the effect registry (they
+    // tick and expire on their own), so they are listed explicitly.
+    const dot = (c.dot_dmg || 0) + (c._poison_dmg || 0);
+    const extraChips = [
+      !c.alive                   ? chip('down', '💀 Dead') : '',
+      c._stun_rounds > 0         ? chip('down', `💫 Stunned ${c._stun_rounds}`) : '',
+      dot > 0                    ? chip('down', `🩸 DoT ${dot}/round`) : '',
+      c._hot > 0                 ? chip('up',   `💚 Regen ${c._hot}/round`) : '',
+      c._rage_stacks > 0         ? chip('up',   `😡 Rage x${c._rage_stacks}`) : '',
+      c._aegis_stacks > 0        ? chip('up',   `🛡 Aegis x${c._aegis_stacks}`) : '',
+      c._fanaticism_stacks > 0   ? chip('up',   `🔥 Fanaticism x${c._fanaticism_stacks}`) : '',
+      c._invulnerable            ? chip('up',   '✨ Invulnerable') : '',
+      (c._dmg_mult ?? 1) !== 1   ? chip((c._dmg_mult > 1) ? 'up' : 'down',
+                                        `⚔ Damage ${Math.round(((c._dmg_mult ?? 1) - 1) * 100)}%`) : '',
+    ].filter(Boolean);
+
+    const statusChips = [...effectChips, ...extraChips].join('');
     const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
     // Drawn for ANY combatant carrying an item. The player's units resolve
@@ -725,7 +758,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
       : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');
 
-    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml })}${statusHtml}</div>`;
+    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit })}${statusHtml}</div>`;
   }
 
   function formatLogEntry(entry) {

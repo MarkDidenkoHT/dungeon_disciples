@@ -432,13 +432,25 @@ export function renderUnitResistColumn(unit, compareUnit = null) {
       ${statDeltaHtml(diffs.armor, 'left')}
     </div>`;
 
+  // Resist buffs (Frost Armor, Aegis, Sanctuary) and shreds move these numbers
+  // in place, so each cell carries its own delta against the comparison unit —
+  // otherwise a warded unit reads exactly like an unwarded one.
+  const baseRes = compareUnit?.resistances || {};
   const resistCells = RESIST_ORDER.map(r => {
     const info = RESIST_ICONS[r];
     const val  = res[r] ?? 0;
     const cls  = val > 0 ? 'resist-val--pos' : val < 0 ? 'resist-val--neg' : '';
+    const rd   = compareUnit ? val - (baseRes[r] ?? 0) : 0;
+    // Inline rather than the absolutely-positioned statDeltaHtml badge: six
+    // resist cells sit shoulder to shoulder in one row, so a badge hung outside
+    // a cell would land on top of its neighbour.
+    const rDelta = rd
+      ? `<span class="resist-delta stat-delta--${rd > 0 ? 'up' : 'down'}">${rd > 0 ? '+' : ''}${rd}</span>`
+      : '';
     return `<div class="resist-cell" title="${RESIST_LABELS[r] ? uiText(RESIST_LABELS[r].en, RESIST_LABELS[r].ru) : info.label}">
       <span class="resist-icon">${info.icon}</span>
       <span class="resist-val ${cls}">${val}</span>
+      ${rDelta}
     </div>`;
   }).join('');
 
@@ -539,7 +551,12 @@ export function unitStatDiffs(unit, compareUnit) {
   if (!unit || !compareUnit) return {};
   const out = {};
   for (const s of STAT_DIFF_MAP) {
-    const diff = (unit[s.key] ?? 0) - (compareUnit[s.key] ?? 0);
+    // HP arrives as "12/50" on a live combatant card, and a string subtraction
+    // yields NaN — which is !== 0 and would render a "NaN" badge. Only compare
+    // stats that are numbers on BOTH sides.
+    const a = Number(unit[s.key] ?? 0), b = Number(compareUnit[s.key] ?? 0);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    const diff = a - b;
     if (diff !== 0) out[s.key] = { label: s.label, diff };
   }
   return out;

@@ -187,6 +187,18 @@ class BattleEngine {
       _clear_shot_initiative_amt: 0,
       _clear_shot_dmg_amt: 0,
       _bark_counts: {},
+      // Frozen copy of the stats a buff/debuff can move, taken before anything
+      // has been applied. Armor, initiative and resistances are all mutated in
+      // place during a battle, so without this there is nothing left to compare
+      // the live numbers against and the inspector can only show a bare value
+      // that looks identical whether or not the unit is buffed.
+      _base_stats: {
+        max_hp:       maxHp,
+        armor:        data.armor ?? 0,
+        initiative:   data.initiative ?? 40,
+        action_power: data.action_power ?? data.action?.value ?? 0,
+        resistances:  { ...(data.resistances || {}) },
+      },
     };
   }
   fireTrigger(trigger, ctx) {
@@ -1473,6 +1485,10 @@ class BattleEngine {
         acted_this_round: c.acted_this_round,
         used_active:      c.used_active ?? false,
         _rosterId:        c._rosterId ?? null,
+        _base_stats:      c._base_stats ?? null,
+        // Live resistances. rehydrate() rebuilds combatants from the setup, so
+        // without these every resist buff and shred silently reverted on reload.
+        _resistances:     { ...(c.unit_data?.resistances || {}) },
         buffs: {
           dot_dmg:             c.dot_dmg,
           _hot:                c._hot,
@@ -1561,6 +1577,11 @@ class BattleEngine {
       c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;
       c._base_max_hp        = s._base_max_hp ?? c.max_hp;
       c._fanaticism_bonus   = s._fanaticism_bonus ?? 0;
+      if (s._base_stats) c._base_stats = s._base_stats;
+      if (s._resistances) {
+        c.unit_data = c.unit_data || {};
+        c.unit_data.resistances = { ...s._resistances };
+      }
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;

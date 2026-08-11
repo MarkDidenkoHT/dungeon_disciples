@@ -1907,6 +1907,9 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .core-stat {
   flex: 1;
+  /* Anchor for .stat-delta, which hangs off THIS cell — without it the badge
+     resolves against whatever ancestor happens to be positioned. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1966,6 +1969,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .resist-cell {
+  position: relative;   /* anchor for the armor cell's .stat-delta badge */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1977,6 +1981,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   border: 1px solid var(--border);
   padding: 3px 1px;
   transition: background 0.15s;
+}
+
+/* Buff/shred delta under a resistance value. Inline, so it stays inside its own
+   cell in the six-across resist row. */
+.resist-delta {
+  font-size: 0.52rem;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .resist-cell:active {
