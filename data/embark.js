@@ -99,7 +99,7 @@ const REGION_ENCOUNTERS = {
   glittering_abyss: {
     level_1: {
       enemies: [
-        { key: 'glittering_abyss.сhillrock',  cell: 0 },
+        { key: 'glittering_abyss.chillrock',  cell: 0 },
       ],
       rewards: {
         gold: 15, xp: 30,
@@ -125,7 +125,7 @@ const REGION_ENCOUNTERS = {
       spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 2 },
-        { key: 'glittering_abyss.сhillrock',  cell: 1 },
+        { key: 'glittering_abyss.chillrock',  cell: 1 },
       ],
       rewards: {
         gold: 25, xp: 50,
