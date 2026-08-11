@@ -5,7 +5,7 @@ const UNITS = {
     black_castellan: {
       id: 'h_d_1',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 1, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 80, armor: 10, initiative: 45,
@@ -18,7 +18,7 @@ const UNITS = {
     black_castellan_path_a_t2: {
       id: 'h_d_1_a2',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 2, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 95, armor: 10, initiative: 45,
@@ -31,7 +31,7 @@ const UNITS = {
     black_castellan_path_a_t3: {
       id: 'h_d_1_a3',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 3, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 110, armor: 10, initiative: 45,
@@ -44,7 +44,7 @@ const UNITS = {
     black_castellan_path_a_t4: {
       id: 'h_d_1_a41',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный каКастелянстелян',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 125, armor: 10, initiative: 45,
@@ -57,7 +57,7 @@ const UNITS = {
     black_castellan_path_a_t4_alt: {
       id: 'h_d_1_a42',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 125, armor: 10, initiative: 45,
@@ -70,7 +70,7 @@ const UNITS = {
     black_castellan_path_b_t2: {
       id: 'h_d_1_b2',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 2, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 90, armor: 15, initiative: 45,
@@ -83,7 +83,7 @@ const UNITS = {
     black_castellan_path_b_t3: {
       id: 'h_d_1_b3',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 3, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 100, armor: 20, initiative: 50,
@@ -96,7 +96,7 @@ const UNITS = {
     black_castellan_path_b_t4: {
       id: 'h_d_1_b41',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 110, armor: 25, initiative: 55,
@@ -109,7 +109,7 @@ const UNITS = {
     black_castellan_path_b_t4_alt: {
       id: 'h_d_1_b42',
       name: 'Black Castellan',
-      name_ru: 'Чёрный кастелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 4, size: 'tile',
       tags: ['Knight', 'Demon'],
       hp: 110, armor: 25, initiative: 55,
@@ -239,7 +239,7 @@ const UNITS = {
     infernal_ascendant: {
       id: 'h_d_3',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 1, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 50, armor: 0, initiative: 40,
@@ -252,7 +252,7 @@ const UNITS = {
     infernal_ascendant_path_a_t2: {
       id: 'h_d_3_a2',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 60, armor: 0, initiative: 40,
@@ -265,7 +265,7 @@ const UNITS = {
     infernal_ascendant_path_a_t3: {
       id: 'h_d_3_a3',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 70, armor: 0, initiative: 40,
@@ -278,7 +278,7 @@ const UNITS = {
     infernal_ascendant_path_a_t4: {
       id: 'h_d_3_a41',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 80, armor: 0, initiative: 40,
@@ -291,7 +291,7 @@ const UNITS = {
     infernal_ascendant_path_a_t4_alt: {
       id: 'h_d_3_a42',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 80, armor: 0, initiative: 40,
@@ -304,7 +304,7 @@ const UNITS = {
     infernal_ascendant_path_b_t2: {
       id: 'h_d_3_b2',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 2, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 55, armor: 5, initiative: 40,
@@ -317,7 +317,7 @@ const UNITS = {
     infernal_ascendant_path_b_t3: {
       id: 'h_d_3_b3',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 3, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 60, armor: 10, initiative: 40,
@@ -330,7 +330,7 @@ const UNITS = {
     infernal_ascendant_path_b_t4: {
       id: 'h_d_3_b41',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 70, armor: 10, initiative: 40,
@@ -343,7 +343,7 @@ const UNITS = {
     infernal_ascendant_path_b_t4_alt: {
       id: 'h_d_3_b42',
       name: 'Infernal Ascendant',
-      name_ru: 'Инфернальный вознесённый',
+      name_ru: 'Инфернальный Вознесённый',
       f: 'd', t: 4, size: 'tile',
       tags: ['Caster', 'Demon'],
       hp: 65, armor: 15, initiative: 40,
@@ -416,7 +416,7 @@ const UNITS = {
     clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
-      name_ru: 'Глиняная горгулья',
+      name_ru: 'Глиняная Горгулья',
       tags: ['Demon', 'Construct'],
       size: 'row',
       hp: 60, armor: 30, initiative: 50,
@@ -428,7 +428,7 @@ const UNITS = {
     stone_gargoyle: {
       id: 'd31', f: 'd', t: 2,
       name: 'Stone Gargoyle',
-      name_ru: 'Каменная горгулья',
+      name_ru: 'Каменная Горгулья',
       tags: ['Demon', 'Construct'],
       size: 'row',
       hp: 80, armor: 35, initiative: 50,
@@ -440,7 +440,7 @@ const UNITS = {
     onyx_gargoyle: {
       id: 'd311', f: 'd', t: 3,
       name: 'Onyx Gargoyle',
-      name_ru: 'Ониксовая горгулья',
+      name_ru: 'Ониксовая Горгулья',
       tags: ['Demon', 'Construct'],
       size: 'row',
       hp: 85, armor: 40, initiative: 50,
@@ -452,7 +452,7 @@ const UNITS = {
     quartz_gargoyle: {
       id: 'd32', f: 'd', t: 2,
       name: 'Quartz Gargoyle',
-      name_ru: 'Кварцевая горгулья',
+      name_ru: 'Кварцевая Горгулья',
       tags: ['Demon', 'Construct'],
       size: 'row',
       hp: 80, armor: 30, initiative: 50,
@@ -464,7 +464,7 @@ const UNITS = {
     azurite_gargoyle: {
       id: 'd321', f: 'd', t: 3,
       name: 'Azurite Gargoyle',
-      name_ru: 'Азуритовая горгулья',
+      name_ru: 'Азуритовая Горгулья',
       tags: ['Demon', 'Construct'],
       size: 'row',
       hp: 95, armor: 30, initiative: 50,
@@ -512,7 +512,7 @@ const UNITS = {
     pain_projector: {
       id: 'd412', f: 'd', t: 3,
       name: 'Pain Projector',
-      name_ru: 'Проводник боли',
+      name_ru: 'Проводник Боли',
       tags: ['Warrior', 'Demon'],
       size: 'tile',
       hp: 70, armor: 5, initiative: 10,
@@ -560,7 +560,7 @@ const UNITS = {
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
       name: 'Flame Spawn',
-      name_ru: 'Порождение пламени',
+      name_ru: 'Порождение Пламени',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 60, armor: 5, initiative: 10,
@@ -572,7 +572,7 @@ const UNITS = {
     blaze_spawn: {
       id: 'd71', f: 'd', t: 2,
       name: 'Blaze Spawn',
-      name_ru: 'Порождение полымя',
+      name_ru: 'Порождение Полымя',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 70, armor: 5, initiative: 10,
@@ -584,7 +584,7 @@ const UNITS = {
     inferno_spawn: {
       id: 'd711', f: 'd', t: 3,
       name: 'Inferno Spawn',
-      name_ru: 'Порождение инферно',
+      name_ru: 'Порождение Инферно',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 75, armor: 10, initiative: 10,
@@ -629,14 +629,10 @@ const UNITS = {
       damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 700, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
-    // The Cultist's other road: instead of learning to throw fire, this branch
-    // learns to sing over the burned. Song of Ash mends DEMONS only — see
-    // TAG_RULES in utils/tag-rules.js — so it is a mender that can do nothing
-    // for the Choir's Constructs or its Court, and everything for its Demons.
     ash_cantor: {
       id: 'd52', f: 'd', t: 2,
       name: 'Ash Cantor',
-      name_ru: 'Пепельный кантор',
+      name_ru: 'Пепельный Кантор',
       tags: ['Caster', null],
       size: 'tile',
       hp: 45, armor: 5, initiative: 30,
@@ -648,7 +644,7 @@ const UNITS = {
     ash_precentor: {
       id: 'd521', f: 'd', t: 3,
       name: 'Ash Precentor',
-      name_ru: 'Пепельный регент',
+      name_ru: 'Пепельный Регент',
       tags: ['Caster', 'Demon'],
       size: 'tile',
       hp: 55, armor: 5, initiative: 30,
@@ -1050,7 +1046,7 @@ const UNITS = {
     heavy_infantry: {
       id: 'e112', f: 'e', t: 3,
       name: 'Heavy Infantry',
-      name_ru: 'Тяжёлый пехотинец',
+      name_ru: 'Тяжёлый Пехотинец',
       tags: ['Knight', null],
       size: 'tile',
       hp: 70, armor: 20, initiative: 40,
@@ -1098,7 +1094,7 @@ const UNITS = {
     iron_automaton: {
       id: 'e31', f: 'e', t: 2,
       name: 'Iron Automaton',
-      name_ru: 'Железный автоматон',
+      name_ru: 'Железный Автоматон',
       tags: ['Construct', null],
       size: 'column',
       hp: 105, armor: 25, initiative: 40,
@@ -1110,7 +1106,7 @@ const UNITS = {
     golden_lion: {
       id: 'e311', f: 'e', t: 3,
       name: 'Golden Lion',
-      name_ru: 'Золотой лев',
+      name_ru: 'Золотой Лев',
       tags: ['Construct', 'Holy'],
       size: 'column',
       hp: 130, armor: 30, initiative: 55,
@@ -1122,7 +1118,7 @@ const UNITS = {
     siege_engine: {
       id: 'e32', f: 'e', t: 2,
       name: 'Siege Engine',
-      name_ru: 'Осадная машина',
+      name_ru: 'Осадная Машина',
       tags: ['Construct', null],
       size: 'column',
       hp: 105, armor: 20, initiative: 30,
@@ -1134,7 +1130,7 @@ const UNITS = {
     siege_dreadnought: {
       id: 'e321', f: 'e', t: 3,
       name: 'Siege Dreadnought',
-      name_ru: 'Осадный дредноут',
+      name_ru: 'Осадный Дредноут',
       tags: ['Construct', null],
       size: 'column',
       hp: 125, armor: 20, initiative: 30,
@@ -1170,7 +1166,7 @@ const UNITS = {
     master_mechanic: {
       id: 'e611', f: 'e', t: 3,
       name: 'Master Mechanic',
-      name_ru: 'Мастер-механик',
+      name_ru: 'Мастер Механик',
       tags: ['Engineer', null],
       size: 'tile',
       hp: 55, armor: 10, initiative: 20,
@@ -1218,7 +1214,7 @@ const UNITS = {
     blessed_soul: {
       id: 'e7', f: 'e', t: 1,
       name: 'Blessed Soul',
-      name_ru: 'Благословенная душа',
+      name_ru: 'Благословенная Душа',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
       hp: 40, armor: 0, initiative: 10,
@@ -1278,7 +1274,7 @@ const UNITS = {
     mithrails_champion: {
       id: 'e211', f: 'e', t: 3,
       name: 'Mithrails Champion',
-      name_ru: 'Поборник Митраила',
+      name_ru: 'Чемпион Митраила',
       tags: ['Knight', 'Holy'],
       size: 'tile',
       hp: 65, armor: 20, initiative: 30,
@@ -1302,7 +1298,7 @@ const UNITS = {
     ardent_priest: {
       id: 'e221', f: 'e', t: 3,
       name: 'Ardent Priest',
-      name_ru: 'Ревностный жрец',
+      name_ru: 'Ревностный Жрец',
       tags: ['Caster', 'Holy'],
       size: 'tile',
       hp: 55, armor: 5, initiative: 20,
@@ -1326,7 +1322,7 @@ const UNITS = {
     red_mage: {
       id: 'e41', f: 'e', t: 2,
       name: 'Red Mage',
-      name_ru: 'Красный маг',
+      name_ru: 'Красный Маг',
       tags: ['Caster', null],
       size: 'tile',
       hp: 50, armor: 0, initiative: 30,
@@ -1338,7 +1334,7 @@ const UNITS = {
     ash_priest: {
       id: 'e411', f: 'e', t: 3,
       name: 'Ash Priest',
-      name_ru: 'Пепельный жрец',
+      name_ru: 'Пепельный Жрец',
       tags: ['Caster', null],
       size: 'tile',
       hp: 60, armor: 0, initiative: 30,
@@ -1350,7 +1346,7 @@ const UNITS = {
     cinder_knight: {
       id: 'e412', f: 'e', t: 3,
       name: 'Cinder Knight',
-      name_ru: 'Рыцарь углей',
+      name_ru: 'Пепельный Рыцарь',
       tags: ['Caster', 'Knight'],
       size: 'tile',
       hp: 60, armor: 15, initiative: 45,
@@ -1362,7 +1358,7 @@ const UNITS = {
     blue_mage: {
       id: 'e42', f: 'e', t: 2,
       name: 'Blue Mage',
-      name_ru: 'Синий маг',
+      name_ru: 'Синий Маг',
       tags: ['Caster', null],
       size: 'tile',
       hp: 45, armor: 5, initiative: 30,
@@ -1389,7 +1385,7 @@ const UNITS = {
     mourning_prophet: {
       id: 'h_g_1',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 1, size: 'tile',
       tags: ['Vampire'],
       hp: 75, armor: 10, initiative: 45,
@@ -1402,7 +1398,7 @@ const UNITS = {
     mourning_prophet_path_a_t2: {
       id: 'h_g_1_a2',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 2, size: 'tile',
       tags: ['Vampire'],
       hp: 85, armor: 10, initiative: 45,
@@ -1415,7 +1411,7 @@ const UNITS = {
     mourning_prophet_path_a_t3: {
       id: 'h_g_1_a3',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 3, size: 'tile',
       tags: ['Vampire'],
       hp: 95, armor: 10, initiative: 50,
@@ -1428,7 +1424,7 @@ const UNITS = {
     mourning_prophet_path_a_t4: {
       id: 'h_g_1_a41',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 4, size: 'tile',
       tags: ['Vampire'],
       hp: 105, armor: 10, initiative: 50,
@@ -1441,7 +1437,7 @@ const UNITS = {
     mourning_prophet_path_a_t4_alt: {
       id: 'h_g_1_a42',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 4, size: 'tile',
       tags: ['Vampire'],
       hp: 115, armor: 10, initiative: 50,
@@ -1454,7 +1450,7 @@ const UNITS = {
     mourning_prophet_path_b_t2: {
       id: 'h_g_1_b2',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 2, size: 'tile',
       tags: ['Vampire'],
       hp: 75, armor: 15, initiative: 40,
@@ -1467,7 +1463,7 @@ const UNITS = {
     mourning_prophet_path_b_t3: {
       id: 'h_g_1_b3',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 3, size: 'tile',
       tags: ['Vampire'],
       hp: 85, armor: 15, initiative: 40,
@@ -1480,7 +1476,7 @@ const UNITS = {
     mourning_prophet_path_b_t4: {
       id: 'h_g_1_b41',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 4, size: 'tile',
       tags: ['Vampire'],
       hp: 90, armor: 15, initiative: 45,
@@ -1493,7 +1489,7 @@ const UNITS = {
     mourning_prophet_path_b_t4_alt: {
       id: 'h_g_1_b42',
       name: 'Mourning Prophet',
-      name_ru: 'Скорбящий пророк',
+      name_ru: 'Скорбящий Пророк',
       f: 'g', t: 4, size: 'tile',
       tags: ['Vampire'],
       hp: 95, armor: 15, initiative: 45,
@@ -1752,7 +1748,7 @@ const UNITS = {
     poisonous_ghoul: {
       id: 'gs11', f: 'g', t: 2,
       name: 'Poisonous Ghoul',
-      name_ru: 'Ядовитый упырь',
+      name_ru: 'Ядовитый Упырь',
       tags: ['Zombie'],
       size: 'tile',
       hp: 70, armor: 0, initiative: 20,
@@ -1764,7 +1760,7 @@ const UNITS = {
     plague_knight: {
       id: 'gs111', f: 'g', t: 3,
       name: 'Plague Knight',
-      name_ru: 'Чумной рыцарь',
+      name_ru: 'Чумной Рыцарь',
       tags: ['Zombie', 'Knight'],
       size: 'tile',
       hp: 75, armor: 15, initiative: 20,
@@ -1800,7 +1796,7 @@ const UNITS = {
     cesswalker: {
       id: 'gs13', f: 'g', t: 2,
       name: 'Cesswalker',
-      name_ru: 'Бродящий в скверне',
+      name_ru: 'Бродящий Скверны',
       tags: ['Caster', 'Zombie'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 20,
@@ -1812,7 +1808,7 @@ const UNITS = {
     blightwalker: {
       id: 'gs131', f: 'g', t: 3,
       name: 'Blightwalker',
-      name_ru: 'Бродящий в порче',
+      name_ru: 'Бродящий Порчи',
       tags: ['Caster', 'Zombie'],
       size: 'tile',
       hp: 70, armor: 0, initiative: 20,
@@ -1836,7 +1832,7 @@ const UNITS = {
     blood_adept: {
       id: 'gs31', f: 'g', t: 2,
       name: 'Blood Adept',
-      name_ru: 'Адепт крови',
+      name_ru: 'Адепт Крови',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
       hp: 50, armor: 0, initiative: 40,
@@ -1848,7 +1844,7 @@ const UNITS = {
     crimson_mage: {
       id: 'gs312', f: 'g', t: 3,
       name: 'Crimson Mage',
-      name_ru: 'Багровый маг',
+      name_ru: 'Багровый Маг',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 40,
@@ -1860,7 +1856,7 @@ const UNITS = {
     blood_knight: {
       id: 'gs311', f: 'g', t: 3,
       name: 'Blood Knight',
-      name_ru: 'Рыцарь крови',
+      name_ru: 'Рыцарь Крови',
       tags: ['Vampire', 'Knight'],
       size: 'tile',
       hp: 55, armor: 10, initiative: 55,
@@ -1884,7 +1880,7 @@ const UNITS = {
     death_lord: {
       id: 'gs321', f: 'g', t: 3,
       name: 'Death Lord',
-      name_ru: 'Владыка смерти',
+      name_ru: 'Владыка Смерти',
       tags: ['Zombie', 'Caster'],
       size: 'tile',
       hp: 65, armor: 0, initiative: 30,
@@ -1896,7 +1892,7 @@ const UNITS = {
     plague_scholar: {
       id: 'gs33', f: 'g', t: 2,
       name: 'Plague Scholar',
-      name_ru: 'Чумной учёный',
+      name_ru: 'Чумной Учёный',
       tags: ['Zombie', 'Caster'],
       size: 'tile',
       hp: 60, armor: 10, initiative: 20,
@@ -1908,7 +1904,7 @@ const UNITS = {
     plague_lord: {
       id: 'gs331', f: 'g', t: 3,
       name: 'Plague Lord',
-      name_ru: 'Владыка чумы',
+      name_ru: 'Владыка Чумы',
       tags: ['Zombie', 'Caster'],
       size: 'tile',
       hp: 65, armor: 15, initiative: 20,
@@ -1932,7 +1928,7 @@ const UNITS = {
     crimson_communicant: {
       id: 'gs21', f: 'g', t: 2,
       name: 'Crimson Communicant',
-      name_ru: 'Багровый причастник',
+      name_ru: 'Багровый Причастник',
       tags: ['Vampire', 'Holy'],
       size: 'column',
       hp: 105, armor: 15, initiative: 50,
@@ -1956,7 +1952,7 @@ const UNITS = {
     husk_colossus: {
       id: 'gs4', f: 'g', t: 1,
       name: 'Husk Colossus',
-      name_ru: 'Колосс-оболочка',
+      name_ru: 'Иссушенный Колосс',
       tags: ['Zombie'],
       size: 'row',
       hp: 120, armor: 0, initiative: 20,
@@ -1992,7 +1988,7 @@ const UNITS = {
     sorrow_bearer: {
       id: 'gs42', f: 'g', t: 2,
       name: 'Sorrow Bearer',
-      name_ru: 'Носитель скорби',
+      name_ru: 'Носитель Скорби',
       tags: ['Zombie','Caster'],
       size: 'row',
       hp: 120, armor: 10, initiative: 20,
@@ -2004,7 +2000,7 @@ const UNITS = {
     sorrow_vessel: {
       id: 'gs421', f: 'g', t: 3,
       name: 'Sorrow Vessel',
-      name_ru: 'Сосуд скорби',
+      name_ru: 'Сосуд Скорби',
       tags: ['Zombie','Caster'],
       size: 'row',
       hp: 125, armor: 20, initiative: 20,
@@ -2052,7 +2048,7 @@ const UNITS = {
     grieving_servant: {
       id: 'gs52', f: 'g', t: 2,
       name: 'Grieving Servant',
-      name_ru: 'Скорбящий слуга',
+      name_ru: 'Скорбящий Слуга',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 55, armor: 0, initiative: 30,
@@ -2064,7 +2060,7 @@ const UNITS = {
     grieving_custodian: {
       id: 'gs521', f: 'g', t: 3,
       name: 'Grieving Custodian',
-      name_ru: 'Скорбящий блюститель',
+      name_ru: 'Скорбящий Блюститель',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 65, armor: 0, initiative: 30,
@@ -2136,7 +2132,7 @@ const UNITS = {
     pale_maiden: {
       id: 'gs7', f: 'g', t: 1,
       name: 'Pale Maiden',
-      name_ru: 'Бледная дева',
+      name_ru: 'Бледная Дева',
       tags: ['Spirit', 'Knight'],
       size: 'tile',
       hp: 45, armor: 15, initiative: 50,
@@ -2148,7 +2144,7 @@ const UNITS = {
     pale_dame: {
       id: 'gs71', f: 'g', t: 2,
       name: 'Pale Dame',
-      name_ru: 'Бледная госпожа',
+      name_ru: 'Бледная Госпожа',
       tags: ['Spirit', 'Knight'],
       size: 'tile',
       hp: 55, armor: 20, initiative: 50,
@@ -2160,7 +2156,7 @@ const UNITS = {
     pale_votaress: {
       id: 'gs72', f: 'g', t: 2,
       name: 'Pale Votaress',
-      name_ru: 'Бледная послушница',
+      name_ru: 'Бледная Послушница',
       tags: ['Spirit', 'Knight'],
       size: 'tile',
       hp: 50, armor: 20, initiative: 40,
@@ -2172,7 +2168,7 @@ const UNITS = {
     pale_abbess: {
       id: 'gs721', f: 'g', t: 3,
       name: 'Pale Abbess',
-      name_ru: 'Бледная аббатиса',
+      name_ru: 'Бледная Аббатиса',
       tags: ['Spirit', 'Knight'],
       size: 'tile',
       hp: 55, armor: 20, initiative: 40,
@@ -2184,7 +2180,7 @@ const UNITS = {
     pale_matriarch: {
       id: 'gs711', f: 'g', t: 3,
       name: 'Pale Matriarch',
-      name_ru: 'Бледная праматерь',
+      name_ru: 'Бледная Праматерь',
       tags: ['Spirit', 'Knight'],
       size: 'tile',
       hp: 55, armor: 20, initiative: 50,
@@ -2260,7 +2256,7 @@ const UNITS = {
       aggrails_herald: {
         id: 'opb_e1', f: 'opb', t: 1,
         name: 'Aggrails Herald',
-        name_ru: 'Вестник Аггрейла',
+        name_ru: 'Вестник Агграила',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 60, armor: 5, initiative: 50,
@@ -2272,7 +2268,7 @@ const UNITS = {
       exalted_herald: {
         id: 'opb_e11', f: 'opb', t: 2,
         name: 'Exalted Herald',
-        name_ru: 'Возвышенный вестник',
+        name_ru: 'Возвышенный Вестник',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 70, armor: 10, initiative: 50,
@@ -2284,7 +2280,7 @@ const UNITS = {
       exalted_evangelist: {
         id: 'opb_e111', f: 'opb', t: 3,
         name: 'Exalted Evangelist',
-        name_ru: 'Возвышенный евангелист',
+        name_ru: 'Возвышенный Евангелист',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 105, armor: 15, initiative: 50,
@@ -2308,7 +2304,7 @@ const UNITS = {
       aggrails_devoted: {
         id: 'opb_e21', f: 'opb', t: 2,
         name: 'Aggrails Devoted',
-        name_ru: 'Преданный Аггрейлу',
+        name_ru: 'Преданный Агграила',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 50, armor: 20, initiative: 25,
@@ -2320,7 +2316,7 @@ const UNITS = {
       aggrails_champion: {
         id: 'opb_e211', f: 'opb', t: 3,
         name: 'Aggrails Champion',
-        name_ru: 'Поборник Аггрейла',
+        name_ru: 'Поборник Агграила',
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 60, armor: 25, initiative: 25,
@@ -2332,7 +2328,7 @@ const UNITS = {
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
         name: 'Initiate',
-        name_ru: 'Посвящённый',
+        name_ru: 'Посвящённая',
         tags: ['Caster', 'Holy'],
         size: 'tile',
         hp: 40, armor: 0, initiative: 20,
@@ -2344,7 +2340,7 @@ const UNITS = {
       keeper_of_purity: {
         id: 'opb_e31', f: 'opb', t: 2,
         name: 'Keeper of Purity',
-        name_ru: 'Хранитель чистоты',
+        name_ru: 'Хранительница Чистоты',
         tags: ['Caster', 'Holy'],
         size: 'tile',
         hp: 50, armor: 0, initiative: 20,
@@ -2356,7 +2352,7 @@ const UNITS = {
       high_keeper: {
         id: 'opb_e311', f: 'opb', t: 3,
         name: 'High Keeper',
-        name_ru: 'Верховный хранитель',
+        name_ru: 'Верховный Хранитель',
         tags: ['Caster', 'Holy'],
         size: 'tile',
         hp: 60, armor: 0, initiative: 20,
@@ -2368,7 +2364,7 @@ const UNITS = {
       crimson_scout: {
         id: 'opb_e4', f: 'opb', t: 1,
         name: 'Crimson Scout',
-        name_ru: 'Багровый разведчик',
+        name_ru: 'Багровый Разведчик',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 45, armor: 0, initiative: 50,
@@ -2380,7 +2376,7 @@ const UNITS = {
       crimson_hunter: {
         id: 'opb_e41', f: 'opb', t: 2,
         name: 'Crimson Hunter',
-        name_ru: 'Багровый охотник',
+        name_ru: 'Багровый Охотник',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 55, armor: 0, initiative: 50,
@@ -2392,7 +2388,7 @@ const UNITS = {
       crimson_stalker: {
         id: 'opb_e411', f: 'opb', t: 3,
         name: 'Crimson Stalker',
-        name_ru: 'Багровый преследователь',
+        name_ru: 'Багровый Преследователь',
         tags: ['Archer', 'Holy'],
         size: 'tile',
         hp: 70, armor: 0, initiative: 50,
@@ -2467,7 +2463,7 @@ const UNITS = {
       frostshard: {
         id: 'mv_e2', f: 'mv', t: 1,
         name: 'Frostshard',
-        name_ru: 'Морозный осколок',
+        name_ru: 'Морозный Осколок',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 35, armor: 15, initiative: 60,
@@ -2479,7 +2475,7 @@ const UNITS = {
       rime_splinter: {
         id: 'mv_e21', f: 'mv', t: 2,
         name: 'Rime Splinter',
-        name_ru: 'Инеевый осколок',
+        name_ru: 'Инеевый Осколок',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 45, armor: 15, initiative: 60,
@@ -2491,7 +2487,7 @@ const UNITS = {
       glacial_prism: {
         id: 'mv_e211', f: 'mv', t: 3,
         name: 'Glacial Prism',
-        name_ru: 'Ледниковая призма',
+        name_ru: 'Ледниковая Призма',
         tags: ['Construct', 'Caster'],
         size: 'tile',
         hp: 50, armor: 20, initiative: 60,
@@ -2503,7 +2499,7 @@ const UNITS = {
       сhillrock: {
         id: 'mv_e3', f: 'mv', t: 1,
         name: 'Сhillrock',
-        name_ru: 'Стылый камень',
+        name_ru: 'Стылый Камень',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 110, armor: 10, initiative: 20,
@@ -2515,7 +2511,7 @@ const UNITS = {
       rimewarden: {
         id: 'mv_e31', f: 'mv', t: 2,
         name: 'Rimewarden',
-        name_ru: 'Инеевый страж',
+        name_ru: 'Инеевый Страж',
         tags: ['Construct', 'Caster'],
         size: 'row',
         hp: 130, armor: 15, initiative: 20,
@@ -2566,7 +2562,7 @@ const UNITS = {
       bone_knight: {
         id: 'dm_e1', f: 'dm', t: 1,
         name: 'Bone Knight',
-        name_ru: 'Костяной рыцарь',
+        name_ru: 'Костяной Рыцарь',
         tags: ['Skeleton', 'Knight'],
         size: 'tile',
         hp: 50, armor: 10, initiative: 25,
@@ -2578,7 +2574,7 @@ const UNITS = {
       dread_knight: {
         id: 'dm_e11', f: 'dm', t: 2,
         name: 'Dread Knight',
-        name_ru: 'Рыцарь ужаса',
+        name_ru: 'Рыцарь Ужаса',
         tags: ['Skeleton', 'Knight'],
         size: 'tile',
         hp: 60, armor: 15, initiative: 25,
@@ -2590,7 +2586,7 @@ const UNITS = {
       death_knight: {
         id: 'dm_e111', f: 'dm', t: 3,
         name: 'Death Knight',
-        name_ru: 'Рыцарь смерти',
+        name_ru: 'Рыцарь Смерти',
         tags: ['Skeleton', 'Knight'],
         size: 'tile',
         hp: 70, armor: 20, initiative: 25,
@@ -2602,7 +2598,7 @@ const UNITS = {
       oathbound_martyr: {
         id: 'dm_2', f: 'dm', t: 1,
         name: 'Oathbound Martyr',
-        name_ru: 'Мученик клятвы',
+        name_ru: 'Мученик Клятвы',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
         hp: 50, armor: 10, initiative: 35,
@@ -2614,7 +2610,7 @@ const UNITS = {
       oathsworn_martyr: {
         id: 'dm_21', f: 'dm', t: 2,
         name: 'Oathsworn Martyr',
-        name_ru: 'Присягнувший мученик',
+        name_ru: 'Присягнувший Мученик',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
         hp: 55, armor: 15, initiative: 35,
@@ -2626,7 +2622,7 @@ const UNITS = {
       martyr_of_the_vow: {
         id: 'dm_211', f: 'dm', t: 3,
         name: 'Martyr of the Vow',
-        name_ru: 'Мученик обета',
+        name_ru: 'Мученик Обета',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
         hp: 65, armor: 15, initiative: 35,
@@ -2638,7 +2634,7 @@ const UNITS = {
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,
         name: 'Wailing Ghost',
-        name_ru: 'Стенающий призрак',
+        name_ru: 'Стенающий Призрак',
         tags: ['Spirit', 'Caster'],
         size: 'tile',
         hp: 45, armor: 0, initiative: 30,
@@ -2662,7 +2658,7 @@ const UNITS = {
       soul_harvester: {
         id: 'dm_e311', f: 'dm', t: 3,
         name: 'Soul Harvester',
-        name_ru: 'Жнец душ',
+        name_ru: 'Жнец Душ',
         tags: ['Spirit', 'Caster'],
         size: 'tile',
         hp: 65, armor: 0, initiative: 30,
