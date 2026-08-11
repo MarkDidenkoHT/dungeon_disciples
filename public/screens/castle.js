@@ -1114,22 +1114,48 @@ export function renderCastle(root, { player }) {
     });
     openSubSheet(CASTLE_TEXT.treeTitle[castleLang], html);
 
-    // Tapping a node fills a card UNDER the grid rather than opening anything:
-    // the sub-sheet is the last modal level (the tree is already using it), and
-    // keeping the grid on screen is the point — you tap along the line and the
-    // card swaps, which is the comparison the tree exists to answer.
+    // Everything happens inside this one sheet — it is the last modal level, so
+    // there is nowhere to open a card or an ability into. Instead the sheet has
+    // two states and the grid never leaves the screen:
+    //
+    //   grid state    the 5x5 at full size, no card
+    //   detail state  the grid shrinks to a strip of portraits, the unit card
+    //                 opens under it
+    //
+    // Tapping a portrait enters the detail state. Tapping the SAME portrait
+    // again leaves it. Tapping a different one swaps the card without expanding,
+    // so stepping along a line stays one tap per unit.
     const treeRoot = getSubSheetBody()?.querySelector('.utree-root');
     if (!treeRoot) return;
     const byId = new Map(tree.nodes.map(n => [n.id, n]));
+    let openId = null;
+
+    const closeAbility = () => {
+      const box = treeRoot.querySelector('#utree-ability');
+      if (box) { box.innerHTML = ''; box.classList.remove('utree-ability--open'); }
+    };
+
+    const collapseDetail = () => {
+      openId = null;
+      treeRoot.classList.remove('utree-root--detail');
+      treeRoot.querySelectorAll('.utree-cell--selected')
+        .forEach(el => el.classList.remove('utree-cell--selected'));
+      const detail = treeRoot.querySelector('#utree-detail');
+      if (detail) detail.innerHTML = '';
+      closeAbility();
+    };
 
     const showNode = id => {
       const node = byId.get(id);
       if (!node?.def) return;
+      openId = id;
+      closeAbility();
       // Deltas are against the PARENT, so each card answers "what does this one
       // step buy me" — the question a tree is read with. Comparing against the
       // player's current unit instead would paint their own past path red.
       const parent = node.parentId ? byId.get(node.parentId)?.def : null;
 
+      treeRoot.classList.add('utree-root--detail');
       treeRoot.querySelectorAll('.utree-cell--selected')
         .forEach(el => el.classList.remove('utree-cell--selected'));
       treeRoot.querySelector(`.utree-cell[data-unit-id="${id}"]`)?.classList.add('utree-cell--selected');
@@ -1138,12 +1164,48 @@ export function renderCastle(root, { player }) {
       if (detail) detail.innerHTML = buildUnitCard(node.def, { compareUnit: parent });
     };
 
+    // Ability and passive icons on the card open INLINE, under it. The sheet
+    // stack is full, so the alternative was leaving them inert — which is what
+    // they were, and it read as broken art rather than as a deliberate limit.
+    const toggleAbility = (key, type) => {
+      const box = treeRoot.querySelector('#utree-ability');
+      if (!box) return;
+      if (box.dataset.key === key && box.classList.contains('utree-ability--open')) {
+        closeAbility();
+        box.dataset.key = '';
+        return;
+      }
+      const def = resolveAbility(key);
+      if (!def) return;
+      const parts = buildAbilityModalParts(def, type || 'passive');
+      box.dataset.key = key;
+      box.innerHTML = `
+        <div class="utree-ability-head">
+          <span class="utree-ability-title">${parts.title}</span>
+          <span class="modal-header-badges">${parts.badges}</span>
+        </div>
+        ${parts.body}`;
+      box.classList.add('utree-ability--open');
+      box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    };
+
     treeRoot.addEventListener('click', e => {
+      const abilityBtn = e.target.closest('.utree-detail .ability-icon[data-ability-key]');
+      if (abilityBtn) {
+        const key = abilityBtn.dataset.abilityKey;
+        if (key) toggleAbility(key, abilityBtn.dataset.abilityType);
+        return;
+      }
       const cell = e.target.closest('.utree-cell[data-unit-id]');
-      if (cell) showNode(cell.dataset.unitId);
+      if (!cell) return;
+      const id = cell.dataset.unitId;
+      if (id === openId) collapseDetail();
+      else showNode(id);
     });
 
-    showNode(unitId);
+    // Opens showing the TREE, not a card: the sheet was asked for to see the
+    // line. The unit you came from already carries its own ring (currentId), so
+    // tapping it is the obvious first move and opens its card like any other.
   }
 
   // ── Slot unit sheet ───────────────────────────────────────────────────────

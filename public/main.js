@@ -164,10 +164,18 @@ function navigate(screen, params = {}) {
   const setSheetBottom = px =>
     document.documentElement.style.setProperty('--sheet-bottom', px);
 
+  // And how far off the TOP. The resource strip sits at z-index 300 so it stays
+  // usable while a sheet is open, which means it paints OVER the sheet — fine
+  // while sheets were short, but a full-height one slid its own header (title
+  // and close button) underneath the strip. The overlay now stops below it.
+  const setSheetTop = px =>
+    document.documentElement.style.setProperty('--sheet-top', px);
+
   if (screen === 'register') {
     shellMounted = false;
     currentScreen = 'register';
     setSheetBottom('0px');
+    setSheetTop('0px');
     app.innerHTML = '';
     renderRegister(app, params);
     return;
@@ -190,6 +198,11 @@ function navigate(screen, params = {}) {
     // screen shows it normally.
     resBarEl.classList.toggle('resource-bar--collapsed', screen === 'battle-prep');
   }
+  // Battle hides the strip and battle prep collapses it. A collapsed strip still
+  // reports its old offsetHeight until the transition finishes, so both cases
+  // are read off the decision above rather than measured.
+  const barHidden = isBattle || screen === 'battle-prep';
+  setSheetTop(barHidden ? '0px' : `${resBarEl?.offsetHeight || 0}px`);
 
   if (player && !isBattle) {
     refreshResourceBar(player).catch(() => {});

@@ -1398,6 +1398,10 @@ button:active:not(:disabled) { opacity: 0.75; }
      the nav handler in main.js). Screens with no nav (battle, register) set the
      variable to 0 so the sheet reaches the bottom edge as before. */
   bottom: var(--sheet-bottom, 0px);
+  /* Symmetrically, stops below the resource strip — it paints above sheets
+     (z-index 300) so that it stays usable, and a full-height sheet was sliding
+     its own header underneath it. main.js measures both. */
+  top: var(--sheet-top, 0px);
   background: rgba(0, 0, 0, 0.72);
   z-index: 100;
   display: flex;
@@ -1764,16 +1768,50 @@ button:active:not(:disabled) { opacity: 0.75; }
   box-shadow: 0 0 0 1px #d8e4f6 inset;
 }
 
+/* Detail state: the grid shrinks so the card has room, but stays on screen and
+   stays tappable. Cells lose their names and go square — enough to recognise a
+   portrait and step to the next one, a third of the height. */
+.utree-root--detail .utree { gap: 4px; }
+.utree-root--detail .utree-cell { aspect-ratio: 1 / 1; }
+.utree-root--detail .utree-name { display: none; }
+.utree-root--detail .utree-tier {
+  top: 1px;
+  left: 1px;
+  font-size: 0.5rem;
+  line-height: 11px;
+}
+
 /* The card under the grid. Tapping a node swaps it in place; the grid stays put
    above it, which is what makes stepping along a line readable. */
+.utree-detail:empty { display: none; }
 .utree-detail {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #232d3d;
 }
-/* Ability icons in this card are inert: inspecting one would need a third modal
-   level, and the sub-sheet is the last one. Shown for reference, not tappable. */
-.utree-detail .ability-icon { pointer-events: none; }
+
+/* Ability and passive detail, opened inline from the card's icons: the sheet
+   stack is full, so there is nowhere to open a modal into. */
+.utree-ability {
+  display: none;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.utree-ability--open { display: block; }
+.utree-ability-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.utree-ability-title {
+  font-weight: 700;
+  color: var(--text);
+}
 
 .ability-icon-img {
   width: 100%;

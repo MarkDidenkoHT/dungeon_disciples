@@ -173,10 +173,16 @@ export function renderUnitTreeHtml(tree, opts = {}) {
   // the sub-sheet reuses one body element across opens, so a listener bound to
   // the body itself would accumulate. Binding to this wrapper ties the
   // listener's life to the content, the same trick #slot-sheet-root uses.
+  // Two states, driven by the caller (see openUnitTreeSheet in screens/castle.js):
+  //   .utree-root            the grid at full size, no card
+  //   .utree-root--detail    the grid shrunk to a strip, card open below it
+  // The grid stays on screen in both, because the whole point is stepping along
+  // a line and watching the numbers change.
   return `
     <div class="utree-root">
       <div class="utree" style="--utree-cols:${TREE_COLS}">${cells.join('')}</div>
       <div class="utree-detail" id="utree-detail"></div>
+      <div class="utree-ability" id="utree-ability"></div>
     </div>`;
 }
 
