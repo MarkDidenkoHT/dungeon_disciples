@@ -10,7 +10,7 @@ import { SPELLS }            from '../../data/spells.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
+  resolveAbility, abilityName, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
@@ -1404,7 +1404,9 @@ export function renderCastle(root, { player }) {
     const key = stats?.passive;
     if (!key) return '';
     const def   = resolveAbility(key);
-    const label = def?.name || String(key).split(' ')[0].replace(/_/g, ' ');
+    // abilityName, not def.name — the Russian name lives on the definition as
+    // name_ru, so reading .name left item passives in English.
+    const label = abilityName(def) || String(key).split(' ')[0].replace(/_/g, ' ');
     return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
               <span class="item-passive-icon">✦</span>${label}
             </button>`;

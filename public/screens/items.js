@@ -10,7 +10,7 @@ import {
   resolveUnitDef, resolveAbility,
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
-  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
+  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, abilityName,
 } from '../utils.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
@@ -137,7 +137,10 @@ export function renderItems(root, { player }) {
     const key = stats?.passive;
     if (!key) return '';
     const def = resolveAbility(key);
-    const label = def?.name || String(key).split(' ')[0].replace(/_/g, ' ');
+    // abilityName, not def.name: the Russian name lives on the definition as
+    // name_ru, so reading .name directly left every item-granted passive in
+    // English while the rest of the card translated.
+    const label = abilityName(def) || String(key).split(' ')[0].replace(/_/g, ' ');
     return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
               <span class="item-passive-icon">✦</span>${label}
             </button>`;

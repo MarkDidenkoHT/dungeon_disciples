@@ -775,24 +775,37 @@ export function buildAbilityModalParts(def, type) {
 }
 
 export function buildItemModalParts(item, player) {
-  if (!item) return { title: 'Item', badges: '', body: renderModalContent('No item equipped.') };
+  if (!item) return { title: uiText('Item', 'Предмет'), badges: '', body: renderModalContent(uiText('No item equipped.', 'Предмет не надет.')) };
   const stats = item.item_stats || {};
   const lines = [];
-  if (stats.faction)      lines.push(`Faction: ${cap(stats.faction.replace(/_/g, ' '))}`);
-  if (stats.tag_required) lines.push(`Requires tag: ${stats.tag_required}`);
-  if (stats.adds_tag)     lines.push(`Grants tag: ${stats.adds_tag}`);
+  if (stats.faction)      lines.push(`${uiText('Faction', 'Фракция')}: ${cap(stats.faction.replace(/_/g, ' '))}`);
+  if (stats.tag_required) lines.push(`${uiText('Requires tag', 'Требует метку')}: ${stats.tag_required}`);
+  if (stats.adds_tag)     lines.push(`${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}`);
+  // The passive an item grants is the whole point of most items, and it was
+  // missing from this panel entirely — the name and its full description now
+  // read in the viewer's language like every other ability description.
+  const passiveDef = stats.passive ? resolveAbility(stats.passive) : null;
+  if (passiveDef) {
+    lines.push(`✦ ${abilityName(passiveDef)}`);
+    const desc = buildStatDescription(passiveDef, 'passive');
+    if (desc) lines.push(desc);
+  }
   const modParts = Object.entries(stats.stat_mods || {}).map(([key, val]) => {
     const sign = val >= 0 ? '+' : '';
     if (key === 'hp')    return `${sign}${val} HP`;
-    if (key === 'armor') return `${sign}${val} Armor`;
+    if (key === 'armor') return `${sign}${val} ${uiText('Armor', 'Броня')}`;
     const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
-    if (resistMatch) return `${sign}${val} ${cap(resistMatch[1])} Resist`;
+    if (resistMatch) {
+      const rl = RESIST_LABELS[resistMatch[1]];
+      const name = rl ? uiText(rl.en, rl.ru) : cap(resistMatch[1]);
+      return `${sign}${val} ${name} ${uiText('Resist', 'сопр.')}`;
+    }
     return `${sign}${val} ${cap(key)}`;
   });
   if (modParts.length) lines.push(modParts.join(', '));
   return {
     title:  itemName(item, player) || item.item_name || 'Item',
-    badges: renderModalPill('Item', 'item'),
+    badges: renderModalPill(uiText('Item', 'Предмет'), 'item'),
     body:   `<div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>`,
   };
 }

@@ -1625,7 +1625,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: 'sorrow 1', ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 75
     },
@@ -1638,7 +1638,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 60,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -1651,7 +1651,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 65,
       resistances: { air: 15, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -1664,7 +1664,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 70,
       resistances: { air: 15, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2', 'resist_aura_cold 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1677,7 +1677,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 70,
       resistances: { air: 20, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'inspiration_initiative 2', 'resist_aura_air 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1690,7 +1690,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 55,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 15, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'death_mark 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 360
     },
@@ -1703,7 +1703,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 60,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'death_mark 2'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 900
     },
@@ -1716,7 +1716,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'death_mark 2', 'inspiration_damage 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -1729,7 +1729,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 65,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 25, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       passive: ['sorrow 1', 'death_mark 2', 'dissipate 1'], ability: 'mothers_blessing 1',
       building_slot: 'slot_0', xp: 1500
     },
@@ -2078,7 +2078,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 55, passive: 'sorrow 1', ability: 'terror 1',
     },
     specter: {
@@ -2090,7 +2090,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 320, passive: ['sorrow 1', 'slow 1'], ability: 'terror 1',
     },
     wraith: {
@@ -2102,7 +2102,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 55,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 800, passive: ['sorrow 1', 'slow 2'], ability: 'terror 1',
     },
     apparition: {
@@ -2114,7 +2114,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 320, passive: ['sorrow 1', 'dissipate 1'], ability: 'terror 1',
     },
     phantom: {
@@ -2126,7 +2126,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 800, passive: ['sorrow 1', 'dissipate 2', ], ability: 'terror 1',
     },
     pale_maiden: {
@@ -2640,7 +2640,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt',
+        damage_source: 'cold', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
         xp: 75, passive: 'chill 1', ability: null,
       },
       revenant: {
@@ -2652,7 +2652,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt',
+        damage_source: 'cold', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
         xp: 260, passive: ['chill 1', 'sorrow 1'], ability: null,
       },
       soul_harvester: {
@@ -2664,7 +2664,7 @@ const UNITS = {
         hp: 65, armor: 0, initiative: 30,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt',
+        damage_source: 'cold', action_power: 12, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
         xp: 480, passive: ['chill 2', 'sorrow 1'], ability: null,
       },
       malgrath_the_undying_1: {

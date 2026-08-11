@@ -12,7 +12,7 @@ import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction,
-  resolveUnitDef, resolveAbility, buildStatDescription,
+  resolveUnitDef, resolveAbility, abilityName, buildStatDescription,
   renderModalContent, openSheet, closeSheet, onSheetClose, openSubSheet, closeSubSheet, getSubSheetBody, getSheetBody, applyBackground,
   renderUnitPortrait, renderUnitCoreStatsColumn, renderUnitResistColumn, renderUnitAbilitiesRow,
   renderItemSlotIcon, withEquippedItem, buildAbilityModalParts,
@@ -790,7 +790,9 @@ export function renderRoster(root, { player }) {
     const key = stats?.passive;
     if (!key) return '';
     const def = resolveAbility(key);
-    const label = def?.name || String(key).split(' ')[0].replace(/_/g, ' ');
+    // abilityName, not def.name — the Russian name lives on the definition as
+    // name_ru, so reading .name left item passives in English.
+    const label = abilityName(def) || String(key).split(' ')[0].replace(/_/g, ' ');
     return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
               <span class="item-passive-icon">✦</span>${label}
             </button>`;
@@ -941,7 +943,9 @@ export function renderRoster(root, { player }) {
     const resParts = Object.entries(cost).map(([resName, amount]) => {
       const have    = resources.find(r => r.item === resName)?.amount ?? 0;
       const shortage = have < amount;
-      const label = resName.startsWith('Crystals_') ? resName.replace('Crystals_', '') + ' Crystals' : resName;
+      // Same name resolution as everywhere else the cost of something is drawn,
+      // so a trophy or crafted part in a recipe reads like it does in the stash.
+      const label = materialName(resName) || resName;
       return `<span class="item-cost-part ${shortage ? 'item-cost-part--short' : ''}">${label} ${have}/${amount}</span>`;
     });
     const itemParts = Object.entries(itemCost).map(([ingredientKey, count]) => {
@@ -949,8 +953,10 @@ export function renderRoster(root, { player }) {
         (it.item_stats?.key || it.item_stats?.icon) === ingredientKey && !it.equipped_by
       ).length;
       const shortage = ownedCount < count;
-      const def = ITEM_DEFS[ingredientKey];
-      const label = def ? def.name : ingredientKey;
+      // materialName, not def.name: an ingredient is an item like any other and
+      // has a name_ru — reading .name left craft recipes listing their
+      // ingredients in English on a Russian card.
+      const label = materialName(ingredientKey) || ingredientKey;
       return `<span class="item-cost-part ${shortage ? 'item-cost-part--short' : ''}">🔧 ${label} ${ownedCount}/${count}</span>`;
     });
     return [...resParts, ...itemParts].join(' · ');

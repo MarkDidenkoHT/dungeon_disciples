@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -90,6 +90,51 @@ const BT = {
   passiveNone:   { en: 'None',          ru: 'Нет' },
   tapForStats:   { en: 'Tap a unit to see stats', ru: 'Нажмите на юнита, чтобы увидеть характеристики' },
   noUnitData:    { en: 'Unit data unavailable',   ru: 'Данные юнита недоступны' },
+  noAbility:     { en: 'No Ability',              ru: 'Нет способности' },
+
+  // ── Combat log ─────────────────────────────────────────────────────────────
+  // Whole clauses rather than stitched-together words: Russian word order and
+  // case endings do not survive being assembled from an English sentence's
+  // parts. Each entry takes the pieces it needs and returns finished markup.
+  logRound:      { en: n => `── Round ${n} ──`, ru: n => `── Раунд ${n} ──` },
+  logIntercept:  { en: (a, t) => `${a} <span class="log-passive">intercepted</span> attack on ${t}`,
+                   ru: (a, t) => `${a} <span class="log-passive">перехватил</span> атаку по ${t}` },
+  logShield:     { en: (t, v) => `${t} 🛡 shield absorbed <span class="log-val-shield">${v}</span>`,
+                   ru: (t, v) => `${t} 🛡 щит поглотил <span class="log-val-shield">${v}</span>` },
+  logShieldThru: { en: n => `, ${n} passes through`, ru: n => `, ${n} прошло` },
+  logShieldAll:  { en: ', all blocked',            ru: ', всё заблокировано' },
+  logStatus:     { en: (a, p, t, v) => `${a} applied <span class="log-passive">${p}</span> to ${t} <span class="log-dot">(${v}/turn)</span>`,
+                   ru: (a, p, t, v) => `${a} наложил <span class="log-passive">${p}</span> на ${t} <span class="log-dot">(${v}/ход)</span>` },
+  logGranted:    { en: (a, p, t, v, s) => `${a} <span class="log-passive">${p}</span> granted ${t} <span class="log-val-heal">+${v}</span> ${s}`,
+                   ru: (a, p, t, v, s) => `${a} <span class="log-passive">${p}</span> даёт ${t} <span class="log-val-heal">+${v}</span> ${s}` },
+  logPassiveHeal:{ en: (a, p, t, v) => `${a} <span class="log-passive">${p}</span> healed ${t} for <span class="log-val-heal">${v}</span>`,
+                   ru: (a, p, t, v) => `${a} <span class="log-passive">${p}</span> лечит ${t} на <span class="log-val-heal">${v}</span>` },
+  logPassiveHit: { en: (a, p, t, v) => `${a} <span class="log-passive">${p}</span> hit ${t} for <span class="log-val">${v}</span>`,
+                   ru: (a, p, t, v) => `${a} <span class="log-passive">${p}</span> бьёт ${t} на <span class="log-val">${v}</span>` },
+  logHeal:       { en: (a, t, v) => `${a} healed ${t} for <span class="log-val-heal">${v}</span>`,
+                   ru: (a, t, v) => `${a} лечит ${t} на <span class="log-val-heal">${v}</span>` },
+  logHit:        { en: (a, t, v) => `${a} hit ${t} for <span class="log-val">${v}</span>`,
+                   ru: (a, t, v) => `${a} бьёт ${t} на <span class="log-val">${v}</span>` },
+  logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
+                   ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
+  logPower:      { en: p => ` <span class="log-resisted">(${p} power)</span>`,
+                   ru: p => ` <span class="log-resisted">(${p} силы)</span>` },
+  logSkip:       { en: a => `${a} skipped`,        ru: a => `${a} пропускает ход` },
+
+  // Stat names as they appear in a "granted +N <stat>" line.
+  statArmor:     { en: 'Armor',      ru: 'брони' },
+  statMaxHp:     { en: 'max HP',     ru: 'макс. HP' },
+  statInit:      { en: 'Initiative', ru: 'инициативы' },
+  statResist:    { en: 'Resist',     ru: 'сопр.' },
+
+  // Live status chips on the inspected unit.
+  chipDead:      { en: 'Dead',       ru: 'Погиб' },
+  chipStunned:   { en: 'Stunned',    ru: 'Оглушён' },
+  chipDot:       { en: 'DoT',        ru: 'Урон/ход' },
+  chipRegen:     { en: 'Regen',      ru: 'Реген' },
+  chipPerRound:  { en: '/round',     ru: '/ход' },
+  chipInvuln:    { en: 'Invulnerable', ru: 'Неуязвим' },
+  chipDamage:    { en: 'Damage',     ru: 'Урон' },
 };
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
@@ -728,22 +773,30 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // rather than from a hand-maintained set of known buff names.
     const chip = (cls, text) => `<span class="stat-diff-chip stat-diff--${cls}">${text}</span>`;
     const effectChips = (c._effects || []).map(e =>
-      chip(e.polarity === 'positive' ? 'up' : 'down', e.name || e.key));
+      chip(e.polarity === 'positive' ? 'up' : 'down', logPassive(e.name || e.key)));
 
     // Damage-over-time and stack counters live outside the effect registry (they
     // tick and expire on their own), so they are listed explicitly.
     const dot = (c.dot_dmg || 0) + (c._poison_dmg || 0);
+    // Rage/Aegis/Fanaticism are ability names, so they translate through the
+    // ability table like every other one rather than being spelled out here.
+    // The ability table is keyed by tier ("rage 1", "rage 2"), so these resolve
+    // by display NAME the same way the log's passive names do.
+    const stackChip = (n, ability, icon) => n > 0
+      ? chip('up', `${icon} ${logPassive(ability)} x${n}`)
+      : '';
+    const perRound = BTx('chipPerRound');
     const extraChips = [
-      !c.alive                   ? chip('down', '💀 Dead') : '',
-      c._stun_rounds > 0         ? chip('down', `💫 Stunned ${c._stun_rounds}`) : '',
-      dot > 0                    ? chip('down', `🩸 DoT ${dot}/round`) : '',
-      c._hot > 0                 ? chip('up',   `💚 Regen ${c._hot}/round`) : '',
-      c._rage_stacks > 0         ? chip('up',   `😡 Rage x${c._rage_stacks}`) : '',
-      c._aegis_stacks > 0        ? chip('up',   `🛡 Aegis x${c._aegis_stacks}`) : '',
-      c._fanaticism_stacks > 0   ? chip('up',   `🔥 Fanaticism x${c._fanaticism_stacks}`) : '',
-      c._invulnerable            ? chip('up',   '✨ Invulnerable') : '',
-      (c._dmg_mult ?? 1) !== 1   ? chip((c._dmg_mult > 1) ? 'up' : 'down',
-                                        `⚔ Damage ${Math.round(((c._dmg_mult ?? 1) - 1) * 100)}%`) : '',
+      !c.alive                 ? chip('down', `💀 ${BTx('chipDead')}`) : '',
+      c._stun_rounds > 0       ? chip('down', `💫 ${BTx('chipStunned')} ${c._stun_rounds}`) : '',
+      dot > 0                  ? chip('down', `🩸 ${BTx('chipDot')} ${dot}${perRound}`) : '',
+      c._hot > 0               ? chip('up',   `💚 ${BTx('chipRegen')} ${c._hot}${perRound}`) : '',
+      stackChip(c._rage_stacks,       'Rage',       '😡'),
+      stackChip(c._aegis_stacks,      'Aegis',      '🛡'),
+      stackChip(c._fanaticism_stacks, 'Fanaticism', '🔥'),
+      c._invulnerable          ? chip('up',   `✨ ${BTx('chipInvuln')}`) : '',
+      (c._dmg_mult ?? 1) !== 1 ? chip((c._dmg_mult > 1) ? 'up' : 'down',
+                                      `⚔ ${BTx('chipDamage')} ${Math.round(((c._dmg_mult ?? 1) - 1) * 100)}%`) : '',
     ].filter(Boolean);
 
     const statusChips = [...effectChips, ...extraChips].join('');
@@ -761,72 +814,99 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit })}${statusHtml}</div>`;
   }
 
+  // ── Combat log rendering ────────────────────────────────────────────────────
+  // The log is written by the SERVER, in English: unit names, passive names and
+  // the odd literal like "all allies" all arrive already-rendered. Every one of
+  // them is a key we can resolve back to a definition, so the whole line is
+  // rebuilt in the viewer's language here rather than printed as it arrived.
+  const BTf = k => BT[k][BL];
+
+  const loc = cell => cell !== undefined ? ` <span class="log-loc">(${cellLabel(cell)})</span>` : '';
+
+  // Server-side literals that name a group rather than a unit.
+  const GROUP_NAMES = {
+    'all allies':  { en: 'all allies',  ru: 'всем союзникам' },
+    'all enemies': { en: 'all enemies', ru: 'всем врагам' },
+  };
+
+  // A name as the server stamped it, translated back. Combatant ids are the
+  // reliable route; the name string is the fallback for older log rows.
+  function logName(name, id, cls, cell) {
+    const group = GROUP_NAMES[name];
+    let label = group ? group[BL] : null;
+    if (!label && id) {
+      const c = state.combatants?.find(x => x.id === id);
+      if (c) label = cName(c);
+    }
+    if (!label) {
+      const c = state.combatants?.find(x => x.unit_name === name);
+      label = c ? cName(c) : name;
+    }
+    return `<span class="${cls}">${label}</span>${loc(cell)}`;
+  }
+
+  // entry.passive is the ability's English name — the same string the icon
+  // lookups in this file already key off, so it resolves to a definition and
+  // through abilityName to the localized one.
+  function logPassive(name) {
+    const def = Object.values(UNIT_ABILITIES).find(d => d?.name === name);
+    return def ? abilityName(def) : name;
+  }
+
+  const STAT_LOG_LABELS = { armor: 'statArmor', 'max HP': 'statMaxHp', initiative: 'statInit' };
+  function logStat(stat) {
+    const key = STAT_LOG_LABELS[stat];
+    if (key) return BTx(key);
+    const m = String(stat).match(/^(air|fire|nature|cold|life|death)\s*resist$/i);
+    return m ? `${m[1]} ${BTx('statResist')}` : stat;
+  }
+
   function formatLogEntry(entry) {
-    if (entry.type === 'round') return `<div class="log-entry log-entry--round">── Round ${entry.round} ──</div>`;
+    const actor  = () => logName(entry.actorName,  entry.actorId,  'log-actor',  entry.actorCell);
+    const target = () => logName(entry.targetName, entry.targetId, 'log-target', entry.targetCell);
+
+    if (entry.type === 'round') return `<div class="log-entry log-entry--round">${BTf('logRound')(entry.round)}</div>`;
     if (entry.type === 'intercept') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
-      return `<div class="log-entry log-entry--passive"><span class="log-actor">${entry.actorName}</span>${actorLoc} <span class="log-passive">intercepted</span> attack on <span class="log-target">${entry.targetName}</span>${targetLoc}</div>`;
+      return `<div class="log-entry log-entry--passive">${BTf('logIntercept')(actor(), target())}</div>`;
     }
     if (entry.type === 'defend' || entry.type === 'ability') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
-      const target    = entry.targetName ? ` → <span class="log-target">${entry.targetName}</span>${targetLoc}` : '';
-      return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${actorLoc}${target} ${entry.message}</div>`;
+      // entry.message is composed server-side and stays in English — see the
+      // note in the log header. Everything around it is localized.
+      const tgt = entry.targetName ? ` → ${target()}` : '';
+      return `<div class="log-entry">${actor()}${tgt} ${entry.message}</div>`;
     }
     if (entry.type === 'shield') {
-      const actorLoc = entry.actorCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>` : '';
-      return `<div class="log-entry log-entry--shield"><span class="log-actor">${entry.targetName}</span>${actorLoc} 🛡 shield absorbed <span class="log-val-shield">${entry.value}</span>${entry.remaining > 0 ? `, ${entry.remaining} passes through` : ', all blocked'}</div>`;
+      const tail = entry.remaining > 0 ? BTf('logShieldThru')(entry.remaining) : BTx('logShieldAll');
+      return `<div class="log-entry log-entry--shield">${BTf('logShield')(target(), entry.value)}${tail}</div>`;
     }
     if (entry.type === 'status') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
-      return `<div class="log-entry"><span class="log-actor">${entry.actorName}</span>${actorLoc} applied <span class="log-passive">${entry.passive}</span> to <span class="log-target">${entry.targetName}</span>${targetLoc} <span class="log-dot">(${entry.value}/turn)</span></div>`;
+      return `<div class="log-entry">${BTf('logStatus')(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
     }
     if (entry.type === 'passive') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
       // A stat grant (armor / resistance / max HP) is neither a heal nor a hit.
       // `stat` names it; without that flag the entry would fall through to the
       // heal wording, which is how buff auras came to read as "healed for 3".
       if (entry.stat) {
-        return `<div class="log-entry log-entry--passive">
-          <span class="log-actor">${entry.actorName}</span>${actorLoc}
-          <span class="log-passive"> ${entry.passive}</span>
-          granted
-          <span class="log-target"> ${entry.targetName}</span>${targetLoc}
-          <span class="log-val-heal">+${entry.value}</span> ${entry.stat}
-        </div>`;
+        return `<div class="log-entry log-entry--passive">${
+          BTf('logGranted')(actor(), logPassive(entry.passive), target(), entry.value, logStat(entry.stat))}</div>`;
       }
-      const isHeal    = entry.heal !== false;
-      return `<div class="log-entry log-entry--passive">
-        <span class="log-actor">${entry.actorName}</span>${actorLoc}
-        <span class="log-passive"> ${entry.passive}</span>
-        ${isHeal ? 'healed' : 'hit'}
-        <span class="log-target"> ${entry.targetName}</span>${targetLoc} for
-        <span class="${isHeal ? 'log-val-heal' : 'log-val'}">${entry.value}</span>
-      </div>`;
+      const tpl = entry.heal !== false ? 'logPassiveHeal' : 'logPassiveHit';
+      return `<div class="log-entry log-entry--passive">${
+        BTf(tpl)(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
     }
     if (entry.type === 'action') {
-      const actorLoc  = entry.actorCell  !== undefined ? ` <span class="log-loc">(${cellLabel(entry.actorCell)})</span>`  : '';
-      const targetLoc = entry.targetCell !== undefined ? ` <span class="log-loc">(${cellLabel(entry.targetCell)})</span>` : '';
-      const verb      = entry.heal ? 'healed' : 'hit';
-      const valClass  = entry.heal ? 'log-val-heal' : 'log-val';
-      const resistedStr = (!entry.heal && entry.rawDmg != null && entry.resisted > 0)
-        ? ` <span class="log-resisted">(${entry.rawDmg} power, ${entry.resisted} resisted)</span>` : '';
-      const powerStr = (!entry.heal && entry.rawDmg != null && entry.resisted === 0)
-        ? ` <span class="log-resisted">(${entry.rawDmg} power)</span>` : '';
-      return `<div class="log-entry">
-        <span class="log-actor">${entry.actorName}</span>${actorLoc} ${verb}
-        <span class="log-target"> ${entry.targetName}</span>${targetLoc} for
-        <span class="${valClass}">${entry.value}</span>${resistedStr}${powerStr}
-        ${entry.killed ? ' 💀' : ''}
-      </div>`;
+      const line = entry.heal
+        ? BTf('logHeal')(actor(), target(), entry.value)
+        : BTf('logHit')(actor(), target(), entry.value);
+      const detail = (!entry.heal && entry.rawDmg != null)
+        ? (entry.resisted > 0 ? BTf('logResisted')(entry.rawDmg, entry.resisted) : BTf('logPower')(entry.rawDmg))
+        : '';
+      return `<div class="log-entry">${line}${detail}${entry.killed ? ' 💀' : ''}</div>`;
     }
-    if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${entry.actorName} skipped</div>`;
+    if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${BTf('logSkip')(actor())}</div>`;
     if (entry.type === 'bark') {
       if (player?.settings?.barks_enabled === false) return '';
-      return `<div class="log-entry log-entry--bark">${entry.actorName}: "${barkText(entry)}"</div>`;
+      return `<div class="log-entry log-entry--bark">${actor()}: "${barkText(entry)}"</div>`;
     }
     if (entry.type === 'notice') return `<div class="log-entry log-entry--notice">${entry.message}</div>`;
     return '';
@@ -1317,7 +1397,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const isEnemyTurn  = !actor || actor.side === 'enemy';
     const hasAbility   = actor && !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
-    const abilityName  = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || 'No Ability') : 'Ability';
+    // The button used to show the RAW key off the unit ("Shield_Wall"), which is
+    // neither translated nor formatted. Resolve the definition and take its
+    // localized name, falling back to the de-underscored key if the ability is
+    // missing from the table.
+    const abilityKey   = actor ? (actor.unit_data?.ability || actor.unit_data?.active_ability || '') : '';
+    const abilityLabel = abilityKey
+      ? (abilityName(resolveAbility(abilityKey)) || abilityKey.replace(/_/g, ' '))
+      : (actor ? BTx('noAbility') : BTx('btnAbility'));
     const actionLabel  = actor ? getActionLabel(actor) : 'Attack';
     const actionIcon   = actor?.unit_data?.action_icon ?? null;
     const isNoneAction = actor && (typeof actor.unit_data?.action === 'object' ? actor.unit_data.action?.action_type === 'none' : false);
@@ -1413,8 +1500,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
     ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
-    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), abilityName, 'battle-action-ability-icon');
-    ui.abilityBtn.title = abilityName;
+    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), abilityLabel, 'battle-action-ability-icon');
+    ui.abilityBtn.title = abilityLabel;
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
