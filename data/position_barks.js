@@ -101,117 +101,115 @@ const POSITION_BARKS = [
   {
     prefers: 'back', actor: { tag: 'Caster' },
     lines: [
-      'Cant concentrate here.',
-      'This is not the best place for me.',
+      'Too close. Put me in the back.',
+      'I cannot cast from the front line.',
     ],
     lines_ru: [
-      'Тут я не сконцентрируюсь.',
-      'Это не лучшее место для меня.',
+      'Слишком близко. Поставьте меня назад.',
+      'Из первого ряда я не смогу колдовать.',
     ],
     ok: [
-      'Better. I can think now.',
-      'This will do.',
+      'Better. Now I can cast.',
+      'Good. Back line is mine.',
     ],
     ok_ru: [
-      'Так лучше. Теперь я могу думать.',
-      'Вот это подойдёт.',
+      'Так лучше. Теперь смогу колдовать.',
+      'Хорошо. Задний ряд — мой.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Archer' },
     lines: [
-      'A bow is no good at arm\'s length.',
-      'I cannot draw with a blade at my throat.',
+      'Too close to shoot. Move me back.',
+      'A bow is useless in the front line.',
     ],
     lines_ru: [
-      'Лук бесполезен на расстоянии вытянутой руки.',
-      'Я не натяну тетиву с клинком у горла.',
+      'Слишком близко для выстрела. Отодвиньте меня.',
+      'В первом ряду лук бесполезен.',
     ],
     ok: [
-      'Now I have the length for it.',
-      'Now I can draw.',
+      'Now I can shoot.',
+      'Good. Clear line of fire.',
     ],
     ok_ru: [
-      'Теперь есть где размахнуться.',
-      'Теперь я натяну тетиву.',
+      'Теперь смогу стрелять.',
+      'Хорошо. Линия огня открыта.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Engineer' },
     lines: [
-      'I work with tools better from the back.',
-      'Set me behind a construct and I will keep it standing.',
+      'Wrong place. I work from the back line.',
+      'I cannot work with blades in my face.',
     ],
     lines_ru: [
-      'Я лучше управляюсь с инструментам с заднего ряда.',
-      'Поставьте меня за конструктом, и я не дам ему рухнуть.',
+      'Не то место. Я работаю из заднего ряда.',
+      'Я не смогу работать с клинками перед лицом.',
     ],
     ok: [
       'Good. My hands are free.',
-      'It will not fall while I am here.',
+      'Better. Now I can work.',
     ],
     ok_ru: [
       'Хорошо. Руки свободны.',
-      'Пока я здесь, он не рухнет.',
+      'Так лучше. Теперь смогу работать.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Holy', faction: 'e' },
     lines: [
-      'The blessing dies with me. Put steel where the blows land.',
-      'Mithrail speaks through me, not through my corpse.',
+      'Not the front line. Put steel here, not prayer.',
+      'I bless the line, I do not hold it. Move me back.',
     ],
     lines_ru: [
-      'Благословение умрёт вместе со мной. Поставьте под удар другого.',
-      'Митраил говорит через меня, а не через мой труп.',
+      'Не в первый ряд. Здесь нужна сталь, а не молитва.',
+      'Я благословляю строй, а не держу его. Назад меня.',
     ],
     ok: [
-      'Now it reaches all of them.',
-      'Good. Let the faithful hear it.',
+      'Good. Mithrail is with you.',
+      'Better. Now it reaches all of them.',
     ],
     ok_ru: [
-      'Теперь оно дойдёт до всех.',
-      'Хорошо. Пусть верные услышат.',
+      'Хорошо. Митраил с вами.',
+      'Так лучше. Теперь оно дойдёт до всех.',
     ],
   },
   {
-    // Grail holy: the same office, the wrong side of it. They bless the dead
-    // because they ARE the dead — no zeal, only duty carried out of habit.
     prefers: 'back', actor: { tag: 'Holy', faction: 'g' },
     lines: [
-      'I tend the fallen. I cannot tend them while falling.',
-      'Let me do this from behind. It is all I am still good for.',
+      'I tend the fallen. Not from the front line.',
+      'I will not last a round here. Move me back.',
     ],
     lines_ru: [
-      'Я забочусь о павших. Я не смогу этого, падая сам.',
-      'Позвольте делать это сзади. Больше я ни на что не гожусь.',
+      'Я забочусь о павших. Но не из первого ряда.',
+      'Здесь я не продержусь и раунда. Назад меня.',
     ],
     ok: [
-      'Mother sees it done.',
-      'Here I can still work.',
+      'Better. Mother sees it.',
+      'Good. Here I can still work.',
     ],
     ok_ru: [
-      'Мать видит, что дело сделано.',
-      'Здесь я ещё пригожусь.',
+      'Так лучше. Мать это видит.',
+      'Хорошо. Здесь я ещё пригожусь.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Holy' },
     lines: [
-      'I can shield the line or stand in it. Not both.',
-      'From behind, my faith covers all of them. Here it covers one.',
+      'Wrong place. My work is done from the back.',
+      'Not the front line. Put someone with armour here.',
     ],
     lines_ru: [
-      'Я могу защищать строй или стоять в нём. Но не одновременно.',
-      'Сзади моя вера укроет всех. Здесь — только одного.',
+      'Не то место. Моё дело — задний ряд.',
+      'Не в первый ряд. Поставьте сюда кого-то в броне.',
     ],
     ok: [
-      'Then I shield it. Go.',
-      'Now it covers them all.',
+      'Better. Now I can help them.',
+      'Good. This is my place.',
     ],
     ok_ru: [
-      'Тогда я укрою его. Идите.',
-      'Теперь она укрывает всех.',
+      'Так лучше. Теперь я им помогу.',
+      'Хорошо. Это моё место.',
     ],
   },
   {
@@ -221,134 +219,131 @@ const POSITION_BARKS = [
       'This is not the place for me.',
     ],
     lines_ru: [
-      'Отсюда Асталот не увидит мою боль.',
-      'Это не мое место.',
+      'Только не первый ряд. Я там сгорю.',
+      'Слишком близко. Отодвиньте меня назад.',
     ],
     ok: [
-      'Mother watches over me.',
-      'Agreed.',
+      'Better. Mother watches.',
+      'Good. Here I last.',
     ],
     ok_ru: [
-      'Мать смотрит за мной.',
-      'Так лучше.',
+      'Так лучше. Мать смотрит.',
+      'Хорошо. Здесь я устою.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Spirit', faction: 'g' },
     lines: [
-      'I cannot hold anything here.',
+      'I hold nothing in the front line. Move me back.',
       'Not the front. Please.',
     ],
     lines_ru: [
-      'Здесь мне ничего не удержать.',
-      'Только не в первый ряд. Прошу.',
+      'В первом ряду мне не устоять. Отодвиньте назад.',
+      'Только не первый ряд. Прошу.',
     ],
     ok: [
-      'Better.',
+      'Better. Thank you.',
       'Yes. Here.',
     ],
     ok_ru: [
-      'Так лучше.',
+      'Так лучше. Спасибо.',
       'Да. Здесь.',
     ],
   },
   {
-    // Empire spirit: a soldier who kept reporting for duty after dying. Still
-    // the Empire register — dutiful and flat, not mournful.
     prefers: 'back', actor: { tag: 'Spirit', faction: 'e' },
     lines: [
-      'I am no wall. Put one here.',
-      'Wrong post. Send me back.',
+      'Wrong post. I am no wall — put one here.',
+      'Front line is not mine. Send me back.',
     ],
     lines_ru: [
-      'Я не стена. Поставьте сюда стену.',
-      'Не мой пост. Отправьте меня назад.',
+      'Не мой пост. Я не стена — поставьте сюда стену.',
+      'Первый ряд не мой. Отправьте меня назад.',
     ],
     ok: [
-      'Better. I can watch from here.',
       'Post accepted.',
+      'Better.',
     ],
     ok_ru: [
-      'Так лучше. Отсюда я вижу всё.',
       'Пост принят.',
+      'Так лучше.',
     ],
   },
   {
-    // Neutral fallback for a Spirit with no faction on its def.
     prefers: 'back', actor: { tag: 'Spirit' },
     lines: [
-      'I am too thin for the front.',
-      'Move me back.',
+      'Too thin for the front line.',
+      'Wrong place.',
     ],
     lines_ru: [
-      'Я слишком тонок для первого ряда.',
-      'Отодвиньте меня назад.',
+      'Я слишком слаб для первого ряда.',
+      'Не то место.',
     ],
     ok: [
       'Better here.',
-      'Now I can help.',
+      'Good. Now I can help.',
     ],
     ok_ru: [
       'Здесь лучше.',
-      'Теперь я пригожусь.',
+      'Хорошо. Теперь я пригожусь.',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Court' },
     lines: [
-      'Read the contract. My name is not in the front rank.',
-      'Rhaa sollan ti — my part was bought, and it is not this one.',
+      'Wrong rank.',
+      'Rhaa sollan ti... the front line is not my place.',
     ],
     lines_ru: [
-      'Перечитайте договор. Моего имени в первом ряду нет.',
-      'Рхаа соллан ти — мою партию купили, и она не эта.',
+      'Не тот ряд.',
+      'Рхаа соллан ти... первый ряд не моё место.',
     ],
     ok: [
-      'Now the terms are honoured.',
-      'Now I sing the part I was paid for.',
+      'Better. Now I can sing.',
+      'They will hear the Choir!',
     ],
     ok_ru: [
-      'Вот теперь условия соблюдены.',
-      'Теперь я пою ту партию, за которую заплачено.',
+      'Так лучше. Теперь я спою.',
+      'Они услышат наш Хор!',
     ],
   },
   {
     prefers: 'back', actor: { tag: 'Demon' },
     lines: [
-      'They will not hear my song from here.',
-      'NOT HERE!',
+      'My song does not carry from the front line.',
+      'NOT HERE! Back. Put me back!',
     ],
     lines_ru: [
-      'Отсюда они не услышат мою песню.',
-      'НЕ СЮДА!',
+      'Из первого ряда моя песнь не звучит.',
+      'НЕ СЮДА! Назад. Поставь меня назад!',
     ],
     ok: [
       'Now they will hear every word.',
-      'Да.',
+      'Yes. HERE.',
     ],
     ok_ru: [
       'Теперь они услышат каждое слово.',
-      'Да.',
+      'Да. ЗДЕСЬ.',
     ],
   },
   {
     // Generic catch-all so a ranged unit with no matching tag still speaks.
     prefers: 'back',
     lines: [
-      'Not sure about this.',
-      'I need room between me and them.',
+      'Wrong place. Move me to the back line.',
+      'Too close. I need distance.',
     ],
     lines_ru: [
-      'Сомневаюсь в этом.',
-      'Мне нужно расстояние между мной и ними.',
+      'Не то место. Отодвиньте меня в задний ряд.',
+      'Слишком близко. Мне нужна дистанция.',
     ],
     ok: [
-      'Yes. This is better.',
-      'Now I have room.',
+      'Better. This is my place.',
+      'Good. Now I have room.',
     ],
     ok_ru: [
-      'Да. Так лучше.',
-      'Теперь есть простор.',
+      'Так лучше. Это моё место.',
+      'Хорошо. Теперь есть простор.',
     ],
   },
 
@@ -358,20 +353,20 @@ const POSITION_BARKS = [
   {
     prefers: 'front', actor: { tag: 'Knight', faction: 'e' },
     lines: [
-      'The oath was to protect at all cost.',
-      'Their kind should not exist. Let me begin.',
+      'I cannot hold the line from the back. Move me forward.',
+      'I cannot slay them from here. Front line.',
     ],
     lines_ru: [
-      'Я клялся защищать любой ценой.',
-      'Их род не должен существовать. Дайте начать.',
+      'Из заднего ряда строй не удержать. Вперёд меня.',
+      'Отсюда мне их не сразить. В первый ряд.',
     ],
     ok: [
-      'Now I can keep it.',
-      'Mithrail wills it. I begin here.',
+      'Now I hold it.',
+      'Good. Mithrail wills it.',
     ],
     ok_ru: [
-      'Теперь я смогу её сдержать.',
-      'На то воля Митраила. Начну отсюда.',
+      'Теперь удержу.',
+      'Хорошо. На то воля Митраила.',
     ],
   },
   {
@@ -379,20 +374,20 @@ const POSITION_BARKS = [
     // still had a pulse, and kept out of habit rather than zeal.
     prefers: 'front', actor: { tag: 'Knight', faction: 'g' },
     lines: [
-      'I swore this while I was still breathing. It still holds.',
-      'Put me in front.',
+      'I swore to stand in front. Not here.',
+      'I reach no one from the back. Move me forward.',
     ],
     lines_ru: [
-      'Я клялся, когда ещё дышал. Клятва в силе.',
-      'Поставь меня вперёд.',
+      'Я клялся стоять впереди. Не здесь.',
+      'Из заднего ряда я ни до кого не дотянусь. Вперёд.',
     ],
     ok: [
-      'Mother heard it. It holds.',
-      'Let it be quicker this time.',
+      'Now the oath holds.',
+      'Better. Now I reach them.',
     ],
     ok_ru: [
-      'Мать её слышала. Она в силе.',
-      'Пусть в этот раз будет быстрее.',
+      'Теперь клятва в силе.',
+      'Так лучше. Теперь дотянусь.',
     ],
   },
   {
@@ -400,20 +395,20 @@ const POSITION_BARKS = [
     // by vow: he is here because the terms say front rank pays better.
     prefers: 'front', actor: { tag: 'Knight', faction: 'd' },
     lines: [
-      'The verse said front rank...',
-      'I am owed a place where the blood is.',
+      'The verse said front rank. This is the back.',
+      'I strike nothing from here... Closer...',
     ],
     lines_ru: [
-      'В этих строках пелось про первые ряды...',
-      'Мне причитается место, где есть кровь.',
+      'В строках пелось про первый ряд. А это задний.',
+      'Отсюда я никого не достану... Ближе...',
     ],
     ok: [
-      'The terms are met.',
-      'Lets proceed.',
+      'Aggraa am neee... front rank.',
+      'Now I can strike. Lets proceed.',
     ],
     ok_ru: [
-      'Условия соблюдены.',
-      'Приступим.',
+      'Агграа ам нэээ... первый ряд.',
+      'Теперь достану. Приступим.',
     ],
   },
   {
@@ -421,175 +416,155 @@ const POSITION_BARKS = [
     prefers: 'front', actor: { tag: 'Knight' },
     lines: [
       'Put me in the front line.',
-      'I cannot reach a thing from here.',
+      'I cannot reach a thing from the back.',
     ],
     lines_ru: [
       'Поставьте меня в первый ряд.',
-      'Отсюда я ни до кого не дотянусь.',
+      'Из заднего ряда я ни до кого не дотянусь.',
     ],
     ok: [
       'Now I can reach them.',
-      'Better.',
+      'Better. Front line.',
     ],
     ok_ru: [
-      'Теперь я до них дотянусь.',
-      'Так лучше.',
+      'Теперь дотянусь.',
+      'Так лучше. Первый ряд.',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Warrior' },
     lines: [
-      'I did not come here to watch.',
-      'Forward. I want them ended!',
+      'I swing at nothing from the back. Forward!',
+      'Wrong place. My blade is short — front line!',
     ],
     lines_ru: [
-      'Я пришёл сюда не смотреть.',
-      'Вперёд. Я хочу покончить с ними!',
+      'Из заднего ряда я бью по воздуху. Вперёд!',
+      'Не то место. Мой клинок короток — в первый ряд!',
     ],
     ok: [
       'Now I fight!',
-      'They end today!',
+      'Good. They end today!',
     ],
     ok_ru: [
       'Теперь сразимся!',
-      'Сегодня им конец!',
+      'Хорошо. Сегодня им конец!',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Construct' },
     lines: [
-      'I was built to be struck.',
-      'Forward. That is the whole of my purpose.',
+      'I was built to be struck. Front line.',
+      'Wrong position. Nothing reaches me back here.',
     ],
     lines_ru: [
-      'Меня построили, чтобы принимать удары.',
-      'Вперёд. В этом всё моё назначение.',
+      'Меня построили принимать удары. В первый ряд.',
+      'Неверная позиция. Сюда удары не долетают.',
     ],
     ok: [
-      'Let them strike.',
+      'Now let them strike.',
       'Purpose served.',
     ],
     ok_ru: [
-      'Пусть бьют.',
+      'Теперь пусть бьют.',
       'Назначение исполнено.',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Holy', faction: 'g' },
     lines: [
-      'Let me stand where they fall. I know that place.',
-      'I cannot reach them from back here.',
+      'Сan..not..re..ach...',
+      'Wro..ng..pla..ce...',
     ],
     lines_ru: [
-      'Дайте встать там, где они падают. Мне это место знакомо.',
-      'Отсюда мне до них не дотянуться.',
+      'Не..до..ста..ю...',
+      'Не..то..мес..то...',
     ],
     ok: [
-      'Then let them come.',
-      'Now I reach them.',
+      'Re..ach...',
+      'Bet..te..r... ',
     ],
     ok_ru: [
-      'Пусть теперь приходят.',
-      'Теперь дотянусь.',
+      'До..тя..ну..сь...',
+      'Лу..ч..ше...',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Holy', faction: 'e' },
     lines: [
-      'Let me see what passes for fury among their kind!',
-      'Let my faith be our shield!',
+      'Let me see what passes for fury among their kind! Closer!',
+      'Let my faith be our shield! Put me in front!',
     ],
     lines_ru: [
-      'Дай взглянуть что они зовут яростью!',
-      'Позволь моей вере быть нашим щитом!',
+      'Дай взглянуть что они зовут яростью! Ближе!',
+      'Позволь моей вере быть нашим щитом! В первый ряд!',
     ],
     ok: [
       'Witness Mithrails light!',
-      'The shield stands here!',
+      'Now none shall fall!',
     ],
     ok_ru: [
       'Узрите свет Митраила!',
-      'Щит стоит здесь!',
+      'Теперь никто не падёт!',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Demon' },
     lines: [
-      'I want to paint next song in their blood.',
-      'Aggra mo naaa.. what? WHAT? NOT HERE!',
+      'Their blood is out of reach from here! Forward!',
+      'Aggra mo naaa... the back? NOT HERE!',
     ],
     lines_ru: [
-      'Я хочу нарисовать следущую песнь их кровью!',
-      'Аггра мо нааа... что? ЧТО? НЕ СЮДА!',
+      'Отсюда до их крови не достать! Вперёд!',
+      'Аггра мо нааа... задний ряд? НЕ СЮДА!',
     ],
     ok: [
       'Close enough...',
-      'Qeraa an moreee... yes. HERE.',
+      'Qeraa an moreee... yes, HERE.',
     ],
     ok_ru: [
       'Достаточно близко...',
-      'Кераа ан морэээ... да. ЗДЕСЬ.',
-    ],
-  },
-  {
-    prefers: 'front', actor: { tag: 'Choir' },
-    lines: [
-      'The First Song is sung at the throat, not from the back of the room.',
-      'Sollaa ver miin — closer. CLOSER.',
-    ],
-    lines_ru: [
-      'Первую Песнь поют у горла, а не из глубины зала.',
-      'Соллаа вер миин — ближе. БЛИЖЕ.',
-    ],
-    ok: [
-      'Now it is sung properly.',
-      'Sollaa ver miin. Yes.',
-    ],
-    ok_ru: [
-      'Вот теперь она спета как надо.',
-      'Соллаа вер миин. Да.',
+      'Кераа ан морэээ... да, ЗДЕСЬ.',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Zombie' },
     lines: [
       'Forward... not... here...',
-      'Not... here...'
+      'Cannot... reach... front...',
     ],
     lines_ru: [
       'Вперёд... не... сюда...',
-      'Не... сюда...'
+      'Не... достать... вперёд...',
     ],
     ok: [
       'Forward... yes... here...',
-      'Here... good...',
+      'Now... reach... good...',
     ],
     ok_ru: [
       'Да... сюда...',
-      'Хорошо...',
+      'Теперь... достану... хорошо...',
     ],
   },
   {
     prefers: 'front', actor: { tag: 'Skeleton' },
     lines: [
-      'Forward. There is nothing left in me to break.',
-      'Put me in the front line. Let them dull their blades.',
+      'Front line.',
+      'I reach no one from the back. Move me forward.',
     ],
     lines_ru: [
-      'Вперёд. Во мне уже нечему ломаться.',
-      'Поставьте меня в первый ряд. Пусть тупят клинки.',
+      'В первый ряд.',
+      'Из заднего ряда мне никого не достать. Вперёд.',
     ],
     ok: [
-      'Mother keeps the rest of me safe.',
-      'Their blades will dull on me.',
+      'Now their blades dull on me.',
+      'Better. Now I reach them.',
     ],
     ok_ru: [
-      'Остальное Мать хранит.',
-      'Их клинки затупятся об меня.',
+      'Теперь их клинки затупятся об меня.',
+      'Так лучше. Теперь достану.',
     ],
   },
   {
-    // Generic catch-all for a range-1 unit with no matching tag.
     prefers: 'front',
     lines: [
       'Put me in the front line.',
