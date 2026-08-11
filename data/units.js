@@ -2506,7 +2506,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 12, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 200, passive: ['protector 1', 'rimeguard 1'], ability: null,
+        xp: 200, passive: ['resist_aura_cold 1', 'rimeguard 1'], ability: null,
       },
       rimewarden: {
         id: 'mv_e31', f: 'mv', t: 2,
@@ -2518,7 +2518,7 @@ const UNITS = {
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 16, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 800, passive: ['protector 2', 'rimeguard 1'], ability: null,
+        xp: 800, passive: ['resist_aura_cold 2', 'rimeguard 1'], ability: null,
       },
       glaciok: {
         id: 'mv_e311', f: 'mv', t: 3,
@@ -2530,7 +2530,7 @@ const UNITS = {
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 20, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 1800, passive: ['protector 2', 'rimeguard 2'], ability: null,
+        xp: 1800, passive: ['resist_aura_cold 2', 'rimeguard 2'], ability: null,
       },
       cryodrox: {
         id: 'mv_e4', f: 'mv', t: 2,
