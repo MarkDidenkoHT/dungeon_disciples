@@ -124,7 +124,7 @@ const REGION_ENCOUNTERS = {
     level_3: {
       spell_id: 'enemy_spell_1',
       enemies: [
-        { key: 'glittering_abyss.cryodrox',  cell: 2 },
+        { key: 'glittering_abyss.cryodrox',  cell: 4 },
         { key: 'glittering_abyss.chillrock',  cell: 1 },
       ],
       rewards: {
