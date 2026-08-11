@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -1326,15 +1326,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const cellMap = {};
     const shadow  = new Set();
 
+    // Footprint via the shared helper, which mirrors the engine's. Deriving the
+    // covered cells here meant a `row` anchored in column 1 reserved nothing at
+    // all — its 2-wide tile then started at the grid's last column and pushed
+    // the whole rest of the grid down a row.
     for (const co of state.combatants) {
       if (co.side !== side) continue;
-      const anchor = co.cellIndex;
-      const size   = co.size ?? 'tile';
-      const r      = Math.floor(anchor / COLS);
-      const c      = anchor % COLS;
-      cellMap[anchor] = co;
-      if (size === 'row'    && c === 0)        shadow.add(anchor + 1);
-      if (size === 'column' && r <= ROWS - 2)  shadow.add(anchor + COLS);
+      const cells = cellFootprint(co.cellIndex, co.size ?? 'tile', ROWS, COLS);
+      cellMap[cells[0]] = co;
+      cells.slice(1).forEach(cell => shadow.add(cell));
     }
 
     const html = [];

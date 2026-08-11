@@ -373,6 +373,33 @@ export function renderUnitPortrait(unit, opts = {}) {
     </div>`;
 }
 
+// Which cells a unit of `size` actually stands on, anchored at `cell`.
+//
+// This MIRRORS BattleEngine.getFootprint() in utils/battle-engine.js and must
+// keep mirroring it: the server decides what a large unit covers, and a grid
+// that disagrees either paints a unit over a cell the engine considers free or
+// emits a tile for a cell that is already taken — which overflows a fixed grid
+// and shoves every later cell out of place.
+//
+// Both sizes are NORMALIZED rather than trusted:
+//   row    — 2 wide, so it always starts in column 0 whatever column it was
+//            anchored in. Reading `cell + 1` off an anchor in column 1 reaches
+//            into the NEXT ROW, which is another unit's cell.
+//   column — 2 tall, so an anchor on the bottom row hangs off the grid; it
+//            starts one row higher instead.
+// Returns the covered cells in grid order, so index 0 is where the tile is
+// drawn and the rest are the cells it swallows.
+export function cellFootprint(cell, size, rows = 3, cols = 2) {
+  const r = Math.floor(cell / cols);
+  const c = cell % cols;
+  if (size === 'row')    return [r * cols, r * cols + 1];
+  if (size === 'column') {
+    const top = r <= rows - 2 ? r : r - 1;
+    return [top * cols + c, (top + 1) * cols + c];
+  }
+  return [cell];
+}
+
 export function calcUnitPower(unit) {
   const res      = unit.resistances || {};
   const avgRes   = Object.values(res).reduce((s, v) => s + (v || 0), 0) / 6;

@@ -28,7 +28,7 @@ import {
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
   itemFromDefKey, combatantItem,
-  spellName, spellDesc, withEquippedItem, unitName,
+  spellName, spellDesc, withEquippedItem, unitName, cellFootprint,
 } from '../utils.js';
 
 const BP_TEXT = {
@@ -851,20 +851,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   function renderEnemyGrid() {
     const grid = root.querySelector('#enemy-grid');
 
+    // Every cell a unit covers maps back to that unit, and `_anchor` marks the
+    // one cell that actually draws the tile. The old version reserved only the
+    // second cell of a `row` and nothing at all for a `column`, so on a level
+    // holding both (Glittering Abyss 3) the column's lower cell was emitted as
+    // a fog tile — seven tiles in a six-cell grid — and a row anchored in
+    // column 1 reserved the cell BELOW it, erasing whoever stood there.
     const unitAtCell = {};
     for (const e of enemies) {
-      if (e.size === 'row') {
-        unitAtCell[e.cell] = e;
-        unitAtCell[e.cell + 1] = { _shadow: true };
-      } else {
-        unitAtCell[e.cell] = e;
-      }
+      const cells = cellFootprint(e.cell, e.size, ROWS, COLS);
+      cells.forEach((cell, n) => { unitAtCell[cell] = { unit: e, _anchor: n === 0 }; });
     }
 
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
-      const e = unitAtCell[i];
-      if (!e) return `<div class="battle-cell battle-cell--fog">???</div>`;
-      if (e._shadow) return '';
+      const slot = unitAtCell[i];
+      if (!slot) return `<div class="battle-cell battle-cell--fog">???</div>`;
+      if (!slot._anchor) return '';
+      const e = slot.unit;
       const colSpan = e.size === 'row' ? 2 : 1;
       const rowSpan = e.size === 'column' ? 2 : 1;
       return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
@@ -884,8 +887,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
     grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
       cell.addEventListener('click', () => {
-        const e = unitAtCell[Number(cell.dataset.i)];
-        if (e && !e._shadow) showDetail(e.name, enemyDetailHtml(e));
+        const slot = unitAtCell[Number(cell.dataset.i)];
+        if (slot) showDetail(slot.unit.name, enemyDetailHtml(slot.unit));
       });
     });
   }
