@@ -98,7 +98,7 @@ function mountShell(player) {
           <!-- <span class="nav-btn-label">${NAV_LABELS.castle[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="roster" title="${NAV_LABELS.roster[L]}" aria-label="${NAV_LABELS.roster[L]}">
-          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/roster.png`)}" alt="">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/items.png`)}" alt="">
           <!-- <span class="nav-btn-label">${NAV_LABELS.roster[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="embark" title="${NAV_LABELS.embark[L]}" aria-label="${NAV_LABELS.embark[L]}">
