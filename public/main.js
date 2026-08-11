@@ -317,6 +317,19 @@ async function boot() {
 
   tg.ready();
 
+  // WHY THIS IS NOT OPTIONAL: a Mini App launched from an inline button or the
+  // chat menu button opens COMPACT — a half-height sheet — while one launched
+  // from the attachment/app entry opens expanded. Telegram reports the compact
+  // height in --tg-viewport-stable-height, which is exactly what #shell sizes
+  // itself from, so the layout dutifully shrank to half a screen while the
+  // castle grid (a fixed 458px) did not. That is the dead block under the units
+  // and the app "not fitting" on those two launch routes only.
+  tg.expand?.();
+  // Drag-to-close competes with the game's own drags: pulling a unit downward
+  // in battle prep could close the app. Available from Bot API 7.7; older
+  // clients simply do not have it.
+  tg.disableVerticalSwipes?.();
+
   // Decide where the art comes from BEFORE anything renders or preloads: the
   // probe flips assetUrl's base to this server if the CDN is unreachable, and
   // every URL built after this point picks that up (see public/asset_base.js).

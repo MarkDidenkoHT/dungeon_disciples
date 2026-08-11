@@ -105,7 +105,14 @@ html, body {
    stopped 20vh above the nav with dead space between them. navigate() stamps
    data-screen on #content-root. */
 #content-root[data-screen="castle"] {
+  /* Same height source as #shell and .bottom-nav — this was the one rule left
+     on plain vh, which is the LARGE viewport and ignores the Telegram chrome
+     the other two account for. On a tall screen the cap therefore measured 80%
+     of a box bigger than the one it lives in, so it stopped binding and the
+     grid drifted back down with dead space under it. */
   max-height: 80vh;
+  max-height: 80dvh;
+  max-height: calc(var(--tg-viewport-stable-height, 100dvh) * 0.8);
 }
 
 .screen {
