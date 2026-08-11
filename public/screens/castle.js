@@ -1112,6 +1112,37 @@ export function renderCastle(root, { player }) {
       emptyLabel:  CASTLE_TEXT.treeEmpty[castleLang],
     });
     openSubSheet(CASTLE_TEXT.treeTitle[castleLang], html);
+
+    // Tapping a node fills a card UNDER the grid rather than opening anything:
+    // the sub-sheet is the last modal level (the tree is already using it), and
+    // keeping the grid on screen is the point — you tap along the line and the
+    // card swaps, which is the comparison the tree exists to answer.
+    const treeRoot = getSubSheetBody()?.querySelector('.utree-root');
+    if (!treeRoot) return;
+    const byId = new Map(tree.nodes.map(n => [n.id, n]));
+
+    const showNode = id => {
+      const node = byId.get(id);
+      if (!node?.def) return;
+      // Deltas are against the PARENT, so each card answers "what does this one
+      // step buy me" — the question a tree is read with. Comparing against the
+      // player's current unit instead would paint their own past path red.
+      const parent = node.parentId ? byId.get(node.parentId)?.def : null;
+
+      treeRoot.querySelectorAll('.utree-cell--selected')
+        .forEach(el => el.classList.remove('utree-cell--selected'));
+      treeRoot.querySelector(`.utree-cell[data-unit-id="${id}"]`)?.classList.add('utree-cell--selected');
+
+      const detail = treeRoot.querySelector('#utree-detail');
+      if (detail) detail.innerHTML = buildUnitCard(node.def, { compareUnit: parent });
+    };
+
+    treeRoot.addEventListener('click', e => {
+      const cell = e.target.closest('.utree-cell[data-unit-id]');
+      if (cell) showNode(cell.dataset.unitId);
+    });
+
+    showNode(unitId);
   }
 
   // ── Slot unit sheet ───────────────────────────────────────────────────────

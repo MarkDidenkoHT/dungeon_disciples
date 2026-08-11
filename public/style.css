@@ -1718,6 +1718,25 @@ button:active:not(:disabled) { opacity: 0.75; }
 .utree-cell--current { border-color: var(--accent); box-shadow: 0 0 8px rgba(201, 146, 42, 0.5); }
 .utree-cell--path    { border-color: #4a80aa; }
 .utree-cell--other   { opacity: 0.55; }
+/* Whichever node the card below is showing. Wins over --other's dimming, so
+   inspecting a branch you did not take does not leave the cell greyed out. */
+.utree-cell[data-unit-id] { cursor: pointer; }
+.utree-cell--selected {
+  opacity: 1;
+  border-color: #d8e4f6;
+  box-shadow: 0 0 0 1px #d8e4f6 inset;
+}
+
+/* The card under the grid. Tapping a node swaps it in place; the grid stays put
+   above it, which is what makes stepping along a line readable. */
+.utree-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #232d3d;
+}
+/* Ability icons in this card are inert: inspecting one would need a third modal
+   level, and the sub-sheet is the last one. Shown for reference, not tappable. */
+.utree-detail .ability-icon { pointer-events: none; }
 
 .ability-icon-img {
   width: 100%;

@@ -169,7 +169,15 @@ export function renderUnitTreeHtml(tree, opts = {}) {
     }
   }
 
-  return `<div class="utree" style="--utree-cols:${TREE_COLS}">${cells.join('')}</div>`;
+  // The detail card is filled by the caller on tap and lives INSIDE this root:
+  // the sub-sheet reuses one body element across opens, so a listener bound to
+  // the body itself would accumulate. Binding to this wrapper ties the
+  // listener's life to the content, the same trick #slot-sheet-root uses.
+  return `
+    <div class="utree-root">
+      <div class="utree" style="--utree-cols:${TREE_COLS}">${cells.join('')}</div>
+      <div class="utree-detail" id="utree-detail"></div>
+    </div>`;
 }
 
 // Every id on the path from the root down to `unitId`, inclusive — the branch
