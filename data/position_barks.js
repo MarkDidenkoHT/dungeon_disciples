@@ -472,7 +472,7 @@ const POSITION_BARKS = [
   {
     prefers: 'front', actor: { tag: 'Holy', faction: 'g' },
     lines: [
-      'Сan..not..re..ach...',
+      'Can..not..re..ach...',
       'Wro..ng..pla..ce...',
     ],
     lines_ru: [
