@@ -81,8 +81,8 @@ const FACTIONS = [
       ru: 'Лев не знает усталости.',
     },
     description: {
-      en: 'Aurex kept its faith when the crown broke: Mithrail, the golden lion, rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs in Aurexian hands.',
-      ru: 'Аурекс сохранил веру, когда корона раскололась: Митраил, золотой лев, вознаграждает тех, кто держит строй. Его рыцари, жрецы и инженеры бьются как одна стена — в броне, освящённые и уверенные, что каждый осколок принадлежит Аурексу.',
+      en: 'Impire of Aurex kept its faith when the crown broke: Mithrail, the golden lion, rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs in Aurexian hands.',
+      ru: 'Империя Аурекс, поклоняются Митраилу, Золотому Льву. Его рыцари, жрецы и инженеры бьются как одна стена — в броне, освящённые и уверенные, что каждый осколок принадлежит Аурексу.',
     },
     bg: assetUrl('/assets/screens/empire.jpg'),
     crest: assetUrl('/assets/crests/empire.jpg'),
@@ -97,7 +97,7 @@ const FACTIONS = [
     },
     description: {
       en: 'When the court of Cinderhold wanted more than its borders could give, it called downward, and Aggrail replied. The bargain made lords into demons and a court into a choir. They do not seek the crown’s shards. They are collecting what was promised.',
-      ru: 'Когда двору Пепельного Чертога стало мало собственных границ, он воззвал вниз — и Агграил ответил. Сделка обратила владык в демонов, а двор — в хор. Они не ищут осколки короны. Они забирают обещанное.',
+      ru: 'Когда двору Пепельного Чертога стало мало собственных ресурсов в борьбе за корону - они стали искать способы, что угодно чтобы осилить врагов. Ритуалы, обряды, договора - ничего не помогало. Пока в город не зашла странная труппа. Их песни были на неведом языке. вал вниз — и Агграил ответил. Сделка обратила владык в демонов, а двор — в хор.',
     },
     bg: assetUrl('/assets/screens/choir.jpg'),
     crest: assetUrl('/assets/crests/choir.jpg'),
@@ -111,8 +111,8 @@ const FACTIONS = [
       ru: 'Одна секунда. Этого хватило.',
     },
     description: {
-      en: 'In the war for Ilmenar, its scholars cast a spell to carry their people forward — an error in the translation carried them too far. In a single second the city and everyone in it aged into rot. Now two answers divide them: accept the rot, or hold it back with the blood and living essence of others.',
-      ru: 'В войне за Ильменар его учёные сотворили заклинание, чтобы продвинуть свой народ вперёд, — ошибка в переводе унесла их слишком далеко. За одну секунду город и все в нём истлели. Теперь их разделяют два ответа: принять тлен или сдерживать его кровью и живой сутью других.',
+      en: 'In the war for Ilmenar, its scholars cast a spell to carry their people forward — an error in the translation - instead of travelling to future - they lived through a century within a glimpse. In a single second the city and everyone in it aged into rot. Now two answers divide them: accept the rot, or hold it back with the blood and living essence of others.',
+      ru: 'В войне за Ильменар его учёные сотворили заклинание, чтобы продвинуть свой народ вперёд, — ошибка в сотворении заклинания - не их тела перенесло в будущее, а они состарились на век за мгновение. За одну секунду город и все в нём истлели. Теперь их разделяют два ответа: принять тлен или сдерживать его чужой кровью.',
     },
     bg: assetUrl('/assets/screens/grail.jpg'),
     crest: assetUrl('/assets/crests/grail.jpg'),
