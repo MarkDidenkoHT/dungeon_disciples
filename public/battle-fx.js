@@ -1,3 +1,4 @@
+import { assetUrl } from './asset_base.js';
 let app = null;
 let rootEl = null;
 
@@ -347,7 +348,7 @@ export async function sword_swing(cellEl, opts = {}) {
 
   let texture;
   try {
-    texture = await PIXI.Assets.load('/assets/vfx/sword.png');
+    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/sword.png'));
   } catch {
     layer.destroy({ children: true });
     return;
@@ -404,7 +405,7 @@ export async function impale(cellEl, opts = {}) {
 
   let texture;
   try {
-    texture = await PIXI.Assets.load('/assets/vfx/impale.png');
+    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/impale.png'));
   } catch {
     layer.destroy({ children: true });
     return;
@@ -1396,7 +1397,7 @@ export async function repair(cellEl) {
 
   let gearSprite = null;
   try {
-    const tex = await PIXI.Assets.load('/assets/vfx/repair_gear.png');
+    const tex = await PIXI.Assets.load(assetUrl('/assets/vfx/repair_gear.png'));
     gearSprite = new PIXI.Sprite(tex);
     gearSprite.anchor.set(0.5, 0.5);
     layer.addChild(gearSprite);
@@ -2061,7 +2062,7 @@ export async function arrow_shot(cellEl, opts = {}) {
 
   let texture;
   try {
-    texture = await PIXI.Assets.load('/assets/vfx/arrow.png');
+    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/arrow.png'));
   } catch {
     // No art present — draw nothing rather than throwing mid-battle.
     layer.destroy({ children: true });

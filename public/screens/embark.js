@@ -2,6 +2,7 @@ import { api, navigate } from '../api.js';
 import { applyBackground } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
+import { assetUrl } from '../asset_base.js';
 
 // Static UI strings, keyed by language (see lang(player)). Region label/desc live
 // on REGIONS with _ru suffixes, following the game's inline-localization rule.
@@ -79,7 +80,7 @@ const REGIONS = [
 // Region art as the card's full background. The text over it carries its own
 // shadow (see .embark-card-label / -desc), so the art is shown clean.
 function regionBgStyle(r) {
-  return `background-image: url('/assets/embark/${r.id}.jpg');`;
+  return `background-image: url('${assetUrl(`/assets/embark/${r.id}.jpg`)}');`;
 }
 
 // `highlightRegions` arrives from the item sheet's material detail: the regions

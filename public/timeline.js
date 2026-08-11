@@ -1,3 +1,4 @@
+import { assetUrl } from './asset_base.js';
 const SPRITE_COLS   = 5;
 const SPRITE_FRAMES = 25;
 const FRAME_MS      = 90;
@@ -42,8 +43,8 @@ const TIMELINE = [
     desc:  { en: 'Fully-animated units and improved battle grid!',
              ru: 'Полностью анимированные юниты и обновлённая боевая сетка!' },
     sprites: [
-      { src: '/assets/character_sprites/e21.png',   alt: 'Templar' },
-      { src: '/assets/character_sprites/gs312.png', alt: 'Crimson Mage' },
+      { src: assetUrl('/assets/character_sprites/e21.png'),   alt: 'Templar' },
+      { src: assetUrl('/assets/character_sprites/gs312.png'), alt: 'Crimson Mage' },
     ],
   },
   {

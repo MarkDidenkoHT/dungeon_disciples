@@ -1,3 +1,4 @@
+import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
@@ -73,7 +74,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function spellIconUrl(spell) {
-    return `/assets/icons/spells/${spell.id}.png`;
+    return assetUrl(`/assets/icons/spells/${spell.id}.png`);
   }
 
   function canAfford(spell) {
@@ -112,7 +113,7 @@ export function renderSpellTome(root, { player }) {
           ${isLearned ? '<div class="spell-card-learned-ring"></div>' : ''}
           <div class="spell-card-icon">
             <img src="${spellIconUrl(spell)}" alt="${spellName(spell, player)}" onerror="this.style.display='none'">
-            ${!isLearned ? '<img src="/assets/icons/spells/spell_locked.png" alt="Locked" class="spell-card-lock-img">' : ''}
+            ${!isLearned ? `<img src="${assetUrl('/assets/icons/spells/spell_locked.png')}" alt="Locked" class="spell-card-lock-img">` : ''}
           </div>
           <div class="spell-card-name">${spellName(spell, player)}</div>
           <div class="spell-card-cost">${costHtml(spell)}</div>

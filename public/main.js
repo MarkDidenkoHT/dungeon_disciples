@@ -1,3 +1,4 @@
+import { assetUrl, resolveAssetBase, installAssetFallback } from './asset_base.js';
 import { renderRegister }   from './screens/register.js';
 import { renderCastle }     from './screens/castle.js';
 import { renderItems }      from './screens/items.js';
@@ -78,12 +79,12 @@ function mountShell(player) {
            resource slots and squeezed them flat. -->
       <div class="resource-bar-row" id="resource-bar-row">
         <button class="res-bar-btn res-bar-timeline" title="${SHELL_TEXT.timeline[L]}" aria-label="${SHELL_TEXT.timeline[L]}">
-          <img src="/assets/icons/ui/timeline.png" class="res-icon-img" alt="Timeline"
+          <img src="${assetUrl(`/assets/icons/ui/timeline.png`)}" class="res-icon-img" alt="Timeline"
                onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
         </button>
         <div class="resource-bar" id="resource-bar"></div>
         <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}">
-          <img src="/assets/icons/ui/errand.png" class="res-icon-img" alt="Errands"
+          <img src="${assetUrl(`/assets/icons/ui/errand.png`)}" class="res-icon-img" alt="Errands"
                onerror="this.replaceWith(document.createTextNode('\u{2709}'))">
         </button>
       </div>
@@ -93,23 +94,23 @@ function mountShell(player) {
            .nav-btn-label is null-guarded, so their absence is not a crash. -->
       <nav class="bottom-nav" id="bottom-nav">
         <button class="nav-btn" data-screen="castle" title="${NAV_LABELS.castle[L]}" aria-label="${NAV_LABELS.castle[L]}">
-          <img class="nav-btn-icon" src="/assets/icons/ui/castle.png" alt="">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/castle.png`)}" alt="">
           <!-- <span class="nav-btn-label">${NAV_LABELS.castle[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="roster" title="${NAV_LABELS.roster[L]}" aria-label="${NAV_LABELS.roster[L]}">
-          <img class="nav-btn-icon" src="/assets/icons/ui/roster.png" alt="">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/roster.png`)}" alt="">
           <!-- <span class="nav-btn-label">${NAV_LABELS.roster[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="embark" title="${NAV_LABELS.embark[L]}" aria-label="${NAV_LABELS.embark[L]}">
-          <img class="nav-btn-icon" src="/assets/icons/ui/embark.png" alt="">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/embark.png`)}" alt="">
           <!-- <span class="nav-btn-label">${NAV_LABELS.embark[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="spells" title="${NAV_LABELS.spells[L]}" aria-label="${NAV_LABELS.spells[L]}">
-          <img class="nav-btn-icon" src="/assets/icons/ui/spellbook.png" alt="">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/spellbook.png`)}" alt="">
           <!-- <span class="nav-btn-label">${NAV_LABELS.spells[L]}</span> -->
         </button>
         <button class="nav-btn" data-screen="settings" title="${NAV_LABELS.settings[L]}" aria-label="${NAV_LABELS.settings[L]}">
-          <img class="nav-btn-icon" src="/assets/icons/ui/settings.png" alt="" onerror="this.style.display='none';">
+          <img class="nav-btn-icon" src="${assetUrl(`/assets/icons/ui/settings.png`)}" alt="" onerror="this.style.display='none';">
           <!-- <span class="nav-btn-label">${NAV_LABELS.settings[L]}</span> -->
         </button>
       </nav>
@@ -315,6 +316,12 @@ async function boot() {
   }
 
   tg.ready();
+
+  // Decide where the art comes from BEFORE anything renders or preloads: the
+  // probe flips assetUrl's base to this server if the CDN is unreachable, and
+  // every URL built after this point picks that up (see public/asset_base.js).
+  installAssetFallback();
+  await resolveAssetBase();
 
   try {
     const [loginResult] = await Promise.all([

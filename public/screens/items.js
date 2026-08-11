@@ -1,3 +1,4 @@
+import { assetUrl } from '../asset_base.js';
 import { api }                 from '../api.js';
 import { navigate }            from '../api.js';
 import { refreshResourceBar }  from '../api.js';
@@ -154,7 +155,7 @@ export function renderItems(root, { player }) {
     return `
       <div class="item-card-aside">
         <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <img src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
         <div class="item-card-rarity item-card-rarity--${r}">${T('rarity_' + r)}</div>
@@ -199,9 +200,9 @@ export function renderItems(root, { player }) {
     if (CRYSTAL_ICONS[key]) return CRYSTAL_ICONS[key];
     if (ITEM_DEFS[key]) {
       const iconId = ITEM_DEFS[key].icon || ITEM_DEFS[key].key;
-      return `<img class="mat-chip-img" src="/assets/icons/items/${iconId}.png" alt="${key}" onerror="this.style.display='none'">`;
+      return `<img class="mat-chip-img" src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${key}" onerror="this.style.display='none'">`;
     }
-    return `<img class="mat-chip-img" src="/assets/icons/recources/${key}.png" alt="${key}" onerror="this.style.display='none'">`;
+    return `<img class="mat-chip-img" src="${assetUrl(`/assets/icons/recources/${key}.png`)}" alt="${key}" onerror="this.style.display='none'">`;
   }
 
   function ownedAmount(key) {
@@ -350,7 +351,7 @@ export function renderItems(root, { player }) {
     return list.map((entry, i) => `
       <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
            data-i="${i}" title="${entryName(entry)}">
-        <img class="portrait-art-img" src="/assets/icons/items/${entryIcon(entry)}.png"
+        <img class="portrait-art-img" src="${assetUrl(`/assets/icons/items/${entryIcon(entry)}.png`)}"
              alt="${entryName(entry)}" onerror="this.style.display='none'">
         ${entry.kind === 'blueprint'
           ? (entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : '')
@@ -516,7 +517,7 @@ export function renderItems(root, { player }) {
     bar.innerHTML = trophyItems.map(t => `
       <div class="trophy-bar-item" title="${t.item}">
         <div class="trophy-bar-icon-wrap">
-          <img src="/assets/icons/recources/${t.item}.png"
+          <img src="${assetUrl(`/assets/icons/recources/${t.item}.png`)}"
               class="trophy-bar-icon"
               alt="${t.item}"
               onerror="this.style.display='none';this.nextSibling.style.display='flex';">

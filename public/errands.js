@@ -2,6 +2,7 @@ import { api, bootstrapCache, refreshResourceBar } from './api.js';
 import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
+import { assetUrl } from './asset_base.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
 // The daily draw. One non-hero unit goes out and is unavailable until it comes
@@ -48,7 +49,7 @@ function untilText(iso) {
 // art, so it is not printed twice; the description keeps the foot of the image.
 function errandHeaderHtml(def, desc) {
   const art = def?.art
-    ? `<img class="errand-art-img" src="/assets/icons/errands/${def.art}" alt=""
+    ? `<img class="errand-art-img" src="${assetUrl(`/assets/icons/errands/${def.art}`)}" alt=""
             onerror="this.closest('.errand-header').classList.add('errand-header--noart')">`
     : '';
   return `
@@ -85,7 +86,7 @@ function unitCardHtml(row, selected) {
   return `
     <div class="portrait-card portrait-card--errand ${selected ? 'portrait-card--selected' : ''}"
          data-roster-id="${row.id}" title="${name}">
-      <img class="portrait-art-img" src="/assets/character_portraits/p_${portraitId}.png"
+      <img class="portrait-art-img" src="${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}"
            alt="${name}" onerror="this.style.display='none'">
     </div>`;
 }

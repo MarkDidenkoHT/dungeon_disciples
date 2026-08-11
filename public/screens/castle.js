@@ -19,6 +19,7 @@ import {
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml } from '../unit_tree.js';
+import { assetUrl } from '../asset_base.js';
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -99,9 +100,9 @@ const CASTLE_TEXT = {
 };
 
 const CASTLE_BACKGROUNDS = {
-  empire:              '/assets/screens/empire.jpg',
-  choir_of_the_cursed: '/assets/screens/choir.jpg',
-  grail_of_sorrow:     '/assets/screens/grail.jpg',
+  empire:              assetUrl('/assets/screens/empire.jpg'),
+  choir_of_the_cursed: assetUrl('/assets/screens/choir.jpg'),
+  grail_of_sorrow:     assetUrl('/assets/screens/grail.jpg'),
 };
 
 export function renderCastle(root, { player }) {
@@ -243,7 +244,7 @@ export function renderCastle(root, { player }) {
     const id = unit?.id;
     if (!id) return '';
     const portraitId = id.match(/^(h_[a-z]_\d)/)?.[1] ?? id;
-    return `/assets/character_portraits/p_${portraitId}.png`;
+    return `${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}`;
   }
 
   function getUnitByUnitId(unitId) {
@@ -369,7 +370,7 @@ export function renderCastle(root, { player }) {
       .filter(([key]) => !RESOURCE_BAR_SLOTS.some(s => s.key === key))
       .map(([key, need]) => {
         const name = key.replace(/_/g, ' ');
-        const icon = `<img src="/assets/icons/recources/${key}.png" class="res-icon-img" alt="${name}" onerror="this.style.visibility='hidden'">`;
+        const icon = `<img src="${assetUrl(`/assets/icons/recources/${key}.png`)}" class="res-icon-img" alt="${name}" onerror="this.style.visibility='hidden'">`;
         return slotHtml(icon, key, name, need);
       }).join('');
 
@@ -1464,7 +1465,7 @@ export function renderCastle(root, { player }) {
           <div class="item-card-body">
             <div class="item-card-aside">
               <div class="item-card-icon">
-                <img src="/assets/icons/items/${iconId}.png" alt="${itemName(it, player)}"
+                <img src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${itemName(it, player)}"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 <span class="item-card-icon-fallback" style="display:none;">⚙</span>
               </div>
@@ -1495,7 +1496,7 @@ export function renderCastle(root, { player }) {
         return `
           <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
                data-i="${i}" title="${name}">
-            <img class="portrait-art-img" src="/assets/icons/items/${icon}.png" alt="${name}"
+            <img class="portrait-art-img" src="${assetUrl(`/assets/icons/items/${icon}.png`)}" alt="${name}"
                  onerror="this.style.display='none'">
             ${entry.count > 1 ? `<span class="item-track-owned">${entry.count}</span>` : ''}
           </div>`;

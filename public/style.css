@@ -1,3 +1,19 @@
+/* Asset URLs that CSS owns. They point at the CDN; if it is unreachable the
+   boot probe in public/asset_base.js rewrites these nine variables to the app
+   server's own /assets path. CSS cannot fall back on its own, which is why the
+   URLs live in variables rather than inline in the rules below. */
+:root {
+  --img-battle-grid: url('https://assets.markdidenkowork.workers.dev/icons/ui/battle_grid.png');
+  --img-nav-active: url('https://assets.markdidenkowork.workers.dev/icons/ui/bottom-nav-active.png');
+  --img-nav: url('https://assets.markdidenkowork.workers.dev/icons/ui/bottom-nav.png');
+  --img-bottom-ui: url('https://assets.markdidenkowork.workers.dev/icons/ui/bottom_ui.jpg');
+  --img-building-slot: url('https://assets.markdidenkowork.workers.dev/icons/ui/building_slot1.png');
+  --img-formation: url('https://assets.markdidenkowork.workers.dev/icons/ui/formation.png');
+  --img-formation-highlight: url('https://assets.markdidenkowork.workers.dev/icons/ui/formation_highligt.png');
+  --img-resource-bar: url('https://assets.markdidenkowork.workers.dev/icons/ui/recource_bar.png');
+  --img-battle-prep-bg: url('https://assets.markdidenkowork.workers.dev/screens/battle_prep_bg.jpeg');
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* Mobile browsers paint a translucent blue box over a tapped element — and on
@@ -669,7 +685,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .nav-btn {
   flex: 1;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-image: var(--img-nav);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-color: transparent;
@@ -685,7 +701,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .nav-btn.active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  background-image: var(--img-nav-active);
 }
 
 /* Icons-only nav (labels commented out in main.js): the icon takes the row the
@@ -794,7 +810,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .nav-btn--battle-ready {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  background-image: var(--img-nav-active);
   animation: battle-ready-pulse 1.2s ease-in-out infinite;
 }
 
@@ -863,7 +879,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 4px 8px;
   /* Ornate frame art stretched across the bar. No fallback colour behind it —
      the art is present, and the flat block showed through its edges. */
-  background-image: url('/assets/icons/ui/recource_bar.png');
+  background-image: var(--img-resource-bar);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   flex-shrink: 0;
@@ -920,7 +936,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 1rem;
   color: var(--muted);
   background-color: transparent;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-image: var(--img-nav);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border-radius: 0;
@@ -941,7 +957,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-bar-btn:not(:disabled):active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  background-image: var(--img-nav-active);
   transform: scale(0.94);
 }
 .res-bar-btn:not(:disabled):active .res-icon-img,
@@ -1311,7 +1327,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 4px 12px;
   /* Same ornate frame art as the resource bar (fallback: --surface). */
   background-color: var(--surface);
-  background-image: url('/assets/icons/ui/recource_bar.png');
+  background-image: var(--img-resource-bar);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border-bottom: 1px solid var(--border);
@@ -2688,7 +2704,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .portrait-card--roster.portrait-card--selected {
-  background-image: url('/assets/icons/ui/formation_highligt.png');
+  background-image: var(--img-formation-highlight);
 }
 
 /* .roster-nav / .roster-dot rules removed — the roster pages via the portrait
@@ -3219,7 +3235,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 0;
   position: relative;
   overflow: hidden;
-  background-image: url('/assets/screens/battle_prep_bg.jpeg');
+  background-image: var(--img-battle-prep-bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -3240,7 +3256,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-bottom: 1px solid var(--border);
   /* Same framed panel art the prep track uses, so the queue reads as a physical
      tray rather than a strip of cards floating on the battle background. */
-  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-image: var(--img-bottom-ui);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -3891,7 +3907,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background-image: url('/assets/screens/battle_prep_bg.jpeg');
+  background-image: var(--img-battle-prep-bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -4058,7 +4074,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/assets/icons/ui/battle_grid.png');
+  background-image: var(--img-battle-grid);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -4410,7 +4426,7 @@ button:active:not(:disabled) { opacity: 0.75; }
      drag still work, and the bar itself was eating vertical space. */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-image: var(--img-bottom-ui);
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -4430,7 +4446,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .prep-track-arrow {
   flex: 0 0 auto;
   width: 26px;
-  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-image: var(--img-bottom-ui);
   background-size: cover;
   border: none;
   color: var(--accent);
@@ -4491,7 +4507,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: grab;
   flex-shrink: 0;
   /* background-color: #14181f; */
-  background-image: url('/assets/icons/ui/formation.png');
+  background-image: var(--img-formation);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   user-select: none;
@@ -4505,7 +4521,7 @@ button:active:not(:disabled) { opacity: 0.75; }
    highlight: they always occupy the first slot, which says it already. */
 .portrait-card:active,
 .portrait-card--selected {
-  background-image: url('/assets/icons/ui/formation_highligt.png');
+  background-image: var(--img-formation-highlight);
 }
 
 .portrait-art {
@@ -5319,7 +5335,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/assets/icons/ui/building_slot1.png');
+  background-image: var(--img-building-slot);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   pointer-events: none;
@@ -6592,7 +6608,7 @@ button:active:not(:disabled) { opacity: 0.75; }
    the portraits. Used by the castle's build/upgrade slider and the register
    screen's hero picker — the two rows built to this shape. */
 .track-action-row--framed {
-  background-image: url(/assets/icons/ui/bottom_ui.jpg);
+  background-image: var(--img-bottom-ui);
   background-size: cover;
   background-repeat: no-repeat;
   /* Padding longhands rather than the shorthand: .hero-action-row sets its own
@@ -6644,14 +6660,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 1.4rem;
   line-height: 1;
   background-color: transparent;
-  background-image: url('/assets/icons/ui/bottom-nav.png');
+  background-image: var(--img-nav);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   transition: transform 0.1s, filter 0.15s;
 }
 
 .frame-action:active {
-  background-image: url('/assets/icons/ui/bottom-nav-active.png');
+  background-image: var(--img-nav-active);
   transform: scale(0.94);
 }
 

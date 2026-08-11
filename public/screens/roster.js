@@ -1,3 +1,4 @@
+import { assetUrl } from '../asset_base.js';
 import { api }              from '../api.js';
 import { navigate }         from '../api.js';
 import { refreshResourceBar } from '../api.js';
@@ -498,7 +499,7 @@ export function renderRoster(root, { player }) {
     const unitId = def?.id;
     if (!unitId) return null;
     const portraitId = unitId.match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
-    return `/assets/character_portraits/p_${portraitId}.png`;
+    return `${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}`;
   }
 
   // Current/max HP with the equipped item's bonus applied — same derivation as
@@ -813,7 +814,7 @@ export function renderRoster(root, { player }) {
     return `
       <div class="item-card-aside">
         <div class="item-card-icon">
-          <img src="/assets/icons/items/${iconId}.png" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <img src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="item-card-icon-fallback" style="display:none;">⚙</span>
         </div>
         <div class="item-card-rarity item-card-rarity--${rarity}">${T('rarity_' + rarity)}</div>
@@ -882,9 +883,9 @@ export function renderRoster(root, { player }) {
     // Trophies share the resource icon folder; items use the item folder.
     if (ITEM_DEFS[key]) {
       const iconId = ITEM_DEFS[key].icon || ITEM_DEFS[key].key;
-      return `<img class="mat-chip-img" src="/assets/icons/items/${iconId}.png" alt="${key}" onerror="this.style.display='none'">`;
+      return `<img class="mat-chip-img" src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${key}" onerror="this.style.display='none'">`;
     }
-    return `<img class="mat-chip-img" src="/assets/icons/recources/${key}.png" alt="${key}" onerror="this.style.display='none'">`;
+    return `<img class="mat-chip-img" src="${assetUrl(`/assets/icons/recources/${key}.png`)}" alt="${key}" onerror="this.style.display='none'">`;
   }
 
   function ownedAmount(key) {
@@ -1033,7 +1034,7 @@ export function renderRoster(root, { player }) {
     bar.innerHTML = trophyItems.map(t => `
       <div class="trophy-bar-item" title="${t.item}">
         <div class="trophy-bar-icon-wrap">
-          <img src="/assets/icons/recources/${t.item}.png"
+          <img src="${assetUrl(`/assets/icons/recources/${t.item}.png`)}"
               class="trophy-bar-icon"
               alt="${t.item}"
               onerror="this.style.display='none';this.nextSibling.style.display='flex';">
@@ -1166,7 +1167,7 @@ export function renderRoster(root, { player }) {
       return list.map((entry, i) => `
         <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${entryName(entry)}">
-          <img class="portrait-art-img" src="/assets/icons/items/${entryIcon(entry)}.png"
+          <img class="portrait-art-img" src="${assetUrl(`/assets/icons/items/${entryIcon(entry)}.png`)}"
                alt="${entryName(entry)}" onerror="this.style.display='none'">
           ${entry.kind === 'blueprint'
             ? (entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : '')

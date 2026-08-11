@@ -3,6 +3,7 @@ import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
 import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet } from '../utils.js';
 import { playFactionTheme } from '../music.js';
+import { assetUrl } from '../asset_base.js';
 
 function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -83,8 +84,8 @@ const FACTIONS = [
       en: 'Aurex kept its faith when the crown broke: Mithrail, the golden lion, rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs in Aurexian hands.',
       ru: 'Аурекс сохранил веру, когда корона раскололась: Митраил, золотой лев, вознаграждает тех, кто держит строй. Его рыцари, жрецы и инженеры бьются как одна стена — в броне, освящённые и уверенные, что каждый осколок принадлежит Аурексу.',
     },
-    bg: '/assets/screens/empire.jpg',
-    crest: '/assets/crests/empire.jpg',
+    bg: assetUrl('/assets/screens/empire.jpg'),
+    crest: assetUrl('/assets/crests/empire.jpg'),
     highlights: getHighlights('empire'),
   },
   {
@@ -98,8 +99,8 @@ const FACTIONS = [
       en: 'When the court of Cinderhold wanted more than its borders could give, it called downward, and Aggrail replied. The bargain made lords into demons and a court into a choir. They do not seek the crown’s shards. They are collecting what was promised.',
       ru: 'Когда двору Пепельного Чертога стало мало собственных границ, он воззвал вниз — и Агграил ответил. Сделка обратила владык в демонов, а двор — в хор. Они не ищут осколки короны. Они забирают обещанное.',
     },
-    bg: '/assets/screens/choir.jpg',
-    crest: '/assets/crests/choir.jpg',
+    bg: assetUrl('/assets/screens/choir.jpg'),
+    crest: assetUrl('/assets/crests/choir.jpg'),
     highlights: getHighlights('choir_of_the_cursed'),
   },
   {
@@ -113,8 +114,8 @@ const FACTIONS = [
       en: 'In the war for Ilmenar, its scholars cast a spell to carry their people forward — an error in the translation carried them too far. In a single second the city and everyone in it aged into rot. Now two answers divide them: accept the rot, or hold it back with the blood and living essence of others.',
       ru: 'В войне за Ильменар его учёные сотворили заклинание, чтобы продвинуть свой народ вперёд, — ошибка в переводе унесла их слишком далеко. За одну секунду город и все в нём истлели. Теперь их разделяют два ответа: принять тлен или сдерживать его кровью и живой сутью других.',
     },
-    bg: '/assets/screens/grail.jpg',
-    crest: '/assets/crests/grail.jpg',
+    bg: assetUrl('/assets/screens/grail.jpg'),
+    crest: assetUrl('/assets/crests/grail.jpg'),
     highlights: getHighlights('grail_of_sorrow'),
   },
 ];
@@ -163,7 +164,7 @@ export function renderRegister(root, { player } = {}) {
 
   function showIntroStep() {
     root.innerHTML = `
-      <div class="screen screen-intro" style="background-image: linear-gradient(180deg, rgba(10,10,14,0.35) 0%, rgba(10,10,14,0.75) 60%, rgba(10,10,14,0.96) 100%), url('/assets/screens/embark.jpg')">
+      <div class="screen screen-intro" style="background-image: linear-gradient(180deg, rgba(10,10,14,0.35) 0%, rgba(10,10,14,0.75) 60%, rgba(10,10,14,0.96) 100%), url('${assetUrl(`/assets/screens/embark.jpg`)}')">
         <div class="intro-content">
           <div class="intro-title">${UI_TEXT.introTitle[L]}</div>
           <p class="intro-text">${UI_TEXT.introP1[L]}</p>
@@ -195,7 +196,7 @@ export function renderRegister(root, { player } = {}) {
                     ${f.highlights.map((h, i) => `
                       <div class="portrait-card portrait-card--branch"
                            data-i="${i}" title="${h.name}">
-                        <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
+                        <img class="portrait-art-img" src="${assetUrl(`/assets/character_portraits/p_${h.id}.png`)}"
                              alt="${h.name}" onerror="this.style.display='none'">
                         <div class="portrait-name">${h.name}</div>
                       </div>`).join('')}
@@ -301,8 +302,8 @@ export function renderRegister(root, { player } = {}) {
       const factionPrefix = prefixMap[selectedFaction.id] ?? 'h_e_';
       heroes = all.filter(h => h.id.startsWith(factionPrefix) && h.t === 1);
       await preloadAssets(heroes.flatMap(h => [
-        `/assets/character_art/${h.id}.png`,
-        `/assets/character_portraits/p_${h.id}.png`,
+        `${assetUrl(`/assets/character_art/${h.id}.png`)}`,
+        `${assetUrl(`/assets/character_portraits/p_${h.id}.png`)}`,
       ]));
       showHeroStep();
     } catch (err) {
@@ -349,7 +350,7 @@ export function renderRegister(root, { player } = {}) {
               ${heroes.map((h, i) => `
                 <div class="portrait-card portrait-card--branch ${i === 0 ? 'portrait-card--selected' : ''}"
                      data-i="${i}" title="${h.name ?? h.id}">
-                  <img class="portrait-art-img" src="/assets/character_portraits/p_${h.id}.png"
+                  <img class="portrait-art-img" src="${assetUrl(`/assets/character_portraits/p_${h.id}.png`)}"
                        alt="${h.name ?? h.id}" onerror="this.style.display='none'">
                   <div class="portrait-name">${h.name ?? h.id}</div>
                 </div>`).join('')}

@@ -1,3 +1,4 @@
+import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
@@ -160,24 +161,24 @@ export const RESIST_ICONS = {
 
 export const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 
-const PAGE_TURN_SOUND_URL = '/assets/mp3/ui/turn-page.mp3';
+const PAGE_TURN_SOUND_PATH = '/assets/mp3/ui/turn-page.mp3';
 
 export function playPageTurnSound() {
-  const audio = new Audio(PAGE_TURN_SOUND_URL);
+  const audio = new Audio(assetUrl(PAGE_TURN_SOUND_PATH));
   audio.volume = 0.55;
   audio.play().catch(() => {});
 }
 
 export const CRYSTAL_ICONS = {
-  Crystals_Life:   '<img src="/assets/icons/recources/life.png"   class="res-icon-img" alt="Life">',
-  Crystals_Fire:   '<img src="/assets/icons/recources/fire.png"   class="res-icon-img" alt="Fire">',
-  Crystals_Death:  '<img src="/assets/icons/recources/death.png"  class="res-icon-img" alt="Death">',
-  Crystals_Frost:  '<img src="/assets/icons/recources/cold.png"   class="res-icon-img" alt="Frost">',
-  Crystals_Nature: '<img src="/assets/icons/recources/nature.png" class="res-icon-img" alt="Nature">',
-  Crystals_Air:    '<img src="/assets/icons/recources/air.png" class="res-icon-img" alt="Air">',
+  Crystals_Life:   `<img src="${assetUrl('/assets/icons/recources/life.png')}"   class="res-icon-img" alt="Life">`,
+  Crystals_Fire:   `<img src="${assetUrl('/assets/icons/recources/fire.png')}"   class="res-icon-img" alt="Fire">`,
+  Crystals_Death:  `<img src="${assetUrl('/assets/icons/recources/death.png')}"  class="res-icon-img" alt="Death">`,
+  Crystals_Frost:  `<img src="${assetUrl('/assets/icons/recources/cold.png')}"   class="res-icon-img" alt="Frost">`,
+  Crystals_Nature: `<img src="${assetUrl('/assets/icons/recources/nature.png')}" class="res-icon-img" alt="Nature">`,
+  Crystals_Air:    `<img src="${assetUrl('/assets/icons/recources/air.png')}" class="res-icon-img" alt="Air">`,
 };
 
-export const GOLD_ICON = '<img src="/assets/icons/recources/gold.png" class="res-icon-img" alt="Gold">';
+export const GOLD_ICON = `<img src="${assetUrl('/assets/icons/recources/gold.png')}" class="res-icon-img" alt="Gold">`;
 
 // The resource strip's slots, in the order they are drawn. Anything that has to
 // line up COLUMN-WISE with that strip — the build-cost bar under it — renders
@@ -194,19 +195,19 @@ export const RESOURCE_BAR_SLOTS = [
 
 export const SCREEN_BACKGROUNDS = {
   roster: {
-    empire:              '/assets/screens/empire.jpg',
-    choir_of_the_cursed: '/assets/screens/choir.jpg',
-    grail_of_sorrow:     '/assets/screens/grail.jpg',
+    empire:              assetUrl('/assets/screens/empire.jpg'),
+    choir_of_the_cursed: assetUrl('/assets/screens/choir.jpg'),
+    grail_of_sorrow:     assetUrl('/assets/screens/grail.jpg'),
   },
   embark: {
-    empire:              '/assets/screens/embark.jpg',
-    choir_of_the_cursed: '/assets/screens/embark.jpg',
-    grail_of_sorrow:     '/assets/screens/embark.jpg',
+    empire:              assetUrl('/assets/screens/embark.jpg'),
+    choir_of_the_cursed: assetUrl('/assets/screens/embark.jpg'),
+    grail_of_sorrow:     assetUrl('/assets/screens/embark.jpg'),
   },
   spells: {
-    empire:              '/assets/screens/spell_book.jpg',
-    choir_of_the_cursed: '/assets/screens/spell_book.jpg',
-    grail_of_sorrow:     '/assets/screens/spell_book.jpg',
+    empire:              assetUrl('/assets/screens/spell_book.jpg'),
+    choir_of_the_cursed: assetUrl('/assets/screens/spell_book.jpg'),
+    grail_of_sorrow:     assetUrl('/assets/screens/spell_book.jpg'),
   },
 };
 
@@ -331,7 +332,7 @@ export function renderUnitAbilityIcon(key, type) {
   const def     = resolveAbility(key);
   const isEmpty = !def;
   const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-  const imgSrc  = def ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+  const imgSrc  = def ? assetUrl(`/assets/icons/abilities/${fileKey}.jpg`) : null;
   return `
     <button
       class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
@@ -348,7 +349,7 @@ export function renderUnitPortrait(unit, opts = {}) {
   const tags     = (unit.tags || []).filter(Boolean);
   const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
-  const portrait = `/assets/character_art/${portraitId}.png`;
+  const portrait = assetUrl(`/assets/character_art/${portraitId}.png`);
 
   return `
     <div class="unit-portrait">
@@ -472,7 +473,7 @@ export function renderItemSlotIcon(item, rosterId, opts = {}) {
     const label  = itemName(item, player) || item.item_name || 'Item';
     return `
       <button class="ability-icon ability-icon--item ability-icon--rarity-${itemRarity(item)}" ${triggerAttr} data-roster-id="${rosterId ?? ''}" data-item-id="${item.id ?? ''}" data-item-key="${item.item_key ?? ''}" title="${label}">
-        <img class="ability-icon-img" src="/assets/icons/items/${iconId}.png" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <img class="ability-icon-img" src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${label}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
         <span class="item-slot-fallback" style="display:none;">⚙</span>
       </button>`;
   }
@@ -746,7 +747,7 @@ export function buildAbilityModalParts(def, type) {
   // The icon file is keyed off the English id, NOT the display name — the id is
   // the stable identifier and does not change with language.
   const fileKey = def.id ? def.id.replace(/\s+/g, '_').replace(/_\d+$/, '') : '';
-  const imgSrc  = fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+  const imgSrc  = fileKey ? assetUrl(`/assets/icons/abilities/${fileKey}.jpg`) : null;
   const name    = abilityName(def);
   const body = `
     <div class="ability-modal-content">

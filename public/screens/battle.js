@@ -5,6 +5,7 @@ import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../bat
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../realtime.js';
+import { assetUrl } from '../asset_base.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -36,7 +37,7 @@ function getPortraitUrl(unit, variant = 'default') {
   const portraitId = unitId.match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
   const size = unitDef?.size ?? 'tile';
   const prefix = (variant === 'grid' && (size === 'row' || size === 'column')) ? 'p2' : 'p';
-  return `/assets/character_portraits/${prefix}_${portraitId}.png`;
+  return `${assetUrl(`/assets/character_portraits/${prefix}_${portraitId}.png`)}`;
 }
 
 // Result-screen copy. The rest of the battle UI is icons, so these are the only
@@ -165,7 +166,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const abilityKey = actor?.unit_data?.ability || actor?.unit_data?.active_ability;
     const def = resolveAbility(abilityKey);
     const fileKey = abilityKey ? abilityKey.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
-    return def && fileKey ? `/assets/icons/abilities/${fileKey}.jpg` : null;
+    return def && fileKey ? `${assetUrl(`/assets/icons/abilities/${fileKey}.jpg`)}` : null;
   }
 
   // Localized bark text. For a non-English language, returns ONLY that language's
@@ -1121,7 +1122,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const title  = d.unit || n > 1 ? `${d[L]}: ${n}${suffix}` : d[L];
         return `
         <span class="bc-state bc-state--${d.key}" title="${title}">
-          <img class="bc-state-img" src="/assets/icons/abilities/${d.icon}" alt="${d[L]}"
+          <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${d.icon}`)}" alt="${d[L]}"
                onerror="this.style.display='none'">
           ${n > 1 ? `<span class="bc-state-num">${n}</span>` : ''}
         </span>`;
@@ -1374,7 +1375,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // now switches back from Ability.
     ui.mainBtn.className = `action-btn ${armed === 'attack' ? 'action-btn--armed' : ''} ${isEnemyTurn || processing || isNoneAction ? 'action-btn--disabled' : ''}`;
     ui.mainBtn.disabled = isEnemyTurn || processing || isNoneAction;
-    ui.mainBtn.innerHTML = btnFace(actionIcon ? `/assets/icons/actions/${actionIcon}` : null, actionLabel);
+    ui.mainBtn.innerHTML = btnFace(actionIcon ? `${assetUrl(`/assets/icons/actions/${actionIcon}`)}` : null, actionLabel);
     ui.mainBtn.title = actionLabel;   // the actual action name lives here
 
     ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
@@ -1384,14 +1385,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
-    ui.defendBtn.innerHTML = btnFace('/assets/icons/actions/defend.jpg', BTx('btnDefend'));
+    ui.defendBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/defend.jpg'), BTx('btnDefend'));
 
     // Only meaningful once something OTHER than the default is selected —
     // cancelling the default would just re-arm it, so there is nothing to undo.
     const canCancel = armed === 'ability' && !isEnemyTurn && !processing;
     ui.cancelBtn.className = `action-btn action-btn--cancel ${!canCancel ? 'action-btn--disabled' : ''}`;
     ui.cancelBtn.disabled = !canCancel;
-    ui.cancelBtn.innerHTML = btnFace('/assets/icons/actions/cancel.jpg', BTx('btnCancel'));
+    ui.cancelBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/cancel.jpg'), BTx('btnCancel'));
 
     // A glyph, not an icon tile: there is no art for this action, and an <img>
     // that 404s would leave the button blank. Shows what the panel will switch
@@ -1590,8 +1591,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // defeat keeps a random loading screen.
     const FACTION_LETTER = { empire: 'e', choir_of_the_cursed: 'c', grail_of_sorrow: 'g' };
     const bgImage = won
-      ? `/assets/victory_screens/victory_${FACTION_LETTER[player.faction] || 'e'}.jpg`
-      : `/assets/loading_screens/loading${Math.floor(Math.random() * 8) + 1}.jpg`;
+      ? `${assetUrl(`/assets/victory_screens/victory_${FACTION_LETTER[player.faction] || 'e'}.jpg`)}`
+      : `${assetUrl(`/assets/loading_screens/loading${Math.floor(Math.random() * 8) + 1}.jpg`)}`;
 
     root.innerHTML = `
       <!-- The only inline style here is the background URL, which is chosen at
@@ -1633,7 +1634,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
              <span class="reward-chip-amt">+${amount}</span>
              ${label ? `<span class="reward-chip-label">${label}</span>` : ''}
            </div>`;
-        const trophyIcon = id => `<img class="reward-chip-img" src="/assets/icons/recources/${id}.png" alt="${id.replace(/_/g, ' ')}">`;
+        const trophyIcon = id => `<img class="reward-chip-img" src="${assetUrl(`/assets/icons/recources/${id}.png`)}" alt="${id.replace(/_/g, ' ')}">`;
         const trophies = Object.entries(result.trophies_gained || {})
           .map(([id, amt]) => chip(trophyIcon(id), amt, id.replace(/_/g, ' '))).join('');
         // One chip per crystal type, each with its own element icon. Falls back

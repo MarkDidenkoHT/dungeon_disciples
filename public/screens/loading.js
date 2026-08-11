@@ -1,19 +1,20 @@
 import { api } from '../api.js';
 import { preloadAssets } from '../utils.js';
+import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.22';
+export const GAME_VERSION = '0.23';
 
 const LOADING_IMAGES = [
-  '/assets/loading_screens/loading1.jpg',
-  '/assets/loading_screens/loading2.jpg',
-  '/assets/loading_screens/loading3.jpg',
-  '/assets/loading_screens/loading4.jpg',
-  '/assets/loading_screens/loading5.jpg',
-  '/assets/loading_screens/loading6.jpg',
-  '/assets/loading_screens/loading7.jpg',
-  '/assets/loading_screens/loading8.jpg',
+  assetUrl('/assets/loading_screens/loading1.jpg'),
+  assetUrl('/assets/loading_screens/loading2.jpg'),
+  assetUrl('/assets/loading_screens/loading3.jpg'),
+  assetUrl('/assets/loading_screens/loading4.jpg'),
+  assetUrl('/assets/loading_screens/loading5.jpg'),
+  assetUrl('/assets/loading_screens/loading6.jpg'),
+  assetUrl('/assets/loading_screens/loading7.jpg'),
+  assetUrl('/assets/loading_screens/loading8.jpg'),
 ];
 
 const LOADING_TIPS = {
@@ -96,8 +97,13 @@ export async function runPreload(root) {
   let critical = [];
   let deferred = [];
   try {
+    // The manifest is built from the app server's own copy of the files and so
+    // lists origin paths (/assets/…). Preloading those would warm the wrong
+    // origin and spend the bandwidth this move exists to save, so every entry
+    // is routed through assetUrl — which is a no-op when the CDN is down.
     const manifest = await api('/assets-manifest');
-    for (const [group, urls] of Object.entries(manifest)) {
+    for (const [group, paths] of Object.entries(manifest)) {
+      const urls = paths.map(assetUrl);
       (CRITICAL_GROUPS.includes(group) ? critical : deferred).push(...urls);
     }
   } catch {

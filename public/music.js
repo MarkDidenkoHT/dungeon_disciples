@@ -1,7 +1,15 @@
-const FACTION_THEME = {
+import { assetUrl } from './asset_base.js';
+// Resolved when the track is played, not at import: assetUrl's base can still
+// flip to the origin while this module is loading (see asset_base.js), and audio
+// has no per-element retry the way <img> does.
+const FACTION_THEME_PATH = {
   empire:              '/assets/sfx/themes/empire.mp3',
   choir_of_the_cursed: '/assets/sfx/themes/choir.mp3',
   grail_of_sorrow:     '/assets/sfx/themes/grail.mp3',
+};
+const themeUrl = faction => {
+  const p = FACTION_THEME_PATH[faction];
+  return p ? assetUrl(p) : null;
 };
 
 let _audio    = null;
@@ -23,7 +31,7 @@ function unlockAudio() {
     document.removeEventListener(evt, unlockAudio, true)
   );
   if (_faction && _enabled) {
-    _audio = createAudio(FACTION_THEME[_faction]);
+    _audio = createAudio(themeUrl(_faction));
     _audio.play().catch(() => {});
   }
 }
@@ -36,7 +44,7 @@ export function initMusic(player) {
 }
 
 export function playFactionTheme(faction) {
-  const src = FACTION_THEME[faction];
+  const src = themeUrl(faction);
   if (!src) return;
   if (_faction === faction) {
     if (_enabled && _audio?.paused) _audio.play().catch(() => {});
@@ -60,7 +68,7 @@ export function setMusicEnabled(enabled) {
     if (_audio) _audio.pause();
   } else {
     if (_faction && !_audio && _unlocked) {
-      _audio = createAudio(FACTION_THEME[_faction]);
+      _audio = createAudio(themeUrl(_faction));
       _audio.play().catch(() => {});
     } else if (_audio?.paused) {
       _audio.play().catch(() => {});

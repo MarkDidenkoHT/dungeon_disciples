@@ -1,3 +1,4 @@
+import { assetUrl } from '../asset_base.js';
 import { api, navigate, resourceCache, refreshResourceBar, bootstrapCache }  from '../api.js';
 import { errandRosterIds } from '../errands.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
@@ -106,7 +107,7 @@ function getPortraitUrl(unit, variant = 'default') {
   const portraitId = unitId.match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
   const size = unitDef?.size ?? 'tile';
   const prefix = (variant === 'grid' && (size === 'row' || size === 'column')) ? 'p2' : 'p';
-  return `/assets/character_portraits/${prefix}_${portraitId}.png`;
+  return `${assetUrl(`/assets/character_portraits/${prefix}_${portraitId}.png`)}`;
 }
 
 function unitTypeIcon(unit) {
@@ -181,7 +182,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         </div>
 
         <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="${BP_TEXT.toBattle[L]}">
-          <img src="/assets/icons/ui/to_battle.png" alt="${BP_TEXT.toBattle[L]}"
+          <img src="${assetUrl(`/assets/icons/ui/to_battle.png`)}" alt="${BP_TEXT.toBattle[L]}"
                onerror="this.replaceWith(document.createTextNode('⚔'))">
         </button>
 
@@ -456,7 +457,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon"><img src="/assets/icons/spells/${spell.id}.png" class="spell-icon-img" alt="${spellName(spell, player)}" onerror="this.style.display='none'"></div>
+          <div class="spell-list-icon"><img src="${assetUrl(`/assets/icons/spells/${spell.id}.png`)}" class="spell-icon-img" alt="${spellName(spell, player)}" onerror="this.style.display='none'"></div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spellName(spell, player)}</div>
             <div class="spell-list-meta">
@@ -867,7 +868,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const colSpan = e.size === 'row' ? 2 : 1;
       const rowSpan = e.size === 'column' ? 2 : 1;
       return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
-        <img class="battle-cell-portrait" src="/assets/character_portraits/p_${e.id}.png" alt="${e.name}" onerror="this.style.display='none'">
+        <img class="battle-cell-portrait" src="${assetUrl(`/assets/character_portraits/p_${e.id}.png`)}" alt="${e.name}" onerror="this.style.display='none'">
         <div class="battle-cell-info">
           <span class="battle-cell-name">${e.name}</span>
           <span class="battle-cell-sub">❤ ${e.hp}</span>
