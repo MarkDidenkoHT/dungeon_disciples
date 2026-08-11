@@ -20,6 +20,12 @@ const UNIT_ART = new Set([
 // combo. Deliberately no numbers — stats are on the card right above this text,
 // and repeating them there wastes the only lines a new player actually reads.
 // Every ability named here is verified against data/unit_abilities.js.
+//
+// VOICE — the three registers are defined at the top of data/combat_barks.js and
+// data/position_barks.js; this screen is a player's first contact with them, so
+// it has to agree with them. Empire is stoic and dutiful, the Grail carries
+// recent grief (their OWN mistranslated spell, never anyone's punishment), and
+// the Choir is song and appetite — NO commerce, no bargains, no debts.
 const HERO_FLAVOR = {
   h_e_1: {
     en: 'Holds the line, and cleans it. Mithrail’s Light keeps him standing where the fighting is worst, and Cleanse strips bleed, burn and poison off an ally.',
@@ -34,16 +40,16 @@ const HERO_FLAVOR = {
     ru: 'Держит стену целой. Чинит союзников на расстоянии, а Укрепление даёт броню всему отряду. Активной способности у него нет — его ход это работа, и на ней держится весь строй.',
   },
   h_d_1: {
-    en: 'Wants to be hit. Taunt drags the enemy in front onto him; Rage turns every wound into fury. The taunt is how you feed the passive.',
-    ru: 'Хочет, чтобы били его. Провокация тянет врага напротив на него, а Ярость обращает каждую рану в силу. Провокация — это то, чем вы кормите пассивку.',
+    en: 'Wants to be hit — every wound is another note. Taunt drags the enemy in front onto him; Rage turns the pain into fury. The taunt is how you feed the passive.',
+    ru: 'Хочет, чтобы били его: каждая рана — ещё одна нота. Провокация тянет врага напротив на него, а Ярость обращает боль в силу. Провокация — это то, чем вы кормите пассивку.',
   },
   h_d_2: {
-    en: 'Rules from the back. Inspiration lifts the allies beside him, and Rite of Reclamation calls a fallen demon back to the field. He commands; he does not brawl.',
-    ru: 'Правит из тыла. Вдохновение усиливает союзников рядом, а Обряд возвращения поднимает павшего демона обратно в бой. Он командует, а не дерётся.',
+    en: 'Rules from the back — the Court sings, it does not brawl. Inspiration lifts the allies beside him, and Rite of Reclamation calls a fallen demon back into the chord.',
+    ru: 'Правит из тыла: Двор поёт, а не дерётся. Вдохновение усиливает союзников рядом, а Обряд возвращения возвращает павшего демона в аккорд.',
   },
   h_d_3: {
-    en: 'Sets the field alight. Mark of Ash makes a burn permanent, and Fellfire splashes every burning enemy each time he strikes. Burn one — after that, everything he does hits everyone.',
-    ru: 'Поджигает поле. Печать пепла делает горение постоянным, а Злое пламя задевает каждого горящего врага при каждом его ударе. Подожгите одного — дальше всё, что он делает, бьёт по всем.',
+    en: 'Sets the field alight and keeps it burning. Mark of Ash makes a burn permanent, and Fellfire splashes every burning enemy each time he strikes. Burn one — after that, everything he does hits everyone.',
+    ru: 'Поджигает поле и не даёт ему потухнуть. Печать пепла делает горение постоянным, а Злое пламя задевает каждого горящего врага при каждом его ударе. Подожгите одного — дальше всё, что он делает, бьёт по всем.',
   },
   h_g_1: {
     en: 'Invites the blow, answers first. Taunt goads the enemy in front into striking at him, and Duelist lands his blow first — a kill cancels their attack outright.',
@@ -81,7 +87,7 @@ const FACTIONS = [
       ru: 'Лев не знает усталости.',
     },
     description: {
-      en: 'Impire of Aurex kept its faith when the crown broke: Mithrail, the golden lion, rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs in Aurexian hands.',
+      en: 'The Empire of Aurex keeps to Mithrail, the Golden Lion, who rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs to Aurex.',
       ru: 'Империя Аурекс, поклоняются Митраилу, Золотому Льву. Его рыцари, жрецы и инженеры бьются как одна стена — в броне, освящённые и уверенные, что каждый осколок принадлежит Аурексу.',
     },
     bg: assetUrl('/assets/screens/empire.jpg'),
@@ -92,12 +98,12 @@ const FACTIONS = [
     id: 'choir_of_the_cursed',
     label: { en: 'The Choir', ru: 'Хор' },
     tagline: {
-      en: 'They asked, and something beneath answered.',
-      ru: 'Они воззвали — и нечто снизу ответило.',
+      en: 'They sang, and something beneath sang back.',
+      ru: 'Они запели — и нечто снизу подпело.',
     },
     description: {
-      en: 'When the court of Cinderhold wanted more than its borders could give, it called downward, and Aggrail replied. The bargain made lords into demons and a court into a choir. They do not seek the crown’s shards. They are collecting what was promised.',
-      ru: 'Когда двору Пепельного Чертога стало мало собственных ресурсов в борьбе за корону - они стали искать способы, что угодно чтобы осилить врагов. Ритуалы, обряды, договора - ничего не помогало. Пока в город не зашла странная труппа. Их песни были на неведом языке. вал вниз — и Агграил ответил. Сделка обратила владык в демонов, а двор — в хор.',
+      en: 'The court of Cinderhold was losing the war for the crown, and tried everything: rites, oaths, older rites. Nothing held. Then a troupe nobody had invited played in the hall, in a tongue nobody knew, and the court learned the First Song. Aggrail answered it. The lords are demons now and the court is a choir, and it is still singing — every voice it takes makes the chord louder.',
+      ru: 'Двор Пепельного Чертога проигрывал войну за корону и хватался за что угодно: обряды, клятвы, обряды постарше. Ничто не держалось. Пока в зале не заиграла труппа, которую никто не звал, на языке, которого никто не знал, — и двор выучил Первую Песнь. Агграил ответил. Владыки стали демонами, а двор — хором, и он поёт до сих пор: каждый забранный голос делает аккорд громче.',
     },
     bg: assetUrl('/assets/screens/choir.jpg'),
     crest: assetUrl('/assets/crests/choir.jpg'),
@@ -111,7 +117,7 @@ const FACTIONS = [
       ru: 'Одна секунда. Этого хватило.',
     },
     description: {
-      en: 'In the war for Ilmenar, its scholars cast a spell to carry their people forward — an error in the translation - instead of travelling to future - they lived through a century within a glimpse. In a single second the city and everyone in it aged into rot. Now two answers divide them: accept the rot, or hold it back with the blood and living essence of others.',
+      en: 'In the war for Ilmenar its scholars cast a spell to carry their people forward. The working was wrong: their bodies were never moved into the future — they lived a century through in an instant. In a single second the city and everyone in it aged into rot. Two answers divide them now: accept the rot, or hold it back with the blood and living essence of others.',
       ru: 'В войне за Ильменар его учёные сотворили заклинание, чтобы продвинуть свой народ вперёд, — ошибка в сотворении заклинания - не их тела перенесло в будущее, а они состарились на век за мгновение. За одну секунду город и все в нём истлели. Теперь их разделяют два ответа: принять тлен или сдерживать его чужой кровью.',
     },
     bg: assetUrl('/assets/screens/grail.jpg'),
