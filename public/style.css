@@ -1645,6 +1645,80 @@ button:active:not(:disabled) { opacity: 0.75; }
   pointer-events: none;
 }
 
+/* Evolution-tree button: same tile as the ability icons so the row stays even,
+   but it opens a sub-sheet rather than inspecting anything. */
+.ability-icon--tree {
+  border-color: #3d5a3a;
+  font-size: 3vh;
+  line-height: 1;
+}
+.ability-icon--tree:not([disabled]):active {
+  border-color: #6aa05e;
+}
+
+/* ── Evolution tree (sub-sheet) ─────────────────────────────────────────────
+   Five fixed columns; rows are tiers, top-down. Cells are square-ish and sized
+   off the column width so the grid fits any phone without horizontal scroll.
+   Empty cells stay in the flow — the gaps ARE the shape of the tree. */
+.utree {
+  display: grid;
+  grid-template-columns: repeat(var(--utree-cols, 5), 1fr);
+  gap: 6px;
+  padding: 4px 2px;
+}
+.utree-cell {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border: 1px solid #2b3548;
+  border-radius: 6px;
+  background: #0d131c;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.utree-cell--empty {
+  border-color: transparent;
+  background: transparent;
+}
+.utree-portrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.utree-tier {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  z-index: 1;
+  min-width: 12px;
+  padding: 0 2px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  color: #e6edf7;
+  background: rgba(5, 8, 13, 0.85);
+  border-radius: 3px;
+}
+.utree-name {
+  position: relative;
+  z-index: 1;
+  padding: 2px 3px;
+  font-size: 0.55rem;
+  line-height: 1.15;
+  text-align: center;
+  color: #e6edf7;
+  background: linear-gradient(to top, rgba(5, 8, 13, 0.92), rgba(5, 8, 13, 0.55) 70%, transparent);
+}
+/* The unit the sheet was opened from, then the rest of its own branch, then
+   everything the player did not take. */
+.utree-cell--current { border-color: var(--accent); box-shadow: 0 0 8px rgba(201, 146, 42, 0.5); }
+.utree-cell--path    { border-color: #4a80aa; }
+.utree-cell--other   { opacity: 0.55; }
+
 .ability-icon-img {
   width: 100%;
   height: 100%;

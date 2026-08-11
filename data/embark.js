@@ -36,7 +36,6 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
@@ -51,6 +50,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_4: {
+      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0, item_id: 'mace' },
@@ -122,6 +122,7 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
+      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 2 },
         { key: 'glittering_abyss.сhillrock',  cell: 1 },

@@ -18,6 +18,7 @@ import {
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
+import { buildUnitTree, lineageTo, renderUnitTreeHtml } from '../unit_tree.js';
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -33,6 +34,8 @@ const CASTLE_TEXT = {
   confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
   build:       { en: 'Build',                                 ru: 'Построить' },
   upgrade:     { en: 'Upgrade',                               ru: 'Улучшить' },
+  treeTitle:   { en: 'Evolution',                             ru: 'Развитие' },
+  treeEmpty:   { en: 'This unit has no upgrade line.',        ru: 'У этого юнита нет ветки развития.' },
   equip:       { en: 'Equip',                                 ru: 'Надеть' },
   unequip:     { en: 'Unequip',                               ru: 'Снять' },
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
@@ -1059,6 +1062,23 @@ export function renderCastle(root, { player }) {
       </div>`;
   }
 
+  // ── Evolution tree ────────────────────────────────────────────────────────
+  // Read-only for now: the whole line the unit belongs to, on a 5x5 grid, with
+  // the unit's own branch highlighted. `upgradePaths` is the server's
+  // UNIT_UPGRADE_PATHS, delivered on the buildings bootstrap (see line ~178).
+  function openUnitTreeSheet(unitId) {
+    const paths = (upgradePaths || {})[player.faction] || {};
+    const tree  = buildUnitTree(paths, unitId, getUnitByUnitId);
+    const html  = renderUnitTreeHtml(tree, {
+      currentId:   unitId,
+      pathIds:     lineageTo(paths, unitId),
+      portraitUrl: (id, unitDef) => branchPortraitUrl(unitDef || { id }),
+      nameOf:      unitDef => unitName(unitDef) || unitDef?.id || '',
+      emptyLabel:  CASTLE_TEXT.treeEmpty[castleLang],
+    });
+    openSubSheet(CASTLE_TEXT.treeTitle[castleLang], html);
+  }
+
   // ── Slot unit sheet ───────────────────────────────────────────────────────
   // Tapping a built slot used to drop straight into the upgrade branch picker.
   // It now opens the UNIT standing in that slot — its real roster row, with the
@@ -1105,6 +1125,14 @@ export function renderCastle(root, { player }) {
       ? renderItemSlotIcon(item, rosterUnit.id, { player })
       : '';
 
+    // Evolution tree. Opened as a SUB-sheet so the unit sheet underneath stays
+    // where it was — closing the tree returns to the unit, not to the castle.
+    const treeUnitId = baseUnit?.id || null;
+    const treeBtnHtml = treeUnitId
+      ? `<button class="ability-icon ability-icon--tree" id="unit-tree-btn"
+                 title="${CASTLE_TEXT.treeTitle[castleLang]}" aria-label="${CASTLE_TEXT.treeTitle[castleLang]}">⑂</button>`
+      : '';
+
     const canUpgrade = paths && paths.length > 0;
     const actionOverlayHtml = rosterUnit ? unitActionOverlay(rosterUnit) : '';
     // Wrapper is not cosmetic: openSheet only replaces the body's innerHTML, so
@@ -1114,7 +1142,7 @@ export function renderCastle(root, { player }) {
     const bodyHtml = `
       <div id="slot-sheet-root">
       <div class="castle-unit-card-wrap">
-        ${buildUnitCard(liveUnit, { buildingLabel: buildingLabel(def), itemSlotHtml, progress })}
+        ${buildUnitCard(liveUnit, { buildingLabel: buildingLabel(def), itemSlotHtml, extraSlotHtml: treeBtnHtml, progress })}
         ${actionOverlayHtml}
       </div>
       <div class="track-action-row track-action-row--framed">
@@ -1131,6 +1159,10 @@ export function renderCastle(root, { player }) {
 
     const body = getSheetBody()?.querySelector('#slot-sheet-root');
     body?.addEventListener('click', e => {
+      // Before handleUnitInspect: the tree button is an .ability-icon by shape,
+      // so the generic inspector would swallow it looking for an ability key.
+      if (e.target.closest('#unit-tree-btn')) { openUnitTreeSheet(treeUnitId); return; }
+
       // Stat / ability / resist inspection, same as every other unit card.
       if (handleUnitInspect(e, openAbilityModal)) return;
 

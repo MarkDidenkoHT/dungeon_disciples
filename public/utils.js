@@ -505,11 +505,15 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
   ].join('');
 
   const itemHtml = opts.itemSlotHtml || '';
+  // Anything the screen wants to hang off the end of the row (the castle's
+  // evolution-tree button). Optional, so cards that have no use for it — battle,
+  // battle prep, registration — render exactly as before.
+  const extraHtml = opts.extraSlotHtml || '';
 
   return `
     <div class="unit-abilities-row">
       <div class="unit-abilities-icons">
-        ${iconsHtml}${itemHtml}
+        ${iconsHtml}${itemHtml}${extraHtml}
       </div>
     </div>`;
 }
@@ -619,7 +623,7 @@ export function renderUnitProgressRow(progress) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', progress = null } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null } = opts;
 
   if (!unit) {
     return `
@@ -643,7 +647,7 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="unit-info">
         ${renderUnitProgressRow(progress)}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit, { itemSlotHtml })}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml })}
       </div>
     </div>`;
 }
