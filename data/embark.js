@@ -125,7 +125,7 @@ const REGION_ENCOUNTERS = {
       spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'glittering_abyss.cryodrox',  cell: 4 },
-        { key: 'glittering_abyss.chillrock',  cell: 1 },
+        { key: 'glittering_abyss.chillrock',  cell: 0 },
       ],
       rewards: {
         gold: 25, xp: 50,
