@@ -2496,7 +2496,7 @@ const UNITS = {
         damage_source: 'cold', action_power: 18, action_icon: 'frost_shard.jpg',
         xp: 900, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost',
       },
-      сhillrock: {
+      chillrock: {
         id: 'mv_e3', f: 'mv', t: 1,
         name: 'Сhillrock',
         name_ru: 'Стылый Камень',
