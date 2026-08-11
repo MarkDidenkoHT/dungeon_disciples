@@ -36,6 +36,11 @@ const CASTLE_TEXT = {
   upgrade:     { en: 'Upgrade',                               ru: 'Улучшить' },
   treeTitle:   { en: 'Evolution',                             ru: 'Развитие' },
   treeEmpty:   { en: 'This unit has no upgrade line.',        ru: 'У этого юнита нет ветки развития.' },
+  // The build picker names the UNIT, not the building: the player is choosing
+  // who will live there, and that is what the card in front of them shows.
+  chooseUnit:  { en: 'Choose Unit',                           ru: 'Выберите бойца' },
+  beginReign:  { en: 'Begin Your Reign',                      ru: 'Начните правление' },
+  noBuildings: { en: 'No buildings available for this slot.', ru: 'Для этого слота нет доступных зданий.' },
   equip:       { en: 'Equip',                                 ru: 'Надеть' },
   unequip:     { en: 'Unequip',                               ru: 'Снять' },
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
@@ -418,7 +423,14 @@ export function renderCastle(root, { player }) {
       return `
         <div class="castle-unit-slider">
           <div class="castle-slider-track" id="slider-track">
-            ${buildUnitCard(s.unit, { buildingLabel: s.buildingLabel, compareUnit: s.compareUnit })}
+            ${buildUnitCard(s.unit, {
+              buildingLabel: s.buildingLabel,
+              compareUnit:   s.compareUnit,
+              // The whole point of showing the line here: the player is picking
+              // what to build and wants to know where each option leads before
+              // committing the gold, not after.
+              extraSlotHtml: treeButtonHtml(s.unit?.id),
+            })}
           </div>
         </div>
         <div class="track-action-row track-action-row--framed">
@@ -443,7 +455,13 @@ export function renderCastle(root, { player }) {
     onSheetClose(hideCostBar);
 
     function attachAbilityListeners() {
-      getSheetBody().querySelectorAll('.ability-icon:not([disabled])').forEach(btn => {
+      // The tree button shares the .ability-icon shape but has no ability key,
+      // so it is bound first and excluded below — otherwise the inspector eats
+      // the click and nothing happens.
+      getSheetBody().querySelector('#unit-tree-btn')?.addEventListener('click', e => {
+        openUnitTreeSheet(e.currentTarget.dataset.treeUnit);
+      });
+      getSheetBody().querySelectorAll('.ability-icon:not([disabled]):not(#unit-tree-btn)').forEach(btn => {
         btn.addEventListener('click', () => {
           const key  = btn.dataset.abilityKey;
           const type = btn.dataset.abilityType;
@@ -1066,6 +1084,23 @@ export function renderCastle(root, { player }) {
   // Read-only for now: the whole line the unit belongs to, on a 5x5 grid, with
   // the unit's own branch highlighted. `upgradePaths` is the server's
   // UNIT_UPGRADE_PATHS, delivered on the buildings bootstrap (see line ~178).
+  // Only units that actually sit on the faction's upgrade map get a button.
+  // Mercenaries advance through their own table (getMercUpgradePaths) and are
+  // absent from this one, so without the check they would open a one-cell tree.
+  function hasTreeLine(unitId) {
+    if (!unitId) return false;
+    const paths = (upgradePaths || {})[player.faction] || {};
+    if (paths[unitId]) return true;
+    return Object.values(paths).some(list => (list || []).some(p => p.unit_id === unitId));
+  }
+
+  function treeButtonHtml(unitId) {
+    if (!hasTreeLine(unitId)) return '';
+    const label = CASTLE_TEXT.treeTitle[castleLang];
+    return `<button class="ability-icon ability-icon--tree" id="unit-tree-btn" data-tree-unit="${unitId}"
+                    title="${label}" aria-label="${label}">⑂</button>`;
+  }
+
   function openUnitTreeSheet(unitId) {
     const paths = (upgradePaths || {})[player.faction] || {};
     const tree  = buildUnitTree(paths, unitId, getUnitByUnitId);
@@ -1127,11 +1162,8 @@ export function renderCastle(root, { player }) {
 
     // Evolution tree. Opened as a SUB-sheet so the unit sheet underneath stays
     // where it was — closing the tree returns to the unit, not to the castle.
-    const treeUnitId = baseUnit?.id || null;
-    const treeBtnHtml = treeUnitId
-      ? `<button class="ability-icon ability-icon--tree" id="unit-tree-btn"
-                 title="${CASTLE_TEXT.treeTitle[castleLang]}" aria-label="${CASTLE_TEXT.treeTitle[castleLang]}">⑂</button>`
-      : '';
+    const treeUnitId  = baseUnit?.id || null;
+    const treeBtnHtml = treeButtonHtml(treeUnitId);
 
     const canUpgrade = paths && paths.length > 0;
     const actionOverlayHtml = rosterUnit ? unitActionOverlay(rosterUnit) : '';
@@ -1759,11 +1791,14 @@ export function renderCastle(root, { player }) {
     }
 
     if (!available.length) {
-      openModal('Build', '<p class="modal-empty">No buildings available for this slot.</p>');
+      openModal(CASTLE_TEXT.build[castleLang],
+        `<p class="modal-empty">${CASTLE_TEXT.noBuildings[castleLang]}</p>`);
       return;
     }
 
-    openSliderModal(slot === 'slot_0' ? 'Begin Your Reign' : 'Choose Building',
+    openSliderModal(slot === 'slot_0'
+      ? CASTLE_TEXT.beginReign[castleLang]
+      : CASTLE_TEXT.chooseUnit[castleLang],
       available.map(b => {
         const costText = slot === 'slot_0' ? '' : costLabelFor(b.cost);
         return {
