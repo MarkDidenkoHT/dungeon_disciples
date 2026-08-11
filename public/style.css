@@ -1461,6 +1461,14 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-radius: 16px 16px 0 0;
   width: 100%;
   max-width: 480px;
+  /* Load-bearing. Without it the sheet grows to whatever its content needs and
+     silently pushes the excess off the top of the screen: .modal-body already
+     asks for overflow-y:auto, but a box with no height limit never overflows,
+     so nothing scrolled and the content was simply unreachable. Bounding the
+     sheet to the overlay lets flex give the body a real height, at which point
+     its existing scrolling starts working. A tall sheet — the evolution tree
+     with its detail card, a long item list — is the case that hit this. */
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1559,6 +1567,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Keep the scroll inside the sheet. Once it reaches an end the gesture would
+     otherwise chain to the page behind it, and in Telegram a downward chain is
+     the drag-to-close gesture — scrolling a long sheet to the top could shut
+     the app. disableVerticalSwipes() covers this on Bot API 7.7+; this covers
+     the clients that do not have it. */
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
 }
