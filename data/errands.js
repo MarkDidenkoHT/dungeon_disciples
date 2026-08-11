@@ -119,7 +119,7 @@ const ERRANDS = [
     desc:  { en: 'The court wants the old verse sung where it was written. Sing it badly and the court remembers.',
              ru: 'Двор желает услышать старый стих там, где он был написан. Спойте плохо — двор запомнит.' },
     parts: [
-      { tag: 'Choir', reward: { xp_self: PART_XP } },
+      { tag: 'Caster', reward: { xp_self: PART_XP } },
       { tag: 'Court', reward: { resources: { Crystals_Fire: PART_CRYST } } },
     ],
   },

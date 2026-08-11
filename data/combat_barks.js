@@ -18,20 +18,37 @@
 //   target. A named rule therefore always beats any tag rule.
 //
 // The ONLY tags any unit in data/units.js carries are:
-//   Archer, Beast, Caster, Choir, Construct, Court, Demon, Engineer, Ghost,
-//   Holy, Knight, Skeleton, Spirit, Vampire, Warrior, Zombie
+//   Archer, Caster, Construct, Court, Demon, Engineer, Holy, Knight, Skeleton,
+//   Spirit, Vampire, Warrior, Zombie
 // A filter naming anything else silently never matches - check units.js before
-// inventing one.
+// inventing one. There is no Choir, Beast or Ghost tag.
+//
+// TWO LINES PER RULE. Not three, not five. A bark is a shout across a battle
+// line, and a rule with five lines is four of them padding out the two that
+// were any good. Write the two, delete the rest.
 //
 // VOICE - three factions, three registers. Keep new lines inside them:
-//   Empire (Knight / Holy / Engineer / Construct / Archer) - militant and
-//     stoic, persevering. Duty, discipline, the line holding. Understatement;
-//     never triumphant.
-//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton) - mourning and
-//     melancholic. Grief carried rather than performed. Vampires are formal and
-//     tired, never flippant or arch.
-//   Choir of the Cursed (Demon / Court / Choir / Beast) - greedy and
-//     self-serving. Everything is a price, a debt, a share owed to them.
+//   Empire (Knight / Holy / Engineer / Construct / Archer / Caster / Spirit) -
+//     militant and stoic, persevering. Duty, discipline, the line holding.
+//     Understatement; never triumphant. Their god is MITHRAIL.
+//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton / Holy / Knight /
+//     Caster) - mourning and melancholic. Grief carried rather than performed.
+//     Vampires are formal and tired, never flippant or arch. Their god is
+//     ASTALOTH, the Mother: she watches, keeps and mourns - she never takes.
+//     THEIR HISTORY: always their own faction, always Astaloth's, never the
+//     Empire's and never abandoned by anyone. They mistranslated a time spell
+//     they were building for the war, and it moved them through time - bodies
+//     rotted and collapsed on the way, and very little of them arrived. The
+//     grief is for what the spell cost them, THEIR OWN mistake. Never write
+//     them as forgotten, cast out, or waiting on the Empire's god.
+//   Choir of the Cursed (Demon / Court / Warrior / Knight / Caster /
+//     Construct) - born out of song and hungry with it. Voices, verses, the
+//     First Song, appetite. Their god is AGGRAIL, and they lapse into a tongue
+//     nobody else speaks, transliterated the same way in both languages.
+//
+// NO COMMERCE. Nothing in this file is a price, a debt, a share, a contract, a
+// loan or a payment - not for the Choir, not for anyone. The Choir is greedy
+// the way a mouth is greedy, not the way a bank is.
 // No quips, no exclamation-mark comedy, no modern idiom.
 //
 // Localization: each rule carries `lines` (English) and a parallel `lines_ru`
@@ -65,145 +82,104 @@ const COMBAT_BARKS = [
   // NOT old blood. They are barely a decade dead - collateral of a time spell
   // that went wrong - and they remember being alive well enough for it to hurt.
   // They kill the way a physician works: precisely, and without appetite for it.
-  // Blood is a sacrament they have not yet got used to taking.
   // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
     lines: [
-      'Your blood is smoke. There is nothing in you to mourn.',
-      'Burnt through. Even your veins were sold.',
-      'I take no sacrament from a thing that made itself.',
-      'You were owed a death long before I came.',
-      'Ash, where the grief should be.',
+      'There is nothing in you to mourn.',
+      'You chose to become this. We were not asked.',
     ],
     lines_ru: [
-      'Твоя кровь — дым. В тебе не о чем горевать.',
-      'Выжжен дотла. Даже вены твои проданы.',
-      'Я не приму причастия от того, кто сделал себя сам.',
-      'Смерть задолжали тебе задолго до меня.',
-      'Пепел там, где должно быть горе.',
+      'В тебе не о чем горевать.',
+      'Ты сам таким стал. А нас не спрашивали.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Knight' },
     lines: [
       'Iron does not answer for the man inside it.',
-      'You swore to a house that is already dust.',
       'I have buried braver men. I remember each of them.',
-      'Your blood is warm. That is the whole of your advantage.',
-      'Lower the shield. It changes nothing, but you will tire less.',
     ],
     lines_ru: [
       'Железо не отвечает за того, кто внутри.',
-      'Ты присягнул дому, что давно обратился в прах.',
       'Я хоронил и храбрее. Я помню каждого.',
-      'Твоя кровь тёплая. В этом всё твоё преимущество.',
-      'Опусти щит. Это ничего не изменит, но ты меньше устанешь.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
-      'Your god is listening. He simply will not come.',
-      'I prayed once, in your language. It changed nothing.',
-      'Faith is only grief that refuses to sit down.',
-      'You are certain. I envy that more than the blood.',
-      'Bleed, then. Perhaps He answers to that.',
+      'Keep your god. We have our own.',
+      'Astaloth mourns us. Yours would not bother.',
     ],
     lines_ru: [
-      'Твой бог слышит. Он просто не придёт.',
-      'Я тоже молился — на твоём языке. Это ничего не изменило.',
-      'Вера — лишь горе, которое не желает присесть.',
-      'Ты уверен. Этому я завидую больше, чем крови.',
-      'Что ж, истекай. Быть может, на это Он и отзовётся.',
+      'Оставь себе своего бога. У нас есть своя.',
+      'Асталот о нас скорбит. Твой бы и не стал.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Zombie' },
     lines: [
       'Rest. You have carried this long enough.',
-      'We were one house once. I have not forgotten.',
-      'No blood left in you, brother. Only the walking.',
-      'I do this gently. It is all that remains to me.',
+      'We were one house once. Astaloth remembers us both.',
     ],
     lines_ru: [
       'Отдохни. Ты нёс это достаточно долго.',
-      'Когда-то мы были одним домом. Я не забыл.',
-      'В тебе не осталось крови, брат. Только ход.',
-      'Я делаю это мягко. Больше мне ничего не осталось.',
+      'Когда-то мы были одним домом. Асталот помнит нас обоих.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Construct' },
     lines: [
       'Nothing in you to grieve. It makes the work quicker.',
-      'No blood, no name, no rest owed to you.',
-      'Someone built you to spare himself the standing here.',
-      'I break machines the way I break silence. Without pleasure.',
+      'No blood, no name, no rest to give you.',
     ],
     lines_ru: [
-      'В тебе не о чем горевать. Работа идёт быстрее.',
-      'Ни крови, ни имени, ни причитающегося покоя.',
-      'Тебя собрали, чтобы кому-то не стоять здесь самому.',
-      'Я ломаю машины, как ломаю тишину. Без удовольствия.',
+      'В тебе не о чем горевать. Так даже быстрее.',
+      'Ни крови, ни имени. И покоя тебе не нужно.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
-      'He died certain. That is a mercy I was never given.',
-      'Your god has him now. Ask what took so long.',
+      'I will steal your life!',
       'Say the rites yourselves. I no longer remember them.',
-      'A clean death, and still no one comes for the body.',
     ],
     lines_ru: [
-      'Он умер уверенным. Такой милости мне не досталось.',
-      'Теперь он у вашего бога. Спросите, отчего так долго.',
+      'Я украду твою жизнь!',
       'Прочтите обряд сами. Я его больше не помню.',
-      'Чистая смерть — и всё равно за телом никто не придёт.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
     lines: [
-      'A debt closed. Not mine, but closed.',
-      'It ends as smoke. There is nothing to bury.',
-      'Whatever bargain made you is settled now.',
+      'No burial for you!',
+      'Whatever made you is next!',
     ],
     lines_ru: [
-      'Долг закрыт. Не мой, но закрыт.',
-      'Кончается дымом. Хоронить нечего.',
-      'Какая бы сделка тебя ни создала — она исполнена.',
+      'Даже хоронить нечего!',
+      'Кто бы тебя ни призвал — следующий!',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
-      'Close his eyes. We are not animals.',
-      'One more name I will keep, and no one will ask for.',
-      'It is done. Do not make me say it twice.',
-      'He is quiet now. I remember wanting that.',
+      'Forgive me Astaloth, i must.',
+      'He is quiet now.',
     ],
     lines_ru: [
-      'Закройте ему глаза. Мы не звери.',
-      'Ещё одно имя, что я сохраню и о котором никто не спросит.',
-      'Кончено. Не заставляй меня повторять.',
-      'Теперь он тих. Я помню, как хотел того же.',
+      'Просмти меня Асталот, я должен.',
+      'Теперь он стих.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
-      'At last. I had begun to think it would not come.',
-      'Do not carry me home. There is no home.',
-      'Tell the house I lasted. That is all they ask.',
-      'So this is the taste of it. Ordinary.',
+      'At last. Carry me home.',
+      'Bury me properly this time. Please.',
     ],
     lines_ru: [
-      'Наконец-то. Я уже думал, оно не придёт.',
-      'Не несите меня домой. Дома нет.',
-      'Скажите дому, что я выстоял. Большего они не просят.',
-      'Так вот каков её вкус. Обыкновенный.',
+      'Наконец-то. Отнесите меня домой.',
+      'В этот раз похороните как надо. Прошу.',
     ],
   },
 
@@ -214,90 +190,72 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
     lines: [
-      'We were buried in your ground. We came back through it.',
-      'You blessed this field once. It did not hold.',
-      'Your prayers are heavy. We are heavier.',
+      'Buried... us... here...',
+      'Prayers... did not... hold...',
     ],
     lines_ru: [
-      'Нас похоронили в вашей земле. Мы вернулись сквозь неё.',
-      'Ты освятил это поле однажды. Оно не удержало.',
-      'Ваши молитвы тяжелы. Мы тяжелее.',
+      'Зарыли... нас... тут...',
+      'Молитвы... не... держат...',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
-      'We do not tire. That is the whole of the sorrow.',
-      'Stand aside. We would rather not.',
-      'It hurts. We carry it anyway.',
-      'We have been walking toward you for years.',
+      'Never... tired...',
+      'Move... aside...',
     ],
     lines_ru: [
-      'Мы не устаём. В этом всё горе.',
-      'Отойди. Нам не хочется этого делать.',
-      'Больно. Мы всё равно это несём.',
-      'Мы шли к тебе годами.',
+      'Не... устаём...',
+      'Уйди... с дороги...',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
-      'Down. Now you know the weight.',
-      'Leave him. The ground takes its own.',
-      'One fewer to grieve for later.',
+      'Down... stay... down...',
+      'Ground... takes... him...',
     ],
     lines_ru: [
-      'Лежи. Теперь ты знаешь этот вес.',
-      'Оставьте его. Земля берёт своё.',
-      'Одним, о ком горевать после, меньше.',
+      'Лежи... лежи...',
+      'Земля... заберёт...',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
-      'Finally. Let me stay down.',
-      'I remembered my name near the end. I would rather not have.',
-      'Do not raise me again.',
+      'Let... me... rest...',
+      'Mother... no... more...',
     ],
     lines_ru: [
-      'Наконец-то. Дайте остаться лежать.',
-      'Под конец я вспомнил своё имя. Лучше бы не вспоминал.',
-      'Не поднимайте меня снова.',
+      'Дайте... от...дохнуть...',
+      'Мать... больше... не надо...',
     ],
   },
 
   // ===========================================================================
   // GRAIL OF SORROW - THE BONE ORDER (Skeleton)
   // What is left once the grief has worn even the flesh off. Dry and formal.
-  // (These rules were tagged `Undead`, which no unit carries - they never fired
-  // once. Retagged to Skeleton, which is the real tag.)
   // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
     lines: [
-      'I kept the oath. I did not keep the rest of me.',
-      'You will be this light one day. It is no worse.',
-      'The war ended. No one came to tell the dead.',
-      'Strike the bone. There is nothing behind it to spare.',
+      'The oath is all that is left.',
+      'Nothing left in me to break.',
     ],
     lines_ru: [
-      'Клятву я сохранил. Всё остальное — нет.',
-      'Однажды и ты станешь таким же лёгким. Это не хуже.',
-      'Война кончилась. Мёртвым сообщить забыли.',
-      'Бей в кость. За ней нечего щадить.',
+      'От меня осталась одна клятва.',
+      'Ломать во мне уже нечего.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
     lines: [
-      'Another kept waiting. He will learn patience.',
-      'Marked. The roll of the dead is longer than yours.',
-      'He goes where we go. He simply arrives rested.',
+      'Now he waits with us.',
+      'He will learn patience.',
     ],
     lines_ru: [
-      'Ещё одного заставили ждать. Научится терпению.',
-      'Записан. Список мёртвых длиннее вашего.',
-      'Он идёт туда же, куда и мы. Просто прибудет отдохнувшим.',
+      'Теперь он ждёт вместе с нами.',
+      'Научится терпению.',
     ],
   },
 
@@ -309,41 +267,33 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
     lines: [
-      'I am only finishing what was interrupted.',
-      'You cannot wound what is already the wound.',
-      'I do not remember your face. I will not remember this either.',
-      'Cold, is it not. I stopped noticing.',
+      'I do not want this. I cannot stop either.',
+      'I barely remember my name. I will not learn yours.',
     ],
     lines_ru: [
-      'Я лишь заканчиваю прерванное.',
-      'Нельзя ранить то, что само — рана.',
-      'Я не помню твоего лица. И этого не запомню.',
-      'Холодно, правда? Я перестал замечать.',
+      'Я этого не хочу. И остановиться не могу.',
+      'Я едва помню своё имя. Твоего и не запомню.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] }, target: { tag: 'Holy' },
     lines: [
-      'Your light passes through. Everything does.',
-      'I was consecrated too. Look what it bought.',
-      'Pray louder. I want to hear whether it still works.',
+      'Your light passes through me. Everything does.',
+      'I was consecrated too. Look at me now.',
     ],
     lines_ru: [
-      'Твой свет проходит насквозь. Как и всё остальное.',
-      'Меня тоже освящали. Погляди, что это дало.',
-      'Молись громче. Хочу услышать, работает ли ещё.',
+      'Твой свет проходит сквозь меня. Как и всё остальное.',
+      'Меня тоже освящали. Погляди на меня теперь.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
     lines: [
       'Oh. It was this simple all along.',
-      'Do not follow me. There is very little here.',
       'Let me go quiet this time.',
     ],
     lines_ru: [
-      'Вот как. Оказывается, всё было так просто.',
-      'Не иди за мной. Здесь почти ничего нет.',
+      'Надо же. А всё было так просто.',
       'Дайте мне уйти тихо на этот раз.',
     ],
   },
@@ -351,12 +301,10 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { tags: ['Knight', 'Zombie'] },
     lines: [
       'The oath outlived the man. Only the oath is still standing.',
-      'I served this house alive. The terms did not change.',
       'My lord released me. I did not go.',
     ],
     lines_ru: [
-      'Клятва пережила человека. Стоять осталась только она.',
-      'Я служил этому дому живым. Условия не изменились.',
+      'Человек умер, клятва — нет. Она и держит строй.',
       'Господин освободил меня. Я не ушёл.',
     ],
   },
@@ -366,115 +314,91 @@ const COMBAT_BARKS = [
   // Militant, stoic, unhurried. Nothing here is triumphant; it is work.
   // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Demon' },
+    trigger: 'attack', actor: { tag: 'Holy', faction: ['e'] }, target: { tag: 'Demon' },
     lines: [
-      'You were let in. We are the ones who close the door.',
-      'No bargain. No terms. Down.',
-      'I have read your name in the ledgers. It is shorter than you think.',
-      'Hold the line. It is only fire.',
-      'Nothing you offer is worth the taking.',
+      'Burn in holy fire!',
+      'Back where you came from!',
     ],
     lines_ru: [
-      'Тебя впустили. Мы — те, кто закрывает дверь.',
-      'Ни сделки, ни условий. На землю.',
-      'Я читал твоё имя в списках. Оно короче, чем ты думаешь.',
-      'Держать строй. Это всего лишь огонь.',
-      'Ничто из предложенного тобой не стоит того, чтобы брать.',
+      'Гори праведным огнем!',
+      'Убирайся откуда пришёл!',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Vampire' },
     lines: [
-      'Your grief is not our concern. Your teeth are.',
-      'Ten years to repent, and you spent them feeding.',
-      'We do not hate you. We simply do not yield.',
-      'Sorrow is no defence. Step back or fall.',
+      'Your grief is not our concern, your teeth are!',
+      'Sorrow is no defence. Step back or fall!',
     ],
     lines_ru: [
-      'Твоё горе — не наша забота. Твои клыки — наша.',
-      'Десять лет на покаяние — и ты кормился.',
-      'Мы не ненавидим тебя. Мы просто не уступаем.',
-      'Скорбь — не защита. Отступи или пади.',
+      'Наша забота не твоя скорбь, а твои клыки!',
+      'Скорбь — не оправдание. Отступи или пади!',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
     lines: [
-      'You were a soldier once. Stand down and be buried properly.',
-      'Rest is not a favour. It is an order.',
-      'Whoever kept you here answers for it. Not you.',
+      'Oathbreaker!',
+      'Rest. That is an order.',
     ],
     lines_ru: [
-      'Когда-то ты был солдатом. Отступи и будь похоронен по-людски.',
-      'Покой — не одолжение. Это приказ.',
-      'Отвечает тот, кто удержал тебя здесь. Не ты.',
+      'Клятвопреступник!',
+      'Покойся. Это приказ.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Zombie' },
     lines: [
-      'This is not cruelty. This is the burial they were denied.',
-      'Steady. Aim for what holds it up.',
-      'Someone loved this one. Do it cleanly.',
+      'Mockery of life!',
+      'Burn it. Burn all of it!',
     ],
     lines_ru: [
-      'Это не жестокость. Это погребение, в котором им отказали.',
-      'Спокойно. Бей туда, где оно держится.',
-      'Кто-то любил его. Сделай это чисто.',
+      'Жалкое подобие жизни!',
+      'Сжечь. Сжечь до тла!',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Spirit' },
     lines: [
-      'Whatever holds you, I will cut it. Then go.',
-      'You are late for your own funeral.',
-      'The war is over for you. Accept it.',
+      'Whatever holds you here I will burn!',
+      'The war is over for you.',
     ],
     lines_ru: [
-      'Что бы тебя ни держало — я это перережу. Потом иди.',
-      'Ты опоздал на собственные похороны.',
-      'Для тебя война окончена. Прими это.',
+      'Что бы тебя тут ни держало я испепелю!',
+      'Для тебя война окончена.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Demon' },
     lines: [
-      'Sent back. Note the hour.',
-      'One door shut. There are others.',
+      'One more sent back!',
       'It ends as it began - uninvited.',
     ],
     lines_ru: [
-      'Отправлен назад. Отметьте час.',
-      'Одна дверь закрыта. Есть и другие.',
-      'Кончается тем же, чем началось, — незваным.',
+      'Еще один отправлен назад!',
+      'Пришёл незваным — таким и уйдешь!',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
     lines: [
-      'Buried. Late, but buried.',
-      'Rest, soldier. Your watch is relieved.',
-      'Mark the ground. Someone may still come looking.',
+      'Rest, your watch is relieved.',
+      'Buried.',
     ],
     lines_ru: [
-      'Погребён. Поздно, но погребён.',
-      'Покойся, солдат. Твой караул снят.',
-      'Отметьте место. Кто-то ещё может прийти за ним.',
+      'Покойся, твой караул снят.',
+      'Погребён.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Holy', faction: ['e', 'opb'] },
     lines: [
-      'Hold the line. Mine is finished.',
-      'No last words. Close the gap.',
-      'I was not owed more time than this.',
-      'Tell them the line held.',
+      'Hold the line!',
+      'Tell them the line held...',
     ],
     lines_ru: [
-      'Держите строй. Мой окончен.',
-      'Без последних слов. Сомкнуть ряды.',
-      'Мне не было обещано больше времени.',
-      'Скажите им: строй устоял.',
+      'Держите строй!',
+      'Скажите им: строй устоял...',
     ],
   },
 
@@ -485,59 +409,51 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: 'e' },
     lines: [
-      'Mithrail sees the work. Do it properly.',
+      'Mithrail guide me hand!',
       'By his light, and by my hand.',
-      'His light does not negotiate. Neither do I.',
     ],
     lines_ru: [
-      'Митраил видит работу. Делай её как должно.',
+      'Митраил направь мою руку!',
       'Его светом и моей рукой.',
-      'Его свет не торгуется. И я тоже.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Holy', faction: 'e' },
     lines: [
-      'Mithrail. The line. In that order.',
-      'His light was enough. I was not.',
+      'My light fades...',
+      'Avenge me...',
     ],
     lines_ru: [
-      'Митраил. Строй. Именно в таком порядке.',
-      'Его света хватило. Меня — нет.',
+      'Мой свет угас...',
+      'Отомстите...',
     ],
   },
 
   // ===========================================================================
   // GRAIL OF SORROW - THE FAITHFUL (Holy)
-  // The Communicants, Seraphs and Chosen carry the same office as the Empire's
-  // priesthood and none of its certainty. They tend Astaloth's children knowing
-  // they ARE her children - the thing the Empire burns. The Mother grieves for
-  // what was done TO them, so she is spoken of as watching and keeping, never
-  // as the author of it.
+  // The same office as the Empire's priesthood and none of its certainty. They
+  // tend Astaloth's children knowing they ARE her children. The Mother grieves
+  // for what was done TO them, so she watches and keeps - never takes.
   // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: 'g' }, target: { tag: 'Holy' },
     lines: [
-      'You would burn us for surviving. We only wanted to be buried.',
-      'Your god closed the door. Ours came looking for us.',
-      'We were faithful too. It made no difference.',
+      'A spell did this to us, not your god.',
+      'Astaloth grieves for us. Yours never knew us.',
     ],
     lines_ru: [
-      'Вы сожгли бы нас за то, что мы уцелели. Мы хотели лишь быть погребёнными.',
-      'Ваш бог закрыл дверь. Наша — пошла нас искать.',
-      'Мы тоже были верны. Это ничего не изменило.',
+      'Это сделало заклинание, а не ваш бог.',
+      'Асталот о нас скорбит. Ваш нас и не знал.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: 'g' },
     lines: [
       'Mother sees this. She does not look away.',
-      'I bless what is left of them. Someone has to.',
       'Forgive me. I was taught to mend, not to do this.',
     ],
     lines_ru: [
       'Мать это видит. Она не отводит глаз.',
-      'Я благословляю то, что от них осталось. Кто-то должен.',
       'Простите меня. Меня учили исцелять, а не этому.',
     ],
   },
@@ -545,39 +461,33 @@ const COMBAT_BARKS = [
     trigger: 'kill', actor: { tag: 'Holy', faction: 'g' },
     lines: [
       'Rest. That is more than we were given.',
-      'Mother keeps them now. She keeps everyone.',
-      'One more to grieve for. I will remember the face.',
+      'Astaloth keeps him now. She keeps everyone.',
     ],
     lines_ru: [
       'Покойся. Нам и того не досталось.',
-      'Теперь их хранит Мать. Она хранит всех.',
-      'Ещё одна утрата. Я запомню лицо.',
+      'Теперь его хранит Асталот. Она хранит всех.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Holy', faction: 'g' },
     lines: [
-      'Mother... I am coming back to you.',
-      'Ten years borrowed. I am grateful for them.',
-      'Do not mourn. I have had enough mourning for both of us.',
+      'Mother... I am coming...',
+      'Do not mourn...',
     ],
     lines_ru: [
-      'Мать... я возвращаюсь к тебе.',
-      'Десять лет взаймы. Я благодарен за них.',
-      'Не скорбите. Я отскорбел за нас обоих.',
+      'Мать... я возвращаюсь...',
+      'Не скорбите...',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: 'g' },
     lines: [
       'Stay. I have lost enough of us.',
-      'Mother is not finished with you.',
-      'I cannot give you life. I can give you a little longer.',
+      'Astaloth is not finished with you.',
     ],
     lines_ru: [
-      'Останься. Я потерял уже достаточно наших.',
-      'Мать с тобой ещё не закончила.',
-      'Я не верну тебе жизнь. Но дам немного времени.',
+      'Останься. Я потерял слишком многих.',
+      'Асталот с тобой ещё не закончила.',
     ],
   },
 
@@ -588,45 +498,33 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] },
     lines: [
-      'Hold. Step. Hold.',
-      'Nothing clever. Just forward.',
+      'Burn!',
       'The line is where I am standing.',
-      'I have done this since I was fifteen.',
-      'Take ground. Keep it.',
     ],
     lines_ru: [
-      'Держать. Шаг. Держать.',
-      'Никаких хитростей. Только вперёд.',
+      'Гори!',
       'Строй — там, где стою я.',
-      'Я делаю это с пятнадцати лет.',
-      'Взять землю. Удержать.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
     lines: [
-      'I have no interest in what you are offering.',
-      'Shield up. It burns; it does not break through.',
+      'Shields up!',
       'You are not the first thing to come out of that hole.',
     ],
     lines_ru: [
-      'Мне неинтересно то, что ты предлагаешь.',
-      'Щит выше. Жжёт — но не пробивает.',
+      'Щиты выше!',
       'Ты не первое, что вылезло из той дыры.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie'] },
     lines: [
-      'Someone take the left. Now.',
       'Do not carry me. Carry the line.',
-      'That is all I had. It was enough for today.',
       'Finish it. I will wait here.',
     ],
     lines_ru: [
-      'Кто-нибудь — на левый фланг. Сейчас.',
       'Не несите меня. Несите строй.',
-      'Это всё, что у меня было. На сегодня хватило.',
       'Заканчивайте. Я подожду здесь.',
     ],
   },
@@ -638,14 +536,12 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tags: ['Spirit', 'Holy'] },
     lines: [
-      'I was relieved of my body. Not of my post.',
-      'The Empire keeps its dead on the roster.',
-      'Death changed the duty roster. Nothing else.',
+      'I was relieved of my body, not of my oath.',
+      'Aurex stands!',
     ],
     lines_ru: [
-      'Меня освободили от тела. Не от поста.',
-      'Империя держит своих мёртвых в списках.',
-      'Смерть изменила расписание караулов. И только.',
+      'Меня освободили от тела а не от клятвы.',
+      'Аурекс выстоит!',
     ],
   },
   {
@@ -655,7 +551,7 @@ const COMBAT_BARKS = [
       'Strike my name properly this time.',
     ],
     lines_ru: [
-      'Второй раз. И снова лицом куда надо.',
+      'Второй раз. И снова лицом к врагу.',
       'На этот раз вычеркните имя как следует.',
     ],
   },
@@ -668,40 +564,32 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
       'Ranged, sighted, done. Next.',
-      'Powder is cheaper than courage and works further out.',
       'It is not brave. It is accurate.',
-      'Hold still. It shortens the paperwork.',
     ],
     lines_ru: [
       'Дистанция, прицел, готово. Следующий.',
-      'Порох дешевле храбрости и бьёт дальше.',
       'Это не храбро. Это точно.',
-      'Стой смирно. Меньше бумаг потом.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Construct' },
     lines: [
       'Poor work. Whoever built you cut the joints.',
-      'I have repaired better and scrapped worse.',
       'Every machine has a seam. There it is.',
     ],
     lines_ru: [
-      'Скверная работа. Кто тебя собирал, сэкономил на сочленениях.',
-      'Я чинил и получше, и списывал похуже.',
+      'Скверная работа. На сочленениях сэкономили.',
       'У всякой машины есть шов. Вот он.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Demon' },
     lines: [
-      'Sulphur and hot iron. I work with both daily.',
       'You are not unnatural. You are poorly contained.',
       'Fire I understand. Stand still.',
     ],
     lines_ru: [
-      'Сера и раскалённое железо. Я с обоими работаю каждый день.',
-      'Ты не противоестественен. Ты плохо изолирован.',
+      'Ты не исчадие. Ты просто плохо изолирован.',
       'Огонь я понимаю. Стой смирно.',
     ],
   },
@@ -710,23 +598,19 @@ const COMBAT_BARKS = [
     lines: [
       'Down. Log it.',
       'The instrument performed as intended.',
-      'Barrel is fouling. Bring the rod.',
     ],
     lines_ru: [
       'Готов. Занесите в журнал.',
       'Изделие сработало как задумано.',
-      'Ствол засоряется. Подайте шомпол.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
-      'The plans are in the third case. Do not lose them.',
       'Do not let them take the gun.',
       'Tell the shop it was not the mechanism.',
     ],
     lines_ru: [
-      'Чертежи в третьем ящике. Не потеряйте.',
       'Не отдавайте им орудие.',
       'Передайте в мастерскую: дело было не в механизме.',
     ],
@@ -741,26 +625,20 @@ const COMBAT_BARKS = [
     lines: [
       'Target acknowledged. Proceeding.',
       'No fatigue. No fear. Continue.',
-      'This unit does not withdraw.',
-      'Force applied. Repeating.',
     ],
     lines_ru: [
       'Цель принята. Выполняю.',
       'Усталости нет. Страха нет. Продолжаю.',
-      'Этот механизм не отступает.',
-      'Усилие приложено. Повторяю.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
     lines: [
       'Target ended. Awaiting next.',
-      'Efficient. Reloading.',
       'One removed from the count.',
     ],
     lines_ru: [
       'Цель уничтожена. Жду следующую.',
-      'Эффективно. Перезарядка.',
       'Одним в списке меньше.',
     ],
   },
@@ -769,12 +647,10 @@ const COMBAT_BARKS = [
     lines: [
       'Frame failing. Salvage the core.',
       'This unit is spent. Others remain.',
-      'Recoverable. Send the wagons.',
     ],
     lines_ru: [
       'Каркас отказывает. Снимите сердечник.',
       'Механизм выработан. Остальные — на ходу.',
-      'Подлежит восстановлению. Пришлите повозки.',
     ],
   },
   {
@@ -782,12 +658,10 @@ const COMBAT_BARKS = [
     lines: [
       'Ranged and marked.',
       'The wind is steady. So am I.',
-      'You had a hundred paces to reconsider.',
     ],
     lines_ru: [
       'Дистанция взята, цель отмечена.',
       'Ветер ровный. Я тоже.',
-      'У тебя было сто шагов, чтобы передумать.',
     ],
   },
   {
@@ -795,218 +669,174 @@ const COMBAT_BARKS = [
     lines: [
       'Down at range. Next mark.',
       'One shaft, one man. As trained.',
-      'Recover the arrow if you can.',
     ],
     lines_ru: [
       'Снят на дистанции. Следующая цель.',
       'Одна стрела, один человек. Как учили.',
-      'Стрелу подберите, если сможете.',
     ],
   },
 
   // ===========================================================================
   // CHOIR OF THE CURSED - DEMONS
-  // Everything is a transaction, and they intend to collect. Greed, not glee.
+  // Sung into being and hungry ever since. Voices, verses, appetite - AGGRAIL.
   // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
-      'Your god pays nothing. Mine pays in advance.',
-      'Faith is the one currency no one will exchange for you.',
-      'Everything you were given, someone else is still paying for.',
-      'Name your price. I know you have one.',
-      'You die poor. That is the insult, not the dying.',
+      'Your god has no voice. Aggrail answers every time.',
+      'Pray louder. It only sweetens the note.',
     ],
     lines_ru: [
-      'Твой бог не платит. Мой платит вперёд.',
-      'Вера — единственная монета, которую за тебя никто не разменяет.',
-      'За всё, что тебе дали, до сих пор платит кто-то другой.',
-      'Назови цену. Я знаю, она у тебя есть.',
-      'Ты умираешь нищим. Вот в чём оскорбление, а не в смерти.',
+      'У твоего бога нет голоса. Агграил отвечает всегда.',
+      'Молись громче. От этого нота только слаще.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Knight' },
     lines: [
-      'That armour is worth more than the man wearing it.',
-      'You serve for wages. I serve for shares.',
-      'Someone bought your loyalty cheaply. I would have paid more.',
-      'Set it down. I am taking it either way.',
+      'All that iron, and I can still hear you breathing.',
+      'Kneel. The First Song carries better from down there.',
     ],
     lines_ru: [
-      'Эти доспехи стоят больше, чем тот, кто в них.',
-      'Ты служишь за жалованье. Я — за долю.',
-      'Кто-то дёшево купил твою верность. Я дал бы больше.',
-      'Клади на землю. Я всё равно это заберу.',
+      'Столько железа, а дыхание всё равно слышно.',
+      'На колени. Оттуда Первая Песнь слышнее.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Vampire' },
     lines: [
-      'All that grief, and not one thing to show for it.',
-      'You inherited. I earned. That is the difference.',
-      'Your house is bankrupt and still holding funerals.',
-      'Mourn on your own coin.',
+      'All that grief and not one note in it.',
+      'Your mourning is a dull sound. I will end it.',
     ],
     lines_ru: [
-      'Столько горя — и ни единого приобретения.',
-      'Ты унаследовал. Я заработал. В этом разница.',
-      'Твой дом разорён и всё ещё справляет похороны.',
-      'Скорби за свой счёт.',
+      'Столько горя — и ни одной ноты в нём.',
+      'Твоя скорбь звучит глухо. Я её оборву.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Caster' },
     lines: [
-      'Power on loan. I hold the note.',
-      'You rent what I own outright.',
-      'Every word you say costs you. I am counting.',
+      'You learned your words. Mine were sung into me.',
+      'Say it again. I want to hear the voice break.',
     ],
     lines_ru: [
-      'Сила взаймы. Расписка у меня.',
-      'Ты арендуешь то, чем я владею целиком.',
-      'Каждое твоё слово тебе стоит. Я считаю.',
+      'Ты свои слова выучил. Мои — в меня впеты.',
+      'Повтори. Хочу услышать, как сорвётся голос.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Construct' },
     lines: [
-      'No soul in it. Nothing worth collecting.',
-      'Scrap value only. Disappointing.',
-      'Someone spent good iron to avoid a good bargain.',
+      'No voice in it. Nothing worth swallowing.',
+      'Iron does not scream properly. Disappointing.',
     ],
     lines_ru: [
-      'Души нет. Взыскивать нечего.',
-      'Только цена лома. Досадно.',
-      'Кто-то потратил доброе железо, лишь бы не заключать сделку.',
+      'Голоса нет. И глотать нечего.',
+      'Железо кричит скверно. Досадно.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
-      'Collected. He argued the terms to the end.',
-      'His god declined to match my offer.',
-      'That one was owed to me twice over.',
+      'His god never answered. Mine is still singing.',
+      'Silenced. Aggrail heard that one.',
     ],
     lines_ru: [
-      'Взыскано. Он спорил об условиях до конца.',
-      'Его бог отказался перебить мою цену.',
-      'Этот был должен мне дважды.',
+      'Его бог так и не ответил. Мой всё ещё поёт.',
+      'Умолк. Этого Агграил услышал.',
     ],
   },
   {
     trigger: 'kill', actor: { tag: 'Demon', faction: 'd' },
     lines: [
-      'Mine. Note it against my share.',
-      'Paid in full, and early.',
-      'One more than my brother has taken.',
-      'Nothing left worth splitting.',
+      'Aggraa am neee. One more voice in the chord.',
+      'He went quiet beautifully.',
     ],
     lines_ru: [
-      'Мой. Запишите в мою долю.',
-      'Уплачено сполна и досрочно.',
-      'На одного больше, чем взял мой брат.',
-      'Делить больше нечего.',
+      'Агграа ам нэээ. Ещё один голос в аккорде.',
+      'Он умолк красиво.',
     ],
   },
   {
     trigger: 'death', actor: { tag: 'Demon', faction: 'd' },
     lines: [
-      'My share - someone see that it is held.',
-      'This was not the agreement.',
-      'I go back owed. I always come back owed.',
-      'Take it from his portion. Not mine.',
+      'Aggrail... sing me back... sing me back!',
+      'This is not how the verse went!',
     ],
     lines_ru: [
-      'Моя доля — проследите, чтобы её сохранили.',
-      'Уговор был не такой.',
-      'Ухожу кредитором. Я всегда возвращаюсь кредитором.',
-      'Вычтите из его части. Не из моей.',
+      'Агграил... верни меня в песнь... верни!',
+      'В песне было не так!',
     ],
   },
 
   // ===========================================================================
-  // CHOIR OF THE CURSED - THE COURT & THE CHOIR
-  // The ones who own the contracts rather than sign them.
+  // CHOIR OF THE CURSED - THE COURT
+  // The ones who hold the old verses, and expect to be sung to properly.
   // ===========================================================================
   {
     trigger: 'attack', actor: { tag: 'Court', faction: 'd' },
     lines: [
-      'I do not fight. I foreclose.',
-      'You are standing on something that belongs to me.',
-      'I have owned better men for less.',
-      'Address me properly. It affects the price.',
+      'You are standing where the Court sings. Move, or be sung over.',
+      'Address me properly. The First Song remembers manners.',
     ],
     lines_ru: [
-      'Я не сражаюсь. Я взыскиваю.',
-      'Ты стоишь на том, что принадлежит мне.',
-      'Я владел людьми получше и дешевле.',
-      'Обращайся ко мне как должно. Это влияет на цену.',
+      'Ты стоишь там, где поёт Двор. Уйди, или тебя впишут в песнь.',
+      'Обращайся ко мне как должно. Первая Песнь помнит учтивость.',
     ],
   },
   {
     trigger: 'attack', actor: { tag: 'Court', faction: 'd' }, target: { tag: 'Holy' },
     lines: [
-      'Your order took my money for three hundred years.',
-      'Piety is the cheapest thing your church sells.',
-      'I have bought bishops. You are not expensive.',
+      'Your choir chants. Ours devours.',
+      'I have heard your hymns. Thin things.',
     ],
     lines_ru: [
-      'Твой орден брал мои деньги триста лет.',
-      'Благочестие — самое дешёвое, что продаёт твоя церковь.',
-      'Я покупал епископов. Ты недорог.',
+      'Ваш хор поёт. Наш — пожирает.',
+      'Я слышал ваши гимны. Пустые.',
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Choir', faction: 'd' },
+    trigger: 'kill', actor: { tag: 'Court', faction: 'd' },
     lines: [
-      'Every voice in the Choir is paid. Yours is not.',
-      'Sing or settle. I accept either.',
-      'The chord is owed a note. You will provide it.',
+      'Added to the chord. He sings for Aggrail now.',
+      'A voice taken. The Court is louder for it.',
     ],
     lines_ru: [
-      'Каждому голосу в Хоре платят. Твоему — нет.',
-      'Пой или расплачивайся. Я приму и то и другое.',
-      'Аккорду недостаёт ноты. Ты её дашь.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Choir', faction: 'd' },
-    lines: [
-      'Added to the chord. He sings for me now.',
-      'A voice acquired. Cheaply.',
-      'The Choir grows. My share grows with it.',
-    ],
-    lines_ru: [
-      'Добавлен в аккорд. Теперь он поёт за меня.',
-      'Голос приобретён. Задёшево.',
-      'Хор растёт. Вместе с ним растёт и моя доля.',
+      'Добавлен в аккорд. Теперь он поёт Агграилу.',
+      'Голосом больше. Двор звучит громче.',
     ],
   },
   {
     trigger: 'attack', actor: { tags: ['Construct', 'Demon'] },
     lines: [
-      'I was carved to guard property. You are not it.',
-      'The stone was paid for. The stone collects.',
-      'Off the threshold. It is not yours.',
+      'I was carved to guard this threshold. You are not part of it.',
+      'Off the stone. It is not yours to stand on.',
     ],
     lines_ru: [
-      'Меня высекли охранять имущество. Ты в него не входишь.',
-      'За камень заплачено. Камень взыскивает.',
-      'Прочь с порога. Он не твой.',
+      'Меня высекли стеречь этот порог. Тебя здесь быть не должно.',
+      'Прочь с камня. Не тебе на нём стоять.',
     ],
   },
   {
-    trigger: 'attack', actor: { tag: 'Beast' },
+    trigger: 'attack', actor: { tag: 'Warrior', faction: 'd' },
     lines: [
-      'Whatever falls, I keep.',
-      'A small share is still a share.',
-      'I bite low. No one watches the ankles.',
+      'I hunt. You simply happened to be here.',
+      'Do not run. It is worse when they run.',
     ],
     lines_ru: [
-      'Что упадёт — моё.',
-      'Малая доля — тоже доля.',
-      'Я кусаю низко. За лодыжками никто не следит.',
+      'Я охочусь. Ты просто подвернулся.',
+      'Не беги. Тем, кто бежит, хуже.',
+    ],
+  },
+  {
+    trigger: 'kill', actor: { tag: 'Warrior', faction: 'd' },
+    lines: [
+      'Still warm. Good.',
+      'Aggraa am neee. That one was mine.',
+    ],
+    lines_ru: [
+      'Ещё тёплый. Хорошо.',
+      'Агграа ам нэээ. Этот был мой.',
     ],
   },
 
@@ -1017,12 +847,10 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
     lines: [
       'I have held this ground before. I will hold it again.',
-      'There is no bargain here. Only the wall.',
       'You will not pass the shield.',
     ],
     lines_ru: [
       'Я держал эту землю прежде. Удержу и теперь.',
-      'Здесь не торгуются. Здесь стоят стеной.',
       'Через щит ты не пройдёшь.',
     ],
   },
@@ -1030,12 +858,10 @@ const COMBAT_BARKS = [
     trigger: 'kill', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
     lines: [
       'Closed. Reform on me.',
-      'One less debt for the world to carry.',
       'It is done. Do not stand and look at it.',
     ],
     lines_ru: [
       'Закрыто. Строиться на меня.',
-      'Одним долгом мира меньше.',
       'Кончено. Не стойте и не смотрите.',
     ],
   },
@@ -1043,25 +869,21 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { name: 'Inquisitor' },
     lines: [
       'I asked once. That was the courtesy.',
-      'Your answers are noted. They did not help you.',
       'I take no pleasure in this. I take responsibility for it.',
     ],
     lines_ru: [
       'Я спросил один раз. Это и была любезность.',
-      'Твои ответы записаны. Они тебе не помогли.',
-      'Я не нахожу в этом удовольствия. Я беру за это ответственность.',
+      'Мне это не в радость. Но отвечаю за это я.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Blood Knight' }, target: { tag: 'Holy' },
     lines: [
       'I wore that colour once. It kept no one alive.',
-      'We knelt in the same chapel. Only one of us got up.',
       'Do not preach. I know the words better than you do.',
     ],
     lines_ru: [
       'Я тоже носил этот цвет. Он никого не уберёг.',
-      'Мы преклоняли колени в одной часовне. Поднялся только один.',
       'Не проповедуй. Я знаю эти слова лучше тебя.',
     ],
   },
@@ -1069,13 +891,11 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { name: 'Necromancer' },
     lines: [
       'I did not raise them for war. War is simply what was left.',
-      'They were going to be forgotten. I refused.',
-      'Someone has to keep the dead. No one else volunteered.',
+      'The spell left them like this. I keep them.',
     ],
     lines_ru: [
       'Я поднял их не для войны. Просто ничего другого не осталось.',
-      'Их собирались забыть. Я отказался.',
-      'Кто-то должен хранить мёртвых. Добровольцев больше не нашлось.',
+      'Такими их оставило заклинание. Я их храню.',
     ],
   },
   {
@@ -1083,49 +903,43 @@ const COMBAT_BARKS = [
     lines: [
       'Do not bury him. He will be needed by morning.',
       'Another name for the roll. I keep all of them.',
-      'He is not gone. That is the trouble with my work.',
     ],
     lines_ru: [
       'Не хороните его. К утру он понадобится.',
       'Ещё одно имя в перекличку. Я храню их все.',
-      'Он не ушёл. В этом и беда моего ремесла.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Malgrath the Undying' },
     lines: [
       'I have outlasted your gods, your kings, and their heirs.',
-      'Undying is not a boast. It is a sentence I stopped appealing.',
       'Continue. I am curious how you imagine this ends.',
     ],
     lines_ru: [
       'Я пережил ваших богов, ваших королей и их наследников.',
-      'Бессмертие — не похвальба. Это приговор, который я перестал обжаловать.',
-      'Продолжай. Мне любопытно, чем, по-твоему, это кончится.',
+      'Продолжай. Любопытно, чем ты думаешь это кончить.',
     ],
   },
   {
     trigger: 'attack', actor: { name: 'Imp' },
     lines: [
-      'I only want what falls. Drop something.',
-      'The Baron takes the soul. I take the purse.',
-      'You will not miss the small things. You never do.',
+      'Small teeth. Many bites.',
+      'Do not look up. I am not up there.',
     ],
     lines_ru: [
-      'Мне нужно лишь то, что упадёт. Урони что-нибудь.',
-      'Барон берёт душу. Я беру кошель.',
-      'Мелочи ты не хватишься. Ты никогда не хватаешься.',
+      'Зубы мелкие. Укусов много.',
+      'Не смотри вверх. Меня там нет.',
     ],
   },
   {
     trigger: 'death', actor: { name: 'Imp' },
     lines: [
-      'My share. Someone hold my share.',
-      'I had almost enough.',
+      'Aggrail... I was so close...',
+      'That is not how it goes! Not like this!',
     ],
     lines_ru: [
-      'Моя доля. Пусть кто-нибудь сбережёт мою долю.',
-      'Мне почти хватило.',
+      'Агграил... я был так близко...',
+      'Нечестно! Так нечестно!',
     ],
   },
 
@@ -1137,12 +951,10 @@ const COMBAT_BARKS = [
     lines: [
       'Stay. I have you.',
       'Breathe. Slowly. Again.',
-      'Not today. Get up.',
     ],
     lines_ru: [
       'Держись. Я рядом.',
       'Дыши. Медленно. Ещё раз.',
-      'Не сегодня. Вставай.',
     ],
   },
   {
@@ -1150,64 +962,52 @@ const COMBAT_BARKS = [
     lines: [
       'You are not finished. Stand.',
       'The wound is closed. The duty is not.',
-      'Back to the line when you can walk.',
     ],
     lines_ru: [
       'Ты ещё не закончил. Встань.',
       'Рана закрыта. Долг — нет.',
-      'В строй, как только сможешь идти.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: ['e', 'opb'] },
     lines: [
       'Hold on. That is an order.',
-      'Pressure here. Do not look at it.',
       'We do not leave men on the ground.',
-      'You will keep. Move up.',
     ],
     lines_ru: [
       'Держись. Это приказ.',
-      'Прижми здесь. Не смотри туда.',
       'Мы не оставляем своих на земле.',
-      'Дотянешь. Вперёд.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
     lines: [
       'Not you. Not while I can prevent it.',
-      'I have buried enough of this house.',
       'Stay a while longer. Please.',
     ],
     lines_ru: [
-      'Только не ты. Не пока я могу это предотвратить.',
-      'Я похоронил уже достаточно этого дома.',
+      'Только не ты. Не при мне.',
       'Побудь ещё немного. Прошу.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Demon', faction: 'd' },
     lines: [
-      'You are worth more standing. Stand.',
-      'I am not spending this for nothing. Earn it.',
-      'Consider it a loan. I will name the terms later.',
+      'Get up. Your part in the song is not finished.',
+      'Aggrail is not done with you. Stand.',
     ],
     lines_ru: [
-      'Стоя ты стоишь дороже. Встань.',
-      'Я трачу это не даром. Отработай.',
-      'Считай это займом. Условия назову позже.',
+      'Вставай. Твоя партия ещё не допета.',
+      'Агграил с тобой ещё не закончил. Встань.',
     ],
   },
   {
     trigger: 'heal_low_hp', actor: { tag: 'Engineer', faction: 'e' },
     lines: [
-      'Bleeding stopped. Do not test the seal.',
       'Patched. It will hold if you do not run.',
       'Good enough for the field. See a surgeon after.',
     ],
     lines_ru: [
-      'Кровь остановлена. Не проверяй шов на прочность.',
       'Заштопано. Продержится, если не побежишь.',
       'Для поля сойдёт. Потом — к лекарю.',
     ],
@@ -1215,14 +1015,12 @@ const COMBAT_BARKS = [
   {
     trigger: 'heal_low_hp', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
     lines: [
-      'Stay on this side a while longer.',
-      'I know the other road. Not yet.',
-      'The ground can wait. I told it so.',
+      'Not... yet... stay...',
+      'Road... can... wait...',
     ],
     lines_ru: [
-      'Побудь на этой стороне ещё немного.',
-      'Я знаю ту дорогу. Ещё рано.',
-      'Земля подождёт. Я ей так и сказал.',
+      'Ещё... не... время...',
+      'Дорога... подождёт...',
     ],
   },
 ];
