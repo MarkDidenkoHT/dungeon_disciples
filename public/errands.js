@@ -292,18 +292,28 @@ export function errandsUnlocked(player) {
 // player is back in the castle after a battle, the errand button they have
 // never seen before is spotlighted and explained, then the sheet is opened for
 // them. Two steps — what errands are, and the cost of sending someone.
+let introRunning = false;
+
 export function maybeShowErrandsIntro(player) {
+  // A navigation tears the overlay down without going through onAdvance; drop
+  // the flag rather than blocking the intro forever.
+  if (introRunning && !document.querySelector('.tutorial-overlay')) introRunning = false;
+  if (introRunning) return;
   if (!errandsUnlocked(player)) return;
   if (isTutorialDone(player, 'errands_intro')) return;
   const btn = document.querySelector('.res-bar-errands');
   if (!btn) return;
 
+  introRunning = true;
+  // Locked until the first refresh lands; the spotlight can't wait for it.
+  btn.disabled = false;
   showTutorialSpotlight(player, 'errands_intro', btn, {
     showContinue: true,
     onAdvance: () => {
       showTutorialSpotlight(player, 'errands_away', btn, {
         showContinue: true,
         onAdvance: () => {
+          introRunning = false;
           markTutorialDone(player, 'errands_intro');
           openErrandsSheet(player);
         },

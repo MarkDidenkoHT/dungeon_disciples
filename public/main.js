@@ -9,7 +9,7 @@ import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
-import { openErrandsSheet, refreshErrandButton, errandsUnlocked, maybeShowErrandsIntro } from './errands.js';
+import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 import { setUiLanguage, closeSheet, closeSubSheet } from './utils.js';
 
@@ -193,14 +193,10 @@ function navigate(screen, params = {}) {
   if (player && !isBattle) {
     refreshResourceBar(player).catch(() => {});
     refreshNavLock(player).catch(() => {});
-    // The intro waits for the refresh: the button it points at is hidden until
-    // that call unhides it, and spotlighting a display:none element measures a
-    // zero-size hole. Only the castle gets it — it is where the player lands
-    // after a battle, and an unrelated screen is the wrong place to be taught
-    // a new system.
-    refreshErrandButton(player)
-      .then(() => { if (screen === 'castle') maybeShowErrandsIntro(player); })
-      .catch(() => {});
+    // The errands intro is fired by the castle screen itself, once its own
+    // onboarding chain has decided it has nothing to show — see onboardingIdle
+    // in screens/castle.js.
+    refreshErrandButton(player).catch(() => {});
   }
 
   const root = document.getElementById('content-root');

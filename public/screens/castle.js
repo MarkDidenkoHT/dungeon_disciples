@@ -17,7 +17,7 @@ import {
   handleUnitInspect, unitName, buildingLabel,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
-import { errandRosterIds } from '../errands.js';
+import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -728,6 +728,14 @@ export function renderCastle(root, { player }) {
     setTimeout(run, 400);   // in case the animation was skipped or already over
   }
 
+  // Nothing left to teach here. The errands intro is fired from this point
+  // rather than from navigate(): the castle's own render is async, and whichever
+  // of the two finished last used to hideTutorial() the other one off the screen.
+  function onboardingIdle() {
+    hideTutorial();
+    maybeShowErrandsIntro(player);
+  }
+
   function runCastleOnboarding() {
     if (onboardingBusy) return;
     if (!isTutorialDone(player, 'second_building')) { hideTutorial(); return; }
@@ -751,21 +759,21 @@ export function renderCastle(root, { player }) {
       showReviveStep();
       return;
     }
-    hideTutorial();
+    onboardingIdle();
   }
 
   function startEquipChain() {
     const hero = heroRosterUnit();
-    if (!hero) { hideTutorial(); return; }
+    if (!hero) { onboardingIdle(); return; }
     // Nothing to teach if the hero is already armed, or has nothing to put on
     // (an account that registered before starting gear was granted). Just stop —
     // never mark the step done here, or a later item could never teach it.
-    if (equippedItemFor(hero.id)) { hideTutorial(); return; }
-    if (!itemsCache.some(it => !it.equipped_by && isEquippableBy(it, hero))) { hideTutorial(); return; }
+    if (equippedItemFor(hero.id)) { onboardingIdle(); return; }
+    if (!itemsCache.some(it => !it.equipped_by && isEquippableBy(it, hero))) { onboardingIdle(); return; }
 
     const slot = slotOfUnit(hero);
     const node = nodeForSlot(slot);
-    if (!slot || !node) { hideTutorial(); return; }
+    if (!slot || !node) { onboardingIdle(); return; }
 
     if (!isTutorialDone(player, 'roster_intro')) {
       // An action step: the tap opens the slot sheet through the node's own
