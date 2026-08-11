@@ -1044,54 +1044,93 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return ui;
   }
 
-  // Status effects surfaced as small icons on top of a unit's portrait. The
-  // engine tracks each on the raw combatant (see getSnapshot). Order here is the
-  // left-to-right order the icons appear in. Extend this list to add more.
-  // Burn (dot_dmg) and Poison (_poison_dmg) are independent slots now, so a unit
-  // can show both icons at once.
-  const STATUS_DEFS = [
-    { key: 'bleed',  icon: '🩸', active: c => (c._bleed_dmg || 0) > 0 },
-    { key: 'chill',  icon: '❄️', active: c => (c._chill_dmg || 0) > 0 },
-    { key: 'poison', icon: '☠️', active: c => (c._poison_dmg || 0) > 0 },
-    { key: 'burn',   icon: '🔥', active: c => (c.dot_dmg || 0) > 0 },
-  ];
+  // ── Standing states on a portrait ─────────────────────────────────────────
+  // Two columns of ability art, both filled top-down: BUFFS down the right edge,
+  // DEBUFFS down the left. The number on an icon is whatever the effect counts —
+  // stacks for Rage/Fanaticism/Aegis, rounds left for the timed ones, damage per
+  // tick for DoTs, percent for the reductions — and is hidden when it is 1 or
+  // when the effect has nothing to count.
+  //
+  // `val(c)` reads BOTH shapes on purpose: these fields are nested under `buffs`
+  // in a battle snapshot and flat on a live combatant (same as aegisLevelFor).
+  // The art is /assets/icons/abilities/<ability id, spaces to _, rank stripped>,
+  // the same convention abilityIconSrc uses; a missing file hides itself.
+  const st = (occ, field) => occ?.[field] ?? occ?.buffs?.[field];
+  const num = (occ, field) => Number(st(occ, field) ?? 0) || 0;
 
-  function statusIconsHtml(occ) {
-    if (!occ || !occ.alive) return '';
-    return STATUS_DEFS
-      .filter(s => s.active(occ))
-      .map(s => `<span class="bc-status-icon bc-status-icon--${s.key}">${s.icon}</span>`)
-      .join('');
-  }
-
-  // Stacking self-buffs, drawn as a column of ability icons down the RIGHT edge
-  // of the portrait with the stack count sitting on the icon itself. The counts
-  // are display-only fields set by the engine (see _rage_stacks and friends in
-  // battle-engine.js); nothing here re-derives a bonus from them.
-  // Read from both shapes for the same reason aegisLevelFor does: nested under
-  // `buffs` in a snapshot, flat on a live combatant.
   const BUFF_DEFS = [
-    { key: 'rage',       icon: 'rage.jpg',       label: 'Rage',       field: '_rage_stacks' },
-    { key: 'fanaticism', icon: 'fanaticism.jpg', label: 'Fanaticism', field: '_fanaticism_stacks' },
-    { key: 'aegis',      icon: 'aegis.jpg',      label: 'Aegis',      field: '_aegis_stacks' },
+    { key: 'rage',        icon: 'rage.jpg',             en: 'Rage',            ru: 'Ярость',         n: c => num(c, '_rage_stacks') },
+    { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
+    { key: 'aegis',       icon: 'aegis.jpg',            en: 'Aegis',           ru: 'Эгида',          n: c => num(c, '_aegis_stacks') },
+    { key: 'frost-armor', icon: 'frost_armor.jpg',      en: 'Frost Armor',     ru: 'Ледяной доспех', n: c => num(c, '_frost_armor_rounds'), unit: 'rounds' },
+    { key: 'stone-form',  icon: 'stone_form.jpg',       en: 'Stone Form',      ru: 'Каменная форма', n: c => num(c, '_stone_form_rounds'),  unit: 'rounds' },
+    { key: 'sanctuary',   icon: 'sanctuary.jpg',        en: 'Sanctuary',       ru: 'Святилище',      n: c => num(c, '_sanctuary_rounds'),   unit: 'rounds' },
+    { key: 'regenerate',  icon: 'regenerate.jpg',       en: 'Regeneration',    ru: 'Регенерация',    n: c => num(c, '_hot'),                unit: 'hp' },
+    { key: 'blessing',    icon: 'mothers_blessing.jpg', en: "Mother's Blessing", ru: 'Благословение Матери', n: c => (st(c, '_mothers_blessing') ? 1 : 0) },
+    { key: 'kiss',        icon: 'communion.jpg',        en: "Mother's Kiss",   ru: 'Поцелуй Матери',  n: c => (st(c, '_mothers_kiss') ? 1 : 0) },
+    { key: 'parry',       icon: 'duelist.jpg',          en: 'Parry ready',     ru: 'Парирование готово', n: c => (st(c, '_parry_available') ? 1 : 0) },
+    { key: 'dodge',       icon: 'dodge.jpg',            en: 'Dodge',           ru: 'Уклонение',      n: c => num(c, '_dodge_count') },
+    { key: 'defend',      icon: 'fortify.jpg',          en: 'Defending',       ru: 'В защите',       n: c => num(c, 'defend_armor_bonus'),  unit: 'armor' },
+    { key: 'invulnerable',icon: 'undying.jpg',          en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
+    { key: 'untargetable',icon: 'unity.jpg',            en: 'Cannot be targeted', ru: 'Нельзя выбрать целью', n: c => (st(c, '_untargetable') ? 1 : 0) },
   ];
 
-  function buffStack(occ, field) {
-    return Number(occ?.[field] ?? occ?.buffs?.[field] ?? 0) || 0;
+  const DEBUFF_DEFS = [
+    { key: 'burn',    icon: 'burn.jpg',    en: 'Burning',          ru: 'Горение',        n: c => num(c, 'dot_dmg'),             unit: 'dmg' },
+    { key: 'bleed',   icon: 'bleed.jpg',   en: 'Bleeding',         ru: 'Кровотечение',   n: c => num(c, '_bleed_dmg'),          unit: 'dmg' },
+    { key: 'poison',  icon: 'poison.jpg',  en: 'Poisoned',         ru: 'Отравление',     n: c => num(c, '_poison_dmg'),         unit: 'dmg' },
+    { key: 'chill',   icon: 'chill.jpg',   en: 'Chilled',          ru: 'Обморожение',    n: c => num(c, '_chill_dmg'),          unit: 'dmg' },
+    { key: 'stun',    icon: 'stun.jpg',    en: 'Stunned',          ru: 'Оглушение',      n: c => num(c, '_stun_rounds'),        unit: 'rounds' },
+    { key: 'terror',  icon: 'terror.jpg',  en: 'Terror',           ru: 'Ужас',           n: c => num(c, '_terror_rounds'),      unit: 'rounds' },
+    { key: 'fear',    icon: 'fear.jpg',    en: 'Fear',             ru: 'Страх',          n: c => num(c, '_fear_dmg_reduction'), unit: 'pct' },
+    { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_healing_reduction'), unit: 'pct' },
+    { key: 'taunt',   icon: 'taunt.jpg',   en: 'Taunted',          ru: 'Спровоцирован',  n: c => (st(c, '_taunted_by_id') ? 1 : 0) },
+    { key: 'sorrow',  icon: 'sorrow.jpg',  en: 'Sorrow',           ru: 'Скорбь',         n: c => (st(c, '_sorrow_source_ids') || []).length },
+  ];
+
+  const UNIT_SUFFIX = {
+    rounds: { en: 'rounds left', ru: 'ост. раундов' },
+    dmg:    { en: 'per turn',    ru: 'за ход' },
+    hp:     { en: 'HP per turn', ru: 'HP за ход' },
+    pct:    { en: '%',           ru: '%' },
+    armor:  { en: 'armor',       ru: 'брони' },
+  };
+
+  // A tile is 110px tall and an icon row is 18px, so six is the most that fits
+  // before the column runs off the bottom of the portrait. Show five and roll
+  // the rest into a "+N" tile whose tooltip names them, rather than letting the
+  // column overflow into the row below.
+  const MAX_STATE_ICONS = 5;
+
+  function stateIconsHtml(occ, defs) {
+    if (!occ || !occ.alive) return '';
+    const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
+    const active = defs.map(d => ({ d, n: d.n(occ) })).filter(x => x.n > 0);
+    const shown  = active.slice(0, MAX_STATE_ICONS);
+    const hidden = active.slice(MAX_STATE_ICONS);
+
+    const more = hidden.length
+      ? `<span class="bc-state bc-state--more" title="${hidden.map(x => x.d[L]).join(', ')}">
+           <span class="bc-state-more">+${hidden.length}</span>
+         </span>`
+      : '';
+
+    return shown
+      .map(({ d, n }) => {
+        const suffix = d.unit ? ` ${UNIT_SUFFIX[d.unit][L]}` : '';
+        const title  = d.unit || n > 1 ? `${d[L]}: ${n}${suffix}` : d[L];
+        return `
+        <span class="bc-state bc-state--${d.key}" title="${title}">
+          <img class="bc-state-img" src="/assets/icons/abilities/${d.icon}" alt="${d[L]}"
+               onerror="this.style.display='none'">
+          ${n > 1 ? `<span class="bc-state-num">${n}</span>` : ''}
+        </span>`;
+      })
+      .join('') + more;
   }
 
-  function buffIconsHtml(occ) {
-    if (!occ || !occ.alive) return '';
-    return BUFF_DEFS
-      .map(b => ({ b, n: buffStack(occ, b.field) }))
-      .filter(x => x.n > 0)
-      .map(({ b, n }) => `
-        <span class="bc-buff bc-buff--${b.key}" title="${b.label} x${n}">
-          <img class="bc-buff-img" src="/assets/icons/abilities/${b.icon}" alt="${b.label}">
-          ${n > 1 ? `<span class="bc-buff-stack">${n}</span>` : ''}
-        </span>`)
-      .join('');
-  }
+  const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS);
+  const debuffIconsHtml = occ => stateIconsHtml(occ, DEBUFF_DEFS);
 
   // A one-shot coloured pulse over a portrait when its DoT ticks. Purely visual;
   // sits above the portrait but below the name/HP so text stays readable.
@@ -1163,8 +1202,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       fill.style.width = `${Math.max(0, hpPct * 100)}%`;
       fill.style.background = hpColor(hpPct);
     }
-    const statusEl = cellEl.querySelector('.bc-status-icons');
-    if (statusEl) statusEl.innerHTML = statusIconsHtml(occ);
+    const debuffEl = cellEl.querySelector('.bc-debuff-icons');
+    if (debuffEl) debuffEl.innerHTML = debuffIconsHtml(occ);
     const buffEl = cellEl.querySelector('.bc-buff-icons');
     if (buffEl) buffEl.innerHTML = buffIconsHtml(occ);
   }
@@ -1221,7 +1260,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         html.push(`
           <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${cName(occ)}" onerror="this.style.display='none'">` : ''}
-            <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
+            <div class="bc-debuff-icons">${debuffIconsHtml(occ)}</div>
             <div class="bc-buff-icons">${buffIconsHtml(occ)}</div>
             <div class="battle-cell-info">
               <span class="battle-cell-name">${cName(occ)}</span>

@@ -3682,45 +3682,30 @@ button:active:not(:disabled) { opacity: 0.75; }
   z-index: 0;
 }
 
-/* Status-effect icons pinned to the top of a unit's portrait (bleed/chill/burn/
-   poison). No z-index: painted after the portrait but before .battle-cell-info,
-   so they sit over the art while the name/HP still paint on top. */
-.bc-status-icons {
+/* Standing states on a portrait: BUFFS down the right edge, DEBUFFS down the
+   left, both filling top-down. Two columns rather than one wrapping strip so a
+   glance tells you which side of the ledger an icon is on without reading it.
+   Icons are the ability art from /assets/icons/abilities. */
+.bc-buff-icons,
+.bc-debuff-icons {
   position: absolute;
   top: 1px;
-  left: 2px;
-  right: 2px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
-  pointer-events: none;
-  line-height: 1;
-}
-.bc-status-icon {
-  font-size: 9px;
-  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);
-}
-
-/* Stacking self-buffs (Rage / Fanaticism / Aegis): a column down the RIGHT edge
-   of the portrait, top-aligned, with the stack count printed on the icon. Kept
-   clear of .bc-status-icons, which owns the top-left strip. */
-.bc-buff-icons {
-  position: absolute;
-  top: 1px;
-  right: 2px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   pointer-events: none;
   z-index: 3;
 }
-.bc-buff {
+.bc-buff-icons   { right: 2px; }
+.bc-debuff-icons { left: 2px; }
+
+.bc-state {
   position: relative;
   display: block;
   width: 16px;
   height: 16px;
 }
-.bc-buff-img {
+.bc-state-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -3728,12 +3713,38 @@ button:active:not(:disabled) { opacity: 0.75; }
   border: 1px solid rgba(0, 0, 0, 0.75);
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
 }
-.bc-buff--rage       .bc-buff-img { outline: 1px solid rgba(255, 90, 60, 0.9); }
-.bc-buff--fanaticism .bc-buff-img { outline: 1px solid rgba(255, 205, 90, 0.9); }
-.bc-buff--aegis      .bc-buff-img { outline: 1px solid rgba(120, 190, 255, 0.9); }
+/* One ring colour per column, so the side is readable even on a busy portrait:
+   warm for what helps this unit, cold-red for what is being done to it. */
+.bc-buff-icons   .bc-state-img { outline: 1px solid rgba(120, 220, 150, 0.85); }
+.bc-debuff-icons .bc-state-img { outline: 1px solid rgba(235, 95, 85, 0.85); }
+/* A handful of states keep their own colour - these are the ones players track
+   by sight rather than by reading the icon. */
+.bc-state--rage        .bc-state-img { outline-color: rgba(255, 90, 60, 0.95); }
+.bc-state--fanaticism  .bc-state-img { outline-color: rgba(255, 205, 90, 0.95); }
+.bc-state--aegis       .bc-state-img { outline-color: rgba(120, 190, 255, 0.95); }
+.bc-state--stun        .bc-state-img { outline-color: rgba(255, 230, 120, 0.95); }
+.bc-state--invulnerable .bc-state-img { outline-color: rgba(255, 255, 255, 0.9); }
+
+/* Overflow tile: "+2" when more states are active than the column can show.
+   Its tooltip lists what is hidden (see MAX_STATE_ICONS in screens/battle.js). */
+.bc-state--more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.bc-state-more {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
 /* The count sits ON the icon, bottom-right, rather than beside it - the cell has
-   no horizontal room to spare. */
-.bc-buff-stack {
+   no horizontal room to spare. Hidden at 1 (see stateIconsHtml). */
+.bc-state-num {
   position: absolute;
   right: -3px;
   bottom: -4px;
