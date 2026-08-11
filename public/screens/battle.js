@@ -1064,6 +1064,35 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       .join('');
   }
 
+  // Stacking self-buffs, drawn as a column of ability icons down the RIGHT edge
+  // of the portrait with the stack count sitting on the icon itself. The counts
+  // are display-only fields set by the engine (see _rage_stacks and friends in
+  // battle-engine.js); nothing here re-derives a bonus from them.
+  // Read from both shapes for the same reason aegisLevelFor does: nested under
+  // `buffs` in a snapshot, flat on a live combatant.
+  const BUFF_DEFS = [
+    { key: 'rage',       icon: 'rage.jpg',       label: 'Rage',       field: '_rage_stacks' },
+    { key: 'fanaticism', icon: 'fanaticism.jpg', label: 'Fanaticism', field: '_fanaticism_stacks' },
+    { key: 'aegis',      icon: 'aegis.jpg',      label: 'Aegis',      field: '_aegis_stacks' },
+  ];
+
+  function buffStack(occ, field) {
+    return Number(occ?.[field] ?? occ?.buffs?.[field] ?? 0) || 0;
+  }
+
+  function buffIconsHtml(occ) {
+    if (!occ || !occ.alive) return '';
+    return BUFF_DEFS
+      .map(b => ({ b, n: buffStack(occ, b.field) }))
+      .filter(x => x.n > 0)
+      .map(({ b, n }) => `
+        <span class="bc-buff bc-buff--${b.key}" title="${b.label} x${n}">
+          <img class="bc-buff-img" src="/assets/icons/abilities/${b.icon}" alt="${b.label}">
+          ${n > 1 ? `<span class="bc-buff-stack">${n}</span>` : ''}
+        </span>`)
+      .join('');
+  }
+
   // A one-shot coloured pulse over a portrait when its DoT ticks. Purely visual;
   // sits above the portrait but below the name/HP so text stays readable.
   function flashCellStatus(cellEl, kind) {
@@ -1136,6 +1165,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
     const statusEl = cellEl.querySelector('.bc-status-icons');
     if (statusEl) statusEl.innerHTML = statusIconsHtml(occ);
+    const buffEl = cellEl.querySelector('.bc-buff-icons');
+    if (buffEl) buffEl.innerHTML = buffIconsHtml(occ);
   }
 
   function renderSide(side, actor, validTargetKeys) {
@@ -1191,6 +1222,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${cName(occ)}" onerror="this.style.display='none'">` : ''}
             <div class="bc-status-icons">${statusIconsHtml(occ)}</div>
+            <div class="bc-buff-icons">${buffIconsHtml(occ)}</div>
             <div class="battle-cell-info">
               <span class="battle-cell-name">${cName(occ)}</span>
               ${occ.alive

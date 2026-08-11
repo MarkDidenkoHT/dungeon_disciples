@@ -3701,6 +3701,54 @@ button:active:not(:disabled) { opacity: 0.75; }
   filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);
 }
 
+/* Stacking self-buffs (Rage / Fanaticism / Aegis): a column down the RIGHT edge
+   of the portrait, top-aligned, with the stack count printed on the icon. Kept
+   clear of .bc-status-icons, which owns the top-left strip. */
+.bc-buff-icons {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 3;
+}
+.bc-buff {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.bc-buff-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.75);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+}
+.bc-buff--rage       .bc-buff-img { outline: 1px solid rgba(255, 90, 60, 0.9); }
+.bc-buff--fanaticism .bc-buff-img { outline: 1px solid rgba(255, 205, 90, 0.9); }
+.bc-buff--aegis      .bc-buff-img { outline: 1px solid rgba(120, 190, 255, 0.9); }
+/* The count sits ON the icon, bottom-right, rather than beside it - the cell has
+   no horizontal room to spare. */
+.bc-buff-stack {
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  min-width: 10px;
+  padding: 0 1px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 10px;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 5px;
+  text-shadow: 0 0 2px #000;
+}
+
 /* One-shot coloured pulse over the portrait when a DoT ticks. Inserted before
    .battle-cell-info and given no z-index so the text stays legible above it. */
 .bc-status-flash {

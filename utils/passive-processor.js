@@ -537,6 +537,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.rage_atk_bonus != null) {
       owner._dmg_mult = (owner._dmg_mult ?? 1) + p.rage_atk_bonus / 100;
       owner.initiative = (owner.initiative ?? 0) + (p.rage_init_bonus ?? 0);
+      owner._rage_stacks = (owner._rage_stacks ?? 0) + 1;   // display only
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.rage_atk_bonus });
     }
   }
@@ -624,6 +625,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   if (trigger === 'on_take_damage' && owner === target && dmg > 0) {
     if (p.resist_gain != null && p.match_damage_type) {
+      owner._aegis_stacks = (owner._aegis_stacks ?? 0) + 1;   // display only
 
       const damageSource = actor?.unit_data?.damage_source ?? 'physical';
       if (damageSource === 'physical') {
@@ -648,6 +650,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_receive_ally_buff' && owner === target) {
     if (p.dmg_bonus_pct != null) {
       owner._dmg_mult = (owner._dmg_mult ?? 1) + p.dmg_bonus_pct / 100;
+      owner._fanaticism_stacks = (owner._fanaticism_stacks ?? 0) + 1;   // display only
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.dmg_bonus_pct });
     }
   }

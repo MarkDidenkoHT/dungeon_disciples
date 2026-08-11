@@ -164,6 +164,12 @@ class BattleEngine {
       _parry_available:   false,
       _aegis_armor:       0,
       _aegis_resists:     {},
+      // Stack COUNTS, kept purely so the client can draw "Rage x3" on the
+      // portrait. The bonuses themselves live in _dmg_mult / armor / resists —
+      // these never feed back into any calculation.
+      _rage_stacks:       0,
+      _fanaticism_stacks: 0,
+      _aegis_stacks:      0,
       _invulnerable:      false,
       _untargetable:      false,
       _unity_host_id:     null,
@@ -1105,6 +1111,9 @@ class BattleEngine {
         }
         c._aegis_resists = {};
       }
+      // Aegis is a per-round ward, so its stack badge clears with it. Rage and
+      // Fanaticism stacks are kept for the whole battle, same as their bonuses.
+      c._aegis_stacks = 0;
 
       c._passives_locked = false;
       c._actives_locked  = false;
@@ -1471,6 +1480,9 @@ class BattleEngine {
           _parry_available:    c._parry_available,
           _aegis_armor:        c._aegis_armor,
           _aegis_resists:      c._aegis_resists,
+          _rage_stacks:        c._rage_stacks       ?? 0,
+          _fanaticism_stacks:  c._fanaticism_stacks ?? 0,
+          _aegis_stacks:       c._aegis_stacks      ?? 0,
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
           _poison_dmg:         c._poison_dmg ?? 0,
@@ -1559,6 +1571,9 @@ class BattleEngine {
       c._parry_available   = b._parry_available   ?? false;
       c._aegis_armor       = b._aegis_armor       ?? 0;
       c._aegis_resists     = b._aegis_resists     || {};
+      c._rage_stacks       = b._rage_stacks       ?? 0;
+      c._fanaticism_stacks = b._fanaticism_stacks ?? 0;
+      c._aegis_stacks      = b._aegis_stacks      ?? 0;
       c._bleed_dmg         = b._bleed_dmg         ?? 0;
       c._chill_dmg         = b._chill_dmg         ?? 0;
       c._dot_permanent     = b._dot_permanent     ?? 0;
