@@ -926,10 +926,14 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (healed > 0) engine.fireHealTriggers(actor, actor, healed);
   }
   if (p.ally_initiative_bonus != null) {
-    for (const a of combatants.filter(c => c.side === actor.side && c.alive)) {
+    const allies = combatants.filter(c => c.side === actor.side && c.alive);
+    for (const a of allies) {
       a.initiative += p.ally_initiative_bonus;
     }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: `${def.name} — +${p.ally_initiative_bonus} initiative to all allies` });
+    // Recorded so the bonus is handed back if the caster dies, and so anyone
+    // with Fanaticism registers that an ally just buffed them.
+    engine.recordGrantedBuff(actor, 'initiative', allies.filter(a => a.id !== actor.id), p.ally_initiative_bonus);
   }
   if (p.bonus_attack != null && target) {
     // Route through engine.executeAction so range, invulnerability, unity bonds,
@@ -960,9 +964,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       }
     }
 
-    for (const a of allies) {
-      engine.fireTrigger('on_receive_ally_buff', { actor, target: a, dmg: 0, dying: null });
-    }
+    engine.fireAllyBuffTriggers(actor, allies);
   }
 
   // ── Frost Armor ───────────────────────────────────────────────────────────
@@ -997,7 +999,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
       value: armorAmt, heal: false, stat: 'armor',
       message: `${def.name} — +${armorAmt} armor and +${resistAmt} ${school} resist for ${p.duration_rounds ?? 2} rounds` });
-    engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
+    // The ally-buff trigger is fired by engine.recordGrantedBuff above.
   }
 
   // ── Volley ────────────────────────────────────────────────────────────────
@@ -1110,7 +1112,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     });
     engine.recordGrantedBuff(actor, 'all_resist', [target], p.all_resist_bonus);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — +${p.all_resist_bonus} all resists for ${p.duration_rounds} rounds` });
-    engine.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
+    // The ally-buff trigger is fired by engine.recordGrantedBuff above.
   }
 
   if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {

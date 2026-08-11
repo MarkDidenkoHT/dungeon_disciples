@@ -264,8 +264,31 @@ class BattleEngine {
     }
   }
 
+  // Every ally buff in the game funnels through here, so this is also where
+  // 'on_receive_ally_buff' is fired. It used to be fired by hand at three call
+  // sites, which meant Fanaticism ("gain damage whenever an ally buffs you")
+  // silently ignored Lion's Roar, Command, Inspiration and every aura — the
+  // buffs a Herald standing next to a Recruit actually hands out.
+  // Self-buffs are not ally buffs: a unit warding ITSELF (Aegis, Stone Form)
+  // must not feed its own Fanaticism, hence the id check.
   recordGrantedBuff(source, type, targets, value) {
     source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
+    this.fireAllyBuffTriggers(source, targets);
+  }
+  fireAllyBuffTriggers(source, targets) {
+    // A passive answering this trigger could grant another buff; the flag keeps
+    // that from looping back in on itself.
+    if (this._in_ally_buff) return;
+    this._in_ally_buff = true;
+    try {
+      for (const t of targets) {
+        if (!t || t.id === source?.id || !t.alive) continue;
+        if (source && t.side !== source.side) continue;
+        this.fireTrigger('on_receive_ally_buff', { actor: source, target: t, dmg: 0, dying: null });
+      }
+    } finally {
+      this._in_ally_buff = false;
+    }
   }
   revokeGrantedBuffs(dying) {
     for (const buff of dying._granted_buffs) {
