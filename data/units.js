@@ -2498,7 +2498,7 @@ const UNITS = {
       },
       chillrock: {
         id: 'mv_e3', f: 'mv', t: 1,
-        name: 'Сhillrock',
+        name: 'Chillrock',
         name_ru: 'Стылый Камень',
         tags: ['Construct', 'Caster'],
         size: 'row',
