@@ -83,11 +83,11 @@ const TUTORIAL_STEPS = {
   roster_equipped: {
     en: {
       title: 'Armor Equipped',
-      text: 'The armor now fills your hero\'s slot and its +5 HP is already counted in their health. Tap the slot any time to swap gear — new gear is made in the Items tab below.',
+      text: 'The armor now fills your hero\'s slot and its stats are already counted. Tap the slot any time to swap gear — new gear is made in the Items tab below.',
     },
     ru: {
       title: 'Доспех надет',
-      text: 'Доспех занял слот вашего героя, а его +5 к здоровью уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение, — новое создаётся во вкладке «Предметы» внизу.',
+      text: 'Доспех занял слот вашего героя, а его характеристики уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение, — новое создаётся во вкладке «Предметы» внизу.',
     },
   },
   roster_passive_stack: {

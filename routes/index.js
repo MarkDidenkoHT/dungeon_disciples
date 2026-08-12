@@ -646,8 +646,11 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
     });
 
-    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
+    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,tutorials&limit=1`);
     const preservedTimezone = existingPlayer[0]?.timezone ?? null;
+    // Tutorials survive a reset — once a player has seen a hint, replaying the
+    // whole onboarding is noise, not help.
+    const preservedTutorials = existingPlayer[0]?.tutorials ?? null;
 
     const emptySlots = emptyStructures();
     await supabase('/structures', {
@@ -662,7 +665,7 @@ router.post('/player/reset', requireAuth, async (req, res) => {
         hero: null,
         progress: null,
         learned_spells: null,
-        tutorials: null,
+        tutorials: preservedTutorials,
         timezone: preservedTimezone,
       }),
     });
