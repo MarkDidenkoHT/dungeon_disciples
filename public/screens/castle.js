@@ -81,6 +81,7 @@ const CASTLE_TEXT = {
   nothingMatches:{ en: 'Nothing matches these filters.',      ru: 'Ничего не найдено по фильтрам.' },
   equippedOn:  { en: 'on',                                    ru: 'у' },
   onErrand:    { en: 'Away on an errand',                     ru: 'В пути по поручению' },
+  level:       { en: 'Level',                                 ru: 'Уровень' },
   // Divine favor: the ad-funded alternative to Resurrect / Heal. Each faction
   // petitions its own god — the mechanic is identical, only the name changes,
   // so FAVOR_LABELS is presentation, not behaviour. The "Ad" marker is never
@@ -603,14 +604,20 @@ export function renderCastle(root, { player }) {
     const pct     = Math.max(0, Math.min(100, Math.round((cur / max) * 100)));
     const damaged = cur < max;
     const state   = pct <= 33 ? 'critical' : (damaged ? 'damaged' : 'ok');
+    // The unit's tier is its level — the same number the unit card shows as Lv.
+    const level = resolveUnitDef(u)?.t ?? '';
     // Both bars share one absolutely-positioned strip; stacking them separately
-    // would have each fight the same bottom inset.
+    // would have each fight the same bottom inset. The level sits beside that
+    // stack rather than above it, so the whole readout is one short row.
     return `
       <div class="castle-node-bars">
-        <div class="portrait-hp-bar" title="${cur}/${max}">
-          <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+        ${level !== '' ? `<span class="castle-node-level" title="${CASTLE_TEXT.level[castleLang]} ${level}">${level}</span>` : ''}
+        <div class="castle-node-bar-stack">
+          <div class="portrait-hp-bar" title="${cur}/${max}">
+            <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>
+          </div>
+          ${nodeXpBar(u)}
         </div>
-        ${nodeXpBar(u)}
       </div>`;
   }
 

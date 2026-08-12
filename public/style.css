@@ -2693,6 +2693,31 @@ button:active:not(:disabled) { opacity: 0.75; }
   right: 11px;
   bottom: 13px;
   z-index: 4;
+  /* A ROW now: level number, then the two bars stacked beside it. The bars used
+     to span the whole tile, which read as the loudest thing on a portrait for
+     information that is glanceable at a quarter of the length. */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+/* The unit's tier, left of the bars. Tabular figures so a 1 and a 4 occupy the
+   same width and the bars start at the same x on every tile. */
+.castle-node-level {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #f0e6d2;
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A quarter of the strip, so the bars stay a readout rather than a headline. */
+.castle-node-bar-stack {
+  flex: 0 0 25%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -5421,7 +5446,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   overflow: hidden;
   white-space: normal;
 }
-.castle-node-level { font-size: 0.52rem; color: var(--accent); font-weight: bold; }
+/* .castle-node-level moved up beside .castle-node-bars, where the element that
+   uses it now lives. The rule that stood here belonged to an older node layout
+   that no longer emits any of these classes, and being later in the file it
+   silently overrode the live one's colour and size. */
 .castle-node-timer { font-size: 0.65rem; }
 .castle-node-ready { font-size: 0.65rem; color: #6aaa5a; }
 .castle-node-hint  {
