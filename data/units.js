@@ -742,7 +742,7 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 900
@@ -755,7 +755,7 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 2'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
@@ -768,7 +768,7 @@ const UNITS = {
       tags: ['Knight', 'Holy'],
       hp: 120, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'chain 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500

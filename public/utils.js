@@ -993,3 +993,61 @@ export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENC
     Array.from({ length: Math.min(concurrency, total) }, worker)
   );
 }
+// Swipe-to-scroll for the portrait tracks. .portrait-card holds touch-action:
+// none (it must — pan-x makes iOS Safari fire pointercancel and kills
+// drag-to-grid), so a finger starting on a card gives the browser no chance to
+// pan the strip. touchmove still arrives, so the scroll is done by hand here.
+//
+// A swipe swallows the tap that ends it, otherwise letting go would also pick
+// whichever portrait sits under the finger.
+const SWIPE_THRESHOLD = 8;
+
+export function enableTrackSwipe(wrap) {
+  if (!wrap || wrap.dataset.swipeBound) return;
+  wrap.dataset.swipeBound = '1';
+
+  let startX = 0, startY = 0, startLeft = 0;
+  let swiping = false, resolved = false;
+
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    startX    = e.touches[0].clientX;
+    startY    = e.touches[0].clientY;
+    startLeft = wrap.scrollLeft;
+    swiping   = false;
+    // Nothing to scroll, and a vertical drag belongs to the page behind us.
+    resolved  = wrap.scrollWidth - wrap.clientWidth <= 1;
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!swiping) {
+      if (resolved) return;
+      if (Math.abs(dy) >= SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx)) { resolved = true; return; }
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+      swiping = true;
+    }
+    e.preventDefault();
+    wrap.scrollLeft = startLeft - dx;
+  }, { passive: false });
+
+  // Time-boxed rather than a one-shot listener: a swipe does not always end in
+  // a click, and an unspent guard would eat the player's next real tap.
+  let suppressUntil = 0;
+
+  wrap.addEventListener('touchend', () => {
+    if (!swiping) return;
+    swiping = false;
+    suppressUntil = Date.now() + 400;
+  });
+
+  // Capture, so it lands before any card's own handler.
+  wrap.addEventListener('click', e => {
+    if (Date.now() > suppressUntil) return;
+    suppressUntil = 0;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
+}

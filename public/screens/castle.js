@@ -14,7 +14,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName, buildingLabel,
+  handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -512,6 +512,7 @@ export function renderCastle(root, { player }) {
           ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
       };
       centreSelected('auto');
+      enableTrackSwipe(sheetBody.querySelector('.branch-track-wrap'));
 
       sheetBody.querySelectorAll('#branch-track .portrait-card').forEach(card => {
         card.addEventListener('click', () => {

@@ -1,7 +1,7 @@
 import { api }      from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
-import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet } from '../utils.js';
+import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet, enableTrackSwipe } from '../utils.js';
 import { playFactionTheme } from '../music.js';
 import { assetUrl } from '../asset_base.js';
 
@@ -232,6 +232,7 @@ export function renderRegister(root, { player } = {}) {
 
     const slider = root.querySelector('#faction-slider');
     const crests = [...root.querySelectorAll('#faction-crest-track .portrait-card')];
+    enableTrackSwipe(root.querySelector('.register-track-wrap'));
 
     slider.addEventListener('scroll', () => {
       const idx = Math.round(slider.scrollLeft / slider.clientWidth);
@@ -254,6 +255,8 @@ export function renderRegister(root, { player } = {}) {
       const faction   = FACTIONS.find(f => f.id === factionId);
       const cardEl    = root.querySelector(`.faction-example-card[data-faction="${factionId}"]`);
       let openIndex   = null;   // null = no card on show
+
+      enableTrackSwipe(track.closest('.prep-track-wrap'));
 
       function closeCard() {
         openIndex = null;
@@ -380,6 +383,8 @@ export function renderRegister(root, { player } = {}) {
         if (ci === i) c.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
       });
     }
+
+    enableTrackSwipe(root.querySelector('#hero-portrait-track')?.closest('.prep-track-wrap'));
 
     root.querySelectorAll('#hero-portrait-track .portrait-card').forEach(card => {
       card.addEventListener('click', () => selectHero(Number(card.dataset.i)));

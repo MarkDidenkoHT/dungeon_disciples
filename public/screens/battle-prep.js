@@ -48,8 +48,8 @@ const BP_TEXT = {
   // into. The numbers are the same ⚔ totals already on screen, repeated here so
   // the warning is checkable rather than just ominous.
   weakerArmy: {
-    en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle.`,
-    ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой.`,
+    en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle, or cast a spell.`,
+    ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой, или применить заклинание.`,
   },
   yourPower:    { en: 'Your Power',   ru: 'Ваша сила' },
   enemyPower:   { en: 'Enemy Power',  ru: 'Сила врага' },
@@ -998,10 +998,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
-  // The cards keep touch-action: none so drag-to-grid survives on iOS, which
-  // also means the track cannot be swiped. These arrows are the way to reach
-  // units that do not fit on screen; they hide themselves when everything fits
-  // or when the track is already at that end.
+  // Swiping the track is handled in resolveSliderGesture; these arrows remain
+  // for players who never try the gesture. They hide themselves when everything
+  // fits or when the track is already at that end.
   function updateTrackArrows() {
     const wrap = root.querySelector('#prep-track-wrap');
     const prev = root.querySelector('#track-prev');
@@ -1049,6 +1048,23 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   // a fixed-position, pointer-events:none card stuck on screen. Every drag
   // handler below ignores pointers that are not the owner.
   let activePointerId = null;
+
+  // Swipe-to-scroll on the portrait track. The cards must keep touch-action:
+  // none (see attachPortraitEvents), so the browser can never pan the strip on
+  // its own — we own the pointer, and resolve the gesture ourselves: a mostly
+  // horizontal move that started on a card and stays in the tray scrolls the
+  // track instead of dragging the unit onto the grid.
+  const SLIDER_THRESHOLD = 8;
+  let dragStartX      = 0;
+  let dragStartY      = 0;
+  let sliderScrolling = false;   // gesture resolved as a track swipe
+  let sliderResolved  = false;   // gesture resolved either way — stop testing
+  let sliderStartLeft = 0;
+  let suppressCardClick = false; // a swipe must not also select a portrait
+  // A swipe leaves the selection exactly as the player left it, so the drag
+  // that turned out to be a scroll is rolled back to these.
+  let prevDragUnit     = null;
+  let prevDragFromCell = null;
 
   function makeDragGhost(unit) {
     const size     = getUnitSize(unit);
@@ -1127,10 +1143,22 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     // Never leak a previous ghost, whatever state we were left in.
     removeGhost();
     clearHover();
+    // Any stale suppression is spent by now: the click it guarded against would
+    // have fired before this next press.
+    suppressCardClick = false;
+    prevDragUnit     = dragUnit;
+    prevDragFromCell = dragFromCell;
     dragUnit        = unit;
     dragFromCell    = fromCell;
     pointerDragging = true;
     activePointerId = pointerId;
+    dragStartX      = clientX;
+    dragStartY      = clientY;
+    sliderScrolling = false;
+    // Only a drag that begins in the tray can turn into a swipe; dragging a
+    // placed unit off the grid keeps its old meaning.
+    sliderResolved  = fromCell !== null;
+    sliderStartLeft = root.querySelector('#prep-track-wrap')?.scrollLeft ?? 0;
     activeGhost     = makeDragGhost(unit);
     moveGhost(clientX, clientY);
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -1152,6 +1180,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     removeGhost();
     pointerDragging = false;
     activePointerId = null;
+    sliderScrolling = false;
+    sliderResolved  = true;
 
     const cell     = cellFromPoint(clientX, clientY);
     const ignoreId = dragFromCell !== null ? (occupied[dragFromCell]?.unitId ?? null) : null;
@@ -1187,6 +1217,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     removeGhost();
     pointerDragging = false;
     activePointerId = null;
+    sliderScrolling = false;
+    sliderResolved  = true;
     dragUnit        = null;
     dragFromCell    = null;
     root.querySelectorAll('.battle-cell--dragging').forEach(c => c.classList.remove('battle-cell--dragging'));
@@ -1198,10 +1230,44 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return pointerDragging && (activePointerId === null || e.pointerId === activePointerId);
   }
 
+  function scrollTrackBy(clientX) {
+    const wrap = root.querySelector('#prep-track-wrap');
+    if (wrap) wrap.scrollLeft = sliderStartLeft - (clientX - dragStartX);
+  }
+
+  // Returns true once the gesture has been claimed as a track swipe.
+  function resolveSliderGesture(e) {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    // Pulling the card upward (toward the grid) is a placement drag — decide
+    // that way as soon as the vertical move wins, and stop testing.
+    if (Math.abs(dy) >= SLIDER_THRESHOLD && Math.abs(dy) > Math.abs(dx)) {
+      sliderResolved = true;
+      return false;
+    }
+    if (Math.abs(dx) < SLIDER_THRESHOLD) return false;
+
+    const wrap = root.querySelector('#prep-track-wrap');
+    if (!wrap || wrap.scrollWidth - wrap.clientWidth <= 1) { sliderResolved = true; return false; }
+
+    sliderResolved  = true;
+    sliderScrolling = true;
+    sliderStartLeft = wrap.scrollLeft;
+    dragStartX      = e.clientX;
+    removeGhost();
+    clearHover();
+    root.querySelector('#portrait-track')?.classList.remove('portrait-track--drop-target');
+    return true;
+  }
+
 
   document.addEventListener('pointermove', e => {
     if (!isDragPointer(e)) return;
     e.preventDefault();
+
+    if (sliderScrolling) { scrollTrackBy(e.clientX); return; }
+    if (!sliderResolved && resolveSliderGesture(e)) return;
+
     moveGhost(e.clientX, e.clientY);
 
     const cell     = cellFromPoint(e.clientX, e.clientY);
@@ -1229,6 +1295,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   document.addEventListener('pointerup', e => {
     if (!isDragPointer(e)) return;
+    if (sliderScrolling) {
+      suppressCardClick = true;
+      cancelPointerDrag();
+      dragUnit     = prevDragUnit;
+      dragFromCell = prevDragFromCell;
+      updateTrackArrows();
+      return;
+    }
     finishPointerDrag(e.clientX, e.clientY);
   });
 
@@ -1336,11 +1410,12 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       if (card.classList.contains('portrait-card--locked')) return;
 
       // Grabs the pointer immediately, and the card keeps touch-action: none.
-      // A direction-threshold version (defer the drag, let sideways swipes
-      // scroll) works on Android but is broken on iOS: Safari fires
-      // pointercancel as soon as touch-action permits a pan in that axis, which
-      // lands before the threshold resolves and kills the drag outright. The
-      // track is scrolled by the arrow buttons instead.
+      // Letting the browser resolve the direction instead is broken on iOS:
+      // Safari fires pointercancel as soon as touch-action permits a pan in
+      // that axis, which lands before the threshold resolves and kills the drag
+      // outright. So we own the pointer and split the gesture ourselves in
+      // resolveSliderGesture — sideways scrolls the track, upward drags the
+      // unit to the grid. The arrows stay as a non-gestural fallback.
       card.addEventListener('pointerdown', e => {
         if (!e.isPrimary || pointerDragging) return;
         e.preventDefault();
@@ -1350,6 +1425,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       card.addEventListener('click', e => {
         if (pointerDragging) return;
+        // The click that closes a swipe lands on whichever card ended up under
+        // the finger — it is scrolling, not a pick.
+        if (suppressCardClick) { suppressCardClick = false; return; }
         const wasSelected = dragUnit?.id === u.id;
         dragUnit     = wasSelected ? null : u;
         dragFromCell = null;
