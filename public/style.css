@@ -2710,6 +2710,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 700;
   line-height: 1;
   color: #f0e6d2;
+  background-color: black;
+  width: 15px;
   /* text-shadow: 0 0 3px #000, 0 0 2px #000; */
   font-variant-numeric: tabular-nums;
 }
