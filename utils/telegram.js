@@ -1,5 +1,5 @@
 const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.WEBAPP_URL || 'https://dungeon-disciples.onrender.com';
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://shattered-crown-lhso.onrender.com';
 
 const BOT_WELCOME = {
   en: {
