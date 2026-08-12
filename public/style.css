@@ -2716,7 +2716,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 /* A quarter of the strip, so the bars stay a readout rather than a headline. */
 .castle-node-bar-stack {
-  flex: 0 0 25%;
+  flex: 0 0 70%;
   min-width: 0;
   display: flex;
   flex-direction: column;
