@@ -6550,6 +6550,21 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: default;
 }
 
+/* The disabled button carries the reason as its label. It has to wrap — a lock
+   requirement is a sentence, not a word — and it reads as a blocker rather than
+   as a dimmed action, which is why it keeps a warm tone against the dead grey. */
+.item-action-btn--blocked {
+  white-space: normal;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 7px 10px;
+  text-align: center;
+}
+.item-action-btn--craft[disabled].item-action-btn--blocked {
+  color: #d98274;
+}
+
 .item-cost {
   font-size: 0.65rem;
   color: var(--muted);

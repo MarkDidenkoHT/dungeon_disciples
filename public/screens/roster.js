@@ -1000,8 +1000,11 @@ export function renderRoster(root, { player }) {
           </div>
         </div>
         <div class="item-cost">${costChips(cost, itemCost)}</div>
-        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>${T('craft')}</button>
-        ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
+        <!-- Same card as the one in screens/items.js — the reason lives in the
+             button, which is dead while a reason exists. Keep the two in step. -->
+        <button class="item-action-btn item-action-btn--craft${blocked ? ' item-action-btn--blocked' : ''}"
+                data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}
+                ${blocked ? `title="${blocked}"` : ''}>${blocked || T('craft')}</button>
       </div>`;
   }
 

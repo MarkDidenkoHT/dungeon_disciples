@@ -294,8 +294,15 @@ export function renderItems(root, { player }) {
           </div>
         </div>
         <div class="item-cost">${costChips(itemDef.cost || {}, itemDef.item_cost || {})}</div>
-        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}>${T('craft')}</button>
-        ${blocked ? `<div class="item-card-blocked">${blocked}</div>` : ''}
+        <!-- The reason goes IN the button rather than on a line under it: the
+             button is dead anyway while a reason exists, so its label is free
+             space, and one element cannot disagree with itself about whether the
+             item is craftable. Missing materials stay unlabelled — the cost
+             chips above already say which, and repeating it in the button would
+             be the one case where the reason is longer than the card. -->
+        <button class="item-action-btn item-action-btn--craft${blocked ? ' item-action-btn--blocked' : ''}"
+                data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}
+                ${blocked ? `title="${blocked}"` : ''}>${blocked || T('craft')}</button>
       </div>`;
   }
 
