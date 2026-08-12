@@ -2706,11 +2706,11 @@ button:active:not(:disabled) { opacity: 0.75; }
    same width and the bars start at the same x on every tile. */
 .castle-node-level {
   flex: 0 0 auto;
-  font-size: 0.62rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1;
   color: #f0e6d2;
-  text-shadow: 0 0 3px #000, 0 0 2px #000;
+  /* text-shadow: 0 0 3px #000, 0 0 2px #000; */
   font-variant-numeric: tabular-nums;
 }
 
