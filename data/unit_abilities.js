@@ -1501,13 +1501,13 @@ const UNIT_ABILITIES = {
   'clear_shot 1': {
     id: 'clear_shot 1',
     name: 'Clear Shot',
-    name_ru: "Чистый выстрел",
+    name_ru: "Точный выстрел",
     rank: 1,
     type: 'passive',
     trigger: 'on_round_start',
-    description: 'If this unit is in the back and has no living ally in front of it, gain +25% initiative and +25% damage.',
-    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +25% инициативы и +25% урона.",
-    params: { clear_shot_initiative_bonus_pct: 25, clear_shot_dmg_bonus_pct: 25 },
+    description: 'If this unit is in the back and has no living ally in front of it, gain +10% initiative and +20% damage. Except units with Protector.',
+    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +10% инициативы и +20% урона. За исключением юнитов с Защитник.",
+    params: { clear_shot_initiative_bonus_pct: 10, clear_shot_dmg_bonus_pct: 20 },
   },
   'duelist 1': {
     id: 'duelist 1',

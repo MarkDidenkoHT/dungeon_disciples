@@ -770,7 +770,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'chain 1'], ability: 'cleanse 1',
+      passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'dissipate 1'], ability: 'cleanse 1',
       building_slot: 'slot_0', xp: 1500
     },
     inquisitor: {
@@ -1088,7 +1088,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'iron_fist.jpg',
+      damage_source: 'physical', action_power: 22, action_icon: 'iron_fist.jpg', action_sfx: 'robot_hit',
       xp: 150, passive: 'unbreakable 2', ability: null,
     },
     iron_automaton: {
@@ -1099,8 +1099,8 @@ const UNITS = {
       size: 'column',
       hp: 105, armor: 25, initiative: 40,
       resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'iron_fist.jpg',
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1, 
+      damage_source: 'physical', action_power: 30, action_icon: 'iron_fist.jpg', action_sfx: 'robot_hit',
       xp: 720, passive: ['unbreakable 2', 'protector 1'], ability: null,
     },
     golden_lion: {
@@ -1112,7 +1112,7 @@ const UNITS = {
       hp: 130, armor: 30, initiative: 55,
       resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 36, action_icon: 'iron_fist.jpg',
+      damage_source: 'physical', action_power: 36, action_icon: 'iron_fist.jpg', action_sfx: 'robot_hit',
       xp: 1800, passive: ['unbreakable 2', 'protector 1', 'beacon_of_hope 1'], ability: 'lions_roar 2',
     },
     siege_engine: {
@@ -1184,8 +1184,8 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 35,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
-      xp: 360, passive: ['shatter 1', 'scavenger 1'], ability: null,
+      damage_source: 'physical', action_power: 14, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
+      xp: 360, passive: ['shatter 1', 'scavenger 1', 'clear_shot 1'], ability: null,
     },
     devastator: {
       id: 'e621', f: 'e', t: 3,
@@ -1196,8 +1196,8 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 35,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
-      xp: 900, passive: ['shatter 2', 'scavenger 1'], ability: null,
+      damage_source: 'physical', action_power: 18, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
+      xp: 900, passive: ['shatter 2', 'scavenger 1', 'clear_shot 1'], ability: null,
     },
     flamethrower: {
       id: 'e622', f: 'e', t: 3,
@@ -1208,8 +1208,8 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 25, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 15, action_icon: 'flame_wave.jpg',
-      xp: 900, passive: ['burn 2', 'scavenger 1'], ability: null,
+      damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg',
+      xp: 900, passive: ['burn 2', 'dissipate 1', 'scavenger 1'], ability: null,
     },
     blessed_soul: {
       id: 'e7', f: 'e', t: 1,
@@ -1316,7 +1316,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'shock',
+      damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'shock', action_sfx: 'shock',
       xp: 60, passive: 'inspiration_initiative 1', ability: null,
     },
     red_mage: {
