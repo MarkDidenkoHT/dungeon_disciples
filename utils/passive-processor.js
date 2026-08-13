@@ -429,10 +429,33 @@ function dispatchPassive(trigger, owner, def, ctx) {
       target._stacks[key] = (target._stacks[key] ?? 0) + 1;
       if (target._stacks[key] >= p.stacks_needed) {
         target._stacks[key] = 0;
-        const burst = Math.max(1, p.stack_burst_damage - target.armor);
+        // The burst used to be `stack_burst_damage - target.armor` — armor as a
+        // FLAT subtraction, which nothing else in the game does. Armor is a
+        // percentage everywhere else (calcDamageWithPassives: armorRed =
+        // armor/100, and the Armor tooltip says "each point reduces damage by
+        // 1%"), so Death Mark's 15 became 1 against any target with 15 armor.
+        // It read as the passive having stopped working, because against
+        // anything armoured it did nothing.
+        //
+        // `damage_type` was declared on the param and then ignored outright: a
+        // 'death' burst is not physical, so it goes through the target's
+        // resistance like every other typed hit, not through armor at all.
+        const burstType = p.damage_type ?? 'physical';
+        let burst = p.stack_burst_damage;
+        if (burstType === 'physical') {
+          const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
+          burst = Math.floor(burst * (1 - armor / 100));
+        } else {
+          const resist = (target.unit_data?.resistances ?? target.resistances ?? {})[burstType] ?? 0;
+          burst = Math.floor(burst * (1 - resist / 100));
+        }
+        burst = Math.max(1, burst);
         hurt(target, burst);
         if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
+        // targetId, so the client can place the animation on the struck cell —
+        // the FX layer resolves its target by id (see effectForEntry/playback in
+        // screens/battle.js) and this entry never carried one.
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: burst, heal: false });
       }
     }
     if (p.stack_bonus_pct != null && p.max_stacks != null) {
