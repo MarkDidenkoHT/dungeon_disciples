@@ -518,7 +518,7 @@ const UNITS = {
       hp: 70, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+      damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
       xp: 900, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     peer: {
@@ -1016,7 +1016,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 10, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 10, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 75, passive: 'impale 1', ability: null,
     },
     infantry: {
@@ -1028,7 +1028,7 @@ const UNITS = {
       hp: 55, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 14, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 14, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 360, passive: ['impale 1', 'protector 1'], ability: null,
     },
     crossbowman: {
@@ -1052,7 +1052,7 @@ const UNITS = {
       hp: 70, armor: 20, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 900, passive: ['impale 1', 'protector 1', 'iron_will 1'], ability: 'stun 1',
     },
     horseman: {
@@ -1064,7 +1064,7 @@ const UNITS = {
       hp: 105, armor: 25, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 30, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 720, passive: ['impale 2', 'iron_will 1'], ability: null,
     },
     cavalry: {
@@ -1076,7 +1076,7 @@ const UNITS = {
       hp: 125, armor: 25, initiative: 55,
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'spear.jpg', action_animation: 'impale',
+      damage_source: 'physical', action_power: 40, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 1800, passive: ['impale 2', 'iron_will 1', 'inspiration_initiative 1'], ability: null,
     },
     sentinel: {
@@ -1124,7 +1124,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 30,
       resistances: { air: 0, fire: 20, life: 20, death: 20, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 16, action_icon: 'mortar_shoot.jpg',
+      damage_source: 'physical', action_power: 16, action_icon: 'mortar_shoot.jpg', action_sfx: 'canon_shot',
       xp: 720, passive: ['unbreakable 2', 'shatter 1'], ability: null,  
     },
     siege_dreadnought: {
@@ -1136,7 +1136,7 @@ const UNITS = {
       hp: 125, armor: 20, initiative: 30,
       resistances: { air: 0, fire: 30, life: 20, death: 20, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'mortar_shoot.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'mortar_shoot.jpg',  action_sfx: 'canon_shot',
       xp: 1800, passive: ['unbreakable 2', 'shatter 2'], ability: null,  
     },
     smith: {
@@ -1184,7 +1184,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 35,
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'musket_shoot.jpg',
+      damage_source: 'physical', action_power: 20, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
       xp: 360, passive: ['shatter 1', 'scavenger 1'], ability: null,
     },
     devastator: {
@@ -1196,7 +1196,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 35,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'musket_shoot.jpg',
+      damage_source: 'physical', action_power: 30, action_icon: 'musket_shoot.jpg',  action_sfx: 'canon_shot',
       xp: 900, passive: ['shatter 2', 'scavenger 1'], ability: null,
     },
     flamethrower: {
@@ -1267,8 +1267,8 @@ const UNITS = {
       size: 'tile',
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg',
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'life', action_power: 10, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       xp: 360, passive: ['aegis 1', 'iron_will 1'], ability: 'sanctuary 1',
     },
     mithrails_champion: {
@@ -1279,7 +1279,7 @@ const UNITS = {
       size: 'tile',
       hp: 65, armor: 20, initiative: 30,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
-      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       xp: 900, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
     },
@@ -1823,7 +1823,7 @@ const UNITS = {
       name_ru: 'Адепт',
       tags: ['Caster'],
       size: 'tile',
-      hp: 40, armor: 0, initiative: 35,
+      hp: 45, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 0, life: 25, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'shock',
@@ -2604,7 +2604,7 @@ const UNITS = {
         hp: 50, armor: 10, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+        damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
         xp: 110, passive: 'sacrament 1', ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
@@ -2616,7 +2616,7 @@ const UNITS = {
         hp: 55, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 14, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+        damage_source: 'physical', action_power: 14, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
         xp: 330, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
@@ -2628,7 +2628,7 @@ const UNITS = {
         hp: 65, armor: 15, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice',
+        damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
         xp: 560, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
       },
       wailing_ghost: {
