@@ -1922,7 +1922,7 @@ const UNITS = {
       hp: 90, armor: 10, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 150, passive: ['sacrament 1', 'regenerate 1'], ability: 'libation 1',
     },
     crimson_communicant: {
@@ -1934,7 +1934,7 @@ const UNITS = {
       hp: 105, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 24, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 720, passive: ['sacrament 1', 'regenerate 2'], ability: 'libation 1',
     },
     chosen: {
@@ -1946,7 +1946,7 @@ const UNITS = {
       hp: 130, armor: 15, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1800, passive: ['sacrament 1', 'regenerate 2', 'lifesteal 1'], ability: 'libation 1',
     },
     husk_colossus: {
@@ -1958,7 +1958,7 @@ const UNITS = {
       hp: 120, armor: 0, initiative: 20,
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 150, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
@@ -1970,7 +1970,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 720, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_angel: {
@@ -1982,7 +1982,7 @@ const UNITS = {
       hp: 140, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1800, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
@@ -2198,7 +2198,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 8, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'death', action_power: 8, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 125, passive: ['horde 1', 'lifesteal 1'], ability: 'mothers_blessing 1',
     },
     mothers_sorrow: {
@@ -2210,7 +2210,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range:1,
-      damage_source: 'death', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'death', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 450, passive: ['horde 1', 'lifesteal 1', 'vitality 1'], ability: 'mothers_blessing 1',
     },
     mothers_grief: {
@@ -2222,7 +2222,7 @@ const UNITS = {
       hp: 60, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 30 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'death', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1000, passive: ['horde 1', 'lifesteal 1', 'vitality 2'], ability: 'mothers_blessing 1',
     },
     mothers_vigil: {
@@ -2234,7 +2234,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'death', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 450, passive: ['horde 1', 'lifesteal 1', 'resist_aura_nature 1'], ability: 'mothers_blessing 1',
     },
     mothers_shroud: {
@@ -2246,7 +2246,7 @@ const UNITS = {
       hp: 60, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 30 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'death', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1000, passive: ['horde 1', 'lifesteal 1', 'resist_aura_nature 2'], ability: 'mothers_blessing 1',
     },
   },
