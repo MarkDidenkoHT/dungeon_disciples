@@ -392,6 +392,124 @@ export async function sword_swing(cellEl, opts = {}) {
   console.log('[battle-fx] sword_swing END', dataId);
 }
 
+// ── mace_swing ────────────────────────────────────────────────────────────────
+// Same family as sword_swing — sprite plus two motion ghosts, rotated about the
+// grip — but weighted for a blunt weapon. 21 units carry `mace.jpg` as their
+// action icon (Black Castellan and Grail Warden and their whole upgrade trees,
+// plus Heretic/Posessed/Vessel) and were all swinging a sword.
+//
+// What makes it a mace rather than a fast sprite swap:
+//   * pivot at the BUTT of the handle, so the head describes the long arc
+//   * the swing hangs back, then whips through — a sword's ease is symmetric,
+//     a mace has to look like it takes effort to start and cannot be stopped
+//   * a wider arc, and the ghosts trail further behind the head
+//   * it lands: the head hangs at the end of the arc for a beat over a dust
+//     thud, instead of fading out mid-motion the way a slash does
+export async function mace_swing(cellEl, opts = {}) {
+  console.log('[battle-fx] mace_swing START', cellEl?.dataset?.id, opts);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const isEnemy = opts.isEnemy ?? false;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const layer = new PIXI.Container();
+  const dustG = new PIXI.Graphics();          // NOT additive: this is grit, not light
+  app.stage.addChild(layer);
+
+  let texture;
+  try {
+    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/mace_attack.png'));
+  } catch {
+    // Loud, then carry on with the sword art rather than animating nothing —
+    // a silent failure here would look exactly like the bug this fixes.
+    console.error('[battle-fx] mace_attack.png missing — falling back to sword.png');
+    try {
+      texture = await PIXI.Assets.load(assetUrl('/assets/vfx/sword.png'));
+    } catch {
+      layer.destroy({ children: true });
+      return;
+    }
+  }
+
+  const sprites = [0.16, 0.34, 1].map(alpha => {
+    const s = new PIXI.Sprite(texture);
+    // Grip end, not the middle: a mace pivots where the hand is.
+    s.anchor.set(0.5, 0.92);
+    const scale = 58 / Math.max(texture.width, texture.height);
+    s.scale.set(isEnemy ? -scale : scale, scale);
+    s.alpha = alpha;
+    layer.addChild(s);
+    return s;
+  });
+  const [ghost1, ghost2, main] = sprites;
+  layer.addChild(dustG);
+
+  const CENTER = isEnemy
+    ? -Math.PI * 0.25 - Math.PI * 2 / 3
+    : -Math.PI * 0.25 + Math.PI * 2 / 3;
+  const SWING     = 1.35;                     // wider than the sword's 1.0
+  const START_ROT = CENTER - SWING / 2;
+  const END_ROT   = CENTER + SWING / 2;
+
+  const grit = Array.from({ length: 9 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.3, 0.9), size: rand(1.6, 3.6), delay: rand(0, 0.15),
+  }));
+
+  await animate(900, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width  / 2;
+    const cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    // Hang back for the first 40%, then whip through and stop dead. Sword uses a
+    // symmetric ease-in-out; this is deliberately lopsided.
+    let ease;
+    if (t < 0.40) {
+      ease = -0.12 * (t / 0.40);                       // drifts BACKWARD: the wind-up
+    } else if (t < 0.62) {
+      const k = (t - 0.40) / 0.22;
+      ease = -0.12 + 1.12 * (k * k);                   // accelerating strike
+    } else {
+      ease = 1;                                        // landed; the head stays put
+    }
+
+    const rot   = START_ROT + (END_ROT - START_ROT) * ease;
+    const alpha = t < 0.08 ? t / 0.08 : t > 0.82 ? (1 - t) / 0.18 : 1;
+    // Ghosts lag by the SPEED of the swing, so they bunch up during the wind-up
+    // and smear out through the strike instead of trailing at a fixed offset.
+    const smear = t > 0.40 && t < 0.62 ? 0.34 : 0.10;
+
+    main.position.set(cx, cy);   main.rotation = rot;             main.alpha = alpha;
+    ghost2.position.set(cx, cy); ghost2.rotation = rot - smear;   ghost2.alpha = alpha * 0.35;
+    ghost1.position.set(cx, cy); ghost1.rotation = rot - smear * 2; ghost1.alpha = alpha * 0.18;
+
+    // The thud, under the head at the end of the arc.
+    dustG.clear();
+    const land = clamp01((t - 0.60) / 0.40);
+    if (land > 0) {
+      const hx = cx + Math.cos(END_ROT - Math.PI / 2) * R * 0.42 * (isEnemy ? -1 : 1);
+      const hy = cy + Math.sin(END_ROT - Math.PI / 2) * R * 0.42;
+      for (const g of grit) {
+        const s2 = clamp01((land - g.delay) / (1 - g.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.38 * s2 * g.speed;
+        dustG.beginFill(0xa89c88, 0.4 * (1 - s2));
+        dustG.drawCircle(hx + Math.cos(g.ang) * dist, hy + Math.sin(g.ang) * dist - s2 * R * 0.1,
+                         g.size * (0.8 + s2));
+        dustG.endFill();
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] mace_swing END', dataId);
+}
+
 // ── impale ─────────────────────────────────────────────────────────────────────
 export async function impale(cellEl, opts = {}) {
   console.log('[battle-fx] impale START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
@@ -3624,6 +3742,7 @@ export const EFFECTS = {
   mithrails_light,
   communion,
   sword_swing,
+  mace_swing,
   impale,
   holy_heal,
   protector,
