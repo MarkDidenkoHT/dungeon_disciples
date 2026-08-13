@@ -422,7 +422,7 @@ const UNITS = {
       hp: 60, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg', action_animation: 'cannon_shot',
+      damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 170, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
@@ -434,7 +434,7 @@ const UNITS = {
       hp: 80, armor: 35, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg', action_animation: 'cannon_shot',
+      damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
@@ -446,7 +446,7 @@ const UNITS = {
       hp: 85, armor: 40, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg', action_animation: 'cannon_shot',
+      damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
@@ -458,7 +458,7 @@ const UNITS = {
       hp: 80, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'cannon_shot',
+      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
@@ -470,7 +470,7 @@ const UNITS = {
       hp: 95, armor: 30, initiative: 50,
       resistances: { air: 15, fire: 10, life: 10, death: 20, cold: 25, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'throw_stone.jpg', action_animation: 'cannon_shot',
+      damage_source: 'physical', action_power: 15, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     heretic: {

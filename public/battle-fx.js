@@ -3313,6 +3313,159 @@ export async function cannon_shot(cellEl, opts = {}) {
   console.log('[battle-fx] cannon_shot END', dataId);
 }
 
+// Hurled STONE — the gargoyles. Split off cannon_shot on purpose: powder and
+// masonry are not the same attack. No muzzle flash, no straight line and no
+// sparks (stone does not spark). Instead the rock is heaved, tumbles through a
+// high arc, and lands with weight — the whole thing is slower than the cannon
+// so it reads as mass rather than velocity.
+//
+// The rock is drawn on a NON-additive layer: it is an object that occludes,
+// not light. Only the dust and the landing thud get any glow at all.
+export async function stone_throw(cellEl, opts = {}) {
+  console.log('[battle-fx] stone_throw START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+
+  const ROCK  = 0x6b6459;   // the stone itself
+  const EDGE  = 0x8d857a;   // lit edge, so it is not a silhouette
+  const DUST  = 0xa89c88;   // grit thrown up
+  const CRACK = 0x4a443c;   // fracture lines under the impact
+
+  const layer     = new PIXI.Container();
+  const dustLayer = new PIXI.Container(); dustLayer.filters = [new PIXI.BlurFilter(4)];
+  const dustG  = new PIXI.Graphics();
+  const rockG  = new PIXI.Graphics();
+  const groundG = new PIXI.Graphics();
+  dustLayer.addChild(dustG);
+  layer.addChild(groundG, dustLayer, rockG);
+  app.stage.addChild(layer);
+
+  // One irregular silhouette, reused every frame and rotated — a rock that
+  // changed shape frame to frame would boil.
+  const facets = Array.from({ length: 7 }, (_, i) => ({
+    ang: (i / 7) * TAU, r: rand(0.72, 1.12),
+  }));
+  const rubble = Array.from({ length: 11 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.3, 0.95), size: rand(1.8, 4.6), delay: rand(0, 0.14),
+    spin: rand(-5, 5), bounce: rand(0.15, 0.4),
+  }));
+  const grit = Array.from({ length: 14 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.4, 1.2), size: rand(2, 5), delay: rand(0, 0.2), rise: rand(0.1, 0.45),
+  }));
+  const spin0 = rand(0, TAU);
+  const spinRate = rand(3.5, 6) * (Math.random() < 0.5 ? -1 : 1);
+
+  const drawRock = (g, cx, cy, radius, rot, fill, alpha) => {
+    g.beginFill(fill, alpha);
+    const pts = [];
+    for (const f of facets) {
+      pts.push(cx + Math.cos(f.ang + rot) * radius * f.r,
+               cy + Math.sin(f.ang + rot) * radius * f.r);
+    }
+    g.drawPolygon(pts);
+    g.endFill();
+  };
+
+  const DURATION = 720;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.8;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    // Wind-up is longer than the cannon's: the thing has to be lifted first.
+    const windup = clamp01(t / 0.26);
+    const flight = clamp01((t - 0.26) / 0.46);
+    const impact = clamp01((t - 0.72) / 0.28);
+
+    dustG.clear(); rockG.clear(); groundG.clear();
+
+    // ── Wind-up: the rock rises and cocks back behind the thrower.
+    if (t < 0.26) {
+      const lift = Math.sin(windup * Math.PI * 0.5);
+      const back = (dx > sx ? -1 : 1) * R * 0.20 * lift;
+      drawRock(rockG, sx + back, sy - R * 0.30 * lift, R * 0.15 * (0.6 + lift * 0.4),
+               spin0, ROCK, 0.95);
+      drawRock(rockG, sx + back - R * 0.02, sy - R * 0.30 * lift - R * 0.02,
+               R * 0.11 * (0.6 + lift * 0.4), spin0, EDGE, 0.5);
+    }
+
+    // ── Flight: high, heavy arc. Tumbling, not streaking.
+    if (flight > 0 && flight < 1) {
+      // Steeper than arrow_shot's — a thrown rock is lobbed, not loosed.
+      const arc = Math.sin(flight * Math.PI) * R * 0.55;
+      const bx  = lerp(sx, dx, flight);
+      const by  = lerp(sy, dy, flight) - arc;
+      const rot = spin0 + spinRate * flight;
+      const rr  = R * 0.16;
+
+      // A little grit shed along the way, hanging where it fell off.
+      if (flight > 0.15) {
+        dustG.beginFill(DUST, 0.16 * (1 - flight));
+        dustG.drawCircle(bx, by + rr * 0.5, rr * 0.5);
+        dustG.endFill();
+      }
+      drawRock(rockG, bx, by, rr, rot, ROCK, 1);
+      // Offset highlight, so the tumble is legible against a dark portrait.
+      drawRock(rockG, bx - rr * 0.22, by - rr * 0.22, rr * 0.62, rot, EDGE, 0.55);
+    }
+
+    // ── Landing: a thud. Dust bursts UP and out, rubble bounces, the ground
+    //    under the target cracks briefly.
+    if (impact > 0) {
+      const ring = R * (0.14 + impact * 0.5);
+      groundG.lineStyle(Math.max(1, R * 0.05 * (1 - impact)), DUST, (1 - impact) * 0.55);
+      groundG.drawCircle(dx, dy, ring);
+      groundG.lineStyle(0);
+
+      // Fracture lines, drawn once and fading — short, straight, irregular.
+      groundG.lineStyle(Math.max(1, R * 0.028 * (1 - impact)), CRACK, (1 - impact) * 0.8);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * TAU + 0.7;
+        const inner = ring * 0.25, outer = ring * rand(0.7, 1.0);
+        groundG.moveTo(dx + Math.cos(a) * inner, dy + Math.sin(a) * inner);
+        groundG.lineTo(dx + Math.cos(a) * outer, dy + Math.sin(a) * outer);
+      }
+      groundG.lineStyle(0);
+
+      for (const g of grit) {
+        const s2 = clamp01((impact - g.delay) / (1 - g.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.55 * s2 * g.speed;
+        dustG.beginFill(DUST, 0.45 * (1 - s2));
+        dustG.drawCircle(dx + Math.cos(g.ang) * dist,
+                         dy + Math.sin(g.ang) * dist - s2 * R * g.rise,
+                         g.size * (0.8 + s2 * 1.3));
+        dustG.endFill();
+      }
+      for (const c of rubble) {
+        const s2 = clamp01((impact - c.delay) / (1 - c.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.6 * s2 * c.speed;
+        // Chunks arc up then drop — the bounce is what sells the weight.
+        const hop = Math.sin(clamp01(s2 / c.bounce) * Math.PI) * R * 0.14;
+        drawRock(rockG,
+          dx + Math.cos(c.ang) * dist,
+          dy + Math.sin(c.ang) * dist - hop + s2 * s2 * R * 0.2,
+          c.size * (1 - s2 * 0.4), c.spin * s2, ROCK, (1 - s2) * 0.9);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] stone_throw END', dataId);
+}
+
 // Cold PROJECTILE — the Glittering Abyss's casters and the cold-damage ghosts.
 // frost_claw already covers cold at melee range; this is the thrown half of the
 // school, so the two read as the same element without looking like each other:
@@ -3506,6 +3659,7 @@ export const EFFECTS = {
   fire_bolt,
   arrow_shot,
   cannon_shot,
+  stone_throw,
   frost_bolt,
   repair,
 };
