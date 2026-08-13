@@ -1178,6 +1178,22 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const st = (occ, field) => occ?.[field] ?? occ?.buffs?.[field];
   const num = (occ, field) => Number(st(occ, field) ?? 0) || 0;
 
+  // Hits still to come before this unit's next dodge, or 0 when it has no dodge
+  // passive at all (which hides the badge). Mirrors the engine's rule exactly —
+  // `_dodge_count % dodge_every === 0` avoids the blow, see executeAction and
+  // strikeTarget in utils/battle-engine.js — so the countdown cannot drift from
+  // what actually happens. Only PHYSICAL attacks are counted there, which is why
+  // this badge can sit still through a whole volley of spell damage.
+  function dodgeCountdown(occ) {
+    const source = occ?.unit_data?.native_passive ?? occ?.unit_data?.passive;
+    const keys   = Array.isArray(source) ? source : (source ? [source] : []);
+    const every  = keys
+      .map(k => resolveAbility(k)?.params?.dodge_every)
+      .find(v => v != null);
+    if (!every) return 0;
+    return every - (num(occ, '_dodge_count') % every);
+  }
+
   const BUFF_DEFS = [
     { key: 'rage',        icon: 'rage.jpg',             en: 'Rage',            ru: 'Ярость',         n: c => num(c, '_rage_stacks') },
     { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
@@ -1189,7 +1205,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'blessing',    icon: 'mothers_blessing.jpg', en: "Mother's Blessing", ru: 'Благословение Матери', n: c => (st(c, '_mothers_blessing') ? 1 : 0) },
     { key: 'kiss',        icon: 'communion.jpg',        en: "Mother's Kiss",   ru: 'Поцелуй Матери',  n: c => (st(c, '_mothers_kiss') ? 1 : 0) },
     { key: 'parry',       icon: 'duelist.jpg',          en: 'Parry ready',     ru: 'Парирование готово', n: c => (st(c, '_parry_available') ? 1 : 0) },
-    { key: 'dodge',       icon: 'dodge.jpg',            en: 'Dodge',           ru: 'Уклонение',      n: c => num(c, '_dodge_count') },
+    // _dodge_count is a running tally of physical hits TAKEN, not stacks of
+    // anything: the engine dodges when it divides evenly by the passive's
+    // dodge_every. Printed raw it climbed all battle and never reset, so the
+    // badge read "Dodge: 6" — six of what? It now counts down the hits until
+    // the next dodge, which is the only number a player can act on.
+    { key: 'dodge',       icon: 'dodge.jpg',            en: 'Dodge',           ru: 'Уклонение',      n: c => dodgeCountdown(c), unit: 'hits', alwaysNum: true },
     { key: 'defend',      icon: 'fortify.jpg',          en: 'Defending',       ru: 'В защите',       n: c => num(c, 'defend_armor_bonus'),  unit: 'armor' },
     { key: 'invulnerable',icon: 'undying.jpg',          en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
     { key: 'untargetable',icon: 'unity.jpg',            en: 'Cannot be targeted', ru: 'Нельзя выбрать целью', n: c => (st(c, '_untargetable') ? 1 : 0) },
@@ -1214,6 +1235,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     hp:     { en: 'HP per turn', ru: 'HP за ход' },
     pct:    { en: '%',           ru: '%' },
     armor:  { en: 'armor',       ru: 'брони' },
+    hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
   };
 
   // A tile is 110px tall and an icon row is 18px, so six is the most that fits
@@ -1243,7 +1265,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <span class="bc-state bc-state--${d.key}" title="${title}">
           <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${d.icon}`)}" alt="${d[L]}"
                onerror="this.style.display='none'">
-          ${n > 1 ? `<span class="bc-state-num">${n}</span>` : ''}
+          ${n > 1 || d.alwaysNum ? `<span class="bc-state-num">${n}</span>` : ''}
         </span>`;
       })
       .join('') + more;

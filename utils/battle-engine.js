@@ -1399,7 +1399,20 @@ class BattleEngine {
       // (ability/skip/none/attack all bypass executeAction's own tick — see the
       // { turnStart: false } on the attack branch below).
       this.applyTurnStartTicks(actor);
-      if (!actor.alive) { actor.acted_this_round = true; newLog.push(...this.log.slice(before)); continue; }
+      // Bled/burned/chilled out before it could move. This has to close the turn
+      // out the same way every other path does — afterAction() is the ONLY place
+      // that checks for a win and advances the round. Without it, an enemy dying
+      // here left `done` false and `winner` null even when it was the last one
+      // standing: the endpoint answered done:false, and the client sat waiting
+      // for input on a battle that was already over with nothing left to attack.
+      // executeAction's copy of this branch (see the turnStart block there) has
+      // always called afterAction; this one did not.
+      if (!actor.alive) {
+        actor.acted_this_round = true;
+        this.afterAction(actor);
+        newLog.push(...this.log.slice(before));
+        continue;
+      }
       if (actor._unity_host_id != null || actor._invulnerable) {
         this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
         this.doNone(actor);
