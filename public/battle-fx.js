@@ -3154,6 +3154,319 @@ export async function fire_bolt(cellEl, opts = {}) {
 }
 
 
+// Heavy ranged PHYSICAL shot — hurled stone, siege shell, rifle ball. Kept
+// deliberately distinct from arrow_shot: no arc, no fletching, no drawn-bow
+// hold. A muzzle flash, a dense slug crossing in a straight line, and a
+// percussive hit, so a dreadnought does not read as a longbow.
+//
+// Ten units share it (action_animation in data/units.js) and FIVE of them are
+// AoE x6 — the multi-target path fires one instance per victim through a single
+// Promise.all, so this stays short and allocates a fixed, small number of
+// particles rather than scaling with anything.
+export async function cannon_shot(cellEl, opts = {}) {
+  console.log('[battle-fx] cannon_shot START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const FLASH = 0xfff2d2;   // muzzle core
+  const SPARK = 0xffc873;   // burning powder
+  const SMOKE = 0x3a342d;   // propellant smoke, occludes
+  const DUST  = 0xbfb3a0;   // masonry dust at the impact
+  const IRON  = 0x6e6459;   // shrapnel / broken masonry
+
+  const layer      = new PIXI.Container();
+  const smokeLayer = new PIXI.Container(); smokeLayer.filters = [new PIXI.BlurFilter(5)];
+  const glowLayer  = new PIXI.Container(); glowLayer.filters  = [new PIXI.BlurFilter(6)];
+  const smokeG = new PIXI.Graphics();                       // NOT additive: smoke hides what is behind it
+  const glowG  = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const shotG  = new PIXI.Graphics(); shotG.blendMode = ADD;
+  const dustG  = new PIXI.Graphics();
+  smokeLayer.addChild(smokeG); glowLayer.addChild(glowG);
+  layer.addChild(smokeLayer, dustG, glowLayer, shotG);
+  app.stage.addChild(layer);
+
+  // Seeded once so the flight and the burst are stable frame to frame.
+  const trail  = Array.from({ length: 8 }, (_, i) => ({
+    at: (i + 0.5) / 8, perp: rand(-0.35, 0.35), size: rand(0.07, 0.16), rise: rand(0.05, 0.28),
+  }));
+  const debris = Array.from({ length: 12 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.35, 1.05), size: rand(1.6, 4.2), delay: rand(0, 0.16), spin: rand(-4, 4),
+  }));
+  const sparks = Array.from({ length: 10 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.5, 1.3), size: rand(1.2, 2.6), delay: rand(0, 0.1),
+  }));
+
+  const DURATION = 560;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    // With no target cell (a log entry that lost its target) the shot still
+    // leaves the barrel, aimed off the unit's facing, rather than not drawing.
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.8;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    const ux = dx - sx, uy = dy - sy;
+    const len = Math.hypot(ux, uy) || 1;
+    const nx = ux / len, ny = uy / len;          // along the barrel
+    const px = -ny,      py = nx;                // across it
+
+    const muzzle = clamp01(t / 0.14);            // flash blooms then dies
+    const flight = clamp01((t - 0.10) / 0.52);
+    const impact = clamp01((t - 0.62) / 0.38);
+
+    smokeG.clear(); glowG.clear(); shotG.clear(); dustG.clear();
+
+    // ── Muzzle: a hot cone off the barrel and a shove of smoke behind it.
+    if (muzzle > 0 && muzzle < 1) {
+      const f = Math.sin(muzzle * Math.PI);
+      const mx = sx + nx * R * 0.30, my = sy + ny * R * 0.30;
+      softGlow(glowG, mx, my, R * 0.30 * f, SPARK, 0.75);
+      softGlow(shotG, mx, my, R * 0.13 * f, FLASH, 1.0);
+      shotG.beginFill(FLASH, 0.55 * f);
+      shotG.drawPolygon([
+        sx + nx * R * 0.12, sy + ny * R * 0.12,
+        mx + px * R * 0.20 * f, my + py * R * 0.20 * f,
+        mx + nx * R * 0.34,     my + ny * R * 0.34,
+        mx - px * R * 0.20 * f, my - py * R * 0.20 * f,
+      ]);
+      shotG.endFill();
+    }
+    if (muzzle > 0) {
+      const age = clamp01(t / 0.5);
+      smokeG.beginFill(SMOKE, 0.32 * (1 - age));
+      smokeG.drawCircle(sx + nx * R * 0.34, sy + ny * R * 0.34 - age * R * 0.22, R * (0.14 + age * 0.30));
+      smokeG.endFill();
+    }
+
+    // ── The slug: a short bright streak, not a dot, so the speed reads.
+    if (flight > 0 && flight < 1) {
+      const bx = lerp(sx, dx, flight), by = lerp(sy, dy, flight);
+      const tail = R * 0.26;
+      shotG.lineStyle(Math.max(2, R * 0.075), FLASH, 0.95);
+      shotG.moveTo(bx - nx * tail, by - ny * tail);
+      shotG.lineTo(bx, by);
+      shotG.lineStyle(0);
+      softGlow(glowG, bx, by, R * 0.15, SPARK, 0.85);
+
+      // Trail puffs are born on the line and STAY there, so the shot leaves a
+      // wake hanging in the air instead of dragging a tail along with it.
+      for (const p of trail) {
+        if (flight < p.at) continue;
+        const age = clamp01((flight - p.at) / 0.6 + impact * 0.5);
+        const ex = lerp(sx, dx, p.at) + px * R * p.perp * 0.22;
+        const ey = lerp(sy, dy, p.at) + py * R * p.perp * 0.22 - age * R * p.rise;
+        smokeG.beginFill(SMOKE, 0.26 * (1 - age));
+        smokeG.drawCircle(ex, ey, R * p.size * (0.7 + age));
+        smokeG.endFill();
+      }
+    }
+
+    // ── Impact: white flash, expanding dust ring, chunks and sparks thrown out.
+    if (impact > 0) {
+      const flare = Math.sin(clamp01(impact / 0.28) * Math.PI);
+      softGlow(glowG, dx, dy, R * 0.42 * flare, SPARK, 0.8);
+      softGlow(shotG, dx, dy, R * 0.18 * flare, FLASH, 1.0);
+
+      const ring = R * (0.18 + impact * 0.62);
+      dustG.lineStyle(Math.max(1, R * 0.055 * (1 - impact)), DUST, (1 - impact) * 0.7);
+      dustG.drawCircle(dx, dy, ring);
+      dustG.lineStyle(0);
+
+      for (const c of debris) {
+        const s2 = clamp01((impact - c.delay) / (1 - c.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.62 * s2 * c.speed;
+        const cx = dx + Math.cos(c.ang) * dist;
+        const cy = dy + Math.sin(c.ang) * dist + s2 * s2 * R * 0.26;   // chunks fall
+        const sz = c.size * (1 - s2 * 0.45);
+        const rot = c.spin * s2;
+        dustG.beginFill(IRON, (1 - s2) * 0.85);
+        dustG.drawPolygon([
+          cx + Math.cos(rot) * sz,            cy + Math.sin(rot) * sz,
+          cx + Math.cos(rot + 2.2) * sz,      cy + Math.sin(rot + 2.2) * sz,
+          cx + Math.cos(rot + 4.2) * sz * 0.8, cy + Math.sin(rot + 4.2) * sz * 0.8,
+        ]);
+        dustG.endFill();
+      }
+      for (const k of sparks) {
+        const s2 = clamp01((impact - k.delay) / (1 - k.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.7 * s2 * k.speed;
+        softGlow(shotG, dx + Math.cos(k.ang) * dist, dy + Math.sin(k.ang) * dist,
+                 k.size * (1 - s2 * 0.7), SPARK, (1 - s2) * 0.9);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] cannon_shot END', dataId);
+}
+
+// Cold PROJECTILE — the Glittering Abyss's casters and the cold-damage ghosts.
+// frost_claw already covers cold at melee range; this is the thrown half of the
+// school, so the two read as the same element without looking like each other:
+// a shard forms, crosses, and shatters, where the claw rakes.
+export async function frost_bolt(cellEl, opts = {}) {
+  console.log('[battle-fx] frost_bolt START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const CORE = 0xf2fbff;   // the shard itself, almost white
+  const ICE  = 0x9fe4ff;   // pale cyan body
+  const DEEP = 0x3f8fd6;   // shadowed blue
+  const RIME = 0xdff4ff;   // settling frost
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container(); glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const boltG = new PIXI.Graphics(); boltG.blendMode = ADD;
+  const iceG  = new PIXI.Graphics();
+  glowLayer.addChild(glowG);
+  layer.addChild(glowLayer, iceG, boltG);
+  app.stage.addChild(layer);
+
+  // Motes drawn IN toward the caster while the shard forms, then left behind.
+  const motes = Array.from({ length: 12 }, () => ({
+    ang: rand(0, TAU), dist: rand(0.5, 1.1), size: rand(1.2, 2.8), delay: rand(0, 0.35),
+  }));
+  // Shards thrown by the shatter — they drift rather than fall, like frost_claw.
+  const chips = Array.from({ length: 14 }, () => ({
+    ang: rand(0, TAU), speed: rand(0.35, 1.0), size: rand(1.8, 4.4), delay: rand(0, 0.2), spin: rand(-3, 3),
+  }));
+  const trail = Array.from({ length: 9 }, (_, i) => ({
+    at: (i + 0.5) / 9, perp: rand(-0.3, 0.3), size: rand(1.4, 3.2),
+  }));
+
+  const DURATION = 640;
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(dataId);
+    if (!s) { layer.visible = false; return; }
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.8;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+
+    const ux = dx - sx, uy = dy - sy;
+    const len = Math.hypot(ux, uy) || 1;
+    const nx = ux / len, ny = uy / len;
+    const px = -ny,      py = nx;
+
+    const form    = clamp01(t / 0.20);
+    const flight  = clamp01((t - 0.20) / 0.50);
+    const shatter = clamp01((t - 0.70) / 0.30);
+
+    glowG.clear(); boltG.clear(); iceG.clear();
+
+    // ── Forming: motes converge on a point just off the caster.
+    if (form < 1) {
+      const ox = sx + nx * R * 0.28, oy = sy + ny * R * 0.28;
+      for (const m of motes) {
+        const s2 = clamp01((form - m.delay) / (1 - m.delay));
+        if (s2 <= 0) continue;
+        const dist = R * m.dist * (1 - s2);
+        softGlow(boltG, ox + Math.cos(m.ang) * dist, oy + Math.sin(m.ang) * dist,
+                 m.size * (0.5 + s2 * 0.5), ICE, s2 * 0.9);
+      }
+      softGlow(glowG, ox, oy, R * 0.22 * form, ICE, 0.7 * form);
+    }
+
+    // ── Flight: a six-point shard, tumbling, with a cold wake behind it.
+    if (flight > 0 && flight < 1) {
+      const bx = lerp(sx, dx, flight), by = lerp(sy, dy, flight);
+      const spin = flight * 7;
+      const rr   = R * 0.14;
+
+      for (const p of trail) {
+        if (flight < p.at) continue;
+        const age = clamp01((flight - p.at) / 0.5);
+        softGlow(glowG,
+          lerp(sx, dx, p.at) + px * R * p.perp * 0.18,
+          lerp(sy, dy, p.at) + py * R * p.perp * 0.18,
+          p.size * (1 - age * 0.5), DEEP, (1 - age) * 0.5);
+      }
+
+      softGlow(glowG, bx, by, R * 0.26, ICE, 0.85);
+      // Long axis along the direction of travel, so it flies point-first.
+      const a1 = Math.atan2(ny, nx);
+      boltG.beginFill(CORE, 0.95);
+      boltG.drawPolygon([
+        bx + Math.cos(a1) * rr * 1.9,        by + Math.sin(a1) * rr * 1.9,
+        bx + Math.cos(a1 + 1.9) * rr * 0.8,  by + Math.sin(a1 + 1.9) * rr * 0.8,
+        bx - Math.cos(a1) * rr * 1.2,        by - Math.sin(a1) * rr * 1.2,
+        bx + Math.cos(a1 - 1.9) * rr * 0.8,  by + Math.sin(a1 - 1.9) * rr * 0.8,
+      ]);
+      boltG.endFill();
+      // A second, thinner blade crossing it, spinning — reads as a crystal
+      // rather than a flat lozenge.
+      boltG.lineStyle(Math.max(1, R * 0.02), ICE, 0.8);
+      boltG.moveTo(bx + Math.cos(spin) * rr * 1.1, by + Math.sin(spin) * rr * 1.1);
+      boltG.lineTo(bx - Math.cos(spin) * rr * 1.1, by - Math.sin(spin) * rr * 1.1);
+      boltG.lineStyle(0);
+    }
+
+    // ── Shatter: a hard bloom, an expanding rime ring, chips drifting outward.
+    if (shatter > 0) {
+      const flare = Math.sin(clamp01(shatter / 0.3) * Math.PI);
+      softGlow(glowG, dx, dy, R * 0.46 * flare, ICE,  0.85);
+      softGlow(boltG, dx, dy, R * 0.20 * flare, CORE, 1.0);
+
+      const ring = R * (0.16 + shatter * 0.58);
+      iceG.lineStyle(Math.max(1, R * 0.05 * (1 - shatter)), RIME, (1 - shatter) * 0.8);
+      iceG.drawCircle(dx, dy, ring);
+      iceG.lineStyle(0);
+      // Six spikes of rime crawling out along the ring — the ground freezing.
+      iceG.lineStyle(Math.max(1, R * 0.03 * (1 - shatter)), ICE, (1 - shatter) * 0.7);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * TAU + 0.3;
+        iceG.moveTo(dx + Math.cos(a) * ring * 0.45, dy + Math.sin(a) * ring * 0.45);
+        iceG.lineTo(dx + Math.cos(a) * ring,        dy + Math.sin(a) * ring);
+      }
+      iceG.lineStyle(0);
+
+      for (const c of chips) {
+        const s2 = clamp01((shatter - c.delay) / (1 - c.delay));
+        if (s2 <= 0) continue;
+        const dist = R * 0.6 * s2 * c.speed;
+        const cx = dx + Math.cos(c.ang) * dist;
+        const cy = dy + Math.sin(c.ang) * dist + s2 * s2 * R * 0.06;   // barely any gravity
+        const sz = c.size * (1 - s2 * 0.5);
+        const rot = c.spin * s2;
+        iceG.beginFill(CORE, (1 - s2) * 0.9);
+        iceG.drawPolygon([
+          cx + Math.cos(rot) * sz,             cy + Math.sin(rot) * sz,
+          cx + Math.cos(rot + 2.1) * sz * 0.7, cy + Math.sin(rot + 2.1) * sz * 0.7,
+          cx + Math.cos(rot + 4.2) * sz * 0.9, cy + Math.sin(rot + 4.2) * sz * 0.9,
+        ]);
+        iceG.endFill();
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] frost_bolt END', dataId);
+}
+
+
 export const EFFECTS = {
   mithrails_light,
   communion,
@@ -3192,5 +3505,7 @@ export const EFFECTS = {
   blood_bolt,
   fire_bolt,
   arrow_shot,
+  cannon_shot,
+  frost_bolt,
   repair,
 };
