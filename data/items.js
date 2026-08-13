@@ -78,7 +78,7 @@ const ITEM_DEFS = {
     key:          'might_of_the_pure',
     name:         'Might Of The Pure',
     name_ru:      'Мощь Непорочных',
-    faction:      null,
+    faction:      'empire',
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { action_power: 5, death_resist: 5 },

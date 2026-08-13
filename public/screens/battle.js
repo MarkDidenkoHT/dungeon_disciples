@@ -759,7 +759,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       resistances:  c.unit_data?.resistances ?? def.resistances ?? {},
     };
 
+    // Spread the SAME def liveUnit was built from, then override only the four
+    // stats a buff can move. Building this from scratch left targets and range
+    // undefined, and the diff read that as 0 — so every unit whose action hits
+    // more than one target at more than range 1 reported a permanent
+    // "Targets +1 / Range +1" that no buff had granted.
     const baseUnit = {
+      ...def,
       armor:        base.armor ?? def.armor ?? 0,
       initiative:   base.initiative ?? def.initiative ?? 0,
       action_power: basePower,

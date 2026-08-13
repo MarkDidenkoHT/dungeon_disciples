@@ -145,11 +145,27 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
-
-      const enemies = engine.combatants.filter(c => c.side !== owner.side);
+      // ADJACENT, as the description says — not "anywhere within a row or two".
+      // The old test compared rows only, so on a 3-row grid `range: 1` from the
+      // middle row covered every row, and from an outer row still covered two
+      // thirds of the field: the aura hit the whole enemy side and the range
+      // parameter did nothing.
+      //
+      // Adjacency here is the same shape the engine already uses for melee
+      // reach: the enemy must stand in the column FACING this unit, and be
+      // within `range` rows of it. Footprint-to-footprint, so a large unit is
+      // measured by the cells it actually occupies rather than its anchor.
+      const enemies   = engine.combatants.filter(c => c.side !== owner.side);
       const fearRange = p.range ?? 1;
+      const ownerRows = engine.getFootprint(owner).map(cellRow);
       for (const e of enemies) {
-        if (Math.abs(Math.floor(e.cellIndex / 2) - Math.floor(owner.cellIndex / 2)) <= fearRange) {
+        const cells = engine.getFootprint(e);
+        // Front column of the enemy's own side — the rank standing opposite.
+        const facingCol = e.side === 'enemy' ? 0 : 1;
+        if (!cells.some(cell => cellCol(cell) === facingCol)) continue;
+        const rowDist = Math.min(...cells.map(cellRow)
+          .flatMap(r => ownerRows.map(or => Math.abs(r - or))));
+        if (rowDist <= fearRange) {
           e._fear_dmg_reduction = Math.min(100, (e._fear_dmg_reduction ?? 0) + p.adjacent_physical_dmg_reduction_pct);
         }
       }

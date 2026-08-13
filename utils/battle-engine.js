@@ -1414,6 +1414,12 @@ class BattleEngine {
         continue;
       }
       const decision = this.chooseAiAction(actor);
+      // The round BEFORE the action, for the guard below. A completed action can
+      // legitimately clear acted_this_round: afterAction() advances the round
+      // once the last unit has moved, and advanceRound() resets the flag on
+      // every combatant. So a flag reading false does not mean "did nothing" —
+      // it also means "acted, and was the last to do so".
+      const roundBefore = this.round;
       if (decision.type === 'ability') {
         this.doAbility(actor, decision.target);
       } else if (decision.type === 'defend') {
@@ -1433,7 +1439,13 @@ class BattleEngine {
       //
       // So: if the actor is still standing and still owed a turn, take it. The
       // unit forfeits its action, the fight continues, and the log says so.
-      if (actor.alive && !actor.acted_this_round) {
+      //
+      // `this.round === roundBefore` is what keeps this net from firing on a
+      // unit that DID act: the last enemy to move each round came back here with
+      // its flag freshly reset by advanceRound(), was declared idle, and had the
+      // skip below burn its turn in the round that had just begun. That is the
+      // "unit randomly skips a turn" report — always the last actor of a round.
+      if (actor.alive && !actor.acted_this_round && this.round === roundBefore) {
         console.error('[battle] AI turn produced no action', {
           unit: actor.unit_name, cell: actor.cellIndex, decision: decision?.type,
           action: actor.unit_data?.action, hasTarget: !!decision?.target,
