@@ -1,4 +1,4 @@
-import { api, navigate, itemsCache } from '../api.js';
+import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
@@ -1748,6 +1748,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         battle_id,
         survivor_ids: survivorIds,
       });
+      // /battle/reward writes gold, crystals, trophies, roster XP and — on a win
+      // — the region progress that unlocks the next level. All of that lives in
+      // /bootstrap, and nothing here told the cache it was stale: the next
+      // screen could serve pre-battle resources from the TTL window. Embark now
+      // reads its progress from this cache too, so a newly unlocked level would
+      // have been missing from the pips as well.
+      bootstrapCache.invalidate();
       const rewardsEl = root.querySelector('#result-rewards');
       if (won) {
         // Icon-forward reward chips: real art for gold, crystals and trophies.

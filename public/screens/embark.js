@@ -1,4 +1,4 @@
-import { api, navigate } from '../api.js';
+import { api, navigate, bootstrapCache } from '../api.js';
 import { applyBackground } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
@@ -190,18 +190,24 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
 
   async function loadRegions() {
     try {
-      const progress = await api(`/progress?chat_id=${player.chat_id}`);
-      let activeResp = activeCheck;
-      if (!activeResp) {
-        try {
-          activeResp = await api(`/battle/active?chat_id=${player.chat_id}`);
-        } catch (e) {
-          console.error('Failed to check active battle:', e);
-        }
-      }
+      // /bootstrap already carries `progress` — the same players.progress column
+      // /progress reads — and the shell has just warmed that cache on the way to
+      // this screen. Fetching it again cost a round-trip for a value already in
+      // memory, and it was AWAITED before anything was drawn.
+      const boot = await bootstrapCache.get(player.chat_id);
+      const progress = boot?.progress || {};
 
-      if (activeResp && activeResp.active) {
-        showReconnectModal(activeResp.battle_id, activeResp.battle_data);
+      // The reconnect check no longer gates the region list. It answers "is
+      // there a battle to return to", which is a modal on top of this screen —
+      // waiting for it before drawing meant a second serial round-trip before
+      // the player saw anything. Fired here, handled when it lands; the pips
+      // re-check at the moment of departure anyway (see the click handler).
+      if (activeCheck?.active) {
+        showReconnectModal(activeCheck.battle_id, activeCheck.battle_data);
+      } else if (!activeCheck) {
+        api(`/battle/active?chat_id=${player.chat_id}`)
+          .then(resp => { if (resp?.active) showReconnectModal(resp.battle_id, resp.battle_data); })
+          .catch(e => console.error('Failed to check active battle:', e));
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {

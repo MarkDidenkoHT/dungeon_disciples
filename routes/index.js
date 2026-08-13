@@ -630,6 +630,18 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     await supabase(`/items?player_id=eq.${encodeURIComponent(player_id)}`, { method: 'DELETE' });
     await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
+
+    // Errands were the one table a reset left behind, and a RUNNING row is a
+    // dead end: ensureErrandOffer returns early while anything is active and
+    // /errands/start answers errand_busy, so the player never gets another
+    // errand — and the only thing that clears `active` is the edge function
+    // finishing THIS one, which needs the roster row the two lines above just
+    // deleted. An untaken offer is stale too (it was minted for the faction and
+    // throne level being wiped here), and a finished-but-unseen row would pay
+    // out a reward for a unit that no longer exists. The whole account is going
+    // away, so the rows go with it. Keyed on `player`, which holds the chat_id
+    // as text — see ERRAND_TABLE.
+    await supabase(`${ERRAND_TABLE}?player=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     
     const deleteResult = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
     

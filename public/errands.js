@@ -1,4 +1,4 @@
-import { api, bootstrapCache, refreshResourceBar } from './api.js';
+import { api, bootstrapCache, errandsCache, refreshResourceBar } from './api.js';
 import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
@@ -102,7 +102,11 @@ export async function openErrandsSheet(player) {
   let chosenHours = null;
 
   async function load() {
-    state  = await api(`/errands?chat_id=${player.chat_id}`);
+    // refresh(), not get(): opening the sheet is a deliberate act and the player
+    // is looking straight at this state, so it is worth one round-trip. The
+    // per-navigation badge is the thing that reads the cache — see
+    // refreshErrandButton — and it now shares whatever this stores.
+    state  = await errandsCache.refresh(player.chat_id);
     chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
     chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
     render();
@@ -234,8 +238,7 @@ export async function openErrandsSheet(player) {
         btn.textContent = T('sending');
         try {
           await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen, hours: chosenHours });
-          _awayCache = null;                 // that unit is out now
-          await load();
+          await load();                      // refreshes the cache; that unit is out now
           refreshErrandButton(player).catch(() => {});
         } catch (err) {
           btn.disabled = false;
@@ -258,25 +261,20 @@ export async function openErrandsSheet(player) {
   await load();
 }
 
-// Which roster ids are away right now. Cached for a few seconds because both
-// battle prep and the castle ask on mount and they must not disagree — and
-// neither should pay a round-trip the other already made.
-let _awayCache = null;
-let _awayAt    = 0;
-const AWAY_TTL_MS = 5000;
+// Which roster ids are away right now. Battle prep and the castle both ask on
+// mount and must not disagree; both now read the shared errands cache, so they
+// see the same answer and neither pays a round-trip the other already made.
+// (This used to keep its own 5-second copy alongside the button's, which meant
+// the two could hold different states and each had its own fetch.)
+const awaySet = state => new Set((state?.active || []).map(a => String(a.roster_id)));
 
 export async function errandRosterIds(chat_id) {
-  if (_awayCache && Date.now() - _awayAt < AWAY_TTL_MS) return _awayCache;
   try {
-    const state = await api(`/errands?chat_id=${chat_id}`);
-    _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));
-    _awayAt    = Date.now();
+    return awaySet(await errandsCache.get(chat_id));
   } catch {
     // Never let this hide the whole roster — on failure, nobody is away.
-    _awayCache = new Set();
-    _awayAt    = Date.now();
+    return new Set();
   }
-  return _awayCache;
 }
 
 // ── The errand system is LOCKED until the first battle is over ──────────────
@@ -337,9 +335,12 @@ export async function refreshErrandButton(player) {
   btn.disabled = !errandsUnlocked(player);
   if (btn.disabled) return;
   try {
-    const state = await api(`/errands?chat_id=${player.chat_id}`);
-    _awayCache = new Set((state.active || []).map(a => String(a.roster_id)));
-    _awayAt    = Date.now();
+    // get(), not a bare fetch: this runs on EVERY navigation and only decides
+    // whether the button glows. The cache's TTL covers the one thing that
+    // changes without us — an errand finishing on a server timer — and both
+    // errand writes refresh it, so the badge cannot lag behind the player's own
+    // actions.
+    const state = await errandsCache.get(player.chat_id);
     btn.classList.toggle('res-bar-errands--ready', !!state.offer || !!(state.finished || []).length);
   } catch {
     // Never let this take the shell down; the button just stays quiet.

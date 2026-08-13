@@ -53,8 +53,9 @@ export async function api(path, body = null) {
 // instead of three.
 const CACHE_TTL_MS = 15000;
 
-function makeCache(fetcher) {
+function makeCache(fetcher, ttlMs = CACHE_TTL_MS) {
   return {
+    _ttl: ttlMs,
     data: null,
     dirty: true,
     _at: 0,
@@ -65,7 +66,7 @@ function makeCache(fetcher) {
     _epoch: 0,
     _tickOpen: false,
     async get(...args) {
-      const fresh = Date.now() - this._at < CACHE_TTL_MS;
+      const fresh = Date.now() - this._at < this._ttl;
       if (!this.dirty && this.data && fresh) return this.data;
       if (this._inflight) return this._inflight;
       const epoch = this._epoch;
@@ -139,6 +140,20 @@ function makeCache(fetcher) {
 }
 
 export const bootstrapCache = makeCache(chat_id => api(`/bootstrap?chat_id=${chat_id}`));
+
+// The errand strip button asks for this on EVERY navigation — see
+// refreshErrandButton, called from navigate() in main.js — and the answer only
+// decides whether the button glows and which roster ids are away. Uncached, that
+// made a tab switch to Settings cost the most expensive read in the app:
+// /errands runs ensureErrandOffer, which is three parallel queries plus an
+// INSERT when no offer exists yet.
+//
+// Its own TTL, longer than the bootstrap's: nothing the player does changes
+// errand state except starting one or acknowledging a finished one, and both of
+// those refresh() this cache explicitly. What is left is a server timer ticking
+// over, which no one is watching for to the second.
+const ERRANDS_TTL_MS = 60000;
+export const errandsCache = makeCache(chat_id => api(`/errands?chat_id=${chat_id}`), ERRANDS_TTL_MS);
 
 // resourceCache / structuresCache are kept as separate exports for call sites that
 // only need one slice, but they're both backed by the same bootstrapCache fetch so
