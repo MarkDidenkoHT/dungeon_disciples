@@ -442,10 +442,13 @@ export function renderCastle(root, { player }) {
               // what to build and wants to know where each option leads before
               // committing the gold, not after.
               extraSlotHtml: treeButtonHtml(s.unit?.id),
-              // A preview has no HP or XP of its own, but the slot sheet this
-              // opens from does — without the space held the card lost two rows
-              // and everything below it jumped.
-              reserveProgress: true,
+              // The slot's own HP/XP when the caller has them (an upgrade opened
+              // from an occupied slot), so the card keeps the two rows it had on
+              // the sheet before this opened. Where there is no unit yet — the
+              // build picker on an empty slot — the space is held instead, so
+              // the card is the same height either way.
+              progress:        s.progress || null,
+              reserveProgress: !s.progress,
             })}
           </div>
         </div>
@@ -592,6 +595,40 @@ export function renderCastle(root, { player }) {
     // Mercenaries live in their own table, same as everywhere else that resolves
     // a slot's building.
     return Object.values(mercenaryBuildings || {}).find(d => d?.unit_id === unitId) || null;
+  }
+
+  // HP and XP for the card in a slot's sheet, both read off the ROSTER ROW —
+  // the blueprint would report full HP whatever state the unit is really in,
+  // and its `xp` is the cost of the next tier, not what the unit has earned.
+  //
+  // `forUnit` retargets the ceilings without touching the current values: while
+  // previewing an upgrade, the HP the unit HAS is shown against the max it
+  // WOULD have, and the XP it has earned against what that upgrade requires.
+  // That is the comparison the player is making, and it keeps both bars on the
+  // card through the swap instead of dropping two rows and shifting everything
+  // under them.
+  function progressForSlot(slot, paths, forUnit = null) {
+    const u = rosterUnitForSlot(slot);
+    if (!u) return null;
+    const stored = u.unit_data || {};
+    const ownDef = resolveUnitDef(u);
+    const item   = equippedItemFor(u.id);
+    // The item's HP bonus counts toward the ceiling, the same way the card's
+    // own stat column counts it.
+    const defFor = forUnit || ownDef;
+    const withItem = item ? withEquippedItem(defFor, item) : defFor;
+
+    const max = withItem?.hp ?? stored.max_hp ?? ownDef?.hp ?? null;
+    const cur = Math.min(stored.current_hp ?? max ?? 0, max ?? 0);
+
+    // No paths left means nothing to advance into, so the XP row says "max tier"
+    // rather than drawing a bar against a requirement that does not exist.
+    const req = (paths && paths.length) ? (defFor?.xp ?? null) : null;
+
+    return {
+      hp: max != null && max > 0 ? { cur, max } : null,
+      xp: { cur: stored.current_xp ?? 0, req: req ?? 0, maxed: !req },
+    };
   }
 
   function nodeHpBar(slot) {
@@ -1298,20 +1335,7 @@ export function renderCastle(root, { player }) {
     // unit was really in, and `XP 720` — which is the XP this tier COSTS, not
     // what the unit has earned. Both live on the roster row, so they are derived
     // here the way the roster screen derived them, item bonus included.
-    const progress = rosterUnit ? (() => {
-      const stored    = rosterUnit.unit_data || {};
-      const baseMaxHp = stored.max_hp != null ? stored.max_hp : (baseUnit?.hp ?? null);
-      const derived   = withEquippedItem(
-        { max_hp: baseMaxHp ?? 0, current_hp: stored.current_hp ?? baseMaxHp ?? 0 }, item);
-      // xp on a unit def is what the NEXT tier costs; a top-tier unit has one
-      // too, so "can it still advance" is decided by the upgrade paths, not by
-      // whether the number exists.
-      const xpRequired = paths && paths.length ? (baseUnit?.xp ?? null) : null;
-      return {
-        hp: baseMaxHp == null ? null : { cur: derived.current_hp, max: derived.max_hp },
-        xp: { cur: stored.current_xp ?? 0, req: xpRequired ?? 0, maxed: !xpRequired },
-      };
-    })() : null;
+    const progress = progressForSlot(slot, paths);
 
     const itemSlotHtml = rosterUnit
       ? renderItemSlotIcon(item, rosterUnit.id, { player })
@@ -1457,10 +1481,27 @@ export function renderCastle(root, { player }) {
     const ownCardHtml = cardWrap?.innerHTML ?? '';
     let selectedPath = null;
 
+    // What a branch costs. The slider modal put this on the cost bar and the
+    // inline picker did not, so selecting an upgrade showed the unit it leads to
+    // and nothing about the price — the number the decision actually turns on.
+    // Throne upgrades are priced by the LEVEL they move to rather than by the
+    // building, which is why they are read from a different table (mirrors
+    // openUpgradeModal and POST /structures/build).
+    const isThrone  = def.category === 'throne';
+    const nextLevel = (structuresRecord.buildings_data[slot]?.level ?? 0) + 1;
+    function costForPath(unitId) {
+      const path = paths.find(p => p.unit_id === unitId);
+      if (!path) return null;
+      if (mercDef)  return getMercBuildingDef(path.building_id)?.cost ?? path.cost ?? null;
+      if (isThrone) return throneUpgradeCosts[nextLevel] || null;
+      return getBuildingDef(player.faction, path.building_id)?.cost ?? null;
+    }
+
     function showOwnUnit() {
       selectedPath = null;
       if (cardWrap) cardWrap.innerHTML = ownCardHtml;
       if (upgradeBtn) upgradeBtn.disabled = true;
+      hideCostBar();
       body?.querySelectorAll('#slot-upgrade-track .portrait-card')
           .forEach(c => c.classList.remove('portrait-card--selected'));
     }
@@ -1477,12 +1518,19 @@ export function renderCastle(root, { player }) {
         // stat delta and the +N on a ranked-up ability read against what the
         // player actually owns rather than against the blueprint.
         cardWrap.innerHTML = buildUnitCard(nextUnit, {
-          buildingLabel:   unitName(nextUnit) || '',
-          compareUnit:     liveUnit,
-          extraSlotHtml:   treeButtonHtml(nextUnit.id),
-          reserveProgress: true,
+          buildingLabel: unitName(nextUnit) || '',
+          compareUnit:   liveUnit,
+          extraSlotHtml: treeButtonHtml(nextUnit.id),
+          // The REAL bars, not a placeholder. The unit standing in this slot
+          // still has the HP and XP it had a moment ago — browsing a branch
+          // does not change them — so the rows carry true numbers and, being
+          // the same rows, cannot change height between the two cards.
+          progress,
         });
       }
+      // The price of the branch now on show, on the same bar the build slider
+      // uses, so it is in the one place the player already looks for a cost.
+      showCostBar(costForPath(unitId));
     }
 
     body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
@@ -1499,6 +1547,9 @@ export function renderCastle(root, { player }) {
       else         openUpgradeModal(slot, def, paths, startIndex);
     });
     body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
+    // The cost bar lives outside the sheet, so it has to be torn down with it —
+    // however the sheet closes.
+    onSheetClose(hideCostBar);
   }
 
   // ── Item equipping, in the castle ─────────────────────────────────────────
