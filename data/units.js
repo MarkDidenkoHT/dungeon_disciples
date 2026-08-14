@@ -624,7 +624,7 @@ const UNITS = {
     choir_servant: {
       id: 'd51', f: 'd', t: 2,
       name: 'Choir Servant',
-      name_ru: 'Служка Хора',
+      name_ru: 'Слуга Хора',
       tags: ['Caster', null],
       size: 'tile',
       hp: 45, armor: 5, initiative: 30,

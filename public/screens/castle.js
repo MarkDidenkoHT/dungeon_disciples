@@ -7,6 +7,9 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, 
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { SPELLS }            from '../../data/spells.js';
+// Which regions drop a material — the castle's cost bar uses it to answer
+// "where do I get this?" for a cost the player cannot meet.
+import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -363,11 +366,22 @@ export function renderCastle(root, { player }) {
     const slotHtml = (iconHtml, key, label, need) => {
       const have  = amountOf(key);
       const short = have < need;
-      return `<div class="res-bar-item cost-bar-item ${short ? 'cost-bar-item--short' : 'cost-bar-item--ok'}"
-                   title="${label}: ${castleLang === 'ru' ? `нужно ${need}, есть ${have}` : `need ${need}, have ${have}`}">
+      // A cost you cannot meet is a question — "where do I get this?" — so the
+      // column answers it. Short ones become buttons carrying the material; the
+      // ones you can already pay stay inert, since there is nothing to go and
+      // find. Covers building costs and mercenary trophy costs alike: both are
+      // priced through this same bar.
+      const title = `${label}: ${castleLang === 'ru' ? `нужно ${need}, есть ${have}` : `need ${need}, have ${have}`}`;
+      if (!short) {
+        return `<div class="res-bar-item cost-bar-item cost-bar-item--ok" title="${title}">
+                  <span class="res-bar-icon">${iconHtml}</span>
+                  <span class="res-bar-val">${need}</span>
+                </div>`;
+      }
+      return `<button class="res-bar-item cost-bar-item cost-bar-item--short" data-material="${key}" title="${title}">
                 <span class="res-bar-icon">${iconHtml}</span>
                 <span class="res-bar-val">${need}</span>
-              </div>`;
+              </button>`;
     };
 
     const slots = RESOURCE_BAR_SLOTS.map(slot => {
@@ -400,7 +414,58 @@ export function renderCastle(root, { player }) {
       <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>
       <div class="resource-bar cost-bar">${slots}${extras}</div>
       <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>`;
+    // The bar lives outside #content-root, next to the resource strip, so no
+    // screen-level delegation reaches it — it carries its own listener.
+    bar.addEventListener('click', e => {
+      const chip = e.target.closest('[data-material]');
+      if (chip) openMaterialSourceSheet(chip.dataset.material);
+    });
     resourceRow.insertAdjacentElement('afterend', bar);
+  }
+
+  // ── Where does this come from? ────────────────────────────────────────────
+  // Opened from a cost the player cannot meet. Crystals and trophies both drop
+  // on expeditions, so both get the same answer and the same jump; gold and
+  // crafted intermediates do not, and say so rather than offering a dead button.
+  //
+  // A sub-sheet, because the cost bar is shown while a slot or upgrade sheet is
+  // already open and closing that to answer a side question would lose the
+  // player's place.
+  function openMaterialSourceSheet(key) {
+    const regionIds = getRegionsForMaterial(key) || [];
+    const label     = key === 'Gold' ? 'Gold' : key.replace(/Crystals_/, '').replace(/_/g, ' ');
+    const have      = amountOf(key);
+
+    const rows = regionIds.map(id => {
+      const region = REGIONS.find(r => r.id === id);
+      const name   = (region ? (castleLang === 'ru' ? (region.label_ru || region.label) : region.label) : id) || id;
+      return `<button class="mat-region-btn" data-region="${id}">
+                <span class="mat-region-name">${name}</span>
+                <span class="mat-region-go">→</span>
+              </button>`;
+    }).join('');
+
+    openSubSheet(label, `
+      <div class="mat-sheet">
+        <div class="mat-sheet-head">
+          <span class="mat-sheet-have">${castleLang === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
+        </div>
+        ${regionIds.length
+          ? `<p class="mat-sheet-label">${castleLang === 'ru' ? 'Выпадает:' : 'Drops in:'}</p>
+             <div class="mat-region-list">${rows}</div>`
+          : `<p class="modal-empty">${castleLang === 'ru'
+                ? 'Не выпадает в походах.'
+                : 'Not found on any expedition.'}</p>`}
+      </div>`);
+
+    getSubSheetBody()?.querySelectorAll('.mat-region-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Leaves the castle entirely, so both sheets go with it.
+        closeSubSheet();
+        closeModal();
+        navigate('embark', { player, highlightRegions: [btn.dataset.region], highlightMaterial: key });
+      });
+    });
   }
 
   // `def.upgrades` lists the BUILDING ids this building can become — the same

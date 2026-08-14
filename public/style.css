@@ -1320,6 +1320,22 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .cost-bar-item--ok    .res-bar-val { color: var(--text); }
 .cost-bar-item--short .res-bar-val { color: var(--danger); }
+
+/* A shortfall is a <button> so it can be tapped for "where does this drop?".
+   Everything the app-wide button rule would impose is undone — it has to look
+   exactly like the columns beside it, which are plain divs. */
+button.cost-bar-item {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+button.cost-bar-item:active { transform: scale(0.9); }
 /* The one you cannot pay is the whole point of the bar — make it findable. */
 .cost-bar-item--short .res-icon-img {
   filter: drop-shadow(0 0 3px var(--danger));
@@ -1350,13 +1366,50 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .roster-trophy-bar::-webkit-scrollbar { display: none; }
 
+/* A <button> now, so the whole app-wide button styling has to be undone —
+   otherwise every trophy turns into a gold pill. Looks identical to the div it
+   replaced; it just takes taps. */
 .trophy-bar-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
 }
+.trophy-bar-item:active { transform: scale(0.92); }
+
+/* One row per region that drops the material, each its own jump. */
+.mat-region-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.mat-region-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.mat-region-btn:active { background: #1a2235; }
+.mat-region-go { color: var(--accent); font-weight: 700; }
 
 .trophy-bar-icon-wrap {
   font-size: 0.82rem;

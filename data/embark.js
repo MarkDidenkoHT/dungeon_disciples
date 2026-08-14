@@ -31,8 +31,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 50,
         crystals:        [{ type: 'Crystals_Life', amount: 8 }, { type: 'Crystals_Fire', amount: 8 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 2 }],
-        spell_trophies:  [{ id: 'aggrails_signet', amount: 1 }],
+        trophies:        [{ id: 'aggrails_signet', amount: 1 }], 
+        spell_trophies:  [{ id: 'vial_of_pure_blood', amount: 2 }],
       },
     },
     level_3: {
@@ -46,7 +46,7 @@ const REGION_ENCOUNTERS = {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Life', amount: 10 }, { type: 'Crystals_Fire', amount: 10 }],
         trophies:        [{ id: 'vial_of_pure_blood', amount: 2 }],
-        spell_trophies:  [{ id: 'shard_of_devotion', amount: 2 }],
+        spell_trophies:  [{ id: 'shard_of_devotion', amount: 1 }],
       },
     },
     level_4: {
@@ -60,8 +60,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Life', amount: 11 }, { type: 'Crystals_Fire', amount: 11 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
-        spell_trophies:  [{ id: 'aggrails_signet', amount: 2 }],
+        trophies:        [{ id: 'aggrails_signet', amount: 2 }],
+        spell_trophies:  [{ id: 'vial_of_pure_blood', amount: 2 }],
       },
     },
     level_5: {
@@ -69,7 +69,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
-        { key: 'crimson_basilica.keeper_of_purity',         cell: 3 },
+        { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
         { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
@@ -90,7 +90,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Life', amount: 14 }, { type: 'Crystals_Fire', amount: 14 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
+        trophies:        [{ id: 'shard_of_devotion', amount: 1 }],
         spell_trophies:  [{ id: 'shard_of_devotion', amount: 2 }],
       },
     },
@@ -117,8 +117,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Frost', amount: 8 }, { type: 'Crystals_Air', amount: 8 }],
-        trophies:        [{ id: 'crystal_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
+        trophies:        [{ id: 'crystal_shard', amount: 1 }],
+        spell_trophies:  [{ id: 'crystal_dust', amount: 1 }],
       },
     },
     level_3: {
@@ -130,7 +130,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Frost', amount: 10 }, { type: 'Crystals_Air', amount: 10 }],
-        trophies:        [{ id: 'crystal_dust', amount: 2 }],
+        trophies:        [{ id: 'living_geode', amount: 1 }],
         spell_trophies:  [{ id: 'living_geode', amount: 1 }],
       },
     },
@@ -156,8 +156,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Frost', amount: 13 }, { type: 'Crystals_Air', amount: 13 }],
-        trophies:        [{ id: 'crystal_dust', amount: 2 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        [{ id: 'rusted_shackle', amount: 2 }],
+        spell_trophies:  [{ id: 'crystal_dust', amount: 1 }],
       },
     },
     level_6: {
@@ -170,7 +170,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
-        trophies:        [{ id: 'crystal_dust', amount: 2 }],
+        trophies:        [{ id: 'living_geode', amount: 1 }],
         spell_trophies:  [{ id: 'living_geode', amount: 2 }],
       },
     },
@@ -212,7 +212,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Death', amount: 10 }, { type: 'Crystals_Nature', amount: 10 }],
-        trophies:        [{ id: 'grave_dust', amount: 2 }],
+        trophies:        [{ id: 'shard_of_might', amount: 1 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 1 }],
       },
     },
@@ -240,8 +240,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Death', amount: 13 }, { type: 'Crystals_Nature', amount: 13 }],
-        trophies:        [{ id: 'grave_dust', amount: 2 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        [{ id: 'rusted_shackle', amount: 2 }],
+        spell_trophies:  [{ id: 'grave_dust', amount: 1 }],
       },
     },
     level_6: {
@@ -255,7 +255,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
-        trophies:        [{ id: 'grave_dust', amount: 2 }],
+        trophies:        [{ id: 'shard_of_might', amount: 1 }],
         spell_trophies:  [{ id: 'shard_of_might', amount: 2 }],
       },
     },

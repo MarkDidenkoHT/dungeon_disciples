@@ -524,8 +524,13 @@ export function renderItems(root, { player }) {
     const bar = document.createElement('div');
     bar.id = 'roster-trophy-bar';
     bar.className = 'roster-trophy-bar';
+    // Tappable, like the cost chips. A trophy the player is short of is the one
+    // thing on this screen they want to act on, and the answer — which region
+    // drops it — was already a tap away from a cost chip but not from the bar
+    // that shows what they own.
     bar.innerHTML = trophyItems.map(t => `
-      <div class="trophy-bar-item" title="${t.item}">
+      <button class="trophy-bar-item" data-material="${t.item}"
+              title="${materialName(t.item)} — ${t.amount}">
         <div class="trophy-bar-icon-wrap">
           <img src="${assetUrl(`/assets/icons/recources/${t.item}.png`)}"
               class="trophy-bar-icon"
@@ -534,7 +539,14 @@ export function renderItems(root, { player }) {
           <span class="trophy-bar-icon-fallback">🏆</span>
         </div>
         <span class="trophy-bar-val">${t.amount}</span>
-      </div>`).join('');
+      </button>`).join('');
+
+    // The bar is mounted OUTSIDE this screen's host (it sits under the resource
+    // strip), so the host's delegated click never reaches it — it needs its own.
+    bar.addEventListener('click', e => {
+      const chip = e.target.closest('[data-material]');
+      if (chip) openMaterialSheet(chip.dataset.material);
+    });
 
     const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
     resourceRow?.insertAdjacentElement('afterend', bar);
@@ -562,7 +574,20 @@ export function renderItems(root, { player }) {
           <span class="mat-sheet-have">${L === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
         </div>
         ${regionIds.length
-          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает:' : 'Drops in:'} <span class="mat-regions">${regionNames}</span></p>`
+          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает:' : 'Drops in:'} <span class="mat-regions">${regionNames}</span></p>
+             <!-- One row per region, each its own jump. Listing three names and
+                  offering a single Embark button meant the player still had to
+                  find the right card once they arrived. -->
+             <div class="mat-region-list">
+               ${regionIds.map(id => {
+                 const region = REGIONS.find(r => r.id === id);
+                 const name   = (region ? (L === 'ru' ? (region.label_ru || region.label) : region.label) : id) || id;
+                 return `<button class="mat-region-btn" data-region="${id}">
+                           <span class="mat-region-name">${name}</span>
+                           <span class="mat-region-go">→</span>
+                         </button>`;
+               }).join('')}
+             </div>`
           : `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`}
         ${ingredientDef ? `
           <div class="mat-sheet-cost">${costChips(ingredientDef.cost || {}, ingredientDef.item_cost || {})}</div>
@@ -596,6 +621,16 @@ export function renderItems(root, { player }) {
       closeSheet();
       // embark.js flashes these region cards for a few seconds on arrival.
       navigate('embark', { player, highlightRegions: regionIds, highlightMaterial: key });
+    });
+
+    // Straight to ONE region. Same highlight machinery, narrowed to the card the
+    // player picked, so arriving on the embark screen scrolls to that region
+    // rather than flashing all of them.
+    sheetBody?.querySelectorAll('.mat-region-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        closeSheet();
+        navigate('embark', { player, highlightRegions: [btn.dataset.region], highlightMaterial: key });
+      });
     });
   }
 
