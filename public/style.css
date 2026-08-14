@@ -1636,6 +1636,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: #0e1219;
   border: 1px solid #222d3e;
   border-radius: 7px;
+  position: relative;   /* anchor for .ability-rank-up */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1819,6 +1820,28 @@ button:active:not(:disabled) { opacity: 0.75; }
   object-fit: cover;
   border-radius: 4px;
   display: block;
+}
+
+/* "+1" over an ability an upgrade raises a rank. Sits ON the icon rather than
+   beside it so the abilities row keeps its width — this is drawn while
+   comparing two units, and a badge that widened the row would shift the card
+   the player is reading. */
+.ability-rank-up {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #1b2a1b;
+  border: 1px solid #6fcf97;
+  color: #6fcf97;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .ability-modal-content {
@@ -6813,6 +6836,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: none;
   pointer-events: none;
 }
+
+/* Waiting for a choice, not broken: the frame stays, the glyph dims. Keeping
+   the button in the row at all times is the point — a control that vanishes
+   moves everything beside it and never teaches the player where it lives. */
+.frame-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.frame-action:disabled:active { transform: none; background-image: var(--img-nav); }
+
+/* A maxed building has no branch to ever pick, so its build button is dimmer
+   still and takes no clicks at all. */
+.frame-action--inert { opacity: 0.22; pointer-events: none; }
 
 /* Registration crest / hero track — the same portrait-card frame used across the
    game, sized larger since it is the primary chooser on these screens. */

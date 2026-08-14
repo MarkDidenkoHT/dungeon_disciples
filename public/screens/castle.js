@@ -442,6 +442,10 @@ export function renderCastle(root, { player }) {
               // what to build and wants to know where each option leads before
               // committing the gold, not after.
               extraSlotHtml: treeButtonHtml(s.unit?.id),
+              // A preview has no HP or XP of its own, but the slot sheet this
+              // opens from does — without the space held the card lost two rows
+              // and everything below it jumped.
+              reserveProgress: true,
             })}
           </div>
         </div>
@@ -1348,6 +1352,13 @@ export function renderCastle(root, { player }) {
         ${actionOverlayHtml}
       </div>
       <div class="track-action-row track-action-row--framed">
+        <!-- Always present, disabled until a branch is picked. A control that
+             appears and disappears moves everything beside it, and the player
+             cannot learn where it lives; one that is simply dim reads as "not
+             yet" and stays put. Maxed buildings keep it too — permanently
+             inert, so the row never changes shape. -->
+        <button class="frame-action frame-action--confirm ${canUpgrade ? '' : 'frame-action--inert'}" id="slot-upgrade" disabled
+                title="${CASTLE_TEXT.upgrade[castleLang]}" aria-label="${CASTLE_TEXT.upgrade[castleLang]}">⚒</button>
         ${canUpgrade
           ? `<div class="prep-track-wrap branch-track-wrap">
                <div class="portrait-track" id="slot-upgrade-track">${upgradeCards}</div>
@@ -1432,15 +1443,24 @@ export function renderCastle(root, { player }) {
       }
     });
 
-    // Each upgrade portrait opens the same comparison the ⚒ button used to,
-    // already sitting on the branch that was tapped — so the choice made here
-    // is the one being compared, rather than always landing on the first path.
+    // Pick a branch, then build it. Selecting only arms the button — it does not
+    // spend anything — so the portraits stay browsable and the commitment is
+    // always the same deliberate second tap on ⚒.
+    const upgradeBtn = body?.querySelector('#slot-upgrade');
+    let selectedPath = null;
     body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
       card.addEventListener('click', () => {
-        const startIndex = Math.max(0, paths.findIndex(p => p.unit_id === card.dataset.pathUnit));
-        if (mercDef) openMercUpgradeModal(slot, mercDef, paths, startIndex);
-        else         openUpgradeModal(slot, def, paths, startIndex);
+        selectedPath = card.dataset.pathUnit;
+        body.querySelectorAll('#slot-upgrade-track .portrait-card')
+            .forEach(c => c.classList.toggle('portrait-card--selected', c === card));
+        if (upgradeBtn) upgradeBtn.disabled = false;
       });
+    });
+    upgradeBtn?.addEventListener('click', () => {
+      if (!selectedPath) return;
+      const startIndex = Math.max(0, paths.findIndex(p => p.unit_id === selectedPath));
+      if (mercDef) openMercUpgradeModal(slot, mercDef, paths, startIndex);
+      else         openUpgradeModal(slot, def, paths, startIndex);
     });
     body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
   }

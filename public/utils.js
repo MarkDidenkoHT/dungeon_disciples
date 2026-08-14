@@ -344,11 +344,24 @@ export function getActionLabel(actionKey) {
   return map[k.toLowerCase()] || cap(k);
 }
 
-export function renderUnitAbilityIcon(key, type) {
+// The rank an ability key carries: 'aegis 2' -> 2, 'aegis' -> 1. Ranks are the
+// trailing number on the key and nothing else, so this is the one place that
+// has to know the convention.
+export function abilityRank(key) {
+  const m = /\s(\d+)$/.exec(String(key || ''));
+  return m ? Number(m[1]) : (key ? 1 : 0);
+}
+
+// `rankUp` draws a +N flag over the icon. An upgrade that raises a passive a
+// rank (aegis 1 -> aegis 2) otherwise looked identical to one that changed
+// nothing — same art, same name, same slot — so the single most common reason
+// to take a branch was invisible on the card comparing them.
+export function renderUnitAbilityIcon(key, type, opts = {}) {
   const def     = resolveAbility(key);
   const isEmpty = !def;
   const fileKey = key ? key.replace(/\s+/g, '_').replace(/_\d+$/, '') : null;
   const imgSrc  = def ? assetUrl(`/assets/icons/abilities/${fileKey}.jpg`) : null;
+  const rankUp  = Number(opts.rankUp) || 0;
   return `
     <button
       class="ability-icon ability-icon--${type}${isEmpty ? ' ability-icon--empty' : ''}"
@@ -357,6 +370,7 @@ export function renderUnitAbilityIcon(key, type) {
       ${isEmpty ? 'disabled' : ''}
     >
       ${imgSrc ? `<img class="ability-icon-img" src="${imgSrc}" alt="${abilityName(def)}" onerror="this.style.visibility='hidden'">` : ''}
+      ${rankUp > 0 ? `<span class="ability-rank-up">+${rankUp}</span>` : ''}
     </button>`;
 }
 
@@ -553,11 +567,28 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
     ? source.filter(Boolean)
     : (source ? [source] : []);
 
+  // How many ranks each ability gained over the unit being compared against.
+  // Matched on the ability's BASE name, so 'aegis 1' and 'aegis 2' are the same
+  // ability at two ranks rather than two unrelated keys.
+  const base = k => String(k || '').replace(/\s+\d+$/, '');
+  const cmp  = opts.compareUnit;
+  const cmpKeys = cmp
+    ? [cmp.ability, ...(Array.isArray(cmp.native_passive ?? cmp.passive)
+        ? (cmp.native_passive ?? cmp.passive)
+        : [cmp.native_passive ?? cmp.passive])].filter(Boolean)
+    : [];
+  const rankUpFor = key => {
+    if (!cmp || !key) return 0;
+    const was = cmpKeys.find(k => base(k) === base(key));
+    if (!was) return 0;                       // brand new, not a rank-up
+    return Math.max(0, abilityRank(key) - abilityRank(was));
+  };
+
   const iconsHtml = [
-    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active')  : renderUnitAbilityIcon('', 'empty'),
-    passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive') : renderUnitAbilityIcon('', 'empty'),
-    passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive') : renderUnitAbilityIcon('', 'empty'),
-    passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive') : renderUnitAbilityIcon('', 'empty'),
+    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active',  { rankUp: rankUpFor(unit.ability) })  : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive', { rankUp: rankUpFor(passiveKeys[0]) }) : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive', { rankUp: rankUpFor(passiveKeys[1]) }) : renderUnitAbilityIcon('', 'empty'),
+    passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive', { rankUp: rankUpFor(passiveKeys[2]) }) : renderUnitAbilityIcon('', 'empty'),
   ].join('');
 
   const itemHtml = opts.itemSlotHtml || '';
@@ -641,8 +672,23 @@ export function renderUnitStatDiffs(unit, compareUnit) {
 //
 // The XP bar is the one that answers "how close is this unit to levelling", a
 // question the flat "XP 720" in the stat column never could — 720 of what?
-export function renderUnitProgressRow(progress) {
-  if (!progress) return '';
+// `reserve: true` keeps the HP and XP rows' HEIGHT when there is no progress to
+// draw. The castle shows a unit with its bars and then an upgrade preview
+// without them — the card lost two rows and everything under it jumped, which
+// is a lot of layout shift on the screen a player reads most carefully. The
+// placeholders are empty, not fake: no numbers, no fill, just the space the
+// real rows occupy.
+export function renderUnitProgressRow(progress, opts = {}) {
+  if (!progress) {
+    if (!opts.reserve) return '';
+    const blank = `
+      <div class="levelup-row unit-progress-row unit-progress-row--ghost" aria-hidden="true">
+        <span class="unit-progress-key"></span>
+        <div class="levelup-xp-bar"></div>
+        <span class="levelup-xp-label"></span>
+      </div>`;
+    return blank + blank;
+  }
   const rows = [];
 
   const hp = progress.hp;
@@ -684,7 +730,7 @@ export function renderUnitProgressRow(progress) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false } = opts;
 
   if (!unit) {
     return `
@@ -706,9 +752,9 @@ export function buildUnitCard(unit, opts = {}) {
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
-        ${renderUnitProgressRow(progress)}
+        ${renderUnitProgressRow(progress, { reserve: reserveProgress })}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml })}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, compareUnit })}
       </div>
     </div>`;
 }
