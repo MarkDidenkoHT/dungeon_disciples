@@ -82,7 +82,7 @@ const ITEM_DEFS = {
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { action_power: 5, death_resist: 5 },
-    passive:      'iron_will 1',
+    passive:      'iron_will 2',
     icon:         'might_of_the_pure',
     rarity:       'mythic',
     unique:       true,

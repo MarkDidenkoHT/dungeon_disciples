@@ -763,30 +763,30 @@ const MERCENARY_BUILDINGS = {
   crimson_basilica: [
     {
       id:       'cb_aggrails_herald',
-      label:    'Aggrails Herald', label_ru: 'Вестник Аггрейла',
+      label:    'Aggrails Herald', label_ru: 'Вестник Агграила',
       region:   'crimson_basilica',
       unit_id:  'opb_e1',
       tier:     1,
       upgrades: ['cb_exalted_herald'],
-      cost:     { vial_of_pure_blood: 1, aggrails_signet: 1 },
+      cost:     { vial_of_pure_blood: 5, aggrails_signet: 5 },
     },
     {
       id:       'cb_exalted_herald',
-      label:    'Exalted Herald', label_ru: 'Возвышенный вестник',
+      label:    'Exalted Herald', label_ru: 'Возвышенный Вестник',
       region:   'crimson_basilica',
       unit_id:  'opb_e11',
       tier:     2,
       upgrades: ['cb_exalted_evangelist'],
-      cost:     { vial_of_pure_blood: 2, aggrails_signet: 2 },
+      cost:     { vial_of_pure_blood: 10, aggrails_signet: 10 },
     },
     {
       id:       'cb_exalted_evangelist',
-      label:    'Exalted Evangelist', label_ru: 'Возвышенный евангелист',
+      label:    'Exalted Evangelist', label_ru: 'Возвышенный Евангелист',
       region:   'crimson_basilica',
       unit_id:  'opb_e111',
       tier:     3,
       upgrades: [],
-      cost:     { vial_of_pure_blood: 4, aggrails_signet: 3 },
+      cost:     { vial_of_pure_blood: 20, aggrails_signet: 20 },
     },
     {
       id:       'cb_scarlet_recruit',
@@ -795,52 +795,52 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'opb_e2',
       tier:     1,
       upgrades: ['cb_aggrails_devoted'],
-      cost:     { vial_of_pure_blood: 1, aggrails_signet: 1 },
+      cost:     { vial_of_pure_blood: 5, aggrails_signet: 5 },
     },
     {
       id:       'cb_aggrails_devoted',
-      label:    'Aggrails Devoted', label_ru: 'Преданный Аггрейлу',
+      label:    'Aggrails Devoted', label_ru: 'Преданный Агграилу',
       region:   'crimson_basilica',
       unit_id:  'opb_e21',
       tier:     2,
       upgrades: ['cb_aggrails_champion'],
-      cost:     { vial_of_pure_blood: 2, aggrails_signet: 2 },
+      cost:     { vial_of_pure_blood: 10, aggrails_signet: 10 },
     },
     {
       id:       'cb_aggrails_champion',
-      label:    'Aggrails Champion', label_ru: 'Поборник Аггрейла',
+      label:    'Aggrails Champion', label_ru: 'Поборник Агграила',
       region:   'crimson_basilica',
       unit_id:  'opb_e211',
       tier:     3,
       upgrades: [],
-      cost:     { vial_of_pure_blood: 4, aggrails_signet: 3 },
+      cost:     { vial_of_pure_blood: 15, aggrails_signet: 15 },
     },
     {
       id:       'cb_initiate',
-      label:    'Initiate', label_ru: 'Посвящённый',
+      label:    'Initiate', label_ru: 'Посвящённая',
       region:   'crimson_basilica',
       unit_id:  'opb_e3',
       tier:     1,
       upgrades: ['cb_keeper_of_purity'],
-      cost:     { vial_of_pure_blood: 1, aggrails_signet: 2 },
+      cost:     { vial_of_pure_blood: 5, aggrails_signet: 5 },
     },
     {
       id:       'cb_keeper_of_purity',
-      label:    'Keeper of Purity', label_ru: 'Хранитель чистоты',
+      label:    'Keeper of Purity', label_ru: 'Хранитель Чистоты',
       region:   'crimson_basilica',
       unit_id:  'opb_e31',
       tier:     2,
       upgrades: ['cb_high_keeper'],
-      cost:     { vial_of_pure_blood: 3, aggrails_signet: 3 },
+      cost:     { vial_of_pure_blood: 10, aggrails_signet: 10 },
     },
     {
       id:       'cb_high_keeper',
-      label:    'High Keeper', label_ru: 'Верховный хранитель',
+      label:    'High Keeper', label_ru: 'Верховный Хранитель',
       region:   'crimson_basilica',
       unit_id:  'opb_e311',
       tier:     3,
       upgrades: [],
-      cost:     { vial_of_pure_blood: 4, aggrails_signet: 4 },
+      cost:     { vial_of_pure_blood: 15, aggrails_signet: 15 },
     },
     // Archer line. The id stays cb_crimson_hunter — saved buildings_data rows
     // reference it — but the label now names the unit it actually grants
@@ -852,7 +852,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'opb_e4',
       tier:     1,
       upgrades: ['cb_crimson_hunter_2'],
-      cost:     { vial_of_pure_blood: 1, aggrails_signet: 1 },
+      cost:     { vial_of_pure_blood: 5, aggrails_signet: 5 },
     },
     {
       id:       'cb_crimson_hunter_2',
@@ -861,7 +861,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'opb_e41',
       tier:     2,
       upgrades: ['cb_crimson_stalker'],
-      cost:     { vial_of_pure_blood: 2, aggrails_signet: 2 },
+      cost:     { vial_of_pure_blood: 10, aggrails_signet: 10 },
     },
     {
       id:       'cb_crimson_stalker',
@@ -870,7 +870,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'opb_e411',
       tier:     3,
       upgrades: [],
-      cost:     { vial_of_pure_blood: 4, aggrails_signet: 3 },
+      cost:     { vial_of_pure_blood: 15, aggrails_signet: 15 },
     },
     // Sister Aldra (opb_e5/opb_e51) is a boss — deliberately NOT recruitable.
   ],
@@ -887,7 +887,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e1',
       tier:     1,
       upgrades: ['ga_geode_mender'],
-      cost:     { crystal_dust: 1, crystal_shard: 1 },
+      cost:     { crystal_dust: 5, crystal_shard: 5 },
     },
     {
       id:       'ga_geode_mender',
@@ -896,7 +896,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e11',
       tier:     2,
       upgrades: ['ga_radiant_geode'],
-      cost:     { crystal_dust: 2, crystal_shard: 2 },
+      cost:     { crystal_dust: 10, crystal_shard: 10 },
     },
     {
       id:       'ga_radiant_geode',
@@ -905,7 +905,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e111',
       tier:     3,
       upgrades: [],
-      cost:     { crystal_dust: 4, crystal_shard: 3 },
+      cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
     // Frostshard line — fast cold strikers.
     {
@@ -915,7 +915,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e2',
       tier:     1,
       upgrades: ['ga_rime_splinter'],
-      cost:     { crystal_dust: 1, crystal_shard: 1 },
+      cost:     { crystal_dust: 5, crystal_shard: 5 },
     },
     {
       id:       'ga_rime_splinter',
@@ -924,7 +924,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e21',
       tier:     2,
       upgrades: ['ga_glacial_prism'],
-      cost:     { crystal_dust: 2, crystal_shard: 2 },
+      cost:     { crystal_dust: 10, crystal_shard: 10 },
     },
     {
       id:       'ga_glacial_prism',
@@ -933,7 +933,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e211',
       tier:     3,
       upgrades: [],
-      cost:     { crystal_dust: 4, crystal_shard: 3 },
+      cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
     // Cairnling line — row-holding protectors.
     {
@@ -943,7 +943,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e3',
       tier:     1,
       upgrades: ['ga_rimewarden'],
-      cost:     { crystal_dust: 2, crystal_shard: 1 },
+      cost:     { crystal_dust: 5, crystal_shard: 5 },
     },
     {
       id:       'ga_rimewarden',
@@ -952,7 +952,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e31',
       tier:     2,
       upgrades: ['ga_bulwark_geode'],
-      cost:     { crystal_dust: 3, crystal_shard: 2 },
+      cost:     { crystal_dust: 10, crystal_shard: 10 },
     },
     {
       id:       'ga_bulwark_geode',
@@ -961,7 +961,7 @@ const MERCENARY_BUILDINGS = {
       unit_id:  'mv_e311',
       tier:     3,
       upgrades: [],
-      cost:     { crystal_dust: 5, crystal_shard: 3 },
+      cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
   ],
 
@@ -969,17 +969,17 @@ const MERCENARY_BUILDINGS = {
   // rusted_shackle). Malgrath the Undying (dm_e4/dm_e41) is a boss — not here.
   chamber_of_unrest: [
     // Bone Knight line.
-    { id: 'cu_bone_knight',  label: 'Bone Knight', label_ru: 'Костяной рыцарь',  region: 'chamber_of_unrest', unit_id: 'dm_e1',   tier: 1, upgrades: ['cu_dread_knight'], cost: { grave_dust: 1, rusted_shackle: 1 } },
-    { id: 'cu_dread_knight', label: 'Dread Knight', label_ru: 'Рыцарь ужаса', region: 'chamber_of_unrest', unit_id: 'dm_e11',  tier: 2, upgrades: ['cu_death_knight'], cost: { grave_dust: 2, rusted_shackle: 2 } },
-    { id: 'cu_death_knight', label: 'Death Knight', label_ru: 'Рыцарь смерти', region: 'chamber_of_unrest', unit_id: 'dm_e111', tier: 3, upgrades: [],                   cost: { grave_dust: 4, rusted_shackle: 3 } },
+    { id: 'cu_bone_knight',  label: 'Bone Knight', label_ru: 'Костяной рыцарь',  region: 'chamber_of_unrest', unit_id: 'dm_e1',   tier: 1, upgrades: ['cu_dread_knight'], cost: { grave_dust: 5, rusted_shackle: 5 } },
+    { id: 'cu_dread_knight', label: 'Dread Knight', label_ru: 'Рыцарь ужаса', region: 'chamber_of_unrest', unit_id: 'dm_e11',  tier: 2, upgrades: ['cu_death_knight'], cost: { grave_dust: 10, rusted_shackle: 10 } },
+    { id: 'cu_death_knight', label: 'Death Knight', label_ru: 'Рыцарь смерти', region: 'chamber_of_unrest', unit_id: 'dm_e111', tier: 3, upgrades: [],                   cost: { grave_dust: 15, rusted_shackle: 15 } },
     // Oathbound Martyr line.
-    { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', label_ru: 'Мученик клятвы', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 1, rusted_shackle: 1 } },
-    { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', label_ru: 'Присягнувший мученик', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 2, rusted_shackle: 2 } },
-    { id: 'cu_martyr_of_the_vow', label: 'Martyr of the Vow', label_ru: 'Мученик обета', region: 'chamber_of_unrest', unit_id: 'dm_211', tier: 3, upgrades: [],                       cost: { grave_dust: 4, rusted_shackle: 3 } },
+    { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', label_ru: 'Мученик клятвы', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 5, rusted_shackle: 5 } },
+    { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', label_ru: 'Присягнувший мученик', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 10, rusted_shackle: 10 } },
+    { id: 'cu_martyr_of_the_vow', label: 'Martyr of the Vow', label_ru: 'Мученик обета', region: 'chamber_of_unrest', unit_id: 'dm_211', tier: 3, upgrades: [],                       cost: { grave_dust: 15, rusted_shackle: 15 } },
     // Wailing Ghost line.
-    { id: 'cu_wailing_ghost',  label: 'Wailing Ghost', label_ru: 'Стенающий призрак',  region: 'chamber_of_unrest', unit_id: 'dm_e3',   tier: 1, upgrades: ['cu_revenant'],       cost: { grave_dust: 2, rusted_shackle: 1 } },
-    { id: 'cu_revenant',       label: 'Revenant', label_ru: 'Ревенант',       region: 'chamber_of_unrest', unit_id: 'dm_e31',  tier: 2, upgrades: ['cu_soul_harvester'], cost: { grave_dust: 3, rusted_shackle: 2 } },
-    { id: 'cu_soul_harvester', label: 'Soul Harvester', label_ru: 'Жнец душ', region: 'chamber_of_unrest', unit_id: 'dm_e311', tier: 3, upgrades: [],                     cost: { grave_dust: 5, rusted_shackle: 3 } },
+    { id: 'cu_wailing_ghost',  label: 'Wailing Ghost', label_ru: 'Стенающий призрак',  region: 'chamber_of_unrest', unit_id: 'dm_e3',   tier: 1, upgrades: ['cu_revenant'],       cost: { grave_dust: 5, rusted_shackle: 5 } },
+    { id: 'cu_revenant',       label: 'Revenant', label_ru: 'Ревенант',       region: 'chamber_of_unrest', unit_id: 'dm_e31',  tier: 2, upgrades: ['cu_soul_harvester'], cost: { grave_dust: 10, rusted_shackle: 10 } },
+    { id: 'cu_soul_harvester', label: 'Soul Harvester', label_ru: 'Жнец душ', region: 'chamber_of_unrest', unit_id: 'dm_e311', tier: 3, upgrades: [],                     cost: { grave_dust: 15, rusted_shackle: 15 } },
   ],
 };
 
