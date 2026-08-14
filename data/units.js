@@ -417,18 +417,18 @@ const UNITS = {
     // around Purge rather than damage — it strips the blessings off whatever
     // the Choir is about to eat. Low HP and no armor, because a thing that
     // fights from the back rank should die if it is caught in the front one.
-    gnawling: {
-      id: 'd2', f: 'd', t: 1,
-      name: 'Gnawling',
-      name_ru: 'Грызун',
-      tags: ['Demon', 'Caster'],
-      size: 'tile',
-      hp: 45, armor: 0, initiative: 55,
-      resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 170, passive: 'dissipate 1', ability: 'purge 1',
-    },
+    // gnawling: {
+    //   id: 'd2', f: 'd', t: 1,
+    //   name: 'Gnawling',
+    //   name_ru: 'Грызун',
+    //   tags: ['Demon', 'Caster'],
+    //   size: 'tile',
+    //   hp: 45, armor: 0, initiative: 55,
+    //   resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
+    //   action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+    //   damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
+    //   xp: 170, passive: 'dissipate 1', ability: 'purge 1',
+    // },
     clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
