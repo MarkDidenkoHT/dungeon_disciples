@@ -419,7 +419,6 @@ export function renderCastle(root, { player }) {
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${unitName(slide.unit) || slide.buildingLabel || ''}">
           ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${unitName(slide.unit)}" onerror="this.style.display='none'">` : ''}
-          <div class="portrait-name">${unitName(slide.unit) || slide.buildingLabel || ''}</div>
         </div>`).join('');
 
       return `

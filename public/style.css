@@ -6707,7 +6707,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   min-width: 0;
   /* Its own scroll container, so cards pass under nothing but its own edges. */
   overflow-x: auto;
-  padding: 0;
+  /* padding: 0; */
   scroll-padding-inline: 8px;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
