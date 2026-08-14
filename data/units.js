@@ -362,7 +362,7 @@ const UNITS = {
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 170, passive: ['rage 1', 'vengeance 1'], ability: 'pact 1',
     },
     tormentor: {
@@ -374,7 +374,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     praetor: {
@@ -386,7 +386,7 @@ const UNITS = {
       hp: 140, armor: 15, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 2000, passive: ['rage 2', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     chorister: {
@@ -398,7 +398,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 28, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'burn 1'], ability: 'pact 1',
     },
     chanter: {
@@ -410,8 +410,24 @@ const UNITS = {
       hp: 140, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 26, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 36, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 2000, passive: ['rage 2', 'vengeance 1', 'burn 1'], ability: 'pact 1',
+    },
+    // A new tier 1 line of its own, not a branch: small, ranged, and built
+    // around Purge rather than damage — it strips the blessings off whatever
+    // the Choir is about to eat. Low HP and no armor, because a thing that
+    // fights from the back rank should die if it is caught in the front one.
+    gnawling: {
+      id: 'd2', f: 'd', t: 1,
+      name: 'Gnawling',
+      name_ru: 'Грызун',
+      tags: ['Demon', 'Caster'],
+      size: 'tile',
+      hp: 35, armor: 0, initiative: 55,
+      resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 10, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
+      xp: 170, passive: 'rage 1', ability: 'purge 1',
     },
     clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
@@ -422,7 +438,7 @@ const UNITS = {
       hp: 60, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 170, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
@@ -434,7 +450,7 @@ const UNITS = {
       hp: 80, armor: 35, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 28, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
@@ -446,7 +462,7 @@ const UNITS = {
       hp: 85, armor: 40, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 34, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
@@ -458,7 +474,7 @@ const UNITS = {
       hp: 80, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 10, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
@@ -470,7 +486,7 @@ const UNITS = {
       hp: 95, armor: 30, initiative: 50,
       resistances: { air: 15, fire: 10, life: 10, death: 20, cold: 25, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 15, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     heretic: {
@@ -1283,6 +1299,22 @@ const UNITS = {
       damage_source: 'life', action_power: 15, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       xp: 1000, passive: ['aegis 1', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
     },
+    // The Empire's first TIER 4 unit. Nothing else in the game goes past tier 3,
+    // so this is the shape the rest will follow: one step past the tier 3, no
+    // new toys — the same kit with its keystone passive raised a rank (aegis 1
+    // -> aegis 2) and the stat line moved on rather than doubled.
+    mithrails_exemplar: {
+      id: 'e2111', f: 'e', t: 4,
+      name: 'Mithrails Exemplar',
+      name_ru: 'Экземплар Митраила',
+      tags: ['Knight', 'Holy'],
+      size: 'tile',
+      hp: 80, armor: 25, initiative: 35,
+      resistances: { air: 15, fire: 15, life: 50, death: 15, cold: 15, nature: 15 },
+      action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'life', action_power: 20, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      xp: 2200, passive: ['aegis 2', 'iron_will 1', 'radiance 1'], ability: 'sanctuary 1',
+    },
     priest: {
       id: 'e22', f: 'e', t: 2,
       name: 'Priest',
@@ -1378,6 +1410,35 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_animation: 'fire_bolt', action_sfx: 'frost_spell_impact',
       xp: 1000, passive: ['resist_aura_cold 1', 'chill 2'], ability: 'frost_armor 2',
+    },
+    // Third branch off the Apprentice: the mage who wards instead of burning or
+    // freezing. Its TURN is the shield (action: 'shield'), so action_power is
+    // the size of the pool it hands an ally, not damage — see the shield action
+    // in utils/battle-engine.js. Range 3 and targets 1 to start; the tier 3
+    // wards the whole line at once.
+    warder_adept: {
+      id: 'e43', f: 'e', t: 2,
+      name: 'Warder Adept',
+      name_ru: 'Хранитель',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 45, armor: 5, initiative: 35,
+      resistances: { air: 10, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
+      action: 'shield', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 12, action_icon: 'aegis.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      xp: 400, passive: ['inspiration_initiative 1', 'aegis 1'], ability: 'frost_armor 1',
+    },
+    bulwark_magus: {
+      id: 'e431', f: 'e', t: 3,
+      name: 'Bulwark Magus',
+      name_ru: 'Старший Хранитель',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 55, armor: 10, initiative: 35,
+      resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'shield', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'aegis.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      xp: 1000, passive: ['inspiration_initiative 1', 'aegis 2'], ability: 'frost_armor 2',
     },
   },
 
@@ -1573,7 +1634,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1586,7 +1647,7 @@ const UNITS = {
       hp: 95, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1000
     },
@@ -1599,7 +1660,7 @@ const UNITS = {
       hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2', 'undying 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1700
     },
@@ -1612,7 +1673,7 @@ const UNITS = {
       hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 2', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1700
     },
@@ -1958,7 +2019,7 @@ const UNITS = {
       hp: 120, armor: 0, initiative: 20,
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 170, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
@@ -1970,7 +2031,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_angel: {
@@ -1982,7 +2043,7 @@ const UNITS = {
       hp: 140, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 2000, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
@@ -1994,7 +2055,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 800, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
@@ -2006,7 +2067,7 @@ const UNITS = {
       hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 2000, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
@@ -2187,6 +2248,36 @@ const UNITS = {
       resistances: { air: 20, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      xp: 900, passive: ['dodge 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
+    },
+    // Third branch off the Pale Maiden. Where the Votaress mends the dead, this
+    // one denies the living their mending: its TURN is Decay (action: 'decay'),
+    // so action_power is the size of the anti-heal pool it lays on an enemy and
+    // it deals no damage at all — see the decay action in utils/battle-engine.js.
+    // Ranged, because a unit whose whole job is a debuff should not be standing
+    // in the front rank to do it.
+    pale_mourner: {
+      id: 'gs73', f: 'g', t: 2,
+      name: 'Pale Mourner',
+      name_ru: 'Бледная Плакальщица',
+      tags: ['Spirit', 'Knight'],
+      size: 'tile',
+      hp: 50, armor: 15, initiative: 45,
+      resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
+      action: 'decay', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
+      xp: 330, passive: ['dodge 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
+    },
+    pale_lamenter: {
+      id: 'gs731', f: 'g', t: 3,
+      name: 'Pale Lamenter',
+      name_ru: 'Бледная Скорбница',
+      tags: ['Spirit', 'Knight'],
+      size: 'tile',
+      hp: 60, armor: 20, initiative: 45,
+      resistances: { air: 20, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
+      action: 'decay', target_type: 'enemy', targets: 6, range: 3,
+      damage_source: null, action_power: 8, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
       xp: 900, passive: ['dodge 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
     },
     mothers_tear: {
