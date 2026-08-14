@@ -291,6 +291,71 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 35% урона юниту позади цели.",
     params: { behind_splash_pct: 35 },
   },
+  // ── Decay / Shield ─────────────────────────────────────────────────────────
+  // Two mirrored POOLS, both capped at 50% of the target's own max HP (see
+  // POOL_CAP_PCT in utils/battle-engine.js). Decay eats incoming HEALING point
+  // for point and is spent doing it; Shield eats incoming DAMAGE the same way.
+  // Both stack on re-application and saturate at the cap, so a long fight
+  // cannot turn either into an absolute immunity.
+  //
+  // `decay_amount` applies to whoever was hit. `shield_amount` shields the unit
+  // that was hit too, unless `shield_target: 'self'` names the attacker.
+  'decay 1': {
+    id: 'decay 1',
+    name: 'Decay',
+    name_ru: 'Тлен',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Each hit adds 3 Decay. Decay cancels incoming healing point for point, and is used up doing so. Caps at half the target’s max HP.',
+    description_ru: 'Каждое попадание добавляет 3 Тлена. Тлен поглощает входящее исцеление один к одному и расходуется при этом. Предел — половина макс. HP цели.',
+    dispellable: true,
+    effect_name: 'noxious_death',
+    animation_sound: 'noxious_death',
+    params: { decay_amount: 3 },
+  },
+  'decay 2': {
+    id: 'decay 2',
+    name: 'Decay',
+    name_ru: 'Тлен',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Each hit adds 6 Decay. Decay cancels incoming healing point for point, and is used up doing so. Caps at half the target’s max HP.',
+    description_ru: 'Каждое попадание добавляет 6 Тлена. Тлен поглощает входящее исцеление один к одному и расходуется при этом. Предел — половина макс. HP цели.',
+    dispellable: true,
+    effect_name: 'noxious_death',
+    animation_sound: 'noxious_death',
+    params: { decay_amount: 6 },
+  },
+  'shield 1': {
+    id: 'shield 1',
+    name: 'Shield',
+    name_ru: 'Щит',
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Grants a 10-point Shield. Shield absorbs damage point for point, and is used up doing so. Caps at half the unit’s max HP.',
+    description_ru: 'Даёт Щит на 10 единиц. Щит поглощает урон один к одному и расходуется при этом. Предел — половина макс. HP юнита.',
+    dispellable: true,
+    effect_name: 'aegis',
+    animation_sound: 'divine_spell',
+    params: { shield_amount: 10, shield_target: 'self' },
+  },
+  'shield 2': {
+    id: 'shield 2',
+    name: 'Shield',
+    name_ru: 'Щит',
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Grants a 20-point Shield. Shield absorbs damage point for point, and is used up doing so. Caps at half the unit’s max HP.',
+    description_ru: 'Даёт Щит на 20 единиц. Щит поглощает урон один к одному и расходуется при этом. Предел — половина макс. HP юнита.',
+    dispellable: true,
+    effect_name: 'aegis',
+    animation_sound: 'divine_spell',
+    params: { shield_amount: 20, shield_target: 'self' },
+  },
   'infect 1': {
     id: 'infect 1',
     name: 'Infect',
@@ -1501,13 +1566,13 @@ const UNIT_ABILITIES = {
   'clear_shot 1': {
     id: 'clear_shot 1',
     name: 'Clear Shot',
-    name_ru: "Точный выстрел",
+    name_ru: "Чистый выстрел",
     rank: 1,
     type: 'passive',
     trigger: 'on_round_start',
-    description: 'If this unit is in the back and has no living ally in front of it, gain +10% initiative and +20% damage. Except units with Protector.',
-    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +10% инициативы и +20% урона. За исключением юнитов с Защитник.",
-    params: { clear_shot_initiative_bonus_pct: 10, clear_shot_dmg_bonus_pct: 20 },
+    description: 'If this unit is in the back and has no living ally in front of it, gain +25% initiative and +25% damage.',
+    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +25% инициативы и +25% урона.",
+    params: { clear_shot_initiative_bonus_pct: 25, clear_shot_dmg_bonus_pct: 25 },
   },
   'duelist 1': {
     id: 'duelist 1',

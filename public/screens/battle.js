@@ -83,6 +83,8 @@ const BT = {
   // ability, plus the two empty/failure states of the panel itself.
   actSacrifice:  { en: 'Sacrifice',     ru: 'Жертва' },
   actHolyShock:  { en: 'Holy Shock',    ru: 'Священный удар' },
+  actShield:     { en: 'Shield',        ru: 'Щит' },
+  actDecay:      { en: 'Decay',         ru: 'Тлен' },
   actMothersKiss:{ en: "Mother's Kiss", ru: 'Поцелуй матери' },
   actPassive:    { en: 'Passive',       ru: 'Пассивная' },
   actHeal:       { en: 'Heal',          ru: 'Лечение' },
@@ -103,6 +105,16 @@ const BT = {
                    ru: (t, v) => `${t} 🛡 щит поглотил <span class="log-val-shield">${v}</span>` },
   logShieldThru: { en: n => `, ${n} passes through`, ru: n => `, ${n} прошло` },
   logShieldAll:  { en: ', all blocked',            ru: ', всё заблокировано' },
+  logDecay:      { en: (t, v) => `${t} 🥀 decay ate <span class="log-val">${v}</span> healing`,
+                   ru: (t, v) => `${t} 🥀 тлен поглотил <span class="log-val">${v}</span> исцеления` },
+  logDecayThru:  { en: n => `, ${n} healed`,        ru: n => `, ${n} вылечено` },
+  logDecayAll:   { en: ', all of it',               ru: ', полностью' },
+  // A POOL being granted, as opposed to one being spent. `total` is where the
+  // pool now stands, which is the number the player is deciding against.
+  logShieldOn:   { en: (a, t, v, tot) => `${a} shields ${t} for <span class="log-val-shield">${v}</span> (${tot} total)`,
+                   ru: (a, t, v, tot) => `${a} даёт ${t} щит на <span class="log-val-shield">${v}</span> (всего ${tot})` },
+  logDecayOn:    { en: (a, t, v, tot) => `${a} decays ${t} by <span class="log-val">${v}</span> (${tot} total)`,
+                   ru: (a, t, v, tot) => `${a} насылает на ${t} тлен <span class="log-val">${v}</span> (всего ${tot})` },
   logStatus:     { en: (a, p, t, v) => `${a} applied <span class="log-passive">${p}</span> to ${t} <span class="log-dot">(${v}/turn)</span>`,
                    ru: (a, p, t, v) => `${a} наложил <span class="log-passive">${p}</span> на ${t} <span class="log-dot">(${v}/ход)</span>` },
   logGranted:    { en: (a, p, t, v, s) => `${a} <span class="log-passive">${p}</span> granted ${t} <span class="log-val-heal">+${v}</span> ${s}`,
@@ -133,6 +145,8 @@ const BT = {
   chipDot:       { en: 'DoT',        ru: 'Урон/ход' },
   chipRegen:     { en: 'Regen',      ru: 'Реген' },
   chipPerRound:  { en: '/round',     ru: '/ход' },
+  chipShield:    { en: 'Shield',     ru: 'Щит' },
+  chipDecay:     { en: 'Decay',      ru: 'Тлен' },
   chipInvuln:    { en: 'Invulnerable', ru: 'Неуязвим' },
   chipDamage:    { en: 'Damage',     ru: 'Урон' },
 };
@@ -596,6 +610,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
     if (key === 'sacrifice') return BTx('actSacrifice');
     if (key === 'holy_shock') return BTx('actHolyShock');
+    if (key === 'shield')    return BTx('actShield');
+    if (key === 'decay')     return BTx('actDecay');
     const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
     if (actionType === 'none') return BTx('actPassive');
     if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return BTx('actMothersKiss');
@@ -800,6 +816,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       stackChip(c._rage_stacks,       'Rage',       '😡'),
       stackChip(c._aegis_stacks,      'Aegis',      '🛡'),
       stackChip(c._fanaticism_stacks, 'Fanaticism', '🔥'),
+      (c._shield ?? 0) > 0     ? chip('up',   `🛡 ${BTx('chipShield')} ${c._shield}`) : '',
+      (c._decay  ?? 0) > 0     ? chip('down', `🥀 ${BTx('chipDecay')} ${c._decay}`) : '',
       c._invulnerable          ? chip('up',   `✨ ${BTx('chipInvuln')}`) : '',
       (c._dmg_mult ?? 1) !== 1 ? chip((c._dmg_mult > 1) ? 'up' : 'down',
                                       `⚔ ${BTx('chipDamage')} ${Math.round(((c._dmg_mult ?? 1) - 1) * 100)}%`) : '',
@@ -884,6 +902,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'shield') {
       const tail = entry.remaining > 0 ? BTf('logShieldThru')(entry.remaining) : BTx('logShieldAll');
       return `<div class="log-entry log-entry--shield">${BTf('logShield')(target(), entry.value)}${tail}</div>`;
+    }
+    if (entry.type === 'pool') {
+      const tpl = entry.pool === 'shield' ? 'logShieldOn' : 'logDecayOn';
+      return `<div class="log-entry log-entry--shield">${BTf(tpl)(actor(), target(), entry.value, entry.total)}</div>`;
+    }
+    if (entry.type === 'decay') {
+      const tail = entry.remaining > 0 ? BTf('logDecayThru')(entry.remaining) : BTx('logDecayAll');
+      return `<div class="log-entry log-entry--shield">${BTf('logDecay')(target(), entry.value)}${tail}</div>`;
     }
     if (entry.type === 'status') {
       return `<div class="log-entry">${BTf('logStatus')(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
@@ -1198,6 +1224,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'rage',        icon: 'rage.jpg',             en: 'Rage',            ru: 'Ярость',         n: c => num(c, '_rage_stacks') },
     { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
     { key: 'aegis',       icon: 'aegis.jpg',            en: 'Aegis',           ru: 'Эгида',          n: c => num(c, '_aegis_stacks') },
+    // Damage the unit can still absorb before anything reaches its HP.
+    { key: 'shield',      icon: 'aegis.jpg',            en: 'Shield',          ru: 'Щит',            n: c => num(c, '_shield'),             unit: 'dmg_absorb' },
     { key: 'frost-armor', icon: 'frost_armor.jpg',      en: 'Frost Armor',     ru: 'Ледяной доспех', n: c => num(c, '_frost_armor_rounds'), unit: 'rounds' },
     { key: 'stone-form',  icon: 'stone_form.jpg',       en: 'Stone Form',      ru: 'Каменная форма', n: c => num(c, '_stone_form_rounds'),  unit: 'rounds' },
     { key: 'sanctuary',   icon: 'sanctuary.jpg',        en: 'Sanctuary',       ru: 'Святилище',      n: c => num(c, '_sanctuary_rounds'),   unit: 'rounds' },
@@ -1227,6 +1255,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_healing_reduction'), unit: 'pct' },
     { key: 'taunt',   icon: 'taunt.jpg',   en: 'Taunted',          ru: 'Спровоцирован',  n: c => (st(c, '_taunted_by_id') ? 1 : 0) },
     { key: 'sorrow',  icon: 'sorrow.jpg',  en: 'Sorrow',           ru: 'Скорбь',         n: c => (st(c, '_sorrow_source_ids') || []).length },
+    // The pool left, not a percentage: it is how much healing this unit will
+    // lose before any reaches its HP.
+    { key: 'decay',   icon: 'aura_of_decay.jpg', en: 'Decay',      ru: 'Тлен',           n: c => num(c, '_decay'),  unit: 'heal' },
   ];
 
   const UNIT_SUFFIX = {
@@ -1236,6 +1267,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     pct:    { en: '%',           ru: '%' },
     armor:  { en: 'armor',       ru: 'брони' },
     hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
+    heal:        { en: 'healing absorbed', ru: 'исцеления поглотит' },
+    dmg_absorb:  { en: 'damage absorbed',  ru: 'урона поглотит' },
   };
 
   // A tile is 110px tall and an icon row is 18px, so six is the most that fits

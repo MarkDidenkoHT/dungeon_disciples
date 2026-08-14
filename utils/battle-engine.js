@@ -19,6 +19,20 @@ const BATTLE_FATIGUE = {
   wither_pct_max_hp: 5,
 };
 
+// ── Shield and Decay ────────────────────────────────────────────────────────
+// Two mirrored POOLS, both carried on the unit and both capped at a share of
+// its own max HP, so neither scales past the body it is attached to:
+//
+//   _shield  absorbs incoming DAMAGE  point for point, and is spent doing it
+//   _decay   absorbs incoming HEALING point for point, and is spent doing it
+//
+// The cap is what keeps them honest — a stack applied twenty times on a
+// 40 HP recruit cannot exceed 20, so neither pool can make a unit unkillable
+// or unhealable no matter how many applications land. Both are expressed as a
+// percentage of max_hp rather than a flat number for the same reason: the same
+// ability reads the same on a hero and on a chaff unit.
+const POOL_CAP_PCT = 50;
+
 // Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
 // through the exact same target-resolution + param-application system as player
 // prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
@@ -143,6 +157,8 @@ class BattleEngine {
       _effects:           [],
       _effect_seq:        0,
       _hot:               0,
+      _shield:            0,   // damage this unit can still absorb  (see POOL_CAP_PCT)
+      _decay:             0,   // healing this unit can still lose   (see POOL_CAP_PCT)
       _stacks:            {},
       _flags:             {},
       _dmg_mult:          1,
@@ -310,6 +326,9 @@ class BattleEngine {
         if (buff.type === 'max_hp') {
           target.max_hp    = Math.max(1, target.max_hp - buff.value);
           target.battle_hp = Math.min(target.battle_hp, target.max_hp);
+          // Shield and Decay are capped at a share of max_hp, so shrinking it
+          // can leave a pool that was legal when applied sitting over the line.
+          this.clampPools(target);
         } else if (buff.type === 'armor') {
           target.armor = Math.max(0, target.armor - buff.value);
         } else if (buff.type === 'initiative') {
@@ -469,6 +488,111 @@ class BattleEngine {
   fatigueHealMult() {
     return 1 - this.fatigueHealReductionPct() / 100;
   }
+  // ── Shield / Decay ────────────────────────────────────────────────────────
+  // Both pools cap at the SAME share of the target's own max HP, so a stacking
+  // application saturates instead of growing without bound. Returns what was
+  // actually added, which is what a dispel has to hand back.
+  poolCap(unit) { return Math.max(0, Math.floor((unit?.max_hp ?? 0) * POOL_CAP_PCT / 100)); }
+
+  // The cap is a share of max_hp, and max_hp MOVES: an ally_max_hp_bonus is
+  // handed back when the unit granting it dies, so a pool that was legal when
+  // applied can end up over the line afterwards. Re-clamped whenever a pool is
+  // touched and once per round, rather than trying to catch every write to
+  // max_hp scattered across the passives.
+  clampPools(unit) {
+    if (!unit) return;
+    const cap = this.poolCap(unit);
+    if ((unit._shield ?? 0) > cap) unit._shield = cap;
+    if ((unit._decay  ?? 0) > cap) unit._decay  = cap;
+  }
+
+  // `source` is whoever granted it, when there is one — an action names its
+  // caster in the log; a passive that fires on being hit does not.
+  grantShield(target, amount, def, source = null) {
+    if (!target || !target.alive || !(amount > 0)) return 0;
+    const cap    = this.poolCap(target);
+    const before = target._shield ?? 0;
+    const added  = Math.min(cap, before + amount) - before;
+    if (added <= 0) return 0;
+    target._shield = before + added;
+    this.registerEffect(target, {
+      key: 'shield', name: def?.name || 'Shield', polarity: 'positive',
+      dispellable: def ? def.dispellable === true : true,
+      restore: { _shield: -added },
+    });
+    // Its own log type: a pool is not a per-turn tick, and the 'status' line
+    // would have read "Shield (12/turn)".
+    this.pushLog({
+      type: 'pool', pool: 'shield', passive: def?.name || 'Shield',
+      actorId: source?.id, actorName: (source || target).unit_name, actorCell: (source || target).cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: added, total: target._shield,
+    });
+    return added;
+  }
+
+  applyDecay(target, amount, def, source = null) {
+    if (!target || !target.alive || !(amount > 0)) return 0;
+    const cap    = this.poolCap(target);
+    const before = target._decay ?? 0;
+    const added  = Math.min(cap, before + amount) - before;
+    if (added <= 0) return 0;
+    target._decay = before + added;
+    this.registerEffect(target, {
+      key: 'decay', name: def?.name || 'Decay', polarity: 'negative',
+      dispellable: def ? def.dispellable === true : true,
+      restore: { _decay: -added },
+    });
+    this.pushLog({
+      type: 'pool', pool: 'decay', passive: def?.name || 'Decay',
+      actorId: source?.id, actorName: (source || target).unit_name, actorCell: (source || target).cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: added, total: target._decay,
+    });
+    return added;
+  }
+
+  // Damage first passes through the shield, which is spent point for point.
+  // Returns what still reaches HP. Sits alongside recuperate in BOTH damage
+  // paths (executeAction's inline strike and strikeTarget) so a shielded unit
+  // behaves identically whether it was hit once or as part of a volley.
+  absorbWithShield(target, dmg) {
+    this.clampPools(target);
+    const pool = target?._shield ?? 0;
+    if (!(pool > 0) || !(dmg > 0)) return dmg;
+    const absorbed = Math.min(pool, dmg);
+    target._shield = pool - absorbed;
+    const through  = dmg - absorbed;
+    this.pushLog({
+      type: 'shield', targetId: target.id, targetName: target.unit_name,
+      actorCell: target.cellIndex, targetCell: target.cellIndex,
+      value: absorbed, remaining: through,
+    });
+    // Spent pools stop being dispellable effects — otherwise a dispel would
+    // "restore" a shield that no longer exists.
+    if (target._shield <= 0) this.clearEffect(target, 'shield');
+    return through;
+  }
+
+  // The mirror image: healing is eaten by decay before it reaches HP, and the
+  // decay is spent doing it. Every heal in the game funnels through here, so a
+  // Renew tick and a priest's mend are reduced by the same rule.
+  absorbWithDecay(target, heal) {
+    this.clampPools(target);
+    const pool = target?._decay ?? 0;
+    if (!(pool > 0) || !(heal > 0)) return heal;
+    const absorbed = Math.min(pool, heal);
+    target._decay = pool - absorbed;
+    const through  = heal - absorbed;
+    this.pushLog({
+      type: 'decay', targetId: target.id, targetName: target.unit_name,
+      actorCell: target.cellIndex, targetCell: target.cellIndex,
+      value: absorbed, remaining: through,
+    });
+    if (target._decay <= 0) this.clearEffect(target, 'decay');
+    return through;
+  }
+
   applyRecuperate(target, rawDmg) {
     const defs = this.resolveAllPassiveDefs(target);
     const recuperateDef = defs.find(d => d.params?.recuperate_prevent_pct != null);
@@ -515,6 +639,31 @@ class BattleEngine {
     if (actionType === 'ability') return this.doAbility(actor, target);
     if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
     if (!target) return false;
+
+    // ── Decay / Shield as ACTIONS ─────────────────────────────────────────
+    // A unit whose turn IS the debuff or the ward, rather than a passive that
+    // rides along with an attack. Magnitude is the unit's own action_power, and
+    // `targets > 1` fans out exactly like the heal and attack branches below —
+    // so one definition covers a single-target warder and a whole-line one.
+    //
+    // Keyed off the unit's intrinsic action, not `actionType`, for the same
+    // reason `sacrifice` is above: the AI drives every turn through 'attack'.
+    const poolAction = this.getActionKey(actor);
+    if (poolAction === 'shield' || poolAction === 'decay') {
+      const power   = Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0);
+      const maxHits = Math.max(1, Number(actor.unit_data?.targets ?? 1));
+      const list    = maxHits > 1 ? this.getValidTargets(actor).slice(0, maxHits) : [target];
+      const label   = { name: poolAction === 'shield' ? 'Shield' : 'Decay', dispellable: true };
+      for (const t of list) {
+        if (!actor.alive) break;
+        if (!t?.alive) continue;
+        if (poolAction === 'shield') this.grantShield(t, power, label, actor);
+        else                         this.applyDecay(t, power, label, actor);
+      }
+      actor.acted_this_round = true;
+      return this.afterAction(actor);
+    }
+
     if (this.isHealer(actor) || holyShockHeal) {
       if (actor._mothers_kiss) {
         return this.doMothersKiss(actor);
@@ -608,6 +757,9 @@ class BattleEngine {
         let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
         if (remaining > 0) {
           remaining = this.applyRecuperate(target, remaining);
+          // After recuperate, before HP: a shield is the last thing between the
+          // blow and the body.
+          if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
           if (remaining > 0) {
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             const dead = target.battle_hp <= 0;
@@ -644,7 +796,12 @@ class BattleEngine {
     if (!target || !target.alive) return 0;
     const raw    = this.calcHeal(actor);
     const factor = 1 - (target._healing_reduction ?? 0) / 100;
-    const heal   = Math.floor(Math.min(raw * factor * this.fatigueHealMult(), target.max_hp - target.battle_hp));
+    // Decay is applied to the heal BEFORE the overheal clamp, so a decayed unit
+    // at full HP still burns its decay down rather than having the clamp hide
+    // it — otherwise topping up a healthy ally would silently cleanse them.
+    const scaled = Math.floor(raw * factor * this.fatigueHealMult());
+    const afterDecay = this.absorbWithDecay(target, scaled);
+    const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
     target.battle_hp += heal;
     this.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
@@ -688,6 +845,7 @@ class BattleEngine {
 
     let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
     if (remaining > 0) remaining = this.applyRecuperate(target, remaining);
+    if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
     if (remaining > 0) {
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
       const dead = target.battle_hp <= 0;
@@ -978,7 +1136,10 @@ class BattleEngine {
     // whenever the unit happened to be struck. Last in the order, so a unit the
     // afflictions above just killed doesn't heal out of its own death.
     if (unit.alive && unit._hot > 0) {
-      const actual = Math.min(Math.floor(unit._hot * this.fatigueHealMult()), unit.max_hp - unit.battle_hp);
+      // Through decay like every other heal — a regen that ignored it would be
+      // the obvious way to play around the debuff.
+      const ticked = this.absorbWithDecay(unit, Math.floor(unit._hot * this.fatigueHealMult()));
+      const actual = Math.max(0, Math.min(ticked, unit.max_hp - unit.battle_hp));
       unit.battle_hp += actual;
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: actual, heal: true });
       unit._hot = 0;
@@ -1098,6 +1259,7 @@ class BattleEngine {
 
   advanceRound() {
     for (const c of this.combatants) {
+      this.clampPools(c);
       c.acted_this_round   = false;
       c.dot_dmg = 0;
 
@@ -1517,6 +1679,8 @@ class BattleEngine {
         buffs: {
           dot_dmg:             c.dot_dmg,
           _hot:                c._hot,
+          _shield:             c._shield ?? 0,
+          _decay:              c._decay  ?? 0,
           _stacks:             c._stacks,
           _flags:              c._flags,
           _granted_buffs:      c._granted_buffs,
@@ -1617,6 +1781,8 @@ class BattleEngine {
       c._bleed_source_key = b._bleed_source_key ?? null;
       c._chill_source_key = b._chill_source_key ?? null;
       c._hot               = b._hot               ?? 0;
+      c._shield            = b._shield            ?? 0;
+      c._decay             = b._decay             ?? 0;
       c._stacks            = b._stacks            || {};
       c._flags             = b._flags             || {};
       c._granted_buffs     = b._granted_buffs     || [];

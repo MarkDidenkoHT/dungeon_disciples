@@ -132,6 +132,20 @@ export const ACTION_INFO = {
       ru: 'Смотрит по цели: союзника лечит на величину Силы, врага бьёт на неё же. Одно действие — два применения.',
     },
   },
+  'shield': {
+    name: { en: 'Shield', ru: 'Щит' },
+    desc: {
+      en: 'Wards an ally with a pool equal to the unit\'s Power. The pool absorbs damage point for point and is spent doing it, so it is worth most on a unit about to be hit. It stacks with itself up to half the warded unit\'s max HP.',
+      ru: 'Даёт союзнику запас, равный Силе бойца. Запас поглощает урон один к одному и расходуется при этом, так что полезнее всего на том, кого вот-вот ударят. Складывается сам с собой до половины макс. HP цели.',
+    },
+  },
+  'decay': {
+    name: { en: 'Decay', ru: 'Тлен' },
+    desc: {
+      en: 'Saddles an enemy with a pool equal to the unit\'s Power. The pool eats the healing they receive, point for point, and is spent doing it — it deals no damage itself. It stacks up to half the target\'s max HP.',
+      ru: 'Накладывает на врага запас, равный Силе бойца. Запас съедает получаемое им исцеление один к одному и расходуется при этом — сам по себе урона не наносит. Складывается до половины макс. HP цели.',
+    },
+  },
   'none': {
     name: { en: 'Passive',  ru: 'Пассивное' },
     desc: {
@@ -324,6 +338,8 @@ export function getActionLabel(actionKey) {
     sacrifice:    'Sacrifice',
     holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
     pale_embrace: 'Pale Embrace',
+    shield:       'Shield',       // grants an ally a damage-absorbing pool
+    decay:        'Decay',        // saddles an enemy with a healing-absorbing one
   };
   return map[k.toLowerCase()] || cap(k);
 }

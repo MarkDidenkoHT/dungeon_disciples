@@ -111,6 +111,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
   const p = def.params || {};
   const abilityKey = def.id ?? def.name ?? null;
   if (trigger === 'on_battle_start') {
+    // Shield handed out up front — the defensive shape of the ability, as
+    // opposed to the on_hit one below that hardens a unit as it fights.
+    // `shield_target: 'all_allies'` puts it on the whole side; anything else
+    // shields the owner, since there is no "target" at battle start.
+    if (p.shield_amount != null) {
+      const who = p.shield_target === 'all_allies'
+        ? engine.combatants.filter(c => c.side === owner.side && c.alive)
+        : [owner];
+      for (const u of who) engine.grantShield(u, p.shield_amount, def);
+    }
     if (p.ally_max_hp_bonus != null) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
       for (const a of allies) { a.battle_hp += p.ally_max_hp_bonus; a.max_hp += p.ally_max_hp_bonus; }
@@ -500,15 +510,32 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.healing_reduction_pct != null) {
-      // Infect now STACKS each hit, up to a 100% healing-reduction cap.
+      // Infect does NOT stack. Every hit re-applies it, and re-applying takes
+      // the stronger of the two rather than adding: an attacker with Infect
+      // lands several blows a round, and stacking drove any target to a 100%
+      // healing block within two rounds, which made healers pointless rather
+      // than pressured. A higher rank (or a second infector) still upgrades a
+      // weaker one — it just cannot pile onto itself.
       const before  = target._healing_reduction ?? 0;
-      const applied = Math.min(100, before + p.healing_reduction_pct) - before;
-      target._healing_reduction = before + applied;
-      engine.registerEffect(target, {
-        key: 'healing_reduction', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        restore: { _healing_reduction: -applied }, // dispel undoes exactly what stacked
-      });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: applied });
+      const applied = Math.max(0, Math.min(100, p.healing_reduction_pct) - before);
+      if (applied > 0) {
+        target._healing_reduction = before + applied;
+        engine.registerEffect(target, {
+          key: 'healing_reduction', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+          restore: { _healing_reduction: -applied }, // dispel undoes exactly what was added
+        });
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._healing_reduction });
+      }
+    }
+    // ── Decay: stacking anti-heal pool on the TARGET (see POOL_CAP_PCT).
+    if (p.decay_amount != null) {
+      engine.applyDecay(target, p.decay_amount, def);
+    }
+    // ── Shield: absorbs damage. `shield_target: 'self'` shields the attacker
+    // (a unit that hardens as it strikes); anything else shields whoever was
+    // hit, which is what an ally-facing trigger wants.
+    if (p.shield_amount != null) {
+      engine.grantShield(p.shield_target === 'self' ? owner : target, p.shield_amount, def);
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && c.id !== target.id);
