@@ -302,9 +302,17 @@ export function renderCastle(root, { player }) {
   // Dwellings are paid for in gold + the faction's crystal now (see
   // applyBuildingCosts in data/buildings.js), so the sheet has to say what a
   // build costs and refuse to offer one the player cannot pay for.
+  // /bootstrap splits the resources table in two by item_type — `resources` for
+  // gold and crystals, `trophies` for everything embarks drop — and this looked
+  // only at the first. Anything priced in trophies (every mercenary, and the
+  // cost bar's trophy columns) therefore read as "have 0" no matter how many
+  // were in the inventory: the hall said nothing was affordable, and a merc
+  // cost showed a full bar of shortfalls. Both lists are the same table, so
+  // both are searched.
   function amountOf(item) {
     const key = item === 'gold' ? 'Gold' : item;
-    const row = resourceInventory.find(r => r.item === key);
+    const row = resourceInventory.find(r => r.item === key)
+             || trophyInventory.find(r => r.item === key);
     return row ? Number(row.amount) : 0;
   }
 
