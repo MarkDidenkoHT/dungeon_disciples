@@ -6699,7 +6699,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 6px 2px 2px;
+  /* padding: 6px 2px 2px; */
 }
 
 .track-action-row .branch-track-wrap {
@@ -6730,7 +6730,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   /* Padding longhands rather than the shorthand: .hero-action-row sets its own
      padding-bottom to clear the safe-area inset, and a shorthand here would
      silently drop it on a notched phone. */
-  padding-top: 6px;
+  /* padding-top: 6px; */
   padding-right: 6px;
   padding-left: 6px;
   gap: 4px;
