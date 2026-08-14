@@ -2,6 +2,40 @@ import { assetUrl } from './asset_base.js';
 let app = null;
 let rootEl = null;
 
+// Textures, with the SAME origin fallback the rest of the art has.
+//
+// installAssetFallback() in asset_base.js retries a failed image against the app
+// server, but it hooks `error` on DOM <img> elements — and PIXI.Assets.load
+// never puts one in the document, so every texture in this file sat outside the
+// safety net. When the art moved to the CDN that became visible: a cross-origin
+// texture needs an Access-Control-Allow-Origin header that a plain <img> does
+// not, so the five texture effects (sword, mace, spear, arrow, repair) died
+// while every other image on the page was fine.
+//
+// The origin serves the same files, so the retry is the same one the DOM images
+// already get: CDN first, app server second, and only then give up.
+async function loadFxTexture(path) {
+  if (!window.PIXI?.Assets) return null;
+  const cdnUrl = assetUrl(path);
+  try {
+    const tex = await PIXI.Assets.load(cdnUrl);
+    if (tex?.width) return tex;
+    console.warn(`[battle-fx] texture has no width, retrying from origin: ${cdnUrl}`);
+  } catch (err) {
+    console.warn(`[battle-fx] texture failed from CDN, retrying from origin: ${cdnUrl}`, err?.message || err);
+  }
+  // Same-origin copy. Skipped when assetUrl already resolved to the origin,
+  // because that would just repeat the request that has already failed.
+  if (cdnUrl === path) return null;
+  try {
+    const tex = await PIXI.Assets.load(path);
+    return tex?.width ? tex : null;
+  } catch (err) {
+    console.error(`[battle-fx] texture unavailable from CDN and origin: ${path}`, err?.message || err);
+    return null;
+  }
+}
+
 function getBattleFxHost(root) {
   if (!root) return null;
   return root.querySelector?.('.screen-battle') || root;
@@ -346,24 +380,8 @@ export async function sword_swing(cellEl, opts = {}) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
-  let texture;
-  try {
-    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/sword.png'));
-  } catch (err) {
-    // Was a bare `catch {}` that returned. A texture failing to load — a missing
-    // file, or a CROSS-ORIGIN fetch the CDN refuses — then looked exactly like
-    // the effect never being called at all: no animation, no error, nothing in
-    // the console. The URL opening fine in a browser tab does NOT mean PIXI can
-    // use it; a canvas texture needs CORS headers a plain <img> view does not.
-    console.error(`[battle-fx] sword_swing: texture failed to load ${assetUrl('/assets/vfx/sword.png')}`, err);
-    layer.destroy({ children: true });
-    return;
-  }
-  if (!texture?.width) {
-    console.error('[battle-fx] sword_swing: texture loaded but has no width — nothing will be drawn', texture);
-    layer.destroy({ children: true });
-    return;
-  }
+  const texture = await loadFxTexture('/assets/vfx/sword.png');
+  if (!texture) { layer.destroy({ children: true }); return; }
 
   const sprites = [0.18, 0.35, 1].map(alpha => {
     const s = new PIXI.Sprite(texture);
@@ -429,20 +447,15 @@ export async function mace_swing(cellEl, opts = {}) {
   const dustG = new PIXI.Graphics();          // NOT additive: this is grit, not light
   app.stage.addChild(layer);
 
-  let texture;
-  try {
-    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/mace_attack.png'));
-  } catch {
-    // Loud, then carry on with the sword art rather than animating nothing —
-    // a silent failure here would look exactly like the bug this fixes.
-    console.error('[battle-fx] mace_attack.png missing — falling back to sword.png');
-    try {
-      texture = await PIXI.Assets.load(assetUrl('/assets/vfx/sword.png'));
-    } catch {
-      layer.destroy({ children: true });
-      return;
-    }
+  // Both go through the CDN-then-origin retry. The sword is the second fallback
+  // — for the art itself being absent, not for a transport failure — so a mace
+  // unit still swings something rather than nothing.
+  let texture = await loadFxTexture('/assets/vfx/mace_attack.png');
+  if (!texture) {
+    console.error('[battle-fx] mace_attack.png unavailable — falling back to sword.png');
+    texture = await loadFxTexture('/assets/vfx/sword.png');
   }
+  if (!texture) { layer.destroy({ children: true }); return; }
 
   const sprites = [0.16, 0.34, 1].map(alpha => {
     const s = new PIXI.Sprite(texture);
@@ -532,14 +545,8 @@ export async function impale(cellEl, opts = {}) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
-  let texture;
-  try {
-    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/impale.png'));
-  } catch (err) {
-    console.error(`[battle-fx] impale: texture failed to load ${assetUrl('/assets/vfx/impale.png')}`, err);
-    layer.destroy({ children: true });
-    return;
-  }
+  const texture = await loadFxTexture('/assets/vfx/impale.png');
+  if (!texture) { layer.destroy({ children: true }); return; }
 
   const sprites = [0.16, 0.32, 1].map(alpha => {
     const s = new PIXI.Sprite(texture);
@@ -1633,13 +1640,15 @@ export async function repair(cellEl) {
   layer.addChild(gearG);
   app.stage.addChild(layer);
 
+  // The only one that is genuinely optional: a procedural gear is drawn either
+  // way, so a missing texture costs detail rather than the whole effect.
   let gearSprite = null;
-  try {
-    const tex = await PIXI.Assets.load(assetUrl('/assets/vfx/repair_gear.png'));
-    gearSprite = new PIXI.Sprite(tex);
+  const gearTex = await loadFxTexture('/assets/vfx/repair_gear.png');
+  if (gearTex) {
+    gearSprite = new PIXI.Sprite(gearTex);
     gearSprite.anchor.set(0.5, 0.5);
     layer.addChild(gearSprite);
-  } catch { /* procedural gear carries it */ }
+  }
 
   const DURATION = 788;
   await animate(DURATION, t => {
@@ -2298,16 +2307,8 @@ export async function arrow_shot(cellEl, opts = {}) {
   const layer = new PIXI.Container();
   app.stage.addChild(layer);
 
-  let texture;
-  try {
-    texture = await PIXI.Assets.load(assetUrl('/assets/vfx/arrow.png'));
-  } catch (err) {
-    // Draw nothing rather than throwing mid-battle — but SAY so, or a texture
-    // that cannot load is indistinguishable from an effect that never ran.
-    console.error(`[battle-fx] arrow_shot: texture failed to load ${assetUrl('/assets/vfx/arrow.png')}`, err);
-    layer.destroy({ children: true });
-    return;
-  }
+  const texture = await loadFxTexture('/assets/vfx/arrow.png');
+  if (!texture) { layer.destroy({ children: true }); return; }
 
   // The arrow plus two fading ghosts behind it, for motion blur.
   const sprites = [0.18, 0.38, 1].map(alpha => {
