@@ -349,7 +349,18 @@ export async function sword_swing(cellEl, opts = {}) {
   let texture;
   try {
     texture = await PIXI.Assets.load(assetUrl('/assets/vfx/sword.png'));
-  } catch {
+  } catch (err) {
+    // Was a bare `catch {}` that returned. A texture failing to load — a missing
+    // file, or a CROSS-ORIGIN fetch the CDN refuses — then looked exactly like
+    // the effect never being called at all: no animation, no error, nothing in
+    // the console. The URL opening fine in a browser tab does NOT mean PIXI can
+    // use it; a canvas texture needs CORS headers a plain <img> view does not.
+    console.error(`[battle-fx] sword_swing: texture failed to load ${assetUrl('/assets/vfx/sword.png')}`, err);
+    layer.destroy({ children: true });
+    return;
+  }
+  if (!texture?.width) {
+    console.error('[battle-fx] sword_swing: texture loaded but has no width — nothing will be drawn', texture);
     layer.destroy({ children: true });
     return;
   }
@@ -524,7 +535,8 @@ export async function impale(cellEl, opts = {}) {
   let texture;
   try {
     texture = await PIXI.Assets.load(assetUrl('/assets/vfx/impale.png'));
-  } catch {
+  } catch (err) {
+    console.error(`[battle-fx] impale: texture failed to load ${assetUrl('/assets/vfx/impale.png')}`, err);
     layer.destroy({ children: true });
     return;
   }
@@ -2289,8 +2301,10 @@ export async function arrow_shot(cellEl, opts = {}) {
   let texture;
   try {
     texture = await PIXI.Assets.load(assetUrl('/assets/vfx/arrow.png'));
-  } catch {
-    // No art present — draw nothing rather than throwing mid-battle.
+  } catch (err) {
+    // Draw nothing rather than throwing mid-battle — but SAY so, or a texture
+    // that cannot load is indistinguishable from an effect that never ran.
+    console.error(`[battle-fx] arrow_shot: texture failed to load ${assetUrl('/assets/vfx/arrow.png')}`, err);
     layer.destroy({ children: true });
     return;
   }

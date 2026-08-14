@@ -4,7 +4,7 @@ import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.3243';
+export const GAME_VERSION = '0.3244';
 
 const LOADING_IMAGES = [
   assetUrl('/assets/loading_screens/loading1.jpg'),

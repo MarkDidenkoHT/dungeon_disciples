@@ -198,8 +198,8 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Death', amount: 8 }, { type: 'Crystals_Nature', amount: 8 }],
-        trophies:        [{ id: 'grave_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        [{ id: 'rusted_shackle', amount: 1 }],
+        spell_trophies:  [{ id: 'grave_dust', amount: 1 }], 
       },
     },
     level_3: {
