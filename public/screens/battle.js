@@ -74,7 +74,6 @@ const BT = {
   btnAction:    { en: 'Action',             ru: 'Действие' },
   btnAbility:   { en: 'Ability',            ru: 'Способность' },
   btnDefend:    { en: 'Defend',             ru: 'Защита' },
-  btnCancel:    { en: 'Cancel',             ru: 'Отмена' },
   // Per-unit XP block on the victory screen.
   xpGained:       { en: 'Experience',        ru: 'Опыт' },
   maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
@@ -764,7 +763,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const base       = c._base_stats || {};
     const basePower  = base.action_power ?? def.action_power ?? def.action?.value ?? 0;
     const livePower  = Math.floor(basePower * (c._dmg_mult ?? 1));
-    const liveArmor  = (c.armor ?? def.armor ?? 0) + (c.defend_armor_bonus || 0);
+    const guard      = c.defend_armor_bonus || 0;
+    const liveArmor  = (c.armor ?? def.armor ?? 0) + guard;
+    // Defending raises every resistance by the same amount it raises armor (see
+    // DEFEND_BONUS in utils/battle-engine.js), so the resist column has to show
+    // it too — otherwise the card claims bracing only helps against physical,
+    // which is exactly the bug it used to have.
+    const liveResists = { ...(c.unit_data?.resistances ?? def.resistances ?? {}) };
+    if (guard) for (const k of Object.keys(liveResists)) liveResists[k] = Math.min(100, (liveResists[k] ?? 0) + guard);
 
     const liveUnit = {
       ...def,
@@ -772,7 +778,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       armor:        liveArmor,
       initiative:   c.initiative ?? def.initiative ?? '—',
       action_power: livePower,
-      resistances:  c.unit_data?.resistances ?? def.resistances ?? {},
+      resistances:  liveResists,
     };
 
     // Spread the SAME def liveUnit was built from, then override only the four
@@ -1136,10 +1142,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               <span class="action-slot-label">${BTx('btnDefend')}</span>
             </div>
             <div class="action-slot">
-              <button class="action-btn action-btn--cancel" id="btn-cancel" data-battle-action="cancel"></button>
-              <span class="action-slot-label">${BTx('btnCancel')}</span>
-            </div>
-            <div class="action-slot">
               <button class="action-btn action-btn--panel" id="btn-panel" data-battle-action="panel"></button>
               <span class="action-slot-label">${BTx('btnInfo')}</span>
             </div>
@@ -1162,7 +1164,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       mainBtn: root.querySelector('#btn-main'),
       abilityBtn: root.querySelector('#btn-ability'),
       defendBtn: root.querySelector('#btn-defend'),
-      cancelBtn: root.querySelector('#btn-cancel'),
       battleLog: root.querySelector('#battle-log'),
       battleInfo: root.querySelector('#battle-info'),
       panelBtn: root.querySelector('#btn-panel'),
@@ -1568,12 +1569,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.defendBtn.disabled = isEnemyTurn || processing;
     ui.defendBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/defend.jpg'), BTx('btnDefend'));
 
-    // Only meaningful once something OTHER than the default is selected —
-    // cancelling the default would just re-arm it, so there is nothing to undo.
-    const canCancel = armed === 'ability' && !isEnemyTurn && !processing;
-    ui.cancelBtn.className = `action-btn action-btn--cancel ${!canCancel ? 'action-btn--disabled' : ''}`;
-    ui.cancelBtn.disabled = !canCancel;
-    ui.cancelBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/cancel.jpg'), BTx('btnCancel'));
+    // No Cancel button: the only thing it could undo was an armed Ability, and
+    // tapping Action already switches back to the basic attack. A player who
+    // wants to do nothing has Defend, which beats a wasted turn.
 
     // A glyph, not an icon tile: there is no art for this action, and an <img>
     // that 404s would leave the button blank. Shows what the panel will switch
@@ -1719,11 +1717,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (action === 'defend') {
           sendAction('defend', actor.id);
           return;
-        }
-        if (action === 'cancel') {
-          selectingTarget = null;
-          pendingAction   = null;
-          render();
         }
         return;
       }

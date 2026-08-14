@@ -456,7 +456,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
           const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
           burst = Math.floor(burst * (1 - armor / 100));
         } else {
-          const resist = (target.unit_data?.resistances ?? target.resistances ?? {})[burstType] ?? 0;
+          const resist = Math.min(100,
+            ((target.unit_data?.resistances ?? target.resistances ?? {})[burstType] ?? 0) + (target.defend_armor_bonus || 0));
           burst = Math.floor(burst * (1 - resist / 100));
         }
         burst = Math.max(1, burst);
@@ -817,7 +818,11 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
       dmg = Math.floor(dmg * (1 - actor._terror_reduction / 100));
     }
   } else {
-    const resistance = resistances[damageSource] ?? 0;
+    // Defending covers TYPED damage too. It used to add only to armor, which is
+    // read in the physical branch above — so a defending unit took full fire,
+    // cold, death, life, nature and air damage. Against the whole Chamber of
+    // Unrest (death) or a Wailing Ghost (cold), pressing Defend did nothing.
+    const resistance = Math.min(100, (resistances[damageSource] ?? 0) + (target.defend_armor_bonus || 0));
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
   }
   return { dmg: Math.max(1, dmg), rawDmg };

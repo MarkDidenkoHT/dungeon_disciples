@@ -33,6 +33,15 @@ const BATTLE_FATIGUE = {
 // ability reads the same on a hero and on a chaff unit.
 const POOL_CAP_PCT = 50;
 
+// Bracing. Added to the unit's armor AND to every resistance for the round, so
+// it works against a sword and a firebolt alike — it used to feed armor only,
+// and armor is read exclusively in the physical damage branch, so defending did
+// nothing whatsoever against fire, cold, death, life, nature or air. Expressed
+// in the game's own percentage-point currency rather than as a hidden
+// multiplier, so the player can see what it bought: the inspector already draws
+// armor and resistance deltas.
+const DEFEND_BONUS = 25;
+
 // Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
 // through the exact same target-resolution + param-application system as player
 // prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
@@ -1208,9 +1217,9 @@ class BattleEngine {
     this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
   }
   doDefend(actor) {
-    actor.defend_armor_bonus = 25;
+    actor.defend_armor_bonus = DEFEND_BONUS;
     actor.acted_this_round   = true;
-    this.pushLog({ type: 'defend', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, message: 'defended (+25 armor this round)' });
+    this.pushLog({ type: 'defend', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, value: DEFEND_BONUS, message: `defended (+${DEFEND_BONUS} armor and all resists this round)` });
     return this.afterAction(actor);
   }
   doAbility(actor, target) {
@@ -1630,12 +1639,12 @@ class BattleEngine {
           unit: actor.unit_name, cell: actor.cellIndex, decision: decision?.type,
           action: actor.unit_data?.action, hasTarget: !!decision?.target,
         });
-        this.pushLog({
-          type: 'skip', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
-          message: `${actor.unit_name} hesitates.`,
-        });
-        actor.acted_this_round = true;
-        this.afterAction(actor);
+        // Braces rather than skipping. There is never a reason for a unit to
+        // forfeit its turn outright — defending beats doing nothing, and it
+        // keeps this safety net from handing the player a free round when
+        // something upstream goes wrong. The console error above is still where
+        // the actual fault gets reported.
+        this.doDefend(actor);
       }
 
       newLog.push(...this.log.slice(before));
@@ -1962,7 +1971,11 @@ class BattleEngine {
           const armor = Math.max(0, (c.armor ?? 0) + (c.defend_armor_bonus || 0));
           dmg = Math.max(1, Math.floor(params.damage_flat * (1 - armor / 100)));
         } else {
-          const resist = (c.unit_data?.resistances ?? c.resistances ?? {})[type] ?? 0;
+          // Defending adds to the matching resistance as well as to armor —
+          // see calcDamageWithPassives. Without this, bracing helped against a
+          // sword and not against a firebolt.
+          const resist = Math.min(100,
+            ((c.unit_data?.resistances ?? c.resistances ?? {})[type] ?? 0) + (c.defend_armor_bonus || 0));
           dmg = Math.max(1, Math.floor(params.damage_flat * (1 - resist / 100)));
         }
         c.battle_hp = Math.max(0, (c.battle_hp || 0) - dmg);

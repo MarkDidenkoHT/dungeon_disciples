@@ -1411,11 +1411,6 @@ const UNITS = {
       damage_source: 'fire', action_power: 15, action_icon: 'frost_shard.jpg', action_animation: 'fire_bolt', action_sfx: 'frost_spell_impact',
       xp: 1000, passive: ['resist_aura_cold 1', 'chill 2'], ability: 'frost_armor 2',
     },
-    // Third branch off the Apprentice: the mage who wards instead of burning or
-    // freezing. Its TURN is the shield (action: 'shield'), so action_power is
-    // the size of the pool it hands an ally, not damage — see the shield action
-    // in utils/battle-engine.js. Range 3 and targets 1 to start; the tier 3
-    // wards the whole line at once.
     warder_adept: {
       id: 'e43', f: 'e', t: 2,
       name: 'Warder Adept',
@@ -1425,7 +1420,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 35,
       resistances: { air: 10, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'aegis.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 12, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 400, passive: ['inspiration_initiative 1', 'aegis 1'], ability: 'frost_armor 1',
     },
     bulwark_magus: {
@@ -1437,7 +1432,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 35,
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'aegis.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 10, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 1000, passive: ['inspiration_initiative 1', 'aegis 2'], ability: 'frost_armor 2',
     },
   },
@@ -2250,12 +2245,6 @@ const UNITS = {
       damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
       xp: 900, passive: ['dodge 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
     },
-    // Third branch off the Pale Maiden. Where the Votaress mends the dead, this
-    // one denies the living their mending: its TURN is Decay (action: 'decay'),
-    // so action_power is the size of the anti-heal pool it lays on an enemy and
-    // it deals no damage at all — see the decay action in utils/battle-engine.js.
-    // Ranged, because a unit whose whole job is a debuff should not be standing
-    // in the front rank to do it.
     pale_mourner: {
       id: 'gs73', f: 'g', t: 2,
       name: 'Pale Mourner',

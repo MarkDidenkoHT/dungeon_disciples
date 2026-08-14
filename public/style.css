@@ -6734,6 +6734,15 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding-right: 6px;
   padding-left: 6px;
   gap: 4px;
+  /* Pinned to the EDGES, not centred. Two rows share this class and they hold
+     different things: the build slider is `action | portraits | action`, where
+     the track's flex kept the buttons apart, but the slot sheet is just the two
+     buttons — which then sat centred and touching, and slid sideways whenever
+     the row's contents changed (upgrade button vs. the "maxed" label, which
+     carries flex: 1). space-between puts the first control hard left and the
+     last hard right in BOTH, so the deconstruct button lives at the same edge
+     no matter what else is in the row. */
+  justify-content: space-between;
 }
 
 /* Stands in for the upgrade button on a maxed building, so the action row keeps
@@ -6761,10 +6770,17 @@ button:active:not(:disabled) { opacity: 0.75; }
      action never inherits the app's default gold pill. */
   --portrait-card-h: var(--track-card-h, clamp(64px, 10vh, 86px));
   margin: 0;
-  align-self: center;
+  /* STRETCH, not centre. Computing the same height expression as the portrait
+     cards only matches them while the cards actually obey it — the moment a
+     card grows past it (art with its own intrinsic height, a longer name
+     wrapping) the buttons stayed short and sat centred against taller
+     portraits. Stretching makes them exactly as tall as the row, so they match
+     the cards by construction rather than by both arriving at the same number.
+     min-height keeps the row honest when there are no portraits in it at all. */
+  align-self: stretch;
   flex: 0 0 auto;
   width: calc(var(--portrait-card-h) * 0.80);
-  height: var(--portrait-card-h);
+  min-height: var(--portrait-card-h);
   display: flex;
   align-items: center;
   justify-content: center;
