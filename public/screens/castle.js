@@ -42,6 +42,13 @@ const CASTLE_TEXT = {
   chooseUnit:  { en: 'Choose Unit',                           ru: 'Выберите бойца' },
   beginReign:  { en: 'Begin Your Reign',                      ru: 'Начните правление' },
   noBuildings: { en: 'No buildings available for this slot.', ru: 'Для этого слота нет доступных зданий.' },
+  mercHall:    { en: 'Mercenary Hall',                        ru: 'Зал наёмников' },
+  mercRecruit: { en: 'Recruit',                               ru: 'Нанять' },
+  // Shown instead of "Recruit" on a mercenary the player cannot pay for yet:
+  // the cost rides along in the same label, so the trophies needed are on
+  // screen rather than behind a failed attempt.
+  mercNeeds:   { en: 'Needs',                                 ru: 'Нужно' },
+  mercNone:    { en: 'No mercenaries are offered here.',      ru: 'Здесь не предлагают наёмников.' },
   equip:       { en: 'Equip',                                 ru: 'Надеть' },
   unequip:     { en: 'Unequip',                               ru: 'Снять' },
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
@@ -405,7 +412,11 @@ export function renderCastle(root, { player }) {
   }
 
   function openSliderModal(title, slides, onConfirm, opts = {}) {
-    let current = 0;
+    // Opens on the branch the caller asked for. The slot sheet now shows every
+    // upgrade up front, so the one the player tapped there has to be the one
+    // this lands on — otherwise it always reopened on the first path and the
+    // choice they just made was thrown away.
+    let current = Math.min(Math.max(0, opts.startIndex ?? 0), Math.max(0, slides.length - 1));
 
     function renderSliderHtml(idx) {
       const s = slides[idx];
@@ -1105,9 +1116,40 @@ export function renderCastle(root, { player }) {
   // Only units that actually sit on the faction's upgrade map get a button.
   // Mercenaries advance through their own table (getMercUpgradePaths) and are
   // absent from this one, so without the check they would open a one-cell tree.
+  // Mercenaries are not in UNIT_UPGRADE_PATHS — they live in MERCENARY_BUILDINGS,
+  // keyed by region, and carry their chain as building ids in `upgrades`. This
+  // reshapes a region's pool into the same { unitId: [{ unit_id, building_id,
+  // label }] } map the tree renderer already understands, so a merc gets the
+  // same upgrade tree as anyone else. Without it hasTreeLine never matched a
+  // merc, the ⑂ button was never drawn, and a recruited mercenary was the one
+  // unit in the game whose line you could not look at.
+  function mercTreePaths() {
+    const out = {};
+    for (const pool of Object.values(mercenaryBuildings || {})) {
+      for (const b of pool) {
+        if (!b.upgrades?.length) continue;
+        const steps = b.upgrades
+          .map(uid => pool.find(x => x.id === uid))
+          .filter(Boolean)
+          .map(next => ({ unit_id: next.unit_id, building_id: next.id, label: next.label, label_ru: next.label_ru }));
+        if (steps.length) out[b.unit_id] = steps;
+      }
+    }
+    return out;
+  }
+
+  // The faction's own paths, plus the mercenary ones. A unit id belongs to
+  // exactly one of the two, so a plain merge cannot collide.
+  function treePathsFor(unitId) {
+    const factionPaths = (upgradePaths || {})[player.faction] || {};
+    const inFaction = factionPaths[unitId]
+      || Object.values(factionPaths).some(list => (list || []).some(p => p.unit_id === unitId));
+    return inFaction ? factionPaths : mercTreePaths();
+  }
+
   function hasTreeLine(unitId) {
     if (!unitId) return false;
-    const paths = (upgradePaths || {})[player.faction] || {};
+    const paths = treePathsFor(unitId);
     if (paths[unitId]) return true;
     return Object.values(paths).some(list => (list || []).some(p => p.unit_id === unitId));
   }
@@ -1120,7 +1162,7 @@ export function renderCastle(root, { player }) {
   }
 
   function openUnitTreeSheet(unitId) {
-    const paths = (upgradePaths || {})[player.faction] || {};
+    const paths = treePathsFor(unitId);
     const tree  = buildUnitTree(paths, unitId, getUnitByUnitId);
     const html  = renderUnitTreeHtml(tree, {
       currentId:   unitId,
@@ -1277,6 +1319,23 @@ export function renderCastle(root, { player }) {
     const treeBtnHtml = treeButtonHtml(treeUnitId);
 
     const canUpgrade = paths && paths.length > 0;
+
+    // The upgrades are shown HERE, on the unit, instead of behind a ⚒ button
+    // that opened a second sheet. Where a slot leads is the thing a player is
+    // deciding about while looking at the unit, so hiding it one tap away made
+    // them open and close the sheet to remember what the options were. Tapping
+    // one still goes to the full comparison — this only removes the tap that
+    // asked "are there any?".
+    const upgradeCards = canUpgrade ? paths.map(path => {
+      const nextUnit = getUnitByUnitId(path.unit_id);
+      const label    = unitName(nextUnit) || buildingLabel(path);
+      const url      = nextUnit ? branchPortraitUrl(nextUnit) : '';
+      return `
+        <div class="portrait-card portrait-card--branch" data-path-unit="${path.unit_id}" title="${label}">
+          ${url ? `<img class="portrait-art-img" src="${url}" alt="${label}" onerror="this.style.display='none'">` : ''}
+        </div>`;
+    }).join('') : '';
+
     const actionOverlayHtml = rosterUnit ? unitActionOverlay(rosterUnit) : '';
     // Wrapper is not cosmetic: openSheet only replaces the body's innerHTML, so
     // the body element itself survives across opens and a listener bound to it
@@ -1290,8 +1349,9 @@ export function renderCastle(root, { player }) {
       </div>
       <div class="track-action-row track-action-row--framed">
         ${canUpgrade
-          ? `<button class="frame-action frame-action--confirm" id="slot-upgrade"
-                     title="${CASTLE_TEXT.upgrade[castleLang]}" aria-label="${CASTLE_TEXT.upgrade[castleLang]}">⚒</button>`
+          ? `<div class="prep-track-wrap branch-track-wrap">
+               <div class="portrait-track" id="slot-upgrade-track">${upgradeCards}</div>
+             </div>`
           : `<span class="castle-slot-maxed">${CASTLE_TEXT.maxed[castleLang]}</span>`}
         <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
                 title="${CASTLE_TEXT.deconstruct[castleLang]}" aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
@@ -1372,9 +1432,15 @@ export function renderCastle(root, { player }) {
       }
     });
 
-    body?.querySelector('#slot-upgrade')?.addEventListener('click', () => {
-      if (mercDef) openMercUpgradeModal(slot, mercDef, paths);
-      else         openUpgradeModal(slot, def, paths);
+    // Each upgrade portrait opens the same comparison the ⚒ button used to,
+    // already sitting on the branch that was tapped — so the choice made here
+    // is the one being compared, rather than always landing on the first path.
+    body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const startIndex = Math.max(0, paths.findIndex(p => p.unit_id === card.dataset.pathUnit));
+        if (mercDef) openMercUpgradeModal(slot, mercDef, paths, startIndex);
+        else         openUpgradeModal(slot, def, paths, startIndex);
+      });
     });
     body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
   }
@@ -1936,7 +2002,7 @@ export function renderCastle(root, { player }) {
     );
   }
 
-  async function openMercUpgradeModal(slot, def, paths) {
+  async function openMercUpgradeModal(slot, def, paths, startIndex = 0) {
     const currentUnit = getUnitByUnitId(def.unit_id);
 
     function trophyAmount(item) {
@@ -1973,11 +2039,11 @@ export function renderCastle(root, { player }) {
         if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
         performMercenaryUpgrade(s.mercBuildingId, slot, s.rosterId);
       },
-      { deconstructSlot: slot }
+      { deconstructSlot: slot, startIndex }
     );
   }
 
-  function openUpgradeModal(slot, def, paths) {
+  function openUpgradeModal(slot, def, paths, startIndex = 0) {
     const currentUnit = getUnitByUnitId(def.unit_id);
 
     // The throne — i.e. every hero upgrade — is priced by the LEVEL it moves to,
@@ -2012,7 +2078,7 @@ export function renderCastle(root, { player }) {
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
       },
-      { deconstructSlot: slot }
+      { deconstructSlot: slot, startIndex }
     );
   }
 
@@ -2096,24 +2162,36 @@ export function renderCastle(root, { player }) {
     const canAfford    = cost => Object.entries(cost || {}).every(([item, amt]) => trophyAmount(item) >= amt);
     const costLabel    = cost => Object.entries(cost || {}).map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`).join(' + ');
 
-    const affordable = tier1Defs.filter(b => canAfford(b.cost));
-    // Nothing you can afford → don't build anything, just say why.
-    if (!affordable.length) {
-      openModal('Mercenary Hall',
-        '<p class="modal-empty">No mercenaries you can afford yet — gather more trophies from embarks.</p>');
+    // EVERY tier-1 mercenary is listed, affordable or not. Filtering to what the
+    // player could pay for meant an empty hall said "no mercenaries you can
+    // afford" without naming a single one or the trophies it wanted — so there
+    // was no way to learn who exists, what they cost, or which region to embark
+    // to for them. An unaffordable merc is now shown with its price and refuses
+    // the recruit, the same way an unaffordable building does in the build
+    // slider.
+    if (!tier1Defs.length) {
+      openModal(CASTLE_TEXT.mercHall[castleLang],
+        `<p class="modal-empty">${CASTLE_TEXT.mercNone[castleLang]}</p>`);
       return;
     }
 
-    openSliderModal('Mercenary Hall',
-      affordable.map(b => ({
-        unit:          getUnitByUnitId(b.unit_id),
-        buildingLabel: buildingLabel(b),
-        confirmLabel:  `Recruit · ${buildingLabel(b)} (${costLabel(b.cost)})`,
-        mercBuildingId: b.id,
-        mercCost:       b.cost,
-        slot,
-      })),
-      s => performMercenaryRecruit(s.mercBuildingId, slot)
+    openSliderModal(CASTLE_TEXT.mercHall[castleLang],
+      tier1Defs.map(b => {
+        const affordable = canAfford(b.cost);
+        return {
+          unit:          getUnitByUnitId(b.unit_id),
+          buildingLabel: buildingLabel(b),
+          confirmLabel:  `${affordable ? CASTLE_TEXT.mercRecruit[castleLang] : CASTLE_TEXT.mercNeeds[castleLang]} · ${buildingLabel(b)} (${costLabel(b.cost)})`,
+          mercBuildingId: b.id,
+          mercCost:       b.cost,
+          affordable,
+          slot,
+        };
+      }),
+      s => {
+        if (!s.affordable) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabel(s.mercCost)}`); return; }
+        performMercenaryRecruit(s.mercBuildingId, slot);
+      }
     );
   }
 
