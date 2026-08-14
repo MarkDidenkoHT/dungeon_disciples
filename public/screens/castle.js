@@ -1375,7 +1375,11 @@ export function renderCastle(root, { player }) {
     body?.addEventListener('click', e => {
       // Before handleUnitInspect: the tree button is an .ability-icon by shape,
       // so the generic inspector would swallow it looking for an ability key.
-      if (e.target.closest('#unit-tree-btn')) { openUnitTreeSheet(treeUnitId); return; }
+      // Reads the id off the BUTTON, not the closed-over one: the card is
+      // swapped for an upgrade preview while browsing branches, and the tree
+      // has to follow whichever unit is currently on show.
+      const treeBtn = e.target.closest('#unit-tree-btn');
+      if (treeBtn) { openUnitTreeSheet(treeBtn.dataset.treeUnit || treeUnitId); return; }
 
       // Stat / ability / resist inspection, same as every other unit card.
       if (handleUnitInspect(e, openAbilityModal)) return;
@@ -1443,19 +1447,51 @@ export function renderCastle(root, { player }) {
       }
     });
 
-    // Pick a branch, then build it. Selecting only arms the button — it does not
-    // spend anything — so the portraits stay browsable and the commitment is
-    // always the same deliberate second tap on ⚒.
+    // Picking a branch SWAPS THE CARD to that upgrade, compared against the unit
+    // standing in the slot. Selecting used to only light the portrait and arm
+    // the button, which meant choosing an upgrade showed the player nothing
+    // about it — the whole reason to look at a branch is to see what it turns
+    // into. Tapping the lit portrait again puts your own unit back.
     const upgradeBtn = body?.querySelector('#slot-upgrade');
+    const cardWrap   = body?.querySelector('.castle-unit-card-wrap');
+    const ownCardHtml = cardWrap?.innerHTML ?? '';
     let selectedPath = null;
+
+    function showOwnUnit() {
+      selectedPath = null;
+      if (cardWrap) cardWrap.innerHTML = ownCardHtml;
+      if (upgradeBtn) upgradeBtn.disabled = true;
+      body?.querySelectorAll('#slot-upgrade-track .portrait-card')
+          .forEach(c => c.classList.remove('portrait-card--selected'));
+    }
+
+    function showUpgrade(card) {
+      const unitId   = card.dataset.pathUnit;
+      const nextUnit = getUnitByUnitId(unitId);
+      selectedPath = unitId;
+      body.querySelectorAll('#slot-upgrade-track .portrait-card')
+          .forEach(c => c.classList.toggle('portrait-card--selected', c === card));
+      if (upgradeBtn) upgradeBtn.disabled = false;
+      if (cardWrap && nextUnit) {
+        // compareUnit is the unit as it stands NOW (item included), so every
+        // stat delta and the +N on a ranked-up ability read against what the
+        // player actually owns rather than against the blueprint.
+        cardWrap.innerHTML = buildUnitCard(nextUnit, {
+          buildingLabel:   unitName(nextUnit) || '',
+          compareUnit:     liveUnit,
+          extraSlotHtml:   treeButtonHtml(nextUnit.id),
+          reserveProgress: true,
+        });
+      }
+    }
+
     body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
       card.addEventListener('click', () => {
-        selectedPath = card.dataset.pathUnit;
-        body.querySelectorAll('#slot-upgrade-track .portrait-card')
-            .forEach(c => c.classList.toggle('portrait-card--selected', c === card));
-        if (upgradeBtn) upgradeBtn.disabled = false;
+        if (selectedPath === card.dataset.pathUnit) showOwnUnit();
+        else                                        showUpgrade(card);
       });
     });
+
     upgradeBtn?.addEventListener('click', () => {
       if (!selectedPath) return;
       const startIndex = Math.max(0, paths.findIndex(p => p.unit_id === selectedPath));
