@@ -524,6 +524,10 @@ class BattleEngine {
     // would have read "Shield (12/turn)".
     this.pushLog({
       type: 'pool', pool: 'shield', passive: def?.name || 'Shield',
+      // Named here rather than per-unit: effectForEntry checks entry.effect_name
+      // first, so a pool animates the same whether an action, a passive or a
+      // spell granted it.
+      effect_name: 'shield_ward',
       actorId: source?.id, actorName: (source || target).unit_name, actorCell: (source || target).cellIndex,
       targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
       value: added, total: target._shield,
@@ -545,6 +549,7 @@ class BattleEngine {
     });
     this.pushLog({
       type: 'pool', pool: 'decay', passive: def?.name || 'Decay',
+      effect_name: 'decay_touch',
       actorId: source?.id, actorName: (source || target).unit_name, actorCell: (source || target).cellIndex,
       targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
       value: added, total: target._decay,

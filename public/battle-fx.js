@@ -612,6 +612,114 @@ export async function holy_heal(cellEl) {
   console.log('[battle-fx] holy_heal END', dataId);
 }
 
+// ── shield_ward / decay_touch ─────────────────────────────────────────────────
+// The two POOL effects (see POOL_CAP_PCT in utils/battle-engine.js), built as
+// siblings of holy_heal so a ward and a mend read as the same KIND of event —
+// something washing over a unit — and are told apart by colour and direction:
+//
+//   shield_ward   cold blue, energy RISING and locking into a hard rim. It is
+//                 armour going on: it settles and holds.
+//   decay_touch   black-violet, sinking DOWNWARD with a ragged edge and motes
+//                 that fall rather than rise. It is something draining out.
+//
+// Shared body, two palettes — the difference is `dir` (+1 rises, -1 sinks) and
+// how crisp the rim is, so the pair can never drift apart visually.
+async function poolWash(cellEl, pal) {
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(pal.blur)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = pal.additive ? ADD : PIXI.BLEND_MODES.NORMAL;
+  const rimG  = new PIXI.Graphics();
+  const moteG = new PIXI.Graphics(); moteG.blendMode = pal.additive ? ADD : PIXI.BLEND_MODES.NORMAL;
+  glowLayer.addChild(glowG);
+  layer.addChild(glowLayer, rimG, moteG);
+  app.stage.addChild(layer);
+
+  const motes = Array.from({ length: 12 }, () => ({
+    x: rand(0.1, 0.9), at: rand(0, 0.55), speed: rand(0.5, 1.1), size: rand(1.4, 3.2), sway: rand(-0.1, 0.1),
+  }));
+
+  await animate(pal.duration, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const alpha = t < 0.15 ? t / 0.15 : t < 0.55 ? 1 : Math.max(0, 1 - (t - 0.55) / 0.45);
+    const grow  = 0.3 + t * 0.5;
+    const fillH = b.height * grow;
+    // dir +1: the wash climbs from the feet. dir -1: it slides down from the head.
+    const fillY = pal.dir > 0
+      ? b.y + b.height - fillH * (0.5 + t * 0.5)
+      : b.y + (b.height - fillH) * (1 - t) * 0.5;
+
+    glowG.clear();
+    glowG.beginFill(pal.body, pal.bodyAlpha * alpha);
+    glowG.drawRoundedRect(b.x - 4, fillY, b.width + 8, fillH, 8);
+    glowG.endFill();
+    // A second, tighter band inside it so the wash has a bright core rather
+    // than reading as one flat wall of colour.
+    glowG.beginFill(pal.core, pal.coreAlpha * alpha);
+    glowG.drawRoundedRect(b.x + b.width * 0.16, fillY + fillH * 0.12,
+                          b.width * 0.68, fillH * 0.76, 6);
+    glowG.endFill();
+
+    rimG.clear();
+    // The ward's rim SNAPS in and stays hard; decay's stays soft and uneven.
+    const rimA = pal.rimSnap
+      ? (t < 0.25 ? t / 0.25 : 1) * alpha
+      : alpha * (0.55 + Math.sin(t * 9) * 0.15);
+    rimG.lineStyle(pal.rimWidth, pal.rim, pal.rimAlpha * rimA);
+    rimG.drawRoundedRect(b.x + 2, b.y + 2, b.width - 4, b.height - 4, 6);
+
+    moteG.clear();
+    for (const m of motes) {
+      const s = clamp01((t - m.at) / 0.5);
+      if (s <= 0) continue;
+      const travel = b.height * 0.45 * s * m.speed;
+      const mx = b.x + b.width * (m.x + m.sway * s);
+      const my = pal.dir > 0
+        ? b.y + b.height * 0.85 - travel      // rising
+        : b.y + b.height * 0.15 + travel;     // falling
+      moteG.beginFill(pal.mote, (1 - s) * alpha * 0.9);
+      moteG.drawCircle(mx, my, m.size * (1 - s * 0.4));
+      moteG.endFill();
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] poolWash END', dataId);
+}
+
+export async function shield_ward(cellEl) {
+  console.log('[battle-fx] shield_ward START', cellEl?.dataset?.id);
+  return poolWash(cellEl, {
+    duration: 850, dir: 1, additive: true, blur: 10,
+    body: 0x3f8fd6, bodyAlpha: 0.45,   // cold blue energy
+    core: 0x9fe4ff, coreAlpha: 0.35,
+    rim:  0xdff0ff, rimAlpha: 0.95, rimWidth: 2.5, rimSnap: true,
+    mote: 0xdff0ff,
+  });
+}
+
+export async function decay_touch(cellEl) {
+  console.log('[battle-fx] decay_touch START', cellEl?.dataset?.id);
+  return poolWash(cellEl, {
+    // NOT additive: rot does not glow, it OCCLUDES — an additive black would be
+    // invisible over a dark portrait, which is the whole trap with this palette.
+    duration: 900, dir: -1, additive: false, blur: 8,
+    body: 0x120a18, bodyAlpha: 0.72,   // near-black, violet-tinted
+    core: 0x2e1436, coreAlpha: 0.6,
+    rim:  0x6b3f7a, rimAlpha: 0.8, rimWidth: 2, rimSnap: false,
+    mote: 0x1a0f20,
+  });
+}
+
 // ── protector ──────────────────────────────────────────────────────────────────
 export async function protector(cellEl, opts = {}) {
   console.log('[battle-fx] protector START', cellEl?.dataset?.id, 'from:', opts.fromCell?.dataset?.id);
@@ -3745,6 +3853,8 @@ export const EFFECTS = {
   mace_swing,
   impale,
   holy_heal,
+  shield_ward,
+  decay_touch,
   protector,
   noxious_death,
   last_verse,

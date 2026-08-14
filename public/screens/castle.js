@@ -631,13 +631,23 @@ export function renderCastle(root, { player }) {
     // the node instead of a generic glyph. Falls back to the glyph when there is
     // no unit (empty slot) or no art for it — see .castle-node--portrait, which
     // lays a gradient over the image to keep the label legible.
-    const nodeBackground = unitId => {
-      const unit = unitId ? getUnitByUnitId(unitId) : null;
+    //
+    // The portrait comes from the unit STANDING IN the slot, not from the
+    // building definition. A building's `unit_id` is the unit it recruits at
+    // tier 1 and never changes, so a node kept showing the recruit long after
+    // the unit inside it had levelled or branched into something else — most
+    // visibly on the throne, where the hero's whole upgrade tree shares one
+    // slot. The building's own unit_id is only the fallback, for a slot that
+    // is built but empty.
+    const nodeBackground = (slot, fallbackUnitId) => {
+      const occupantId = rosterUnitForSlot(slot)?.unit_data?.unit_id ?? null;
+      const unit = resolveUnitDef({ unit_data: { unit_id: occupantId } })
+                || (fallbackUnitId ? getUnitByUnitId(fallbackUnitId) : null);
       const url  = unit ? branchPortraitUrl(unit) : '';
       return url ? ` style="background-image:url('${url}')"` : '';
     };
     const throneDef  = throneState?.building_id ? getBuildingDef(player.faction, throneState.building_id) : null;
-    const throneBg   = nodeBackground(throneDef?.unit_id);
+    const throneBg   = nodeBackground('slot_0', throneDef?.unit_id);
 
     root.querySelector('#center-slot').innerHTML = `
       <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
@@ -657,7 +667,7 @@ export function renderCastle(root, { player }) {
         // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
         // pool, so both are consulted before giving up on a portrait.
         const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
-        const bg         = nodeBackground((def || mercDef)?.unit_id);
+        const bg         = nodeBackground(slot, (def || mercDef)?.unit_id);
         const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : '', bg ? 'castle-node--portrait' : '']
           .filter(Boolean).join(' ');
 

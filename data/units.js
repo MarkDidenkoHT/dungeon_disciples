@@ -362,7 +362,7 @@ const UNITS = {
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 18, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 170, passive: ['rage 1', 'vengeance 1'], ability: 'pact 1',
     },
     tormentor: {
@@ -374,7 +374,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     praetor: {
@@ -386,7 +386,7 @@ const UNITS = {
       hp: 140, armor: 15, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 28, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 2000, passive: ['rage 2', 'vengeance 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     chorister: {
@@ -398,7 +398,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 28, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 800, passive: ['rage 1', 'vengeance 1', 'burn 1'], ability: 'pact 1',
     },
     chanter: {
@@ -410,7 +410,7 @@ const UNITS = {
       hp: 140, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 36, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 26, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 2000, passive: ['rage 2', 'vengeance 1', 'burn 1'], ability: 'pact 1',
     },
     clay_gargoyle: {
@@ -422,7 +422,7 @@ const UNITS = {
       hp: 60, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 25, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 170, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
@@ -434,7 +434,7 @@ const UNITS = {
       hp: 80, armor: 35, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 28, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
@@ -446,7 +446,7 @@ const UNITS = {
       hp: 85, armor: 40, initiative: 50,
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 34, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
@@ -458,7 +458,7 @@ const UNITS = {
       hp: 80, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 10, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 800, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
@@ -470,7 +470,7 @@ const UNITS = {
       hp: 95, armor: 30, initiative: 50,
       resistances: { air: 15, fire: 10, life: 10, death: 20, cold: 25, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 15, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
       xp: 2000, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     heretic: {
@@ -1573,7 +1573,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 400
     },
@@ -1586,7 +1586,7 @@ const UNITS = {
       hp: 95, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1000
     },
@@ -1599,7 +1599,7 @@ const UNITS = {
       hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2', 'undying 1'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1700
     },
@@ -1612,7 +1612,7 @@ const UNITS = {
       hp: 110, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 2', 'infect 2'], ability: 'grails_blessing 1',
       building_slot: 'slot_0', xp: 1700
     },
@@ -1958,7 +1958,7 @@ const UNITS = {
       hp: 120, armor: 0, initiative: 20,
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 16, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 170, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
@@ -1970,7 +1970,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 22, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 800, passive: ['infect 1', 'poison 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_angel: {
@@ -1982,7 +1982,7 @@ const UNITS = {
       hp: 140, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 40, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 28, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 2000, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_bearer: {
@@ -1994,7 +1994,7 @@ const UNITS = {
       hp: 120, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 12, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 800, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
@@ -2006,7 +2006,7 @@ const UNITS = {
       hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 2000, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
