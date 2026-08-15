@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint, spellName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -101,6 +101,14 @@ const BT = {
                    ru: (a, n, t) => `${a} копит <span class="log-val-shield">${n}</span> силы (${t})` },
   logCast:       { en: (a, s, n) => `${a} casts <span class="log-passive">${s}</span> for <span class="log-val-shield">${n}</span> power`,
                    ru: (a, s, n) => `${a} читает <span class="log-passive">${s}</span> за <span class="log-val-shield">${n}</span> силы` },
+  // What the cast reached, appended to the line above. One target is named; a
+  // spread is counted, because six names in one line is not a sentence.
+  logCastAt:     { en: (t) => ` → ${t}`,
+                   ru: (t) => ` → ${t}` },
+  logCastWide:   { en: (n) => ` → <span class="log-val-shield">${n}</span> targets`,
+                   ru: (n) => ` → целей: <span class="log-val-shield">${n}</span>` },
+  logCastNone:   { en: ()  => ` → no targets`,
+                   ru: ()  => ` → нет целей` },
 
   // ── Combat log ─────────────────────────────────────────────────────────────
   // Whole clauses rather than stitched-together words: Russian word order and
@@ -1191,6 +1199,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
   }
 
+  // Any spell in the game by id — the player's own, an encounter's, a boss's.
+  // The log carries ids rather than definitions, so this is what turns one back
+  // into something that can be named in the reader's language.
+  function findSpellById(id) {
+    return Object.values(SPELLS).flat().find(s => s.id === id) || null;
+  }
+
   function formatLogEntry(entry) {
     const actor  = () => logName(entry.actorName,  entry.actorId,  'log-actor',  entry.actorCell);
     const target = () => logName(entry.targetName, entry.targetId, 'log-target', entry.targetCell);
@@ -1213,7 +1228,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return `<div class="log-entry log-entry--shield">${BTf('logPower')(actor(), entry.value, entry.total)}</div>`;
     }
     if (entry.type === 'cast') {
-      return `<div class="log-entry log-entry--passive">${BTf('logCast')(actor(), entry.spell, entry.value)}</div>`;
+      // `entry.spell` is the English name the engine stamped. The id travels
+      // with it, so the name can be resolved and translated here rather than
+      // showing a Russian player an English spell in an otherwise Russian log.
+      const def  = entry.spell_id ? findSpellById(entry.spell_id) : null;
+      const name = def ? spellName(def, player) : entry.spell;
+      let reach = '';
+      if (entry.targets === 0)      reach = BTf('logCastNone')();
+      else if (entry.targetName)    reach = BTf('logCastAt')(target());
+      else if (entry.targets > 1)   reach = BTf('logCastWide')(entry.targets);
+      return `<div class="log-entry log-entry--passive">${
+        BTf('logCast')(actor(), name, entry.value)}${reach}</div>`;
     }
     if (entry.type === 'pool') {
       const tpl = entry.pool === 'shield' ? 'logShieldOn' : 'logDecayOn';

@@ -129,7 +129,11 @@ const REGION_ENCOUNTERS = {
     level_3: {
       spell_id: 'enemy_spell_1',
       enemies: [
-        { key: 'glittering_abyss.cryodrox',  cell: 2 },
+        // Carrying spells is what makes a unit a hero to the engine, so this is
+        // also what turns Cryodrox into a caster that banks power. Cheap ward
+        // first, the burst once it has survived long enough to afford it.
+        { key: 'glittering_abyss.cryodrox',  cell: 2,
+          spells: [{ spell_id: 'boss_rime_ward', power: 2 }] },
         { key: 'glittering_abyss.chillrock',  cell: 0 },
       ],
       rewards: {
@@ -167,7 +171,9 @@ const REGION_ENCOUNTERS = {
     },
     level_6: {
       enemies: [
-        { key: 'glittering_abyss.cryodrox2',      cell: 0 },
+        { key: 'glittering_abyss.cryodrox2',      cell: 0,
+          spells: [{ spell_id: 'boss_rime_ward', power: 2 },
+                   { spell_id: 'boss_glacial_burst', power: 3 }] },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
         { key: 'glittering_abyss.rime_splinter',  cell: 1 },
         { key: 'glittering_abyss.rime_splinter',  cell: 3 },
@@ -212,7 +218,8 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.bone_knight',            cell: 0 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
         { key: 'chamber_of_unrest.wailing_ghost',          cell: 3 },
-        { key: 'chamber_of_unrest.malgrath_the_undying_1', cell: 2 },
+        { key: 'chamber_of_unrest.malgrath_the_undying_1', cell: 2,
+          spells: [{ spell_id: 'boss_grave_rot', power: 3 }] },
       ],
       rewards: {
         gold: 25, xp: 50,
@@ -255,7 +262,9 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.death_knight',           cell: 4 },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
-        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2 },
+        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2,
+          spells: [{ spell_id: 'boss_grave_rot', power: 3 },
+                   { spell_id: 'boss_deaths_verdict', power: 4 }] },
       ],
       rewards: {
         gold: 40, xp: 80,

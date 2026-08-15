@@ -1322,10 +1322,22 @@ class BattleEngine {
     if (have < spend) return { error: `Not enough power (need ${spend}, have ${have})` };
 
     this.power[actor.side] = have - spend;
+    // Resolved BEFORE the cast so the announcement can say how wide it lands.
+    // A six-target debuff and a single-target one read identically otherwise —
+    // the player saw "casts Grave Rot" and then a wall of separate decay lines
+    // with nothing tying them to it.
+    const willHit = this.getSpellTargets(spellDef, actor.side, targetId);
     this.pushLog({
       type: 'cast', side: actor.side, spell_id: spellDef.id, spell: spellDef.name,
       actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
       targetId: targetId ?? null, value: spend, total: this.power[actor.side],
+      // `targets` is the count; `targetName` names the victim when there is
+      // exactly one, so a single-target cast reads as a sentence rather than
+      // as "1 target".
+      targets: willHit.length,
+      targetName: willHit.length === 1 ? willHit[0].unit_name : null,
+      targetCell: willHit.length === 1 ? willHit[0].cellIndex : undefined,
+      scope: spellDef.target_scope || null,
       effect_name: spellDef.effect_name || null,
     });
 
