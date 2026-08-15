@@ -6,7 +6,12 @@
   <title>Shattered Crown</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.31.0/dist/umd/supabase.js"></script>
+  <!-- The Supabase browser client used to live here, purely so each player could
+       open their own realtime socket. Battles now stream from our own server
+       (GET /battle/stream), so nothing in the client talks to Supabase — one
+       fewer CDN script on the critical path, and zero connections against the
+       Supabase concurrency cap. -->
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>

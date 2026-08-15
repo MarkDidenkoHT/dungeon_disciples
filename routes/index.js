@@ -23,6 +23,7 @@ const {
   getBattleLogs,
   getBattleLogsSince,
 } = require('../utils/realtime');
+const battleBus = require('../utils/battle-bus');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
@@ -1844,11 +1845,62 @@ router.get('/battle/active', requireAuth, async (req, res) => {
   }
 });
 
+// Kept for older clients only. Nothing in the current client asks for it — the
+// browser no longer talks to Supabase realtime at all; it holds one SSE
+// connection to us instead (GET /battle/stream). Returning nulls makes a stale
+// client fall through to its polling path rather than opening a socket that
+// counts against the Supabase connection cap.
 router.get('/battle/realtime-config', requireAuth, async (req, res) => {
-  res.json({
-    url: process.env.SUPABASE_URL || null,
-    anonKey: process.env.SUPABASE_ANON_KEY || null,
-  });
+  res.json({ url: null, anonKey: null, superseded_by: '/battle/stream' });
+});
+
+// GET /battle/stream — server-sent events for one battle.
+//
+// EventSource cannot set request headers, so the session token arrives as a
+// query parameter here rather than in x-session-token. It is checked against the
+// same players.session_token column requireAuth uses; the token is not a bearer
+// credential for anything outside this app, and the alternative (an unauthed
+// stream) would let anyone watch any battle by id.
+router.get('/battle/stream', async (req, res) => {
+  const { chat_id, battle_id, token } = req.query;
+  if (!chat_id || !battle_id || !token) {
+    return res.status(400).json({ error: 'chat_id, battle_id and token required' });
+  }
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=session_token&limit=1`);
+    if (!rows.length || rows[0].session_token !== token) return res.status(401).json({ error: 'Unauthorized' });
+
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No such battle' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
+
+    res.writeHead(200, {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection':    'keep-alive',
+      // Render sits behind a proxy that will otherwise buffer the stream and
+      // deliver nothing until it closes.
+      'X-Accel-Buffering': 'no',
+    });
+    res.flushHeaders?.();
+
+    const close = battleBus.subscribe(battle_id, String(chat_id), res);
+    if (!close) {
+      // Room full — say so and hang up, so the client takes its polling path
+      // instead of sitting on a stream that will never speak.
+      res.write('event: full\ndata: {}\n\n');
+      return res.end();
+    }
+
+    // An opening frame is what tells the client the stream is live, as opposed
+    // to a request that connected but is being buffered somewhere.
+    res.write(`event: ready\ndata: ${JSON.stringify({ battle_id })}\n\n`);
+    req.on('close', close);
+  } catch (err) {
+    // Headers may already be sent, in which case serverError would throw.
+    if (res.headersSent) { try { res.end(); } catch {} return; }
+    serverError(res, err);
+  }
 });
 
 router.get('/battle/state', requireAuth, async (req, res) => {
@@ -2027,6 +2079,15 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
       console.error('Failed to persist battle log:', err);
     }
 
+    // Tell every other watcher of this battle that it moved. Only a pointer
+    // travels — the client re-reads through /battle/state?last_log_id=N, so the
+    // event and the data cannot drift apart. The caller who made this request
+    // already has the result in the response body and ignores its own echo.
+    battleBus.publish(battle_id, {
+      last_log_id: insertedLogs.length ? insertedLogs[insertedLogs.length - 1].id : null,
+      done: engine.done,
+    });
+
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
     serverError(res, err);
@@ -2107,6 +2168,15 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     } catch (err) {
       console.error('Failed to persist battle log:', err);
     }
+
+    // Tell every other watcher of this battle that it moved. Only a pointer
+    // travels — the client re-reads through /battle/state?last_log_id=N, so the
+    // event and the data cannot drift apart. The caller who made this request
+    // already has the result in the response body and ignores its own echo.
+    battleBus.publish(battle_id, {
+      last_log_id: insertedLogs.length ? insertedLogs[insertedLogs.length - 1].id : null,
+      done: engine.done,
+    });
 
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {

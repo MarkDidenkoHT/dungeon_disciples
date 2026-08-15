@@ -6,6 +6,10 @@ export function setSessionToken(token) {
   _sessionToken = token;
 }
 
+// EventSource cannot set request headers, so the battle stream has to carry the
+// token in its query string. This is the one place that hands it out.
+export function getSessionToken() { return _sessionToken; }
+
 export async function api(path, body = null) {
   const options = {
     method: body ? 'POST' : 'GET',
