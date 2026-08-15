@@ -73,11 +73,11 @@ const TUTORIAL_STEPS = {
   roster_equip: {
     en: {
       title: 'Arm Your Hero',
-      text: 'Everything this unit can wear is on the strip below — tap an icon to look at it. Padded Armor grants +5 HP; tap Equip to put it on.',
+      text: 'Everything this unit can wear is on the strip below — tap an icon to look at it. Padded Armor grants +2 HP and +2 Armor tap Equip to put it on.',
     },
     ru: {
       title: 'Снарядите героя',
-      text: 'Всё, что может носить этот боец, — на полосе внизу: коснитесь значка, чтобы рассмотреть предмет. Стёганый доспех даёт +5 к здоровью — нажмите «Надеть».',
+      text: 'Всё, что может носить этот боец, — на полосе внизу: коснитесь значка, чтобы рассмотреть предмет. Стёганый доспех даёт +2 к здоровью b +2 к броне — нажмите «Надеть».',
     },
   },
   roster_equipped: {

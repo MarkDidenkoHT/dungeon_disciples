@@ -3,6 +3,13 @@ import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
 
+// The tome is for RESEARCH, and the two non-combat spells (revive and mend) are
+// neither researched nor cast from here — every faction starts with both, and
+// they are used from a unit's sheet in the castle. A tab listing two spells that
+// are always already learned and have no action attached to them is a dead page,
+// so the tome shows the combat categories only. Same filter battle-prep applies.
+const TOME_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
+
 // Every user-facing string in this screen, in the same shape the other screens
 // use (CASTLE_TEXT and friends) so there is one place to add a language.
 const TOME_TEXT = {
@@ -31,7 +38,7 @@ export function renderSpellTome(root, { player }) {
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
         <div class="tier-tabs" id="tier-tabs">
-          ${SPELL_CATEGORIES.map((c, i) => `
+          ${TOME_CATEGORIES.map((c, i) => `
             <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
           `).join('')}
         </div>
@@ -49,7 +56,7 @@ export function renderSpellTome(root, { player }) {
   let throneLevel     = 1;
   let learnedSpells   = [];
   let activeSpellId   = null;
-  let activeCategory  = SPELL_CATEGORIES[0].id;
+  let activeCategory  = TOME_CATEGORIES[0].id;
   const factionSpells = SPELLS[player.faction] || [];
 
   const slider      = root.querySelector('#spells-slider');
@@ -258,11 +265,11 @@ export function renderSpellTome(root, { player }) {
     closeSheet();
   }
 
-  // Swiping steps one tab along the SPELL_CATEGORIES order, stopping at the ends.
+  // Swiping steps one tab along the TOME_CATEGORIES order, stopping at the ends.
   function stepCategory(delta) {
-    const i    = SPELL_CATEGORIES.findIndex(c => c.id === activeCategory);
-    const next = Math.max(0, Math.min(SPELL_CATEGORIES.length - 1, i + delta));
-    setCategory(SPELL_CATEGORIES[next].id);
+    const i    = TOME_CATEGORIES.findIndex(c => c.id === activeCategory);
+    const next = Math.max(0, Math.min(TOME_CATEGORIES.length - 1, i + delta));
+    setCategory(TOME_CATEGORIES[next].id);
   }
 
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
