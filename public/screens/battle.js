@@ -1940,9 +1940,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const tutorialActor = currentActor();
     const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
-    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && !isTutorialDone(player, 'battle_first_action')) {
-      const mainBtn = ui.mainBtn;
-      if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
+    const needsPower  = !isTutorialDone(player, 'battle_power');
+    const needsAction = !isTutorialDone(player, 'battle_first_action');
+    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && (needsPower || needsAction)) {
+      const showAction = () => {
+        if (!needsAction) return;
+        const mainBtn = ui.mainBtn;
+        if (mainBtn) showTutorialSpotlight(player, 'battle_first_action', mainBtn);
+      };
+      // Power comes first: the action step now names the Spell button, and that
+      // button means nothing until the player knows what it spends.
+      const strip = ui.powerPlayer;
+      if (needsPower && strip) {
+        showTutorialSpotlight(player, 'battle_power', strip, {
+          showContinue: true,
+          onAdvance: () => { markTutorialDone(player, 'battle_power'); showAction(); },
+        });
+      } else {
+        showAction();
+      }
     } else {
       hideTutorial();
     }

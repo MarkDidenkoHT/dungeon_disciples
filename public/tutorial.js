@@ -140,14 +140,31 @@ const TUTORIAL_STEPS = {
       text: 'Он вернулся почти без здоровья. Заклинание исцеления восстанавливает HP вне боя — нажмите «Лечить», чтобы подлечить его.',
     },
   },
-  spell_buff: {
+  // Replaces the old `spell_buff` step, which told the player to cast a buff on
+  // a unit before the fight. Spells are no longer charged or cast out of battle
+  // — combat spells are researched here once and then cast during the fight —
+  // so that step taught a screen that no longer does what it described. New key
+  // rather than reused, because everyone needs to see the corrected lesson.
+  spell_research: {
     en: {
-      title: 'Prepare a Blessing',
-      text: 'Before the fight, you can empower an ally. Open your spellbook and cast your buff on a unit to strengthen it for this battle.',
+      title: 'Your Spellbook',
+      text: 'Spells are learned here, once, with crystals — a spell you research is yours for good. Battle spells are not cast from this screen: you cast them during the fight itself, from the Spell button.',
     },
     ru: {
-      title: 'Подготовьте благословение',
-      text: 'Перед боем можно усилить союзника. Откройте книгу заклинаний и наложите усиление на бойца, чтобы укрепить его в этом бою.',
+      title: 'Книга заклинаний',
+      text: 'Заклинания изучаются здесь один раз за кристаллы — изученное остаётся с вами навсегда. Боевые заклинания не читаются с этого экрана: их вы применяете прямо в бою, кнопкой «Заклинание».',
+    },
+  },
+  // Two things a player cannot infer from the strip: where power comes from, and
+  // that spending more of it on one cast makes that cast stronger.
+  battle_power: {
+    en: {
+      title: 'Power',
+      text: 'This is your power. It starts at zero and rises by one every time your hero acts, up to five. Casting spends it, and a spell cast with more power hits harder — so you choose between a small spell now and a bigger one later. Power does not carry over to the next battle, and it stops building if your hero falls.',
+    },
+    ru: {
+      title: 'Сила',
+      text: 'Это ваша сила. Она начинается с нуля и растёт на единицу каждый раз, когда герой действует, максимум до пяти. Заклинание тратит её, и чем больше силы вложено, тем сильнее эффект — так что выбирайте между слабым заклинанием сейчас и мощным позже. Сила не переносится в следующий бой и перестаёт расти, если герой пал.',
     },
   },
   embark_region: {
@@ -173,11 +190,11 @@ const TUTORIAL_STEPS = {
   battle_first_action: {
     en: {
       title: 'Your Turn',
-      text: 'Tap Attack, then tap an enemy to strike. You can also use an Ability or Defend instead.',
+      text: 'Tap Attack, then tap an enemy to strike. You can also use an Ability, Defend to cut incoming damage, or Spell to cast one of the spells you have researched.',
     },
     ru: {
       title: 'Ваш ход',
-      text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать. Также можно использовать способность или защиту.',
+      text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать. Можно также применить способность, встать в защиту, чтобы снизить получаемый урон, или выбрать «Заклинание» и прочесть одно из изученных.',
     },
   },
   // Shown once, the first time the player opens the app after finishing a
