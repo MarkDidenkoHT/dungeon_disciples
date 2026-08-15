@@ -188,6 +188,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const lastEntry = logs[logs.length - 1];
     if (lastEntry?.id != null) lastLogId = lastEntry.id;
   }
+  // Seeded below, once playedLogIds exists — see seedPlayedLogs(). Everything
+  // handed to the screen at mount has, by definition, already been shown.
   let ui = null;
   let realtimeController = null;
   let battleResolved = false;
@@ -403,7 +405,51 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   // Patches local state incrementally from a single log entry so HP bars
   // update in sync with the animation rather than all at once at the end.
-  async function playbackSequence(newEntries) {
+  // Every log id this client has already animated.
+  //
+  // Playback used to trust that whatever arrived was new, and three paths can
+  // deliver the same entry: the response to your own action, the stream's
+  // catch-up fetch, and the refresh on returning to foreground. Whenever
+  // `lastLogId` was behind — most of all at the START of a battle, before any
+  // entry with an id had been seen — a catch-up returned the whole log and the
+  // fight replayed from the beginning. That is exactly why it was worst in
+  // round one and clean by the end: by then lastLogId was high and a refetch
+  // returned almost nothing.
+  //
+  // Filtering on the id makes a duplicate delivery cost nothing, whichever
+  // route it came by, instead of each route needing its own guard.
+  const playedLogIds = new Set();
+
+  // Drops entries this client already holds, BEFORE they are merged into
+  // state.log. Playback has its own guard, but the log pane appends first — so
+  // without this the text duplicated even when the animation did not.
+  function dedupeIncoming(logs) {
+    const seenInState = new Set((state?.log || []).map(e => e?.id).filter(id => id != null));
+    return (logs || []).filter(e => e?.id == null || (!seenInState.has(e.id) && !playedLogIds.has(e.id)));
+  }
+
+  // Anything already on screen at mount counts as played: a reconnect mid-battle
+  // hands the whole log back, and without this the first catch-up would replay
+  // the entire fight — the worst case of the duplicate problem, and the reason
+  // it looked so much worse early on.
+  (function seedPlayedLogs() {
+    for (const e of [...(logs || []), ...(snapshot?.log || [])]) {
+      if (e?.id != null) {
+        playedLogIds.add(e.id);
+        if (lastLogId == null || e.id > lastLogId) lastLogId = e.id;
+      }
+    }
+  })();
+
+  async function playbackSequence(entries) {
+    const newEntries = (entries || []).filter(e => {
+      if (e?.id == null) return true;          // no id (a local/optimistic entry) — always play
+      if (playedLogIds.has(e.id)) return false;
+      playedLogIds.add(e.id);
+      if (lastLogId == null || e.id > lastLogId) lastLogId = e.id;
+      return true;
+    });
+    if (!newEntries.length) return;
     console.log('[battle] playbackSequence START, entries:', newEntries.length, newEntries.map(e => e.type + ':' + (e.passive || e.value || '')));
     // Indices whose animation has already been covered by an earlier play —
     // either a fan-out, or a simultaneous volley (see below). Their log lines
@@ -972,10 +1018,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Spell art. `icon` on the definition, falling back to the id's base name, so
   // a spell without its own file still lines up with the ability icons rather
   // than leaving a hole.
-  function spellIconHtml(spell) {
-    const key = spell.icon || String(spell.id || '').replace(/\s+/g, '_');
-    return `<img class="spell-cast-icon" src="${assetUrl(`/assets/icons/spells/${key}.jpg`)}"
-                 alt="" onerror="this.style.display='none'">`;
+  // Spell art is keyed by the spell's ID and lives in /assets/icons/spells as a
+  // PNG. The portrait badge is a different picture entirely — see effect_icon.
+  function spellIconHtml(spell, cls = 'spell-cast-icon') {
+    return `<img class="${cls}" src="${assetUrl(`/assets/icons/spells/${spell.id}.png`)}"
+                 alt="${spell.name}" onerror="this.style.visibility='hidden'">`;
   }
 
   // What the numbers become at this power. Reads the same scaling function the
@@ -1019,64 +1066,76 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return;
     }
 
-    const body = affordable.map(s => {
-      const min = s.power_cost ?? 1;
-      const desc = BL === 'ru' ? (s.description_ru || s.description) : s.description;
-      const opts = [];
-      for (let p = min; p <= Math.min(POWER_MAX, have); p++) {
-        opts.push(`<button class="spell-power-opt${p === min ? ' spell-power-opt--on' : ''}"
-                           data-spell="${s.id}" data-power="${p}">${p}</button>`);
-      }
-      return `
-        <div class="spell-cast-row" data-spell-row="${s.id}">
-          <div class="spell-cast-head">
-            ${spellIconHtml(s)}
-            <span class="spell-cast-name">${BL === 'ru' ? (s.name_ru || s.name) : s.name}</span>
-          </div>
-          <p class="spell-cast-desc">${desc}</p>
-          <!-- The numbers this cast will actually produce, recomputed as the
-               power is changed. The description states the base and the step;
-               this states the result, which is what the choice turns on. -->
-          <div class="spell-cast-preview" data-preview="${s.id}">${spellPreviewHtml(s, min)}</div>
-          <div class="spell-cast-power">
-            <span class="spell-cast-power-label">${powerLabel()}</span>
-            ${opts.join('')}
-          </div>
-          <button class="spell-cast-btn" data-cast="${s.id}">${BTx('castBtn')}</button>
-        </div>`;
-    }).join('');
+    // A TRACK of spell art with one detail panel under it, rather than a stack
+    // of full-height rows. Six spells as rows meant scrolling a sheet to
+    // compare them, on the screen where the player is mid-turn; as icons they
+    // are all visible at once and the panel answers for whichever is selected.
+    const track = affordable.map((s, i) => `
+      <button class="spell-pick ${i === 0 ? 'spell-pick--on' : ''}" data-pick="${s.id}"
+              title="${BL === 'ru' ? (s.name_ru || s.name) : s.name}">
+        ${spellIconHtml(s, 'spell-pick-img')}
+      </button>`).join('');
+
+    const body = `
+      <div class="spell-track">${track}</div>
+      <div class="spell-detail" id="spell-detail"></div>`;
 
     openSheet(`${powerLabel()} ${have}/${POWER_MAX}`,
       affordable.length ? body : `<p class="modal-empty">${BTx('noPower')}</p>`);
 
     const sheet = getSheetBody();
-    // Power choice per row, so two spells can be pondered at different levels
-    // without the sheet reordering under the player's thumb.
-    const chosen = {};
-    sheet?.querySelectorAll('.spell-power-opt').forEach(btn => {
-      chosen[btn.dataset.spell] = chosen[btn.dataset.spell] ?? Number(btn.dataset.power);
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.spell;
-        const power = Number(btn.dataset.power);
-        chosen[id] = power;
-        sheet.querySelectorAll(`.spell-power-opt[data-spell="${id}"]`)
-             .forEach(b => b.classList.toggle('spell-power-opt--on', b === btn));
-        // Restate the outcome at the newly chosen power.
-        const preview = sheet.querySelector(`[data-preview="${id}"]`);
-        const spell   = affordable.find(s => s.id === id);
-        if (preview && spell) preview.innerHTML = spellPreviewHtml(spell, power);
-      });
-    });
 
-    sheet?.querySelectorAll('.spell-cast-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const spell = affordable.find(s => s.id === btn.dataset.cast);
-        if (!spell) return;
-        const power = chosen[spell.id] ?? (spell.power_cost ?? 1);
-        closeSheet();
-        beginCast(spell, power);
+    // The detail panel for one spell: description, the numbers this cast will
+    // actually produce, the power selector, and the cast button.
+    const chosenPower = {};
+    function renderDetail(spell) {
+      const min = spell.power_cost ?? 1;
+      const power = chosenPower[spell.id] ?? min;
+      const desc = BL === 'ru' ? (spell.description_ru || spell.description) : spell.description;
+      const opts = [];
+      for (let p = min; p <= Math.min(POWER_MAX, have); p++) {
+        opts.push(`<button class="spell-power-opt${p === power ? ' spell-power-opt--on' : ''}"
+                           data-spell="${spell.id}" data-power="${p}">${p}</button>`);
+      }
+      const panel = sheet?.querySelector('#spell-detail');
+      if (!panel) return;
+      panel.innerHTML = `
+        <div class="spell-cast-name">${BL === 'ru' ? (spell.name_ru || spell.name) : spell.name}</div>
+        <p class="spell-cast-desc">${desc}</p>
+        <div class="spell-cast-preview" data-preview="${spell.id}">${spellPreviewHtml(spell, power)}</div>
+        <div class="spell-cast-power">
+          <span class="spell-cast-power-label">${powerLabel()}</span>
+          ${opts.join('')}
+        </div>
+        <button class="spell-cast-btn" data-cast="${spell.id}">${BTx('castBtn')}</button>`;
+      bindDetail(spell);
+    }
+
+    function bindDetail(spell) {
+      // Power choice restates the outcome in place — the numbers ARE the choice.
+      sheet?.querySelectorAll('.spell-power-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          chosenPower[spell.id] = Number(btn.dataset.power);
+          renderDetail(spell);
+        });
       });
-    });
+      sheet?.querySelector('.spell-cast-btn')?.addEventListener('click', () => {
+        closeSheet();
+        beginCast(spell, chosenPower[spell.id] ?? (spell.power_cost ?? 1));
+      });
+    }
+
+    if (affordable.length) {
+      renderDetail(affordable[0]);
+      sheet?.querySelectorAll('.spell-pick').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const spell = affordable.find(s => s.id === btn.dataset.pick);
+          if (!spell) return;
+          sheet.querySelectorAll('.spell-pick').forEach(b => b.classList.toggle('spell-pick--on', b === btn));
+          renderDetail(spell);
+        });
+      });
+    }
   }
 
   // A spell that needs a target arms the grid the same way an attack does, so
@@ -1099,7 +1158,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     try {
       const result = await api('/battle/cast', { chat_id: player.chat_id, battle_id, spell_id, power, target_id });
       if (result.error) throw new Error(result.error);
-      const newLogs = result.logs || [];
+      const newLogs = dedupeIncoming(result.logs);
       state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
       if (ui?.battleLog) {
         const existingCount = (state.log || []).length - newLogs.length;
@@ -1564,9 +1623,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const effects = (occ?._effects ?? occ?.buffs?._effects ?? [])
       .filter(e => e?.icon && e.polarity === polarity);
     if (!effects.length) return '';
+    // From the ABILITIES set, not the spell art: this tile sits beside the
+    // passive-driven statuses and has to read as one of them.
     return effects.slice(0, MAX_STATE_ICONS).map(e => `
       <span class="bc-state bc-state--spell" title="${e.name}${e.rounds ? ` · ${e.rounds}` : ''}">
-        <img class="bc-state-img" src="${assetUrl(`/assets/icons/spells/${e.icon}.jpg`)}"
+        <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${e.icon}.jpg`)}"
              alt="${e.name}" onerror="this.style.display='none'">
         ${e.rounds > 1 ? `<span class="bc-state-num">${e.rounds}</span>` : ''}
       </span>`).join('');
@@ -1899,7 +1960,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
       if (result.error) throw new Error(result.error);
 
-      const newLogs = result.logs || [];
+      const newLogs = dedupeIncoming(result.logs);
       state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
 
       if (ui?.battleLog) {
@@ -2230,7 +2291,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // The lastLogId guard means onStateChange will only have genuinely new
         // entries that sendAction didn't receive (e.g. from a second DB write).
         if (processing) return;
-        const newLogs = Array.isArray(data.logs) && data.logs.length ? data.logs : [];
+        const newLogs = dedupeIncoming(Array.isArray(data.logs) ? data.logs : []);
         if (!newLogs.length) {
           // State update only, no new log entries - just reconcile state
           state = { ...data.state, log: state.log || [] };

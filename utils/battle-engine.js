@@ -2322,7 +2322,9 @@ class BattleEngine {
       ...scaled,
       _spell_name: spellDef.name,
       _spell_id:   spellDef.id,
-      _spell_icon: spellDef.icon || null,
+      // The portrait badge, from the ABILITIES icon set — not the spell's own
+      // art, which is keyed by id and used in the casting sheet.
+      _spell_icon: spellDef.effect_icon || null,
       _caster_side: casterSide,
     });
     // Spells resolve before round 1 has "advanced", and firePendingRoundEffects

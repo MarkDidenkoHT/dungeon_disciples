@@ -8,7 +8,7 @@
 // CRYSTALS are paid ONCE, to research a spell (POST /spells/research). They are
 // never spent again. POWER — Lion's Fury for the Empire, Chord of Hate for the
 // Choir, Mother's Tear for the Grail — is the per-cast cost, earned during the
-// battle itself: the hero gains 1 每 action it takes, to a maximum of 5, and
+// battle itself: the hero gains 1 per action it takes, to a maximum of 5, and
 // generation stops when the hero dies. Casting IS the hero's action, so every
 // cast is paid for twice over: once in power, once in the attack not made.
 //
@@ -28,9 +28,17 @@
 //   Holy Aegis at 1 power -> +15 armor, 2 rounds
 //   Holy Aegis at 5 power -> +35 armor, 3 rounds
 //
+// ── Two kinds of art ───────────────────────────────────────────────────────
+// The spell's own picture is keyed by ID: /assets/icons/spells/<id>.png. It is
+// not a field here because it never differs from the id.
+//
+// `effect_icon` is a DIFFERENT thing: the badge drawn on a unit's portrait
+// while the spell's effect is on it, taken from /assets/icons/abilities/. A
+// portrait tile has to sit alongside the passive-driven statuses and read like
+// one of them, so it comes from that set rather than from the spell art.
+//
 // Non-combat spells (resurrect / heal) are unchanged: roster-only, crystal
-// cost at point of use, never castable in battle. They are the repair kit
-// between fights, not part of the combat economy.
+// cost at point of use, never castable in battle.
 const SPELLS = {
   empire: [
     {
@@ -67,12 +75,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_3',
-      icon: 'holy_aegis',
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       category: 'buff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'aegis',
       description: 'Bless one ally with divine protection: +15 armor for 2 rounds, +5 per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Благословляет союзника: +15 брони на 2 раунда, +5 за каждую доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Life: 10 } },
@@ -86,12 +94,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_7',
-      icon: 'martyrdom',
       name: 'Martyrdom',
       name_ru: 'Мученичество',
       category: 'buff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'shared_suffering',
       description: 'One ally redirects 10% of the damage it takes to the rest of the line for 2 rounds, +5% per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Союзник перенаправляет 10% получаемого урона на остальной строй на 2 раунда, +5% за доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Life: 10, Crystals_Frost: 5 } },
@@ -105,12 +113,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_8',
-      icon: 'vow_of_protection',
       name: 'Vow of Protection',
       name_ru: 'Обет защиты',
       category: 'buff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'protector',
       description: 'One ally guards the line: 25% chance to intercept blows aimed at its row, +5% per extra power, and +10 armor. 2 rounds.',
       description_ru: 'Союзник прикрывает строй: 25% шанс перехватить удар по своему ряду, +5% за доп. силу, и +10 брони. 2 раунда.',
       cost: { crystals: { Crystals_Life: 15, Crystals_Fire: 5 } },
@@ -123,12 +131,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_9',
-      icon: 'wrath_of_heaven',
       name: 'Wrath of Heaven',
       name_ru: 'Гнев небес',
       category: 'debuff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'light_of_dawn',
       // Was a round-3 delayed hit — which only made sense when the spell was
       // chosen before the battle began. Cast reactively, a nuke that lands two
       // rounds later is strictly worse than one that lands now.
@@ -144,12 +152,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_10',
-      icon: 'condemn',
       name: 'Condemn',
       name_ru: 'Осуждение',
       category: 'debuff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'find_weakness',
       description: 'The enemy line is judged: −10 life resistance and −10 armor for 2 rounds, −5 more per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Вражеский строй осуждён: −10 сопр. жизни и −10 брони на 2 раунда, ещё −5 за доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Life: 15, Crystals_Frost: 5 } },
@@ -163,12 +171,12 @@ const SPELLS = {
     },
     {
       id: 'e_spell_11',
-      icon: 'purgation',
       name: 'Purgation',
       name_ru: 'Очищение',
       category: 'debuff',
       tier: 4,
       type: 'combat',
+      effect_icon: 'purge',
       // One blessing per point of power, on ONE enemy. Stripping the whole line
       // was the strongest effect in the game for a single cast.
       description: 'Tear the blessings off one enemy: 1 buff removed per power spent.',
@@ -218,12 +226,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_3',
-      icon: 'song_of_frenzy',
       name: 'Song of Frenzy',
       name_ru: 'Песнь исступления',
       category: 'buff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'rage',
       description: 'One ally sings itself into a fury: +15% damage for 2 rounds, +5% per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Союзник впадает в исступление: +15% урона на 2 раунда, +5% за доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Fire: 10 } },
@@ -237,12 +245,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_9',
-      icon: 'chorus_of_wrath',
       name: 'Chorus of Wrath',
       name_ru: 'Хор ярости',
       category: 'buff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'fanaticism',
       description: 'The whole choir takes up the verse: +8% damage to every ally for 2 rounds, +3% per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Весь хор подхватывает: +8% урона каждому союзнику на 2 раунда, +3% за доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Fire: 20 } },
@@ -256,12 +264,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_5',
-      icon: 'hymn_of_warding',
       name: 'Hymn of Warding',
       name_ru: 'Гимн оберега',
       category: 'buff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'resist_aura_cold',
       description: 'One ally is warded against air and cold: +15 to both for 2 rounds, +5 per extra power.',
       description_ru: 'Союзник защищён от воздуха и холода: +15 к обоим на 2 раунда, +5 за доп. силу.',
       cost: { crystals: { Crystals_Fire: 15 } },
@@ -274,12 +282,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_7',
-      icon: 'song_of_weakness',
       name: 'Song of Weakness',
       name_ru: 'Песнь слабости',
       category: 'debuff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'slow',
       description: 'The enemy line falters: −10% damage dealt for 1 round, −5% per extra power. At full power it lasts 2 rounds.',
       description_ru: 'Вражеский строй слабеет: −10% наносимого урона на 1 раунд, −5% за доп. силу. На полной силе — 2 раунда.',
       cost: { crystals: { Crystals_Fire: 10, Crystals_Frost: 5 } },
@@ -293,12 +301,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_10',
-      icon: 'pyre_requiem',
       name: 'Pyre Requiem',
       name_ru: 'Погребальный реквием',
       category: 'debuff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'burn',
       description: 'Fire answers the verse: 15 fire damage to the whole enemy line, +6 per extra power.',
       description_ru: 'Огонь отвечает на песнь: 15 урона огнём всему вражескому строю, +6 за доп. силу.',
       cost: { crystals: { Crystals_Fire: 20, Crystals_Frost: 5 } },
@@ -311,12 +319,12 @@ const SPELLS = {
     },
     {
       id: 'd_spell_11',
-      icon: 'unsung',
       name: 'Unsung',
       name_ru: 'Неспетые',
       category: 'special',
       tier: 4,
       type: 'combat',
+      effect_icon: 'dissipate',
       // In a faction where everything is song, the punishment is being left out
       // of it: their passives go unsung.
       description: 'The enemy is left out of the verse: their passives fall silent for 1 round. At full power, 2 rounds.',
@@ -366,12 +374,12 @@ const SPELLS = {
     },
     {
       id: 'g_spell_3',
-      icon: 'sorrows_haste',
       name: "Sorrow's Haste",
       name_ru: 'Скорая скорбь',
       category: 'buff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'inspiration_initiative',
       description: 'One ally moves ahead of its grief: +15 initiative for 2 rounds, +5 per extra power.',
       description_ru: 'Союзник опережает свою скорбь: +15 инициативы на 2 раунда, +5 за доп. силу.',
       cost: { crystals: { Crystals_Death: 10 } },
@@ -384,12 +392,12 @@ const SPELLS = {
     },
     {
       id: 'g_spell_10',
-      icon: 'last_rites',
       name: 'Last Rites',
       name_ru: 'Последние обряды',
       category: 'buff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'command',
       description: 'The whole line is spoken over: +10 initiative to every ally for 2 rounds, +4 per extra power.',
       description_ru: 'Над всем строем читают отходную: +10 инициативы каждому союзнику на 2 раунда, +4 за доп. силу.',
       cost: { crystals: { Crystals_Death: 15, Crystals_Life: 5 } },
@@ -402,15 +410,13 @@ const SPELLS = {
     },
     {
       id: 'g_spell_5',
-      icon: 'pall_of_sorrow',
       name: 'Pall of Sorrow',
       name_ru: 'Покров скорби',
       category: 'special',
       tier: 2,
       type: 'combat',
+      effect_icon: 'sorrow',
       // The drain fantasy in one cast: they are weakened, your own is veiled.
-      // Replaces Dark Determination, whose Zombie-count buff only worked for one
-      // army composition and did nothing at all for the rest.
       description: 'A shroud settles over one enemy — −10% damage dealt for 2 rounds, −5% per extra power — and your hero is veiled with an 8-point shield, +4 per extra power.',
       description_ru: 'Покров ложится на врага — −10% наносимого урона на 2 раунда, −5% за доп. силу — а вашего героя укрывает щит на 8 единиц, +4 за доп. силу.',
       cost: { crystals: { Crystals_Death: 10, Crystals_Fire: 5 } },
@@ -423,12 +429,12 @@ const SPELLS = {
     },
     {
       id: 'g_spell_7',
-      icon: 'sorrows_weight',
       name: "Sorrow's Weight",
       name_ru: 'Бремя скорби',
       category: 'debuff',
       tier: 2,
       type: 'combat',
+      effect_icon: 'find_weakness',
       description: 'Grief presses on the enemy line: −10 death resistance for 2 rounds, −5 per extra power.',
       description_ru: 'Скорбь давит на вражеский строй: −10 сопр. смерти на 2 раунда, −5 за доп. силу.',
       cost: { crystals: { Crystals_Death: 10, Crystals_Life: 5 } },
@@ -441,12 +447,12 @@ const SPELLS = {
     },
     {
       id: 'g_spell_9',
-      icon: 'the_long_rot',
       name: 'The Long Rot',
       name_ru: 'Долгий тлен',
       category: 'debuff',
       tier: 3,
       type: 'combat',
+      effect_icon: 'aura_of_decay',
       // The game's only answer to an enemy healer. Uses the Decay pool: healing
       // is eaten point for point until the pool is spent.
       description: 'Rot settles into one enemy: 6 Decay, +3 per extra power. Decay eats the healing they receive, point for point.',
@@ -461,12 +467,12 @@ const SPELLS = {
     },
     {
       id: 'g_spell_11',
-      icon: 'a_second_longer',
       name: 'A Second Longer',
       name_ru: 'Ещё секунда',
       category: 'debuff',
       tier: 4,
       type: 'combat',
+      effect_icon: 'death_mark',
       // Named for the spell that ruined them: one second, and a century passed.
       description: 'A stolen second catches up with one enemy: 20 death damage, +6 per extra power.',
       description_ru: 'Украденная секунда настигает врага: 20 урона смертью, +6 за доп. силу.',
@@ -485,17 +491,16 @@ const SPELLS = {
     // Encounter bosses use the SAME power economy the player's hero does: one
     // point per action, capped at 5, generation stops when they die. An
     // encounter gives a boss its two spells in data/embark.js — the cheap one
-    // it will cast again and again, and the expensive one it only reaches by
-    // surviving long enough, which turns its power strip into a clock the
-    // player can read and race.
+    // it casts again and again, and the expensive one it only reaches by
+    // surviving, which turns its power strip into a clock the player can race.
     {
       id: 'boss_heal',
-      icon: 'ministration',
       name: 'Ministration',
       name_ru: 'Врачевание',
       category: 'buff',
       tier: 1,
       type: 'enemy',
+      effect_icon: 'prayer_of_healing',
       description: 'Mend the most wounded ally.',
       description_ru: 'Исцеляет самого раненого союзника.',
       power_cost: 2,
@@ -507,12 +512,12 @@ const SPELLS = {
     },
     {
       id: 'boss_resurrect',
-      icon: 'called_back',
       name: 'Called Back',
       name_ru: 'Призванный обратно',
       category: 'special',
       tier: 1,
       type: 'enemy',
+      effect_icon: 'raise_dead',
       description: 'Raise one fallen ally at half health.',
       description_ru: 'Поднимает одного павшего союзника с половиной здоровья.',
       power_cost: 5,
@@ -521,7 +526,6 @@ const SPELLS = {
       target_scope: 'single_dead_ally',
       params: { resurrect_hp_pct: 50 },
     },
-
     {
       id: 'enemy_spell_1',
       name: 'Enemy Spell 1 (placeholder)',
