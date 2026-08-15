@@ -1483,6 +1483,18 @@ const UNITS = {
       damage_source: null, action_power: 10, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 1000, passive: ['inspiration_initiative 1', 'aegis 2'], ability: 'frost_armor 2',
     },
+    protector: {
+      id: 'e432', f: 'e', t: 3,
+      name: 'Bulwark Magus',
+      name_ru: 'Старший Хранитель',
+      tags: ['Caster', null],
+      size: 'tile',
+      hp: 55, armor: 20, initiative: 35,
+      resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
+      action: 'shield', target_type: 'ally', targets: 1, range: 1,
+      damage_source: null, action_power: 16, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      xp: 1000, passive: ['protector 1', 'aegis 2'], ability: 'frost_armor 2',
+    },
   },
 
   grail_of_sorrow: {

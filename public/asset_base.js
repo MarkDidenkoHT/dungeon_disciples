@@ -38,9 +38,27 @@ export let ASSET_BASE = remembered ? '' : ASSET_CDN;
 // The CDN holds the CONTENTS of the assets folder at its root (Cloudflare's
 // uploader flattens the folder it is given), so the origin's `/assets` segment
 // is dropped for CDN URLs and kept for same-origin ones.
+// What we have already learned about individual files, for THIS session.
+//
+// `data-assetRetried` only protects one element. Every re-render builds new
+// <img> elements, so a file missing from the CDN cost two fresh requests on
+// every single render — and the battle screen re-renders on every poll. These
+// two sets make each dead path cost at most two requests for the whole session.
+const cdnMissing    = new Set();   // 404 on the CDN — go straight to the origin
+const originMissing = new Set();   // 404 on both — stop asking entirely
+export function isAssetMissing(path) { return originMissing.has(normalizePath(path)); }
+
+function normalizePath(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return p.startsWith('/assets') ? p : `/assets${p}`;
+}
+
 export function assetUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
   if (!ASSET_BASE) return p;
+  // Already known absent from the CDN: request the origin the FIRST time, so
+  // the image that does exist there appears without a failed round trip first.
+  if (cdnMissing.has(normalizePath(p))) return p;
   return ASSET_BASE + p.replace(/^\/assets/, '');
 }
 
@@ -125,10 +143,23 @@ export function installAssetFallback() {
   document.addEventListener('error', e => {
     const el = e.target;
     if (!(el instanceof HTMLImageElement)) return;
-    if (el.dataset.assetRetried) return;
     const src = el.getAttribute('src') || '';
-    if (!src.startsWith(ASSET_CDN)) return;
-    el.dataset.assetRetried = '1';
-    el.src = '/assets' + src.slice(ASSET_CDN.length);
+    if (!src) return;
+
+    if (src.startsWith(ASSET_CDN)) {
+      const path = '/assets' + src.slice(ASSET_CDN.length);
+      // Remember it for every future element pointing at the same file, not
+      // just this one — that is what stops the per-render re-request storm.
+      cdnMissing.add(path);
+      if (originMissing.has(path)) return;   // known dead on both; let it fail
+      if (el.dataset.assetRetried) return;
+      el.dataset.assetRetried = '1';
+      el.src = path;
+      return;
+    }
+
+    // The origin failed too. That file does not exist anywhere we serve from,
+    // so nothing is gained by ever asking for it again this session.
+    if (src.startsWith('/assets')) originMissing.add(src.split('?')[0]);
   }, true);
 }
