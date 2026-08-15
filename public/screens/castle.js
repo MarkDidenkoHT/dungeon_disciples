@@ -644,7 +644,7 @@ export function renderCastle(root, { player }) {
     if (!def) return '';
 
     const slotDef = getBuildingDefForUnit(def.id);
-    const hasPath = slotDef ? getUpgradePathsForBuilding(player.faction, slotDef).length > 0 : false;
+    const hasPath = upgradePathsForBuildingDef(slotDef).length > 0;
     const req     = hasPath ? (def.xp ?? 0) : 0;
     const cur     = stored.current_xp ?? 0;
     if (!req) return `<div class="portrait-xp-bar portrait-xp-bar--maxed" title="MAX"></div>`;
@@ -666,8 +666,19 @@ export function renderCastle(root, { player }) {
       if (hit) return hit;
     }
     // Mercenaries live in their own table, same as everywhere else that resolves
-    // a slot's building.
-    return Object.values(mercenaryBuildings || {}).find(d => d?.unit_id === unitId) || null;
+    // a slot's building. It is keyed by REGION and each value is an array, so
+    // this has to flatten before matching — without it every `d` was an array,
+    // `d.unit_id` was undefined, and no mercenary ever resolved.
+    return Object.values(mercenaryBuildings || {}).flat().find(d => d?.unit_id === unitId) || null;
+  }
+
+  // A building's upgrade options, whichever table it belongs to. Mercenaries are
+  // absent from the faction path map and carry their chain as building ids on
+  // the def itself, so asking the faction table about one always answers "no
+  // upgrades" — which is why a mercenary's XP bar rendered as maxed.
+  function upgradePathsForBuildingDef(def) {
+    if (!def) return [];
+    return def.region ? getMercUpgradePaths(def) : getUpgradePathsForBuilding(player.faction, def);
   }
 
   // HP and XP for the card in a slot's sheet, both read off the ROSTER ROW —

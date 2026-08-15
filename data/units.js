@@ -1388,7 +1388,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 6,
-      damage_source: 'fire', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 900, passive: ['inspiration_initiative 1', 'burn 2'], ability: null,
     },
     cinder_knight: {
@@ -1400,7 +1400,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 35, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 20, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
       xp: 1000, passive: ['inspiration_initiative 1', 'regenerate 1', 'volcanic_skin 1'], ability: null,
     },
     blue_mage: {

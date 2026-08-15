@@ -136,7 +136,24 @@ export function resolveAssetBase({ timeoutMs = 4000, probePath = '/assets/icons/
 
 /**
  * Per-image safety net. Capture phase, because `error` on <img> does not
- * bubble. Skips images that already carry their own onerror fallback art.
+ * bubble.
+ *
+ * THE ORDERING PROBLEM THIS SOLVES
+ * Almost every <img> in this app carries an inline onerror that hides it —
+ * `this.style.display='none'`, sometimes revealing a placeholder sibling too.
+ * That handler is written for "this file does not exist", but it cannot tell
+ * that case from "the CDN does not have it". Event order makes it worse: this
+ * capture-phase listener runs BEFORE the element's own handler, so the sequence
+ * for a file the CDN is missing was
+ *
+ *   1. CDN 404 -> we point the element at the origin
+ *   2. the SAME error event reaches the element -> inline onerror hides it
+ *   3. the origin copy loads fine, into an element that is now display:none
+ *
+ * — an image that exists on Render and never appears. So a retry now snapshots
+ * the styles BEFORE the inline handler can touch them and restores them once
+ * the origin copy loads. If the origin fails too, the inline handler hides it
+ * again on that second error, which is the behaviour it was written for.
  */
 export function installAssetFallback() {
   if (typeof document === 'undefined') return;
@@ -154,6 +171,24 @@ export function installAssetFallback() {
       if (originMissing.has(path)) return;   // known dead on both; let it fail
       if (el.dataset.assetRetried) return;
       el.dataset.assetRetried = '1';
+
+      // Captured in THIS phase, which is before any inline onerror has run, so
+      // these are the styles the element was authored with.
+      const sibling = el.nextElementSibling;
+      const before = {
+        display:    el.style.display,
+        visibility: el.style.visibility,
+        sibling,
+        siblingDisplay: sibling ? sibling.style.display : null,
+      };
+      el.addEventListener('load', () => {
+        el.style.display    = before.display;
+        el.style.visibility = before.visibility;
+        // The placeholder the inline handler revealed has to go back down, or
+        // the art and its stand-in are shown together.
+        if (before.sibling) before.sibling.style.display = before.siblingDisplay;
+      }, { once: true });
+
       el.src = path;
       return;
     }

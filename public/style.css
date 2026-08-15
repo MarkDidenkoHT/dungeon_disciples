@@ -4116,10 +4116,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   justify-content: center;
   gap: 4px;
   height: 14px;
-  margin: 0;
+  /* margin: 0; */
+  margin-top: -5px;
+  margin-bottom: 3px;
   padding: 0 6px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
+  /* border: 1px solid var(--border);
+  border-radius: 7px; */
   background: rgba(10, 14, 20, 0.6);
   font-family: inherit;
   cursor: default;
@@ -4128,8 +4130,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .power-pip {
   flex: 1;
-  max-width: 22px;
-  height: 6px;
+  /* max-width: 22px; */
+  height: 10px;
   border-radius: 3px;
   background: #1e2735;
   transition: background 0.25s, box-shadow 0.25s;
@@ -4143,8 +4145,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 /* Enough power AND the hero's turn: the strip invites a tap. */
 .power-strip--ready {
   cursor: pointer;
-  border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.35);
+  /* border-color: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.35); */
 }
 .power-strip--ready:active { transform: scale(0.98); }
 
