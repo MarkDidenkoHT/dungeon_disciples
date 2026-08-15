@@ -54,7 +54,6 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_4: {
-      spell_id: 'enemy_spell_1',
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0, item_id: 'mace' },
@@ -127,7 +126,6 @@ const REGION_ENCOUNTERS = {
       },
     },
     level_3: {
-      spell_id: 'enemy_spell_1',
       enemies: [
         // Carrying spells is what makes a unit a hero to the engine, so this is
         // also what turns Cryodrox into a caster that banks power. Cheap ward
@@ -362,11 +360,6 @@ function getEncounter(region_id, level) {
     .filter(Boolean);
 }
 
-function getEncounterSpellId(region_id, level) {
-  const levelKey = `level_${level}`;
-  return REGION_ENCOUNTERS[region_id]?.[levelKey]?.spell_id || null;
-}
-
 // ── Where does X drop? ──────────────────────────────────────────────────────
 // Reverse index over every region/level reward table: material -> region ids.
 // Used by the item sheet, so tapping a crafting ingredient can say where to go
@@ -416,5 +409,5 @@ function getFactionHomeRegion(faction) {
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getEncounterSpellId, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };

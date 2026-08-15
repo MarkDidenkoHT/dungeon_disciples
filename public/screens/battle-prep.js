@@ -6,7 +6,7 @@ import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
 // castable in a battle.
 const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
-import { getEncounter, getEncounterSpellId } from '../../data/embark.js';
+import { getEncounter } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 
@@ -35,8 +35,10 @@ const BP_TEXT = {
   undo:        { en: 'Undo',   ru: 'Отменить' },
   use:         { en: 'Use',    ru: 'Применить' },
   cancel:      { en: 'Cancel', ru: 'Отмена' },
-  hiddenSpell: { en: 'This group has a hidden spell prepared',
-                 ru: 'У этой группы заготовлено скрытое заклинание' },
+  // No longer "hidden" — an enemy caster banks power in the open, on its own
+  // strip, and its spells are named in the log when they land.
+  hiddenSpell: { en: 'This group has an enemy that casts spells',
+                 ru: 'В этой группе есть враг, применяющий заклинания' },
   goBack:      { en: 'Go Back', ru: 'Назад' },
   continueOn:  { en: 'Continue', ru: 'Продолжить' },
   undoFirst:   { en: 'Undo active spell first', ru: 'Сначала отмените активное заклинание' },
@@ -1582,10 +1584,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       enemies = getEncounter(region_id, level);
 
+      // Was driven by the encounter's own hidden spell, which no longer exists.
+      // The warning is still worth giving, so it now reads the enemies THEMSELVES
+      // — a boss carrying `spells` is a caster, and that is what the player needs
+      // to know before committing a formation.
       const enemySpellIndicator = root.querySelector('#enemy-spell-indicator');
       if (enemySpellIndicator) {
-        const hasEnemySpell = !!getEncounterSpellId(region_id, level);
-        enemySpellIndicator.style.display = hasEnemySpell ? '' : 'none';
+        const hasCaster = (enemies || []).some(e => Array.isArray(e?.spells) && e.spells.length > 0);
+        enemySpellIndicator.style.display = hasCaster ? '' : 'none';
       }
 
       await Promise.all([loadResources(), loadLearnedSpells()]);

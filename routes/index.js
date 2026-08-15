@@ -6,7 +6,7 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter, getEncounterSpellId, getLevelRewards } = require('../data/embark');
+const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
@@ -1994,8 +1994,6 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     //
     // `selected_spells` is still accepted and stored so an in-flight client does
     // not 400, but it is inert.
-
-    engine.castEncounterSpell(getEncounterSpellId(region_id, level));
 
     // Round 1 never goes through advanceRound(), so anything a spell scheduled
     // for the round the battle opens on has to be drained explicitly.

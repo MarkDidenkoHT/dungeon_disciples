@@ -82,19 +82,6 @@ function scaleSpellParams(spell, power) {
   return out;
 }
 
-// Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
-// through the exact same target-resolution + param-application system as player
-// prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
-// enemy_spell entry with e.g. target_scope: 'all_allies' and
-// params: { armor_boost: 10 } will buff every enemy combatant, the same way a
-// player spell with those fields buffs every player combatant. Fill in
-// spellDef.target_scope/params on the SPELLS.enemies entries; nothing else to
-// wire up. Only add a manual branch here for effects that don't fit the generic
-// scope/params shape (e.g. something like the player-only 'tag_count_buff').
-function applyEnemySpellEffect(engine, actor, spellDef) {
-  engine.castSpell(spellDef, { casterSide: 'enemy', targetId: null });
-}
-
 let _UNIT_ABILITIES = null;
 async function getAbilities() {
   if (_UNIT_ABILITIES) return _UNIT_ABILITIES;
@@ -121,7 +108,6 @@ class BattleEngine {
       this.done       = state.done || false;
       this.winner     = state.winner || null;
       this.pendingRoundEffects   = state.pendingRoundEffects || [];
-      this._encounter_spell_cast = state._encounter_spell_cast || false;
       this.power = { player: 0, enemy: 0, ...(state.power || {}) };
     } else {
       this.combatants = [];
@@ -130,7 +116,6 @@ class BattleEngine {
       this.done       = false;
       this.winner     = null;
       this.pendingRoundEffects   = [];
-      this._encounter_spell_cast = false;
       // Power never carries between battles — the second fight of a run must not
       // open on a full bank — but each side STARTS with one.
       //
@@ -1860,7 +1845,6 @@ class BattleEngine {
       // Per-battle, never carried between fights — but it must survive a reload
       // mid-fight or a hero would bank its power twice.
       power: this.power,
-      _encounter_spell_cast: this._encounter_spell_cast ?? false,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -2050,46 +2034,17 @@ class BattleEngine {
     engine.done   = battleData.done;
     engine.winner = battleData.winner;
     engine.pendingRoundEffects   = battleData.pendingRoundEffects || [];
-    engine._encounter_spell_cast = battleData._encounter_spell_cast ?? false;
     engine.log    = [];
     return engine;
   }
-  // Casts the encounter's one hardcoded spell (see data/embark.js
-  // getEncounterSpellId - REGION_ENCOUNTERS[region][level].spell_id), once, at
-  // battle start. This mirrors the player's one-spell-per-battle rule exactly:
-  // there is no per-unit caster, the level itself "casts" this. spellId can
-  // reference ANY spell in data/spells.js - a faction spell, or one of the
-  // SPELLS.enemies placeholders - same catalog, same effect engine as player
-  // casts. Only logs that a hidden spell was cast - never the spell's name or
-  // effect.
-  // Counter-spells (Ward / Nihilism / Decay) negate the encounter spell when its
-  // category matches. Recorded by the player's cast so castEncounterSpell can
-  // check it — which means the encounter spell must be cast AFTER the player's
-  // (see routes/index.js /battle/create). The encounter is the PvE stand-in for
-  // an opposing player, so PvP will set this from the opponent's pick instead.
-  declareCounter(category) {
-    if (category) this._counter_category = category;
-  }
-  castEncounterSpell(spellId) {
-    if (!spellId || this._encounter_spell_cast) return;
-    this._encounter_spell_cast = true;
-    const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
-    if (!spellDef) return;
-    if (this._counter_category && spellDef.category === this._counter_category) {
-      // Tell the player their counter earned its keep, without revealing which
-      // spell it ate — the encounter's spell stays hidden either way.
-      this.pushLog({
-        type:    'notice',
-        message: 'The enemy reaches for a hidden power — your counter-spell smothers it.',
-      });
-      return;
-    }
-    this.pushLog({
-      type:    'notice',
-      message: 'The enemy channels a hidden power before the battle begins.',
-    });
-    applyEnemySpellEffect(this, null, spellDef);
-  }
+  // Enemies cast through their UNITS now — a boss carries `spells` in
+  // data/embark.js, banks power like any hero and casts in the open, named in
+  // the log. The encounter-level spell that used to fire anonymously at battle
+  // start (castEncounterSpell / declareCounter / the counter-spell branch) was a
+  // weaker parallel answer to the same question and has been removed. Its
+  // counter half had been unreachable since the spell refactor deleted the
+  // pre-battle player cast that set the category.
+
   // Resolves the combatants a spell/cast affects, generalized by which side is
   // casting (so the exact same scopes used by player prep-spells - 'all_allies',
   // 'single_enemy', 'tag_allies', etc. - work identically for an enemy caster,
