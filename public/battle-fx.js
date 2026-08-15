@@ -1,4 +1,4 @@
-import { assetUrl } from './asset_base.js';
+import { assetUrl, markCdnMissing, isCdnMissing } from './asset_base.js';
 let app = null;
 let rootEl = null;
 
@@ -16,7 +16,11 @@ let rootEl = null;
 // already get: CDN first, app server second, and only then give up.
 async function loadFxTexture(path) {
   if (!window.PIXI?.Assets) return null;
-  const cdnUrl = assetUrl(path);
+  // PIXI caches SUCCESSFUL loads, not failures, so without the memo every sword
+  // swing re-ran the blocked cross-origin fetch before falling back — one dead
+  // CORS request per animation, all battle. The CDN either serves /vfx with the
+  // right header or it does not, and that answer does not change mid-fight.
+  const cdnUrl = isCdnMissing(path) ? path : assetUrl(path);
   try {
     const tex = await PIXI.Assets.load(cdnUrl);
     if (tex?.width) return tex;
@@ -24,6 +28,10 @@ async function loadFxTexture(path) {
   } catch (err) {
     console.warn(`[battle-fx] texture failed from CDN, retrying from origin: ${cdnUrl}`, err?.message || err);
   }
+  // Recorded BEFORE the retry, in the memo asset_base shares with the DOM
+  // images: every later call for this texture then goes straight to the origin
+  // instead of repeating a request already known to fail.
+  if (cdnUrl !== path) markCdnMissing(path);
   // Same-origin copy. Skipped when assetUrl already resolved to the origin,
   // because that would just repeat the request that has already failed.
   if (cdnUrl === path) return null;
