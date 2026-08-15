@@ -6,6 +6,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone }
 import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../realtime.js';
 import { assetUrl } from '../asset_base.js';
+import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower } from '../../data/spells.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -92,6 +93,13 @@ const BT = {
   tapForStats:   { en: 'Tap a unit to see stats', ru: 'Нажмите на юнита, чтобы увидеть характеристики' },
   noUnitData:    { en: 'Unit data unavailable',   ru: 'Данные юнита недоступны' },
   noAbility:     { en: 'No Ability',              ru: 'Нет способности' },
+  noSpells:      { en: 'No combat spells researched yet.', ru: 'Боевые заклинания ещё не изучены.' },
+  noPower:       { en: 'Not enough power for any spell yet.', ru: 'Пока не хватает силы ни на одно заклинание.' },
+  castBtn:       { en: 'Cast',                    ru: 'Применить' },
+  logPower:      { en: (a, n, t) => `${a} gathers <span class="log-val-shield">${n}</span> power (${t})`,
+                   ru: (a, n, t) => `${a} копит <span class="log-val-shield">${n}</span> силы (${t})` },
+  logCast:       { en: (a, s, n) => `${a} casts <span class="log-passive">${s}</span> for <span class="log-val-shield">${n}</span> power`,
+                   ru: (a, s, n) => `${a} читает <span class="log-passive">${s}</span> за <span class="log-val-shield">${n}</span> силы` },
 
   // ── Combat log ─────────────────────────────────────────────────────────────
   // Whole clauses rather than stitched-together words: Russian word order and
@@ -891,6 +899,174 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return m ? `${m[1]} ${BTx('statResist')}` : stat;
   }
 
+  // ── Power ──────────────────────────────────────────────────────────────────
+  // Five pips per side. A dead hero greys its whole strip — that side's casting
+  // is over for the fight, and saying so is worth more than showing a number
+  // that will never move again.
+  function heroOf(side) {
+    return (state?.combatants || []).find(c => c.side === side && (c._is_hero || c.buffs?._is_hero));
+  }
+
+  function renderPowerStrips() {
+    const pips = (side) => {
+      const have = Number(state?.power?.[side] ?? 0);
+      const hero = heroOf(side);
+      const dead = hero ? !hero.alive : true;
+      const cells = Array.from({ length: POWER_MAX }, (_, i) =>
+        `<span class="power-pip ${i < have ? 'power-pip--full' : ''}"></span>`).join('');
+      return { html: cells, dead, have };
+    };
+
+    for (const [side, el] of [['player', ui.powerPlayer], ['enemy', ui.powerEnemy]]) {
+      if (!el) continue;
+      const { html, dead, have } = pips(side);
+      el.innerHTML = html;
+      el.classList.toggle('power-strip--spent', dead);
+      el.title = `${powerLabel()}: ${have}/${POWER_MAX}`;
+      if (side === 'player') {
+        // Only openable on the hero's own turn with something to spend — the
+        // list would otherwise offer spells that cannot be cast yet.
+        const hero = heroOf('player');
+        const canCast = !!hero?.alive && have > 0 && currentActor()?.id === hero.id && !processing;
+        el.disabled = !canCast;
+        el.classList.toggle('power-strip--ready', canCast);
+      }
+    }
+  }
+
+  function powerLabel() {
+    const names = POWER_NAMES[player?.faction] || POWER_NAMES.enemies;
+    return BL === 'ru' ? names.ru : names.en;
+  }
+
+  // ── Casting ────────────────────────────────────────────────────────────────
+  // Researched combat spells only, and only those the current power can pay for
+  // — a list that shows what you cannot afford is a list of disappointments.
+  // The power slider under each spell is the whole decision: the same spell is
+  // a cheap patch at 1 and a turning point at 5.
+  let castChoice = null;   // { spell, power } while picking a target
+
+  // Which spells are researched. The player object the battle is handed does not
+  // reliably carry them (the Tome fetches its own), so this is pulled once, the
+  // first time the sheet is opened, and reused for the rest of the fight —
+  // nothing can be researched mid-battle.
+  let researchedIds = null;
+  async function loadResearched() {
+    if (researchedIds) return researchedIds;
+    if (Array.isArray(player?.learned_spells)) return (researchedIds = new Set(player.learned_spells));
+    try {
+      const res = await api(`/spells/research?chat_id=${player.chat_id}`);
+      researchedIds = new Set(res?.researched_spells || []);
+    } catch {
+      researchedIds = new Set();
+    }
+    return researchedIds;
+  }
+
+  function learnedCombatSpells(known) {
+    const all = SPELLS[player?.faction] || [];
+    return all.filter(s => known.has(s.id) && s.category !== 'non_combat' && s.usage !== 'roster');
+  }
+
+  async function openSpellSheet() {
+    const known = await loadResearched();
+    const have = Number(state?.power?.player ?? 0);
+    const list = learnedCombatSpells(known);
+    const affordable = list.filter(s => (s.power_cost ?? 1) <= have);
+
+    if (!list.length) {
+      openSheet(powerLabel(), `<p class="modal-empty">${BTx('noSpells')}</p>`);
+      return;
+    }
+
+    const body = affordable.map(s => {
+      const min = s.power_cost ?? 1;
+      const desc = BL === 'ru' ? (s.description_ru || s.description) : s.description;
+      const opts = [];
+      for (let p = min; p <= Math.min(POWER_MAX, have); p++) {
+        opts.push(`<button class="spell-power-opt${p === min ? ' spell-power-opt--on' : ''}"
+                           data-spell="${s.id}" data-power="${p}">${p}</button>`);
+      }
+      return `
+        <div class="spell-cast-row" data-spell-row="${s.id}">
+          <div class="spell-cast-head">
+            <span class="spell-cast-name">${BL === 'ru' ? (s.name_ru || s.name) : s.name}</span>
+          </div>
+          <p class="spell-cast-desc">${desc}</p>
+          <div class="spell-cast-power">
+            <span class="spell-cast-power-label">${powerLabel()}</span>
+            ${opts.join('')}
+          </div>
+          <button class="spell-cast-btn" data-cast="${s.id}">${BTx('castBtn')}</button>
+        </div>`;
+    }).join('');
+
+    openSheet(`${powerLabel()} ${have}/${POWER_MAX}`,
+      affordable.length ? body : `<p class="modal-empty">${BTx('noPower')}</p>`);
+
+    const sheet = getSheetBody();
+    // Power choice per row, so two spells can be pondered at different levels
+    // without the sheet reordering under the player's thumb.
+    const chosen = {};
+    sheet?.querySelectorAll('.spell-power-opt').forEach(btn => {
+      chosen[btn.dataset.spell] = chosen[btn.dataset.spell] ?? Number(btn.dataset.power);
+      btn.addEventListener('click', () => {
+        chosen[btn.dataset.spell] = Number(btn.dataset.power);
+        sheet.querySelectorAll(`.spell-power-opt[data-spell="${btn.dataset.spell}"]`)
+             .forEach(b => b.classList.toggle('spell-power-opt--on', b === btn));
+      });
+    });
+
+    sheet?.querySelectorAll('.spell-cast-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const spell = affordable.find(s => s.id === btn.dataset.cast);
+        if (!spell) return;
+        const power = chosen[spell.id] ?? (spell.power_cost ?? 1);
+        closeSheet();
+        beginCast(spell, power);
+      });
+    });
+  }
+
+  // A spell that needs a target arms the grid the same way an attack does, so
+  // targeting is one system rather than two that look alike.
+  function beginCast(spell, power) {
+    const needsTarget = spell.target_scope === 'single_enemy' || spell.target_scope === 'single_ally';
+    if (!needsTarget) { sendCast(spell.id, power, null); return; }
+    castChoice = { spell, power };
+    selectingTarget = currentActor();
+    pendingAction   = 'spell';
+    render();
+  }
+
+  async function sendCast(spell_id, power, target_id) {
+    castChoice = null;
+    pendingAction = null;
+    selectingTarget = null;
+    processing = true;
+    render();
+    try {
+      const result = await api('/battle/cast', { chat_id: player.chat_id, battle_id, spell_id, power, target_id });
+      if (result.error) throw new Error(result.error);
+      const newLogs = result.logs || [];
+      state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
+      if (ui?.battleLog) {
+        const existingCount = (state.log || []).length - newLogs.length;
+        ui.battleLog.innerHTML = (state.log || []).slice(0, existingCount).slice().reverse().map(formatLogEntry).join('');
+      }
+      await playbackSequence(newLogs);
+      if (realtimeController) realtimeController.setLastLogId(lastLogId);
+      if (result.done) { renderResult(result.winner); return; }
+      processing = false;
+      render();
+    } catch (err) {
+      console.error('Cast failed:', err);
+      processing = false;
+      alert(err.message || 'Cast failed');
+      render();
+    }
+  }
+
   function formatLogEntry(entry) {
     const actor  = () => logName(entry.actorName,  entry.actorId,  'log-actor',  entry.actorCell);
     const target = () => logName(entry.targetName, entry.targetId, 'log-target', entry.targetCell);
@@ -908,6 +1084,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'shield') {
       const tail = entry.remaining > 0 ? BTf('logShieldThru')(entry.remaining) : BTx('logShieldAll');
       return `<div class="log-entry log-entry--shield">${BTf('logShield')(target(), entry.value)}${tail}</div>`;
+    }
+    if (entry.type === 'power') {
+      return `<div class="log-entry log-entry--shield">${BTf('logPower')(actor(), entry.value, entry.total)}</div>`;
+    }
+    if (entry.type === 'cast') {
+      return `<div class="log-entry log-entry--passive">${BTf('logCast')(actor(), entry.spell, entry.value)}</div>`;
     }
     if (entry.type === 'pool') {
       const tpl = entry.pool === 'shield' ? 'logShieldOn' : 'logDecayOn';
@@ -1114,11 +1296,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <div class="battle-grid-wrap">
               <div class="battle-grid" id="battle-grid-player"></div>
             </div>
+            <!-- Power. Five pips, because the only question being asked is
+                 "have I got enough for the spell I want" and a bar of pips
+                 answers it without reading a number. The player's own strip is
+                 the button that opens the spell list. -->
+            <button class="power-strip" id="power-player" data-side="player"></button>
           </div>
           <div class="battle-half battle-half--enemy">
             <div class="battle-grid-wrap">
               <div class="battle-grid" id="battle-grid-enemy"></div>
             </div>
+            <div class="power-strip power-strip--enemy" id="power-enemy" data-side="enemy"></div>
           </div>
         </div>
         <div class="init-queue" id="init-queue"></div>
@@ -1158,6 +1346,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui = {
       screen: root.querySelector('.screen-battle'),
       initQueue: root.querySelector('#init-queue'),
+      powerPlayer: root.querySelector('#power-player'),
+      powerEnemy:  root.querySelector('#power-enemy'),
       playerGrid: root.querySelector('#battle-grid-player'),
       enemyGrid: root.querySelector('#battle-grid-enemy'),
       actionPanelLabel: root.querySelector('#action-panel-label'),
@@ -1494,6 +1684,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       .filter(c => c.alive && !c.acted_this_round)
       .sort((a, b) => b.initiative - a.initiative);
 
+    renderPowerStrips();
+
     ui.initQueue.innerHTML = actingOrder.map((c, i) => {
       const portrait = getPortraitUrl(c);
       const isActive = i === 0;
@@ -1663,6 +1855,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function attachEvents() {
     if (ui?.screen?._battleHandlersAttached) return;
 
+    // The power strip IS the spell button — the resource and the thing it buys
+    // are the same control, so there is nothing to hunt for.
+    ui.powerPlayer?.addEventListener('click', () => {
+      if (ui.powerPlayer.disabled) return;
+      openSpellSheet();
+    });
+
     // The unit sheet lives on document.body, NOT inside ui.screen, so clicks in
     // it never reached the handler below — tapping an ability in a battle unit
     // card did nothing at all. Inspection is delegated from the sheet body
@@ -1726,6 +1925,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const id = cell.dataset.id;
       const combatant = state.combatants.find(c => c.id === id);
       if (!combatant) return;
+
+      // A spell being aimed. Its own reach rules, not the unit's: a single_ally
+      // spell wants any living ally and a single_enemy one any living enemy —
+      // melee reach has nothing to do with it.
+      if (castChoice && pendingAction === 'spell') {
+        const wantAlly = castChoice.spell.target_scope === 'single_ally';
+        const ok = combatant.alive && (wantAlly ? combatant.side === 'player' : combatant.side === 'enemy');
+        if (ok) { sendCast(castChoice.spell.id, castChoice.power, combatant.id); return; }
+        return;
+      }
 
       if (selectingTarget && pendingAction) {
         const validIds = getValidTargetIds(selectingTarget, pendingAction === 'ability');

@@ -1932,69 +1932,13 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
 
-    if (Array.isArray(selected_spells) && selected_spells.length > 1) {
-      return res.status(400).json({ error: 'Only one spell may be cast per battle' });
-    }
-    if (Array.isArray(selected_spells) && selected_spells.length > 0) {
-      const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
-      if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
-      const learnedSpells = playerRows[0].learned_spells || [];
-
-      for (const clientSpell of selected_spells) {
-        const spellId = clientSpell.spell_id;
-        if (!spellId) return res.status(400).json({ error: 'selected_spells entries must include spell_id' });
-        if (!learnedSpells.includes(spellId)) return res.status(403).json({ error: `Spell ${spellId} is not learned` });
-
-        const spellDef = Object.values(SPELLS).flat().find(s => s.id === spellId);
-        if (!spellDef) return res.status(400).json({ error: `Spell definition not found for ${spellId}` });
-
-        // Deduct crystal cost server-side before applying effects
-        try {
-          await consumeCrystalCosts(chat_id, spellDef.cost?.crystals || {});
-        } catch (e) {
-          return res.status(400).json({ error: e.message });
-        }
-
-        const scope    = spellDef.target_scope || '';
-        const params   = spellDef.params || {};
-        const targetId = clientSpell.target_id ?? null;
-
-        const targets = spellDef.effect_type === 'round_trigger_heal'
-          ? []
-          : engine.getSpellTargets(spellDef, 'player', targetId);
-
-        if (spellDef.effect_type === 'round_trigger_heal') {
-          engine.pendingRoundEffects.push({
-            type:                 'tag_heal_per_unit',
-            round:                params.trigger_round,
-            side:                 'player',
-            tag:                  params.tag_required,
-            heal_per_tagged_unit: params.heal_per_tagged_unit,
-            name:                 spellDef.name,
-            effect_name:          spellDef.effect_name || null,
-          });
-        }
-
-        if (spellDef.effect_type === 'tag_count_buff') {
-          const taggedCount = playerUnits.filter(u => (u.unit_data?.tags ?? []).includes(params.tag_required)).length;
-          const single = engine.combatants.find(c => c.side === 'player' && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
-          if (single && taggedCount > 0) {
-            const hpGain = taggedCount * (params.hp_per_tagged_unit || 0);
-            single.max_hp     += hpGain;
-            single.battle_hp  += hpGain;
-            single.armor       = (single.armor || 0) + taggedCount * (params.armor_per_tagged_unit || 0);
-            single.initiative  = Math.max(1, (single.initiative || 40) - taggedCount * (params.initiative_penalty_per_tagged_unit || 0));
-          }
-        }
-
-        // A counter-spell has no effect of its own — it just arms the check in
-        // castEncounterSpell below, which is why that cast happens after this
-        // loop rather than right after fromSetup.
-        if (params.counters_category) engine.declareCounter(params.counters_category);
-
-        engine.applySpellParams(targets, { ...params, _spell_name: spellDef.name });
-      }
-    }
+    // Spells are no longer chosen before the fight. They are cast IN battle by
+    // the hero, paid for with power earned during it (POST /battle/cast), so
+    // nothing is selected, validated or charged here any more. Crystals are
+    // spent once at research time and never again.
+    //
+    // `selected_spells` is still accepted and stored so an in-flight client does
+    // not 400, but it is inert.
 
     engine.castEncounterSpell(getEncounterSpellId(region_id, level));
 
@@ -2020,6 +1964,70 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       console.error('Failed to persist initial battle log:', err);
     }
     res.json({ record, state: engine.getSnapshot(), logs: initialLogs });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /battle/cast — the hero spends its turn on a spell.
+//
+// The spell must be RESEARCHED (crystals were paid then, once) and the side must
+// hold enough power, which is earned only inside this battle. Everything is
+// re-checked here against server state: the client sends an id, a power amount
+// and a target, and nothing else it says is trusted.
+router.post('/battle/cast', requireAuth, async (req, res) => {
+  const { chat_id, battle_id, spell_id, power, target_id } = req.body;
+  if (!chat_id || !battle_id || !spell_id) {
+    return res.status(400).json({ error: 'chat_id, battle_id and spell_id required' });
+  }
+  try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No active battle found' });
+    if (record.chat_id !== String(chat_id)) return res.status(403).json({ error: 'Forbidden' });
+
+    const engine = await rehydrateEngine(record);
+    if (engine.done) return res.status(400).json({ error: 'Battle is already over' });
+
+    const hero = engine.heroFor('player');
+    if (!hero)        return res.status(400).json({ error: 'No hero on the field' });
+    if (!hero.alive)  return res.status(400).json({ error: 'Your hero has fallen' });
+
+    // Casting IS the hero's turn, so it can only happen on the hero's turn.
+    const currentActor = engine.currentActor();
+    if (!currentActor || currentActor.id !== hero.id) {
+      return res.status(400).json({ error: 'Not your hero\'s turn' });
+    }
+
+    const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+    const learned = playerRows[0].learned_spells || [];
+    if (!learned.includes(spell_id)) return res.status(403).json({ error: 'Spell not researched' });
+
+    const spellDef = (SPELLS[playerRows[0].faction] || []).find(s => s.id === spell_id);
+    if (!spellDef) return res.status(404).json({ error: 'Spell not found for your faction' });
+
+    const result = engine.doCast(hero, spellDef, { power, targetId: target_id ?? null });
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    // The enemy answers immediately, exactly as after any other hero action.
+    if (!engine.done) engine.runAiTurns();
+
+    const battle_data = buildBattleData(engine, record.battle_data);
+    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
+    const newEntries  = engine.log.slice(previousLog.length);
+
+    await updateBattleState(battle_id, battle_data);
+    let insertedLogs = [];
+    try {
+      if (newEntries.length) {
+        const inserted = await appendBattleLogEntries(battle_id, newEntries);
+        insertedLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+      }
+    } catch (err) {
+      console.error('Failed to persist battle log:', err);
+    }
+
+    res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
     serverError(res, err);
   }

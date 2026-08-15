@@ -323,18 +323,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     });
   });
 
-  const spellsNavBtn = document.querySelector('.nav-btn[data-screen="spells"]');
-  if (spellsNavBtn) {
-    // The nav is icons-only right now, so the label may not exist — the title is
-    // what actually carries "Cast Spell" to the player. Both are set so this
-    // still reads correctly if the labels come back.
-    const bpLabel = spellsNavBtn.querySelector('.nav-btn-label');
-    if (bpLabel) bpLabel.textContent = BP_NAV_LABELS.castSpell[L];
-    spellsNavBtn.title = BP_NAV_LABELS.castSpell[L];
-    spellsNavBtn.setAttribute('aria-label', BP_NAV_LABELS.castSpell[L]);
-    spellsNavBtn._battlePrepHandler = (e) => { e.stopImmediatePropagation(); openSpellSheet(); };
-    spellsNavBtn.addEventListener('click', spellsNavBtn._battlePrepHandler, true);
-  }
+  // No spell picking before the battle any more. Spells are cast IN the fight,
+  // by the hero, out of power earned during it — so there is nothing to choose
+  // here, and the nav button keeps its normal meaning (open the Spell Tome)
+  // instead of being hijacked into a one-shot pre-battle picker.
+  //
+  // The sheet markup and openSpellSheet() below are left in place: the tome
+  // still uses the same styling, and removing them is a separate cleanup.
 
 
   function restoreNavLabels() {

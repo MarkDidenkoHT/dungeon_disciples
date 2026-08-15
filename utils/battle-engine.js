@@ -42,6 +42,43 @@ const POOL_CAP_PCT = 50;
 // armor and resistance deltas.
 const DEFEND_BONUS = 25;
 
+// ── Power ───────────────────────────────────────────────────────────────────
+// The per-cast spell currency, earned inside the battle: each side's HERO gains
+// one point every time it acts, capped, and stops earning the moment it dies.
+// Crystals now only pay to RESEARCH a spell (POST /spells/research); casting is
+// paid for here, and in the hero's turn, because casting IS its action.
+//
+// Both sides use the same rule — an enemy boss banks power exactly as the
+// player's hero does, which is what lets an encounter run its own two spells
+// without a separate mechanism.
+const POWER_MAX = 5;
+const POWER_PER_HERO_ACTION = 1;
+
+// Mirrors spellParamsAtPower in data/spells.js. Duplicated rather than imported
+// because that module is ESM and this one is CommonJS — the same reason
+// BATTLE_FATIGUE is duplicated in the client. If the scaling rule changes,
+// change it in both.
+function scaleSpellParams(spell, power) {
+  const out = JSON.parse(JSON.stringify(spell?.params || {}));
+  if (!spell) return out;
+  const steps = Math.max(0, (Number(power) || 0) - (spell.power_cost ?? 1));
+  const bump = (target, key, amount) => {
+    const path = String(key).split('.');
+    let node = target;
+    for (let i = 0; i < path.length - 1; i++) {
+      if (node[path[i]] == null || typeof node[path[i]] !== 'object') node[path[i]] = {};
+      node = node[path[i]];
+    }
+    const leaf = path[path.length - 1];
+    node[leaf] = (Number(node[leaf]) || 0) + amount;
+  };
+  for (const [key, per] of Object.entries(spell.scaling || {})) bump(out, key, per * steps);
+  if ((Number(power) || 0) >= POWER_MAX) {
+    for (const [key, amount] of Object.entries(spell.max_power_bonus || {})) bump(out, key, amount);
+  }
+  return out;
+}
+
 // Dispatcher for enemy-cast spells (data/spells.js SPELLS.enemies). This runs
 // through the exact same target-resolution + param-application system as player
 // prep-spells (BattleEngine.getSpellTargets / applySpellParams below) - an
@@ -82,6 +119,7 @@ class BattleEngine {
       this.winner     = state.winner || null;
       this.pendingRoundEffects   = state.pendingRoundEffects || [];
       this._encounter_spell_cast = state._encounter_spell_cast || false;
+      this.power = { player: 0, enemy: 0, ...(state.power || {}) };
     } else {
       this.combatants = [];
       this.round      = 1;
@@ -90,7 +128,36 @@ class BattleEngine {
       this.winner     = null;
       this.pendingRoundEffects   = [];
       this._encounter_spell_cast = false;
+      // Both sides start empty every battle — power never carries over, or the
+      // second fight of a run would open with a full bank.
+      this.power = { player: 0, enemy: 0 };
     }
+  }
+
+  // ── Power ─────────────────────────────────────────────────────────────────
+  // The hero of a side: the flagged roster unit for the player, and for the
+  // enemy whichever combatant carries spells (an encounter boss). Only a LIVING
+  // hero earns, so killing it shuts the other side's casting down for good.
+  heroFor(side) {
+    return this.combatants.find(c => c.side === side && c._is_hero) || null;
+  }
+
+  powerFor(side) { return this.power?.[side] ?? 0; }
+
+  // Called from afterAction, so every route a hero's turn can take — attack,
+  // ability, defend, a pool action, even standing ready — pays the same.
+  // Casting is excluded by the caster itself: it spends, it does not earn.
+  gainPower(actor) {
+    if (!actor?._is_hero || !actor.alive) return;
+    const side   = actor.side;
+    const before = this.powerFor(side);
+    const after  = Math.min(POWER_MAX, before + POWER_PER_HERO_ACTION);
+    if (after === before) return;
+    this.power[side] = after;
+    this.pushLog({
+      type: 'power', side, actorId: actor.id, actorName: actor.unit_name,
+      actorCell: actor.cellIndex, value: after - before, total: after,
+    });
   }
   async init() {
     this.ABILITIES = await getAbilities();
@@ -212,6 +279,10 @@ class BattleEngine {
       _clear_shot_initiative_amt: 0,
       _clear_shot_dmg_amt: 0,
       _bark_counts: {},
+      // Drives the power economy. The player's hero is flagged on the roster
+      // row; an enemy is a "hero" when the encounter gave it spells to cast.
+      _is_hero: !!(unit.is_hero || data.is_hero || (Array.isArray(data.spells) && data.spells.length > 0)),
+      _spells:  Array.isArray(data.spells) ? data.spells : [],
       // Frozen copy of the stats a buff/debuff can move, taken before anything
       // has been applied. Armor, initiative and resistances are all mutated in
       // place during a battle, so without this there is nothing left to compare
@@ -1216,6 +1287,41 @@ class BattleEngine {
     this.fireTrigger('on_heal', { actor: healer, target, dmg: amount, dying: null });
     this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
   }
+  // A hero spending its turn on a spell. Returns { ok } or { error } — the
+  // caller (the /battle/cast route, or the AI) decides what to do with a
+  // refusal; nothing is spent unless every check passes.
+  //
+  // Casting costs the turn AND the power, which is the whole tension: the hero
+  // is usually the best attacker on the field, so every cast is an attack not
+  // made. `_skip_power_gain` stops afterAction handing the point straight back.
+  doCast(actor, spellDef, { power = null, targetId = null } = {}) {
+    if (!actor?.alive)        return { error: 'Caster is not alive' };
+    if (!actor._is_hero)      return { error: 'Only a hero can cast' };
+    if (!spellDef)            return { error: 'Spell not found' };
+    if (spellDef.usage === 'roster' || spellDef.category === 'non_combat') {
+      return { error: 'That spell cannot be cast in battle' };
+    }
+    const min   = spellDef.power_cost ?? 1;
+    const spend = Math.max(min, Math.min(POWER_MAX, Number(power) || min));
+    const have  = this.powerFor(actor.side);
+    if (have < spend) return { error: `Not enough power (need ${spend}, have ${have})` };
+
+    this.power[actor.side] = have - spend;
+    this.pushLog({
+      type: 'cast', side: actor.side, spell_id: spellDef.id, spell: spellDef.name,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: targetId ?? null, value: spend, total: this.power[actor.side],
+      effect_name: spellDef.effect_name || null,
+    });
+
+    this.castSpell(spellDef, { casterSide: actor.side, targetId, power: spend });
+
+    actor._skip_power_gain = true;
+    actor.acted_this_round = true;
+    this.afterAction(actor);
+    return { ok: true, spent: spend, remaining: this.power[actor.side] };
+  }
+
   doDefend(actor) {
     actor.defend_armor_bonus = DEFEND_BONUS;
     actor.acted_this_round   = true;
@@ -1241,6 +1347,11 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    // Every completed hero turn earns power. Sits here rather than in each
+    // action so nothing can be added later that quietly skips it — a cast is
+    // the one exception, and it opts out by flagging the actor.
+    if (!actor?._skip_power_gain) this.gainPower(actor);
+    actor._skip_power_gain = false;
     actor._taunted_by_id = null;
     const win = this.checkWin();
     if (win) { this.done = true; this.winner = win; return true; }
@@ -1546,8 +1657,32 @@ class BattleEngine {
     return hasHealer && hasOtherDamage;
   }
 
+  // A boss spending its banked power. Encounter units carry `spells` in
+  // data/embark.js as [{ spell_id, power }] — the cheap one it will cast
+  // repeatedly, the expensive one it can only reach by surviving.
+  //
+  // Greedy on purpose: it casts the most expensive spell it can currently pay
+  // for. That makes the enemy power strip a clock the player can read and race,
+  // rather than a hidden roll.
+  aiPickSpell(actor) {
+    if (!actor?._is_hero || !actor._spells?.length) return null;
+    const have = this.powerFor(actor.side);
+    const options = actor._spells
+      .map(s => {
+        const def = Object.values(SPELLS).flat().find(x => x.id === s.spell_id);
+        if (!def) return null;
+        const cost = Math.max(def.power_cost ?? 1, Number(s.power) || def.power_cost || 1);
+        return cost <= have ? { def, cost } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.cost - a.cost);
+    return options[0] || null;
+  }
+
   // Chooses this enemy's whole turn: ability / defend / attack / skip.
   chooseAiAction(actor) {
+    const spell = this.aiPickSpell(actor);
+    if (spell) return { type: 'spell', spell: spell.def, power: spell.cost, target: null };
     const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
     if (key && !actor.used_active && !actor._actives_locked) {
       const def = this.ABILITIES?.[key];
@@ -1609,7 +1744,22 @@ class BattleEngine {
       // every combatant. So a flag reading false does not mean "did nothing" —
       // it also means "acted, and was the last to do so".
       const roundBefore = this.round;
-      if (decision.type === 'ability') {
+      if (decision.type === 'spell') {
+        // Single-target enemy spells aim at the weakest of whatever they can
+        // reach; everything else resolves on its own scope.
+        const scope = decision.spell.target_scope;
+        let targetId = null;
+        if (scope === 'single_ally') {
+          targetId = this.combatants
+            .filter(c => c.side === actor.side && c.alive)
+            .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
+        } else if (scope === 'single_enemy') {
+          targetId = this.combatants
+            .filter(c => c.side !== actor.side && c.alive)
+            .sort((a, b) => a.battle_hp - b.battle_hp)[0]?.id ?? null;
+        }
+        this.doCast(actor, decision.spell, { power: decision.power, targetId });
+      } else if (decision.type === 'ability') {
         this.doAbility(actor, decision.target);
       } else if (decision.type === 'defend') {
         this.executeAction(actor, null, 'defend', { turnStart: false });
@@ -1658,6 +1808,8 @@ class BattleEngine {
       log:        this.log,
       done:       this.done,
       winner:     this.winner,
+      // The client draws a power strip per side and gates the spell list on it.
+      power:      this.power,
     };
   }
   getBattleData() {
@@ -1666,6 +1818,9 @@ class BattleEngine {
       done:   this.done,
       winner: this.winner,
       pendingRoundEffects: this.pendingRoundEffects,
+      // Per-battle, never carried between fights — but it must survive a reload
+      // mid-fight or a hero would bank its power twice.
+      power: this.power,
       _encounter_spell_cast: this._encounter_spell_cast ?? false,
       units:  this.combatants.map(c => ({
         id:               c.id,
@@ -1760,6 +1915,10 @@ class BattleEngine {
   }
   static async rehydrate(setup, battleData) {
     const engine = await BattleEngine.fromSetup(setup.playerUnits, setup.enemies, setup.placement);
+    // Banked power survives a reload. fromSetup starts both sides at zero, so
+    // without this a player could reload to refill — and an enemy boss would
+    // lose the charge it had built toward its own spell.
+    engine.power = { player: 0, enemy: 0, ...(battleData.power || {}) };
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -1906,6 +2065,12 @@ class BattleEngine {
     if (scope === 'all_enemies')  return this.combatants.filter(c => c.side === enemySide && c.alive);
     if (scope === 'single_ally')  return this.combatants.filter(c => c.side === allySide  && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
     if (scope === 'single_enemy') return this.combatants.filter(c => c.side === enemySide && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
+    // The only scope that looks for the DEAD — a boss resurrect picks its own
+    // corpse (the first to fall), so it needs no target from the caller.
+    if (scope === 'single_dead_ally') {
+      const fallen = this.combatants.filter(c => c.side === allySide && !c.alive);
+      return fallen.length ? [fallen[0]] : [];
+    }
     if (scope === 'tag_allies') {
       const tag = params.tag_required;
       return this.combatants.filter(c => c.side === allySide && c.alive && (c.unit_data?.tags ?? []).includes(tag));
@@ -1937,10 +2102,31 @@ class BattleEngine {
   applySpellParams(targets, params = {}) {
     const duration = params.duration_rounds || 0;
 
+    // Shields the CASTER, not the targets — Pall of Sorrow weakens an enemy and
+    // veils your own hero in the same breath, so it cannot ride the per-target
+    // loop below.
+    if (params.shield_caster && params._caster_side) {
+      const hero = this.heroFor(params._caster_side);
+      if (hero) this.grantShield(hero, params.shield_caster, { name: params._spell_name || 'Shield' }, hero);
+    }
+
     for (const c of targets) {
       // Undo ledger for this unit, filled in as timed params are applied.
       const revert = {};
 
+      // Raising the fallen — the boss resurrect. Has to run before anything
+      // else touches HP, and it is the one spell param that acts on a corpse.
+      if (params.resurrect_hp_pct && !c.alive) {
+        c.alive     = true;
+        c.battle_hp = Math.max(1, Math.floor(c.max_hp * params.resurrect_hp_pct / 100));
+        this.pushLog({
+          type: 'passive', passive: params._spell_name || 'Resurrect',
+          actorName: params._spell_name || 'Resurrect',
+          targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex,
+          value: c.battle_hp, heal: true,
+          message: `${c.unit_name} rises again`,
+        });
+      }
       if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult()); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
       if (params.armor_boost)          { c.armor = (c.armor || 0) + params.armor_boost; revert.armor = -params.armor_boost; }
       if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
@@ -2051,6 +2237,28 @@ class BattleEngine {
         });
       }
 
+      // Immediate dispel — Purgation. One blessing per point of power, off ONE
+      // enemy. dispelEffects reverses each effect it removes, so a stripped
+      // buff hands its stat back rather than lingering as a number with no
+      // effect record behind it.
+      if (params.dispel_count) {
+        const removed = this.dispelEffects(c, params.dispel_polarity || 'positive', params.dispel_count);
+        this.pushLog({
+          type: 'passive', passive: params._spell_name || 'Dispel',
+          actorName: params._spell_name || 'Dispel',
+          targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex,
+          value: removed.length, heal: false,
+          message: removed.length
+            ? `${removed.map(e => e.name).join(', ')} stripped`
+            : 'nothing to strip',
+        });
+      }
+
+      // Decay pool — The Long Rot. Same pool the Decay ACTION fills, so a
+      // spell-cast rot and a unit-cast one are the same debuff at different
+      // magnitudes rather than two systems that look alike.
+      if (params.decay_amount) this.applyDecay(c, params.decay_amount, { name: params._spell_name || 'Decay' });
+
       // Deferred + recurring: strip N effects of a polarity, every round, for
       // `rounds` rounds. The handler re-queues itself until the count runs out.
       if (params.dispel_per_round) {
@@ -2082,11 +2290,16 @@ class BattleEngine {
   // through; it does not cover the handful of bespoke effect_types (e.g.
   // 'round_trigger_heal', 'tag_count_buff') that are still handled specially in
   // routes/index.js for player casts.
-  castSpell(spellDef, { casterSide = 'player', targetId = null } = {}) {
+  // `power` scales the spell — see spellParamsAtPower in data/spells.js. Omitted
+  // (the encounter-spell path) it falls back to the spell's own minimum, which
+  // is the unscaled base.
+  castSpell(spellDef, { casterSide = 'player', targetId = null, power = null } = {}) {
+    const spent   = Number(power) || spellDef.power_cost || 1;
     const targets = this.getSpellTargets(spellDef, casterSide, targetId);
+    const scaled  = scaleSpellParams(spellDef, spent);
     // _spell_name only rides along so deferred effects can name themselves in
     // the log; it is never read as a gameplay param.
-    this.applySpellParams(targets, { ...(spellDef.params || {}), _spell_name: spellDef.name });
+    this.applySpellParams(targets, { ...scaled, _spell_name: spellDef.name, _caster_side: casterSide });
     // Spells resolve before round 1 has "advanced", and firePendingRoundEffects
     // otherwise only runs from advanceRound() — so anything scheduled for the
     // current round would never fire. Drain it here.

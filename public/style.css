@@ -4105,6 +4105,119 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
 }
 
+/* ── Power ──────────────────────────────────────────────────────────────────
+   One strip per side, directly under its grid. Five pips rather than a number:
+   the question being asked is "can I afford the spell I want", and pips answer
+   it at a glance. The player's own strip is also the button that opens the
+   spell list — the resource and the thing it buys are one control. */
+.power-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 14px;
+  margin: 0;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(10, 14, 20, 0.6);
+  font-family: inherit;
+  cursor: default;
+  transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.power-pip {
+  flex: 1;
+  max-width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: #1e2735;
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+.power-pip--full {
+  background: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+/* Enough power AND the hero's turn: the strip invites a tap. */
+.power-strip--ready {
+  cursor: pointer;
+  border-color: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.35);
+}
+.power-strip--ready:active { transform: scale(0.98); }
+
+/* Hero down — this side will never cast again, so the strip says so rather
+   than showing a number that cannot change. */
+.power-strip--spent { opacity: 0.25; }
+
+.power-strip--enemy .power-pip--full {
+  background: var(--danger);
+  box-shadow: 0 0 4px var(--danger);
+}
+
+/* ── Spell casting sheet ───────────────────────────────────────────────── */
+.spell-cast-row {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+.spell-cast-name { font-weight: 700; color: var(--accent); }
+.spell-cast-desc {
+  margin: 6px 0 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.spell-cast-power {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.spell-cast-power-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+/* One button per affordable power level. The same spell is a cheap patch at 1
+   and a turning point at 5, so the choice is the interesting part. */
+.spell-power-opt {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(10, 14, 20, 0.6);
+  color: var(--text);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.spell-power-opt--on {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.35);
+}
+.spell-cast-btn {
+  width: 100%;
+  margin: 0;
+  padding: 9px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--accent);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.spell-cast-btn:active { transform: scale(0.98); }
+
 .battle-half-label {
   font-size: 0.62rem;
   color: var(--muted);

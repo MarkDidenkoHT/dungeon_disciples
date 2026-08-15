@@ -39,7 +39,11 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-        { key: 'crimson_basilica.sister_aldra_1',   cell: 3 , item_id: 'aldras_devotion'},
+        { key: 'crimson_basilica.sister_aldra_1',   cell: 3 , item_id: 'aldras_devotion',
+          // A boss casts from the same power pool the player's hero uses: one
+          // point per action, capped at 5. The cheap spell recurs, the
+          // expensive one is the reward for surviving — see aiPickSpell.
+          spells: [{ spell_id: 'boss_heal', power: 2 }] },
         { key: 'crimson_basilica.initiate',         cell: 1},
       ],
       rewards: {
@@ -83,7 +87,8 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'aegis_of_the_first_ward' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
-        { key: 'crimson_basilica.sister_aldra_2',   cell: 4, item_id: 'aldras_devotion'},
+        { key: 'crimson_basilica.sister_aldra_2',   cell: 4, item_id: 'aldras_devotion',
+          spells: [{ spell_id: 'boss_heal', power: 2 }, { spell_id: 'boss_resurrect', power: 5 }] },
         { key: 'crimson_basilica.high_keeper', cell: 1 },
         { key: 'crimson_basilica.crimson_stalker',   cell: 5 },
       ],
@@ -341,7 +346,9 @@ function getEncounter(region_id, level) {
         if (itemDef) unitData = applyItemModifiers(unitData, itemDef);
       }
 
-      return { ...unitData, cell: slot.cell, item_id: slot.item_id || null };
+      // `spells` marks this unit as the encounter's caster: the engine treats
+      // any enemy carrying them as a hero, so it banks power and spends it.
+      return { ...unitData, cell: slot.cell, item_id: slot.item_id || null, spells: slot.spells || [] };
     })
     .filter(Boolean);
 }
