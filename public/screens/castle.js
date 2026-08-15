@@ -2334,6 +2334,11 @@ export function renderCastle(root, { player }) {
         building_id,
         perk,
       });
+      // The throne step was the ONE step that never recorded itself, so it
+      // replayed on every visit with a level 0 throne while every other step
+      // stayed flagged. Chain-wise it is the first beat, and it is finished the
+      // moment the throne exists.
+      if (slot === 'slot_0') markTutorialDone(player, 'throne_upgrade');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so
