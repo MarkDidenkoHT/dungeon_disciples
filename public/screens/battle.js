@@ -169,6 +169,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // def cannot be found (an older snapshot, a unit that has since been renamed).
   const cName = c => (c ? (unitName(resolveUnitDef(c)) || c.unit_name || '') : '');
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
+  // Warm the researched-spell set at mount. render() needs it to decide whether
+  // the hero's cast button is live, and render runs long before anyone opens the
+  // cast sheet — without this the button spends the first turn guessing.
+  loadResearched().then(() => render()).catch(() => {});
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
   let pendingAction    = null;
@@ -1015,6 +1019,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return all.filter(s => known.has(s.id) && s.category !== 'non_combat' && s.usage !== 'roster');
   }
 
+  // The least power that could buy anything, used to decide whether the cast
+  // button is live. Returns 1 while the researched set is still loading, so the
+  // button is never wrongly dead on the first render — and Infinity when nothing
+  // is researched at all, which correctly leaves it inert.
+  function cheapestSpellCost() {
+    if (!researchedIds) return 1;
+    const costs = learnedCombatSpells(researchedIds).map(s => s.power_cost ?? 1);
+    return costs.length ? Math.min(...costs) : Infinity;
+  }
+
   // Spell art. `icon` on the definition, falling back to the id's base name, so
   // a spell without its own file still lines up with the ability icons rather
   // than leaving a hole.
@@ -1423,9 +1437,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         <div class="action-panel">
           <div class="action-panel-label" id="action-panel-label"></div>
           <!-- Each button is an icon tile with its role caption BELOW the tile,
-               outside the button's own border. The captions are fixed words and
-               never change, so they are written once here rather than rebuilt
-               on every render. -->
+               outside the button's own border. Every caption but one is a fixed
+               word written once here. The exception is the second slot: it is
+               the ABILITY for an ordinary character and the CAST for a hero,
+               which is why that caption alone is rebuilt on each render. -->
           <div class="action-btns">
             <div class="action-slot">
               <button class="action-btn" id="btn-main" data-battle-action="main"></button>
@@ -1433,19 +1448,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             </div>
             <div class="action-slot">
               <button class="action-btn" id="btn-ability" data-battle-action="ability"></button>
-              <span class="action-slot-label">${BTx('btnAbility')}</span>
+              <span class="action-slot-label" id="btn-ability-label">${BTx('btnAbility')}</span>
             </div>
             <div class="action-slot">
               <button class="action-btn" id="btn-defend" data-battle-action="defend"></button>
               <span class="action-slot-label">${BTx('btnDefend')}</span>
-            </div>
-            <!-- Spells get a slot of their own, next to the other actions.
-                 Hanging them off the power strip alone meant the one new system
-                 in the fight had no presence where the player looks for things
-                 to do — the strip stays tappable, but this is the button. -->
-            <div class="action-slot">
-              <button class="action-btn action-btn--spell" id="btn-spell" data-battle-action="spell"></button>
-              <span class="action-slot-label">${BTx('btnSpell')}</span>
             </div>
             <div class="action-slot">
               <button class="action-btn action-btn--panel" id="btn-panel" data-battle-action="panel"></button>
@@ -1472,7 +1479,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       mainBtn: root.querySelector('#btn-main'),
       abilityBtn: root.querySelector('#btn-ability'),
       defendBtn: root.querySelector('#btn-defend'),
-      spellBtn:  root.querySelector('#btn-spell'),
+      abilityLabelEl: root.querySelector('#btn-ability-label'),
       battleLog: root.querySelector('#battle-log'),
       battleInfo: root.querySelector('#battle-info'),
       panelBtn: root.querySelector('#btn-panel'),
@@ -1786,7 +1793,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!state) return;
 
     const isEnemyTurn  = !actor || actor.side === 'enemy';
-    const hasAbility   = actor && !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
+    // A HERO has no ability — casting is what it does instead, and it takes over
+    // this slot. `ability` is still on hero definitions in data/units.js, kept
+    // deliberately, but nothing reads it for them any more.
+    const actorIsHero  = !!(actor && (actor._is_hero || actor.buffs?._is_hero));
+    const hasAbility   = actor && !actorIsHero &&
+                         !!(actor.unit_data?.ability || actor.unit_data?.active_ability);
     // The button used to show the RAW key off the unit ("Shield_Wall"), which is
     // neither translated nor formatted. Resolve the definition and take its
     // localized name, falling back to the de-underscored key if the ability is
@@ -1890,27 +1902,32 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.mainBtn.innerHTML = btnFace(actionIcon ? `${assetUrl(`/assets/icons/actions/${actionIcon}`)}` : null, actionLabel);
     ui.mainBtn.title = actionLabel;   // the actual action name lives here
 
-    ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
-    ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
-    ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), abilityLabel, 'battle-action-ability-icon');
-    ui.abilityBtn.title = abilityLabel;
+    // The second slot is the ability for an ordinary character and the CAST for
+    // a hero. One control, so there is never a question of which button a given
+    // unit uses — and the caption changes with it, because a slot that silently
+    // does something else is how a player never finds out spells exist.
+    if (actorIsHero) {
+      const haveNow = Number(state?.power?.[actor.side] ?? 0);
+      // Enabled only when something is actually castable. `power > 0` alone gave
+      // a live button that opened a sheet with nothing affordable in it.
+      const canCast = !!actor.alive && !isEnemyTurn && !processing && haveNow >= cheapestSpellCost();
+      ui.abilityBtn.className = `action-btn action-btn--spell ${canCast ? '' : 'action-btn--disabled'}`;
+      ui.abilityBtn.disabled  = !canCast;
+      ui.abilityBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/spell.jpg'),
+                                        `${BTx('btnSpell')} ${haveNow}`, 'battle-action-ability-icon');
+      ui.abilityBtn.title = `${powerLabel()} ${haveNow}/${POWER_MAX}`;
+      if (ui.abilityLabelEl) ui.abilityLabelEl.textContent = BTx('btnSpell');
+    } else {
+      ui.abilityBtn.className = `action-btn ${armed === 'ability' ? 'action-btn--armed' : ''} ${(!hasAbility || (actor && actor.used_active) || isEnemyTurn || processing) ? 'action-btn--disabled' : ''}`;
+      ui.abilityBtn.disabled = !hasAbility || (actor && actor.used_active) || isEnemyTurn || processing;
+      ui.abilityBtn.innerHTML = btnFace(abilityIconSrc(actor), abilityLabel, 'battle-action-ability-icon');
+      ui.abilityBtn.title = abilityLabel;
+      if (ui.abilityLabelEl) ui.abilityLabelEl.textContent = BTx('btnAbility');
+    }
 
     ui.defendBtn.className = `action-btn ${isEnemyTurn || processing ? 'action-btn--disabled' : ''}`;
     ui.defendBtn.disabled = isEnemyTurn || processing;
     ui.defendBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/defend.jpg'), BTx('btnDefend'));
-
-    // Spell: only the hero, only on its turn, only with power banked. The count
-    // rides on the face so the player can see what they have without looking
-    // away to the strip.
-    if (ui.spellBtn) {
-      const heroNow  = heroOf('player');
-      const haveNow  = Number(state?.power?.player ?? 0);
-      const canSpell = !!heroNow?.alive && haveNow > 0 && actor?.id === heroNow.id && !isEnemyTurn && !processing;
-      ui.spellBtn.className = `action-btn action-btn--spell ${canSpell ? '' : 'action-btn--disabled'}`;
-      ui.spellBtn.disabled  = !canSpell;
-      ui.spellBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/spell.jpg'),
-                                      `${BTx('btnSpell')} ${haveNow}`);
-    }
 
     // No Cancel button: the only thing it could undo was an armed Ability, and
     // tapping Action already switches back to the basic attack. A player who
@@ -2022,14 +2039,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function attachEvents() {
     if (ui?.screen?._battleHandlersAttached) return;
 
-    // The power strip IS the spell button — the resource and the thing it buys
-    // are the same control, so there is nothing to hunt for.
+    // The power strip stays tappable as a second way in — the resource and the
+    // thing it buys are the same control. The button itself is the hero's action
+    // slot, handled with the other actions below.
     ui.powerPlayer?.addEventListener('click', () => {
       if (ui.powerPlayer.disabled) return;
-      openSpellSheet();
-    });
-    ui.spellBtn?.addEventListener('click', () => {
-      if (ui.spellBtn.disabled) return;
       openSpellSheet();
     });
 
@@ -2072,6 +2086,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           return;
         }
         if (action === 'ability') {
+          // For a hero this slot is the cast button — no ability to arm.
+          if (actor._is_hero || actor.buffs?._is_hero) {
+            if (ui.abilityBtn?.disabled) return;
+            openSpellSheet();
+            return;
+          }
           const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
           const def        = abilityKey ? UNIT_ABILITIES[abilityKey] : null;
           const ttype      = def?.target ?? 'enemy';

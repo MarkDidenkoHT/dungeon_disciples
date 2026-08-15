@@ -53,6 +53,9 @@ const DEFEND_BONUS = 25;
 // without a separate mechanism.
 const POWER_MAX = 5;
 const POWER_PER_HERO_ACTION = 1;
+// What each side banks before the first turn. See the constructor for why this
+// is not zero.
+const POWER_START = 1;
 
 // Mirrors spellParamsAtPower in data/spells.js. Duplicated rather than imported
 // because that module is ESM and this one is CommonJS — the same reason
@@ -128,9 +131,16 @@ class BattleEngine {
       this.winner     = null;
       this.pendingRoundEffects   = [];
       this._encounter_spell_cast = false;
-      // Both sides start empty every battle — power never carries over, or the
-      // second fight of a run would open with a full bank.
-      this.power = { player: 0, enemy: 0 };
+      // Power never carries between battles — the second fight of a run must not
+      // open on a full bank — but each side STARTS with one.
+      //
+      // It used to start at zero, which meant a hero's cast action was dead for
+      // the whole of round one: nothing to spend, so the button was disabled at
+      // the exact moment a new player pokes at it. With the hero's only action
+      // now being the cast, opening at zero would leave it with nothing to do at
+      // all. One is enough to make round one a decision — cheapest spell now, or
+      // attack and bank toward something bigger.
+      this.power = { player: POWER_START, enemy: POWER_START };
     }
   }
 
@@ -1335,7 +1345,13 @@ class BattleEngine {
   }
   doAbility(actor, target) {
     actor.defend_armor_bonus = 0;
-    const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
+    // A HERO does not have an active ability — casting is its ability. The
+    // `ability` field is still on hero definitions in data/units.js and is left
+    // there deliberately, but it is not an action any more, so it is not read
+    // here. Passives are a separate field (`passive`) and are untouched by this.
+    const key = actor._is_hero
+      ? null
+      : (actor.unit_data?.ability || actor.unit_data?.active_ability);
     if (actor._actives_locked || actor.used_active || !key) {
       actor.acted_this_round = true;
       return this.afterAction(actor);
@@ -1688,7 +1704,13 @@ class BattleEngine {
   chooseAiAction(actor) {
     const spell = this.aiPickSpell(actor);
     if (spell) return { type: 'spell', spell: spell.def, power: spell.cost, target: null };
-    const key = actor.unit_data?.ability || actor.unit_data?.active_ability;
+    // Heroes (which on the enemy side means bosses) cast instead of using an
+    // ability. With no spell affordable this turn they fall through to defend or
+    // attack like anyone else, rather than reaching for an ability they no
+    // longer have.
+    const key = actor._is_hero
+      ? null
+      : (actor.unit_data?.ability || actor.unit_data?.active_ability);
     if (key && !actor.used_active && !actor._actives_locked) {
       const def = this.ABILITIES?.[key];
       const abilityTargets = this.getValidTargets(actor, true);

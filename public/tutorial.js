@@ -160,11 +160,11 @@ const TUTORIAL_STEPS = {
   battle_power: {
     en: {
       title: 'Power',
-      text: 'This is your power. It starts at zero and rises by one every time your hero acts, up to five. Casting spends it, and a spell cast with more power hits harder — so you choose between a small spell now and a bigger one later. Power does not carry over to the next battle, and it stops building if your hero falls.',
+      text: 'This is your power. You start each battle with one and gain another every time your hero acts, up to five. Your hero fights by casting — that is what its action button does — and every cast spends power. A spell cast with more power hits harder, so the choice is a small spell now or a bigger one later. Power never carries over to the next battle, and it stops building if your hero falls.',
     },
     ru: {
       title: 'Сила',
-      text: 'Это ваша сила. Она начинается с нуля и растёт на единицу каждый раз, когда герой действует, максимум до пяти. Заклинание тратит её, и чем больше силы вложено, тем сильнее эффект — так что выбирайте между слабым заклинанием сейчас и мощным позже. Сила не переносится в следующий бой и перестаёт расти, если герой пал.',
+      text: 'Это ваша сила. В начале каждого боя у вас есть единица, и ещё одна прибавляется каждый раз, когда герой действует, максимум до пяти. Герой сражается заклинаниями — именно это делает его кнопка действия, — и каждое заклинание тратит силу. Чем больше силы вложено, тем сильнее эффект: выбирайте между слабым заклинанием сейчас и мощным позже. Сила не переносится в следующий бой и перестаёт расти, если герой пал.',
     },
   },
   embark_region: {
@@ -190,11 +190,11 @@ const TUTORIAL_STEPS = {
   battle_first_action: {
     en: {
       title: 'Your Turn',
-      text: 'Tap Attack, then tap an enemy to strike. You can also use an Ability, Defend to cut incoming damage, or Spell to cast one of the spells you have researched.',
+      text: 'Tap Attack, then tap an enemy to strike, or Defend to cut the damage coming your way. The middle button belongs to whoever is acting: an ordinary soldier uses its Ability there, while your hero casts one of the spells you have researched.',
     },
     ru: {
       title: 'Ваш ход',
-      text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать. Можно также применить способность, встать в защиту, чтобы снизить получаемый урон, или выбрать «Заклинание» и прочесть одно из изученных.',
+      text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать, или встаньте в защиту, чтобы снизить получаемый урон. Средняя кнопка зависит от того, чей ход: обычный боец применяет там свою способность, а герой читает одно из изученных заклинаний.',
     },
   },
   // Shown once, the first time the player opens the app after finishing a
