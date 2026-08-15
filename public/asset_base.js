@@ -44,9 +44,23 @@ export let ASSET_BASE = remembered ? '' : ASSET_CDN;
 // <img> elements, so a file missing from the CDN cost two fresh requests on
 // every single render — and the battle screen re-renders on every poll. These
 // two sets make each dead path cost at most two requests for the whole session.
-const cdnMissing    = new Set();   // 404 on the CDN — go straight to the origin
-const originMissing = new Set();   // 404 on both — stop asking entirely
+const cdnMissing    = new Set();   // failed on the CDN — go straight to the origin
+const originMissing = new Set();   // failed on both — stop asking entirely
 export function isAssetMissing(path) { return originMissing.has(normalizePath(path)); }
+
+// A 404 is NOT cached by the browser, so an <img> rebuilt on the next render
+// asks for the dead file again — and the battle screen rebuilds its action bar
+// several times per action. Handing back a transparent pixel instead of the URL
+// costs zero requests and looks the same as the hidden element the inline
+// onerror would have produced.
+const BLANK_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+// Shared with battle-fx.js, whose PIXI textures are loaded outside the DOM and
+// so never reach installAssetFallback's error listener. Both now write to and
+// read from the same memo, which is what stops a texture that is missing (or
+// CORS-blocked) on the CDN from re-attempting it on every single cast.
+export function markCdnMissing(path) { cdnMissing.add(normalizePath(path)); }
+export function isCdnMissing(path)   { return cdnMissing.has(normalizePath(path)); }
 
 function normalizePath(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
@@ -55,10 +69,14 @@ function normalizePath(path) {
 
 export function assetUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
+  const key = normalizePath(p);
+  // Dead everywhere we serve from. Nothing is gained by asking again, this
+  // render or any later one.
+  if (originMissing.has(key)) return BLANK_PIXEL;
   if (!ASSET_BASE) return p;
   // Already known absent from the CDN: request the origin the FIRST time, so
   // the image that does exist there appears without a failed round trip first.
-  if (cdnMissing.has(normalizePath(p))) return p;
+  if (cdnMissing.has(key)) return p;
   return ASSET_BASE + p.replace(/^\/assets/, '');
 }
 
