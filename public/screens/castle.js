@@ -1492,7 +1492,7 @@ export function renderCastle(root, { player }) {
              yet" and stays put. Maxed buildings keep it too — permanently
              inert, so the row never changes shape. -->
         <button class="frame-action frame-action--confirm ${canUpgrade ? '' : 'frame-action--inert'}" id="slot-upgrade" disabled
-                title="${CASTLE_TEXT.upgrade[castleLang]}" aria-label="${CASTLE_TEXT.upgrade[castleLang]}">⚒</button>
+                title="${CASTLE_TEXT.build[castleLang]}" aria-label="${CASTLE_TEXT.build[castleLang]}">⚒</button>
         ${canUpgrade
           ? `<div class="prep-track-wrap branch-track-wrap">
                <div class="portrait-track" id="slot-upgrade-track">${upgradeCards}</div>
@@ -1650,11 +1650,37 @@ export function renderCastle(root, { player }) {
       });
     });
 
+    // ONE button. Picking a branch already swaps the card to the unit it leads
+    // to and puts its price on the cost bar, so everything the old slider modal
+    // re-showed is on screen before this is pressed — opening it again just
+    // asked the player to confirm a choice they had already made, on a second
+    // button, in a second sheet. This builds it.
     upgradeBtn?.addEventListener('click', () => {
       if (!selectedPath) return;
-      const startIndex = Math.max(0, paths.findIndex(p => p.unit_id === selectedPath));
-      if (mercDef) openMercUpgradeModal(slot, mercDef, paths, startIndex);
-      else         openUpgradeModal(slot, def, paths, startIndex);
+      const path = paths.find(p => p.unit_id === selectedPath);
+      if (!path) return;
+
+      if (mercDef) {
+        // Mercenaries are priced in trophies, and their roster row is found by
+        // region + unit rather than by slot.
+        const cost  = getMercBuildingDef(path.building_id)?.cost ?? path.cost ?? {};
+        const short = Object.entries(cost).some(([item, amt]) => amountOf(item) < amt);
+        if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
+        const currentUnit = getUnitByUnitId(mercDef.unit_id);
+        const rosterEntry = rosterCache.find(r =>
+          r.unit_data?.mercenary &&
+          r.unit_data?.mercenary_region === mercDef.region &&
+          r.unit_data?.id === currentUnit?.id);
+        performMercenaryUpgrade(path.building_id, slot, rosterEntry?.id);
+        return;
+      }
+
+      const cost = costForPath(selectedPath);
+      if (!canAffordCost(cost)) {
+        alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(cost)}`);
+        return;
+      }
+      performBuildingUpgrade(slot, path.building_id);
     });
     body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
     // The cost bar lives outside the sheet, so it has to be torn down with it —
