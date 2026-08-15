@@ -75,6 +75,7 @@ const BT = {
   btnAction:    { en: 'Action',             ru: 'Действие' },
   btnAbility:   { en: 'Ability',            ru: 'Способность' },
   btnDefend:    { en: 'Defend',             ru: 'Защита' },
+  btnSpell:     { en: 'Spell',              ru: 'Магия' },
   // Per-unit XP block on the victory screen.
   xpGained:       { en: 'Experience',        ru: 'Опыт' },
   maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
@@ -968,6 +969,45 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return all.filter(s => known.has(s.id) && s.category !== 'non_combat' && s.usage !== 'roster');
   }
 
+  // Spell art. `icon` on the definition, falling back to the id's base name, so
+  // a spell without its own file still lines up with the ability icons rather
+  // than leaving a hole.
+  function spellIconHtml(spell) {
+    const key = spell.icon || String(spell.id || '').replace(/\s+/g, '_');
+    return `<img class="spell-cast-icon" src="${assetUrl(`/assets/icons/spells/${key}.jpg`)}"
+                 alt="" onerror="this.style.display='none'">`;
+  }
+
+  // What the numbers become at this power. Reads the same scaling function the
+  // server casts with, so the preview cannot promise something the engine will
+  // not deliver.
+  function spellPreviewHtml(spell, power) {
+    const p = spellParamsAtPower(spell, power);
+    const bits = [];
+    const add = (label, v, suffix = '') => { if (v) bits.push(`${label} <strong>${v}${suffix}</strong>`); };
+
+    add(BL === 'ru' ? 'броня'      : 'armor',      p.armor_boost);
+    add(BL === 'ru' ? 'урон'       : 'damage',     p.damage_flat);
+    add(BL === 'ru' ? 'инициатива' : 'initiative', p.initiative_boost);
+    add(BL === 'ru' ? 'щит'        : 'shield',     p.shield_caster);
+    add(BL === 'ru' ? 'тлен'       : 'decay',      p.decay_amount);
+    add(BL === 'ru' ? 'усилений'   : 'buffs',      p.dispel_count);
+    add(BL === 'ru' ? 'урон'       : 'damage',     p.damage_boost_pct, '%');
+    add(BL === 'ru' ? 'перенаправление' : 'redirect', p.martyrdom_redirect_pct, '%');
+    add(BL === 'ru' ? 'перехват'   : 'intercept',  p.intercept_chance_pct, '%');
+    if (p.damage_dealt_reduction_pct) bits.push(`${BL === 'ru' ? 'урон врага' : 'enemy damage'} <strong>−${p.damage_dealt_reduction_pct}%</strong>`);
+    if (p.armor_flat_reduction)       bits.push(`${BL === 'ru' ? 'броня' : 'armor'} <strong>−${p.armor_flat_reduction}</strong>`);
+    for (const [school, amount] of Object.entries(p.resist_reduction || {})) {
+      bits.push(`${school} <strong>−${amount}</strong>`);
+    }
+    for (const [school, amount] of Object.entries(p.resistances || {})) {
+      bits.push(`${school} <strong>+${amount}</strong>`);
+    }
+    if (p.duration_rounds) bits.push(`${p.duration_rounds} ${BL === 'ru' ? 'раунда' : 'rounds'}`);
+    if (p.lock_all_passives_rounds) bits.push(`${BL === 'ru' ? 'пассивки молчат' : 'passives silenced'} <strong>${p.lock_all_passives_rounds}</strong>`);
+    return bits.join(' · ');
+  }
+
   async function openSpellSheet() {
     const known = await loadResearched();
     const have = Number(state?.power?.player ?? 0);
@@ -990,9 +1030,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return `
         <div class="spell-cast-row" data-spell-row="${s.id}">
           <div class="spell-cast-head">
+            ${spellIconHtml(s)}
             <span class="spell-cast-name">${BL === 'ru' ? (s.name_ru || s.name) : s.name}</span>
           </div>
           <p class="spell-cast-desc">${desc}</p>
+          <!-- The numbers this cast will actually produce, recomputed as the
+               power is changed. The description states the base and the step;
+               this states the result, which is what the choice turns on. -->
+          <div class="spell-cast-preview" data-preview="${s.id}">${spellPreviewHtml(s, min)}</div>
           <div class="spell-cast-power">
             <span class="spell-cast-power-label">${powerLabel()}</span>
             ${opts.join('')}
@@ -1011,9 +1056,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     sheet?.querySelectorAll('.spell-power-opt').forEach(btn => {
       chosen[btn.dataset.spell] = chosen[btn.dataset.spell] ?? Number(btn.dataset.power);
       btn.addEventListener('click', () => {
-        chosen[btn.dataset.spell] = Number(btn.dataset.power);
-        sheet.querySelectorAll(`.spell-power-opt[data-spell="${btn.dataset.spell}"]`)
+        const id = btn.dataset.spell;
+        const power = Number(btn.dataset.power);
+        chosen[id] = power;
+        sheet.querySelectorAll(`.spell-power-opt[data-spell="${id}"]`)
              .forEach(b => b.classList.toggle('spell-power-opt--on', b === btn));
+        // Restate the outcome at the newly chosen power.
+        const preview = sheet.querySelector(`[data-preview="${id}"]`);
+        const spell   = affordable.find(s => s.id === id);
+        if (preview && spell) preview.innerHTML = spellPreviewHtml(spell, power);
       });
     });
 
@@ -1329,6 +1380,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               <button class="action-btn" id="btn-defend" data-battle-action="defend"></button>
               <span class="action-slot-label">${BTx('btnDefend')}</span>
             </div>
+            <!-- Spells get a slot of their own, next to the other actions.
+                 Hanging them off the power strip alone meant the one new system
+                 in the fight had no presence where the player looks for things
+                 to do — the strip stays tappable, but this is the button. -->
+            <div class="action-slot">
+              <button class="action-btn action-btn--spell" id="btn-spell" data-battle-action="spell"></button>
+              <span class="action-slot-label">${BTx('btnSpell')}</span>
+            </div>
             <div class="action-slot">
               <button class="action-btn action-btn--panel" id="btn-panel" data-battle-action="panel"></button>
               <span class="action-slot-label">${BTx('btnInfo')}</span>
@@ -1354,6 +1413,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       mainBtn: root.querySelector('#btn-main'),
       abilityBtn: root.querySelector('#btn-ability'),
       defendBtn: root.querySelector('#btn-defend'),
+      spellBtn:  root.querySelector('#btn-spell'),
       battleLog: root.querySelector('#battle-log'),
       battleInfo: root.querySelector('#battle-info'),
       panelBtn: root.querySelector('#btn-panel'),
@@ -1495,8 +1555,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       .join('') + more;
   }
 
-  const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS);
-  const debuffIconsHtml = occ => stateIconsHtml(occ, DEBUFF_DEFS);
+  // Spell effects are not in BUFF_DEFS/DEBUFF_DEFS — they are not fixed fields
+  // on the combatant but records in `_effects`, one per spell that landed. They
+  // carry their own icon and polarity, so they are rendered from the record
+  // rather than from a hand-maintained table, and a new spell shows up on the
+  // portrait without anything here changing.
+  function spellEffectIconsHtml(occ, polarity) {
+    const effects = (occ?._effects ?? occ?.buffs?._effects ?? [])
+      .filter(e => e?.icon && e.polarity === polarity);
+    if (!effects.length) return '';
+    return effects.slice(0, MAX_STATE_ICONS).map(e => `
+      <span class="bc-state bc-state--spell" title="${e.name}${e.rounds ? ` · ${e.rounds}` : ''}">
+        <img class="bc-state-img" src="${assetUrl(`/assets/icons/spells/${e.icon}.jpg`)}"
+             alt="${e.name}" onerror="this.style.display='none'">
+        ${e.rounds > 1 ? `<span class="bc-state-num">${e.rounds}</span>` : ''}
+      </span>`).join('');
+  }
+
+  const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS)   + spellEffectIconsHtml(occ, 'positive');
+  const debuffIconsHtml = occ => stateIconsHtml(occ, DEBUFF_DEFS) + spellEffectIconsHtml(occ, 'negative');
 
   // A one-shot coloured pulse over a portrait when its DoT ticks. Purely visual;
   // sits above the portrait but below the name/HP so text stays readable.
@@ -1761,6 +1838,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.defendBtn.disabled = isEnemyTurn || processing;
     ui.defendBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/defend.jpg'), BTx('btnDefend'));
 
+    // Spell: only the hero, only on its turn, only with power banked. The count
+    // rides on the face so the player can see what they have without looking
+    // away to the strip.
+    if (ui.spellBtn) {
+      const heroNow  = heroOf('player');
+      const haveNow  = Number(state?.power?.player ?? 0);
+      const canSpell = !!heroNow?.alive && haveNow > 0 && actor?.id === heroNow.id && !isEnemyTurn && !processing;
+      ui.spellBtn.className = `action-btn action-btn--spell ${canSpell ? '' : 'action-btn--disabled'}`;
+      ui.spellBtn.disabled  = !canSpell;
+      ui.spellBtn.innerHTML = btnFace(assetUrl('/assets/icons/actions/spell.jpg'),
+                                      `${BTx('btnSpell')} ${haveNow}`);
+    }
+
     // No Cancel button: the only thing it could undo was an armed Ability, and
     // tapping Action already switches back to the basic attack. A player who
     // wants to do nothing has Defend, which beats a wasted turn.
@@ -1859,6 +1949,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // are the same control, so there is nothing to hunt for.
     ui.powerPlayer?.addEventListener('click', () => {
       if (ui.powerPlayer.disabled) return;
+      openSpellSheet();
+    });
+    ui.spellBtn?.addEventListener('click', () => {
+      if (ui.spellBtn.disabled) return;
       openSpellSheet();
     });
 

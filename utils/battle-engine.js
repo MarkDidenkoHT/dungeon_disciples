@@ -1064,6 +1064,11 @@ class BattleEngine {
       polarity: rec.polarity === 'positive' ? 'positive' : 'negative',
       clear:    rec.clear   || {},
       restore:  rec.restore || {},
+      // Carried so the client can draw the effect on a portrait: `icon` names an
+      // image, `rounds` is how long it was applied for. Both are display-only —
+      // nothing in the engine reads them.
+      ...(rec.icon   ? { icon: rec.icon }     : {}),
+      ...(rec.rounds ? { rounds: rec.rounds } : {}),
       // `dispellable: false` opts an effect out of dispels (permanent/structural).
       ...(rec.dispellable === false ? { dispellable: false } : {}),
     };
@@ -2206,6 +2211,20 @@ class BattleEngine {
         const polarity = params.resist_reduction || params.armor_flat_reduction || params.damage_dealt_reduction_pct
           || params.initiative_flat_reduction
           ? 'negative' : 'positive';
+        // Registered as well as queued. The comment above always claimed these
+        // were dispellable, but nothing recorded them — so Purgation could not
+        // see a spell buff, and the portrait had no way to show one either. The
+        // record carries the spell's own icon, which is what lets the client
+        // draw it beside the ability-driven statuses.
+        this.registerEffect(c, {
+          key:      `spell:${params._spell_id || params._spell_name}`,
+          name:     params._spell_name || 'Spell',
+          icon:     params._spell_icon || null,
+          polarity,
+          dispellable: true,
+          rounds:   duration,
+          restore:  revert,
+        });
         this.pendingRoundEffects.push({
           type:   'expire_modifier',
           round:  this.round + duration,
@@ -2299,7 +2318,13 @@ class BattleEngine {
     const scaled  = scaleSpellParams(spellDef, spent);
     // _spell_name only rides along so deferred effects can name themselves in
     // the log; it is never read as a gameplay param.
-    this.applySpellParams(targets, { ...scaled, _spell_name: spellDef.name, _caster_side: casterSide });
+    this.applySpellParams(targets, {
+      ...scaled,
+      _spell_name: spellDef.name,
+      _spell_id:   spellDef.id,
+      _spell_icon: spellDef.icon || null,
+      _caster_side: casterSide,
+    });
     // Spells resolve before round 1 has "advanced", and firePendingRoundEffects
     // otherwise only runs from advanceRound() — so anything scheduled for the
     // current round would never fire. Drain it here.

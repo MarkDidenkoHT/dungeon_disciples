@@ -7389,3 +7389,29 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
+/* Spell effect on a portrait. Same tile as the ability-driven statuses beside
+   it — the player should not have to learn that a spell buff looks different
+   from a passive one. */
+.bc-state--spell { border-color: rgba(212, 175, 55, 0.5); }
+
+/* The numbers a cast will actually produce, restated as the power changes. */
+.spell-cast-preview {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.spell-cast-preview strong { color: var(--accent); }
+
+.spell-cast-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.spell-cast-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+}

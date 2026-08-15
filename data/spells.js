@@ -67,6 +67,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_3',
+      icon: 'holy_aegis',
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       category: 'buff',
@@ -85,6 +86,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_7',
+      icon: 'martyrdom',
       name: 'Martyrdom',
       name_ru: 'Мученичество',
       category: 'buff',
@@ -103,6 +105,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_8',
+      icon: 'vow_of_protection',
       name: 'Vow of Protection',
       name_ru: 'Обет защиты',
       category: 'buff',
@@ -120,6 +123,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_9',
+      icon: 'wrath_of_heaven',
       name: 'Wrath of Heaven',
       name_ru: 'Гнев небес',
       category: 'debuff',
@@ -140,6 +144,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_10',
+      icon: 'condemn',
       name: 'Condemn',
       name_ru: 'Осуждение',
       category: 'debuff',
@@ -158,6 +163,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_11',
+      icon: 'purgation',
       name: 'Purgation',
       name_ru: 'Очищение',
       category: 'debuff',
@@ -212,6 +218,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_3',
+      icon: 'song_of_frenzy',
       name: 'Song of Frenzy',
       name_ru: 'Песнь исступления',
       category: 'buff',
@@ -230,6 +237,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_9',
+      icon: 'chorus_of_wrath',
       name: 'Chorus of Wrath',
       name_ru: 'Хор ярости',
       category: 'buff',
@@ -248,6 +256,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_5',
+      icon: 'hymn_of_warding',
       name: 'Hymn of Warding',
       name_ru: 'Гимн оберега',
       category: 'buff',
@@ -265,6 +274,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_7',
+      icon: 'song_of_weakness',
       name: 'Song of Weakness',
       name_ru: 'Песнь слабости',
       category: 'debuff',
@@ -283,6 +293,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_10',
+      icon: 'pyre_requiem',
       name: 'Pyre Requiem',
       name_ru: 'Погребальный реквием',
       category: 'debuff',
@@ -300,6 +311,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_11',
+      icon: 'unsung',
       name: 'Unsung',
       name_ru: 'Неспетые',
       category: 'special',
@@ -354,6 +366,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_3',
+      icon: 'sorrows_haste',
       name: "Sorrow's Haste",
       name_ru: 'Скорая скорбь',
       category: 'buff',
@@ -371,6 +384,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_10',
+      icon: 'last_rites',
       name: 'Last Rites',
       name_ru: 'Последние обряды',
       category: 'buff',
@@ -388,6 +402,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_5',
+      icon: 'pall_of_sorrow',
       name: 'Pall of Sorrow',
       name_ru: 'Покров скорби',
       category: 'special',
@@ -408,6 +423,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_7',
+      icon: 'sorrows_weight',
       name: "Sorrow's Weight",
       name_ru: 'Бремя скорби',
       category: 'debuff',
@@ -425,6 +441,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_9',
+      icon: 'the_long_rot',
       name: 'The Long Rot',
       name_ru: 'Долгий тлен',
       category: 'debuff',
@@ -444,6 +461,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_11',
+      icon: 'a_second_longer',
       name: 'A Second Longer',
       name_ru: 'Ещё секунда',
       category: 'debuff',
@@ -472,6 +490,7 @@ const SPELLS = {
     // player can read and race.
     {
       id: 'boss_heal',
+      icon: 'ministration',
       name: 'Ministration',
       name_ru: 'Врачевание',
       category: 'buff',
@@ -488,6 +507,7 @@ const SPELLS = {
     },
     {
       id: 'boss_resurrect',
+      icon: 'called_back',
       name: 'Called Back',
       name_ru: 'Призванный обратно',
       category: 'special',

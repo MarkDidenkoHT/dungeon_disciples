@@ -97,11 +97,16 @@ function subscribe(battleId, chatId, res) {
  * entries it has not seen, and duplicating state into the event would give two
  * sources of truth that can disagree.
  */
-function publish(battleId, payload = {}) {
+function publish(battleId, payload = {}, { exceptChatId = null } = {}) {
   const room = rooms.get(battleId);
   if (!room || !room.size) return 0;
   let delivered = 0;
   for (const sub of [...room]) {
+    // Never echo to the player who caused it. They already have the result in
+    // the response body and have played it; a stream event on top made the same
+    // exchange animate a SECOND time, because the catch-up fetch it triggers
+    // arrives after playback has finished and `processing` has gone false.
+    if (exceptChatId != null && sub.chatId === String(exceptChatId)) continue;
     if (writeFrame(sub.res, 'battle', { battle_id: battleId, ...payload })) delivered++;
   }
   return delivered;

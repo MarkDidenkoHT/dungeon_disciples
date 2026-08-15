@@ -2086,7 +2086,7 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     battleBus.publish(battle_id, {
       last_log_id: insertedLogs.length ? insertedLogs[insertedLogs.length - 1].id : null,
       done: engine.done,
-    });
+    }, { exceptChatId: chat_id });
 
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
@@ -2176,7 +2176,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     battleBus.publish(battle_id, {
       last_log_id: insertedLogs.length ? insertedLogs[insertedLogs.length - 1].id : null,
       done: engine.done,
-    });
+    }, { exceptChatId: chat_id });
 
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
