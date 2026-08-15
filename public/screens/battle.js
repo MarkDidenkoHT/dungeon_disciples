@@ -1535,7 +1535,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
     { key: 'aegis',       icon: 'aegis.jpg',            en: 'Aegis',           ru: 'Эгида',          n: c => num(c, '_aegis_stacks') },
     // Damage the unit can still absorb before anything reaches its HP.
-    { key: 'shield',      icon: 'aegis.jpg',            en: 'Shield',          ru: 'Щит',            n: c => num(c, '_shield'),             unit: 'dmg_absorb' },
+    { key: 'shield',      icon: 'shield.jpg',            en: 'Shield',          ru: 'Щит',            n: c => num(c, '_shield'),             unit: 'dmg_absorb' },
     { key: 'frost-armor', icon: 'frost_armor.jpg',      en: 'Frost Armor',     ru: 'Ледяной доспех', n: c => num(c, '_frost_armor_rounds'), unit: 'rounds' },
     { key: 'stone-form',  icon: 'stone_form.jpg',       en: 'Stone Form',      ru: 'Каменная форма', n: c => num(c, '_stone_form_rounds'),  unit: 'rounds' },
     { key: 'sanctuary',   icon: 'sanctuary.jpg',        en: 'Sanctuary',       ru: 'Святилище',      n: c => num(c, '_sanctuary_rounds'),   unit: 'rounds' },
@@ -1567,7 +1567,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'sorrow',  icon: 'sorrow.jpg',  en: 'Sorrow',           ru: 'Скорбь',         n: c => (st(c, '_sorrow_source_ids') || []).length },
     // The pool left, not a percentage: it is how much healing this unit will
     // lose before any reaches its HP.
-    { key: 'decay',   icon: 'aura_of_decay.jpg', en: 'Decay',      ru: 'Тлен',           n: c => num(c, '_decay'),  unit: 'heal' },
+    { key: 'decay',   icon: 'decay.jpg', en: 'Decay',      ru: 'Тлен',           n: c => num(c, '_decay'),  unit: 'heal' },
   ];
 
   const UNIT_SUFFIX = {

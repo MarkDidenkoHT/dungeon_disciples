@@ -1,5 +1,6 @@
 import { api, navigate } from '../api.js';
 import { setMusicEnabled } from '../music.js';
+import { setSfxEnabled } from '../sfx.js';
 import { saveLanguageCache } from './loading.js';
 
 export function lang(player) {
@@ -31,7 +32,10 @@ const UI_TEXT = {
 export function renderSettings(root, { player }) {
   const L = lang(player);
 
-  const sfxEnabled           = localStorage.getItem('sfx_enabled')   !== 'false';
+  // Read from the same place sfx.js reads it (initSfx). It used to come from
+  // localStorage while playback checked player.settings, so the two could not
+  // agree no matter which way the button went.
+  const sfxEnabled           = player?.settings?.sfx_enabled !== false;
   const musicEnabled = player?.settings?.music_enabled !== false;
   const notificationsEnabled = player?.settings?.notifications !== false;
   const barksEnabled         = player?.settings?.barks_enabled !== false;
@@ -45,7 +49,7 @@ export function renderSettings(root, { player }) {
         <div class="settings-section">
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.sfx[L]}</span>
-            <button class="settings-toggle ${sfxEnabled ? 'settings-toggle--on' : ''}" id="toggle-sfx" data-key="sfx_enabled">
+            <button class="settings-toggle ${sfxEnabled ? 'settings-toggle--on' : ''}" id="toggle-sfx">
               ${sfxEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
@@ -83,16 +87,26 @@ export function renderSettings(root, { player }) {
     </div>
   `;
 
-  // root.querySelectorAll('.settings-toggle[data-key]').forEach(btn => {
-  //   btn.addEventListener('click', () => {
-  //     const key     = btn.dataset.key;
-  //     const current = localStorage.getItem(key) !== 'false';
-  //     const next    = !current;
-  //     localStorage.setItem(key, String(next));
-  //     btn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
-  //     btn.classList.toggle('settings-toggle--on', next);
-  //   });
-  // });
+  const sfxBtn = root.querySelector('#toggle-sfx');
+  sfxBtn.addEventListener('click', async () => {
+    const next = player.settings?.sfx_enabled === false;
+    sfxBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    sfxBtn.classList.toggle('settings-toggle--on', next);
+    setSfxEnabled(next);
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { sfx_enabled: next },
+      });
+      player.settings = updated.settings;
+    } catch (err) {
+      sfxBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      sfxBtn.classList.toggle('settings-toggle--on', !next);
+      setSfxEnabled(!next);
+      alert(err.message || UI_TEXT.saveFailed[L]);
+    }
+  });
 
   const musicBtn = root.querySelector('#toggle-music');
   musicBtn.addEventListener('click', async () => {

@@ -484,6 +484,26 @@ export function renderCastle(root, { player }) {
       .map(d => ({ unit_id: d.unit_id, building_id: d.id, label: buildingLabel(d) }));
   }
 
+  // Where a slot's unit can go next. Keyed on the UNIT, because the unit is the
+  // thing being levelled and it can lag the building it stands in. Mercenaries
+  // keep their own table; a slot with no occupant yet falls back to the
+  // building's blueprint so an empty slot still shows a chain.
+  function upgradePathsForSlotUnit(rosterUnit, mercDef, buildingDef) {
+    const unitDef = rosterUnit ? resolveUnitDef(rosterUnit) : null;
+    if (unitDef) {
+      if (mercDef) {
+        const ownBuilding = getBuildingDefForUnit(unitDef.id);
+        if (ownBuilding) return getMercUpgradePaths(ownBuilding);
+      } else {
+        const byUnit = (upgradePaths[player.faction] || {})[unitDef.id];
+        if (byUnit && byUnit.length) return byUnit;
+      }
+    }
+    return mercDef
+      ? getMercUpgradePaths(mercDef)
+      : getUpgradePathsForBuilding(player.faction, buildingDef);
+  }
+
   function openSliderModal(title, slides, onConfirm, opts = {}) {
     // Opens on the branch the caller asked for. The slot sheet now shows every
     // upgrade up front, so the one the player tapped there has to be the one
@@ -1405,9 +1425,15 @@ export function renderCastle(root, { player }) {
     const def     = mercDef || getBuildingDef(player.faction, state.building_id);
     if (!def) { openModal('Error', '<p class="modal-empty">Building definition not found.</p>'); return; }
 
-    const paths = mercDef ? getMercUpgradePaths(mercDef) : getUpgradePathsForBuilding(player.faction, def);
     const rosterUnit = rosterUnitForSlot(slot);
     const item       = rosterUnit ? equippedItemFor(rosterUnit.id) : null;
+
+    // Ask the OCCUPANT what it can become, not the building. The two can sit a
+    // tier apart — a slot holding the tier 4 keep with a tier 3 unit still in it
+    // asked the keep, which is terminal, and the unit was told it was max tier
+    // with its real upgrade sitting right there. The building is only the
+    // fallback, for a slot whose unit has not spawned yet.
+    const paths = upgradePathsForSlotUnit(rosterUnit, mercDef, def);
 
     // Prefer the roster row: it carries current HP/XP and can hold an item. A
     // slot with no occupant yet (building raised, unit not spawned) still shows
