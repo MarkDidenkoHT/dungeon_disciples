@@ -4349,7 +4349,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  padding: 15px;
+  padding: 24px 15px;
 }
 
 /* ── Attrition aura ─────────────────────────────────────────────────────────
