@@ -12,6 +12,24 @@
        fewer CDN script on the critical path, and zero connections against the
        Supabase concurrency cap. -->
 
+  <!-- Microsoft Clarity, in the head where the docs put it and where you can
+       see it by viewing source.
+       CONSENT: the project has "Cookie consent" enabled in its dashboard
+       settings, so the tag loads but stores nothing and records nothing until
+       clarity("consent") is called. public/analytics.js makes that call after
+       the player accepts on the welcome screen, and clarity("consent", false)
+       if they decline or turn it off later in Settings.
+       This used to be injected from analytics.js only after consent, which kept
+       the script itself off the page but made "is Clarity even loaded?"
+       impossible to answer by looking. -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "y34ziwwyak");
+  </script>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
