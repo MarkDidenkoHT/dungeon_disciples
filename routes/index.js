@@ -809,6 +809,13 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         cap:       FAVOR_DAILY_CAP,
         seconds:   FAVOR_AD_SECONDS,
       },
+      // The second ad type, reported the same way and for the same reason: the
+      // errands sheet can label its reroll button without a round-trip of its own.
+      errand_reroll: {
+        remaining: player ? Math.max(0, REROLL_DAILY_CAP - favorRecordFor(player).reroll.count) : 0,
+        cap:       REROLL_DAILY_CAP,
+        seconds:   REROLL_AD_SECONDS,
+      },
     });
   } catch (err) {
     serverError(res, err);
@@ -1024,6 +1031,11 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 // with the network's completion callback. Nothing else about this shape moves.
 const FAVOR_AD_SECONDS   = 15;
 const FAVOR_DAILY_CAP    = 3;
+// Second ad type: swap today's errand offer for a different one. Same length of
+// view and same daily allowance as a favor, deliberately — two ad types with
+// different rules is two things for a player to learn about watching an ad.
+const REROLL_AD_SECONDS  = 15;
+const REROLL_DAILY_CAP   = 3;
 const FAVOR_PENDING_TTL_MS = 10 * 60 * 1000;  // an abandoned view stops blocking
 
 // The player's LOCAL calendar day, from the timezone recorded at login. Day
@@ -1044,11 +1056,36 @@ function playerLocalDate(timezone) {
 
 // Reads adds_daily_view, rolling it over when the player's local day has moved
 // on. Returns the record for today, never null.
+//
+// SHAPE. The column started as one ad type (favor) and its three fields sit at
+// the top level: { date, count, pending }. A second ad type — rerolling the
+// errand offer — is nested under its own key rather than adding `reroll_count`
+// and `reroll_pending` beside them, so a third type is one more sub-object
+// instead of two more loose fields:
+//
+//   { date, count, pending, reroll: { count, pending } }
+//
+// Favor stays where it is on purpose: moving it would have to migrate every
+// in-flight record, and the day it is read wrong is the day someone gets free
+// revives.
+//
+// EVERY caller must write back the WHOLE record. writeAdsRecord PATCHes the
+// column outright, so a favor claim that wrote only its own fields would erase
+// the day's reroll count — which is why both halves are carried here together.
 function favorRecordFor(player) {
   const today = playerLocalDate(player.timezone);
   const rec   = player.adds_daily_view || {};
-  if (rec.date !== today) return { date: today, count: 0, pending: null };
-  return { date: today, count: Number(rec.count) || 0, pending: rec.pending || null };
+  const blank = { count: 0, pending: null };
+  if (rec.date !== today) return { date: today, count: 0, pending: null, reroll: { ...blank } };
+  return {
+    date:    today,
+    count:   Number(rec.count) || 0,
+    pending: rec.pending || null,
+    reroll: {
+      count:   Number(rec.reroll?.count) || 0,
+      pending: rec.reroll?.pending || null,
+    },
+  };
 }
 
 // What a favor would do for this unit, or null if it needs nothing.
@@ -1130,7 +1167,17 @@ function dailySeed(chat_id, date) {
 // the offer was derived on every read. It is now derived ONCE and stored (see
 // ensureErrandOffer), so the seed is really only a tie-breaker — but it is kept
 // because it makes a bad pick reproducible.
-function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, lastErrandId = null }) {
+// `salt` varies the otherwise fixed daily seed. Without it a reroll re-ran the
+// same modulo over the same list and handed back the identical errand — the
+// determinism that makes the daily offer stable is exactly what has to be broken
+// to change it.
+//
+// `requireDifferent` turns the "no fresh option" case from a silent fallback
+// into a null. Normally, if the only eligible errand is the one just run, giving
+// it again beats giving nothing. For a reroll it does not: the player paid an ad
+// view for a DIFFERENT errand, so the caller needs to know it cannot deliver and
+// refund rather than hand back what they already had.
+function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, lastErrandId = null, salt = '', requireDifferent = false }) {
   if (!freeRows.length) return null;
 
   const profiles = freeRows.map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }));
@@ -1146,8 +1193,9 @@ function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, lastErra
 
   // Don't hand back the last errand run while another one fits.
   const fresh = eligible.filter(e => e.errand.id !== lastErrandId);
+  if (requireDifferent && !fresh.length) return null;
   const from  = fresh.length ? fresh : eligible;
-  const pick  = from[dailySeed(chat_id, date) % from.length];
+  const pick  = from[dailySeed(chat_id, `${date}${salt ? `|${salt}` : ''}`) % from.length];
 
   return { errand_id: pick.errand.id, tier, requirement: pick.resolved };
 }
@@ -1526,6 +1574,156 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
       roster:    updated[0],
       remaining: FAVOR_DAILY_CAP - record.count,
       cap:       FAVOR_DAILY_CAP,
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// ── Errand reroll (ad) ──────────────────────────────────────────────────────
+// Watch an ad, swap today's offer for a different errand. Same two-step shape as
+// /favor: start mints a token, claim verifies the view actually elapsed on the
+// SERVER's clock and only then does the work.
+//
+// The reroll deletes the offer row and writes a new one, rather than editing it
+// in place — `errand_data` carries `offered_at`, and a rerolled offer is a new
+// offer, not the old one wearing a different id.
+router.post('/errands/reroll/start', requireAuth, async (req, res) => {
+  const { chat_id } = req.body;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const rows    = await errandRowsFor(chat_id);
+    const active  = rows.filter(r => r.active);
+    const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+
+    // Nothing to swap. Checked before the allowance so a player cannot burn a
+    // day's rerolls against an offer that is not there.
+    if (active.length)   return res.status(400).json({ error: 'An errand is already running', code: 'errand_busy' });
+    if (!offered.length) return res.status(400).json({ error: 'No offer to reroll',           code: 'reroll_no_offer' });
+
+    const record = favorRecordFor(player);
+    if (record.reroll.count >= REROLL_DAILY_CAP) {
+      return res.status(429).json({ error: 'Daily reroll limit reached', code: 'reroll_cap', remaining: 0, cap: REROLL_DAILY_CAP });
+    }
+
+    const token = crypto.randomUUID();
+    record.reroll.pending = { token, started_at: Date.now() };
+    await writeFavorRecord(chat_id, record);
+
+    res.json({
+      token,
+      seconds:   REROLL_AD_SECONDS,
+      remaining: REROLL_DAILY_CAP - record.reroll.count,
+      cap:       REROLL_DAILY_CAP,
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
+  const { chat_id, token } = req.body;
+  if (!chat_id || !token) return res.status(400).json({ error: 'chat_id and token required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    // Recomputed, so a view started just before local midnight lands in the new
+    // day's allowance rather than double-spending the old one.
+    const record  = favorRecordFor(player);
+    const pending = record.reroll.pending;
+    if (!pending || pending.token !== token) {
+      return res.status(400).json({ error: 'No reroll in progress', code: 'reroll_none' });
+    }
+
+    const elapsedMs = Date.now() - Number(pending.started_at || 0);
+    if (elapsedMs > FAVOR_PENDING_TTL_MS) {
+      record.reroll.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(400).json({ error: 'Reroll expired — start again', code: 'reroll_expired' });
+    }
+    if (elapsedMs < REROLL_AD_SECONDS * 1000 - 750) {
+      return res.status(400).json({ error: 'Ad not finished', code: 'reroll_early' });
+    }
+    if (record.reroll.count >= REROLL_DAILY_CAP) {
+      record.reroll.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(429).json({ error: 'Daily reroll limit reached', code: 'reroll_cap', remaining: 0, cap: REROLL_DAILY_CAP });
+    }
+
+    // Re-read rather than trusting what was true at start — the player may have
+    // taken the errand while the ad played.
+    const [structRows, roster, rows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+      errandRowsFor(chat_id),
+    ]);
+    const active  = rows.filter(r => r.active);
+    const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+    if (active.length || !offered.length) {
+      // Burn the token, do NOT spend a daily use — there is nothing to swap.
+      record.reroll.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(400).json({ error: 'No offer to reroll', code: 'reroll_no_offer' });
+    }
+
+    const oldRow = offered.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0];
+
+    // The whole point of the ad: it must not come back the same. `salt` moves
+    // the daily seed off its fixed value and requireDifferent refuses rather
+    // than falling back to the errand being replaced.
+    const offer = pickErrandFor({
+      chat_id,
+      faction:      player.faction,
+      throneLevel:  throneLevelOf(structRows[0]),
+      freeRows:     freeRosterRows(roster, active),
+      date:         playerLocalDate(player.timezone),
+      lastErrandId: oldRow.errand,
+      salt:         `reroll:${record.reroll.count + 1}`,
+      requireDifferent: true,
+    });
+    if (!offer) {
+      // Only one errand this roster can answer. Refund by not counting it.
+      record.reroll.pending = null;
+      await writeFavorRecord(chat_id, record);
+      return res.status(400).json({ error: 'No other errand fits your roster right now', code: 'reroll_no_alternative' });
+    }
+
+    await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(oldRow.id)}`, { method: 'DELETE' });
+    const inserted = await supabase(ERRAND_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({
+        player: String(chat_id),
+        errand: offer.errand_id,
+        errand_data: {
+          offered:     true,
+          tier:        offer.tier,
+          requirement: offer.requirement,
+          offered_at:  new Date().toISOString(),
+          rerolled_from: oldRow.errand,
+        },
+        active: false,
+      }),
+      headers: { Prefer: 'return=representation' },
+    });
+    const offerRow = Array.isArray(inserted) ? inserted[0] : inserted;
+
+    record.reroll.count  += 1;
+    record.reroll.pending = null;
+    await writeFavorRecord(chat_id, record);
+
+    res.json({
+      success:   true,
+      offer:     offerPayload({
+        errand_id:   offerRow.errand,
+        tier:        offerRow.errand_data.tier,
+        requirement: offerRow.errand_data.requirement,
+      }, freeRosterRows(roster, active), throneLevelOf(structRows[0])),
+      remaining: REROLL_DAILY_CAP - record.reroll.count,
+      cap:       REROLL_DAILY_CAP,
     });
   } catch (err) {
     serverError(res, err);

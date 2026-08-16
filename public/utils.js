@@ -1113,3 +1113,59 @@ export function enableTrackSwipe(wrap) {
     e.preventDefault();
   }, true);
 }
+// ── Rewarded-ad overlay ─────────────────────────────────────────────────────
+// Shared by every ad-gated feature: divine favor in the castle, and rerolling
+// the errand offer. Lived in castle.js while there was one caller; a second one
+// would have meant two copies of a countdown that has to agree with the server's
+// own timer, and the day they drift is the day claims start getting rejected as
+// "ad not finished".
+//
+// Resolves TRUE if the view ran to completion, FALSE if the player backed out.
+// A cancelled view simply leaves the server's token unclaimed — nothing to undo.
+//
+// `labels` supplies the copy so this file stays language-agnostic:
+//   { badge, placeholder, title, cancel }
+export function playAdPlaceholder(seconds, labels = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'favor-overlay';
+    overlay.innerHTML = `
+      <div class="favor-modal">
+        <div class="favor-modal-ad">
+          <span class="favor-modal-adbadge">${labels.badge ?? 'Ad'}</span>
+          <span class="favor-modal-adtext">${labels.placeholder ?? ''}</span>
+        </div>
+        <div class="favor-modal-title">${labels.title ?? ''}</div>
+        <div class="favor-modal-bar"><div class="favor-modal-fill"></div></div>
+        <div class="favor-modal-count">${seconds}</div>
+        <button class="favor-modal-cancel">${labels.cancel ?? 'Cancel'}</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const fill  = overlay.querySelector('.favor-modal-fill');
+    const count = overlay.querySelector('.favor-modal-count');
+    const endAt = Date.now() + seconds * 1000;
+
+    let done = false;
+    const finish = ok => {
+      if (done) return;
+      done = true;
+      clearInterval(timer);
+      overlay.remove();
+      resolve(ok);
+    };
+
+    // Driven off wall-clock rather than a tick count, so a backgrounded tab
+    // (which throttles intervals) doesn't leave the bar stuck behind the
+    // server's own timer.
+    const timer = setInterval(() => {
+      const leftMs = endAt - Date.now();
+      const left   = Math.max(0, Math.ceil(leftMs / 1000));
+      count.textContent = left;
+      fill.style.width  = `${Math.min(100, 100 - (leftMs / (seconds * 1000)) * 100)}%`;
+      if (leftMs <= 0) finish(true);
+    }, 100);
+
+    overlay.querySelector('.favor-modal-cancel').addEventListener('click', () => finish(false));
+  });
+}

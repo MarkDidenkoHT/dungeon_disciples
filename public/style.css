@@ -1114,6 +1114,39 @@ button:active:not(:disabled) { opacity: 0.75; }
 .errand-btn:disabled { opacity: 0.4; cursor: default; }
 .errand-btn:not(:disabled):active { background: rgba(200,151,58,0.26); }
 
+/* Reroll sits under Send and is deliberately quieter than it: taking the errand
+   is the action, swapping it is the aside. The remaining count rides on the
+   button because three a day is the whole decision. */
+.errand-btn--reroll {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-color: var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+}
+.errand-btn--reroll:not(:disabled):active { background: rgba(255,255,255,0.05); }
+.errand-reroll-ad {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.errand-reroll-left {
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: rgba(200,151,58,0.16);
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+
 /* A unit that is away cannot be fielded — shown, but plainly out of play. */
 .portrait-card--on-errand { opacity: 0.4; filter: grayscale(0.7); cursor: not-allowed; }
 

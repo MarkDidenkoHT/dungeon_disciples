@@ -18,6 +18,7 @@ import {
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
+  playAdPlaceholder as playAd,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -1139,51 +1140,15 @@ export function renderCastle(root, { player }) {
     }
   }
 
-  // Resolves true if the "ad" ran to completion, false if the player backed out.
-  function playAdPlaceholder(seconds) {
-    return new Promise(resolve => {
-      const overlay = document.createElement('div');
-      overlay.className = 'favor-overlay';
-      overlay.innerHTML = `
-        <div class="favor-modal">
-          <div class="favor-modal-ad">
-            <span class="favor-modal-adbadge">${CASTLE_TEXT.adBadge[castleLang]}</span>
-            <span class="favor-modal-adtext">${CASTLE_TEXT.favorPlaceholder[castleLang]}</span>
-          </div>
-          <div class="favor-modal-title">${CASTLE_TEXT.favorWatching[castleLang]}</div>
-          <div class="favor-modal-bar"><div class="favor-modal-fill"></div></div>
-          <div class="favor-modal-count">${seconds}</div>
-          <button class="favor-modal-cancel">${CASTLE_TEXT.favorCancel[castleLang]}</button>
-        </div>`;
-      document.body.appendChild(overlay);
-
-      const fill  = overlay.querySelector('.favor-modal-fill');
-      const count = overlay.querySelector('.favor-modal-count');
-      const endAt = Date.now() + seconds * 1000;
-
-      let done = false;
-      const finish = ok => {
-        if (done) return;
-        done = true;
-        clearInterval(timer);
-        overlay.remove();
-        resolve(ok);
-      };
-
-      // Driven off wall-clock rather than a tick count, so a backgrounded tab
-      // (which throttles intervals) doesn't leave the bar stuck behind the
-      // server's own timer.
-      const timer = setInterval(() => {
-        const leftMs = endAt - Date.now();
-        const left   = Math.max(0, Math.ceil(leftMs / 1000));
-        count.textContent = left;
-        fill.style.width  = `${Math.min(100, 100 - (leftMs / (seconds * 1000)) * 100)}%`;
-        if (leftMs <= 0) finish(true);
-      }, 100);
-
-      overlay.querySelector('.favor-modal-cancel').addEventListener('click', () => finish(false));
-    });
-  }
+  // The overlay itself now lives in utils.js — the errands sheet runs the same
+  // one for its reroll ad, and two copies of a countdown that has to agree with
+  // the server's timer is one copy too many.
+  const playAdPlaceholder = seconds => playAd(seconds, {
+    badge:       CASTLE_TEXT.adBadge[castleLang],
+    placeholder: CASTLE_TEXT.favorPlaceholder[castleLang],
+    title:       CASTLE_TEXT.favorWatching[castleLang],
+    cancel:      CASTLE_TEXT.favorCancel[castleLang],
+  });
 
   // Resurrect / Heal, lifted from the roster screen unchanged: the same two
   // spells (resurrect = a roster-usage single-ally spell, heal = an effect_type
