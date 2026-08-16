@@ -516,7 +516,11 @@ router.post('/login', async (req, res) => {
     const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (existing.length > 0) {
       const mergedSettings = { ...(existing[0].settings || {}), language: existing[0].settings?.language || telegramUser.language_code || 'en' };
-      const patchBody = { session_token, settings: mergedSettings };
+      // Written on every login. The column has a DEFAULT, which only ever fires
+      // on INSERT — so until now `last_login` was just a second copy of
+      // created_at and every returning player looked like they had never come
+      // back. Nothing else in the codebase touches it.
+      const patchBody = { session_token, settings: mergedSettings, last_login: new Date().toISOString() };
       if (timezone) patchBody.timezone = timezone;
       const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
         method: 'PATCH',
@@ -544,6 +548,9 @@ router.post('/login', async (req, res) => {
       username: telegramUser.username || null,
       first_name: telegramUser.first_name || null,
       session_token,
+      // Set explicitly rather than left to the column DEFAULT, so first login
+      // and every later one are written by the same code path.
+      last_login: new Date().toISOString(),
       settings: { language: telegramUser.language_code || 'en', notifications: true, music_enabled: true, sfx_enabled: true, barks_enabled: true },
     };
     if (timezone) newPlayerBody.timezone = timezone;
@@ -581,6 +588,47 @@ router.get('/player', requireAuth, async (req, res) => {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json(rows[0]);
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// Records the answer to the privacy notice, plus the language chosen on the
+// same screen (see public/screens/welcome.js).
+//
+// Stored as three columns rather than a flag in `settings`, because consent has
+// to be auditable: WHAT was agreed to (consent_version), and WHEN (consent_at).
+// A bare boolean cannot answer either question, and the version is what lets a
+// changed notice re-ask everyone without also wiping their other preferences.
+//
+// `analytics_consent` is deliberately nullable: NULL means "never asked", which
+// is a different state from an explicit false, and it is the one that decides
+// whether the welcome screen appears.
+router.post('/player/consent', requireAuth, async (req, res) => {
+  const { chat_id, analytics_consent, consent_version, language } = req.body;
+  if (!chat_id || typeof analytics_consent !== 'boolean' || !consent_version) {
+    return res.status(400).json({ error: 'chat_id, analytics_consent and consent_version required' });
+  }
+  try {
+    const existing = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=settings&limit=1`);
+    if (!existing.length) return res.status(404).json({ error: 'Player not found' });
+
+    const patch = {
+      analytics_consent,
+      consent_version:   String(consent_version),
+      consent_at:        new Date().toISOString(),
+    };
+    // The language picker lives on the same screen, so it is written here too —
+    // one round trip, and the two can never end up disagreeing.
+    if (language === 'en' || language === 'ru') {
+      patch.settings = { ...(existing[0].settings || {}), language };
+    }
+
+    const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    });
+    res.json({ player: updated[0] });
   } catch (err) {
     serverError(res, err);
   }

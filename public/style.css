@@ -7456,3 +7456,111 @@ button.cost-bar-item:active { transform: scale(0.9); }
   object-fit: cover;
   flex-shrink: 0;
 }
+
+/* ── Welcome / consent screen ──────────────────────────────────────────────
+   The first screen anyone sees. Scrolls, because the privacy notice must stay
+   fully readable on a short phone in either language — Russian runs noticeably
+   longer than English here, and a notice you cannot finish reading is not one
+   you can meaningfully agree to. */
+.screen-welcome {
+  height: 100%;
+  flex: 1;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  overflow-y: auto;
+}
+.welcome-body {
+  width: 100%;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.welcome-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.welcome-lang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.welcome-lang-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.welcome-lang-opts { display: flex; gap: 8px; }
+.welcome-lang-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+.welcome-lang-btn--on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.welcome-privacy {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 15px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.welcome-privacy-title {
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+.welcome-privacy-text {
+  margin: 0 0 9px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.welcome-privacy-text:last-child { margin-bottom: 0; }
+.welcome-privacy-text--muted { color: var(--muted); }
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.welcome-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: transform 0.1s ease, opacity 0.12s ease;
+}
+.welcome-btn:active { transform: scale(0.99); }
+.welcome-btn:disabled { opacity: 0.6; cursor: default; }
+/* Accept is the emphasised option, but decline is a full-width button beside
+   it rather than a link in the corner — declining has to look like a real
+   choice, because it is one. */
+.welcome-btn--accept {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #14100a;
+}
+.welcome-btn--decline {
+  background: transparent;
+  color: var(--muted);
+}

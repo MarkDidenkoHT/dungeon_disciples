@@ -1,6 +1,7 @@
 import { api, navigate } from '../api.js';
 import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
+import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 import { saveLanguageCache } from './loading.js';
 
 export function lang(player) {
@@ -13,6 +14,8 @@ const UI_TEXT = {
   music:         { en: 'Music', ru: 'Музыка' },
   notifications: { en: 'Notifications', ru: 'Уведомления' },
   barks:         { en: 'Combat Barks', ru: 'Реплики в бою' },
+  // The welcome screen promises this can be changed later, so it has to be here.
+  analytics:     { en: 'Usage Analytics', ru: 'Аналитика использования' },
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
   language:      { en: 'Language', ru: 'Язык' },
@@ -39,6 +42,9 @@ export function renderSettings(root, { player }) {
   const musicEnabled = player?.settings?.music_enabled !== false;
   const notificationsEnabled = player?.settings?.notifications !== false;
   const barksEnabled         = player?.settings?.barks_enabled !== false;
+  // Reads the column, not a setting — consent is stored separately so it can
+  // carry its own timestamp and the version of the notice that was agreed to.
+  const analyticsOn          = player?.analytics_consent === true;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
   root.innerHTML = `
@@ -63,6 +69,12 @@ export function renderSettings(root, { player }) {
             <span class="settings-label">${UI_TEXT.notifications[L]}</span>
             <button class="settings-toggle ${notificationsEnabled ? 'settings-toggle--on' : ''}" id="toggle-notifications">
               ${notificationsEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
+            </button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">${UI_TEXT.analytics[L]}</span>
+            <button class="settings-toggle ${analyticsOn ? 'settings-toggle--on' : ''}" id="toggle-analytics">
+              ${analyticsOn ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
@@ -144,6 +156,32 @@ export function renderSettings(root, { player }) {
     } catch (err) {
       notifBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
       notifBtn.classList.toggle('settings-toggle--on', !next);
+      alert(err.message || UI_TEXT.saveFailed[L]);
+    }
+  });
+
+  // Turning this off stops Clarity for the rest of the session AND clears what a
+  // previously-accepted session left on the device, so "off" means off now, not
+  // off next launch.
+  const analyticsBtn = root.querySelector('#toggle-analytics');
+  analyticsBtn.addEventListener('click', async () => {
+    const next = player.analytics_consent !== true;
+    analyticsBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    analyticsBtn.classList.toggle('settings-toggle--on', next);
+    try {
+      const res = await api('/player/consent', {
+        chat_id: player.chat_id,
+        analytics_consent: next,
+        consent_version: CONSENT_VERSION,
+      });
+      if (res?.player) {
+        player.analytics_consent = res.player.analytics_consent;
+        player.consent_version   = res.player.consent_version;
+      }
+      applyAnalyticsConsent(player);
+    } catch (err) {
+      analyticsBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      analyticsBtn.classList.toggle('settings-toggle--on', !next);
       alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });

@@ -1,5 +1,7 @@
 import { assetUrl, resolveAssetBase, installAssetFallback } from './asset_base.js';
 import { renderRegister }   from './screens/register.js';
+import { renderWelcome }    from './screens/welcome.js';
+import { needsConsent, applyAnalyticsConsent } from './analytics.js';
 import { renderCastle }     from './screens/castle.js';
 import { renderItems }      from './screens/items.js';
 import { renderEmbark }     from './screens/embark.js';
@@ -364,16 +366,35 @@ async function boot() {
     initMusic(player);
     if (player.faction) playFactionTheme(player.faction);
 
-    if (active) {
-      mountShell(player);
-      showReconnectModal(player, battle_id, battle_data);
+    // Where this player was headed anyway, once consent is settled.
+    const goOn = (p) => {
+      if (active) {
+        mountShell(p);
+        showReconnectModal(p, battle_id, battle_data);
+        return;
+      }
+      if (isNew || !p.faction || !p.hero) navigate('register', { player: p });
+      else                                navigate('castle',   { player: p });
+    };
+
+    // The notice comes before EVERYTHING, including an interrupted battle —
+    // analytics must not start recording a session the player has not agreed to,
+    // and the reconnect modal is part of that session. Existing players see it
+    // once too, because their stored consent_version is empty.
+    if (needsConsent(player)) {
+      app.innerHTML = '';
+      renderWelcome(app, {
+        player,
+        onDone: (updated) => {
+          if (updated.settings?.language) saveLanguageCache(updated.settings.language);
+          goOn(updated);
+        },
+      });
       return;
     }
-    if (isNew || !player.faction || !player.hero) {
-      navigate('register', { player });
-    } else {
-      navigate('castle', { player });
-    }
+
+    applyAnalyticsConsent(player);
+    goOn(player);
   } catch (err) {
     app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#e74c3c;font-family:sans-serif;text-align:center;padding:2rem">Login failed: ${err.message}</div>`;
   }
