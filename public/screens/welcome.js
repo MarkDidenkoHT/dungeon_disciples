@@ -19,7 +19,7 @@ import { saveLanguageCache } from './loading.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 
 const T = {
-  title:      { en: 'Shattered Crown', ru: 'Расколотая корона' },
+  title:      { en: 'Shattered Crown', ru: 'Shattered Crown' },
   langLabel:  { en: 'Language', ru: 'Язык' },
   privacyTitle: { en: 'Before you begin', ru: 'Прежде чем начать' },
   // Plain language on purpose. A notice nobody reads protects nobody, and the
