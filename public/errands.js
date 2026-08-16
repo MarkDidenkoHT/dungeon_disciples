@@ -1,5 +1,5 @@
 import { api, bootstrapCache, errandsCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
+import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, playAdPlaceholder } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
 import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
 import { assetUrl } from './asset_base.js';
@@ -28,6 +28,24 @@ const ET = {
   xpRoster:    { en: 'XP shared at home',      ru: 'Опыт на всех оставшихся' },
   hours:       { en: 'h',                      ru: 'ч' },
   failed:      { en: 'Something went wrong.',  ru: 'Что-то пошло не так.' },
+  // Reroll (rewarded ad). The count is on the button because the allowance is
+  // the whole decision — three a day is worth spending carefully.
+  reroll:      { en: 'Different errand',       ru: 'Другое поручение' },
+  rerollNone:  { en: 'No swaps left today',    ru: 'На сегодня замен нет' },
+  adBadge:     { en: 'Ad',                     ru: 'Реклама' },
+  adPlaceholder: { en: 'Advertisement placeholder', ru: 'Место для рекламы' },
+  adWatching:  { en: 'Finding other work…',    ru: 'Ищем другую работу…' },
+  adCancel:    { en: 'Cancel',                 ru: 'Отмена' },
+  rerollNoAlt: { en: 'No other errand fits your roster right now.',
+                 ru: 'Сейчас вашему отряду не подходит другое поручение.' },
+};
+
+// Server error codes that deserve their own line rather than the generic
+// failure. `reroll_no_alternative` is the one a player can act on: it means the
+// roster, not the dice, is the limit — and no daily use was spent.
+const REROLL_ERRORS = {
+  reroll_no_alternative: 'rerollNoAlt',
+  reroll_cap:            'rerollNone',
 };
 
 let lang = 'en';
@@ -110,6 +128,63 @@ export async function openErrandsSheet(player) {
     chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
     chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
     render();
+  }
+
+  // The reroll button, or nothing at all when the day's swaps are gone. Hidden
+  // rather than shown-disabled: the offer sheet is already dense, and a control
+  // that cannot do anything until tomorrow is not worth the row.
+  function rerollBtnHtml() {
+    const left = bootstrapCache.data?.errand_reroll?.remaining ?? 0;
+    if (left <= 0) return '';
+    return `
+      <button class="errand-btn errand-btn--reroll" id="errand-reroll">
+        <span class="errand-reroll-ad">${T('adBadge')}</span>
+        <span>${T('reroll')}</span>
+        <span class="errand-reroll-left">${left}</span>
+      </button>`;
+  }
+
+  // Watch an ad, get a different errand. The server is the authority on every
+  // part of this: it times the view, enforces the daily cap, and guarantees the
+  // replacement is not the errand being replaced.
+  async function runReroll(btn) {
+    btn.disabled = true;
+    let started;
+    try {
+      started = await api('/errands/reroll/start', { chat_id: player.chat_id });
+    } catch (err) {
+      alert(rerollError(err));
+      btn.disabled = false;
+      return;
+    }
+
+    const seconds  = started.seconds ?? bootstrapCache.data?.errand_reroll?.seconds ?? 15;
+    const finished = await playAdPlaceholder(seconds, {
+      badge:       T('adBadge'),
+      placeholder: T('adPlaceholder'),
+      title:       T('adWatching'),
+      cancel:      T('adCancel'),
+    });
+    // Backed out: the token is simply left unclaimed and no use is spent.
+    if (!finished) { btn.disabled = false; return; }
+
+    try {
+      await api('/errands/reroll/claim', { chat_id: player.chat_id, token: started.token });
+      // Both caches move: the offer changed, and so did the day's allowance.
+      await Promise.all([
+        bootstrapCache.refresh(player.chat_id),
+        errandsCache.refresh(player.chat_id),
+      ]);
+      await load();
+    } catch (err) {
+      alert(rerollError(err));
+      btn.disabled = false;
+    }
+  }
+
+  function rerollError(err) {
+    const key = REROLL_ERRORS[err?.code];
+    return key ? T(key) : (err?.message || T('failed'));
   }
 
   function render() {
@@ -206,6 +281,8 @@ export async function openErrandsSheet(player) {
 
           <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
 
+          ${rerollBtnHtml()}
+
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">
               ${rows.map(r => unitCardHtml(r, String(r.id) === String(chosen))).join('')}
@@ -220,6 +297,10 @@ export async function openErrandsSheet(player) {
         if (!btn) return;
         chosenHours = Number(btn.dataset.hours);
         render();
+      });
+
+      body.querySelector('#errand-reroll')?.addEventListener('click', e => {
+        runReroll(e.currentTarget);
       });
 
       body.querySelector('#errand-track')?.addEventListener('click', e => {
