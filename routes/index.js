@@ -2542,20 +2542,14 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       result.crystals_gained = crystalsGained;   // { Crystals_Fire: 14, … }
       result.crystal         = crystalTotal;     // kept: the summed total
 
-      // Two independent trophy tracks that COMBINE: `trophies` always drop on a
-      // win; `spell_trophies` are granted on top when a trophy_gain spell was cast.
-      const activeTrophySpell = (record.battle_data.selected_spells || [])
-        .map(s => Object.values(SPELLS).flat().find(sp => sp.id === s.spell_id))
-        .find(sp => sp && sp.effect_type === 'trophy_gain');
-
+      // Trophies are declared as { id: amount } on the level and always drop on
+      // a win. There used to be a second `spell_trophies` track granted on top
+      // when a trophy_gain spell had been cast — both halves of that are gone:
+      // no spell carries trophy_gain any more, and pre-battle spell selection
+      // was removed, so it could never fire.
       const granted = {};
-      for (const { id, amount } of tuned.trophies) {
+      for (const [id, amount] of Object.entries(tuned.trophies)) {
         if (id && amount) granted[id] = (granted[id] || 0) + amount;
-      }
-      if (activeTrophySpell) {
-        for (const { id, amount } of tuned.spell_trophies) {
-          if (id && amount) granted[id] = (granted[id] || 0) + amount;
-        }
       }
       // Trophies land together — a six-trophy haul was six sequential writes on
       // the victory screen, which is precisely where the player is waiting.

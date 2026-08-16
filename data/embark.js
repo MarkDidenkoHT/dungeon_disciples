@@ -18,8 +18,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 15, xp: 30,
         crystals:        [{ type: 'Crystals_Life', amount: 5 }, { type: 'Crystals_Fire', amount: 5 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 1 }],
-        spell_trophies:  [{ id: 'aggrails_signet', amount: 1 }],
+        trophies:        { vial_of_pure_blood: 1, aggrails_signet: 1 },
       },
     },
     level_2: {
@@ -31,8 +30,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 50,
         crystals:        [{ type: 'Crystals_Life', amount: 8 }, { type: 'Crystals_Fire', amount: 8 }],
-        trophies:        [{ id: 'aggrails_signet', amount: 1 }], 
-        spell_trophies:  [{ id: 'vial_of_pure_blood', amount: 2 }],
+        trophies:        { aggrails_signet: 1, vial_of_pure_blood: 2 },
       },
     },
     level_3: {
@@ -40,17 +38,13 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.aggrails_herald',  cell: 2 },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.sister_aldra_1',   cell: 3 , item_id: 'aldras_devotion',
-          // A boss casts from the same power pool the player's hero uses: one
-          // point per action, capped at 5. The cheap spell recurs, the
-          // expensive one is the reward for surviving — see aiPickSpell.
           spells: [{ spell_id: 'boss_heal', power: 2 }] },
         { key: 'crimson_basilica.initiate',         cell: 1},
       ],
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Life', amount: 10 }, { type: 'Crystals_Fire', amount: 10 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 2 }],
-        spell_trophies:  [{ id: 'shard_of_devotion', amount: 1 }],
+        trophies:        { vial_of_pure_blood: 2, shard_of_devotion: 1 },
       },
     },
     level_4: {
@@ -63,8 +57,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Life', amount: 11 }, { type: 'Crystals_Fire', amount: 11 }],
-        trophies:        [{ id: 'aggrails_signet', amount: 2 }],
-        spell_trophies:  [{ id: 'vial_of_pure_blood', amount: 2 }],
+        trophies:        { aggrails_signet: 2, vial_of_pure_blood: 2 },
       },
     },
     level_5: {
@@ -78,8 +71,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Life', amount: 13 }, { type: 'Crystals_Fire', amount: 13 }],
-        trophies:        [{ id: 'vial_of_pure_blood', amount: 3 }],
-        spell_trophies:  [{ id: 'aggrails_signet', amount: 2 }],
+        trophies:        { vial_of_pure_blood: 3, aggrails_signet: 2 },
       },
     },
     level_6: {
@@ -94,8 +86,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Life', amount: 14 }, { type: 'Crystals_Fire', amount: 14 }],
-        trophies:        [{ id: 'shard_of_devotion', amount: 1 }],
-        spell_trophies:  [{ id: 'shard_of_devotion', amount: 2 }],
+        trophies:        { shard_of_devotion: 3 },
       },
     },
   },
@@ -108,8 +99,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 15, xp: 30,
         crystals:        [{ type: 'Crystals_Frost', amount: 6 }, { type: 'Crystals_Air', amount: 6 }],
-        trophies:        [{ id: 'crystal_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'crystal_shard', amount: 1 }],
+        trophies:        { crystal_dust: 1, crystal_shard: 1 },
       },
     },
     level_2: {
@@ -121,15 +111,11 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Frost', amount: 8 }, { type: 'Crystals_Air', amount: 8 }],
-        trophies:        [{ id: 'crystal_shard', amount: 1 }],
-        spell_trophies:  [{ id: 'crystal_dust', amount: 1 }],
+        trophies:        { crystal_shard: 1, crystal_dust: 1 },
       },
     },
     level_3: {
       enemies: [
-        // Carrying spells is what makes a unit a hero to the engine, so this is
-        // also what turns Cryodrox into a caster that banks power. Cheap ward
-        // first, the burst once it has survived long enough to afford it.
         { key: 'glittering_abyss.cryodrox',  cell: 2,
           spells: [{ spell_id: 'boss_rime_ward', power: 2 }] },
         { key: 'glittering_abyss.chillrock',  cell: 0 },
@@ -137,8 +123,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Frost', amount: 10 }, { type: 'Crystals_Air', amount: 10 }],
-        trophies:        [{ id: 'living_geode', amount: 1 }],
-        spell_trophies:  [{ id: 'living_geode', amount: 1 }],
+        trophies:        { living_geode: 2 },
       },
     },
     level_4: {
@@ -150,8 +135,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Frost', amount: 11 }, { type: 'Crystals_Air', amount: 11 }],
-        trophies:        [{ id: 'crystal_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        { crystal_dust: 1, rusted_shackle: 1 },
       },
     },
     level_5: {
@@ -163,8 +147,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Frost', amount: 13 }, { type: 'Crystals_Air', amount: 13 }],
-        trophies:        [{ id: 'rusted_shackle', amount: 2 }],
-        spell_trophies:  [{ id: 'crystal_dust', amount: 1 }],
+        trophies:        { rusted_shackle: 2, crystal_dust: 1 },
       },
     },
     level_6: {
@@ -179,8 +162,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
-        trophies:        [{ id: 'living_geode', amount: 1 }],
-        spell_trophies:  [{ id: 'living_geode', amount: 2 }],
+        trophies:        { living_geode: 3 },
       },
     },
   },
@@ -194,8 +176,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 15, xp: 30,
         crystals:        [{ type: 'Crystals_Death', amount: 6 }, { type: 'Crystals_Nature', amount: 6 }],
-        trophies:        [{ id: 'grave_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        { grave_dust: 1, rusted_shackle: 1 },
       },
     },
     level_2: {
@@ -207,8 +188,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 20, xp: 40,
         crystals:        [{ type: 'Crystals_Death', amount: 8 }, { type: 'Crystals_Nature', amount: 8 }],
-        trophies:        [{ id: 'rusted_shackle', amount: 1 }],
-        spell_trophies:  [{ id: 'grave_dust', amount: 1 }], 
+        trophies:        { rusted_shackle: 1, grave_dust: 1 },
       },
     },
     level_3: {
@@ -222,8 +202,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 50,
         crystals:        [{ type: 'Crystals_Death', amount: 10 }, { type: 'Crystals_Nature', amount: 10 }],
-        trophies:        [{ id: 'shard_of_might', amount: 1 }],
-        spell_trophies:  [{ id: 'shard_of_might', amount: 1 }],
+        trophies:        { shard_of_might: 2 },
       },
     },
     level_4: {
@@ -236,8 +215,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 60,
         crystals:        [{ type: 'Crystals_Death', amount: 11 }, { type: 'Crystals_Nature', amount: 11 }],
-        trophies:        [{ id: 'grave_dust', amount: 1 }],
-        spell_trophies:  [{ id: 'rusted_shackle', amount: 1 }],
+        trophies:        { grave_dust: 1, rusted_shackle: 1 },
       },
     },
     level_5: {
@@ -250,8 +228,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 70,
         crystals:        [{ type: 'Crystals_Death', amount: 13 }, { type: 'Crystals_Nature', amount: 13 }],
-        trophies:        [{ id: 'rusted_shackle', amount: 2 }],
-        spell_trophies:  [{ id: 'grave_dust', amount: 1 }],
+        trophies:        { rusted_shackle: 2, grave_dust: 1 },
       },
     },
     level_6: {
@@ -267,8 +244,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 80,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
-        trophies:        [{ id: 'shard_of_might', amount: 1 }],
-        spell_trophies:  [{ id: 'shard_of_might', amount: 2 }],
+        trophies:        { shard_of_might: 3 },
       },
     },
   },
@@ -299,38 +275,22 @@ const REGIONS = [
 ];
 
 
-// ── Per-level rewards ────────────────────────────────────────────────────────
-// No formulas, no region pools, no randomised trophy tables. Every level states
-// exactly what it pays out in its own `rewards` block in REGION_ENCOUNTERS:
+// Every level states exactly what it pays; nothing is scaled or randomised.
+// Omitted keys simply don't drop. Trophies are the crafting inputs — finished
+// equipment is never a drop.
 //
 //   rewards: {
 //     gold: 40, xp: 90,
-//
-//     // Guaranteed crystals — exact types and amounts. List as many as you like.
 //     crystals: [{ type: 'Crystals_Life', amount: 8 }],
-//
-//     // The ONLY random element: one type is picked from this pool.
-//
-//     // Basic shards — always drop on a win, no spell needed.
-//     trophies: [{ id: 'vial_of_pure_blood', amount: 1 }],
-//
-//     // Extra shards the trophy spell unlocks. These COMBINE with `trophies`
-//     // (both are granted when a trophy_gain spell was cast), they don't replace them.
-//     spell_trophies: [{ id: 'aggrails_signet', amount: 1 }],
+//     trophies: { vial_of_pure_blood: 1, aggrails_signet: 2 },
 //   }
-//
-// Anything omitted simply doesn't drop — nothing is inferred or invented.
-// Finished items are NEVER dropped; equipment comes only from crafting, so
-// these shards are the crafting inputs.
 function getLevelRewards(region_id, level) {
   const declared = REGION_ENCOUNTERS[region_id]?.[`level_${level}`]?.rewards ?? {};
-  const asList   = v => (Array.isArray(v) ? v : []);
   return {
-    gold: declared.gold ?? 0,
-    xp:   declared.xp   ?? 0,
-    crystals:        asList(declared.crystals),
-    trophies:        asList(declared.trophies),
-    spell_trophies:  asList(declared.spell_trophies),
+    gold:     declared.gold ?? 0,
+    xp:       declared.xp   ?? 0,
+    crystals: Array.isArray(declared.crystals) ? declared.crystals : [],
+    trophies: declared.trophies && typeof declared.trophies === 'object' ? declared.trophies : {},
   };
 }
 
@@ -353,19 +313,16 @@ function getEncounter(region_id, level) {
         if (itemDef) unitData = applyItemModifiers(unitData, itemDef);
       }
 
-      // `spells` marks this unit as the encounter's caster: the engine treats
-      // any enemy carrying them as a hero, so it banks power and spends it.
+      // `spells` makes the engine treat this unit as a hero: it banks power.
       return { ...unitData, cell: slot.cell, item_id: slot.item_id || null, spells: slot.spells || [] };
     })
     .filter(Boolean);
 }
 
 // ── Where does X drop? ──────────────────────────────────────────────────────
-// Reverse index over every region/level reward table: material -> region ids.
-// Used by the item sheet, so tapping a crafting ingredient can say where to go
-// and send the player to those regions on the embark map.
-// Materials are crystal resource names ('Crystals_Fire'), trophy ids
-// ('grave_dust') or 'Gold'.
+// material -> region ids, so tapping a crafting ingredient can say where to go.
+// Materials are crystal names ('Crystals_Fire'), trophy ids ('grave_dust'), or
+// 'Gold'.
 let _dropIndex = null;
 function buildDropIndex() {
   const index = {};
@@ -381,8 +338,7 @@ function buildDropIndex() {
       const rw = getLevelRewards(region.id, level);
       if (rw.gold) add('Gold', region.id);
       for (const c of rw.crystals) add(c.type, region.id);
-      for (const t of rw.trophies) add(t.id, region.id);
-      for (const t of rw.spell_trophies) add(t.id, region.id);
+      for (const id of Object.keys(rw.trophies)) add(id, region.id);
     }
   }
   return Object.fromEntries(Object.entries(index).map(([k, v]) => [k, [...v]]));
@@ -393,10 +349,8 @@ function getRegionsForMaterial(material) {
   return _dropIndex[material] || [];
 }
 
-// ── Where a faction should be sent first ────────────────────────────────────
-// Derived from the reward tables rather than hardcoded: a faction is pointed at
-// whichever region drops the crystal its buildings are paid for in. If those
-// rewards are retuned, this follows automatically.
+// A faction opens on whichever region drops the crystal its buildings cost, so
+// retuning the reward tables moves this automatically.
 const FACTION_CRYSTAL_FOR_REGION = {
   empire:              'Crystals_Life',
   choir_of_the_cursed: 'Crystals_Fire',
