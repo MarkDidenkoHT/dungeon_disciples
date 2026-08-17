@@ -521,18 +521,31 @@ export function renderCastle(root, { player }) {
       paths = mercDef ? getMercUpgradePaths(mercDef) : getUpgradePathsForBuilding(player.faction, buildingDef);
     }
 
-    // The unit and the building can sit a tier apart in EITHER direction, and
-    // asking the unit alone only fixed one of them. When the building has run
-    // ahead — the tier 4 keep already raised while the unit is still tier 3 —
-    // the unit's path still names that keep, so the sheet offered a build for a
-    // building already standing there and /structures/build answered "Already at
-    // max level". The unit levels up from XP once its building exists (the
-    // server auto-levels it); there is nothing left to BUILD.
+    // The unit and the building can sit a tier apart in either direction, so the
+    // unit's path list alone is not the answer — the SLOT decides what is still
+    // buildable.
+    //
+    // Faction paths carry `building_id`; mercenary paths are building defs and
+    // carry `id`. Both mean the same thing here.
+    const targetOf = p => p.building_id ?? p.id;
     const state = slot ? structuresRecord.buildings_data?.[slot] : null;
     if (!state) return paths;
+
     // Nothing can be built on a maxed slot, whatever the unit's path says.
     if ((state.level ?? 0) >= heroMaxLevel) return [];
-    return (paths || []).filter(p => p.building_id !== state.building_id);
+
+    // THE BRANCH IS ALREADY CHOSEN. If the building standing here is one of the
+    // unit's own upgrade targets, the player committed to that branch when they
+    // raised it — the unit now only needs XP, and its SIBLING branches are no
+    // longer reachable.
+    //
+    // This was the e2 case: slot holds sun_temple (which grants e21) while the
+    // unit is still e2, and e2's paths name both e21 and e22. Filtering only the
+    // building already present left e22 on offer, inviting the player to build a
+    // branch they had already passed on.
+    if ((paths || []).some(p => targetOf(p) === state.building_id)) return [];
+
+    return (paths || []).filter(p => targetOf(p) !== state.building_id);
   }
 
   function openSliderModal(title, slides, onConfirm, opts = {}) {
