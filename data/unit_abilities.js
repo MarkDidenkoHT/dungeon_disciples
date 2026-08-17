@@ -746,9 +746,6 @@ const UNIT_ABILITIES = {
     dispellable: true,
     params: { initiative_shred: 5 },
   },
-  // Battle start ONLY — the ghosts arriving together, not a ward that renews.
-  // The shield is spent point for point and is capped at half max HP by the pool
-  // rules, so a large Ghost roster is generous rather than unbounded.
   'ethereal_form 1': {
     id: 'ethereal_form 1',
     name: 'Ethereal Form',
@@ -756,9 +753,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain a 4-point Shield for each Ghost ally on the field.',
+    description: 'At battle start, gain a 4-point Shield for each Spirit ally on the field.',
     description_ru: "В начале боя получает щит на 4 единицы за каждого союзного призрака на поле.",
-    params: { shield_per_tagged_unit: 4, tag_required: 'Ghost' },
+    params: { shield_per_tagged_unit: 4, tag_required: 'Spirit' },
     effect_name: 'shield_ward',
   },
   'ethereal_form 2': {
@@ -768,9 +765,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain a 6-point Shield for each Ghost ally on the field.',
+    description: 'At battle start, gain a 6-point Shield for each Spirit ally on the field.',
     description_ru: "В начале боя получает щит на 6 единиц за каждого союзного призрака на поле.",
-    params: { shield_per_tagged_unit: 6, tag_required: 'Ghost' },
+    params: { shield_per_tagged_unit: 6, tag_required: 'Spirit' },
     effect_name: 'shield_ward',
   },
   'aura_of_decay 1': {
