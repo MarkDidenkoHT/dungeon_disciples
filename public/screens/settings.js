@@ -3,6 +3,7 @@ import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 import { saveLanguageCache } from './loading.js';
+import { CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, getSheetBody } from '../utils.js';
 
 export function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -34,10 +35,11 @@ const UI_TEXT = {
   promoPlaceholder: { en: 'Enter a code',    ru: 'Введите код' },
   promoRedeem:      { en: 'Redeem',          ru: 'Активировать' },
   promoRedeeming:   { en: 'Checking…',       ru: 'Проверяем…' },
-  promoOk:          { en: 'Claimed',         ru: 'Получено' },
-  promoXp:          { en: 'XP each',         ru: 'опыта каждому' },
-  promoCrystals:    { en: 'crystals',        ru: 'кристаллов' },
-  promoTrophies:    { en: 'trophies',        ru: 'трофеев' },
+  promoOk:          { en: 'Rewards claimed', ru: 'Награды получены' },
+  promoXp:          { en: 'XP to every unit', ru: 'опыта каждому бойцу' },
+  promoGotIt:       { en: 'Good',            ru: 'Отлично' },
+  promoLeveled:     { en: n => `${n} unit${n > 1 ? 's' : ''} advanced a tier`,
+                      ru: n => `Бойцов повысило ранг: ${n}` },
 };
 
 // Server codes get their own line; anything else falls back to the message the
@@ -160,6 +162,45 @@ export function renderSettings(root, { player }) {
     promoMsg.className = `promo-box-msg ${ok ? 'promo-box-msg--ok' : 'promo-box-msg--err'}`;
   };
 
+  // What the code actually paid, with the same resource icons the rest of the
+  // game uses. One chip per reward, wrapping in a grid — six crystal types read
+  // at a glance here where they could not as a comma list.
+  function openRewardModal(res) {
+    const g = res.granted || {};
+    const chips = [];
+
+    if (g.gold) {
+      chips.push(`<span class="promo-reward-chip">${GOLD_ICON}<span>+${g.gold}</span></span>`);
+    }
+    // Fixed order, not object order, so the same promo always reads the same way.
+    for (const type of ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death',
+                        'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air']) {
+      const amt = g.crystals?.[type];
+      if (amt) chips.push(`<span class="promo-reward-chip" title="${type.replace('Crystals_', '')}">${
+        CRYSTAL_ICONS[type] || ''}<span>+${amt}</span></span>`);
+    }
+    for (const [id, amt] of Object.entries(g.trophies || {})) {
+      chips.push(`<span class="promo-reward-chip promo-reward-chip--wide" title="${id.replace(/_/g, ' ')}">${
+        id.replace(/_/g, ' ')} <span>+${amt}</span></span>`);
+    }
+
+    const xpRow = g.roster_xp
+      ? `<div class="promo-reward-xp">+${g.roster_xp} ${UI_TEXT.promoXp[L]}</div>` : '';
+    // Only when the promo's XP actually pushed someone over their threshold.
+    const levels = (res.auto_level_ups || []).length;
+    const lvlRow = levels
+      ? `<div class="promo-reward-levels">${UI_TEXT.promoLeveled[L](levels)}</div>` : '';
+
+    openSheet(res.name || UI_TEXT.promoTitle[L], `
+      <div class="promo-reward">
+        <div class="promo-reward-title">${UI_TEXT.promoOk[L]}</div>
+        <div class="promo-reward-chips">${chips.join('')}</div>
+        ${xpRow}${lvlRow}
+        <button class="promo-reward-btn" id="promo-reward-ok">${UI_TEXT.promoGotIt[L]}</button>
+      </div>`);
+    getSheetBody()?.querySelector('#promo-reward-ok')?.addEventListener('click', closeSheet);
+  }
+
   async function redeemPromo() {
     const code = promoInput.value.trim();
     if (!code) { showPromoMsg(PROMO_ERRORS.promo_empty[L], false); return; }
@@ -168,19 +209,13 @@ export function renderSettings(root, { player }) {
     promoBtn.textContent = UI_TEXT.promoRedeeming[L];
     try {
       const res = await api('/player/promo', { chat_id: player.chat_id, code });
-      // SUMMARISED, not itemised. Listing six crystal types plus XP ran to three
-      // wrapped lines on a phone, which is exactly what the fixed-height message
-      // box cannot show — and the resource bar already displays the real totals.
-      const g = res.granted || {};
-      const bits = [];
-      if (g.gold) bits.push(`${g.gold} Gold`);
-      const crystalTotal = Object.values(g.crystals || {}).reduce((a, b) => a + b, 0);
-      if (crystalTotal) bits.push(`${crystalTotal} ${UI_TEXT.promoCrystals[L]}`);
-      const trophyTotal = Object.values(g.trophies || {}).reduce((a, b) => a + b, 0);
-      if (trophyTotal) bits.push(`${trophyTotal} ${UI_TEXT.promoTrophies[L]}`);
-      if (g.roster_xp) bits.push(`${g.roster_xp} ${UI_TEXT.promoXp[L]}`);
-      showPromoMsg(`${UI_TEXT.promoOk[L]}: ${bits.join(', ')}`, true);
+      // A summary line could not carry six crystal types legibly, so the reward
+      // goes in a modal with the real icons — the same chips the errand payout
+      // screen uses. The inline line stays for ERRORS only, where one short
+      // sentence is the right amount of noise.
       promoInput.value = '';
+      showPromoMsg('', true);
+      openRewardModal(res);
       // BOTH halves of the reward. The bar carries crystals and gold; the roster
       // XP lives in the bootstrap payload, so without refreshing that the castle
       // and unit sheets would keep showing pre-promo XP until the next reload.

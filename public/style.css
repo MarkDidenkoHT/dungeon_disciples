@@ -7759,3 +7759,71 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .promo-box-msg--ok  { color: #6fbf73; }
 .promo-box-msg--err { color: var(--danger); }
+
+
+/* ── Promo reward modal ────────────────────────────────────────────────────
+   A comma list could not carry six crystal types legibly, so the payout gets
+   the real icons in a wrapping grid — the same read as the errand payout.
+   Icons are sized down from the 35px resource-bar default: at full size six
+   chips would not fit two rows on a phone. */
+.promo-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 2px;
+}
+.promo-reward-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.promo-reward-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.promo-reward-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(200, 151, 58, 0.08);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.promo-reward-chip .res-icon-img {
+  width: 24px;
+  height: 24px;
+}
+.promo-reward-chip--wide {
+  padding: 6px 10px;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+.promo-reward-xp {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.promo-reward-levels {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.promo-reward-btn {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(200, 151, 58, 0.12);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.promo-reward-btn:active { background: rgba(200, 151, 58, 0.26); }
