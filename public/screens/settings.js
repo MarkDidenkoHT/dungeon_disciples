@@ -1,4 +1,4 @@
-import { api, navigate } from '../api.js';
+import { api, navigate, refreshResourceBar } from '../api.js';
 import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
@@ -30,6 +30,20 @@ const UI_TEXT = {
   resetting:   { en: 'Resetting…', ru: 'Сброс…' },
   resetFailed: { en: 'Failed to reset progress', ru: 'Не удалось сбросить прогресс' },
   saveFailed:  { en: 'Failed to save setting', ru: 'Не удалось сохранить настройку' },
+  promoTitle:       { en: 'Promo Code',      ru: 'Промокод' },
+  promoPlaceholder: { en: 'Enter a code',    ru: 'Введите код' },
+  promoRedeem:      { en: 'Redeem',          ru: 'Активировать' },
+  promoRedeeming:   { en: 'Checking…',       ru: 'Проверяем…' },
+  promoOk:          { en: 'Rewards claimed', ru: 'Награды получены' },
+  promoXp:          { en: 'XP to every unit', ru: 'опыта каждому бойцу' },
+};
+
+// Server codes get their own line; anything else falls back to the message the
+// server sent, so a new failure mode is never swallowed into a blank box.
+const PROMO_ERRORS = {
+  promo_unknown: { en: 'No such code',        ru: 'Такого кода нет' },
+  promo_used:    { en: 'Already used',        ru: 'Код уже использован' },
+  promo_empty:   { en: 'Enter a code first',  ru: 'Сначала введите код' },
 };
 
 export function renderSettings(root, { player }) {
@@ -91,6 +105,17 @@ export function renderSettings(root, { player }) {
           </div>
         </div>
 
+        <div class="settings-section">
+          <div class="settings-promo-label">${UI_TEXT.promoTitle[L]}</div>
+          <div class="settings-promo-row">
+            <input class="settings-promo-input" id="promo-input" type="text"
+                   autocomplete="off" autocapitalize="none" spellcheck="false"
+                   placeholder="${UI_TEXT.promoPlaceholder[L]}">
+            <button class="settings-promo-btn" id="promo-btn">${UI_TEXT.promoRedeem[L]}</button>
+          </div>
+          <div class="settings-promo-msg" id="promo-msg"></div>
+        </div>
+
         <div class="settings-section settings-section--danger">
           <div class="settings-danger-title">${UI_TEXT.dangerZone[L]}</div>
           <button class="settings-reset-btn" id="reset-progress-btn">${UI_TEXT.resetBtn[L]}</button>
@@ -119,6 +144,49 @@ export function renderSettings(root, { player }) {
       alert(err.message || UI_TEXT.saveFailed[L]);
     }
   });
+
+  // ── Promo code ────────────────────────────────────────────────────────────
+  // The server is the authority on everything: whether the code exists, whether
+  // it has been used, and what it pays. This only reports the answer.
+  const promoBtn   = root.querySelector('#promo-btn');
+  const promoInput = root.querySelector('#promo-input');
+  const promoMsg   = root.querySelector('#promo-msg');
+
+  const showPromoMsg = (text, ok) => {
+    promoMsg.textContent = text;
+    promoMsg.className = `settings-promo-msg ${ok ? 'settings-promo-msg--ok' : 'settings-promo-msg--err'}`;
+  };
+
+  async function redeemPromo() {
+    const code = promoInput.value.trim();
+    if (!code) { showPromoMsg(PROMO_ERRORS.promo_empty[L], false); return; }
+
+    promoBtn.disabled = true;
+    promoBtn.textContent = UI_TEXT.promoRedeeming[L];
+    try {
+      const res = await api('/player/promo', { chat_id: player.chat_id, code });
+      // Say what actually arrived — "success" alone leaves the player checking
+      // three screens to find out whether anything happened.
+      const g = res.granted || {};
+      const bits = [];
+      if (g.gold) bits.push(`${g.gold} Gold`);
+      for (const [type, amt] of Object.entries(g.crystals || {})) bits.push(`${amt} ${type.replace('Crystals_', '')}`);
+      for (const [id, amt]  of Object.entries(g.trophies || {})) bits.push(`${amt} ${id.replace(/_/g, ' ')}`);
+      if (g.roster_xp) bits.push(`${g.roster_xp} ${UI_TEXT.promoXp[L]}`);
+      showPromoMsg(`${UI_TEXT.promoOk[L]}: ${bits.join(', ')}`, true);
+      promoInput.value = '';
+      // Crystals and gold are on the top bar, so it has to catch up immediately.
+      refreshResourceBar(player).catch(() => {});
+    } catch (err) {
+      showPromoMsg(PROMO_ERRORS[err?.code]?.[L] || err.message || UI_TEXT.saveFailed[L], false);
+    } finally {
+      promoBtn.disabled = false;
+      promoBtn.textContent = UI_TEXT.promoRedeem[L];
+    }
+  }
+
+  promoBtn.addEventListener('click', redeemPromo);
+  promoInput.addEventListener('keydown', e => { if (e.key === 'Enter') redeemPromo(); });
 
   const musicBtn = root.querySelector('#toggle-music');
   musicBtn.addEventListener('click', async () => {

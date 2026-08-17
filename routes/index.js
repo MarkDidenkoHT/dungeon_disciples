@@ -635,6 +635,106 @@ router.post('/player/consent', requireAuth, async (req, res) => {
   }
 });
 
+// ── Promo codes ─────────────────────────────────────────────────────────────
+// A row in `promos` names a code and what it pays; `players.promos` records
+// which codes that player has already taken, as { code: redeemed_at }.
+//
+// promo_data:
+//   {
+//     "crystals":  { "Crystals_Life": 50, ... },   // any resource row by name
+//     "gold":      100,
+//     "trophies":  { "grave_dust": 2 },
+//     "roster_xp": 25                              // to EVERY unit on the roster
+//   }
+//
+// Codes are matched case-insensitively and stored lower-cased, so a player
+// typing THX4PLAYTST on a phone keyboard is not told their code is wrong.
+router.post('/player/promo', requireAuth, async (req, res) => {
+  const { chat_id, code } = req.body;
+  if (!chat_id || !code) return res.status(400).json({ error: 'chat_id and code required' });
+
+  const key = String(code).trim().toLowerCase();
+  if (!key) return res.status(400).json({ error: 'Enter a code', code: 'promo_empty' });
+
+  try {
+    const [playerRows, promoRows] = await Promise.all([
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,promos&limit=1`),
+      // ilike rather than eq: the stored name may carry different casing.
+      supabase(`/promos?promo_name=ilike.${encodeURIComponent(key)}&limit=1`),
+    ]);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+    if (!promoRows.length)  return res.status(404).json({ error: 'Unknown code', code: 'promo_unknown' });
+
+    const player = playerRows[0];
+    const promo  = promoRows[0];
+    const taken  = player.promos || {};
+    // Keyed on the NORMALISED code, so re-entering it in different casing is
+    // still recognised as already used.
+    if (taken[key]) return res.status(400).json({ error: 'Code already used', code: 'promo_used' });
+
+    const data     = promo.promo_data || {};
+    const granted  = { crystals: {}, trophies: {}, gold: 0, roster_xp: 0 };
+    const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+
+    // Resources and trophies live in the same table, keyed by `item`. A row the
+    // player has never held does not exist yet, so it is inserted rather than
+    // skipped — otherwise a promo granting an unseen crystal pays nothing.
+    const addItem = async (item, amount, bucket) => {
+      const amt = Number(amount);
+      if (!item || !Number.isFinite(amt) || amt <= 0) return;
+      const row = inventory.find(r => r.item === item);
+      if (row) {
+        await supabase(`/resources?id=eq.${row.id}`, {
+          method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amt }) });
+      } else {
+        await supabase('/resources', { method: 'POST', body: JSON.stringify({
+          chat_id: String(chat_id),
+          item,
+          amount: amt,
+          item_type: bucket === 'trophies' ? 'trophy' : 'resource',
+        }) });
+      }
+      if (bucket === 'gold') granted.gold += amt;
+      else granted[bucket][item] = (granted[bucket][item] || 0) + amt;
+    };
+
+    if (data.gold) await addItem('Gold', data.gold, 'gold');
+    for (const [type, amt] of Object.entries(data.crystals || {})) await addItem(type, amt, 'crystals');
+    for (const [id,   amt] of Object.entries(data.trophies || {})) await addItem(id,   amt, 'trophies');
+
+    // Roster XP goes to every unit, hero included. Auto level-ups run afterwards
+    // so a unit pushed over its threshold by the promo advances immediately,
+    // exactly as it would after a battle.
+    let autoLeveled = [];
+    if (Number(data.roster_xp) > 0) {
+      const xp = Number(data.roster_xp);
+      const roster = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      await Promise.all(roster.map(r => supabase(`/roster?id=eq.${encodeURIComponent(r.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ unit_data: { ...(r.unit_data || {}),
+          current_xp: Number(r.unit_data?.current_xp ?? 0) + xp } }),
+      })));
+      granted.roster_xp = xp;
+
+      const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+      const fresh = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      try { autoLeveled = await applyAutoLevelUps(fresh, structRows[0]?.buildings_data); }
+      catch (err) { console.error('promo auto level-up failed:', err.message); }
+    }
+
+    // Recorded LAST: if anything above threw, the code is not burned and the
+    // player can try again rather than losing it to a half-applied reward.
+    await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ promos: { ...taken, [key]: new Date().toISOString() } }),
+    });
+
+    res.json({ success: true, code: key, name: promo.promo_name, granted, auto_level_ups: autoLeveled });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.post('/player/settings', requireAuth, async (req, res) => {
   const { player_id, chat_id, settings } = req.body;
   if (!player_id || !chat_id || !settings || typeof settings !== 'object') {
