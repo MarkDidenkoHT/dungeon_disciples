@@ -33,6 +33,9 @@ const CASTLE_TEXT = {
   upgradeTo:   { en: n => `Upgrade → ${n}`,             ru: n => `Улучшить → ${n}` },
   upgradeCost: { en: (n, c) => `Upgrade → ${n} (${c})`, ru: (n, c) => `Улучшить → ${n} (${c})` },
   maxed:       { en: 'Maxed — No Upgrades',             ru: 'Максимальный уровень' },
+  // Nothing to BUILD, but the unit itself still has a tier ahead — it is only
+  // short of XP. Saying "maxed" here is simply false.
+  awaitingXp:  { en: 'Next tier at %s XP',              ru: 'Следующий ранг при %s опыта' },
   notEnough:   { en: 'Not enough trophies for this upgrade.', ru: 'Недостаточно трофеев для улучшения.' },
   deconstruct: { en: 'Deconstruct',                           ru: 'Разобрать' },
   close:       { en: 'Close',                                 ru: 'Закрыть' },
@@ -707,9 +710,9 @@ export function renderCastle(root, { player }) {
     const def    = resolveUnitDef(u);
     if (!def) return '';
 
-    const slotDef = getBuildingDefForUnit(def.id);
-    const hasPath = upgradePathsForBuildingDef(slotDef).length > 0;
-    const req     = hasPath ? (def.xp ?? 0) : 0;
+    // Same question the slot sheet's XP row asks, so the strip and the sheet can
+    // never disagree about whether a unit is finished.
+    const req = unitHasNextTier(u) ? (def.xp ?? 0) : 0;
     const cur     = stored.current_xp ?? 0;
     if (!req) return `<div class="portrait-xp-bar portrait-xp-bar--maxed" title="MAX"></div>`;
 
@@ -755,6 +758,19 @@ export function renderCastle(root, { player }) {
   // That is the comparison the player is making, and it keeps both bars on the
   // card through the swap instead of dropping two rows and shifting everything
   // under them.
+  // Does this unit have a next tier AT ALL, ignoring whether its building is
+  // ready? Drives the XP bar and the "maxed" wording, which describe the unit's
+  // own progression rather than what the ⚒ button can do right now.
+  function unitHasNextTier(rosterUnit) {
+    const def = rosterUnit ? resolveUnitDef(rosterUnit) : null;
+    if (!def) return false;
+    const own = getBuildingDefForUnit(def.id);
+    // Mercenaries progress through their own table; faction units through
+    // UNIT_UPGRADE_PATHS.
+    if (own?.region) return getMercUpgradePaths(own).length > 0;
+    return ((upgradePaths[player.faction] || {})[def.id] || []).length > 0;
+  }
+
   function progressForSlot(slot, paths, forUnit = null) {
     const u = rosterUnitForSlot(slot);
     if (!u) return null;
@@ -769,9 +785,13 @@ export function renderCastle(root, { player }) {
     const max = withItem?.hp ?? stored.max_hp ?? ownDef?.hp ?? null;
     const cur = Math.min(stored.current_hp ?? max ?? 0, max ?? 0);
 
-    // No paths left means nothing to advance into, so the XP row says "max tier"
-    // rather than drawing a bar against a requirement that does not exist.
-    const req = (paths && paths.length) ? (defFor?.xp ?? null) : null;
+    // Whether the XP bar has a target is about the UNIT's next tier, not about
+    // whether a BUILD is available. Those are different questions and the answer
+    // differs exactly when the building has run ahead of its unit: the tier 4
+    // keep is already standing, so there is nothing to build, but the unit is
+    // still tier 3 and 91 XP short of using it. Reading the build paths here
+    // stamped "Max tier" on a unit with its next tier plainly in front of it.
+    const req = unitHasNextTier(u) ? (defFor?.xp ?? null) : null;
 
     return {
       hp: max != null && max > 0 ? { cur, max } : null,
@@ -1505,7 +1525,14 @@ export function renderCastle(root, { player }) {
           ? `<div class="prep-track-wrap branch-track-wrap">
                <div class="portrait-track" id="slot-upgrade-track">${upgradeCards}</div>
              </div>`
-          : `<span class="castle-slot-maxed">${CASTLE_TEXT.maxed[castleLang]}</span>`}
+          : `<span class="castle-slot-maxed">${
+                // Two different reasons the track is empty, and they must not
+                // read the same. No build to do but a tier still ahead means the
+                // unit is waiting on XP, not finished.
+                (!canUpgrade && progress?.xp && !progress.xp.maxed && progress.xp.req > 0)
+                  ? CASTLE_TEXT.awaitingXp[castleLang].replace('%s', progress.xp.req)
+                  : CASTLE_TEXT.maxed[castleLang]
+              }</span>`}
         <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
                 title="${CASTLE_TEXT.deconstruct[castleLang]}" aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
       </div>
