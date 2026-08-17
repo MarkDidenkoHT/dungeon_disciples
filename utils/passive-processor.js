@@ -1041,11 +1041,23 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     // with Fanaticism registers that an ally just buffed them.
     engine.recordGrantedBuff(actor, 'initiative', allies.filter(a => a.id !== actor.id), p.ally_initiative_bonus);
   }
-  if (p.bonus_attack != null && target) {
+  if ((p.bonus_attack != null || p.bonus_attack_per_tag != null) && target) {
     // Route through engine.executeAction so range, invulnerability, unity bonds,
     // and all other targeting/damage rules are fully respected.
+    //
+    // `bonus_attack_per_tag` scales the strike by how many of that tag are on
+    // the field, so the ability rewards committing to the archetype rather than
+    // paying the same whatever the party looks like. The commanded unit counts
+    // itself — it is one of the Vampires/Demons standing there.
+    let pct = p.bonus_attack ?? 0;
+    if (p.bonus_attack_per_tag != null) {
+      const tagCount = combatants.filter(c =>
+        c.side === actor.side && c.alive &&
+        (c.unit_data?.tags ?? []).includes(p.tag_required)).length;
+      pct = p.bonus_attack_per_tag * tagCount;
+    }
     const savedPower = target.unit_data?.action_power;
-    const scaledPower = Math.floor((savedPower ?? 12) * p.bonus_attack / 100);
+    const scaledPower = Math.floor((savedPower ?? 12) * pct / 100);
     if (target.unit_data) target.unit_data = { ...target.unit_data, action_power: scaledPower };
     const validTargets = engine.getValidTargets(target, false);
     if (validTargets.length > 0) {

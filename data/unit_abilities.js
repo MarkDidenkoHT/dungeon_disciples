@@ -291,6 +291,15 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 35% урона юниту позади цели.",
     params: { behind_splash_pct: 35 },
   },
+  // ── Decay / Shield ─────────────────────────────────────────────────────────
+  // Two mirrored POOLS, both capped at 50% of the target's own max HP (see
+  // POOL_CAP_PCT in utils/battle-engine.js). Decay eats incoming HEALING point
+  // for point and is spent doing it; Shield eats incoming DAMAGE the same way.
+  // Both stack on re-application and saturate at the cap, so a long fight
+  // cannot turn either into an absolute immunity.
+  //
+  // `decay_amount` applies to whoever was hit. `shield_amount` shields the unit
+  // that was hit too, unless `shield_target: 'self'` names the attacker.
   'decay 1': {
     id: 'decay 1',
     name: 'Decay',
@@ -1029,9 +1038,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Command a Vampire ally to strike a random enemy for 50% of their normal damage.',
-    description_ru: "Приказывает союзному вампиру ударить случайного врага с 50% его обычного урона.",
-    params: { bonus_attack: 50, tag_required: 'Vampire' },
+    description: 'Command a Vampire ally to strike a random enemy for 30% of their normal damage per Vampire on the field.',
+    description_ru: "Приказывает союзному вампиру ударить случайного врага с уроном 30% за каждого вампира на поле.",
+    params: { bonus_attack_per_tag: 30, tag_required: 'Vampire' },
   },
   'blood_craze 2': {
     id: 'blood_craze 2',
@@ -1040,9 +1049,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Command a Vampire ally to strike a random enemy for 75% of their normal damage.',
-    description_ru: "Приказывает союзному вампиру ударить случайного врага с 75% его обычного урона.",
-    params: { bonus_attack: 75, tag_required: 'Vampire' },
+    description: 'Command a Vampire ally to strike a random enemy for 40% of their normal damage per Vampire on the field.',
+    description_ru: "Приказывает союзному вампиру ударить случайного врага с уроном 40% за каждого вампира на поле.",
+    params: { bonus_attack_per_tag: 40, tag_required: 'Vampire' },
   },
   'infernal_mandate 1': {
     id: 'infernal_mandate 1',
@@ -1051,9 +1060,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Command a Demon ally to strike a random enemy for 50% of their normal damage.',
-    description_ru: "Приказывает союзному демону ударить случайного врага с 50% его обычного урона.",
-    params: { bonus_attack: 50, tag_required: 'Demon' },
+    description: 'Command a Demon ally to strike a random enemy for 30% of their normal damage per Demon on the field.',
+    description_ru: "Приказывает союзному демону ударить случайного врага с уроном 30% за каждого демона на поле.",
+    params: { bonus_attack_per_tag: 30, tag_required: 'Demon' },
   },
   'infernal_mandate 2': {
     id: 'infernal_mandate 2',
@@ -1062,9 +1071,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Command a Demon ally to strike a random enemy for 75% of their normal damage.',
-    description_ru: "Приказывает союзному демону ударить случайного врага с 75% его обычного урона.",
-    params: { bonus_attack: 75, tag_required: 'Demon' },
+    description: 'Command a Demon ally to strike a random enemy for 40% of their normal damage per Demon on the field.',
+    description_ru: "Приказывает союзному демону ударить случайного врага с уроном 40% за каждого демона на поле.",
+    params: { bonus_attack_per_tag: 40, tag_required: 'Demon' },
   },
   'infernal_mandate 3': {
     id: 'infernal_mandate 3',
@@ -1073,9 +1082,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'ally_tagged',
-    description: 'Command a Demon ally to strike a random enemy for 100% of their normal damage.',
-    description_ru: "Приказывает союзному демону ударить случайного врага со 100% его обычного урона.",
-    params: { bonus_attack: 100, tag_required: 'Demon' },
+    description: 'Command a Demon ally to strike a random enemy for 50% of their normal damage per Demon on the field.',
+    description_ru: "Приказывает союзному демону ударить случайного врага с уроном 50% за каждого демона на поле.",
+    params: { bonus_attack_per_tag: 50, tag_required: 'Demon' },
   },
   'prayer_of_healing 1': {
     id: 'prayer_of_healing 1',
