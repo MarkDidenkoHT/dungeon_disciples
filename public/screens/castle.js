@@ -9,7 +9,7 @@ import { UNITS }             from '../../data/units.js';
 import { SPELLS }            from '../../data/spells.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
-import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
+import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -433,7 +433,17 @@ export function renderCastle(root, { player }) {
   // already open and closing that to answer a side question would lose the
   // player's place.
   function openMaterialSourceSheet(key) {
-    const regionIds = getRegionsForMaterial(key) || [];
+    const staticIds = getRegionsForMaterial(key) || [];
+    // A running event can be the ONLY place something drops — an event trophy has
+    // no entry in the static tables at all. Merged rather than shown separately:
+    // the player asked where to go, and the answer is a list of regions either way.
+    const eventIds  = eventRegionsForMaterial(key, bootstrapCache.data?.event);
+    const regionIds = [...new Set([...staticIds, ...eventIds])];
+    const eventOnly = !staticIds.length && eventIds.length > 0;
+    // Nothing drops it and no event is running. That is either a crafted
+    // ingredient or an event trophy between events; "not right now" is true of
+    // both, where "drops nowhere" is misleading for the second.
+    const dormant   = !regionIds.length;
     const label     = key === 'Gold' ? 'Gold' : key.replace(/Crystals_/, '').replace(/_/g, ' ');
     const have      = amountOf(key);
 
@@ -451,12 +461,14 @@ export function renderCastle(root, { player }) {
         <div class="mat-sheet-head">
           <span class="mat-sheet-have">${castleLang === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
         </div>
-        ${regionIds.length
-          ? `<p class="mat-sheet-label">${castleLang === 'ru' ? 'Выпадает:' : 'Drops in:'}</p>
+        ${!dormant
+          ? `<p class="mat-sheet-label">${eventOnly
+                ? (castleLang === 'ru' ? 'Выпадает только во время события:' : 'Drops during the event only:')
+                : (castleLang === 'ru' ? 'Выпадает:' : 'Drops in:')}</p>
              <div class="mat-region-list">${rows}</div>`
           : `<p class="modal-empty">${castleLang === 'ru'
-                ? 'Не выпадает в походах.'
-                : 'Not found on any expedition.'}</p>`}
+                ? 'Сейчас не выпадает — вернитесь во время события.'
+                : 'Not dropping right now — check back during an event.'}</p>`}
       </div>`);
 
     getSubSheetBody()?.querySelectorAll('.mat-region-btn').forEach(btn => {

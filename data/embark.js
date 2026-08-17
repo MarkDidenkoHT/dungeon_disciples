@@ -395,6 +395,22 @@ function getRegionsForMaterial(material) {
   return _dropIndex[material] || [];
 }
 
+// Regions that drop `material` because of the RUNNING event. Kept separate from
+// the static index above because the two answer different questions: the index
+// is permanent and derived from these tables, while this depends on a database
+// row that will stop existing. The event is passed in rather than read here —
+// this file has no server access and must stay pure.
+//
+// An empty result for a material with no static source either means "that is
+// crafted, not dropped" or "that is event-only and no event is running", and the
+// callers say so rather than claiming it drops nowhere.
+function eventRegionsForMaterial(material, event) {
+  const drops = event?.drops;
+  if (!material || !drops) return [];
+  return Object.keys(drops).filter(regionId =>
+    Object.values(drops[regionId] || {}).some(items => items && material in items));
+}
+
 // A faction opens on whichever region drops the crystal its buildings cost, so
 // retuning the reward tables moves this automatically.
 const FACTION_CRYSTAL_FOR_REGION = {
@@ -409,5 +425,5 @@ function getFactionHomeRegion(faction) {
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, getFactionHomeRegion };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion };

@@ -4,7 +4,7 @@ import { navigate }            from '../api.js';
 import { refreshResourceBar }  from '../api.js';
 import { bootstrapCache }      from '../api.js';
 import { ITEM_DEFS, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
-import { REGIONS, getRegionsForMaterial } from '../../data/embark.js';
+import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, cap,
   resolveUnitDef, resolveAbility,
@@ -556,7 +556,13 @@ export function renderItems(root, { player }) {
   // Tapping a cost chip answers the only question a player has about it: where
   // do I get more? Lists the regions that drop it and offers to go there.
   function openMaterialSheet(key) {
-    const regionIds     = getRegionsForMaterial(key);
+    // Static drops plus whatever the running event adds — an event trophy has no
+    // entry in the static tables, so without this it would report as dropping
+    // nowhere while it is actively dropping.
+    const staticIds     = getRegionsForMaterial(key) || [];
+    const eventIds      = eventRegionsForMaterial(key, bootstrapCache.data?.event);
+    const regionIds     = [...new Set([...staticIds, ...eventIds])];
+    const eventOnly     = !staticIds.length && eventIds.length > 0;
     const label         = materialName(key);
     const have          = ownedAmount(key);
     const ingredientDef = ITEM_DEFS[key] || null;
@@ -574,7 +580,9 @@ export function renderItems(root, { player }) {
           <span class="mat-sheet-have">${L === 'ru' ? 'В наличии' : 'Owned'}: <strong>${have}</strong></span>
         </div>
         ${regionIds.length
-          ? `<p class="mat-sheet-label">${L === 'ru' ? 'Выпадает:' : 'Drops in:'} <span class="mat-regions">${regionNames}</span></p>
+          ? `<p class="mat-sheet-label">${eventOnly
+                ? (L === 'ru' ? 'Только во время события:' : 'During the event only:')
+                : (L === 'ru' ? 'Выпадает:' : 'Drops in:')} <span class="mat-regions">${regionNames}</span></p>
              <!-- One row per region, each its own jump. Listing three names and
                   offering a single Embark button meant the player still had to
                   find the right card once they arrived. -->
@@ -588,7 +596,11 @@ export function renderItems(root, { player }) {
                          </button>`;
                }).join('')}
              </div>`
-          : `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`}
+          : ingredientDef
+            // Genuinely crafted — the existing, correct answer.
+            ? `<p class="modal-empty">${L === 'ru' ? 'Не выпадает в походах — только изготовление.' : 'Not found on any expedition — crafted only.'}</p>`
+            // Not crafted and dropping nowhere: an event trophy between events.
+            : `<p class="modal-empty">${L === 'ru' ? 'Сейчас не выпадает — вернитесь во время события.' : 'Not dropping right now — check back during an event.'}</p>`}
         ${ingredientDef ? `
           <div class="mat-sheet-cost">${costChips(ingredientDef.cost || {}, ingredientDef.item_cost || {})}</div>
           <button class="mat-embark-btn" id="mat-craft-btn" ${canMake ? '' : 'disabled'}>${T('craft')}</button>` : ''}
