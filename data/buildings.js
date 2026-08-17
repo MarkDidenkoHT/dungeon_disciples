@@ -727,16 +727,40 @@ const RESPEC_COST_PCT = 25;
 
 // Same category and same tier as `buildingId`, excluding itself. For the throne
 // this is the other branch at the current level (…_2_a <-> …_2_b).
+// A respec swaps a building for a SIBLING — another branch the same parent
+// leads to. It is re-choosing a fork, not moving to an unrelated line.
+//
+// It used to match on category + tier alone, which is far too wide: every
+// hero's cathedral is category 'throne', so a tier 3 Paladin cathedral offered
+// the Inquisitor and Artificer towers and a respec silently changed which HERO
+// the player had. The same hole let a Sun Temple (the Acolyte line) become an
+// Automaton Lab, carrying the unit's XP across to an unrelated unit.
 function getRespecOptions(faction, buildingId) {
   const pools = BUILDING_POOLS[faction];
   if (!pools) return [];
   const current = getBuildingDef(faction, buildingId);
   if (!current) return [];
   const pool = pools[current.category] || [];
+
+  // The building that upgrades INTO this one. Its other upgrades are the forks
+  // the player could have taken instead, and those are the only legal swaps.
+  const parent = pool.find(b => (b.upgrades || []).includes(current.id));
+  if (parent) {
+    return (parent.upgrades || [])
+      .filter(id => id !== current.id)
+      .map(id => pool.find(b => b.id === id))
+      .filter(b => b && b.unit_id);
+  }
+
+  // No parent: a tier 1 building raised straight from the pool. Swapping one of
+  // those is re-picking a starting choice, which is reasonable for barracks —
+  // but the throne IS the hero, chosen once at registration, and must never
+  // become a different hero's line.
+  if (current.category === 'throne') return [];
   return pool.filter(b =>
     b.id !== current.id &&
     b.tier != null && b.tier === current.tier &&
-    b.unit_id // 'throne' itself is a placeholder with no unit and no tier
+    b.unit_id
   );
 }
 

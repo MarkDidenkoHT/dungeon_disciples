@@ -285,12 +285,30 @@ export function renderCastle(root, { player }) {
   // rules are derived from that. Kept deliberately identical to
   // getRespecOptions/getRespecCost in data/buildings.js, which the server
   // enforces; this copy only decides what the UI offers.
+  // Must agree with getRespecOptions in data/buildings.js, which is what the
+  // server validates against — this had drifted into a second copy of the old
+  // category+tier rule, so the sheet offered swaps /structures/respec refuses.
+  //
+  // A respec re-chooses a FORK: the other branches the same parent leads to.
+  // Matching on category + tier alone let a Paladin cathedral list the
+  // Inquisitor and Artificer towers, which would change the player's hero.
   function respecOptionsFor(buildingId) {
     const pools = buildingPools?.[player.faction];
     if (!pools) return [];
     const current = getBuildingDef(player.faction, buildingId);
     if (!current) return [];
     const pool = pools[current.category] || [];
+
+    const parent = pool.find(b => (b.upgrades || []).includes(current.id));
+    if (parent) {
+      return (parent.upgrades || [])
+        .filter(id => id !== current.id)
+        .map(id => pool.find(b => b.id === id))
+        .filter(b => b && b.unit_id);
+    }
+    // Tier 1 has no parent: re-picking a starting building is fine for barracks,
+    // but the throne is the hero and is chosen once.
+    if (current.category === 'throne') return [];
     return pool.filter(b => b.id !== current.id && b.tier != null && b.tier === current.tier && b.unit_id);
   }
 

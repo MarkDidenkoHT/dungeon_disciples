@@ -2031,7 +2031,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 2000, passive: ['sacrament 1', 'lifesteal 2', 'regenerate 1'], ability: 'libation 1',
+      xp: 2000, passive: ['sacrament 1', 'lifesteal 2', 'regenerate 1'], ability: 'libation 2',
     },
     husk_colossus: {
       id: 'gs4', f: 'g', t: 1,
@@ -2090,7 +2090,7 @@ const UNITS = {
       hp: 125, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 15, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 2000, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
@@ -2102,7 +2102,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 12, action_icon: 'communion.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 10, action_icon: 'communion.jpg', action_animation: 'haunt',
       xp: 90, passive: 'communion 1', ability: 'blood_craze 1',
     },
     grail_tender: {
@@ -2114,7 +2114,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 14, action_icon: 'communion.jpg', action_animation: 'haunt',
       xp: 400, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'blood_craze 1',
     },
     grail_keeper: {
@@ -2126,7 +2126,7 @@ const UNITS = {
       hp: 60, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 18, action_icon: 'communion.jpg', action_animation: 'haunt',
       xp: 1000, passive: ['communion 1', 'resist_aura_fire 1', 'inspiration_damage 1'], ability: 'blood_craze 2',
     },
     grieving_servant: {
@@ -2138,7 +2138,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 15, action_icon: 'communion.jpg', action_animation: 'haunt',
+      damage_source: 'death', action_power: 14, action_icon: 'communion.jpg', action_animation: 'haunt',
       xp: 400, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
     },
     grieving_custodian: {
@@ -2150,8 +2150,8 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'communion.jpg', action_animation: 'haunt',
-      xp: 1000, passive: ['communion 1', 'lifesteal 1', 'rage 1'], ability: 'blood_craze 2',
+      damage_source: 'death', action_power: 18, action_icon: 'communion.jpg', action_animation: 'haunt',
+      xp: 1000, passive: ['communion 2', 'lifesteal 1'], ability: 'blood_craze 2',
     },
     ghost: {
       id: 'gs6', f: 'g', t: 1,

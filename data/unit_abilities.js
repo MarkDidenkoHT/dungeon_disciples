@@ -1578,6 +1578,17 @@ const UNIT_ABILITIES = {
     description_ru: "Жертвует 30% максимума HP (доступно только выше этого порога), чтобы нанести столько же урона одному врагу.",
     params: { libation_sacrifice_pct: 30 },
   },
+  'libation 2': {
+    id: 'libation 2',
+    name: 'Libation',
+    name_ru: "Возлияние",
+    rank: 2,
+    type: 'active',
+    target: 'enemy',
+    description: 'Sacrifice 50% of max HP (only usable above that threshold) to deal that much damage to a single enemy.',
+    description_ru: "Жертвует 50% максимума HP (доступно только выше этого порога), чтобы нанести столько же урона одному врагу.",
+    params: { libation_sacrifice_pct: 50 },
+  },
   'shared_suffering 1': {
     id: 'shared_suffering 1',
     name: 'Shared Suffering',

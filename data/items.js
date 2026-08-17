@@ -37,9 +37,6 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100, Crystals_Frost: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
-    // Example of a per-item gate overriding the rarity default (see the craft
-    // gating block below ITEM_DEFS): every ingredient comes out of the Abyss, so
-    // going deep there unlocks it early — otherwise it waits on a full clear.
     requires:     [
       { region: 'glittering_abyss',  level: 4 },
       { region: 'chamber_of_unrest', level: 6 },
@@ -225,7 +222,7 @@ const ITEM_DEFS = {
     faction:      'grail_of_sorrow',
     tag_required: 'Vampire',
     adds_tag:     'Zombie',
-    blocked_tags: ['Holy'],         // undeath will not graft onto a consecrated bearer
+    blocked_tags: ['Holy'],         
     stat_mods:    { hp: 3, armor: 3 },
     passive:      'horde 1',
     icon:         'shroud_of_the_fallen',
@@ -246,7 +243,6 @@ const ITEM_DEFS = {
     icon:         'mothers_gift',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Death: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   padded_armor: {
@@ -315,7 +311,6 @@ const ITEM_DEFS = {
     icon:         'fire_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Fire: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   orb_of_fire: {
@@ -374,6 +369,22 @@ const ITEM_DEFS = {
     rarity:       'common',
     cost:         { Gold: 20, Crystals_Fire: 15 },
   },
+  frost_cloak: {
+    key:          'frost_cloak',
+    name:         "Cold Resistance Potion",
+    name_ru:      'Зелье Защиты От Холода',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { cold_resist: 5 },
+    passive:      'resist_aura_cold 2',
+    icon:         'frost_cloak',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 30, Crystals_Frost: 10 },
+    requires:     { region: 'any', level: 2 },
+    item_cost:    {cold_resistance_potion: 2}
+  },
   death_resistance_potion: {
     key:          'death_resistance_potion',
     name:         "Death Resistance Potion",
@@ -399,7 +410,6 @@ const ITEM_DEFS = {
     icon:         'cold_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Frost: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   life_resistance_potion: {
@@ -414,7 +424,6 @@ const ITEM_DEFS = {
     icon:         'life_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Life: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   nature_resistance_potion: {
@@ -429,7 +438,6 @@ const ITEM_DEFS = {
     icon:         'nature_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Nature: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   air_resistance_potion: {
