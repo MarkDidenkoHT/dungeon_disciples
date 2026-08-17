@@ -244,23 +244,28 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all enemies', value: drain });
       }
     }
-    if (p.inspiration_stat != null && p.inspiration_value != null) {
-      const targets = engine.getInspirationTargets(owner);
+    if (p.inspiration_stat != null && (p.inspiration_value != null || p.inspiration_value_per_tag != null)) {
+      // The magnitude can scale with how many of the tag are fielded; who it
+      // reaches (adjacent allies in the column) is unchanged.
+      const inspVal = p.inspiration_value_per_tag != null
+        ? p.inspiration_value_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.inspiration_value;
+      const targets = inspVal > 0 ? engine.getInspirationTargets(owner) : [];
       for (const t of targets) {
         if (p.inspiration_stat === 'armor') {
-          t.armor += p.inspiration_value;
+          t.armor += inspVal;
         } else if (p.inspiration_stat === 'initiative') {
-          t.initiative += p.inspiration_value;
+          t.initiative += inspVal;
         } else if (p.inspiration_stat === 'max_hp') {
-          t.max_hp    += p.inspiration_value;
-          t.battle_hp += p.inspiration_value;
+          t.max_hp    += inspVal;
+          t.battle_hp += inspVal;
         } else if (p.inspiration_stat === 'damage') {
-          t._dmg_mult = (t._dmg_mult ?? 1) * (1 + p.inspiration_value / 100);
+          t._dmg_mult = (t._dmg_mult ?? 1) * (1 + inspVal / 100);
         }
       }
       if (targets.length) {
-        engine.recordGrantedBuff(owner, p.inspiration_stat, targets, p.inspiration_stat === 'damage' ? p.inspiration_value / 100 : p.inspiration_value);
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: p.inspiration_value, message: `${def.name} — +${p.inspiration_value}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
+        engine.recordGrantedBuff(owner, p.inspiration_stat, targets, p.inspiration_stat === 'damage' ? inspVal / 100 : inspVal);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
       }
     }
     // Resistance aura: +N of one school to every living ally, the carrier
@@ -268,24 +273,27 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // resistance step picks it up with no special case. Guarded by a flag —
     // on_battle_start can fire more than once for a revived unit, and this must
     // not stack with itself.
-    if (p.resist_aura_school != null && p.resist_aura_value != null &&
+    if (p.resist_aura_school != null && (p.resist_aura_value != null || p.resist_aura_value_per_tag != null) &&
         !owner._flags[def.id + '_aura']) {
       owner._flags[def.id + '_aura'] = true;
       const school = p.resist_aura_school;
+      const auraVal = p.resist_aura_value_per_tag != null
+        ? p.resist_aura_value_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.resist_aura_value;
       const allies = engine.combatants.filter(c => c.side === owner.side && c.alive);
       for (const t of allies) {
         if (!t.unit_data) continue;
         const resists = { ...(t.unit_data.resistances || {}) };
-        resists[school] = (resists[school] || 0) + p.resist_aura_value;
+        resists[school] = (resists[school] || 0) + auraVal;
         t.unit_data = { ...t.unit_data, resistances: resists };
       }
       if (allies.length) {
         engine.pushLog({
           type: 'passive', passive: def.name,
           actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
-          targetName: 'all allies', value: p.resist_aura_value,
+          targetName: 'all allies', value: auraVal,
           heal: false, stat: `${school} resistance`,
-          message: `${def.name} — +${p.resist_aura_value} ${school} resistance to the party`,
+          message: `${def.name} — +${auraVal} ${school} resistance to the party`,
         });
       }
     }
