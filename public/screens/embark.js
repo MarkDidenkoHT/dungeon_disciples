@@ -3,6 +3,13 @@ import { applyBackground } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import { assetUrl } from '../asset_base.js';
+// How many levels each region really has. The REGIONS array below is
+// presentation only; the level tables live in data/embark.js and are the single
+// source of truth for how many pips a region can ever show.
+import { REGIONS as REGION_DEFS } from '../../data/embark.js';
+
+const LEVEL_COUNTS = Object.fromEntries(
+  REGION_DEFS.map(r => [r.id, Object.keys(r.difficulties || {}).length]));
 
 // Static UI strings, keyed by language (see lang(player)). Region label/desc live
 // on REGIONS with _ru suffixes, following the game's inline-localization rule.
@@ -311,13 +318,17 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
           `;
         }
         // Clamped to the levels this region actually has. `progress` is the next
-        // playable level and now reaches levelCount + 1 once the final level is
+        // playable level and reaches levelCount + 1 once the final level is
         // cleared (so craft gates can require clearing the last one) — without
         // the clamp that extra point would draw a pip for a level that does not
         // exist, and tapping it would be rejected by /battle/create.
-        const levelCount = Object.keys(r.difficulties || {}).length || 1;
-        const maxLevel   = Math.min(progress[r.id] ?? 1, levelCount);
-        const levels     = Array.from({ length: maxLevel }, (_, i) => i + 1);
+        //
+        // The count comes from LEVEL_COUNTS, NOT from `r`: the REGIONS array in
+        // this file is presentation only (labels, art, blurb) and carries no
+        // `difficulties`. Reading it off `r` silently yielded 1 for every region
+        // and collapsed every map to a single pip.
+        const maxLevel = Math.min(progress[r.id] ?? 1, LEVEL_COUNTS[r.id] || 1);
+        const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
           <div class="embark-region-block">
             <div class="embark-card" data-id="${r.id}" style="${regionBgStyle(r)}">
