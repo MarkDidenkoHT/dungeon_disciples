@@ -202,7 +202,19 @@ class BattleEngine {
       _rosterId:  side === 'player' ? (unit._rosterId || unit.id || null) : null,
       _sourceId:  unit.id || null,
       unit_name:  unit.unit_name || data.name || 'Unknown',
-      unit_data:  data,
+      // A COMBATANT-OWNED copy, not the caller's object.
+      //
+      // `data` for an enemy is a shallow spread of its definition in
+      // data/units.js (see getEncounter), so `resistances` was literally the
+      // same object as the module-level def. Dissipate, Shatter, Condemn and
+      // every other resist-shredding effect write into it in place — which meant
+      // they were editing the game's own data: permanently, for every player, on
+      // every battle, accumulating until the resistance hit zero and staying
+      // there until the process restarted.
+      //
+      // Only the nested objects that get mutated need cloning; the flat fields
+      // are replaced wholesale or never written.
+      unit_data:  { ...data, resistances: { ...(data.resistances || {}) } },
       side,
       cellIndex:  cellIdx,
       size:       data.size ?? 'tile',

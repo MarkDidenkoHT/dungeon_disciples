@@ -303,12 +303,34 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // passive. Only genuine passives (regen above, light_of_dawn below) belong here.
     if (p.light_of_dawn === true) {
       const ownerRow = cellRow(owner.cellIndex);
-      const ownerCol = cellCol(owner.cellIndex);
-      const frontAllyCol = ownerCol === 1 ? 0 : 1;
-      const frontAlly = engine.combatants.find(c =>
-        c.side === owner.side && c.alive && c.id !== owner.id &&
-        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === frontAllyCol
-      );
+
+      // "The one in front" means the FIRST unit standing in that row — front
+      // column if anyone is there, otherwise the back one. It does not mean a
+      // fixed cell.
+      //
+      // The old version picked a column arithmetically from the OWNER's own
+      // column: the ally was whichever column the owner was not in (so a unit
+      // standing in the front column healed the one BEHIND it), and the enemy
+      // was the owner's column index mirrored onto the other side, ignoring
+      // that the enemy's front column is 0 while the player's is 1. Both
+      // therefore hit the wrong cell, and hit nothing at all whenever that one
+      // cell happened to be empty even though the row was occupied.
+      //
+      // Footprint-aware, because a 'row' unit stands in both columns and a
+      // 'column' unit covers two rows — matching on cellIndex alone misses them.
+      const frontColOf = side => (side === 'enemy' ? 0 : 1);
+      const firstInRow = (side, row, excludeId = null) => {
+        const front = frontColOf(side);
+        for (const col of [front, front === 0 ? 1 : 0]) {
+          const hit = engine.combatants.find(c =>
+            c.side === side && c.alive && c.id !== excludeId &&
+            engine.getFootprint(c).some(cell => cellRow(cell) === row && cellCol(cell) === col));
+          if (hit) return hit;
+        }
+        return null;
+      };
+
+      const frontAlly = firstInRow(owner.side, ownerRow, owner.id);
       if (frontAlly) {
         const healAmt = Math.min(Math.floor((p.light_of_dawn_heal ?? 15) * engine.fatigueHealMult()), frontAlly.max_hp - frontAlly.battle_hp);
         if (healAmt > 0) {
@@ -317,11 +339,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontAlly.unit_name, targetId: frontAlly.id, targetCell: frontAlly.cellIndex, value: healAmt, heal: true });
         }
       }
-      const frontEnemyCol = ownerCol === 0 ? 0 : 1;
-      const frontEnemy = engine.combatants.find(c =>
-        c.side !== owner.side && c.alive &&
-        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === frontEnemyCol
-      );
+      const frontEnemy = firstInRow(owner.side === 'player' ? 'enemy' : 'player', ownerRow);
       if (frontEnemy) {
         const dmgAmt = p.light_of_dawn_dmg ?? 15;
         hurt(frontEnemy, dmgAmt);
