@@ -603,7 +603,6 @@ const ITEM_DEFS = {
     passive:      'bleed 1',
     icon:         'orb_of_pure_blood',
     rarity:       'rare',
-    unique:       true,
     cost:         { vial_of_pure_blood: 1, Crystals_Death: 25 },
     item_cost:    { seal_of_power: 1, life_charm: 1 },
   },
