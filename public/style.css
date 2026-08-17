@@ -2427,12 +2427,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
   height: 100%;
 }
 
+/* Tightened from 24px gap / 24px vertical padding. Six toggles, the promo box
+   and the danger zone have to coexist on a phone; the old spacing plus the
+   removed "Settings" heading was what pushed the language row out of view. */
 .settings-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px 16px;
+  gap: 16px;
+  padding: 18px 16px;
   overflow-y: auto;
 }
 
@@ -7685,63 +7688,74 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .event-bonus-row span:last-child { color: var(--accent); font-weight: 600; }
 
-/* ── Promo code (settings) ─────────────────────────────────────────────────
-   Sits above the danger zone: a reward box next to a destructive one needs
-   clear separation, so this keeps the plain section styling and the reset
-   button keeps its red. */
-.settings-promo-label {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-bottom: 8px;
+
+/* ── Promo code box (settings) ─────────────────────────────────────────────
+   Its own element rather than a .settings-section: no card border, no heading
+   row, and the placeholder names the field. That keeps it to two lines of
+   vertical space on a screen that has to fit six toggles and the danger zone
+   on a phone.
+
+   The message line is FIXED HEIGHT and always in the DOM, so redeeming swaps
+   text into reserved space instead of growing the block and shoving the
+   language row off the bottom. */
+.promo-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.settings-promo-row {
+.promo-box-row {
   display: flex;
   gap: 8px;
 }
-.settings-promo-input {
+.promo-box-input {
   flex: 1;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text);
   font-family: inherit;
-  font-size: 0.9rem;
-  /* Codes are lower-cased server-side anyway; showing them upper keeps the
-     field legible on a phone without changing what is sent. */
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  /* Codes normalise to lower case server-side; upper just reads better here. */
   text-transform: uppercase;
 }
-.settings-promo-input:focus {
+.promo-box-input:focus {
   outline: none;
   border-color: var(--accent);
 }
-.settings-promo-input::placeholder {
+.promo-box-input::placeholder {
   color: var(--muted);
   text-transform: none;
+  letter-spacing: normal;
 }
-.settings-promo-btn {
-  padding: 10px 16px;
+.promo-box-btn {
+  flex: 0 0 auto;
+  padding: 9px 15px;
   border: 1px solid var(--accent);
   border-radius: 8px;
   background: rgba(200, 151, 58, 0.12);
   color: var(--accent);
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
-.settings-promo-btn:disabled { opacity: 0.5; cursor: default; }
-.settings-promo-btn:not(:disabled):active { background: rgba(200, 151, 58, 0.26); }
+.promo-box-btn:disabled { opacity: 0.5; cursor: default; }
+.promo-box-btn:not(:disabled):active { background: rgba(200, 151, 58, 0.26); }
 
-/* Reserves no height when empty, so redeeming does not shove the danger zone
-   down the screen under the player's thumb. */
-.settings-promo-msg {
-  font-size: 0.78rem;
-  line-height: 1.4;
-  margin-top: 8px;
+/* Two lines' worth, reserved whether or not there is a message. `overflow:
+   hidden` is the guarantee: even an unexpectedly long server error cannot
+   stretch the box. */
+.promo-box-msg {
+  height: 2.1em;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.05em;
+  padding-top: 0.15em;
+  color: var(--muted);
 }
-.settings-promo-msg:empty { margin-top: 0; }
-.settings-promo-msg--ok  { color: #6fbf73; }
-.settings-promo-msg--err { color: var(--danger); }
+.promo-box-msg--ok  { color: #6fbf73; }
+.promo-box-msg--err { color: var(--danger); }

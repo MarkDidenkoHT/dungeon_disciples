@@ -1,4 +1,4 @@
-import { api, navigate, refreshResourceBar } from '../api.js';
+import { api, navigate, refreshResourceBar, bootstrapCache } from '../api.js';
 import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
@@ -34,8 +34,10 @@ const UI_TEXT = {
   promoPlaceholder: { en: 'Enter a code',    ru: 'Введите код' },
   promoRedeem:      { en: 'Redeem',          ru: 'Активировать' },
   promoRedeeming:   { en: 'Checking…',       ru: 'Проверяем…' },
-  promoOk:          { en: 'Rewards claimed', ru: 'Награды получены' },
-  promoXp:          { en: 'XP to every unit', ru: 'опыта каждому бойцу' },
+  promoOk:          { en: 'Claimed',         ru: 'Получено' },
+  promoXp:          { en: 'XP each',         ru: 'опыта каждому' },
+  promoCrystals:    { en: 'crystals',        ru: 'кристаллов' },
+  promoTrophies:    { en: 'trophies',        ru: 'трофеев' },
 };
 
 // Server codes get their own line; anything else falls back to the message the
@@ -64,8 +66,6 @@ export function renderSettings(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-settings">
       <main class="settings-main">
-        <div class="settings-header">${UI_TEXT.header[L]}</div>
-
         <div class="settings-section">
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.sfx[L]}</span>
@@ -105,15 +105,18 @@ export function renderSettings(root, { player }) {
           </div>
         </div>
 
-        <div class="settings-section">
-          <div class="settings-promo-label">${UI_TEXT.promoTitle[L]}</div>
-          <div class="settings-promo-row">
-            <input class="settings-promo-input" id="promo-input" type="text"
+        <!-- Its own element, not a settings-section: no bordered card, no label
+             line, and the placeholder names the field. The message line below
+             has a FIXED height so redeeming cannot grow the block and push the
+             rows above it off screen. -->
+        <div class="promo-box">
+          <div class="promo-box-row">
+            <input class="promo-box-input" id="promo-input" type="text"
                    autocomplete="off" autocapitalize="none" spellcheck="false"
                    placeholder="${UI_TEXT.promoPlaceholder[L]}">
-            <button class="settings-promo-btn" id="promo-btn">${UI_TEXT.promoRedeem[L]}</button>
+            <button class="promo-box-btn" id="promo-btn">${UI_TEXT.promoRedeem[L]}</button>
           </div>
-          <div class="settings-promo-msg" id="promo-msg"></div>
+          <div class="promo-box-msg" id="promo-msg"></div>
         </div>
 
         <div class="settings-section settings-section--danger">
@@ -154,7 +157,7 @@ export function renderSettings(root, { player }) {
 
   const showPromoMsg = (text, ok) => {
     promoMsg.textContent = text;
-    promoMsg.className = `settings-promo-msg ${ok ? 'settings-promo-msg--ok' : 'settings-promo-msg--err'}`;
+    promoMsg.className = `promo-box-msg ${ok ? 'promo-box-msg--ok' : 'promo-box-msg--err'}`;
   };
 
   async function redeemPromo() {
@@ -165,18 +168,26 @@ export function renderSettings(root, { player }) {
     promoBtn.textContent = UI_TEXT.promoRedeeming[L];
     try {
       const res = await api('/player/promo', { chat_id: player.chat_id, code });
-      // Say what actually arrived — "success" alone leaves the player checking
-      // three screens to find out whether anything happened.
+      // SUMMARISED, not itemised. Listing six crystal types plus XP ran to three
+      // wrapped lines on a phone, which is exactly what the fixed-height message
+      // box cannot show — and the resource bar already displays the real totals.
       const g = res.granted || {};
       const bits = [];
       if (g.gold) bits.push(`${g.gold} Gold`);
-      for (const [type, amt] of Object.entries(g.crystals || {})) bits.push(`${amt} ${type.replace('Crystals_', '')}`);
-      for (const [id, amt]  of Object.entries(g.trophies || {})) bits.push(`${amt} ${id.replace(/_/g, ' ')}`);
+      const crystalTotal = Object.values(g.crystals || {}).reduce((a, b) => a + b, 0);
+      if (crystalTotal) bits.push(`${crystalTotal} ${UI_TEXT.promoCrystals[L]}`);
+      const trophyTotal = Object.values(g.trophies || {}).reduce((a, b) => a + b, 0);
+      if (trophyTotal) bits.push(`${trophyTotal} ${UI_TEXT.promoTrophies[L]}`);
       if (g.roster_xp) bits.push(`${g.roster_xp} ${UI_TEXT.promoXp[L]}`);
       showPromoMsg(`${UI_TEXT.promoOk[L]}: ${bits.join(', ')}`, true);
       promoInput.value = '';
-      // Crystals and gold are on the top bar, so it has to catch up immediately.
-      refreshResourceBar(player).catch(() => {});
+      // BOTH halves of the reward. The bar carries crystals and gold; the roster
+      // XP lives in the bootstrap payload, so without refreshing that the castle
+      // and unit sheets would keep showing pre-promo XP until the next reload.
+      await Promise.all([
+        refreshResourceBar(player).catch(() => {}),
+        bootstrapCache.refresh(player.chat_id).catch(() => {}),
+      ]);
     } catch (err) {
       showPromoMsg(PROMO_ERRORS[err?.code]?.[L] || err.message || UI_TEXT.saveFailed[L], false);
     } finally {

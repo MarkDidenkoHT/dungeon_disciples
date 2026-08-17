@@ -767,7 +767,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['resist_aura_death 1', 'beacon_of_hope 1'], ability: null,
+      passive: ['mithrails_light 1', 'beacon_of_hope 1'], ability: null,
       building_slot: 'slot_0', xp: 400
     },
     paladin_path_b_t3: {
@@ -780,7 +780,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['resist_aura_death 2', 'beacon_of_hope 1'], ability: null,
+      passive: ['mithrails_light 2', 'beacon_of_hope 1'], ability: null,
       building_slot: 'slot_0', xp: 1000
     },
     paladin_path_b_t4: {
@@ -793,7 +793,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['resist_aura_death 2', 'beacon_of_hope 2'], ability: null,
+      passive: ['mithrails_light 2', 'beacon_of_hope 2'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     paladin_path_b_t4_alt: {
@@ -806,7 +806,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['resist_aura_death 2', 'beacon_of_hope 1', 'dissipate 1'], ability: null,
+      passive: ['mithrails_light 2', 'beacon_of_hope 1', 'dissipate 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     inquisitor: {
