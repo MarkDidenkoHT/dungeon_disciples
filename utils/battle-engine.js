@@ -133,6 +133,28 @@ class BattleEngine {
   // The hero of a side: the flagged roster unit for the player, and for the
   // enemy whichever combatant carries spells (an encounter boss). Only a LIVING
   // hero earns, so killing it shuts the other side's casting down for good.
+  // Living units on `side` carrying `tag`. The unit of account for every
+  // "per Zombie / per Caster / per Knight" effect, so they all count alike.
+  tagCountFor(side, tag) {
+    if (!tag) return 0;
+    return this.combatants.filter(c =>
+      c.side === side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(tag)
+    ).length;
+  }
+
+  // A protector's own intercept chance: flat, or scaled by how many of the tag
+  // stand with it — a Knight line covers its own better the more of it there is.
+  // Read in two places (the "is anyone able to intercept?" filter and the roll
+  // itself), which must never disagree.
+  interceptChanceOf(unit, interceptDef) {
+    const ip = interceptDef?.params;
+    if (!ip) return 0;
+    if (ip.intercept_chance_pct_per_tag != null) {
+      return ip.intercept_chance_pct_per_tag * this.tagCountFor(unit.side, ip.tag_required);
+    }
+    return ip.intercept_chance_pct ?? 0;
+  }
+
   heroFor(side) {
     return this.combatants.find(c => c.side === side && c._is_hero) || null;
   }
@@ -975,14 +997,14 @@ class BattleEngine {
       if (!cells.some(cell => targetRows.has(cellRow(cell)))) return false;
       const defs = this.resolveAllPassiveDefs(c);
       const interceptDef  = defs.find(d => d.trigger === 'intercept');
-      const passiveChance = interceptDef?.params?.intercept_chance_pct ?? 0;
+      const passiveChance = this.interceptChanceOf(c, interceptDef);
       const spellChance   = c.intercept_bonus_pct ?? 0;
       return (passiveChance + spellChance) > 0;
     });
     for (const protector of protectors) {
       const defs = this.resolveAllPassiveDefs(protector);
       const interceptDef  = defs.find(d => d.trigger === 'intercept');
-      const passiveChance = interceptDef?.params?.intercept_chance_pct ?? 0;
+      const passiveChance = this.interceptChanceOf(protector, interceptDef);
       const spellChance   = protector.intercept_bonus_pct ?? 0;
       const chance = (passiveChance + spellChance) / 100;
       if (Math.random() < chance) {

@@ -5,10 +5,7 @@ function cellCol(i) { return i % 2; }
 // "per Zombie / per Demon / per Holy" passive, so they all count the same way:
 // the owner counts itself when it carries the tag, and the dead never count.
 function tagCount(engine, side, tag) {
-  if (!tag) return 0;
-  return engine.combatants.filter(c =>
-    c.side === side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(tag)
-  ).length;
+  return engine.tagCountFor ? engine.tagCountFor(side, tag) : 0;
 }
 
 // A percentage that may be flat or scaled per tag. Returns 0 when neither is
@@ -138,13 +135,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
         : [owner];
       for (const u of who) engine.grantShield(u, p.shield_amount, def);
     }
-    if (p.ally_max_hp_bonus != null) {
+    if (p.ally_max_hp_bonus != null || p.ally_max_hp_bonus_per_tag != null) {
+      const hpEach = p.ally_max_hp_bonus_per_tag != null
+        ? p.ally_max_hp_bonus_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.ally_max_hp_bonus;
       const allies = engine.combatants.filter(c => c.side === owner.side);
-      for (const a of allies) { a.battle_hp += p.ally_max_hp_bonus; a.max_hp += p.ally_max_hp_bonus; }
-      engine.recordGrantedBuff(owner, 'max_hp', allies, p.ally_max_hp_bonus);
+      for (const a of allies) { a.battle_hp += hpEach; a.max_hp += hpEach; }
+      engine.recordGrantedBuff(owner, 'max_hp', allies, hpEach);
       // `stat` marks this as a stat grant, not a heal — without it the client's
       // log renderer defaults to "healed" (entry.heal !== false).
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_max_hp_bonus, heal: false, stat: 'max HP' });
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: hpEach, heal: false, stat: 'max HP' });
     }
     if (p.ally_armor_bonus != null) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
@@ -228,9 +228,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: rowAlly.unit_name, targetCell: rowAlly.cellIndex, value: p.command_initiative_bonus });
       }
     }
-    if (p.sorrow_initiative_drain === true) {      const specter_count = engine.combatants.filter(c => c.side === owner.side && c.alive && (c.unit_data?.tags ?? []).includes('Specter')).length;
-      if (specter_count > 0) {
-        const drain = 2 * specter_count;
+    if (p.sorrow_initiative_drain === true) {
+      // Counted 'Specter', a tag no unit in the game carries, so the drain was
+      // always 2 x 0 and Sorrow did nothing at all. The tag is Spirit, and it
+      // now comes from the params rather than being hardcoded.
+      const n = tagCount(engine, owner.side, p.tag_required ?? 'Spirit');
+      if (n > 0) {
+        const drain = (p.sorrow_drain_per_tag ?? 2) * n;
         const enemies = engine.combatants.filter(c => c.side !== owner.side);
         for (const e of enemies) {
           e.initiative = Math.max(0, e.initiative - drain);
@@ -552,13 +556,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
     }
-    if (p.fellfire_pct != null) {
+    if (p.fellfire_pct != null || p.fellfire_pct_per_tag != null) {
       // Splash a fraction of the damage to every OTHER burning enemy.
       const burning = engine.combatants.filter(c =>
         c.side !== owner.side && c.alive && c.id !== target.id && (c.dot_dmg ?? 0) > 0
       );
       for (const b of burning) {
-        const splash = Math.max(1, Math.floor(dmg * p.fellfire_pct / 100));
+        const splash = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "fellfire_pct", "fellfire_pct_per_tag") / 100));
         hurt(b, splash);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: b.unit_name, targetId: b.id, targetCell: b.cellIndex, value: splash, heal: false });
         if (b.battle_hp <= 0) {
@@ -730,17 +734,20 @@ function dispatchPassive(trigger, owner, def, ctx) {
       owner._reanimate_pending = reviveHp;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — ${owner.unit_name} will reanimate next turn with ${reviveHp} HP (${zombieCount} Zombie tag${zombieCount !== 1 ? 's' : ''})` });
     }
-    if (p.death_aoe_damage != null) {
+    if (p.death_aoe_damage != null || p.death_aoe_damage_per_tag != null) {
+      const deathDmg = p.death_aoe_damage_per_tag != null
+        ? p.death_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.death_aoe_damage;
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
-        hurt(e, p.death_aoe_damage);
+        hurt(e, deathDmg);
         if (e.battle_hp <= 0) e.alive = false;
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: p.death_aoe_damage, heal: false });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: deathDmg, heal: false });
       }
     }
   }
   if (trigger === 'on_heal' && owner === actor) {
-    if (p.hot_pct != null && target) {
-      target._hot = (target._hot ?? 0) + Math.floor(dmg * p.hot_pct / 100);
+    if ((p.hot_pct != null || p.hot_pct_per_tag != null) && target) {
+      target._hot = (target._hot ?? 0) + Math.floor(dmg * pctFor(p, engine, owner.side, "hot_pct", "hot_pct_per_tag") / 100);
       engine.registerEffect(target, {
         key: 'hot', name: def.name, polarity: 'positive', dispellable: def.dispellable === true, clear: { _hot: 0 },
       });
