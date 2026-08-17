@@ -245,6 +245,22 @@ const ITEM_DEFS = {
     cost:         { Gold: 30, Crystals_Death: 10 },
     requires:     { region: 'any', level: 1 },
   },
+  vampirics_dagger: {
+    key:          'vampirics_dagger',
+    name:         "Vampiric Dagger",
+    name_ru:      'Вампирский Кинжал',
+    faction:      'grail_of_sorrow',
+    tag_required: 'Vampire',
+    adds_tag:     'knight',
+    stat_mods:    { hp: 2 },
+    passive:      'bleed 1',
+    icon:         'vampirics_dagger',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 40, Crystals_Death: 15, Crystals_Life: 15 },
+    requires:     { region: 'any', level: 1 },
+    item_cost:    { life_charm: 1 }
+  },
   padded_armor: {
     key:          'padded_armor',
     name:         "Padded Armor",
