@@ -601,9 +601,26 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
     if (p.adjacent_aoe_damage != null) {
+      // Retaliation splash, centred on the ATTACKER and including it.
+      //
+      // It used to measure row distance from the OWNER and exclude the attacker,
+      // which was wrong twice over: the owner stands on the opposite grid so the
+      // comparison was across boards, and with no column term at all `range: 1`
+      // selected every cell in three rows — four of six cells minimum, all six
+      // from the middle row. The one unit it reliably spared was the attacker,
+      // which is precisely who a retaliation is for.
+      //
+      // Manhattan distance, so range 1 is the struck cell plus its orthogonal
+      // neighbours and a diagonal stays out. Footprint-to-footprint, because a
+      // 'row' or 'column' unit stands in more than one cell.
+      const range      = p.range ?? 1;
+      const actorCells = engine.getFootprint(actor);
+      const withinRange = c => engine.getFootprint(c).some(tc =>
+        actorCells.some(ac =>
+          Math.abs(cellRow(tc) - cellRow(ac)) + Math.abs(cellCol(tc) - cellCol(ac)) <= range));
+
       const adjacent = engine.combatants.filter(c =>
-        c.side === actor.side && c.alive && c.id !== actor.id &&
-        Math.abs(cellRow(c.cellIndex) - cellRow(owner.cellIndex)) <= (p.range ?? 1)
+        c.side === actor.side && c.alive && withinRange(c)
       );
       for (const adj of adjacent) {
         hurt(adj, p.adjacent_aoe_damage);

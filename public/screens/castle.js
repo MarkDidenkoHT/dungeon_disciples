@@ -501,20 +501,31 @@ export function renderCastle(root, { player }) {
   // thing being levelled and it can lag the building it stands in. Mercenaries
   // keep their own table; a slot with no occupant yet falls back to the
   // building's blueprint so an empty slot still shows a chain.
-  function upgradePathsForSlotUnit(rosterUnit, mercDef, buildingDef) {
+  function upgradePathsForSlotUnit(rosterUnit, mercDef, buildingDef, slot = null) {
     const unitDef = rosterUnit ? resolveUnitDef(rosterUnit) : null;
-    if (unitDef) {
-      if (mercDef) {
-        const ownBuilding = getBuildingDefForUnit(unitDef.id);
-        if (ownBuilding) return getMercUpgradePaths(ownBuilding);
-      } else {
-        const byUnit = (upgradePaths[player.faction] || {})[unitDef.id];
-        if (byUnit && byUnit.length) return byUnit;
-      }
+    let paths;
+    if (unitDef && mercDef) {
+      const ownBuilding = getBuildingDefForUnit(unitDef.id);
+      paths = ownBuilding ? getMercUpgradePaths(ownBuilding) : getMercUpgradePaths(mercDef);
+    } else if (unitDef && !mercDef) {
+      const byUnit = (upgradePaths[player.faction] || {})[unitDef.id];
+      paths = (byUnit && byUnit.length) ? byUnit : getUpgradePathsForBuilding(player.faction, buildingDef);
+    } else {
+      paths = mercDef ? getMercUpgradePaths(mercDef) : getUpgradePathsForBuilding(player.faction, buildingDef);
     }
-    return mercDef
-      ? getMercUpgradePaths(mercDef)
-      : getUpgradePathsForBuilding(player.faction, buildingDef);
+
+    // The unit and the building can sit a tier apart in EITHER direction, and
+    // asking the unit alone only fixed one of them. When the building has run
+    // ahead — the tier 4 keep already raised while the unit is still tier 3 —
+    // the unit's path still names that keep, so the sheet offered a build for a
+    // building already standing there and /structures/build answered "Already at
+    // max level". The unit levels up from XP once its building exists (the
+    // server auto-levels it); there is nothing left to BUILD.
+    const state = slot ? structuresRecord.buildings_data?.[slot] : null;
+    if (!state) return paths;
+    // Nothing can be built on a maxed slot, whatever the unit's path says.
+    if ((state.level ?? 0) >= heroMaxLevel) return [];
+    return (paths || []).filter(p => p.building_id !== state.building_id);
   }
 
   function openSliderModal(title, slides, onConfirm, opts = {}) {
@@ -1410,7 +1421,7 @@ export function renderCastle(root, { player }) {
     // asked the keep, which is terminal, and the unit was told it was max tier
     // with its real upgrade sitting right there. The building is only the
     // fallback, for a slot whose unit has not spawned yet.
-    const paths = upgradePathsForSlotUnit(rosterUnit, mercDef, def);
+    const paths = upgradePathsForSlotUnit(rosterUnit, mercDef, def, slot);
 
     // Prefer the roster row: it carries current HP/XP and can hold an item. A
     // slot with no occupant yet (building raised, unit not spawned) still shows
