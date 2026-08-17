@@ -310,8 +310,14 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
             </div>
           `;
         }
-        const maxLevel = progress[r.id] ?? 1;
-        const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
+        // Clamped to the levels this region actually has. `progress` is the next
+        // playable level and now reaches levelCount + 1 once the final level is
+        // cleared (so craft gates can require clearing the last one) — without
+        // the clamp that extra point would draw a pip for a level that does not
+        // exist, and tapping it would be rejected by /battle/create.
+        const levelCount = Object.keys(r.difficulties || {}).length || 1;
+        const maxLevel   = Math.min(progress[r.id] ?? 1, levelCount);
+        const levels     = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
           <div class="embark-region-block">
             <div class="embark-card" data-id="${r.id}" style="${regionBgStyle(r)}">

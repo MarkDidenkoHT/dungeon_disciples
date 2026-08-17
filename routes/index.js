@@ -2659,7 +2659,15 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         const progress     = playerRows[0].progress || {};
         const currentLevel = progress[region_id] ?? 1;
         const maxLevel     = Object.keys(region.difficulties).length;
-        if (level >= currentLevel && level < maxLevel) {
+        // `<= maxLevel`, not `<`. Clearing the FINAL level used to advance
+        // nothing, so progress capped at maxLevel and `clearedLevel`
+        // (progress - 1, see data/items.js) capped one below the last level.
+        // With every region holding 6 levels that made the mythic craft gate —
+        // "clear any region level 6" — unreachable for everybody, permanently.
+        // Progress may now read maxLevel + 1, meaning "this region is finished";
+        // the embark screen clamps its level pips to the real level count so it
+        // never draws a pip for a level that does not exist.
+        if (level >= currentLevel && level <= maxLevel) {
           progress[region_id] = level + 1;
           await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
           result.progress_unlocked = true;
