@@ -291,15 +291,6 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 35% урона юниту позади цели.",
     params: { behind_splash_pct: 35 },
   },
-  // ── Decay / Shield ─────────────────────────────────────────────────────────
-  // Two mirrored POOLS, both capped at 50% of the target's own max HP (see
-  // POOL_CAP_PCT in utils/battle-engine.js). Decay eats incoming HEALING point
-  // for point and is spent doing it; Shield eats incoming DAMAGE the same way.
-  // Both stack on re-application and saturate at the cap, so a long fight
-  // cannot turn either into an absolute immunity.
-  //
-  // `decay_amount` applies to whoever was hit. `shield_amount` shields the unit
-  // that was hit too, unless `shield_target: 'self'` names the attacker.
   'decay 1': {
     id: 'decay 1',
     name: 'Decay',
