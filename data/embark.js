@@ -181,7 +181,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 30, xp: 115,
         crystals:        [{ type: 'Crystals_Frost', amount: 11 }, { type: 'Crystals_Air', amount: 11 }],
-        trophies:        { crystal_dust: 1, rusted_shackle: 1 },
+        trophies:        { crystal_dust: 1, crystal_shard: 1 },
       },
     },
     level_5: {
@@ -193,7 +193,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 40, xp: 150,
         crystals:        [{ type: 'Crystals_Frost', amount: 13 }, { type: 'Crystals_Air', amount: 13 }],
-        trophies:        { rusted_shackle: 2, crystal_dust: 1 },
+        trophies:        { crystal_shard: 2, crystal_dust: 1 },
       },
     },
     level_6: {

@@ -627,8 +627,26 @@ function dispatchPassive(trigger, owner, def, ctx) {
             const current = resistances[damageSource] ?? 0;
             const reduction = target._debuff_reduction ?? 0;
             const effective = Math.floor(p.dissipate_resistance_pct * (1 - reduction / 100));
-            resistances[damageSource] = Math.max(0, current - effective);
-            engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: effective });
+            // How much was ACTUALLY taken. Clamped at zero, so a resistance
+            // already low gives back only what it lost — the undo has to match
+            // the deduction or a dispel would hand out resistance from nowhere.
+            const applied = Math.min(effective, current);
+            resistances[damageSource] = current - applied;
+            if (applied > 0) {
+              // Registered so the shred is VISIBLE: a portrait badge like every
+              // other debuff, and dispellable. It was previously applied
+              // silently — the number moved on the inspector and nothing said
+              // why, and no cleanse could touch it.
+              engine.registerEffect(target, {
+                key:  `dissipate:${damageSource}`,
+                name: def.name,
+                polarity: 'negative',
+                dispellable: def.dispellable !== false,
+                icon: 'dissipate',
+                restore: { [`unit_data.resistances.${damageSource}`]: applied },
+              });
+            }
+            engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: applied });
           }
         }
       }
