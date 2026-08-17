@@ -504,13 +504,20 @@ export function renderCastle(root, { player }) {
   function upgradePathsForSlotUnit(rosterUnit, mercDef, buildingDef, slot = null) {
     const unitDef = rosterUnit ? resolveUnitDef(rosterUnit) : null;
     let paths;
-    if (unitDef && mercDef) {
-      const ownBuilding = getBuildingDefForUnit(unitDef.id);
-      paths = ownBuilding ? getMercUpgradePaths(ownBuilding) : getMercUpgradePaths(mercDef);
-    } else if (unitDef && !mercDef) {
-      const byUnit = (upgradePaths[player.faction] || {})[unitDef.id];
-      paths = (byUnit && byUnit.length) ? byUnit : getUpgradePathsForBuilding(player.faction, buildingDef);
+    if (unitDef) {
+      // The OCCUPANT is the authority, and an empty answer is a real answer.
+      //
+      // This used to fall back to the BUILDING's own upgrade list whenever the
+      // unit had no path — which is precisely the maxed case. A hero at its top
+      // tier has no entry in UNIT_UPGRADE_PATHS, so the sheet fell through and
+      // offered both of the cathedral's tier 4 branches to a unit that cannot
+      // take either. No fallback: if the unit is done, the slot is done.
+      paths = mercDef
+        ? getMercUpgradePaths(getBuildingDefForUnit(unitDef.id) || {})
+        : ((upgradePaths[player.faction] || {})[unitDef.id] || []);
     } else {
+      // No occupant yet — the building was raised but its unit has not spawned.
+      // Only here is the blueprint the best available answer.
       paths = mercDef ? getMercUpgradePaths(mercDef) : getUpgradePathsForBuilding(player.faction, buildingDef);
     }
 
