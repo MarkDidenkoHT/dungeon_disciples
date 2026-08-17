@@ -1,6 +1,23 @@
 function cellRow(i) { return Math.floor(i / 2); }
 function cellCol(i) { return i % 2; }
 
+// How many living units on `side` carry `tag`. The unit of account for every
+// "per Zombie / per Demon / per Holy" passive, so they all count the same way:
+// the owner counts itself when it carries the tag, and the dead never count.
+function tagCount(engine, side, tag) {
+  if (!tag) return 0;
+  return engine.combatants.filter(c =>
+    c.side === side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(tag)
+  ).length;
+}
+
+// A percentage that may be flat or scaled per tag. Returns 0 when neither is
+// declared, so a caller can multiply unconditionally.
+function pctFor(p, engine, side, flatKey, perTagKey) {
+  if (p[perTagKey] != null) return p[perTagKey] * tagCount(engine, side, p.tag_required);
+  return p[flatKey] ?? 0;
+}
+
 // The ONE way a passive takes hit points off a unit.
 //
 // Invulnerability (Unity's bonded guardian) was checked only on the two direct
@@ -136,12 +153,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
     }
     if (p.hp_per_tagged_unit != null && p.tag_required != null) {
-      const tagCount = engine.combatants.filter(c =>
-        c.side === owner.side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(p.tag_required)
-      ).length;
-      if (tagCount > 0) {
-        const hpBonus    = (p.hp_per_tagged_unit ?? 0) * tagCount;
-        const armorBonus = (p.armor_per_tagged_unit ?? 0) * tagCount;
+      const n = tagCount(engine, owner.side, p.tag_required);
+      if (n > 0) {
+        const hpBonus    = (p.hp_per_tagged_unit ?? 0) * n;
+        const armorBonus = (p.armor_per_tagged_unit ?? 0) * n;
+        // Horde now pays HP and POWER rather than HP and armor: a swarm passive
+        // that only made each zombie harder to kill made the swarm slower to
+        // resolve, not more dangerous.
+        const powerBonus = (p.power_per_tagged_unit ?? 0) * n;
         if (hpBonus > 0) {
           owner.battle_hp += hpBonus;
           owner.max_hp    += hpBonus;
@@ -151,8 +170,24 @@ function dispatchPassive(trigger, owner, def, ctx) {
           owner.armor += armorBonus;
           engine.recordGrantedBuff(owner, 'armor', [owner], armorBonus);
         }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: tagCount, message: `${def.name} — ${tagCount} ${p.tag_required} allies: +${hpBonus} HP, +${armorBonus} armor` });
+        if (powerBonus > 0 && owner.unit_data) {
+          owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + powerBonus;
+          engine.recordGrantedBuff(owner, 'action_power', [owner], powerBonus);
+        }
+        const parts = [];
+        if (hpBonus)    parts.push(`+${hpBonus} HP`);
+        if (armorBonus) parts.push(`+${armorBonus} armor`);
+        if (powerBonus) parts.push(`+${powerBonus} power`);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: n, message: `${def.name} — ${n} ${p.tag_required} allies: ${parts.join(', ')}` });
       }
+    }
+    // Ethereal Form: a shield at battle start, scaled by how many of the tag are
+    // fielded. On battle start only — it is the ghosts arriving together, not a
+    // ward that renews.
+    if (p.shield_per_tagged_unit != null && p.tag_required != null) {
+      const n = tagCount(engine, owner.side, p.tag_required);
+      const amount = p.shield_per_tagged_unit * n;
+      if (amount > 0) engine.grantShield(owner, amount, def, owner);
     }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
       // ADJACENT, as the description says — not "anywhere within a row or two".
@@ -332,7 +367,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
       const frontAlly = firstInRow(owner.side, ownerRow, owner.id);
       if (frontAlly) {
-        const healAmt = Math.min(Math.floor((p.light_of_dawn_heal ?? 15) * engine.fatigueHealMult()), frontAlly.max_hp - frontAlly.battle_hp);
+        const healBase = p.light_of_dawn_per_tag != null
+          ? p.light_of_dawn_per_tag * tagCount(engine, owner.side, p.tag_required)
+          : (p.light_of_dawn_heal ?? 15);
+        const healAmt = Math.min(Math.floor(healBase * engine.fatigueHealMult()), frontAlly.max_hp - frontAlly.battle_hp);
         if (healAmt > 0) {
           frontAlly.battle_hp += healAmt;
           engine.fireHealTriggers(owner, frontAlly, healAmt);
@@ -341,7 +379,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
       const frontEnemy = firstInRow(owner.side === 'player' ? 'enemy' : 'player', ownerRow);
       if (frontEnemy) {
-        const dmgAmt = p.light_of_dawn_dmg ?? 15;
+        const dmgAmt = p.light_of_dawn_per_tag != null
+          ? p.light_of_dawn_per_tag * tagCount(engine, owner.side, p.tag_required)
+          : (p.light_of_dawn_dmg ?? 15);
         hurt(frontEnemy, dmgAmt);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetId: frontEnemy.id, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
@@ -350,7 +390,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
     if (p.lowest_ally_heal_pct != null) {
-      const heal = Math.floor(dmg * p.lowest_ally_heal_pct / 100 * engine.fatigueHealMult());
+      const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
+      const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
       if (candidates.length > 0) {
         const lowest = candidates.reduce((a, b) => {
@@ -375,7 +416,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive);
       if (enemies.length > 0) {
         const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
-        const extra = Math.max(1, Math.floor(dmg * p.lowest_enemy_dmg_pct / 100));
+        const extra = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "lowest_enemy_dmg_pct", "lowest_enemy_dmg_pct_per_tag") / 100));
         hurt(lowest, extra);
         if (lowest.battle_hp <= 0) { lowest.alive = false; engine.applyOnDeathPassives(lowest); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
@@ -600,7 +641,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
-    if (p.adjacent_aoe_damage != null) {
+    if (p.adjacent_aoe_damage != null || p.adjacent_aoe_damage_per_tag != null) {
       // Retaliation splash, centred on the ATTACKER and including it.
       //
       // It used to measure row distance from the OWNER and exclude the attacker,
@@ -613,6 +654,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // Manhattan distance, so range 1 is the struck cell plus its orthogonal
       // neighbours and a diagonal stays out. Footprint-to-footprint, because a
       // 'row' or 'column' unit stands in more than one cell.
+      const splashDmg  = p.adjacent_aoe_damage_per_tag != null
+        ? p.adjacent_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.adjacent_aoe_damage;
       const range      = p.range ?? 1;
       const actorCells = engine.getFootprint(actor);
       const withinRange = c => engine.getFootprint(c).some(tc =>
@@ -623,9 +667,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
         c.side === actor.side && c.alive && withinRange(c)
       );
       for (const adj of adjacent) {
-        hurt(adj, p.adjacent_aoe_damage);
+        hurt(adj, splashDmg);
         if (adj.battle_hp <= 0) { adj.alive = false; engine.applyOnDeathPassives(adj); }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: p.adjacent_aoe_damage, heal: false });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: splashDmg, heal: false });
       }
     }
     if (p.retaliation_damage != null) {
@@ -1020,7 +1064,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
   }
   if (p.ally_drain_pct != null && target) {
-    const drained  = Math.floor(target.max_hp * p.ally_drain_pct / 100);
+    const drained  = Math.floor(target.max_hp * pctFor(p, engine, actor.side, "ally_drain_pct", "ally_drain_pct_per_tag") / 100);
     target.battle_hp = Math.max(1, target.battle_hp - drained);
     const healAmount = Math.floor(drained * (p.ally_drain_heal_mult ?? 1) * engine.fatigueHealMult());
     const healed = Math.min(healAmount, actor.max_hp - actor.battle_hp);

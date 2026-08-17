@@ -2127,7 +2127,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg', action_animation: 'haunt',
-      xp: 1000, passive: ['communion 1', 'resist_aura_fire 1', 'inspiration_damage 1'], ability: 'blood_craze 1',
+      xp: 1000, passive: ['communion 1', 'resist_aura_fire 1', 'inspiration_damage 1'], ability: 'blood_craze 2',
     },
     grieving_servant: {
       id: 'gs52', f: 'g', t: 2,
@@ -2151,7 +2151,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg', action_animation: 'haunt',
-      xp: 1000, passive: ['communion 1', 'lifesteal 1', 'rage 1'], ability: 'blood_craze 1',
+      xp: 1000, passive: ['communion 1', 'lifesteal 1', 'rage 1'], ability: 'blood_craze 2',
     },
     ghost: {
       id: 'gs6', f: 'g', t: 1,
@@ -2550,7 +2550,7 @@ const UNITS = {
         hp: 125, armor: 15, initiative: 50,
         resistances: { air: 20, fire: 25, life: 40, death: 20, cold: 20, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 15, action_animation: 'holy_shock',
+        damage_source: 'life', action_power: 15, action_animation: 'cannon_shot',
         xp: 1100, passive: ['bleed 2', 'recuperate 1'], ability: null,
       },
     },
