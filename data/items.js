@@ -371,8 +371,8 @@ const ITEM_DEFS = {
   },
   frost_cloak: {
     key:          'frost_cloak',
-    name:         "Cold Resistance Potion",
-    name_ru:      'Зелье Защиты От Холода',
+    name:         "Cloak of Frost Protection",
+    name_ru:      'Плащ Защиты От Холода',
     faction:      null,
     tag_required: null,
     adds_tag:     null,
@@ -381,9 +381,25 @@ const ITEM_DEFS = {
     icon:         'frost_cloak',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 30, Crystals_Frost: 10 },
+    cost:         { Crystals_Life: 5, Crystals_Death: 5, Crystals_Nature: 5, Crystals_Air: 5, Crystals_Fire: 5 },
     requires:     { region: 'any', level: 2 },
-    item_cost:    {cold_resistance_potion: 2}
+    item_cost:    { cold_resistance_potion: 2 }
+  },
+  caster_hat: {
+    key:          'caster_hat',
+    name:         "Caster's Hat",
+    name_ru:      'Шляпа Мага',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'caster',
+    stat_mods:    { power: 2, hp: 3 },
+    passive:      null,
+    icon:         'caster_hat',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Crystals_Frost: 5,  },
+    requires:     { region: 'any', level: 2 },
+    item_cost:    { seal_of_power: 1, life_charm: 1}
   },
   death_resistance_potion: {
     key:          'death_resistance_potion',
