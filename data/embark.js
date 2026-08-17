@@ -55,7 +55,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
-        gold: 30, xp: 60,
+        gold: 30, xp: 75,
         crystals:        [{ type: 'Crystals_Life', amount: 11 }, { type: 'Crystals_Fire', amount: 11 }],
         trophies:        { aggrails_signet: 2, vial_of_pure_blood: 2 },
       },
@@ -69,7 +69,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       ],
       rewards: {
-        gold: 35, xp: 70,
+        gold: 40, xp: 100,
         crystals:        [{ type: 'Crystals_Life', amount: 13 }, { type: 'Crystals_Fire', amount: 13 }],
         trophies:        { vial_of_pure_blood: 3, aggrails_signet: 2 },
       },
@@ -84,9 +84,55 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.crimson_stalker',   cell: 5 },
       ],
       rewards: {
-        gold: 40, xp: 80,
+        gold: 55, xp: 135,
         crystals:        [{ type: 'Crystals_Life', amount: 14 }, { type: 'Crystals_Fire', amount: 14 }],
         trophies:        { shard_of_devotion: 3 },
+      },
+    },
+    // Levels 7-9 are the endgame stretch: 9 is tuned for a full tier-3 army in
+    // gear. Rosters below are a starting point drawn from the region's tier-3
+    // pool — replace them; the cell map is at the top of this file.
+    level_7: {
+      enemies: [
+        { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
+        { key: 'crimson_basilica.aggrails_champion',  cell: 0 },
+        { key: 'crimson_basilica.high_keeper',        cell: 3 },
+        { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
+      ],
+      rewards: {
+        gold: 75, xp: 180,
+        crystals:        [{ type: 'Crystals_Life', amount: 16 }, { type: 'Crystals_Fire', amount: 16 }],
+        trophies:        { shard_of_devotion: 2, aggrails_signet: 3 },
+      },
+    },
+    level_8: {
+      enemies: [
+        { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
+        { key: 'crimson_basilica.aggrails_champion',  cell: 0 },
+        { key: 'crimson_basilica.high_keeper',        cell: 3 },
+        { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
+        { key: 'crimson_basilica.keeper_of_purity',   cell: 5 },
+      ],
+      rewards: {
+        gold: 100, xp: 235,
+        crystals:        [{ type: 'Crystals_Life', amount: 18 }, { type: 'Crystals_Fire', amount: 18 }],
+        trophies:        { shard_of_devotion: 3, vial_of_pure_blood: 4 },
+      },
+    },
+    level_9: {
+      enemies: [
+        { key: 'crimson_basilica.sister_aldra_2',     cell: 2, item_id: 'aldras_devotion',
+          spells: [{ spell_id: 'boss_heal', power: 2 }, { spell_id: 'boss_resurrect', power: 5 }] },
+        { key: 'crimson_basilica.exalted_evangelist', cell: 0 },
+        { key: 'crimson_basilica.aggrails_champion',  cell: 4 },
+        { key: 'crimson_basilica.high_keeper',        cell: 3 },
+        { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
+        { key: 'crimson_basilica.exalted_herald',     cell: 5 },
+      ],
+      rewards: {
+        gold: 130, xp: 300,
+        crystals:        [{ type: 'Crystals_Life', amount: 20 }, { type: 'Crystals_Fire', amount: 20 }],
+        trophies:        { shard_of_devotion: 4, aggrails_signet: 4 },
       },
     },
   },
@@ -133,7 +179,7 @@ const REGION_ENCOUNTERS = {
         { key: 'glittering_abyss.rime_splinter',       cell: 5 },
       ],
       rewards: {
-        gold: 30, xp: 60,
+        gold: 30, xp: 75,
         crystals:        [{ type: 'Crystals_Frost', amount: 11 }, { type: 'Crystals_Air', amount: 11 }],
         trophies:        { crystal_dust: 1, rusted_shackle: 1 },
       },
@@ -145,7 +191,7 @@ const REGION_ENCOUNTERS = {
         { key: 'glittering_abyss.rime_splinter',          cell: 5 },
       ],
       rewards: {
-        gold: 35, xp: 70,
+        gold: 40, xp: 100,
         crystals:        [{ type: 'Crystals_Frost', amount: 13 }, { type: 'Crystals_Air', amount: 13 }],
         trophies:        { rusted_shackle: 2, crystal_dust: 1 },
       },
@@ -160,7 +206,7 @@ const REGION_ENCOUNTERS = {
         { key: 'glittering_abyss.rime_splinter',  cell: 3 },
       ],
       rewards: {
-        gold: 40, xp: 80,
+        gold: 55, xp: 135,
         crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
         trophies:        { living_geode: 3 },
       },
@@ -213,7 +259,7 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
       ],
       rewards: {
-        gold: 30, xp: 60,
+        gold: 30, xp: 75,
         crystals:        [{ type: 'Crystals_Death', amount: 11 }, { type: 'Crystals_Nature', amount: 11 }],
         trophies:        { grave_dust: 1, rusted_shackle: 1 },
       },
@@ -226,7 +272,7 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
       ],
       rewards: {
-        gold: 35, xp: 70,
+        gold: 40, xp: 100,
         crystals:        [{ type: 'Crystals_Death', amount: 13 }, { type: 'Crystals_Nature', amount: 13 }],
         trophies:        { rusted_shackle: 2, grave_dust: 1 },
       },
@@ -242,7 +288,7 @@ const REGION_ENCOUNTERS = {
                    { spell_id: 'boss_deaths_verdict', power: 4 }] },
       ],
       rewards: {
-        gold: 40, xp: 80,
+        gold: 55, xp: 135,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
         trophies:        { shard_of_might: 3 },
       },

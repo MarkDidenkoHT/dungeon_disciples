@@ -7,6 +7,7 @@ const path   = require('path');
 
 const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
+const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
@@ -816,6 +817,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         cap:       REROLL_DAILY_CAP,
         seconds:   REROLL_AD_SECONDS,
       },
+      // The running event, or null. Presentational only — what it actually pays
+      // is decided server-side at battle end, never from this.
+      event: eventPayload(await getActiveEvent(supabase)),
     });
   } catch (err) {
     serverError(res, err);
@@ -2522,6 +2526,15 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       embarkBonus.xp_pct      += perkBonus.xp_pct;
       embarkBonus.crystal_pct += perkBonus.crystal_pct;
 
+      // A timed event is the third feeder into the same pipeline, after
+      // expedition passives and throne perks. Global and per-region bonuses are
+      // both additive, so a 10% global + 10% regional event is +20% there.
+      const activeEvent = await getActiveEvent(supabase);
+      const eventBonus  = eventBonusFor(activeEvent, region_id);
+      embarkBonus.gold_pct    += eventBonus.gold_pct;
+      embarkBonus.xp_pct      += eventBonus.xp_pct;
+      embarkBonus.crystal_pct += eventBonus.crystal_pct;
+
       // Gold, then the level's guaranteed crystals (exact types and amounts).
       const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
       await updateItem('Gold', goldPayout);
@@ -2551,6 +2564,14 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       for (const [id, amount] of Object.entries(tuned.trophies)) {
         if (id && amount) granted[id] = (granted[id] || 0) + amount;
       }
+      // Event drops land in the SAME map, so they are written by the same batch
+      // and reported on the victory screen like any other trophy. An event
+      // trophy on a level that already drops one simply adds to it.
+      const eventDrops = eventDropsFor(activeEvent, region_id, level);
+      for (const [id, amount] of Object.entries(eventDrops)) {
+        if (id && amount) granted[id] = (granted[id] || 0) + amount;
+      }
+      result.event_trophies = eventDrops;
       // Trophies land together — a six-trophy haul was six sequential writes on
       // the victory screen, which is precisely where the player is waiting.
       await Promise.all(Object.entries(granted).map(([id, amount]) => {

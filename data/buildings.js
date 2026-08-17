@@ -848,8 +848,30 @@ const MERCENARY_BUILDINGS = {
       region:   'crimson_basilica',
       unit_id:  'opb_e311',
       tier:     3,
-      upgrades: [],
+      upgrades: ['cb_grand_keeper', 'cb_bloodied_veil'],
       cost:     { vial_of_pure_blood: 15, aggrails_signet: 15 },
+    },
+    {
+      id:       'cb_grand_keeper',
+      label:    'Grand Keeper', label_ru: 'Великий Хранитель',
+      region:   'crimson_basilica',
+      unit_id:  'opb_e3111',
+      tier:     4,
+      upgrades: [],
+      cost:     { shard_of_devotion: 20, vial_of_pure_blood: 25 },
+    },
+    {
+      // EVENT BRANCH. `bloodied_brooch` drops only while a Basilica event runs
+      // (see the events table). The DROP expires with the event; this building
+      // never does — a player who banked brooches can raise it whenever, which
+      // is the whole reason the trophy is worth chasing during the window.
+      id:       'cb_bloodied_veil',
+      label:    'Keeper of the Bloodied Veil', label_ru: 'Хранитель Окровавленной Завесы',
+      region:   'crimson_basilica',
+      unit_id:  'opb_e3112',
+      tier:     4,
+      upgrades: [],
+      cost:     { bloodied_brooch: 10, shard_of_devotion: 15 },
     },
     // Archer line. The id stays cb_crimson_hunter — saved buildings_data rows
     // reference it — but the label now names the unit it actually grants

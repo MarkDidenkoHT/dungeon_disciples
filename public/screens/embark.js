@@ -6,7 +6,26 @@ import { assetUrl } from '../asset_base.js';
 
 // Static UI strings, keyed by language (see lang(player)). Region label/desc live
 // on REGIONS with _ru suffixes, following the game's inline-localization rule.
+// Per-region glow for the event badge. Not on REGIONS because it is purely a
+// presentation choice and the server has no opinion about it.
+const REGION_GLOW = {
+  crimson_basilica:  '#8b1a1a',   // dark blood red
+  glittering_abyss:  '#3a7fa8',
+  chamber_of_unrest: '#5a7a4a',
+};
+const DEFAULT_GLOW = '#c8973a';
+
 const UI_TEXT = {
+  eventBadge:      { en: 'Event',                ru: 'Событие' },
+  eventEnds:       { en: 'Ends in',              ru: 'Осталось' },
+  eventDrops:      { en: 'Drops during the event', ru: 'Выпадает во время события' },
+  eventBonus:      { en: 'Bonus',                ru: 'Бонус' },
+  eventLevel:      { en: 'Level',                ru: 'Уровень' },
+  eventXp:         { en: 'XP',                   ru: 'Опыт' },
+  eventGold:       { en: 'Gold',                 ru: 'Золото' },
+  eventCrystals:   { en: 'Crystals',             ru: 'Кристаллы' },
+  eventEverywhere: { en: 'Everywhere',           ru: 'Везде' },
+  eventOver:       { en: 'Ended',                ru: 'Завершено' },
   selectRegion:    { en: 'Select Region',        ru: 'Выберите регион' },
   checking:        { en: 'Checking active battles…', ru: 'Проверка активных боёв…' },
   reconnectTitle:  { en: 'Reconnect to Battle',   ru: 'Вернуться в бой' },
@@ -93,6 +112,74 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   const rLabel = r => (L === 'ru' && r.label_ru)       || r.label;
   const rDesc  = r => (L === 'ru' && r.description_ru)  || r.description;
   const rCrystal = r => (L === 'ru' && r.crystal_ru)   || r.crystal;
+
+  // ── Event ────────────────────────────────────────────────────────────────
+  // Read from the bootstrap payload, so the banner costs no request of its own.
+  // Null whenever nothing is running, which is the common case — every helper
+  // below returns empty rather than branching at each call site.
+  const activeEvent = () => bootstrapCache.data?.event ?? null;
+
+  function eventEndsInText() {
+    const ev = activeEvent();
+    if (!ev?.time_to) return '';
+    const ms = new Date(ev.time_to).getTime() - Date.now();
+    if (ms <= 0) return UI_TEXT.eventOver[L];
+    const hours = Math.floor(ms / 3600000);
+    const days  = Math.floor(hours / 24);
+    if (days >= 1)  return `${UI_TEXT.eventEnds[L]} ${days}${L === 'ru' ? 'д' : 'd'}`;
+    return `${UI_TEXT.eventEnds[L]} ${Math.max(1, hours)}${L === 'ru' ? 'ч' : 'h'}`;
+  }
+
+  // Top-right corner of the region card, glowing that region's colour.
+  function eventBadgeHtml(regionId) {
+    const ev = activeEvent();
+    if (!ev || !ev.regions?.includes(regionId)) return '';
+    const glow = REGION_GLOW[regionId] || DEFAULT_GLOW;
+    return `
+      <button class="embark-event-badge" data-event-region="${regionId}"
+              style="--event-glow:${glow}" title="${ev.name || UI_TEXT.eventBadge[L]}">
+        <span class="embark-event-badge-dot"></span>
+        <span class="embark-event-badge-text">${UI_TEXT.eventBadge[L]}</span>
+      </button>`;
+  }
+
+  function openEventSheet(regionId) {
+    const ev = activeEvent();
+    if (!ev) return;
+    const glow = REGION_GLOW[regionId] || DEFAULT_GLOW;
+
+    // What drops where, level by level. Only this region's rows — the badge was
+    // tapped on a specific card and that is the question being asked.
+    const drops = ev.drops?.[regionId] || {};
+    const dropRows = Object.entries(drops)
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([lvl, items]) => `
+        <div class="event-drop-row">
+          <span class="event-drop-level">${UI_TEXT.eventLevel[L]} ${lvl}</span>
+          <span class="event-drop-items">${Object.entries(items)
+            .map(([id, amt]) => `<span class="event-drop-item">${id.replace(/_/g, ' ')} ×${amt}</span>`)
+            .join('')}</span>
+        </div>`).join('');
+
+    // Global bonuses and this region's own, listed separately so the player can
+    // see that they stack rather than replace.
+    const pctRow = (src, label) => {
+      const bits = [];
+      if (src?.xp_pct)      bits.push(`+${src.xp_pct}% ${UI_TEXT.eventXp[L]}`);
+      if (src?.gold_pct)    bits.push(`+${src.gold_pct}% ${UI_TEXT.eventGold[L]}`);
+      if (src?.crystal_pct) bits.push(`+${src.crystal_pct}% ${UI_TEXT.eventCrystals[L]}`);
+      return bits.length ? `<div class="event-bonus-row"><span>${label}</span><span>${bits.join(', ')}</span></div>` : '';
+    };
+    const bonusHtml = pctRow(ev.bonus, UI_TEXT.eventEverywhere[L])
+                    + pctRow(ev.bonus?.regions?.[regionId], rLabel(REGIONS.find(r => r.id === regionId) || {}) || regionId);
+
+    openModal(ev.name || UI_TEXT.eventBadge[L], `
+      <div class="event-sheet" style="--event-glow:${glow}">
+        <div class="event-sheet-ends">${eventEndsInText()}</div>
+        ${dropRows ? `<div class="event-section-label">${UI_TEXT.eventDrops[L]}</div>${dropRows}` : ''}
+        ${bonusHtml ? `<div class="event-section-label">${UI_TEXT.eventBonus[L]}</div>${bonusHtml}` : ''}
+      </div>`);
+  }
 
   root.innerHTML = `
     <div class="screen screen-embark">
@@ -228,6 +315,7 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         return `
           <div class="embark-region-block">
             <div class="embark-card" data-id="${r.id}" style="${regionBgStyle(r)}">
+              ${eventBadgeHtml(r.id)}
               <div class="embark-card-info">
                 <span class="embark-card-label">${rLabel(r)}</span>
                 <span class="embark-card-desc">${rDesc(r)}</span>
@@ -261,6 +349,17 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         const first = root.querySelector('.embark-card--highlight');
         first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
+
+      // Bound before the level pips and stopping propagation: the badge sits on
+      // the region card, and without this a tap would open the sheet AND count
+      // as picking the region.
+      root.querySelectorAll('.embark-event-badge').forEach(badge => {
+        badge.addEventListener('click', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          openEventSheet(badge.dataset.eventRegion);
+        });
+      });
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
         pip.addEventListener('click', async () => {

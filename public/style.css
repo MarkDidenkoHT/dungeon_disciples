@@ -7597,3 +7597,90 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: transparent;
   color: var(--muted);
 }
+
+
+/* ── Event badge + sheet ───────────────────────────────────────────────────
+   The badge sits in the region card's top-right corner and glows that region's
+   colour (--event-glow, set inline per region in embark.js). The card needs a
+   positioning context for it; `overflow: hidden` there already clips the glow
+   to the card's rounded corner, which is why the badge is inset rather than
+   overhanging. */
+.embark-card { position: relative; }
+
+.embark-event-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--event-glow, var(--accent));
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--event-glow, var(--accent));
+  animation: event-badge-pulse 2.4s ease-in-out infinite;
+}
+.embark-event-badge:active { transform: scale(0.96); }
+.embark-event-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--event-glow, var(--accent));
+  box-shadow: 0 0 6px var(--event-glow, var(--accent));
+}
+/* Slow and shallow on purpose: it has to read as "something is on" from across
+   the screen without competing with the level pips for attention. */
+@keyframes event-badge-pulse {
+  0%, 100% { box-shadow: 0 0 6px var(--event-glow, var(--accent)); }
+  50%      { box-shadow: 0 0 16px var(--event-glow, var(--accent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .embark-event-badge { animation: none; }
+}
+
+.event-sheet { display: flex; flex-direction: column; gap: 10px; }
+.event-sheet-ends {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--event-glow, var(--accent));
+  color: var(--event-glow, var(--accent));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.event-section-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.event-drop-row,
+.event-bonus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+.event-drop-level { color: var(--muted); }
+.event-drop-items { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.event-drop-item {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(200, 151, 58, 0.14);
+  color: var(--accent);
+  text-transform: capitalize;
+}
+.event-bonus-row span:last-child { color: var(--accent); font-weight: 600; }
