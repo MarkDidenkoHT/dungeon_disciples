@@ -665,6 +665,18 @@ const UNITS = {
       damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 800, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
+    choir_exalted: {
+      id: 'd5111', f: 'd', t: 4,
+      name: 'Choir Exalted',
+      name_ru: 'Превознесённый Хора',
+      tags: ['Caster', 'Demon'],
+      size: 'tile',
+      hp: 60, armor: 10, initiative: 30,
+      resistances: { air: 0, fire: 45, life: 25, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'fire', action_power: 24,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      xp: 2000, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
+    },
     ash_cantor: {
       id: 'd52', f: 'd', t: 2,
       name: 'Ash Cantor',

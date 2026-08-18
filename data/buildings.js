@@ -143,7 +143,8 @@ const BUILDING_POOLS = {
       { id: 'inferno_spawn_pit', label: 'Inferno Spawn Pit', label_ru: 'Яма порождений инферно', category: 'barracks', tier: 3, unit_id: 'd711', upgrades: [] },
       { id: 'cultist_shrine',    label: 'Cultist Shrine', label_ru: 'Святилище культистов',    category: 'barracks', tier: 1, unit_id: 'd5',  upgrades: ['choir_servant_shrine', 'ash_cantor_chancel'], cost: { gold: 50 } },
       { id: 'choir_servant_shrine', label: 'Choir Servant Shrine', label_ru: 'Святилище служек Хора', category: 'barracks', tier: 2, unit_id: 'd51', upgrades: ['choir_ascendant_shrine'],       cost: { gold: 100 } },
-      { id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', label_ru: 'Святилище вознесённых Хора', category: 'barracks', tier: 3, unit_id: 'd511', upgrades: [] },
+      { id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', label_ru: 'Святилище вознесённых Хора', category: 'barracks', tier: 3, unit_id: 'd511', upgrades: ['choir_exalted_shrine'] },
+      { id: 'choir_exalted_shrine', label: 'Choir Exalted Shrine', label_ru: 'Святилище превознесённых Хора', category: 'barracks', tier: 4, unit_id: 'd5111', upgrades: [] },
       // The mender branch off the Cultist. A chancel is where the choir stands
       // to sing, which is what this half of the line does instead of burning.
       { id: 'ash_cantor_chancel',    label: 'Ash Cantor Chancel', label_ru: 'Клирос пепельного кантора',    category: 'barracks', tier: 2, unit_id: 'd52',  upgrades: ['ash_precentor_chancel'], cost: { gold: 100 } },
@@ -353,6 +354,7 @@ const UNIT_UPGRADE_PATHS = {
     d61: [{ unit_id: 'd611', building_id: 'nether_lord_hall', label: 'Nether Lord Hall', label_ru: 'Зал владык Преисподней' }],
     d71: [{ unit_id: 'd711', building_id: 'inferno_spawn_pit', label: 'Inferno Spawn Pit', label_ru: 'Яма порождений инферно' }],
     d51: [{ unit_id: 'd511', building_id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', label_ru: 'Святилище вознесённых Хора' }],
+    d511: [{ unit_id: 'd5111', building_id: 'choir_exalted_shrine', label: 'Choir Exalted Shrine', label_ru: 'Святилище превознесённых Хора' }],
     d52: [{ unit_id: 'd521', building_id: 'ash_precentor_chancel',  label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента' }],
   },
 
@@ -653,6 +655,7 @@ const BUILDING_COSTS = {
   cultist_shrine:                { gold: 40, Crystals_Fire: 20, Crystals_Life: 5 },
   choir_servant_shrine:          { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
   choir_ascendant_shrine:        { gold: 96, Crystals_Fire: 48, Crystals_Life: 12, Crystals_Death: 12 },
+  choir_exalted_shrine:          { gold: 160, Crystals_Fire: 80, Crystals_Life: 20, Crystals_Death: 20 },
   // Priced against the shrine branch it forks from; the Life crystal is heavier
   // because this half mends instead of burns.
   ash_cantor_chancel:            { gold: 60, Crystals_Fire: 30, Crystals_Life: 12, Crystals_Air: 5 },
