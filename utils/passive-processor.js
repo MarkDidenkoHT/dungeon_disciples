@@ -42,6 +42,21 @@ function dotAmount(dmg, pct, def) {
   return Math.max(def?.rank ?? 1, Math.floor(dmg * pct / 100));
 }
 
+// What a passive's flat hit actually lands for once the target's defences are
+// read. Physical goes through armor, everything else through the matching
+// resistance — the same split calcDamageWithPassives and applySpellParams use,
+// so a passive that names a damage type is resisted exactly like an attack or a
+// spell of that type. Untyped (or 'physical') keeps the armor behaviour.
+function typedAmount(target, amount, type) {
+  if (!type || type === 'physical') {
+    const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
+    return Math.max(1, Math.floor(amount * (1 - armor / 100)));
+  }
+  const resist = Math.min(100,
+    ((target.unit_data?.resistances ?? target.resistances ?? {})[type] ?? 0) + (target.defend_armor_bonus || 0));
+  return Math.max(1, Math.floor(amount * (1 - resist / 100)));
+}
+
 function hurt(unit, amount) {
   if (!unit || !unit.alive || unit._invulnerable) return 0;
   const before = unit.battle_hp;
@@ -391,9 +406,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
       const frontEnemy = firstInRow(owner.side === 'player' ? 'enemy' : 'player', ownerRow);
       if (frontEnemy) {
-        const dmgAmt = p.light_of_dawn_per_tag != null
+        // Typed, so resistances apply: the dawn light was raw HP loss that a
+        // unit resistant to life took in full, unlike every other typed source.
+        const dmgBase = p.light_of_dawn_per_tag != null
           ? p.light_of_dawn_per_tag * tagCount(engine, owner.side, p.tag_required)
           : (p.light_of_dawn_dmg ?? 15);
+        const dmgAmt = typedAmount(frontEnemy, dmgBase, p.light_of_dawn_damage_type ?? 'life');
         hurt(frontEnemy, dmgAmt);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetId: frontEnemy.id, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
@@ -521,17 +539,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // `damage_type` was declared on the param and then ignored outright: a
         // 'death' burst is not physical, so it goes through the target's
         // resistance like every other typed hit, not through armor at all.
-        const burstType = p.damage_type ?? 'physical';
-        let burst = p.stack_burst_damage;
-        if (burstType === 'physical') {
-          const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
-          burst = Math.floor(burst * (1 - armor / 100));
-        } else {
-          const resist = Math.min(100,
-            ((target.unit_data?.resistances ?? target.resistances ?? {})[burstType] ?? 0) + (target.defend_armor_bonus || 0));
-          burst = Math.floor(burst * (1 - resist / 100));
-        }
-        burst = Math.max(1, burst);
+        const burst = typedAmount(target, p.stack_burst_damage, p.damage_type ?? 'physical');
         hurt(target, burst);
         if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
         // targetId, so the client can place the animation on the struck cell —
@@ -649,12 +657,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
               // other debuff, and dispellable. It was previously applied
               // silently — the number moved on the inspector and nothing said
               // why, and no cleanse could touch it.
+              // No `rounds`: nothing schedules an expiry for this record, so the
+              // shred stands until the battle ends or something dispels it.
+              // `amount` is what the badge prints — the record used to say only
+              // "Dissipate", which told the player nothing about how much
+              // resistance had gone or to which school.
               engine.registerEffect(target, {
                 key:  `dissipate:${damageSource}`,
-                name: def.name,
+                name: `${def.name} · ${damageSource} resistance`,
                 polarity: 'negative',
                 dispellable: def.dispellable !== false,
                 icon: 'dissipate',
+                amount: applied,
                 restore: { [`unit_data.resistances.${damageSource}`]: applied },
               });
             }
@@ -827,10 +841,15 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_receive_ally_buff' && owner === target) {
-    if (p.dmg_bonus_pct != null) {
-      owner._dmg_mult = (owner._dmg_mult ?? 1) + p.dmg_bonus_pct / 100;
-      owner._fanaticism_stacks = (owner._fanaticism_stacks ?? 0) + 1;   // display only
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.dmg_bonus_pct });
+    // Fanaticism pays in POWER, not in a damage multiplier: the multiplier
+    // compounded with every other percentage the unit carried and was invisible
+    // on the sheet, while power is the stat the attack is actually built from
+    // and shows up in the inspector. Written straight onto unit_data and never
+    // revoked or timed out, so it holds for the whole battle.
+    if (p.power_bonus_flat != null && owner.unit_data) {
+      owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + p.power_bonus_flat;
+      owner._fanaticism_stacks = (owner._fanaticism_stacks ?? 0) + 1;
+      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: owner.id, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.power_bonus_flat, message: `${def.name} — +${p.power_bonus_flat} power (${owner.unit_data.action_power} total)` });
     }
   }
   if (trigger === 'on_ally_death' && owner !== dying && owner.side === dying?.side && owner.alive) {

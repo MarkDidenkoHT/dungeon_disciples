@@ -2407,7 +2407,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: null, action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 120, passive: 'fanaticism 1', ability: null,
+        xp: 120, passive: 'aggrails_blessing 1', ability: null,
       },
       aggrails_devoted: {
         id: 'opb_e21', f: 'opb', t: 2,
@@ -2502,7 +2502,7 @@ const UNITS = {
         hp: 45, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 12, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
+        damage_source: 'physical', action_power: 10, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 120, passive: 'bleed 1', ability: 'volley 1',
       },
       crimson_hunter: {
@@ -2514,7 +2514,7 @@ const UNITS = {
         hp: 55, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 16, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
+        damage_source: 'physical', action_power: 14, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 450, passive: ['bleed 1', 'clear_shot 1'], ability: 'volley 1',
       },
       crimson_stalker: {
@@ -2523,10 +2523,10 @@ const UNITS = {
         name_ru: 'Багровый Преследователь',
         tags: ['Archer', 'Holy'],
         size: 'tile',
-        hp: 70, armor: 0, initiative: 50,
+        hp: 65, armor: 0, initiative: 50,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'physical', action_power: 20, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
+        damage_source: 'physical', action_power: 18, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
         xp: 1000, passive: ['bleed 2', 'clear_shot 1'], ability: 'volley 2',
       },
       sister_aldra_1: {

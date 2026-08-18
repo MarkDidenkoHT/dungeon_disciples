@@ -1657,12 +1657,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!effects.length) return '';
     // From the ABILITIES set, not the spell art: this tile sits beside the
     // passive-driven statuses and has to read as one of them.
-    return effects.slice(0, MAX_STATE_ICONS).map(e => `
-      <span class="bc-state bc-state--spell" title="${e.name}${e.rounds ? ` · ${e.rounds}` : ''}">
+    // `amount` is how big the effect is (a resistance shred); `rounds` is how
+    // long it lasts. An effect carrying an amount and no rounds is permanent for
+    // the battle, so the badge prints the magnitude instead of a countdown.
+    return effects.slice(0, MAX_STATE_ICONS).map(e => {
+      const detail = e.rounds ? ` · ${e.rounds}` : (e.amount ? ` · −${e.amount}` : '');
+      const badge  = e.rounds > 1 ? e.rounds : (e.rounds ? null : (e.amount || null));
+      return `
+      <span class="bc-state bc-state--spell" title="${e.name}${detail}">
         <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${e.icon}.jpg`)}"
              alt="${e.name}" onerror="this.style.display='none'">
-        ${e.rounds > 1 ? `<span class="bc-state-num">${e.rounds}</span>` : ''}
-      </span>`).join('');
+        ${badge ? `<span class="bc-state-num">${badge}</span>` : ''}
+      </span>`;
+    }).join('');
   }
 
   const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS)   + spellEffectIconsHtml(occ, 'positive');

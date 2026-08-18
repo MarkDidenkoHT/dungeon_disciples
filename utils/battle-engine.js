@@ -408,9 +408,70 @@ class BattleEngine {
   // buffs a Herald standing next to a Recruit actually hands out.
   // Self-buffs are not ally buffs: a unit warding ITSELF (Aegis, Stone Form)
   // must not feed its own Fanaticism, hence the id check.
+  //
+  // It is also where the beacons are paid out. Beacon of Hope / Beacon of
+  // Despair "increase the effect of buffs on allies", and a buff is granted from
+  // a dozen different call sites — amplifying at each of them would mean a dozen
+  // chances to forget one. Here there is exactly one, and the amplifier applies
+  // to whatever a passive, ability or aura hands an ally.
+  //
+  // The extra is booked as its OWN granted-buff record rather than folded into
+  // the caller's value, so revokeGrantedBuffs undoes base and bonus by the same
+  // arithmetic that applied them (this matters for 'damage', which is
+  // multiplicative).
   recordGrantedBuff(source, type, targets, value) {
-    source._granted_buffs.push({ type, targetIds: targets.map(t => t.id), value });
+    for (const t of targets) {
+      source._granted_buffs.push({ type, targetIds: [t.id], value });
+      // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
+      if (!t || !t.alive || t.id === source?.id) continue;
+      const pct = this.buffAmpPctFor(t.side);
+      if (pct <= 0) continue;
+      // 'damage' carries a fraction (0.15 = +15%); every other type is a flat
+      // stat point and must stay whole.
+      const extra = type === 'damage' ? value * pct / 100 : Math.floor(value * pct / 100);
+      if (!extra) continue;
+      this.applyStatBuff(t, type, extra);
+      source._granted_buffs.push({ type, targetIds: [t.id], value: extra });
+    }
     this.fireAllyBuffTriggers(source, targets);
+  }
+  // Combined beacon strength for a side: every living unit's passives, flat or
+  // scaled per tag. Zero when nobody is carrying one, which is the usual case.
+  buffAmpPctFor(side) {
+    let pct = 0;
+    for (const c of this.combatants) {
+      if (c.side !== side || !c.alive) continue;
+      for (const def of this.resolveAllPassiveDefs(c)) {
+        const p = def.params || {};
+        if (p.buff_effect_bonus_pct_per_tag != null) {
+          pct += p.buff_effect_bonus_pct_per_tag * this.tagCountFor(side, p.tag_required);
+        } else if (p.buff_effect_bonus_pct != null) {
+          pct += p.buff_effect_bonus_pct;
+        }
+      }
+    }
+    return pct;
+  }
+  // Adds `amount` of one buff type to a unit, in the same shape the granting
+  // sites use — so the beacon bonus lands exactly where the base buff did.
+  applyStatBuff(unit, type, amount) {
+    if (!unit || !amount) return;
+    if (type === 'max_hp') {
+      unit.max_hp    += amount;
+      unit.battle_hp += amount;
+    } else if (type === 'armor') {
+      unit.armor = (unit.armor || 0) + amount;
+    } else if (type === 'initiative') {
+      unit.initiative = (unit.initiative || 0) + amount;
+    } else if (type === 'damage') {
+      unit._dmg_mult = (unit._dmg_mult ?? 1) * (1 + amount);
+    } else if (type === 'action_power' && unit.unit_data) {
+      unit.unit_data.action_power = (unit.unit_data.action_power ?? 0) + amount;
+    } else if (type === 'all_resist' && unit.unit_data?.resistances) {
+      for (const k of Object.keys(unit.unit_data.resistances)) {
+        unit.unit_data.resistances[k] = (unit.unit_data.resistances[k] || 0) + amount;
+      }
+    }
   }
   fireAllyBuffTriggers(source, targets) {
     // A passive answering this trigger could grant another buff; the flag keeps
@@ -1083,6 +1144,9 @@ class BattleEngine {
         existing.restore = existing.restore || {};
         existing.restore[f] = (existing.restore[f] || 0) + amt;
       }
+      // Shown on the badge, so it has to total the stacks the same way the undo
+      // does — two Dissipates on one unit read as one record.
+      if (rec.amount != null) existing.amount = (existing.amount || 0) + rec.amount;
       existing.clear = { ...(existing.clear || {}), ...(rec.clear || {}) };
       existing.name  = rec.name || existing.name;
       return existing;
@@ -1098,6 +1162,9 @@ class BattleEngine {
       // nothing in the engine reads them.
       ...(rec.icon   ? { icon: rec.icon }     : {}),
       ...(rec.rounds ? { rounds: rec.rounds } : {}),
+      // Magnitude, for effects whose size is the point (a resistance shred).
+      // Display-only, like `icon` and `rounds`.
+      ...(rec.amount != null ? { amount: rec.amount } : {}),
       // `dispellable: false` opts an effect out of dispels (permanent/structural).
       ...(rec.dispellable === false ? { dispellable: false } : {}),
     };
@@ -1902,6 +1969,10 @@ class BattleEngine {
         // Live resistances. rehydrate() rebuilds combatants from the setup, so
         // without these every resist buff and shred silently reverted on reload.
         _resistances:     { ...(c.unit_data?.resistances || {}) },
+        // Live power, for the same reason: Horde and Fanaticism grow
+        // unit_data.action_power during the battle, and rehydrate() would
+        // otherwise hand back the roster's starting value.
+        _action_power:    c.unit_data?.action_power ?? null,
         buffs: {
           dot_dmg:             c.dot_dmg,
           _hot:                c._hot,
@@ -2000,6 +2071,10 @@ class BattleEngine {
       if (s._resistances) {
         c.unit_data = c.unit_data || {};
         c.unit_data.resistances = { ...s._resistances };
+      }
+      if (s._action_power != null) {
+        c.unit_data = c.unit_data || {};
+        c.unit_data.action_power = s._action_power;
       }
       if (s._rosterId     != null) c._rosterId     = s._rosterId;
       const b              = s.buffs || {};
