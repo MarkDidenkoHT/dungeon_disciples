@@ -613,6 +613,56 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return new Set(Object.values(occupied).map(p => p.unitId));
   }
 
+  // ── Remembered formation ──────────────────────────────────────────────────
+  // Stored per DEVICE in localStorage rather than on the player row: it is a
+  // convenience, not game state, and it must not cost a write on every battle.
+  // Keyed by chat_id so two accounts on one phone do not inherit each other's.
+  const FORMATION_KEY = `formation:${player.chat_id}`;
+
+  function rememberFormationEnabled() {
+    return player?.settings?.remember_formation === true;
+  }
+
+  // { roster_id: anchor_cell }, anchors only — the footprint is re-derived from
+  // the unit's own size on restore, so a unit that changed size still lands
+  // legally instead of occupying cells it no longer covers.
+  function saveFormation() {
+    if (!rememberFormationEnabled()) return;
+    const anchors = {};
+    for (const [cellIdx, occ] of Object.entries(occupied)) {
+      if (occ.anchor === Number(cellIdx)) anchors[occ.unitId] = Number(cellIdx);
+    }
+    try { localStorage.setItem(FORMATION_KEY, JSON.stringify(anchors)); } catch {}
+  }
+
+  // Best effort, and deliberately silent about what it could not do. Every
+  // placement goes through placeUnit, so loyalty, footprint overlap and grid
+  // bounds are all still enforced — a saved formation can never produce an
+  // illegal board, it just produces a smaller one.
+  //
+  // Reasons a unit may not come back: it died, it is out on an errand (already
+  // filtered from `roster`), it was dismissed, it grew to a size that no longer
+  // fits, or the hero's loyalty dropped. The hero is placed FIRST so it always
+  // gets its cell even if loyalty has since shrunk.
+  function restoreFormation() {
+    if (!rememberFormationEnabled()) return;
+    let anchors;
+    try { anchors = JSON.parse(localStorage.getItem(FORMATION_KEY) || 'null'); } catch { return; }
+    if (!anchors || typeof anchors !== 'object') return;
+
+    const byId = new Map(roster.map(u => [String(u.id), u]));
+    const entries = Object.entries(anchors)
+      .filter(([id]) => byId.has(String(id)))
+      .sort((a, b) => (String(b[0]) === String(heroId)) - (String(a[0]) === String(heroId)));
+
+    for (const [id, anchor] of entries) {
+      const unit = byId.get(String(id));
+      if (!unit || unit.unit_data?.alive === false) continue;
+      if (!Number.isInteger(anchor)) continue;
+      placeUnit(unit, anchor);
+    }
+  }
+
   function placedLoyaltyUsed() {
     return [...placedUnitIds()]
       .filter(id => id !== heroId)
@@ -1526,6 +1576,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       }
     }
 
+    // Saved at COMMIT, not on every drag: "last formation" means the one the
+    // player actually fought with, not whatever half-arrangement they abandoned.
+    saveFormation();
+
     try {
       const battle_id = `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const result = await api('/battle/create', {
@@ -1581,6 +1635,10 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       const heroUnit = roster.find(u => u.is_hero === true);
       heroId     = heroUnit?.id ?? null;
       maxNonHero = getLoyalty(heroUnit);
+
+      // After heroId and maxNonHero, because placeUnit needs both to enforce
+      // loyalty and to know which unit is exempt from it.
+      restoreFormation();
 
       enemies = getEncounter(region_id, level);
 

@@ -17,6 +17,7 @@ const UI_TEXT = {
   barks:         { en: 'Combat Barks', ru: 'Реплики в бою' },
   // The welcome screen promises this can be changed later, so it has to be here.
   analytics:     { en: 'Usage Analytics', ru: 'Аналитика использования' },
+  rememberFormation: { en: 'Remember Formation', ru: 'Запоминать построение' },
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
   language:      { en: 'Language', ru: 'Язык' },
@@ -63,6 +64,9 @@ export function renderSettings(root, { player }) {
   // Reads the column, not a setting — consent is stored separately so it can
   // carry its own timestamp and the version of the notice that was agreed to.
   const analyticsOn          = player?.analytics_consent === true;
+  // Default OFF: it silently pre-fills the grid, and a player who has not asked
+  // for that should see the board they left it in.
+  const rememberFormation    = player?.settings?.remember_formation === true;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
   root.innerHTML = `
@@ -97,6 +101,12 @@ export function renderSettings(root, { player }) {
             <span class="settings-label">${UI_TEXT.barks[L]}</span>
             <button class="settings-toggle ${barksEnabled ? 'settings-toggle--on' : ''}" id="toggle-barks">
               ${barksEnabled ? UI_TEXT.on[L] : UI_TEXT.off[L]}
+            </button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">${UI_TEXT.rememberFormation[L]}</span>
+            <button class="settings-toggle ${rememberFormation ? 'settings-toggle--on' : ''}" id="toggle-formation">
+              ${rememberFormation ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
@@ -233,6 +243,27 @@ export function renderSettings(root, { player }) {
 
   promoBtn.addEventListener('click', redeemPromo);
   promoInput.addEventListener('keydown', e => { if (e.key === 'Enter') redeemPromo(); });
+
+  // Server-persisted like the other toggles, so the preference follows the
+  // account. The formation ITSELF stays in localStorage — see battle-prep.js.
+  const formationBtn = root.querySelector('#toggle-formation');
+  formationBtn.addEventListener('click', async () => {
+    const next = player.settings?.remember_formation !== true;
+    formationBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    formationBtn.classList.toggle('settings-toggle--on', next);
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { remember_formation: next },
+      });
+      player.settings = updated.settings;
+    } catch (err) {
+      formationBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      formationBtn.classList.toggle('settings-toggle--on', !next);
+      alert(err.message || UI_TEXT.saveFailed[L]);
+    }
+  });
 
   const musicBtn = root.querySelector('#toggle-music');
   musicBtn.addEventListener('click', async () => {

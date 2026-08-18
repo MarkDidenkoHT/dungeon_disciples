@@ -2456,11 +2456,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
 }
 
+/* 11px, not 14px. Seven toggles, the promo box and the danger zone have to fit
+   a phone; the 3px per row pays for the Remember Formation row almost exactly.
+   Still a 42px+ tap target with the toggle button's own padding. */
 .settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 11px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
