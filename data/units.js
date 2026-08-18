@@ -2371,7 +2371,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 120, passive: 'inspiration_damage 1', ability: 'lions_roar 1',
+        xp: 120, passive: 'beacon_of_hope 1', ability: 'lions_roar 1',
       },
       exalted_herald: {
         id: 'opb_e11', f: 'opb', t: 2,
@@ -2382,8 +2382,8 @@ const UNITS = {
         hp: 70, armor: 10, initiative: 50,
         resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing',
-        xp: 450, passive: ['inspiration_damage 1', 'beacon_of_hope 1'], ability: 'lions_roar 1', action_sfx: 'sword_slash',
+        damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 450, passive: ['beacon_of_hope 1', 'beacon_of_despair 1'], ability: 'lions_roar 1',
       },
       exalted_evangelist: {
         id: 'opb_e111', f: 'opb', t: 3,
@@ -2395,7 +2395,7 @@ const UNITS = {
         resistances: { air: 5, fire: 10, life: 50, death: 10, cold: 5, nature: 15 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 1000, passive: ['inspiration_damage 2', 'beacon_of_hope 1'], ability: 'lions_roar 2', 
+        xp: 1000, passive: ['beacon_of_hope 2', 'beacon_of_despair 1'], ability: 'lions_roar 2', 
       },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,

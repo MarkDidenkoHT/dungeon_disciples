@@ -424,33 +424,61 @@ class BattleEngine {
       source._granted_buffs.push({ type, targetIds: [t.id], value });
       // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
       if (!t || !t.alive || t.id === source?.id) continue;
+      // Signed: positive amplifies (Beacon of Hope / Despair on our side),
+      // negative shrinks (the enemy's Beacon of Despair). `=== 0` rather than
+      // `<= 0`, or the reduction half would be skipped entirely.
       const pct = this.buffAmpPctFor(t.side);
-      if (pct <= 0) continue;
+      if (pct === 0) continue;
       // 'damage' carries a fraction (0.15 = +15%); every other type is a flat
-      // stat point and must stay whole.
-      const extra = type === 'damage' ? value * pct / 100 : Math.floor(value * pct / 100);
+      // stat point and must stay whole. Truncated TOWARD ZERO, not floored —
+      // Math.floor(-2.5) is -3, which would remove more than the percentage
+      // asked for.
+      let extra = type === 'damage' ? value * pct / 100 : Math.trunc(value * pct / 100);
+      // A reduction can cancel a buff but never invert it into a penalty.
+      if (extra < 0) extra = Math.max(extra, -value);
       if (!extra) continue;
       this.applyStatBuff(t, type, extra);
       source._granted_buffs.push({ type, targetIds: [t.id], value: extra });
     }
     this.fireAllyBuffTriggers(source, targets);
   }
-  // Combined beacon strength for a side: every living unit's passives, flat or
-  // scaled per tag. Zero when nobody is carrying one, which is the usual case.
+  // NET buff strength for a side: what its own beacons add, minus what the
+  // OPPOSING side's Beacon of Despair takes away.
+  //
+  // One signed number rather than two systems: a positive result grants extra
+  // buff exactly as before, a negative one shrinks the buff being granted, and
+  // both travel the same `applyStatBuff` path so both revert correctly when the
+  // granting unit dies.
+  //
+  // Clamped at -100: the most Despair can do is cancel a buff outright. Past
+  // that it would silently invert into a debuff, which is a different mechanic
+  // and not one anything here declares.
   buffAmpPctFor(side) {
+    const other = side === 'player' ? 'enemy' : 'player';
     let pct = 0;
     for (const c of this.combatants) {
-      if (c.side !== side || !c.alive) continue;
+      if (!c.alive) continue;
+      const own = c.side === side;
+      if (!own && c.side !== other) continue;
       for (const def of this.resolveAllPassiveDefs(c)) {
         const p = def.params || {};
-        if (p.buff_effect_bonus_pct_per_tag != null) {
-          pct += p.buff_effect_bonus_pct_per_tag * this.tagCountFor(side, p.tag_required);
-        } else if (p.buff_effect_bonus_pct != null) {
-          pct += p.buff_effect_bonus_pct;
+        if (own) {
+          if (p.buff_effect_bonus_pct_per_tag != null) {
+            pct += p.buff_effect_bonus_pct_per_tag * this.tagCountFor(side, p.tag_required);
+          } else if (p.buff_effect_bonus_pct != null) {
+            pct += p.buff_effect_bonus_pct;
+          }
+        } else {
+          // Despair is carried by the ENEMY and counts ITS tags, not ours.
+          if (p.enemy_buff_effect_reduction_pct_per_tag != null) {
+            pct -= p.enemy_buff_effect_reduction_pct_per_tag * this.tagCountFor(other, p.tag_required);
+          } else if (p.enemy_buff_effect_reduction_pct != null) {
+            pct -= p.enemy_buff_effect_reduction_pct;
+          }
         }
       }
     }
-    return pct;
+    return Math.max(-100, pct);
   }
   // Adds `amount` of one buff type to a unit, in the same shape the granting
   // sites use — so the beacon bonus lands exactly where the base buff did.
