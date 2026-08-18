@@ -2314,6 +2314,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .embark-level-pip {
   width: 28px;
   height: 28px;
+  padding: 0px;
   display: flex;
   align-items: center;
   justify-content: center;

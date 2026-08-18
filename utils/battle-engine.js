@@ -632,6 +632,27 @@ class BattleEngine {
   //     unit instead reaches the NEAREST one(s) by row distance, so it's never
   //     stranded when a target exists in its lane.
   meleeCanReach(actor, t) {
+    // 0. THE ATTACKER'S OWN LINE. Range 1 means contact, and a unit standing in
+    // its own back column has none while its own front column is manned — its
+    // allies are in the way. It reaches only once that front column is empty.
+    //
+    // Without this the back column was strictly better for melee: full reach
+    // AND immunity to enemy melee, which inverted the whole front/back trade the
+    // formation screen teaches. A unit blocked here has no valid targets, and
+    // both sides already handle that — the AI defends instead of idling, and the
+    // player simply sees no lit cells.
+    //
+    // Footprint-based: a 'row' unit spans both columns, so it is always in
+    // contact and is never blocked by this.
+    const ownFront = actor.side === 'enemy' ? 0 : 1;
+    const actorInOwnFront = this.getFootprint(actor).some(cell => cellCol(cell) === ownFront);
+    if (!actorInOwnFront) {
+      const ownFrontManned = this.combatants.some(c =>
+        c.side === actor.side && c.alive && c.id !== actor.id &&
+        this.getFootprint(c).some(cell => cellCol(cell) === ownFront));
+      if (ownFrontManned) return false;
+    }
+
     const side       = t.side;
     const frontCol   = side === 'enemy' ? 0 : 1;
     const backCol    = side === 'enemy' ? 1 : 0;
