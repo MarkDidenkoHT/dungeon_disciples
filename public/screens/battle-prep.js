@@ -50,8 +50,8 @@ const BP_TEXT = {
   // into. The numbers are the same ⚔ totals already on screen, repeated here so
   // the warning is checkable rather than just ominous.
   weakerArmy: {
-    en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle, or cast a spell.`,
-    ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой, или применить заклинание.`,
+    en: (mine, theirs) => `Your army is weaker than theirs — ⚔ ${mine} against ⚔ ${theirs}. You may want to look for a different battle.`,
+    ru: (mine, theirs) => `Ваше войско слабее — ⚔ ${mine} против ⚔ ${theirs}. Возможно, стоит поискать другой бой.`,
   },
   yourPower:    { en: 'Your Power',   ru: 'Ваша сила' },
   enemyPower:   { en: 'Enemy Power',  ru: 'Сила врага' },
