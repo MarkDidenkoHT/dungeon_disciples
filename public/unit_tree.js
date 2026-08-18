@@ -16,17 +16,6 @@
 export const TREE_COLS = 5;
 export const TREE_ROWS = 5;
 
-// Where n leaves sit across five columns. Symmetrical and gap-first: two leaves
-// straddle the middle rather than crowding the left edge, which is what makes a
-// small tree look deliberate instead of ragged.
-const LEAF_SPREAD = {
-  1: [3],
-  2: [2, 4],
-  3: [1, 3, 5],
-  4: [1, 2, 4, 5],
-  5: [1, 2, 3, 4, 5],
-};
-
 // paths: UNIT_UPGRADE_PATHS[faction] — { unitId: [{ unit_id, building_id, ... }] }
 function childIdsOf(paths, unitId) {
   return (paths?.[unitId] || []).map(p => p.unit_id).filter(Boolean);
@@ -70,21 +59,51 @@ function collect(paths, rootId) {
   return nodes;
 }
 
-// Leaves get their columns from LEAF_SPREAD in DFS order; every parent then
-// sits over the middle of its own children. Rounding pulls toward the centre
-// column so an odd split leans inward rather than off the edge.
+// Leaves are packed by sibling group; every parent then sits over the middle
+// of its own children. Rounding pulls toward the centre column so an odd split
+// leans inward rather than off the edge.
 function assignColumns(nodes) {
   const byId   = new Map(nodes.map(n => [n.id, n]));
   const leaves = nodes.filter(n => n.children.length === 0);
-  const spread = LEAF_SPREAD[leaves.length] || null;
 
-  leaves.forEach((leaf, i) => {
-    leaf.col = spread
-      ? spread[i]
-      // More leaves than columns: fall back to an even sweep and let two share
-      // a column rather than dropping one off the grid.
-      : Math.min(TREE_COLS, Math.max(1, Math.round(1 + (i * (TREE_COLS - 1)) / Math.max(1, leaves.length - 1))));
-  });
+  // SIBLINGS STAY TOGETHER, and the gap goes BETWEEN branches.
+  //
+  // This used to index a flat LEAF_SPREAD table by leaf count, which knew
+  // nothing about parentage. With three children on one branch and one on
+  // another, spread[4] = [1,2,4,5] put the third child in column 4 — hard
+  // against the other branch's child, with the empty column splitting it from
+  // its own siblings. The tree read as though it belonged to the wrong parent.
+  //
+  // Instead: pack each sibling group into consecutive columns, separate groups
+  // by one empty column, and centre the whole thing.
+  const groups = [];
+  const byParent = new Map();
+  for (const leaf of leaves) {
+    const key = leaf.parentId ?? '__root__';
+    if (!byParent.has(key)) { byParent.set(key, []); groups.push(byParent.get(key)); }
+    byParent.get(key).push(leaf);
+  }
+
+  const total   = leaves.length;
+  const withGap = total + (groups.length - 1);
+  // Gaps are a luxury: drop them before dropping a unit off the grid.
+  const useGap  = withGap <= TREE_COLS;
+  const width   = useGap ? withGap : total;
+
+  if (width <= TREE_COLS) {
+    let col = Math.max(1, Math.floor((TREE_COLS - width) / 2) + 1);
+    for (const group of groups) {
+      for (const leaf of group) leaf.col = col++;
+      if (useGap) col++;   // one blank column between branches
+    }
+  } else {
+    // More leaves than columns even packed tight: fall back to an even sweep
+    // and let two share a column rather than dropping one off the grid.
+    leaves.forEach((leaf, i) => {
+      leaf.col = Math.min(TREE_COLS, Math.max(1,
+        Math.round(1 + (i * (TREE_COLS - 1)) / Math.max(1, leaves.length - 1))));
+    });
+  }
 
   // Parents after children, so deepest-first.
   for (const n of [...nodes].reverse()) {

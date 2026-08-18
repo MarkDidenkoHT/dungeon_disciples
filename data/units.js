@@ -1367,6 +1367,18 @@ const UNITS = {
       damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 900, passive: ['renew 1', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
+    high_priest: {
+      id: 'e2211', f: 'e', t: 4,
+      name: 'High Priest',
+      name_ru: 'Верховный Жрец',
+      tags: ['Caster', 'Holy'],
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 25,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
+      action: 'heal', target_type: 'ally', targets: 1, range: 3,
+      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      xp: 2000, passive: ['renew 2', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
+    },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
       name: 'Apprentice',
