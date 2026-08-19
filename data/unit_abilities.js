@@ -1787,6 +1787,17 @@ const UNIT_ABILITIES = {
     description_ru: "При атаке в ближнем бою врагом прямо впереди бьёт первым с 50% урона. Если это убивает атакующего, его атака отменяется.",
     params: { preemptive_strike_pct: 50 },
   },
+  'duelist 2': {
+    id: 'duelist 2',
+    name: 'Duelist',
+    name_ru: "Дуэлянт",
+    rank: 2,
+    type: 'passive',
+    trigger: 'preemptive_strike',
+    description: 'When attacked in melee by the enemy directly in front, strike first for 80% damage. If this kills the attacker, their attack is cancelled.',
+    description_ru: "При атаке в ближнем бою врагом прямо впереди бьёт первым с 80% урона. Если это убивает атакующего, его атака отменяется.",
+    params: { preemptive_strike_pct: 80 },
+  },
   'taunt 1': {
     id: 'taunt 1',
     name: 'Taunt',
