@@ -2650,7 +2650,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt',
-        xp: 120, passive: 'slow 1', ability: 'permafrost',
+        xp: 120, passive: 'slow 1', ability: 'permafrost 1',
       },
       rime_splinter: {
         id: 'mv_e21', f: 'mv', t: 2,
@@ -2662,7 +2662,7 @@ const UNITS = {
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 14, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt',
-        xp: 450, passive: ['slow 1', 'hungering_frost 1'], ability: 'permafrost',
+        xp: 450, passive: ['slow 1', 'hungering_frost 1'], ability: 'permafrost 1',
       },
       glacial_prism: {
         id: 'mv_e211', f: 'mv', t: 3,
@@ -2674,7 +2674,7 @@ const UNITS = {
         resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 50, nature: 30 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 18, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt',
-        xp: 1000, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost',
+        xp: 1000, passive: ['slow 1', 'hungering_frost 2'], ability: 'permafrost 1',
       },
       chillrock: {
         id: 'mv_e3', f: 'mv', t: 1,
