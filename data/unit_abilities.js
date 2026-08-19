@@ -629,6 +629,53 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит на 30% больше урона целям ниже 50% HP.",
     params: { execute_bonus_pct: 30, execute_threshold_pct: 50 },
   },
+  // ── SLAYER TEMPLATE ────────────────────────────────────────────────────────
+  // Bonus damage against a target that carries a tag, scaled by how many of a
+  // (usually different) tag stand with the attacker. Two independent tag axes:
+  //
+  //   vs_tag                        the tag ON THE TARGET that arms the bonus
+  //   tag_required                  the tag ON YOUR SIDE that scales it
+  //   vs_tag_dmg_bonus_pct_per_tag  percent per living ally carrying tag_required
+  //   vs_tag_dmg_bonus_pct          flat percent instead, when it should not scale
+  //
+  // Use one of the two percent keys, never both — the per-tag key wins. Drop
+  // tag_required with the flat key. Nothing else is needed: the whole family is
+  // read generically in calcDamageWithPassives, so a new one is a data entry
+  // with no code change. E.g. a Knight-scaled anti-Construct passive:
+  //   params: { vs_tag: 'Construct', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Knight' }
+  'exorcism 1': {
+    id: 'exorcism 1',
+    name: 'Exorcism',
+    name_ru: "Экзорцизм",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 5% bonus damage to Demon targets per Holy ally on the field.',
+    description_ru: "Наносит на 5% больше урона целям-демонам за каждого святого союзника на поле.",
+    params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Holy' },
+  },
+  'exorcism 2': {
+    id: 'exorcism 2',
+    name: 'Exorcism',
+    name_ru: "Экзорцизм",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 8% bonus damage to Demon targets per Holy ally on the field.',
+    description_ru: "Наносит на 8% больше урона целям-демонам за каждого святого союзника на поле.",
+    params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 8, tag_required: 'Holy' },
+  },
+  'exorcism 3': {
+    id: 'exorcism 3',
+    name: 'Exorcism',
+    name_ru: "Экзорцизм",
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 11% bonus damage to Demon targets per Holy ally on the field.',
+    description_ru: "Наносит на 11% больше урона целям-демонам за каждого святого союзника на поле.",
+    params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Holy' },
+  },
   'regenerate 1': {
     id: 'regenerate 1',
     name: 'Regenerate',
@@ -718,20 +765,6 @@ const UNIT_ABILITIES = {
     description_ru: "Накапливает по 5% полученного исцеления за каждого союзного заклинателя и возвращает после следующего попадания по этому юниту.",
     dispellable: true,
     params: { hot_pct_per_tag: 5, tag_required: 'Caster' },
-    effect_name: 'renew',
-  },
-  'renew 2': {
-    id: 'renew 2',
-    effect_name: 'renew',
-    name: 'Renew',
-    name_ru: "Обновление",
-    rank: 2,
-    type: 'passive',
-    trigger: 'on_heal',
-    description: 'Banks 8% of healing received per Caster ally and restores it after this unit next takes a hit.',
-    description_ru: "Накапливает по 8% полученного исцеления за каждого союзного заклинателя и возвращает после следующего попадания по этому юниту.",
-    dispellable: true,
-    params: { hot_pct_per_tag: 8, tag_required: 'Caster' },
     effect_name: 'renew',
   },
   'shatter 1': {

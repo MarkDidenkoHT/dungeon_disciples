@@ -471,7 +471,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 30, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
-      xp: 800, passive: ['unbreakable 1', 'aegis 1', 'fortify 1'], ability: 'stone_form 1',
+      xp: 800, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_death 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
       id: 'd311', f: 'd', t: 3,
@@ -483,7 +483,7 @@ const UNITS = {
       resistances: { air: 20, fire: 20, life: 10, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 35, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
-      xp: 2000, passive: ['unbreakable 1', 'aegis 1', 'fortify 2'], ability: 'stone_form 2',
+      xp: 2000, passive: ['unbreakable 1', 'aegis 1', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
       id: 'd32', f: 'd', t: 2,
@@ -943,7 +943,7 @@ const UNITS = {
       name: 'Artificer',
       name_ru: 'Артефактор',
       f: 'e', t: 1, size: 'tile',
-      tags: ['Engineer', null],
+      tags: ['Engineer', 'Caster'],
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,

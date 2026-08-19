@@ -683,7 +683,9 @@ class BattleEngine {
     return tDist === minDist;
   }
   calcDamage(actor, target) {
-    return calcDamageWithPassives(actor, target, this.ABILITIES);
+    // `this` is passed so per-tag scaling (the vs_tag slayer family) can count
+    // living allies — without it those passives silently resolve to +0%.
+    return calcDamageWithPassives(actor, target, this.ABILITIES, this);
   }
   calcDamageValue(actor, target) {
     return this.calcDamage(actor, target).dmg;

@@ -29,6 +29,14 @@ const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice', 'te
 // the same instant.
 const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace']);
 
+// Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
+// { targetCell }). An ordinary attack already routes these correctly (see the
+// 'action' branch of singleEffectCall), but an ABILITY that draws one did not:
+// it fell through to the catch-all that anchors on the victim with no aim.
+// arrow_shot with no destination flies off in its default heading, so Volley
+// spawned an arrow on every enemy and sent them back at the archer.
+const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale']);
+
 function cellIndex(row, col) { return row * COLS + col; }
 
 function getPortraitUrl(unit, variant = 'default') {
@@ -408,6 +416,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return {
         key: `${id(actorCell)}<${id(sourceCell)}`,
         run: () => fn(actorCell, { fromCell: sourceCell }),
+      };
+    }
+    // A directional ability travels from the actor to the target, the same as a
+    // strike does. Keyed by BOTH cells, so a volley's one-entry-per-enemy each
+    // draws its own arrow instead of being deduplicated down to a single shot.
+    if (DIRECTIONAL_FX.has(effectName) && actorCell && targetCell) {
+      return {
+        key: `${id(actorCell)}>${id(targetCell)}`,
+        run: () => fn(actorCell, { isEnemy, targetCell }),
       };
     }
     // Passives and everything else are drawn on whoever they happened to.

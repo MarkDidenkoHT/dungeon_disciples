@@ -130,14 +130,20 @@ const TUTORIAL_STEPS = {
       text: 'Один из ваших бойцов пал. Заклинание воскрешения вернёт его — нажмите «Воскресить», чтобы поднять его.',
     },
   },
+  // The regen line is the important half. A player who never learns that wounds
+  // close on their own reads a half-empty HP bar as permanent damage, and either
+  // hoards crystals to undo it or stops embarking. Taught here because this is
+  // the one moment they are about to pay for something time gives away free.
+  // The rate is authored in Supabase, not in this repo — if it changes there,
+  // this string has to change with it.
   spell_heal: {
     en: {
       title: 'Mend the Wounded',
-      text: 'They return with barely any health. Your Mending spell restores HP outside of battle — tap Heal to patch them up.',
+      text: 'They return with barely any health. A living unit recovers on its own — 10% of its max HP every 5 minutes — so time will mend them for free. Your Mending spell is for when you cannot wait: tap Heal to patch them up now.',
     },
     ru: {
       title: 'Исцелите раненого',
-      text: 'Он вернулся почти без здоровья. Заклинание исцеления восстанавливает HP вне боя — нажмите «Лечить», чтобы подлечить его.',
+      text: 'Он вернулся почти без здоровья. Живой боец восстанавливается сам — 10% от максимума здоровья каждые 5 минут, — так что время вылечит его бесплатно. Заклинание исцеления нужно, когда ждать некогда: нажмите «Лечить», чтобы подлечить его сейчас.',
     },
   },
   // Replaces the old `spell_buff` step, which told the player to cast a buff on

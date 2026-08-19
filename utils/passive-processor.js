@@ -5,7 +5,7 @@ function cellCol(i) { return i % 2; }
 // "per Zombie / per Demon / per Holy" passive, so they all count the same way:
 // the owner counts itself when it carries the tag, and the dead never count.
 function tagCount(engine, side, tag) {
-  return engine.tagCountFor ? engine.tagCountFor(side, tag) : 0;
+  return engine?.tagCountFor ? engine.tagCountFor(side, tag) : 0;
 }
 
 // A percentage that may be flat or scaled per tag. Returns 0 when neither is
@@ -914,7 +914,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
 }
-function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
+function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
   const data = actor.unit_data || actor;
   let power = data.action_power ?? data.action?.value ?? 12;
   const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
@@ -927,6 +927,16 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES) {
   // Leech: bonus damage against bleeding targets.
   if (p.leech_bleed_bonus_pct != null && (target._bleed_dmg ?? 0) > 0) {
     power = Math.floor(power * (1 + p.leech_bleed_bonus_pct / 100));
+  }
+  // Slayer family (Exorcism and anything added beside it): bonus damage when
+  // the TARGET carries `vs_tag`, optionally scaled by how many of
+  // `tag_required` stand with the ATTACKER. Deliberately generic — a new
+  // "hunts X" passive is a data entry in unit_abilities.js and nothing here.
+  // Applied to `power` alongside execute and leech, so it lands before armor
+  // and resistance rather than on top of them.
+  if (p.vs_tag && (target.unit_data?.tags ?? target.tags ?? []).includes(p.vs_tag)) {
+    const bonus = pctFor(p, engine, actor.side, 'vs_tag_dmg_bonus_pct', 'vs_tag_dmg_bonus_pct_per_tag');
+    if (bonus) power = Math.floor(power * (1 + bonus / 100));
   }
   const rawDmg = Math.floor(power * (actor._dmg_mult ?? 1));
   const damageSource = data.damage_source ?? 'physical';
