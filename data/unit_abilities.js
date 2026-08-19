@@ -1949,7 +1949,7 @@ const UNIT_ABILITIES = {
     params: { fellfire_pct_per_tag: 8, tag_required: 'Caster' },
     effect_name: 'fellfire',
   },
-  'hungering_frost': {
+  'hungering_frost 1': {
     id: 'hungering_frost 1',
     name: 'Hungering Frost',
     name_ru: "Голодный мороз",
@@ -1960,7 +1960,7 @@ const UNIT_ABILITIES = {
     description_ru: "Атаки этого юнита также наносят 20% своего урона каждому горящему врагу.",
     params: { fellfire_pct: 20 },
   },
-  'hungering_frost': {
+  'hungering_frost 2': {
     id: 'hungering_frost 2',
     name: 'Hungering Frost',
     name_ru: "Голодный мороз",
