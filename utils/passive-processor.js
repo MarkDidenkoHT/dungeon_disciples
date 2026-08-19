@@ -162,10 +162,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: hpEach, heal: false, stat: 'max HP' });
     }
     if (p.ally_armor_bonus != null) {
-      const allies = engine.combatants.filter(c => c.side === owner.side);
-      for (const a of allies) { a.armor += p.ally_armor_bonus; }
-      engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
+      // `ally_tag_required` narrows WHO RECEIVES the armor — distinct from
+      // `tag_required`, which elsewhere scales HOW MUCH. Omit it and every ally
+      // is covered, as before. Fortify uses it to plate only Constructs.
+      const allies = engine.combatants.filter(c =>
+        c.side === owner.side &&
+        (!p.ally_tag_required || (c.unit_data?.tags ?? c.tags ?? []).includes(p.ally_tag_required))
+      );
+      if (allies.length) {
+        for (const a of allies) { a.armor += p.ally_armor_bonus; }
+        engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
+      }
     }
     if (p.hp_per_tagged_unit != null && p.tag_required != null) {
       const n = tagCount(engine, owner.side, p.tag_required);
