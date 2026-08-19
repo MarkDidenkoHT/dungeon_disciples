@@ -2455,7 +2455,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: null, action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 120, passive: 'aggrails_blessing 1', ability: null,
+        xp: 120, passive: ['aggrails_blessing 1', 'gravebane 1'], ability: null,
       },
       aggrails_devoted: {
         id: 'opb_e21', f: 'opb', t: 2,
@@ -2467,7 +2467,7 @@ const UNITS = {
         resistances: { air: 5, fire: 10, life: 40, death: 15, cold: 5, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 16, action_icon: 'aggrails_blessing.jpg', action_animation: 'sword_swing',
-        xp: 450, passive: ['aggrails_blessing 1', 'protector 1'], ability: 'sanctuary 1',
+        xp: 450, passive: ['aggrails_blessing 1', 'gravebane 1', 'protector 1'], ability: 'sanctuary 1',
       },
       aggrails_champion: {
         id: 'opb_e211', f: 'opb', t: 3,
@@ -2479,7 +2479,7 @@ const UNITS = {
         resistances: { air: 10, fire: 20, life: 40, death: 15, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 20, action_icon: 'aggrails_blessing.jpg', action_animation: 'sword_swing',
-        xp: 1000, passive: ['aggrails_blessing 1', 'protector 1', 'aegis 1'], ability: 'sanctuary 1',
+        xp: 1000, passive: ['aggrails_blessing 2', 'gravebane 1', 'protector 1'], ability: 'sanctuary 1',
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
@@ -2527,19 +2527,19 @@ const UNITS = {
         resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 2200, passive: ['vitality 2', 'beacon_of_hope 1'], ability: 'infernal_mandate 1',
+        xp: 2200, passive: ['vitality 2', 'beacon_of_hope 1', 'renew 1'], ability: 'infernal_mandate 2',
       },
       keeper_of_the_bloodied_veil: {
         id: 'opb_e3112', f: 'opb', t: 4,
         name: 'Keeper of the Bloodied Veil',
         name_ru: 'Хранитель Окровавленной Завесы',
-        tags: ['Caster', 'Holy'],
+        tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 65, armor: 5, initiative: 20,
+        hp: 65, armor: 10, initiative: 20,
         resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 6, range: 3,
-        damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 2200, passive: ['vitality 2', 'sanctuary 1'], ability: 'infernal_mandate 1',
+        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        xp: 2200, passive: ['choir 2', 'beacon_of_hope 1', 'recuperate 1'], ability: 'infernal_mandate 2',
       },
       crimson_scout: {
         id: 'opb_e4', f: 'opb', t: 1,
@@ -2749,7 +2749,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 10, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 100, passive: 'iron_will 1', ability: 'terror 1',
+        xp: 100, passive: ['iron_will 1', 'heartpiercer 1'], ability: 'terror 1',
       },
       dread_knight: {
         id: 'dm_e11', f: 'dm', t: 2,
@@ -2761,7 +2761,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 14, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 310, passive: ['iron_will 1', 'infect 1'], ability: 'terror 1',
+        xp: 310, passive: ['iron_will 1', 'heartpiercer 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
         id: 'dm_e111', f: 'dm', t: 3,
@@ -2773,7 +2773,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 18, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 600, passive: ['iron_will 1', 'infect 2'], ability: 'terror 2',
+        xp: 600, passive: ['iron_will 1', 'heartpiercer 1', 'infect 2'], ability: 'terror 2',
       },
       oathbound_martyr: {
         id: 'dm_2', f: 'dm', t: 1,

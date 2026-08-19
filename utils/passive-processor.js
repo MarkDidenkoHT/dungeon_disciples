@@ -175,7 +175,21 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
       }
     }
-    if (p.hp_per_tagged_unit != null && p.tag_required != null) {
+    // ── KINSHIP TEMPLATE ──────────────────────────────────────────────────────
+    // Horde, Iron Will, Choir, Banquet: the owner grows for each living ally
+    // carrying `tag_required`, itself included. Mix any of the four stat keys.
+    //
+    //   tag_required               the tag counted
+    //   hp_per_tagged_unit         max HP (and current) per tagged ally
+    //   armor_per_tagged_unit      armor per tagged ally
+    //   power_per_tagged_unit      action power per tagged ally
+    //   initiative_per_tagged_unit initiative per tagged ally
+    //
+    // The gate used to require hp_per_tagged_unit, which silently dropped any
+    // passive that grants no HP — Banquet (power + initiative) would have done
+    // nothing at all. It now fires when ANY of the four is declared.
+    if (p.tag_required != null && (p.hp_per_tagged_unit != null || p.armor_per_tagged_unit != null ||
+                                   p.power_per_tagged_unit != null || p.initiative_per_tagged_unit != null)) {
       const n = tagCount(engine, owner.side, p.tag_required);
       if (n > 0) {
         const hpBonus    = (p.hp_per_tagged_unit ?? 0) * n;
@@ -184,6 +198,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // that only made each zombie harder to kill made the swarm slower to
         // resolve, not more dangerous.
         const powerBonus = (p.power_per_tagged_unit ?? 0) * n;
+        const initBonus  = (p.initiative_per_tagged_unit ?? 0) * n;
         if (hpBonus > 0) {
           owner.battle_hp += hpBonus;
           owner.max_hp    += hpBonus;
@@ -197,10 +212,15 @@ function dispatchPassive(trigger, owner, def, ctx) {
           owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + powerBonus;
           engine.recordGrantedBuff(owner, 'action_power', [owner], powerBonus);
         }
+        if (initBonus > 0) {
+          owner.initiative = (owner.initiative ?? 0) + initBonus;
+          engine.recordGrantedBuff(owner, 'initiative', [owner], initBonus);
+        }
         const parts = [];
         if (hpBonus)    parts.push(`+${hpBonus} HP`);
         if (armorBonus) parts.push(`+${armorBonus} armor`);
         if (powerBonus) parts.push(`+${powerBonus} power`);
+        if (initBonus)  parts.push(`+${initBonus} initiative`);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: n, message: `${def.name} — ${n} ${p.tag_required} allies: ${parts.join(', ')}` });
       }
     }

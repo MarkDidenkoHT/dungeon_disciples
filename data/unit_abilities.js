@@ -313,15 +313,6 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 35% урона юниту позади цели.",
     params: { behind_splash_pct: 35 },
   },
-  // ── Decay / Shield ─────────────────────────────────────────────────────────
-  // Two mirrored POOLS, both capped at 50% of the target's own max HP (see
-  // POOL_CAP_PCT in utils/battle-engine.js). Decay eats incoming HEALING point
-  // for point and is spent doing it; Shield eats incoming DAMAGE the same way.
-  // Both stack on re-application and saturate at the cap, so a long fight
-  // cannot turn either into an absolute immunity.
-  //
-  // `decay_amount` applies to whoever was hit. `shield_amount` shields the unit
-  // that was hit too, unless `shield_target: 'self'` names the attacker.
   'decay 1': {
     id: 'decay 1',
     name: 'Decay',
@@ -629,20 +620,6 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит на 30% больше урона целям ниже 50% HP.",
     params: { execute_bonus_pct: 30, execute_threshold_pct: 50 },
   },
-  // ── SLAYER TEMPLATE ────────────────────────────────────────────────────────
-  // Bonus damage against a target that carries a tag, scaled by how many of a
-  // (usually different) tag stand with the attacker. Two independent tag axes:
-  //
-  //   vs_tag                        the tag ON THE TARGET that arms the bonus
-  //   tag_required                  the tag ON YOUR SIDE that scales it
-  //   vs_tag_dmg_bonus_pct_per_tag  percent per living ally carrying tag_required
-  //   vs_tag_dmg_bonus_pct          flat percent instead, when it should not scale
-  //
-  // Use one of the two percent keys, never both — the per-tag key wins. Drop
-  // tag_required with the flat key. Nothing else is needed: the whole family is
-  // read generically in calcDamageWithPassives, so a new one is a data entry
-  // with no code change. E.g. a Knight-scaled anti-Construct passive:
-  //   params: { vs_tag: 'Construct', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Knight' }
   'exorcism 1': {
     id: 'exorcism 1',
     name: 'Exorcism',
@@ -675,6 +652,72 @@ const UNIT_ABILITIES = {
     description: 'Deals 11% bonus damage to Demon targets per Holy ally on the field.',
     description_ru: "Наносит на 11% больше урона целям-демонам за каждого святого союзника на поле.",
     params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Holy' },
+  },
+  'gravebane 1': {
+    id: 'gravebane 1',
+    name: 'Gravebane',
+    name_ru: "Могильная погибель",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 5% bonus damage to Zombie targets per Knight ally on the field.',
+    description_ru: "Наносит на 5% больше урона целям-зомби за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Zombie', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Knight' },
+  },
+  'gravebane 2': {
+    id: 'gravebane 2',
+    name: 'Gravebane',
+    name_ru: "Могильная погибель",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 8% bonus damage to Zombie targets per Knight ally on the field.',
+    description_ru: "Наносит на 8% больше урона целям-зомби за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Zombie', vs_tag_dmg_bonus_pct_per_tag: 8, tag_required: 'Knight' },
+  },
+  'gravebane 3': {
+    id: 'gravebane 3',
+    name: 'Gravebane',
+    name_ru: "Могильная погибель",
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 11% bonus damage to Zombie targets per Knight ally on the field.',
+    description_ru: "Наносит на 11% больше урона целям-зомби за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Zombie', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Knight' },
+  },
+  'heartpiercer 1': {
+    id: 'heartpiercer 1',
+    name: 'Heartpiercer',
+    name_ru: "Сердцебой",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 5% bonus damage to Vampire targets per Knight ally on the field.',
+    description_ru: "Наносит на 5% больше урона целям-вампирам за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Vampire', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Knight' },
+  },
+  'heartpiercer 2': {
+    id: 'heartpiercer 2',
+    name: 'Heartpiercer',
+    name_ru: "Сердцебой",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 8% bonus damage to Vampire targets per Knight ally on the field.',
+    description_ru: "Наносит на 8% больше урона целям-вампирам за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Vampire', vs_tag_dmg_bonus_pct_per_tag: 8, tag_required: 'Knight' },
+  },
+  'heartpiercer 3': {
+    id: 'heartpiercer 3',
+    name: 'Heartpiercer',
+    name_ru: "Сердцебой",
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 11% bonus damage to Vampire targets per Knight ally on the field.',
+    description_ru: "Наносит на 11% больше урона целям-вампирам за каждого союзного рыцаря на поле.",
+    params: { vs_tag: 'Vampire', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Knight' },
   },
   'regenerate 1': {
     id: 'regenerate 1',
@@ -752,6 +795,50 @@ const UNIT_ABILITIES = {
     description: 'At battle start, gain +2 HP and +2 armor for each Knight ally on the field.',
     description_ru: "В начале боя получает +2 HP и +2 брони за каждого союзного рыцаря на поле.",
     params: { tag_required: 'Knight', hp_per_tagged_unit: 2, armor_per_tagged_unit: 2 },
+  },
+  'choir 1': {
+    id: 'choir 1',
+    name: 'Choir',
+    name_ru: "Хор",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, gain +2 HP and +1 power for each Demon ally on the field.',
+    description_ru: "В начале боя получает +2 HP и +1 к силе за каждого союзного демона на поле.",
+    params: { tag_required: 'Demon', hp_per_tagged_unit: 2, power_per_tagged_unit: 1 },
+  },
+  'choir 2': {
+    id: 'choir 2',
+    name: 'Choir',
+    name_ru: "Хор",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, gain +3 HP and +2 power for each Demon ally on the field.',
+    description_ru: "В начале боя получает +3 HP и +2 к силе за каждого союзного демона на поле.",
+    params: { tag_required: 'Demon', hp_per_tagged_unit: 3, power_per_tagged_unit: 2 },
+  },
+  'banquet 1': {
+    id: 'banquet 1',
+    name: 'Banquet',
+    name_ru: "Пиршество",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, gain +1 power and +1 initiative for each Vampire ally on the field.',
+    description_ru: "В начале боя получает +1 к силе и +1 к инициативе за каждого союзного вампира на поле.",
+    params: { tag_required: 'Vampire', power_per_tagged_unit: 1, initiative_per_tagged_unit: 1 },
+  },
+  'banquet 2': {
+    id: 'banquet 2',
+    name: 'Banquet',
+    name_ru: "Пиршество",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, gain +2 power and +2 initiative for each Vampire ally on the field.',
+    description_ru: "В начале боя получает +2 к силе и +2 к инициативе за каждого союзного вампира на поле.",
+    params: { tag_required: 'Vampire', power_per_tagged_unit: 2, initiative_per_tagged_unit: 2 },
   },
   'renew 1': {
     id: 'renew 1',
