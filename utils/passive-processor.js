@@ -328,6 +328,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
           t.armor += inspVal;
         } else if (p.inspiration_stat === 'initiative') {
           t.initiative += inspVal;
+          // The buff icon needs something ON THE TARGET to read. recordGrantedBuff
+          // files the grant against the SOURCE, and applyStatBuff just moves the
+          // number, so without this the inspired unit carries no sign of it and
+          // the icon row has nothing to show.
+          t._inspiration_initiative = (t._inspiration_initiative ?? 0) + inspVal;
         } else if (p.inspiration_stat === 'max_hp') {
           t.max_hp    += inspVal;
           t.battle_hp += inspVal;

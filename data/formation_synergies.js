@@ -19,9 +19,11 @@
 // describes what the bond does — the mechanical effect stays with the ability
 // in data/unit_abilities.js, where the rest of the ability already lives.
 
+const ROWS = 3;
 const COLS = 2;
 const cellRow = i => Math.floor(i / COLS);
 const cellCol = i => i % COLS;
+const cellIndex = (row, col) => row * COLS + col;
 
 // ── Relations ────────────────────────────────────────────────────────────────
 //
@@ -40,8 +42,40 @@ const RELATIONS = {
   same_col:  (a, b) => a.some(x => b.some(y => cellCol(x) === cellCol(y))),
   adjacent:  (a, b) => a.some(x => b.some(y =>
                  Math.abs(cellRow(x) - cellRow(y)) + Math.abs(cellCol(x) - cellCol(y)) === 1)),
+  // Note this is NOT `adjacent` restricted to a column: it reaches one row past
+  // the source's EXTENT in each column it occupies, which for a multi-cell unit
+  // is not the same set. A 2x1 unit lying across a row occupies both columns and
+  // so reaches four cells, two above and two below.
+  column_adjacent: (a, b) => {
+    const cells = columnAdjacentCells(a);
+    return b.some(y => cells.includes(y));
+  },
   any_ally:  () => true,
 };
+
+// The cells one row beyond a footprint, per column it occupies. Used by
+// `column_adjacent` and by the battle engine's Inspiration targeting, which
+// calls this rather than keeping its own copy.
+//
+//   row0  .            a unit at row1/col0 reaches row0 and row2 of col0;
+//   row1  X   ->       a unit at row0/col0 reaches only row1, since there is
+//   row2  .            no row above it.
+function columnAdjacentCells(cells) {
+  const rowsByCol = {};
+  for (const cell of cells) {
+    const col = cellCol(cell), row = cellRow(cell);
+    (rowsByCol[col] = rowsByCol[col] || []).push(row);
+  }
+  const targets = new Set();
+  for (const [col, rows] of Object.entries(rowsByCol)) {
+    const colNum = Number(col);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    if (minRow - 1 >= 0)        targets.add(cellIndex(minRow - 1, colNum));
+    if (maxRow + 1 <= ROWS - 1) targets.add(cellIndex(maxRow + 1, colNum));
+  }
+  return [...targets];
+}
 
 function sharesRowAcrossColumns(a, b) {
   return a.some(x => b.some(y => cellRow(x) === cellRow(y) && cellCol(x) !== cellCol(y)));
@@ -74,23 +108,58 @@ const baseKey = k => String(k || '').replace(/\s+\d+$/, '');
 
 // ── Registry ─────────────────────────────────────────────────────────────────
 //
-// effect: the key into EFFECTS in public/battle-fx.js. fx: the palette and
-// parts that effect is built from, so a second bond of the same shape is a row
-// in this table rather than another hand-written animation.
+// `present` is how the bond SHOWS, and it is the main thing that varies:
+//
+//   'tether'  a cord between the two units, a sigil on the receiver, and a glow
+//             on both, held for as long as the bond stands. For a bond that is
+//             about the LINK itself — two units becoming one thing.
+//   'flash'   a bloom on the affected units and nothing after. For a bond that
+//             is about the BUFF, where the lasting record belongs in the normal
+//             buff-icon row rather than in an overlay of its own.
+//
+// effect: the key into EFFECTS in public/battle-fx.js. fx: the palette that
+// effect is built from, so a second bond of the same shape is a row in this
+// table rather than another hand-written animation.
+//
+// multi: bond every matching partner, not just the first.
 const FORMATION_SYNERGIES = {
   unity_bond: {
     id: 'unity_bond',
     source:   { ability: 'unity 1' },
     partner:  { tag: 'Holy' },
     relation: 'front',
+    present:  'tether',
     effect:   'unity_bond',
     fx: {
       tether: 0xffe6a8,      // the cord itself
       glow:   0xfff2cf,      // the bloom on both cells
       mark:   0xffd77a,      // the sigil on the host
-      sigil:  'ring',
     },
     label: 'Unity', label_ru: 'Единство',
+  },
+
+  // Matched on the BASE name, so ranks 1 and 2 both take this row. They look the
+  // same deliberately: the rank changes how much initiative is granted, and the
+  // number is already on the buff icon.
+  //
+  // `partner: {}` is every ally. The tag on the ability scales the VALUE (2 per
+  // Caster ally) — it never decides who is eligible.
+  inspiration_initiative: {
+    id: 'inspiration_initiative',
+    source:   { ability: 'inspiration_initiative' },
+    partner:  {},
+    relation: 'column_adjacent',
+    multi:    true,
+    present:  'flash',
+    effect:   'inspiration_flash',
+    fx: {
+      glow: 0x8cff9b,       // the bloom on each inspired unit
+      core: 0xd6ffdc,       // its bright centre
+    },
+    // The buff icon this bond leaves behind, in the ability-icon folder. Battle
+    // renders it through BUFF_DEFS, prep as a single badge on the cell.
+    buffIcon: 'inspiration_initiative.jpg',
+    label: 'Inspiration', label_ru: 'Вдохновение',
   },
 };
 
@@ -122,13 +191,15 @@ function resolveSynergies(units, opts = {}) {
       if (!matchesSpec(source, def.source)) continue;
       // A Unity guardian is itself tagged Holy, so without this it would bond
       // to its own reflection.
-      const partner = alive.find(p =>
+      const eligible = p =>
         p.id !== source.id &&
         p.side === source.side &&
         matchesSpec(p, def.partner) &&
-        relation(source.cells, p.cells)
-      );
-      if (!partner) continue;
+        relation(source.cells, p.cells);
+      // A one-to-one bond takes the first match; Inspiration buffs everyone it
+      // reaches, which is up to four units for a source lying across a row.
+      const partners = def.multi ? alive.filter(eligible) : [alive.find(eligible)].filter(Boolean);
+      for (const partner of partners) {
       const [sourceCell, partnerCell] = nearestPair(source.cells, partner.cells);
       out.push({
         defId: def.id, def,
@@ -141,8 +212,11 @@ function resolveSynergies(units, opts = {}) {
         // which is where a cord should meet it anyway.
         sourceAnchor: source.anchor ?? sourceCell,
         partnerAnchor: partner.anchor ?? partnerCell,
+        // Per PARTNER, so the bonds of a multi source diff independently: move
+        // one target away and only its own bond breaks.
         key: `${def.id}:${source.id}:${partner.id}`,
       });
+      }
     }
   }
   return out;
@@ -167,7 +241,7 @@ function findPartnerFor(units, sourceId, defId) {
   return resolveSynergies(units).find(s => s.sourceId === sourceId && s.defId === defId) || null;
 }
 
-export { FORMATION_SYNERGIES, RELATIONS, resolveSynergies, findPartnerFor, matchesSpec };
+export { FORMATION_SYNERGIES, RELATIONS, resolveSynergies, findPartnerFor, matchesSpec, columnAdjacentCells };
 if (typeof module !== 'undefined') {
-  module.exports = { FORMATION_SYNERGIES, RELATIONS, resolveSynergies, findPartnerFor, matchesSpec };
+  module.exports = { FORMATION_SYNERGIES, RELATIONS, resolveSynergies, findPartnerFor, matchesSpec, columnAdjacentCells };
 }

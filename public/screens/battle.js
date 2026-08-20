@@ -1633,6 +1633,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'defend',      icon: 'fortify.jpg',          en: 'Defending',       ru: 'В защите',       n: c => num(c, 'defend_armor_bonus'),  unit: 'armor' },
     { key: 'invulnerable',icon: 'undying.jpg',          en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
     { key: 'untargetable',icon: 'unity.jpg',            en: 'Cannot be targeted', ru: 'Нельзя выбрать целью', n: c => (st(c, '_untargetable') ? 1 : 0) },
+    // Granted by an Inspiration ally standing directly above or below in the
+    // same column (see data/formation_synergies.js). The number is the
+    // initiative actually handed over, summed if two of them reach this unit.
+    { key: 'inspiration', icon: 'inspiration_initiative.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_initiative'), unit: 'initiative' },
   ];
 
   const DEBUFF_DEFS = [
@@ -1657,6 +1661,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     hp:     { en: 'HP per turn', ru: 'HP за ход' },
     pct:    { en: '%',           ru: '%' },
     armor:  { en: 'armor',       ru: 'брони' },
+    initiative: { en: 'initiative', ru: 'инициативы' },
     hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
     heal:        { en: 'healing absorbed', ru: 'исцеления поглотит' },
     dmg_absorb:  { en: 'damage absorbed',  ru: 'урона поглотит' },

@@ -4199,11 +4199,83 @@ function makeBondEffect(fx) {
   };
 }
 
-// Every bond in the registry gets its formation animation registered under its
-// own `effect` key, so battle-side dispatch needs no per-bond wiring at all: the
-// existing lookup in battle.js finds it the moment the ability names it.
-for (const bondDef of Object.values(FORMATION_SYNERGIES)) {
-  if (bondDef.effect && !EFFECTS[bondDef.effect]) EFFECTS[bondDef.effect] = makeBondEffect(bondDef.fx || {});
+
+// ── Bond presentation: flash ─────────────────────────────────────────────────
+//
+// The other way a bond can show. Where a tether is about the LINK — two units
+// held together, drawn for as long as it lasts — a flash is about the BUFF: the
+// affected units light up hard for a moment, and what remains is an ordinary
+// buff icon in the ordinary icon row, the same as Rage or Aegis.
+//
+// So there is no idle phase and no break here. A bond that presents this way
+// gets one animation and then hands the job over to the buff icon.
+async function playBondFlash(cellSel, fx = {}) {
+  if (!app || !window.PIXI || !cellSel) return;
+  const layer = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const glow = new PIXI.Graphics(); glow.blendMode = PIXI.BLEND_MODES.ADD;
+  const ring = new PIXI.Graphics(); ring.blendMode = PIXI.BLEND_MODES.ADD;
+  glowLayer.addChild(glow);
+  layer.addChild(glowLayer, ring);
+  app.stage.addChild(layer);
+
+  await animate(300, t => {
+    const b = boundsForSelector(cellSel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const cellR = Math.min(b.width, b.height);
+    // Hard in, slow out — a strike of light rather than a pulse. Reaching full
+    // brightness a fifth of the way through is what makes it read as sudden.
+    const rise = Math.min(1, t / 0.2);
+    const fall = t < 0.2 ? 1 : 1 - (t - 0.2) / 0.8;
+    const a = rise * fall;
+
+    glow.clear();
+    // Two radii: a wide bloom that covers the unit, and a tighter brighter core,
+    // so the tile is lit rather than merely tinted.
+    softGlow(glow, cx, cy, cellR * (0.55 + t * 0.25), fx.glow ?? 0x8cff9b, a * 0.85);
+    softGlow(glow, cx, cy, cellR * 0.3, fx.core ?? 0xd6ffdc, a * 0.7);
+
+    ring.clear();
+    // One ring travelling outward, gone before the glow is. Gives the flash a
+    // direction — something arrived here — without a cord to arrive along.
+    if (t > 0.05) {
+      const rt = (t - 0.05) / 0.95;
+      ring.lineStyle(2.5, fx.core ?? 0xd6ffdc, (1 - rt) * 0.7);
+      ring.drawCircle(cx, cy, cellR * (0.2 + rt * 0.55));
+    }
+  });
+
+  layer.destroy({ children: true });
 }
 
-export { playBondForm, startBondIdle, playBondBreak, makeBondEffect, cellSelectorFor };
+// Flash presentations anchor on the RECEIVER only — nothing travels, so the
+// source is not part of the picture. Takes the same two-cell signature as the
+// tether effects so one dispatcher can call either.
+function makeFlashEffect(fx) {
+  return async function flashEffect(_sourceCellEl, targetCellEl) {
+    const sel = cellSelectorFor(targetCellEl);
+    if (!sel) return;
+    await playBondFlash(sel, fx);
+  };
+}
+
+// Every bond in the registry gets its opening animation registered under its own
+// `effect` key, built from whichever presentation it declares. Battle-side
+// dispatch needs no per-bond wiring at all: the existing lookup in battle.js
+// finds it the moment the ability names it.
+const BOND_PRESENTATIONS = {
+  tether: makeBondEffect,
+  flash:  makeFlashEffect,
+};
+
+for (const bondDef of Object.values(FORMATION_SYNERGIES)) {
+  const build = BOND_PRESENTATIONS[bondDef.present || 'tether'];
+  if (bondDef.effect && build && !EFFECTS[bondDef.effect]) {
+    EFFECTS[bondDef.effect] = build(bondDef.fx || {});
+  }
+}
+
+export { playBondForm, startBondIdle, playBondBreak, playBondFlash, makeBondEffect, makeFlashEffect, cellSelectorFor };

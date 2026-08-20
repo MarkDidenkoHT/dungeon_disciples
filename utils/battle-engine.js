@@ -1,5 +1,8 @@
 const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
+// Inspiration's reach is also the 'column_adjacent' relation a battle-prep
+// preview draws from, so the rule is defined once, there.
+const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 
@@ -339,23 +342,12 @@ class BattleEngine {
     }
     return [unit.cellIndex];
   }
+  // One row beyond this unit's extent, in each column it occupies. The rule
+  // itself lives in data/formation_synergies.js, because battle prep previews
+  // the same reach while the player is still placing units — two copies of it
+  // would drift, and the visible symptom is a preview that lies.
   getInspirationTargetCells(unit) {
-    const footprint = this.getFootprint(unit);
-    const rowsByCol = {};
-    for (const cell of footprint) {
-      const col = cellCol(cell), row = cellRow(cell);
-      rowsByCol[col] = rowsByCol[col] || [];
-      rowsByCol[col].push(row);
-    }
-    const targets = new Set();
-    for (const [col, rows] of Object.entries(rowsByCol)) {
-      const colNum  = Number(col);
-      const minRow  = Math.min(...rows);
-      const maxRow  = Math.max(...rows);
-      if (minRow - 1 >= 0)        targets.add(cellIndex(minRow - 1, colNum));
-      if (maxRow + 1 <= ROWS - 1) targets.add(cellIndex(maxRow + 1, colNum));
-    }
-    return [...targets];
+    return columnAdjacentCells(this.getFootprint(unit));
   }
   getInspirationTargets(owner) {
     const targetCells = this.getInspirationTargetCells(owner);
@@ -2074,6 +2066,7 @@ class BattleEngine {
           _effect_seq:         c._effect_seq ?? 0,
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
+          _inspiration_initiative: c._inspiration_initiative ?? 0,
           _unity_host_id:      c._unity_host_id,
           _unity_bonded_id:    c._unity_bonded_id,
           _mothers_kiss:       c._mothers_kiss,
@@ -2175,6 +2168,7 @@ class BattleEngine {
       c._effects           = b._effects           ?? [];
       c._invulnerable      = b._invulnerable      ?? false;
       c._untargetable      = b._untargetable      ?? false;
+      c._inspiration_initiative = b._inspiration_initiative ?? 0;
       c._unity_host_id     = b._unity_host_id     ?? null;
       c._unity_bonded_id   = b._unity_bonded_id   ?? null;
       c._mothers_kiss      = b._mothers_kiss      ?? false;

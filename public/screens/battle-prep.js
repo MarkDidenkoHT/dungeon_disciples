@@ -11,6 +11,7 @@ import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
+import { resolveSynergies } from '../../data/formation_synergies.js';
 
 // The ability/item inspect handler has to be on `document`, because these icons
 // also appear inside the body-level modal sheet, which is outside the screen
@@ -860,8 +861,63 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     return out;
   }
 
+  // The enemy formation, in the same shape. Enemies are already shown openly on
+  // their grid — only the EMPTY cells are fogged — so previewing their bonds
+  // reveals nothing that is not on screen anyway.
+  //
+  // Indexed rather than keyed by `e.id`, which is a unit DEFINITION id: two of
+  // the same creature in one encounter would otherwise collapse into one unit
+  // and bond with themselves.
+  function enemySynergyUnits() {
+    return (enemies || []).map((e, i) => {
+      const passives = Array.isArray(e.passive) ? e.passive : (e.passive ? [e.passive] : []);
+      return {
+        id: `enemy_${i}`, side: 'enemy',
+        anchor: e.cell, cells: cellFootprint(e.cell, e.size, ROWS, COLS),
+        tags: e.tags ?? [],
+        abilityKeys: [e.ability, ...passives].filter(Boolean),
+        type: e.type, unitId: e.id,
+      };
+    });
+  }
+
+  // How much initiative each unit is being handed right now, so the badge can
+  // show a live number while the player is still arranging.
+  //
+  // The value scales with Casters ON THE FIELD, so it moves as more are placed —
+  // which is the point of showing it here rather than a bare icon. Summed,
+  // because a unit sandwiched between two Inspiration allies gets both.
+  function inspirationBuffs(units) {
+    const out = new Map();
+    const casters = units.filter(u => (u.tags ?? []).includes('Caster')).length;
+    for (const bond of resolveSynergies(units)) {
+      if (bond.defId !== 'inspiration_initiative') continue;
+      const source = units.find(u => u.id === bond.sourceId);
+      const key    = (source?.abilityKeys ?? []).find(k => String(k).startsWith('inspiration_initiative'));
+      const params = UNIT_ABILITIES[key]?.params ?? {};
+      const value  = params.inspiration_value_per_tag != null
+        ? params.inspiration_value_per_tag * casters
+        : (params.inspiration_value ?? 0);
+      if (value > 0) out.set(bond.partnerId, (out.get(bond.partnerId) ?? 0) + value);
+    }
+    return out;
+  }
+
+  // The same markup battle uses for its buff column (see stateIconsHtml in
+  // screens/battle.js), so an inspired unit looks identical on both screens
+  // without prep growing a status system of its own.
+  function inspirationBadgeHtml(value) {
+    if (!value) return '';
+    const icon = assetUrl('/assets/icons/abilities/inspiration_initiative.jpg');
+    return `<div class="bc-buff-icons"><span class="bc-state bc-state--inspiration">
+      <img class="bc-state-img" src="${icon}" alt="" onerror="this.style.display='none'">
+      <span class="bc-state-num">${value}</span>
+    </span></div>`;
+  }
+
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
+    const inspBuffs = inspirationBuffs(synergyUnits());
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const occ = occupied[i];
       if (occ && occ.anchor === i) {
@@ -890,6 +946,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           return false;
         });
         const spellDot = spellBuffs.length > 0 ? `<span class="battle-cell-spell-dot">✦</span>` : '';
+        const inspBadge = inspirationBadgeHtml(inspBuffs.get(occ.unitId));
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''} ${isAlive ? '' : 'battle-cell--dead'}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
@@ -898,6 +955,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
             <span class="battle-cell-sub">${isAlive ? `${currentHp}/${maxHp}` : 'Dead'}</span>
           </div>
           ${spellDot}
+          ${inspBadge}
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;
       }
@@ -949,11 +1007,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       cells.forEach((cell, n) => { unitAtCell[cell] = { unit: e, _anchor: n === 0 }; });
     }
 
+    const enemyUnits = enemySynergyUnits();
+    const enemyInsp  = inspirationBuffs(enemyUnits);
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const slot = unitAtCell[i];
       if (!slot) return `<div class="battle-cell battle-cell--fog">???</div>`;
       if (!slot._anchor) return '';
       const e = slot.unit;
+      const eInsp = inspirationBadgeHtml(enemyInsp.get(`enemy_${enemies.indexOf(e)}`));
       const colSpan = e.size === 'row' ? 2 : 1;
       const rowSpan = e.size === 'column' ? 2 : 1;
       return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
@@ -962,6 +1023,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           <span class="battle-cell-name">${e.name}</span>
           <span class="battle-cell-sub">❤ ${e.hp}</span>
         </div>
+        ${eInsp}
       </div>`;
     }).join('');
 
@@ -1123,6 +1185,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     // canvas measured before that is a canvas nothing can be drawn on.
     reattachBattleFx(root);
     syncFormationSynergies(synergyUnits());
+    // The enemy grid is its own scope: its cells repeat the same `data-i` values
+    // as the player's, so the two must never share selectors.
+    syncFormationSynergies(enemySynergyUnits(), 'enemy-grid');
     renderPortraitTrack();
     attachPortraitEvents();
     attachGridDragEvents();
@@ -1722,6 +1787,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       requestAnimationFrame(() => {
         reattachBattleFx(root);
         syncFormationSynergies(synergyUnits());
+        syncFormationSynergies(enemySynergyUnits(), 'enemy-grid');
       });
       renderPortraitTrack();
       attachPortraitEvents();

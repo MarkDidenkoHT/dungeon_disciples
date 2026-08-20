@@ -1,29 +1,37 @@
 // The screen-side of formation synergies: it asks resolveSynergies() what bonds
 // exist right now and keeps what is drawn in step with the answer.
 //
-// One function serves both screens, because both want the same three beats — a
-// bond forms, it stands, it breaks. Only the way a cell is ADDRESSED differs:
-// prep keys cells by grid position (`data-i`, scoped by grid, since the player
-// and enemy grids repeat the same indices), battle keys them by combatant id
-// (`data-id`). That is the whole of the difference, so it is the only thing the
-// caller has to say.
+// One function serves both screens and both sides, because they all want the
+// same reconcile — a bond appears, it stands, it goes. What differs is only:
 //
-// In battle the three beats fall out of the mechanic for free: the bond forms at
-// battle start, stands while both units live, and breaks when one of them dies —
-// because a dead combatant drops out of the units list and the diff notices.
+//   * how a cell is ADDRESSED. Prep keys cells by grid position (`data-i`,
+//     scoped by grid, since the player and enemy grids repeat the same indices);
+//     battle keys them by combatant id (`data-id`). That is the `scope`.
+//   * how the bond PRESENTS. A 'tether' bond is drawn for as long as it lasts,
+//     so it owns an idle loop and a break. A 'flash' bond lights its targets
+//     once and leaves the lasting record to the ordinary buff icon, so it has
+//     neither. See `present` in data/formation_synergies.js.
+//
+// In battle the beats fall out of the mechanic for free: a bond forms at battle
+// start, stands while both units live, and goes when one of them dies — because
+// a dead combatant drops out of the units list and the diff notices.
 
 import { resolveSynergies } from '../data/formation_synergies.js';
-import { playBondForm, startBondIdle, playBondBreak, isBattleFxReady } from './battle-fx.js';
+import {
+  playBondForm, startBondIdle, playBondBreak, playBondFlash, isBattleFxReady,
+} from './battle-fx.js';
 
-// key -> { stop, srcSel, dstSel, fx }
+// `${scope}|${bond.key}` -> { scope, stop, srcSel, dstSel, fx, present }
+//
+// Namespaced by scope rather than reset when the scope changes, because prep
+// drives TWO scopes at once — its player grid and its enemy grid — and they must
+// not clear each other. Only entries in the scope being synced take part in its
+// diff.
 const active = new Map();
-let currentScope = null;
 
-// Prep: cells carry `data-i`, a grid POSITION that repeats between the player
-// and enemy grids, so the selector is scoped by its grid. The bond's ANCHOR
-// cells are used rather than its nearest cells — a multi-cell unit renders as
-// one element spanning its whole footprint, anchored at its first cell, so only
-// the anchor exists in the DOM.
+// Prep: the bond's ANCHOR cells, not its nearest cells — a multi-cell unit
+// renders as one element spanning its whole footprint, anchored at its first
+// cell, so only the anchor exists in the DOM.
 const gridSelectors = gridId => bond => [
   `#${gridId} .battle-cell[data-i="${bond.sourceAnchor}"]`,
   `#${gridId} .battle-cell[data-i="${bond.partnerAnchor}"]`,
@@ -36,75 +44,76 @@ const idSelectors = () => bond => [
 ];
 
 /**
- * Bring the drawn bonds in line with `units`:
+ * Bring the bonds drawn in one scope in line with `units`:
  *
- *   a key that wasn't there before -> formation, then start its idle loop
- *   a key that has gone away       -> stop the idle loop, then break
- *   a key that is in both          -> leave it alone, its loop is still running
+ *   a key that wasn't there before -> play its opening beat
+ *   a key that has gone away       -> stop it and close it out
+ *   a key that is in both          -> leave it alone
  *
  * The diff is the whole point. Both screens re-render constantly — prep on every
  * placement and drag, battle on every log entry — and without it an untouched
- * bond would replay its formation flare over and over.
+ * bond would replay its opening over and over.
  *
- * `scope` is 'battle', or the id of the grid the cells live in. It also
- * identifies the screen: changing it drops every bond, since selectors from the
- * old screen cannot resolve on the new one.
+ * `scope` is 'battle', or the id of the grid whose cells these are.
  *
  * Safe to call on every refresh; that is how it is meant to be used.
  */
 export function syncFormationSynergies(units, scope = 'player-grid') {
   // Nothing is recorded before there is a canvas to record it against. A bond
-  // marked as drawn while the FX layer was still coming up would sit in
-  // `active` forever without ever appearing.
+  // marked as shown while the FX layer was still coming up would sit in `active`
+  // forever without ever appearing.
   if (!isBattleFxReady()) return;
-  if (currentScope && currentScope !== scope) clearFormationSynergies();
-  currentScope = scope;
 
   const selectorsFor = scope === 'battle' ? idSelectors() : gridSelectors(scope);
   const found = resolveSynergies(units);
   const seen = new Set();
-  // Logged only when the set CHANGES, in the same shape as battle-fx's own
-  // logs. A bond that never appears is otherwise indistinguishable from a bond
-  // that was never resolved, and those have very different causes.
-  if (found.length !== active.size) {
-    console.log('[synergy] bonds:', found.map(b => b.key).join(', ') || '(none)', '| was', active.size);
-  }
 
   for (const bond of found) {
-    seen.add(bond.key);
-    if (active.has(bond.key)) continue;             // already standing, already drawn
+    const id = `${scope}|${bond.key}`;
+    seen.add(id);
+    if (active.has(id)) continue;                   // already standing, already shown
 
     const [srcSel, dstSel] = selectorsFor(bond);
     const fx = bond.def.fx || {};
+    const present = bond.def.present || 'tether';
 
-    // Registered BEFORE the formation animation is awaited. A player can place
-    // another unit inside those 620ms, which re-enters this function — without
-    // the entry already present, the bond would be treated as new a second time
-    // and flare twice.
-    const entry = { stop: null, srcSel, dstSel, fx };
-    active.set(bond.key, entry);
+    // Registered BEFORE the opening animation is awaited. A player can place
+    // another unit while it is still playing, which re-enters this function —
+    // without the entry already present, the bond would be treated as new a
+    // second time and play twice.
+    const entry = { scope, stop: null, srcSel, dstSel, fx, present };
+    active.set(id, entry);
+
+    if (present === 'flash') {
+      // Lights the affected unit and is done. The buff icon on the cell carries
+      // it from here, so there is nothing to hold on to and nothing to tear
+      // down — the entry stays only so the diff knows it has been played.
+      playBondFlash(dstSel, fx);
+      continue;
+    }
 
     playBondForm(srcSel, dstSel, fx).then(() => {
-      // The pair may have been pulled apart while the flare was still playing.
+      // The pair may have been pulled apart while the opening was still playing.
       // Its break has already run by then, so starting an idle loop now would
       // leave a tether on screen with nothing holding it up.
-      if (active.get(bond.key) !== entry) return;
+      if (active.get(id) !== entry) return;
       entry.stop = startBondIdle(srcSel, dstSel, fx);
     });
   }
 
-  for (const [key, entry] of [...active]) {
-    if (seen.has(key)) continue;
-    active.delete(key);
+  for (const [id, entry] of [...active]) {
+    if (entry.scope !== scope || seen.has(id)) continue;
+    active.delete(id);
     entry.stop?.();
-    playBondBreak(entry.srcSel, entry.dstSel, entry.fx);
+    // A flash bond has nothing on screen to dismiss — its buff icon simply stops
+    // being rendered, which is how every other buff ends.
+    if (entry.present !== 'flash') playBondBreak(entry.srcSel, entry.dstSel, entry.fx);
   }
 }
 
-// Tear down every bond without playing a break — for leaving the screen, where
-// a recoiling cord on a grid that is about to be erased would be nonsense.
+// Tear down every bond without closing animations — for leaving the screen,
+// where a recoiling cord on a grid that is about to be erased would be nonsense.
 export function clearFormationSynergies() {
   for (const entry of active.values()) entry.stop?.();
   active.clear();
-  currentScope = null;
 }
