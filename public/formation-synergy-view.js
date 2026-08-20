@@ -67,6 +67,12 @@ export function syncFormationSynergies(units, scope = 'player-grid') {
   const selectorsFor = scope === 'battle' ? idSelectors() : gridSelectors(scope);
   const found = resolveSynergies(units);
   const seen = new Set();
+  // Cells already flashing this pass. A unit standing between two Inspiration
+  // allies is the target of two bonds at once, and the flash is ADD-blended —
+  // played twice it lights up about twice as bright as everyone else, which
+  // reads as "something special happened here" when nothing did. The buff icon
+  // is where the doubled value belongs, and it already sums.
+  const flashed = new Set();
 
   for (const bond of found) {
     const id = `${scope}|${bond.key}`;
@@ -88,7 +94,10 @@ export function syncFormationSynergies(units, scope = 'player-grid') {
       // Lights the affected unit and is done. The buff icon on the cell carries
       // it from here, so there is nothing to hold on to and nothing to tear
       // down — the entry stays only so the diff knows it has been played.
-      playBondFlash(dstSel, fx);
+      if (!flashed.has(dstSel)) {
+        flashed.add(dstSel);
+        playBondFlash(dstSel, fx);
+      }
       continue;
     }
 
