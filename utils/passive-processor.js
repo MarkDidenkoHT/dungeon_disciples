@@ -614,7 +614,15 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
-    if (p.lowest_ally_heal_pct != null) {
+    // The gate has to name BOTH keys. It used to check only the flat one, so
+    // Mithrail's Light — which declares nothing but
+    // lowest_ally_heal_pct_per_tag — never passed it and was a dead passive on
+    // all nine units carrying it, Paladin line included. Communion declares the
+    // flat key and was unaffected, which is why the hole went unseen. Same
+    // failure the KINSHIP TEMPLATE gate above already had and already fixed:
+    // when pctFor supports a flat key and a per-tag key, the gate must accept
+    // either, or the per-tag-only abilities are silently dropped.
+    if (p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
       const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
@@ -637,7 +645,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
         }
       }
     }
-    if (p.lowest_enemy_dmg_pct != null) {
+    // Same per-tag-only gate hole as Mithrail's Light above: Aggrail's
+    // Blessing declares nothing but lowest_enemy_dmg_pct_per_tag.
+    if (p.lowest_enemy_dmg_pct != null || p.lowest_enemy_dmg_pct_per_tag != null) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive);
       if (enemies.length > 0) {
         const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
@@ -1360,7 +1370,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     target.battle_hp = Math.floor(target.max_hp * p.resurrect_hp_pct / 100);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
   }
-  if (p.ally_drain_pct != null && target) {
+  // Same per-tag-only gate hole again: Shared Suffering declares nothing but
+  // ally_drain_pct_per_tag. Exsanguinate declares the flat key and was fine.
+  if ((p.ally_drain_pct != null || p.ally_drain_pct_per_tag != null) && target) {
     const drained  = Math.floor(target.max_hp * pctFor(p, engine, actor.side, "ally_drain_pct", "ally_drain_pct_per_tag") / 100);
     target.battle_hp = Math.max(1, target.battle_hp - drained);
     const healAmount = Math.floor(drained * (p.ally_drain_heal_mult ?? 1) * engine.fatigueHealMult());
