@@ -1637,6 +1637,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // same column (see data/formation_synergies.js). The number is the
     // initiative actually handed over, summed if two of them reach this unit.
     { key: 'inspiration', icon: 'inspiration_initiative.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_initiative'), unit: 'initiative' },
+    { key: 'inspiration-dmg', icon: 'inspiration_damage.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_damage'), unit: 'pct' },
+    { key: 'inspiration-hp',  icon: 'inspiration_max_hp.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_max_hp'),  unit: 'max_hp' },
   ];
 
   const DEBUFF_DEFS = [
@@ -1662,6 +1664,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     pct:    { en: '%',           ru: '%' },
     armor:  { en: 'armor',       ru: 'брони' },
     initiative: { en: 'initiative', ru: 'инициативы' },
+    max_hp:     { en: 'max HP',    ru: 'макс. HP' },
     hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
     heal:        { en: 'healing absorbed', ru: 'исцеления поглотит' },
     dmg_absorb:  { en: 'damage absorbed',  ru: 'урона поглотит' },

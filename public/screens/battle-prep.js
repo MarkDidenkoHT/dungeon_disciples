@@ -889,30 +889,53 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   // because a unit sandwiched between two Inspiration allies gets both.
   function inspirationBuffs(units) {
     const out = new Map();
-    const casters = units.filter(u => (u.tags ?? []).includes('Caster')).length;
+    // Cached per tag, since several bonds in one pass can scale off the same one.
+    const tagCounts = new Map();
+    const countTag = tag => {
+      if (!tagCounts.has(tag)) tagCounts.set(tag, units.filter(u => (u.tags ?? []).includes(tag)).length);
+      return tagCounts.get(tag);
+    };
+
     for (const bond of resolveSynergies(units)) {
-      if (bond.defId !== 'inspiration_initiative') continue;
+      const buff = bond.def.buff;
+      if (!buff) continue;                    // a bond that leaves no icon behind
       const source = units.find(u => u.id === bond.sourceId);
-      const key    = (source?.abilityKeys ?? []).find(k => String(k).startsWith('inspiration_initiative'));
+      // The rank the unit actually carries, so 'inspiration_damage 2' is read as
+      // rank 2 rather than being matched loosely to the rank-1 params.
+      const key    = (source?.abilityKeys ?? []).find(k => String(k).replace(/\s+\d+$/, '') === bond.defId);
       const params = UNIT_ABILITIES[key]?.params ?? {};
       const value  = params.inspiration_value_per_tag != null
-        ? params.inspiration_value_per_tag * casters
+        ? params.inspiration_value_per_tag * countTag(params.tag_required)
         : (params.inspiration_value ?? 0);
-      if (value > 0) out.set(bond.partnerId, (out.get(bond.partnerId) ?? 0) + value);
+      if (value <= 0) continue;
+
+      const forUnit = out.get(bond.partnerId) ?? new Map();
+      // Keyed by ICON, not by bond: two ranks of the same Inspiration reaching
+      // one unit are one badge with the total, matching how battle sums them on
+      // the combatant.
+      forUnit.set(buff.icon, {
+        icon: buff.icon,
+        suffix: buff.suffix ?? '',
+        value: (forUnit.get(buff.icon)?.value ?? 0) + value,
+      });
+      out.set(bond.partnerId, forUnit);
     }
     return out;
   }
 
   // The same markup battle uses for its buff column (see stateIconsHtml in
-  // screens/battle.js), so an inspired unit looks identical on both screens
-  // without prep growing a status system of its own.
-  function inspirationBadgeHtml(value) {
-    if (!value) return '';
-    const icon = assetUrl('/assets/icons/abilities/inspiration_initiative.jpg');
-    return `<div class="bc-buff-icons"><span class="bc-state bc-state--inspiration">
-      <img class="bc-state-img" src="${icon}" alt="" onerror="this.style.display='none'">
-      <span class="bc-state-num">${value}</span>
-    </span></div>`;
+  // screens/battle.js), so a buffed unit looks identical on both screens without
+  // prep growing a status system of its own. One entry per stat: a unit reached
+  // by a captain who inspires both damage and max HP shows two, stacked, the way
+  // the battle column stacks them.
+  function inspirationBadgeHtml(buffs) {
+    if (!buffs || !buffs.size) return '';
+    const icons = [...buffs.values()].map(b => `
+      <span class="bc-state">
+        <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${b.icon}`)}" alt="" onerror="this.style.display='none'">
+        <span class="bc-state-num">${b.value}${b.suffix}</span>
+      </span>`).join('');
+    return `<div class="bc-buff-icons">${icons}</div>`;
   }
 
   function renderPlayerGrid() {

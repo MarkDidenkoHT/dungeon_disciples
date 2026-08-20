@@ -2067,6 +2067,8 @@ class BattleEngine {
           _invulnerable:       c._invulnerable,
           _untargetable:       c._untargetable,
           _inspiration_initiative: c._inspiration_initiative ?? 0,
+          _inspiration_damage:     c._inspiration_damage ?? 0,
+          _inspiration_max_hp:     c._inspiration_max_hp ?? 0,
           _unity_host_id:      c._unity_host_id,
           _unity_bonded_id:    c._unity_bonded_id,
           _mothers_kiss:       c._mothers_kiss,
@@ -2169,6 +2171,8 @@ class BattleEngine {
       c._invulnerable      = b._invulnerable      ?? false;
       c._untargetable      = b._untargetable      ?? false;
       c._inspiration_initiative = b._inspiration_initiative ?? 0;
+      c._inspiration_damage     = b._inspiration_damage     ?? 0;
+      c._inspiration_max_hp     = b._inspiration_max_hp     ?? 0;
       c._unity_host_id     = b._unity_host_id     ?? null;
       c._unity_bonded_id   = b._unity_bonded_id   ?? null;
       c._mothers_kiss      = b._mothers_kiss      ?? false;

@@ -336,8 +336,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
         } else if (p.inspiration_stat === 'max_hp') {
           t.max_hp    += inspVal;
           t.battle_hp += inspVal;
+          t._inspiration_max_hp = (t._inspiration_max_hp ?? 0) + inspVal;
         } else if (p.inspiration_stat === 'damage') {
           t._dmg_mult = (t._dmg_mult ?? 1) * (1 + inspVal / 100);
+          // Summed for DISPLAY while the multiplier above compounds, so two +3%
+          // sources read as 6% on the icon and are worth 6.09% in the maths. The
+          // icon is a summary of what is helping this unit, not a damage
+          // calculator, and a compounded figure there would be unreadable.
+          t._inspiration_damage = (t._inspiration_damage ?? 0) + inspVal;
         }
       }
       if (targets.length) {

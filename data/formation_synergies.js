@@ -122,6 +122,13 @@ const baseKey = k => String(k || '').replace(/\s+\d+$/, '');
 // table rather than another hand-written animation.
 //
 // multi: bond every matching partner, not just the first.
+// One green for the whole Inspiration family — every rank and every stat. See
+// the note on inspiration_damage below for why they must not differ.
+const INSPIRATION_FX = {
+  glow: 0x8cff9b,       // the bloom on each inspired unit
+  core: 0xd6ffdc,       // its bright centre
+};
+
 const FORMATION_SYNERGIES = {
   unity_bond: {
     id: 'unity_bond',
@@ -152,16 +159,50 @@ const FORMATION_SYNERGIES = {
     multi:    true,
     present:  'flash',
     effect:   'inspiration_flash',
-    fx: {
-      glow: 0x8cff9b,       // the bloom on each inspired unit
-      core: 0xd6ffdc,       // its bright centre
-    },
+    fx: INSPIRATION_FX,
     // The buff icon this bond leaves behind, in the ability-icon folder. Battle
-    // renders it through BUFF_DEFS, prep as a single badge on the cell.
-    buffIcon: 'inspiration_initiative.jpg',
+    // renders it through BUFF_DEFS, prep as a badge on the cell.
+    buff: { icon: 'inspiration_initiative.jpg', suffix: '' },
+    label: 'Inspiration', label_ru: 'Вдохновение',
+  },
+
+  // The other two Inspirations are the same bond with a different payload, so
+  // they are the same row with a different icon. They deliberately share
+  // INSPIRATION_FX: two of these can live on ONE unit (see units.js, where a
+  // couple of captains carry damage and max HP together), which means one
+  // source bonding twice to the same neighbour. A single flash colour is what
+  // makes that read as one event; the stat is told apart by the icon, which
+  // carries the number anyway.
+  inspiration_damage: {
+    id: 'inspiration_damage',
+    source:   { ability: 'inspiration_damage' },
+    partner:  {},
+    relation: 'column_adjacent',
+    multi:    true,
+    present:  'flash',
+    effect:   'inspiration_flash',
+    fx: INSPIRATION_FX,
+    buff: { icon: 'inspiration_damage.jpg', suffix: '%' },
+    label: 'Inspiration', label_ru: 'Вдохновение',
+  },
+
+  inspiration_max_hp: {
+    id: 'inspiration_max_hp',
+    source:   { ability: 'inspiration_max_hp' },
+    partner:  {},
+    relation: 'column_adjacent',
+    multi:    true,
+    present:  'flash',
+    effect:   'inspiration_flash',
+    fx: INSPIRATION_FX,
+    buff: { icon: 'inspiration_max_hp.jpg', suffix: '' },
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 };
+
+// inspiration_armor exists in data/unit_abilities.js but no unit carries it and
+// it has no icon, so it is deliberately absent here. Adding it is one more row
+// once something actually has it.
 
 // ── Resolver ─────────────────────────────────────────────────────────────────
 //
