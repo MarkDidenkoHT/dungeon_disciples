@@ -1,6 +1,35 @@
 function cellRow(i) { return Math.floor(i / 2); }
 function cellCol(i) { return i % 2; }
 
+// Formation bonds — who may bond with whom, and where they must be standing.
+// The battle-prep screen previews these while the player is still placing units,
+// so the adjacency rule CANNOT live here as well: two copies drift, and the
+// visible symptom is prep promising a bond that this file then refuses to form.
+// See data/formation_synergies.js.
+const { findPartnerFor } = require('../data/formation_synergies.js');
+
+// The shape resolveSynergies() reads, built from live combatants. The prep
+// screen builds the same shape from its placement map; that shared shape is what
+// lets one geometry rule serve both.
+function synergyUnitsFor(engine) {
+  return (engine?.combatants || [])
+    .filter(c => c.alive)
+    .map(c => {
+      const raw = c.unit_data?.passive || c.unit_data?.passive_ability;
+      const passives = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      return {
+        id: c.id,
+        side: c.side,
+        cells: engine.getFootprint(c),
+        anchor: c.cellIndex,
+        tags: c.unit_data?.tags ?? [],
+        abilityKeys: [c.unit_data?.ability, ...passives].filter(Boolean),
+        type: c.unit_data?.type,
+        unitId: c.unit_data?.unit_id ?? c.unit_data?.id,
+      };
+    });
+}
+
 // How many living units on `side` carry `tag`. The unit of account for every
 // "per Zombie / per Demon / per Holy" passive, so they all count the same way:
 // the owner counts itself when it carries the tag, and the dead never count.
@@ -343,14 +372,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
     if (p.unity_bond === true && !owner._flags[def.id + '_bonded']) {
       owner._flags[def.id + '_bonded'] = true;
-      const ownerRow = cellRow(owner.cellIndex);
-      const ownerCol = cellCol(owner.cellIndex);
-      const hostCol = ownerCol === 1 ? 0 : 1;
-      const host = engine.combatants.find(c =>
-        c.side === owner.side && c.alive && c.id !== owner.id &&
-        cellRow(c.cellIndex) === ownerRow && cellCol(c.cellIndex) === hostCol &&
-        (c.unit_data?.tags ?? []).includes('Holy')
-      );
+      // Was an inline same-row/other-column search against a Holy ally. That is
+      // now the 'unity_bond' entry in data/formation_synergies.js, resolved by
+      // the same function the prep preview calls — so what the player was shown
+      // while placing and what actually bonds here are one rule, not two.
+      const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, 'unity_bond');
+      const host = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
       if (host) {
         owner._unity_host_id = host.id;
         host._unity_bonded_id = owner.id;
@@ -374,7 +401,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
           }
           host.unit_data = { ...host.unit_data, resistances: hostResists };
         }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, Unity guardian is invulnerable.` });
+        // actorId/targetId carry the bond FX: the client anchors a two-cell
+        // effect on the cells those ids name (see SRC_TARGET_FX in battle.js).
+        // Without them the entry still READ correctly but had no cells to draw
+        // between, so the tether never appeared.
+        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: host.id, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, Unity guardian is invulnerable.` });
       }
     }
   }

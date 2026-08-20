@@ -1,4 +1,5 @@
 import { assetUrl, markCdnMissing, isCdnMissing } from './asset_base.js';
+import { FORMATION_SYNERGIES } from '../data/formation_synergies.js';
 let app = null;
 let rootEl = null;
 
@@ -44,9 +45,18 @@ async function loadFxTexture(path) {
   }
 }
 
+// Where the FX canvas is hung. It has to be an ancestor of the cells the
+// effects anchor on, and it defines the coordinate space every effect works in
+// (see boundsForSelector, which measures relative to it).
+//
+// Battle prep is here too: bonds are previewed while units are being placed, so
+// the prep screen needs the same canvas over its arena that battle has over its
+// board.
 function getBattleFxHost(root) {
   if (!root) return null;
-  return root.querySelector?.('.screen-battle') || root;
+  return root.querySelector?.('.screen-battle')
+      || root.querySelector?.('.battle-arena')
+      || root;
 }
 
 export function destroyBattleFx() {
@@ -90,6 +100,14 @@ export function initBattleFx(root) {
   console.log('[battle-fx] PIXI app initialized', { w: host.clientWidth, h: host.clientHeight });
 }
 
+// Whether there is a live canvas to draw into. Callers that keep STATE about
+// what they have drawn need this: a bond registered while the canvas was still
+// missing would be recorded as drawn, and — being already known — would never
+// be drawn later either.
+export function isBattleFxReady() {
+  return !!app;
+}
+
 export function reattachBattleFx(root) {
   const host = getBattleFxHost(root);
   if (!app || !host) return;
@@ -99,6 +117,35 @@ export function reattachBattleFx(root) {
     host.appendChild(app.view);
   }
   forceResize(host);
+}
+
+// A cell is looked up FRESH on every animation frame rather than held as an
+// element, because both screens rebuild their grid while effects are running —
+// battle on every log entry, prep on every placement. A held reference would
+// point at a detached node and the effect would drift off its target.
+//
+// The two screens key their cells differently: battle uses a globally unique
+// `data-id`, prep uses `data-i` which is only a grid POSITION and so repeats
+// between the player and enemy grids. Prep selectors are therefore scoped by
+// the owning grid's id, or the enemy grid's cell 3 would answer for the
+// player's.
+function cellSelectorFor(cellEl) {
+  if (!cellEl?.dataset) return null;
+  if (cellEl.dataset.id != null) return `.battle-cell[data-id="${cellEl.dataset.id}"]`;
+  if (cellEl.dataset.i != null) {
+    const grid = cellEl.closest('[id]');
+    return `${grid?.id ? `#${grid.id} ` : ''}.battle-cell[data-i="${cellEl.dataset.i}"]`;
+  }
+  return null;
+}
+
+function boundsForSelector(sel) {
+  if (!app || !rootEl || !sel) return null;
+  const cellEl = rootEl.querySelector(sel);
+  if (!cellEl) return null;
+  const cellRect = cellEl.getBoundingClientRect();
+  const baseRect = rootEl.getBoundingClientRect();
+  return { x: cellRect.left - baseRect.left, y: cellRect.top - baseRect.top, width: cellRect.width, height: cellRect.height };
 }
 
 function cellBoundsFor(dataId) {
@@ -3915,3 +3962,248 @@ export const EFFECTS = {
   frost_bolt,
   repair,
 };
+// ── Formation bonds ───────────────────────────────────────────────────────────
+//
+// A bond is not an attack: nothing is thrown, nobody is hurt. Two allies are
+// LINKED, and the picture has to say so in three beats — the moment the link
+// forms, the whole time it stands, and the moment it breaks.
+//
+// Unity is the first of these, but the parts below are deliberately generic: a
+// tether, a sigil, a paired glow, all taking their colours from the `fx` block
+// of a registry entry in data/formation_synergies.js. A second bond should be a
+// row in that table and a palette, not another two hundred lines here.
+
+const BOND_TAU = Math.PI * 2;
+
+// Both anchor points of a bond, recomputed for the current frame. Returns null
+// while either cell is missing — mid re-render, or after one of the pair has
+// been dragged off the grid — so a caller can simply hide itself for that frame
+// instead of drawing a cord to a stale coordinate.
+function bondAnchors(srcSel, dstSel) {
+  const s = boundsForSelector(srcSel), d = boundsForSelector(dstSel);
+  if (!s || !d) return null;
+  return {
+    sx: s.x + s.width / 2, sy: s.y + s.height / 2,
+    dx: d.x + d.width / 2, dy: d.y + d.height / 2,
+    cellR: Math.min(Math.min(s.width, s.height), Math.min(d.width, d.height)),
+  };
+}
+
+// The cord. `reach` is how far along it has been drawn (0 = nothing, 1 = it has
+// arrived), which is what turns one draw call into the formation's travel-out,
+// the idle's steady line and the break's recoil.
+//
+// Three passes, widest and dimmest first, so the cord reads as a soft core with
+// a bloom around it rather than a hard vector line.
+function bondTether(g, a, opts = {}) {
+  const { reach = 1, alpha = 1, color = 0xffe6a8, sway = 1, time = 0, thickness = 1 } = opts;
+  if (alpha <= 0 || reach <= 0) return;
+  const ex = a.sx + (a.dx - a.sx) * reach;
+  const ey = a.sy + (a.dy - a.sy) * reach;
+  const ang = Math.atan2(ey - a.sy, ex - a.sx);
+  const perpX = Math.cos(ang + Math.PI / 2), perpY = Math.sin(ang + Math.PI / 2);
+  const segs = 16;
+  const passes = [[7 * thickness, 0.16], [3.5 * thickness, 0.34], [1.6 * thickness, 0.75]];
+  passes.forEach(([width, la], li) => {
+    g.lineStyle(width, color, la * alpha);
+    g.moveTo(a.sx, a.sy);
+    for (let i = 1; i <= segs; i++) {
+      const tt = i / segs;
+      const mx = a.sx + (ex - a.sx) * tt, my = a.sy + (ey - a.sy) * tt;
+      // Bowed by a standing wave pinned at both ends (sin(tt*PI) is zero at the
+      // anchors), so the cord breathes in the middle while staying visibly
+      // attached to the two units.
+      const off = Math.sin(time * 1.6 + tt * 3.1 + li * 0.6) * 5 * sway * Math.sin(tt * Math.PI);
+      g.lineTo(mx + perpX * off, my + perpY * off);
+    }
+  });
+}
+
+// The buff sigil, drawn on whichever unit RECEIVES the bond. `scale` lets the
+// formation beat punch it in oversized before it settles.
+function bondSigil(g, x, y, radius, opts = {}) {
+  const { alpha = 1, color = 0xffd77a, spin = 0, scale = 1 } = opts;
+  if (alpha <= 0) return;
+  const r = radius * scale;
+  g.lineStyle(2, color, alpha * 0.9);
+  g.drawCircle(x, y, r);
+  g.lineStyle(1, color, alpha * 0.45);
+  g.drawCircle(x, y, r * 1.35);
+  // Four rays on the diagonals — enough to read as "blessed" at grid size
+  // without turning into a busy rosette on a phone.
+  for (let i = 0; i < 4; i++) {
+    const rayAng = spin + (i / 4) * BOND_TAU + Math.PI / 4;
+    g.lineStyle(1.5, color, alpha * 0.7);
+    g.moveTo(x + Math.cos(rayAng) * r * 1.05, y + Math.sin(rayAng) * r * 1.05);
+    g.lineTo(x + Math.cos(rayAng) * r * 1.5,  y + Math.sin(rayAng) * r * 1.5);
+  }
+}
+
+// The bloom on both cells, which is what makes the pair read as one entity
+// rather than two units with a line between them.
+function bondPairGlow(g, a, opts = {}) {
+  const { alpha = 1, color = 0xfff2cf, spread = 0.5 } = opts;
+  if (alpha <= 0) return;
+  softGlow(g, a.sx, a.sy, a.cellR * spread, color, alpha);
+  softGlow(g, a.dx, a.dy, a.cellR * spread, color, alpha);
+}
+
+// The three layers every bond phase draws into, wired the same way each time:
+// glow onto a blurred ADD-blended container, line work above it.
+function makeBondLayer() {
+  const layer = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glow   = new PIXI.Graphics(); glow.blendMode   = PIXI.BLEND_MODES.ADD;
+  const cord   = new PIXI.Graphics(); cord.blendMode   = PIXI.BLEND_MODES.ADD;
+  const sigilG = new PIXI.Graphics(); sigilG.blendMode = PIXI.BLEND_MODES.ADD;
+  glowLayer.addChild(glow);
+  layer.addChild(glowLayer, cord, sigilG);
+  app.stage.addChild(layer);
+  return { layer, glow, cord, sigil: sigilG };
+}
+
+// ── Phase 1: formation ───────────────────────────────────────────────────────
+//
+// Fires the instant the pair becomes valid — a placement in prep, battle start
+// in combat. This is the beat that tells the player their placement DID
+// something, so it is the loudest of the three: the cord shoots from the source
+// to the partner, the sigil lands and punches, both cells flare.
+async function playBondForm(srcSel, dstSel, fx = {}) {
+  if (!app || !window.PIXI || !srcSel || !dstSel) return;
+  const { layer, glow, cord, sigil } = makeBondLayer();
+  const DURATION = 620;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  await animate(DURATION, t => {
+    const a = bondAnchors(srcSel, dstSel);
+    if (!a) { layer.visible = false; return; }
+    layer.visible = true;
+    // The cord arrives at 45%, leaving the sigil and the flare the back half:
+    // the link is established first, then it visibly pays out.
+    const travel = clamp01(t / 0.45);
+    const land   = clamp01((t - 0.4) / 0.6);
+    const eased  = 1 - Math.pow(1 - travel, 3);
+    const time   = t * 6;
+
+    glow.clear();
+    bondPairGlow(glow, a, {
+      color: fx.glow ?? 0xfff2cf,
+      // Peaks as the sigil lands, then eases back toward the level the idle
+      // loop picks up, so the handover between phases is not a visible step.
+      alpha: 0.25 + Math.sin(land * Math.PI) * 0.45,
+      spread: 0.5 + land * 0.28,
+    });
+
+    cord.clear();
+    bondTether(cord, a, {
+      reach: eased, time,
+      color: fx.tether ?? 0xffe6a8,
+      alpha: 0.35 + eased * 0.55,
+      thickness: 1 + Math.sin(land * Math.PI) * 0.5,
+    });
+
+    sigil.clear();
+    if (land > 0) {
+      // Overshoot: lands at 1.6x and settles to 1x, the snap that makes the buff
+      // feel PLACED rather than faded in.
+      const pop = land < 0.35 ? 1.6 - (land / 0.35) * 0.6 : 1;
+      bondSigil(sigil, a.dx, a.dy, a.cellR * 0.22, {
+        color: fx.mark ?? 0xffd77a,
+        alpha: Math.min(1, land * 3) * 0.95,
+        spin: time * 0.4, scale: pop,
+      });
+    }
+  });
+  layer.destroy({ children: true });
+}
+
+// ── Phase 2: idle ────────────────────────────────────────────────────────────
+//
+// Runs for as long as the pair stands. Deliberately far quieter than the
+// formation beat: this has to survive being looked at for a whole prep session,
+// on a grid that may hold several bonds at once, so it breathes slowly and sits
+// well below the formation's brightness.
+//
+// Returns a stop() handle. The caller owns it — see the prep overlay, which
+// stops a bond's loop the moment that pair is broken.
+function startBondIdle(srcSel, dstSel, fx = {}) {
+  if (!app || !window.PIXI || !srcSel || !dstSel) return () => {};
+  const { layer, glow, cord, sigil } = makeBondLayer();
+  const started = performance.now();
+  let stopped = false;
+
+  const tick = () => {
+    if (stopped || !app) return;
+    const a = bondAnchors(srcSel, dstSel);
+    // Hidden rather than torn down: prep rebuilds its grid on every placement,
+    // so the cells vanish for a frame constantly. Ending the loop for that would
+    // kill a bond that never actually broke.
+    if (!a) { layer.visible = false; return; }
+    layer.visible = true;
+    const time = (performance.now() - started) / 1000;
+    const breathe = 0.5 + 0.5 * Math.sin(time * 1.4);
+
+    glow.clear();
+    bondPairGlow(glow, a, { color: fx.glow ?? 0xfff2cf, alpha: 0.14 + breathe * 0.1, spread: 0.42 });
+    cord.clear();
+    bondTether(cord, a, { reach: 1, time: time * 1.1, color: fx.tether ?? 0xffe6a8, alpha: 0.3 + breathe * 0.18, thickness: 0.8 });
+    sigil.clear();
+    bondSigil(sigil, a.dx, a.dy, a.cellR * 0.2, { color: fx.mark ?? 0xffd77a, alpha: 0.45 + breathe * 0.25, spin: time * 0.35 });
+  };
+
+  app.ticker.add(tick);
+  return () => {
+    if (stopped) return;
+    stopped = true;
+    try { app?.ticker.remove(tick); } catch {}
+    try { layer.destroy({ children: true }); } catch {}
+  };
+}
+
+// ── Phase 3: break ───────────────────────────────────────────────────────────
+//
+// One of the pair has been dragged away. Short and downward: the cord recoils
+// toward the unit still standing and the glow drops out. Without this the link
+// just stops existing between two frames, and a player whose eyes are on the
+// portrait track never learns they lost it.
+async function playBondBreak(srcSel, dstSel, fx = {}) {
+  if (!app || !window.PIXI || !srcSel || !dstSel) return;
+  const { layer, glow, cord, sigil } = makeBondLayer();
+  await animate(320, t => {
+    const a = bondAnchors(srcSel, dstSel);
+    if (!a) { layer.visible = false; return; }
+    layer.visible = true;
+    const fade = 1 - t;
+    glow.clear();
+    bondPairGlow(glow, a, { color: fx.glow ?? 0xfff2cf, alpha: 0.2 * fade * fade, spread: 0.42 + t * 0.2 });
+    cord.clear();
+    // Retreats from the partner's end back toward the source, so the cord reads
+    // as recoiling rather than merely dimming.
+    bondTether(cord, a, { reach: 1 - t, time: t * 10, color: fx.tether ?? 0xffe6a8, alpha: 0.5 * fade, sway: 1 + t * 3, thickness: 0.9 });
+    sigil.clear();
+    bondSigil(sigil, a.dx, a.dy, a.cellR * (0.2 + t * 0.18), { color: fx.mark ?? 0xffd77a, alpha: 0.5 * fade, spin: t * 4 });
+  });
+  layer.destroy({ children: true });
+}
+
+// Turns a registry entry's `fx` palette into the standard two-cell effect the
+// battle screen already knows how to dispatch — EFFECTS[name](srcCell, dstCell).
+// A new bond is this one line plus its palette; only a bond that genuinely needs
+// a DIFFERENT picture has to write its own effect.
+function makeBondEffect(fx) {
+  return async function bondEffect(sourceCellEl, targetCellEl) {
+    const srcSel = cellSelectorFor(sourceCellEl);
+    const dstSel = cellSelectorFor(targetCellEl);
+    if (!srcSel || !dstSel) return;
+    await playBondForm(srcSel, dstSel, fx);
+  };
+}
+
+// Every bond in the registry gets its formation animation registered under its
+// own `effect` key, so battle-side dispatch needs no per-bond wiring at all: the
+// existing lookup in battle.js finds it the moment the ability names it.
+for (const bondDef of Object.values(FORMATION_SYNERGIES)) {
+  if (bondDef.effect && !EFFECTS[bondDef.effect]) EFFECTS[bondDef.effect] = makeBondEffect(bondDef.fx || {});
+}
+
+export { playBondForm, startBondIdle, playBondBreak, makeBondEffect, cellSelectorFor };
