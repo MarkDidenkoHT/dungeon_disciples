@@ -140,9 +140,13 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Construct allies gain +3 armor.',
-    description_ru: "Союзники-конструкты получают +3 брони.",
-    params: { ally_armor_bonus: 3, ally_tag_required: 'Construct' },
+    description: 'Adjacent Construct allies in the same column gain 2 armor per Engineer ally on the field.',
+    description_ru: "Соседние союзники-конструкты в том же столбце получают по 2 брони за каждого союзного инженера.",
+    // Reuses the Inspiration machinery — same reach, same per-tag scaling — with
+    // inspiration_target_tag narrowing it to Constructs. Was a field-wide flat
+    // +3 to every Construct ally; it is now a placement decision that only pays
+    // when Engineers and Constructs are fielded together.
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer', inspiration_target_tag: 'Construct' },
   },
   'fortify 2': {
     id: 'fortify 2',
@@ -151,9 +155,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Construct allies gain +5 armor.',
-    description_ru: "Союзники-конструкты получают +5 брони.",
-    params: { ally_armor_bonus: 5, ally_tag_required: 'Construct' },
+    description: 'Adjacent Construct allies in the same column gain 3 armor per Engineer ally on the field.',
+    description_ru: "Соседние союзники-конструкты в том же столбце получают по 3 брони за каждого союзного инженера.",
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 3, tag_required: 'Engineer', inspiration_target_tag: 'Construct' },
   },
   'beacon_of_hope 1': {
     id: 'beacon_of_hope 1',
@@ -1608,6 +1612,34 @@ const UNIT_ABILITIES = {
     description_ru: "В начале боя связывается со святым союзником прямо впереди. Тот юнит получает 50% характеристик этого юнита. Этот юнит становится неуязвимым, не может быть целью, не действует и погибает вместе с носителем. Пассивные способности продолжают срабатывать.",
     params: { bond_synergy: 'unity_bond' },
     effect_name: 'unity_bond',
+  },
+  // Grail cross-tag: the horde feeds the bloodline. Costs the Zombie its own HP
+  // every round, which is why it is worth only as much as the horde is big.
+  'cattle 1': {
+    id: 'cattle 1',
+    name: 'Cattle',
+    name_ru: "Скот",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_round_start',
+    description: 'Each round, sacrifice 2 HP per Zombie ally to heal the allied Vampire in the same row for the same amount. Never drops below 1 HP.',
+    description_ru: "Каждый раунд жертвует 2 HP за каждого союзного зомби, исцеляя союзного вампира в том же ряду на ту же величину. Не опускается ниже 1 HP.",
+    params: { cattle_hp_per_tag: 2, tag_required: 'Zombie', partner_synergy: 'cattle' },
+    effect_name: 'cattle_flash',
+  },
+  // Choir cross-tag: position unlocks it, roster scales it. The Warrior keeps
+  // the power; the Caster behind is the condition, not the recipient.
+  'chorus_of_war 1': {
+    id: 'chorus_of_war 1',
+    name: 'Chorus of War',
+    name_ru: "Хор войны",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, if an allied Caster stands directly behind this unit, gain 2 power per Caster ally on the field.',
+    description_ru: "В начале боя, если прямо позади стоит союзный заклинатель, получает по 2 силы за каждого союзного заклинателя на поле.",
+    params: { chorus_power_per_tag: 2, tag_required: 'Caster', partner_synergy: 'chorus_of_war' },
+    effect_name: 'chorus_flash',
   },
   'blood_bond 1': {
     id: 'blood_bond 1',

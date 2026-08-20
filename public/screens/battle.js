@@ -1646,6 +1646,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'inspiration', icon: 'inspiration_initiative.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_initiative'), unit: 'initiative' },
     { key: 'inspiration-dmg', icon: 'inspiration_damage.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_damage'), unit: 'pct' },
     { key: 'inspiration-hp',  icon: 'inspiration_max_hp.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_max_hp'),  unit: 'max_hp' },
+    // Cross-tag bonds. Fortify borrows reforge.jpg — an Engineer working on a
+    // Construct is the same picture — and Chorus borrows command.jpg. Neither
+    // has art of its own yet.
+    { key: 'fortify',     icon: 'reforge.jpg', en: 'Fortify',       ru: 'Укрепление', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
+    { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
   ];
 
   const DEBUFF_DEFS = [
@@ -1672,6 +1677,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     armor:  { en: 'armor',       ru: 'брони' },
     initiative: { en: 'initiative', ru: 'инициативы' },
     max_hp:     { en: 'max HP',    ru: 'макс. HP' },
+    power:      { en: 'power',     ru: 'силы' },
     hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
     heal:        { en: 'healing absorbed', ru: 'исцеления поглотит' },
     dmg_absorb:  { en: 'damage absorbed',  ru: 'урона поглотит' },

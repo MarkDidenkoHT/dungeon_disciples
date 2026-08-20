@@ -75,6 +75,11 @@ export function syncFormationSynergies(units, scope = 'player-grid') {
   const flashed = new Set();
 
   for (const bond of found) {
+    // A previewOnly bond is a placement hint only. Its battle side is driven by
+    // the LOG instead, because it fires every round and a reconcile would show
+    // it once at battle start and never again — see `cattle` in the registry.
+    if (bond.def.previewOnly && scope === 'battle') continue;
+
     const id = `${scope}|${bond.key}`;
     seen.add(id);
     if (active.has(id)) continue;                   // already standing, already shown
@@ -90,13 +95,18 @@ export function syncFormationSynergies(units, scope = 'player-grid') {
     const entry = { scope, stop: null, srcSel, dstSel, fx, present };
     active.set(id, entry);
 
+    // A bond that pays its SOURCE lights the source: the partner is a condition,
+    // not a recipient, and flashing it would say the wrong thing about who got
+    // something. See `buffs` in data/formation_synergies.js.
+    const flashSel = bond.def.buffs === 'source' ? srcSel : dstSel;
+
     if (present === 'flash') {
       // Lights the affected unit and is done. The buff icon on the cell carries
       // it from here, so there is nothing to hold on to and nothing to tear
       // down — the entry stays only so the diff knows it has been played.
-      if (!flashed.has(dstSel)) {
-        flashed.add(dstSel);
-        playBondFlash(dstSel, fx);
+      if (!flashed.has(flashSel)) {
+        flashed.add(flashSel);
+        playBondFlash(flashSel, fx);
       }
       continue;
     }

@@ -904,12 +904,18 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       // rank 2 rather than being matched loosely to the rank-1 params.
       const key    = (source?.abilityKeys ?? []).find(k => String(k).replace(/\s+\d+$/, '') === bond.defId);
       const params = UNIT_ABILITIES[key]?.params ?? {};
-      const value  = params.inspiration_value_per_tag != null
-        ? params.inspiration_value_per_tag * countTag(params.tag_required)
+      // `valueParam` names the per-tag parameter to read, so a bond does not have
+      // to use Inspiration's parameter names to get a live badge.
+      const perTag = params[buff.valueParam ?? 'inspiration_value_per_tag'];
+      const value  = perTag != null
+        ? perTag * countTag(params.tag_required)
         : (params.inspiration_value ?? 0);
       if (value <= 0) continue;
 
-      const forUnit = out.get(bond.partnerId) ?? new Map();
+      // A bond that pays its SOURCE badges the source. The partner is a
+      // condition, not a recipient — Chorus of War's Caster gives nothing away.
+      const holderId = bond.def.buffs === 'source' ? bond.sourceId : bond.partnerId;
+      const forUnit = out.get(holderId) ?? new Map();
       // Keyed by ICON, not by bond: two ranks of the same Inspiration reaching
       // one unit are one badge with the total, matching how battle sums them on
       // the combatant.
@@ -918,7 +924,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         suffix: buff.suffix ?? '',
         value: (forUnit.get(buff.icon)?.value ?? 0) + value,
       });
-      out.set(bond.partnerId, forUnit);
+      out.set(holderId, forUnit);
     }
     return out;
   }

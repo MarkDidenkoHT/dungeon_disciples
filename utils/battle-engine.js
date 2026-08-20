@@ -2077,6 +2077,8 @@ class BattleEngine {
           _untargetable:       c._untargetable,
           _inspiration_initiative: c._inspiration_initiative ?? 0,
           _inspiration_damage:     c._inspiration_damage ?? 0,
+          _inspiration_armor:      c._inspiration_armor ?? 0,
+          _chorus_power:           c._chorus_power ?? 0,
           _inspiration_max_hp:     c._inspiration_max_hp ?? 0,
           _unity_host_id:      c._unity_host_id,
           _unity_bonded_id:    c._unity_bonded_id,
@@ -2181,6 +2183,8 @@ class BattleEngine {
       c._untargetable      = b._untargetable      ?? false;
       c._inspiration_initiative = b._inspiration_initiative ?? 0;
       c._inspiration_damage     = b._inspiration_damage     ?? 0;
+      c._inspiration_armor      = b._inspiration_armor      ?? 0;
+      c._chorus_power           = b._chorus_power           ?? 0;
       c._inspiration_max_hp     = b._inspiration_max_hp     ?? 0;
       c._unity_host_id     = b._unity_host_id     ?? null;
       c._unity_bonded_id   = b._unity_bonded_id   ?? null;

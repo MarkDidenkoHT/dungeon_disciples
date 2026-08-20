@@ -35,9 +35,28 @@ const cellIndex = (row, col) => row * COLS + col;
 // are the same test from opposite ends: same row, other column. They are kept
 // as separate names because a registry entry reads far better saying which way
 // it faces, and because a wider grid would eventually tell them apart.
+// Which column a side's FRONT rank is. Mirrored, because the two armies face
+// each other across the board: see frontCol in utils/battle-engine.js, the rule
+// melee reach and intercepts already use.
+const frontColFor = side => (side === 'enemy' ? 0 : 1);
+
+// Each relation takes the two footprints, plus the two units themselves, for the
+// few rules that need to know which way a side is facing.
 const RELATIONS = {
+  // NOT directional, despite the names: on a two-column board "the other column
+  // in the same row" is the whole of it, and this is the rule Unity has always
+  // used. partner_behind below is the one that really knows front from back.
   front:     (a, b) => sharesRowAcrossColumns(a, b),
   behind:    (a, b) => sharesRowAcrossColumns(a, b),
+  // The partner stands in the BACK rank, directly behind a source that stands in
+  // the front rank — a Caster sheltering behind the Warrior it sings for.
+  // Genuinely directional, so it reads correctly for both armies.
+  partner_behind: (a, b, source) => {
+    const front = frontColFor(source.side);
+    const back  = 1 - front;
+    return a.some(x => cellCol(x) === front &&
+                  b.some(y => cellCol(y) === back && cellRow(x) === cellRow(y)));
+  },
   same_row:  (a, b) => a.some(x => b.some(y => cellRow(x) === cellRow(y))),
   same_col:  (a, b) => a.some(x => b.some(y => cellCol(x) === cellCol(y))),
   adjacent:  (a, b) => a.some(x => b.some(y =>
@@ -50,6 +69,10 @@ const RELATIONS = {
     const cells = columnAdjacentCells(a);
     return b.some(y => cells.includes(y));
   },
+  // Beside me in this row, whichever rank either of us is in. `front`/`behind`
+  // compute the same thing on a two-column board; this name is for rules that
+  // genuinely do not care which way round the pair stands.
+  same_row_any: (a, b) => sharesRowAcrossColumns(a, b),
   any_ally:  () => true,
 };
 
@@ -179,8 +202,10 @@ const FORMATION_SYNERGIES = {
     effect:   'inspiration_flash',
     fx: INSPIRATION_FX,
     // The buff icon this bond leaves behind, in the ability-icon folder. Battle
-    // renders it through BUFF_DEFS, prep as a badge on the cell.
-    buff: { icon: 'inspiration_initiative.jpg', suffix: '' },
+    // renders it through BUFF_DEFS, prep as a badge on the cell. `valueParam`
+    // names the per-tag parameter on the ABILITY that prep multiplies by the tag
+    // count, so the badge can show a live number while units are still moving.
+    buff: { icon: 'inspiration_initiative.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 
@@ -200,7 +225,7 @@ const FORMATION_SYNERGIES = {
     present:  'flash',
     effect:   'inspiration_flash',
     fx: INSPIRATION_FX,
-    buff: { icon: 'inspiration_damage.jpg', suffix: '%' },
+    buff: { icon: 'inspiration_damage.jpg', suffix: '%', valueParam: 'inspiration_value_per_tag' },
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 
@@ -213,8 +238,77 @@ const FORMATION_SYNERGIES = {
     present:  'flash',
     effect:   'inspiration_flash',
     fx: INSPIRATION_FX,
-    buff: { icon: 'inspiration_max_hp.jpg', suffix: '' },
+    buff: { icon: 'inspiration_max_hp.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
     label: 'Inspiration', label_ru: 'Вдохновение',
+  },
+
+  // ── Cross-tag bonds ────────────────────────────────────────────────────────
+  //
+  // The three above pay a tag its own kind. These pay a DIFFERENT kind, so a
+  // list of one tag cannot trigger them at all — the mix is the cost.
+
+  // Grail. The horde is livestock: a Zombie opens a vein for the Vampire beside
+  // it, every round, and pays for it in its own blood.
+  //
+  // previewOnly because the battle side is driven by the LOG instead: this fires
+  // each round, and a reconcile would show it once at battle start and never
+  // again. Prep still previews the pairing, which is the placement decision.
+  cattle: {
+    id: 'cattle',
+    source:      { ability: 'cattle' },
+    partner:     { tag: 'Vampire' },
+    relation:    'same_row_any',
+    present:     'flash',
+    effect:      'cattle_flash',
+    previewOnly: true,
+    fx: {
+      glow: 0x8c0f1e,      // dark arterial bloom
+      core: 0xff3b52,      // the bright centre of it
+    },
+    label: 'Cattle', label_ru: 'Скот',
+  },
+
+  // Choir. A Caster sheltering directly behind a Warrior sings it forward. The
+  // position unlocks it; the number of Casters fielded decides how much — so it
+  // is a placement decision AND a roster decision at once.
+  //
+  // buffs: 'source' — the Warrior carries the ability and keeps the power. Every
+  // other bond pays its partner, so this is the first that pays itself, and the
+  // partner is a condition rather than a recipient.
+  chorus_of_war: {
+    id: 'chorus_of_war',
+    source:   { ability: 'chorus_of_war' },
+    partner:  { tag: 'Caster' },
+    relation: 'partner_behind',
+    present:  'flash',
+    effect:   'chorus_flash',
+    buffs:    'source',
+    fx: {
+      glow: 0xb46cff,      // the choir's light, not the warrior's steel
+      core: 0xe9d2ff,
+    },
+    buff: { icon: 'command.jpg', suffix: '', valueParam: 'chorus_power_per_tag' },
+    label: 'Chorus of War', label_ru: 'Хор войны',
+  },
+
+  // Empire. An Artificer keeping the machines beside it running. Same reach as
+  // Inspiration — one row above and below, in each column the source occupies —
+  // but it pays only Constructs, and it scales off Engineers, so neither tag is
+  // worth fielding alone.
+  fortify: {
+    id: 'fortify',
+    source:   { ability: 'fortify' },
+    partner:  { tag: 'Construct' },
+    relation: 'column_adjacent',
+    multi:    true,
+    present:  'flash',
+    effect:   'fortify_flash',
+    fx: {
+      glow: 0x9fb4c9,      // cold worked steel
+      core: 0xe6f0fa,
+    },
+    buff: { icon: 'reforge.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
+    label: 'Fortify', label_ru: 'Укрепление',
   },
 };
 
@@ -245,7 +339,13 @@ function resolveSynergies(units, opts = {}) {
 
   for (const def of Object.values(defs)) {
     const relation = RELATIONS[def.relation];
-    if (!relation) continue;
+    // Loud, because the alternative is silent: a registry row naming a relation
+    // that does not exist simply never produces a bond, and the ability looks
+    // broken everywhere else instead of here.
+    if (!relation) {
+      console.warn(`[formation_synergies] '${def.id}' names unknown relation '${def.relation}' — no bonds will form`);
+      continue;
+    }
     for (const source of alive) {
       if (!matchesSpec(source, def.source)) continue;
       // A Unity guardian is itself tagged Holy, so without this it would bond
@@ -254,7 +354,7 @@ function resolveSynergies(units, opts = {}) {
         p.id !== source.id &&
         p.side === source.side &&
         matchesSpec(p, def.partner) &&
-        relation(source.cells, p.cells);
+        relation(source.cells, p.cells, source, p);
       // A one-to-one bond takes the first match; Inspiration buffs everyone it
       // reaches, which is up to four units for a source lying across a row.
       const partners = def.multi ? alive.filter(eligible) : [alive.find(eligible)].filter(Boolean);

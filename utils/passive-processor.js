@@ -396,10 +396,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const inspVal = p.inspiration_value_per_tag != null
         ? p.inspiration_value_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.inspiration_value;
-      const targets = inspVal > 0 ? engine.getInspirationTargets(owner) : [];
+      let targets = inspVal > 0 ? engine.getInspirationTargets(owner) : [];
+      // Fortify reaches the same cells as any Inspiration but pays only one kind
+      // of ally. Without this the Engineer would armour whatever happened to
+      // stand beside it, which is not what the ability says.
+      if (p.inspiration_target_tag) {
+        targets = targets.filter(t => (t.unit_data?.tags ?? []).includes(p.inspiration_target_tag));
+      }
       for (const t of targets) {
         if (p.inspiration_stat === 'armor') {
           t.armor += inspVal;
+          t._inspiration_armor = (t._inspiration_armor ?? 0) + inspVal;
         } else if (p.inspiration_stat === 'initiative') {
           t.initiative += inspVal;
           // The buff icon needs something ON THE TARGET to read. recordGrantedBuff
@@ -460,6 +467,36 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // the same mechanic against different hosts, so the ability names WHICH
     // synergy it forms and everything below is shared. `unity_bond: true` is the
     // original spelling, kept working so no data has to move.
+    // Chorus of War: the bond is a CONDITION, not a transfer. The Caster behind
+    // decides whether this fires at all; the number of Casters fielded decides
+    // how much. Deferred with the guardian bonds for the same reason — the
+    // Warrior's other battle-start passives may still be moving its power.
+    if (p.chorus_power_per_tag != null && p.partner_synergy && !owner._flags[def.id + '_chorus']) {
+      owner._flags[def.id + '_chorus'] = true;
+      const sing = () => {
+        const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, p.partner_synergy);
+        if (!bond || !owner.unit_data) return;
+        const gain = p.chorus_power_per_tag * tagCount(engine, owner.side, p.tag_required);
+        if (gain <= 0) return;
+        owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + gain;
+        owner._chorus_power = (owner._chorus_power ?? 0) + gain;
+        const singer = engine.combatants.find(c => c.id === bond.partnerId);
+        engine.pushLog({
+          type: 'passive', passive: def.name,
+          actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetId: owner.id, targetName: owner.unit_name, targetCell: owner.cellIndex,
+          value: gain, heal: false, stat: 'power',
+          message: `${def.name} — ${singer ? singer.unit_name + ' sings behind ' : ''}${owner.unit_name}: +${gain} power`,
+        });
+      };
+      if (typeof ctx._deferToEnd === 'function') ctx._deferToEnd(sing);
+      else sing();
+    }
+
+    // `bond_synergy` specifically means "form a GUARDIAN bond" — half my stats,
+    // invulnerable, dies with the host. An ability that merely needs to find a
+    // partner uses `partner_synergy` instead; sharing one name here made Chorus
+    // of War turn its Warrior into an invulnerable passenger.
     const bondSynergyId = p.bond_synergy || (p.unity_bond === true ? 'unity_bond' : null);
     if (bondSynergyId && !owner._flags[def.id + '_bonded']) {
       // Flagged NOW, not when the bond actually forms, so a deferred bond cannot
@@ -1002,6 +1039,36 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_round_start') {
+    // Cattle: the Zombie opens a vein for the Vampire beside it. Every round,
+    // which is the only way a heal is worth anything — at battle start the
+    // Vampire is at full HP and the whole thing would be pure cost.
+    //
+    // The Zombie can never bleed itself out: it stops at 1 HP, and whatever it
+    // could not pay is simply not healed. So the sacrifice is capped by what the
+    // Zombie has left, not by what the horde is worth.
+    if (p.cattle_hp_per_tag != null && p.partner_synergy && owner.alive) {
+      const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, p.partner_synergy);
+      const drinker = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
+      if (drinker && drinker.alive) {
+        const wanted    = p.cattle_hp_per_tag * tagCount(engine, owner.side, p.tag_required);
+        const spendable = Math.max(0, owner.battle_hp - 1);
+        const spent     = Math.min(wanted, spendable);
+        if (spent > 0) {
+          owner.battle_hp -= spent;
+          const before = drinker.battle_hp;
+          drinker.battle_hp = Math.min(drinker.max_hp, drinker.battle_hp + spent);
+          const healed = drinker.battle_hp - before;
+          engine.pushLog({
+            type: 'passive', passive: def.name,
+            actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+            targetId: drinker.id, targetName: drinker.unit_name, targetCell: drinker.cellIndex,
+            value: healed, heal: true,
+            message: `${def.name} — ${owner.unit_name} bleeds ${spent} HP, ${drinker.unit_name} drinks ${healed}`,
+          });
+          if (healed > 0) engine.fireHealTriggers(owner, drinker, healed);
+        }
+      }
+    }
     if (p.block_first_melee === true) {
 
       owner._parry_available = true;
