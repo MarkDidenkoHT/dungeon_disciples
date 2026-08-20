@@ -439,11 +439,11 @@ const COMBAT_BARKS = [
     trigger: 'attack', actor: { tag: 'Holy', faction: 'g' }, target: { tag: 'Holy' },
     lines: [
       'A spell did this to us, not your god.',
-      'Astaloth grieves for us. Yours never knew us.',
+      'Astaloth grieves for us. Who grieves for you?',
     ],
     lines_ru: [
       'Это сделало заклинание, а не ваш бог.',
-      'Асталот о нас скорбит. Ваш нас и не знал.',
+      'Асталот о нас скорбит. Кто скорбит по тебе?',
     ],
   },
   {

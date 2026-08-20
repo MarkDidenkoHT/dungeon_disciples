@@ -713,7 +713,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 1': {
     id: 'heartpiercer 1',
     name: 'Heartpiercer',
-    name_ru: "Сердцебой",
+    name_ru: "Удар В Сердце",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -724,7 +724,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 2': {
     id: 'heartpiercer 2',
     name: 'Heartpiercer',
-    name_ru: "Сердцебой",
+    name_ru: "Удар В Сердце",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -735,7 +735,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 3': {
     id: 'heartpiercer 3',
     name: 'Heartpiercer',
-    name_ru: "Сердцебой",
+    name_ru: "Удар В Сердце",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
