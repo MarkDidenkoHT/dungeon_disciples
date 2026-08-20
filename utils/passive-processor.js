@@ -381,13 +381,19 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
 
-    if (p.unity_bond === true && !owner._flags[def.id + '_bonded']) {
+    // Guardian bonds: this unit gives half of itself to the ally in front and
+    // becomes an untouchable passenger. Unity (Holy) and Blood Bond (Vampire) are
+    // the same mechanic against different hosts, so the ability names WHICH
+    // synergy it forms and everything below is shared. `unity_bond: true` is the
+    // original spelling, kept working so no data has to move.
+    const bondSynergyId = p.bond_synergy || (p.unity_bond === true ? 'unity_bond' : null);
+    if (bondSynergyId && !owner._flags[def.id + '_bonded']) {
       owner._flags[def.id + '_bonded'] = true;
-      // Was an inline same-row/other-column search against a Holy ally. That is
-      // now the 'unity_bond' entry in data/formation_synergies.js, resolved by
-      // the same function the prep preview calls — so what the player was shown
-      // while placing and what actually bonds here are one rule, not two.
-      const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, 'unity_bond');
+      // Was an inline same-row/other-column search against a Holy ally. The host
+      // rule now lives in data/formation_synergies.js, resolved by the same
+      // function the prep preview calls — so what the player was shown while
+      // placing and what actually bonds here are one rule, not two.
+      const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, bondSynergyId);
       const host = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
       if (host) {
         owner._unity_host_id = host.id;
@@ -416,7 +422,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // effect on the cells those ids name (see SRC_TARGET_FX in battle.js).
         // Without them the entry still READ correctly but had no cells to draw
         // between, so the tether never appeared.
-        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: host.id, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, Unity guardian is invulnerable.` });
+        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: host.id, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, the ${def.name} guardian is invulnerable.` });
       }
     }
   }

@@ -145,6 +145,24 @@ const FORMATION_SYNERGIES = {
     label: 'Unity', label_ru: 'Единство',
   },
 
+  // The Vampire mirror of Unity. Identical mechanics and an identical
+  // presentation — only the host tag and the palette differ, which is the whole
+  // reason this table exists: a second guardian bond is a row, not a rewrite.
+  blood_bond: {
+    id: 'blood_bond',
+    source:   { ability: 'blood_bond 1' },
+    partner:  { tag: 'Vampire' },
+    relation: 'front',
+    present:  'tether',
+    effect:   'blood_bond',
+    fx: {
+      tether: 0xc2102a,      // the cord — arterial, not orange
+      glow:   0x6e0716,      // a dark bloom, so the pair reads as heavy
+      mark:   0xff2d44,      // the sigil on the host, the brightest part
+    },
+    label: 'Blood Bond', label_ru: 'Кровные узы',
+  },
+
   // Matched on the BASE name, so ranks 1 and 2 both take this row. They look the
   // same deliberately: the rank changes how much initiative is granted, and the
   // number is already on the buff icon.

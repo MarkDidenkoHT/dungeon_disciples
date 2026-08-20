@@ -233,7 +233,7 @@ const BUILDING_POOLS = {
       { id: 'pale_mourner_shrine',   label: 'Pale Mourner Shrine', label_ru: 'Святилище бледных плакальщиц',   category: 'barracks', tier: 2, unit_id: 'gs73',  upgrades: ['pale_lamenter_shrine'], cost: { gold: 100 } },
       { id: 'pale_lamenter_shrine',  label: 'Pale Lamenter Shrine', label_ru: 'Святилище бледных скорбниц',  category: 'barracks', tier: 3, unit_id: 'gs731', upgrades: [], cost: { gold: 200 } },
       // Mother's Tear line. A font is the basin the tears are collected in.
-      { id: 'mothers_tear_font',     label: "Mother's Tear Font", label_ru: 'Купель Слезы Матери',    category: 'barracks', tier: 1, unit_id: 'gs8',   upgrades: ['mothers_sorrow_font', 'mothers_vigil_reliquary'], cost: { gold: 50 } },
+      { id: 'mothers_tear_font',     label: "Mother's Tear Font", label_ru: 'Купель Слезы Матери',    category: 'barracks', tier: 1, unit_id: 'gs8',   upgrades: ['mothers_sorrow_font', 'mothers_vigil_reliquary', 'mothers_chalice_altar'], cost: { gold: 50 } },
       // The greedy branch — vitality, it just drinks deeper.
       { id: 'mothers_sorrow_font',   label: "Mother's Sorrow Font", label_ru: 'Купель Скорби Матери',  category: 'barracks', tier: 2, unit_id: 'gs81',  upgrades: ['mothers_grief_font'], cost: { gold: 100 } },
       { id: 'mothers_grief_font',    label: "Mother's Grief Font", label_ru: 'Купель Горя Матери',   category: 'barracks', tier: 3, unit_id: 'gs811', upgrades: [], cost: { gold: 200 } },
@@ -241,6 +241,10 @@ const BUILDING_POOLS = {
       // what the nature resist aura does for the horde around it.
       { id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary", label_ru: 'Реликварий Бдения Матери',  category: 'barracks', tier: 2, unit_id: 'gs82',  upgrades: ['mothers_shroud_reliquary'], cost: { gold: 100 } },
       { id: 'mothers_shroud_reliquary', label: "Mother's Shroud Reliquary", label_ru: 'Реликварий Покрова Матери', category: 'barracks', tier: 3, unit_id: 'gs821', upgrades: [], cost: { gold: 200 } },
+      // The offering branch — an altar is where something is given up, which is
+      // what a Blood Bond guardian does with itself.
+      { id: 'mothers_chalice_altar', label: "Mother's Chalice Altar", label_ru: 'Алтарь Чаши Матери',  category: 'barracks', tier: 2, unit_id: 'gs83',  upgrades: ['mothers_vessel_altar'], cost: { gold: 100 } },
+      { id: 'mothers_vessel_altar',  label: "Mother's Vessel Altar", label_ru: 'Алтарь Сосуда Матери', category: 'barracks', tier: 3, unit_id: 'gs831', upgrades: [], cost: { gold: 200 } },
     ],
     special: [
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'special', unit_id: null },
@@ -418,9 +422,11 @@ const UNIT_UPGRADE_PATHS = {
     gs72: [{ unit_id: 'gs721', building_id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry', label_ru: 'Часовня бледных аббатис' }],
     gs73: [{ unit_id: 'gs731', building_id: 'pale_lamenter_shrine',  label: 'Pale Lamenter Shrine', label_ru: 'Святилище бледных скорбниц' }],
     gs8:  [{ unit_id: 'gs81',  building_id: 'mothers_sorrow_font',      label: "Mother's Sorrow Font", label_ru: 'Купель Скорби Матери' },
-           { unit_id: 'gs82',  building_id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary", label_ru: 'Реликварий Бдения Матери' }],
+           { unit_id: 'gs82',  building_id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary", label_ru: 'Реликварий Бдения Матери' },
+           { unit_id: 'gs83',  building_id: 'mothers_chalice_altar',    label: "Mother's Chalice Altar", label_ru: 'Алтарь Чаши Матери' }],
     gs81: [{ unit_id: 'gs811', building_id: 'mothers_grief_font',       label: "Mother's Grief Font", label_ru: 'Купель Горя Матери' }],
     gs82: [{ unit_id: 'gs821', building_id: 'mothers_shroud_reliquary', label: "Mother's Shroud Reliquary", label_ru: 'Реликварий Покрова Матери' }],
+    gs83: [{ unit_id: 'gs831', building_id: 'mothers_vessel_altar',     label: "Mother's Vessel Altar", label_ru: 'Алтарь Сосуда Матери' }],
   },
 };
 
