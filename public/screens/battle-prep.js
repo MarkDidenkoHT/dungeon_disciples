@@ -9,6 +9,8 @@ const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 import { getEncounter } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
+import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
+import { syncFormationSynergies } from '../formation-synergy-view.js';
 
 // The ability/item inspect handler has to be on `document`, because these icons
 // also appear inside the body-level modal sheet, which is outside the screen
@@ -821,6 +823,43 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     if (counter) counter.textContent = `${placedLoyaltyUsed()}/${maxNonHero}`;
   }
 
+  // What the formation-synergy resolver needs to see, built from the placement
+  // map. Kept as an adapter rather than handing `occupied` over directly, so the
+  // resolver never learns this screen's data model — the battle engine feeds the
+  // same function from combatants, and they must agree.
+  //
+  // One entry per PLACED unit, not per occupied cell: a 1x2 unit is one unit
+  // standing on two cells, and adjacency has to be judged on the whole
+  // footprint.
+  function synergyUnits() {
+    const byUnit = new Map();
+    for (const [cell, occ] of Object.entries(occupied)) {
+      if (!occ) continue;
+      if (!byUnit.has(occ.unitId)) byUnit.set(occ.unitId, { anchor: occ.anchor, cells: [] });
+      byUnit.get(occ.unitId).cells.push(Number(cell));
+    }
+    const out = [];
+    for (const [unitId, { anchor, cells }] of byUnit) {
+      const unit = roster.find(u => u.id === unitId);
+      const def  = unit ? resolveUnitDef(unit) : null;
+      if (!def) continue;
+      // Same read as the unit card's ability icons (see buildUnitCard in
+      // utils.js): passive may be one key or several, and native_passive wins
+      // where a unit has one.
+      const passives = def.native_passive ?? def.passive;
+      const abilityKeys = [
+        def.ability,
+        ...(Array.isArray(passives) ? passives : [passives]),
+      ].filter(Boolean);
+      out.push({
+        id: unitId, side: 'player', anchor, cells,
+        tags: def.tags ?? [], abilityKeys,
+        type: def.type ?? unit.unit_data?.type, unitId: def.id,
+      });
+    }
+    return out;
+  }
+
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
@@ -1077,6 +1116,13 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   function fullRefresh() {
     renderPlayerGrid();
+    // After the grid, because the bonds anchor on cell elements that the render
+    // above has just replaced. Reattached first for the same reason the battle
+    // screen does it on every render: the canvas sizes itself to the arena, and
+    // the arena's height changes as the grid and the portrait track fill in — a
+    // canvas measured before that is a canvas nothing can be drawn on.
+    reattachBattleFx(root);
+    syncFormationSynergies(synergyUnits());
     renderPortraitTrack();
     attachPortraitEvents();
     attachGridDragEvents();
@@ -1667,6 +1713,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
       renderPlayerGrid();
       renderEnemyGrid();
+      // The FX canvas goes up once the arena exists and has a size. Bonds
+      // restored from a saved formation flare on arrival, which is the correct
+      // read: as far as the player is concerned they have just been formed.
+      initBattleFx(root);
+      // A frame later, so the arena has been laid out and the canvas can size
+      // itself to something real.
+      requestAnimationFrame(() => {
+        reattachBattleFx(root);
+        syncFormationSynergies(synergyUnits());
+      });
       renderPortraitTrack();
       attachPortraitEvents();
       attachGridDragEvents();

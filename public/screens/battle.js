@@ -2,6 +2,8 @@ import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint, spellName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
+import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
+import { playFormationSynergies } from '../formation-synergy-view.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../realtime.js';
@@ -15,7 +17,14 @@ const COLS = 2;
 // — because something (life, blood) travels between the acting unit and its
 // target. Everything else is single-cell / (cell, opts). Keep in sync with the
 // two-cell effects in battle-fx.js.
-const SRC_TARGET_FX = new Set(['communion', 'shared_suffering', 'sacrifice', 'terror']);
+// Formation bonds are two-cell for a different reason — nothing travels, two
+// allies are LINKED — but they take the same (sourceCell, targetCell) call, so
+// they belong in this set. Every bond in data/formation_synergies.js is added
+// automatically; a new one needs no edit here.
+const SRC_TARGET_FX = new Set([
+  'communion', 'shared_suffering', 'sacrifice', 'terror',
+  ...Object.values(FORMATION_SYNERGIES).map(d => d.effect).filter(Boolean),
+]);
 
 // Effects that hit MANY cells at once — EFFECTS[name](originCell, { targetCells }).
 // The engine logs one entry per victim (fellfire splashes every burning enemy,
@@ -215,6 +224,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let battleResolved = false;
   let rewardRequestInFlight = false;
   let fxInitialized = false;
+  let synergiesShown = false;
 
   // Items for the equipped-gear inspector. Served from the shared bootstrap
   // cache — the battle screen no longer fetches its own copy.
@@ -469,6 +479,29 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
     }
   })();
+
+  // The shape data/formation_synergies.js reads, built from live combatants.
+  // Battle prep builds the same shape from its placement map and the engine
+  // builds it from its own combatants — one shared shape is what lets a single
+  // adjacency rule serve all three.
+  function synergyUnits() {
+    return (state.combatants || [])
+      .filter(c => c.alive !== false)
+      .map(c => {
+        const raw = c.unit_data?.passive || c.unit_data?.passive_ability;
+        const passives = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        return {
+          id: c.id,
+          side: c.side,
+          cells: cellFootprint(c.cellIndex, c.size ?? 'tile'),
+          anchor: c.cellIndex,
+          tags: c.unit_data?.tags ?? [],
+          abilityKeys: [c.unit_data?.ability, ...passives].filter(Boolean),
+          type: c.unit_data?.type,
+          unitId: c.unit_data?.unit_id ?? c.unit_data?.id,
+        };
+      });
+  }
 
   async function playbackSequence(entries) {
     const newEntries = (entries || []).filter(e => {
@@ -2000,6 +2033,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!fxInitialized) {
       initBattleFx(battleHost);
       fxInitialized = true;
+      // Formation bonds, once, on the first render that has both a canvas and
+      // cells to anchor on. Read from the COMBATANTS rather than from the log:
+      // /battle/create fires on_battle_start server-side and hands us those
+      // entries at mount, where seedPlayedLogs() marks them already-shown, so a
+      // battle-start passive's log entry never reaches the FX dispatcher.
+      if (!synergiesShown) {
+        synergiesShown = true;
+        // After the frame that just painted these cells — the bond measures
+        // them, and mid-render they have no box yet.
+        requestAnimationFrame(() => playFormationSynergies(synergyUnits()));
+      }
     } else {
       reattachBattleFx(battleHost);
     }
