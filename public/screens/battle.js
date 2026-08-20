@@ -878,7 +878,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // same way a roster comparison does.
     const base       = c._base_stats || {};
     const basePower  = base.action_power ?? def.action_power ?? def.action?.value ?? 0;
-    const livePower  = Math.floor(basePower * (c._dmg_mult ?? 1));
+    // unit_data.action_power is where the engine keeps LIVE power — Banquet,
+    // Horde, Fanaticism and a guardian bond all add to it (see
+    // calcDamageWithPassives, which reads the same field to deal damage).
+    // Deriving live power from the BASE times _dmg_mult, as this did, showed the
+    // blueprint number forever: every flat power buff in the game was real in
+    // the maths and invisible on the card.
+    const flatPower  = c.unit_data?.action_power ?? basePower;
+    const livePower  = Math.floor(flatPower * (c._dmg_mult ?? 1));
     const guard      = c.defend_armor_bonus || 0;
     const liveArmor  = (c.armor ?? def.armor ?? 0) + guard;
     // Defending raises every resistance by the same amount it raises armor (see

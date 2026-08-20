@@ -156,14 +156,88 @@ function runTrigger(trigger, ctx) {
     on_round_start:        () => engine.combatants,
   };
   const pool = (sideMap[trigger] ?? (() => []))();
+  // Work that must see the FINAL state of this trigger rather than the state
+  // partway through it. Guardian bonds are the case: they hand over half of the
+  // guardian, and the guardian's own passives are still growing it. See
+  // formGuardianBond.
+  const deferred = [];
+  const innerCtx = { ...ctx, _deferToEnd: fn => deferred.push(fn) };
   for (const unit of pool) {
     const defs = resolvePassiveDefs(unit, UNIT_ABILITIES);
     for (const def of defs) {
       if (def.trigger !== trigger) continue;
-      dispatchPassive(trigger, unit, def, ctx);
+      dispatchPassive(trigger, unit, def, innerCtx);
     }
   }
+  for (const fn of deferred) fn();
 }
+// Half of the guardian, handed to the ally in front. Read LIVE, not from
+// unit_data: that is a copy of the unit's DEFINITION, so `armor` and
+// `initiative` there are the blueprint values and never move. Anything that
+// buffed the guardian during the battle — Banquet, a spell, an aura — writes to
+// the combatant instead, and reading the blueprint silently left all of it
+// behind. action_power is the exception and lives in unit_data, because that is
+// where the engine keeps live power (see calcDamageWithPassives).
+const BOND_STATS = {
+  battle_hp:    o => o.battle_hp ?? 0,
+  armor:        o => o.armor ?? 0,
+  initiative:   o => o.initiative ?? 0,
+  action_power: o => o.unit_data?.action_power ?? o.unit_data?.action?.value ?? 0,
+};
+
+function formGuardianBond(owner, def, synergyId, engine) {
+  // The host rule lives in data/formation_synergies.js, resolved by the same
+  // function the prep preview calls — so what the player was shown while placing
+  // and what actually bonds here are one rule, not two.
+  const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, synergyId);
+  const host = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
+  if (!host) return;
+
+  owner._unity_host_id = host.id;
+  host._unity_bonded_id = owner.id;
+  owner._invulnerable = true;
+  owner._untargetable = true;
+
+  const half = stat => Math.floor(BOND_STATS[stat](owner) * 0.5);
+
+  const hp = half('battle_hp');
+  if (hp) { host.battle_hp += hp; host.max_hp += hp; engine.recordGrantedBuff(owner, 'max_hp', [host], hp); }
+
+  const armor = half('armor');
+  if (armor) { host.armor += armor; engine.recordGrantedBuff(owner, 'armor', [host], armor); }
+
+  const initiative = half('initiative');
+  if (initiative) { host.initiative += initiative; engine.recordGrantedBuff(owner, 'initiative', [host], initiative); }
+
+  const power = half('action_power');
+  if (power && host.unit_data) {
+    host.unit_data = { ...host.unit_data, action_power: (host.unit_data.action_power ?? 0) + power };
+    engine.recordGrantedBuff(owner, 'action_power', [host], power);
+  }
+
+  // Half of the resistances too, from unit_data — which for resistances IS the
+  // live copy, cloned per combatant and written in place by every resist effect.
+  const ownerResists = owner.unit_data?.resistances || {};
+  if (host.unit_data) {
+    const hostResists = { ...(host.unit_data.resistances || {}) };
+    for (const [type, val] of Object.entries(ownerResists)) {
+      hostResists[type] = (hostResists[type] || 0) + Math.floor(val * 0.5);
+    }
+    host.unit_data = { ...host.unit_data, resistances: hostResists };
+  }
+
+  // actorId/targetId carry the bond FX: the client anchors a two-cell effect on
+  // the cells those ids name (see SRC_TARGET_FX in battle.js). Without them the
+  // entry still READ correctly but had no cells to draw between, so the tether
+  // never appeared.
+  engine.pushLog({
+    type: 'passive', passive: def.name,
+    actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+    targetId: host.id, targetName: host.unit_name, targetCell: host.cellIndex,
+    message: `${owner.unit_name} bonds to ${host.unit_name} — +${hp} HP, +${armor} armor, +${initiative} initiative, +${power} power transferred; the ${def.name} guardian is invulnerable.`,
+  });
+}
+
 function dispatchPassive(trigger, owner, def, ctx) {
   const { engine, actor, target, dmg, dying } = ctx;
   const p = def.params || {};
@@ -388,42 +462,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // original spelling, kept working so no data has to move.
     const bondSynergyId = p.bond_synergy || (p.unity_bond === true ? 'unity_bond' : null);
     if (bondSynergyId && !owner._flags[def.id + '_bonded']) {
+      // Flagged NOW, not when the bond actually forms, so a deferred bond cannot
+      // be queued twice.
       owner._flags[def.id + '_bonded'] = true;
-      // Was an inline same-row/other-column search against a Holy ally. The host
-      // rule now lives in data/formation_synergies.js, resolved by the same
-      // function the prep preview calls — so what the player was shown while
-      // placing and what actually bonds here are one rule, not two.
-      const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, bondSynergyId);
-      const host = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
-      if (host) {
-        owner._unity_host_id = host.id;
-        host._unity_bonded_id = owner.id;
-        owner._invulnerable = true;
-        owner._untargetable = true;
-        const stats = ['battle_hp', 'max_hp', 'armor', 'initiative', 'action_power'];
-        for (const stat of stats) {
-          const bonus = Math.floor((owner.unit_data?.[stat] ?? owner[stat] ?? 0) * 0.5);
-          if (stat === 'battle_hp') { host.battle_hp += bonus; host.max_hp += bonus; engine.recordGrantedBuff(owner, 'max_hp', [host], bonus); }
-          else if (stat === 'max_hp') { }
-          else if (stat === 'armor') { host.armor += bonus; engine.recordGrantedBuff(owner, 'armor', [host], bonus); }
-          else if (stat === 'initiative') { host.initiative += bonus; engine.recordGrantedBuff(owner, 'initiative', [host], bonus); }
-          else if (stat === 'action_power' && host.unit_data) { host.unit_data = { ...host.unit_data, action_power: (host.unit_data.action_power ?? 0) + bonus }; }
-        }
-        // Transfer 50% of resistances
-        const ownerResists = owner.unit_data?.resistances || {};
-        if (host.unit_data) {
-          const hostResists = { ...(host.unit_data.resistances || {}) };
-          for (const [type, val] of Object.entries(ownerResists)) {
-            hostResists[type] = (hostResists[type] || 0) + Math.floor(val * 0.5);
-          }
-          host.unit_data = { ...host.unit_data, resistances: hostResists };
-        }
-        // actorId/targetId carry the bond FX: the client anchors a two-cell
-        // effect on the cells those ids name (see SRC_TARGET_FX in battle.js).
-        // Without them the entry still READ correctly but had no cells to draw
-        // between, so the tether never appeared.
-        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: host.id, targetName: host.unit_name, targetCell: host.cellIndex, message: `${owner.unit_name} bonds to ${host.unit_name} — 50% stats transferred, the ${def.name} guardian is invulnerable.` });
-      }
+      const form = () => formGuardianBond(owner, def, bondSynergyId, engine);
+      // DEFERRED to the end of the trigger. The guardian's own other battle-start
+      // passives grow the stats being handed over — Banquet gives Mother's
+      // Chalice power and initiative per Vampire ally — and passives run in the
+      // order the unit lists them, so a bond that formed inline handed over
+      // whatever half of them happened to have run first. Half of the FINAL unit
+      // is the only answer that does not depend on array order.
+      if (typeof ctx._deferToEnd === 'function') ctx._deferToEnd(form);
+      else form();
     }
   }
   if (trigger === 'on_turn_start' && owner === actor) {

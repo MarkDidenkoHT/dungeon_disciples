@@ -525,6 +525,15 @@ class BattleEngine {
           target.initiative = Math.max(0, target.initiative - buff.value);
         } else if (buff.type === 'damage') {
           target._dmg_mult = Math.max(0.01, (target._dmg_mult ?? 1) / (1 + buff.value));
+        } else if (buff.type === 'action_power' && target.unit_data) {
+          // Mirrors applyStatBuff, which has always been able to GRANT power.
+          // Without the matching branch here a guardian bond's transferred power
+          // outlived the guardian while the HP, armor and initiative it handed
+          // over all reverted — the host kept half a dead ally's damage.
+          target.unit_data = {
+            ...target.unit_data,
+            action_power: Math.max(0, (target.unit_data.action_power ?? 0) - buff.value),
+          };
         }
       }
     }
