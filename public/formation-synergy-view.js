@@ -1,18 +1,16 @@
 // The screen-side of formation synergies: it asks resolveSynergies() what bonds
-// exist and draws them.
+// exist right now and keeps what is drawn in step with the answer.
 //
-// Two entry points, because the two screens want different things:
+// One function serves both screens, because both want the same three beats — a
+// bond forms, it stands, it breaks. Only the way a cell is ADDRESSED differs:
+// prep keys cells by grid position (`data-i`, scoped by grid, since the player
+// and enemy grids repeat the same indices), battle keys them by combatant id
+// (`data-id`). That is the whole of the difference, so it is the only thing the
+// caller has to say.
 //
-//   syncFormationSynergies()  battle prep — a LIVE view. Bonds form, persist and
-//                             break as the player rearranges the grid.
-//   playFormationSynergies()  battle — a one-shot at mount. The bonds are
-//                             already decided by then; this just shows them.
-//
-// Neither knows what a bond is. Both take the normalised unit shape that
-// data/formation_synergies.js reads, and a way to turn a bond into the two cell
-// selectors it should be drawn between — which differs per screen: prep keys
-// cells by grid position (`data-i`, scoped by grid, since the player and enemy
-// grids repeat the same indices), battle keys them by combatant id (`data-id`).
+// In battle the three beats fall out of the mechanic for free: the bond forms at
+// battle start, stands while both units live, and breaks when one of them dies —
+// because a dead combatant drops out of the units list and the diff notices.
 
 import { resolveSynergies } from '../data/formation_synergies.js';
 import { playBondForm, startBondIdle, playBondBreak, isBattleFxReady } from './battle-fx.js';
@@ -38,27 +36,31 @@ const idSelectors = () => bond => [
 ];
 
 /**
- * Battle prep. Bring the drawn bonds in line with `units`:
+ * Bring the drawn bonds in line with `units`:
  *
  *   a key that wasn't there before -> formation, then start its idle loop
  *   a key that has gone away       -> stop the idle loop, then break
  *   a key that is in both          -> leave it alone, its loop is still running
  *
- * The diff is the whole point. Prep re-renders its grid on every placement,
- * drag and spell selection; without it, arranging the rest of your army would
- * replay the formation flare of an untouched bond over and over.
+ * The diff is the whole point. Both screens re-render constantly — prep on every
+ * placement and drag, battle on every log entry — and without it an untouched
+ * bond would replay its formation flare over and over.
+ *
+ * `scope` is 'battle', or the id of the grid the cells live in. It also
+ * identifies the screen: changing it drops every bond, since selectors from the
+ * old screen cannot resolve on the new one.
  *
  * Safe to call on every refresh; that is how it is meant to be used.
  */
-export function syncFormationSynergies(units, gridId = 'player-grid') {
+export function syncFormationSynergies(units, scope = 'player-grid') {
   // Nothing is recorded before there is a canvas to record it against. A bond
   // marked as drawn while the FX layer was still coming up would sit in
   // `active` forever without ever appearing.
   if (!isBattleFxReady()) return;
-  if (currentScope && currentScope !== gridId) clearFormationSynergies();
-  currentScope = gridId;
+  if (currentScope && currentScope !== scope) clearFormationSynergies();
+  currentScope = scope;
 
-  const selectorsFor = gridSelectors(gridId);
+  const selectorsFor = scope === 'battle' ? idSelectors() : gridSelectors(scope);
   const found = resolveSynergies(units);
   const seen = new Set();
   // Logged only when the set CHANGES, in the same shape as battle-fx's own
@@ -97,32 +99,6 @@ export function syncFormationSynergies(units, gridId = 'player-grid') {
     entry.stop?.();
     playBondBreak(entry.srcSel, entry.dstSel, entry.fx);
   }
-}
-
-/**
- * Battle start. Plays the formation beat for every bond on the field, once.
- *
- * Driven off the COMBATANTS rather than off the battle log, which is the only
- * way it can work: /battle/create fires on_battle_start server-side and hands
- * the client those entries at mount, where seedPlayedLogs() marks them as
- * already shown — so a battle-start passive's log entry never reaches the FX
- * dispatcher at all. The bond is visible in the board state regardless, so that
- * is what this reads.
- *
- * Both sides, since an enemy formation is worth reading too.
- */
-export async function playFormationSynergies(units) {
-  if (!isBattleFxReady()) return;
-  const selectorsFor = idSelectors();
-  const bonds = resolveSynergies(units);
-  console.log('[synergy] battle start bonds:', bonds.map(b => b.key).join(', ') || '(none)');
-  // Together, not in sequence: every bond on the field forms at the same
-  // instant, and awaiting them one by one would read as a chain of separate
-  // events.
-  await Promise.all(bonds.map(bond => {
-    const [srcSel, dstSel] = selectorsFor(bond);
-    return playBondForm(srcSel, dstSel, bond.def.fx || {});
-  }));
 }
 
 // Tear down every bond without playing a break — for leaving the screen, where

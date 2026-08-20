@@ -7,6 +7,8 @@ import { renderItems }      from './screens/items.js';
 import { renderEmbark }     from './screens/embark.js';
 import { renderSettings, lang } from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
+import { destroyBattleFx } from './battle-fx.js';
+import { clearFormationSynergies } from './formation-synergy-view.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache } from './screens/loading.js';
@@ -252,6 +254,13 @@ function navigate(screen, params = {}) {
   // they would follow the player onto the next screen.
   document.getElementById('roster-trophy-bar')?.remove();
   document.getElementById('castle-cost-bar')?.remove();
+
+  // The FX canvas and any running bond loops belong to the screen being left.
+  // Clearing the root only detaches the canvas from the DOM — the PIXI app and
+  // its tickers keep running, so a bond idle loop from battle prep would tick
+  // forever behind whatever screen came next.
+  clearFormationSynergies();
+  destroyBattleFx();
 
   root.innerHTML = '';
   root.style.backgroundImage    = '';

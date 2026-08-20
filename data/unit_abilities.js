@@ -1607,6 +1607,11 @@ const UNIT_ABILITIES = {
     description: 'At battle start, bonds to the allied Holy unit directly in front. That unit gains 50% of this unit\'s stats. This unit becomes invulnerable, cannot be targeted, does not act, and dies when its host dies. Passives still trigger.',
     description_ru: "В начале боя связывается со святым союзником прямо впереди. Тот юнит получает 50% характеристик этого юнита. Этот юнит становится неуязвимым, не может быть целью, не действует и погибает вместе с носителем. Пассивные способности продолжают срабатывать.",
     params: { unity_bond: true },
+    // The bond's picture — a tether, a sigil on the host, a glow on both — is
+    // generated from the 'unity_bond' entry in data/formation_synergies.js and
+    // registered into EFFECTS by battle-fx.js. Naming it here is all the battle
+    // screen needs to play it at battle start.
+    effect_name: 'unity_bond',
   },
   'mothers_blessing 1': {
     id: 'mothers_blessing 1',

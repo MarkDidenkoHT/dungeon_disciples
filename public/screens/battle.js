@@ -3,7 +3,7 @@ import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
 import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint, spellName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
-import { playFormationSynergies } from '../formation-synergy-view.js';
+import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../realtime.js';
@@ -224,7 +224,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let battleResolved = false;
   let rewardRequestInFlight = false;
   let fxInitialized = false;
-  let synergiesShown = false;
 
   // Items for the equipped-gear inspector. Served from the shared bootstrap
   // cache — the battle screen no longer fetches its own copy.
@@ -2033,20 +2032,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!fxInitialized) {
       initBattleFx(battleHost);
       fxInitialized = true;
-      // Formation bonds, once, on the first render that has both a canvas and
-      // cells to anchor on. Read from the COMBATANTS rather than from the log:
-      // /battle/create fires on_battle_start server-side and hands us those
-      // entries at mount, where seedPlayedLogs() marks them already-shown, so a
-      // battle-start passive's log entry never reaches the FX dispatcher.
-      if (!synergiesShown) {
-        synergiesShown = true;
-        // After the frame that just painted these cells — the bond measures
-        // them, and mid-render they have no box yet.
-        requestAnimationFrame(() => playFormationSynergies(synergyUnits()));
-      }
     } else {
       reattachBattleFx(battleHost);
     }
+
+    // Formation bonds, reconciled on every render. Driven off the COMBATANTS
+    // rather than off the battle log, which is the only thing that can work:
+    // /battle/create fires on_battle_start server-side and hands us those
+    // entries at mount, where seedPlayedLogs() marks them already-shown — so a
+    // battle-start passive's log entry never reaches the FX dispatcher at all.
+    //
+    // Reconciling (rather than playing once) is also what gives the bond its
+    // life in combat: it forms at battle start, holds while both units live,
+    // and breaks on its own when one of them dies and drops out of the list.
+    syncFormationSynergies(synergyUnits(), 'battle');
 
     const tutorialActor = currentActor();
     const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
