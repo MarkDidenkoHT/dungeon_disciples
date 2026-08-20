@@ -142,10 +142,6 @@ const UNIT_ABILITIES = {
     trigger: 'on_battle_start',
     description: 'Adjacent Construct allies in the same column gain 2 armor per Engineer ally on the field.',
     description_ru: "Соседние союзники-конструкты в том же столбце получают по 2 брони за каждого союзного инженера.",
-    // Reuses the Inspiration machinery — same reach, same per-tag scaling — with
-    // inspiration_target_tag narrowing it to Constructs. Was a field-wide flat
-    // +3 to every Construct ally; it is now a placement decision that only pays
-    // when Engineers and Constructs are fielded together.
     params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer', inspiration_target_tag: 'Construct' },
   },
   'fortify 2': {
@@ -1627,8 +1623,6 @@ const UNIT_ABILITIES = {
     params: { cattle_hp_per_tag: 2, tag_required: 'Zombie', partner_synergy: 'cattle' },
     effect_name: 'cattle_flash',
   },
-  // Choir cross-tag: position unlocks it, roster scales it. The Warrior keeps
-  // the power; the Caster behind is the condition, not the recipient.
   'chorus_of_war 1': {
     id: 'chorus_of_war 1',
     name: 'Chorus of War',
@@ -1640,6 +1634,85 @@ const UNIT_ABILITIES = {
     description_ru: "В начале боя, если прямо позади стоит союзный заклинатель, получает по 2 силы за каждого союзного заклинателя на поле.",
     params: { chorus_power_per_tag: 2, tag_required: 'Caster', partner_synergy: 'chorus_of_war' },
     effect_name: 'chorus_flash',
+  },
+  'chorus_of_war 2': {
+    id: 'chorus_of_war 2',
+    name: 'Chorus of War',
+    name_ru: "Хор войны",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, if an allied Caster stands directly behind this unit, gain 3 power per Caster ally on the field.',
+    description_ru: "В начале боя, если прямо позади стоит союзный заклинатель, получает по 3 силы за каждого союзного заклинателя на поле.",
+    params: { chorus_power_per_tag: 3, tag_required: 'Caster', partner_synergy: 'chorus_of_war' },
+    effect_name: 'chorus_flash',
+  },
+  'sovereigns_levy 1': {
+    id: 'sovereigns_levy 1',
+    name: "Sovereign's Levy",
+    name_ru: "Сюзеренский сбор",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, if this is the only Court ally on the field, gain 3 power and 3 armor for each Demon ally. Fielding a second Court ally disables this entirely.',
+    description_ru: "В начале боя, если это единственный союзник Двора на поле, получает по 3 силы и 3 брони за каждого союзного демона. Второй союзник Двора полностью отключает эту способность.",
+    params: {
+      tag_required: 'Demon',
+      tag_exclusive: 'Court',
+      power_per_tagged_unit: 3,
+      armor_per_tagged_unit: 3,
+    },
+  },
+  'sanctified_ordnance 1': {
+    id: 'sanctified_ordnance 1',
+    name: 'Sanctified Ordnance',
+    name_ru: "Освящённый боеприпас",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: "Attacks ignore 15% of the target's armor. While an allied Holy unit shares this unit's row, ignore 30% instead.",
+    description_ru: "Атаки игнорируют 15% брони цели. Пока союзный святой юнит находится в том же ряду, игнорируется 30%.",
+    params: {
+      armor_ignore_pct: 15,
+      armor_ignore_pct_bonded: 30,
+      tag_required: 'Holy',
+      partner_synergy: 'sanctified_ordnance',
+    },
+    effect_name: 'ordnance_flash',
+  },
+  'sanctified_ordnance 2': {
+    id: 'sanctified_ordnance 2',
+    name: 'Sanctified Ordnance',
+    name_ru: "Освящённый боеприпас",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: "Attacks ignore 25% of the target's armor. While an allied Holy unit shares this unit's row, ignore 50% instead.",
+    description_ru: "Атаки игнорируют 25% брони цели. Пока союзный святой юнит находится в том же ряду, игнорируется 50%.",
+    params: {
+      armor_ignore_pct: 25,
+      armor_ignore_pct_bonded: 50,
+      tag_required: 'Holy',
+      partner_synergy: 'sanctified_ordnance',
+    },
+    effect_name: 'ordnance_flash',
+  },
+  'procession_of_grief 1': {
+    id: 'procession_of_grief 1',
+    name: 'Procession of Grief',
+    name_ru: "Процессия скорби",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'If this is the only Spirit ally on the field, allied Zombie attacks apply 2 decay on hit. Decay eats the healing its target receives.',
+    description_ru: "Если это единственный союзник-дух на поле, атаки союзных зомби накладывают 2 разложения. Разложение поглощает получаемое целью исцеление.",
+    dispellable: true,
+    params: {
+      ally_hit_decay: 2,
+      ally_tag_required: 'Zombie',
+      tag_exclusive: 'Spirit',
+    },
+    effect_name: 'decay_touch',
   },
   'blood_bond 1': {
     id: 'blood_bond 1',

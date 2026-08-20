@@ -25,7 +25,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      passive: ['rage 1', 'inspiration_damage 1'], ability: null,
+      passive: ['rage 1', 'chorus_of_war 1'], ability: null,
       building_slot: 'slot_0', xp: 400
     },
     black_castellan_path_a_t3: {
@@ -38,7 +38,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      passive: ['rage 1', 'inspiration_damage 2'], ability: null,
+      passive: ['rage 1', 'chorus_of_war 2'], ability: null,
       building_slot: 'slot_0', xp: 1000
     },
     black_castellan_path_a_t4: {
@@ -51,7 +51,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      passive: ['rage 1', 'inspiration_damage 2', 'command 1'], ability: null,
+      passive: ['rage 1', 'chorus_of_war 2', 'command 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     black_castellan_path_a_t4_alt: {
@@ -64,7 +64,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      passive: ['rage 1', 'inspiration_damage 2', 'inspiration_max_hp 1'], ability: null,
+      passive: ['rage 1', 'chorus_of_war 2', 'inspiration_max_hp 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     black_castellan_path_b_t2: {
@@ -519,7 +519,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      xp: 90, passive: 'rage 1', ability: 'furious_strike 1',
+      xp: 90, passive: 'chorus_of_war 1', ability: 'furious_strike 1',
     },
     posessed: {
       id: 'd41', f: 'd', t: 2,
@@ -531,7 +531,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 30, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 15, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      xp: 370, passive: ['rage 1', 'blood_frenzy 1'], ability: 'furious_strike 1',
+      xp: 370, passive: ['chorus_of_war 1', 'blood_frenzy 1'], ability: 'furious_strike 1',
     },
     vessel: {
       id: 'd411', f: 'd', t: 3,
@@ -543,7 +543,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 0, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      xp: 1000, passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: 'furious_strike 1',
+      xp: 1000, passive: ['chorus_of_war 1', 'blood_frenzy 1', 'execute 1'], ability: 'furious_strike 1',
     },
     pain_projector: {
       id: 'd412', f: 'd', t: 3,
@@ -579,7 +579,7 @@ const UNITS = {
       resistances: { air: 0, fire: 20, life: 30, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 400, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'undying 1'], ability: 'infernal_mandate 2',
+      xp: 400, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'sovereigns_levy 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
       id: 'd611', f: 'd', t: 3,
@@ -591,7 +591,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 1000, passive: ['magic_attunement 1', 'resist_aura_fire 2', 'undying 1'], ability: 'infernal_mandate 3',
+      xp: 1000, passive: ['magic_attunement 1', 'resist_aura_fire 2', 'sovereigns_levy 1'], ability: 'infernal_mandate 3',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -1245,7 +1245,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 14, action_icon: 'musket_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
-      xp: 400, passive: ['shatter 1', 'scavenger 1', 'clear_shot 1'], ability: null,
+      xp: 400, passive: ['clear_shot 1', 'sanctified_ordnance 1'], ability: null,
     },
     devastator: {
       id: 'e621', f: 'e', t: 3,
@@ -1257,7 +1257,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 18, action_icon: 'musket_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
-      xp: 1000, passive: ['shatter 2', 'scavenger 1', 'clear_shot 1'], ability: null,
+      xp: 1000, passive: ['clear_shot 1', 'sanctified_ordnance 2'], ability: null,
     },
     flamethrower: {
       id: 'e622', f: 'e', t: 3,
@@ -2223,7 +2223,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 360, passive: ['sorrow 1', 'slow 1'], ability: 'terror 1',
+      xp: 360, passive: ['sorrow 1', 'procession_of_grief 1'], ability: 'terror 1',
     },
     wraith: {
       id: 'gs611', f: 'g', t: 3,
@@ -2235,7 +2235,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 10, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 900, passive: ['sorrow 1', 'slow 2'], ability: 'terror 1',
+      xp: 900, passive: ['sorrow 1', 'procession_of_grief 1', 'slow 1',], ability: 'terror 1',
     },
     apparition: {
       id: 'gs62', f: 'g', t: 2,
@@ -2411,7 +2411,7 @@ const UNITS = {
       name_ru: 'Чаша Матери',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
-      hp: 60, armor: 0, initiative: 50,
+      hp: 60, armor: 0, initiative: 10,
       resistances: { air: 10, fire: 10, life: 0, death: 20, cold: 10, nature: 20 },
       action: 'none', target_type: 'enemy', targets: 1, range: 3,
       damage_source: null, action_power: 12,
@@ -2423,7 +2423,7 @@ const UNITS = {
       name_ru: 'Сосуд Матери',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
-      hp: 70, armor: 0, initiative: 50,
+      hp: 70, armor: 0, initiative: 10,
       resistances: { air: 10, fire: 10, life: 0, death: 20, cold: 20, nature: 30 },
       action: 'none', target_type: 'enemy', targets: 1, range: 3,
       damage_source: null, action_power: 16,

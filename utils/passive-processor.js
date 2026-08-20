@@ -291,10 +291,23 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // The gate used to require hp_per_tagged_unit, which silently dropped any
     // passive that grants no HP — Banquet (power + initiative) would have done
     // nothing at all. It now fires when ANY of the four is declared.
+    //
+    //   tag_exclusive              OPTIONAL. The whole grant is refused unless
+    //                              this tag is on exactly one living unit on the
+    //                              owner's side. Sovereign's Levy is the first
+    //                              user: the horde answers to a single lord, so
+    //                              fielding a second Court unit turns it off
+    //                              rather than making it bigger. Read live, so a
+    //                              rival lord dying does NOT switch it back on —
+    //                              the grant only ever fires at battle start.
     if (p.tag_required != null && (p.hp_per_tagged_unit != null || p.armor_per_tagged_unit != null ||
                                    p.power_per_tagged_unit != null || p.initiative_per_tagged_unit != null)) {
       const n = tagCount(engine, owner.side, p.tag_required);
-      if (n > 0) {
+      const exclusive = p.tag_exclusive == null || tagCount(engine, owner.side, p.tag_exclusive) <= 1;
+      if (!exclusive) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: 0, heal: false, message: `${def.name} — inert: more than one ${p.tag_exclusive} ally fielded` });
+      }
+      if (n > 0 && exclusive) {
         const hpBonus    = (p.hp_per_tagged_unit ?? 0) * n;
         const armorBonus = (p.armor_per_tagged_unit ?? 0) * n;
         // Horde now pays HP and POWER rather than HP and armor: a swarm passive
@@ -579,6 +592,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetId: frontEnemy.id, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
       }
+    }
+  }
+  // Procession of Grief. The ONE on_hit rider that fires for somebody else's
+  // attack: the Spirit owns the passive, the Zombie swinging the axe delivers
+  // it. runTrigger already hands on_hit to every unit on the attacker's side,
+  // so the owner is in the pool without any new plumbing — it just must not
+  // gate on `owner === actor` the way the block below does.
+  //
+  // Re-checked on every hit rather than resolved once, so a second Spirit
+  // arriving (or the horde thinning) is reflected immediately, and the rider
+  // stops the moment the Spirit carrying it dies.
+  if (trigger === 'on_hit' && p.ally_hit_decay != null && target && dmg > 0 && owner.alive && actor) {
+    const actorTags = actor.unit_data?.tags ?? actor.tags ?? [];
+    const alone = p.tag_exclusive == null || tagCount(engine, owner.side, p.tag_exclusive) <= 1;
+    if (alone && (!p.ally_tag_required || actorTags.includes(p.ally_tag_required))) {
+      // applyDecay clamps to POOL_CAP_PCT of the target's max HP and logs the
+      // pool itself, so a long fight cannot pile this up without bound and no
+      // extra log line is needed here.
+      engine.applyDecay(target, p.ally_hit_decay, def, owner);
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
@@ -1139,7 +1171,17 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
     const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
     const armorRed = armor / 100;
     if (p.armor_ignore_pct != null) {
-      dmg = Math.floor(rawDmg * (1 - armorRed * (1 - p.armor_ignore_pct / 100)));
+      // Sanctified Ordnance: a HIGHER percentage while the formation bond holds.
+      // Resolved live through findPartnerFor rather than cached at battle start,
+      // because the Holy unit standing in the row can die — and when it does the
+      // gunline must drop back to its unbonded 25% on the very next shot.
+      // Pierce declares no _bonded value and so is untouched by this.
+      let ignorePct = p.armor_ignore_pct;
+      if (p.armor_ignore_pct_bonded != null && p.partner_synergy && engine) {
+        const bond = findPartnerFor(synergyUnitsFor(engine), actor.id, p.partner_synergy);
+        if (bond) ignorePct = p.armor_ignore_pct_bonded;
+      }
+      dmg = Math.floor(rawDmg * (1 - armorRed * (1 - ignorePct / 100)));
     } else {
       dmg = Math.floor(rawDmg * (1 - armorRed));
     }

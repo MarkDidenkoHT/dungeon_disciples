@@ -291,6 +291,35 @@ const FORMATION_SYNERGIES = {
     label: 'Chorus of War', label_ru: 'Хор войны',
   },
 
+  // Empire. A Priest walking the gunline. Unlike every other bond here this one
+  // does not decide WHETHER the ability works — Sanctified Ordnance pays 25%
+  // armor ignore unbonded — it decides how MUCH, doubling to 50%. So the entry
+  // exists purely so prep can show the player what standing the Priest in the
+  // row is worth; the battle side reads the same bond per shot in
+  // calcDamageWithPassives.
+  //
+  // buffs: 'source' — the Engineer keeps the effect, as with Chorus of War. The
+  // Holy unit is the condition, and it pays for the privilege by standing in
+  // the row rather than wherever it would rather be.
+  //
+  // previewOnly because the effect is read at damage time, not written as a
+  // stat at battle start: there is nothing for a reconcile to hand out.
+  sanctified_ordnance: {
+    id: 'sanctified_ordnance',
+    source:      { ability: 'sanctified_ordnance' },
+    partner:     { tag: 'Holy' },
+    relation:    'same_row_any',
+    present:     'flash',
+    effect:      'ordnance_flash',
+    buffs:       'source',
+    previewOnly: true,
+    fx: {
+      glow: 0xd9a441,      // gilded brass, the Empire's consecrated metal
+      core: 0xfff3d0,
+    },
+    label: 'Sanctified Ordnance', label_ru: 'Освящённый боеприпас',
+  },
+
   // Empire. An Artificer keeping the machines beside it running. Same reach as
   // Inspiration — one row above and below, in each column the source occupies —
   // but it pays only Constructs, and it scales off Engineers, so neither tag is
