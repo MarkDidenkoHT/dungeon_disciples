@@ -208,7 +208,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     'demon',
     stat_mods:    { armor: 3, hp: 3, death_resist: 5},
-    passive:      'fortify 1',
+    passive:      'beacon_of_despair 1',
     icon:         'aldras_devotion',
     rarity:       'mythic',
     unique:       true,

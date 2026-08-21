@@ -2908,7 +2908,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 25, action_animation: 'sword_swing',
-        xp: 1600, passive: ['iron_will 1', 'undying 1', 'aura_of_decay 1'], ability: null,
+        xp: 1600, passive: ['iron_will 2', 'undying 1'], ability: null,
       },
     },
   },
