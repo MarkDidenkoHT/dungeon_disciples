@@ -1453,6 +1453,54 @@ const UNIT_ABILITIES = {
     params: { frost_armor_armor: 25, frost_armor_resist: 30, frost_armor_resist_type: 'cold', duration_rounds: 2 },
     effect_name: 'aegis',
   },
+  // ── Disabling strikes ──────────────────────────────────────────────────────
+  //
+  // Three of a kind: half the wielder's power as damage, plus something the
+  // target cannot do for two rounds. Headshot and Skullcrack are the same strike
+  // at different reaches — one silences from range 3, the other from range 1 —
+  // and Shield Bash takes the active away instead of the passives.
+  //
+  // Damage is a share of the unit's LIVE power, so a buffed unit hits harder
+  // with these exactly as it does with its basic attack.
+  'headshot 1': {
+    id: 'headshot 1',
+    name: 'Headshot',
+    name_ru: "Выстрел в голову",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    range: 3,
+    description: "A precise shot: deals 50% of this unit's power and disables the target's passives for 2 rounds.",
+    description_ru: "Точный выстрел: наносит 50% силы этого юнита и отключает пассивные способности цели на 2 раунда.",
+    params: { power_pct_damage: 50, lock_passives_rounds: 2 },
+    effect_name: 'arrow_shot',
+  },
+  'skullcrack 1': {
+    id: 'skullcrack 1',
+    name: 'Skullcrack',
+    name_ru: "Раскол черепа",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    range: 1,
+    description: "A crushing blow: deals 50% of this unit's power and disables the target's passives for 2 rounds.",
+    description_ru: "Сокрушительный удар: наносит 50% силы этого юнита и отключает пассивные способности цели на 2 раунда.",
+    params: { power_pct_damage: 50, lock_passives_rounds: 2 },
+    effect_name: 'mace_swing',
+  },
+  'shield_bash 1': {
+    id: 'shield_bash 1',
+    name: 'Shield Bash',
+    name_ru: "Удар щитом",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    range: 1,
+    description: "A shield to the face: deals 50% of this unit's power and stops the target using its ability for 2 rounds.",
+    description_ru: "Удар щитом: наносит 50% силы этого юнита; цель не может использовать активную способность 2 раунда.",
+    params: { power_pct_damage: 50, lock_actives_rounds: 2 },
+    effect_name: 'shield_bash',
+  },
   'volley 1': {
     id: 'volley 1',
     name: 'Volley',

@@ -1667,6 +1667,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // The pool left, not a percentage: it is how much healing this unit will
     // lose before any reaches its HP.
     { key: 'decay',   icon: 'decay.jpg', en: 'Decay',      ru: 'Тлен',           n: c => num(c, '_decay'),  unit: 'heal' },
+    // Headshot / Skullcrack silence the passives; Shield Bash takes the active.
+    // Borrowed art: dissipate for the silence, purge for the disarm.
+    { key: 'silenced', icon: 'dissipate.jpg', en: 'Passives disabled', ru: 'Пассивные отключены', n: c => num(c, '_passives_locked_rounds'), unit: 'rounds' },
+    { key: 'disarmed', icon: 'purge.jpg',     en: 'Ability disabled',  ru: 'Способность отключена', n: c => num(c, '_actives_locked_rounds'),  unit: 'rounds' },
   ];
 
   const UNIT_SUFFIX = {

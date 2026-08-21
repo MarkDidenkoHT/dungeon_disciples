@@ -1245,7 +1245,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 14, action_icon: 'musket_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
-      xp: 400, passive: ['clear_shot 1', 'sanctified_ordnance 1'], ability: null,
+      xp: 400, passive: ['clear_shot 1', 'sanctified_ordnance 1'], ability: 'headshot 1',
     },
     devastator: {
       id: 'e621', f: 'e', t: 3,
@@ -1257,7 +1257,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 18, action_icon: 'musket_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
-      xp: 1000, passive: ['clear_shot 1', 'sanctified_ordnance 2'], ability: null,
+      xp: 1000, passive: ['clear_shot 1', 'sanctified_ordnance 2'], ability: 'headshot 1',
     },
     flamethrower: {
       id: 'e622', f: 'e', t: 3,

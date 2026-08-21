@@ -1605,6 +1605,49 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
   }
 
+  // Headshot / Skullcrack / Shield Bash. One block, because they differ only in
+  // reach and in which half of the target's kit they shut off.
+  if (p.power_pct_damage != null && target && def.target === 'enemy') {
+    // Melee versions declare range 1, so a unit that fights at range cannot
+    // reach with them — the same gate the initiative-stun ability uses.
+    const actorRange   = actor.unit_data?.range ?? actor.unit_data?.action?.range ?? 1;
+    const abilityRange = def.range ?? 1;
+    if (actorRange <= abilityRange) {
+      // A share of LIVE power (unit_data.action_power), so Banquet, a guardian
+      // bond or Chorus of War all make these hit harder, exactly as they make
+      // the basic attack hit harder.
+      const power = actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0;
+      const armor = Math.max(0, target.armor ?? 0);
+      const dmg   = Math.max(1, Math.floor(power * p.power_pct_damage / 100 * (1 - armor / 100)));
+      hurt(target, dmg);
+      const dead = target.battle_hp <= 0;
+      if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
+
+      const shut = [];
+      // Set the COUNTER and the flag together: the flag is what every check
+      // reads, the counter is what keeps it set past this round (see the round
+      // reset in utils/battle-engine.js).
+      if (!dead && p.lock_passives_rounds != null) {
+        target._passives_locked_rounds = Math.max(target._passives_locked_rounds ?? 0, p.lock_passives_rounds);
+        target._passives_locked = true;
+        shut.push(`passives disabled for ${p.lock_passives_rounds} rounds`);
+      }
+      if (!dead && p.lock_actives_rounds != null) {
+        target._actives_locked_rounds = Math.max(target._actives_locked_rounds ?? 0, p.lock_actives_rounds);
+        target._actives_locked = true;
+        shut.push(`ability disabled for ${p.lock_actives_rounds} rounds`);
+      }
+
+      engine.pushLog({
+        type: 'ability', ability: abilityKey,
+        actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+        value: dmg, heal: false, killed: dead,
+        message: `${def.name} — ${target.unit_name} takes ${dmg}${shut.length ? ', ' + shut.join(' and ') : ''}`,
+      });
+    }
+  }
+
   if (p.physical_dmg_reduction_pct != null && target && def.target === 'enemy') {
     target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
     target._terror_rounds = p.duration_rounds ?? 2;

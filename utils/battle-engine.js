@@ -306,6 +306,8 @@ class BattleEngine {
       intercept_bonus_pct: 0,
       _passives_locked: false,
       _actives_locked:  false,
+      _passives_locked_rounds: 0,
+      _actives_locked_rounds:  0,
       _taunted_by_id:      null,
       _clear_shot_active:  false,
       _clear_shot_initiative_amt: 0,
@@ -1608,8 +1610,16 @@ class BattleEngine {
       // Fanaticism stacks are kept for the whole battle, same as their bonuses.
       c._aegis_stacks = 0;
 
-      c._passives_locked = false;
-      c._actives_locked  = false;
+      // Both locks used to be plain booleans cleared here, which made every
+      // silence exactly one round long. They are now driven by a round counter,
+      // so an ability can disable something for longer — Headshot and Skullcrack
+      // silence passives for two. Anything that still sets the boolean directly
+      // leaves its counter at 0 and so behaves exactly as before: gone next
+      // round.
+      c._passives_locked_rounds = Math.max(0, (c._passives_locked_rounds ?? 0) - 1);
+      c._actives_locked_rounds  = Math.max(0, (c._actives_locked_rounds  ?? 0) - 1);
+      c._passives_locked = c._passives_locked_rounds > 0;
+      c._actives_locked  = c._actives_locked_rounds  > 0;
     }
     this.fireTrigger('on_round_start', { actor: null, target: null, dmg: 0, dying: null });
     // Reanimate: revive units that were marked for revival last round
@@ -2088,6 +2098,8 @@ class BattleEngine {
           _stun_rounds:        c._stun_rounds ?? 0,
           _stun_initiative_lost: c._stun_initiative_lost ?? 0,
           _passives_locked:    c._passives_locked ?? false,
+          _passives_locked_rounds: c._passives_locked_rounds ?? 0,
+          _actives_locked_rounds:  c._actives_locked_rounds ?? 0,
           _actives_locked:     c._actives_locked  ?? false,
           _taunted_by_id:      c._taunted_by_id ?? null,
           _clear_shot_active:  c._clear_shot_active ?? false,
@@ -2194,6 +2206,8 @@ class BattleEngine {
       c._stun_rounds       = b._stun_rounds       ?? 0;
       c._stun_initiative_lost = b._stun_initiative_lost ?? 0;
       c._passives_locked   = b._passives_locked   ?? false;
+      c._passives_locked_rounds = b._passives_locked_rounds ?? 0;
+      c._actives_locked_rounds  = b._actives_locked_rounds  ?? 0;
       c._actives_locked    = b._actives_locked    ?? false;
       c._taunted_by_id      = b._taunted_by_id ?? null;
       c._clear_shot_active  = b._clear_shot_active ?? false;
