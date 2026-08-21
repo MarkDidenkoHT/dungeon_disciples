@@ -102,6 +102,42 @@ function effectiveResist(target, type) {
   return Math.max(0, Math.min(MITIGATION_CAP_PCT, res + (target?.defend_armor_bonus || 0)));
 }
 
+// The ONE way armor and resistance are allowed to MOVE. Both clamp to
+// [0, MITIGATION_CAP_PCT] and return the delta that was ACTUALLY applied, which
+// is the number a revoke has to hand back.
+//
+// Returning the applied delta is the whole point. Capping a write without it
+// desynchronises every grant/revoke pair: +24 onto 34 stores 50 (a real +16),
+// and a revoke that subtracts the requested 24 leaves the unit at 26 — below
+// where it started, permanently, every time a buffed ally dies. So callers must
+// record what came back from here, not what they asked for.
+function addArmor(unit, amount) {
+  if (!unit || !amount) return 0;
+  const before = unit.armor ?? 0;
+  const after  = Math.max(0, Math.min(MITIGATION_CAP_PCT, before + amount));
+  unit.armor = after;
+  return after - before;
+}
+function addResist(unit, type, amount) {
+  const res = unit?.unit_data?.resistances ?? unit?.resistances;
+  if (!res || !type || !amount) return 0;
+  const before = res[type] ?? 0;
+  const after  = Math.max(0, Math.min(MITIGATION_CAP_PCT, before + amount));
+  res[type] = after;
+  return after - before;
+}
+// Pulls a unit's stored defences back onto the line. Needed because a stat can
+// arrive already over it from outside the add helpers — a deserialised battle
+// saved before the cap existed, an item, a unit definition someone edits later.
+function clampDefenses(unit) {
+  if (!unit) return;
+  if (unit.armor != null) unit.armor = Math.max(0, Math.min(MITIGATION_CAP_PCT, unit.armor));
+  const res = unit.unit_data?.resistances ?? unit.resistances;
+  if (res) for (const k of Object.keys(res)) {
+    res[k] = Math.max(0, Math.min(MITIGATION_CAP_PCT, res[k] ?? 0));
+  }
+}
+
 function typedAmount(target, amount, type) {
   if (!type || type === 'physical') {
     return Math.max(1, Math.floor(amount * (1 - effectiveArmor(target) / 100)));
@@ -227,7 +263,9 @@ function formGuardianBond(owner, def, synergyId, engine) {
   if (hp) { host.battle_hp += hp; host.max_hp += hp; engine.recordGrantedBuff(owner, 'max_hp', [host], hp); }
 
   const armor = half('armor');
-  if (armor) { host.armor += armor; engine.recordGrantedBuff(owner, 'armor', [host], armor); }
+  // Only what the cap actually let through is recorded, so the revoke on the
+  // guardian's death hands back exactly that and no more.
+  if (armor) { const got = addArmor(host, armor); if (got) engine.recordGrantedBuff(owner, 'armor', [host], got); }
 
   const initiative = half('initiative');
   if (initiative) { host.initiative += initiative; engine.recordGrantedBuff(owner, 'initiative', [host], initiative); }
@@ -296,8 +334,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
         (!p.ally_tag_required || (c.unit_data?.tags ?? c.tags ?? []).includes(p.ally_tag_required))
       );
       if (allies.length) {
-        for (const a of allies) { a.armor += p.ally_armor_bonus; }
-        engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus);
+        // Recorded PER TARGET: the cap can clip one ally and not another, so a
+        // single shared value would over-revoke whoever it clipped.
+        const applied = new Map();
+        for (const a of allies) applied.set(a.id, addArmor(a, p.ally_armor_bonus));
+        engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus, applied);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
       }
     }
@@ -344,8 +385,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
           engine.recordGrantedBuff(owner, 'max_hp', [owner], hpBonus);
         }
         if (armorBonus > 0) {
-          owner.armor += armorBonus;
-          engine.recordGrantedBuff(owner, 'armor', [owner], armorBonus);
+          const got = addArmor(owner, armorBonus);
+          if (got) engine.recordGrantedBuff(owner, 'armor', [owner], got);
         }
         if (powerBonus > 0 && owner.unit_data) {
           owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + powerBonus;
@@ -439,10 +480,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (p.inspiration_target_tag) {
         targets = targets.filter(t => (t.unit_data?.tags ?? []).includes(p.inspiration_target_tag));
       }
+      // Armor is the one inspiration stat the cap can clip, so what each target
+      // actually gained is tracked per target for the revoke and for the icon.
+      const inspApplied = new Map();
       for (const t of targets) {
         if (p.inspiration_stat === 'armor') {
-          t.armor += inspVal;
-          t._inspiration_armor = (t._inspiration_armor ?? 0) + inspVal;
+          const got = addArmor(t, inspVal);
+          inspApplied.set(t.id, got);
+          t._inspiration_armor = (t._inspiration_armor ?? 0) + got;
         } else if (p.inspiration_stat === 'initiative') {
           t.initiative += inspVal;
           // The buff icon needs something ON THE TARGET to read. recordGrantedBuff
@@ -464,7 +509,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
         }
       }
       if (targets.length) {
-        engine.recordGrantedBuff(owner, p.inspiration_stat, targets, p.inspiration_stat === 'damage' ? inspVal / 100 : inspVal);
+        engine.recordGrantedBuff(owner, p.inspiration_stat, targets,
+          p.inspiration_stat === 'damage' ? inspVal / 100 : inspVal,
+          p.inspiration_stat === 'armor' ? inspApplied : null);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
       }
     }
@@ -484,7 +531,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
       for (const t of allies) {
         if (!t.unit_data) continue;
         const resists = { ...(t.unit_data.resistances || {}) };
-        resists[school] = (resists[school] || 0) + auraVal;
+        // Clamped like every other resistance write. The aura has no revoke of
+        // its own (it is flag-guarded and stands for the battle), so nothing
+        // needs the applied delta back — only the ceiling matters here.
+        resists[school] = Math.max(0, Math.min(MITIGATION_CAP_PCT, (resists[school] || 0) + auraVal));
         t.unit_data = { ...t.unit_data, resistances: resists };
       }
       if (allies.length) {
@@ -737,7 +787,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const reduction = target._debuff_reduction ?? 0;
       const effective = Math.max(1, Math.floor(p.armor_shred * (1 - reduction / 100)));
       const applied   = Math.min(effective, target.armor); // can't restore more than was taken
-      target.armor = Math.max(0, target.armor - effective);
+      addArmor(target, -effective);
       engine.registerEffect(target, {
         key: 'armor_shred', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, restore: { armor: applied },
       });
@@ -886,7 +936,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
             // already low gives back only what it lost — the undo has to match
             // the deduction or a dispel would hand out resistance from nowhere.
             const applied = Math.min(effective, current);
-            resistances[damageSource] = current - applied;
+            addResist(target, damageSource, -applied);
             if (applied > 0) {
               // Registered so the shred is VISIBLE: a portrait badge like every
               // other debuff, and dispellable. It was previously applied
@@ -1058,14 +1108,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const damageSource = actor?.unit_data?.damage_source ?? 'physical';
       if (damageSource === 'physical') {
         owner._aegis_armor = (owner._aegis_armor ?? 0) + p.resist_gain;
-        owner.armor += p.resist_gain;
+        owner._aegis_armor = (owner._aegis_armor ?? 0) + addArmor(owner, p.resist_gain);
         engine.recordGrantedBuff(owner, 'armor', [owner], p.resist_gain);
       } else {
         const res = owner.unit_data?.resistances ?? owner.resistances;
         if (res) {
-          res[damageSource] = (res[damageSource] ?? 0) + p.resist_gain;
           owner._aegis_resists = owner._aegis_resists ?? {};
-          owner._aegis_resists[damageSource] = (owner._aegis_resists[damageSource] ?? 0) + p.resist_gain;
+          owner._aegis_resists[damageSource] = (owner._aegis_resists[damageSource] ?? 0) + addResist(owner, damageSource, p.resist_gain);
         }
       }
       // targetId is required for the animation to find a cell to draw on — the
@@ -1479,9 +1528,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     // amount can be given back), so a re-cast refreshes rather than adds.
     if (target._frost_armor_rounds > 0) engine.expireFrostArmor(target);
 
-    target.armor = (target.armor ?? 0) + armorAmt;
+    armorAmt = addArmor(target, armorAmt);
     const res = target.unit_data?.resistances ?? target.resistances;
-    if (res && resistAmt) res[school] = (res[school] ?? 0) + resistAmt;
+    if (resistAmt) resistAmt = addResist(target, school, resistAmt);
 
     target._frost_armor_rounds = p.duration_rounds ?? 2;
     target._frost_armor_armor  = armorAmt;
@@ -1530,7 +1579,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const armorAmt = p.stone_form_armor;
     if (actor._stone_form_rounds > 0) engine.expireStoneForm(actor);
 
-    actor.armor = (actor.armor ?? 0) + armorAmt;
+    armorAmt = addArmor(actor, armorAmt);
     actor._stone_form_rounds = p.duration_rounds ?? 2;
     actor._stone_form_armor  = armorAmt;
     engine.registerEffect(actor, {
@@ -1596,15 +1645,21 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.all_resist_bonus != null && target && def.target === 'ally') {
     const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
     const res = target.unit_data?.resistances ?? target.resistances;
+    // PER TYPE, because the cap clips each school independently: a unit already
+    // at 50 fire and 10 cold gains nothing on fire and the full amount on cold,
+    // and both the timed expiry and a dispel have to hand back those two
+    // different numbers. A single scalar here used to strip resistance the
+    // ward never granted.
+    const sanctuaryApplied = {};
     if (res) {
-      for (const type of resistTypes) res[type] = (res[type] ?? 0) + p.all_resist_bonus;
+      for (const type of resistTypes) sanctuaryApplied[type] = addResist(target, type, p.all_resist_bonus);
     }
     target._sanctuary_rounds = p.duration_rounds ?? 2;
-    target._sanctuary_resist = p.all_resist_bonus;
+    target._sanctuary_resist = sanctuaryApplied;
     // Dispellable positive: give the resistances back on each type it touched.
     const resPath = target.unit_data?.resistances ? 'unit_data.resistances' : 'resistances';
     const sanctuaryRestore = {};
-    for (const type of resistTypes) sanctuaryRestore[`${resPath}.${type}`] = -p.all_resist_bonus;
+    for (const type of resistTypes) sanctuaryRestore[`${resPath}.${type}`] = -(sanctuaryApplied[type] ?? 0);
     engine.registerEffect(target, {
       key: 'sanctuary', name: def.name, polarity: 'positive', dispellable: def.dispellable === true,
       restore: sanctuaryRestore,
@@ -1720,5 +1775,5 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
+  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, addArmor, addResist, clampDefenses, runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
 }

@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -222,7 +222,7 @@ class BattleEngine {
       : maxHp;
     const battleHp = Math.max(0, Math.min(currentHp, maxHp));
     const uniqueId = `${side}:${cellIdx}`;
-    return {
+    const combatant = {
       id:         uniqueId,
       _rosterId:  side === 'player' ? (unit._rosterId || unit.id || null) : null,
       _sourceId:  unit.id || null,
@@ -330,6 +330,14 @@ class BattleEngine {
         resistances:  { ...(data.resistances || {}) },
       },
     };
+    // The last gate before a unit enters a battle. Item stat_mods, upgrade
+    // tiers and resistance auras all pile onto the same two stats from outside
+    // the add helpers, so a unit can arrive already over the ceiling — the
+    // Communicant showing 54 life resistance came in this way, not through a
+    // buff. Clamped here, and _base_stats above is captured pre-clamp on
+    // purpose so the inspector's delta still reads against the real base.
+    clampDefenses(combatant);
+    return combatant;
   }
   fireTrigger(trigger, ctx) {
     runTrigger(trigger, { engine: this, UNIT_ABILITIES: this.ABILITIES, ...ctx });
@@ -413,9 +421,15 @@ class BattleEngine {
   // the caller's value, so revokeGrantedBuffs undoes base and bonus by the same
   // arithmetic that applied them (this matters for 'damage', which is
   // multiplicative).
-  recordGrantedBuff(source, type, targets, value) {
+  // `appliedByTarget` is an optional Map<targetId, number> of what each target
+  // ACTUALLY gained, for the capped stats where the ask and the gain can differ
+  // per unit. Omit it and `value` is recorded for everyone, which is right for
+  // every uncapped stat.
+  recordGrantedBuff(source, type, targets, value, appliedByTarget = null) {
     for (const t of targets) {
-      source._granted_buffs.push({ type, targetIds: [t.id], value });
+      const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
+      if (appliedByTarget && !landed) continue;   // nothing got through the cap
+      source._granted_buffs.push({ type, targetIds: [t.id], value: landed });
       // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
       if (!t || !t.alive || t.id === source?.id) continue;
       // Signed: positive amplifies (Beacon of Hope / Despair on our side),
@@ -431,8 +445,8 @@ class BattleEngine {
       // A reduction can cancel a buff but never invert it into a penalty.
       if (extra < 0) extra = Math.max(extra, -value);
       if (!extra) continue;
-      this.applyStatBuff(t, type, extra);
-      source._granted_buffs.push({ type, targetIds: [t.id], value: extra });
+      const landedExtra = this.applyStatBuff(t, type, extra);
+      if (landedExtra) source._granted_buffs.push({ type, targetIds: [t.id], value: landedExtra });
     }
     this.fireAllyBuffTriggers(source, targets);
   }
@@ -476,13 +490,17 @@ class BattleEngine {
   }
   // Adds `amount` of one buff type to a unit, in the same shape the granting
   // sites use — so the beacon bonus lands exactly where the base buff did.
+  // Returns the amount ACTUALLY applied, which differs from `amount` only for
+  // armor and resistance — the two stats with a hard ceiling. Callers that will
+  // later revoke the grant must record the return value, not what they asked
+  // for; see addArmor in passive-processor.js for why.
   applyStatBuff(unit, type, amount) {
-    if (!unit || !amount) return;
+    if (!unit || !amount) return 0;
     if (type === 'max_hp') {
       unit.max_hp    += amount;
       unit.battle_hp += amount;
     } else if (type === 'armor') {
-      unit.armor = (unit.armor || 0) + amount;
+      return addArmor(unit, amount);
     } else if (type === 'initiative') {
       unit.initiative = (unit.initiative || 0) + amount;
     } else if (type === 'damage') {
@@ -490,10 +508,19 @@ class BattleEngine {
     } else if (type === 'action_power' && unit.unit_data) {
       unit.unit_data.action_power = (unit.unit_data.action_power ?? 0) + amount;
     } else if (type === 'all_resist' && unit.unit_data?.resistances) {
+      // One number back for a fan-out across schools: the largest delta any
+      // school actually took. Nothing revokes 'all_resist' through
+      // _granted_buffs today, so this is a reasonable summary rather than a
+      // per-school ledger; if something ever does, it needs the map treatment
+      // ally_armor_bonus got.
+      let most = 0;
       for (const k of Object.keys(unit.unit_data.resistances)) {
-        unit.unit_data.resistances[k] = (unit.unit_data.resistances[k] || 0) + amount;
+        const got = addResist(unit, k, amount);
+        if (Math.abs(got) > Math.abs(most)) most = got;
       }
+      return most;
     }
+    return amount;
   }
   fireAllyBuffTriggers(source, targets) {
     // A passive answering this trigger could grant another buff; the flag keeps
@@ -522,7 +549,7 @@ class BattleEngine {
           // can leave a pool that was legal when applied sitting over the line.
           this.clampPools(target);
         } else if (buff.type === 'armor') {
-          target.armor = Math.max(0, target.armor - buff.value);
+          addArmor(target, -buff.value);
         } else if (buff.type === 'initiative') {
           target.initiative = Math.max(0, target.initiative - buff.value);
         } else if (buff.type === 'damage') {
@@ -1580,7 +1607,14 @@ class BattleEngine {
           const resistTypes = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
           const res = c.unit_data?.resistances ?? c.resistances;
           if (res) {
-            for (const type of resistTypes) res[type] = Math.max(0, (res[type] ?? 0) - c._sanctuary_resist);
+            // _sanctuary_resist is a per-school map of what each type ACTUALLY
+            // gained, not one shared number — the cap can clip one school and
+            // not another. See the grant site in passive-processor.js.
+            const applied = c._sanctuary_resist;
+            for (const type of resistTypes) {
+              const back = typeof applied === 'number' ? applied : (applied?.[type] ?? 0);
+              if (back) addResist(c, type, -back);
+            }
           }
           c._sanctuary_resist = null;
         }
@@ -1705,13 +1739,13 @@ class BattleEngine {
         const unit = this.combatants.find(c => c.id === effect.unitId);
         if (!unit) continue;
         const r = effect.revert || {};
-        if (r.armor)      unit.armor      = Math.max(0, (unit.armor      || 0) + r.armor);
+        if (r.armor)      addArmor(unit, r.armor);
         if (r.initiative) unit.initiative = Math.max(1, (unit.initiative || 40) + r.initiative);
         if (r.dmg_mult_div) unit._dmg_mult = (unit._dmg_mult || 1) / r.dmg_mult_div;
         if (r.resistances) {
           if (!unit.unit_data.resistances) unit.unit_data.resistances = {};
           for (const [rType, rVal] of Object.entries(r.resistances)) {
-            unit.unit_data.resistances[rType] = Math.max(0, (unit.unit_data.resistances[rType] || 0) + rVal);
+            addResist(unit, rType, rVal);
           }
         }
       }
@@ -2129,7 +2163,7 @@ class BattleEngine {
       c.used_active        = s.used_active ?? false;
       if (s.initiative    != null) c.initiative    = s.initiative;
       if (s.max_hp        != null) c.max_hp        = s.max_hp;
-      if (s.armor         != null) c.armor         = s.armor;
+      if (s.armor         != null) c.armor         = Math.max(0, Math.min(MITIGATION_CAP_PCT, s.armor));
       c.defend_armor_bonus = s.defend_armor_bonus ?? 0;
       c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
       c._lifesteal         = s._lifesteal          ?? 0;
@@ -2307,14 +2341,15 @@ class BattleEngine {
         });
       }
       if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult()); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
-      if (params.armor_boost)          { c.armor = (c.armor || 0) + params.armor_boost; revert.armor = -params.armor_boost; }
-      if (params.armor_reduction)      c.armor      = Math.max(0, Math.floor((c.armor || 0) * (1 - params.armor_reduction)));
+      // Reverted by what LANDED, not by what the spell offered — a target
+      // already at the ceiling gains nothing and must give nothing back.
+      if (params.armor_boost)          { revert.armor = -addArmor(c, params.armor_boost); }
+      if (params.armor_reduction)      c.armor      = Math.max(0, Math.min(MITIGATION_CAP_PCT, Math.floor((c.armor || 0) * (1 - params.armor_reduction))));
       if (params.armor_flat_reduction) {
         // Flat shred, unlike armor_reduction's percentage. Only give back what
         // was actually taken, so a unit at 3 armor doesn't rebound to 10.
         const taken = Math.min(c.armor || 0, params.armor_flat_reduction);
-        c.armor = (c.armor || 0) - taken;
-        revert.armor = (revert.armor || 0) + taken;
+        revert.armor = (revert.armor || 0) - addArmor(c, -taken);
       }
       if (params.max_hp_reduction)     { const cut = Math.floor(c.max_hp * params.max_hp_reduction); c.max_hp = Math.max(1, c.max_hp - cut); c.battle_hp = Math.min(c.battle_hp, c.max_hp); }
       if (params.initiative_boost)     { c.initiative = (c.initiative || 40) + params.initiative_boost; revert.initiative = -params.initiative_boost; }
@@ -2363,18 +2398,18 @@ class BattleEngine {
       if (params.resistances) {
         for (const [rType, rVal] of Object.entries(params.resistances)) {
           if (!c.unit_data.resistances) c.unit_data.resistances = {};
-          c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) + rVal;
+          const landedR = addResist(c, rType, rVal);
           revert.resistances = revert.resistances || {};
-          revert.resistances[rType] = (revert.resistances[rType] || 0) - rVal;
+          revert.resistances[rType] = (revert.resistances[rType] || 0) - landedR;
         }
       }
       if (params.resist_reduction) {
         for (const [rType, rVal] of Object.entries(params.resist_reduction)) {
           if (!c.unit_data.resistances) c.unit_data.resistances = {};
           const taken = Math.min(c.unit_data.resistances[rType] || 0, rVal);
-          c.unit_data.resistances[rType] = (c.unit_data.resistances[rType] || 0) - taken;
+          const shed = -addResist(c, rType, -taken);
           revert.resistances = revert.resistances || {};
-          revert.resistances[rType] = (revert.resistances[rType] || 0) + taken;
+          revert.resistances[rType] = (revert.resistances[rType] || 0) + shed;
         }
       }
 
