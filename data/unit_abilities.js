@@ -1609,19 +1609,17 @@ const UNIT_ABILITIES = {
     params: { bond_synergy: 'unity_bond' },
     effect_name: 'unity_bond',
   },
-  // Grail cross-tag: the horde feeds the bloodline. Costs the Zombie its own HP
-  // every round, which is why it is worth only as much as the horde is big.
-  'cattle 1': {
-    id: 'cattle 1',
-    name: 'Cattle',
-    name_ru: "Скот",
+  'sustenance 1': {
+    id: 'sustenance 1',
+    name: 'Sustenance',
+    name_ru: "Пропитание",
     rank: 1,
     type: 'passive',
     trigger: 'on_round_start',
     description: 'Each round, sacrifice 2 HP per Zombie ally to heal the allied Vampire in the same row for the same amount. Never drops below 1 HP.',
     description_ru: "Каждый раунд жертвует 2 HP за каждого союзного зомби, исцеляя союзного вампира в том же ряду на ту же величину. Не опускается ниже 1 HP.",
-    params: { cattle_hp_per_tag: 2, tag_required: 'Zombie', partner_synergy: 'cattle' },
-    effect_name: 'cattle_flash',
+    params: { sustenance_hp_per_tag: 2, tag_required: 'Zombie', partner_synergy: 'sustenance' },
+    effect_name: 'sustenance_flash',
   },
   'chorus_of_war 1': {
     id: 'chorus_of_war 1',

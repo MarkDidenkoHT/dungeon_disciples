@@ -1081,18 +1081,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_round_start') {
-    // Cattle: the Zombie opens a vein for the Vampire beside it. Every round,
+    // Sustenance: the Zombie opens a vein for the Vampire beside it. Every round,
     // which is the only way a heal is worth anything — at battle start the
     // Vampire is at full HP and the whole thing would be pure cost.
     //
     // The Zombie can never bleed itself out: it stops at 1 HP, and whatever it
     // could not pay is simply not healed. So the sacrifice is capped by what the
     // Zombie has left, not by what the horde is worth.
-    if (p.cattle_hp_per_tag != null && p.partner_synergy && owner.alive) {
+    if (p.sustenance_hp_per_tag != null && p.partner_synergy && owner.alive) {
       const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, p.partner_synergy);
       const drinker = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
       if (drinker && drinker.alive) {
-        const wanted    = p.cattle_hp_per_tag * tagCount(engine, owner.side, p.tag_required);
+        const wanted    = p.sustenance_hp_per_tag * tagCount(engine, owner.side, p.tag_required);
         const spendable = Math.max(0, owner.battle_hp - 1);
         const spent     = Math.min(wanted, spendable);
         if (spent > 0) {

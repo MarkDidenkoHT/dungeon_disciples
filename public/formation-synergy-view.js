@@ -77,7 +77,7 @@ export function syncFormationSynergies(units, scope = 'player-grid') {
   for (const bond of found) {
     // A previewOnly bond is a placement hint only. Its battle side is driven by
     // the LOG instead, because it fires every round and a reconcile would show
-    // it once at battle start and never again — see `cattle` in the registry.
+    // it once at battle start and never again — see `sustenance` in the registry.
     if (bond.def.previewOnly && scope === 'battle') continue;
 
     const id = `${scope}|${bond.key}`;
