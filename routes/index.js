@@ -808,14 +808,13 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
     });
 
-    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,tutorials&limit=1`);
+    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
     const preservedTimezone = existingPlayer[0]?.timezone ?? null;
-    // Tutorials are CLEARED, because a reset takes the faction, hero, units,
-    // buildings and resources with it — the player is genuinely at step one
-    // again. Keeping the flags meant the onboarding chain half-ran: the throne
-    // step reappeared (its slot really is empty again) and every step after it
-    // was skipped as already-seen, which reads as a broken tutorial rather than
-    // a spared one.
+    // Tutorials are KEPT. A reset takes the faction, hero, units, buildings and
+    // resources, but it does not take back what the player already knows, and
+    // walking them through onboarding again is a punishment rather than a help.
+    // `tutorials` is simply left out of the PATCH below, so the column keeps
+    // whatever it held.
 
     const emptySlots = emptyStructures();
     await supabase('/structures', {
@@ -830,7 +829,6 @@ router.post('/player/reset', requireAuth, async (req, res) => {
         hero: null,
         progress: null,
         learned_spells: null,
-        tutorials: null,
         timezone: preservedTimezone,
       }),
     });
