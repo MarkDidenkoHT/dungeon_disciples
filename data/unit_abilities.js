@@ -414,6 +414,7 @@ const UNIT_ABILITIES = {
     description: 'Heals self for 25% of damage dealt.',
     description_ru: "Исцеляет себя на 25% нанесённого урона.",
     params: { self_heal_pct: 25 },
+    effect_name: 'blood_drawback',
   },
   'lifesteal 2': {
     id: 'lifesteal 2',
@@ -425,6 +426,7 @@ const UNIT_ABILITIES = {
     description: 'Heals self for 40% of damage dealt.',
     description_ru: "Исцеляет себя на 40% нанесённого урона.",
     params: { self_heal_pct: 40 },
+    effect_name: 'blood_drawback',
   },
   'communion 1': {
     id: 'communion 1',
@@ -1029,6 +1031,7 @@ const UNIT_ABILITIES = {
     description: 'When hit adjacent enemies take 3 cold damage.',
     description_ru: "При получении удара соседние враги получают 3 урона холодом.",
     params: { adjacent_aoe_damage: 3, damage_type: 'cold', range: 1 },
+    effect_name: 'steel_shell',
   },
   'rimeguard 2': {
     id: 'rimeguard 2',
@@ -1040,6 +1043,7 @@ const UNIT_ABILITIES = {
     description: 'When hit adjacent enemies take 5 cold damage.',
     description_ru: "При получении удара соседние враги получают 5 урона холодом.",
     params: { adjacent_aoe_damage: 5, damage_type: 'cold', range: 1 },
+    effect_name: 'steel_shell',
   },
   'thorns 1': {
     id: 'thorns 1',
@@ -1130,6 +1134,7 @@ const UNIT_ABILITIES = {
     description: 'When hit by physical damage, deals 5 fire damage back to attacker.',
     description_ru: "При получении физического урона наносит 5 урона огнём атакующему.",
     params: { retaliation_damage: 5, damage_type: 'fire' },
+    effect_name: 'ember_riposte',
   },
   'volcanic_skin 2': {
     id: 'volcanic_skin 2',
@@ -1141,6 +1146,7 @@ const UNIT_ABILITIES = {
     description: 'When hit by physical damage, deals 8 fire damage back to attacker.',
     description_ru: "При получении физического урона наносит 8 урона огнём атакующему.",
     params: { retaliation_damage: 8, damage_type: 'fire' },
+    effect_name: 'ember_riposte',
   },
   'recuperate 1': {
     id: 'recuperate 1',
@@ -1152,6 +1158,7 @@ const UNIT_ABILITIES = {
     description: 'Prevents 30% of incoming damage. 75% of that prevented damage is dealt again next turn.',
     description_ru: "Предотвращает 30% входящего урона. 75% предотвращённого урона наносится вновь на следующем ходу.",
     params: { recuperate_prevent_pct: 30, recuperate_defer_pct: 75 },
+    effect_name: 'steel_shell',
   },
   'recuperate 2': {
     id: 'recuperate 2',
@@ -1163,6 +1170,7 @@ const UNIT_ABILITIES = {
     description: 'Prevents 45% of incoming damage. 75% of that prevented damage is dealt again next turn.',
     description_ru: "Предотвращает 45% входящего урона. 75% предотвращённого урона наносится вновь на следующем ходу.",
     params: { recuperate_prevent_pct: 45, recuperate_defer_pct: 75 },
+    effect_name: 'steel_shell',
   },
   'unbreakable 1': {
     id: 'unbreakable 1',
@@ -1174,6 +1182,7 @@ const UNIT_ABILITIES = {
     description: 'Armor and resistance debuffs applied to this unit are 30% less effective.',
     description_ru: "Ослабления брони и сопротивлений на этом юните на 30% менее эффективны.",
     params: { debuff_reduction_pct: 30 },
+    effect_name: 'steel_shell',
   },
   'unbreakable 2': {
     id: 'unbreakable 2',
@@ -1185,6 +1194,7 @@ const UNIT_ABILITIES = {
     description: 'Armor and resistance debuffs applied to this unit are 40% less effective.',
     description_ru: "Ослабления брони и сопротивлений на этом юните на 40% менее эффективны.",
     params: { debuff_reduction_pct: 40 },
+    effect_name: 'steel_shell',
   },
   'chain 1': {
     id: 'chain 1',
@@ -1254,6 +1264,7 @@ const UNIT_ABILITIES = {
     description_ru: "При получении урона получает +5% урона атаки и +2 инициативы.",
     dispellable: false,
     params: { rage_atk_bonus: 5, rage_init_bonus: 2 },
+    effect_name: 'rage_flare',
   },
   'rage 2': {
     id: 'rage 2',
@@ -1266,6 +1277,7 @@ const UNIT_ABILITIES = {
     description_ru: "При получении урона получает +10% урона атаки и +3 инициативы.",
     dispellable: false,
     params: { rage_atk_bonus: 10, rage_init_bonus: 3 },
+    effect_name: 'rage_flare',
   },
   'bleed 1': {
     id: 'bleed 1',
@@ -1278,6 +1290,7 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 20% физического урона как кровотечение на следующем ходу цели.",
     dispellable: true,
     params: { bleed_dmg_pct: 20 },
+    effect_name: 'blood_spatter',
   },
   'bleed 2': {
     id: 'bleed 2',
@@ -1290,6 +1303,7 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит 35% физического урона как кровотечение на следующем ходу цели.",
     dispellable: true,
     params: { bleed_dmg_pct: 35 },
+    effect_name: 'blood_spatter',
   },
   'chill 1': {
     id: 'chill 1',
@@ -2121,6 +2135,7 @@ const UNIT_ABILITIES = {
     description: 'Attacks against bleeding targets deal 30% bonus damage.',
     description_ru: "Атаки по истекающим кровью целям наносят на 30% больше урона.",
     params: { leech_bleed_bonus_pct: 30 },
+    effect_name: 'blood_spatter',
   },
   'fellfire 1': {
     id: 'fellfire 1',

@@ -4279,3 +4279,251 @@ for (const bondDef of Object.values(FORMATION_SYNERGIES)) {
 }
 
 export { playBondForm, startBondIdle, playBondBreak, playBondFlash, makeBondEffect, makeFlashEffect, cellSelectorFor };
+
+// ── Riders ───────────────────────────────────────────────────────────────────
+//
+// Short effects that belong to somebody else's attack. An on-hit passive fires
+// as part of a swing that is already animating, so a rider has to read as part
+// of that blow rather than as a separate event: a few hundred milliseconds, no
+// wind-up, and never awaited by playback (see RIDER_FX in screens/battle.js).
+//
+// They all take the same shape — (anchorCell, { actorCell, targetCell }) — so
+// the dispatcher does not have to know which is which, and a rider that wants a
+// direction can work one out from the two cells.
+
+// The heading from attacker to victim, so spatter throws the way the blow
+// travelled rather than in an arbitrary direction. Falls back to straight down,
+// which reads as gravity instead of as a mistake.
+function riderHeading(actorCellEl, targetCellEl) {
+  const a = actorCellEl && boundsForSelector(cellSelectorFor(actorCellEl));
+  const b = targetCellEl && boundsForSelector(cellSelectorFor(targetCellEl));
+  if (!a || !b) return Math.PI / 2;
+  const dx = (b.x + b.width / 2) - (a.x + a.width / 2);
+  const dy = (b.y + b.height / 2) - (a.y + a.height / 2);
+  if (!dx && !dy) return Math.PI / 2;
+  return Math.atan2(dy, dx);
+}
+
+// One ADD-blended blurred layer plus a crisp one, the arrangement every effect
+// in this file uses. Pulled out because a rider is small and the setup is longer
+// than the drawing.
+function riderLayer(blur = 3) {
+  const layer = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(blur)];
+  const g = new PIXI.Graphics(); g.blendMode = PIXI.BLEND_MODES.ADD;
+  const solid = new PIXI.Graphics();
+  glowLayer.addChild(g);
+  layer.addChild(glowLayer, solid);
+  app.stage.addChild(layer);
+  return { layer, glow: g, solid };
+}
+
+const BLOOD = { drop: 0xc2102a, mist: 0x6e0716 };
+const RAGE  = { core: 0xff5a3c, edge: 0xffb27a };
+const STEEL = { core: 0xc9d6e6, edge: 0x7d93ad };
+const EMBER = { core: 0xff7a1a, edge: 0xffd08a };
+
+// ── blood_spatter ────────────────────────────────────────────────────────────
+//
+// Thrown from the point of impact along the line the attack travelled, with
+// gravity pulling the arc down. Bleed, and anything else that opens a wound.
+async function blood_spatter(cellEl, opts = {}) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  const heading = riderHeading(opts.actorCell, opts.targetCell || cellEl);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  // Spread around the heading rather than a full circle: a blow throws blood
+  // onward, not back at the thing that struck.
+  const drops = Array.from({ length: 14 }, () => ({
+    ang:  heading + rand(-0.9, 0.9),
+    dist: rand(0.18, 0.62),
+    size: rand(1.6, 4.2),
+    lag:  rand(0, 0.25),
+  }));
+  const { layer, glow, solid } = riderLayer(2);
+
+  await animate(340, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r = Math.min(b.width, b.height);
+
+    glow.clear(); solid.clear();
+    // A dark bloom at the wound, brightest at the moment of impact.
+    softGlow(glow, cx, cy, r * 0.3 * (1 + t), BLOOD.mist, (1 - t) * 0.5);
+
+    for (const d of drops) {
+      const p = Math.min(1, Math.max(0, (t - d.lag) / (1 - d.lag)));
+      if (p <= 0) continue;
+      // Decelerating outward, accelerating downward — the arc of something
+      // thrown, not a ring expanding.
+      const travel = (1 - Math.pow(1 - p, 2)) * d.dist * r;
+      const x = cx + Math.cos(d.ang) * travel;
+      const y = cy + Math.sin(d.ang) * travel + p * p * r * 0.34;
+      const fade = p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3;
+      solid.beginFill(BLOOD.drop, 0.85 * fade);
+      solid.drawCircle(x, y, d.size * (1 - p * 0.35));
+      solid.endFill();
+    }
+  });
+  layer.destroy({ children: true });
+}
+
+// ── blood_drawback ───────────────────────────────────────────────────────────
+//
+// The same blood going the other way: Lifesteal and Leech take something back.
+// The direction is the whole point — it is the only thing on screen that says
+// the ATTACKER gained rather than the victim lost.
+async function blood_drawback(cellEl, opts = {}) {
+  if (!app || !window.PIXI) return;
+  // Ends on the attacker, because that is where the payoff is and where the
+  // player needs to look. These passives log the attacker as both actor and
+  // target, so either cell will do as a fallback.
+  const fromEl = opts.targetCell || cellEl;
+  const toEl   = opts.actorCell  || cellEl;
+  const fromSel = cellSelectorFor(fromEl), toSel = cellSelectorFor(toEl);
+  if (!fromSel || !toSel) return;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const motes = Array.from({ length: 9 }, () => ({
+    lag: rand(0, 0.3), perp: rand(-0.22, 0.22), size: rand(2, 4),
+  }));
+  const { layer, glow, solid } = riderLayer(3);
+
+  await animate(400, t => {
+    const a = boundsForSelector(fromSel), b = boundsForSelector(toSel);
+    if (!a || !b) { layer.visible = false; return; }
+    layer.visible = true;
+    const ax = a.x + a.width / 2, ay = a.y + a.height / 2;
+    const bx = b.x + b.width / 2, by = b.y + b.height / 2;
+    const r = Math.min(b.width, b.height);
+    // Same-cell case (an attacker healing itself, with no separate victim cell):
+    // draw the motes rising into it rather than travelling nowhere.
+    const still = Math.abs(ax - bx) < 1 && Math.abs(ay - by) < 1;
+    const perpX = -(by - ay), perpY = (bx - ax);
+
+    glow.clear(); solid.clear();
+    for (const m of motes) {
+      const p = Math.min(1, Math.max(0, (t - m.lag) / (1 - m.lag)));
+      if (p <= 0) continue;
+      const eased = 1 - Math.pow(1 - p, 2);
+      const x = still ? bx + Math.cos(m.perp * 12) * r * 0.3 * (1 - eased)
+                      : ax + (bx - ax) * eased + perpX * m.perp * (1 - eased);
+      const y = still ? by + r * 0.4 * (1 - eased)
+                      : ay + (by - ay) * eased + perpY * m.perp * (1 - eased);
+      const fade = p < 0.75 ? 1 : 1 - (p - 0.75) / 0.25;
+      solid.beginFill(BLOOD.drop, 0.9 * fade);
+      solid.drawCircle(x, y, m.size);
+      solid.endFill();
+    }
+    // The attacker warms as the motes arrive — the payoff of the drawback.
+    softGlow(glow, bx, by, r * 0.42, BLOOD.drop, Math.sin(t * Math.PI) * 0.4);
+  });
+  layer.destroy({ children: true });
+}
+
+// ── Defender reactions ───────────────────────────────────────────────────────
+//
+// These fire when a unit is HIT, and until now the defender did nothing on
+// screen no matter what its passives were doing. All three are drawn on the
+// DEFENDER and share one shape — a shell that snaps out of the unit and settles.
+// The palette is what tells them apart.
+function defenderReaction(color, opts = {}) {
+  const { duration = 320, spikes = 0 } = opts;
+  return async function reaction(cellEl) {
+    if (!app || !window.PIXI || !cellEl) return;
+    const sel = cellSelectorFor(cellEl);
+    if (!sel) return;
+    const { layer, glow, solid } = riderLayer(4);
+
+    await animate(duration, t => {
+      const b = boundsForSelector(sel);
+      if (!b) { layer.visible = false; return; }
+      layer.visible = true;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r = Math.min(b.width, b.height);
+      // Snaps up, eases out: this is a reaction, not a wind-up. The unit has
+      // already been hit by the time it plays.
+      const rise = Math.min(1, t / 0.18);
+      const fall = t < 0.18 ? 1 : 1 - (t - 0.18) / 0.82;
+      const a = rise * fall;
+
+      glow.clear(); solid.clear();
+      softGlow(glow, cx, cy, r * (0.4 + t * 0.2), color.core, a * 0.7);
+      solid.lineStyle(2, color.edge, a * 0.85);
+      solid.drawCircle(cx, cy, r * (0.34 + t * 0.16));
+      // Rage bristles; the defensive shells stay smooth.
+      for (let i = 0; i < spikes; i++) {
+        const ang = (i / spikes) * Math.PI * 2 + t * 0.6;
+        const inner = r * (0.34 + t * 0.16);
+        solid.moveTo(cx + Math.cos(ang) * inner, cy + Math.sin(ang) * inner);
+        solid.lineTo(cx + Math.cos(ang) * (inner + r * 0.12 * a), cy + Math.sin(ang) * (inner + r * 0.12 * a));
+      }
+    });
+    layer.destroy({ children: true });
+  };
+}
+
+const rage_flare  = defenderReaction(RAGE,  { spikes: 8 });
+const steel_shell = defenderReaction(STEEL, { duration: 360 });
+
+// ── ember_riposte ────────────────────────────────────────────────────────────
+//
+// Volcanic Skin deals real damage back to whoever struck it, so unlike the other
+// two reactions this one has to travel: a defender flare plus an ember thrown
+// back down the line of the attack.
+async function ember_riposte(cellEl, opts = {}) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const defSel = cellSelectorFor(cellEl);
+  // The attacker is the one being burned. With no cell for it this degrades to
+  // the plain flare, which is still truthful — just quieter.
+  const atkSel = opts.actorCell && cellSelectorFor(opts.actorCell);
+  if (!defSel) return;
+  const { layer, glow, solid } = riderLayer(4);
+
+  await animate(380, t => {
+    const d = boundsForSelector(defSel);
+    if (!d) { layer.visible = false; return; }
+    layer.visible = true;
+    const dx = d.x + d.width / 2, dy = d.y + d.height / 2;
+    const r = Math.min(d.width, d.height);
+    const rise = Math.min(1, t / 0.18);
+    const fall = t < 0.18 ? 1 : 1 - (t - 0.18) / 0.82;
+
+    glow.clear(); solid.clear();
+    softGlow(glow, dx, dy, r * (0.4 + t * 0.2), EMBER.core, rise * fall * 0.7);
+    solid.lineStyle(2, EMBER.edge, rise * fall * 0.8);
+    solid.drawCircle(dx, dy, r * (0.34 + t * 0.16));
+
+    const a = atkSel && boundsForSelector(atkSel);
+    if (a) {
+      const ax = a.x + a.width / 2, ay = a.y + a.height / 2;
+      // Leaves once the flare is up, so the ember reads as thrown BY the shell
+      // rather than arriving alongside it.
+      const p = Math.min(1, Math.max(0, (t - 0.2) / 0.8));
+      if (p > 0) {
+        const eased = 1 - Math.pow(1 - p, 2);
+        const x = dx + (ax - dx) * eased;
+        const y = dy + (ay - dy) * eased - Math.sin(p * Math.PI) * r * 0.22;
+        softGlow(glow, x, y, 7, EMBER.core, 0.9 * (1 - p * 0.4));
+        solid.beginFill(EMBER.edge, 0.9 * (1 - p * 0.4));
+        solid.drawCircle(x, y, 3);
+        solid.endFill();
+      }
+    }
+  });
+  layer.destroy({ children: true });
+}
+
+Object.assign(EFFECTS, {
+  blood_spatter,
+  blood_drawback,
+  rage_flare,
+  steel_shell,
+  ember_riposte,
+});
+
+export { blood_spatter, blood_drawback, rage_flare, steel_shell, ember_riposte };

@@ -46,6 +46,19 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
 // spawned an arrow on every enemy and sent them back at the archer.
 const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale']);
 
+// Effects that RIDE an attack rather than being an event of their own —
+// EFFECTS[name](anchorCell, { actorCell, targetCell }), never awaited.
+//
+// Every other set here describes where an effect is drawn; this one describes
+// WHEN. An on-hit passive fires as part of somebody's swing, and playback awaits
+// each animation in turn, so treating these like ordinary effects would queue
+// them one after another behind the strike they belong to. See the dispatch
+// branch in playbackSequence.
+const RIDER_FX = new Set([
+  'blood_spatter', 'blood_drawback',
+  'rage_flare', 'steel_shell', 'ember_riposte',
+]);
+
 function cellIndex(row, col) { return row * COLS + col; }
 
 function getPortraitUrl(unit, variant = 'default') {
@@ -324,7 +337,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // log type (see resolveProtectorIntercept in utils/battle-engine.js). Without
     // it here, Protector resolved to no effect at all and never animated despite
     // being correctly wired in data/unit_abilities.js.
-    if ((entry.type === 'passive' || entry.type === 'intercept') && entry.passive) {
+    // 'status' belongs here too. Bleed, Chill, Poison and the other riders log as
+    // status rather than passive (see registerEffect in utils/passive-processor.js),
+    // and leaving the type out meant a status could name an effect_name that was
+    // never looked up — soundForEntry already treated the two the same.
+    if ((entry.type === 'passive' || entry.type === 'intercept' || entry.type === 'status') && entry.passive) {
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
       if (def?.effect_name) return def.effect_name;
     }
@@ -571,8 +588,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (abilitySound && !fxCovered.has(entryIdx)) playAbilitySound(abilitySound);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
-        const targetCell = entry.targetId
-          ? document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`)
+        // Most on-hit passives log a target by NAME and CELL but no id (they
+        // predate the FX layer). Resolving by id alone left every one of them
+        // with nothing to anchor on, so they could never animate. Same ladder the
+        // actor above uses, and for the same reason: cellIndex repeats across
+        // sides, so the name breaks the tie before cell-only is tried.
+        const targetCombatant =
+          (entry.targetId != null && state.combatants.find(u => u.id === entry.targetId)) ||
+          (entry.targetCell !== undefined && entry.targetName != null &&
+            state.combatants.find(u => u.cellIndex === entry.targetCell && u.unit_name === entry.targetName)) ||
+          (entry.targetCell !== undefined &&
+            state.combatants.find(u => u.cellIndex === entry.targetCell)) ||
+          null;
+        const targetCell = targetCombatant
+          ? document.querySelector(`.battle-cell[data-id="${targetCombatant.id}"]`)
           : null;
         const sourceCell = entry.sourceId
           ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
@@ -581,7 +610,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
           : null;
 
-        if (FAN_OUT_FX.has(effectName)) {
+        // Riders come FIRST and are deliberately not awaited. They belong to the
+        // attack that spawned them, not to a beat of their own: a unit carrying
+        // Bleed, Lifesteal and Execute would otherwise play four animations end
+        // to end for one swing, which makes combat slower rather than better.
+        // Fired and forgotten, they layer over the strike that is already
+        // playing and are gone in a few hundred milliseconds.
+        if (RIDER_FX.has(effectName)) {
+          const anchor = targetCell || actorCell;
+          if (anchor) EFFECTS[effectName](anchor, { actorCell, targetCell });
+        } else if (FAN_OUT_FX.has(effectName)) {
           // Collapse the consecutive run of entries this actor produced for the
           // same passive, and play once against every victim. Grouping by RUN
           // rather than by name means two separate triggers in one batch still
