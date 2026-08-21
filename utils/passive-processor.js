@@ -76,14 +76,37 @@ function dotAmount(dmg, pct, def) {
 // resistance — the same split calcDamageWithPassives and applySpellParams use,
 // so a passive that names a damage type is resisted exactly like an attack or a
 // spell of that type. Untyped (or 'physical') keeps the armor behaviour.
+// ── Mitigation cap ───────────────────────────────────────────────────────────
+//
+// Armor and every resistance are read as "1 point = 1% less damage", and NOTHING
+// used to stop that climbing. Stack Aegis, Frost Armor, Stone Form, Defend, an
+// item and a Fortify bond on one Construct and it passed 100 — at which point
+// the target healed off every physical hit, and the only thing standing between
+// the game and that was `Math.max(1, ...)` on some of the paths but not others.
+//
+// The cap is applied at READ time, never written back to the stat. A buff that
+// pushed armor from 45 to 60 still hands back its own 15 when it expires; it
+// simply bought nothing while it stood. Clamping the stored value instead would
+// desynchronise every grant/revoke pair in the game (see recordGrantedBuff).
+//
+// Both helpers fold in defend_armor_bonus, because Defend adds to armor AND to
+// every resistance — so a defending unit is capped on the same line as anything
+// else rather than being the one way over the top.
+const MITIGATION_CAP_PCT = 50;
+function effectiveArmor(target) {
+  const raw = (target?.armor ?? 0) + (target?.defend_armor_bonus || 0);
+  return Math.max(0, Math.min(MITIGATION_CAP_PCT, raw));
+}
+function effectiveResist(target, type) {
+  const res = (target?.unit_data?.resistances ?? target?.resistances ?? {})[type] ?? 0;
+  return Math.max(0, Math.min(MITIGATION_CAP_PCT, res + (target?.defend_armor_bonus || 0)));
+}
+
 function typedAmount(target, amount, type) {
   if (!type || type === 'physical') {
-    const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
-    return Math.max(1, Math.floor(amount * (1 - armor / 100)));
+    return Math.max(1, Math.floor(amount * (1 - effectiveArmor(target) / 100)));
   }
-  const resist = Math.min(100,
-    ((target.unit_data?.resistances ?? target.resistances ?? {})[type] ?? 0) + (target.defend_armor_bonus || 0));
-  return Math.max(1, Math.floor(amount * (1 - resist / 100)));
+  return Math.max(1, Math.floor(amount * (1 - effectiveResist(target, type) / 100)));
 }
 
 function hurt(unit, amount) {
@@ -841,10 +864,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.fireTrigger('on_hit_received', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
       }
     }
+    // STACKS. It used to set a once-per-target-per-battle flag, so the second
+    // and every later hit on the same enemy shredded nothing — a Wraith could
+    // pound one target all fight and take 10 resistance off it in total.
+    //
+    // registerEffect was already built for this: it accumulates both `restore`
+    // and `amount` on a repeated key, and its own comment says "two Dissipates
+    // on one unit read as one record". Only the flag stood in the way. The
+    // shred still cannot overshoot, because `applied` is clamped to whatever
+    // resistance is actually left, so repeated hits grind toward 0 and stop.
     if (p.dissipate_resistance_pct != null) {
-      const flagKey = def.id + '_applied_' + target.id;
-      if (!owner._flags[flagKey]) {
-        owner._flags[flagKey] = true;
+      {
         const damageSource = owner.unit_data?.damage_source ?? 'physical';
         if (damageSource !== 'physical') {
           const resistances = target.unit_data?.resistances ?? target.resistances;
@@ -1178,8 +1208,7 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
   const resistances = target.unit_data?.resistances ?? target.resistances ?? {};
   let dmg = rawDmg;
   if (damageSource === 'physical') {
-    const armor = Math.max(0, (target.armor ?? 0) + (target.defend_armor_bonus || 0));
-    const armorRed = armor / 100;
+    const armorRed = effectiveArmor(target) / 100;
     if (p.armor_ignore_pct != null) {
       // Sanctified Ordnance: a HIGHER percentage while the formation bond holds.
       // Resolved live through findPartnerFor rather than cached at battle start,
@@ -1208,7 +1237,7 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
     // read in the physical branch above — so a defending unit took full fire,
     // cold, death, life, nature and air damage. Against the whole Chamber of
     // Unrest (death) or a Wailing Ghost (cold), pressing Defend did nothing.
-    const resistance = Math.min(100, (resistances[damageSource] ?? 0) + (target.defend_armor_bonus || 0));
+    const resistance = effectiveResist(target, damageSource);
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
   }
   return { dmg: Math.max(1, dmg), rawDmg };
@@ -1261,7 +1290,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${def.name} — ${actor.unit_name} is too weak to invoke Libation.` });
     } else {
       actor.battle_hp -= cost;
-      const armor = Math.max(0, target.armor ?? 0);
+      const armor = effectiveArmor(target);
       const dmg = Math.max(1, Math.floor(cost * (1 - armor / 100)));
       hurt(target, dmg);
       const dead = target.battle_hp <= 0;
@@ -1479,7 +1508,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.volley_damage != null) {
     const enemies = combatants.filter(c => c.side !== actor.side && c.alive && !c._invulnerable);
     for (const e of enemies) {
-      const armor = Math.max(0, e.armor ?? 0);
+      const armor = effectiveArmor(e);
       const dmg   = Math.max(1, Math.floor(p.volley_damage * (1 - armor / 100)));
       hurt(e, dmg);
       const dead = e.battle_hp <= 0;
@@ -1587,7 +1616,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   }
 
   if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {
-    const armor = Math.max(0, target.armor ?? 0);
+    const armor = effectiveArmor(target);
     const dmg = Math.max(1, Math.floor(p.damage_flat * (1 - armor / 100)));
     hurt(target, dmg);
     const dead = target.battle_hp <= 0;
@@ -1617,7 +1646,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       // bond or Chorus of War all make these hit harder, exactly as they make
       // the basic attack hit harder.
       const power = actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0;
-      const armor = Math.max(0, target.armor ?? 0);
+      const armor = effectiveArmor(target);
       const dmg   = Math.max(1, Math.floor(power * p.power_pct_damage / 100 * (1 - armor / 100)));
       hurt(target, dmg);
       const dead = target.battle_hp <= 0;
@@ -1691,5 +1720,5 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
+  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
 }

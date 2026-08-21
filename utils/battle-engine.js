@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -1667,7 +1667,7 @@ class BattleEngine {
         if (!unit || !unit.alive) continue;
         // Typed damage, so it obeys the target's resistance the same way a
         // non-physical attack does (see calcDamageWithPassives).
-        const resist = (unit.unit_data?.resistances ?? unit.resistances ?? {})[effect.damage_type] ?? 0;
+        const resist = effectiveResist(unit, effect.damage_type);
         const dmg    = Math.max(1, Math.floor(effect.amount * (1 - resist / 100)));
         if (unit._invulnerable) continue;   // Unity guardian: spells cannot touch it either
         unit.battle_hp = Math.max(0, unit.battle_hp - dmg);
@@ -2329,19 +2329,18 @@ class BattleEngine {
       // Immediate damage, as opposed to round_damage's deferred tick. Physical
       // damage is reduced by the target's armor (1% per point, as in
       // calcDamageWithPassives); typed damage obeys the matching resistance.
+      // Both are read through the shared helpers, so the MITIGATION_CAP_PCT
+      // ceiling applies to a spell exactly as it does to an attack.
       if (params.damage_flat) {
         const type = params.damage_type || 'physical';
         let dmg;
         if (type === 'physical') {
-          const armor = Math.max(0, (c.armor ?? 0) + (c.defend_armor_bonus || 0));
-          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - armor / 100)));
+          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - effectiveArmor(c) / 100)));
         } else {
           // Defending adds to the matching resistance as well as to armor —
           // see calcDamageWithPassives. Without this, bracing helped against a
           // sword and not against a firebolt.
-          const resist = Math.min(100,
-            ((c.unit_data?.resistances ?? c.resistances ?? {})[type] ?? 0) + (c.defend_armor_bonus || 0));
-          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - resist / 100)));
+          dmg = Math.max(1, Math.floor(params.damage_flat * (1 - effectiveResist(c, type) / 100)));
         }
         c.battle_hp = Math.max(0, (c.battle_hp || 0) - dmg);
         this.pushLog({
