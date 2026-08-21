@@ -2554,7 +2554,7 @@ const UNITS = {
         resistances: { air: 0, fire: 15, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 450, passive: ['aggrails_blessing 1', 'exorcism 1', 'choir 1'], ability: null,
+        xp: 450, passive: ['aggrails_blessing 1', 'gravebane 1', 'choir 1'], ability: null,
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,

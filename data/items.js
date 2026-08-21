@@ -86,6 +86,21 @@ const ITEM_DEFS = {
     cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 150, Crystals_Life: 25, Crystals_Death: 25 },
     item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
   },
+  desecrated_plate: {
+    key:          'desecrated_plate',
+    name:         'Desecrated Plate',
+    name_ru:      'Оскверненный Доспех',
+    faction:      'grail_of_sorrow',
+    tag_required: 'Zombie',
+    adds_tag:     'Knight',
+    stat_mods:    { hp: 2, armor: 5 },
+    passive:      'sustenance 1',
+    icon:         'desecrated_plate',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, Crystals_Death: 25  },
+    item_cost:    { iron_armor: 1, poisonous_dagger: 2 },
+  },
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
     name:         'Sanctified Bulwark',
