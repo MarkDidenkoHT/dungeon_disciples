@@ -43,7 +43,7 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
      row height made every node square and stretched the portraits inside it.
      (The old layout got this from `aspect-ratio: 5/8` on the wrap — 3 columns
      over 3 rows — which stopped being true the moment there were 4 rows.) */
-  --castle-node-ratio: 0.625;
+  --castle-node-ratio: 0.785;
 
   /* One castle node's height — 18% of the viewport. The grid rows and the
      node/centre-slot caps all read it, so a row and what sits in it can never
@@ -67,7 +67,7 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
      sideways instead of the nodes getting shorter. 344px is the 360 cap less
      the grounds' padding. */
   --castle-node-h: min(
-    calc(var(--tg-viewport-stable-height, 100dvh) * 0.18),
+    calc(var(--tg-viewport-stable-height, 100dvh) * 0.19),
     calc(min(344px, 100vw - 16px) / 3 / var(--castle-node-ratio))
   );
 
@@ -917,7 +917,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex: 1;
   min-width: 0;
   gap: 0;
-  padding: 4px 8px;
   /* Ornate frame art stretched across the bar. No fallback colour behind it —
      the art is present, and the flat block showed through its edges. */
   background-image: var(--img-resource-bar);
@@ -1413,7 +1412,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   padding: 4px 12px;
   /* Same ornate frame art as the resource bar (fallback: --surface). */
   background-color: var(--surface);
@@ -1440,7 +1438,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
   flex-shrink: 0;
   margin: 0;
   padding: 0;
@@ -1486,8 +1483,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .trophy-bar-icon {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   object-fit: contain;
   display: block;
 }
