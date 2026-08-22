@@ -55,7 +55,7 @@ const UI_TEXT = {
 };
 
 // Levels that end in a boss fight — highlighted red on the level row.
-const BOSS_LEVELS = [3, 6];
+const BOSS_LEVELS = [3, 6, 10];
 
 // Each region card uses /assets/embark/<id>.jpg as its full background (see the
 // regionBgStyle scrim below). Descriptions and the guaranteed crystal match the

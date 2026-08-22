@@ -2688,6 +2688,19 @@ const UNITS = {
         damage_source: 'life', action_power: 15, action_animation: 'cannon_shot',
         xp: 1100, passive: ['bleed 2', 'recuperate 1'], ability: null,
       },
+
+      sister_aldra_3: {
+        id: 'opb_e511', f: 'opb', t: 4,
+        name: 'Sister Aldra',
+        name_ru: 'Сестра Алдра',
+        tags: ['Demon', 'Holy'],
+        size: 'tile',
+        hp: 175, armor: 20, initiative: 55,
+        resistances: { air: 25, fire: 30, life: 50, death: 25, cold: 25, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'life', action_power: 20, action_animation: 'cannon_shot',
+        xp: 1100, passive: ['bleed 2', 'recuperate 1', 'aegis 1'], ability: null,
+      },
     },
 
     glittering_abyss: {
@@ -2823,6 +2836,19 @@ const UNITS = {
         damage_source: 'cold', action_power: 40, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
         xp: 1100, passive: ['chill 2', 'dissipate 1'], ability: null,
       },
+
+      cryodrox3: {
+        id: 'mv_e411', f: 'mv', t: 4,
+        name: 'Cryodrox',
+        name_ru: 'Криодрокс',
+        tags: ['Construct', 'Caster'],
+        size: 'column',
+        hp: 320, armor: 30, initiative: 30,
+        resistances: { air: 50, fire: 50, life: 50, death: 50, cold: 50, nature: 50 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'cold', action_power: 50, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
+        xp: 1100, passive: ['chill 2', 'dissipate 1', 'rimeguard 2'], ability: null,
+      },
     },
 
     chamber_of_unrest: {
@@ -2957,6 +2983,19 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 25, action_animation: 'sword_swing',
         xp: 1600, passive: ['iron_will 2', 'undying 1'], ability: null,
+      },
+
+      malgrath_the_undying_3: {
+        id: 'dm_e411', f: 'dm', t: 4,
+        name: 'Malgrath the Undying',
+        name_ru: 'Малграт Неумирающий',
+        tags: ['Skeleton', 'Knight'],
+        size: 'tile',
+        hp: 200, armor: 25, initiative: 35,
+        resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 10 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 32, action_animation: 'sword_swing',
+        xp: 1600, passive: ['iron_will 2', 'undying 1', 'execute 1'], ability: null,
       },
     },
   },
