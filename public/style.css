@@ -37,6 +37,14 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --muted:   #6b7080;
   --radius:  8px;
 
+  /* The frame art (building_slot1.png) is 100x160, so a node is 0.625 as wide
+     as it is tall. The COLUMNS are derived from this and the row height rather
+     than being 1fr: 1fr divides up whatever width is going, which with a fixed
+     row height made every node square and stretched the portraits inside it.
+     (The old layout got this from `aspect-ratio: 5/8` on the wrap — 3 columns
+     over 3 rows — which stopped being true the moment there were 4 rows.) */
+  --castle-node-ratio: 0.625;
+
   /* One castle node's height — 18% of the viewport. The grid rows and the
      node/centre-slot caps all read it, so a row and what sits in it can never
      disagree.
@@ -52,8 +60,16 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
      One expression rather than the usual vh/dvh/calc ladder: the ladder works
      by later declarations overriding earlier ones, which custom properties do
      not do — any token sequence parses, so the last line always wins and the
-     earlier "fallbacks" are dead. dvh is the fallback here instead. */
-  --castle-node-h: calc(var(--tg-viewport-stable-height, 100dvh) * 0.18);
+     earlier "fallbacks" are dead. dvh is the fallback here instead.
+
+     The min() is the narrow-screen guard: three nodes at 0.625 of 18% height
+     can be wider than the screen, and without it the row would overflow
+     sideways instead of the nodes getting shorter. 344px is the 360 cap less
+     the grounds' padding. */
+  --castle-node-h: min(
+    calc(var(--tg-viewport-stable-height, 100dvh) * 0.18),
+    calc(min(344px, 100vw - 16px) / 3 / var(--castle-node-ratio))
+  );
 
   /* Rarity is one palette used by EVERY item surface — card border, slot icon,
      filter chip, rarity label. Three different sets of greens/blues/oranges had
@@ -5559,14 +5575,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
    cells and left slack inside each one. */
 .castle-grid-wrap {
   position: relative;
-  /* Full width up to the cap, so the three 1fr columns have a width to divide.
-     `auto` in the flex-row parent shrank the grid to its content and let the
-     columns collapse. */
-  width: 100%;
-  max-width: min(360px, 100%);
+  /* Sized by its cells, not by the space available — the columns carry the
+     node proportion, so the grid is exactly as wide as three nodes. */
+  width: max-content;
+  max-width: 100%;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, calc(var(--castle-node-h) * var(--castle-node-ratio)));
   grid-template-rows: repeat(4, var(--castle-node-h));
   gap: 0;
 }
