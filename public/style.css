@@ -4014,6 +4014,18 @@ button.cost-bar-item:active { transform: scale(0.9); }
   z-index: 0;
 }
 
+/* Enemy art is drawn facing the same way as the player's, which on the enemy
+   half means every unit has its back to the fight. Mirrored so both sides face
+   each other across the grids.
+
+   Scoped to the half rather than to .battle-cell--enemy: that class is set in an
+   else-if chain, so an enemy that is acting, targetable or selected does not
+   carry it and would flip back mid-turn.
+
+   On the IMG only — the buff and debuff icon columns are siblings, so they keep
+   their own left/right sides and stay the right way round. */
+.battle-half--enemy .battle-cell-portrait { transform: scaleX(-1); }
+
 /* Standing states on a portrait: BUFFS down the right edge, DEBUFFS down the
    left, both filling top-down. Two columns rather than one wrapping strip so a
    glance tells you which side of the ledger an icon is on without reading it.
