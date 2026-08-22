@@ -1798,7 +1798,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // long it lasts. An effect carrying an amount and no rounds is permanent for
     // the battle, so the badge prints the magnitude instead of a countdown.
     return effects.slice(0, MAX_STATE_ICONS).map(e => {
-      const detail = e.rounds ? ` · ${e.rounds}` : (e.amount ? ` · −${e.amount}` : '');
+      // `detail` is the effect's own sentence ("+4 HP, +8 armor") and beats any
+      // number this could invent. Failing that, an `amount` was signed −N for
+      // everything, which is right for a shred and wrong for every buff — the
+      // sign now follows the polarity being rendered.
+      const sign   = polarity === 'negative' ? '−' : '+';
+      const detail = e.detail ? ` · ${e.detail}`
+                   : e.rounds ? ` · ${e.rounds}`
+                   : (e.amount ? ` · ${sign}${e.amount}` : '');
       const badge  = e.rounds > 1 ? e.rounds : (e.rounds ? null : (e.amount || null));
       return `
       <span class="bc-state bc-state--spell" title="${e.name}${detail}">
@@ -2014,6 +2021,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return `
         <div class="portrait-card portrait-card--init portrait-card--${side}
                     ${isActive ? 'portrait-card--selected' : ''}"
+             data-id="${c.id}" role="button" tabindex="0"
              title="${cName(c)}">
           ${portrait
             ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
@@ -2318,6 +2326,29 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       openStatsModal(combatant);
       ui.screen.querySelectorAll('.battle-cell--selected').forEach(c => c.classList.remove('battle-cell--selected'));
       cell.classList.add('battle-cell--selected');
+    });
+
+    // The initiative track is an inspector too. Tapping a portrait there opens
+    // the same sheet the grid does — it is often the only place an enemy the
+    // player has not reached yet can be read, and the track is where they are
+    // already looking to plan the round.
+    //
+    // Deliberately NOT a targeting surface: aiming still happens on the grid, so
+    // a tap here never fires an action or cancels a spell being aimed. Delegated
+    // on the container, which survives every re-render of its contents.
+    const inspectFromQueue = event => {
+      const card = event.target.closest('.portrait-card--init[data-id]');
+      if (!card) return;
+      const combatant = state.combatants.find(c => c.id === card.dataset.id);
+      if (combatant) openStatsModal(combatant);
+    };
+    ui.initQueue?.addEventListener('click', inspectFromQueue);
+    // Keyboard parity with the role="button" the markup claims.
+    ui.initQueue?.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (!event.target.closest('.portrait-card--init[data-id]')) return;
+      event.preventDefault();
+      inspectFromQueue(event);
     });
 
     ui.screen._battleHandlersAttached = true;

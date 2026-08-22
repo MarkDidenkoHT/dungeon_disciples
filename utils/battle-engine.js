@@ -1246,6 +1246,10 @@ class BattleEngine {
       // Magnitude, for effects whose size is the point (a resistance shred).
       // Display-only, like `icon` and `rounds`.
       ...(rec.amount != null ? { amount: rec.amount } : {}),
+      // What the effect actually did, spelled out ("+4 HP, +8 armor"). A grant
+      // that moves several stats at once cannot be summed into one `amount`, so
+      // the tooltip carries the sentence instead. Display-only.
+      ...(rec.detail ? { detail: rec.detail } : {}),
       // `dispellable: false` opts an effect out of dispels (permanent/structural).
       ...(rec.dispellable === false ? { dispellable: false } : {}),
     };
@@ -1821,9 +1825,15 @@ class BattleEngine {
   aiPickAbilityTarget(actor, def, targets) {
     if (!def || !targets.length) return null;
     const p = def.params || {};
-    const hasNegative = c => (c._effects || []).some(e => e.polarity === 'negative')
+    // `dispellable !== false` on both, matching dispelEffects exactly: an effect
+    // a dispel cannot remove is not a reason to cast one. Battle-start stat
+    // grants (Vitality, Iron Will, the resistance auras) register as positive
+    // structural effects, so without this test a Purge would fire every turn at
+    // a target it could strip nothing from.
+    const dispellable = e => e.dispellable !== false;
+    const hasNegative = c => (c._effects || []).some(e => e.polarity === 'negative' && dispellable(e))
       || (c.dot_dmg > 0) || (c._poison_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._healing_reduction > 0);
-    const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive') || (c._dmg_mult || 1) > 1;
+    const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive' && dispellable(e)) || (c._dmg_mult || 1) > 1;
 
     // Resurrect a fallen ally — always worth it when a valid corpse exists.
     if (p.resurrect_hp_pct != null) return targets[0];

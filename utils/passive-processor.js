@@ -44,6 +44,33 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
   return p[flatKey] ?? 0;
 }
 
+// Puts a battle-start stat grant on the portrait.
+//
+// Vitality, Iron Will, Horde, Choir, Banquet, Fortify and the resistance auras
+// all MOVE A NUMBER and then leave no trace: they set no `_flag` field, so the
+// BUFF_DEFS table in battle.js — which reads fixed combatant fields — has
+// nothing to draw, and the buff was invisible on the grid no matter how large
+// it was. Registering it as an effect gives the client the same record a spell
+// leaves, so it renders through the existing icon path with no table to edit.
+//
+// `dispellable: false` because these are structural: they are the army the
+// player brought, not a ward that can be stripped off mid-fight. The icon key
+// follows the ability-art convention ('iron_will 1' -> iron_will.jpg).
+function registerStatGrant(engine, unit, def, amount, detail) {
+  if (!engine?.registerEffect || !unit || !def) return;
+  const key = String(def.id ?? def.name ?? '').replace(/\s+\d+$/, '').replace(/\s+/g, '_');
+  if (!key) return;
+  engine.registerEffect(unit, {
+    key,
+    name:        def.name,
+    polarity:    'positive',
+    icon:        key,
+    dispellable: false,
+    ...(amount ? { amount } : {}),
+    ...(detail ? { detail } : {}),
+  });
+}
+
 // The ONE way a passive takes hit points off a unit.
 //
 // Invulnerability (Unity's bonded guardian) was checked only on the two direct
@@ -321,6 +348,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const allies = engine.combatants.filter(c => c.side === owner.side);
       for (const a of allies) { a.battle_hp += hpEach; a.max_hp += hpEach; }
       engine.recordGrantedBuff(owner, 'max_hp', allies, hpEach);
+      if (hpEach) for (const a of allies) registerStatGrant(engine, a, def, hpEach, `+${hpEach} max HP`);
       // `stat` marks this as a stat grant, not a heal — without it the client's
       // log renderer defaults to "healed" (entry.heal !== false).
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: hpEach, heal: false, stat: 'max HP' });
@@ -339,6 +367,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const applied = new Map();
         for (const a of allies) applied.set(a.id, addArmor(a, p.ally_armor_bonus));
         engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus, applied);
+        // Per target, using what LANDED: an ally the armor cap clipped shows the
+        // armor it actually got, and one that got none shows no icon at all.
+        for (const a of allies) {
+          const got = applied.get(a.id);
+          if (got) registerStatGrant(engine, a, def, got, `+${got} armor`);
+        }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
       }
     }
@@ -401,6 +435,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (armorBonus) parts.push(`+${armorBonus} armor`);
         if (powerBonus) parts.push(`+${powerBonus} power`);
         if (initBonus)  parts.push(`+${initBonus} initiative`);
+        // The whole grant is one icon on the owner. `n` is the badge — the
+        // number the player can act on is how many of the tag are standing, not
+        // any one of the four stats it bought.
+        if (parts.length) registerStatGrant(engine, owner, def, n, parts.join(', '));
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: n, message: `${def.name} — ${n} ${p.tag_required} allies: ${parts.join(', ')}` });
       }
     }
@@ -536,6 +574,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // needs the applied delta back — only the ceiling matters here.
         resists[school] = Math.max(0, Math.min(MITIGATION_CAP_PCT, (resists[school] || 0) + auraVal));
         t.unit_data = { ...t.unit_data, resistances: resists };
+        if (auraVal) registerStatGrant(engine, t, def, auraVal, `+${auraVal} ${school} resistance`);
       }
       if (allies.length) {
         engine.pushLog({

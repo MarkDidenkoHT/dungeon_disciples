@@ -3487,7 +3487,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: var(--portrait-inset);
   gap: 0;
   position: relative;
-  cursor: default;
+  /* Tappable: the track opens the same unit sheet the grid does. */
+  cursor: pointer;
+}
+
+.portrait-card--init:focus-visible {
+  outline: 2px solid var(--accent, #d9b46a);
+  outline-offset: 2px;
 }
 
 .portrait-card--init .portrait-art-img,
