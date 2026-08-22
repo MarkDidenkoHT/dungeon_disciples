@@ -842,12 +842,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const out = [];
     for (const [unitId, { anchor, cells }] of byUnit) {
       const unit = roster.find(u => u.id === unitId);
-      const def  = unit ? resolveUnitDef(unit) : null;
-      if (!def) continue;
-      // Same read as the unit card's ability icons (see buildUnitCard in
-      // utils.js): passive may be one key or several, and native_passive wins
-      // where a unit has one.
-      const passives = def.native_passive ?? def.passive;
+      const base = unit ? resolveUnitDef(unit) : null;
+      if (!base) continue;
+      // Through the worn item, because a tag or a passive an item grants counts
+      // for bonds exactly like a native one. The engine builds this same profile
+      // from `unit_data`, which is already base + item, so reading the raw
+      // definition here made the preview disagree with the fight it previews.
+      const def = withEquippedItem(base, equippedItemFor(unitId));
+      // `passive` (not `native_passive`) for the same reason: it is the merged
+      // list, and the merged list is what the engine matches on.
+      const passives = def.passive;
       const abilityKeys = [
         def.ability,
         ...(Array.isArray(passives) ? passives : [passives]),

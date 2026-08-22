@@ -1342,6 +1342,25 @@ function offerPayload(offer, freeRows, throneLevel) {
 }
 
 // Free = on the roster, alive, not the hero, not already out on an errand.
+// Roster rows for the errand checks, each carrying the stats of whatever item
+// the unit is wearing. Equipping only records the link — the roster row keeps
+// base stats — so a tag an item grants is invisible to any check that reads the
+// row on its own, and errands are tag checks. See `unitProfile` in
+// data/errands.js, which reads `_item_stats` off the row.
+async function errandRosterRows(chat_id, player) {
+  const [roster, items] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+    player?.id
+      ? supabase(`/items?player_id=eq.${player.id}&select=item_stats,equipped_by`)
+      : Promise.resolve([]),
+  ]);
+  const byRosterId = new Map();
+  for (const it of items) {
+    if (it.equipped_by != null) byRosterId.set(String(it.equipped_by), it.item_stats || null);
+  }
+  return roster.map(r => ({ ...r, _item_stats: byRosterId.get(String(r.id)) || null }));
+}
+
 function freeRosterRows(roster, activeRows) {
   const busy = new Set(activeRows.map(r => String(r.errand_data?.roster_id)));
   return roster.filter(r =>
@@ -1365,7 +1384,7 @@ function freeRosterRows(roster, activeRows) {
 async function ensureErrandOffer(chat_id, player) {
   const [structRows, roster, rows] = await Promise.all([
     supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+    errandRosterRows(chat_id, player),
     errandRowsFor(chat_id),
   ]);
 
@@ -1467,7 +1486,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
 
     const [structRows, roster, rows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+      errandRosterRows(chat_id, player),
       errandRowsFor(chat_id),
     ]);
     const active = rows.filter(r => r.active);
@@ -1760,7 +1779,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
     // taken the errand while the ad played.
     const [structRows, roster, rows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+      errandRosterRows(chat_id, player),
       errandRowsFor(chat_id),
     ]);
     const active  = rows.filter(r => r.active);

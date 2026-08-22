@@ -174,13 +174,19 @@ function throneTier(throneLevel) {
 
 // Everything a roster row brings to a requirement check. `resolveDef` is passed
 // in so this file needs no import of units.js (the client already has one).
-// unit_data wins over the definition: that is where a tag granted by an item, or
-// any other per-unit change, would live.
-function unitProfile(row, resolveDef) {
+// unit_data wins over the definition, for any per-unit change stored there.
+//
+// A tag from a worn item is NOT one of those: equipping only writes the items
+// link and the roster row keeps the unit's base stats, so the item has to be
+// handed in separately. Callers that read a row without its item get base tags —
+// which is why `_item_stats` rides along on the rows the errand endpoints load.
+function unitProfile(row, resolveDef, itemStats = row?._item_stats ?? null) {
   const stored = row?.unit_data || {};
   const def    = resolveDef ? resolveDef(row) : null;
   const raw    = stored.tags ?? def?.tags ?? [];
   const list   = (Array.isArray(raw) ? raw : [raw]).filter(Boolean).map(String);
+  const granted = itemStats?.adds_tag ? String(itemStats.adds_tag) : null;
+  if (granted && !list.includes(granted)) list.push(granted);
   return { tags: list };
 }
 
