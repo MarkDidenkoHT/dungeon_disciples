@@ -175,7 +175,12 @@ const BT = {
                    ru: (a, t, v) => `${a} бьёт ${t} на <span class="log-val">${v}</span>` },
   logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
                    ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
-  logPower:      { en: p => ` <span class="log-resisted">(${p} power)</span>`,
+  // Was ALSO called logPower, silently overwriting the entry above it — so the
+  // "gathers N power" line called this one-argument version with the actor as
+  // its only argument and rendered as "(Paladin (R2C2) power)" every time a
+  // hero banked power. Sits beside logResisted because it is the same kind of
+  // thing: the damage detail suffix on an attack.
+  logRawPower:   { en: p => ` <span class="log-resisted">(${p} power)</span>`,
                    ru: p => ` <span class="log-resisted">(${p} силы)</span>` },
   logSkip:       { en: a => `${a} skipped`,        ru: a => `${a} пропускает ход` },
 
@@ -1387,7 +1392,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         ? BTf('logHeal')(actor(), target(), entry.value)
         : BTf('logHit')(actor(), target(), entry.value);
       const detail = (!entry.heal && entry.rawDmg != null)
-        ? (entry.resisted > 0 ? BTf('logResisted')(entry.rawDmg, entry.resisted) : BTf('logPower')(entry.rawDmg))
+        ? (entry.resisted > 0 ? BTf('logResisted')(entry.rawDmg, entry.resisted) : BTf('logRawPower')(entry.rawDmg))
         : '';
       return `<div class="log-entry">${line}${detail}${entry.killed ? ' 💀' : ''}</div>`;
     }

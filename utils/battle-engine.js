@@ -45,6 +45,18 @@ const POOL_CAP_PCT = 50;
 // armor and resistance deltas.
 const DEFEND_BONUS = 25;
 
+// How each `recordGrantedBuff` type reads on a portrait tooltip. Keyed by the
+// same strings the callers already pass, so a new grant type shows its own name
+// rather than nothing.
+const STAT_GRANT_LABELS = {
+  max_hp:       'max HP',
+  armor:        'armor',
+  initiative:   'initiative',
+  action_power: 'power',
+  all_resist:   'all resists',
+  damage:       'damage',
+};
+
 // ── Power ───────────────────────────────────────────────────────────────────
 // The per-cast spell currency, earned inside the battle: each side's HERO gains
 // one point every time it acts, capped, and stops earning the moment it dies.
@@ -425,11 +437,20 @@ class BattleEngine {
   // ACTUALLY gained, for the capped stats where the ask and the gain can differ
   // per unit. Omit it and `value` is recorded for everyone, which is right for
   // every uncapped stat.
-  recordGrantedBuff(source, type, targets, value, appliedByTarget = null) {
+  // `def` is the ability doing the granting. Pass it and every recipient also
+  // gets a portrait icon for the buff; omit it when the caller already registers
+  // an effect of its own (Stone Form, Sanctuary, Frost Armor) or already sets a
+  // BUFF_DEFS field (Inspiration, Aegis), so nothing is drawn twice.
+  //
+  // This is the general fix for buffs that were only ever RECORDED and never
+  // SHOWN: _granted_buffs is filed against the SOURCE, for revocation, so a unit
+  // handed +8 initiative carried no sign of it anywhere.
+  recordGrantedBuff(source, type, targets, value, appliedByTarget = null, def = null) {
     for (const t of targets) {
       const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
       if (appliedByTarget && !landed) continue;   // nothing got through the cap
       source._granted_buffs.push({ type, targetIds: [t.id], value: landed });
+      if (def && landed) this.registerStatGrantEffect(t, def, landed, type);
       // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
       if (!t || !t.alive || t.id === source?.id) continue;
       // Signed: positive amplifies (Beacon of Hope / Despair on our side),
@@ -1255,6 +1276,35 @@ class BattleEngine {
     };
     unit._effects.push(eff);
     return eff;
+  }
+
+  // Puts a stat grant on the recipient's portrait.
+  //
+  // The BUFF_DEFS table the client draws from reads fixed combatant fields, so a
+  // passive that only moves a number — Vitality, Iron Will, Lion's Roar, Command,
+  // Unity's transfer, the resistance auras — left nothing for it to find and was
+  // invisible however large it was. An effect record is what a spell already
+  // leaves behind, so registering one here reuses the existing icon path.
+  //
+  // `dispellable: false`: these are structural, not wards to be stripped. The
+  // icon key follows the ability-art convention ('iron_will 1' -> iron_will.jpg).
+  registerStatGrantEffect(unit, def, amount, type = null, detail = null) {
+    if (!unit || !def) return;
+    const key = String(def.id ?? def.name ?? '').replace(/\s+\d+$/, '').replace(/\s+/g, '_');
+    if (!key) return;
+    const label = STAT_GRANT_LABELS[type] ?? type;
+    // 'damage' carries a fraction (0.15 = +15%); every other type is stat points.
+    const shown = type === 'damage' ? Math.round(amount * 100) : amount;
+    const text  = detail || (label ? `+${shown}${type === 'damage' ? '%' : ''} ${label}` : null);
+    return this.registerEffect(unit, {
+      key,
+      name:        def.name,
+      polarity:    'positive',
+      icon:        key,
+      dispellable: false,
+      ...(shown ? { amount: shown } : {}),
+      ...(text   ? { detail: text } : {}),
+    });
   }
 
   // Drops an effect record without reverting anything — for when the effect ends

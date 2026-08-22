@@ -56,19 +56,12 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
 // `dispellable: false` because these are structural: they are the army the
 // player brought, not a ward that can be stripped off mid-fight. The icon key
 // follows the ability-art convention ('iron_will 1' -> iron_will.jpg).
+// The implementation lives on the engine (registerStatGrantEffect) because
+// recordGrantedBuff calls it too — one icon rule for every buff, whether it is
+// handed out through recordGrantedBuff or applied directly here.
 function registerStatGrant(engine, unit, def, amount, detail) {
-  if (!engine?.registerEffect || !unit || !def) return;
-  const key = String(def.id ?? def.name ?? '').replace(/\s+\d+$/, '').replace(/\s+/g, '_');
-  if (!key) return;
-  engine.registerEffect(unit, {
-    key,
-    name:        def.name,
-    polarity:    'positive',
-    icon:        key,
-    dispellable: false,
-    ...(amount ? { amount } : {}),
-    ...(detail ? { detail } : {}),
-  });
+  if (!engine?.registerStatGrantEffect) return;
+  return engine.registerStatGrantEffect(unit, def, amount, null, detail);
 }
 
 // The ONE way a passive takes hit points off a unit.
@@ -287,20 +280,22 @@ function formGuardianBond(owner, def, synergyId, engine) {
   const half = stat => Math.floor(BOND_STATS[stat](owner) * 0.5);
 
   const hp = half('battle_hp');
-  if (hp) { host.battle_hp += hp; host.max_hp += hp; engine.recordGrantedBuff(owner, 'max_hp', [host], hp); }
+  const unityParts = [];
+  if (hp) { host.battle_hp += hp; host.max_hp += hp; engine.recordGrantedBuff(owner, 'max_hp', [host], hp); unityParts.push(`+${hp} HP`); }
 
   const armor = half('armor');
   // Only what the cap actually let through is recorded, so the revoke on the
   // guardian's death hands back exactly that and no more.
-  if (armor) { const got = addArmor(host, armor); if (got) engine.recordGrantedBuff(owner, 'armor', [host], got); }
+  if (armor) { const got = addArmor(host, armor); if (got) { engine.recordGrantedBuff(owner, 'armor', [host], got); unityParts.push(`+${got} armor`); } }
 
   const initiative = half('initiative');
-  if (initiative) { host.initiative += initiative; engine.recordGrantedBuff(owner, 'initiative', [host], initiative); }
+  if (initiative) { host.initiative += initiative; engine.recordGrantedBuff(owner, 'initiative', [host], initiative); unityParts.push(`+${initiative} initiative`); }
 
   const power = half('action_power');
   if (power && host.unit_data) {
     host.unit_data = { ...host.unit_data, action_power: (host.unit_data.action_power ?? 0) + power };
     engine.recordGrantedBuff(owner, 'action_power', [host], power);
+    unityParts.push(`+${power} power`);
   }
 
   // Half of the resistances too, from unit_data — which for resistances IS the
@@ -318,6 +313,9 @@ function formGuardianBond(owner, def, synergyId, engine) {
   // the cells those ids name (see SRC_TARGET_FX in battle.js). Without them the
   // entry still READ correctly but had no cells to draw between, so the tether
   // never appeared.
+  // One icon on the host for the whole transfer — four separate ones for the
+  // four stats would say less and crowd the portrait.
+  if (unityParts.length) registerStatGrant(engine, host, def, null, unityParts.join(', '));
   engine.pushLog({
     type: 'passive', passive: def.name,
     actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
@@ -485,7 +483,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       if (rowAlly) {
         rowAlly.initiative += p.command_initiative_bonus;
-        engine.recordGrantedBuff(owner, 'initiative', [rowAlly], p.command_initiative_bonus);
+        engine.recordGrantedBuff(owner, 'initiative', [rowAlly], p.command_initiative_bonus, null, def);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: rowAlly.unit_name, targetCell: rowAlly.cellIndex, value: p.command_initiative_bonus });
       }
     }
@@ -605,6 +603,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (gain <= 0) return;
         owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + gain;
         owner._chorus_power = (owner._chorus_power ?? 0) + gain;
+        engine.registerStatGrantEffect(owner, def, gain, 'action_power');
         const singer = engine.combatants.find(c => c.id === bond.partnerId);
         engine.pushLog({
           type: 'passive', passive: def.name,
@@ -1171,6 +1170,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // revoked or timed out, so it holds for the whole battle.
     if (p.power_bonus_flat != null && owner.unit_data) {
       owner.unit_data.action_power = (owner.unit_data.action_power ?? 0) + p.power_bonus_flat;
+      engine.registerStatGrantEffect(owner, def, p.power_bonus_flat, 'action_power');
       owner._fanaticism_stacks = (owner._fanaticism_stacks ?? 0) + 1;
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: owner.id, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.power_bonus_flat, message: `${def.name} — +${p.power_bonus_flat} power (${owner.unit_data.action_power} total)` });
     }
@@ -1509,7 +1509,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: 'all allies', message: `${def.name} — +${p.ally_initiative_bonus} initiative to all allies` });
     // Recorded so the bonus is handed back if the caster dies, and so anyone
     // with Fanaticism registers that an ally just buffed them.
-    engine.recordGrantedBuff(actor, 'initiative', allies.filter(a => a.id !== actor.id), p.ally_initiative_bonus);
+    engine.recordGrantedBuff(actor, 'initiative', allies.filter(a => a.id !== actor.id), p.ally_initiative_bonus, null, def);
+    // The caster is excluded above (a unit does not "buff" itself for the
+    // ally-buff triggers) but it DID gain the initiative, so it gets the icon.
+    engine.registerStatGrantEffect(actor, def, p.ally_initiative_bonus, 'initiative');
   }
   if ((p.bonus_attack != null || p.bonus_attack_per_tag != null) && target) {
     // Route through engine.executeAction so range, invulnerability, unity bonds,
