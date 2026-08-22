@@ -135,6 +135,22 @@ const REGION_ENCOUNTERS = {
         trophies:        { shard_of_devotion: 4, aggrails_signet: 4 },
       },
     },
+    level_10: {
+      enemies: [
+        { key: 'crimson_basilica.sister_aldra_3',      cell: 2, item_id: 'aldras_devotion',
+          spells: [{ spell_id: 'boss_heal', power: 3 }, { spell_id: 'boss_resurrect', power: 5 }] },
+        { key: 'crimson_basilica.grand_keeper',        cell: 3 },
+        { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
+        { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
+        { key: 'crimson_basilica.aggrails_desecrator', cell: 1 },
+        { key: 'crimson_basilica.crimson_stalker',     cell: 5 },
+      ],
+      rewards: {
+        gold: 175, xp: 500,
+        crystals:        [{ type: 'Crystals_Life', amount: 22 }, { type: 'Crystals_Fire', amount: 22 }],
+        trophies:        { shard_of_devotion: 5, vial_of_pure_blood: 5, aggrails_signet: 5 },
+      },
+    },
   },
 
   glittering_abyss: {
@@ -209,6 +225,67 @@ const REGION_ENCOUNTERS = {
         gold: 55, xp: 200,
         crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
         trophies:        { living_geode: 3 },
+      },
+    },
+    level_7: {
+      enemies: [
+        { key: 'glittering_abyss.glaciok',        cell: 2 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
+        { key: 'glittering_abyss.rimewarden',     cell: 4 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 3 },
+      ],
+      rewards: {
+        gold: 75, xp: 250,
+        crystals:        [{ type: 'Crystals_Frost', amount: 16 }, { type: 'Crystals_Air', amount: 16 }],
+        trophies:        { crystal_shard: 3, living_geode: 2 },
+      },
+    },
+    level_8: {
+      enemies: [
+        { key: 'glittering_abyss.glaciok',        cell: 2 },
+        { key: 'glittering_abyss.arctyx',         cell: 3 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
+        { key: 'glittering_abyss.glaciron',       cell: 0 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 5 },
+      ],
+      rewards: {
+        gold: 100, xp: 325,
+        crystals:        [{ type: 'Crystals_Frost', amount: 18 }, { type: 'Crystals_Air', amount: 18 }],
+        trophies:        { crystal_dust: 4, living_geode: 3 },
+      },
+    },
+    level_9: {
+      enemies: [
+        { key: 'glittering_abyss.cryodrox2',      cell: 2,
+          spells: [{ spell_id: 'boss_rime_ward', power: 2 },
+                   { spell_id: 'boss_glacial_burst', power: 3 }] },
+        { key: 'glittering_abyss.glaciok',        cell: 0 },
+        { key: 'glittering_abyss.arctyx',         cell: 3 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
+        { key: 'glittering_abyss.rimewarden',     cell: 4 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 5 },
+      ],
+      rewards: {
+        gold: 130, xp: 400,
+        crystals:        [{ type: 'Crystals_Frost', amount: 20 }, { type: 'Crystals_Air', amount: 20 }],
+        trophies:        { living_geode: 4, crystal_shard: 4 },
+      },
+    },
+    level_10: {
+      enemies: [
+        { key: 'glittering_abyss.cryodrox3',      cell: 2,
+          spells: [{ spell_id: 'boss_rime_ward', power: 3 },
+                   { spell_id: 'boss_glacial_burst', power: 4 }] },
+        { key: 'glittering_abyss.glaciok',        cell: 0 },
+        { key: 'glittering_abyss.arctyx',         cell: 3 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 5 },
+        { key: 'glittering_abyss.glaciron',       cell: 4 },
+      ],
+      rewards: {
+        gold: 175, xp: 500,
+        crystals:        [{ type: 'Crystals_Frost', amount: 22 }, { type: 'Crystals_Air', amount: 22 }],
+        trophies:        { living_geode: 5, crystal_shard: 5, crystal_dust: 5 },
       },
     },
   },
@@ -291,6 +368,67 @@ const REGION_ENCOUNTERS = {
         gold: 55, xp: 200,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
         trophies:        { shard_of_might: 3 },
+      },
+    },
+    level_7: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
+        { key: 'chamber_of_unrest.revenant',               cell: 5 },
+      ],
+      rewards: {
+        gold: 75, xp: 250,
+        crystals:        [{ type: 'Crystals_Death', amount: 16 }, { type: 'Crystals_Nature', amount: 16 }],
+        trophies:        { shard_of_might: 2, rusted_shackle: 3 },
+      },
+    },
+    level_8: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
+        { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 5 },
+      ],
+      rewards: {
+        gold: 100, xp: 325,
+        crystals:        [{ type: 'Crystals_Death', amount: 18 }, { type: 'Crystals_Nature', amount: 18 }],
+        trophies:        { shard_of_might: 3, grave_dust: 4 },
+      },
+    },
+    level_9: {
+      enemies: [
+        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2,
+          spells: [{ spell_id: 'boss_grave_rot', power: 3 },
+                   { spell_id: 'boss_deaths_verdict', power: 4 }] },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
+        { key: 'chamber_of_unrest.revenant',               cell: 5 },
+      ],
+      rewards: {
+        gold: 130, xp: 400,
+        crystals:        [{ type: 'Crystals_Death', amount: 20 }, { type: 'Crystals_Nature', amount: 20 }],
+        trophies:        { shard_of_might: 4, rusted_shackle: 4 },
+      },
+    },
+    level_10: {
+      enemies: [
+        { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 2,
+          spells: [{ spell_id: 'boss_grave_rot', power: 4 },
+                   { spell_id: 'boss_deaths_verdict', power: 5 }] },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 5 },
+      ],
+      rewards: {
+        gold: 175, xp: 500,
+        crystals:        [{ type: 'Crystals_Death', amount: 22 }, { type: 'Crystals_Nature', amount: 22 }],
+        trophies:        { shard_of_might: 5, grave_dust: 5, rusted_shackle: 5 },
       },
     },
   },

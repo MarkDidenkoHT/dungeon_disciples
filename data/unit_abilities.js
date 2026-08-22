@@ -404,6 +404,17 @@ const UNIT_ABILITIES = {
     description_ru: "При попадании наносит врагу с наименьшим HP по 5% этого урона за каждого союзного демона.",
     params: { lowest_enemy_dmg_pct_per_tag: 5, tag_required: 'Demon' },
   },
+  'aggrails_blessing 2': {
+    id: 'aggrails_blessing 2',
+    name: "Aggrail's Blessing",
+    name_ru: "Благословение Агграила",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'When this unit hits an enemy, deals 8% of that damage per Demon ally to the enemy with the lowest HP.',
+    description_ru: "При попадании наносит врагу с наименьшим HP по 8% этого урона за каждого союзного демона.",
+    params: { lowest_enemy_dmg_pct_per_tag: 8, tag_required: 'Demon' },
+  },
   'lifesteal 1': {
     id: 'lifesteal 1',
     name: 'Lifesteal',
