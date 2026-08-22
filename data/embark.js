@@ -89,9 +89,6 @@ const REGION_ENCOUNTERS = {
         trophies:        { shard_of_devotion: 3 },
       },
     },
-    // Levels 7-9 are the endgame stretch: 9 is tuned for a full tier-3 army in
-    // gear. Rosters below are a starting point drawn from the region's tier-3
-    // pool — replace them; the cell map is at the top of this file.
     level_7: {
       enemies: [
         { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
@@ -121,13 +118,13 @@ const REGION_ENCOUNTERS = {
     },
     level_9: {
       enemies: [
-        { key: 'crimson_basilica.sister_aldra_2',     cell: 2, item_id: 'aldras_devotion',
+        { key: 'crimson_basilica.sister_aldra_2',     cell: 3, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_heal', power: 2 }, { spell_id: 'boss_resurrect', power: 5 }] },
         { key: 'crimson_basilica.exalted_evangelist', cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',  cell: 4 },
-        { key: 'crimson_basilica.high_keeper',        cell: 3 },
+        { key: 'crimson_basilica.exalted_herald',     cell: 2 },
         { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
-        { key: 'crimson_basilica.exalted_herald',     cell: 5 },
+        { key: 'crimson_basilica.high_keeper',        cell: 5 },
       ],
       rewards: {
         gold: 130, xp: 400,
@@ -137,12 +134,12 @@ const REGION_ENCOUNTERS = {
     },
     level_10: {
       enemies: [
-        { key: 'crimson_basilica.sister_aldra_3',      cell: 2, item_id: 'aldras_devotion',
+        { key: 'crimson_basilica.sister_aldra_3',      cell: 1, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_heal', power: 3 }, { spell_id: 'boss_resurrect', power: 5 }] },
         { key: 'crimson_basilica.grand_keeper',        cell: 3 },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
-        { key: 'crimson_basilica.aggrails_desecrator', cell: 1 },
+        { key: 'crimson_basilica.aggrails_desecrator', cell: 2 },
         { key: 'crimson_basilica.crimson_stalker',     cell: 5 },
       ],
       rewards: {
@@ -230,9 +227,9 @@ const REGION_ENCOUNTERS = {
     level_7: {
       enemies: [
         { key: 'glittering_abyss.glaciok',        cell: 2 },
-        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
-        { key: 'glittering_abyss.rimewarden',     cell: 4 },
-        { key: 'glittering_abyss.rime_splinter',  cell: 3 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 0 },
+        { key: 'glittering_abyss.rime_splinter',  cell: 1 },
+        { key: 'glittering_abyss.arctyx',         cell: 5 },
       ],
       rewards: {
         gold: 75, xp: 250,
@@ -243,10 +240,9 @@ const REGION_ENCOUNTERS = {
     level_8: {
       enemies: [
         { key: 'glittering_abyss.glaciok',        cell: 2 },
-        { key: 'glittering_abyss.arctyx',         cell: 3 },
-        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
-        { key: 'glittering_abyss.glaciron',       cell: 0 },
-        { key: 'glittering_abyss.rime_splinter',  cell: 5 },
+        { key: 'glittering_abyss.rimewarden',     cell: 4 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 0 },
+        { key: 'glittering_abyss.arctyx',         cell: 1 },
       ],
       rewards: {
         gold: 100, xp: 325,
@@ -256,14 +252,12 @@ const REGION_ENCOUNTERS = {
     },
     level_9: {
       enemies: [
-        { key: 'glittering_abyss.cryodrox2',      cell: 2,
+        { key: 'glittering_abyss.cryodrox2',      cell: 0,
           spells: [{ spell_id: 'boss_rime_ward', power: 2 },
                    { spell_id: 'boss_glacial_burst', power: 3 }] },
-        { key: 'glittering_abyss.glaciok',        cell: 0 },
-        { key: 'glittering_abyss.arctyx',         cell: 3 },
-        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
-        { key: 'glittering_abyss.rime_splinter',  cell: 5 },
+        { key: 'glittering_abyss.glacial_prism',  cell: 1 },
+        { key: 'glittering_abyss.arctyx',         cell: 3 },
       ],
       rewards: {
         gold: 130, xp: 400,
@@ -273,14 +267,12 @@ const REGION_ENCOUNTERS = {
     },
     level_10: {
       enemies: [
-        { key: 'glittering_abyss.cryodrox3',      cell: 2,
+        { key: 'glittering_abyss.cryodrox3',      cell: 0,
           spells: [{ spell_id: 'boss_rime_ward', power: 3 },
                    { spell_id: 'boss_glacial_burst', power: 4 }] },
-        { key: 'glittering_abyss.glaciok',        cell: 0 },
-        { key: 'glittering_abyss.arctyx',         cell: 3 },
+        { key: 'glittering_abyss.glaciok',        cell: 4 },
         { key: 'glittering_abyss.glacial_prism',  cell: 1 },
-        { key: 'glittering_abyss.glacial_prism',  cell: 5 },
-        { key: 'glittering_abyss.glaciron',       cell: 4 },
+        { key: 'glittering_abyss.arctyx',         cell: 3 },
       ],
       rewards: {
         gold: 175, xp: 500,
@@ -450,24 +442,12 @@ function buildDifficulties(regionId) {
   return out;
 }
 
-// Regions carry no reward data — every drop is declared on the level itself.
-// `difficulties` only exists so the server can validate a level and count them.
 const REGIONS = [
   { id: 'crimson_basilica',     difficulties: buildDifficulties('crimson_basilica') },
   { id: 'glittering_abyss', difficulties: buildDifficulties('glittering_abyss') },
   { id: 'chamber_of_unrest', difficulties: buildDifficulties('chamber_of_unrest') },
 ];
 
-
-// Every level states exactly what it pays; nothing is scaled or randomised.
-// Omitted keys simply don't drop. Trophies are the crafting inputs — finished
-// equipment is never a drop.
-//
-//   rewards: {
-//     gold: 40, xp: 90,
-//     crystals: [{ type: 'Crystals_Life', amount: 8 }],
-//     trophies: { vial_of_pure_blood: 1, aggrails_signet: 2 },
-//   }
 function getLevelRewards(region_id, level) {
   const declared = REGION_ENCOUNTERS[region_id]?.[`level_${level}`]?.rewards ?? {};
   return {
