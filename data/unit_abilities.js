@@ -745,6 +745,28 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит на 11% больше урона целям-вампирам за каждого союзного рыцаря на поле.",
     params: { vs_tag: 'Vampire', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Knight' },
   },
+  'desecrate 1': {
+    id: 'desecrate 1',
+    name: 'Desecrate',
+    name_ru: "Осквернение",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 5% bonus damage to Holy targets per Demon ally on the field.',
+    description_ru: "Наносит на 5% больше урона святым целям за каждого союзного демона на поле.",
+    params: { vs_tag: 'Holy', vs_tag_dmg_bonus_pct_per_tag: 5, tag_required: 'Demon' },
+  },
+  'desecrate 2': {
+    id: 'desecrate 2',
+    name: 'Desecrate',
+    name_ru: "Осквернение",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: 'Deals 8% bonus damage to Holy targets per Demon ally on the field.',
+    description_ru: "Наносит на 8% больше урона святым целям за каждого союзного демона на поле.",
+    params: { vs_tag: 'Holy', vs_tag_dmg_bonus_pct_per_tag: 8, tag_required: 'Demon' },
+  },
   'regenerate 1': {
     id: 'regenerate 1',
     name: 'Regenerate',
@@ -1467,15 +1489,6 @@ const UNIT_ABILITIES = {
     params: { frost_armor_armor: 25, frost_armor_resist: 30, frost_armor_resist_type: 'cold', duration_rounds: 2 },
     effect_name: 'aegis',
   },
-  // ── Disabling strikes ──────────────────────────────────────────────────────
-  //
-  // Three of a kind: half the wielder's power as damage, plus something the
-  // target cannot do for two rounds. Headshot and Skullcrack are the same strike
-  // at different reaches — one silences from range 3, the other from range 1 —
-  // and Shield Bash takes the active away instead of the passives.
-  //
-  // Damage is a share of the unit's LIVE power, so a buffed unit hits harder
-  // with these exactly as it does with its basic attack.
   'headshot 1': {
     id: 'headshot 1',
     name: 'Headshot',
