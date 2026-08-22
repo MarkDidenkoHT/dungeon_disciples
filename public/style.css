@@ -1,7 +1,3 @@
-/* Asset URLs that CSS owns. They point at the CDN; if it is unreachable the
-   boot probe in public/asset_base.js rewrites these nine variables to the app
-   server's own /assets path. CSS cannot fall back on its own, which is why the
-   URLs live in variables rather than inline in the rules below. */
 :root {
   --img-battle-grid: url('https://assets.markdidenkowork.workers.dev/icons/ui/battle_grid.png');
   --img-nav-active: url('https://assets.markdidenkowork.workers.dev/icons/ui/bottom-nav-active.png');
@@ -16,10 +12,6 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Mobile browsers paint a translucent blue box over a tapped element — and on
-   Android WebView over the IMAGES inside it — for ~150ms. On an icon-driven UI
-   that reads as the art flickering, so it is disabled globally; every control
-   here already has its own :active state. */
 * { -webkit-tap-highlight-color: transparent; }
 button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   -webkit-touch-callout: none;
@@ -37,44 +29,13 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --muted:   #6b7080;
   --radius:  8px;
 
-  /* The frame art (building_slot1.png) is 100x160, so a node is 0.625 as wide
-     as it is tall. The COLUMNS are derived from this and the row height rather
-     than being 1fr: 1fr divides up whatever width is going, which with a fixed
-     row height made every node square and stretched the portraits inside it.
-     (The old layout got this from `aspect-ratio: 5/8` on the wrap — 3 columns
-     over 3 rows — which stopped being true the moment there were 4 rows.) */
   --castle-node-ratio: 0.785;
 
-  /* One castle node's height — 18% of the viewport. The grid rows and the
-     node/centre-slot caps all read it, so a row and what sits in it can never
-     disagree.
-
-     NOT plain `18vh`. vh is the LARGE viewport and ignores the Telegram chrome,
-     the same trap #shell, .bottom-nav and the castle's own max-height cap each
-     carry a comment about. Four rows is 72% of the viewport inside a screen
-     capped at 80% of it, so measuring against a box ~15% taller than the real
-     one overflows the cap — and .castle-main/.castle-grounds are both
-     overflow:hidden, so the bottom row (the specials) would be clipped away
-     with no scroll rather than merely looking cramped.
-
-     One expression rather than the usual vh/dvh/calc ladder: the ladder works
-     by later declarations overriding earlier ones, which custom properties do
-     not do — any token sequence parses, so the last line always wins and the
-     earlier "fallbacks" are dead. dvh is the fallback here instead.
-
-     The min() is the narrow-screen guard: three nodes at 0.625 of 18% height
-     can be wider than the screen, and without it the row would overflow
-     sideways instead of the nodes getting shorter. 344px is the 360 cap less
-     the grounds' padding. */
   --castle-node-h: min(
     calc(var(--tg-viewport-stable-height, 100dvh) * 0.19),
     calc(min(344px, 100vw - 16px) / 3 / var(--castle-node-ratio))
   );
 
-  /* Rarity is one palette used by EVERY item surface — card border, slot icon,
-     filter chip, rarity label. Three different sets of greens/blues/oranges had
-     drifted apart, and epic/mythic cards were 2px while common/rare were 1px,
-     so the same idea looked like four different systems. */
   --rarity-common: #16a34a;
   --rarity-rare:   #3b82f6;
   --rarity-epic:   #a855f7;
@@ -98,23 +59,11 @@ html, body {
 #shell {
   display: flex;
   flex-direction: column;
-  /* On iOS, 100vh is the LARGE viewport — it deliberately ignores the browser
-     and Telegram chrome. In full-size app mode the shell is therefore taller
-     than the area actually on screen, and everything below the fold (the unit
-     card holder in roster and battle prep) is pushed out of sight with no
-     scrollbar to reveal it, because the inner containers are overflow:hidden.
-     Each line overrides the one above it where supported:
-       100vh  — last-resort fallback
-       100dvh — the real visible height, tracked as chrome shows/hides
-       Telegram's own stable height — authoritative inside a Mini App. */
+
   height: 100vh;
   height: 100dvh;
   height: var(--tg-viewport-stable-height, 100dvh);
-  /* Full-size mode lets Telegram's header and the system status bar overlay the
-     page. These insets keep the top and bottom of the layout clear of them.
-     Both sources are consulted: the Telegram vars exist only on newer clients,
-     env() only when the page opts into the safe area — whichever is larger
-     wins, and both resolve to 0px when absent. */
+
   padding-top: max(var(--tg-content-safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
   padding-bottom: max(var(--tg-content-safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
   max-width: 480px;
@@ -130,20 +79,8 @@ html, body {
   min-height: 0;
 }
 
-/* Castle only. The castle grid is a fixed 458px tall and centres itself in
-   whatever height it is given, so on a tall phone it floated in the middle of a
-   very large box. Capping the screen pulls it up and gives the rest of the
-   layout the room back.
-   Scoped deliberately: applied to every screen it also shortened battle prep,
-   whose unit track pins itself to the BOTTOM of the screen — the track then
-   stopped 20vh above the nav with dead space between them. navigate() stamps
-   data-screen on #content-root. */
 #content-root[data-screen="castle"] {
-  /* Same height source as #shell and .bottom-nav — this was the one rule left
-     on plain vh, which is the LARGE viewport and ignores the Telegram chrome
-     the other two account for. On a tall screen the cap therefore measured 80%
-     of a box bigger than the one it lives in, so it stopped binding and the
-     grid drifted back down with dead space under it. */
+
   max-height: 80vh;
   max-height: 80dvh;
   max-height: calc(var(--tg-viewport-stable-height, 100dvh) * 0.8);
@@ -153,11 +90,7 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* Tab switching empties #content-root and rebuilds it, so the new screen
-     appears in one hard cut — the "flash" between two tabs. Fading it in over
-     ~160px of nothing costs no layout work and reads as a transition rather
-     than a glitch. Deliberately entry-only: an exit animation would have to
-     delay the teardown, which makes the switch measurably slower to respond. */
+
   animation: screen-in 0.16s ease-out both;
 }
 
@@ -166,8 +99,6 @@ html, body {
   to   { opacity: 1; transform: none; }
 }
 
-/* Motion is a preference, not a decoration: honour the system setting. The
-   screen still appears, just without the movement. */
 @media (prefers-reduced-motion: reduce) {
   .screen { animation: none; }
 }
@@ -247,17 +178,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.5);
   pointer-events: none;
-  /* Last-resort guard on a short screen: a bubble taller than the viewport
-     scrolls inside itself rather than pushing its dismiss button out of reach. */
+
   max-height: calc(100vh - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-/* Scrolling needs pointer events, but an ACTION step's bubble must stay
-   transparent to taps — it can sit over the control the player has to press.
-   Only informational steps take events, and those already block the target
-   behind the ring, so nothing is lost. */
 .tutorial-bubble--dismissible { pointer-events: auto; }
 
 .tutorial-bubble::before {
@@ -291,9 +217,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1.4;
 }
 
-/* Extra per-player line under the step text — currently the faction's
-   first-recruit advice on the `second_building` step. Set off from the copy
-   above it so it reads as advice rather than instruction. */
 .tutorial-bubble-hint {
   margin-top: 8px;
   padding-top: 8px;
@@ -304,7 +227,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   line-height: 1.4;
 }
 
-/* The bubble itself is click-through; this button must not be. */
 .tutorial-bubble-btn {
   pointer-events: auto;
   display: block;
@@ -319,15 +241,11 @@ button:active:not(:disabled) { opacity: 0.75; }
   cursor: pointer;
 }
 
-/* Hero selection now shows ONE unit card (the roster's own .unit-card) with the
-   portrait track choosing between heroes — the old list of small side-by-side
-   cards is gone. */
 .screen-hero-select {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* Fill the screen so the action row can sit ON the bottom edge instead of
-     wherever the card happens to end. */
+
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -355,7 +273,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .hero-action-row {
   flex-shrink: 0;
-  margin-top: auto;   /* pinned to the bottom of the screen */
+  margin-top: auto;
   position: sticky;
   bottom: 0;
   padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
@@ -368,8 +286,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   opacity: 0.85;
   line-height: 1.4;
 }
-
-
 
 .screen-intro {
   height: 100%;
@@ -413,7 +329,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: 100%;
   flex: 1;
   overflow: hidden;
-  /* Column so the crest track can sit under the slider instead of over it. */
+
   display: flex;
   flex-direction: column;
 }
@@ -543,7 +459,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   justify-content: center;
   height: 100vh;
   width: 100%;
-  /* background: radial-gradient(circle at 50% 40%, #1c1f28 0%, #0d0e12 100%); */
+
   gap: 20px;
 }
 
@@ -559,7 +475,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .loading-bg-overlay {
   position: absolute;
   inset: 0;
-  /* background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.92) 100%); */
+
   pointer-events: none;
 }
 
@@ -609,9 +525,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   50%      { box-shadow: 0 0 0 10px rgba(200, 151, 58, 0); }
 }
 
-/* Anchored to the top of the loading screen (its parent is the flex column that
-   pushes everything else to the bottom). Same engraved-gold serif as the other
-   ornate headings — .formation-title / .result-outcome / .prep-side-label. */
 .loading-title {
   position: absolute;
   top: max(6vh, 28px);
@@ -631,8 +544,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
 }
 
-/* Build number, bottom-right. Deliberately dim and small — it is there to be
-   read off a bug report screenshot, not to compete with the art. */
 .loading-version {
   position: absolute;
   right: 10px;
@@ -686,11 +597,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .error  { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .hidden { display: none !important; }
 
-/* Plain text back button, used by the hero-load error state. This used to be an
-   ID rule (#back-btn), whose 1-0-0 specificity silently overrode the .frame-action
-   class on the hero-select back button — background, border, colour and padding
-   all came from here instead, which is why it did not match the button beside
-   the portraits. Class-based now, applied only where it is wanted. */
 .text-back-btn {
   background: transparent;
   border: 1px solid var(--border);
@@ -705,22 +611,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   flex-shrink: 0;
   border-top: none;
-  /* Must use the SAME height source as #shell (see the comment there). This was
-     10vh, and vh is the large viewport — it ignores the Telegram/browser chrome
-     that #shell's --tg-viewport-stable-height accounts for. The nav therefore
-     measured 10% of a taller box than the one it lives in, and ran off the
-     bottom of the visible area. Each line overrides the one above where
-     supported, mirroring #shell exactly. */
+
   height: 10vh;
   height: 10dvh;
   height: calc(var(--tg-viewport-stable-height, 100dvh) * 0.1);
-  /* A floor so the icons stay legible on a short viewport, where 10% of the
-     height is not enough to draw the nav art. */
+
   min-height: 52px;
-  /* Pinned to the bottom of the shell. #content-root is capped at 80vh, so on a
-     tall screen the content above ends before the viewport does — without this
-     the nav follows it up and leaves a dead strip underneath, which is what the
-     battle-prep screen was showing. `auto` eats that leftover instead. */
+
   margin-top: auto;
 }
 
@@ -745,9 +642,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   background-image: var(--img-nav-active);
 }
 
-/* Icons-only nav (labels commented out in main.js): the icon takes the row the
-   label used to occupy instead of leaving the bar half empty. Restore 5vh if
-   the labels come back. */
 .nav-btn-icon {
   width: auto;
   height: 6.4vh;
@@ -891,7 +785,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   filter: brightness(1);
 }
 
-/* The row: control, strip, control. Only the middle element wears the frame. */
 .resource-bar-row {
   display: flex;
   flex-direction: row;
@@ -899,11 +792,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 0;
   padding: 0;
   flex-shrink: 0;
-  /* The stacking belongs to the ROW, not just the strip inside it. When only
-     .resource-bar carried z-index 300, the timeline and errands buttons — its
-     SIBLINGS — stayed at the default level and any open sheet (.modal-overlay,
-     z-index 100) painted over them, so they vanished in the inventory while the
-     strip between them stayed put. */
+
   position: relative;
   z-index: 300;
   transition: max-height 0.2s, opacity 0.2s, padding 0.2s;
@@ -917,8 +806,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex: 1;
   min-width: 0;
   gap: 0;
-  /* Ornate frame art stretched across the bar. No fallback colour behind it —
-     the art is present, and the flat block showed through its edges. */
+
   background-image: var(--img-resource-bar);
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -931,8 +819,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
 }
 
-/* Collapsed (slid up): used in battle prep until the spell sheet opens. Also
-   reclaims its vertical space so the arena isn't pushed down. */
 .resource-bar-row--collapsed,
 .resource-bar--collapsed {
   max-height: 0;
@@ -951,21 +837,13 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
-/* Equal-width columns rather than content-width ones. The cost bar below has to
-   line up slot for slot with this strip, and content-width slots drift the
-   moment one number is wider than the other ("1250" gold above, "40" below). */
 .resource-bar .res-bar-item {
   flex: 1 1 0;
   min-width: 0;
 }
 
-/* Timeline / errand slots. These are controls, not readouts, so they wear the
-   bottom-nav frame art instead of sitting bare among the resource numbers —
-   same button language as the nav bar, scaled to the resource strip. */
 .res-bar-btn {
-  /* Same frame art, icon treatment and press behaviour as .nav-btn — these are
-     controls sitting in a strip of readouts, and should look like the app's
-     other buttons rather than like a resource count. */
+
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1003,13 +881,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .res-bar-btn:not(:disabled):active .res-icon-img,
 .res-bar-btn:not(:disabled):active img { filter: none; }
 
-/* ── Errands ────────────────────────────────────────────────────────────────
-   The button is live now. It sits quiet by default and glows only when there is
-   something to DO — an offer waiting, or a unit home with its reward. A daily
-   system that always glows teaches players to ignore it. */
-/* Errands are locked until the first battle is finished — the button sits there
-   dimmed and unpressable rather than vanishing, so the strip does not change
-   shape when it unlocks. */
 .res-bar-btn:disabled { opacity: 0.35; cursor: default; }
 
 .res-bar-errands--ready {
@@ -1024,14 +895,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   .res-bar-errands--ready { animation: none; filter: drop-shadow(0 0 5px var(--accent)); }
 }
 
-/* No padding on the sheet: the art is meant to run edge to edge. The rows that
-   DO need breathing room carry their own inline padding (see .errand-parts /
-   .errand-durations), and the text-only empty state opts back in. */
 .errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 0; }
 .errand-sheet--padded { padding: 10px; }
-/* Everything that is not the art or the track keeps the inset the sheet used to
-   give it. The track is a scroll strip and stays full width — insetting it just
-   stops the cards short of the edge. */
+
 .errand-sheet > .errand-btn,
 .errand-sheet > .errand-chips,
 .errand-sheet > .errand-section-label,
@@ -1044,16 +910,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   color: var(--muted); margin-top: 2px;
 }
 .errand-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-/* No pill: the resource icon carries the chip now, and a border and green fill
-   around it was framing art that already reads on its own. */
+
 .errand-reward-chip { font-size: 0.7rem; font-weight: 700; padding: 3px 9px; }
-/* Errand art. Wide banner rather than a square icon: it sits above the title and
-   sets the scene, and it is cropped rather than letterboxed so art of slightly
-   different proportions still fills the strip. */
-/* Art, name and description in ONE block instead of three stacked ones: the
-   name sits on top of the image and the description along its foot, both over a
-   gradient so they stay legible whatever the art does. Costs the height of the
-   image and nothing more. */
+
 .errand-header {
   position: relative;
   width: 200px;
@@ -1069,9 +928,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   max-height: 200px;
   object-fit: cover;
 }
-/* The description rides the foot of the art over a scrim, so it costs no height
-   of its own. The errand's NAME is the sheet header (setSheetTitle) and is not
-   drawn here — printing it twice was the whole problem. */
+
 .errand-header .errand-desc {
   position: absolute;
   left: 0;
@@ -1084,8 +941,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
 }
 
-/* No art (missing file, or a definition without one): the overlay has nothing to
-   sit on, so the block falls back to plain stacked text. */
 .errand-header--noart { width: 100%; border: none; }
 .errand-header--noart .errand-art-img { display: none; }
 .errand-header--noart .errand-desc {
@@ -1094,9 +949,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 0;
 }
 
-/* The two tag halves sit SIDE BY SIDE — they are alternatives, and a column read
-   as a list of things you get. Each is dimmed until the selected unit actually
-   carries that tag, so picking who goes lights up what they bring. */
 .errand-parts { display: flex; flex-direction: row; gap: 6px; padding: 0 10px; }
 .errand-part {
   flex: 1;
@@ -1110,12 +962,9 @@ button:active:not(:disabled) { opacity: 0.75; }
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   background: rgba(200,151,58,0.10);
 }
-/* Reward chips carry resource art at its normal .res-icon-img size — same as
-   the resource strip — so the chip only has to line the icon up with the text. */
+
 .errand-reward-chip { display: inline-flex; align-items: center; gap: 3px; }
 
-/* Longer trips pay more per errand and less per hour, so the multiplier is
-   shown on the button — the trade has to be visible to be a choice. */
 .errand-durations { display: flex; gap: 6px; padding: 0 10px; }
 .errand-duration {
   flex: 1; display: flex; flex-direction: row; align-items: center;
@@ -1147,9 +996,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .errand-btn:disabled { opacity: 0.4; cursor: default; }
 .errand-btn:not(:disabled):active { background: rgba(200,151,58,0.26); }
 
-/* Reroll sits under Send and is deliberately quieter than it: taking the errand
-   is the action, swapping it is the aside. The remaining count rides on the
-   button because three a day is the whole decision. */
 .errand-btn--reroll {
   margin-top: 8px;
   display: flex;
@@ -1180,11 +1026,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-size: 0.75rem;
 }
 
-/* A unit that is away cannot be fielded — shown, but plainly out of play. */
 .portrait-card--on-errand { opacity: 0.4; filter: grayscale(0.7); cursor: not-allowed; }
 
-/* Marker on the castle node of a unit that is away. Same slot as the HP bar,
-   which that unit does not need while it is out. */
 .castle-node-errand {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-size: 1.5rem; color: var(--accent); text-shadow: 0 0 8px rgba(0,0,0,0.8); z-index: 3;
@@ -1195,7 +1038,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   opacity: 0.45;
 }
 
-/* ── Timeline / roadmap modal ─────────────────────────────────────────────── */
 .timeline-overlay {
   position: fixed;
   inset: 0;
@@ -1302,7 +1144,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   width: 184px;
   height: 184px;
   border-radius: 14px;
-  background-size: 500% 500%;   /* 5×5 sheet */
+  background-size: 500% 500%;
   background-repeat: no-repeat;
   background-color: rgba(0, 0, 0, 0.25);
   box-shadow:
@@ -1324,7 +1166,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .res-icon-img {
-  width: 35px;   /* was `40` — a missing unit, so the declaration was dropped */
+  width: 35px;
   height: 35px;
   object-fit: contain;
   display: block;
@@ -1346,12 +1188,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   margin: 0 2px;
 }
 
-/* ── Build / upgrade cost bar ────────────────────────────────────────────────
-   Slides in under the resource strip (same slot the roster's trophy bar uses)
-   while a build or upgrade is being chosen. It repeats the strip's geometry
-   exactly — same ghost buttons at both ends, same .resource-bar inner box, same
-   seven equal columns — so the amount you must PAY sits directly beneath the
-   amount you HAVE, and the comparison is a glance down a column. */
 .cost-bar-row {
   display: flex;
   flex-direction: row;
@@ -1361,16 +1197,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
-/* Deliberately inherits .resource-bar's padding and icon size unchanged. Making
-   this bar shorter squashes the frame art (background-size: 100% 100%) into a
-   different-looking strip and breaks the illusion that it is the same bar
-   repeated — which is the whole point of the alignment. */
 .cost-bar {
-  z-index: 299;   /* directly beneath the resource bar's 300 */
+  z-index: 299;
 }
 
-/* Reserves exactly the width of the timeline / errands buttons flanking the
-   strip above. Without these the columns would all sit one button to the left. */
 .cost-bar-ghost {
   background: none;
   visibility: hidden;
@@ -1378,8 +1208,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   height: auto;
 }
 
-/* A column this build does not charge for. Kept in place, near-invisible, so
-   every other column stays under its counterpart above. */
 .cost-bar-item--idle {
   opacity: 0.22;
 }
@@ -1387,9 +1215,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 .cost-bar-item--ok    .res-bar-val { color: var(--text); }
 .cost-bar-item--short .res-bar-val { color: var(--danger); }
 
-/* A shortfall is a <button> so it can be tapped for "where does this drop?".
-   Everything the app-wide button rule would impose is undone — it has to look
-   exactly like the columns beside it, which are plain divs. */
 button.cost-bar-item {
   margin: 0;
   padding: 0;
@@ -1402,7 +1227,7 @@ button.cost-bar-item {
   cursor: pointer;
 }
 button.cost-bar-item:active { transform: scale(0.9); }
-/* The one you cannot pay is the whole point of the bar — make it findable. */
+
 .cost-bar-item--short .res-icon-img {
   filter: drop-shadow(0 0 3px var(--danger));
 }
@@ -1413,7 +1238,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
-  /* Same ornate frame art as the resource bar (fallback: --surface). */
+
   background-color: var(--surface);
   background-image: var(--img-resource-bar);
   background-size: 100% 100%;
@@ -1431,9 +1256,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .roster-trophy-bar::-webkit-scrollbar { display: none; }
 
-/* A <button> now, so the whole app-wide button styling has to be undone —
-   otherwise every trophy turns into a gold pill. Looks identical to the div it
-   replaced; it just takes taps. */
 .trophy-bar-item {
   display: flex;
   flex-direction: column;
@@ -1450,7 +1272,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .trophy-bar-item:active { transform: scale(0.92); }
 
-/* One row per region that drops the material, each its own jump. */
 .mat-region-list {
   display: flex;
   flex-direction: column;
@@ -1510,14 +1331,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  /* Stops short of the bottom nav so the tab bar stays visible AND clickable
-     while a sheet is open — tapping a tab closes the sheet and goes there (see
-     the nav handler in main.js). Screens with no nav (battle, register) set the
-     variable to 0 so the sheet reaches the bottom edge as before. */
+
   bottom: var(--sheet-bottom, 0px);
-  /* Symmetrically, stops below the resource strip — it paints above sheets
-     (z-index 300) so that it stays usable, and a full-height sheet was sliding
-     its own header underneath it. main.js measures both. */
+
   top: var(--sheet-top, 0px);
   background: rgba(0, 0, 0, 0.72);
   z-index: 100;
@@ -1532,9 +1348,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .modal-overlay.hidden { display: none !important; }
 
-/* Upgrade-path picker, shown when several branches fit the building already
-   standing in the slot (the hero trees merge, so a tier-3 cathedral is reached
-   from either tier-2 kit and the choice cannot be guessed). */
 .branch-choice-list {
   display: flex;
   flex-direction: column;
@@ -1582,13 +1395,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-radius: 16px 16px 0 0;
   width: 100%;
   max-width: 480px;
-  /* Load-bearing. Without it the sheet grows to whatever its content needs and
-     silently pushes the excess off the top of the screen: .modal-body already
-     asks for overflow-y:auto, but a box with no height limit never overflows,
-     so nothing scrolled and the content was simply unreachable. Bounding the
-     sheet to the overlay lets flex give the body a real height, at which point
-     its existing scrolling starts working. A tall sheet — the evolution tree
-     with its detail card, a long item list — is the case that hit this. */
+
   max-height: 100%;
   display: flex;
   flex-direction: column;
@@ -1688,11 +1495,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Keep the scroll inside the sheet. Once it reaches an end the gesture would
-     otherwise chain to the page behind it, and in Telegram a downward chain is
-     the drag-to-close gesture — scrolling a long sheet to the top could shut
-     the app. disableVerticalSwipes() covers this on Bot API 7.7+; this covers
-     the clients that do not have it. */
+
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
@@ -1753,7 +1556,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #0e1219;
   border: 1px solid #222d3e;
   border-radius: 7px;
-  position: relative;   /* anchor for .ability-rank-up */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1804,8 +1607,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   pointer-events: none;
 }
 
-/* Evolution-tree button: same tile as the ability icons so the row stays even,
-   but it opens a sub-sheet rather than inspecting anything. */
 .ability-icon--tree {
   border-color: #3d5a3a;
   font-size: 3vh;
@@ -1815,10 +1616,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-color: #6aa05e;
 }
 
-/* ── Evolution tree (sub-sheet) ─────────────────────────────────────────────
-   Five fixed columns; rows are tiers, top-down. Cells are square-ish and sized
-   off the column width so the grid fits any phone without horizontal scroll.
-   Empty cells stay in the flow — the gaps ARE the shape of the tree. */
 .utree {
   display: grid;
   grid-template-columns: repeat(var(--utree-cols, 5), 1fr);
@@ -1872,13 +1669,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: #e6edf7;
   background: linear-gradient(to top, rgba(5, 8, 13, 0.92), rgba(5, 8, 13, 0.55) 70%, transparent);
 }
-/* The unit the sheet was opened from, then the rest of its own branch, then
-   everything the player did not take. */
+
 .utree-cell--current { border-color: var(--accent); box-shadow: 0 0 8px rgba(201, 146, 42, 0.5); }
 .utree-cell--path    { border-color: #4a80aa; }
 .utree-cell--other   { opacity: 0.55; }
-/* Whichever node the card below is showing. Wins over --other's dimming, so
-   inspecting a branch you did not take does not leave the cell greyed out. */
+
 .utree-cell[data-unit-id] { cursor: pointer; }
 .utree-cell--selected {
   opacity: 1;
@@ -1886,9 +1681,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 0 1px #d8e4f6 inset;
 }
 
-/* Detail state: the grid shrinks so the card has room, but stays on screen and
-   stays tappable. Cells lose their names and go square — enough to recognise a
-   portrait and step to the next one, a third of the height. */
 .utree-root--detail .utree { gap: 4px; }
 .utree-root--detail .utree-cell { aspect-ratio: 1 / 1; }
 .utree-root--detail .utree-name { display: none; }
@@ -1899,8 +1691,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 11px;
 }
 
-/* The card under the grid. Tapping a node swaps it in place; the grid stays put
-   above it, which is what makes stepping along a line readable. */
 .utree-detail:empty { display: none; }
 .utree-detail {
   margin-top: 10px;
@@ -1908,8 +1698,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-top: 1px solid #232d3d;
 }
 
-/* Ability and passive detail, opened inline from the card's icons: the sheet
-   stack is full, so there is nowhere to open a modal into. */
 .utree-ability {
   display: none;
   margin-top: 8px;
@@ -1939,10 +1727,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: block;
 }
 
-/* "+1" over an ability an upgrade raises a rank. Sits ON the icon rather than
-   beside it so the abilities row keeps its width — this is drawn while
-   comparing two units, and a badge that widened the row would shift the card
-   the player is reading. */
 .ability-rank-up {
   position: absolute;
   top: -4px;
@@ -2047,8 +1831,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .core-stat {
   flex: 1;
-  /* Anchor for .stat-delta, which hangs off THIS cell — without it the badge
-     resolves against whatever ancestor happens to be positioned. */
+
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2109,7 +1892,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .resist-cell {
-  position: relative;   /* anchor for the armor cell's .stat-delta badge */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2123,8 +1906,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   transition: background 0.15s;
 }
 
-/* Buff/shred delta under a resistance value. Inline, so it stays inside its own
-   cell in the six-across resist row. */
 .resist-delta {
   font-size: 0.52rem;
   font-weight: bold;
@@ -2180,9 +1961,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-shrink: 0;
 }
 
-/* HP / XP bars inside a unit card (see renderUnitProgressRow). Reuses the
-   roster's .levelup-row track so the two screens read identically; only the
-   leading key and the HP colouring are new. */
 .unit-progress-row { margin: 2px 0; }
 
 .unit-progress-key {
@@ -2194,8 +1972,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   min-width: 18px;
 }
 
-/* Same thresholds and colours the portrait strips use, so a unit that looks
-   critical on the castle node looks critical on its card too. */
 .unit-hp-fill--ok       { background: #4caf50; }
 .unit-hp-fill--damaged  { background: #d8b23a; }
 .unit-hp-fill--critical { background: #d1483a; }
@@ -2317,7 +2093,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 4px;
 }
 
-/* Text sits over the region art, so it's light with a soft shadow for contrast. */
 .embark-card-label { font-size: 1.05rem; font-weight: bold; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
 .embark-card-desc  { font-size: 0.72rem; color: #d7dce6; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 .embark-card-crystal { font-size: 0.7rem; color: #f5c542; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
@@ -2372,7 +2147,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--accent);
 }
 
-/* Boss levels (3, 6) — red so the player knows a boss waits. */
 .embark-level-pip--boss {
   border-color: #e0453f;
   color: #ff7a72;
@@ -2459,9 +2233,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   height: 100%;
 }
 
-/* Tightened from 24px gap / 24px vertical padding. Six toggles, the promo box
-   and the danger zone have to coexist on a phone; the old spacing plus the
-   removed "Settings" heading was what pushed the language row out of view. */
 .settings-main {
   flex: 1;
   display: flex;
@@ -2488,9 +2259,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
 }
 
-/* 11px, not 14px. Seven toggles, the promo box and the danger zone have to fit
-   a phone; the 3px per row pays for the Remember Formation row almost exactly.
-   Still a 42px+ tap target with the toggle button's own padding. */
 .settings-row {
   display: flex;
   align-items: center;
@@ -2659,10 +2427,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   z-index: 1;
 }
 
-/* ── Items screen ───────────────────────────────────────────────────────────
-   The craft catalog used to be the third tab of a sheet, so .items-modal is
-   sized for one (70vh). As a screen of its own it simply fills what the nav and
-   resource bar leave; everything else about it is unchanged. */
 .screen-items {
   height: 100%;
   min-height: 0;
@@ -2745,12 +2509,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-sizing: border-box;
 }
 
-/* Roster at-a-glance strip — reuses the battle-prep portrait-card frame, with
-   an HP bar / dead badge added underneath so damaged and fallen units read in
-   one look. Cards are clickable and page the slider to that unit. */
 .roster-portrait-wrap {
-  /* Reserved by the WRAPPER so an empty list keeps the strip's height and
-     nothing below it jumps. The cards inherit this value. */
+
   --track-card-h: clamp(52px, 8vh, 74px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
@@ -2758,19 +2518,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-top: 1px solid var(--border);
   background: var(--surface);
   padding: clamp(3px, 0.6vh, 8px) 10px;
-  /* Scrollbar chrome is hidden: the nav arrows/dots are the paging control,
-     and goTo() scrolls the active portrait into view. Swipe still works. */
+
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .roster-portrait-wrap::-webkit-scrollbar { display: none; }
 
-/* Sizes are viewport-driven (clamped) so the strip shrinks on short screens
-   instead of pushing the unit card out of view. Everything inside the card is
-   derived from --portrait-card-h, so one value tunes the whole strip. */
-/* The art fills the whole inner panel of the frame; the HP bar is overlaid
-   along its bottom edge rather than taking a row of its own. */
 .portrait-card--roster {
   --portrait-card-h: var(--track-card-h, clamp(52px, 8vh, 74px));
   --portrait-inset: calc(var(--portrait-card-h) * 0.12);
@@ -2808,12 +2562,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 1.1rem;
 }
 
-/* Castle slot equivalent of the .portrait-card--roster rule above. The shared
-   .portrait-hp-bar carries only height and colour — its WIDTH comes from being
-   stretched by a positioned rule like this one, so without it the bar collapses
-   to 0 inside the node's centred flex column. Inset matches the frame padding
-   so the bar sits inside the border art, and z-index clears the ::after frame
-   (z-index 2) which would otherwise cover it. */
 .castle-node .portrait-hp-bar {
   position: absolute;
   left: 9px;
@@ -2823,34 +2571,19 @@ button.cost-bar-item:active { transform: scale(0.9); }
   z-index: 3;
 }
 
-/* HP over XP in one strip. The wrapper takes the positioning the HP bar had on
-   its own, and the child rule above is neutralised inside it — otherwise both
-   bars would be absolutely positioned to the same bottom inset and overlap. */
-/* Sits ABOVE the frame art (::after, z-index 2) and clear of its bottom
-   moulding. Outlined and 5px tall, because a thin translucent bar on dark
-   ornate metal reads as nothing at node size.
-   The doubled class is REQUIRED, not decoration: `.castle-node--portrait > *`
-   below sets `position: relative; z-index: 1` on every child at specificity
-   0,1,1. A lone `.castle-node-bars` (0,1,0) loses to it, and the strip then
-   lays out as a zero-width flex child buried under the frame — which is
-   exactly how these bars went missing. */
 .castle-node .castle-node-bars {
   position: absolute;
   left: 11px;
   right: 11px;
   bottom: 13px;
   z-index: 4;
-  /* A ROW now: level number, then the two bars stacked beside it. The bars used
-     to span the whole tile, which read as the loudest thing on a portrait for
-     information that is glanceable at a quarter of the length. */
+
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 4px;
 }
 
-/* The unit's tier, left of the bars. Tabular figures so a 1 and a 4 occupy the
-   same width and the bars start at the same x on every tile. */
 .castle-node-level {
   flex: 0 0 auto;
   font-size: 1rem;
@@ -2859,11 +2592,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: #f0e6d2;
   background-color: black;
   width: 15px;
-  /* text-shadow: 0 0 3px #000, 0 0 2px #000; */
+
   font-variant-numeric: tabular-nums;
 }
 
-/* A quarter of the strip, so the bars stay a readout rather than a headline. */
 .castle-node-bar-stack {
   flex: 0 0 70%;
   min-width: 0;
@@ -2880,7 +2612,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   width: auto;
 }
 
-/* Thinner than the HP bar on purpose: HP is the urgent one, XP is a glance. */
 .portrait-xp-bar {
   height: 4px;
   border-radius: 2px;
@@ -2889,8 +2620,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
 }
 
-/* Inside a castle node both bars need the same outline treatment — without it
-   they disappear into the frame art behind them. */
 .castle-node-bars .portrait-hp-bar,
 .castle-node-bars .portrait-xp-bar {
   height: 5px;
@@ -2905,8 +2634,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   transition: width 0.2s;
 }
 
-/* Nothing left to advance to — a full bar in a muted colour, so it reads as
-   "done" rather than as one XP short of an upgrade. */
 .portrait-xp-bar--maxed { background: color-mix(in srgb, var(--accent) 35%, transparent); }
 
 .castle-node .portrait-status--dead {
@@ -2952,10 +2679,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background-image: var(--img-formation-highlight);
 }
 
-/* .roster-nav / .roster-dot rules removed — the roster pages via the portrait
-   strip and swipe; there are no arrows or dots. */
-
-
 .unit-card {
   background: #000000;
   border: 1px solid #2e3a50;
@@ -2981,8 +2704,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-self: stretch;
 }
 
-/* Tightened only for the roster card's side columns — .core-stat is shared with
-   the detail sheets, which have room to spare. */
 .unit-core-stats--side .core-stat {
   flex: 1;
   justify-content: center;
@@ -3006,11 +2727,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   justify-content: center;
 }
 
-/* Upgrade-comparison deltas, pinned to the stat they belong to instead of
-   collected in a detached chip row — reading "+20" beside the HP cell needs no
-   cross-referencing. They hang OUT of their column and over the portrait, so
-   the columns need a stacking context: the portrait follows the left column in
-   the DOM and would otherwise paint on top of anything spilling into it. */
 .unit-core-stats--side,
 .unit-resists-grid--side {
   position: relative;
@@ -3030,8 +2746,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   white-space: nowrap;
   padding: 2px 5px;
   border-radius: 20px;
-  /* Sits over arbitrary portrait art, so it carries its own backdrop rather
-     than relying on whatever happens to be behind it. */
+
   background: rgba(0, 0, 0, 0.62);
   pointer-events: none;
   z-index: 3;
@@ -3163,9 +2878,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-weight: 600;
 }
 
-/* Heal / resurrect sit ON the portrait, centred, instead of occupying a row in
-   the card. As inline rows they appeared and vanished with the unit's state and
-   pushed everything below them — layout shift on every death, revive and heal. */
 .unit-portrait-wrap {
   position: relative;
   flex: 1;
@@ -3179,26 +2891,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;   /* only the button itself is clickable */
+  pointer-events: none;
   z-index: 3;
 }
 .unit-card-overlay > button { pointer-events: auto; }
 
-/* The castle slot sheet reuses .unit-card-overlay, which is position:absolute
-   with inset:0 — it needs a positioned ancestor or it would escape to the
-   viewport. The roster card provides one; buildUnitCard's output does not. */
 .castle-unit-card-wrap { position: relative; }
 
-/* A wounded unit is still playable, so its button sits low and out of the way;
-   a dead one is not, so its button owns the middle of the card. */
-/* Inherits align-items:center from .unit-card-overlay — the buttons sit in the
-   middle of the card for a wounded unit as well as a dead one. The bottom
-   padding stays, lifting them clear of the card's own bottom row. */
 .unit-card-overlay--heal { padding-bottom: 46px; }
 
-/* Favor + spell share one overlay and stack, favor on top. Column order in the
-   markup IS the visual order, so there is no offset to maintain when either
-   button changes size. The side padding keeps both clear of the stat columns. */
 .unit-card-overlay--actions {
   flex-direction: column;
   gap: 7px;
@@ -3206,11 +2907,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding-right: 10px;
 }
 
-/* Resurrect, Heal and the favor button are ONE control stack, so they share a
-   footprint. Sized here rather than on each button: the three have different
-   internals (one line vs two, plain text vs badge + label) and would otherwise
-   drift apart every time one of them changed. Because they stack vertically,
-   a difference in width reads as a mistake rather than a hierarchy. */
 .unit-card-overlay--actions > button {
   box-sizing: border-box;
   width: 100%;
@@ -3222,8 +2918,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 4px 10px;
 }
 
-/* Size (width / min-height / padding) is owned by .unit-card-overlay--actions
-   above so all three action buttons match — only the skin lives here. */
 .resurrect-btn {
   background: linear-gradient(180deg,#2563eb,#1243b8);
   color: #fff;
@@ -3246,14 +2940,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .heal-btn[disabled] { opacity: 0.6; cursor: default; }
 
-/* ── Divine favor (rewarded ad) ────────────────────────────────────────────
-   Sits directly above the spell button (same overlay, column order) — it is the
-   fallback when a spell is unaffordable, so it reads as secondary but stays in
-   the same place. Two stacked lines and a hard width cap: as a single row with
-   a long faction label it ran off the portrait and over the stat columns. */
 .favor-btn {
-  /* Column, unlike the single-line spell buttons — but the same footprint,
-     which comes from .unit-card-overlay--actions. */
+
   flex-direction: column;
   gap: 1px;
   background: rgba(10, 12, 16, 0.88);
@@ -3272,8 +2960,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   max-width: 100%;
   min-width: 0;
 }
-/* Required, not decorative: the player has to know this is an ad BEFORE they
-   tap it. Never hide this to make the button tidier. */
+
 .favor-btn-ad {
   flex-shrink: 0;
   background: var(--accent);
@@ -3290,7 +2977,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;   /* ellipsis rather than wrapping, so height never shifts */
+  white-space: nowrap;
 }
 .favor-btn-left {
   color: var(--muted);
@@ -3320,8 +3007,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 16px;
   text-align: center;
 }
-/* Stands in for the ad network's own view. When the real SDK lands this box is
-   what it replaces — everything around it stays. */
+
 .favor-modal-ad {
   position: relative;
   height: 150px;
@@ -3363,7 +3049,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
   font-size: 0.8rem;
   margin: 8px 0 12px;
-  font-variant-numeric: tabular-nums;   /* the digit must not jiggle as it ticks */
+  font-variant-numeric: tabular-nums;
 }
 .favor-modal-cancel {
   background: none;
@@ -3390,7 +3076,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .battle-cell--dead .battle-cell-portrait { filter: grayscale(60%) brightness(0.7); }
 .portrait-card--dead .portrait-art-img { filter: grayscale(60%) brightness(0.6); }
-
 
 .unit-info {
   padding: 5px;
@@ -3426,9 +3111,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 4px;
 }
 
-/* Targets and Range hang off the Action cell as a side delta, like every other
-   stat's. Both carry a label ("Targets +5"), so unlike the single-number deltas
-   they may need two lines — hence the stack. */
 .stat-delta--stack {
   display: flex;
   flex-direction: column;
@@ -3486,8 +3168,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background-repeat: no-repeat;
 }
 
-/* Sits between the arena and the action panel, so it needs breathing room on
-   both sides plus a rule to separate it from the buttons below. */
 .init-queue {
   display: flex;
   flex-direction: row;
@@ -3499,17 +3179,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   scrollbar-width: none;
   -ms-overflow-style: none;
   border-bottom: 1px solid var(--border);
-  /* Same framed panel art the prep track uses, so the queue reads as a physical
-     tray rather than a strip of cards floating on the battle background. */
+
   background-image: var(--img-bottom-ui);
   background-size: cover;
   background-repeat: no-repeat;
 }
 .init-queue::-webkit-scrollbar { display: none; }
 
-/* The queue reuses the formation portrait-card frame (and its lit variant for
-   whoever acts next), so the same art reads the same way in prep and in battle.
-   Only the size and the side strip are queue-specific. */
 .portrait-card--init {
   --portrait-card-h: var(--track-card-h, clamp(46px, 7vh, 62px));
   --portrait-inset: calc(var(--portrait-card-h) * 0.12);
@@ -3518,7 +3194,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: var(--portrait-inset);
   gap: 0;
   position: relative;
-  /* Tappable: the track opens the same unit sheet the grid does. */
+
   cursor: pointer;
 }
 
@@ -3541,7 +3217,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 1rem;
 }
 
-/* Which army the unit belongs to, along the bottom edge of the art. */
 .init-side-strip {
   position: absolute;
   left: var(--portrait-inset);
@@ -3556,8 +3231,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .portrait-card--dead-init { opacity: 0.5; }
 
-/* Slim handle above the log. Sits outside .battle-log because entries prepend
-   (newest first), so a button inside would be pushed down by every new line. */
 .battle-log-bar {
   flex-shrink: 0;
   display: flex;
@@ -3577,30 +3250,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .battle-log-toggle:hover { color: var(--accent); }
 
-/* Takes every pixel the arena and action panel leave behind, instead of being
-   capped at 35vh with dead space under it. flex-basis 0 + min-height 0 is what
-   lets it actually shrink and scroll inside the fixed-height battle column. */
 .battle-log {
   flex: 1 1 0;
   min-height: 68px;
   padding: 6px 10px;
   overflow-y: auto;
   background: var(--bg);
-  border-top: none;   /* .battle-log-bar carries the divider now */
+  border-top: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-/* Expanded, the log takes the height back from the arena rather than growing
-   the page — the battle screen is a fixed-height column. */
-/* The log now fills the column by default, so this only tips the balance
-   further its way rather than setting a fixed height (a hard min-height here
-   would overflow the fixed-height battle screen on a short phone). */
 .battle-log--expanded { flex-grow: 3; }
 
-/* ── Ability info panel ─────────────────────────────────────────────────────*/
-/* Occupies the same slot as the log; the fifth action button swaps them. */
 .battle-info {
   flex: 1 1 0;
   min-height: 68px;
@@ -3646,7 +3309,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .binfo-k { color: var(--muted); text-transform: capitalize; }
 .binfo-v { color: var(--text); font-weight: 700; text-align: right; }
-/* The derived figure, so it reads as a consequence of the number before it. */
+
 .binfo-calc { color: var(--accent); font-weight: 600; }
 .binfo-empty { margin: 0; font-size: 0.8rem; color: var(--muted); }
 .binfo-note {
@@ -3685,23 +3348,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .action-btns { display: flex; gap: 6px; justify-content: center; width: 100%; }
 
-/* One control = an icon TILE plus a caption underneath it. The caption sits
-   outside the button so the tile stays a clean square of art and the border
-   wraps only the thing you press. */
 .action-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  /* Shares the row with the other four rather than holding a fixed width, so
-     five tiles fit on a narrow screen. */
+
   flex: 1 1 0;
   min-width: 0;
 }
 
-/* Always visible, always one of four fixed words - never the action's own name.
-   See btnAction/btnAbility/btnDefend/btnCancel in screens/battle.js. Sized to
-   fit the longest label across both languages. */
 .action-slot-label {
   font-size: 0.5rem;
   font-weight: 700;
@@ -3717,9 +3373,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .action-btns .action-btn {
-  /* Five tiles now, not four. At a fixed 65px they came to ~349px with the gaps
-     and ran off a narrow phone, so they share the row instead: square, capped
-     at the old size, shrinking only when there is not enough width. */
+
   width: 100%;
   max-width: 65px;
   aspect-ratio: 1 / 1;
@@ -3778,10 +3432,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .action-btn--cancel      { border-color: var(--danger); color: var(--danger); }
 .action-btn--disabled    { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
 
-/* The action you are currently aiming. Without this nothing on screen says
-   whether the taps you are about to make will attack or cast. Declared AFTER
-   --disabled because an armed button is also disabled (it cannot be re-pressed)
-   and must still read as the live one. */
 .action-btn--armed.action-btn--disabled,
 .action-btn--armed {
   opacity: 1;
@@ -3812,7 +3462,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-cell--targetable:active { background: #3a1818 !important; }
 .battle-cell--dead { opacity: 0.35; filter: grayscale(1); cursor: default; }
 
-/* ── Battle animations ───────────────────────────────────────────── */
 @keyframes anim-hit {
   0%   { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0); background: transparent; }
   20%  { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0.9); background: rgba(200, 60, 40, 0.25); }
@@ -3858,8 +3507,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   transition: width 0.3s ease;
 }
 
-/* --result-bg is set inline per battle (victory art vs a loading screen); the
-   rest of the layout belongs here, not in a style attribute. */
 .screen-battle-result {
   display: flex;
   align-items: center;
@@ -3881,8 +3528,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 1rem;
 }
 
-/* One word at the head of the rewards panel - the old boxed banner and the
-   3rem emoji headline are gone; the victory art carries the moment. */
 .result-outcome {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.15rem;
@@ -3907,8 +3552,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   width: 100%;
 }
 
-/* The victory art is the backdrop; the panel is a plain black block on top of
-   it, with no card chrome around it (see .result-content). */
 .result-content {
   max-width: 500px;
   width: 100%;
@@ -3935,10 +3578,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .result-reward-row span { color: var(--accent); font-weight: bold; }
 .result-log { font-size: 0.75rem; color: var(--muted); }
 
-/* Victory reward chips — icon-forward, wrapping grid. */
-/* Three across, one row per three rewards. A column each was a full-width bar
-   per drop, so a level paying gold + two crystals + two trophies filled the
-   screen with five near-empty rows. */
 .reward-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3959,10 +3598,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .reward-chip-icon .res-icon-img,
 .reward-chip-img { width: 28px; height: 28px; display: block; object-fit: contain; }
 .reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
-/* ── Per-unit XP on the victory screen ─────────────────────────────────────
-   Portrait, name, what this unit earned, and how close that leaves it to its
-   next tier. Sized off the reward chips above so the panel reads as one list
-   rather than two stacked components. */
+
 .reward-xp-block {
   margin-top: 14px;
   padding-top: 12px;
@@ -3986,8 +3622,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-radius: 10px;
   padding: 6px 10px 6px 6px;
 }
-/* Earned it while dead (Unending Servitude) — dimmed so the list still reads
-   as "who fought" at a glance without hiding the award. */
+
 .reward-xp-row--fallen .reward-xp-portrait { filter: grayscale(70%) brightness(0.7); }
 .reward-xp-portrait {
   width: 38px;
@@ -4032,7 +3667,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-align: center;
 }
 
-
 .battle-cell-portrait {
   position: absolute;
   inset: 0;
@@ -4045,22 +3679,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   z-index: 0;
 }
 
-/* Enemy art is drawn facing the same way as the player's, which on the enemy
-   half means every unit has its back to the fight. Mirrored so both sides face
-   each other across the grids.
-
-   Scoped to the half rather than to .battle-cell--enemy: that class is set in an
-   else-if chain, so an enemy that is acting, targetable or selected does not
-   carry it and would flip back mid-turn.
-
-   On the IMG only — the buff and debuff icon columns are siblings, so they keep
-   their own left/right sides and stay the right way round. */
 .battle-half--enemy .battle-cell-portrait { transform: scaleX(-1); }
 
-/* Standing states on a portrait: BUFFS down the right edge, DEBUFFS down the
-   left, both filling top-down. Two columns rather than one wrapping strip so a
-   glance tells you which side of the ledger an icon is on without reading it.
-   Icons are the ability art from /assets/icons/abilities. */
 .bc-buff-icons,
 .bc-debuff-icons {
   position: absolute;
@@ -4088,20 +3708,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border: 1px solid rgba(0, 0, 0, 0.75);
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
 }
-/* One ring colour per column, so the side is readable even on a busy portrait:
-   warm for what helps this unit, cold-red for what is being done to it. */
+
 .bc-buff-icons   .bc-state-img { outline: 1px solid rgba(120, 220, 150, 0.85); }
 .bc-debuff-icons .bc-state-img { outline: 1px solid rgba(235, 95, 85, 0.85); }
-/* A handful of states keep their own colour - these are the ones players track
-   by sight rather than by reading the icon. */
+
 .bc-state--rage        .bc-state-img { outline-color: rgba(255, 90, 60, 0.95); }
 .bc-state--fanaticism  .bc-state-img { outline-color: rgba(255, 205, 90, 0.95); }
 .bc-state--aegis       .bc-state-img { outline-color: rgba(120, 190, 255, 0.95); }
 .bc-state--stun        .bc-state-img { outline-color: rgba(255, 230, 120, 0.95); }
 .bc-state--invulnerable .bc-state-img { outline-color: rgba(255, 255, 255, 0.9); }
 
-/* Overflow tile: "+2" when more states are active than the column can show.
-   Its tooltip lists what is hidden (see MAX_STATE_ICONS in screens/battle.js). */
 .bc-state--more {
   display: flex;
   align-items: center;
@@ -4117,8 +3733,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: #fff;
 }
 
-/* The count sits ON the icon, bottom-right, rather than beside it - the cell has
-   no horizontal room to spare. Hidden at 1 (see stateIconsHtml). */
 .bc-state-num {
   position: absolute;
   right: -3px;
@@ -4135,8 +3749,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-shadow: 0 0 2px #000;
 }
 
-/* One-shot coloured pulse over the portrait when a DoT ticks. Inserted before
-   .battle-cell-info and given no z-index so the text stays legible above it. */
 .bc-status-flash {
   position: absolute;
   inset: 0;
@@ -4165,8 +3777,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border: 1px solid var(--border);
 }
 
-/* Faction-independent, so it lives here rather than in SCREEN_BACKGROUNDS
-   (utils.js), which keys every screen's art by faction. */
 .screen-battle-prep {
   padding: 0;
   display: flex;
@@ -4193,27 +3803,21 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  /* gap: 5px; */
+
   flex: 1;
 }
 
-/* ── Power ──────────────────────────────────────────────────────────────────
-   One strip per side, directly under its grid. Five pips rather than a number:
-   the question being asked is "can I afford the spell I want", and pips answer
-   it at a glance. The player's own strip is also the button that opens the
-   spell list — the resource and the thing it buys are one control. */
 .power-strip {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   height: 14px;
-  /* margin: 0; */
+
   margin-top: -5px;
   margin-bottom: 3px;
   padding: 0 6px;
-  /* border: 1px solid var(--border);
-  border-radius: 7px; */
+
   background: rgba(10, 14, 20, 0.6);
   font-family: inherit;
   cursor: default;
@@ -4222,7 +3826,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .power-pip {
   flex: 1;
-  /* max-width: 22px; */
+
   height: 10px;
   border-radius: 3px;
   background: #1e2735;
@@ -4234,16 +3838,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 4px var(--accent);
 }
 
-/* Enough power AND the hero's turn: the strip invites a tap. */
 .power-strip--ready {
   cursor: pointer;
-  /* border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.35); */
+
 }
 .power-strip--ready:active { transform: scale(0.98); }
 
-/* Hero down — this side will never cast again, so the strip says so rather
-   than showing a number that cannot change. */
 .power-strip--spent { opacity: 0.25; }
 
 .power-strip--enemy .power-pip--full {
@@ -4251,9 +3851,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 4px var(--danger);
 }
 
-/* ── Spell casting sheet ───────────────────────────────────────────────── */
-/* The picker: every researched spell visible at once as art, with one detail
-   panel below. Scrolls horizontally only if the collection outgrows the width. */
 .spell-track {
   display: flex;
   gap: 8px;
@@ -4287,7 +3884,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-radius: 6px;
   display: block;
 }
-/* Reserve the panel's height so switching spells does not jolt the sheet. */
+
 .spell-detail { min-height: 190px; }
 .spell-detail .spell-cast-name { font-size: 1rem; }
 
@@ -4317,8 +3914,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
   margin-right: 2px;
 }
-/* One button per affordable power level. The same spell is a cheap patch at 1
-   and a turning point at 5, so the choice is the interesting part. */
+
 .spell-power-opt {
   width: 30px;
   height: 30px;
@@ -4362,8 +3958,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 5px;
 }
 
-/* One header bar across both grids: player stats | launch button | enemy stats.
-   Both sides share a single type scale so neither reads as the louder one. */
 .battle-prep-header {
   display: flex;
   align-items: center;
@@ -4446,35 +4040,23 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 24px 15px;
 }
 
-/* ── Attrition aura ─────────────────────────────────────────────────────────
-   Battle Fatigue and the Withering are the clock on every fight, and until now
-   they announced themselves with one line in the log and then ran invisibly.
-   Both grids burn from their frames inward: amber as healing weakens, deep red
-   once the field starts killing outright. Intensity comes from the two
-   variables battle.js sets on .battle-arena (0..1 each), so the glow deepens
-   with every round and the two STACK — late in a long fight both are lit.
-   At 0 the shadows compute to zero blur and full transparency, so a fresh
-   battle pays nothing for this. */
 .battle-grid-wrap::before {
   content: '';
   position: absolute;
-  /* Just inside the frame art, so the light reads as coming off the frame
-     rather than as a rectangle drawn over the board. */
+
   inset: 6px;
   pointer-events: none;
-  /* Above the frame (z-index 10) — the frame is what is glowing. */
+
   z-index: 11;
   box-shadow:
     inset 0 0 calc(var(--attrition-warm, 0) * 26px) calc(var(--attrition-warm, 0) * 5px)
       rgba(196, 88, 16, calc(var(--attrition-warm, 0) * 0.55)),
     inset 0 0 calc(var(--attrition-dire, 0) * 36px) calc(var(--attrition-dire, 0) * 8px)
       rgba(146, 18, 18, calc(var(--attrition-dire, 0) * 0.78));
-  /* Long, so a round tick reads as the pressure deepening rather than as a
-     state flipping. */
+
   transition: box-shadow 0.8s ease;
 }
 
-/* Only while something is actually burning — an idle element must not animate. */
 .battle-arena--fatigued .battle-grid-wrap::before {
   animation: attrition-breathe 3.4s ease-in-out infinite;
 }
@@ -4531,41 +4113,25 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 0;
 }
 
-/* battle.js toggles .battle-cell--bark-active and .battle-grid--bark while a
-   unit is speaking, and the dismiss logic reads them to tell whether any cell is
-   still mid-bark. They are load-bearing: the toast floats ABOVE its tile rather
-   than inside it, so it has to punch out through the cell's overflow and the
-   grid has to sit above its own frame art. */
 .battle-cell--bark-active {
-  overflow: visible;   /* the cell clips by default; the toast must escape it */
-  z-index: 21;         /* over its neighbours, and over .battle-grid-wrap::after */
+  overflow: visible;
+  z-index: 21;
 }
 
-/* .battle-grid sits at z-index 1, under the frame art in .battle-grid-wrap::after
-   (z-index 10). A cell's own z-index cannot escape that stacking context, so the
-   GRID has to be lifted while anyone is speaking or the bark renders behind the
-   frame. */
 .battle-grid--bark { z-index: 20; }
 
-/* Centred ON the portrait, not above it. As a caption band across the tile's
-   lower edge it read as part of the portrait art; floated above the tile it sat
-   too far from the speaker (and drifted off the top row entirely). Over the
-   middle of the portrait it reads as that unit speaking.
-   The rounded pill shape is what makes it read as speech. */
 .bark-toast {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  /* Sized to the LINE, not to the cell. Clamped to the cell width it turned into
-     a tall narrow column of two-word lines; a bark is one spoken sentence and
-     should read as one. Overflowing the tile is fine and expected here. */
+
   width: max-content;
   max-width: 240%;
   overflow: hidden;
   background: rgba(17, 19, 24, 0.94);
   border: 1px solid var(--accent);
-  border-radius: 16px;   /* oval-ish: a speech shape, not a panel */
+  border-radius: 16px;
   padding: 5px 11px;
   font-size: 0.6rem;
   line-height: 1.3;
@@ -4577,29 +4143,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
   animation: bark-toast-in 0.18s ease-out;
 }
 
-/* The formation FOLLOW-UP — the unit acknowledging it is now where it wanted to
-   be. Green rather than the accent gold, so a glance says "settled" instead of
-   "still complaining"; everything else about the shape is deliberately the same,
-   since it is the same voice speaking. */
 .prep-bark-toast--ok {
   border-color: #6aaa5a;
   color: #d6ebd0;
 }
 
-/* Settles up into place. BOTH centring offsets have to be carried through every
-   keyframe — transform is doing the positioning here, so dropping either one
-   snaps the toast a half-size sideways or downward as the animation ends. */
 @keyframes bark-toast-in {
   from { opacity: 0; transform: translate(-50%, calc(-50% + 5px)); }
   to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
-/* ── Aegis: the standing ward ───────────────────────────────────────────────
-   The proc FLASH is a PIXI effect; this is the STATE it leaves behind. Drawn in
-   CSS on the cell rather than on the canvas because it has to persist between
-   animations and survive re-renders — a PIXI layer is torn down when its effect
-   ends. --aegis-level (1-4) is set by battle.js from the unit's accumulated
-   armor/resist, so the ward visibly hardens as the round wears on. */
 .battle-cell--aegis {
   --aegis-i: var(--aegis-level, 1);
   position: relative;
@@ -4610,7 +4163,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   inset: 1px;
   border-radius: 3px;
   pointer-events: none;
-  z-index: 4;   /* over the portrait, under the status icons and bark */
+  z-index: 4;
   border: calc(1px + var(--aegis-i) * 0.5px) solid
           rgba(138, 192, 255, calc(0.30 + var(--aegis-i) * 0.15));
   box-shadow:
@@ -4618,8 +4171,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
           0 0 calc(var(--aegis-i) * 3px) rgba(106, 160, 255, calc(0.12 + var(--aegis-i) * 0.08));
   animation: aegis-breathe 2.4s ease-in-out infinite;
 }
-/* Alive, but only just — a ward that pulsed hard would compete with the acting
-   unit's own highlight every single turn. */
+
 @keyframes aegis-breathe {
   0%, 100% { opacity: 0.78; }
   50%      { opacity: 1; }
@@ -4648,9 +4200,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #1a2a1a;
   cursor: grab;
   position: relative;
-  /* Let pointer-drag work on touch: without this the browser hijacks the
-     press-and-drag as a scroll/pan and fires pointercancel, so grid→grid drag
-     never starts on mobile (roster→grid already works via .portrait-card). */
+
   touch-action: none;
 }
 
@@ -4717,15 +4267,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1;
 }
 
-/* Sits in .battle-prep-header, in the gap between the two power readouts.
-   Art-only button: no chrome of its own, the PNG is the button. */
 .battle-prep-enter-btn {
   flex-shrink: 0;
   position: relative;
   border: none;
   background: none;
-  /* Padding is the tap target, not decoration - the art alone is a small hit
-     area for a thumb, and this is the screen's primary action. */
+
   padding: 6px 10px;
   margin: -6px -10px;
   font-family: inherit;
@@ -4733,8 +4280,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
   line-height: 0;
   cursor: not-allowed;
-  /* Unplaced hero = not ready: drained and dim, so "ready" reads as the art
-     lighting up rather than as a colour change. */
+
   filter: grayscale(85%) brightness(0.55);
   opacity: 0.6;
   transition: filter 0.25s, opacity 0.25s, transform 0.1s;
@@ -4749,9 +4295,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   z-index: 1;
 }
 
-/* The glow is its own layer behind the art: a radial bloom that breathes, so
-   the light spills past the button's edges instead of tracing its alpha mask
-   the way a drop-shadow does. */
 .battle-prep-enter-btn::before {
   content: '';
   position: absolute;
@@ -4803,18 +4346,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-prep-tab-content {
   display: none;
   flex-shrink: 0;
-  /* Pushed to the bottom of the screen so the track rests directly on the
-     bottom nav rather than floating with a gap under it. */
+
   margin-top: auto;
 }
 
-/* The unit track must survive a viewport shorter than the layout wants — on iOS
-   in full-size app mode the shell can end up taller than what is actually on
-   screen, and because .screen-battle-prep is overflow:hidden the track was
-   simply pushed past the fold and vanished, with nothing to scroll it back.
-   The ARENA gives up the space instead: it may shrink, and its rows collapse
-   with it, so the track (flex-shrink: 0, with its own min-height) always keeps
-   its place on screen. Scoped to prep — the battle screen sizes differently. */
 .screen-battle-prep .battle-arena {
   flex-shrink: 1;
   min-height: 0;
@@ -4832,9 +4367,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .prep-track-wrap {
-  /* Height reserved by the wrapper so an empty track ('All units placed',
-     'Nothing matches these filters') keeps the strip the same size and
-     nothing below it moves. Overridden per track by the rules below. */
+
   --track-card-h: clamp(52px, 8vh, 74px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
@@ -4842,8 +4375,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow-y: hidden;
   padding: 8px 10px 0;
   -webkit-overflow-scrolling: touch;
-  /* Scrollbar chrome is hidden everywhere a portrait track scrolls; swipe and
-     drag still work, and the bar itself was eating vertical space. */
+
   scrollbar-width: none;
   -ms-overflow-style: none;
   background-image: var(--img-bottom-ui);
@@ -4853,9 +4385,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .prep-track-wrap::-webkit-scrollbar { display: none; }
 
-/* The arrows flank the scroller and sit on the same framed art, so the three
-   read as one tray. They exist because the cards cannot give up touch-action
-   (see .portrait-card) and therefore swallow any swipe that starts on them. */
 .prep-track-row {
   display: flex;
   align-items: stretch;
@@ -4874,7 +4403,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1;
   padding: 0;
   cursor: pointer;
-  touch-action: manipulation;   /* a tap target, never a drag surface */
+  touch-action: manipulation;
   opacity: 0.85;
 }
 .prep-track-arrow:active { opacity: 1; }
@@ -4896,8 +4425,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 0 2px var(--accent);
 }
 
-/* Occupies the same box a row of cards would, so swapping between "some items"
-   and "no items" never changes the strip's height. */
 .track-empty-hint {
   font-size: 0.72rem;
   color: var(--muted);
@@ -4910,35 +4437,27 @@ button.cost-bar-item:active { transform: scale(0.9); }
   width: 100%;
 }
 
-/* The whole card is wrapped in the ornate formation frame art; its content
-   (portrait, name, size) is inset with padding so it sits in the grey inner
-   panel, not on the border. background-color is a fallback until formation.png
-   exists. Hero/selected use a glow (box-shadow) since the art owns the border. */
 .portrait-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* No gap: the card is the portrait inside its frame now, nothing to space. */
+
   width: 65px;
   height: 90px;
   box-sizing: border-box;
-  /* top / sides / bottom padding ≈ the frame's border thickness */
+
   padding: 11px 9px 12px;
   cursor: grab;
   flex-shrink: 0;
-  /* background-color: #14181f; */
+
   background-image: var(--img-formation);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   user-select: none;
-  /* Must stay `none`. pan-x lets iOS Safari claim the gesture and fire
-     pointercancel, which kills drag-to-grid on iPhone entirely. The track is
-     scrolled with the arrow buttons (.prep-track-arrow) instead. */
+
   touch-action: none;
 }
 
-/* Selection swaps the frame art for its lit variant. The hero gets no special
-   highlight: they always occupy the first slot, which says it already. */
 .portrait-card:active,
 .portrait-card--selected {
   background-image: var(--img-formation-highlight);
@@ -5541,11 +5060,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
 }
 
-/* The grounds now TAKE the leftover height instead of being sized by the nodes
-   inside them. Previously the 3x3 grid was fixed at 160px a row (~500px), the
-   nodes drew their portrait art with `contain` inside those boxes, and whatever
-   the art did not fill became dead space at the top and bottom of the screen —
-   about a fifth of it, and 5-7vh of overflow on a short viewport. */
 .castle-grounds {
   display: flex;
   flex-direction: row;
@@ -5566,14 +5080,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   pointer-events: none;
 }
 
-/* Four rows of three. The rows are sized directly rather than shared out of the
-   wrap's height, so a node is 18vh whatever the screen does and the grid stops
-   growing where the nodes do — the old aspect-ratio + 1fr rows stretched the
-   cells and left slack inside each one. */
 .castle-grid-wrap {
   position: relative;
-  /* Sized by its cells, not by the space available — the columns carry the
-     node proportion, so the grid is exactly as wide as three nodes. */
+
   width: max-content;
   max-width: 100%;
   margin: 0 auto;
@@ -5590,22 +5099,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .outer-ring .castle-node {
   width: 100%;
   height: 100%;
-  /* Flat fill, not slot art. The ornate frame comes from ::after; a second
-     framed image underneath it was just a smaller frame inside the first. */
+
   background-color: var(--bg);
-  /* The grid row IS the size now; a min-height here would put the overflow back.
-     A MAX height is different: it stops the nodes stretching on a tall screen,
-     and 152px is the 160 that fit, less the 5% trim. */
+
   min-height: 0;
   min-width: 0;
   max-height: var(--castle-node-h);
 }
 
-/* An empty slot is the SAME object as an occupied one with nothing in it, so it
-   wears the same frame (::after, below) and puts its niche art in the same
-   window the portrait uses. It used to draw a different image across its whole
-   box instead — the two arts carry different internal margins, so the empty
-   frame read as a smaller node even though both boxes measured identically. */
 .outer-ring .castle-node.castle-node--empty {
   background-color: var(--surface);
   background-origin: content-box;
@@ -5613,21 +5114,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: var(--node-frame-inset);
 }
 
-/* Placed by SLOT ID, not by position in the markup. nth-child broke the moment
-   the slot count changed, and it silently mis-seated every node for a player
-   whose saved record was missing a slot: the ids are stable, the order they
-   happen to render in is not.
-
-   Layout — the hero sits in the top row between two barracks, the specials get
-   the bottom row to themselves:
-
-       slot_1   HERO   slot_2
-       slot_3  slot_4  slot_5
-       slot_9  slot_10 slot_11
-       slot_6  slot_7  slot_8     <- special
-
-   Slots 9-11 are the new ones; every other id keeps the square it can be built
-   in, so nothing an existing player owns moves. */
 .outer-ring .castle-node[data-slot="slot_1"]  { grid-column: 1; grid-row: 1; }
 .outer-ring .castle-node[data-slot="slot_2"]  { grid-column: 3; grid-row: 1; }
 .outer-ring .castle-node[data-slot="slot_3"]  { grid-column: 1; grid-row: 2; }
@@ -5653,14 +5139,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .castle-node {
-  /* Inset to the frame art's border thickness, measured off building_slot1.png:
-     its transparent window starts 7.1% in from each side and 4.3% up from the
-     bottom (6.9% of WIDTH — percentage padding always resolves against the
-     inline axis, and the node is 0.62 wide-to-tall).
-     The top deliberately does NOT use the art's 12.8% crown inset. Reserving
-     that left a bare strip of node colour above the portrait wherever the crown
-     is transparent; the portrait now runs up under the ornament, which paints
-     over it at z-index 2. */
+
   --node-frame-inset: 7.1% 7.1% 6.9%;
   display: flex;
   flex-direction: column;
@@ -5672,15 +5151,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-align: center;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  /* NO background-color here. It used to sit on every node as a floor for the
-     portrait, but an EMPTY slot draws its frame art with `contain` and does not
-     clip its background — so the colour painted the node's full rectangle while
-     the art only covered the arch inside it, and the block spilled out past the
-     frame on every side. The floor belongs to the portrait variant alone, which
-     clips it to the content box (see .castle-node--portrait). */
+
   padding: 3px;
-  /* Anchor for the HP bar / dead marker, which are absolutely positioned. The
-     portrait variant sets this too, but a glyph-only node needs it as well. */
+
   position: relative;
 }
 
@@ -5707,50 +5180,22 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .castle-node--clickable { cursor: pointer; }
 
 .castle-node-icon  { font-size: 1rem; line-height: 1; }
-/* A slot exists to house a unit, so that unit's portrait fills the node and the
-   glyph is dropped. The label has to stay readable over arbitrary art, hence
-   the gradient scrim behind the text rather than a flat tint over the whole
-   image (which would wash the portrait out).
 
-   Doubled class (.castle-node.castle-node--portrait) is deliberate, not a typo:
-   `.outer-ring .castle-node` above sets background-size: contain / position:
-   center at two-class specificity. A single `.castle-node--portrait` loses to
-   it, so the portrait was being drawn contained and centred inside the frame —
-   a small floating crop that reads as "the portrait feature is broken" even
-   though the image had loaded fine. Matching that specificity is what makes
-   cover/top actually apply. */
 .castle-node.castle-node--portrait {
   position: relative;
-  /* `cover`, not `contain`. The portraits are 2:3 and the frame's window is
-     narrower than that, so `contain` scaled them to the window's WIDTH and left
-     a dead strip of backing colour above and below — the portrait read as
-     slightly too small for its frame. `cover` fills the window and crops the
-     sides instead; overflow:hidden plus the content-box clip below keep it from
-     ever painting past the frame. */
+
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   justify-content: flex-end;
-  /* The frame art is drawn by ::after across the node's FULL box, so a portrait
-     painted across that same box runs underneath the border and out to the
-     node's edges. Clipping the portrait AND its backing colour to the content
-     box holds both inside the frame's window; the padding is the frame's
-     visual thickness. ::after is a separate box, so the frame itself still
-     spans the node edge-to-edge.
-     Portrait nodes only — an empty slot uses its frame art AS the background,
-     which has to keep the full box or the frame would shrink inside itself. */
+
   padding: var(--node-frame-inset);
   background-origin: content-box;
   background-clip: content-box;
-  /* The floor the portrait is composited onto. `contain` means the image does
-     not fill the node, so without this the letterboxed strips would show the
-     castle grounds through the frame's window. Clipped to the content box by
-     the two lines above, which is what keeps it inside the frame — the reason
-     it cannot live on the base .castle-node. */
+
   background-color: var(--bg);
 }
-/* No scrim: it was darkening the bottom of every portrait to carry a label that
-   is no longer drawn there, and taking the HP/XP bars down with it. */
+
 .castle-node--portrait::before {
   content: '';
   position: absolute;
@@ -5760,11 +5205,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .castle-node--portrait > * { position: relative; z-index: 1; }
 .castle-node--portrait .castle-node-label { color: var(--text); font-weight: 700; }
 
-/* Frame art laid OVER the portrait — the slot reads as a mounted plate rather
-   than a bare crop. Sits above both the image and the label (z-index 2) and
-   never takes a click, so the whole node stays one tap target.
-   100% 100% rather than cover: this is a border, and it has to meet the node's
-   edges exactly instead of being cropped to preserve its aspect ratio. */
 .castle-node--portrait::after,
 .outer-ring .castle-node--empty::after {
   content: '';
@@ -5785,10 +5225,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
   white-space: normal;
 }
-/* .castle-node-level moved up beside .castle-node-bars, where the element that
-   uses it now lives. The rule that stood here belonged to an older node layout
-   that no longer emits any of these classes, and being later in the file it
-   silently overrode the live one's colour and size. */
+
 .castle-node-timer { font-size: 0.65rem; }
 .castle-node-ready { font-size: 0.65rem; color: #6aaa5a; }
 .castle-node-hint  {
@@ -6013,7 +5450,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   margin: 0;
 }
 
-/* Throne perk choice (level 2/3/4 branching boon). */
 .throne-perk-choice { display: flex; flex-direction: column; gap: 10px; }
 .throne-perk-intro  { font-size: 0.82rem; color: var(--muted); margin: 0 0 2px; text-align: center; }
 .throne-perk-card {
@@ -6166,8 +5602,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   letter-spacing: 0.04em;
 }
 
-/* The hook, in the faction's own voice — brighter than the explanation under
-   it so the story lands before the mechanics do. */
 .pvp-placeholder-lead {
   font-size: 0.95rem;
   color: var(--text);
@@ -6181,7 +5615,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1.5;
 }
 
-/* Kept last and quiet: this is a roadmap screen, not a feature. */
 .pvp-placeholder-soon {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -6554,13 +5987,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1;
   z-index: 2;
 }
-/* ---------- Item equip slot (unit card abilities row) ---------- */
+
 .ability-icon--item {
   border-color: #3a2e14;
-  /* Same border weight as the card, so a mythic reads the same on both. */
+
   border-width: var(--rarity-border);
 }
-/* Rarity tint on the equipped-item slot icon, matching the item cards. */
+
 .ability-icon--rarity-common { border-color: var(--rarity-common); }
 .ability-icon--rarity-rare   { border-color: var(--rarity-rare); }
 .ability-icon--rarity-epic   { border-color: var(--rarity-epic); }
@@ -6584,7 +6017,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 1.2rem;
 }
 
-/* ---------- Items modal ---------- */
 .items-modal {
   display: flex;
   flex-direction: column;
@@ -6593,11 +6025,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   max-height: 70vh;
 }
 
-/* ── Item sheet chrome ──────────────────────────────────────────────────────
-   Tabs pick WHAT is listed (equippable / owned / craftable); the chip rows below
-   narrow it by rarity and by what the item actually does. The free-text search
-   is gone: on a phone, tapping a short list of chips beats typing, and nobody
-   searches an inventory this size by name. */
 .items-tabs {
   display: flex;
   flex-shrink: 0;
@@ -6666,8 +6093,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: rgba(200, 151, 58, 0.14);
 }
 
-/* Rarity chips carry their own colour so the filter reads like the cards it
-   filters — same palette as .item-card--rarity-*. */
 .items-chip--rarity-common  { color: var(--rarity-common); }
 .items-chip--rarity-rare    { color: var(--rarity-rare); }
 .items-chip--rarity-epic    { color: var(--rarity-epic); }
@@ -6678,12 +6103,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .items-chip--rarity-mythic.items-chip--active  { border-color: var(--rarity-mythic); background: color-mix(in srgb, var(--rarity-mythic) 14%, transparent); }
 
 .items-chip--toggle { font-weight: 700; }
-/* No tick prefix: it changed the chip's width, nudging the row on every tap. */
 
-/* Rarity and stat/trait are dropdowns rather than chip rows. A chip row has to
-   show every option at once, which is what pushed the longer Russian labels off
-   the right edge; a select shows one and keeps the rest in the native picker.
-   Styled to read as a wider sibling of .items-chip. */
 .items-filter-row--selects {
   gap: 8px;
   padding: 2px 8px 3px;
@@ -6704,8 +6124,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   letter-spacing: 0.02em;
   padding: 5px 26px 5px 12px;
   cursor: pointer;
-  /* Native chevron replaced so the control matches the app in both themes and
-     on iOS, which otherwise draws its own and ignores the border radius. */
+
   appearance: none;
   -webkit-appearance: none;
   background-image:
@@ -6722,16 +6141,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-color: var(--accent);
 }
 
-/* The options themselves are drawn by the OS: without an explicit background
-   the list renders white-on-white in a dark app on several Android builds. */
 .items-select option,
 .items-select optgroup {
   background: var(--surface);
   color: var(--text);
 }
 
-/* The closed rarity select carries the colour of what it is showing, the way
-   the rarity chips used to — same palette as .item-card--rarity-*. */
 .items-select--rarity-common  { color: var(--rarity-common); border-color: var(--rarity-common); }
 .items-select--rarity-rare    { color: var(--rarity-rare);   border-color: var(--rarity-rare); }
 .items-select--rarity-epic    { color: var(--rarity-epic);   border-color: var(--rarity-epic); }
@@ -6768,9 +6183,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow-y: auto;
 }
 
-/* Rarity border. Placed after --equipped so rarity owns the border; the equipped
-   state is shown as a glow ring below instead of a border colour. Same width for
-   every rarity — thickness is not the signal, colour is. */
 .item-card--rarity-common { border: var(--rarity-border) solid var(--rarity-common); }
 .item-card--rarity-rare   { border: var(--rarity-border) solid var(--rarity-rare); }
 .item-card--rarity-epic   { border: var(--rarity-border) solid var(--rarity-epic); }
@@ -6784,7 +6196,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   opacity: 0.7;
 }
 
-/* Craftable-right-now catalog cards read at full strength and get an accent ring. */
 .item-card--catalog.item-card--available {
   opacity: 1;
   box-shadow: 0 0 0 1px var(--accent);
@@ -6794,8 +6205,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
 }
 
-/* Sits in the card's left rail under the rarity label (it used to be absolutely
-   positioned over the corner, from the old single-column layout). */
 .item-card-unique {
   font-size: 0.58rem;
   font-weight: 700;
@@ -6889,9 +6298,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   cursor: default;
 }
 
-/* The disabled button carries the reason as its label. It has to wrap — a lock
-   requirement is a sentence, not a word — and it reads as a blocker rather than
-   as a dimmed action, which is why it keeps a warm tone against the dead grey. */
 .item-action-btn--blocked {
   white-space: normal;
   font-size: 0.7rem;
@@ -6919,9 +6325,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: #c0392b;
 }
 
-/* ── Deconstruction ─────────────────────────────────────────────────────────
-   Respec / demolish UI. Deliberately quieter than the upgrade button: these are
-   corrective actions, not the thing the player is meant to reach for. */
 .deconstruct-link {
   display: block;
   width: 100%;
@@ -6937,8 +6340,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .deconstruct-link:active { background: rgba(255, 255, 255, 0.05); }
 
-/* Carries its own inset now that .modal-body has none — this sheet is words and
-   buttons, which must not sit against the frame. */
 .deconstruct-body { display: flex; flex-direction: column; gap: 12px; padding: 8px; }
 
 .deconstruct-intro {
@@ -6961,8 +6362,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .deconstruct-btn:active { background: rgba(200, 74, 58, 0.22); }
 
-/* Respec is not destruction — the unit keeps its XP — so it does not wear the
-   danger colour that Demolish does. */
 .deconstruct-btn--respec {
   border-color: var(--accent);
   background: rgba(255, 255, 255, 0.04);
@@ -6979,12 +6378,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .deconstruct-warn { color: var(--danger); opacity: 0.85; }
 
-/* Branch picker in the castle upgrade sheet: at most three paths, shown as
-   portrait cards (same frame + lit-selected art as the formation track) rather
-   than arrows and dots that hid the alternatives. */
 .branch-track-wrap {
-  /* Reserved by the WRAPPER so an empty list keeps the strip's height and
-     nothing below it jumps. The cards inherit this value. */
+
   --track-card-h: clamp(64px, 10vh, 86px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
@@ -6994,9 +6389,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .branch-track-wrap::-webkit-scrollbar { display: none; }
 
-/* width:max-content + auto margins: the row CENTRES while the cards fit and
-   SCROLLS once they do not, instead of squashing them or letting them run under
-   the buttons. scroll-padding keeps a scrolled-to card clear of both edges. */
 .branch-track-wrap .portrait-track {
   justify-content: flex-start;
   width: max-content;
@@ -7027,24 +6419,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 0.5rem;
 }
 
-/* ── action | portrait track | action ───────────────────────────────────────
-   One thumb-height strip: a framed button on each side of a portrait picker.
-   Used by the castle upgrade sheet (build / deconstruct) and by hero selection
-   in registration (back / choose). */
 .track-action-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  /* padding: 6px 2px 2px; */
+
 }
 
 .track-action-row .branch-track-wrap {
   flex: 1 1 0;
   min-width: 0;
-  /* Its own scroll container, so cards pass under nothing but its own edges. */
+
   overflow-x: auto;
-  /* padding: 0; */
+
   scroll-padding-inline: 8px;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
@@ -7052,38 +6440,18 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .track-action-row .portrait-card--branch { scroll-snap-align: center; }
 
-/* Build and deconstruct belong INSIDE the framed panel that holds the upgrade
-   portraits, not flanking it from the outside: the art spans the whole row so
-   the three controls read as one object — build, portraits, deconstruct.
-   The art moves up to the row; the inner wrapper keeps the horizontal scrolling
-   (the buttons must stay put while the cards move under them) but gives up its
-   own copy of the background, which would otherwise paint a second time behind
-   the portraits. Used by the castle's build/upgrade slider and the register
-   screen's hero picker — the two rows built to this shape. */
 .track-action-row--framed {
   background-image: var(--img-bottom-ui);
   background-size: cover;
   background-repeat: no-repeat;
-  /* Padding longhands rather than the shorthand: .hero-action-row sets its own
-     padding-bottom to clear the safe-area inset, and a shorthand here would
-     silently drop it on a notched phone. */
-  /* padding-top: 6px; */
+
   padding-right: 6px;
   padding-left: 6px;
   gap: 4px;
-  /* Pinned to the EDGES, not centred. Two rows share this class and they hold
-     different things: the build slider is `action | portraits | action`, where
-     the track's flex kept the buttons apart, but the slot sheet is just the two
-     buttons — which then sat centred and touching, and slid sideways whenever
-     the row's contents changed (upgrade button vs. the "maxed" label, which
-     carries flex: 1). space-between puts the first control hard left and the
-     last hard right in BOTH, so the deconstruct button lives at the same edge
-     no matter what else is in the row. */
+
   justify-content: space-between;
 }
 
-/* Stands in for the upgrade button on a maxed building, so the action row keeps
-   its shape instead of the deconstruct button sliding across to fill the gap. */
 .castle-slot-maxed {
   flex: 1;
   text-align: center;
@@ -7097,23 +6465,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .frame-action {
-  /* Must equal the height of the portrait cards it flanks EXACTLY. This was a
-     hardcoded 84px, which only matched .portrait-card--branch when 10vh
-     happened to land on 84 — at every other viewport height the build and
-     deconstruct buttons sat short or tall against the portraits. Sharing the
-     one expression (and the same --track-card-h override) is what makes them
-     agree at every height instead of at one.
-     Every property the global `button` rule sets is reset here, so a framed
-     action never inherits the app's default gold pill. */
+
   --portrait-card-h: var(--track-card-h, clamp(64px, 10vh, 86px));
   margin: 0;
-  /* STRETCH, not centre. Computing the same height expression as the portrait
-     cards only matches them while the cards actually obey it — the moment a
-     card grows past it (art with its own intrinsic height, a longer name
-     wrapping) the buttons stayed short and sat centred against taller
-     portraits. Stretching makes them exactly as tall as the row, so they match
-     the cards by construction rather than by both arriving at the same number.
-     min-height keeps the row honest when there are no portraits in it at all. */
+
   align-self: stretch;
   flex: 0 0 auto;
   width: calc(var(--portrait-card-h) * 0.80);
@@ -7141,34 +6496,24 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .frame-action { color: var(--accent); }
-/* Deconstruct is the one action that gets a different colour, because it is the
-   destructive one; back / confirm / build all read as the same control. */
+
 .frame-action--deconstruct { color: var(--danger); }
 
-/* Keeps the picker centred when a slot offers no deconstruct (a fresh build). */
 .frame-action--spacer {
   background: none;
   pointer-events: none;
 }
 
-/* Waiting for a choice, not broken: the frame stays, the glyph dims. Keeping
-   the button in the row at all times is the point — a control that vanishes
-   moves everything beside it and never teaches the player where it lives. */
 .frame-action:disabled {
   opacity: 0.4;
   cursor: default;
 }
 .frame-action:disabled:active { transform: none; background-image: var(--img-nav); }
 
-/* A maxed building has no branch to ever pick, so its build button is dimmer
-   still and takes no clicks at all. */
 .frame-action--inert { opacity: 0.22; pointer-events: none; }
 
-/* Registration crest / hero track — the same portrait-card frame used across the
-   game, sized larger since it is the primary chooser on these screens. */
 .register-track-wrap {
-  /* Reserved by the WRAPPER so an empty list keeps the strip's height and
-     nothing below it jumps. The cards inherit this value. */
+
   --track-card-h: clamp(72px, 12vh, 104px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
@@ -7213,9 +6558,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 0.5rem;
 }
 
-/* Faction example card: absent until a portrait is tapped, so the slide keeps
-   its description and Choose button reachable. Tapping the same portrait (or
-   the card's own margin) closes it again. */
 .faction-example-card:empty { display: none; }
 
 .faction-example-card--open {
@@ -7226,15 +6568,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .faction-example-card--open::-webkit-scrollbar { display: none; }
 
-/* ── Item sheet: one detail card + a selector track ─────────────────────────*/
-/* Fixed height, not flex: every item then occupies exactly the same box, so
-   moving through the track never resizes the sheet or shifts the track under
-   the player's thumb. Longer items scroll inside this box. */
 .item-detail {
-  /* Grows to absorb whatever the sheet has spare, so the selector track below
-     is pushed onto the bottom edge instead of floating directly under a fixed
-     40vh card with dead space beneath it. min-height:0 lets it actually shrink
-     inside the flex column rather than overflowing. */
+
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -7245,8 +6580,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .item-detail::-webkit-scrollbar { display: none; }
 
-/* The single card fills the sheet instead of being one of several clamped
-   cards on a rail — nothing is truncated any more. */
 .item-detail .item-card {
   width: 100%;
   max-width: none;
@@ -7255,13 +6588,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .items-track-wrap {
-  /* Reserved by the WRAPPER so an empty list keeps the strip's height and
-     nothing below it jumps. The cards inherit this value. */
+
   --track-card-h: clamp(52px, 8vh, 68px);
   --portrait-card-h: var(--track-card-h);
   min-height: calc(var(--portrait-card-h) + 8px);
-  /* Pinned to the bottom edge of the sheet — thumb-reachable, and it stays put
-     regardless of how tall the detail card above it happens to be. */
+
   margin-top: auto;
   flex-shrink: 0;
   padding: 6px 0 0;
@@ -7284,7 +6615,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   width: 100%; height: 100%; flex: 1; min-height: 0; border-radius: 2px; object-fit: contain;
 }
 
-/* Owned count on a craftable blueprint. */
 .item-track-owned {
   position: absolute;
   right: 1px; bottom: 1px;
@@ -7296,14 +6626,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 0 3px;
 }
 
-/* ── Material chips: icons, not words, and each one is a control ────────────*/
 .item-cost {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-/* One row per material class: currency, trophies, crafted parts. */
 .mat-row {
   display: flex;
   flex-wrap: wrap;
@@ -7311,9 +6639,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 6px;
 }
 
-/* The action button (craft / equip / unequip) always sits at the foot of the
-   card, whatever the rows above it add up to, so it never moves between items.
-   Anything after it — the "why not" line — is carried down with it. */
 .item-detail .item-action-btn { margin-top: auto; }
 
 .mat-chip {
@@ -7334,23 +6659,17 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .mat-chip--free  { color: var(--muted); cursor: default; }
 .mat-chip:active { opacity: 0.6; }
 
-/* Fixed min-width so a 1 and a 100 make the same shape and the row never
-   re-wraps as amounts change. */
 .mat-chip-amt  { min-width: 1.6em; text-align: left; }
 .mat-chip-icon { display: flex; align-items: center; }
 .mat-chip-icon .res-icon-img,
-/* Ingredient icons read as the main content of the cost row, not as footnotes —
-   at 24px the art was unidentifiable and the counts were guesswork. */
+
 .mat-chip-img { width: 38px; height: 38px; object-fit: contain; display: block; }
 .mat-chip { font-size: 0.78rem; gap: 5px; }
 .mat-chip .res-icon-img { width: 38px; height: 38px; object-fit: contain; }
 .mat-row { gap: 12px; }
 
-/* The ingredient's own cost, shown inside its sheet so the player can see what
-   making it would take before committing. */
 .mat-sheet-cost { display: flex; flex-direction: column; gap: 6px; }
 
-/* ── "Where does this drop" sheet ───────────────────────────────────────────*/
 .mat-sheet { display: flex; flex-direction: column; gap: 10px; padding: 2px; }
 
 .mat-sheet-head { display: flex; align-items: center; gap: 10px; }
@@ -7361,8 +6680,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .mat-sheet-label { font-size: 0.78rem; color: var(--muted); }
 
-/* One line — "Drops in: Glittering Abyss" — rather than a bulleted panel for
-   what is usually a single region. */
 .mat-regions { color: var(--text); font-weight: 600; }
 
 .mat-embark-btn {
@@ -7384,7 +6701,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   cursor: not-allowed;
 }
 
-/* Regions that drop the material the player tapped, flagged on arrival. */
 .embark-card--highlight {
   outline: 2px solid #4caf50;
   outline-offset: -2px;
@@ -7396,16 +6712,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   50%      { box-shadow: 0 0 14px 3px rgba(76, 175, 80, 0.55); }
 }
 
-/* Stacked copies: one card reading "x3" instead of three identical cards. */
 .item-card-count {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent);
 }
 
-/* ── Item card: art rail on the left, everything else on the right ──────────
-   The old card stacked a small centred icon over comma-joined text and wasted
-   most of the sheet's width. */
 .item-detail .item-card {
   align-items: stretch;
   text-align: left;
@@ -7474,8 +6786,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   white-space: normal;
 }
 
-/* Stat mods as icon chips — 🛡 and the resist glyphs are the character card's
-   own icons, so the same numbers read the same way in both places. */
 .item-card-stats {
   display: flex;
   flex-wrap: wrap;
@@ -7522,7 +6832,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .item-detail .item-card-tag { margin: 0; }
 
-/* Narrow phones: the two columns stop being worth it, so stack them. */
 @media (max-width: 340px) {
   .item-card-body { flex-direction: column; align-items: center; }
   .item-card-aside { flex: 0 0 auto; max-width: 120px; }
@@ -7531,18 +6840,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .item-passive { align-self: center; }
 }
 
-/* An unmet tag requirement is flagged on the chip that states it, instead of
-   being repeated as a sentence under the button. */
 .item-card-tag--unmet {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
-/* Spell effect on a portrait. Same tile as the ability-driven statuses beside
-   it — the player should not have to learn that a spell buff looks different
-   from a passive one. */
+
 .bc-state--spell { border-color: rgba(212, 175, 55, 0.5); }
 
-/* The numbers a cast will actually produce, restated as the power changes. */
 .spell-cast-preview {
   margin: 0 0 10px;
   font-size: 0.78rem;
@@ -7564,11 +6868,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-shrink: 0;
 }
 
-/* ── Welcome / consent screen ──────────────────────────────────────────────
-   The first screen anyone sees. Scrolls, because the privacy notice must stay
-   fully readable on a short phone in either language — Russian runs noticeably
-   longer than English here, and a notice you cannot finish reading is not one
-   you can meaningfully agree to. */
 .screen-welcome {
   height: 100%;
   flex: 1;
@@ -7659,9 +6958,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .welcome-btn:active { transform: scale(0.99); }
 .welcome-btn:disabled { opacity: 0.6; cursor: default; }
-/* Accept is the emphasised option, but decline is a full-width button beside
-   it rather than a link in the corner — declining has to look like a real
-   choice, because it is one. */
+
 .welcome-btn--accept {
   background: var(--accent);
   border-color: var(--accent);
@@ -7672,13 +6969,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
 }
 
-
-/* ── Event badge + sheet ───────────────────────────────────────────────────
-   The badge sits in the region card's top-right corner and glows that region's
-   colour (--event-glow, set inline per region in embark.js). The card needs a
-   positioning context for it; `overflow: hidden` there already clips the glow
-   to the card's rounded corner, which is why the badge is inset rather than
-   overhanging. */
 .embark-card { position: relative; }
 
 .embark-event-badge {
@@ -7710,8 +7000,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: var(--event-glow, var(--accent));
   box-shadow: 0 0 6px var(--event-glow, var(--accent));
 }
-/* Slow and shallow on purpose: it has to read as "something is on" from across
-   the screen without competing with the level pips for attention. */
+
 @keyframes event-badge-pulse {
   0%, 100% { box-shadow: 0 0 6px var(--event-glow, var(--accent)); }
   50%      { box-shadow: 0 0 16px var(--event-glow, var(--accent)); }
@@ -7759,16 +7048,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .event-bonus-row span:last-child { color: var(--accent); font-weight: 600; }
 
-
-/* ── Promo code box (settings) ─────────────────────────────────────────────
-   Its own element rather than a .settings-section: no card border, no heading
-   row, and the placeholder names the field. That keeps it to two lines of
-   vertical space on a screen that has to fit six toggles and the danger zone
-   on a phone.
-
-   The message line is FIXED HEIGHT and always in the DOM, so redeeming swaps
-   text into reserved space instead of growing the block and shoving the
-   language row off the bottom. */
 .promo-box {
   display: flex;
   flex-direction: column;
@@ -7789,7 +7068,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-family: inherit;
   font-size: 0.85rem;
   letter-spacing: 0.04em;
-  /* Codes normalise to lower case server-side; upper just reads better here. */
+
   text-transform: uppercase;
 }
 .promo-box-input:focus {
@@ -7817,9 +7096,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .promo-box-btn:disabled { opacity: 0.5; cursor: default; }
 .promo-box-btn:not(:disabled):active { background: rgba(200, 151, 58, 0.26); }
 
-/* Two lines' worth, reserved whether or not there is a message. `overflow:
-   hidden` is the guarantee: even an unexpectedly long server error cannot
-   stretch the box. */
 .promo-box-msg {
   height: 2.1em;
   overflow: hidden;
@@ -7831,12 +7107,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .promo-box-msg--ok  { color: #6fbf73; }
 .promo-box-msg--err { color: var(--danger); }
 
-
-/* ── Promo reward modal ────────────────────────────────────────────────────
-   A comma list could not carry six crystal types legibly, so the payout gets
-   the real icons in a wrapping grid — the same read as the errand payout.
-   Icons are sized down from the 35px resource-bar default: at full size six
-   chips would not fit two rows on a phone. */
 .promo-reward {
   display: flex;
   flex-direction: column;
