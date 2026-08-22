@@ -2425,11 +2425,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // Trophy icons are /assets/icons/recources/<trophy_id>.png, named after
         // the id in data/embark.js. No onerror fallback by design - a missing
         // file should show as a hole, not quietly paper over itself.
+        // Icon + amount only. The name was one more element per reward on a grid
+        // that can carry a dozen of them, and the icon already says which
+        // resource it is — it survives as the tooltip rather than as markup.
         const chip = (iconHtml, amount, label = '') =>
-          `<div class="reward-chip">
+          `<div class="reward-chip"${label ? ` title="${label}"` : ''}>
              <span class="reward-chip-icon">${iconHtml}</span>
              <span class="reward-chip-amt">+${amount}</span>
-             ${label ? `<span class="reward-chip-label">${label}</span>` : ''}
            </div>`;
         const trophyIcon = id => `<img class="reward-chip-img" src="${assetUrl(`/assets/icons/recources/${id}.png`)}" alt="${id.replace(/_/g, ' ')}">`;
         const trophies = Object.entries(result.trophies_gained || {})

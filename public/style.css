@@ -3905,26 +3905,29 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .result-log { font-size: 0.75rem; color: var(--muted); }
 
 /* Victory reward chips — icon-forward, wrapping grid. */
+/* Three across, one row per three rewards. A column each was a full-width bar
+   per drop, so a level paying gold + two crystals + two trophies filled the
+   screen with five near-empty rows. */
 .reward-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 .reward-chip {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 8px 6px;
+  min-width: 0;
 }
 .reward-chip-icon { display: flex; align-items: center; font-size: 1.4rem; line-height: 1; }
 .reward-chip-icon .res-icon-img,
 .reward-chip-img { width: 28px; height: 28px; display: block; object-fit: contain; }
 .reward-chip-amt { color: #ffd700; font-weight: bold; font-size: 1.05rem; }
-.reward-chip-label { color: #cfd6e2; font-size: 0.72rem; text-transform: capitalize; }
 /* ── Per-unit XP on the victory screen ─────────────────────────────────────
    Portrait, name, what this unit earned, and how close that leaves it to its
    next tier. Sized off the reward chips above so the panel reads as one list
