@@ -1,14 +1,25 @@
+// Slot ids are STORAGE, not layout. Where each one sits on the castle grid is
+// decided in public/style.css by [data-slot]; the numbering here is frozen so a
+// saved buildings_data keeps meaning what it meant when it was written.
+//
+// That is why slots 9-11 are barracks appended at the end rather than inserted
+// after slot_5: renumbering to make the ids read in grid order would silently
+// move every existing player's buildings to different squares.
 const SLOT_CATEGORIES = {
-  slot_0: 'throne',
-  slot_1: 'barracks',
-  slot_2: 'barracks',
-  slot_3: 'barracks',
-  slot_4: 'barracks',
-  slot_5: 'barracks',
-  slot_6: 'special',
-  slot_7: 'special',
-  slot_8: 'special',
+  slot_0:  'throne',
+  slot_1:  'barracks',
+  slot_2:  'barracks',
+  slot_3:  'barracks',
+  slot_4:  'barracks',
+  slot_5:  'barracks',
+  slot_6:  'special',
+  slot_7:  'special',
+  slot_8:  'special',
+  slot_9:  'barracks',
+  slot_10: 'barracks',
+  slot_11: 'barracks',
 };
+const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
 const BUILDING_POOLS = {
   empire: {
@@ -813,11 +824,13 @@ function getRespecCost(faction, buildingId, level) {
   return scaleCost(base, RESPEC_COST_PCT);
 }
 
+// Driven off SLOT_CATEGORIES so adding a slot there is the only edit needed.
+// Existing records are NOT migrated: a slot missing from a saved buildings_data
+// simply reads as empty everywhere (`buildings[slot] || { level: 0 }`), and is
+// written the first time the player builds in it.
 function emptyStructures() {
-  const slots = { slot_0: { level: 0, building_id: null } };
-  for (let i = 1; i <= 8; i++) {
-    slots[`slot_${i}`] = { level: 0, building_id: null };
-  }
+  const slots = {};
+  for (const slot of SLOT_IDS) slots[slot] = { level: 0, building_id: null };
   return slots;
 }
 
@@ -1113,6 +1126,7 @@ module.exports = {
   BUILDING_POOLS,
   MERCENARY_BUILDINGS,
   SLOT_CATEGORIES,
+  SLOT_IDS,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,

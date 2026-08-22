@@ -25,6 +25,30 @@ import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml } from '../unit_tree.js';
 import { assetUrl } from '../asset_base.js';
 
+// Mirror of SLOT_CATEGORIES in data/buildings.js — that file is CommonJS and
+// cannot be imported here, and the server validates every build against its own
+// copy anyway, so a drift between the two costs a rejected build rather than a
+// wrong one. Keep them in step when adding a slot.
+//
+// The ORDER of these ids is storage order, not grid order. Where each slot sits
+// is set by the [data-slot] rules in style.css; see the note in buildings.js for
+// why slots 9-11 are appended rather than renumbered into place.
+const SLOT_CATEGORIES = {
+  slot_0:  'throne',
+  slot_1:  'barracks',
+  slot_2:  'barracks',
+  slot_3:  'barracks',
+  slot_4:  'barracks',
+  slot_5:  'barracks',
+  slot_6:  'special',
+  slot_7:  'special',
+  slot_8:  'special',
+  slot_9:  'barracks',
+  slot_10: 'barracks',
+  slot_11: 'barracks',
+};
+const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
+
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
 // already localized, so the upgrade button read "Upgrade -> X" next to
@@ -708,9 +732,16 @@ export function renderCastle(root, { player }) {
 
   // buildings_data mixes building slots with bookkeeping keys such as
   // throne_perks; anything that isn't slot_N must never be treated as a slot.
+  //
+  // The canonical list wins over the record's own keys: a player who last
+  // played before a slot existed has no entry for it, and rendering only what
+  // the record mentions would hide the new squares from exactly the accounts
+  // that need them drawn. A slot with no entry reads as empty, which is what it
+  // is. Any slot_N in the record but not in the list is still shown, so a record
+  // from a NEWER build than this client is never silently truncated.
   function buildingSlotKeys(data) {
-    return Object.keys(data || {})
-      .filter(k => /^slot_\d+$/.test(k))
+    const fromRecord = Object.keys(data || {}).filter(k => /^slot_\d+$/.test(k));
+    return [...new Set([...SLOT_IDS, ...fromRecord])]
       .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)));
   }
 
@@ -2238,11 +2269,6 @@ export function renderCastle(root, { player }) {
   }
 
   function openBuildModal(slot) {
-    const SLOT_CATEGORIES = {
-      slot_0: 'throne', slot_1: 'barracks', slot_2: 'barracks',
-      slot_3: 'barracks', slot_4: 'barracks', slot_5: 'barracks',
-      slot_6: 'special', slot_7: 'special', slot_8: 'special',
-    };
     const slotCategory = SLOT_CATEGORIES[slot];
     if (!slotCategory) return;
 

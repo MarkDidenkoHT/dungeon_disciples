@@ -37,6 +37,24 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --muted:   #6b7080;
   --radius:  8px;
 
+  /* One castle node's height — 18% of the viewport. The grid rows and the
+     node/centre-slot caps all read it, so a row and what sits in it can never
+     disagree.
+
+     NOT plain `18vh`. vh is the LARGE viewport and ignores the Telegram chrome,
+     the same trap #shell, .bottom-nav and the castle's own max-height cap each
+     carry a comment about. Four rows is 72% of the viewport inside a screen
+     capped at 80% of it, so measuring against a box ~15% taller than the real
+     one overflows the cap — and .castle-main/.castle-grounds are both
+     overflow:hidden, so the bottom row (the specials) would be clipped away
+     with no scroll rather than merely looking cramped.
+
+     One expression rather than the usual vh/dvh/calc ladder: the ladder works
+     by later declarations overriding earlier ones, which custom properties do
+     not do — any token sequence parses, so the last line always wins and the
+     earlier "fallbacks" are dead. dvh is the fallback here instead. */
+  --castle-node-h: calc(var(--tg-viewport-stable-height, 100dvh) * 0.18);
+
   /* Rarity is one palette used by EVERY item surface — card border, slot icon,
      filter chip, rarity label. Three different sets of greens/blues/oranges had
      drifted apart, and epic/mythic cards were 2px while common/rare were 1px,
@@ -5535,24 +5553,22 @@ button.cost-bar-item:active { transform: scale(0.9); }
   pointer-events: none;
 }
 
-/* Height-first: the grid fills the space the grounds give it and derives its
-   width from the node art's 100x160 proportion (3 columns : 3 rows = 5/8), so
-   the castle always lands inside one screen. Width still caps at 360px on a
-   wide viewport, and the aspect ratio then gives back the extra height. */
+/* Four rows of three. The rows are sized directly rather than shared out of the
+   wrap's height, so a node is 18vh whatever the screen does and the grid stops
+   growing where the nodes do — the old aspect-ratio + 1fr rows stretched the
+   cells and left slack inside each one. */
 .castle-grid-wrap {
   position: relative;
-  height: 100%;
-  width: auto;
-  aspect-ratio: 5 / 8;
-  /* Three 150px rows plus the two gaps: the grid stops growing where the nodes
-     do, instead of stretching and leaving slack inside each cell. */
-  max-height: calc(150px * 3 + 8px);
+  /* Full width up to the cap, so the three 1fr columns have a width to divide.
+     `auto` in the flex-row parent shrank the grid to its content and let the
+     columns collapse. */
+  width: 100%;
   max-width: min(360px, 100%);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-rows: repeat(4, var(--castle-node-h));
+  gap: 0;
 }
 
 .outer-ring {
@@ -5570,7 +5586,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
      and 152px is the 160 that fit, less the 5% trim. */
   min-height: 0;
   min-width: 0;
-  max-height: 150px;
+  max-height: var(--castle-node-h);
 }
 
 /* An empty slot is the SAME object as an occupied one with nothing in it, so it
@@ -5585,25 +5601,43 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: var(--node-frame-inset);
 }
 
-.outer-ring .castle-node:nth-child(1) { grid-column: 1; grid-row: 1; }
-.outer-ring .castle-node:nth-child(2) { grid-column: 2; grid-row: 1; }
-.outer-ring .castle-node:nth-child(3) { grid-column: 3; grid-row: 1; }
-.outer-ring .castle-node:nth-child(4) { grid-column: 1; grid-row: 2; }
-.outer-ring .castle-node:nth-child(5) { grid-column: 3; grid-row: 2; }
-.outer-ring .castle-node:nth-child(6) { grid-column: 1; grid-row: 3; }
-.outer-ring .castle-node:nth-child(7) { grid-column: 2; grid-row: 3; }
-.outer-ring .castle-node:nth-child(8) { grid-column: 3; grid-row: 3; }
+/* Placed by SLOT ID, not by position in the markup. nth-child broke the moment
+   the slot count changed, and it silently mis-seated every node for a player
+   whose saved record was missing a slot: the ids are stable, the order they
+   happen to render in is not.
+
+   Layout — the hero sits in the top row between two barracks, the specials get
+   the bottom row to themselves:
+
+       slot_1   HERO   slot_2
+       slot_3  slot_4  slot_5
+       slot_9  slot_10 slot_11
+       slot_6  slot_7  slot_8     <- special
+
+   Slots 9-11 are the new ones; every other id keeps the square it can be built
+   in, so nothing an existing player owns moves. */
+.outer-ring .castle-node[data-slot="slot_1"]  { grid-column: 1; grid-row: 1; }
+.outer-ring .castle-node[data-slot="slot_2"]  { grid-column: 3; grid-row: 1; }
+.outer-ring .castle-node[data-slot="slot_3"]  { grid-column: 1; grid-row: 2; }
+.outer-ring .castle-node[data-slot="slot_4"]  { grid-column: 2; grid-row: 2; }
+.outer-ring .castle-node[data-slot="slot_5"]  { grid-column: 3; grid-row: 2; }
+.outer-ring .castle-node[data-slot="slot_9"]  { grid-column: 1; grid-row: 3; }
+.outer-ring .castle-node[data-slot="slot_10"] { grid-column: 2; grid-row: 3; }
+.outer-ring .castle-node[data-slot="slot_11"] { grid-column: 3; grid-row: 3; }
+.outer-ring .castle-node[data-slot="slot_6"]  { grid-column: 1; grid-row: 4; }
+.outer-ring .castle-node[data-slot="slot_7"]  { grid-column: 2; grid-row: 4; }
+.outer-ring .castle-node[data-slot="slot_8"]  { grid-column: 3; grid-row: 4; }
 
 .center-slot {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   position: static;
   transform: none;
   width: 100%;
   height: 100%;
   z-index: 2;
   min-height: 0;
-  max-height: 150px;
+  max-height: var(--castle-node-h);
 }
 
 .castle-node {
