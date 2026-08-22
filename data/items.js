@@ -408,7 +408,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Caster',
-    stat_mods:    { power: 2, hp: 3 },
+    stat_mods:    { action_power: 2, hp: 3 },
     passive:      null,
     icon:         'caster_hat',
     rarity:       'rare',
@@ -991,6 +991,33 @@ function craftRequirementText(itemDef, lang = 'en') {
   return L === 'ru' ? `Требуется пройти: ${joined}` : `Requires clearing ${joined}`;
 }
 
+// Every tag a unit can carry, in the ONE casing the game compares against. Tag
+// checks are exact string matches (engine.tagCountFor, vs_tag, tag_required),
+// so a tag that differs only in case grants nothing at all.
+//
+// This exists because an item's stats are COPIED onto the owned row when it
+// drops: correcting a definition here does not correct the rows already in the
+// database, and rows written while `caster_hat` said 'caster' still say
+// 'caster'. Canonicalising on the way in fixes those rows without a migration.
+const CANONICAL_TAGS = [
+  'Archer', 'Caster', 'Construct', 'Court', 'Demon', 'Engineer', 'Holy',
+  'Knight', 'Skeleton', 'Spirit', 'Treefolk', 'Vampire', 'Warrior', 'Zombie',
+];
+const CANONICAL_TAG_BY_LOWER = new Map(CANONICAL_TAGS.map(t => [t.toLowerCase(), t]));
+
+// Unknown tags pass through untouched rather than being dropped: 'Treefolk' is
+// deliberately carried by no unit yet, and a future tag must not silently
+// vanish because this list has not caught up.
+function canonicalTag(tag) {
+  if (!tag) return null;
+  return CANONICAL_TAG_BY_LOWER.get(String(tag).toLowerCase()) ?? String(tag);
+}
+
+// Stat keys that owned rows spell differently from what the loop below reads.
+// Same reason as the tags: `caster_hat` shipped with `power`, so every hat
+// already owned carries `power: 2` and silently granted nothing.
+const STAT_MOD_ALIASES = { power: 'action_power', max_hp: 'hp' };
+
 // Applies every modifier an item grants (hp, armor, action_power, initiative,
 // resistances, added tag, granted passive) on top of a unit_data object.
 //
@@ -1006,7 +1033,8 @@ function applyItemModifiers(unitData, itemStats) {
   if (!itemStats) return unitData;
 
   const tags = Array.isArray(unitData.tags) ? [...unitData.tags] : [];
-  if (itemStats.adds_tag && !tags.includes(itemStats.adds_tag)) tags.push(itemStats.adds_tag);
+  const granted = canonicalTag(itemStats.adds_tag);
+  if (granted && !tags.includes(granted)) tags.push(granted);
 
   const resistances = { ...(unitData.resistances || {}) };
   const mods  = itemStats.stat_mods || {};
@@ -1015,7 +1043,8 @@ function applyItemModifiers(unitData, itemStats) {
   let   initiative   = unitData.initiative   ?? 0;
   let   hpBonus      = 0;
 
-  for (const [statKey, val] of Object.entries(mods)) {
+  for (const [rawKey, val] of Object.entries(mods)) {
+    const statKey = STAT_MOD_ALIASES[rawKey] ?? rawKey;
     if (statKey === 'hp')           { hpBonus      += val; continue; }
     if (statKey === 'armor')        { armor        += val; continue; }
     if (statKey === 'action_power') { action_power += val; continue; }

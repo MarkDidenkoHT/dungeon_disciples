@@ -621,14 +621,22 @@ const ANCHORED_DIFF_KEYS = new Set(['hp', 'initiative', 'action_power', 'armor']
 
 // Keyed by stat, so a renderer can ask "is there a delta for this cell?"
 // instead of the diffs being pre-baked into one detached row.
+// A stat as a number, understanding the "current/max" form a live combatant's
+// HP takes. Anything else non-numeric stays NaN so the caller can skip it.
+function statNumber(raw) {
+  if (typeof raw === 'string' && raw.includes('/')) return Number(raw.split('/')[1]);
+  return Number(raw ?? 0);
+}
+
 export function unitStatDiffs(unit, compareUnit) {
   if (!unit || !compareUnit) return {};
   const out = {};
   for (const s of STAT_DIFF_MAP) {
-    // HP arrives as "12/50" on a live combatant card, and a string subtraction
-    // yields NaN — which is !== 0 and would render a "NaN" badge. Only compare
-    // stats that are numbers on BOTH sides.
-    const a = Number(unit[s.key] ?? 0), b = Number(compareUnit[s.key] ?? 0);
+    // HP arrives as "12/50" on a live combatant card. A plain Number() of that
+    // is NaN, and skipping it meant every max-HP buff in the game — Vitality,
+    // Iron Will, Horde, Inspiration — moved the number and showed no delta.
+    // The MAXIMUM is the half a buff moves, so that is the half compared.
+    const a = statNumber(unit[s.key]), b = statNumber(compareUnit[s.key]);
     if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
     const diff = a - b;
     if (diff !== 0) out[s.key] = { label: s.label, diff };

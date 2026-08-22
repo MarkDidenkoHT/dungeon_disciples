@@ -949,6 +949,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // "Targets +1 / Range +1" that no buff had granted.
     const baseUnit = {
       ...def,
+      // The max HP this unit ENTERED the battle with, item included — not the
+      // blueprint's, or every unit wearing an HP item would report a permanent
+      // buff it did not receive in the fight.
+      hp:           base.max_hp ?? def.hp ?? 0,
       armor:        base.armor ?? def.armor ?? 0,
       initiative:   base.initiative ?? def.initiative ?? 0,
       action_power: basePower,
@@ -1346,6 +1350,27 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return `<div class="log-entry">${BTf('logStatus')(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
     }
     if (entry.type === 'passive') {
+      // A passive that composed its own sentence gets to say it. These spell out
+      // what was counted and what it bought ("4 Knight allies: +4 HP, +8 armor")
+      // — the kinship family, Unity, and every conditional refusal. Falling
+      // through to the templates below threw all of that away and printed the
+      // bare `value`, which for the three entries that carry no value at all
+      // rendered as the word "undefined".
+      //
+      // English, like the `ability` branch above and for the same reason: the
+      // sentence is composed server-side.
+      if (entry.message) {
+        // Nearly every one of these opens with the passive's own name
+        // ("Iron Will — 4 Knight allies: …"), so the actor is prefixed to say
+        // WHO. Unity opens with the actor's name instead, and prefixing that
+        // would print the name twice — so a message that already names the
+        // actor is left to speak for itself.
+        const named  = entry.actorName && entry.message.startsWith(entry.actorName);
+        const prefix = named ? '' : actor();
+        const tgt = (!named && entry.targetName && entry.targetName !== entry.actorName)
+          ? ` → ${target()}` : '';
+        return `<div class="log-entry log-entry--passive">${prefix}${tgt} ${entry.message}</div>`;
+      }
       // A stat grant (armor / resistance / max HP) is neither a heal nor a hit.
       // `stat` names it; without that flag the entry would fall through to the
       // heal wording, which is how buff auras came to read as "healed for 3".
