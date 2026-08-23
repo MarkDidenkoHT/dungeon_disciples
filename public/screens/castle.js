@@ -76,6 +76,11 @@ const BUILDING_MAX_LEVELS = {
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
 
+// Mirrors buildingCostForLevel in data/buildings.js: `cost` is the first level's
+// price, `upgrade_costs` overrides it per level after that.
+const buildingCostForLevel = (def, level) =>
+  def?.upgrade_costs?.[level] ?? def?.upgrade_costs?.[String(level)] ?? def?.cost ?? {};
+
 function buildingLevelIn(data, buildingId) {
   if (!data || !buildingId) return 0;
   let best = 0;
@@ -189,6 +194,7 @@ const CASTLE_TEXT = {
   heal:        { en: 'Heal',                                  ru: 'Лечить' },
   healing:     { en: 'Healing…',                              ru: 'Лечим…' },
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
+  levelWord:   { en: 'Level',                                 ru: 'Уровень' },
   layerCastle: { en: 'Castle',                                ru: 'Замок' },
   layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
   slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
@@ -1807,6 +1813,22 @@ export function renderCastle(root, { player }) {
 
     const canUpgrade = paths && paths.length > 0;
 
+    // Paths are keyed by the unit they lead to — except a layer-2 building
+    // levels IN PLACE and leads to no unit at all, so `unit_id` is null and
+    // every one of them keyed as "null": same key, blank card, no price. The
+    // building id is the fallback key.
+    const pathKey = pth => pth.unit_id ?? pth.building_id;
+
+    // "Infirmary" on a sheet that is offering Infirmary level 2 tells the player
+    // nothing about what the button does. Levelled buildings carry the level
+    // they are being raised TO.
+    const slotLevel = structuresRecord.buildings_data[slot]?.level ?? 0;
+    const levelLabelFor = (bDef, level) => {
+      const base = buildingLabel(bDef) || '';
+      if (!bDef || buildingMaxLevel(bDef.id) <= 1) return base;
+      return `${base} · ${CASTLE_TEXT.levelWord[castleLang]} ${level}`;
+    };
+
     // The upgrades are shown HERE, on the unit, instead of behind a ⚒ button
     // that opened a second sheet. Where a slot leads is the thing a player is
     // deciding about while looking at the unit, so hiding it one tap away made
@@ -1815,10 +1837,11 @@ export function renderCastle(root, { player }) {
     // asked "are there any?".
     const upgradeCards = canUpgrade ? paths.map(path => {
       const nextUnit = getUnitByUnitId(path.unit_id);
-      const label    = unitName(nextUnit) || buildingLabel(path);
-      const url      = nextUnit ? branchPortraitUrl(nextUnit) : '';
+      const nextDef  = getBuildingDef(player.faction, path.building_id);
+      const label    = unitName(nextUnit) || levelLabelFor(nextDef, slotLevel + 1);
+      const url      = nextUnit ? branchPortraitUrl(nextUnit) : buildingArtUrl(nextDef);
       return `
-        <div class="portrait-card portrait-card--branch" data-path-unit="${path.unit_id}" title="${label}">
+        <div class="portrait-card portrait-card--branch" data-path-key="${pathKey(path)}" title="${label}">
           ${url ? `<img class="portrait-art-img" src="${url}" alt="${label}" onerror="this.style.display='none'">` : ''}
         </div>`;
     }).join('') : '';
@@ -1831,7 +1854,12 @@ export function renderCastle(root, { player }) {
     const bodyHtml = `
       <div id="slot-sheet-root">
       <div class="castle-unit-card-wrap">
-        ${buildUnitCard(liveUnit, { buildingLabel: buildingLabel(def), itemSlotHtml, extraSlotHtml: treeBtnHtml, progress })}
+        ${buildUnitCard(liveUnit, {
+          buildingLabel: levelLabelFor(def, slotLevel),
+          itemSlotHtml, extraSlotHtml: treeBtnHtml, progress,
+          artUrl: liveUnit ? '' : buildingArtUrl(def),
+          desc:   liveUnit ? '' : (castleLang === 'ru' ? (def.desc_ru || def.desc || '') : (def.desc || '')),
+        })}
         ${actionOverlayHtml}
       </div>
       <div class="track-action-row track-action-row--framed">
@@ -1859,7 +1887,7 @@ export function renderCastle(root, { player }) {
       </div>
       </div>`;
 
-    openModal(buildingLabel(def), bodyHtml);
+    openModal(levelLabelFor(def, slotLevel), bodyHtml);
 
     const body = getSheetBody()?.querySelector('#slot-sheet-root');
     body?.addEventListener('click', e => {
@@ -1955,12 +1983,14 @@ export function renderCastle(root, { player }) {
     // openUpgradeModal and POST /structures/build).
     const isThrone  = def.category === 'throne';
     const nextLevel = (structuresRecord.buildings_data[slot]?.level ?? 0) + 1;
-    function costForPath(unitId) {
-      const path = paths.find(p => p.unit_id === unitId);
+    function costForPath(key) {
+      const path = paths.find(p => pathKey(p) === key);
       if (!path) return null;
       if (mercDef)  return getMercBuildingDef(path.building_id)?.cost ?? path.cost ?? null;
       if (isThrone) return throneUpgradeCosts[nextLevel] || null;
-      return getBuildingDef(player.faction, path.building_id)?.cost ?? null;
+      // Per-level price where the building declares one, so raising a building
+      // is not charged at its first-level rate.
+      return buildingCostForLevel(getBuildingDef(player.faction, path.building_id), nextLevel);
     }
 
     function showOwnUnit() {
@@ -1973,12 +2003,23 @@ export function renderCastle(root, { player }) {
     }
 
     function showUpgrade(card) {
-      const unitId   = card.dataset.pathUnit;
-      const nextUnit = getUnitByUnitId(unitId);
-      selectedPath = unitId;
+      const key      = card.dataset.pathKey;
+      const path     = paths.find(pth => pathKey(pth) === key);
+      const nextUnit = getUnitByUnitId(path?.unit_id);
+      selectedPath = key;
       body.querySelectorAll('#slot-upgrade-track .portrait-card')
           .forEach(c => c.classList.toggle('portrait-card--selected', c === card));
       if (upgradeBtn) upgradeBtn.disabled = false;
+      // A building with no unit still previews: its own art, its blurb, and the
+      // level it is being raised to.
+      if (cardWrap && !nextUnit && path) {
+        const nextDef = getBuildingDef(player.faction, path.building_id);
+        cardWrap.innerHTML = buildUnitCard(null, {
+          buildingLabel: levelLabelFor(nextDef, slotLevel + 1),
+          artUrl: buildingArtUrl(nextDef),
+          desc:   castleLang === 'ru' ? (nextDef?.desc_ru || nextDef?.desc || '') : (nextDef?.desc || ''),
+        });
+      }
       if (cardWrap && nextUnit) {
         // compareUnit is the unit as it stands NOW (item included), so every
         // stat delta and the +N on a ranked-up ability read against what the
@@ -1996,15 +2037,22 @@ export function renderCastle(root, { player }) {
       }
       // The price of the branch now on show, on the same bar the build slider
       // uses, so it is in the one place the player already looks for a cost.
-      showCostBar(costForPath(unitId));
+      showCostBar(costForPath(key));
     }
 
     body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
       card.addEventListener('click', () => {
-        if (selectedPath === card.dataset.pathUnit) showOwnUnit();
-        else                                        showUpgrade(card);
+        if (selectedPath === card.dataset.pathKey) showOwnUnit();
+        else                                       showUpgrade(card);
       });
     });
+
+    // Open on the first upgrade already chosen, the way the unit sheets do.
+    // The old sheet opened inert: the ⚒ was dim and the price bar empty until
+    // the player tapped a card, which for a building with exactly one upgrade is
+    // a tap that carries no decision.
+    const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
+    if (firstCard) showUpgrade(firstCard);
 
     // ONE button. Picking a branch already swaps the card to the unit it leads
     // to and puts its price on the cost bar, so everything the old slider modal
@@ -2013,7 +2061,7 @@ export function renderCastle(root, { player }) {
     // button, in a second sheet. This builds it.
     upgradeBtn?.addEventListener('click', () => {
       if (!selectedPath) return;
-      const path = paths.find(p => p.unit_id === selectedPath);
+      const path = paths.find(p => pathKey(p) === selectedPath);
       if (!path) return;
 
       if (mercDef) {
