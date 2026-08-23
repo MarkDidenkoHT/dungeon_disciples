@@ -25,10 +25,14 @@ const SLOT_CATEGORIES = {
   // ROW-MAJOR (12,13,14 = top row) because half the codebase identifies a slot
   // with /^slot_\d+$/ and sorts on Number(id.slice(5)); a prettier scheme like
   // slot_t0 would silently drop these from every one of those places.
-  slot_12: 'throne_up',   slot_13: 'merc_up',   slot_14: 'barracks_up',
-  slot_15: 'throne_up',   slot_16: 'merc_up',   slot_17: 'barracks_up',
-  slot_18: 'throne_up',   slot_19: 'merc_up',   slot_20: 'barracks_up',
-  slot_21: 'throne_up',   slot_22: 'merc_up',   slot_23: 'barracks_up',
+  // Column 1 of layer 2 is NOT slots. Throne perks are earned by upgrading the
+  // throne and already live in buildings_data.throne_perks; that column only
+  // LISTS what the player has, so there is nothing to store and nothing to
+  // build. Only columns 2 and 3 are real slots.
+  slot_12: 'merc_up',      slot_16: 'barracks_up',
+  slot_13: 'merc_up',      slot_17: 'barracks_up',
+  slot_14: 'merc_up',      slot_18: 'barracks_up',
+  slot_15: 'merc_up',      slot_19: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
@@ -159,7 +163,6 @@ const BUILDING_POOLS = {
       { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         cost: { gold: 150, Crystals_Life: 50 } },
     ],
-    throne_up: [],
   },
 
   choir_of_the_cursed: {
@@ -237,7 +240,6 @@ const BUILDING_POOLS = {
       { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         cost: { gold: 150, Crystals_Fire: 50 } },
     ],
-    throne_up: [],
   },
 
   grail_of_sorrow: {
@@ -341,7 +343,6 @@ const BUILDING_POOLS = {
       { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         cost: { gold: 150, Crystals_Death: 50 } },
     ],
-    throne_up: [],
   },
 };
 

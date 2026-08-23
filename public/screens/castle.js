@@ -47,10 +47,13 @@ const SLOT_CATEGORIES = {
   slot_10: 'barracks',
   slot_11: 'barracks',
 
-  slot_12: 'throne_up',   slot_13: 'merc_up',   slot_14: 'barracks_up',
-  slot_15: 'throne_up',   slot_16: 'merc_up',   slot_17: 'barracks_up',
-  slot_18: 'throne_up',   slot_19: 'merc_up',   slot_20: 'barracks_up',
-  slot_21: 'throne_up',   slot_22: 'merc_up',   slot_23: 'barracks_up',
+  // Layer 2 column 1 is throne PERKS, which are earned, not built — they are
+  // read out of buildings_data.throne_perks and have no slots. Only columns 2
+  // and 3 are storage.
+  slot_12: 'merc_up',      slot_16: 'barracks_up',
+  slot_13: 'merc_up',      slot_17: 'barracks_up',
+  slot_14: 'merc_up',      slot_18: 'barracks_up',
+  slot_15: 'merc_up',      slot_19: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
@@ -172,6 +175,8 @@ const CASTLE_TEXT = {
   colThrone:   { en: 'Throne',                                ru: 'Трон' },
   colMerc:     { en: 'Mercenary',                             ru: 'Наёмники' },
   colBarracks: { en: 'Barracks',                              ru: 'Казармы' },
+  perkUnclaimed:{ en: 'Not chosen',                           ru: 'Не выбрано' },
+  perkLocked:  { en: l => `Throne ${l}`,                      ru: l => `Трон ${l}` },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -208,7 +213,9 @@ export function renderCastle(root, { player }) {
                     <span>${CASTLE_TEXT.colMerc[lang0]}</span>
                     <span>${CASTLE_TEXT.colBarracks[lang0]}</span>
                   </div>
-                  <div class="upgrade-ring" id="upgrade-ring"></div>
+                  <div class="upgrade-col" id="perk-col"></div>
+                  <div class="upgrade-col" id="merc-col"></div>
+                  <div class="upgrade-col" id="barracks-col"></div>
                 </div>
               </div>
 
@@ -1073,13 +1080,49 @@ export function renderCastle(root, { player }) {
       .filter(s => s !== 'slot_0' && layerOf(s) === 1)
       .map(nodeHtml).join('');
 
-    // Layer 2 is the same node, the same click handler and the same build flow —
-    // only the grid it sits on differs. Nothing here knows it is "upgrades".
-    const upgradeRing = root.querySelector('#upgrade-ring');
-    if (upgradeRing) {
-      upgradeRing.innerHTML = buildingSlotKeys(data)
-        .filter(s => layerOf(s) === 2)
+    // Layer 2, columns 2 and 3: the same node, the same click handler and the
+    // same build flow as layer 1 — only the column they sit in differs.
+    const fillCol = (id, category) => {
+      const el = root.querySelector(id);
+      if (!el) return;
+      el.innerHTML = buildingSlotKeys(data)
+        .filter(sl => layerOf(sl) === 2 && SLOT_CATEGORIES[sl] === category)
         .map(nodeHtml).join('');
+    };
+    fillCol('#merc-col', 'merc_up');
+    fillCol('#barracks-col', 'barracks_up');
+
+    // Layer 2, column 1: throne perks are EARNED by upgrading the throne and
+    // stored under buildings_data.throne_perks as { level: perkId }. Nothing is
+    // built here, so these are read-only cards rather than slots — a node with a
+    // build sheet behind it would be lying about what the column does.
+    //
+    // Every perk level is drawn, not only the taken ones: an unclaimed level is
+    // the most useful thing this column can tell a player, and drawing it as an
+    // empty node keeps the three columns the same height.
+    const perkCol = root.querySelector('#perk-col');
+    if (perkCol) {
+      const taken = data.throne_perks || {};
+      perkCol.innerHTML = Object.keys(thronePerks || {})
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(level => {
+          const chosenId = taken[String(level)] ?? taken[level] ?? null;
+          const def      = (thronePerks[level] || []).find(pk => pk.id === chosenId) || null;
+          const reached  = throneLevel >= level;
+          const label    = def
+            ? (castleLang === 'ru' ? (def.label_ru || def.label) : def.label)
+            : (reached ? CASTLE_TEXT.perkUnclaimed[castleLang] : CASTLE_TEXT.perkLocked[castleLang](level));
+          const classes  = ['castle-node', 'castle-node--perk',
+                            def ? '' : 'castle-node--empty',
+                            def || reached ? '' : 'castle-node--locked'].filter(Boolean).join(' ');
+          const icon = def ? '✦' : (reached ? '＋' : '🔒');
+          return `
+            <div class="${classes}" data-perk-level="${level}" title="${def ? (castleLang === 'ru' ? (def.desc_ru || def.desc) : def.desc) : label}">
+              <div class="castle-node-icon">${icon}</div>
+              <div class="castle-node-label">${label}</div>
+            </div>`;
+        }).join('');
     }
 
     root.querySelectorAll('.castle-node').forEach(node => {
