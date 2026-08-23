@@ -46,8 +46,38 @@ const SLOT_CATEGORIES = {
   slot_9:  'barracks',
   slot_10: 'barracks',
   slot_11: 'barracks',
+
+  slot_12: 'throne_up',   slot_13: 'merc_up',   slot_14: 'barracks_up',
+  slot_15: 'throne_up',   slot_16: 'merc_up',   slot_17: 'barracks_up',
+  slot_18: 'throne_up',   slot_19: 'merc_up',   slot_20: 'barracks_up',
+  slot_21: 'throne_up',   slot_22: 'merc_up',   slot_23: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
+
+const LAYER_COUNT = 2;
+const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
+
+const SLOT_UNLOCKS = {
+  slot_6:  'mercenary_hall',
+  slot_7:  'mercenary_hall',
+  slot_8:  'mercenary_hall',
+  slot_9:  'barracks_2',
+  slot_10: 'barracks_2',
+  slot_11: 'barracks_2',
+};
+
+function hasBuilding(data, buildingId) {
+  if (!data || !buildingId) return false;
+  return Object.entries(data).some(([k, st]) =>
+    /^slot_\d+$/.test(k) && st?.building_id === buildingId);
+}
+
+function slotLockedBy(data, slot) {
+  const required = SLOT_UNLOCKS[slot];
+  if (!required) return null;
+  if (data?.[slot]?.building_id) return null;
+  return hasBuilding(data, required) ? null : required;
+}
 
 // Castle copy that was still hardcoded English while the rest of the sheet
 // followed the player's language (the perk chooser and Deconstruct modal were
@@ -136,6 +166,12 @@ const CASTLE_TEXT = {
   heal:        { en: 'Heal',                                  ru: 'Лечить' },
   healing:     { en: 'Healing…',                              ru: 'Лечим…' },
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
+  layerCastle: { en: 'Castle',                                ru: 'Замок' },
+  layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
+  slotLocked:  { en: n => `Locked — build ${n} first`,        ru: n => `Заперто — сначала постройте: ${n}` },
+  colThrone:   { en: 'Throne',                                ru: 'Трон' },
+  colMerc:     { en: 'Mercenary',                             ru: 'Наёмники' },
+  colBarracks: { en: 'Barracks',                              ru: 'Казармы' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -145,14 +181,42 @@ const CASTLE_BACKGROUNDS = {
 };
 
 export function renderCastle(root, { player }) {
+  // Needed inside the initial markup, which is written before the main
+  // `castleLang` further down exists.
+  const lang0 = player?.settings?.language === 'ru' ? 'ru' : 'en';
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
         <div class="castle-grounds">
-          <div class="castle-grid-wrap">
-            <div class="outer-ring" id="outer-ring"></div>
-            <div class="center-slot" id="center-slot"></div>
+          <button class="castle-layer-arrow castle-layer-arrow--prev" id="layer-prev"
+                  type="button" aria-label="Previous"><span>‹</span></button>
+
+          <div class="castle-layer-viewport" id="castle-layer-viewport">
+            <div class="castle-layer-track" id="castle-layer-track">
+
+              <div class="castle-layer" data-layer="1">
+                <div class="castle-grid-wrap">
+                  <div class="outer-ring" id="outer-ring"></div>
+                  <div class="center-slot" id="center-slot"></div>
+                </div>
+              </div>
+
+              <div class="castle-layer" data-layer="2">
+                <div class="castle-grid-wrap castle-grid-wrap--upgrades">
+                  <div class="castle-layer-heads">
+                    <span>${CASTLE_TEXT.colThrone[lang0]}</span>
+                    <span>${CASTLE_TEXT.colMerc[lang0]}</span>
+                    <span>${CASTLE_TEXT.colBarracks[lang0]}</span>
+                  </div>
+                  <div class="upgrade-ring" id="upgrade-ring"></div>
+                </div>
+              </div>
+
+            </div>
           </div>
+
+          <button class="castle-layer-arrow castle-layer-arrow--next" id="layer-next"
+                  type="button" aria-label="Next"><span>›</span></button>
         </div>
       </main>
     </div>
@@ -239,6 +303,9 @@ export function renderCastle(root, { player }) {
     favorSeconds       = boot.favor?.seconds ?? favorSeconds;
 
     renderBuildings();
+    // After the first render, so the arrows have nodes to reveal. Idempotent —
+    // renderBuildings re-runs on every refresh, this does not.
+    attachLayerControls();
 
     // Not awaited: who is out on an errand only decides a marker, and blocking
     // the whole castle on it would be paying for a badge.
@@ -889,6 +956,56 @@ export function renderCastle(root, { player }) {
       </div>`;
   }
 
+  // ── Layer switching ───────────────────────────────────────────────────────
+  // The two grids sit side by side on a track; switching slides the track
+  // rather than re-rendering, so nothing is rebuilt and the arrows can never
+  // race a render. Kept as an index rather than a boolean because a third layer
+  // is a data change, not a rewrite.
+  let currentLayer = 1;
+
+  function setLayer(next) {
+    const clamped = Math.min(LAYER_COUNT, Math.max(1, next));
+    if (clamped === currentLayer) return;
+    currentLayer = clamped;
+    applyLayer();
+  }
+
+  function applyLayer() {
+    const track = root.querySelector('#castle-layer-track');
+    if (track) track.style.transform = `translateX(-${(currentLayer - 1) * 100}%)`;
+    // The layer being left is hidden from assistive tech and from tab order —
+    // it is still in the DOM, one screen to the side.
+    root.querySelectorAll('.castle-layer').forEach(el => {
+      const isCurrent = Number(el.dataset.layer) === currentLayer;
+      el.classList.toggle('castle-layer--active', isCurrent);
+      el.setAttribute('aria-hidden', String(!isCurrent));
+    });
+    refreshLayerControls();
+  }
+
+  // An arrow that leads nowhere is disabled, not hidden: a control that vanishes
+  // moves everything beside it. The glow marks the direction that HAS something.
+  function refreshLayerControls() {
+    const prev = root.querySelector('#layer-prev');
+    const next = root.querySelector('#layer-next');
+    if (prev) {
+      const can = currentLayer > 1;
+      prev.disabled = !can;
+      prev.classList.toggle('castle-layer-arrow--live', can);
+    }
+    if (next) {
+      const can = currentLayer < LAYER_COUNT;
+      next.disabled = !can;
+      next.classList.toggle('castle-layer-arrow--live', can);
+    }
+  }
+
+  function attachLayerControls() {
+    root.querySelector('#layer-prev')?.addEventListener('click', () => setLayer(currentLayer - 1));
+    root.querySelector('#layer-next')?.addEventListener('click', () => setLayer(currentLayer + 1));
+    applyLayer();
+  }
+
   function renderBuildings() {
     const data        = structuresRecord.buildings_data;
     const throneState = data['slot_0'];
@@ -925,30 +1042,60 @@ export function renderCastle(root, { player }) {
 
     // buildings_data also carries non-slot keys (throne_perks); only slot_N
     // entries are castle nodes.
-    root.querySelector('#outer-ring').innerHTML = buildingSlotKeys(data)
-      .filter(s => s !== 'slot_0')
-      .map(slot => {
-        const state      = data[slot] || { level: 0, building_id: null };
-        const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
-        const isEmpty    = !state.building_id;
-        const hasUpgrade = def && getUpgradePathsForBuilding(player.faction, def).length > 0;
-        // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
-        // pool, so both are consulted before giving up on a portrait.
-        const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
-        const bg         = nodeBackground(slot, (def || mercDef)?.unit_id);
-        const classes    = ['castle-node', isEmpty ? 'castle-node--empty' : '', bg ? 'castle-node--portrait' : '']
-          .filter(Boolean).join(' ');
+    // One node, on either layer. A locked slot still draws — it is a promise,
+    // not an absence — but says what opens it instead of inviting a build.
+    const nodeHtml = slot => {
+      const state      = data[slot] || { level: 0, building_id: null };
+      const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
+      const isEmpty    = !state.building_id;
+      // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
+      // pool, so both are consulted before giving up on a portrait.
+      const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
+      const bg         = nodeBackground(slot, (def || mercDef)?.unit_id);
+      const lockedBy   = slotLockedBy(data, slot);
+      const classes    = ['castle-node',
+                          isEmpty ? 'castle-node--empty' : '',
+                          bg ? 'castle-node--portrait' : '',
+                          lockedBy ? 'castle-node--locked' : '']
+        .filter(Boolean).join(' ');
+      const lockTitle  = lockedBy
+        ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy)) || lockedBy)}"`
+        : '';
+      const glyph = lockedBy ? '🔒' : (isEmpty ? '＋' : '⚔');
+      return `
+        <div class="${classes}" data-slot="${slot}"${bg}${lockTitle}>
+          ${bg && !lockedBy ? '' : `<div class="castle-node-icon">${glyph}</div>`}
+          ${nodeHpBar(slot)}
+        </div>`;
+    };
 
-        return `
-          <div class="${classes}" data-slot="${slot}"${bg}>
-            ${bg ? '' : `<div class="castle-node-icon">${isEmpty ? '＋' : '⚔'}</div>`}
-            ${nodeHpBar(slot)}
-          </div>`;
-      }).join('');
+    root.querySelector('#outer-ring').innerHTML = buildingSlotKeys(data)
+      .filter(s => s !== 'slot_0' && layerOf(s) === 1)
+      .map(nodeHtml).join('');
+
+    // Layer 2 is the same node, the same click handler and the same build flow —
+    // only the grid it sits on differs. Nothing here knows it is "upgrades".
+    const upgradeRing = root.querySelector('#upgrade-ring');
+    if (upgradeRing) {
+      upgradeRing.innerHTML = buildingSlotKeys(data)
+        .filter(s => layerOf(s) === 2)
+        .map(nodeHtml).join('');
+    }
 
     root.querySelectorAll('.castle-node').forEach(node => {
-      node.addEventListener('click', () => handleSlotClick(node.dataset.slot));
+      node.addEventListener('click', () => {
+        const slot     = node.dataset.slot;
+        const lockedBy = slotLockedBy(data, slot);
+        if (lockedBy) {
+          const label = buildingLabel(getBuildingDef(player.faction, lockedBy)) || lockedBy;
+          alert(CASTLE_TEXT.slotLocked[castleLang](label));
+          return;
+        }
+        handleSlotClick(slot);
+      });
     });
+
+    refreshLayerControls();
 
     if (throneLevel < 1 && !isTutorialDone(player, 'throne_upgrade')) {
       const throneEl = root.querySelector('.castle-node[data-slot="slot_0"]');

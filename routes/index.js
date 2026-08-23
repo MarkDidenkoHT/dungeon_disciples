@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -893,6 +893,8 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       buildings: {
         pools:                BUILDING_POOLS,
         slot_categories:      SLOT_CATEGORIES,
+        slot_layers:          SLOT_LAYERS,
+        slot_unlocks:         SLOT_UNLOCKS,
         upgrade_paths:        UNIT_UPGRADE_PATHS,
         hero_max_level:       HERO_MAX_LEVEL,
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
@@ -2104,6 +2106,13 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     const record    = rows[0];
     const buildings = record.buildings_data;
+    // Gated slots (the special row, and the three barracks added with layer 2)
+    // stay shut until their unlocking building exists. Enforced here, not only
+    // in the UI, because the UI is a suggestion and this endpoint is the rule.
+    const lockedBy = slotLockedBy(buildings, slot);
+    if (lockedBy) {
+      return res.status(400).json({ error: `That slot is locked until you build: ${lockedBy}`, code: 'slot_locked', requires: lockedBy });
+    }
     const current   = buildings[slot] || { level: 0, building_id: null };
     const isNew     = !current.building_id;
     const nextLevel = (current.level || 0) + 1;
@@ -2872,6 +2881,10 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
 
     const record = structRows[0];
     const slots  = record.buildings_data || {};
+    const mercLockedBy = slotLockedBy(slots, slot);
+    if (mercLockedBy) {
+      return res.status(400).json({ error: `That slot is locked until you build: ${mercLockedBy}`, code: 'slot_locked', requires: mercLockedBy });
+    }
     if (slots[slot]?.building_id && slots[slot].building_id !== 'mercenary_hall') return res.status(400).json({ error: 'Slot already occupied' });
 
     // Resolve the template before spending anything, so a data gap can never

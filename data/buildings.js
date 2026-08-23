@@ -18,8 +18,66 @@ const SLOT_CATEGORIES = {
   slot_9:  'barracks',
   slot_10: 'barracks',
   slot_11: 'barracks',
+
+  // ── Layer 2 ───────────────────────────────────────────────────────────────
+  // The second castle page. Same 4x3 grid as layer 1, one column per line of
+  // progression: throne, mercenary, barracks. Ids stay `slot_N` and stay
+  // ROW-MAJOR (12,13,14 = top row) because half the codebase identifies a slot
+  // with /^slot_\d+$/ and sorts on Number(id.slice(5)); a prettier scheme like
+  // slot_t0 would silently drop these from every one of those places.
+  slot_12: 'throne_up',   slot_13: 'merc_up',   slot_14: 'barracks_up',
+  slot_15: 'throne_up',   slot_16: 'merc_up',   slot_17: 'barracks_up',
+  slot_18: 'throne_up',   slot_19: 'merc_up',   slot_20: 'barracks_up',
+  slot_21: 'throne_up',   slot_22: 'merc_up',   slot_23: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
+
+// Which page a slot is drawn on. Everything else about a slot works the same on
+// either layer — this only decides where it is rendered and which arrow reveals
+// it.
+const SLOT_LAYERS = {};
+for (const slot of SLOT_IDS) {
+  SLOT_LAYERS[slot] = Number(slot.slice(5)) >= 12 ? 2 : 1;
+}
+const LAYER_COUNT = 2;
+const slotsOnLayer = layer => SLOT_IDS.filter(s => SLOT_LAYERS[s] === layer);
+
+// ── Slot gating ─────────────────────────────────────────────────────────────
+// A slot listed here cannot be built in until the named building exists
+// ANYWHERE in the player's castle. The unlockers live on layer 2, which is why
+// they are not themselves gated: gating the Mercenary Hall behind a special
+// slot would have deadlocked it against the slots it unlocks.
+//
+// Existing players are not grandfathered — a slot they have already built in
+// stays built and keeps working (see isSlotUnlocked), because taking a built
+// slot away retroactively is not a feature, it is a bug report.
+const SLOT_UNLOCKS = {
+  slot_6:  'mercenary_hall',
+  slot_7:  'mercenary_hall',
+  slot_8:  'mercenary_hall',
+  slot_9:  'barracks_2',
+  slot_10: 'barracks_2',
+  slot_11: 'barracks_2',
+};
+
+function hasBuilding(buildingsData, buildingId) {
+  if (!buildingsData || !buildingId) return false;
+  return Object.entries(buildingsData).some(([key, state]) =>
+    /^slot_\d+$/.test(key) && state?.building_id === buildingId);
+}
+
+// `reason` is the building id still needed, or null when the slot is open.
+function slotLockedBy(buildingsData, slot) {
+  const required = SLOT_UNLOCKS[slot];
+  if (!required) return null;
+  // Already built in = already earned. Only EMPTY gated slots stay shut.
+  if (buildingsData?.[slot]?.building_id) return null;
+  return hasBuilding(buildingsData, required) ? null : required;
+}
+
+function isSlotUnlocked(buildingsData, slot) {
+  return slotLockedBy(buildingsData, slot) === null;
+}
 
 const BUILDING_POOLS = {
   empire: {
@@ -92,9 +150,16 @@ const BUILDING_POOLS = {
       { id: 'bulwark_sanctum',     label: 'Bulwark Sanctum', label_ru: 'Санктум оплота',     category: 'barracks', tier: 3, unit_id: 'e431', upgrades: [], cost: { gold: 200 } },
       { id: 'aegis_bastion',       label: 'Aegis Bastion', label_ru: 'Бастион Эгиды',       category: 'barracks', tier: 3, unit_id: 'e432', upgrades: [], cost: { gold: 200 } },
     ],
-    special: [
-      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'special', unit_id: null },
+    special: [],
+    merc_up: [
+      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 120, Crystals_Life: 40 } },
     ],
+    barracks_up: [
+      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 150, Crystals_Life: 50 } },
+    ],
+    throne_up: [],
   },
 
   choir_of_the_cursed: {
@@ -163,9 +228,16 @@ const BUILDING_POOLS = {
       { id: 'ash_cantor_chancel',    label: 'Ash Cantor Chancel', label_ru: 'Клирос пепельного кантора',    category: 'barracks', tier: 2, unit_id: 'd52',  upgrades: ['ash_precentor_chancel'], cost: { gold: 100 } },
       { id: 'ash_precentor_chancel', label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента', category: 'barracks', tier: 3, unit_id: 'd521', upgrades: [] },
     ],
-    special: [
-      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'special', unit_id: null },
+    special: [],
+    merc_up: [
+      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 120, Crystals_Fire: 40 } },
     ],
+    barracks_up: [
+      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 150, Crystals_Fire: 50 } },
+    ],
+    throne_up: [],
   },
 
   grail_of_sorrow: {
@@ -260,9 +332,16 @@ const BUILDING_POOLS = {
       { id: 'mothers_chalice_altar', label: "Mother's Chalice Altar", label_ru: 'Алтарь Чаши Матери',  category: 'barracks', tier: 2, unit_id: 'gs83',  upgrades: ['mothers_vessel_altar'], cost: { gold: 100 } },
       { id: 'mothers_vessel_altar',  label: "Mother's Vessel Altar", label_ru: 'Алтарь Сосуда Матери', category: 'barracks', tier: 3, unit_id: 'gs831', upgrades: [], cost: { gold: 200 } },
     ],
-    special: [
-      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'special', unit_id: null },
+    special: [],
+    merc_up: [
+      { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 120, Crystals_Death: 40 } },
     ],
+    barracks_up: [
+      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        cost: { gold: 150, Crystals_Death: 50 } },
+    ],
+    throne_up: [],
   },
 };
 
@@ -1127,6 +1206,12 @@ module.exports = {
   MERCENARY_BUILDINGS,
   SLOT_CATEGORIES,
   SLOT_IDS,
+  SLOT_LAYERS,
+  LAYER_COUNT,
+  slotsOnLayer,
+  SLOT_UNLOCKS,
+  slotLockedBy,
+  isSlotUnlocked,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
