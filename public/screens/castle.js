@@ -1020,6 +1020,9 @@ export function renderCastle(root, { player }) {
     if (clamped === currentLayer) return;
     currentLayer = clamped;
     applyLayer();
+    // The arrow step is finished by the switch itself; pick the chain back up on
+    // the page they just landed on.
+    if (structuresRecord) runPostBattleChain();
   }
 
   function applyLayer() {
@@ -1105,7 +1108,12 @@ export function renderCastle(root, { player }) {
       // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
       // pool, so both are consulted before giving up on a portrait.
       const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
-      const bg         = nodeBackground(slot, (def || mercDef)?.unit_id, def);
+      // An empty slot that can only ever hold one building shows THAT building's
+      // art, greyed — the player can see what goes here before paying for it.
+      const fixedId    = SLOT_FIXED_BUILDING[slot];
+      const previewDef = !state.building_id && fixedId
+        ? getBuildingDef(player.faction, fixedId) : null;
+      const bg         = nodeBackground(slot, (def || mercDef)?.unit_id, def || previewDef);
       const lockedBy   = slotLockedBy(data, slot);
       // A layer-2 slot with no building named for it holds content that does not
       // exist yet. It reads as locked rather than as an empty plot, because "＋"
@@ -1114,7 +1122,8 @@ export function renderCastle(root, { player }) {
       const classes    = ['castle-node',
                           isEmpty ? 'castle-node--empty' : '',
                           bg ? 'castle-node--portrait' : '',
-                          (lockedBy || reserved) ? 'castle-node--locked' : '']
+                          (lockedBy || reserved) ? 'castle-node--locked' : '',
+                          previewDef && !lockedBy ? 'castle-node--preview' : '']
         .filter(Boolean).join(' ');
       const lockTitle  = lockedBy
         ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building, lockedBy.level)}"`
@@ -1123,7 +1132,7 @@ export function renderCastle(root, { player }) {
       const title = lockTitle || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
       return `
         <div class="${classes}" data-slot="${slot}"${bg}${title}>
-          ${bg && !lockedBy && !reserved ? '' : `<div class="castle-node-icon">${glyph}</div>`}
+          ${bg && !lockedBy && !reserved && !previewDef ? '' : `<div class="castle-node-icon">${glyph}</div>`}
           ${nodeHpBar(slot)}
         </div>`;
     };
@@ -1257,7 +1266,48 @@ export function renderCastle(root, { player }) {
   // of the two finished last used to hideTutorial() the other one off the screen.
   function onboardingIdle() {
     hideTutorial();
+    if (runPostBattleChain()) return;
     maybeShowErrandsIntro(player);
+  }
+
+  // ── After the first battle: find layer 2, build the Messenger's Post ───────
+  // Errands cannot be taught before the building that runs them exists, so this
+  // chain sits between the battle and errands_intro.
+  //
+  // Returns true when it took over the screen, so the caller does not also try
+  // to start the errand intro on top of it.
+  const MESSENGER_SLOT = 'slot_16';
+
+  function runPostBattleChain() {
+    // Nothing until the first battle is behind them.
+    if (!isTutorialDone(player, 'battle_done')) return false;
+    // Built already — by the tutorial or by a player who found it alone. Either
+    // way the lesson is moot, so retire both flags rather than replaying them.
+    const built = (structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id) === 'messenger_post';
+    if (built) {
+      if (!isTutorialDone(player, 'build_messenger_post')) {
+        markTutorialDone(player, 'upgrades_page');
+        markTutorialDone(player, 'build_messenger_post');
+      }
+      return false;
+    }
+    if (isTutorialDone(player, 'build_messenger_post')) return false;
+
+    // On layer 1 the post is a page away, so the arrow is the lesson. The step
+    // does NOT advance on a Continue button — it advances when the player
+    // actually switches, which is the thing being taught.
+    if (currentLayer !== 2) {
+      const arrow = root.querySelector('#layer-next');
+      if (!arrow) return false;
+      showTutorialSpotlight(player, 'upgrades_page', arrow);
+      return true;
+    }
+
+    markTutorialDone(player, 'upgrades_page');
+    const target = root.querySelector(`.castle-node[data-slot="${MESSENGER_SLOT}"]`);
+    if (!target) return false;
+    showTutorialSpotlight(player, 'build_messenger_post', target);
+    return true;
   }
 
   function runCastleOnboarding() {
@@ -2650,6 +2700,13 @@ export function renderCastle(root, { player }) {
       // stayed flagged. Chain-wise it is the first beat, and it is finished the
       // moment the throne exists.
       if (slot === 'slot_0') markTutorialDone(player, 'throne_upgrade');
+      // The post-battle chain ends the moment the Post is raised; errands take
+      // over from there (onboardingIdle -> maybeShowErrandsIntro), now that the
+      // building they need exists.
+      if (building_id === 'messenger_post') {
+        markTutorialDone(player, 'upgrades_page');
+        markTutorialDone(player, 'build_messenger_post');
+      }
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so

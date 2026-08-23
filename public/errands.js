@@ -364,8 +364,24 @@ export async function errandRosterIds(chat_id) {
 // of that is a trap, so nothing about errands exists — no button, no sheet —
 // until they have finished a battle and know what a unit is FOR.
 // `battle_done` is written by the battle result screen (see screens/battle.js).
+// Errands need the building that runs them. The battle flag alone used to be
+// the gate; now the Messenger's Post has to actually stand, so the button is
+// dead until the player raises it — which is the step the post-battle tutorial
+// walks them through.
 export function errandsUnlocked(player) {
-  return isTutorialDone(player, 'battle_done');
+  if (!isTutorialDone(player, 'battle_done')) return false;
+  return messengerPostLevel() > 0;
+}
+
+export function messengerPostLevel() {
+  const data = bootstrapCache.data?.structures?.buildings_data;
+  if (!data) return 0;
+  let best = 0;
+  for (const [key, state] of Object.entries(data)) {
+    if (!/^slot_\d+$/.test(key)) continue;
+    if (state?.building_id === 'messenger_post') best = Math.max(best, state.level ?? 0);
+  }
+  return best;
 }
 
 // Runs on every navigation, does something exactly once: the first time the

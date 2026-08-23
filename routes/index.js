@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, maxUnitTier, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -1500,6 +1500,12 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       errandRosterRows(chat_id, player),
       errandRowsFor(chat_id),
     ]);
+    // The building that runs errands has to exist. Enforced here as well as in
+    // the UI, because the UI only hides the button.
+    if (errandPostLevelOf(structRows[0]) < 1) {
+      return res.status(400).json({ error: "Build the Messenger's Post first", code: 'errand_no_post' });
+    }
+
     const active = rows.filter(r => r.active);
     if (active.length) {
       return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
@@ -2168,7 +2174,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     // data/buildings.js). This used to be declared on the building and never
     // charged, so every barracks was free.
     if (slotCategory !== 'throne') {
-      const cost = def.cost || {};
+      const cost = buildingCostForLevel(def, nextLevel);
       const wanted = Object.entries(cost)
         .map(([item, amount]) => [item === 'gold' ? 'Gold' : item, Number(amount)])
         .filter(([, amount]) => amount > 0);

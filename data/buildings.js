@@ -82,6 +82,15 @@ function buildingMaxLevel(buildingId) {
   return BUILDING_MAX_LEVELS[buildingId] ?? 1;
 }
 
+// What the NEXT level costs. `cost` is the price to raise it the first time;
+// `upgrade_costs` overrides that per level, so a building can be cheap to start
+// and expensive to grow — which is how the Messenger's Post can be a tutorial
+// step without also being a free ride to tier-3 errand payouts.
+function buildingCostForLevel(def, level) {
+  if (!def) return {};
+  return def.upgrade_costs?.[level] ?? def.upgrade_costs?.[String(level)] ?? def.cost ?? {};
+}
+
 // The level a building has reached, anywhere in the castle. 0 when unbuilt.
 function buildingLevel(buildingsData, buildingId) {
   if (!buildingsData || !buildingId) return 0;
@@ -212,7 +221,11 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        cost: { gold: 80, Crystals_Life: 20 } },
+        // Level 1 is deliberately almost free: it is the tutorial's first build
+        // after the opening battle, and a wall there is a wall in onboarding.
+        // The levels that actually raise payouts carry the cost.
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 200, Crystals_Life: 60 }, 3: { gold: 400, Crystals_Life: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
         desc: 'Opens the three mercenary slots in your castle.',
@@ -312,7 +325,11 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        cost: { gold: 80, Crystals_Fire: 20 } },
+        // Level 1 is deliberately almost free: it is the tutorial's first build
+        // after the opening battle, and a wall there is a wall in onboarding.
+        // The levels that actually raise payouts carry the cost.
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 200, Crystals_Fire: 60 }, 3: { gold: 400, Crystals_Fire: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
         desc: 'Opens the three mercenary slots in your castle.',
@@ -438,7 +455,11 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        cost: { gold: 80, Crystals_Death: 20 } },
+        // Level 1 is deliberately almost free: it is the tutorial's first build
+        // after the opening battle, and a wall there is a wall in onboarding.
+        // The levels that actually raise payouts carry the cost.
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 200, Crystals_Death: 60 }, 3: { gold: 400, Crystals_Death: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
         desc: 'Opens the three mercenary slots in your castle.',
@@ -1283,6 +1304,7 @@ module.exports = {
   SLOT_FIXED_BUILDING,
   BUILDING_MAX_LEVELS,
   buildingMaxLevel,
+  buildingCostForLevel,
   buildingLevel,
   BASE_MAX_UNIT_TIER,
   maxUnitTier,

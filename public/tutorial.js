@@ -203,9 +203,34 @@ const TUTORIAL_STEPS = {
       text: 'Нажмите «Атака», затем коснитесь врага, чтобы атаковать, или встаньте в защиту, чтобы снизить получаемый урон. Средняя кнопка зависит от того, чей ход: обычный боец применяет там свою способность, а герой читает одно из изученных заклинаний.',
     },
   },
-  // Shown once, the first time the player opens the app after finishing a
-  // battle — the errand button stays hidden until then (see errandsUnlocked in
-  // errands.js), so this step is also the moment it appears. The warning is the
+  // ── After the first battle ────────────────────────────────────────────────
+  // The chain is: come back to the castle -> find the second page -> build the
+  // Messenger's Post -> errands. Errands cannot be explained before the
+  // building that runs them exists, which is why these two steps sit in front
+  // of errands_intro rather than beside it.
+  upgrades_page: {
+    en: {
+      title: 'A Second Page',
+      text: 'Your castle has more than one page. Tap the arrow to see the halls — the buildings that improve your whole kingdom rather than housing a single soldier.',
+    },
+    ru: {
+      title: 'Вторая страница',
+      text: 'У вашего замка больше одной страницы. Нажмите стрелку, чтобы увидеть залы — здания, которые улучшают всё королевство, а не дают одного бойца.',
+    },
+  },
+  build_messenger_post: {
+    en: {
+      title: "The Messenger's Post",
+      text: "Build the Messenger's Post here. It opens errands: work for a single soldier that pays while you play. It costs almost nothing to raise, and each later level pays more for every errand you run.",
+    },
+    ru: {
+      title: 'Почтовый двор',
+      text: 'Постройте здесь Почтовый двор. Он открывает поручения — работу для одного бойца, которая приносит доход, пока вы играете. Постройка стоит сущие гроши, а каждый следующий уровень увеличивает награду.',
+    },
+  },
+  // Shown once, after the Messenger's Post is raised — the errand button stays
+  // dead until then (see errandsUnlocked in errands.js), so this step is also
+  // the moment it becomes usable. The warning is the
   // important half: an errand takes a unit off the board, and a player who sends
   // their only frontliner out for six hours and then cannot embark has been
   // ambushed by a feature, not taught one.
