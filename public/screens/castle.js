@@ -2044,7 +2044,7 @@ export function renderCastle(root, { player }) {
           artUrl: buildingArtUrl(nextDef),
           desc:   castleLang === 'ru' ? (nextDef?.desc_ru || nextDef?.desc || '') : (nextDef?.desc || ''),
           itemSlotHtml,
-        });
+        }) + actionOverlayHtml;
       }
       if (cardWrap && nextUnit) {
         // compareUnit is the unit as it stands NOW (item included), so every
@@ -2060,7 +2060,7 @@ export function renderCastle(root, { player }) {
           // does not change them — so the rows carry true numbers and, being
           // the same rows, cannot change height between the two cards.
           progress,
-        });
+        }) + actionOverlayHtml;
       }
       // The price of the branch now on show, on the same bar the build slider
       // uses, so it is in the one place the player already looks for a cost.
@@ -2079,7 +2079,10 @@ export function renderCastle(root, { player }) {
     // the player tapped a card, which for a building with exactly one upgrade is
     // a tap that carries no decision.
     const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
-    if (firstCard && !onboardingBusy && isTutorialDone(player, 'roster_equip')) showUpgrade(firstCard);
+    if (firstCard && !onboardingBusy && !spellTutorialActive
+        && isTutorialDone(player, 'roster_equip') && isTutorialDone(player, 'spell_heal')) {
+      showUpgrade(firstCard);
+    }
 
     // ONE button. Picking a branch already swaps the card to the unit it leads
     // to and puts its price on the cost bar, so everything the old slider modal
