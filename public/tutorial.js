@@ -267,17 +267,51 @@ export function isTutorialDone(player, stepId) {
   return !!player?.tutorials?.[stepId];
 }
 
-export async function markTutorialDone(player, stepId) {
-  if (player.tutorials?.[stepId]) return;
+// Flags are set LOCALLY and immediately; the write is queued. Callers never
+// await it — nothing in the UI should wait on a bookkeeping PATCH.
+//
+// Queued rather than sent per step because onboarding marks several in quick
+// succession, and each was its own round trip. They now coalesce into one.
+//
+// The response is MERGED, never assigned: it reflects the request that started,
+// so assigning it wiped any flag marked while it was in flight — the step came
+// back, was answered again, and wrote again. That is the repeated
+// /player/tutorials traffic.
+let _pendingFlags = null;
+let _flushTimer   = null;
+let _flushPlayer  = null;
+
+function flushTutorialFlags(player) {
+  const batch = _pendingFlags;
+  _pendingFlags = null;
+  _flushTimer   = null;
+  if (!batch) return;
+  api('/player/tutorials', {
+    player_id: player.id,
+    chat_id:   player.chat_id,
+    tutorials: batch,
+  })
+    .then(updated => {
+      player.tutorials = { ...(updated?.tutorials || {}), ...(player.tutorials || {}) };
+    })
+    .catch(() => {});
+}
+
+// A queued write must not be lost to a backgrounded tab or a closed Mini App.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => { if (_flushPlayer) flushTutorialFlags(_flushPlayer); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && _flushPlayer) flushTutorialFlags(_flushPlayer);
+  });
+}
+
+export function markTutorialDone(player, stepId) {
+  if (!player || player.tutorials?.[stepId]) return;
   player.tutorials = { ...(player.tutorials || {}), [stepId]: true };
-  try {
-    const updated = await api('/player/tutorials', {
-      player_id: player.id,
-      chat_id:   player.chat_id,
-      tutorials: { [stepId]: true },
-    });
-    player.tutorials = updated.tutorials;
-  } catch {}
+  _pendingFlags = { ...(_pendingFlags || {}), [stepId]: true };
+  _flushPlayer  = player;
+  if (_flushTimer) clearTimeout(_flushTimer);
+  _flushTimer = setTimeout(() => flushTutorialFlags(player), 400);
 }
 
 export function hideTutorial() {

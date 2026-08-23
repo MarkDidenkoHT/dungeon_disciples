@@ -1407,6 +1407,12 @@ export function renderCastle(root, { player }) {
   });
 
   function runOnboarding() {
+    // The castle's async work (the errand-id lookup, a bootstrap refresh) can
+    // resolve after the player has left the screen. Without this the driver ran
+    // on a dead screen, found nothing to teach, and hideTutorial()'d whatever
+    // the NEXT screen had just put up — which is why the embark step vanished
+    // the moment it appeared.
+    if (!root.isConnected) return;
     if (onboardingBusy) return;
     for (const step of ONBOARDING) {
       if (isTutorialDone(player, step.id)) { if (pendingStep === step.id) pendingStep = null; continue; }
