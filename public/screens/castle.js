@@ -1291,11 +1291,13 @@ export function renderCastle(root, { player }) {
   const ONBOARDING = [
     {
       id: 'throne_upgrade',
+      awaits: true,
       ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1,
       target: () => nodeForSlot('slot_0'),
     },
     {
       id: 'second_building',
+      awaits: true,
       ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) >= 1
                  && rosterCount < 3 && !!firstFreeBarracksSlot(),
       target: () => nodeForSlot(firstFreeBarracksSlot()),
@@ -1320,6 +1322,7 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'roster_equip',
+      awaits: true,
       // Only once the picker is actually open, which the step above did.
       ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
       target: equipButtonInPicker,
@@ -1340,12 +1343,14 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'spell_revive',
+      awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(deadTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.resurrect-btn'),
     },
     {
       id: 'spell_heal',
+      awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(woundedTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(woundedTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.heal-btn'),
@@ -1358,6 +1363,7 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'build_messenger_post',
+      awaits: true,
       ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt(),
       open:   () => setLayer(2),
       target: () => nodeForSlot(MESSENGER_SLOT),
@@ -1390,10 +1396,21 @@ export function renderCastle(root, { player }) {
     }) || buttons[0] || null;
   }
 
+  // The step the player has already acted on, waiting for that action to land.
+  // Without it, ANY re-render between the tap and the result re-shows the step
+  // the player just answered — and renderBuildings runs again the moment the
+  // errand lookup resolves, a few hundred ms after the castle opens.
+  let pendingStep = null;
+  onSheetClose(() => {
+    // Backed out without finishing: the step is live again.
+    if (pendingStep) { pendingStep = null; runOnboarding(); }
+  });
+
   function runOnboarding() {
     if (onboardingBusy) return;
     for (const step of ONBOARDING) {
-      if (isTutorialDone(player, step.id)) continue;
+      if (isTutorialDone(player, step.id)) { if (pendingStep === step.id) pendingStep = null; continue; }
+      if (pendingStep === step.id) return;
       if (!step.ready()) continue;
       step.open?.();
       const el = step.target();
@@ -1402,14 +1419,15 @@ export function renderCastle(root, { player }) {
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
         onAdvance: () => {
-          // A Continue step is finished right here: mark it and move on.
+          // Finished by its own Continue button.
           if (step.wait) { markTutorialDone(player, step.id); runOnboarding(); return; }
-          // An ACTION step is not finished by the tap — it is finished by what
-          // the tap sets in motion (a build, an equip, a spell), whose handler
-          // marks the flag and re-enters the driver. Re-running it here showed
-          // the same step again the instant the player touched it, because
-          // nothing had changed yet. Only steps that must wait for a sheet to
-          // open declare onTap.
+          // Finished by a server action (build, equip, spell): that handler
+          // marks the flag. Held as pending meanwhile so a re-render cannot put
+          // the step back up while the player is answering it.
+          if (step.awaits) pendingStep = step.id;
+          // Purely navigational (open a sheet, switch a page): the tap IS the
+          // completion, so mark it here or it repeats forever.
+          else markTutorialDone(player, step.id);
           step.onTap?.();
         },
       });
