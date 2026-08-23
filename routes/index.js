@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, buildingMaxLevel, maxUnitTier, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, maxUnitTier, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -1237,6 +1237,13 @@ function writeFavorRecord(chat_id, record) {
 // costs no column and no write.
 const ERRAND_TABLE = '/errands';
 
+// The Messenger's Post level, which is what errand payouts scale with. Named
+// apart from throneLevelOf so the two cannot be swapped by accident — they used
+// to be the same number.
+function errandPostLevelOf(structures) {
+  return buildingLevel(structures?.buildings_data, 'messenger_post');
+}
+
 function throneLevelOf(structures) {
   return structures?.buildings_data?.slot_0?.level ?? 0;
 }
@@ -1283,12 +1290,12 @@ function dailySeed(chat_id, date) {
 // it again beats giving nothing. For a reroll it does not: the player paid an ad
 // view for a DIFFERENT errand, so the caller needs to know it cannot deliver and
 // refund rather than hand back what they already had.
-function pickErrandFor({ chat_id, faction, throneLevel, freeRows, date, lastErrandId = null, salt = '', requireDifferent = false }) {
+function pickErrandFor({ chat_id, faction, postLevel, freeRows, date, lastErrandId = null, salt = '', requireDifferent = false }) {
   if (!freeRows.length) return null;
 
   const profiles = freeRows.map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }));
   const pool = ERR.ERRANDS.filter(e => e.faction === faction);
-  const tier = ERR.throneTier(throneLevel);
+  const tier = ERR.errandTier(postLevel);
 
   const eligible = [];
   for (const errand of pool) {
@@ -1323,13 +1330,13 @@ function errandCandidates(offer, freeRows) {
 // The whole offer as the client needs it: the errand, every duration priced, and
 // what each tag half pays. Per-unit totals are NOT precomputed — the sheet shows
 // the two halves and the player works out that a dual-tag unit takes both.
-function offerPayload(offer, freeRows, throneLevel) {
+function offerPayload(offer, freeRows, postLevel) {
   const def = ERR.ERRANDS_BY_ID[offer.errand_id];
   if (!def) return null;
   const durations = ERR.DURATIONS.map(d => ({
     hours: d.hours,
     mult:  d.mult,
-    parts: ERR.rewardParts(def, throneLevel, offer.tier, d.hours),
+    parts: ERR.rewardParts(def, postLevel, offer.tier, d.hours),
   }));
   const cands = errandCandidates(offer, freeRows);
   return {
@@ -1409,7 +1416,7 @@ async function ensureErrandOffer(chat_id, player) {
   const offer = pickErrandFor({
     chat_id,
     faction: player.faction,
-    throneLevel: throneLevelOf(structRows[0]),
+    postLevel: errandPostLevelOf(structRows[0]),
     freeRows: freeRosterRows(roster, active),
     date: playerLocalDate(player.timezone),
     lastErrandId: rows[0]?.errand ?? null,
@@ -1464,7 +1471,7 @@ router.get('/errands', requireAuth, async (req, res) => {
       ? offerPayload(
           { errand_id: offerRow.errand, ...offerRow.errand_data },
           freeRosterRows(roster, active),
-          throneLevelOf(structRows[0]))
+          errandPostLevelOf(structRows[0]))
       : null;
 
     res.json({
@@ -1519,7 +1526,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });
     }
 
-    const throneLevel = throneLevelOf(structRows[0]);
+    const postLevel = errandPostLevelOf(structRows[0]);
     const now         = Date.now();
     // The client sends which trip it picked; an unknown value resolves to the
     // shortest one, so the duration multiplier can never be forged.
@@ -1545,7 +1552,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       requirement: offer.requirement,
       // What the errand is WORTH. The edge function applies it and may write
       // back what it actually granted; this stays as the promise that was made.
-      reward:      ERR.rewardForTags(def, profile.tags, throneLevel, offer.tier, duration.hours),
+      reward:      ERR.rewardForTags(def, profile.tags, postLevel, offer.tier, duration.hours),
     };
 
     // The offer row BECOMES the running errand — it is not a second row. That is
@@ -1803,7 +1810,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
     const offer = pickErrandFor({
       chat_id,
       faction:      player.faction,
-      throneLevel:  throneLevelOf(structRows[0]),
+      postLevel:    errandPostLevelOf(structRows[0]),
       freeRows:     freeRosterRows(roster, active),
       date:         playerLocalDate(player.timezone),
       lastErrandId: oldRow.errand,
@@ -1846,7 +1853,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
         errand_id:   offerRow.errand,
         tier:        offerRow.errand_data.tier,
         requirement: offerRow.errand_data.requirement,
-      }, freeRosterRows(roster, active), throneLevelOf(structRows[0])),
+      }, freeRosterRows(roster, active), errandPostLevelOf(structRows[0])),
       remaining: REROLL_DAILY_CAP - record.reroll.count,
       cap:       REROLL_DAILY_CAP,
     });
@@ -2101,7 +2108,7 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
 });
 
 router.post('/structures/build', requireAuth, async (req, res) => {
-  const { chat_id, slot, building_id, perk } = req.body;
+  const { chat_id, slot, building_id } = req.body;
   if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
@@ -2143,13 +2150,9 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const cap = slotCategory === 'throne' ? THRONE_MAX_LEVEL : buildingMaxLevel(building_id);
     if (nextLevel > cap) return res.status(400).json({ error: 'Already at max level', code: 'max_level' });
 
-    // Levels 2–4 offer a perk choice; validate + record it. Stored under
-    // buildings_data.throne_perks so both routes and the Supabase cron/edge
-    // functions (regen, daily crystals) can read the player's picks.
     // Throne perks are gone — the throne is levels only, and what used to be a
-    // perk is a building on layer 2. `perk` in the body is ignored rather than
+    // perk is a building on layer 2. A `perk` in the body is ignored rather than
     // rejected, so an old client mid-session does not start failing.
-    let chosenPerk = null;
 
     if (slotCategory === 'throne' && !isNew) {
       const cost = THRONE_UPGRADE_COSTS[nextLevel];
@@ -2185,9 +2188,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     }
 
     buildings[slot] = { level: nextLevel, building_id };
-    if (chosenPerk) {
-      buildings.throne_perks = { ...(buildings.throne_perks || {}), [nextLevel]: chosenPerk.id };
-    }
+
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
     if (isNew && def.unit_id && slotCategory !== 'throne') {
       const unitDef = getUnitByDataId(def.unit_id);
@@ -2666,17 +2667,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const embarkItems = await getItemsByRosterIds(participantIds);
       const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
 
-      // Throne perks (War Chest / Scholar's Sanctum / Grand Reliquary) feed the
-      // same gold/xp/crystal bonus pipeline as the expedition passives.
-      const structForPerks = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
-      const perkBonus = getThronePerkEmbarkBonuses(structForPerks[0]?.buildings_data?.throne_perks);
-      embarkBonus.gold_pct    += perkBonus.gold_pct;
-      embarkBonus.xp_pct      += perkBonus.xp_pct;
-      embarkBonus.crystal_pct += perkBonus.crystal_pct;
-
-      // A timed event is the third feeder into the same pipeline, after
-      // expedition passives and throne perks. Global and per-region bonuses are
-      // both additive, so a 10% global + 10% regional event is +20% there.
+      // A timed event is the second feeder into the same pipeline, after the
+      // expedition passives. Global and per-region bonuses are both additive, so
+      // a 10% global + 10% regional event is +20% there.
       const activeEvent = await getActiveEvent(supabase);
       const eventBonus  = eventBonusFor(activeEvent, region_id);
       embarkBonus.gold_pct    += eventBonus.gold_pct;
@@ -2866,7 +2859,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
     // Mage Guild throne perk discounts the crystal cost.
-    const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data?.throne_perks) / 100;
+    const spellDiscount = 0;
     const discountedCost = {};
     for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
       discountedCost[type] = Math.max(0, Math.ceil(amt * (1 - spellDiscount)));

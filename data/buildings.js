@@ -72,9 +72,10 @@ const SLOT_FIXED_BUILDING = {
 // How many times a building can be raised. Absent = 1 (build it and it is done).
 // The throne is not here: it has its own ladder (THRONE_UPGRADE_COSTS).
 const BUILDING_MAX_LEVELS = {
-  infirmary:        3,
+  infirmary:      3,
+  messenger_post: 3,
   garrison_annex: 3,
-  proving_grounds:  2,
+  proving_grounds: 2,
 };
 
 function buildingMaxLevel(buildingId) {
@@ -209,8 +210,8 @@ const BUILDING_POOLS = {
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands — send an idle unit out to earn while you play.',
-        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        desc: 'Opens errands. Each level pays more for every errand run.',
+        desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
         cost: { gold: 80, Crystals_Life: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
@@ -309,8 +310,8 @@ const BUILDING_POOLS = {
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands — send an idle unit out to earn while you play.',
-        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        desc: 'Opens errands. Each level pays more for every errand run.',
+        desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
         cost: { gold: 80, Crystals_Fire: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
@@ -435,8 +436,8 @@ const BUILDING_POOLS = {
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands — send an idle unit out to earn while you play.',
-        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        desc: 'Opens errands. Each level pays more for every errand run.',
+        desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
         cost: { gold: 80, Crystals_Death: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
@@ -650,28 +651,12 @@ const THRONE_UPGRADE_COSTS = {
   5: { gold: 800 },
 };
 
-// Upgrading the Throne to level 2/3/4 lets the player pick ONE perk from that
-// level's pair (permanent). The chosen perks live in
-// buildings_data.throne_perks = { "2": <id>, "3": <id>, "4": <id> }.
-//
-// `effect` is read by whatever system owns that reward:
-//   spell_cost_reduction_pct  -> routes /spells/research
-//   embark_gold_pct / embark_xp_pct / embark_crystal_pct -> routes /battle/reward
-//   regen (out-of-combat) and daily_crystal_bonus_pct are applied by the Supabase
-//   cron/edge functions, which read throne_perks directly; routes just stores them.
 
 // The throne outgrew the hero line: it has five levels, the hero has four. They
 // were the same number and read off the same constant, so raising one silently
 // raised the other.
 const THRONE_MAX_LEVEL = 5;
 
-// Throne perks were removed: the throne is levels only now, and the effects
-// that used to hang off a perk choice are buildings on layer 2 instead. These
-// stay as neutral stubs so an older deployment of routes/index.js — the two are
-// copied by hand — cannot crash on a missing export.
-function getThronePerk() { return null; }
-function getThronePerkEmbarkBonuses() { return { gold_pct: 0, xp_pct: 0, crystal_pct: 0 }; }
-function getSpellCostReductionPct() { return 0; }
 
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
@@ -1307,9 +1292,6 @@ module.exports = {
   HERO_MAX_LEVEL,
   THRONE_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
-  getThronePerk,
-  getThronePerkEmbarkBonuses,
-  getSpellCostReductionPct,
   getBuildingDef,
   upgradeReaches,
   resolveUpgradeBranch,

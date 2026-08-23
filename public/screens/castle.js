@@ -187,10 +187,8 @@ const CASTLE_TEXT = {
   layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
   slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
                  ru: (n, l) => l > 1 ? `Заперто — ${n}, уровень ${l}` : `Заперто — сначала постройте: ${n}` },
-  colThrone:   { en: 'Halls',                                 ru: 'Залы' },
-  colMerc:     { en: 'Mercenary',                             ru: 'Наёмники' },
-  colBarracks: { en: 'Barracks',                              ru: 'Казармы' },
   maxLevel:    { en: 'Max level',                             ru: 'Макс. уровень' },
+  slotReserved:{ en: 'Reserved — nothing to build here yet',   ru: 'Зарезервировано — здесь пока нечего строить' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -222,11 +220,6 @@ export function renderCastle(root, { player }) {
 
               <div class="castle-layer" data-layer="2">
                 <div class="castle-grid-wrap castle-grid-wrap--upgrades">
-                  <div class="castle-layer-heads">
-                    <span>${CASTLE_TEXT.colThrone[lang0]}</span>
-                    <span>${CASTLE_TEXT.colMerc[lang0]}</span>
-                    <span>${CASTLE_TEXT.colBarracks[lang0]}</span>
-                  </div>
                   <div class="upgrade-col" id="hall-col"></div>
                   <div class="upgrade-col" id="merc-col"></div>
                   <div class="upgrade-col" id="barracks-col"></div>
@@ -743,6 +736,9 @@ export function renderCastle(root, { player }) {
             ${buildUnitCard(s.unit, {
               buildingLabel: s.buildingLabel,
               compareUnit:   s.compareUnit,
+              // A building that recruits nobody shows its own art and blurb.
+              artUrl:        s.artUrl || '',
+              desc:          s.desc   || '',
               // The whole point of showing the line here: the player is picking
               // what to build and wants to know where each option leads before
               // committing the gold, not after.
@@ -1111,18 +1107,23 @@ export function renderCastle(root, { player }) {
       const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
       const bg         = nodeBackground(slot, (def || mercDef)?.unit_id, def);
       const lockedBy   = slotLockedBy(data, slot);
+      // A layer-2 slot with no building named for it holds content that does not
+      // exist yet. It reads as locked rather than as an empty plot, because "＋"
+      // invites a build that cannot happen.
+      const reserved   = layerOf(slot) === 2 && !SLOT_FIXED_BUILDING[slot] && !state.building_id;
       const classes    = ['castle-node',
                           isEmpty ? 'castle-node--empty' : '',
                           bg ? 'castle-node--portrait' : '',
-                          lockedBy ? 'castle-node--locked' : '']
+                          (lockedBy || reserved) ? 'castle-node--locked' : '']
         .filter(Boolean).join(' ');
       const lockTitle  = lockedBy
         ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building, lockedBy.level)}"`
         : '';
-      const glyph = lockedBy ? '🔒' : (isEmpty ? '＋' : '⚔');
+      const glyph = (lockedBy || reserved) ? '🔒' : (isEmpty ? '＋' : '⚔');
+      const title = lockTitle || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
       return `
-        <div class="${classes}" data-slot="${slot}"${bg}${lockTitle}>
-          ${bg && !lockedBy ? '' : `<div class="castle-node-icon">${glyph}</div>`}
+        <div class="${classes}" data-slot="${slot}"${bg}${title}>
+          ${bg && !lockedBy && !reserved ? '' : `<div class="castle-node-icon">${glyph}</div>`}
           ${nodeHpBar(slot)}
         </div>`;
     };
@@ -1148,6 +1149,11 @@ export function renderCastle(root, { player }) {
     root.querySelectorAll('.castle-node').forEach(node => {
       node.addEventListener('click', () => {
         const slot     = node.dataset.slot;
+        const state    = data[slot] || {};
+        if (layerOf(slot) === 2 && !SLOT_FIXED_BUILDING[slot] && !state.building_id) {
+          alert(CASTLE_TEXT.slotReserved[castleLang]);
+          return;
+        }
         const lockedBy = slotLockedBy(data, slot);
         if (lockedBy) {
           const label = buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building;
@@ -2533,6 +2539,8 @@ export function renderCastle(root, { player }) {
           confirmLabel:  costText
             ? `${CASTLE_TEXT.build[castleLang]} · ${buildingLabel(b)} (${costText})`
             : `${CASTLE_TEXT.build[castleLang]} ${buildingLabel(b)}`,
+          artUrl:        buildingArtUrl(b),
+          desc:          castleLang === 'ru' ? (b.desc_ru || b.desc || '') : (b.desc || ''),
           buildingId:    b.id,
           placeholder:   !!b.placeholder,
           cost:          b.cost,

@@ -738,13 +738,19 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false, artUrl = '', desc = '' } = opts;
 
+  // A building that recruits nobody still has something to show: its own art and
+  // what it does. Without `artUrl` this card was a bare ⚔ glyph, which is why
+  // the Infirmary looked artless in the build sheet while its file existed.
   if (!unit) {
     return `
-      <div class="unit-card unit-card--building">
-        <div class="building-card-icon">⚔</div>
+      <div class="unit-card unit-card--building${artUrl ? ' unit-card--building-art' : ''}">
+        ${artUrl
+          ? `<img class="building-card-art" src="${artUrl}" alt="${buildingLabel}" onerror="this.style.display='none'">`
+          : '<div class="building-card-icon">⚔</div>'}
         <div class="building-card-label">${buildingLabel}</div>
+        ${desc ? `<p class="building-card-desc">${desc}</p>` : ''}
       </div>`;
   }
 

@@ -24,11 +24,16 @@
 // offer is CREATED (see ensureErrandOffer in routes/index.js): the server filters
 // to errands some free unit really satisfies, so a player is never shown a task
 // their roster cannot do.
-const THRONE_TIER = { 0: 1, 1: 1, 2: 2, 3: 3, 4: 3 };
+// Errand payouts scale with the MESSENGER'S POST, not the throne. The post is
+// the building that opens errands, so it is the one that should make them worth
+// running — one tier per level. Level 0 (no post) still maps to tier 1 rather
+// than to nothing, because a caller that has not loaded structures yet must not
+// silently price every errand at zero.
+const ERRAND_BUILDING_TIER = { 0: 1, 1: 1, 2: 2, 3: 3 };
 
-// Throne 1 pays the base rate, throne 2 doubles it, throne 3+ quadruples it —
-// 20 XP, 40, 80 for a two-hour trip. The errand pool itself does not get richer
-// as the game goes on; the throne is the only thing that moves the rate.
+// Post level 1 pays the base rate, level 2 pays 1.5x, level 3 pays 2x. The
+// errand pool itself does not get richer as the game goes on; raising the
+// Messenger's Post is the only thing that moves the rate.
 const TIER_REWARD_MULT = { 1: 1, 2: 1.5, 3: 2 };
 
 // ── Duration ────────────────────────────────────────────────────────────────
@@ -61,10 +66,10 @@ function durationFor(hours) {
 //   one unit's share of a battle   10 XP (level 1) to 26 XP (level 6)
 //   a level-6 battle               40 gold
 //   XP to advance a tier-1 unit    50-75      a tier-2 unit  300-360
-// One part at throne 1 for two hours is about one battle share. A unit matching
-// both tags doubles that, the throne multiplies it (x2, x4) and so does the trip
-// length (x1, x1.5, x2) — so the ceiling is a dual-tag unit at throne 3 for six
-// hours, which is 160 XP and 160 gold.
+// One part at post level 1 for two hours is about one battle share. A unit
+// matching both tags doubles that, the post multiplies it (x1, x1.5, x2) and so
+// does the trip length (x1, x1.5, x2) — so the ceiling is a dual-tag unit at a
+// level-3 post for six hours, which is 160 XP and 160 gold.
 const PART_XP    = 20;
 const PART_GOLD  = 20;
 const PART_CRYST = 6;
@@ -168,8 +173,8 @@ const ERRANDS = [
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-function throneTier(throneLevel) {
-  return THRONE_TIER[Math.max(0, Math.min(4, Number(throneLevel) || 0))] ?? 1;
+function errandTier(postLevel) {
+  return ERRAND_BUILDING_TIER[Math.max(0, Math.min(3, Number(postLevel) || 0))] ?? 1;
 }
 
 // Everything a roster row brings to a requirement check. `resolveDef` is passed
@@ -212,8 +217,8 @@ function scaleAmount(n, mult) { return Math.round(n * mult); }
 // Merge the parts a unit has EARNED into one reward object. A unit matching both
 // tags gets both halves; a unit matching one gets one. Tier and duration
 // multiply what comes out, never which parts apply.
-function rewardForTags(errand, tags, throneLevel, tierOverride = null, hours = DEFAULT_HOURS) {
-  const tier = tierOverride ?? throneTier(throneLevel);
+function rewardForTags(errand, tags, postLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+  const tier = tierOverride ?? errandTier(postLevel);
   const mult = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(hours).mult;
   const have = (tags || []).filter(Boolean).map(String);
 
@@ -233,10 +238,10 @@ function rewardForTags(errand, tags, throneLevel, tierOverride = null, hours = D
 
 // Every part priced on its own, for the sheet: the player sees which tag pays
 // what BEFORE choosing who goes, which is the whole point of the two-part split.
-function rewardParts(errand, throneLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+function rewardParts(errand, postLevel, tierOverride = null, hours = DEFAULT_HOURS) {
   return (errand.parts || []).map(p => ({
     tag:    p.tag,
-    reward: rewardForTags(errand, [p.tag], throneLevel, tierOverride, hours),
+    reward: rewardForTags(errand, [p.tag], postLevel, tierOverride, hours),
   }));
 }
 
@@ -249,12 +254,12 @@ const ERRANDS_BY_ID = Object.fromEntries(ERRANDS.map(e => [e.id, e]));
 export {
   ERRANDS,
   ERRANDS_BY_ID,
-  THRONE_TIER,
+  ERRAND_BUILDING_TIER,
   TIER_REWARD_MULT,
   DURATIONS,
   DEFAULT_HOURS,
   durationFor,
-  throneTier,
+  errandTier,
   unitProfile,
   errandTags,
   resolveRequirement,
@@ -266,12 +271,12 @@ export {
 if (typeof module !== 'undefined') module.exports = {
   ERRANDS,
   ERRANDS_BY_ID,
-  THRONE_TIER,
+  ERRAND_BUILDING_TIER,
   TIER_REWARD_MULT,
   DURATIONS,
   DEFAULT_HOURS,
   durationFor,
-  throneTier,
+  errandTier,
   unitProfile,
   errandTags,
   resolveRequirement,
