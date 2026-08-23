@@ -200,7 +200,16 @@ const CASTLE_TEXT = {
   slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
                  ru: (n, l) => l > 1 ? `Заперто — ${n}, уровень ${l}` : `Заперто — сначала постройте: ${n}` },
   maxLevel:    { en: 'Max level',                             ru: 'Макс. уровень' },
-  slotReserved:{ en: 'Reserved — nothing to build here yet',   ru: 'Зарезервировано — здесь пока нечего строить' },
+  slotReserved:{ en: 'Reserved',                               ru: 'Зарезервировано' },
+  slotReservedBody:{ en: 'Nothing can be built here yet. More is coming to this wing.',
+                     ru: 'Здесь пока нечего строить. Это крыло ещё достраивается.' },
+  lockedBuild: { en: n => `Build the ${n}`,                    ru: n => `Постройте: ${n}` },
+  lockedUpgrade:{ en: (n, l) => `Upgrade the ${n} to level ${l}`,
+                  ru: (n, l) => `Улучшите ${n} до уровня ${l}` },
+  lockedLevel: { en: (h, n) => `Currently level ${h} — needs level ${n}`,
+                 ru: (h, n) => `Сейчас уровень ${h} — нужен уровень ${n}` },
+  lockedWhere: { en: 'Found on the second castle page — use the arrow on the right.',
+                 ru: 'Находится на второй странице замка — стрелка справа.' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -1172,17 +1181,11 @@ export function renderCastle(root, { player }) {
         const slot     = node.dataset.slot;
         const state    = data[slot] || {};
         if (layerOf(slot) === 2 && !SLOT_FIXED_BUILDING[slot] && !state.building_id) {
-          openModal(CASTLE_TEXT.build[castleLang],
-            `<p class="modal-empty">${CASTLE_TEXT.slotReserved[castleLang]}</p>`);
+          openReservedPanel();
           return;
         }
         const lockedBy = slotLockedBy(data, slot);
-        if (lockedBy) {
-          const label = buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building;
-          openModal(CASTLE_TEXT.build[castleLang],
-            `<p class="modal-empty">${CASTLE_TEXT.slotLocked[castleLang](label, lockedBy.level)}</p>`);
-          return;
-        }
+        if (lockedBy) { openLockedPanel(lockedBy); return; }
         handleSlotClick(slot);
       });
     });
@@ -1369,6 +1372,44 @@ export function renderCastle(root, { player }) {
       target: () => nodeForSlot(MESSENGER_SLOT),
     },
   ];
+
+  // What a locked slot is waiting for. The verb is the whole message: a
+  // building that does not exist yet must be BUILT, one that exists but is too
+  // low must be UPGRADED, and telling a player to "build" something already
+  // standing in their castle sends them looking for a slot to put it in.
+  function openLockedPanel(req) {
+    const def   = getBuildingDef(player.faction, req.building);
+    const name  = buildingLabel(def) || req.building;
+    const have  = buildingLevelIn(structuresRecord?.buildings_data, req.building);
+    const build = have === 0;
+    const title = build
+      ? CASTLE_TEXT.lockedBuild[castleLang](name)
+      : CASTLE_TEXT.lockedUpgrade[castleLang](name, req.level);
+    const art   = buildingArtUrl(def);
+    const desc  = castleLang === 'ru' ? (def?.desc_ru || def?.desc || '') : (def?.desc || '');
+    const cost  = buildingCostForLevel(def, Math.max(1, have + 1));
+
+    openModal(build ? CASTLE_TEXT.build[castleLang] : CASTLE_TEXT.upgrade[castleLang], `
+      <div class="locked-panel">
+        ${art ? `<img class="locked-panel-art" src="${art}" alt="${name}" onerror="this.style.display='none'">` : '<div class="locked-panel-icon">🔒</div>'}
+        <div class="locked-panel-title">${title}</div>
+        ${desc ? `<p class="locked-panel-desc">${desc}</p>` : ''}
+        <div class="locked-panel-level">${CASTLE_TEXT.lockedLevel[castleLang](have, req.level)}</div>
+        ${Object.keys(cost || {}).length
+          ? `<div class="locked-panel-cost">${costLabelFor(cost)}</div>`
+          : ''}
+        <p class="locked-panel-where">${CASTLE_TEXT.lockedWhere[castleLang]}</p>
+      </div>`);
+  }
+
+  function openReservedPanel() {
+    openModal(CASTLE_TEXT.build[castleLang], `
+      <div class="locked-panel">
+        <div class="locked-panel-icon">🔒</div>
+        <div class="locked-panel-title">${CASTLE_TEXT.slotReserved[castleLang]}</div>
+        <p class="locked-panel-desc">${CASTLE_TEXT.slotReservedBody[castleLang]}</p>
+      </div>`);
+  }
 
   function firstFreeBarracksSlot() {
     const data = structuresRecord?.buildings_data || {};
