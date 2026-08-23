@@ -424,6 +424,8 @@ export function maybeShowErrandsIntro(player) {
 export async function refreshErrandButton(player) {
   const btn = document.querySelector('.res-bar-errands');
   if (!btn || !player?.chat_id) return;
+  // The gate reads structures, so the cache has to be loaded first.
+  try { await bootstrapCache.get(player.chat_id); } catch {}
   // Locked before the first battle: the button stays in the strip and is simply
   // disabled, so the player can see there is something there to come back to.
   // Re-checked on every refresh rather than at mount, because the unlock lands
