@@ -2805,7 +2805,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       // Anything the XP award just pushed over its threshold levels up now,
       // provided its building already supports the upgrade and the branch is
       // unambiguous. Runs AFTER the XP patches so it sees the new totals.
-      result.auto_level_ups = await applyAutoLevelUps(postXpRows, structForPerks[0]?.buildings_data);
+      result.auto_level_ups = await applyAutoLevelUps(postXpRows, structForBonuses[0]?.buildings_data);
 
       // Stable order — Promise.all resolution order is not meaningful, and the
       // victory list should not reshuffle between runs.
