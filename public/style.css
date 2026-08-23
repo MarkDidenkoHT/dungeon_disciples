@@ -5209,7 +5209,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-node--portrait::after,
 .outer-ring .castle-node--empty::after,
-.upgrade-col .castle-node--empty::after {
+.upgrade-col .castle-node--empty::after,
+.upgrade-col .castle-node--perk::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -7274,10 +7275,33 @@ button.cost-bar-item:active { transform: scale(0.9); }
   min-width: 0;
 }
 
-.castle-node--perk {
+.upgrade-col .castle-node--perk {
+  background-color: var(--surface);
+  background-origin: content-box;
+  background-clip: content-box;
+  padding: var(--node-frame-inset);
   cursor: default;
   justify-content: center;
   gap: 2px;
+}
+
+.upgrade-col .castle-node--perk .castle-node-icon {
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.upgrade-col .castle-node--perk:not(.castle-node--empty):not(.castle-node--locked) {
+  background-color: var(--bg);
+}
+
+.upgrade-col .castle-node--perk:not(.castle-node--empty):not(.castle-node--locked) .castle-node-icon {
+  color: var(--accent);
+}
+
+.upgrade-col .castle-node--perk:not(.castle-node--empty):not(.castle-node--locked) .castle-node-label {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .castle-node--locked {
