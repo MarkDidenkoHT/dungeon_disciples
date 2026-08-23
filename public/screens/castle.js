@@ -1472,11 +1472,21 @@ export function renderCastle(root, { player }) {
     openSlotUnitSheet(slot);
     afterSheetSettles(() => {
       const btn = getSheetBody()?.querySelector('.resurrect-btn');
-      if (!btn) { showHealStep(); return; }
+      // Missing button is a FAILURE, not a state. Falling through to the heal
+      // step marked the whole lesson done and burned it permanently.
+      if (!btn) { abortSpellTutorial('resurrect button not rendered'); return; }
       // An action step: the resurrect handler marks it done and chains onward
       // once the unit is really back on its feet.
       showTutorialSpotlight(player, 'spell_revive', btn);
     });
+  }
+
+  // Stops the lesson WITHOUT marking it done, so a transient miss does not cost
+  // the player the lesson for good. It resumes on the next castle visit.
+  function abortSpellTutorial(reason) {
+    console.warn(`[tutorial] spell lesson stopped: ${reason}`);
+    spellTutorialActive = false;
+    hideTutorial();
   }
 
   function showHealStep() {
@@ -1489,11 +1499,18 @@ export function renderCastle(root, { player }) {
     if (isTutorialDone(player, 'spell_heal')) { spellTutorialActive = false; closeSheet(); navigate('embark', { player }); return; }
     const target = woundedTutorialUnit();
     const slot   = slotOfUnit(target);
-    if (!target || !slot) { finish(); return; }
+    if (!target || !slot) {
+      // Nothing wounded AND nothing dead means there is genuinely nothing left
+      // to teach on. With a corpse still standing there, the revive step simply
+      // has not run yet — leave the flag alone and try again next visit.
+      if (!deadTutorialUnit()) finish();
+      else abortSpellTutorial('no wounded unit yet, revive still pending');
+      return;
+    }
     openSlotUnitSheet(slot);
     afterSheetSettles(() => {
       const btn = getSheetBody()?.querySelector('.heal-btn');
-      if (!btn) { finish(); return; }
+      if (!btn) { abortSpellTutorial('heal button not rendered'); return; }
       showTutorialSpotlight(player, 'spell_heal', btn);
     });
   }
