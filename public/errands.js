@@ -59,12 +59,6 @@ function untilText(iso) {
   return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
 }
 
-// Art, name and description are ONE block: the name rides the top of the image
-// and the text the bottom, so the three of them cost the vertical space of the
-// image alone. Art lives in /assets/icons/errands and is authored separately, so
-// a missing file drops back to plain text rather than leaving a broken image.
-// The name is set on the SHEET HEADER (setSheetTitle) rather than drawn over the
-// art, so it is not printed twice; the description keeps the foot of the image.
 function errandHeaderHtml(def, desc) {
   const art = def?.art
     ? `<img class="errand-art-img" src="${assetUrl(`/assets/icons/errands/${def.art}`)}" alt=""
@@ -342,11 +336,6 @@ export async function openErrandsSheet(player) {
   await load();
 }
 
-// Which roster ids are away right now. Battle prep and the castle both ask on
-// mount and must not disagree; both now read the shared errands cache, so they
-// see the same answer and neither pays a round-trip the other already made.
-// (This used to keep its own 5-second copy alongside the button's, which meant
-// the two could hold different states and each had its own fetch.)
 const awaySet = state => new Set((state?.active || []).map(a => String(a.roster_id)));
 
 export async function errandRosterIds(chat_id) {
@@ -358,16 +347,6 @@ export async function errandRosterIds(chat_id) {
   }
 }
 
-// ── The errand system is LOCKED until the first battle is over ──────────────
-// A new player has one or two units and a tutorial telling them to go and
-// fight. Offering to send one of those units away for six hours in the middle
-// of that is a trap, so nothing about errands exists — no button, no sheet —
-// until they have finished a battle and know what a unit is FOR.
-// `battle_done` is written by the battle result screen (see screens/battle.js).
-// Errands need the building that runs them. The battle flag alone used to be
-// the gate; now the Messenger's Post has to actually stand, so the button is
-// dead until the player raises it — which is the step the post-battle tutorial
-// walks them through.
 export function errandsUnlocked(player) {
   if (!isTutorialDone(player, 'battle_done')) return false;
   return messengerPostLevel() > 0;
@@ -384,15 +363,9 @@ export function messengerPostLevel() {
   return best;
 }
 
-// Runs on every navigation, does something exactly once: the first time the
-// player is back in the castle after a battle, the errand button they have
-// never seen before is spotlighted and explained, then the sheet is opened for
-// them. Two steps — what errands are, and the cost of sending someone.
 let introRunning = false;
 
 export function maybeShowErrandsIntro(player) {
-  // A navigation tears the overlay down without going through onAdvance; drop
-  // the flag rather than blocking the intro forever.
   if (introRunning && !document.querySelector('.tutorial-overlay')) introRunning = false;
   if (introRunning) return;
   if (!errandsUnlocked(player)) return;
@@ -418,27 +391,14 @@ export function maybeShowErrandsIntro(player) {
   });
 }
 
-// The button in the resource row. It glows when there is something to DO — an
-// offer waiting, or a unit home with its result. A daily system that always
-// glows teaches players to ignore it.
 export async function refreshErrandButton(player) {
   const btn = document.querySelector('.res-bar-errands');
   if (!btn || !player?.chat_id) return;
   // The gate reads structures, so the cache has to be loaded first.
   try { await bootstrapCache.get(player.chat_id); } catch {}
-  // Locked before the first battle: the button stays in the strip and is simply
-  // disabled, so the player can see there is something there to come back to.
-  // Re-checked on every refresh rather than at mount, because the unlock lands
-  // mid-session — the player returns from their first battle and the shell is
-  // already up.
   btn.disabled = !errandsUnlocked(player);
   if (btn.disabled) return;
   try {
-    // get(), not a bare fetch: this runs on EVERY navigation and only decides
-    // whether the button glows. The cache's TTL covers the one thing that
-    // changes without us — an errand finishing on a server timer — and both
-    // errand writes refresh it, so the badge cannot lag behind the player's own
-    // actions.
     const state = await errandsCache.get(player.chat_id);
     btn.classList.toggle('res-bar-errands--ready', !!state.offer || !!(state.finished || []).length);
   } catch {
