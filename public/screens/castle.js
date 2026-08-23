@@ -1172,13 +1172,15 @@ export function renderCastle(root, { player }) {
         const slot     = node.dataset.slot;
         const state    = data[slot] || {};
         if (layerOf(slot) === 2 && !SLOT_FIXED_BUILDING[slot] && !state.building_id) {
-          alert(CASTLE_TEXT.slotReserved[castleLang]);
+          openModal(CASTLE_TEXT.build[castleLang],
+            `<p class="modal-empty">${CASTLE_TEXT.slotReserved[castleLang]}</p>`);
           return;
         }
         const lockedBy = slotLockedBy(data, slot);
         if (lockedBy) {
           const label = buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building;
-          alert(CASTLE_TEXT.slotLocked[castleLang](label, lockedBy.level));
+          openModal(CASTLE_TEXT.build[castleLang],
+            `<p class="modal-empty">${CASTLE_TEXT.slotLocked[castleLang](label, lockedBy.level)}</p>`);
           return;
         }
         handleSlotClick(slot);
@@ -1192,8 +1194,12 @@ export function renderCastle(root, { player }) {
       showTutorialSpotlight(player, 'throne_upgrade', throneEl);
     } else if (throneLevel >= 1 && rosterCount < 3 && !isTutorialDone(player, 'second_building')) {
       const emptySlot = buildingSlotKeys(data)
-        .filter(s => s !== 'slot_0' && s !== 'slot_4' && !data[s]?.building_id)
-        .sort()[0];
+        .filter(sl => sl !== 'slot_0'
+                   && layerOf(sl) === 1
+                   && SLOT_CATEGORIES[sl] === 'barracks'
+                   && !data[sl]?.building_id
+                   && !slotLockedBy(data, sl))
+        .sort((a, bb) => Number(a.slice(5)) - Number(bb.slice(5)))[0];
       const targetEl = emptySlot ? root.querySelector(`.castle-node[data-slot="${emptySlot}"]`) : null;
       // The faction's "what to build first" advice rides along with this step —
       // the moment the choice is actually in front of the player.
@@ -1288,11 +1294,16 @@ export function renderCastle(root, { player }) {
   //
   // Returns true when it took over the screen, so the caller does not also try
   // to start the errand intro on top of it.
-  const MESSENGER_SLOT = 'slot_16';
+  const MESSENGER_SLOT = Object.keys(SLOT_FIXED_BUILDING)
+    .find(sl => SLOT_FIXED_BUILDING[sl] === 'messenger_post');
 
   function runPostBattleChain() {
-    // Nothing until the first battle is behind them.
+    // Nothing until the first battle is behind them, and never on top of an
+    // earlier lesson — setLayer can call this at any moment.
+    if (onboardingBusy) return false;
     if (!isTutorialDone(player, 'battle_done')) return false;
+    if (!isTutorialDone(player, 'second_building')) return false;
+    if (!isTutorialDone(player, 'roster_equip')) return false;
     // Built already — by the tutorial or by a player who found it alone. Either
     // way the lesson is moot, so retire both flags rather than replaying them.
     const built = (structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id) === 'messenger_post';
@@ -1311,11 +1322,25 @@ export function renderCastle(root, { player }) {
     if (currentLayer !== 2) {
       const arrow = root.querySelector('#layer-next');
       if (!arrow) return false;
-      showTutorialSpotlight(player, 'upgrades_page', arrow);
+      // onAdvance rather than relying on setLayer's own listener winning the
+      // race: both fire on the same tap, and whichever runs second used to
+      // decide whether the next step survived.
+      showTutorialSpotlight(player, 'upgrades_page', arrow, {
+        onAdvance: () => {
+          markTutorialDone(player, 'upgrades_page');
+          if (currentLayer !== 2) setLayer(2);
+          afterSheetSettles(() => showMessengerStep());
+        },
+      });
       return true;
     }
 
     markTutorialDone(player, 'upgrades_page');
+    return showMessengerStep();
+  }
+
+  function showMessengerStep() {
+    if (!MESSENGER_SLOT) return false;
     const target = root.querySelector(`.castle-node[data-slot="${MESSENGER_SLOT}"]`);
     if (!target) return false;
     showTutorialSpotlight(player, 'build_messenger_post', target);

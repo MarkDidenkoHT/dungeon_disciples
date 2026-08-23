@@ -271,8 +271,8 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   const targetBody      = root.querySelector('#spell-target-body');
   const targetTitle     = root.querySelector('#spell-target-title');
 
-  // Guards the one-time spell_buff onboarding prompt so checkReady (which runs
-  // often) can't re-trigger it.
+  // Guards the one-time research prompt so checkReady (which runs often) can't
+  // re-trigger it.
   let spellResearchPrompted = false;
 
   // The resource bar is collapsed in battle prep; slide it down while the spell
@@ -289,11 +289,6 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     spellSheetOverlay.classList.remove('hidden');
     refreshResourceBar(player).catch(() => {}); // show current crystal counts
     setResourceBarVisible(true);
-    // Opening the book satisfies the buff lesson.
-    if (!isTutorialDone(player, 'spell_buff')) {
-      markTutorialDone(player, 'spell_buff');
-      hideTutorial();
-    }
   }
 
   function closeSpellSheet() {
