@@ -2043,6 +2043,7 @@ export function renderCastle(root, { player }) {
           buildingLabel: levelLabelFor(nextDef, slotLevel + 1),
           artUrl: buildingArtUrl(nextDef),
           desc:   castleLang === 'ru' ? (nextDef?.desc_ru || nextDef?.desc || '') : (nextDef?.desc || ''),
+          itemSlotHtml,
         });
       }
       if (cardWrap && nextUnit) {
@@ -2052,6 +2053,7 @@ export function renderCastle(root, { player }) {
         cardWrap.innerHTML = buildUnitCard(nextUnit, {
           buildingLabel: unitName(nextUnit) || '',
           compareUnit:   liveUnit,
+          itemSlotHtml,
           extraSlotHtml: treeButtonHtml(nextUnit.id),
           // The REAL bars, not a placeholder. The unit standing in this slot
           // still has the HP and XP it had a moment ago — browsing a branch
@@ -2077,7 +2079,7 @@ export function renderCastle(root, { player }) {
     // the player tapped a card, which for a building with exactly one upgrade is
     // a tap that carries no decision.
     const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
-    if (firstCard) showUpgrade(firstCard);
+    if (firstCard && !onboardingBusy && isTutorialDone(player, 'roster_equip')) showUpgrade(firstCard);
 
     // ONE button. Picking a branch already swaps the card to the unit it leads
     // to and puts its price on the cost bar, so everything the old slider modal
