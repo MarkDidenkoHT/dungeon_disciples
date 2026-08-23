@@ -1402,11 +1402,15 @@ export function renderCastle(root, { player }) {
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
         onAdvance: () => {
-          // A Continue step is finished by the button. An action step is
-          // finished by the control it points at, whose handler marks the flag —
-          // marking here too would be wrong for a tap that then fails.
-          if (step.wait) markTutorialDone(player, step.id);
-          (step.onTap || runOnboarding)();
+          // A Continue step is finished right here: mark it and move on.
+          if (step.wait) { markTutorialDone(player, step.id); runOnboarding(); return; }
+          // An ACTION step is not finished by the tap — it is finished by what
+          // the tap sets in motion (a build, an equip, a spell), whose handler
+          // marks the flag and re-enters the driver. Re-running it here showed
+          // the same step again the instant the player touched it, because
+          // nothing had changed yet. Only steps that must wait for a sheet to
+          // open declare onTap.
+          step.onTap?.();
         },
       });
       return;
