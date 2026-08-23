@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -895,6 +895,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         slot_categories:      SLOT_CATEGORIES,
         slot_layers:          SLOT_LAYERS,
         slot_unlocks:         SLOT_UNLOCKS,
+        slot_fixed_building:  SLOT_FIXED_BUILDING,
         upgrade_paths:        UNIT_UPGRADE_PATHS,
         hero_max_level:       HERO_MAX_LEVEL,
         throne_max_level:     THRONE_MAX_LEVEL,
@@ -2104,6 +2105,17 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const def = getBuildingDef(faction, building_id);
     if (!def) return res.status(400).json({ error: 'Unknown building_id for this faction' });
     if (def.category !== slotCategory) return res.status(400).json({ error: `Slot ${slot} only accepts ${slotCategory} buildings` });
+    // A fixed slot is one building, not a category. Enforced here so the ladder
+    // cannot be sidestepped by posting a different id of the right category.
+    const fixedBuilding = SLOT_FIXED_BUILDING[slot];
+    if (SLOT_LAYERS[slot] === 2) {
+      if (!fixedBuilding) {
+        return res.status(400).json({ error: `Slot ${slot} is reserved`, code: 'slot_reserved' });
+      }
+      if (building_id !== fixedBuilding) {
+        return res.status(400).json({ error: `Slot ${slot} only accepts ${fixedBuilding}`, code: 'slot_fixed', requires: fixedBuilding });
+      }
+    }
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
     const record    = rows[0];
     const buildings = record.buildings_data;

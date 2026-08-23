@@ -60,6 +60,13 @@ const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 const LAYER_COUNT = 2;
 const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
 
+// Mirrors SLOT_FIXED_BUILDING in data/buildings.js: layer 2 is a fixed ladder,
+// one named building per slot, not a category pool.
+const SLOT_FIXED_BUILDING = {
+  slot_12: 'mercenary_hall',
+  slot_16: 'barracks_2',
+};
+
 const SLOT_UNLOCKS = {
   slot_6:  'mercenary_hall',
   slot_7:  'mercenary_hall',
@@ -2498,15 +2505,30 @@ export function renderCastle(root, { player }) {
       available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
     }
 
+    // Layer 2 is a fixed ladder: each slot accepts exactly the one building
+    // named for it, and a slot with none named accepts NOTHING — it is reserved
+    // for content that does not exist yet. Falling back to the category pool
+    // there offered the Mercenary Hall in all four mercenary slots.
+    const fixedBuilding = SLOT_FIXED_BUILDING[slot];
+    if (layerOf(slot) === 2) {
+      available = fixedBuilding ? available.filter(b => b.id === fixedBuilding) : [];
+    }
+
     if (!available.length) {
       openModal(CASTLE_TEXT.build[castleLang],
         `<p class="modal-empty">${CASTLE_TEXT.noBuildings[castleLang]}</p>`);
       return;
     }
 
+    // "Choose Unit" is the barracks question. A building that recruits nobody —
+    // the Mercenary Hall, Barracks II — is not a unit choice, and titling its
+    // sheet that way asked the player to pick a soldier from a list of halls.
+    const recruits = available.some(b => b.unit_id);
     openSliderModal(slot === 'slot_0'
       ? CASTLE_TEXT.beginReign[castleLang]
-      : CASTLE_TEXT.chooseUnit[castleLang],
+      : recruits
+        ? CASTLE_TEXT.chooseUnit[castleLang]
+        : CASTLE_TEXT.build[castleLang],
       available.map(b => {
         const costText = slot === 'slot_0' ? '' : costLabelFor(b.cost);
         return {

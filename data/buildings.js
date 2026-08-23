@@ -55,6 +55,19 @@ const slotsOnLayer = layer => SLOT_IDS.filter(s => SLOT_LAYERS[s] === layer);
 // Existing players are not grandfathered — a slot they have already built in
 // stays built and keeps working (see isSlotUnlocked), because taking a built
 // slot away retroactively is not a feature, it is a bug report.
+// A slot that accepts exactly ONE building, by id. Layer 2 is a fixed ladder,
+// not a pool: the first slot of the mercenary column IS the Mercenary Hall and
+// the first slot of the barracks column IS Barracks II. Without this the shared
+// category pool offered the Hall in all four mercenary slots, so a player could
+// build it anywhere — or four times.
+//
+// Slots on a layer-2 column with no entry here are reserved for content that
+// does not exist yet, and correctly offer nothing.
+const SLOT_FIXED_BUILDING = {
+  slot_12: 'mercenary_hall',
+  slot_16: 'barracks_2',
+};
+
 const SLOT_UNLOCKS = {
   slot_6:  'mercenary_hall',
   slot_7:  'mercenary_hall',
@@ -1224,6 +1237,7 @@ module.exports = {
   LAYER_COUNT,
   slotsOnLayer,
   SLOT_UNLOCKS,
+  SLOT_FIXED_BUILDING,
   slotLockedBy,
   isSlotUnlocked,
   UNIT_UPGRADE_PATHS,
