@@ -63,19 +63,26 @@ const slotsOnLayer = layer => SLOT_IDS.filter(s => SLOT_LAYERS[s] === layer);
 // does not exist yet, and correctly offer nothing.
 const SLOT_FIXED_BUILDING = {
   slot_12: 'infirmary',
+  slot_13: 'crystal_mine',
+  slot_14: 'mage_guild',
   slot_16: 'messenger_post',
   slot_17: 'mercenary_hall',
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
+  slot_22: 'training_grounds',
 };
 
 // How many times a building can be raised. Absent = 1 (build it and it is done).
 // The throne is not here: it has its own ladder (THRONE_UPGRADE_COSTS).
 const BUILDING_MAX_LEVELS = {
-  infirmary:      3,
-  messenger_post: 3,
-  garrison_annex: 3,
-  proving_grounds: 2,
+  infirmary:        3,
+  crystal_mine:     2,
+  mage_guild:       2,
+  messenger_post:   3,
+  mercenary_hall:   3,
+  garrison_annex:   3,
+  proving_grounds:  2,
+  training_grounds: 2,
 };
 
 function buildingMaxLevel(buildingId) {
@@ -102,6 +109,65 @@ function buildingLevel(buildingsData, buildingId) {
   return best;
 }
 
+// ── Building effects ────────────────────────────────────────────────────────
+// What a building DOES, per level. Values are absolute for that level, not
+// increments: level 2 of the Mage Guild is 20% off, not 10% on top of 10%.
+//
+// This replaces the throne-perk effects. A perk was one of two picked forever at
+// a throne level; these are buildings that level, so the same numbers now come
+// from something the player keeps investing in.
+//
+//   daily_crystal_bonus_pct  read by the Supabase daily-reward function
+//   spell_cost_reduction_pct routes /spells/research
+//   embark_gold_pct / embark_xp_pct / embark_crystal_pct
+//                            routes /battle/reward, same pipeline as the
+//                            expedition passives and timed events
+const BUILDING_EFFECTS = {
+  crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
+  mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
+  training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
+};
+
+// Every effect the castle currently produces, summed. A building above its
+// highest declared level keeps the highest one, so adding a level to
+// BUILDING_MAX_LEVELS without adding its effect row degrades to "no further
+// gain" rather than to zero.
+function buildingEffects(buildingsData) {
+  const totals = {
+    daily_crystal_bonus_pct: 0,
+    spell_cost_reduction_pct: 0,
+    embark_gold_pct: 0,
+    embark_xp_pct: 0,
+    embark_crystal_pct: 0,
+  };
+  for (const [id, byLevel] of Object.entries(BUILDING_EFFECTS)) {
+    const level = buildingLevel(buildingsData, id);
+    if (!level) continue;
+    const declared = Object.keys(byLevel).map(Number).filter(n => n <= level);
+    if (!declared.length) continue;
+    const effect = byLevel[Math.max(...declared)];
+    for (const [key, value] of Object.entries(effect || {})) {
+      totals[key] = (totals[key] ?? 0) + value;
+    }
+  }
+  return totals;
+}
+
+function getSpellCostReductionPct(buildingsData) {
+  return buildingEffects(buildingsData).spell_cost_reduction_pct;
+}
+
+function getDailyCrystalBonusPct(buildingsData) {
+  return buildingEffects(buildingsData).daily_crystal_bonus_pct;
+}
+
+// Shaped like the old getThronePerkEmbarkBonuses so the reward pipeline takes it
+// unchanged.
+function getEmbarkBuildingBonuses(buildingsData) {
+  const e = buildingEffects(buildingsData);
+  return { gold_pct: e.embark_gold_pct, xp_pct: e.embark_xp_pct, crystal_pct: e.embark_crystal_pct };
+}
+
 // ── Unit tier ceiling ───────────────────────────────────────────────────────
 // Units stop at tier 2 until the Proving Grounds is raised: level 1 opens
 // tier 3, level 2 opens tier 4. A cap, not a path — which branch a unit takes is
@@ -117,8 +183,8 @@ function maxUnitTier(buildingsData) {
 // worth raising twice rather than being a single switch.
 const SLOT_UNLOCKS = {
   slot_6:  { building: 'mercenary_hall',   level: 1 },
-  slot_7:  { building: 'mercenary_hall',   level: 1 },
-  slot_8:  { building: 'mercenary_hall',   level: 1 },
+  slot_7:  { building: 'mercenary_hall',   level: 2 },
+  slot_8:  { building: 'mercenary_hall',   level: 3 },
   slot_9:  { building: 'garrison_annex', level: 1 },
   slot_10: { building: 'garrison_annex', level: 2 },
   slot_11: { building: 'garrison_annex', level: 3 },
@@ -210,6 +276,18 @@ const BUILDING_POOLS = {
     ],
     special: [],
     hall_up: [
+      { id: 'crystal_mine', label: 'Crystal Mine', label_ru: 'Кристальная шахта', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'crystal_mine',
+        desc: 'Raises the crystals your daily reward pays: +15%, then +25%.',
+        desc_ru: 'Увеличивает кристаллы ежедневной награды: +15%, затем +25%.',
+        cost: { gold: 120, Crystals_Life: 40 },
+        upgrade_costs: { 2: { gold: 300, Crystals_Life: 100 } } },
+      { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mage_guild',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        cost: { gold: 150, Crystals_Life: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
@@ -228,9 +306,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 200, Crystals_Life: 60 }, 3: { gold: 400, Crystals_Life: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
-        desc: 'Opens the three mercenary slots in your castle.',
-        desc_ru: 'Открывает три слота наёмников в замке.',
-        cost: { gold: 120, Crystals_Life: 40 } },
+        desc: 'Opens one mercenary slot per level.',
+        desc_ru: 'Открывает по одному слоту наёмника за уровень.',
+        cost: { gold: 120, Crystals_Life: 40 },
+        upgrade_costs: { 2: { gold: 260, Crystals_Life: 90 }, 3: { gold: 480, Crystals_Life: 160 } } },
     ],
     barracks_up: [
       { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -243,6 +322,12 @@ const BUILDING_POOLS = {
         desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
         desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
         cost: { gold: 200, Crystals_Life: 60 } },
+      { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'training_grounds',
+        desc: 'Every embark pays more XP: +5%, then +10%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        cost: { gold: 150, Crystals_Life: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
     ],
   },
 
@@ -314,6 +399,18 @@ const BUILDING_POOLS = {
     ],
     special: [],
     hall_up: [
+      { id: 'crystal_mine', label: 'Crystal Mine', label_ru: 'Кристальная шахта', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'crystal_mine',
+        desc: 'Raises the crystals your daily reward pays: +15%, then +25%.',
+        desc_ru: 'Увеличивает кристаллы ежедневной награды: +15%, затем +25%.',
+        cost: { gold: 120, Crystals_Fire: 40 },
+        upgrade_costs: { 2: { gold: 300, Crystals_Fire: 100 } } },
+      { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mage_guild',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        cost: { gold: 150, Crystals_Fire: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
@@ -332,9 +429,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 200, Crystals_Fire: 60 }, 3: { gold: 400, Crystals_Fire: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
-        desc: 'Opens the three mercenary slots in your castle.',
-        desc_ru: 'Открывает три слота наёмников в замке.',
-        cost: { gold: 120, Crystals_Fire: 40 } },
+        desc: 'Opens one mercenary slot per level.',
+        desc_ru: 'Открывает по одному слоту наёмника за уровень.',
+        cost: { gold: 120, Crystals_Fire: 40 },
+        upgrade_costs: { 2: { gold: 260, Crystals_Fire: 90 }, 3: { gold: 480, Crystals_Fire: 160 } } },
     ],
     barracks_up: [
       { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -347,6 +445,12 @@ const BUILDING_POOLS = {
         desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
         desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
         cost: { gold: 200, Crystals_Fire: 60 } },
+      { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'training_grounds',
+        desc: 'Every embark pays more XP: +5%, then +10%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        cost: { gold: 150, Crystals_Fire: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
     ],
   },
 
@@ -444,6 +548,18 @@ const BUILDING_POOLS = {
     ],
     special: [],
     hall_up: [
+      { id: 'crystal_mine', label: 'Crystal Mine', label_ru: 'Кристальная шахта', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'crystal_mine',
+        desc: 'Raises the crystals your daily reward pays: +15%, then +25%.',
+        desc_ru: 'Увеличивает кристаллы ежедневной награды: +15%, затем +25%.',
+        cost: { gold: 120, Crystals_Death: 40 },
+        upgrade_costs: { 2: { gold: 300, Crystals_Death: 100 } } },
+      { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mage_guild',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        cost: { gold: 150, Crystals_Death: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
@@ -462,9 +578,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 200, Crystals_Death: 60 }, 3: { gold: 400, Crystals_Death: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mercenary_hall',
-        desc: 'Opens the three mercenary slots in your castle.',
-        desc_ru: 'Открывает три слота наёмников в замке.',
-        cost: { gold: 120, Crystals_Death: 40 } },
+        desc: 'Opens one mercenary slot per level.',
+        desc_ru: 'Открывает по одному слоту наёмника за уровень.',
+        cost: { gold: 120, Crystals_Death: 40 },
+        upgrade_costs: { 2: { gold: 260, Crystals_Death: 90 }, 3: { gold: 480, Crystals_Death: 160 } } },
     ],
     barracks_up: [
       { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -477,6 +594,12 @@ const BUILDING_POOLS = {
         desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
         desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
         cost: { gold: 200, Crystals_Death: 60 } },
+      { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'training_grounds',
+        desc: 'Every embark pays more XP: +5%, then +10%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        cost: { gold: 150, Crystals_Death: 50 },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
     ],
   },
 };
@@ -1308,6 +1431,11 @@ module.exports = {
   buildingLevel,
   BASE_MAX_UNIT_TIER,
   maxUnitTier,
+  BUILDING_EFFECTS,
+  buildingEffects,
+  getSpellCostReductionPct,
+  getDailyCrystalBonusPct,
+  getEmbarkBuildingBonuses,
   slotLockedBy,
   isSlotUnlocked,
   UNIT_UPGRADE_PATHS,

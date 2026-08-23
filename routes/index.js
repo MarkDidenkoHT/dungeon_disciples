@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -2673,9 +2673,18 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const embarkItems = await getItemsByRosterIds(participantIds);
       const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
 
-      // A timed event is the second feeder into the same pipeline, after the
-      // expedition passives. Global and per-region bonuses are both additive, so
-      // a 10% global + 10% regional event is +20% there.
+      // Castle buildings (Training Grounds today) feed the same gold/xp/crystal
+      // pipeline as the expedition passives — the slot the throne perks used to
+      // occupy.
+      const structForBonuses = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+      const buildingBonus = getEmbarkBuildingBonuses(structForBonuses[0]?.buildings_data);
+      embarkBonus.gold_pct    += buildingBonus.gold_pct;
+      embarkBonus.xp_pct      += buildingBonus.xp_pct;
+      embarkBonus.crystal_pct += buildingBonus.crystal_pct;
+
+      // A timed event is the third feeder into the same pipeline, after the
+      // expedition passives and the castle. Global and per-region bonuses are
+      // both additive, so a 10% global + 10% regional event is +20% there.
       const activeEvent = await getActiveEvent(supabase);
       const eventBonus  = eventBonusFor(activeEvent, region_id);
       embarkBonus.gold_pct    += eventBonus.gold_pct;
@@ -2865,7 +2874,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
     if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
     // Mage Guild throne perk discounts the crystal cost.
-    const spellDiscount = 0;
+    const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data) / 100;
     const discountedCost = {};
     for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
       discountedCost[type] = Math.max(0, Math.ceil(amt * (1 - spellDiscount)));

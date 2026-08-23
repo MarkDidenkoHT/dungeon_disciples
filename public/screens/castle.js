@@ -61,13 +61,19 @@ const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
 // one named building per slot, not a category pool.
 const SLOT_FIXED_BUILDING = {
   slot_12: 'infirmary',
+  slot_13: 'crystal_mine',
+  slot_14: 'mage_guild',
   slot_16: 'messenger_post',
   slot_17: 'mercenary_hall',
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
+  slot_22: 'training_grounds',
 };
 
-const BUILDING_MAX_LEVELS = { infirmary: 3, garrison_annex: 3, proving_grounds: 2 };
+const BUILDING_MAX_LEVELS = {
+  infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
+  mercenary_hall: 3, garrison_annex: 3, proving_grounds: 2, training_grounds: 2,
+};
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
 
 function buildingLevelIn(data, buildingId) {
@@ -82,8 +88,8 @@ function buildingLevelIn(data, buildingId) {
 
 const SLOT_UNLOCKS = {
   slot_6:  { building: 'mercenary_hall',   level: 1 },
-  slot_7:  { building: 'mercenary_hall',   level: 1 },
-  slot_8:  { building: 'mercenary_hall',   level: 1 },
+  slot_7:  { building: 'mercenary_hall',   level: 2 },
+  slot_8:  { building: 'mercenary_hall',   level: 3 },
   slot_9:  { building: 'garrison_annex', level: 1 },
   slot_10: { building: 'garrison_annex', level: 2 },
   slot_11: { building: 'garrison_annex', level: 3 },
