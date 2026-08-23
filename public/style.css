@@ -7333,6 +7333,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-radius: 8px;
   border: 1px solid var(--border);
   display: block;
+  margin-top: 5px;
 }
 
 .building-card-desc {
