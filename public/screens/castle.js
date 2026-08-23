@@ -1034,7 +1034,7 @@ export function renderCastle(root, { player }) {
     applyLayer();
     // The arrow step is finished by the switch itself; pick the chain back up on
     // the page they just landed on.
-    if (structuresRecord) runPostBattleChain();
+    if (structuresRecord) runOnboarding();
   }
 
   function applyLayer() {
@@ -1189,26 +1189,7 @@ export function renderCastle(root, { player }) {
 
     refreshLayerControls();
 
-    if (throneLevel < 1 && !isTutorialDone(player, 'throne_upgrade')) {
-      const throneEl = root.querySelector('.castle-node[data-slot="slot_0"]');
-      showTutorialSpotlight(player, 'throne_upgrade', throneEl);
-    } else if (throneLevel >= 1 && rosterCount < 3 && !isTutorialDone(player, 'second_building')) {
-      const emptySlot = buildingSlotKeys(data)
-        .filter(sl => sl !== 'slot_0'
-                   && layerOf(sl) === 1
-                   && SLOT_CATEGORIES[sl] === 'barracks'
-                   && !data[sl]?.building_id
-                   && !slotLockedBy(data, sl))
-        .sort((a, bb) => Number(a.slice(5)) - Number(bb.slice(5)))[0];
-      const targetEl = emptySlot ? root.querySelector(`.castle-node[data-slot="${emptySlot}"]`) : null;
-      // The faction's "what to build first" advice rides along with this step —
-      // the moment the choice is actually in front of the player.
-      if (targetEl) showTutorialSpotlight(player, 'second_building', targetEl,
-        { extraText: firstRecruitHint(player) });
-      else hideTutorial();
-    } else {
-      runCastleOnboarding();
-    }
+    runOnboarding();
   }
 
   // ── Onboarding, after the second building ─────────────────────────────────
@@ -1222,10 +1203,10 @@ export function renderCastle(root, { player }) {
   // True only while the revive → heal lesson is running, so the two spell
   // buttons advance the chain during onboarding and never spotlight for a
   // veteran reviving a unit in normal play.
-  let spellTutorialActive = false;
+
 
   // Raised while an action handler is driving the chain itself. Every mutation
-  // ends in reloadFromBootstrap → renderBuildings → runCastleOnboarding, so
+  // ends in reloadFromBootstrap → renderBuildings → runOnboarding, so
   // without this the gate restarts the chain from its own idea of where the
   // player is, at the same moment the handler is advancing it — two steps race,
   // and the loser anchors its spotlight to an element the winner has already
@@ -1279,240 +1260,159 @@ export function renderCastle(root, { player }) {
     setTimeout(run, 400);   // in case the animation was skipped or already over
   }
 
-  // Nothing left to teach here. The errands intro is fired from this point
-  // rather than from navigate(): the castle's own render is async, and whichever
-  // of the two finished last used to hideTutorial() the other one off the screen.
-  function onboardingIdle() {
-    hideTutorial();
-    if (runPostBattleChain()) return;
-    maybeShowErrandsIntro(player);
-  }
-
-  // ── After the first battle: find layer 2, build the Messenger's Post ───────
-  // Errands cannot be taught before the building that runs them exists, so this
-  // chain sits between the battle and errands_intro.
+  // ── Onboarding ────────────────────────────────────────────────────────────
+  // ONE ordered script. The driver walks it top to bottom, shows the FIRST step
+  // that is not done and can run right now, and stops. Nothing chains to
+  // anything: every step re-enters the driver when it finishes, so there is a
+  // single place that decides what comes next.
   //
-  // Returns true when it took over the screen, so the caller does not also try
-  // to start the errand intro on top of it.
+  //   id        tutorial flag, and the copy key in tutorial.js
+  //   ready()   is this step applicable right now? false = skip it and try the
+  //             next one. Never fatal, never marks anything.
+  //   open()    optional. Put the screen in the state where the target exists
+  //             (open a sheet, switch layer). May be async-ish via afterSheetSettles.
+  //   target()  the element to point at. null = skip, same as !ready().
+  //   hint()    optional second paragraph.
+  //   wait      true = the step is finished by a Continue button.
+  //             false = the player must use the real control; that control's own
+  //             handler marks the flag and calls runOnboarding() again.
   const MESSENGER_SLOT = Object.keys(SLOT_FIXED_BUILDING)
     .find(sl => SLOT_FIXED_BUILDING[sl] === 'messenger_post');
 
-  function runPostBattleChain() {
-    // Nothing until the first battle is behind them, and never on top of an
-    // earlier lesson — setLayer can call this at any moment.
-    if (onboardingBusy) return false;
-    if (!isTutorialDone(player, 'battle_done')) return false;
-    if (!isTutorialDone(player, 'second_building')) return false;
-    if (!isTutorialDone(player, 'roster_equip')) return false;
-    // Built already — by the tutorial or by a player who found it alone. Either
-    // way the lesson is moot, so retire both flags rather than replaying them.
-    const built = (structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id) === 'messenger_post';
-    if (built) {
-      if (!isTutorialDone(player, 'build_messenger_post')) {
-        markTutorialDone(player, 'upgrades_page');
-        markTutorialDone(player, 'build_messenger_post');
-      }
-      return false;
-    }
-    if (isTutorialDone(player, 'build_messenger_post')) return false;
-
-    // On layer 1 the post is a page away, so the arrow is the lesson. The step
-    // does NOT advance on a Continue button — it advances when the player
-    // actually switches, which is the thing being taught.
-    if (currentLayer !== 2) {
-      const arrow = root.querySelector('#layer-next');
-      if (!arrow) return false;
-      // onAdvance rather than relying on setLayer's own listener winning the
-      // race: both fire on the same tap, and whichever runs second used to
-      // decide whether the next step survived.
-      showTutorialSpotlight(player, 'upgrades_page', arrow, {
-        onAdvance: () => {
-          markTutorialDone(player, 'upgrades_page');
-          if (currentLayer !== 2) setLayer(2);
-          afterSheetSettles(() => showMessengerStep());
-        },
-      });
-      return true;
-    }
-
-    markTutorialDone(player, 'upgrades_page');
-    return showMessengerStep();
-  }
-
-  function showMessengerStep() {
-    if (!MESSENGER_SLOT) return false;
-    const target = root.querySelector(`.castle-node[data-slot="${MESSENGER_SLOT}"]`);
-    if (!target) return false;
-    showTutorialSpotlight(player, 'build_messenger_post', target);
-    return true;
-  }
-
-  function runCastleOnboarding() {
-    if (onboardingBusy) return;
-    if (!isTutorialDone(player, 'second_building')) { hideTutorial(); return; }
+  const heroSlot        = () => slotOfUnit(heroRosterUnit());
+  const heroNeedsArmour = () => {
     const hero = heroRosterUnit();
+    return !!hero && !equippedItemFor(hero.id)
+        && itemsCache.some(it => !it.equipped_by && isEquippableBy(it, hero));
+  };
+  const postBuilt = () =>
+    structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id === 'messenger_post';
 
-    // Self-heal: roster_equip is only marked when the player equips THROUGH the
-    // tutorial. Someone who armed their hero any other way would keep the flag
-    // false forever and be taught the same lesson on every castle visit. If it
-    // is already moot, retire it.
-    if (!isTutorialDone(player, 'roster_equip') &&
-        (isTutorialDone(player, 'spell_heal') || (hero && equippedItemFor(hero.id)))) {
-      markTutorialDone(player, 'roster_equip');
-    }
+  const ONBOARDING = [
+    {
+      id: 'throne_upgrade',
+      ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1,
+      target: () => nodeForSlot('slot_0'),
+    },
+    {
+      id: 'second_building',
+      ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) >= 1
+                 && rosterCount < 3 && !!firstFreeBarracksSlot(),
+      target: () => nodeForSlot(firstFreeBarracksSlot()),
+      hint:   () => firstRecruitHint(player),
+    },
+    {
+      id: 'roster_intro',
+      ready:  heroNeedsArmour,
+      target: () => nodeForSlot(heroSlot()),
+      // The tap opens the sheet through the node's own handler; the driver then
+      // finds the next step already on screen.
+      onTap:  () => afterSheetSettles(runOnboarding),
+    },
+    {
+      id: 'roster_equip_slot',
+      ready:  heroNeedsArmour,
+      open:   () => openSlotUnitSheet(heroSlot()),
+      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
+      // The same tap opens the item picker through the sheet's delegated
+      // handler, which runs after this one — wait for the sub-sheet.
+      onTap:  () => afterSheetSettles(runOnboarding, true),
+    },
+    {
+      id: 'roster_equip',
+      // Only once the picker is actually open, which the step above did.
+      ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
+      target: equipButtonInPicker,
+    },
+    {
+      id: 'roster_equipped',
+      ready:  () => { const h = heroRosterUnit(); return !!h && !!equippedItemFor(h.id); },
+      open:   () => openSlotUnitSheet(heroSlot()),
+      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
+      wait:   true,
+    },
+    {
+      id: 'roster_passive_stack',
+      ready:  () => !!heroRosterUnit(),
+      open:   () => openSlotUnitSheet(heroSlot()),
+      target: () => getSheetBody()?.querySelector('.unit-abilities-row'),
+      wait:   true,
+    },
+    {
+      id: 'spell_revive',
+      ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
+      open:   () => openSlotUnitSheet(slotOfUnit(deadTutorialUnit())),
+      target: () => getSheetBody()?.querySelector('.resurrect-btn'),
+    },
+    {
+      id: 'spell_heal',
+      ready:  () => !!slotWithBuilding(slotOfUnit(woundedTutorialUnit())),
+      open:   () => openSlotUnitSheet(slotOfUnit(woundedTutorialUnit())),
+      target: () => getSheetBody()?.querySelector('.heal-btn'),
+    },
+    {
+      id: 'upgrades_page',
+      ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt() && currentLayer !== 2,
+      target: () => root.querySelector('#layer-next'),
+      onTap:  () => { if (currentLayer !== 2) setLayer(2); afterSheetSettles(runOnboarding); },
+    },
+    {
+      id: 'build_messenger_post',
+      ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt(),
+      open:   () => setLayer(2),
+      target: () => nodeForSlot(MESSENGER_SLOT),
+    },
+  ];
 
-    if (!isTutorialDone(player, 'roster_equip')) { startEquipChain(); return; }
-
-    // Equip done but the spell lesson didn't finish (a reload mid-way): resume
-    // it as long as there is still a fallen or wounded recruit to act on.
-    if (!isTutorialDone(player, 'spell_heal') && (deadTutorialUnit() || woundedTutorialUnit())) {
-      spellTutorialActive = true;
-      showReviveStep();
-      return;
-    }
-    onboardingIdle();
+  function firstFreeBarracksSlot() {
+    const data = structuresRecord?.buildings_data || {};
+    return buildingSlotKeys(data)
+      .filter(sl => sl !== 'slot_0'
+                 && layerOf(sl) === 1
+                 && SLOT_CATEGORIES[sl] === 'barracks'
+                 && !data[sl]?.building_id
+                 && !slotLockedBy(data, sl))
+      .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)))[0] || null;
   }
 
-  function startEquipChain() {
-    const hero = heroRosterUnit();
-    if (!hero) { onboardingIdle(); return; }
-    // Nothing to teach if the hero is already armed, or has nothing to put on
-    // (an account that registered before starting gear was granted). Just stop —
-    // never mark the step done here, or a later item could never teach it.
-    if (equippedItemFor(hero.id)) { onboardingIdle(); return; }
-    if (!itemsCache.some(it => !it.equipped_by && isEquippableBy(it, hero))) { onboardingIdle(); return; }
-
-    const slot = slotOfUnit(hero);
-    const node = nodeForSlot(slot);
-    if (!slot || !node) { onboardingIdle(); return; }
-
-    if (!isTutorialDone(player, 'roster_intro')) {
-      // An action step: the tap opens the slot sheet through the node's own
-      // click handler, and this only chains what happens next.
-      showTutorialSpotlight(player, 'roster_intro', node, {
-        onAdvance: () => {
-          markTutorialDone(player, 'roster_intro');
-          afterSheetSettles(() => showEquipSlotStep(hero));
-        },
-      });
-      return;
-    }
-
-    // Intro already seen — open the sheet ourselves and pick up at the slot.
-    openSlotUnitSheet(slot);
-    afterSheetSettles(() => showEquipSlotStep(hero));
+  // A slot only counts if something is standing in it — openSlotUnitSheet
+  // refuses an empty slot, and a step whose sheet never opens must be skipped
+  // rather than left pointing at nothing.
+  function slotWithBuilding(slot) {
+    return slot && structuresRecord?.buildings_data?.[slot]?.building_id ? slot : null;
   }
 
-  function showEquipSlotStep(hero) {
-    const slotEl = getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${hero.id}"]`);
-    if (!slotEl) return;
-    showTutorialSpotlight(player, 'roster_equip_slot', slotEl, {
-      // The same tap opens the item picker via the sheet's delegated handler,
-      // which runs after this one — wait for that sub-sheet to settle first.
-      onAdvance: () => afterSheetSettles(() => showEquipButtonStep(), true),
-    });
-  }
-
-  // The picker shows one item at a time, so the button to point at is whichever
-  // card is on screen. On a fresh account that is the starting armor; if the
-  // player has other gear and it is showing instead, teaching Equip on that one
-  // is the same lesson.
-  function showEquipButtonStep() {
-    const body    = getSubSheetBody();
-    const buttons = [...(body?.querySelectorAll('.item-action-btn--equip:not([disabled])') || [])];
-    const target  = buttons.find(b => {
+  function equipButtonInPicker() {
+    const buttons = [...(getSubSheetBody()?.querySelectorAll('.item-action-btn--equip:not([disabled])') || [])];
+    return buttons.find(b => {
       const item = itemsCache.find(it => String(it.id) === String(b.dataset.itemId));
       return (item?.item_stats?.key || item?.item_stats?.icon) === STARTING_ITEM_KEY;
-    }) || buttons[0];
-    if (target) showTutorialSpotlight(player, 'roster_equip', target);
+    }) || buttons[0] || null;
   }
 
-  // Payoff: the picker is closed and the slot now carries the item.
-  function showEquippedStep(rosterId) {
-    const slotEl = getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${rosterId}"]`);
-    if (!slotEl) { startSpellTutorialOrEmbark(); return; }
-    showTutorialSpotlight(player, 'roster_equipped', slotEl, {
-      showContinue: true,
-      onAdvance: () => showPassiveStackStep(),
-    });
-  }
-
-  // Taught while the player is looking at the row where a unit's passives and
-  // its item's passive sit side by side. Ranks add and cap at 3.
-  function showPassiveStackStep() {
-    if (isTutorialDone(player, 'roster_passive_stack')) { startSpellTutorialOrEmbark(); return; }
-    const row = getSheetBody()?.querySelector('.unit-abilities-row');
-    if (!row) { startSpellTutorialOrEmbark(); return; }
-    showTutorialSpotlight(player, 'roster_passive_stack', row, {
-      showContinue: true,
-      onAdvance: () => {
-        markTutorialDone(player, 'roster_passive_stack');
-        startSpellTutorialOrEmbark();
-      },
-    });
-  }
-
-  function startSpellTutorialOrEmbark() {
-    closeSheet();
-    if (!isTutorialDone(player, 'spell_heal') && (deadTutorialUnit() || woundedTutorialUnit())) {
-      spellTutorialActive = true;
-      showReviveStep();
-    } else {
-      navigate('embark', { player });
-    }
-  }
-
-  // Revive and Heal both live on the fallen recruit's own slot sheet, so each
-  // step opens that sheet and points at the button on it.
-  function showReviveStep() {
-    if (isTutorialDone(player, 'spell_revive')) { showHealStep(); return; }
-    const dead = deadTutorialUnit();
-    const slot = slotOfUnit(dead);
-    if (!dead || !slot) { showHealStep(); return; }
-    openSlotUnitSheet(slot);
-    afterSheetSettles(() => {
-      const btn = getSheetBody()?.querySelector('.resurrect-btn');
-      // Missing button is a FAILURE, not a state. Falling through to the heal
-      // step marked the whole lesson done and burned it permanently.
-      if (!btn) { abortSpellTutorial('resurrect button not rendered'); return; }
-      // An action step: the resurrect handler marks it done and chains onward
-      // once the unit is really back on its feet.
-      showTutorialSpotlight(player, 'spell_revive', btn);
-    });
-  }
-
-  // Stops the lesson WITHOUT marking it done, so a transient miss does not cost
-  // the player the lesson for good. It resumes on the next castle visit.
-  function abortSpellTutorial(reason) {
-    console.warn(`[tutorial] spell lesson stopped: ${reason}`);
-    spellTutorialActive = false;
-    hideTutorial();
-  }
-
-  function showHealStep() {
-    const finish = () => {
-      markTutorialDone(player, 'spell_heal');
-      spellTutorialActive = false;
-      closeSheet();
-      navigate('embark', { player });
-    };
-    if (isTutorialDone(player, 'spell_heal')) { spellTutorialActive = false; closeSheet(); navigate('embark', { player }); return; }
-    const target = woundedTutorialUnit();
-    const slot   = slotOfUnit(target);
-    if (!target || !slot) {
-      // Nothing wounded AND nothing dead means there is genuinely nothing left
-      // to teach on. With a corpse still standing there, the revive step simply
-      // has not run yet — leave the flag alone and try again next visit.
-      if (!deadTutorialUnit()) finish();
-      else abortSpellTutorial('no wounded unit yet, revive still pending');
+  function runOnboarding() {
+    if (onboardingBusy) return;
+    for (const step of ONBOARDING) {
+      if (isTutorialDone(player, step.id)) continue;
+      if (!step.ready()) continue;
+      step.open?.();
+      const el = step.target();
+      if (!el) continue;
+      showTutorialSpotlight(player, step.id, el, {
+        showContinue: !!step.wait,
+        extraText:    step.hint?.(),
+        onAdvance: () => {
+          // A Continue step is finished by the button. An action step is
+          // finished by the control it points at, whose handler marks the flag —
+          // marking here too would be wrong for a tap that then fails.
+          if (step.wait) markTutorialDone(player, step.id);
+          (step.onTap || runOnboarding)();
+        },
+      });
       return;
     }
-    openSlotUnitSheet(slot);
-    afterSheetSettles(() => {
-      const btn = getSheetBody()?.querySelector('.heal-btn');
-      if (!btn) { abortSpellTutorial('heal button not rendered'); return; }
-      showTutorialSpotlight(player, 'spell_heal', btn);
-    });
+    hideTutorial();
+    maybeShowErrandsIntro(player);
   }
 
   function getMercBuildingDef(buildingId) {
@@ -1959,14 +1859,10 @@ export function renderCastle(root, { player }) {
         btn.textContent = resurrectBtn
           ? CASTLE_TEXT.resurrecting[castleLang]
           : CASTLE_TEXT.healing[castleLang];
-        // Onboarding: revive done → on to the heal step; heal done → the spell
-        // lesson is over and the player is ready to embark. Gated on
-        // spellTutorialActive so a veteran reviving a unit in normal play never
-        // gets a spotlight. Both are read BEFORE the await and marked before the
-        // reload, because reloadFromBootstrap re-runs the onboarding gate and it
+        // Read BEFORE the await: reloadFromBootstrap re-runs the script, which
         // would otherwise see the step as still pending and restart it.
-        const teachingRevive = spellTutorialActive && !!resurrectBtn && !isTutorialDone(player, 'spell_revive');
-        const teachingHeal   = spellTutorialActive && !!healBtn      && !isTutorialDone(player, 'spell_heal');
+        const teachingRevive = !!resurrectBtn && !isTutorialDone(player, 'spell_revive');
+        const teachingHeal   = !!healBtn      && !isTutorialDone(player, 'spell_heal');
         if (teachingRevive || teachingHeal) onboardingBusy = true;
 
         api(path, {
@@ -1979,24 +1875,16 @@ export function renderCastle(root, { player }) {
             if (teachingHeal)   markTutorialDone(player, 'spell_heal');
             await reloadFromBootstrap();
 
+            onboardingBusy = false;
+            hideTutorial();
             if (teachingHeal) {
-              spellTutorialActive = false;
-              onboardingBusy      = false;
-              hideTutorial();
+              // Last castle step. Onboarding continues on the embark screen.
               closeModal();
               navigate('embark', { player });
               return;
             }
-
             openSlotUnitSheet(slot);
-            if (teachingRevive) {
-              // The revived unit is wounded, so the heal step targets the same
-              // slot — hide the spotlight anchored to the button that just
-              // vanished with the re-render before pointing at the new one.
-              hideTutorial();
-              onboardingBusy = false;
-              showHealStep();
-            }
+            runOnboarding();
           })
           .catch(err => {
             btn.disabled   = false;
@@ -2096,7 +1984,7 @@ export function renderCastle(root, { player }) {
     // the player tapped a card, which for a building with exactly one upgrade is
     // a tap that carries no decision.
     const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
-    if (firstCard && !onboardingBusy && !spellTutorialActive
+    if (firstCard && !onboardingBusy
         && isTutorialDone(player, 'roster_equip') && isTutorialDone(player, 'spell_heal')) {
       showUpgrade(firstCard);
     }
@@ -2494,7 +2382,7 @@ export function renderCastle(root, { player }) {
         if (teachingEquip) {
           markTutorialDone(player, 'roster_equip');
           const rosterId = equipBtn.dataset.rosterId;
-          afterSheetSettles(() => { onboardingBusy = false; showEquippedStep(rosterId); });
+          afterSheetSettles(() => { onboardingBusy = false; runOnboarding(); });
         }
       } catch (err) {
         btn.disabled   = false;
