@@ -235,6 +235,10 @@ export function renderCastle(root, { player }) {
   let throneUpgradeCosts = {};
   let thronePerks        = {};
   let heroMaxLevel       = 4;
+  // The throne has one level MORE than the hero line: level 5 is a perk level
+  // that grants no new hero tier. Read separately or the throne reports itself
+  // maxed at 4 and the fifth upgrade is unreachable.
+  let throneMaxLevel     = 5;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
   let resourceInventory  = [];
@@ -298,6 +302,7 @@ export function renderCastle(root, { player }) {
     throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
     thronePerks        = buildingsResp.throne_perks || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
+    throneMaxLevel     = buildingsResp.throne_max_level || 5;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     trophyInventory     = trophies || [];
@@ -650,8 +655,20 @@ export function renderCastle(root, { player }) {
     const state = slot ? structuresRecord.buildings_data?.[slot] : null;
     if (!state) return paths;
 
+    const level = state.level ?? 0;
+
+    // The throne's last level buys a PERK, not a building. The hero line stops
+    // at tier 4, so at level 4 the cathedral has no upgrade target left and the
+    // fifth level would be unreachable — the slot would show "maxed" with a perk
+    // row still unclaimed below it. The path is synthesised against the building
+    // already standing: same id, one more level, which is exactly what the
+    // server does with it.
+    if (slot === 'slot_0' && level >= heroMaxLevel && level < throneMaxLevel && state.building_id) {
+      return [{ building_id: state.building_id, unit_id: unitDef?.id ?? null, throne_level_only: true }];
+    }
+
     // Nothing can be built on a maxed slot, whatever the unit's path says.
-    if ((state.level ?? 0) >= heroMaxLevel) return [];
+    if (level >= heroMaxLevel) return [];
 
     // THE BRANCH IS ALREADY CHOSEN. If the building standing here is one of the
     // unit's own upgrade targets, the player committed to that branch when they
@@ -1017,7 +1034,7 @@ export function renderCastle(root, { player }) {
     const data        = structuresRecord.buildings_data;
     const throneState = data['slot_0'];
     const throneLevel = throneState?.level ?? 0;
-    const throneMaxed = throneLevel >= heroMaxLevel;
+    const throneMaxed = throneLevel >= throneMaxLevel;
 
     // The unit a slot houses IS what the slot is for, so its portrait carries
     // the node instead of a generic glyph. Falls back to the glyph when there is

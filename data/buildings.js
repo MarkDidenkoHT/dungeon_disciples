@@ -534,6 +534,7 @@ const THRONE_UPGRADE_COSTS = {
   2: { gold: 150 },
   3: { gold: 300 },
   4: { gold: 500 },
+  5: { gold: 800 },
 };
 
 // Upgrading the Throne to level 2/3/4 lets the player pick ONE perk from that
@@ -558,7 +559,19 @@ const THRONE_PERKS = {
     { id: 'scholars_sanctum', label: "Scholar's Sanctum", label_ru: 'Санктум учёных', label_ru: 'Святилище учёных', desc: '+15% XP from every embark.', desc_ru: '+15% опыта за каждый поход.', effect: { embark_xp_pct: 15 } },
     { id: 'grand_reliquary',  label: 'Grand Reliquary', label_ru: 'Великий реликварий',    label_ru: 'Великий реликварий', desc: '+15% crystals from every embark.', desc_ru: '+15% кристаллов за каждый поход.', effect: { embark_crystal_pct: 15 } },
   ],
+  // Level 5 is a PERK level only — it grants no new hero tier, because the hero
+  // line stops at tier 4 (HERO_MAX_LEVEL). Both effects reuse keys the embark
+  // payout already reads, so the level pays out without new plumbing.
+  5: [
+    { id: 'royal_treasury',   label: 'Royal Treasury', label_ru: 'Королевская казна', desc: '+25% gold from every embark.', desc_ru: '+25% золота за каждый поход.', effect: { embark_gold_pct: 25 } },
+    { id: 'grand_athenaeum',  label: 'Grand Athenaeum', label_ru: 'Великий атенеум', desc: '+25% XP from every embark.', desc_ru: '+25% опыта за каждый поход.', effect: { embark_xp_pct: 25 } },
+  ],
 };
+
+// The throne outgrew the hero line: it has five levels, the hero has four. They
+// were the same number and read off the same constant, so raising one silently
+// raised the other.
+const THRONE_MAX_LEVEL = 5;
 
 // Resolves the chosen perk def for a given level from a throne_perks map.
 function getThronePerk(level, throne_perks) {
@@ -1215,6 +1228,7 @@ module.exports = {
   isSlotUnlocked,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
+  THRONE_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
   THRONE_PERKS,
   getThronePerk,

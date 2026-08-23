@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -897,6 +897,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         slot_unlocks:         SLOT_UNLOCKS,
         upgrade_paths:        UNIT_UPGRADE_PATHS,
         hero_max_level:       HERO_MAX_LEVEL,
+        throne_max_level:     THRONE_MAX_LEVEL,
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
         throne_perks:         THRONE_PERKS,
         mercenary_buildings:  MERCENARY_BUILDINGS,
@@ -2116,7 +2117,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const current   = buildings[slot] || { level: 0, building_id: null };
     const isNew     = !current.building_id;
     const nextLevel = (current.level || 0) + 1;
-    if (nextLevel > 4) return res.status(400).json({ error: 'Already at max level' });
+    if (nextLevel > THRONE_MAX_LEVEL) return res.status(400).json({ error: 'Already at max level' });
 
     // Levels 2–4 offer a perk choice; validate + record it. Stored under
     // buildings_data.throne_perks so both routes and the Supabase cron/edge
