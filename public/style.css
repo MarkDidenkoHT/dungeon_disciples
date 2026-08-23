@@ -4754,7 +4754,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(11, 14, 20, 0.60);
   pointer-events: none;
   z-index: 0;
 }

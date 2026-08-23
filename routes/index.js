@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, THRONE_PERKS, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, THRONE_UPGRADE_COSTS, buildingMaxLevel, maxUnitTier, getThronePerkEmbarkBonuses, getSpellCostReductionPct, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -900,7 +900,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         hero_max_level:       HERO_MAX_LEVEL,
         throne_max_level:     THRONE_MAX_LEVEL,
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
-        throne_perks:         THRONE_PERKS,
+        base_max_unit_tier:   maxUnitTier({}),
         mercenary_buildings:  MERCENARY_BUILDINGS,
         respec_cost_pct:      RESPEC_COST_PCT,
       },
@@ -1887,6 +1887,17 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     } else {
       if (xpRequired == null) return res.status(400).json({ error: 'Unit has no xp threshold defined' });
       if (unitData.current_xp < xpRequired) return res.status(400).json({ error: `Not enough XP. Need ${xpRequired}, have ${unitData.current_xp}` });
+      // Units stop at tier 2 until the Proving Grounds is raised. Checked on the
+      // UNIT's next tier, not the building's, because the building can already
+      // stand a tier above the unit inside it.
+      const tierCap  = maxUnitTier(structRows[0].buildings_data);
+      const nextTier = (fullDef.t ?? 1) + 1;
+      if (nextTier > tierCap) {
+        return res.status(400).json({
+          error: `Tier ${nextTier} needs the Proving Grounds. Build or raise it first.`,
+          code: 'tier_capped', tier_cap: tierCap,
+        });
+      }
     }
     const buildingSlot = unitData.building_slot || null;
     let path = null;
@@ -2129,18 +2140,16 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     const current   = buildings[slot] || { level: 0, building_id: null };
     const isNew     = !current.building_id;
     const nextLevel = (current.level || 0) + 1;
-    if (nextLevel > THRONE_MAX_LEVEL) return res.status(400).json({ error: 'Already at max level' });
+    const cap = slotCategory === 'throne' ? THRONE_MAX_LEVEL : buildingMaxLevel(building_id);
+    if (nextLevel > cap) return res.status(400).json({ error: 'Already at max level', code: 'max_level' });
 
     // Levels 2–4 offer a perk choice; validate + record it. Stored under
     // buildings_data.throne_perks so both routes and the Supabase cron/edge
     // functions (regen, daily crystals) can read the player's picks.
+    // Throne perks are gone — the throne is levels only, and what used to be a
+    // perk is a building on layer 2. `perk` in the body is ignored rather than
+    // rejected, so an old client mid-session does not start failing.
     let chosenPerk = null;
-    if (slotCategory === 'throne' && !isNew && THRONE_PERKS[nextLevel]) {
-      chosenPerk = THRONE_PERKS[nextLevel].find(p => p.id === perk);
-      if (!chosenPerk) {
-        return res.status(400).json({ error: `Choose a perk: ${THRONE_PERKS[nextLevel].map(p => p.id).join(' or ')}` });
-      }
-    }
 
     if (slotCategory === 'throne' && !isNew) {
       const cost = THRONE_UPGRADE_COSTS[nextLevel];

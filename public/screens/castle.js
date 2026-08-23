@@ -47,13 +47,10 @@ const SLOT_CATEGORIES = {
   slot_10: 'barracks',
   slot_11: 'barracks',
 
-  // Layer 2 column 1 is throne PERKS, which are earned, not built — they are
-  // read out of buildings_data.throne_perks and have no slots. Only columns 2
-  // and 3 are storage.
-  slot_12: 'merc_up',      slot_16: 'barracks_up',
-  slot_13: 'merc_up',      slot_17: 'barracks_up',
-  slot_14: 'merc_up',      slot_18: 'barracks_up',
-  slot_15: 'merc_up',      slot_19: 'barracks_up',
+  slot_12: 'hall_up',    slot_16: 'merc_up',    slot_20: 'barracks_up',
+  slot_13: 'hall_up',    slot_17: 'merc_up',    slot_21: 'barracks_up',
+  slot_14: 'hall_up',    slot_18: 'merc_up',    slot_22: 'barracks_up',
+  slot_15: 'hall_up',    slot_19: 'merc_up',    slot_23: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
@@ -63,30 +60,40 @@ const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
 // Mirrors SLOT_FIXED_BUILDING in data/buildings.js: layer 2 is a fixed ladder,
 // one named building per slot, not a category pool.
 const SLOT_FIXED_BUILDING = {
-  slot_12: 'mercenary_hall',
-  slot_16: 'barracks_2',
+  slot_12: 'infirmary',
+  slot_16: 'messenger_post',
+  slot_17: 'mercenary_hall',
+  slot_20: 'garrison_annex',
+  slot_21: 'proving_grounds',
 };
+
+const BUILDING_MAX_LEVELS = { infirmary: 3, garrison_annex: 3, proving_grounds: 2 };
+const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
+
+function buildingLevelIn(data, buildingId) {
+  if (!data || !buildingId) return 0;
+  let best = 0;
+  for (const [k, st] of Object.entries(data)) {
+    if (!/^slot_\d+$/.test(k)) continue;
+    if (st?.building_id === buildingId) best = Math.max(best, st.level ?? 0);
+  }
+  return best;
+}
 
 const SLOT_UNLOCKS = {
-  slot_6:  'mercenary_hall',
-  slot_7:  'mercenary_hall',
-  slot_8:  'mercenary_hall',
-  slot_9:  'barracks_2',
-  slot_10: 'barracks_2',
-  slot_11: 'barracks_2',
+  slot_6:  { building: 'mercenary_hall',   level: 1 },
+  slot_7:  { building: 'mercenary_hall',   level: 1 },
+  slot_8:  { building: 'mercenary_hall',   level: 1 },
+  slot_9:  { building: 'garrison_annex', level: 1 },
+  slot_10: { building: 'garrison_annex', level: 2 },
+  slot_11: { building: 'garrison_annex', level: 3 },
 };
-
-function hasBuilding(data, buildingId) {
-  if (!data || !buildingId) return false;
-  return Object.entries(data).some(([k, st]) =>
-    /^slot_\d+$/.test(k) && st?.building_id === buildingId);
-}
 
 function slotLockedBy(data, slot) {
   const required = SLOT_UNLOCKS[slot];
   if (!required) return null;
   if (data?.[slot]?.building_id) return null;
-  return hasBuilding(data, required) ? null : required;
+  return buildingLevelIn(data, required.building) >= required.level ? null : required;
 }
 
 // Castle copy that was still hardcoded English while the rest of the sheet
@@ -178,12 +185,12 @@ const CASTLE_TEXT = {
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
   layerCastle: { en: 'Castle',                                ru: 'Замок' },
   layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
-  slotLocked:  { en: n => `Locked — build ${n} first`,        ru: n => `Заперто — сначала постройте: ${n}` },
-  colThrone:   { en: 'Throne',                                ru: 'Трон' },
+  slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
+                 ru: (n, l) => l > 1 ? `Заперто — ${n}, уровень ${l}` : `Заперто — сначала постройте: ${n}` },
+  colThrone:   { en: 'Halls',                                 ru: 'Залы' },
   colMerc:     { en: 'Mercenary',                             ru: 'Наёмники' },
   colBarracks: { en: 'Barracks',                              ru: 'Казармы' },
-  perkUnclaimed:{ en: 'Not chosen',                           ru: 'Не выбрано' },
-  perkLocked:  { en: l => `Throne ${l}`,                      ru: l => `Трон ${l}` },
+  maxLevel:    { en: 'Max level',                             ru: 'Макс. уровень' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -220,7 +227,7 @@ export function renderCastle(root, { player }) {
                     <span>${CASTLE_TEXT.colMerc[lang0]}</span>
                     <span>${CASTLE_TEXT.colBarracks[lang0]}</span>
                   </div>
-                  <div class="upgrade-col" id="perk-col"></div>
+                  <div class="upgrade-col" id="hall-col"></div>
                   <div class="upgrade-col" id="merc-col"></div>
                   <div class="upgrade-col" id="barracks-col"></div>
                 </div>
@@ -240,11 +247,10 @@ export function renderCastle(root, { player }) {
   let buildingPools      = null;
   let upgradePaths       = null;
   let throneUpgradeCosts = {};
-  let thronePerks        = {};
   let heroMaxLevel       = 4;
-  // The throne has one level MORE than the hero line: level 5 is a perk level
-  // that grants no new hero tier. Read separately or the throne reports itself
-  // maxed at 4 and the fifth upgrade is unreachable.
+  // The throne has one level MORE than the hero line: its last level grants no
+  // new hero tier. Read separately or the throne reports itself maxed at 4 and
+  // the fifth upgrade is unreachable.
   let throneMaxLevel     = 5;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
@@ -307,7 +313,6 @@ export function renderCastle(root, { player }) {
     buildingPools      = buildingsResp.pools;
     upgradePaths       = buildingsResp.upgrade_paths || {};
     throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
-    thronePerks        = buildingsResp.throne_perks || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
     throneMaxLevel     = buildingsResp.throne_max_level || 5;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
@@ -370,6 +375,18 @@ export function renderCastle(root, { player }) {
     if (!id) return '';
     const portraitId = id.match(/^(h_[a-z]_\d)/)?.[1] ?? id;
     return `${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}`;
+  }
+
+  // Layer-2 buildings recruit nobody, so they have no portrait to borrow — they
+  // carry their own art instead, one image per faction. The suffix is the
+  // faction's initial: infirmary_e.jpg / _c / _g.
+  const FACTION_ART_SUFFIX = { empire: 'e', choir_of_the_cursed: 'c', grail_of_sorrow: 'g' };
+
+  function buildingArtUrl(def) {
+    if (!def?.art) return '';
+    const suffix = FACTION_ART_SUFFIX[player.faction];
+    if (!suffix) return '';
+    return assetUrl(`/assets/buildings/${def.art}_${suffix}.jpg`);
   }
 
   function getUnitByUnitId(unitId) {
@@ -664,12 +681,20 @@ export function renderCastle(root, { player }) {
 
     const level = state.level ?? 0;
 
-    // The throne's last level buys a PERK, not a building. The hero line stops
-    // at tier 4, so at level 4 the cathedral has no upgrade target left and the
-    // fifth level would be unreachable — the slot would show "maxed" with a perk
-    // row still unclaimed below it. The path is synthesised against the building
-    // already standing: same id, one more level, which is exactly what the
-    // server does with it.
+    // A LAYER-2 building levels in place: the Infirmary at level 1 upgrades to
+    // the Infirmary at level 2, with no second building to move to. There is no
+    // upgrade path to look up, so one is synthesised against what already
+    // stands — same id, one more level, which is exactly what the server does
+    // with it. Stops at the building's own ceiling.
+    if (layerOf(slot) === 2 && state.building_id) {
+      return level < buildingMaxLevel(state.building_id)
+        ? [{ building_id: state.building_id, unit_id: null, level_only: true }]
+        : [];
+    }
+
+    // The throne's last level grants no new hero tier, so at level 4 the
+    // cathedral has no upgrade target left and the fifth level would be
+    // unreachable. Synthesised the same way.
     if (slot === 'slot_0' && level >= heroMaxLevel && level < throneMaxLevel && state.building_id) {
       return [{ building_id: state.building_id, unit_id: unitDef?.id ?? null, throne_level_only: true }];
     }
@@ -1055,11 +1080,13 @@ export function renderCastle(root, { player }) {
     // visibly on the throne, where the hero's whole upgrade tree shares one
     // slot. The building's own unit_id is only the fallback, for a slot that
     // is built but empty.
-    const nodeBackground = (slot, fallbackUnitId) => {
+    const nodeBackground = (slot, fallbackUnitId, buildingDef = null) => {
       const occupantId = rosterUnitForSlot(slot)?.unit_data?.unit_id ?? null;
       const unit = resolveUnitDef({ unit_data: { unit_id: occupantId } })
                 || (fallbackUnitId ? getUnitByUnitId(fallbackUnitId) : null);
-      const url  = unit ? branchPortraitUrl(unit) : '';
+      // A unit's portrait first; failing that the building's own art, which is
+      // the only thing a layer-2 building has.
+      const url  = (unit ? branchPortraitUrl(unit) : '') || buildingArtUrl(buildingDef);
       return url ? ` style="background-image:url('${url}')"` : '';
     };
     const throneDef  = throneState?.building_id ? getBuildingDef(player.faction, throneState.building_id) : null;
@@ -1082,7 +1109,7 @@ export function renderCastle(root, { player }) {
       // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
       // pool, so both are consulted before giving up on a portrait.
       const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
-      const bg         = nodeBackground(slot, (def || mercDef)?.unit_id);
+      const bg         = nodeBackground(slot, (def || mercDef)?.unit_id, def);
       const lockedBy   = slotLockedBy(data, slot);
       const classes    = ['castle-node',
                           isEmpty ? 'castle-node--empty' : '',
@@ -1090,7 +1117,7 @@ export function renderCastle(root, { player }) {
                           lockedBy ? 'castle-node--locked' : '']
         .filter(Boolean).join(' ');
       const lockTitle  = lockedBy
-        ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy)) || lockedBy)}"`
+        ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building, lockedBy.level)}"`
         : '';
       const glyph = lockedBy ? '🔒' : (isEmpty ? '＋' : '⚔');
       return `
@@ -1116,46 +1143,15 @@ export function renderCastle(root, { player }) {
     fillCol('#merc-col', 'merc_up');
     fillCol('#barracks-col', 'barracks_up');
 
-    // Layer 2, column 1: throne perks are EARNED by upgrading the throne and
-    // stored under buildings_data.throne_perks as { level: perkId }. Nothing is
-    // built here, so these are read-only cards rather than slots — a node with a
-    // build sheet behind it would be lying about what the column does.
-    //
-    // Every perk level is drawn, not only the taken ones: an unclaimed level is
-    // the most useful thing this column can tell a player, and drawing it as an
-    // empty node keeps the three columns the same height.
-    const perkCol = root.querySelector('#perk-col');
-    if (perkCol) {
-      const taken = data.throne_perks || {};
-      perkCol.innerHTML = Object.keys(thronePerks || {})
-        .map(Number)
-        .sort((a, b) => a - b)
-        .map(level => {
-          const chosenId = taken[String(level)] ?? taken[level] ?? null;
-          const def      = (thronePerks[level] || []).find(pk => pk.id === chosenId) || null;
-          const reached  = throneLevel >= level;
-          const label    = def
-            ? (castleLang === 'ru' ? (def.label_ru || def.label) : def.label)
-            : (reached ? CASTLE_TEXT.perkUnclaimed[castleLang] : CASTLE_TEXT.perkLocked[castleLang](level));
-          const classes  = ['castle-node', 'castle-node--perk',
-                            def ? '' : 'castle-node--empty',
-                            def || reached ? '' : 'castle-node--locked'].filter(Boolean).join(' ');
-          const icon = def ? '✦' : (reached ? '＋' : '🔒');
-          return `
-            <div class="${classes}" data-perk-level="${level}" title="${def ? (castleLang === 'ru' ? (def.desc_ru || def.desc) : def.desc) : label}">
-              <div class="castle-node-icon">${icon}</div>
-              <div class="castle-node-label">${label}</div>
-            </div>`;
-        }).join('');
-    }
+    fillCol('#hall-col', 'hall_up');
 
     root.querySelectorAll('.castle-node').forEach(node => {
       node.addEventListener('click', () => {
         const slot     = node.dataset.slot;
         const lockedBy = slotLockedBy(data, slot);
         if (lockedBy) {
-          const label = buildingLabel(getBuildingDef(player.faction, lockedBy)) || lockedBy;
-          alert(CASTLE_TEXT.slotLocked[castleLang](label));
+          const label = buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building;
+          alert(CASTLE_TEXT.slotLocked[castleLang](label, lockedBy.level));
           return;
         }
         handleSlotClick(slot);
@@ -2633,40 +2629,13 @@ export function renderCastle(root, { player }) {
     );
   }
 
-  // Perk choice shown when upgrading the Throne to a level that offers perks.
-  function openThronePerkChoice(level, perks, onPick) {
-    const cards = perks.map(p => `
-      <button class="throne-perk-card" data-perk="${p.id}">
-        <div class="throne-perk-label">${castleLang === 'ru' ? (p.label_ru || p.label) : p.label}</div>
-        <div class="throne-perk-desc">${castleLang === 'ru' ? (p.desc_ru || p.desc) : p.desc}</div>
-      </button>`).join('');
-    openModal(castleLang === 'ru' ? `Трон — уровень ${level}` : `Throne — Level ${level}`, `
-      <div class="throne-perk-choice">
-        <p class="throne-perk-intro">${castleLang === 'ru' ? 'Выберите постоянное улучшение:' : 'Choose one permanent boon:'}</p>
-        ${cards}
-      </div>`);
-    getSheetBody()?.querySelectorAll('.throne-perk-card').forEach(btn => {
-      btn.addEventListener('click', () => onPick(btn.dataset.perk));
-    });
-  }
-
-  async function performBuildingUpgrade(slot, building_id, perk = null) {
-    // Throne upgrades to a perk level require a perk pick first.
-    if (slot === 'slot_0' && !perk) {
-      const nextLevel = (structuresRecord.buildings_data.slot_0?.level ?? 0) + 1;
-      const perks = thronePerks[nextLevel];
-      if (perks && perks.length) {
-        openThronePerkChoice(nextLevel, perks, chosen => performBuildingUpgrade(slot, building_id, chosen));
-        return;
-      }
-    }
+  async function performBuildingUpgrade(slot, building_id) {
     closeModal();
     try {
       const updated = await api('/structures/build', {
         chat_id: player.chat_id,
         slot,
         building_id,
-        perk,
       });
       // The throne step was the ONE step that never recorded itself, so it
       // replayed on every visit with a level 0 throne while every other step

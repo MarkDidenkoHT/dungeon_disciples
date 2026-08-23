@@ -25,14 +25,12 @@ const SLOT_CATEGORIES = {
   // ROW-MAJOR (12,13,14 = top row) because half the codebase identifies a slot
   // with /^slot_\d+$/ and sorts on Number(id.slice(5)); a prettier scheme like
   // slot_t0 would silently drop these from every one of those places.
-  // Column 1 of layer 2 is NOT slots. Throne perks are earned by upgrading the
-  // throne and already live in buildings_data.throne_perks; that column only
-  // LISTS what the player has, so there is nothing to store and nothing to
-  // build. Only columns 2 and 3 are real slots.
-  slot_12: 'merc_up',      slot_16: 'barracks_up',
-  slot_13: 'merc_up',      slot_17: 'barracks_up',
-  slot_14: 'merc_up',      slot_18: 'barracks_up',
-  slot_15: 'merc_up',      slot_19: 'barracks_up',
+  // Layer 2: three columns of four, one category each. Column 1 used to list
+  // throne perks; perks are gone and it is ordinary slots now.
+  slot_12: 'hall_up',    slot_16: 'merc_up',    slot_20: 'barracks_up',
+  slot_13: 'hall_up',    slot_17: 'merc_up',    slot_21: 'barracks_up',
+  slot_14: 'hall_up',    slot_18: 'merc_up',    slot_22: 'barracks_up',
+  slot_15: 'hall_up',    slot_19: 'merc_up',    slot_23: 'barracks_up',
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
@@ -64,32 +62,65 @@ const slotsOnLayer = layer => SLOT_IDS.filter(s => SLOT_LAYERS[s] === layer);
 // Slots on a layer-2 column with no entry here are reserved for content that
 // does not exist yet, and correctly offer nothing.
 const SLOT_FIXED_BUILDING = {
-  slot_12: 'mercenary_hall',
-  slot_16: 'barracks_2',
+  slot_12: 'infirmary',
+  slot_16: 'messenger_post',
+  slot_17: 'mercenary_hall',
+  slot_20: 'garrison_annex',
+  slot_21: 'proving_grounds',
 };
 
-const SLOT_UNLOCKS = {
-  slot_6:  'mercenary_hall',
-  slot_7:  'mercenary_hall',
-  slot_8:  'mercenary_hall',
-  slot_9:  'barracks_2',
-  slot_10: 'barracks_2',
-  slot_11: 'barracks_2',
+// How many times a building can be raised. Absent = 1 (build it and it is done).
+// The throne is not here: it has its own ladder (THRONE_UPGRADE_COSTS).
+const BUILDING_MAX_LEVELS = {
+  infirmary:        3,
+  garrison_annex: 3,
+  proving_grounds:  2,
 };
 
-function hasBuilding(buildingsData, buildingId) {
-  if (!buildingsData || !buildingId) return false;
-  return Object.entries(buildingsData).some(([key, state]) =>
-    /^slot_\d+$/.test(key) && state?.building_id === buildingId);
+function buildingMaxLevel(buildingId) {
+  return BUILDING_MAX_LEVELS[buildingId] ?? 1;
 }
 
-// `reason` is the building id still needed, or null when the slot is open.
+// The level a building has reached, anywhere in the castle. 0 when unbuilt.
+function buildingLevel(buildingsData, buildingId) {
+  if (!buildingsData || !buildingId) return 0;
+  let best = 0;
+  for (const [key, state] of Object.entries(buildingsData)) {
+    if (!/^slot_\d+$/.test(key)) continue;
+    if (state?.building_id === buildingId) best = Math.max(best, state.level ?? 0);
+  }
+  return best;
+}
+
+// ── Unit tier ceiling ───────────────────────────────────────────────────────
+// Units stop at tier 2 until the Proving Grounds is raised: level 1 opens
+// tier 3, level 2 opens tier 4. A cap, not a path — which branch a unit takes is
+// still the building it stands in.
+const BASE_MAX_UNIT_TIER = 2;
+
+function maxUnitTier(buildingsData) {
+  return BASE_MAX_UNIT_TIER + buildingLevel(buildingsData, 'proving_grounds');
+}
+
+// { building, level } — the unlocker and the level it must have reached. The
+// three barracks slots come one per Garrison Annex level, so the building is
+// worth raising twice rather than being a single switch.
+const SLOT_UNLOCKS = {
+  slot_6:  { building: 'mercenary_hall',   level: 1 },
+  slot_7:  { building: 'mercenary_hall',   level: 1 },
+  slot_8:  { building: 'mercenary_hall',   level: 1 },
+  slot_9:  { building: 'garrison_annex', level: 1 },
+  slot_10: { building: 'garrison_annex', level: 2 },
+  slot_11: { building: 'garrison_annex', level: 3 },
+};
+
+// The requirement still unmet, as { building, level }, or null when open.
 function slotLockedBy(buildingsData, slot) {
   const required = SLOT_UNLOCKS[slot];
   if (!required) return null;
   // Already built in = already earned. Only EMPTY gated slots stay shut.
   if (buildingsData?.[slot]?.building_id) return null;
-  return hasBuilding(buildingsData, required) ? null : required;
+  return buildingLevel(buildingsData, required.building) >= required.level ? null : required;
 }
 
 function isSlotUnlocked(buildingsData, slot) {
@@ -168,13 +199,36 @@ const BUILDING_POOLS = {
       { id: 'aegis_bastion',       label: 'Aegis Bastion', label_ru: 'Бастион Эгиды',       category: 'barracks', tier: 3, unit_id: 'e432', upgrades: [], cost: { gold: 200 } },
     ],
     special: [],
+    hall_up: [
+      { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'infirmary',
+        desc: 'Wounded units recover between battles. Each level speeds it up.',
+        desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
+        cost: { gold: 100, Crystals_Life: 30 } },
+    ],
     merc_up: [
+      { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'messenger_post',
+        desc: 'Opens errands — send an idle unit out to earn while you play.',
+        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        cost: { gold: 80, Crystals_Life: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mercenary_hall',
+        desc: 'Opens the three mercenary slots in your castle.',
+        desc_ru: 'Открывает три слота наёмников в замке.',
         cost: { gold: 120, Crystals_Life: 40 } },
     ],
     barracks_up: [
-      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+      { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'garrison_annex',
+        desc: 'Opens one more unit slot per level.',
+        desc_ru: 'Открывает по одному слоту бойца за уровень.',
         cost: { gold: 150, Crystals_Life: 50 } },
+      { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'proving_grounds',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        cost: { gold: 200, Crystals_Life: 60 } },
     ],
   },
 
@@ -245,13 +299,36 @@ const BUILDING_POOLS = {
       { id: 'ash_precentor_chancel', label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента', category: 'barracks', tier: 3, unit_id: 'd521', upgrades: [] },
     ],
     special: [],
+    hall_up: [
+      { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'infirmary',
+        desc: 'Wounded units recover between battles. Each level speeds it up.',
+        desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
+        cost: { gold: 100, Crystals_Fire: 30 } },
+    ],
     merc_up: [
+      { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'messenger_post',
+        desc: 'Opens errands — send an idle unit out to earn while you play.',
+        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        cost: { gold: 80, Crystals_Fire: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mercenary_hall',
+        desc: 'Opens the three mercenary slots in your castle.',
+        desc_ru: 'Открывает три слота наёмников в замке.',
         cost: { gold: 120, Crystals_Fire: 40 } },
     ],
     barracks_up: [
-      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+      { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'garrison_annex',
+        desc: 'Opens one more unit slot per level.',
+        desc_ru: 'Открывает по одному слоту бойца за уровень.',
         cost: { gold: 150, Crystals_Fire: 50 } },
+      { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'proving_grounds',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        cost: { gold: 200, Crystals_Fire: 60 } },
     ],
   },
 
@@ -348,13 +425,36 @@ const BUILDING_POOLS = {
       { id: 'mothers_vessel_altar',  label: "Mother's Vessel Altar", label_ru: 'Алтарь Сосуда Матери', category: 'barracks', tier: 3, unit_id: 'gs831', upgrades: [], cost: { gold: 200 } },
     ],
     special: [],
+    hall_up: [
+      { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'infirmary',
+        desc: 'Wounded units recover between battles. Each level speeds it up.',
+        desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
+        cost: { gold: 100, Crystals_Death: 30 } },
+    ],
     merc_up: [
+      { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'messenger_post',
+        desc: 'Opens errands — send an idle unit out to earn while you play.',
+        desc_ru: 'Открывает поручения — отправьте свободного бойца за добычей.',
+        cost: { gold: 80, Crystals_Death: 20 } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'mercenary_hall',
+        desc: 'Opens the three mercenary slots in your castle.',
+        desc_ru: 'Открывает три слота наёмников в замке.',
         cost: { gold: 120, Crystals_Death: 40 } },
     ],
     barracks_up: [
-      { id: 'barracks_2', label: 'Barracks II', label_ru: 'Казармы II', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+      { id: 'garrison_annex', label: 'Garrison Annex', label_ru: 'Гарнизонная пристройка', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'garrison_annex',
+        desc: 'Opens one more unit slot per level.',
+        desc_ru: 'Открывает по одному слоту бойца за уровень.',
         cost: { gold: 150, Crystals_Death: 50 } },
+      { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'proving_grounds',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        cost: { gold: 200, Crystals_Death: 60 } },
     ],
   },
 };
@@ -559,61 +659,19 @@ const THRONE_UPGRADE_COSTS = {
 //   embark_gold_pct / embark_xp_pct / embark_crystal_pct -> routes /battle/reward
 //   regen (out-of-combat) and daily_crystal_bonus_pct are applied by the Supabase
 //   cron/edge functions, which read throne_perks directly; routes just stores them.
-const THRONE_PERKS = {
-  2: [
-    { id: 'infirmary',   label: 'Infirmary', label_ru: 'Лазарет',    label_ru: 'Лазарет',      desc: 'Doubles out-of-combat health regeneration.', desc_ru: 'Удваивает восстановление здоровья вне боя.', effect: { regen_mult: 2 } },
-    { id: 'crystal_mine', label: 'Crystal Mine', label_ru: 'Кристальная шахта', label_ru: 'Кристальная шахта', desc: '+25% crystals from your daily reward.', desc_ru: '+25% кристаллов от ежедневной награды.', effect: { daily_crystal_bonus_pct: 25 } },
-  ],
-  3: [
-    { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', label_ru: 'Гильдия магов', desc: 'Spell research costs 25% fewer crystals.', desc_ru: 'Изучение заклинаний стоит на 25% меньше кристаллов.', effect: { spell_cost_reduction_pct: 25 } },
-    { id: 'war_chest',  label: 'War Chest', label_ru: 'Военная казна',  label_ru: 'Военный сундук', desc: '+15% gold from every embark.', desc_ru: '+15% золота за каждый поход.', effect: { embark_gold_pct: 15 } },
-  ],
-  4: [
-    { id: 'scholars_sanctum', label: "Scholar's Sanctum", label_ru: 'Санктум учёных', label_ru: 'Святилище учёных', desc: '+15% XP from every embark.', desc_ru: '+15% опыта за каждый поход.', effect: { embark_xp_pct: 15 } },
-    { id: 'grand_reliquary',  label: 'Grand Reliquary', label_ru: 'Великий реликварий',    label_ru: 'Великий реликварий', desc: '+15% crystals from every embark.', desc_ru: '+15% кристаллов за каждый поход.', effect: { embark_crystal_pct: 15 } },
-  ],
-  // Level 5 is a PERK level only — it grants no new hero tier, because the hero
-  // line stops at tier 4 (HERO_MAX_LEVEL). Both effects reuse keys the embark
-  // payout already reads, so the level pays out without new plumbing.
-  5: [
-    { id: 'royal_treasury',   label: 'Royal Treasury', label_ru: 'Королевская казна', desc: '+25% gold from every embark.', desc_ru: '+25% золота за каждый поход.', effect: { embark_gold_pct: 25 } },
-    { id: 'grand_athenaeum',  label: 'Grand Athenaeum', label_ru: 'Великий атенеум', desc: '+25% XP from every embark.', desc_ru: '+25% опыта за каждый поход.', effect: { embark_xp_pct: 25 } },
-  ],
-};
 
 // The throne outgrew the hero line: it has five levels, the hero has four. They
 // were the same number and read off the same constant, so raising one silently
 // raised the other.
 const THRONE_MAX_LEVEL = 5;
 
-// Resolves the chosen perk def for a given level from a throne_perks map.
-function getThronePerk(level, throne_perks) {
-  const chosenId = throne_perks?.[String(level)] ?? throne_perks?.[level];
-  if (!chosenId) return null;
-  return (THRONE_PERKS[level] || []).find(p => p.id === chosenId) || null;
-}
-
-// Sums every chosen perk's embark reward bonuses across all levels.
-function getThronePerkEmbarkBonuses(throne_perks) {
-  const totals = { gold_pct: 0, xp_pct: 0, crystal_pct: 0 };
-  for (const level of Object.keys(THRONE_PERKS)) {
-    const perk = getThronePerk(Number(level), throne_perks);
-    if (!perk) continue;
-    totals.gold_pct    += perk.effect.embark_gold_pct    ?? 0;
-    totals.xp_pct      += perk.effect.embark_xp_pct      ?? 0;
-    totals.crystal_pct += perk.effect.embark_crystal_pct ?? 0;
-  }
-  return totals;
-}
-
-// Spell-research cost reduction from the Mage Guild perk (0 if not chosen).
-function getSpellCostReductionPct(throne_perks) {
-  for (const level of Object.keys(THRONE_PERKS)) {
-    const perk = getThronePerk(Number(level), throne_perks);
-    if (perk?.effect.spell_cost_reduction_pct) return perk.effect.spell_cost_reduction_pct;
-  }
-  return 0;
-}
+// Throne perks were removed: the throne is levels only now, and the effects
+// that used to hang off a perk choice are buildings on layer 2 instead. These
+// stay as neutral stubs so an older deployment of routes/index.js — the two are
+// copied by hand — cannot crash on a missing export.
+function getThronePerk() { return null; }
+function getThronePerkEmbarkBonuses() { return { gold_pct: 0, xp_pct: 0, crystal_pct: 0 }; }
+function getSpellCostReductionPct() { return 0; }
 
 function getBuildingDef(faction, buildingId) {
   const factionPools = BUILDING_POOLS[faction];
@@ -1238,13 +1296,17 @@ module.exports = {
   slotsOnLayer,
   SLOT_UNLOCKS,
   SLOT_FIXED_BUILDING,
+  BUILDING_MAX_LEVELS,
+  buildingMaxLevel,
+  buildingLevel,
+  BASE_MAX_UNIT_TIER,
+  maxUnitTier,
   slotLockedBy,
   isSlotUnlocked,
   UNIT_UPGRADE_PATHS,
   HERO_MAX_LEVEL,
   THRONE_MAX_LEVEL,
   THRONE_UPGRADE_COSTS,
-  THRONE_PERKS,
   getThronePerk,
   getThronePerkEmbarkBonuses,
   getSpellCostReductionPct,
