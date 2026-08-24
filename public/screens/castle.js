@@ -194,6 +194,7 @@ const CASTLE_TEXT = {
   heal:        { en: 'Heal',                                  ru: 'Лечить' },
   healing:     { en: 'Healing…',                              ru: 'Лечим…' },
   cannotAfford:{ en: 'Not enough resources. Needs',           ru: 'Недостаточно ресурсов. Нужно' },
+  freeCost:    { en: 'Free',                                  ru: 'Бесплатно' },
   levelWord:   { en: 'Level',                                 ru: 'Уровень' },
   layerCastle: { en: 'Castle',                                ru: 'Замок' },
   layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
@@ -487,9 +488,9 @@ export function renderCastle(root, { player }) {
   }
 
   function costLabelFor(cost) {
-    return Object.entries(cost || {})
-      .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace('Crystals_', '')}`)
-      .join(' + ');
+    const parts = Object.entries(cost || {})
+      .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace('Crystals_', '')}`);
+    return parts.length ? parts.join(' + ') : CASTLE_TEXT.freeCost[castleLang];
   }
 
   // ── Cost bar ────────────────────────────────────────────────────────────────
@@ -1291,6 +1292,11 @@ export function renderCastle(root, { player }) {
   const postBuilt = () =>
     structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id === 'messenger_post';
 
+  const INFIRMARY_SLOT = Object.keys(SLOT_FIXED_BUILDING)
+    .find(sl => SLOT_FIXED_BUILDING[sl] === 'infirmary');
+  const infirmaryBuilt = () =>
+    structuresRecord?.buildings_data?.[INFIRMARY_SLOT]?.building_id === 'infirmary';
+
   const ONBOARDING = [
     {
       id: 'throne_upgrade',
@@ -1370,6 +1376,17 @@ export function renderCastle(root, { player }) {
       ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt(),
       open:   () => setLayer(2),
       target: () => nodeForSlot(MESSENGER_SLOT),
+    },
+    // The second hall in the same page: the point is that this layer is a whole
+    // shelf of buildings, not one tutorial button. The Infirmary is the one
+    // worth raising immediately — without it wounds do not heal between
+    // battles — and level 1 costs nothing, so this step can never wall.
+    {
+      id: 'build_infirmary',
+      awaits: true,
+      ready:  () => isTutorialDone(player, 'build_messenger_post') && !infirmaryBuilt(),
+      open:   () => setLayer(2),
+      target: () => nodeForSlot(INFIRMARY_SLOT),
     },
   ];
 
@@ -2765,6 +2782,7 @@ export function renderCastle(root, { player }) {
         markTutorialDone(player, 'upgrades_page');
         markTutorialDone(player, 'build_messenger_post');
       }
+      if (building_id === 'infirmary') markTutorialDone(player, 'build_infirmary');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so

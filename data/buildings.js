@@ -292,7 +292,10 @@ const BUILDING_POOLS = {
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
-        cost: { gold: 100, Crystals_Life: 30 },
+        // Free on purpose: the tutorial asks for it right after the Messenger's
+        // Post, and a player who just spent everything must still be able to
+        // raise it. The levels that speed healing up carry the cost.
+        cost: {},
         upgrade_costs: { 2: { gold: 240, Crystals_Life: 80 }, 3: { gold: 450, Crystals_Life: 150 } } },
     ],
     merc_up: [
@@ -418,7 +421,8 @@ const BUILDING_POOLS = {
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
-        cost: { gold: 100, Crystals_Fire: 30 },
+        // Free on purpose: see the note on the Infirmary above.
+        cost: {},
         upgrade_costs: { 2: { gold: 240, Crystals_Fire: 80 }, 3: { gold: 450, Crystals_Fire: 150 } } },
     ],
     merc_up: [
@@ -570,7 +574,8 @@ const BUILDING_POOLS = {
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up.',
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
-        cost: { gold: 100, Crystals_Death: 30 },
+        // Free on purpose: see the note on the Infirmary above.
+        cost: {},
         upgrade_costs: { 2: { gold: 240, Crystals_Death: 80 }, 3: { gold: 450, Crystals_Death: 150 } } },
     ],
     merc_up: [

@@ -1137,7 +1137,19 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 1000, passive: ['execute 1', 'iron_will 1', 'pierce 1'], ability: 'lions_roar 2',
+      xp: 1000, passive: ['execute 1', 'iron_will 1', 'parry 1'], ability: 'lions_roar 2',
+    },
+    blade_guard: {
+      id: 'e1131', f: 'e', t: 4,
+      name: 'Blade Guard',
+      name_ru: 'Страж Клинка',
+      tags: ['Knight', null],
+      size: 'tile',
+      hp: 75, armor: 15, initiative: 55,
+      resistances: { air: 5, fire: 0, life: 50, death: 0, cold: 5, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 25, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+      xp: 1000, passive: ['execute 1', 'iron_will 1', 'parry 1'], ability: 'lions_roar 2',
     },
     horseman: {
       id: 'e12', f: 'e', t: 2,
@@ -2057,9 +2069,6 @@ const UNITS = {
       damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
       xp: 1000, passive: ['infect 1', 'regenerate 1', 'horde 1'], ability: null,
     },
-    // Tier 4 of the Scholar -> Lord line. Named apart from the Lord above it:
-    // the same key twice in one object silently deletes the first, which would
-    // have removed gs331 from the game entirely.
     plague_archon: {
       id: 'gs3311', f: 'g', t: 4,
       name: 'Plague Archon',

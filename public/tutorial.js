@@ -221,13 +221,28 @@ const TUTORIAL_STEPS = {
   build_messenger_post: {
     en: {
       title: "The Messenger's Post",
-      text: "Build the Messenger's Post here. It opens errands: work for a single soldier that pays while you play. It costs almost nothing to raise, and each later level pays more for every errand you run.",
+      text: "This page is a whole shelf of halls, and you will raise most of them in time. Start with the Messenger's Post. It opens errands: work for a single soldier that pays while you play. It costs almost nothing to raise, and each later level pays more for every errand you run.",
     },
     ru: {
       title: 'Почтовый двор',
-      text: 'Постройте здесь Почтовый двор. Он открывает поручения — работу для одного бойца, которая приносит доход, пока вы играете. Постройка стоит сущие гроши, а каждый следующий уровень увеличивает награду.',
+      text: 'На этой странице целый ряд залов, и со временем вы построите почти все. Начните с Почтового двора. Он открывает поручения — работу для одного бойца, которая приносит доход, пока вы играете. Постройка стоит сущие гроши, а каждый следующий уровень увеличивает награду.',
     },
   },
+  // The second build on the same page: it proves the layer holds more than the
+  // one building the tutorial asked for, and it turns on between-battle healing,
+  // which a player who skips it will miss without ever knowing it existed.
+  // Level 1 is free, so this step cannot wall a player who spent their gold.
+  build_infirmary: {
+    en: {
+      title: 'The Infirmary',
+      text: 'One more here, and this one is free. The Infirmary heals your wounded between battles — without it, the damage a soldier takes stays with them. Raise it now, then come back for the rest of these halls as your treasury grows.',
+    },
+    ru: {
+      title: 'Лазарет',
+      text: 'Ещё одно здание, и оно бесплатное. Лазарет лечит раненых между боями — без него полученные раны остаются с бойцом. Постройте его сейчас, а к остальным залам вернётесь, когда пополнится казна.',
+    },
+  },
+
   // Shown once, after the Messenger's Post is raised — the errand button stays
   // dead until then (see errandsUnlocked in errands.js), so this step is also
   // the moment it becomes usable. The warning is the
