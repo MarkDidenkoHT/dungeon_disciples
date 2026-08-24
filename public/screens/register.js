@@ -28,40 +28,40 @@ const UNIT_ART = new Set([
 // the Choir is song and appetite — NO commerce, no bargains, no debts.
 const HERO_FLAVOR = {
   h_e_1: {
-    en: 'Holds the line, and cleans it. Mithrail’s Light keeps him standing where the fighting is worst, and Cleanse strips bleed, burn and poison off an ally.',
-    ru: 'Держит строй — и очищает его. Свет Митраила удерживает его там, где бой всего тяжелее, а Очищение снимает с союзника кровотечение, горение и яд.',
+    en: 'Paladin. Melee, and the hardest thing on your line to kill. Mithrail’s Light turns his damage into healing for whichever ally is worst off — the more Holy allies you field beside him, the more each blow gives back.',
+    ru: 'Паладин. Ближний бой и самое живучее, что есть в вашем строю. Свет Митраила обращает его урон в лечение для самого израненного союзника — и чем больше рядом Святых, тем больше возвращает каждый удар.',
   },
   h_e_2: {
-    en: 'Judgement, on everyone at once. His attack falls across the whole enemy formation. Vitality strengthens every ally; Purge tears the blessings off an enemy. Keep him behind the wall.',
-    ru: 'Приговор — всем сразу. Его атака обрушивается на весь вражеский строй. Живучесть укрепляет каждого союзника, а Изгнание срывает с врага все благословения. Держите его за стеной.',
+    en: 'Inquisitor. His attack hits six targets at range — the entire enemy formation, every turn, for less damage each. Exorcism does the rest. Keep him behind a wall; he is built to reach, not to be reached.',
+    ru: 'Инквизитор. Его атака бьёт по шести целям на расстоянии — по всему вражескому строю, каждый ход, но слабее по каждому. Остальное делает Экзорцизм. Держите его за стеной: он создан доставать, а не быть достанутым.',
   },
   h_e_3: {
-    en: 'Keeps the wall standing. Repairs allies from range, and Fortify armors the whole party. He has no active ability — his turn is upkeep, and the line lives or dies on it.',
-    ru: 'Держит стену целой. Чинит союзников на расстоянии, а Укрепление даёт броню всему отряду. Активной способности у него нет — его ход это работа, и на ней держится весь строй.',
+    en: 'Artificer. He does not attack — his action is Repair, mending an ally from three tiles back, and Fortify armors the party for free. He is the reason the wall is still standing, so choose his spells for the damage he lacks.',
+    ru: 'Артефактор. Он не атакует: его действие — Починка, которая лечит союзника с трёх клеток, а Укрепление даёт отряду броню даром. Он причина, по которой стена ещё стоит, — а урон подберите ему заклинаниями.',
   },
   h_d_1: {
-    en: 'Wants to be hit — every wound is another note. Taunt drags the enemy in front onto him; Rage turns the pain into fury. The taunt is how you feed the passive.',
-    ru: 'Хочет, чтобы били его: каждая рана — ещё одна нота. Провокация тянет врага напротив на него, а Ярость обращает боль в силу. Провокация — это то, чем вы кормите пассивку.',
+    en: 'Black Castellan. Melee, and he wants to be hit: Rage turns every wound he takes into damage he gives back. Put him where the blows land, and let the enemy make him dangerous for you.',
+    ru: 'Чёрный Кастелян. Ближний бой, и он хочет, чтобы били его: Ярость обращает каждую полученную рану в урон. Ставьте его туда, куда приходятся удары, — пусть враг сам сделает его опасным.',
   },
   h_d_2: {
-    en: 'Rules from the back — the Court sings, it does not brawl. Inspiration lifts the allies beside him, and Rite of Reclamation calls a fallen demon back into the chord.',
-    ru: 'Правит из тыла: Двор поёт, а не дерётся. Вдохновение усиливает союзников рядом, а Обряд возвращения возвращает павшего демона в аккорд.',
+    en: 'Choir Regent. He strikes at range and rules from the back, where Inspiration feeds extra damage to the allies stacked in his column. Build the column around him — the Court sings, it does not brawl.',
+    ru: 'Регент Хора. Бьёт на расстоянии и правит из тыла, где Вдохновение добавляет урон союзникам в его колонне. Стройте колонну вокруг него: Двор поёт, а не дерётся.',
   },
   h_d_3: {
-    en: 'Sets the field alight and keeps it burning. Mark of Ash makes a burn permanent, and Fellfire splashes every burning enemy each time he strikes. Burn one — after that, everything he does hits everyone.',
-    ru: 'Поджигает поле и не даёт ему потухнуть. Печать пепла делает горение постоянным, а Злое пламя задевает каждого горящего врага при каждом его ударе. Подожгите одного — дальше всё, что он делает, бьёт по всем.',
+    en: 'Infernal Ascendant. Ranged, and everything he does spreads. Fellfire splashes every burning enemy each time he strikes, scaling with the Casters at his side. Set something on fire first and his attacks stop being single-target.',
+    ru: 'Инфернальный Вознёсшийся. Дальний бой, и всё, что он делает, растекается. Злое пламя при каждом ударе задевает каждого горящего врага и растёт от числа Магов рядом. Подожгите кого-нибудь — и его атаки перестанут быть одиночными.',
   },
   h_g_1: {
-    en: 'Invites the blow, answers first. Taunt goads the enemy in front into striking at him, and Duelist lands his blow first — a kill cancels their attack outright.',
-    ru: 'Зовёт удар и отвечает первым. Провокация вынуждает врага напротив бить именно его, а Дуэлянт наносит удар раньше — и если враг падёт, его атака отменяется.',
+    en: 'Mourning Prophet. Melee. Duelist answers the enemy in front before their blow lands — a kill cancels their attack outright — and Banquet makes him faster and stronger for every Vampire you bring. Reward for committing to the theme.',
+    ru: 'Пророк Скорби. Ближний бой. Дуэлянт отвечает врагу напротив раньше, чем дойдёт его удар, — и если тот падёт, атаки не будет вовсе, — а Пир делает его быстрее и сильнее за каждого приведённого вампира. Награда за верность теме.',
   },
   h_g_2: {
-    en: 'Stronger the more dead you bring. Horde hardens him for every Zombie at his side, and Shared Suffering spreads what he takes across the party.',
-    ru: 'Тем сильнее, чем больше мертвецов вы привели. Орда закаляет его за каждого зомби рядом, а Разделённое страдание распределяет полученный урон по всему отряду.',
+    en: 'Grail Warden. Melee, and the more dead you bring the harder he is to put down: Horde hardens him for every Zombie standing at his side. Build the roster wide and cheap, not tall.',
+    ru: 'Страж Грааля. Ближний бой, и чем больше мертвецов вы привели, тем труднее его свалить: Орда закаляет его за каждого зомби рядом. Стройте отряд вширь и дёшево, а не ввысь.',
   },
   h_g_3: {
-    en: 'Moves before anyone else. Sorrow drags the speed out of every enemy on the field, and Mother’s Blessing spends her own life each turn to keep the party standing.',
-    ru: 'Ходит раньше всех. Скорбь вытягивает скорость из каждого врага на поле, а Благословение Матери каждый ход тратит её собственную жизнь, чтобы отряд устоял.',
+    en: 'Mother’s Voice. She strikes at range and moves before almost anything else on the field, because Sorrow drags the speed out of every enemy. Her turns come first — spend them on the spells that decide the fight.',
+    ru: 'Голос Матери. Бьёт на расстоянии и ходит раньше почти всех на поле, потому что Скорбь вытягивает скорость из каждого врага. Её ход наступает первым — тратьте его на заклинания, которые решают бой.',
   },
 };
 
@@ -144,7 +144,9 @@ const UI_TEXT = {
   introContinue:  { en: 'Choose Your Path', ru: 'Выбрать Путь' },
   chooseBtn:      { en: 'Choose', ru: 'Выбрать' },
   backBtn:        { en: '← Back', ru: '← Назад' },
-  chooseHero:     { en: 'Choose your hero', ru: 'Выберите героя' },
+  chooseHero:     { en: 'Three have answered, and the choice is permanent. Every hero casts the spells you research — what separates them is the blow they strike and the passive they carry.',
+                    ru: 'Откликнулись трое, и выбор этот навсегда. Заклинания читают все герои — различаются они ударом и пассивкой.' },
+  chooseHeroTitle:{ en: f => `Champion of ${f}`, ru: f => `Защитник — ${f}` },
   loadingHeroes:  { en: 'Loading heroes…', ru: 'Загрузка героев…' },
   passive:        { en: 'Passive', ru: 'Пассивка' },
 };
@@ -341,7 +343,7 @@ export function renderRegister(root, { player } = {}) {
     root.innerHTML = `
       <div class="screen screen-faction screen-hero-select">
         <div class="hero-select-header">
-          <h2>${selectedFaction.label[L]}</h2>
+          <h2>${UI_TEXT.chooseHeroTitle[L](selectedFaction.label[L])}</h2>
           <p class="subtitle">${UI_TEXT.chooseHero[L]}</p>
         </div>
 

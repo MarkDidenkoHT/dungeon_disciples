@@ -6516,6 +6516,31 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .frame-action--inert { opacity: 0.22; pointer-events: none; }
 
+.frame-action-hint-wrap {
+  position: relative;
+  align-self: stretch;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.frame-action-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
+  color: var(--accent);
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  animation: frame-action-hint-bob 1s ease-in-out infinite;
+}
+
+@keyframes frame-action-hint-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  50%      { transform: translateX(-50%) translateY(-5px); opacity: 0.55; }
+}
+
 .register-track-wrap {
 
   --track-card-h: clamp(72px, 12vh, 104px);

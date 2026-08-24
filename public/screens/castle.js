@@ -746,11 +746,22 @@ export function renderCastle(root, { player }) {
       // Build sits to the LEFT of the portraits, deconstruct to the RIGHT, so
       // the whole bottom strip is one thumb-height row: act, choose, remove.
       const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
-      const cards = slides.map((slide, i) => `
+      const cards = slides.map((slide, i) => {
+        // Layer 2 holds halls, not soldiers, so a branch card there had nothing
+        // to show and came out as an empty frame. Building art is drawn to the
+        // same ratio as a portrait, so it drops straight into the same card.
+        // Layer 1 is left alone on purpose: a barracks card is about the unit it
+        // recruits, not the shed it recruits them from.
+        const label = unitName(slide.unit) || slide.buildingLabel || '';
+        const art   = slide.unit
+          ? branchPortraitUrl(slide.unit)
+          : (layerOf(slide.slot) === 2 ? (slide.artUrl || '') : '');
+        return `
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
-             data-i="${i}" title="${unitName(slide.unit) || slide.buildingLabel || ''}">
-          ${slide.unit ? `<img class="portrait-art-img" src="${branchPortraitUrl(slide.unit)}" alt="${unitName(slide.unit)}" onerror="this.style.display='none'">` : ''}
-        </div>`).join('');
+             data-i="${i}" title="${label}">
+          ${art ? `<img class="portrait-art-img" src="${art}" alt="${label}" onerror="this.style.display='none'">` : ''}
+        </div>`;
+      }).join('');
 
       return `
         <div class="castle-unit-slider">
@@ -776,8 +787,11 @@ export function renderCastle(root, { player }) {
           </div>
         </div>
         <div class="track-action-row track-action-row--framed">
-          <button class="frame-action frame-action--confirm" id="slider-confirm"
-                  title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
+          <div class="frame-action-hint-wrap">
+            ${opts.hintConfirm ? '<span class="frame-action-hint" aria-hidden="true">▼</span>' : ''}
+            <button class="frame-action frame-action--confirm" id="slider-confirm"
+                    title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
+          </div>
           <div class="prep-track-wrap branch-track-wrap">
             <div class="portrait-track" id="branch-track">${cards}</div>
           </div>
@@ -2678,7 +2692,11 @@ export function renderCastle(root, { player }) {
         if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
-      }
+      },
+      // The throne sheet is the first sheet anyone sees, and the ⚒ that raises
+      // it reads as decoration until you have used it once. The arrow points at
+      // it for that one build and never again.
+      { hintConfirm: slot === 'slot_0' && (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1 }
     );
   }
 
