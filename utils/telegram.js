@@ -1,7 +1,5 @@
 const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://shattered-crown-lhso.onrender.com';
-// No fallback on purpose: an unset test URL must not silently open production.
-const WEBAPP_URL_TEST = process.env.WEBAPP_URL_TEST || '';
 
 const BOT_WELCOME = {
   en: {
@@ -85,23 +83,6 @@ async function notifyAdminNewPlayer(player) {
 async function handleTelegramUpdate(update) {
   const msg = update?.message;
   if (!msg || typeof msg.text !== 'string') return;
-
-  // /test opens the TEST build instead of production. Restricted to the admin
-  // chat: it is a door into an unreleased build, and an unrestricted command
-  // that anyone can discover by typing is not a door worth leaving open.
-  // Silent for everyone else — no reply at all, so the command's existence is
-  // not advertised by an "unauthorized" message.
-  if (msg.text.startsWith('/test')) {
-    if (!ADMIN_CHAT_ID || String(msg.chat.id) !== String(ADMIN_CHAT_ID)) return;
-    if (!WEBAPP_URL_TEST) {
-      await sendTelegramMessage(msg.chat.id, 'WEBAPP_URL_TEST is not set on the server.');
-      return;
-    }
-    await sendTelegramMessage(msg.chat.id, '🧪 <b>Test build</b>', {
-      reply_markup: { inline_keyboard: [[{ text: 'Open test build', web_app: { url: WEBAPP_URL_TEST } }]] },
-    });
-    return;
-  }
 
   if (!msg.text.startsWith('/start')) return;
   const w = BOT_WELCOME[pickLang(msg.from?.language_code)];
