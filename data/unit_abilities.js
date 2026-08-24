@@ -395,6 +395,7 @@ const UNIT_ABILITIES = {
   },
   'aggrails_blessing 1': {
     id: 'aggrails_blessing 1',
+    effect_name: 'aggrails_light',
     name: "Aggrail's Blessing",
     name_ru: "Благословение Агграила",
     rank: 1,
@@ -406,6 +407,7 @@ const UNIT_ABILITIES = {
   },
   'aggrails_blessing 2': {
     id: 'aggrails_blessing 2',
+    effect_name: 'aggrails_light',
     name: "Aggrail's Blessing",
     name_ru: "Благословение Агграила",
     rank: 2,
@@ -780,6 +782,7 @@ const UNIT_ABILITIES = {
   },
   'regenerate 1': {
     id: 'regenerate 1',
+    effect_name: 'regenerate',
     name: 'Regenerate',
     name_ru: "Регенерация",
     rank: 1,
@@ -791,6 +794,7 @@ const UNIT_ABILITIES = {
   },
   'regenerate 2': {
     id: 'regenerate 2',
+    effect_name: 'regenerate',
     name: 'Regenerate',
     name_ru: "Регенерация",
     rank: 2,
@@ -802,6 +806,7 @@ const UNIT_ABILITIES = {
   },
   'regenerate 3': {
     id: 'regenerate 3',
+    effect_name: 'regenerate',
     name: 'Regenerate',
     name_ru: "Регенерация",
     rank: 3,
@@ -944,7 +949,6 @@ const UNIT_ABILITIES = {
     description_ru: "Накапливает по 5% полученного исцеления за каждого союзного заклинателя и возвращает после следующего попадания по этому юниту.",
     dispellable: true,
     params: { hot_pct_per_tag: 5, tag_required: 'Caster' },
-    effect_name: 'renew',
   },
   'renew 2': {
     id: 'renew 2',
@@ -958,7 +962,6 @@ const UNIT_ABILITIES = {
     description_ru: "Накапливает по 8% полученного исцеления за каждого союзного заклинателя и возвращает после следующего попадания по этому юниту.",
     dispellable: true,
     params: { hot_pct_per_tag: 8, tag_required: 'Caster' },
-    effect_name: 'renew',
   },
   'shatter 1': {
     id: 'shatter 1',
@@ -2039,6 +2042,7 @@ const UNIT_ABILITIES = {
   },
   'libation 1': {
     id: 'libation 1',
+    effect_name: 'libation',
     name: 'Libation',
     name_ru: "Возлияние",
     rank: 1,
@@ -2050,6 +2054,7 @@ const UNIT_ABILITIES = {
   },
   'libation 2': {
     id: 'libation 2',
+    effect_name: 'libation',
     name: 'Libation',
     name_ru: "Возлияние",
     rank: 2,

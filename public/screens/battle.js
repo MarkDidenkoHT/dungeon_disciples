@@ -415,12 +415,30 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // be started together) and a `key` identifying what it will draw — two
   // entries with the same key would paint the same animation over itself.
   // Returns null when there is no cell to draw on.
+  // The cell an entry happened TO. Most on-hit / on-heal / on-turn-start
+  // passives log their target by NAME and CELL but carry no targetId (they
+  // predate the FX layer — see the pushLog calls in utils/passive-processor.js),
+  // so resolving by id alone left every one of them with nothing to anchor on
+  // and they could never animate however well the effect was authored. The
+  // dispatcher below already walked this ladder for the rider/fan-out paths;
+  // singleEffectCall did not, which is why the single-cell passives were the
+  // ones that stayed dark. Same ladder, one place: cellIndex repeats across
+  // sides, so the name breaks the tie before cell-only is tried.
+  function targetCellFor(entry) {
+    const c =
+      (entry.targetId != null && state.combatants.find(u => u.id === entry.targetId)) ||
+      (entry.targetCell !== undefined && entry.targetName != null &&
+        state.combatants.find(u => u.cellIndex === entry.targetCell && u.unit_name === entry.targetName)) ||
+      (entry.targetCell !== undefined &&
+        state.combatants.find(u => u.cellIndex === entry.targetCell)) ||
+      null;
+    return c ? document.querySelector(`.battle-cell[data-id="${c.id}"]`) : null;
+  }
+
   function singleEffectCall(entry, effectName, actor, actorCell) {
     const fn = EFFECTS[effectName];
     if (!fn) return null;
-    const targetCell = entry.targetId
-      ? document.querySelector(`.battle-cell[data-id="${entry.targetId}"]`)
-      : null;
+    const targetCell = targetCellFor(entry);
     const sourceCell = entry.sourceId
       ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
       : null;
@@ -593,21 +611,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (abilitySound && !fxCovered.has(entryIdx)) playAbilitySound(abilitySound);
       console.log('[battle] entry', entry.type, entry.passive || '', '| effectName:', effectName, '| targetId:', entry.targetId);
       if (effectName && EFFECTS[effectName]) {
-        // Most on-hit passives log a target by NAME and CELL but no id (they
-        // predate the FX layer). Resolving by id alone left every one of them
-        // with nothing to anchor on, so they could never animate. Same ladder the
-        // actor above uses, and for the same reason: cellIndex repeats across
-        // sides, so the name breaks the tie before cell-only is tried.
-        const targetCombatant =
-          (entry.targetId != null && state.combatants.find(u => u.id === entry.targetId)) ||
-          (entry.targetCell !== undefined && entry.targetName != null &&
-            state.combatants.find(u => u.cellIndex === entry.targetCell && u.unit_name === entry.targetName)) ||
-          (entry.targetCell !== undefined &&
-            state.combatants.find(u => u.cellIndex === entry.targetCell)) ||
-          null;
-        const targetCell = targetCombatant
-          ? document.querySelector(`.battle-cell[data-id="${targetCombatant.id}"]`)
-          : null;
+        // See targetCellFor — an entry's target is resolved by id, then by
+        // cell+name, then by cell alone.
+        const targetCell = targetCellFor(entry);
         const sourceCell = entry.sourceId
           ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
           : null;

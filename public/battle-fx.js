@@ -298,6 +298,131 @@ export async function mithrails_light(cellEl) {
   console.log('[battle-fx] mithrails_light END', dataId);
 }
 
+// ── Aggrail's Blessing ────────────────────────────────────────────────────────
+// The same rising wash as Mithrail's Light, in red. The two are deliberately
+// one picture in two colours: they are the same beat mechanically (an on-hit
+// blessing from the unit's patron), so the player should read them as siblings
+// and tell them apart by colour alone. Built from a shared body rather than
+// copied, so the two can never drift.
+async function risingWash(cellEl, tint, label) {
+  console.log(`[battle-fx] ${label} START`, cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const layer = new PIXI.Container();
+  app.stage.addChild(layer);
+  const rect = new PIXI.Graphics();
+  rect.filters = [new PIXI.BlurFilter(6)];
+  layer.addChild(rect);
+  await animate(800, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const portraitBottom = b.y + b.height * 0.80;
+    const flashH = b.height * 0.75;
+    const riseY  = portraitBottom - flashH * t;
+    rect.clear();
+    const alpha = t < 0.2 ? t / 0.2 : t < 0.6 ? 1 : Math.max(0, 1 - (t - 0.6) / 0.4);
+    rect.beginFill(tint, 0.55 * alpha);
+    rect.drawRect(b.x, riseY, b.width, flashH);
+    rect.endFill();
+  });
+  layer.destroy({ children: true });
+  console.log(`[battle-fx] ${label} END`, dataId);
+}
+
+export async function aggrails_light(cellEl) {
+  return risingWash(cellEl, 0xff6a5a, 'aggrails_light');
+}
+
+// ── Vital pulse — Renew / Regenerate / Libation ───────────────────────────────
+//
+// One picture for "life is being restored over time", in two palettes. All
+// three of these are a TICK rather than a blow: nothing arrives from anywhere,
+// the unit simply mends where it stands. So the shape is a bloom that swells
+// and settles, a ring that opens outward, and motes drifting UP off the unit —
+// upward being the whole difference between a heal read and a damage read.
+//
+// Green for Renew and Regenerate (ordinary mending). Red for Libation: the
+// Grail lines pay for their healing in blood, and the palette is the only place
+// that shows it — same motion, different debt.
+const VITAL_GREEN = { core: 0xd8ffcf, mid: 0x5fd36a, mote: 0x9dffa8 };
+const VITAL_RED   = { core: 0xffd2d2, mid: 0xc0304a, mote: 0xff7a86 };
+
+async function vitalPulse(cellEl, pal, label) {
+  console.log(`[battle-fx] ${label} START`, cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const glow  = new PIXI.Graphics(); glow.blendMode = ADD;
+  const ring  = new PIXI.Graphics(); ring.blendMode = ADD;
+  const motes = new PIXI.Graphics(); motes.blendMode = ADD;
+  glowLayer.addChild(glow);
+  layer.addChild(glowLayer, ring, motes);
+  app.stage.addChild(layer);
+
+  // Fixed per play, so the motes differ between two ticks on the same unit
+  // instead of the effect looking like a looping sprite.
+  const MOTES = 7;
+  const seeds = Array.from({ length: MOTES }, (_, i) => ({
+    x:     (i / (MOTES - 1)) - 0.5 + (Math.random() - 0.5) * 0.12,
+    delay: Math.random() * 0.35,
+    rise:  0.7 + Math.random() * 0.5,
+    size:  1.6 + Math.random() * 1.8,
+    sway:  (Math.random() - 0.5) * 0.5,
+  }));
+
+  await animate(900, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width  / 2;
+    const cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height) * 0.5;
+
+    // Swell in over the first third, ease out across the rest — a breath, not a
+    // flash. A heal that snaps reads as a hit.
+    const swell = t < 0.33 ? t / 0.33 : 1 - (t - 0.33) / 0.67;
+    glow.clear();
+    softGlow(glow, cx, cy, R * (0.5 + t * 0.35), pal.mid,  swell * 0.5);
+    softGlow(glow, cx, cy, R * 0.3,              pal.core, swell * 0.55);
+
+    // One ring opening outward, gone well before the glow — gives the tick an
+    // edge so it is legible against a busy board.
+    ring.clear();
+    const rp = clamp01(t / 0.55);
+    if (rp > 0 && rp < 1) {
+      ring.lineStyle(2.5 * (1 - rp) + 0.5, pal.core, (1 - rp) * 0.7);
+      ring.drawCircle(cx, cy, R * (0.25 + rp * 0.75));
+    }
+
+    // Motes drifting up off the unit and fading near the top.
+    motes.clear();
+    for (const m of seeds) {
+      const mp = clamp01((t - m.delay) / (1 - m.delay));
+      if (mp <= 0) continue;
+      const x = cx + b.width * m.x + Math.sin(mp * Math.PI * 2) * R * m.sway * 0.25;
+      const y = cy + R * 0.5 - R * m.rise * mp;
+      const a = (mp < 0.25 ? mp / 0.25 : 1 - (mp - 0.25) / 0.75) * 0.9;
+      softGlow(motes, x, y, m.size * 2.2, pal.mote, a * 0.5);
+      motes.beginFill(pal.core, a);
+      motes.drawCircle(x, y, m.size * (1 - mp * 0.4));
+      motes.endFill();
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log(`[battle-fx] ${label} END`, dataId);
+}
+
+export async function renew(cellEl)      { return vitalPulse(cellEl, VITAL_GREEN, 'renew'); }
+export async function regenerate(cellEl) { return vitalPulse(cellEl, VITAL_GREEN, 'regenerate'); }
+export async function libation(cellEl)   { return vitalPulse(cellEl, VITAL_RED,   'libation'); }
+
 // ── Communion — blood-drain ritual from a damaged enemy to a wounded ally ──────
 export async function communion(sourceCellEl, targetCellEl) {
   console.log('[battle-fx] communion START', sourceCellEl?.dataset?.id, '->', targetCellEl?.dataset?.id);
@@ -1926,12 +2051,21 @@ export async function raise_dead(cellEl) {
 
 // ── shield_bash — a heavy metallic impact ring and recoil flash ───────────────
 // The attacker telegraphs a bash (brief windup flash), then a heavy silver
-// collision ring slams into the target and radiates concussive ripples outward.
+// collision ring slams into the TARGET and radiates concussive ripples outward.
 // Assign action_animation: 'shield_bash' on any defensive/tank unit.
+//
+// An action is called fn(actorCell, { targetCell }) — see singleEffectCall in
+// public/screens/battle.js. Every beat here used to draw on `cellEl`, so the
+// whole bash played on the basher: the windup, the collision and the ripples
+// all landed on the unit that swung and nothing at all happened to the unit hit.
+// Only the windup belongs on the actor; the impact belongs where the shield
+// arrived. With no targetCell (a lone preview, a dead target) it falls back to
+// the actor cell and behaves as it did before.
 export async function shield_bash(cellEl, opts = {}) {
-  console.log('[battle-fx] shield_bash START', cellEl?.dataset?.id);
+  console.log('[battle-fx] shield_bash START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
   if (!cellEl || !app || !window.PIXI) return;
-  const dataId = cellEl.dataset.id;
+  const dataId    = cellEl.dataset.id;
+  const targetId  = opts.targetCell?.dataset?.id ?? dataId;
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const ADD = PIXI.BLEND_MODES.ADD;
 
@@ -1946,7 +2080,10 @@ export async function shield_bash(cellEl, opts = {}) {
   app.stage.addChild(layer);
 
   await animate(750, t => {
-    const b = cellBoundsFor(dataId);
+    // Two anchors, not one: the windup is the basher's, everything after it is
+    // the victim's.
+    const ab = cellBoundsFor(dataId);
+    const b  = cellBoundsFor(targetId) || ab;
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
@@ -1958,10 +2095,13 @@ export async function shield_bash(cellEl, opts = {}) {
     const impact = clamp01((t - 0.18) / 0.18);
     const decay  = clamp01((t - 0.36) / 0.64);
 
-    // Windup: brief silver glow building on the caster.
+    // Windup: brief silver glow building on the ATTACKER — the shield coming up
+    // before it is thrown.
     impactG.clear();
-    if (windup < 1) {
-      softGlow(impactG, cx, cy, R * windup, 0xddeeff, windup * 0.45);
+    if (windup < 1 && ab) {
+      const ax = ab.x + ab.width / 2, ay = ab.y + ab.height / 2;
+      const aR = Math.min(ab.width, ab.height) * 0.5;
+      softGlow(impactG, ax, ay, aR * windup, 0xddeeff, windup * 0.45);
     }
 
     // Impact flash — sharp white-silver disk that pops in fast.
@@ -1994,7 +2134,7 @@ export async function shield_bash(cellEl, opts = {}) {
   });
 
   layer.destroy({ children: true });
-  console.log('[battle-fx] shield_bash END', dataId);
+  console.log('[battle-fx] shield_bash END', dataId, '->', targetId);
 }
 
 // ── arcane_bolt — a charged violet-white orb that fires toward the target ──────
@@ -3918,6 +4058,10 @@ export async function frost_bolt(cellEl, opts = {}) {
 
 export const EFFECTS = {
   mithrails_light,
+  aggrails_light,
+  renew,
+  regenerate,
+  libation,
   communion,
   sword_swing,
   mace_swing,

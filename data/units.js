@@ -855,7 +855,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 6, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: 'vitality 1', ability: null,
+      passive: 'exorcism 1', ability: null,
       building_slot: 'slot_0', xp: 90
     },
     inquisitor_path_a_t2: {
@@ -868,7 +868,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 8, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 1', 'inspiration_damage 1'], ability: null,
+      passive: ['exorcism 1', 'inspiration_damage 1'], ability: null,
       building_slot: 'slot_0', xp: 400
     },
     inquisitor_path_a_t3: {
@@ -881,7 +881,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 10, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 1', 'inspiration_damage 2'], ability: null,
+      passive: ['exorcism 1', 'inspiration_damage 2'], ability: null,
       building_slot: 'slot_0', xp: 1000
     },
     inquisitor_path_a_t4: {
@@ -894,7 +894,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 1', 'inspiration_damage 2', 'dissipate 1'], ability: null,
+      passive: ['exorcism 1', 'inspiration_damage 2', 'dissipate 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     inquisitor_path_a_t4_alt: {
@@ -907,7 +907,7 @@ const UNITS = {
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 1', 'inspiration_damage 2', 'execute 1'], ability: null,
+      passive: ['exorcism 1', 'inspiration_damage 2', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     inquisitor_path_b_t2: {
@@ -920,7 +920,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 1', 'aegis 1'], ability: null,
+      passive: ['exorcism 1', 'aegis 1'], ability: null,
       building_slot: 'slot_0', xp: 400
     },
     inquisitor_path_b_t3: {
@@ -933,7 +933,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 2', 'aegis 1'], ability: null,
+      passive: ['exorcism 2', 'aegis 1'], ability: null,
       building_slot: 'slot_0', xp: 1000
     },
     inquisitor_path_b_t4: {
@@ -946,7 +946,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 2', 'aegis 1', 'light_of_dawn 1'], ability: null,
+      passive: ['exorcism 2', 'aegis 1', 'light_of_dawn 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     inquisitor_path_b_t4_alt: {
@@ -959,7 +959,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      passive: ['vitality 2', 'aegis 1', 'beacon_of_hope 1'], ability: null,
+      passive: ['exorcism 2', 'aegis 1', 'beacon_of_hope 1'], ability: null,
       building_slot: 'slot_0', xp: 1700
     },
     artificer: {
@@ -1196,7 +1196,7 @@ const UNITS = {
       hp: 130, armor: 30, initiative: 55,
       resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 32, action_icon: 'iron_fist.jpg', action_animation: 'claw_strike', action_sfx: 'robot_hit',
+      damage_source: 'physical', action_power: 32, action_icon: 'iron_fist.jpg', action_animation: 'shield_bash', action_sfx: 'robot_hit',
       xp: 2000, passive: ['unbreakable 2', 'mithrails_light 1', 'beacon_of_hope 1'], ability: 'lions_roar 2',
     },
     siege_engine: {
