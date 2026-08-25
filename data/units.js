@@ -1437,7 +1437,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      xp: 1300, passive: ['aegis 1', 'iron_will 1', 'unbreakable 1'], ability: 'cleanse 1',
+      xp: 1300, passive: ['aegis 1', 'iron_will 1', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     mithrails_paragon: {
       id: 'e2121', f: 'e', t: 4,
@@ -1449,7 +1449,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 50, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      xp: 3080, passive: ['aegis 1', 'iron_will 2', 'unbreakable 1'], ability: 'cleanse 1',
+      xp: 3080, passive: ['aegis 1', 'iron_will 2', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     priest: {
       id: 'e22', f: 'e', t: 2,
