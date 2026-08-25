@@ -120,6 +120,11 @@ const CASTLE_TEXT = {
   awaitingXp:  { en: 'Next tier at %s XP',              ru: 'Следующий ранг при %s опыта' },
   notEnough:   { en: 'Not enough trophies for this upgrade.', ru: 'Недостаточно трофеев для улучшения.' },
   deconstruct: { en: 'Deconstruct',                           ru: 'Разобрать' },
+  upgradeOpen: { en: 'Upgrade',                                ru: 'Улучшить' },
+  advance:     { en: 'Advance',                                ru: 'Развить' },
+  changeBranch:{ en: 'Change branch',                          ru: 'Сменить ветку' },
+  backToUnit:  { en: 'Back',                                   ru: 'Назад' },
+  noOptions:   { en: 'Nothing to change',                      ru: 'Менять нечего' },
   close:       { en: 'Close',                                 ru: 'Закрыть' },
   confirm:     { en: 'Confirm',                               ru: 'Подтвердить' },
   build:       { en: 'Build',                                 ru: 'Построить' },
@@ -1862,7 +1867,11 @@ export function renderCastle(root, { player }) {
   // It now opens the UNIT standing in that slot — its real roster row, with the
   // item it carries — and upgrading is a deliberate second step behind its own
   // button. The slot is the unit's home, so this is where you manage it.
-  function openSlotUnitSheet(slot) {
+  // `initialMode` is 'inspect' unless a caller has a reason to land straight in
+  // the upgrade sequence. Inspect is the default because tapping a slot is how
+  // a player looks at their unit, and this sheet used to open mid-upgrade with
+  // the first branch already selected — showing them somebody else's portrait.
+  function openSlotUnitSheet(slot, initialMode = 'inspect') {
     const state = structuresRecord.buildings_data[slot];
     if (!state?.building_id) return;
 
@@ -1903,6 +1912,14 @@ export function renderCastle(root, { player }) {
 
     const canUpgrade = paths && paths.length > 0;
 
+    // Same-tier siblings. Respec used to live behind the Deconstruct pickaxe,
+    // beside "the unit is destroyed for good" — but it is not destructive: same
+    // tier, keeps the unit's XP, costs a fraction of the new building. It is the
+    // same question upgrading asks (what does this slot become?), so it belongs
+    // in the same place, and Deconstruct is left holding only Demolish.
+    const respecOptions = respecOptionsFor(state.building_id) || [];
+    const canRespec     = respecOptions.length > 0;
+
     // Paths are keyed by the unit they lead to — except a layer-2 building
     // levels IN PLACE and leads to no unit at all, so `unit_id` is null and
     // every one of them keyed as "null": same key, blank card, no price. The
@@ -1919,30 +1936,116 @@ export function renderCastle(root, { player }) {
       return `${base} · ${CASTLE_TEXT.levelWord[castleLang]} ${level}`;
     };
 
-    // The upgrades are shown HERE, on the unit, instead of behind a ⚒ button
-    // that opened a second sheet. Where a slot leads is the thing a player is
-    // deciding about while looking at the unit, so hiding it one tap away made
-    // them open and close the sheet to remember what the options were. Tapping
-    // one still goes to the full comparison — this only removes the tap that
-    // asked "are there any?".
-    const upgradeCards = canUpgrade ? paths.map(path => {
-      const nextUnit = getUnitByUnitId(path.unit_id);
-      const nextDef  = getBuildingDef(player.faction, path.building_id);
-      const label    = unitName(nextUnit) || levelLabelFor(nextDef, slotLevel + 1);
-      const url      = nextUnit ? branchPortraitUrl(nextUnit) : buildingArtUrl(nextDef);
-      return `
-        <div class="portrait-card portrait-card--branch" data-path-key="${pathKey(path)}" title="${label}">
-          ${url ? `<img class="portrait-art-img" src="${url}" alt="${label}" onerror="this.style.display='none'">` : ''}
-        </div>`;
-    }).join('') : '';
+    const isThrone  = def.category === 'throne';
+    const nextLevel = slotLevel + 1;
+
+    // The two segments of the upgrade mode, flattened into one shape so the
+    // track, the preview and the price all read from the same list and the
+    // segment is only a filter. `kind` is the one thing the confirm needs.
+    function choicesFor(segment) {
+      if (segment === 'respec') {
+        return respecOptions.map(o => ({
+          kind: 'respec',
+          key: o.id,
+          buildingId: o.id,
+          unit: getUnitByUnitId(o.unit_id),
+          def: o,
+          cost: respecCostFor(o.id, slotLevel),
+        }));
+      }
+      return (paths || []).map(pth => ({
+        kind: 'advance',
+        key: pathKey(pth),
+        buildingId: pth.building_id,
+        unit: getUnitByUnitId(pth.unit_id),
+        def: getBuildingDef(player.faction, pth.building_id),
+        path: pth,
+        // Mercenaries are priced in trophies; a throne by the LEVEL it moves to
+        // rather than by the building, which is why they come from different
+        // tables (mirrors openUpgradeModal and POST /structures/build).
+        cost: mercDef  ? (getMercBuildingDef(pth.building_id)?.cost ?? pth.cost ?? null)
+            : isThrone ? (throneUpgradeCosts[nextLevel] || null)
+            : buildingCostForLevel(getBuildingDef(player.faction, pth.building_id), nextLevel),
+      }));
+    }
+
+    const labelForChoice = c =>
+      unitName(c.unit) || levelLabelFor(c.def, c.kind === 'respec' ? slotLevel : nextLevel);
+
+    // Why the arrow is dim, in the player's terms. A unit with no build to do
+    // but a tier still ahead is waiting on XP, not finished — two different
+    // situations that must not read the same.
+    const idleHint = canUpgrade || canRespec
+      ? CASTLE_TEXT.upgradeOpen[castleLang]
+      : (progress?.xp && !progress.xp.maxed && progress.xp.req > 0
+          ? CASTLE_TEXT.awaitingXp[castleLang].replace('%s', progress.xp.req)
+          : CASTLE_TEXT.maxed[castleLang]);
 
     const actionOverlayHtml = rosterUnit ? unitActionOverlay(rosterUnit) : '';
+
+    // The action row, per mode. INSPECT is what the sheet opens in: the unit,
+    // and one arrow that starts the upgrade sequence. The branch shelf and the
+    // confirm used to be on screen the moment a slot was tapped, with the first
+    // branch ALREADY SELECTED — so going to look at a unit showed you the next
+    // one instead, which is what made inspecting feel like upgrading.
+    function actionRowHtml(mode, segment) {
+      if (mode === 'inspect') {
+        return `
+          <div class="track-action-row track-action-row--framed">
+            <button class="frame-action frame-action--confirm ${canUpgrade || canRespec ? '' : 'frame-action--inert'}"
+                    id="slot-to-upgrade" ${canUpgrade || canRespec ? '' : 'disabled'}
+                    title="${CASTLE_TEXT.upgradeOpen[castleLang]}"
+                    aria-label="${CASTLE_TEXT.upgradeOpen[castleLang]}">→</button>
+            <span class="castle-slot-maxed">${idleHint}</span>
+            <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
+                    title="${CASTLE_TEXT.deconstruct[castleLang]}"
+                    aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
+          </div>`;
+      }
+
+      const cards = choicesFor(segment).map(c => {
+        const label = labelForChoice(c);
+        const url   = c.unit ? branchPortraitUrl(c.unit) : buildingArtUrl(c.def);
+        return `
+          <div class="portrait-card portrait-card--branch" data-path-key="${c.key}" title="${label}">
+            ${url ? `<img class="portrait-art-img" src="${url}" alt="${label}" onerror="this.style.display='none'">` : ''}
+          </div>`;
+      }).join('');
+
+      // Only shown when there is a real choice between the two. A unit that can
+      // only advance, or only respec, gets the track with no chooser above it.
+      const tabs = (canUpgrade && canRespec)
+        ? `<div class="slot-mode-tabs">
+             <button class="slot-mode-tab ${segment === 'advance' ? 'slot-mode-tab--on' : ''}" data-seg="advance">${CASTLE_TEXT.advance[castleLang]}</button>
+             <button class="slot-mode-tab ${segment === 'respec'  ? 'slot-mode-tab--on' : ''}" data-seg="respec">${CASTLE_TEXT.changeBranch[castleLang]}</button>
+           </div>`
+        : '';
+
+      const confirmLabel = segment === 'respec'
+        ? CASTLE_TEXT.changeBranch[castleLang]
+        : CASTLE_TEXT.advance[castleLang];
+
+      return `
+        ${tabs}
+        <div class="track-action-row track-action-row--framed">
+          <button class="frame-action" id="slot-back"
+                  title="${CASTLE_TEXT.backToUnit[castleLang]}"
+                  aria-label="${CASTLE_TEXT.backToUnit[castleLang]}">←</button>
+          ${cards
+            ? `<div class="prep-track-wrap branch-track-wrap">
+                 <div class="portrait-track" id="slot-upgrade-track">${cards}</div>
+               </div>`
+            : `<span class="castle-slot-maxed">${CASTLE_TEXT.noOptions[castleLang]}</span>`}
+          <button class="frame-action frame-action--confirm" id="slot-confirm" disabled
+                  title="${confirmLabel}" aria-label="${confirmLabel}">⬆</button>
+        </div>`;
+    }
+
     // Wrapper is not cosmetic: openSheet only replaces the body's innerHTML, so
     // the body element itself survives across opens and a listener bound to it
     // would accumulate — re-opening the sheet twice would fire equip twice.
     // Binding to this div instead ties the listener's life to the content.
-    const bodyHtml = `
-      <div id="slot-sheet-root">
+    const cardHtml = `
       <div class="castle-unit-card-wrap">
         ${buildUnitCard(liveUnit, {
           buildingLabel: levelLabelFor(def, slotLevel),
@@ -1951,35 +2054,154 @@ export function renderCastle(root, { player }) {
           desc:   liveUnit ? '' : (castleLang === 'ru' ? (def.desc_ru || def.desc || '') : (def.desc || '')),
         })}
         ${actionOverlayHtml}
-      </div>
-      <div class="track-action-row track-action-row--framed">
-        <!-- Always present, disabled until a branch is picked. A control that
-             appears and disappears moves everything beside it, and the player
-             cannot learn where it lives; one that is simply dim reads as "not
-             yet" and stays put. Maxed buildings keep it too — permanently
-             inert, so the row never changes shape. -->
-        <button class="frame-action frame-action--confirm ${canUpgrade ? '' : 'frame-action--inert'}" id="slot-upgrade" disabled
-                title="${CASTLE_TEXT.build[castleLang]}" aria-label="${CASTLE_TEXT.build[castleLang]}">⚒</button>
-        ${canUpgrade
-          ? `<div class="prep-track-wrap branch-track-wrap">
-               <div class="portrait-track" id="slot-upgrade-track">${upgradeCards}</div>
-             </div>`
-          : `<span class="castle-slot-maxed">${
-                // Two different reasons the track is empty, and they must not
-                // read the same. No build to do but a tier still ahead means the
-                // unit is waiting on XP, not finished.
-                (!canUpgrade && progress?.xp && !progress.xp.maxed && progress.xp.req > 0)
-                  ? CASTLE_TEXT.awaitingXp[castleLang].replace('%s', progress.xp.req)
-                  : CASTLE_TEXT.maxed[castleLang]
-              }</span>`}
-        <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
-                title="${CASTLE_TEXT.deconstruct[castleLang]}" aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
-      </div>
       </div>`;
 
-    openModal(levelLabelFor(def, slotLevel), bodyHtml);
+    let mode    = (canUpgrade || canRespec) ? initialMode : 'inspect';
+    let segment = canUpgrade ? 'advance' : 'respec';
 
-    const body = getSheetBody()?.querySelector('#slot-sheet-root');
+    openModal(levelLabelFor(def, slotLevel), `
+      <div id="slot-sheet-root">
+        ${cardHtml}
+        <div id="slot-action-row">${actionRowHtml(mode, segment)}</div>
+      </div>`);
+
+    const body     = getSheetBody()?.querySelector('#slot-sheet-root');
+    const cardWrap = body?.querySelector('.castle-unit-card-wrap');
+    const ownCardHtml = cardWrap?.innerHTML ?? '';
+    let selectedKey = null;
+
+    // Re-render the ROW only, leaving the card alone: switching segment or going
+    // back must never disturb the unit on show above it.
+    function renderRow() {
+      const host = body?.querySelector('#slot-action-row');
+      if (!host) return;
+      host.innerHTML = actionRowHtml(mode, segment);
+      bindRow();
+    }
+
+    function showOwnUnit() {
+      selectedKey = null;
+      if (cardWrap) cardWrap.innerHTML = ownCardHtml;
+      const confirmBtn = body?.querySelector('#slot-confirm');
+      if (confirmBtn) confirmBtn.disabled = true;
+      hideCostBar();
+      body?.querySelectorAll('#slot-upgrade-track .portrait-card')
+          .forEach(c => c.classList.remove('portrait-card--selected'));
+    }
+
+    function showChoice(card) {
+      const key = card.dataset.pathKey;
+      const c   = choicesFor(segment).find(x => String(x.key) === key);
+      if (!c) return;
+      selectedKey = key;
+      body.querySelectorAll('#slot-upgrade-track .portrait-card')
+          .forEach(el => el.classList.toggle('portrait-card--selected', el === card));
+      const confirmBtn = body?.querySelector('#slot-confirm');
+      if (confirmBtn) confirmBtn.disabled = false;
+
+      if (cardWrap && !c.unit) {
+        // A building with no unit still previews: its own art, its blurb, and
+        // the level it is being raised to.
+        cardWrap.innerHTML = buildUnitCard(null, {
+          buildingLabel: levelLabelFor(c.def, nextLevel),
+          artUrl: buildingArtUrl(c.def),
+          desc:   castleLang === 'ru' ? (c.def?.desc_ru || c.def?.desc || '') : (c.def?.desc || ''),
+          itemSlotHtml,
+        }) + actionOverlayHtml;
+      } else if (cardWrap) {
+        // compareUnit is the unit as it stands NOW (item included), so every
+        // stat delta and the +N on a ranked-up ability read against what the
+        // player actually owns rather than against the blueprint.
+        cardWrap.innerHTML = buildUnitCard(c.unit, {
+          buildingLabel: labelForChoice(c),
+          compareUnit:   liveUnit,
+          itemSlotHtml,
+          extraSlotHtml: treeButtonHtml(c.unit.id),
+          // The REAL bars, not a placeholder. The unit standing in this slot
+          // still has the HP and XP it had a moment ago — browsing a branch
+          // does not change them — so the rows carry true numbers and, being
+          // the same rows, cannot change height between the two cards.
+          progress,
+        }) + actionOverlayHtml;
+      }
+      showCostBar(c.cost);
+    }
+
+    function confirmChoice() {
+      if (!selectedKey) return;
+      const c = choicesFor(segment).find(x => String(x.key) === selectedKey);
+      if (!c) return;
+
+      if (c.kind === 'respec') {
+        if (!canAffordCost(c.cost)) {
+          alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(c.cost)}`);
+          return;
+        }
+        performRespec(slot, c.buildingId);
+        return;
+      }
+
+      if (mercDef) {
+        // Mercenaries are priced in trophies, and their roster row is found by
+        // region + unit rather than by slot.
+        const short = Object.entries(c.cost || {}).some(([item, amt]) => amountOf(item) < amt);
+        if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
+        const currentUnit = getUnitByUnitId(mercDef.unit_id);
+        const rosterEntry = rosterCache.find(r =>
+          r.unit_data?.mercenary &&
+          r.unit_data?.mercenary_region === mercDef.region &&
+          r.unit_data?.id === currentUnit?.id);
+        performMercenaryUpgrade(c.buildingId, slot, rosterEntry?.id);
+        return;
+      }
+
+      if (!canAffordCost(c.cost)) {
+        alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(c.cost)}`);
+        return;
+      }
+      performBuildingUpgrade(slot, c.buildingId);
+    }
+
+    function bindRow() {
+      body?.querySelector('#slot-to-upgrade')?.addEventListener('click', () => {
+        mode = 'upgrade';
+        renderRow();
+      });
+      body?.querySelector('#slot-back')?.addEventListener('click', () => {
+        mode = 'inspect';
+        showOwnUnit();
+        renderRow();
+      });
+      body?.querySelectorAll('.slot-mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          if (tab.dataset.seg === segment) return;
+          segment = tab.dataset.seg;
+          showOwnUnit();
+          renderRow();
+        });
+      });
+      body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
+        card.addEventListener('click', () => {
+          if (selectedKey === card.dataset.pathKey) showOwnUnit();
+          else                                      showChoice(card);
+        });
+      });
+      // ONE button. Picking a branch already swaps the card to what it leads to
+      // and puts its price on the cost bar, so everything a confirmation dialog
+      // would re-show is on screen before this is pressed.
+      body?.querySelector('#slot-confirm')?.addEventListener('click', confirmChoice);
+      body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
+
+      // Inside the sequence, open with the first option already chosen — there
+      // the player has said they are upgrading, so an inert row is a wasted tap.
+      // In INSPECT it must never happen: that is the thing that made looking at
+      // a unit show somebody else's portrait.
+      if (mode === 'upgrade' && !selectedKey && !onboardingBusy) {
+        const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
+        if (firstCard) showChoice(firstCard);
+      }
+    }
+
     body?.addEventListener('click', e => {
       // Before handleUnitInspect: the tree button is an .ability-icon by shape,
       // so the generic inspector would swallow it looking for an ability key.
@@ -2007,169 +2229,33 @@ export function renderCastle(root, { player }) {
         btn.textContent = resurrectBtn
           ? CASTLE_TEXT.resurrecting[castleLang]
           : CASTLE_TEXT.healing[castleLang];
-        // Read BEFORE the await: reloadFromBootstrap re-runs the script, which
-        // would otherwise see the step as still pending and restart it.
-        const teachingRevive = !!resurrectBtn && !isTutorialDone(player, 'spell_revive');
-        const teachingHeal   = !!healBtn      && !isTutorialDone(player, 'spell_heal');
-        if (teachingRevive || teachingHeal) onboardingBusy = true;
-
-        api(path, {
-          chat_id: player.chat_id,
-          roster_id: btn.dataset.rosterId,
-          spell_id: btn.dataset.spellId,
-        })
-          .then(async () => {
-            if (teachingRevive) markTutorialDone(player, 'spell_revive');
-            if (teachingHeal)   markTutorialDone(player, 'spell_heal');
-            await reloadFromBootstrap();
-
-            onboardingBusy = false;
-            hideTutorial();
-            if (teachingHeal) {
-              // Last castle step. Onboarding continues on the embark screen.
-              closeModal();
-              navigate('embark', { player });
-              return;
+        // Read BEFORE the await: reloadFromBootstrap re-renders the castle, and
+        // this button — with its dataset — is gone by the time the call returns.
+        const rosterId = btn.dataset.rosterId;
+        const spellId  = btn.dataset.spellId;
+        // The revive and heal onboarding steps are `awaits` steps: runOnboarding
+        // holds them pending and the handler that does the work marks the flag,
+        // or the spotlight sits on a button the player has already pressed.
+        const stepId = resurrectBtn ? 'spell_revive' : 'spell_heal';
+        (async () => {
+          try {
+            await api(path, { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
+            if (!isTutorialDone(player, stepId)) {
+              await markTutorialDone(player, stepId);
+              hideTutorial();
             }
+            await reloadFromBootstrap();
             openSlotUnitSheet(slot);
-            runOnboarding();
-          })
-          .catch(err => {
-            btn.disabled   = false;
-            onboardingBusy = false;
-            openAbilityModal(buildingLabel(def), renderModalContent(err?.message || 'Failed.'));
-          });
-        return;
+          } catch (err) {
+            alert(err?.message || String(err));
+            btn.disabled = false;
+          }
+        })();
       }
     });
 
-    // Picking a branch SWAPS THE CARD to that upgrade, compared against the unit
-    // standing in the slot. Selecting used to only light the portrait and arm
-    // the button, which meant choosing an upgrade showed the player nothing
-    // about it — the whole reason to look at a branch is to see what it turns
-    // into. Tapping the lit portrait again puts your own unit back.
-    const upgradeBtn = body?.querySelector('#slot-upgrade');
-    const cardWrap   = body?.querySelector('.castle-unit-card-wrap');
-    const ownCardHtml = cardWrap?.innerHTML ?? '';
-    let selectedPath = null;
+    bindRow();
 
-    // What a branch costs. The slider modal put this on the cost bar and the
-    // inline picker did not, so selecting an upgrade showed the unit it leads to
-    // and nothing about the price — the number the decision actually turns on.
-    // Throne upgrades are priced by the LEVEL they move to rather than by the
-    // building, which is why they are read from a different table (mirrors
-    // openUpgradeModal and POST /structures/build).
-    const isThrone  = def.category === 'throne';
-    const nextLevel = (structuresRecord.buildings_data[slot]?.level ?? 0) + 1;
-    function costForPath(key) {
-      const path = paths.find(p => pathKey(p) === key);
-      if (!path) return null;
-      if (mercDef)  return getMercBuildingDef(path.building_id)?.cost ?? path.cost ?? null;
-      if (isThrone) return throneUpgradeCosts[nextLevel] || null;
-      // Per-level price where the building declares one, so raising a building
-      // is not charged at its first-level rate.
-      return buildingCostForLevel(getBuildingDef(player.faction, path.building_id), nextLevel);
-    }
-
-    function showOwnUnit() {
-      selectedPath = null;
-      if (cardWrap) cardWrap.innerHTML = ownCardHtml;
-      if (upgradeBtn) upgradeBtn.disabled = true;
-      hideCostBar();
-      body?.querySelectorAll('#slot-upgrade-track .portrait-card')
-          .forEach(c => c.classList.remove('portrait-card--selected'));
-    }
-
-    function showUpgrade(card) {
-      const key      = card.dataset.pathKey;
-      const path     = paths.find(pth => pathKey(pth) === key);
-      const nextUnit = getUnitByUnitId(path?.unit_id);
-      selectedPath = key;
-      body.querySelectorAll('#slot-upgrade-track .portrait-card')
-          .forEach(c => c.classList.toggle('portrait-card--selected', c === card));
-      if (upgradeBtn) upgradeBtn.disabled = false;
-      // A building with no unit still previews: its own art, its blurb, and the
-      // level it is being raised to.
-      if (cardWrap && !nextUnit && path) {
-        const nextDef = getBuildingDef(player.faction, path.building_id);
-        cardWrap.innerHTML = buildUnitCard(null, {
-          buildingLabel: levelLabelFor(nextDef, slotLevel + 1),
-          artUrl: buildingArtUrl(nextDef),
-          desc:   castleLang === 'ru' ? (nextDef?.desc_ru || nextDef?.desc || '') : (nextDef?.desc || ''),
-          itemSlotHtml,
-        }) + actionOverlayHtml;
-      }
-      if (cardWrap && nextUnit) {
-        // compareUnit is the unit as it stands NOW (item included), so every
-        // stat delta and the +N on a ranked-up ability read against what the
-        // player actually owns rather than against the blueprint.
-        cardWrap.innerHTML = buildUnitCard(nextUnit, {
-          buildingLabel: unitName(nextUnit) || '',
-          compareUnit:   liveUnit,
-          itemSlotHtml,
-          extraSlotHtml: treeButtonHtml(nextUnit.id),
-          // The REAL bars, not a placeholder. The unit standing in this slot
-          // still has the HP and XP it had a moment ago — browsing a branch
-          // does not change them — so the rows carry true numbers and, being
-          // the same rows, cannot change height between the two cards.
-          progress,
-        }) + actionOverlayHtml;
-      }
-      // The price of the branch now on show, on the same bar the build slider
-      // uses, so it is in the one place the player already looks for a cost.
-      showCostBar(costForPath(key));
-    }
-
-    body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
-      card.addEventListener('click', () => {
-        if (selectedPath === card.dataset.pathKey) showOwnUnit();
-        else                                       showUpgrade(card);
-      });
-    });
-
-    // Open on the first upgrade already chosen, the way the unit sheets do.
-    // The old sheet opened inert: the ⚒ was dim and the price bar empty until
-    // the player tapped a card, which for a building with exactly one upgrade is
-    // a tap that carries no decision.
-    const firstCard = body?.querySelector('#slot-upgrade-track .portrait-card');
-    if (firstCard && !onboardingBusy
-        && isTutorialDone(player, 'roster_equip') && isTutorialDone(player, 'spell_heal')) {
-      showUpgrade(firstCard);
-    }
-
-    // ONE button. Picking a branch already swaps the card to the unit it leads
-    // to and puts its price on the cost bar, so everything the old slider modal
-    // re-showed is on screen before this is pressed — opening it again just
-    // asked the player to confirm a choice they had already made, on a second
-    // button, in a second sheet. This builds it.
-    upgradeBtn?.addEventListener('click', () => {
-      if (!selectedPath) return;
-      const path = paths.find(p => pathKey(p) === selectedPath);
-      if (!path) return;
-
-      if (mercDef) {
-        // Mercenaries are priced in trophies, and their roster row is found by
-        // region + unit rather than by slot.
-        const cost  = getMercBuildingDef(path.building_id)?.cost ?? path.cost ?? {};
-        const short = Object.entries(cost).some(([item, amt]) => amountOf(item) < amt);
-        if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
-        const currentUnit = getUnitByUnitId(mercDef.unit_id);
-        const rosterEntry = rosterCache.find(r =>
-          r.unit_data?.mercenary &&
-          r.unit_data?.mercenary_region === mercDef.region &&
-          r.unit_data?.id === currentUnit?.id);
-        performMercenaryUpgrade(path.building_id, slot, rosterEntry?.id);
-        return;
-      }
-
-      const cost = costForPath(selectedPath);
-      if (!canAffordCost(cost)) {
-        alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(cost)}`);
-        return;
-      }
-      performBuildingUpgrade(slot, path.building_id);
-    });
-    body?.querySelector('#slot-deconstruct')?.addEventListener('click', () => openDeconstructModal(slot));
     // The cost bar lives outside the sheet, so it has to be torn down with it —
     // however the sheet closes.
     onSheetClose(hideCostBar);
@@ -2551,26 +2637,20 @@ export function renderCastle(root, { player }) {
   // Respec swaps the slot for a same-tier sibling at RESPEC_COST_PCT of its
   // cost; Demolish empties it entirely. The throne is respec-only — a player
   // without a throne has no hero. Both are server-validated; this is the UI.
+  // Demolish only. Respec used to sit here too, one button above "the unit is
+  // destroyed for good" — but it is the least destructive thing in the castle:
+  // same tier, the unit keeps its XP, and it costs a fraction of the new
+  // building. It now lives in the upgrade sequence on the unit sheet, beside
+  // Advance, because both answer the same question about what a slot becomes.
   function openDeconstructModal(slot) {
     const state = structuresRecord.buildings_data[slot];
     if (!state?.building_id) return;
-    const def     = getBuildingDef(player.faction, state.building_id);
-    const options = respecOptionsFor(state.building_id);
+    const def      = getBuildingDef(player.faction, state.building_id);
     const isThrone = slot === 'slot_0';
     const ru = castleLang === 'ru';
 
     openModal(ru ? 'Разбор' : 'Deconstruct', `
       <div class="deconstruct-body">
-        ${options.length
-          ? `<button class="deconstruct-btn deconstruct-btn--respec" id="deconstruct-respec">
-               ${ru ? 'Сменить ветку' : 'Respec Building'}
-             </button>
-             <p class="deconstruct-intro">
-               ${ru
-                 ? `Смена ветки того же уровня стоит ${respecCostPct}% цены нового здания. Опыт бойца сохраняется.`
-                 : `Switching to another branch of the same tier costs ${respecCostPct}% of the new building's price. The unit keeps its XP.`}
-             </p>`
-          : `<p class="modal-empty">${ru ? 'Нет вариантов того же уровня.' : 'No same-tier alternatives.'}</p>`}
         ${isThrone
           ? `<p class="deconstruct-note">${ru ? 'Трон нельзя снести.' : 'The throne cannot be demolished.'}</p>`
           : `<button class="deconstruct-btn" id="deconstruct-clear">
@@ -2583,47 +2663,11 @@ export function renderCastle(root, { player }) {
              </p>`}
       </div>`);
 
-    getSheetBody()?.querySelector('#deconstruct-respec')?.addEventListener('click', () => {
-      openRespecPicker(slot, options, state.level);
-    });
     getSheetBody()?.querySelector('#deconstruct-clear')?.addEventListener('click', () => {
       confirmAndClear(slot, def);
     });
   }
 
-  // WHICH branch to switch to is the next question, asked in the picker the
-  // rest of the castle already uses: one unit card at a time, the branch track
-  // underneath, and the price on the cost bar under the resource strip. The
-  // flat list of every same-tier sibling said all of that at once, in words.
-  function openRespecPicker(slot, options, level) {
-    const ru = castleLang === 'ru';
-    const currentDef  = getBuildingDef(player.faction, structuresRecord.buildings_data[slot]?.building_id);
-    const currentUnit = currentDef ? getUnitByUnitId(currentDef.unit_id) : null;
-
-    openSliderModal(ru ? 'Сменить ветку' : 'Respec',
-      options.map(o => {
-        const unit     = getUnitByUnitId(o.unit_id);
-        const cost     = respecCostFor(o.id, level);
-        const costText = costLabelFor(cost);
-        const name     = unitName(unit) || buildingLabel(o);
-        return {
-          unit,
-          buildingLabel: name,
-          confirmLabel:  costText
-            ? `${ru ? 'Сменить' : 'Respec'} → ${name} (${costText})`
-            : `${ru ? 'Сменить' : 'Respec'} → ${name}`,
-          compareUnit:   currentUnit,
-          buildingId:    o.id,
-          cost,
-          affordable:    canAffordCost(cost),
-        };
-      }),
-      s => {
-        if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
-        performRespec(slot, s.buildingId);
-      }
-    );
-  }
 
   async function performRespec(slot, building_id) {
     try {

@@ -261,6 +261,23 @@ const ITEM_DEFS = {
     requires:     { region: 'any', level: 1 },
     item_cost:    { life_charm: 1 }
   },
+  orb_of_light: {
+    key:          'orb_of_light',
+    name:         "Orb Of Light",
+    name_ru:      'Сфера Света',
+    faction:      'empire',
+    tag_required: 'Holy',
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { hp: 2 },
+    passive:      'mithrails_light 1',
+    icon:         'orb_of_light',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 40, Crystals_Life: 30 },
+    requires:     { region: 'any', level: 1 },
+    item_cost:    { life_charm: 1 }
+  },
   padded_armor: {
     key:          'padded_armor',
     name:         "Padded Armor",
@@ -545,8 +562,8 @@ const ITEM_DEFS = {
     icon:         'lightbringer',
     rarity:       'epic',
     unique:       true,
-    cost:         { crystal_shard: 1, Gold: 75, Crystals_Air: 20, Crystals_Frost: 20 },
-    item_cost:    { iron_sword: 1 },
+    cost:         { crystal_shard: 1, Gold: 25 },
+    item_cost:    { iron_sword: 1, orb_of_light: 1 },
   },
   forbidden_vow: {
     key:          'forbidden_vow',
