@@ -121,7 +121,7 @@ const CASTLE_TEXT = {
   notEnough:   { en: 'Not enough trophies for this upgrade.', ru: 'Недостаточно трофеев для улучшения.' },
   deconstruct: { en: 'Deconstruct',                           ru: 'Разобрать' },
   upgradeOpen: { en: 'Upgrade',                                ru: 'Улучшить' },
-  advance:     { en: 'Advance',                                ru: 'Развить' },
+  demolish:    { en: 'Demolish',                               ru: 'Снести' },
   changeBranch:{ en: 'Change branch',                          ru: 'Сменить ветку' },
   backToUnit:  { en: 'Back',                                   ru: 'Назад' },
   noOptions:   { en: 'Nothing to change',                      ru: 'Менять нечего' },
@@ -1975,7 +1975,7 @@ export function renderCastle(root, { player }) {
     // Why the arrow is dim, in the player's terms. A unit with no build to do
     // but a tier still ahead is waiting on XP, not finished — two different
     // situations that must not read the same.
-    const idleHint = canUpgrade || canRespec
+    const idleHint = canUpgrade
       ? CASTLE_TEXT.upgradeOpen[castleLang]
       : (progress?.xp && !progress.xp.maxed && progress.xp.req > 0
           ? CASTLE_TEXT.awaitingXp[castleLang].replace('%s', progress.xp.req)
@@ -1988,18 +1988,33 @@ export function renderCastle(root, { player }) {
     // confirm used to be on screen the moment a slot was tapped, with the first
     // branch ALREADY SELECTED — so going to look at a unit showed you the next
     // one instead, which is what made inspecting feel like upgrading.
+    // INSPECT is three plain actions — Upgrade, Respec, Demolish — each opening
+    // its own sequence. They were briefly a pair of pill tabs above the track,
+    // which buried two of the three choices behind a mode the player had to
+    // enter before they could see it.
+    //
+    // Each is dim when it has nothing to offer rather than absent: a control
+    // that appears and disappears moves the ones beside it, and the player never
+    // learns where anything lives.
     function actionRowHtml(mode, segment) {
       if (mode === 'inspect') {
+        // The reason an upgrade is unavailable rides on the button's own tooltip.
+        // It briefly had a line of its own above the row, which added height to
+        // every sheet to explain a case most of them are not in.
+        const upgradeLabel = canUpgrade ? CASTLE_TEXT.upgradeOpen[castleLang] : idleHint;
         return `
-          <div class="track-action-row track-action-row--framed">
-            <button class="frame-action frame-action--confirm ${canUpgrade || canRespec ? '' : 'frame-action--inert'}"
-                    id="slot-to-upgrade" ${canUpgrade || canRespec ? '' : 'disabled'}
-                    title="${CASTLE_TEXT.upgradeOpen[castleLang]}"
-                    aria-label="${CASTLE_TEXT.upgradeOpen[castleLang]}">→</button>
-            <span class="castle-slot-maxed">${idleHint}</span>
+          <div class="track-action-row track-action-row--framed slot-action-row--three">
+            <button class="frame-action frame-action--confirm ${canUpgrade ? '' : 'frame-action--inert'}"
+                    id="slot-to-upgrade" ${canUpgrade ? '' : 'disabled'}
+                    title="${upgradeLabel}"
+                    aria-label="${upgradeLabel}">⚒</button>
+            <button class="frame-action ${canRespec ? '' : 'frame-action--inert'}"
+                    id="slot-to-respec" ${canRespec ? '' : 'disabled'}
+                    title="${CASTLE_TEXT.changeBranch[castleLang]}"
+                    aria-label="${CASTLE_TEXT.changeBranch[castleLang]}">⇄</button>
             <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
-                    title="${CASTLE_TEXT.deconstruct[castleLang]}"
-                    aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>
+                    title="${CASTLE_TEXT.demolish[castleLang]}"
+                    aria-label="${CASTLE_TEXT.demolish[castleLang]}">⛏</button>
           </div>`;
       }
 
@@ -2012,21 +2027,15 @@ export function renderCastle(root, { player }) {
           </div>`;
       }).join('');
 
-      // Only shown when there is a real choice between the two. A unit that can
-      // only advance, or only respec, gets the track with no chooser above it.
-      const tabs = (canUpgrade && canRespec)
-        ? `<div class="slot-mode-tabs">
-             <button class="slot-mode-tab ${segment === 'advance' ? 'slot-mode-tab--on' : ''}" data-seg="advance">${CASTLE_TEXT.advance[castleLang]}</button>
-             <button class="slot-mode-tab ${segment === 'respec'  ? 'slot-mode-tab--on' : ''}" data-seg="respec">${CASTLE_TEXT.changeBranch[castleLang]}</button>
-           </div>`
-        : '';
-
+      // Which sequence you are in is already answered by the portraits on the
+      // track — same-tier siblings or the tier above — so it does not need a
+      // chooser restating it. The confirm keeps the castle's build icon; this is
+      // still the button that spends resources on a slot.
       const confirmLabel = segment === 'respec'
         ? CASTLE_TEXT.changeBranch[castleLang]
-        : CASTLE_TEXT.advance[castleLang];
+        : CASTLE_TEXT.upgradeOpen[castleLang];
 
       return `
-        ${tabs}
         <div class="track-action-row track-action-row--framed">
           <button class="frame-action" id="slot-back"
                   title="${CASTLE_TEXT.backToUnit[castleLang]}"
@@ -2037,7 +2046,7 @@ export function renderCastle(root, { player }) {
                </div>`
             : `<span class="castle-slot-maxed">${CASTLE_TEXT.noOptions[castleLang]}</span>`}
           <button class="frame-action frame-action--confirm" id="slot-confirm" disabled
-                  title="${confirmLabel}" aria-label="${confirmLabel}">⬆</button>
+                  title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
         </div>`;
     }
 
@@ -2165,6 +2174,7 @@ export function renderCastle(root, { player }) {
     function bindRow() {
       body?.querySelector('#slot-to-upgrade')?.addEventListener('click', () => {
         mode = 'upgrade';
+        segment = 'advance';
         renderRow();
       });
       body?.querySelector('#slot-back')?.addEventListener('click', () => {
@@ -2172,13 +2182,10 @@ export function renderCastle(root, { player }) {
         showOwnUnit();
         renderRow();
       });
-      body?.querySelectorAll('.slot-mode-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          if (tab.dataset.seg === segment) return;
-          segment = tab.dataset.seg;
-          showOwnUnit();
-          renderRow();
-        });
+      body?.querySelector('#slot-to-respec')?.addEventListener('click', () => {
+        mode = 'upgrade';
+        segment = 'respec';
+        renderRow();
       });
       body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
         card.addEventListener('click', () => {

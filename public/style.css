@@ -6516,31 +6516,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .frame-action--inert { opacity: 0.22; pointer-events: none; }
 
-/* Advance / Change branch, above the branch track in the unit sheet's upgrade
-   mode. Only rendered when a slot can do both — a unit with one of them gets the
-   track with no chooser over it. See actionRowHtml in screens/castle.js. */
-.slot-mode-tabs {
-  display: flex;
-  gap: 0.35rem;
-  justify-content: center;
-  margin-bottom: 0.4rem;
+/* Upgrade / Respec / Demolish, the three things a built slot can do. Evenly
+   spread rather than pinned to the ends, because none of them is the odd one
+   out — see actionRowHtml in screens/castle.js. */
+.slot-action-row--three {
+  justify-content: space-evenly;
 }
-.slot-mode-tab {
-  flex: 0 1 auto;
-  padding: 0.28rem 0.8rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  cursor: pointer;
-}
-.slot-mode-tab--on {
-  color: var(--bg);
-  background: var(--accent);
-  border-color: var(--accent);
-}
+
 
 .frame-action-hint-wrap {
   position: relative;
@@ -7320,7 +7302,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   grid-template-rows: auto;
   max-width: 90vw;
 }
-
 
 .upgrade-col {
   display: grid;
