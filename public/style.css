@@ -82,6 +82,12 @@ html, body {
   min-height: 0;
 }
 
+#content-root[data-screen="embark"] {
+  scrollbar-width: none;
+}
+
+#content-root[data-screen="embark"]::-webkit-scrollbar { display: none; }
+
 #content-root[data-screen="castle"] {
 
   max-height: 80vh;
@@ -2041,7 +2047,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(11, 14, 20, 0.60);
+  /* background: rgba(11, 14, 20, 0.60); */
   pointer-events: none;
   z-index: 0;
 }
