@@ -16,7 +16,7 @@ import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
-import { setUiLanguage, closeSheet, closeSubSheet } from './utils.js';
+import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme } from './utils.js';
 
 import {
   api,
@@ -373,7 +373,7 @@ async function boot() {
     }
 
     initMusic(player);
-    if (player.faction) playFactionTheme(player.faction);
+    if (player.faction) { playFactionTheme(player.faction); applyFactionTheme(player.faction); }
 
     // Where this player was headed anyway, once consent is settled.
     const goOn = (p) => {

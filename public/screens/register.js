@@ -1,7 +1,7 @@
 import { api }      from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
-import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet, enableTrackSwipe } from '../utils.js';
+import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet, enableTrackSwipe, applyFactionTheme } from '../utils.js';
 import { playFactionTheme } from '../music.js';
 import { assetUrl } from '../asset_base.js';
 
@@ -295,6 +295,7 @@ export function renderRegister(root, { player } = {}) {
       btn.addEventListener('click', async () => {
         selectedFaction = FACTIONS.find(f => f.id === btn.dataset.id);
         playFactionTheme(selectedFaction.id);
+        applyFactionTheme(selectedFaction.id);
         await loadAndShowHeroStep();
       });
     });

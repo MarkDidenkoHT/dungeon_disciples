@@ -230,6 +230,11 @@ export const SCREEN_BACKGROUND_POSITIONS = {
   embark: 'left bottom',
 };
 
+export function applyFactionTheme(faction) {
+  if (!faction) return;
+  document.body.dataset.faction = faction;
+}
+
 export function applyBackground(root, faction, screen) {
   const url = SCREEN_BACKGROUNDS[screen]?.[faction];
   if (!url) return;
