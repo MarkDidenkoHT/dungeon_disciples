@@ -1450,22 +1450,34 @@ export function renderCastle(root, { player }) {
     return Object.keys(data).find(k => /^slot_\d+$/.test(k) && data[k]?.building_id === buildingId) || null;
   }
 
-  // Close the panel, turn to the page the slot is on, and pulse it. The page
-  // only has to change when the slot is on the other one — `layerOf` reads it
-  // from the slot number rather than assuming page 2, which the old copy did.
+  // Close the panel, turn to the page the slot is on, and open the building —
+  // the player asked for it by name, so make them tap once, not go hunting.
+  //
+  // The node is CLICKED rather than routed by hand: its handler already decides
+  // between the reserved panel, a further locked requirement and the build
+  // sheet, and a second copy of that branching here would drift from it. If the
+  // building we jumped to is itself locked behind something, the player simply
+  // gets the next panel in the chain, with its own button.
+  //
+  // `layerOf` reads the page from the slot number instead of assuming page 2,
+  // which is what the sentence this replaced always claimed.
   function goToBuilding(buildingId) {
     const slot = slotForBuilding(buildingId);
     if (!slot) return;
     closeModal();
     setLayer(layerOf(slot));
-    // After the page transition, or the node is measured mid-slide and the
-    // pulse lands on empty ground.
+    // After the page transition. Clicking mid-slide opens the right sheet but
+    // scrolls to a node that is still moving, and the highlight lands on empty
+    // ground.
     setTimeout(() => {
       const node = nodeForSlot(slot);
       if (!node) return;
       node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Marked before the sheet opens so it is already pulsing underneath when
+      // the player closes it, which is what shows them where it lives.
       node.classList.add('castle-node--found');
-      setTimeout(() => node.classList.remove('castle-node--found'), 2400);
+      setTimeout(() => node.classList.remove('castle-node--found'), 3000);
+      node.click();
     }, 420);
   }
 
