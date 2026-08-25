@@ -236,7 +236,9 @@ const BUILDING_POOLS = {
       { id: 'artificer_guild_4_b_alt',   label: 'Artificer Guild IV B Alt', label_ru: 'Гильдия артефакторов IV B Alt', category: 'throne', unit_id: 'h_e_3_b42', tier: 4, upgrades: [] },
     ],
     barracks: [
-      { id: 'conscript_barracks',  label: 'Conscript Barracks', label_ru: 'Казармы рекрутов',  category: 'barracks', tier: 1, unit_id: 'e1',   upgrades: ['infantry_barracks', 'cavalry_stables'],          cost: { gold: 50 } },
+      { id: 'conscript_barracks',  label: 'Conscript Barracks', label_ru: 'Казармы рекрутов',  category: 'barracks', tier: 1, unit_id: 'e1',   upgrades: ['infantry_barracks', 'cavalry_stables', 'banner_yard'], cost: { gold: 50 } },
+      { id: 'banner_yard',         label: 'Banner Yard', label_ru: 'Знамённый двор',         category: 'barracks', tier: 2, unit_id: 'e13',  upgrades: ['banneret_hall'],         cost: { gold: 100 } },
+      { id: 'banneret_hall',       label: 'Banneret Hall', label_ru: 'Зал баннеретов',       category: 'barracks', tier: 3, unit_id: 'e131', upgrades: [],                        cost: { gold: 200 } },
       { id: 'infantry_barracks',   label: 'Infantry Barracks', label_ru: 'Пехотные казармы',   category: 'barracks', tier: 2, unit_id: 'e11',  upgrades: ['crossbow_range', 'heavy_barracks', 'blade_guard_hall'], cost: { gold: 100 } },
       { id: 'crossbow_range',      label: 'Crossbow Range', label_ru: 'Стрельбище арбалетчиков',      category: 'barracks', tier: 3, unit_id: 'e111', upgrades: [],                        cost: { gold: 200 } },
       { id: 'heavy_barracks',      label: 'Heavy Barracks', label_ru: 'Тяжёлые казармы',      category: 'barracks', tier: 3, unit_id: 'e112', upgrades: [],                        cost: { gold: 200 } },
@@ -256,7 +258,9 @@ const BUILDING_POOLS = {
       { id: 'devastator_post',     label: 'Devastator Post', label_ru: 'Пост опустошителей',     category: 'barracks', tier: 3, unit_id: 'e621', upgrades: [],                        cost: { gold: 200 } },
       { id: 'flamethrower_post',   label: 'Flamethrower Post', label_ru: 'Пост огнемётчиков',   category: 'barracks', tier: 3, unit_id: 'e622', upgrades: [],                        cost: { gold: 200 } },
       { id: 'acolyte_shrine',      label: 'Acolyte Shrine', label_ru: 'Святилище послушников',      category: 'barracks', tier: 1, unit_id: 'e2',   upgrades: ['sun_temple', 'priest_shrine'],            cost: { gold: 50 } },
-      { id: 'sun_temple',          label: 'Sun Temple', label_ru: 'Храм Солнца',          category: 'barracks', tier: 2, unit_id: 'e21',  upgrades: ['mithrails_champion_keep'],                  cost: { gold: 100 } },
+      { id: 'sun_temple',          label: 'Sun Temple', label_ru: 'Храм Солнца',          category: 'barracks', tier: 2, unit_id: 'e21',  upgrades: ['mithrails_champion_keep', 'mithrails_warden_keep'], cost: { gold: 100 } },
+      { id: 'mithrails_warden_keep', label: 'Mithrails Warden Keep', label_ru: 'Твердыня хранителей Митраила', category: 'barracks', tier: 3, unit_id: 'e212', upgrades: ['mithrails_paragon_keep'], cost: { gold: 200 } },
+      { id: 'mithrails_paragon_keep', label: 'Mithrails Paragon Keep', label_ru: 'Твердыня идеалов Митраила', category: 'barracks', tier: 4, unit_id: 'e2121', upgrades: [], cost: { gold: 400 } },
       { id: 'mithrails_exemplar_keep', label: 'Mithrails Exemplar Keep', label_ru: 'Твердыня экземпларов Митраила', category: 'barracks', tier: 4, unit_id: 'e2111', upgrades: [], cost: { gold: 400 } },
       { id: 'mithrails_champion_keep', label: 'Mithrails Champion Keep', label_ru: 'Твердыня поборников Митраила', category: 'barracks', tier: 3, unit_id: 'e211', upgrades: ['mithrails_exemplar_keep'], cost: { gold: 200 } },
       { id: 'priest_shrine',       label: 'Priest Shrine', label_ru: 'Святилище жрецов',       category: 'barracks', tier: 2, unit_id: 'e22',  upgrades: ['ardent_shrine'],                  cost: { gold: 100 } },
@@ -618,7 +622,9 @@ const BUILDING_POOLS = {
 const UNIT_UPGRADE_PATHS = {
   empire: {
     e1:   [{ unit_id: 'e11',  building_id: 'infantry_barracks', label: 'Infantry Barracks', label_ru: 'Пехотные казармы' },
-           { unit_id: 'e12',  building_id: 'cavalry_stables',   label: 'Cavalry Stables', label_ru: 'Кавалерийские конюшни' }],
+           { unit_id: 'e12',  building_id: 'cavalry_stables',   label: 'Cavalry Stables', label_ru: 'Кавалерийские конюшни' },
+           { unit_id: 'e13',  building_id: 'banner_yard',       label: 'Banner Yard', label_ru: 'Знамённый двор' }],
+    e13:  [{ unit_id: 'e131', building_id: 'banneret_hall',     label: 'Banneret Hall', label_ru: 'Зал баннеретов' }],
     e11:  [{ unit_id: 'e111', building_id: 'crossbow_range',    label: 'Crossbow Range', label_ru: 'Стрельбище арбалетчиков' },
            { unit_id: 'e112', building_id: 'heavy_barracks',    label: 'Heavy Barracks', label_ru: 'Тяжёлые казармы' },
            { unit_id: 'e113', building_id: 'blade_guard_hall',  label: 'Blade Guard Hall', label_ru: 'Зал Стражей Клинка' }],
@@ -633,7 +639,9 @@ const UNIT_UPGRADE_PATHS = {
            { unit_id: 'e622', building_id: 'flamethrower_post', label: 'Flamethrower Post', label_ru: 'Пост огнемётчиков' }],
     e2:   [{ unit_id: 'e21',  building_id: 'sun_temple',        label: 'Sun Temple', label_ru: 'Храм Солнца' },
            { unit_id: 'e22',  building_id: 'priest_shrine',     label: 'Priest Shrine', label_ru: 'Святилище жрецов' }],
-    e21:  [{ unit_id: 'e211', building_id: 'mithrails_champion_keep', label: 'Mithrails Champion Keep', label_ru: 'Твердыня поборников Митраила' }],
+    e21:  [{ unit_id: 'e211', building_id: 'mithrails_champion_keep', label: 'Mithrails Champion Keep', label_ru: 'Твердыня поборников Митраила' },
+           { unit_id: 'e212', building_id: 'mithrails_warden_keep',   label: 'Mithrails Warden Keep', label_ru: 'Твердыня хранителей Митраила' }],
+    e212: [{ unit_id: 'e2121', building_id: 'mithrails_paragon_keep', label: 'Mithrails Paragon Keep', label_ru: 'Твердыня идеалов Митраила' }],
     e211: [{ unit_id: 'e2111', building_id: 'mithrails_exemplar_keep', label: 'Mithrails Exemplar Keep', label_ru: 'Твердыня экземпларов Митраила' }],
     e22:  [{ unit_id: 'e221', building_id: 'ardent_shrine',     label: 'Ardent Shrine', label_ru: 'Ревностное святилище' }],
     e221: [{ unit_id: 'e2211', building_id: 'high_priest_shrine', label: 'High Priest Shrine', label_ru: 'Святилище верховных жрецов' }],
@@ -808,6 +816,10 @@ const THRONE_UPGRADE_COSTS = {
   5: { gold: 800 },
 };
 
+
+// The throne outgrew the hero line: it has five levels, the hero has four. They
+// were the same number and read off the same constant, so raising one silently
+// raised the other.
 const THRONE_MAX_LEVEL = 5;
 
 
@@ -840,7 +852,7 @@ function upgradeReaches(faction, fromUnitId, targetUnitId) {
   while (stack.length) {
     const id = stack.pop();
     if (id === targetUnitId) return true;
-    if (seen.has(id)) continue;      
+    if (seen.has(id)) continue;      // guards against a cycle in the data
     seen.add(id);
     for (const p of paths[id] || []) stack.push(p.unit_id);
   }
@@ -880,6 +892,9 @@ function upgradeBranchCandidates(faction, paths, buildingId) {
   return paths.filter(p => upgradeReaches(faction, p.unit_id, built.unit_id));
 }
 
+// The unambiguous branch, or null when the player still has to choose. Callers
+// that can ask should use upgradeBranchCandidates instead of treating null as
+// "cannot upgrade" — that is what left an overbuilt hero permanently stuck.
 function resolveUpgradeBranch(faction, paths, buildingId) {
   const candidates = upgradeBranchCandidates(faction, paths, buildingId);
   return candidates.length === 1 ? candidates[0] : null;
@@ -913,6 +928,8 @@ const BUILDING_COSTS = {
   // ── empire ────────────────────────────────────────────────────
   conscript_barracks:            { gold: 40, Crystals_Life: 20, Crystals_Air: 5 },
   infantry_barracks:             { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
+  banner_yard:                   { gold: 60, Crystals_Life: 30, Crystals_Air: 8 },
+  banneret_hall:                 { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Nature: 12 },
   crossbow_range:                { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
   heavy_barracks:                { gold: 96, Crystals_Life: 48, Crystals_Death: 12, Crystals_Frost: 12 },
   blade_guard_hall:              { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Air: 12 },
@@ -933,6 +950,9 @@ const BUILDING_COSTS = {
   acolyte_shrine:                { gold: 40, Crystals_Life: 20, Crystals_Nature: 5 },
   sun_temple:                    { gold: 60, Crystals_Life: 30, Crystals_Death: 8, Crystals_Nature: 8 },
   mithrails_champion_keep:       { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Fire: 12 },
+  mithrails_warden_keep:         { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
+  mithrails_paragon_keep:        { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Frost: 20 },
+  // Tier 4 — the first in the game, so it costs a clear step past every tier 3.
   mithrails_exemplar_keep:       { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Fire: 20 },
   priest_shrine:                 { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
   ardent_shrine:                 { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
@@ -981,6 +1001,8 @@ const BUILDING_COSTS = {
   choir_servant_shrine:          { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
   choir_ascendant_shrine:        { gold: 96, Crystals_Fire: 48, Crystals_Life: 12, Crystals_Death: 12 },
   choir_exalted_shrine:          { gold: 160, Crystals_Fire: 80, Crystals_Life: 20, Crystals_Death: 20 },
+  // Priced against the shrine branch it forks from; the Life crystal is heavier
+  // because this half mends instead of burns.
   ash_cantor_chancel:            { gold: 60, Crystals_Fire: 30, Crystals_Life: 12, Crystals_Air: 5 },
   ash_precentor_chancel:         { gold: 96, Crystals_Fire: 48, Crystals_Life: 18, Crystals_Air: 8 },
 
@@ -1014,6 +1036,8 @@ const BUILDING_COSTS = {
   grail_keeper_chamber:          { gold: 96, Crystals_Death: 48, Crystals_Fire: 12, Crystals_Frost: 12 },
   grieving_servant_chamber:      { gold: 60, Crystals_Death: 30, Crystals_Nature: 8 },
   grieving_custodian_chamber:    { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
+  // Tier 4, priced off mithrails_exemplar_keep (the existing tier 4 barracks)
+  // with the Grail's own crystal in the lead.
   grieving_warden_chamber:       { gold: 160, Crystals_Death: 80, Crystals_Frost: 20, Crystals_Nature: 20 },
   ghost_manor:                   { gold: 40, Crystals_Death: 20, Crystals_Air: 5 },
   specter_hall:                  { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
@@ -1290,6 +1314,7 @@ const MERCENARY_BUILDINGS = {
   // trophies (crystal_dust / crystal_shard). The Prismatis line (mv_e4/mv_e41)
   // is a boss and is intentionally absent — bosses are never mercenaries.
   glittering_abyss: [
+    // Geodeling line — repairing menders.
     {
       id:       'ga_geodeling',
       label:    'Geodeling', label_ru: 'Жеодыш',
@@ -1317,7 +1342,7 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
-
+    // Frostshard line — fast cold strikers.
     {
       id:       'ga_frostshard',
       label:    'Frostshard', label_ru: 'Морозный осколок',
@@ -1345,6 +1370,7 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
+    // Cairnling line — row-holding protectors.
     {
       id:       'ga_cairnling',
       label:    'Cairnling', label_ru: 'Курганник',
@@ -1392,12 +1418,25 @@ const MERCENARY_BUILDINGS = {
   ],
 };
 
+// Mercenaries advance by exactly the same rules as faction units: reach the XP
+// threshold, have the building that supports the next tier, level up. That only
+// holds if they go through the SAME table and the same resolver, so their tree —
+// which is declared once in MERCENARY_BUILDINGS via each hall's `upgrades` — is
+// projected into UNIT_UPGRADE_PATHS here under its region key rather than being
+// written out a second time and left to drift.
+//
+// The region key acts as the "faction" for these units: getFactionForUnit finds
+// it by scanning this table, and getBuildingDef above already falls back to
+// MERCENARY_BUILDINGS, so every branch check resolves without a special case.
 for (const [region, halls] of Object.entries(MERCENARY_BUILDINGS)) {
   const byId  = new Map(halls.map(h => [h.id, h]));
   const paths = {};
   for (const hall of halls) {
     const next = (hall.upgrades || []).map(id => byId.get(id)).filter(Boolean);
     if (!next.length) continue;
+    // label_ru rides along with label — these entries are what the castle's
+    // upgrade slider reads, so dropping it here would leave every mercenary
+    // branch showing an English name while the rest of the castle is translated.
     paths[hall.unit_id] = next.map(n => ({ unit_id: n.unit_id, building_id: n.id, label: n.label, label_ru: n.label_ru }));
   }
   if (Object.keys(paths).length) UNIT_UPGRADE_PATHS[region] = paths;

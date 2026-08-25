@@ -557,7 +557,7 @@ const ITEM_DEFS = {
     adds_tag:     null,
     stat_mods:    { action_power: 2, initiative: 3 },
     passive:      'infect 2',
-    blocked_tags: ['Holy'],         // a vow of undeath on a holy unit is incoherent
+    blocked_tags: ['Holy'],         
     icon:         'forbidden_vow',
     rarity:       'epic',
     unique:       true,
