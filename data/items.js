@@ -875,7 +875,7 @@ const ITEM_DEFS = {
     rarity:       'rare',
     unique:       true,
     unique:       true,
-    cost:         { Gold: 75, Crystals_Nature: 15 },
+    cost:         { Gold: 25, Crystals_Nature: 10 },
     item_cost:    { striders: 1}
   },
   dragon_step: {
@@ -904,10 +904,10 @@ const ITEM_DEFS = {
     stat_mods:    { initiative: 6, hp: 2},
     passive:      'resist_aura_air 1',
     icon:         'glimmering_steps',
-    rarity:       'epic',
+    rarity:       'mythic',
     unique:       true,
     unique:       true,
-    cost:         { Gold: 50, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15 },
+    cost:         { Gold: 25, Crystals_Nature: 10, Crystals_Fire: 10 },
     item_cost:    { dragon_step: 1, dragon_scale: 1}
   },
   iron_greaves: {
