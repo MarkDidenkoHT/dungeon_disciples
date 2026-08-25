@@ -209,8 +209,7 @@ const CASTLE_TEXT = {
                   ru: (n, l) => `Улучшите ${n} до уровня ${l}` },
   lockedLevel: { en: (h, n) => `Currently level ${h} — needs level ${n}`,
                  ru: (h, n) => `Сейчас уровень ${h} — нужен уровень ${n}` },
-  lockedWhere: { en: 'Found on the second castle page — use the arrow on the right.',
-                 ru: 'Находится на второй странице замка — стрелка справа.' },
+  lockedGoto:  { en: 'Open',                                   ru: 'Открыть' },
 };
 
 const CASTLE_BACKGROUNDS = {
@@ -1429,8 +1428,45 @@ export function renderCastle(root, { player }) {
         ${Object.keys(cost || {}).length
           ? `<div class="locked-panel-cost">${costLabelFor(cost)}</div>`
           : ''}
-        <p class="locked-panel-where">${CASTLE_TEXT.lockedWhere[castleLang]}</p>
+        ${slotForBuilding(req.building)
+          ? `<button type="button" class="locked-panel-goto" data-goto-building="${req.building}">${CASTLE_TEXT.lockedGoto[castleLang]}</button>`
+          : ''}
       </div>`);
+
+    getSheetBody()?.querySelector('[data-goto-building]')
+      ?.addEventListener('click', e => goToBuilding(e.currentTarget.dataset.gotoBuilding));
+  }
+
+  // Where a building lives, so the panel can take the player to it instead of
+  // describing where to look. Layer 2 is a fixed ladder (SLOT_FIXED_BUILDING);
+  // layer 1 is whatever the player has actually built, which is in the
+  // structures record. Returns null when the building has no slot yet, and the
+  // button is simply not offered.
+  function slotForBuilding(buildingId) {
+    if (!buildingId) return null;
+    const fixed = Object.keys(SLOT_FIXED_BUILDING).find(k => SLOT_FIXED_BUILDING[k] === buildingId);
+    if (fixed) return fixed;
+    const data = structuresRecord?.buildings_data || {};
+    return Object.keys(data).find(k => /^slot_\d+$/.test(k) && data[k]?.building_id === buildingId) || null;
+  }
+
+  // Close the panel, turn to the page the slot is on, and pulse it. The page
+  // only has to change when the slot is on the other one — `layerOf` reads it
+  // from the slot number rather than assuming page 2, which the old copy did.
+  function goToBuilding(buildingId) {
+    const slot = slotForBuilding(buildingId);
+    if (!slot) return;
+    closeModal();
+    setLayer(layerOf(slot));
+    // After the page transition, or the node is measured mid-slide and the
+    // pulse lands on empty ground.
+    setTimeout(() => {
+      const node = nodeForSlot(slot);
+      if (!node) return;
+      node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      node.classList.add('castle-node--found');
+      setTimeout(() => node.classList.remove('castle-node--found'), 2400);
+    }, 420);
   }
 
   function openReservedPanel() {
