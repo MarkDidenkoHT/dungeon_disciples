@@ -274,10 +274,13 @@ const BUILDING_POOLS = {
       { id: 'ash_sanctum',         label: 'Ash Sanctum', label_ru: 'Пепельный санктум',         category: 'barracks', tier: 3, unit_id: 'e411', upgrades: [],                        cost: { gold: 200 } },
       { id: 'cinder_forge',        label: 'Cinder Forge', label_ru: 'Кузня углей',        category: 'barracks', tier: 3, unit_id: 'e412', upgrades: [],                        cost: { gold: 200 } },
       { id: 'blue_mage_tower',     label: 'Blue Mage Tower', label_ru: 'Башня синих магов',     category: 'barracks', tier: 2, unit_id: 'e42',  upgrades: ['cryomancer_tower'],                        cost: { gold: 100 } },
-      { id: 'cryomancer_tower', label: 'Cryomancer Tower', label_ru: 'Башня криомантов', category: 'barracks', tier: 3, unit_id: 'e421', upgrades: [] },
+      { id: 'cryomancer_tower', label: 'Cryomancer Tower', label_ru: 'Башня криомантов', category: 'barracks', tier: 3, unit_id: 'e421', upgrades: ['winter_magus_tower'] },
+      { id: 'winter_magus_tower', label: 'Winter Magus Tower', label_ru: 'Башня зимних магов', category: 'barracks', tier: 4, unit_id: 'e4211', upgrades: [], cost: { gold: 400 } },
       { id: 'warder_sanctum',      label: 'Warder Sanctum', label_ru: 'Санктум хранителей',      category: 'barracks', tier: 2, unit_id: 'e43',  upgrades: ['bulwark_sanctum', 'aegis_bastion'], cost: { gold: 100 } },
-      { id: 'bulwark_sanctum',     label: 'Bulwark Sanctum', label_ru: 'Санктум оплота',     category: 'barracks', tier: 3, unit_id: 'e431', upgrades: [], cost: { gold: 200 } },
-      { id: 'aegis_bastion',       label: 'Aegis Bastion', label_ru: 'Бастион Эгиды',       category: 'barracks', tier: 3, unit_id: 'e432', upgrades: [], cost: { gold: 200 } },
+      { id: 'bulwark_sanctum',     label: 'Bulwark Sanctum', label_ru: 'Санктум оплота',     category: 'barracks', tier: 3, unit_id: 'e431', upgrades: ['archon_sanctum'], cost: { gold: 200 } },
+      { id: 'archon_sanctum',      label: 'Archon Sanctum', label_ru: 'Санктум архонтов',      category: 'barracks', tier: 4, unit_id: 'e4311', upgrades: [], cost: { gold: 400 } },
+      { id: 'aegis_bastion',       label: 'Aegis Bastion', label_ru: 'Бастион Эгиды',       category: 'barracks', tier: 3, unit_id: 'e432', upgrades: ['aegis_citadel'], cost: { gold: 200 } },
+      { id: 'aegis_citadel',       label: 'Aegis Citadel', label_ru: 'Цитадель Эгиды',       category: 'barracks', tier: 4, unit_id: 'e4321', upgrades: [], cost: { gold: 400 } },
     ],
     special: [],
     hall_up: [
@@ -684,8 +687,11 @@ const UNIT_UPGRADE_PATHS = {
     e32: [{ unit_id: 'e321', building_id: 'siege_dreadnought_workshop', label: 'Siege Dreadnought Workshop', label_ru: 'Мастерская осадных дредноутов' }],
     e71: [{ unit_id: 'e711', building_id: 'mithrails_will_temple', label: 'Mithrails Will', label_ru: 'Воля Митраила' }],
     e42: [{ unit_id: 'e421', building_id: 'cryomancer_tower', label: 'Cryomancer Tower', label_ru: 'Башня криомантов' }],
+    e421: [{ unit_id: 'e4211', building_id: 'winter_magus_tower', label: 'Winter Magus Tower', label_ru: 'Башня зимних магов' }],
     e43: [{ unit_id: 'e431', building_id: 'bulwark_sanctum',  label: 'Bulwark Sanctum', label_ru: 'Санктум оплота' },
           { unit_id: 'e432', building_id: 'aegis_bastion',    label: 'Aegis Bastion', label_ru: 'Бастион Эгиды' }],
+    e431: [{ unit_id: 'e4311', building_id: 'archon_sanctum', label: 'Archon Sanctum', label_ru: 'Санктум архонтов' }],
+    e432: [{ unit_id: 'e4321', building_id: 'aegis_citadel',  label: 'Aegis Citadel', label_ru: 'Цитадель Эгиды' }],
   },
 
   choir_of_the_cursed: {
@@ -975,6 +981,9 @@ const BUILDING_COSTS = {
   warder_sanctum:                { gold: 60, Crystals_Life: 30, Crystals_Air: 8 },
   bulwark_sanctum:               { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
   aegis_bastion:                 { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
+  winter_magus_tower:            { gold: 154, Crystals_Life: 77, Crystals_Frost: 19, Crystals_Air: 19 },
+  archon_sanctum:                { gold: 154, Crystals_Life: 77, Crystals_Air: 19, Crystals_Frost: 19 },
+  aegis_citadel:                 { gold: 154, Crystals_Life: 77, Crystals_Air: 19, Crystals_Nature: 19 },
 
   // ── choir_of_the_cursed ───────────────────────────────────────
   imp_den:                       { gold: 60, Crystals_Fire: 30, Crystals_Nature: 8 },
