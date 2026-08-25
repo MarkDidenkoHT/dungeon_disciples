@@ -864,6 +864,35 @@ router.post('/player/tutorials', requireAuth, async (req, res) => {
   }
 });
 
+// The display name a player is known by. Seeded from Telegram at first login
+// (see /login) and never written again by it, so an edit here sticks.
+//
+// NOT checked for uniqueness, and it must not be: chat_id is the identifier
+// everything actually keys on. Two players may pick the same name and nothing
+// downstream cares.
+const USERNAME_MAX = 24;
+
+router.post('/player/username', requireAuth, async (req, res) => {
+  const { player_id, chat_id, username } = req.body;
+  if (!player_id || !chat_id || typeof username !== 'string') {
+    return res.status(400).json({ error: 'player_id, chat_id, and username required' });
+  }
+  // Collapse runs of whitespace as well as trimming the ends: a name is one
+  // line, and padding it out is the cheapest way to make a scoreboard look odd.
+  const clean = username.replace(/\s+/g, ' ').trim().slice(0, USERNAME_MAX);
+  if (!clean) return res.status(400).json({ error: 'username cannot be empty' });
+  try {
+    const updated = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ username: clean }),
+    });
+    if (!updated.length) return res.status(404).json({ error: 'Player not found' });
+    res.json(updated[0]);
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.get('/bootstrap', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });

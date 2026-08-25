@@ -5,6 +5,12 @@ import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 import { saveLanguageCache } from './loading.js';
 import { CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, getSheetBody } from '../utils.js';
 
+// A name goes straight into a value="" attribute, and it is player-supplied.
+function escapeAttr(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                          .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export function lang(player) {
   return player?.settings?.language === 'ru' ? 'ru' : 'en';
 }
@@ -32,6 +38,13 @@ const UI_TEXT = {
   resetting:   { en: 'Resetting…', ru: 'Сброс…' },
   resetFailed: { en: 'Failed to reset progress', ru: 'Не удалось сбросить прогресс' },
   saveFailed:  { en: 'Failed to save setting', ru: 'Не удалось сохранить настройку' },
+  nameTitle:       { en: 'Display Name',   ru: 'Отображаемое имя' },
+  namePlaceholder: { en: 'Your name',      ru: 'Ваше имя' },
+  nameSave:        { en: 'Save',           ru: 'Сохранить' },
+  nameSaving:      { en: 'Saving…',        ru: 'Сохраняем…' },
+  nameSaved:       { en: 'Name saved',     ru: 'Имя сохранено' },
+  nameEmpty:       { en: 'Name cannot be empty', ru: 'Имя не может быть пустым' },
+  nameFailed:      { en: 'Failed to save name',  ru: 'Не удалось сохранить имя' },
   promoTitle:       { en: 'Promo Code',      ru: 'Промокод' },
   promoPlaceholder: { en: 'Enter a code',    ru: 'Введите код' },
   promoRedeem:      { en: 'Redeem',          ru: 'Активировать' },
@@ -69,9 +82,28 @@ export function renderSettings(root, { player }) {
   const rememberFormation    = player?.settings?.remember_formation === true;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
+  // Seeded from Telegram at first login and editable from here. Shown as a
+  // plain text field rather than a settings-row toggle because it is the only
+  // setting whose value is typed.
+  const currentName = player?.username ?? '';
+
   root.innerHTML = `
     <div class="screen screen-settings">
       <main class="settings-main">
+        <!-- Borrows the promo box's layout: an input, a button beside it and a
+             fixed-height message line. Same shape, so no styles of its own. -->
+        <div class="promo-box">
+          <div class="settings-danger-title">${UI_TEXT.nameTitle[L]}</div>
+          <div class="promo-box-row">
+            <input class="promo-box-input" id="username-input" type="text"
+                   maxlength="24" autocomplete="off" spellcheck="false"
+                   placeholder="${UI_TEXT.namePlaceholder[L]}"
+                   value="${escapeAttr(currentName)}">
+            <button class="promo-box-btn" id="username-btn">${UI_TEXT.nameSave[L]}</button>
+          </div>
+          <div class="promo-box-msg" id="username-msg"></div>
+        </div>
+
         <div class="settings-section">
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.sfx[L]}</span>
@@ -163,6 +195,44 @@ export function renderSettings(root, { player }) {
   // ── Promo code ────────────────────────────────────────────────────────────
   // The server is the authority on everything: whether the code exists, whether
   // it has been used, and what it pays. This only reports the answer.
+  const nameInput = root.querySelector('#username-input');
+  const nameBtn   = root.querySelector('#username-btn');
+  const nameMsg   = root.querySelector('#username-msg');
+
+  async function saveUsername() {
+    const value = nameInput.value.replace(/\s+/g, ' ').trim();
+    const showMsg = (text, ok) => {
+      nameMsg.textContent = text;
+      nameMsg.className = `promo-box-msg ${ok ? 'promo-box-msg--ok' : 'promo-box-msg--err'}`;
+    };
+    if (!value) { showMsg(UI_TEXT.nameEmpty[L], false); return; }
+    // Nothing to save, and no point telling the server so.
+    if (value === (player.username ?? '')) { showMsg('', true); return; }
+
+    nameBtn.disabled = true;
+    nameBtn.textContent = UI_TEXT.nameSaving[L];
+    try {
+      const updated = await api('/player/username', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        username:  value,
+      });
+      // The server trims and caps, so take ITS answer rather than assuming the
+      // field holds what was typed.
+      player.username = updated.username;
+      nameInput.value = updated.username;
+      showMsg(UI_TEXT.nameSaved[L], true);
+    } catch (err) {
+      showMsg(err.message || UI_TEXT.nameFailed[L], false);
+    } finally {
+      nameBtn.disabled = false;
+      nameBtn.textContent = UI_TEXT.nameSave[L];
+    }
+  }
+
+  nameBtn.addEventListener('click', saveUsername);
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveUsername(); });
+
   const promoBtn   = root.querySelector('#promo-btn');
   const promoInput = root.querySelector('#promo-input');
   const promoMsg   = root.querySelector('#promo-msg');
