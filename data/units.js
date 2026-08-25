@@ -425,10 +425,10 @@ const UNITS = {
       damage_source: 'fire', action_power: 40, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 5600, passive: ['rage 2', 'aggrails_blessing 1', 'burn 2'], ability: 'pact 1',
     },
-    archchanter: {
+    doomchanter: {
       id: 'd1212', f: 'd', t: 4,
-      name: 'Archchanter',
-      name_ru: 'Архипевчий',
+      name: 'Doomchanter',
+      name_ru: 'Певчий Гибели',
       tags: ['Demon', 'Caster'],
       size: 'column',
       hp: 150, armor: 10, initiative: 35,
@@ -1151,10 +1151,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 1300, passive: ['execute 1', 'iron_will 1', 'parry 1'], ability: 'lions_roar 2',
     },
-    blade_guard: {
+    blade_master: {
       id: 'e1131', f: 'e', t: 4,
-      name: 'Blade Guard',
-      name_ru: 'Страж Клинка',
+      name: 'Blade Master',
+      name_ru: 'Мастер Клинка',
       tags: ['Knight', null],
       size: 'tile',
       hp: 75, armor: 15, initiative: 55,
