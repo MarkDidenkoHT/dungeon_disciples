@@ -2037,16 +2037,16 @@ export function renderCastle(root, { player }) {
 
       return `
         <div class="track-action-row track-action-row--framed">
-          <button class="frame-action" id="slot-back"
-                  title="${CASTLE_TEXT.backToUnit[castleLang]}"
-                  aria-label="${CASTLE_TEXT.backToUnit[castleLang]}">←</button>
+          <button class="frame-action frame-action--confirm" id="slot-confirm" disabled
+                  title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
           ${cards
             ? `<div class="prep-track-wrap branch-track-wrap">
                  <div class="portrait-track" id="slot-upgrade-track">${cards}</div>
                </div>`
             : `<span class="castle-slot-maxed">${CASTLE_TEXT.noOptions[castleLang]}</span>`}
-          <button class="frame-action frame-action--confirm" id="slot-confirm" disabled
-                  title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
+          <button class="frame-action" id="slot-back"
+                  title="${CASTLE_TEXT.backToUnit[castleLang]}"
+                  aria-label="${CASTLE_TEXT.backToUnit[castleLang]}">←</button>
         </div>`;
     }
 
