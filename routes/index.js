@@ -2190,7 +2190,12 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     // against the Den's own max level of 1, so the answer was always "Already at
     // max level". It also priced the build at a level the new building does not
     // have.
-    const isBranchSwap = !isNew && current.building_id !== building_id;
+    // The THRONE is excluded: it advances by changing building_id AND counting
+    // up — artificer_guild_2_b to artificer_guild_3_b is level 2 to level 3, one
+    // building per level. Treating that as a swap reset it to level 1, which
+    // then blocked the hero, because a hero may only reach a tier BELOW the
+    // throne's level (see resolveAutoLevelUp).
+    const isBranchSwap = !isNew && slotCategory !== 'throne' && current.building_id !== building_id;
     const nextLevel = isBranchSwap ? 1 : (current.level || 0) + 1;
     const cap = slotCategory === 'throne' ? THRONE_MAX_LEVEL : buildingMaxLevel(building_id);
     if (nextLevel > cap) return res.status(400).json({ error: 'Already at max level', code: 'max_level' });
