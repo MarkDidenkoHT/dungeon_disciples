@@ -823,16 +823,13 @@ Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
         ? uiText(info.desc.en, info.desc.ru)
         : uiText('The action this unit performs on its turn.',
                  'Действие, которое боец совершает в свой ход.');
-      // Reach and spread are read off the CELL, not inferred from the action
-      // name: two units sharing an action can carry different range and targets,
-      // so the name alone can answer neither question.
+      // Read off the CELL, not inferred from the action name: two units sharing
+      // an action can carry different range and targets.
       const { targets, range, targetType } = coreStat.dataset;
-      const lines = [desc];
-      if (targets != null || range != null) {
-        lines.push('');
-        if (targets != null) lines.push(`${uiText('Targets', 'Цели')}: ${actionTargetsText(targets, targetType)}`);
-        if (range   != null) lines.push(`${uiText('Range', 'Дальность')}: ${actionReachText(range, targetType)}`);
-      }
+      const lines = [desc, ''];
+      lines.push(`${uiText('Target', 'Цель')}: ${actionTargetSide(coreStat.dataset.actionKey, targetType)}`);
+      if (targets != null) lines.push(`${uiText('Targets', 'Целей')}: ${targets}`);
+      if (range   != null) lines.push(`${uiText('Range', 'Дальность')}: ${range}`);
       open(title, renderModalContent(lines.join('\n')));
       return true;
     }
@@ -970,38 +967,17 @@ export function lookupActionInfo(...keys) {
   return null;
 }
 
-export function actionReachText(range, targetType) {
-  // An ALLY action never consults range at all: getValidTargets returns on the
-  // heal/sacrifice branch before the range test, and every ally action in
-  // data/units.js is range 3 in any case. Reporting "melee" or "the enemy board"
-  // for a heal is simply false, so allies get their own line.
-  if (targetType === 'ally') {
-    return uiText('Reaches any ally, wherever they stand.',
-                  'Достаёт до любого союзника, где бы он ни стоял.');
+// Which side an action may pick. The data says 'enemy' or 'ally', but Holy
+// Shock reaches BOTH — getValidTargets in utils/battle-engine.js has its own
+// branch for it — so the action id decides, not target_type.
+const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock']);
+export function actionTargetSide(actionKey, targetType) {
+  if (DUAL_TARGET_ACTIONS.has(String(actionKey ?? '').toLowerCase())) {
+    return uiText('Any', 'Любая');
   }
-  return Number(range) === 1
-    ? uiText('Melee — the enemy front line only, and only an adjacent row.',
-             'Ближний бой — только передняя линия врага и только соседний ряд.')
-    : uiText('Ranged — reaches anywhere on the enemy board.',
-             'Дальний бой — достаёт до любой точки поля врага.');
-}
-
-export function actionTargetsText(targets, targetType) {
-  const n    = Math.max(1, Number(targets) || 1);
-  const ally = targetType === 'ally';
-  if (n >= 6) {
-    return ally
-      ? uiText('All allies at once.', 'Все союзники одновременно.')
-      : uiText('All enemies at once.', 'Все враги одновременно.');
-  }
-  if (n === 1) {
-    return ally
-      ? uiText('One ally.', 'Один союзник.')
-      : uiText('One enemy.', 'Один враг.');
-  }
-  return ally
-    ? uiText(`Up to ${n} allies.`, `До ${n} союзников.`)
-    : uiText(`Up to ${n} enemies.`, `До ${n} врагов.`);
+  return targetType === 'ally'
+    ? uiText('Ally', 'Союзник')
+    : uiText('Enemy', 'Враг');
 }
 
 export function renderModalContent(text) {
@@ -1126,10 +1102,21 @@ export function mountModal(root) {
 
 // Fetches through a fixed-size pool rather than starting every request at once.
 // The old version was Promise.all over the whole list, which handed the browser
-// ~486 images in one go: it can only open a handful of connections per host, so
-// the rest queue anyway, but the progress bar jumps around and slow images can
-// stall behind a burst. A pool keeps the pipe full without the pile-up.
-const PRELOAD_CONCURRENCY = 8;
+// ~486 images in one go: the progress bar jumps around and slow images can stall
+// behind a burst. A pool keeps the pipe full without the pile-up.
+//
+// The pool was 8 because that is roughly the per-host connection limit — but
+// that limit is an HTTP/1.1 rule, and the asset CDN answers over HTTP/2 (it
+// advertises h3 as well), where one connection multiplexes every request and
+// six-connection queueing does not apply. 8 was leaving the pipe half empty.
+//
+// This matters most while the CDN still sends `max-age=0, must-revalidate`:
+// every asset then costs a conditional request even on a warm cache, the
+// preload is latency-bound rather than bandwidth-bound, and total time is
+// almost exactly (count / concurrency) x round trip. Raising the pool divides
+// that directly. Once the CDN caches properly a warm launch makes no requests
+// at all and this number stops mattering.
+const PRELOAD_CONCURRENCY = 16;
 
 export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENCY) {
   const unique = [...new Set(urls)].filter(Boolean);

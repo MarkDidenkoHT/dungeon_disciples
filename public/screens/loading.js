@@ -4,7 +4,7 @@ import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.4316';
+export const GAME_VERSION = '0.4317';
 
 const LOADING_IMAGES = [
   assetUrl('/assets/loading_screens/loading1.jpg'),
@@ -90,6 +90,50 @@ const CRITICAL_GROUPS = ['ui', 'recources', 'spells', 'abilities', 'screens', 'c
 // Everything else is fetched quietly AFTER the game is interactive. In practice
 // that is `character_art` — the full-body art, ~19 MB of the ~27 MB total, and
 // none of it is visible until a unit card is opened.
+// The manifest is a directory listing that only changes when the game is
+// deployed, but it used to be fetched fresh AFTER the CDN probe had resolved —
+// so a launch paid the probe round trip and then an app-server round trip
+// before it could ask for its first image.
+//
+// Two changes. It is kicked off by main.js in PARALLEL with the probe (the
+// listing is the app server's own file list; it does not depend on where the
+// art is served from), and it is remembered between launches keyed by
+// GAME_VERSION, so a returning player on the same build skips the request
+// entirely and a new build misses the key and refetches.
+const MANIFEST_KEY = `assets_manifest_v${GAME_VERSION}`;
+let _manifestPromise = null;
+
+function readCachedManifest() {
+  try {
+    const raw = localStorage.getItem(MANIFEST_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function startManifestFetch() {
+  if (_manifestPromise) return _manifestPromise;
+  const cached = readCachedManifest();
+  if (cached) {
+    _manifestPromise = Promise.resolve(cached);
+    return _manifestPromise;
+  }
+  _manifestPromise = api('/assets-manifest')
+    .then(m => {
+      try {
+        // Drop every OTHER version's copy first: the key carries the version, so
+        // without this each release leaves its listing behind forever.
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('assets_manifest_v') && k !== MANIFEST_KEY) localStorage.removeItem(k);
+        }
+        localStorage.setItem(MANIFEST_KEY, JSON.stringify(m));
+      } catch {}
+      return m;
+    })
+    .catch(() => null);
+  return _manifestPromise;
+}
+
 export async function runPreload(root) {
   const { setProgress } = renderLoadingScreen(root);
   const start = Date.now();
@@ -97,11 +141,11 @@ export async function runPreload(root) {
   let critical = [];
   let deferred = [];
   try {
-    // The manifest is built from the app server's own copy of the files and so
-    // lists origin paths (/assets/…). Preloading those would warm the wrong
-    // origin and spend the bandwidth this move exists to save, so every entry
-    // is routed through assetUrl — which is a no-op when the CDN is down.
-    const manifest = await api('/assets-manifest');
+    // The manifest lists ORIGIN paths (/assets/…). Preloading those would warm
+    // the wrong origin and spend the bandwidth this move exists to save, so
+    // every entry is routed through assetUrl — a no-op when the CDN is down.
+    const manifest = await startManifestFetch();
+    if (!manifest) throw new Error('no manifest');
     for (const [group, paths] of Object.entries(manifest)) {
       const urls = paths.map(assetUrl);
       (CRITICAL_GROUPS.includes(group) ? critical : deferred).push(...urls);

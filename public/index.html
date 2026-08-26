@@ -4,24 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Shattered Crown</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
-  <!-- The Supabase browser client used to live here, purely so each player could
-       open their own realtime socket. Battles now stream from our own server
-       (GET /battle/stream), so nothing in the client talks to Supabase — one
-       fewer CDN script on the critical path, and zero connections against the
-       Supabase concurrency cap. -->
+  <link rel="preconnect" href="https://assets.markdidenkowork.workers.dev">
+  <link rel="dns-prefetch" href="https://assets.markdidenkowork.workers.dev">
 
-  <!-- Microsoft Clarity, in the head where the docs put it and where you can
-       see it by viewing source.
-       CONSENT: the project has "Cookie consent" enabled in its dashboard
-       settings, so the tag loads but stores nothing and records nothing until
-       clarity("consent") is called. public/analytics.js makes that call after
-       the player accepts on the welcome screen, and clarity("consent", false)
-       if they decline or turn it off later in Settings.
-       This used to be injected from analytics.js only after consent, which kept
-       the script itself off the page but made "is Clarity even loaded?"
-       impossible to answer by looking. -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
   <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

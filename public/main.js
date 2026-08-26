@@ -11,7 +11,7 @@ import { destroyBattleFx } from './battle-fx.js';
 import { clearFormationSynergies } from './formation-synergy-view.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
-import { runPreload, saveLanguageCache } from './screens/loading.js';
+import { runPreload, saveLanguageCache, startManifestFetch } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openTimeline }     from './timeline.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
@@ -358,6 +358,10 @@ async function boot() {
   // probe flips assetUrl's base to this server if the CDN is unreachable, and
   // every URL built after this point picks that up (see public/asset_base.js).
   installAssetFallback();
+  // In flight DURING the probe, not after it. The manifest comes from this
+  // server and does not care where the art lives, so serialising it behind a
+  // probe that can take up to 4s bought nothing (see startManifestFetch).
+  startManifestFetch();
   await resolveAssetBase();
 
   try {
