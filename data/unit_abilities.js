@@ -1276,7 +1276,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: "Reduces target's resistance to the attacker's damage type by 10 for the rest of the battle.",
     description_ru: "Снижает сопротивление цели к типу урона атакующего на 10 до конца боя.",
-    params: { dissipate_resistance_pct: 10 },
+    params: { dissipate_resistance_pct: 3 },
   },
   'dissipate 2': {
     id: 'dissipate 2',
@@ -1287,7 +1287,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: "Reduces target's resistance to the attacker's damage type by 20 for the rest of the battle.",
     description_ru: "Снижает сопротивление цели к типу урона атакующего на 20 до конца боя.",
-    params: { dissipate_resistance_pct: 20 },
+    params: { dissipate_resistance_pct: 5 },
   },
   'rage 1': {
     id: 'rage 1',
