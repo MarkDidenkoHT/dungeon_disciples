@@ -363,7 +363,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
-      xp: 187, passive: ['rage 1', 'aggrails_blessing 1'], ability: 'pact 1',
+      xp: 190, passive: ['rage 1', 'aggrails_blessing 1'], ability: 'pact 1',
     },
     tormentor: {
       id: 'd11', f: 'd', t: 2,
@@ -447,7 +447,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 77, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
+      xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
     },
     emberkeeper: {
       id: 'd21', f: 'd', t: 2,
@@ -459,7 +459,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 396, passive: ['unending_servitude 1', 'shield 1', 'resist_aura_fire 1'], ability: 'purge 1',
+      xp: 400, passive: ['unending_servitude 1', 'shield 1', 'resist_aura_fire 1'], ability: 'purge 1',
     },
     pyre_warden: {
       id: 'd211', f: 'd', t: 3,
@@ -483,7 +483,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
-      xp: 187, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
+      xp: 190, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
       id: 'd31', f: 'd', t: 2,
@@ -711,7 +711,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',  action_animation: 'fire_bolt',
-      xp: 77, passive: 'burn 1', ability: 'mark_of_ash 1',
+      xp: 75, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
       id: 'd51', f: 'd', t: 2,
@@ -723,7 +723,7 @@ const UNITS = {
       resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 396, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
+      xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
       id: 'd511', f: 'd', t: 3,
@@ -759,7 +759,7 @@ const UNITS = {
       resistances: { air: 5, fire: 30, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 396, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'mark_of_ash 1',
+      xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'mark_of_ash 1',
     },
     ash_precentor: {
       id: 'd521', f: 'd', t: 3,
@@ -1257,7 +1257,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 20, death: 20, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'iron_fist.jpg', action_animation: 'shield_bash', action_sfx: 'robot_hit',
-      xp: 187, passive: 'unbreakable 2', ability: null,
+      xp: 190, passive: 'unbreakable 2', ability: null,
     },
     iron_automaton: {
       id: 'e31', f: 'e', t: 2,
@@ -1413,7 +1413,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'none', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8,
-      xp: 77, passive: 'unity 1', ability: null,
+      xp: 75, passive: 'unity 1', ability: null,
     },
     mithrails_light: {
       id: 'e71', f: 'e', t: 2,
@@ -1425,7 +1425,7 @@ const UNITS = {
       resistances: { air: 16, fire: 16, life: 16, death: 16, cold: 16, nature: 16 },
       action: 'none', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12,
-      xp: 396, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
+      xp: 400, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
     },
     mithrails_will: {
       id: 'e711', f: 'e', t: 3,
@@ -1449,7 +1449,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 77, passive: ['renew 1', 'field_medic 1'], ability: 'prayer_of_healing 1',
+      xp: 75, passive: ['renew 1', 'field_medic 1'], ability: 'prayer_of_healing 1',
     },
     templar: {
       id: 'e21', f: 'e', t: 2,
@@ -1521,7 +1521,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 396, passive: ['renew 1','field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
+      xp: 400, passive: ['renew 1','field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
       id: 'e221', f: 'e', t: 3,
@@ -1547,6 +1547,36 @@ const UNITS = {
       damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 2800, passive: ['renew 2', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
+    // The SECOND tier-3 off Priest (e22), beside the Ardent line: Spirit rather
+    // than Caster, and it mends the whole party instead of one ally. Renamed off
+    // `ardent_priest`, which belongs to e221 — the same key twice in one object
+    // silently deletes the first.
+    seraphic_priest: {
+      id: 'e222', f: 'e', t: 3,
+      name: 'Seraphic Priest',
+      name_ru: 'Серафический Жрец',
+      tags: ['Spirit', 'Holy'],
+      size: 'tile',
+      hp: 60, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
+      action: 'heal', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      xp: 1170, passive: ['regenerate 1', 'field_medic 2', 'ethereal_form 2'], ability: 'redemption 2',
+    },
+    // Tier 4 of the Seraphic branch, paired with the High Priest on the Ardent
+    // one.
+    seraph: {
+      id: 'e2221', f: 'e', t: 4,
+      name: 'Seraph',
+      name_ru: 'Серафим',
+      tags: ['Spirit', 'Holy'],
+      size: 'tile',
+      hp: 70, armor: 0, initiative: 20,
+      resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
+      action: 'heal', target_type: 'ally', targets: 6, range: 3,
+      damage_source: null, action_power: 14, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      xp: 2800, passive: ['regenerate 2', 'field_medic 2', 'ethereal_form 2'], ability: 'redemption 2',
+    },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
       name: 'Apprentice',
@@ -1557,7 +1587,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt', action_sfx: 'shock',
-      xp: 77, passive: 'inspiration_initiative 1', ability: null,
+      xp: 75, passive: 'inspiration_initiative 1', ability: null,
     },
     red_mage: {
       id: 'e41', f: 'e', t: 2,
@@ -1569,7 +1599,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 432, passive: ['inspiration_initiative 1', 'burn 1'], ability: null,
+      xp: 430, passive: ['inspiration_initiative 1', 'burn 1'], ability: null,
     },
     ash_priest: {
       id: 'e411', f: 'e', t: 3,
@@ -1664,7 +1694,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 35,
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 15, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 13, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 14, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 2800, passive: ['inspiration_initiative 2', 'aegis 2'], ability: 'frost_armor 2',
     },
     protector: {
@@ -2139,7 +2169,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 25, death: 25, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt',
-      xp: 66, passive: 'poison 1', ability: null,
+      xp: 65, passive: 'poison 1', ability: null,
     },
     blood_adept: {
       id: 'gs31', f: 'g', t: 2,
@@ -2151,7 +2181,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
-      xp: 396, passive: ['lifesteal 1', 'bleed 1'], ability: 'exsanguinate 1',
+      xp: 400, passive: ['lifesteal 1', 'bleed 1'], ability: 'exsanguinate 1',
     },
     crimson_mage: {
       id: 'gs312', f: 'g', t: 3,
@@ -2247,7 +2277,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 187, passive: ['sacrament 1', 'lifesteal 1'], ability: 'libation 1',
+      xp: 190, passive: ['sacrament 1', 'lifesteal 1'], ability: 'libation 1',
     },
     crimson_communicant: {
       id: 'gs21', f: 'g', t: 2,
@@ -2283,7 +2313,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 187, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
+      xp: 190, passive: ['infect 1', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
       id: 'gs41', f: 'g', t: 2,
@@ -2415,7 +2445,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 6, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 77, passive: 'sorrow 1', ability: 'terror 1',
+      xp: 75, passive: 'sorrow 1', ability: 'terror 1',
     },
     specter: {
       id: 'gs61', f: 'g', t: 2,
@@ -2427,7 +2457,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 432, passive: ['sorrow 1', 'procession_of_grief 1'], ability: 'terror 1',
+      xp: 430, passive: ['sorrow 1', 'procession_of_grief 1'], ability: 'terror 1',
     },
     wraith: {
       id: 'gs611', f: 'g', t: 3,
@@ -2451,7 +2481,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 9, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 432, passive: ['sorrow 1', 'dissipate 1'], ability: 'terror 1',
+      xp: 430, passive: ['sorrow 1', 'dissipate 1'], ability: 'terror 1',
     },
     phantom: {
       id: 'gs621', f: 'g', t: 3,
@@ -2475,7 +2505,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 88, passive: ['ethereal_form 1', 'unending_servitude 1'], ability: 'terror 1',
+      xp: 90, passive: ['ethereal_form 1', 'unending_servitude 1'], ability: 'terror 1',
     },
     pale_dame: {
       id: 'gs71', f: 'g', t: 2,
@@ -2487,7 +2517,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 396, passive: ['ethereal_form 1', 'unending_servitude 1', 'fear 1'], ability: 'terror 1',
+      xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'fear 1'], ability: 'terror 1',
     },
     pale_matriarch: {
       id: 'gs711', f: 'g', t: 3,
@@ -2511,7 +2541,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 5, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
-      xp: 396, passive: ['ethereal_form 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
+      xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'terror 1',
     },
     pale_abbess: {
       id: 'gs721', f: 'g', t: 3,
@@ -2535,7 +2565,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'decay', target_type: 'enemy', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
-      xp: 396, passive: ['ethereal_form 1', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
+      xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
     },
     pale_lamenter: {
       id: 'gs731', f: 'g', t: 3,
@@ -2559,7 +2589,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 8, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 88, passive: ['bleed 1', 'poison 1'], ability: 'mothers_blessing 1',
+      xp: 90, passive: ['bleed 1', 'poison 1'], ability: 'mothers_blessing 1',
     },
     mothers_sorrow: {
       id: 'gs81', f: 'g', t: 2,
@@ -2647,7 +2677,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 132, passive: 'beacon_of_hope 1', ability: 'lions_roar 1',
+        xp: 130, passive: 'beacon_of_hope 1', ability: 'lions_roar 1',
       },
       exalted_herald: {
         id: 'opb_e11', f: 'opb', t: 2,
@@ -2683,7 +2713,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: null, action_power: 8, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 132, passive: ['aggrails_blessing 1', 'desecrate 1'], ability: null,
+        xp: 130, passive: ['aggrails_blessing 1', 'desecrate 1'], ability: null,
       },
       aggrails_devoted: {
         id: 'opb_e21', f: 'opb', t: 2,
@@ -2743,7 +2773,7 @@ const UNITS = {
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 132, passive: 'vitality 1', ability: 'infernal_mandate 1',
+        xp: 130, passive: 'vitality 1', ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
         id: 'opb_e31', f: 'opb', t: 2,
@@ -2803,7 +2833,7 @@ const UNITS = {
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 10, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 132, passive: 'bleed 1', ability: 'volley 1',
+        xp: 130, passive: 'bleed 1', ability: 'volley 1',
       },
       crimson_hunter: {
         id: 'opb_e41', f: 'opb', t: 2,
@@ -2879,7 +2909,7 @@ const UNITS = {
         resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 50, nature: 10 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
-        xp: 132, passive: 'fortify 1', ability: null,
+        xp: 130, passive: 'fortify 1', ability: null,
       },
       glaciron: {
         id: 'mv_e11', f: 'mv', t: 2,
@@ -2915,7 +2945,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt',
-        xp: 132, passive: 'slow 1', ability: 'permafrost 1',
+        xp: 130, passive: 'slow 1', ability: 'permafrost 1',
       },
       rime_splinter: {
         id: 'mv_e21', f: 'mv', t: 2,
