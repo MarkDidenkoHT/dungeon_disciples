@@ -2181,7 +2181,17 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     }
     const current   = buildings[slot] || { level: 0, building_id: null };
     const isNew     = !current.building_id;
-    const nextLevel = (current.level || 0) + 1;
+    // A BRANCH upgrade swaps the slot for a DIFFERENT building, so it starts at
+    // level 1 — it does not continue the old building's level. Only a building
+    // that levels IN PLACE (the throne, and layer 2's ladder) counts up.
+    //
+    // Without this every branch upgrade was rejected outright: a Smith Workshop
+    // at level 1 upgrading to a Mechanic Den computed level 2 and compared it
+    // against the Den's own max level of 1, so the answer was always "Already at
+    // max level". It also priced the build at a level the new building does not
+    // have.
+    const isBranchSwap = !isNew && current.building_id !== building_id;
+    const nextLevel = isBranchSwap ? 1 : (current.level || 0) + 1;
     const cap = slotCategory === 'throne' ? THRONE_MAX_LEVEL : buildingMaxLevel(building_id);
     if (nextLevel > cap) return res.status(400).json({ error: 'Already at max level', code: 'max_level' });
 
