@@ -1547,10 +1547,6 @@ const UNITS = {
       damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 2800, passive: ['renew 2', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
-    // The SECOND tier-3 off Priest (e22), beside the Ardent line: Spirit rather
-    // than Caster, and it mends the whole party instead of one ally. Renamed off
-    // `ardent_priest`, which belongs to e221 — the same key twice in one object
-    // silently deletes the first.
     seraphic_priest: {
       id: 'e222', f: 'e', t: 3,
       name: 'Seraphic Priest',
@@ -1563,8 +1559,6 @@ const UNITS = {
       damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 1170, passive: ['regenerate 1', 'field_medic 2', 'ethereal_form 2'], ability: 'redemption 2',
     },
-    // Tier 4 of the Seraphic branch, paired with the High Priest on the Ardent
-    // one.
     seraph: {
       id: 'e2221', f: 'e', t: 4,
       name: 'Seraph',
