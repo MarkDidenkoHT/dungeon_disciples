@@ -2035,8 +2035,11 @@ class BattleEngine {
             .filter(c => c.side === actor.side && c.alive)
             .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
         } else if (scope === 'single_enemy') {
+          // Skips `_untargetable`, or the AI aims every spell at a bonded
+          // guardian: it is deliberately the lowest-HP unit on the field and it
+          // cannot be hurt, so this sort handed it the spell every single time.
           targetId = this.combatants
-            .filter(c => c.side !== actor.side && c.alive)
+            .filter(c => c.side !== actor.side && c.alive && !c._untargetable)
             .sort((a, b) => a.battle_hp - b.battle_hp)[0]?.id ?? null;
         }
         this.doCast(actor, decision.spell, { power: decision.power, targetId });

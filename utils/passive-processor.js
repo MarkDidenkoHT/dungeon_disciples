@@ -758,8 +758,15 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     // Same per-tag-only gate hole as Mithrail's Light above: Aggrail's
     // Blessing declares nothing but lowest_enemy_dmg_pct_per_tag.
+    // `_untargetable` is excluded from every enemy pool below. It is the engine's
+    // flag for a unit that cannot be CHOSEN at all — a Unity or Blood Bond
+    // guardian raises it when it bonds. Left in the pool it broke every
+    // selection that picks one enemy by a rule: the guardian is deliberately
+    // low-HP, so "the enemy with the lowest HP" was always the guardian, and
+    // being invulnerable it took nothing. The effect fired, logged, and never
+    // reached a real target.
     if (p.lowest_enemy_dmg_pct != null || p.lowest_enemy_dmg_pct_per_tag != null) {
-      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive);
+      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable);
       if (enemies.length > 0) {
         const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
         const extra = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "lowest_enemy_dmg_pct", "lowest_enemy_dmg_pct_per_tag") / 100));
@@ -891,7 +898,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.fellfire_pct != null || p.fellfire_pct_per_tag != null) {
       // Splash a fraction of the damage to every OTHER burning enemy.
       const burning = engine.combatants.filter(c =>
-        c.side !== owner.side && c.alive && c.id !== target.id && (c.dot_dmg ?? 0) > 0
+        c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id && (c.dot_dmg ?? 0) > 0
       );
       for (const b of burning) {
         const splash = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "fellfire_pct", "fellfire_pct_per_tag") / 100));
@@ -934,7 +941,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.grantShield(p.shield_target === 'self' ? owner : target, p.shield_amount, def);
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
-      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && c.id !== target.id);
+      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id);
       const count = Math.min(p.chain_targets, enemies.length);
       const shuffled = enemies.sort(() => Math.random() - 0.5);
       for (let i = 0; i < count; i++) {
@@ -1083,7 +1090,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const deathDmg = p.death_aoe_damage_per_tag != null
         ? p.death_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.death_aoe_damage;
-      for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive)) {
+      for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable)) {
         hurt(e, deathDmg);
         if (e.battle_hp <= 0) e.alive = false;
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: deathDmg, heal: false });
@@ -1123,7 +1130,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // this unit's row or one either side of it.
         const ownerRow = cellRow(owner.cellIndex);
         const adjEnemies = engine.combatants.filter(c =>
-          c.side !== owner.side && c.alive &&
+          c.side !== owner.side && c.alive && !c._untargetable &&
           cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1) &&
           Math.abs(cellRow(c.cellIndex) - ownerRow) <= 1
         );
@@ -1332,15 +1339,15 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
 }
 function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
   const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
-  if (!abilityKey || !UNIT_ABILITIES) return combatants.filter(c => c.side !== actor.side && c.alive);
+  if (!abilityKey || !UNIT_ABILITIES) return combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable);
   const def = UNIT_ABILITIES[abilityKey];
-  if (!def) return combatants.filter(c => c.side !== actor.side && c.alive);
+  if (!def) return combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable);
   const p = def.params || {};
-  if (def.target === 'enemy')    return combatants.filter(c => c.side !== actor.side && c.alive);
+  if (def.target === 'enemy')    return combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable);
   if (def.target === 'enemy_front') {
     const actorRow = cellRow(actor.cellIndex);
     return combatants.filter(c =>
-      c.side !== actor.side && c.alive &&
+      c.side !== actor.side && c.alive && !c._untargetable &&
       cellRow(c.cellIndex) === actorRow &&
       cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1)
     );
@@ -1364,7 +1371,7 @@ function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
       (!p.tag_required || (c.unit_data?.tags ?? []).includes(p.tag_required))
     );
   }
-  return combatants.filter(c => c.side !== actor.side && c.alive);
+  return combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable);
 }
 function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine) {
   const abilityKey = actor.unit_data?.ability || actor.unit_data?.active_ability;
@@ -1597,7 +1604,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   // Everyone on the other side, whoever was tapped. One log entry per enemy, so
   // the client plays the arrows against all of them at once.
   if (p.volley_damage != null) {
-    const enemies = combatants.filter(c => c.side !== actor.side && c.alive && !c._invulnerable);
+    const enemies = combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable && !c._invulnerable);
     for (const e of enemies) {
       const armor = effectiveArmor(e);
       const dmg   = Math.max(1, Math.floor(p.volley_damage * (1 - armor / 100)));

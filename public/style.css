@@ -25,8 +25,15 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --border:  #2e3240;
   --accent:  #c8973a;
   --accent-rgb: 200, 151, 58;
-  --accent-2: var(--accent-2);
-  --accent-bright: var(--accent-bright);
+  /* :root IS the Empire palette — the other two factions override it on
+     body[data-faction]. These two were declared as `var(--accent-2)` and
+     `var(--accent-bright)`, i.e. referring to themselves, which is invalid at
+     computed-value time: both resolved to nothing, so every rule using them
+     silently lost its whole declaration. The loading bar was the visible
+     casualty — its fill is a gradient ending in --accent-2, so it had no
+     background at all and never appeared to fill. */
+  --accent-2: #8a5f1e;
+  --accent-bright: #ecd08a;
   --danger:  #c84a3a;
   --text:    #e8e4dc;
   --muted:   #6b7080;
@@ -6420,11 +6427,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background-size: 100% 100%;
   background-repeat: no-repeat;
   transition: transform 0.1s, filter 0.15s;
-}
-
-.frame-action:active {
-  background-image: var(--img-nav-active);
-  transform: scale(0.94);
 }
 
 .frame-action { color: var(--accent); }

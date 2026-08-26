@@ -890,25 +890,47 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     const range = actor.unit_data?.range ?? 1;
-    const actorRow = Math.floor(actor.cellIndex / COLS);
+
+    // Melee reach — mirrors meleeCanReach() in utils/battle-engine.js.
+    //
+    // Every test below goes through the FOOTPRINT, never the anchor cell. This
+    // copy used to read `cellIndex` directly, which quietly broke every large
+    // unit: a 'column' attacker spans two rows but only lit cells within one row
+    // of its ANCHOR, so it could not select targets the server would happily let
+    // it hit; and a 'row' enemy anchored in the back column read as "no
+    // front-column defender", exposing a backline that is actually covered.
+    // The server was fixed for this and the client mirror was not, so the two
+    // disagreed exactly on the units where it matters most.
+    const fp = c => cellFootprint(c.cellIndex, c.size ?? 'tile', ROWS, COLS);
+    const occupiesCol = (c, col) => fp(c).some(cell => cell % COLS === col);
+    const actorRows = fp(actor).map(cell => Math.floor(cell / COLS));
+    const rowDist = c => {
+      const rows = fp(c).map(cell => Math.floor(cell / COLS));
+      return Math.min(...rows.flatMap(r => actorRows.map(ar => Math.abs(r - ar))));
+    };
+
+    // The attacker's own line: a unit in its own back column has no contact
+    // while its own front column is manned. Absent here entirely before, so the
+    // client lit targets for a blocked unit and the server then refused them.
+    const ownFront = actor.side === 'enemy' ? 0 : 1;
+    const blockedByOwnLine = !occupiesCol(actor, ownFront) &&
+      state.combatants.some(c => c.side === actor.side && c.alive && c.id !== actor.id && occupiesCol(c, ownFront));
+
     state.combatants.filter(c => c.side !== actor.side && c.alive).forEach(t => {
       if (range > 1) { targets.add(t.id); return; }
-      // Melee reach — must mirror meleeCanReach() on the server. Front column
-      // first (whole column must fall before the back is exposed), then adjacent
-      // rows (±1); if none in the reachable column are adjacent, the nearest by
-      // row distance is reachable.
-      const side       = t.side;
-      const frontCol   = side === 'enemy' ? 0 : 1;
-      const backCol    = side === 'enemy' ? 1 : 0;
-      const frontAlive = state.combatants.some(c => c.side === side && c.alive && c.cellIndex % COLS === frontCol);
+      if (blockedByOwnLine) return;
+
+      const side     = t.side;
+      const frontCol = side === 'enemy' ? 0 : 1;
+      const backCol  = side === 'enemy' ? 1 : 0;
+      const frontAlive = state.combatants.some(c => c.side === side && c.alive && occupiesCol(c, frontCol));
       const reachableCol = frontAlive ? frontCol : backCol;
-      if (t.cellIndex % COLS !== reachableCol) return;
-      const colUnits = state.combatants.filter(c => c.side === side && c.alive && c.cellIndex % COLS === reachableCol);
-      const tDist    = Math.abs(Math.floor(t.cellIndex / COLS) - actorRow);
-      const hasAdjacent = colUnits.some(c => Math.abs(Math.floor(c.cellIndex / COLS) - actorRow) <= 1);
-      const ok = hasAdjacent
-        ? tDist <= 1
-        : tDist === Math.min(...colUnits.map(c => Math.abs(Math.floor(c.cellIndex / COLS) - actorRow)));
+      if (!occupiesCol(t, reachableCol)) return;
+
+      const colUnits = state.combatants.filter(c => c.side === side && c.alive && occupiesCol(c, reachableCol));
+      const tDist    = rowDist(t);
+      const hasAdjacent = colUnits.some(c => rowDist(c) <= 1);
+      const ok = hasAdjacent ? tDist <= 1 : tDist === Math.min(...colUnits.map(rowDist));
       if (ok) targets.add(t.id);
     });
     return targets;
