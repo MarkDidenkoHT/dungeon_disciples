@@ -2098,6 +2098,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 12px;
   overflow: hidden;
   transition: border-color 0.15s, box-shadow 0.15s;
+  /* The card departs for the furthest unlocked level — it is the control most
+     players aim at, so it has to look like one. --coming-soon overrides this
+     back to `default` and kills pointer events. */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .embark-card--disabled { opacity: 0.55; }

@@ -331,7 +331,7 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
           <div class="embark-region-block">
-            <div class="embark-card" data-id="${r.id}" style="${regionBgStyle(r)}">
+            <div class="embark-card" data-id="${r.id}" data-max-level="${maxLevel}" style="${regionBgStyle(r)}">
               ${eventBadgeHtml(r.id)}
               <div class="embark-card-info">
                 <span class="embark-card-label">${rLabel(r)}</span>
@@ -378,25 +378,38 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         });
       });
 
-      root.querySelectorAll('.embark-level-pip').forEach(pip => {
-        pip.addEventListener('click', async () => {
-          // Re-check at the moment of departure, not just on screen load. The
-          // load-time modal can be dismissed by hand (desktop Telegram exposes
-          // devtools), and the server would then reject /battle/create with a
-          // bare error after the player had already built a formation. Send
-          // them back to reconnect-or-abandon instead, penalty included.
-          try {
-            const active = await api(`/battle/active?chat_id=${player.chat_id}`);
-            if (active?.active) {
-              showReconnectModal(active.battle_id, active.battle_data);
-              return;
-            }
-          } catch (e) {
-            console.error('Failed to check active battle:', e);
+      // Re-check at the moment of departure, not just on screen load. The
+      // load-time modal can be dismissed by hand (desktop Telegram exposes
+      // devtools), and the server would then reject /battle/create with a bare
+      // error after the player had already built a formation. Send them back to
+      // reconnect-or-abandon instead, penalty included.
+      async function departTo(regionId, level) {
+        if (!regionId || !level) return;
+        try {
+          const active = await api(`/battle/active?chat_id=${player.chat_id}`);
+          if (active?.active) {
+            showReconnectModal(active.battle_id, active.battle_data);
+            return;
           }
-          markTutorialDone(player, 'embark_region');
-          navigate('battle-prep', { player, region_id: pip.dataset.region, level: parseInt(pip.dataset.level) });
-        });
+        } catch (e) {
+          console.error('Failed to check active battle:', e);
+        }
+        markTutorialDone(player, 'embark_region');
+        navigate('battle-prep', { player, region_id: regionId, level });
+      }
+
+      root.querySelectorAll('.embark-level-pip').forEach(pip => {
+        pip.addEventListener('click', () => departTo(pip.dataset.region, parseInt(pip.dataset.level)));
+      });
+
+      // The card art is the biggest thing on the screen and reads as the button,
+      // so players tap it expecting to play rather than to be told to aim at a
+      // small numbered pip underneath. Tapping it departs for the furthest level
+      // they have unlocked, which is the one they almost always want; the pips
+      // stay for replaying an earlier level. Coming-soon cards are excluded —
+      // they have a data-id but nothing to enter.
+      root.querySelectorAll('.embark-card:not(.embark-card--coming-soon)').forEach(card => {
+        card.addEventListener('click', () => departTo(card.dataset.id, parseInt(card.dataset.maxLevel)));
       });
 
       // Deliberately gated on the castle step, not the roster ones: onboarding
