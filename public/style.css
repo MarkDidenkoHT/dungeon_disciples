@@ -6338,16 +6338,30 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .track-action-row {
+  /* ONE source of truth for the height of everything in the row — the action
+     buttons, the track, and the portraits inside it. The buttons used to read
+     --track-card-h from their own fallback while the track declared its own, so
+     the two agreed only by coincidence; and the track added 8px of padding the
+     buttons did not have, which made the row 8px taller in upgrade mode than in
+     inspect mode. Switching between them shifted the layout every time. */
+  --track-card-h: clamp(64px, 10vh, 86px);
+  --portrait-card-h: var(--track-card-h);
+  min-height: calc(var(--track-card-h) + 8px);
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
 }
 
 .track-action-row .branch-track-wrap {
   flex: 1 1 0;
   min-width: 0;
+  /* Defer to the ROW's height inside a row, so the buttons, the track and the
+     portraits all read one value. The wrap keeps its own declaration for the
+     places it is used on its own — the register screen and the slider modal. */
+  --track-card-h: inherit;
+  min-height: calc(var(--track-card-h) + 8px);
 
   overflow-x: auto;
 
@@ -6429,13 +6443,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .frame-action:disabled:active { transform: none; background-image: var(--img-nav); }
 
 .frame-action--inert { opacity: 0.22; pointer-events: none; }
-
-/* Upgrade / Respec / Demolish, the three things a built slot can do. Evenly
-   spread rather than pinned to the ends, because none of them is the odd one
-   out — see actionRowHtml in screens/castle.js. */
-.slot-action-row--three {
-  justify-content: space-evenly;
-}
 
 
 .frame-action-hint-wrap {

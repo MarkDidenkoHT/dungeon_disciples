@@ -2003,7 +2003,7 @@ export function renderCastle(root, { player }) {
         // every sheet to explain a case most of them are not in.
         const upgradeLabel = canUpgrade ? CASTLE_TEXT.upgradeOpen[castleLang] : idleHint;
         return `
-          <div class="track-action-row track-action-row--framed slot-action-row--three">
+          <div class="track-action-row track-action-row--framed">
             <button class="frame-action frame-action--confirm ${canUpgrade ? '' : 'frame-action--inert'}"
                     id="slot-to-upgrade" ${canUpgrade ? '' : 'disabled'}
                     title="${upgradeLabel}"
