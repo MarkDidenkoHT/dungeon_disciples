@@ -118,6 +118,13 @@ export const ACTION_INFO = {
       ru: 'Собирает мёртвых к себе: разом исцеляет всех союзников-духов на величину Силы. Тех, у кого ещё есть тело, обнять нельзя.',
     },
   },
+  'song_of_ash': {
+    name: { en: 'Song of Ash', ru: 'Песнь пепла' },
+    desc: {
+      en: "The Choir's restorative hymn: restores HP to Demon allies for the unit's Power. Only Demons can be sung to — nothing else in the army hears it.",
+      ru: 'Восстанавливающий гимн Хора: восстанавливает HP союзникам-демонам на величину Силы. Слышат его только демоны.',
+    },
+  },
   'sacrifice': {
     name: { en: 'Sacrifice', ru: 'Жертва' },
     desc: {
@@ -345,6 +352,8 @@ export function getActionLabel(actionKey) {
     pale_embrace: 'Pale Embrace',
     shield:       'Shield',       // grants an ally a damage-absorbing pool
     decay:        'Decay',        // saddles an enemy with a healing-absorbing one
+    song_of_ash:  'Song of Ash',  // the Choir's mass action - see ACTION_INFO
+    none:         'None',
   };
   return map[k.toLowerCase()] || cap(k);
 }
@@ -476,7 +485,7 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
-      <div class="core-stat"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
+      <div class="core-stat" data-action-key="${unit.action ?? ''}" data-targets="${unit.targets ?? 1}" data-range="${unit.range ?? 1}" data-target-type="${unit.target_type ?? 'enemy'}"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
@@ -808,14 +817,23 @@ Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
 
     // Action gets its own entry: what the action is and what it actually does.
     if (label === 'Action') {
-      const key  = String(val).replace(/_/g, ' ').trim().toLowerCase();
-      const info = ACTION_INFO[key];
+      const info = lookupActionInfo(coreStat.dataset.actionKey, val);
       const title = info ? uiText(info.name.en, info.name.ru) : val;
-      const body  = info
+      const desc  = info
         ? uiText(info.desc.en, info.desc.ru)
-        : uiText(`${val}\nThe action this unit performs on its turn.`,
-                 `${val}\nДействие, которое боец совершает в свой ход.`);
-      open(title, renderModalContent(body));
+        : uiText('The action this unit performs on its turn.',
+                 'Действие, которое боец совершает в свой ход.');
+      // Reach and spread are read off the CELL, not inferred from the action
+      // name: two units sharing an action can carry different range and targets,
+      // so the name alone can answer neither question.
+      const { targets, range, targetType } = coreStat.dataset;
+      const lines = [desc];
+      if (targets != null || range != null) {
+        lines.push('');
+        if (targets != null) lines.push(`${uiText('Targets', 'Цели')}: ${actionTargetsText(targets, targetType)}`);
+        if (range   != null) lines.push(`${uiText('Range', 'Дальность')}: ${actionReachText(range, targetType)}`);
+      }
+      open(title, renderModalContent(lines.join('\n')));
       return true;
     }
     const texts = {
@@ -916,6 +934,74 @@ export function buildItemModalParts(item, player) {
     badges: renderModalPill(uiText('Item', 'Предмет'), 'item'),
     body:   `<div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>`,
   };
+}
+
+// How an action's reach and spread read to a player, from the three fields the
+// unit definition already carries. Nothing here is a new rule -- it is the SAME
+// rule getValidTargets enforces in utils/battle-engine.js, put into words:
+//
+//   range 1   melee, and melee is genuinely restricted: the reachable column
+//             (the enemy front line while any of it stands) AND an adjacent row.
+//   range >1  no positional limit at all; every living enemy is reachable. The
+//             data carries both 3 and 6 for this and they behave identically, so
+//             both are described as "anywhere" rather than quoting a number the
+//             engine never compares against.
+//
+//   targets   how many of the valid targets are actually struck. The board is
+//             six cells a side, so 6 means "every one of them" and is worded
+//             that way instead of as a count the player has to interpret.
+// ACTION_INFO is keyed inconsistently -- 'holy shock' with a space, but
+// 'pale_embrace' with an underscore -- while the old lookup always searched the
+// space form built from the DISPLAY label. 'pale_embrace' and 'song_of_ash'
+// therefore never matched and silently fell back to the generic description.
+//
+// Normalising both sides fixes those two and makes the table's key style stop
+// mattering. Prefer the action ID from the cell over the display label: the
+// label is translated and re-cased for reading, the id is the actual key.
+const _ACTION_INFO_NORM = Object.fromEntries(
+  Object.entries(ACTION_INFO).map(([k, v]) => [k.replace(/_/g, ' ').trim().toLowerCase(), v])
+);
+export function lookupActionInfo(...keys) {
+  for (const k of keys) {
+    if (!k) continue;
+    const hit = _ACTION_INFO_NORM[String(k).replace(/_/g, ' ').trim().toLowerCase()];
+    if (hit) return hit;
+  }
+  return null;
+}
+
+export function actionReachText(range, targetType) {
+  // An ALLY action never consults range at all: getValidTargets returns on the
+  // heal/sacrifice branch before the range test, and every ally action in
+  // data/units.js is range 3 in any case. Reporting "melee" or "the enemy board"
+  // for a heal is simply false, so allies get their own line.
+  if (targetType === 'ally') {
+    return uiText('Reaches any ally, wherever they stand.',
+                  'Достаёт до любого союзника, где бы он ни стоял.');
+  }
+  return Number(range) === 1
+    ? uiText('Melee — the enemy front line only, and only an adjacent row.',
+             'Ближний бой — только передняя линия врага и только соседний ряд.')
+    : uiText('Ranged — reaches anywhere on the enemy board.',
+             'Дальний бой — достаёт до любой точки поля врага.');
+}
+
+export function actionTargetsText(targets, targetType) {
+  const n    = Math.max(1, Number(targets) || 1);
+  const ally = targetType === 'ally';
+  if (n >= 6) {
+    return ally
+      ? uiText('All allies at once.', 'Все союзники одновременно.')
+      : uiText('All enemies at once.', 'Все враги одновременно.');
+  }
+  if (n === 1) {
+    return ally
+      ? uiText('One ally.', 'Один союзник.')
+      : uiText('One enemy.', 'Один враг.');
+  }
+  return ally
+    ? uiText(`Up to ${n} allies.`, `До ${n} союзников.`)
+    : uiText(`Up to ${n} enemies.`, `До ${n} врагов.`);
 }
 
 export function renderModalContent(text) {

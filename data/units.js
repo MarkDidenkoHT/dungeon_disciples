@@ -1365,7 +1365,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 1300, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'reforge 1',
+      xp: 1300, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'reforge 2',
     },
     rifleman: {
       id: 'e62', f: 'e', t: 2,
