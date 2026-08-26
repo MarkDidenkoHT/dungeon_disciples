@@ -1245,7 +1245,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 50, death: 0, cold: 0, nature: 0 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 8, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 1300, passive: ['beacon_of_hope 1', 'iron_will 1', 'fanaticism 1'], ability: 'lions_roar 1',
+      xp: 1300, passive: ['beacon_of_hope 1', 'iron_will 1', 'pure_blood 1'], ability: 'lions_roar 1',
     },
     sentinel: {
       id: 'e3', f: 'e', t: 1,
@@ -1533,7 +1533,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 1170, passive: ['renew 1', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
+      xp: 1170, passive: ['renew 1', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     high_priest: {
       id: 'e2211', f: 'e', t: 4,
@@ -1545,7 +1545,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 2800, passive: ['renew 2', 'field_medic 2', 'vitality 2'], ability: 'prayer_of_healing 2',
+      xp: 2800, passive: ['renew 2', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     seraphic_priest: {
       id: 'e222', f: 'e', t: 3,
@@ -1557,7 +1557,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 50, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 1170, passive: ['regenerate 1', 'field_medic 2', 'ethereal_form 2'], ability: 'redemption 2',
+      xp: 1170, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 1'], ability: 'redemption 2',
     },
     seraph: {
       id: 'e2221', f: 'e', t: 4,
@@ -1569,7 +1569,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
       action: 'heal', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 14, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 2800, passive: ['regenerate 2', 'field_medic 2', 'ethereal_form 2'], ability: 'redemption 2',
+      xp: 2800, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 2'], ability: 'redemption 2',
     },
     apprentice: {
       id: 'e4', f: 'e', t: 1,
@@ -1653,7 +1653,7 @@ const UNITS = {
       resistances: { air: 10, fire: 5, life: 50, death: 10, cold: 35, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'cold', action_power: 16, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt', action_sfx: 'frost_spell_impact',
-      xp: 2800, passive: ['resist_aura_cold 2', 'chill 2'], ability: 'frost_armor 2',
+      xp: 2800, passive: ['resist_aura_cold 1', 'chill 2', 'clear_mind 1'], ability: 'frost_armor 2',
     },
     warder_adept: {
       id: 'e43', f: 'e', t: 2,
@@ -1689,7 +1689,7 @@ const UNITS = {
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 15, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 14, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 2800, passive: ['inspiration_initiative 2', 'aegis 2'], ability: 'frost_armor 2',
+      xp: 2800, passive: ['inspiration_initiative 1', 'aegis 2', 'stoicism 1'], ability: 'frost_armor 2',
     },
     protector: {
       id: 'e432', f: 'e', t: 3,
@@ -1701,7 +1701,7 @@ const UNITS = {
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 10, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 1300, passive: ['protector 2', 'aegis 2'], ability: 'frost_armor 2',
+      xp: 1300, passive: ['protector 2', 'aegis 1'], ability: 'frost_armor 2',
     },
     aegis_sentinel: {
       id: 'e4321', f: 'e', t: 4,
@@ -1713,7 +1713,7 @@ const UNITS = {
       resistances: { air: 25, fire: 10, life: 50, death: 10, cold: 15, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 2800, passive: ['protector 3', 'aegis 2'], ability: 'frost_armor 2',
+      xp: 2800, passive: ['protector 2', 'aegis 1', 'stoicism 1'], ability: 'frost_armor 2',
     },
   },
 
@@ -2267,7 +2267,7 @@ const UNITS = {
       name_ru: 'Причастник',
       tags: ['Vampire', 'Holy'],
       size: 'column',
-      hp: 90, armor: 10, initiative: 50,
+      hp: 90, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
@@ -2279,7 +2279,7 @@ const UNITS = {
       name_ru: 'Багровый Причастник',
       tags: ['Vampire', 'Holy'],
       size: 'column',
-      hp: 105, armor: 15, initiative: 50,
+      hp: 105, armor: 15, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
@@ -2291,7 +2291,7 @@ const UNITS = {
       name_ru: 'Избранный',
       tags: ['Vampire', 'Holy'],
       size: 'column',
-      hp: 130, armor: 15, initiative: 50,
+      hp: 125, armor: 15, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
@@ -2767,7 +2767,7 @@ const UNITS = {
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 130, passive: 'vitality 1', ability: 'infernal_mandate 1',
+        xp: 130, passive: ['vitality 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
         id: 'opb_e31', f: 'opb', t: 2,
@@ -2779,7 +2779,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 540, passive: 'vitality 2', ability: 'infernal_mandate 1',
+        xp: 540, passive: ['vitality 2', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       high_keeper: {
         id: 'opb_e311', f: 'opb', t: 3,
@@ -2791,7 +2791,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 1300, passive: ['vitality 2', 'beacon_of_hope 1'], ability: 'infernal_mandate 1',
+        xp: 1300, passive: ['vitality 2', 'beacon_of_hope 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       grand_keeper: {
         id: 'opb_e3111', f: 'opb', t: 4,
@@ -2803,7 +2803,7 @@ const UNITS = {
         resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 3080, passive: ['vitality 2', 'beacon_of_hope 1', 'renew 1'], ability: 'infernal_mandate 2',
+        xp: 3080, passive: ['vitality 2', 'beacon_of_hope 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       keeper_of_the_bloodied_veil: {
         id: 'opb_e3112', f: 'opb', t: 4,
@@ -2815,7 +2815,7 @@ const UNITS = {
         resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 6, range: 3,
         damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 3080, passive: ['choir 2', 'beacon_of_hope 1', 'recuperate 1'], ability: 'infernal_mandate 2',
+        xp: 3080, passive: ['vitality 2', 'beacon_of_despair 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       crimson_scout: {
         id: 'opb_e4', f: 'opb', t: 1,
@@ -2863,7 +2863,7 @@ const UNITS = {
         resistances: { air: 10, fire: 25, life: 25, death: 10, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'physical', action_power: 10, action_animation: 'cannon_shot',
-        xp: 1320, passive: 'bleed 2', ability: null,
+        xp: 1320, passive: ['bleed 2', 'stoicism 1'], ability: null,
       },
       sister_aldra_2: {
         id: 'opb_e51', f: 'opb', t: 3,
@@ -2875,7 +2875,7 @@ const UNITS = {
         resistances: { air: 20, fire: 25, life: 25, death: 20, cold: 20, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'life', action_power: 15, action_animation: 'cannon_shot',
-        xp: 1430, passive: ['bleed 2', 'recuperate 1'], ability: null,
+        xp: 1430, passive: ['bleed 2', 'recuperate 1', 'stoicism 1'], ability: null,
       },
 
       sister_aldra_3: {
@@ -2884,11 +2884,11 @@ const UNITS = {
         name_ru: 'Сестра Алдра',
         tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 150, armor: 20, initiative: 55,
+        hp: 160, armor: 25, initiative: 55,
         resistances: { air: 25, fire: 30, life: 30, death: 25, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'life', action_power: 20, action_animation: 'cannon_shot',
-        xp: 1540, passive: ['bleed 2', 'recuperate 1', 'aegis 1'], ability: null,
+        xp: 1540, passive: ['bleed 3', 'recuperate 1', 'stoicism 1'], ability: null,
       },
     },
 
@@ -3011,7 +3011,7 @@ const UNITS = {
         resistances: { air: 30, fire: 30, life: 30, death: 30, cold: 30, nature: 30 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 25, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 1320, passive: ['chill 1', 'dissipate 1'], ability: null,
+        xp: 1320, passive: ['chill 1', 'dissipate 1', 'stoicism 1'], ability: null,
       },
       cryodrox2: {
         id: 'mv_e41', f: 'mv', t: 3,
@@ -3023,7 +3023,7 @@ const UNITS = {
         resistances: { air: 40, fire: 40, life: 40, death: 40, cold: 40, nature: 40 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 35, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 1430, passive: ['chill 2', 'dissipate 1'], ability: null,
+        xp: 1430, passive: ['chill 2', 'dissipate 1', 'stoicism 1'], ability: null,
       },
 
       cryodrox3: {
@@ -3036,7 +3036,7 @@ const UNITS = {
         resistances: { air: 50, fire: 50, life: 50, death: 50, cold: 50, nature: 50 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 50, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 1540, passive: ['chill 2', 'dissipate 1', 'rimeguard 1'], ability: null,
+        xp: 1540, passive: ['chill 2', 'dissipate 2', 'stoicism 1'], ability: null,
       },
     },
 
@@ -3159,7 +3159,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 20, action_animation: 'sword_swing',
-        xp: 1920, passive: ['iron_will 1', 'undying 1'], ability: null,
+        xp: 1920, passive: ['iron_will 1', 'undying 1', 'stoicism 1'], ability: null,
       },
       malgrath_the_undying_2: {
         id: 'dm_e41', f: 'dm', t: 3,
@@ -3171,7 +3171,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 25, action_animation: 'sword_swing',
-        xp: 2080, passive: ['iron_will 2', 'undying 1'], ability: null,
+        xp: 2080, passive: ['iron_will 2', 'undying 1', 'stoicism 1'], ability: null,
       },
 
       malgrath_the_undying_3: {
@@ -3180,11 +3180,11 @@ const UNITS = {
         name_ru: 'Малграт Неумирающий',
         tags: ['Skeleton', 'Knight'],
         size: 'tile',
-        hp: 200, armor: 25, initiative: 35,
+        hp: 180, armor: 25, initiative: 35,
         resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 32, action_animation: 'sword_swing',
-        xp: 2240, passive: ['iron_will 2', 'undying 1', 'execute 1'], ability: null,
+        xp: 2240, passive: ['iron_will 2', 'undying 2', 'stoicism 1'], ability: null,
       },
     },
   },

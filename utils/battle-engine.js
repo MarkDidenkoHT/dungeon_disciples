@@ -317,6 +317,18 @@ class BattleEngine {
       _stun_initiative_lost: 0,
       intercept_bonus_pct: 0,
       _passives_locked: false,
+      // Status resistance: subtracted from every DOT's rank floor and rolled
+      // amount (see dotAmount in passive-processor). Summed at battle start from
+      // the unit's own Stoicism and any Sole Artificer grant.
+      _status_resist: 0,
+      // Pure Blood — nothing may drain life from this unit (see the drain sites
+      // in passive-processor.js).
+      _drain_immune: false,
+      // Clear Mind. Read at the LOCK sites, never at the passive-read sites —
+      // _passives_locked gates getPassives(), so a silenced unit can no longer
+      // see its own immunity. Cached here at battle start, before any lock can
+      // land, which is the only point at which it is guaranteed readable.
+      _passive_lock_immune: false,
       _actives_locked:  false,
       _passives_locked_rounds: 0,
       _actives_locked_rounds:  0,
@@ -1411,7 +1423,7 @@ class BattleEngine {
       const bleedRank = bleedSourceKey && this.ABILITIES
         ? (this.ABILITIES[bleedSourceKey]?.rank ?? 1)
         : 1;
-      const b = Math.max(bleedRank, unit._bleed_dmg);
+      const b = Math.max(Math.max(0, bleedRank - (unit._status_resist ?? 0)), unit._bleed_dmg);
       unit._bleed_dmg = 0;
       tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
       if (unit.alive && unit._bleed_permanent > 0) unit._bleed_dmg = unit._bleed_permanent;
@@ -1422,7 +1434,7 @@ class BattleEngine {
       const chillRank = chillSourceKey && this.ABILITIES
         ? (this.ABILITIES[chillSourceKey]?.rank ?? 1)
         : 1;
-      const c = Math.max(chillRank, unit._chill_dmg);
+      const c = Math.max(Math.max(0, chillRank - (unit._status_resist ?? 0)), unit._chill_dmg);
       unit._chill_dmg = 0;
       tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
       this.clearEffect(unit, 'chill');
@@ -1435,7 +1447,7 @@ class BattleEngine {
       const dotRank = dotSourceKey && this.ABILITIES
         ? (this.ABILITIES[dotSourceKey]?.rank ?? 1)
         : 1;
-      const d = Math.max(dotRank, unit.dot_dmg);
+      const d = Math.max(Math.max(0, dotRank - (unit._status_resist ?? 0)), unit.dot_dmg);
       unit.dot_dmg = 0;
       tick(d, 'Burn', '🔥', { dot_kind: 'burn' });
       if (unit.alive && unit._dot_permanent > 0) unit.dot_dmg = unit._dot_permanent;
@@ -1446,7 +1458,7 @@ class BattleEngine {
     if (unit.alive && unit._poison_dmg > 0) {
       const psnKey  = unit._poison_source_key ?? null;
       const psnRank = psnKey && this.ABILITIES ? (this.ABILITIES[psnKey]?.rank ?? 1) : 1;
-      const p = Math.max(psnRank, unit._poison_dmg);
+      const p = Math.max(Math.max(0, psnRank - (unit._status_resist ?? 0)), unit._poison_dmg);
       unit._poison_dmg = 0;
       unit._poison_source_key = null;
       tick(p, 'Poison', '☠️', { dot_kind: 'poison' });
@@ -2195,6 +2207,9 @@ class BattleEngine {
           _stun_rounds:        c._stun_rounds ?? 0,
           _stun_initiative_lost: c._stun_initiative_lost ?? 0,
           _passives_locked:    c._passives_locked ?? false,
+          _status_resist:      c._status_resist ?? 0,
+          _drain_immune:       c._drain_immune ?? false,
+          _passive_lock_immune: c._passive_lock_immune ?? false,
           _passives_locked_rounds: c._passives_locked_rounds ?? 0,
           _actives_locked_rounds:  c._actives_locked_rounds ?? 0,
           _actives_locked:     c._actives_locked  ?? false,
@@ -2303,6 +2318,9 @@ class BattleEngine {
       c._stun_rounds       = b._stun_rounds       ?? 0;
       c._stun_initiative_lost = b._stun_initiative_lost ?? 0;
       c._passives_locked   = b._passives_locked   ?? false;
+      c._status_resist     = b._status_resist     ?? 0;
+      c._drain_immune      = b._drain_immune      ?? false;
+      c._passive_lock_immune = b._passive_lock_immune ?? false;
       c._passives_locked_rounds = b._passives_locked_rounds ?? 0;
       c._actives_locked_rounds  = b._actives_locked_rounds  ?? 0;
       c._actives_locked    = b._actives_locked    ?? false;
@@ -2457,7 +2475,7 @@ class BattleEngine {
       if (params.lifesteal)            c._lifesteal = (c._lifesteal || 0) + params.lifesteal;
       if (params.martyrdom_redirect_pct && c.side === 'player') c.martyrdom_pct = (c.martyrdom_pct || 0) + params.martyrdom_redirect_pct;
       if (params.intercept_chance_pct) c.intercept_bonus_pct = (c.intercept_bonus_pct || 0) + params.intercept_chance_pct;
-      if (params.strip_passives)       c._passives_locked = true;
+      if (params.strip_passives && !c._passive_lock_immune) c._passives_locked = true;
       if (params.resistances) {
         for (const [rType, rVal] of Object.entries(params.resistances)) {
           if (!c.unit_data.resistances) c.unit_data.resistances = {};
@@ -2568,7 +2586,7 @@ class BattleEngine {
     // combatant on BOTH sides, the caster's own units included. advanceRound()
     // clears both flags each round, so a 1-round lock needs no expiry entry.
     if (params.lock_all_passives_rounds) {
-      for (const c of this.combatants) c._passives_locked = true;
+      for (const c of this.combatants) { if (!c._passive_lock_immune) c._passives_locked = true; }
     }
     if (params.lock_all_actives_rounds) {
       for (const c of this.combatants) c._actives_locked = true;

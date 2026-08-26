@@ -87,8 +87,19 @@ function registerStatGrant(engine, unit, def, amount, detail) {
 // safety net for anything stored before this existed (a battle in progress
 // across a deploy), but the value is correct at APPLICATION now — which is what
 // the log line quotes, and what decides whether the effect ticks at all.
-function dotAmount(dmg, pct, def) {
-  return Math.max(def?.rank ?? 1, Math.floor(dmg * pct / 100));
+//
+// Status resistance (Stoicism, and the Sole Artificer's grant) subtracts from
+// BOTH halves. Taking it off the floor alone does nothing against a big hit —
+// a 40-damage strike computes far above the floor, so the passive would read as
+// dead exactly when it matters most. Taking it off the computed amount alone
+// leaves the floor to put it straight back. So both, and the result may reach 0:
+// a fully resisted effect is NOT applied at all, which is why every caller
+// gates on `add > 0` rather than storing it.
+function dotAmount(dmg, pct, def, target) {
+  const resist = Math.max(0, target?._status_resist ?? 0);
+  const floor  = Math.max(0, (def?.rank ?? 1) - resist);
+  const rolled = Math.max(0, Math.floor(dmg * pct / 100) - resist);
+  return Math.max(floor, rolled);
 }
 
 // What a passive's flat hit actually lands for once the target's defences are
@@ -585,6 +596,107 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
 
+    // Clear Mind — silence immunity. Recorded on the combatant rather than
+    // checked where passives are READ: _passives_locked gates getPassives(), so
+    // a silenced unit can no longer see this passive to invoke it. Every site
+    // that SETS the lock consults the flag instead (two in battle-engine.js, one
+    // in the Headshot/Skullcrack branch below). No _flags guard: idempotent.
+    if (p.passive_lock_immune === true && !owner._flags[def.id + '_clear']) {
+      owner._flags[def.id + '_clear'] = true;
+      owner._passive_lock_immune = true;
+      registerStatGrant(engine, owner, def, 0, 'passives cannot be silenced');
+    }
+
+    // Pure Blood — this unit's HP cannot feed anyone. Read by the two drain
+    // paths (self_heal_pct and lowest_ally_heal_pct) when they pick a victim.
+    if (p.drain_immune === true && !owner._flags[def.id + '_pure']) {
+      owner._flags[def.id + '_pure'] = true;
+      owner._drain_immune = true;
+      registerStatGrant(engine, owner, def, 0, 'cannot be drained');
+    }
+
+    // Stoicism — status resistance. Additive with the Sole Artificer grant
+    // below, so a resistant Knight standing under the last engineer reaches 2
+    // and shrugs off a Bleed 2 entirely. Flag-guarded because it ACCUMULATES:
+    // a revived unit re-firing on_battle_start would otherwise double it.
+    if (p.status_resist != null && !owner._flags[def.id + '_stoic']) {
+      owner._flags[def.id + '_stoic'] = true;
+      owner._status_resist = (owner._status_resist ?? 0) + p.status_resist;
+      registerStatGrant(engine, owner, def, p.status_resist, `resists ${p.status_resist} of every affliction`);
+    }
+
+    // Sole Artificer — the last engineer runs the whole line. Grants status
+    // resistance to every living ally carrying the target tag, but ONLY while
+    // this side fields exactly one of tag_required. Bringing a second engineer
+    // switches it off, which is the point: it is the first passive in the game
+    // that gets WORSE for being doubled up.
+    //
+    // Counted once at battle start like every other aura here, so it is a
+    // list-building decision rather than something that flickers on when your
+    // spare engineer dies mid-fight.
+    if (p.grant_status_resist != null && !owner._flags[def.id + '_battery']) {
+      owner._flags[def.id + '_battery'] = true;
+      const soleTag = p.tag_required;
+      if (tagCount(engine, owner.side, soleTag) === 1) {
+        const targets = engine.combatants.filter(c =>
+          c.side === owner.side && c.alive &&
+          (c.unit_data?.tags ?? []).includes(p.grant_target_tag)
+        );
+        for (const t of targets) {
+          t._status_resist = (t._status_resist ?? 0) + p.grant_status_resist;
+          registerStatGrant(engine, t, def, p.grant_status_resist, `resists ${p.grant_status_resist} of every affliction`);
+        }
+        if (targets.length) {
+          engine.pushLog({
+            type: 'passive', passive: def.name,
+            actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+            targetName: targets.map(t => t.unit_name).join(', '), value: p.grant_status_resist,
+            message: `${def.name} — the only ${soleTag} steadies every ${p.grant_target_tag} (+${p.grant_status_resist} status resistance)`,
+          });
+        }
+      }
+    }
+
+    // Divided Flame — one fixed pool of power split evenly across every ally
+    // carrying the tag. The inverse of every other tag passive here, which all
+    // scale UP with the count: bring six demons and each gets a sixth, bring two
+    // and each gets half. Total output is constant, so it pays for going tall
+    // without ever out-damaging a wide board outright.
+    //
+    // Divided once, at battle start, on the same reasoning as the aura above:
+    // the split is a decision the player made when they picked the army.
+    if (p.shared_pool_stat != null && p.shared_pool_value != null && !owner._flags[def.id + '_pool']) {
+      owner._flags[def.id + '_pool'] = true;
+      const share = engine.combatants.filter(c =>
+        c.side === owner.side && c.alive &&
+        (c.unit_data?.tags ?? []).includes(p.tag_required)
+      );
+      if (share.length) {
+        // Floored, so the pool never rounds UP into more than it declares. A
+        // pool that cannot cover its holders one point each hands out nothing
+        // rather than a free minimum to everyone.
+        const each = Math.floor(p.shared_pool_value / share.length);
+        if (each > 0) {
+          if (p.shared_pool_stat === 'damage') {
+            for (const t of share) {
+              t._dmg_mult = (t._dmg_mult ?? 1) * (1 + each / 100);
+              t._inspiration_damage = (t._inspiration_damage ?? 0) + each;
+            }
+            engine.recordGrantedBuff(owner, 'damage', share, each / 100);
+          } else {
+            for (const t of share) engine.applyStatBuff(t, p.shared_pool_stat, each);
+            engine.recordGrantedBuff(owner, p.shared_pool_stat, share, each);
+          }
+          engine.pushLog({
+            type: 'passive', passive: def.name,
+            actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+            targetName: share.map(t => t.unit_name).join(', '), value: each,
+            message: `${def.name} — ${p.shared_pool_value} ${p.shared_pool_stat} split ${share.length} ways (+${each} each)`,
+          });
+        }
+      }
+    }
+
     // Guardian bonds: this unit gives half of itself to the ally in front and
     // becomes an untouchable passenger. Unity (Holy) and Blood Bond (Vampire) are
     // the same mechanic against different hosts, so the ability names WHICH
@@ -733,7 +845,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // failure the KINSHIP TEMPLATE gate above already had and already fixed:
     // when pctFor supports a flat key and a per-tag key, the gate must accept
     // either, or the per-tag-only abilities are silently dropped.
-    if (p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) {
+    // Pure Blood on the VICTIM stops the transfer at its source: no lifesteal
+    // and no communion may be drawn from this unit's wounds. Checked on the
+    // target rather than on the healer, so it holds however the drain is worded.
+    if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
       const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
@@ -775,7 +890,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
       }
     }
-    if (p.self_heal_pct != null) {
+    if (p.self_heal_pct != null && !target?._drain_immune) {
       const heal = Math.floor(dmg * p.self_heal_pct / 100 * engine.fatigueHealMult());
       const actual = Math.min(heal, owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
@@ -788,9 +903,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // Burn and Poison are now INDEPENDENT damage-over-time effects on separate
       // slots (burn -> dot_dmg, poison -> _poison_dmg), so a unit can carry both
       // at once. Each new hit STACKS onto whatever is already there.
-      const add      = dotAmount(dmg, p.dot_dmg_pct, def);
+      const add      = dotAmount(dmg, p.dot_dmg_pct, def, target);
       const isPoison = (def.name || '').toLowerCase() === 'poison';
-      if (isPoison) {
+      if (add <= 0) {
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
+      } else if (isPoison) {
         target._poison_dmg = (target._poison_dmg ?? 0) + add;
         target._poison_source_key = abilityKey;
         engine.registerEffect(target, {
@@ -806,27 +923,35 @@ function dispatchPassive(trigger, owner, def, ctx) {
           clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null },
         });
       }
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      if (add > 0) engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
     }
     if (p.bleed_dmg_pct != null) {
-      const add = dotAmount(dmg, p.bleed_dmg_pct, def);
-      target._bleed_dmg = (target._bleed_dmg ?? 0) + add; // stacks
-      target._bleed_source_key = abilityKey;
-      engine.registerEffect(target, {
-        key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
-      });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      const add = dotAmount(dmg, p.bleed_dmg_pct, def, target);
+      if (add <= 0) {
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
+      } else {
+        target._bleed_dmg = (target._bleed_dmg ?? 0) + add; // stacks
+        target._bleed_source_key = abilityKey;
+        engine.registerEffect(target, {
+          key: 'bleed', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+          clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
+        });
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      }
     }
     if (p.chill_dmg_pct != null) {
-      const add = dotAmount(dmg, p.chill_dmg_pct, def);
-      target._chill_dmg = (target._chill_dmg ?? 0) + add; // stacks
-      target._chill_source_key = abilityKey;
-      engine.registerEffect(target, {
-        key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { _chill_dmg: 0, _chill_source_key: null },
-      });
-      engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      const add = dotAmount(dmg, p.chill_dmg_pct, def, target);
+      if (add <= 0) {
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
+      } else {
+        target._chill_dmg = (target._chill_dmg ?? 0) + add; // stacks
+        target._chill_source_key = abilityKey;
+        engine.registerEffect(target, {
+          key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+          clear: { _chill_dmg: 0, _chill_source_key: null },
+        });
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      }
     }
     if (p.armor_shred != null) {
       const reduction = target._debuff_reduction ?? 0;
@@ -1726,7 +1851,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const dead = target.battle_hp <= 0;
     if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — smote ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
-    const heal = Math.floor(dmg * p.lowest_ally_heal_pct / 100 * engine.fatigueHealMult());
+    // Pure Blood blocks the drain, never the blow: the smite still lands in
+    // full, it simply feeds nobody.
+    const heal = target._drain_immune ? 0 : Math.floor(dmg * p.lowest_ally_heal_pct / 100 * engine.fatigueHealMult());
     const lowest = combatants
       .filter(c => c.side === actor.side && c.alive)
       .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, actor);
@@ -1760,10 +1887,14 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       // Set the COUNTER and the flag together: the flag is what every check
       // reads, the counter is what keeps it set past this round (see the round
       // reset in utils/battle-engine.js).
-      if (!dead && p.lock_passives_rounds != null) {
+      if (!dead && p.lock_passives_rounds != null && !target._passive_lock_immune) {
         target._passives_locked_rounds = Math.max(target._passives_locked_rounds ?? 0, p.lock_passives_rounds);
         target._passives_locked = true;
         shut.push(`passives disabled for ${p.lock_passives_rounds} rounds`);
+      } else if (!dead && p.lock_passives_rounds != null) {
+        // Immune. Said out loud, or the silence simply appears not to have
+        // happened and the passive that stopped it is invisible.
+        shut.push(`but ${target.unit_name} keeps a clear mind`);
       }
       if (!dead && p.lock_actives_rounds != null) {
         target._actives_locked_rounds = Math.max(target._actives_locked_rounds ?? 0, p.lock_actives_rounds);
