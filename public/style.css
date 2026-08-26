@@ -1838,6 +1838,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1.55;
   white-space: pre-wrap;
   margin: 0;
+  padding: 5px;
 }
 
 .unit-core-stats {
