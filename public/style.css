@@ -3355,7 +3355,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .action-panel {
   flex-shrink: 0;
-  padding: 10px 12px;
+  padding: 6px;
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: flex;
@@ -3364,9 +3364,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .action-panel--enemy { align-items: center; }
-.action-panel-label  { font-size: 0.72rem; color: var(--muted); }
-.action-panel-label strong { color: var(--text); }
-
 .action-btns { display: flex; gap: 6px; justify-content: center; width: 100%; }
 
 .action-slot {

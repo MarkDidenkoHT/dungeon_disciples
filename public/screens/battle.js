@@ -1659,7 +1659,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
         <div class="init-queue" id="init-queue"></div>
         <div class="action-panel">
-          <div class="action-panel-label" id="action-panel-label"></div>
           <!-- Each button is an icon tile with its role caption BELOW the tile,
                outside the button's own border. Every caption but one is a fixed
                word written once here. The exception is the second slot: it is
@@ -1699,7 +1698,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       powerEnemy:  root.querySelector('#power-enemy'),
       playerGrid: root.querySelector('#battle-grid-player'),
       enemyGrid: root.querySelector('#battle-grid-enemy'),
-      actionPanelLabel: root.querySelector('#action-panel-label'),
       mainBtn: root.querySelector('#btn-main'),
       abilityBtn: root.querySelector('#btn-ability'),
       defendBtn: root.querySelector('#btn-defend'),
@@ -2133,12 +2131,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         }
       }
     }
-
-    ui.actionPanelLabel.innerHTML = processing
-      ? '<span style="color:var(--muted)">Processing…</span>'
-      : isEnemyTurn
-        ? '<span style="color:var(--muted)">Enemy is acting…</span>'
-        : `<strong>${cName(actor)}</strong>`;
 
     // While a target is being picked, the button that started it stays lit —
     // otherwise nothing on screen says whether you are aiming an attack or an
