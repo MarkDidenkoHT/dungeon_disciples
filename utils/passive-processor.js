@@ -918,7 +918,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const add      = dotAmount(dmg, p.dot_dmg_pct, def, target);
       const isPoison = (def.name || '').toLowerCase() === 'poison';
       if (add <= 0) {
-        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
+        engine.pushLog({ type: 'resisted', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0 });
       } else if (isPoison) {
         target._poison_dmg = (target._poison_dmg ?? 0) + add;
         target._poison_source_key = abilityKey;
@@ -939,9 +939,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.bleed_dmg_pct != null) {
       const add = dotAmount(dmg, p.bleed_dmg_pct, def, target);
-      if (add <= 0) {
-        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
-      } else {
+      if (add > 0) {
         target._bleed_dmg = (target._bleed_dmg ?? 0) + add; // stacks
         target._bleed_source_key = abilityKey;
         engine.registerEffect(target, {
@@ -949,13 +947,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
           clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null },
         });
         engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      } else {
+        engine.pushLog({ type: 'resisted', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0 });
       }
     }
     if (p.chill_dmg_pct != null) {
       const add = dotAmount(dmg, p.chill_dmg_pct, def, target);
-      if (add <= 0) {
-        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, message: `${def.name} — resisted by ${target.unit_name}` });
-      } else {
+      if (add > 0) {
         target._chill_dmg = (target._chill_dmg ?? 0) + add; // stacks
         target._chill_source_key = abilityKey;
         engine.registerEffect(target, {
@@ -963,6 +961,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
           clear: { _chill_dmg: 0, _chill_permanent: 0, _chill_source_key: null },
         });
         engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
+      } else {
+        engine.pushLog({ type: 'resisted', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0 });
       }
     }
     if (p.armor_shred != null) {

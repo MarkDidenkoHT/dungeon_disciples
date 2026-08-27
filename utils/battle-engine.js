@@ -1884,6 +1884,15 @@ class BattleEngine {
     return power > 0;
   }
 
+  // Targets already spoken for by an allied caster THIS round: `claimed` is
+  // taken, `doomed` is taken AND already dying to that hit.
+  aiClaimState() {
+    if (!this._aiClaimState || this._aiClaimState.round !== this.round) {
+      this._aiClaimState = { round: this.round, claimed: new Set(), doomed: new Set() };
+    }
+    return this._aiClaimState;
+  }
+
   // Picks the best target for a basic action. Healers ALWAYS mend the ally with
   // the lowest current HP (preferring wounded ones, so a full-HP unit is never
   // chosen while someone is hurt); attackers prefer a target they can kill this
@@ -1914,9 +1923,20 @@ class BattleEngine {
       const lethal = dmg >= t.battle_hp ? 1 : 0;
       // Kills first; then raw damage; then favour finishing lower-HP targets.
       let score = lethal * 100000 + dmg - t.battle_hp * 0.5;
-      // A frost line is worth more chilled targets than a focused beatdown:
-      // every chilled enemy is another Hungering Frost splash on every later hit.
-      if (doctrine === 'frost_spreader' && !lethal && (t._chill_dmg ?? 0) <= 0) score += 5000;
+      // A frost line wants MORE chilled targets, not one dead one: every chilled
+      // enemy is another Hungering Frost splash on every later hit. Claims are
+      // what actually spread them — reading _chill_dmg alone fails whenever the
+      // chill lands for 0 (resisted, or floored away), because the target then
+      // still looks unchilled to the next caster and they all pile onto it.
+      if (doctrine === 'frost_spreader') {
+        const claims = this.aiClaimState();
+        if (claims.doomed.has(t.id)) {
+          score -= 200000;
+        } else if (!lethal) {
+          if ((t._chill_dmg ?? 0) <= 0)   score += 5000;
+          if (claims.claimed.has(t.id))   score -= 9000;
+        }
+      }
       if (score > bestScore) { bestScore = score; best = t; }
     }
     return best;
@@ -2037,7 +2057,13 @@ class BattleEngine {
     // No one to act on (e.g. a melee unit with nothing in reach): brace instead
     // of idling — a defending unit is better than a wasted turn.
     if (!targets.length) return { type: 'defend', target: null };
-    return { type: 'attack', target: this.aiPickActionTarget(actor, targets) };
+    const pick = this.aiPickActionTarget(actor, targets);
+    if (pick && aiDoctrineFor(actor) === 'frost_spreader') {
+      const claims = this.aiClaimState();
+      claims.claimed.add(pick.id);
+      if (this.calcDamageValue(actor, pick) >= pick.battle_hp) claims.doomed.add(pick.id);
+    }
+    return { type: 'attack', target: pick };
   }
 
   runAiTurns() {

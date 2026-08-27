@@ -163,6 +163,8 @@ const BT = {
                    ru: (a, t, v, tot) => `${a} насылает на ${t} тлен <span class="log-val">${v}</span> (всего ${tot})` },
   logStatus:     { en: (a, p, t, v) => `${a} applied <span class="log-passive">${p}</span> to ${t} <span class="log-dot">(${v}/turn)</span>`,
                    ru: (a, p, t, v) => `${a} наложил <span class="log-passive">${p}</span> на ${t} <span class="log-dot">(${v}/ход)</span>` },
+  logDotResisted:{ en: (a, p, t) => `${t} resisted <span class="log-passive">${p}</span> from ${a}`,
+                   ru: (a, p, t) => `${t} сопротивляется <span class="log-passive">${p}</span> от ${a}` },
   logGranted:    { en: (a, p, t, v, s) => `${a} <span class="log-passive">${p}</span> granted ${t} <span class="log-val-heal">+${v}</span> ${s}`,
                    ru: (a, p, t, v, s) => `${a} <span class="log-passive">${p}</span> даёт ${t} <span class="log-val-heal">+${v}</span> ${s}` },
   logPassiveHeal:{ en: (a, p, t, v) => `${a} <span class="log-passive">${p}</span> healed ${t} for <span class="log-val-heal">${v}</span>`,
@@ -1378,6 +1380,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (entry.type === 'decay') {
       const tail = entry.remaining > 0 ? BTf('logDecayThru')(entry.remaining) : BTx('logDecayAll');
       return `<div class="log-entry log-entry--shield">${BTf('logDecay')(target(), entry.value)}${tail}</div>`;
+    }
+    if (entry.type === 'resisted') {
+      return `<div class="log-entry log-entry--notice">${BTf('logDotResisted')(actor(), logPassive(entry.passive), target())}</div>`;
     }
     if (entry.type === 'status') {
       return `<div class="log-entry">${BTf('logStatus')(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
