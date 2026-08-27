@@ -439,6 +439,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
           owner.initiative = (owner.initiative ?? 0) + initBonus;
           engine.recordGrantedBuff(owner, 'initiative', [owner], initBonus);
         }
+        if (hpBonus || armorBonus || powerBonus || initBonus) {
+          owner._tag_scaled = owner._tag_scaled ?? [];
+          owner._tag_scaled.push({
+            tag:   p.tag_required,
+            n,
+            hp:    p.hp_per_tagged_unit ?? 0,
+            armor: p.armor_per_tagged_unit ?? 0,
+            power: p.power_per_tagged_unit ?? 0,
+            init:  p.initiative_per_tagged_unit ?? 0,
+          });
+        }
         const parts = [];
         if (hpBonus)    parts.push(`+${hpBonus} HP`);
         if (armorBonus) parts.push(`+${armorBonus} armor`);
@@ -644,6 +655,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         );
         for (const t of targets) {
           t._status_resist = (t._status_resist ?? 0) + p.grant_status_resist;
+          owner._granted_buffs.push({ type: 'status_resist', targetIds: [t.id], value: p.grant_status_resist });
           registerStatGrant(engine, t, def, p.grant_status_resist, `resists ${p.grant_status_resist} of every affliction`);
         }
         if (targets.length) {
@@ -1004,7 +1016,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
       } else if ((owner._stacks[key] ?? 0) < p.max_stacks) {
         owner._stacks[key]++;
       }
-      owner._dmg_mult = 1 + (owner._stacks[key] * p.stack_bonus_pct / 100);
+      const prevBonus = owner._stacks[key + '_amt'] ?? 0;
+      const nextBonus = owner._stacks[key] * p.stack_bonus_pct / 100;
+      owner._dmg_mult = (owner._dmg_mult ?? 1) - prevBonus + nextBonus;
+      owner._stacks[key + '_amt'] = nextBonus;
     }
     if (p.behind_splash_pct != null) {
       const row = cellRow(target.cellIndex);

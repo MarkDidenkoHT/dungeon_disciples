@@ -460,7 +460,7 @@ class BattleEngine {
       source._granted_buffs.push({ type, targetIds: [t.id], value: landed });
       if (def && landed) this.registerStatGrantEffect(t, def, landed, type);
       // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
-      if (!t || !t.alive || t.id === source?.id) continue;
+      if (!t || !t.alive) continue;
       // Signed: positive amplifies (Beacon of Hope / Despair on our side),
       // negative shrinks (the enemy's Beacon of Despair). `=== 0` rather than
       // `<= 0`, or the reduction half would be skipped entirely.
@@ -579,6 +579,8 @@ class BattleEngine {
           this.clampPools(target);
         } else if (buff.type === 'armor') {
           addArmor(target, -buff.value);
+        } else if (buff.type === 'status_resist') {
+          target._status_resist = Math.max(0, (target._status_resist ?? 0) - buff.value);
         } else if (buff.type === 'initiative') {
           target.initiative = Math.max(0, target.initiative - buff.value);
         } else if (buff.type === 'damage') {
@@ -597,8 +599,32 @@ class BattleEngine {
     }
     dying._granted_buffs = [];
   }
+  recomputeTagScaledGrants(side, tags) {
+    if (!tags?.length) return;
+    for (const c of this.combatants) {
+      if (!c.alive || c.side !== side || !c._tag_scaled?.length) continue;
+      for (const g of c._tag_scaled) {
+        if (!tags.includes(g.tag)) continue;
+        const n = this.tagCountFor(side, g.tag);
+        const d = n - g.n;
+        if (!d) continue;
+        g.n = n;
+        if (g.hp) {
+          c.max_hp    = Math.max(1, c.max_hp + g.hp * d);
+          c.battle_hp = Math.max(1, Math.min(c.battle_hp, c.max_hp));
+          this.clampPools(c);
+        }
+        if (g.armor) addArmor(c, g.armor * d);
+        if (g.power && c.unit_data) {
+          c.unit_data.action_power = Math.max(0, (c.unit_data.action_power ?? 0) + g.power * d);
+        }
+        if (g.init) c.initiative = Math.max(0, c.initiative + g.init * d);
+      }
+    }
+  }
   applyOnDeathPassives(dying) {
     this.revokeGrantedBuffs(dying);
+    this.recomputeTagScaledGrants(dying.side, dying.unit_data?.tags ?? []);
     this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
     const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
     if (bonded) {
