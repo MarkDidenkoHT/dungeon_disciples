@@ -105,7 +105,7 @@ const REGION_ENCOUNTERS = {
     level_8: {
       enemies: [
         { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
-        { key: 'crimson_basilica.aggrails_champion',  cell: 0 },
+        { key: 'crimson_basilica.aggrails_champion',  cell: 0, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.high_keeper',        cell: 3 },
         { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
         { key: 'crimson_basilica.keeper_of_purity',   cell: 5 },
@@ -124,7 +124,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.aggrails_champion',  cell: 4 },
         { key: 'crimson_basilica.exalted_herald',     cell: 2 },
         { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
-        { key: 'crimson_basilica.high_keeper',        cell: 5 },
+        { key: 'crimson_basilica.high_keeper',        cell: 5, item_id: 'divine_circlet' },
       ],
       rewards: {
         gold: 120, xp: 400,
@@ -136,7 +136,7 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.sister_aldra_3',      cell: 1, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
-        { key: 'crimson_basilica.grand_keeper',        cell: 3 },
+        { key: 'crimson_basilica.grand_keeper',        cell: 3, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
         { key: 'crimson_basilica.aggrails_desecrator', cell: 2 },
@@ -413,7 +413,7 @@ const REGION_ENCOUNTERS = {
                    { spell_id: 'boss_deaths_verdict', power: 5 }] },
         { key: 'chamber_of_unrest.death_knight',           cell: 0 },
         { key: 'chamber_of_unrest.death_knight',           cell: 4 },
-        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1, item_id: 'divine_circlet' },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 5 },
       ],
