@@ -27,7 +27,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
-  renderModalContent, openSheet, closeSheet, getSheetBody,
+  renderModalContent, openSheet, closeSheet, getSheetBody, openSubSheet, closeSubSheet,
   playPageTurnSound, buildUnitCard,
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
   itemFromDefKey, combatantItem,
@@ -260,8 +260,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   let learnedSpells  = [];
   let activeSpellCategory = COMBAT_CATEGORIES[0].id;
 
-  function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
-  function closeModal() { closeSheet(); }
+  // Inspecting an ability or an item opens a SUB-sheet, not the main one.
+  // Both used to go through openSheet, and there is only one main sheet — so
+  // tapping an ability on a unit card replaced the card with the ability, and
+  // closing the ability left nothing behind. The unit you were reading about
+  // was gone. This is the arrangement the castle already uses for the same
+  // pair of screens (see openAbilityModal in screens/castle.js).
+  function openInspectModal(title, bodyHtml, badgesHtml = '') {
+    openSubSheet(title, bodyHtml, badgesHtml);
+  }
 
   const spellSheetOverlay  = root.querySelector('#spell-sheet-overlay');
   const spellSheetBody     = root.querySelector('#spell-sheet-body');
@@ -1576,7 +1583,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         : equippedItemFor(itemBtn.dataset.rosterId);
       if (!item) return;
       const parts = buildItemModalParts(item, player);
-      openModal(parts.title, parts.body, parts.badges);
+      openInspectModal(parts.title, parts.body, parts.badges);
       return;
     }
 
@@ -1585,7 +1592,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const def  = resolveAbility(key);
     if (!def) return;
     const parts = buildAbilityModalParts(def, type);
-    openModal(parts.title, parts.body, parts.badges);
+    openInspectModal(parts.title, parts.body, parts.badges);
   };
   document.addEventListener('click', abilityInspectHandler);
 
