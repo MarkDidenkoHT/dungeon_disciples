@@ -1491,6 +1491,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const steps = Math.min(FATIGUE.witherMaxSteps, Math.max(0, round - FATIGUE.witherStart));
     const redPct = (steps / FATIGUE.witherMaxSteps) * FATIGUE.maxPct;
 
+    const badge = root.querySelector('#attrition-round');
+    if (badge) {
+      badge.textContent = round;
+      // Coloured by the phase the round is in, so the number and the line agree
+      // without the player having to read the line to know which it is.
+      badge.classList.toggle('attrition-round--fatigued', lost > 0 && steps === 0);
+      badge.classList.toggle('attrition-round--withering', steps > 0);
+    }
+
     green.style.height = `${greenPct}%`;
     red.style.height   = `${redPct}%`;
     green.classList.toggle('attrition-line-green--decaying', lost > 0);
@@ -1614,17 +1623,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.innerHTML = `
       <div class="screen screen-battle">
         <div class="battle-arena">
-          <!-- The attrition line. Sits in the gap between the two grids, which
-               was empty padding, and carries both halves of the anti-stall
-               system on one object: a GREEN column that decays as healing is
-               cut back, and a RED one that climbs from the floor as the
-               Withering bites harder. Rounds 1-5 it is simply a full green
-               line, which is the point — you notice it only once it starts to
-               go. See applyAttritionAura. -->
-          <div class="attrition-line" id="attrition-line" aria-hidden="true">
-            <div class="attrition-line-green" id="attrition-green"></div>
-            <div class="attrition-line-red" id="attrition-red"></div>
-          </div>
           <div class="battle-half battle-half--player">
             <div class="battle-grid-wrap">
               <div class="battle-grid" id="battle-grid-player"></div>
@@ -1635,6 +1633,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
                  the button that opens the spell list. -->
             <button class="power-strip" id="power-player" data-side="player"></button>
           </div>
+
+          <!-- The attrition line, standing in the gap BETWEEN the two grids —
+               it is the boundary the two armies are fighting across, so the
+               state of the field belongs on it.
+               The round number caps it, and under that one column carries both
+               halves of the anti-stall system: GREEN decaying as healing is cut
+               back, RED climbing off the floor as the Withering bites harder.
+               Rounds 1-5 it is simply a full green line, which is the point —
+               it should only draw the eye once it starts to go. -->
+          <div class="attrition-line" id="attrition-line">
+            <div class="attrition-round" id="attrition-round">1</div>
+            <div class="attrition-track">
+              <div class="attrition-line-green" id="attrition-green"></div>
+              <div class="attrition-line-red" id="attrition-red"></div>
+            </div>
+          </div>
+
           <div class="battle-half battle-half--enemy">
             <div class="battle-grid-wrap">
               <div class="battle-grid" id="battle-grid-enemy"></div>

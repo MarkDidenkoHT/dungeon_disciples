@@ -3820,23 +3820,74 @@ button.cost-bar-item:active { transform: scale(0.9); }
   margin: 0 auto;
 }
 
-/* The attrition line, standing in the gap between the two grids. The arena is
-   95vw with padding either side of each half, so this costs no width the grids
-   were using — it fills space that was already empty.
+/* ── The attrition line ─────────────────────────────────────────────────────
+   Stands in the gap BETWEEN the two grids — the boundary the armies are
+   fighting across — so the state of the field is drawn on the field's own
+   dividing line. The arena is 95vw with padding either side of each half, so
+   this costs the grids no width.
 
-   One object, two phases: green is how much healing still works (full until
-   round 5, decaying to half by round 10); red climbs off the floor as the
-   Withering gains a step each round. Sized so that at the end state they meet
-   exactly in the middle rather than overlapping. */
+   Round number on top, then one column carrying both halves of the anti-stall
+   system: green is how much healing still works (full until round 5, decaying
+   to half by round 10), red climbs off the floor as the Withering gains a step
+   each round. Sized so at the end state they meet exactly in the middle. */
 .attrition-line {
-  position: relative;
   align-self: stretch;
   flex: 0 0 auto;
-  width: 5px;
-  margin: 24px 2px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.45);
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 24px;
+  width: 26px;
+}
+
+/* The round counter caps the line rather than floating loose, so the number and
+   the pressure it is causing are one object. */
+.attrition-round {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), transparent 60%),
+    linear-gradient(180deg, #2b3040, #171a22);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.attrition-round--fatigued {
+  color: #f0d98a;
+  border-color: rgba(224, 168, 48, 0.9);
+  box-shadow: 0 0 10px rgba(224, 168, 48, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.attrition-round--withering {
+  color: #ffb0ba;
+  border-color: rgba(194, 16, 42, 0.95);
+  box-shadow: 0 0 12px rgba(194, 16, 42, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* The channel the two columns run in — sunken, so they read as something
+   filling it rather than a stripe painted on top. */
+.attrition-track {
+  position: relative;
+  flex: 1 1 auto;
+  width: 8px;
+  min-height: 0;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0d0f14, #14171f);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+    inset 1px 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 2px 4px rgba(0, 0, 0, 0.9);
   overflow: hidden;
 }
 
@@ -3846,39 +3897,89 @@ button.cost-bar-item:active { transform: scale(0.9); }
   left: 0;
   width: 100%;
   /* Slow, so a change reads as the round turning rather than as a flicker. */
-  transition: height 0.45s ease-out;
+  transition: height 0.45s ease-out, filter 0.45s;
 }
 
+/* Lit down the middle, dark at the edges — gives the column a rounded body
+   instead of a flat fill.
+
+   Anchored to the BOTTOM so that as healing is cut the top edge descends and
+   the line drains away downwards, leaving the gap at the top. Anchored to the
+   top it shrank the other way, which read as the line growing shorter from
+   below rather than being drained. The red then climbs from the floor back up
+   through what is left of it. */
 .attrition-line-green {
-  top: 0;
+  bottom: 0;
   height: 100%;
-  background: linear-gradient(180deg, #7fd46a, #3f8f36);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.45), transparent 40%, transparent 60%, rgba(0,0,0,0.45)),
+    linear-gradient(180deg, #b6f593, #6fce55 45%, #2f7f2c);
+  box-shadow: 0 0 8px rgba(111, 206, 85, 0.45);
 }
 
-/* Only once healing has actually been cut — a full line should look healthy and
-   inert, not like something already going wrong. */
+/* A slow sheen travelling down the living part of the line, so a healthy line
+   still looks alive rather than switched off. */
+.attrition-line-green::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  background-size: 100% 45%;
+  background-repeat: no-repeat;
+  animation: attrition-sheen 3.8s linear infinite;
+}
+
+@keyframes attrition-sheen {
+  0%   { background-position: 0 -60%; }
+  100% { background-position: 0 160%; }
+}
+
+/* Sickly and dimmer once healing has actually been cut — a full line should
+   look healthy and inert, not like something already going wrong. */
 .attrition-line-green--decaying {
-  background: linear-gradient(180deg, #cbd46a, #6f8f36);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.5), transparent 40%, transparent 60%, rgba(0,0,0,0.5)),
+    linear-gradient(180deg, #d8dc7a, #9aa844 45%, #5d6a24);
+  box-shadow: 0 0 6px rgba(180, 190, 90, 0.35);
+  filter: saturate(0.75);
 }
 
+/* Above the green in the stacking order (it comes later in the DOM), so the
+   rising red visibly consumes what is left rather than hiding behind it. */
 .attrition-line-red {
   bottom: 0;
   height: 0;
-  background: linear-gradient(0deg, #c2102a, #7a0a1c);
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.45), transparent 40%, transparent 60%, rgba(0,0,0,0.45)),
+    linear-gradient(0deg, #ff4459, #c2102a 45%, #62060f);
+}
+
+/* A bright lip where the red meets the green: the thing that is advancing. */
+.attrition-line-red--rising::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -2px;
+  right: -2px;
+  height: 3px;
+  background: #ff6b7d;
+  filter: blur(1px);
 }
 
 .attrition-line-red--rising {
-  box-shadow: 0 0 8px rgba(194, 16, 42, 0.75);
+  box-shadow: 0 0 10px rgba(194, 16, 42, 0.8);
   animation: attrition-red-pulse 2.2s ease-in-out infinite;
 }
 
 @keyframes attrition-red-pulse {
-  0%, 100% { box-shadow: 0 0 6px rgba(194, 16, 42, 0.6); }
-  50%      { box-shadow: 0 0 14px rgba(194, 16, 42, 0.95); }
+  0%, 100% { box-shadow: 0 0 7px rgba(194, 16, 42, 0.6); }
+  50%      { box-shadow: 0 0 16px rgba(194, 16, 42, 1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .attrition-line-red--rising { animation: none; }
+  .attrition-line-green::after { animation: none; }
   .attrition-line-green,
   .attrition-line-red { transition: none; }
 }
