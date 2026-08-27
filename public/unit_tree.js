@@ -180,7 +180,8 @@ export function renderUnitTreeHtml(tree, opts = {}) {
       // in renderUnitPortrait), so without it a hero's tree is nine identical
       // cells and unreadable.
       cells.push(`
-        <div class="utree-cell utree-cell--${state}" data-unit-id="${n.id}" data-row="${row}" data-col="${col}">
+        <div class="utree-cell utree-cell--${state}" data-unit-id="${n.id}" data-row="${row}" data-col="${col}"
+             data-parent-id="${n.parentId ?? ''}" data-on-path="${onPath.has(n.id) || n.id === currentId ? '1' : ''}">
           ${url ? `<img class="utree-portrait" src="${url}" alt="${nameOf(n.def)}" onerror="this.style.display='none'">` : ''}
           <span class="utree-tier">${row}</span>
           <span class="utree-name">${n.def ? nameOf(n.def) : n.id}</span>
@@ -199,10 +200,83 @@ export function renderUnitTreeHtml(tree, opts = {}) {
   // a line and watching the numbers change.
   return `
     <div class="utree-root">
-      <div class="utree" style="--utree-cols:${TREE_COLS}">${cells.join('')}</div>
+      <div class="utree" style="--utree-cols:${TREE_COLS}">
+        <svg class="utree-links" aria-hidden="true"></svg>
+        ${cells.join('')}
+      </div>
       <div class="utree-detail" id="utree-detail"></div>
       <div class="utree-ability" id="utree-ability"></div>
     </div>`;
+}
+
+/**
+ * Draw the branch connectors, parent to child.
+ *
+ * Measured from the live DOM rather than computed from row/col, because the
+ * grid has two layouts — full size, and the squashed strip the detail state
+ * uses — and the cells change shape between them. Re-run after any layout
+ * change; a ResizeObserver on `.utree` is the cheap way (see openUnitTreeSheet).
+ *
+ * A portrait is `inset: 0` inside its cell, so the cell's border box IS the
+ * portrait's: the line runs from the centre of the parent's bottom edge to the
+ * centre of the child's top edge, exactly.
+ *
+ * The route between those two points is an elbow — straight down, across at the
+ * halfway line, straight down again — rather than a diagonal. With a parent
+ * feeding two or three children, diagonals cross each other and each other's
+ * cells; elbows share the horizontal run and stay readable.
+ */
+export function drawUnitTreeLinks(rootEl) {
+  const grid = rootEl?.querySelector?.('.utree');
+  const svg  = grid?.querySelector?.('.utree-links');
+  if (!grid || !svg) return;
+
+  const base  = grid.getBoundingClientRect();
+  const cells = [...grid.querySelectorAll('.utree-cell[data-unit-id]')];
+  const byId  = new Map(cells.map(c => [c.dataset.unitId, c]));
+
+  svg.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
+  svg.setAttribute('width', base.width);
+  svg.setAttribute('height', base.height);
+
+  const R = 6;   // corner radius on the elbow
+  const parts = [];
+
+  for (const cell of cells) {
+    const parent = byId.get(cell.dataset.parentId);
+    if (!parent) continue;
+
+    const p = parent.getBoundingClientRect();
+    const c = cell.getBoundingClientRect();
+    const px = p.left + p.width / 2 - base.left;
+    const py = p.bottom - base.top;
+    const cx = c.left + c.width / 2 - base.left;
+    const cy = c.top - base.top;
+    const midY = (py + cy) / 2;
+
+    // Straight down when the child sits directly under its parent — an elbow
+    // with no horizontal run would just add two pointless corners.
+    let d;
+    if (Math.abs(cx - px) < 1) {
+      d = `M ${px} ${py} L ${px} ${cy}`;
+    } else {
+      const dir = cx > px ? 1 : -1;
+      const r   = Math.min(R, Math.abs(cx - px) / 2, Math.abs(midY - py), Math.abs(cy - midY));
+      d = `M ${px} ${py}`
+        + ` L ${px} ${midY - r}`
+        + ` Q ${px} ${midY} ${px + dir * r} ${midY}`
+        + ` L ${cx - dir * r} ${midY}`
+        + ` Q ${cx} ${midY} ${cx} ${midY + r}`
+        + ` L ${cx} ${cy}`;
+    }
+
+    // A link is only "taken" when BOTH ends are on the lineage — a branch the
+    // player passed on hangs off an on-path parent and must not read as theirs.
+    const taken = cell.dataset.onPath === '1' && parent.dataset.onPath === '1';
+    parts.push(`<path d="${d}" class="utree-link${taken ? ' utree-link--taken' : ''}" />`);
+  }
+
+  svg.innerHTML = parts.join('');
 }
 
 // Every id on the path from the root down to `unitId`, inclusive — the branch

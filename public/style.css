@@ -1633,10 +1633,41 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .utree {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--utree-cols, 5), 1fr);
   gap: 6px;
   padding: 4px 2px;
+}
+
+/* The branch connectors. Absolutely positioned so it takes no grid slot, and
+   BEHIND the cells so a line meeting a portrait is covered by it rather than
+   drawn across the art. Geometry comes from drawUnitTreeLinks in unit_tree.js. */
+.utree-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.utree-cell { z-index: 1; }
+
+.utree-link {
+  fill: none;
+  stroke: #2b3548;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The line the player actually took, matching .utree-cell--path's border. */
+.utree-link--taken {
+  stroke: #4a80aa;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px rgba(74, 128, 170, 0.6));
 }
 .utree-cell {
   position: relative;

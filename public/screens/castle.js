@@ -22,7 +22,7 @@ import {
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
-import { buildUnitTree, lineageTo, renderUnitTreeHtml } from '../unit_tree.js';
+import { buildUnitTree, lineageTo, renderUnitTreeHtml, drawUnitTreeLinks } from '../unit_tree.js';
 import { assetUrl } from '../asset_base.js';
 
 // Mirror of SLOT_CATEGORIES in data/buildings.js — that file is CommonJS and
@@ -1781,6 +1781,31 @@ export function renderCastle(root, { player }) {
     // so stepping along a line stays one tap per unit.
     const treeRoot = getSubSheetBody()?.querySelector('.utree-root');
     if (!treeRoot) return;
+
+    // The connectors are measured from the laid-out grid, so they are drawn
+    // after it exists and again whenever it changes size — the detail state
+    // squashes the cells to a strip, and the sheet itself can be resized. A
+    // ResizeObserver covers both without the toggle handlers having to remember
+    // to redraw. It is torn down with the grid it observes.
+    const treeGrid = treeRoot.querySelector('.utree');
+    if (treeGrid) {
+      // Self-cleaning: the sub-sheet has no close hook of its own, and this
+      // sheet can be opened many times within one parent sheet, so the observer
+      // retires itself the moment its grid leaves the document rather than
+      // piling up one per open.
+      const ro = new ResizeObserver(() => {
+        if (!treeGrid.isConnected) { ro.disconnect(); return; }
+        drawUnitTreeLinks(treeRoot);
+      });
+      drawUnitTreeLinks(treeRoot);
+      // Portraits load after first paint and can change the row heights.
+      treeRoot.querySelectorAll('.utree-portrait').forEach(img => {
+        if (!img.complete) {
+          img.addEventListener('load', () => drawUnitTreeLinks(treeRoot), { once: true });
+        }
+      });
+      ro.observe(treeGrid);
+    }
     const byId = new Map(tree.nodes.map(n => [n.id, n]));
     let openId = null;
 
