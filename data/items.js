@@ -800,7 +800,7 @@ const ITEM_DEFS = {
     key:          'veil_of_discord',
     name:         "Veil Of Discord",
     name_ru:      'Покров Раздора',
-    faction:      'grail_of_sorrow',
+    faction:      null,
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { cold_resist: 5, air_resist: 5 },

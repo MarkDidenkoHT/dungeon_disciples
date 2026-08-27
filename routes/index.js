@@ -484,7 +484,7 @@ function resolveAutoLevelUp(row, buildingsData) {
   if (!nextDef) return null;
 
   const newUnitData = makeUnitData(nextDef.id, buildingSlot);
-  newUnitData.current_xp = unitData.current_xp ?? 0;
+  newUnitData.current_xp = Math.max(0, (unitData.current_xp ?? 0) - xpRequired);
   const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
   if (oldHp > 0) newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
   newUnitData.alive = unitData.alive !== false;
@@ -2000,7 +2000,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     const nextDef = getUnitByDataId(path.unit_id);
     if (!nextDef) return res.status(400).json({ error: `Definition for ${path.unit_id} not found` });
     const newUnitData = makeUnitData(nextDef.id, buildingSlot);
-    newUnitData.current_xp = unitData.current_xp ?? 0;
+    newUnitData.current_xp = Math.max(0, (unitData.current_xp ?? 0) - (xpRequired ?? 0));
     const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
     if (oldHp > 0) {
       newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);

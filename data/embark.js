@@ -91,10 +91,10 @@ const REGION_ENCOUNTERS = {
     },
     level_7: {
       enemies: [
-        { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
-        { key: 'crimson_basilica.aggrails_champion',  cell: 0 },
-        { key: 'crimson_basilica.high_keeper',        cell: 3 },
-        { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
+        { key: 'crimson_basilica.exalted_evangelist',     cell: 2 },
+        { key: 'crimson_basilica.aggrails_champion',      cell: 0 },
+        { key: 'crimson_basilica.high_keeper',            cell: 3, item_id: 'frost_cloak' },
+        { key: 'crimson_basilica.aggrails_desecrator',    cell: 4, item_id: 'death_resistance_potion' },
       ],
       rewards: {
         gold: 85, xp: 250,
@@ -104,7 +104,7 @@ const REGION_ENCOUNTERS = {
     },
     level_8: {
       enemies: [
-        { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
+        { key: 'crimson_basilica.exalted_evangelist', cell: 2, item_id: 'sanctified_bulwark' },
         { key: 'crimson_basilica.aggrails_champion',  cell: 0, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.high_keeper',        cell: 3 },
         { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
@@ -134,9 +134,9 @@ const REGION_ENCOUNTERS = {
     },
     level_10: {
       enemies: [
-        { key: 'crimson_basilica.sister_aldra_3',      cell: 1, item_id: 'aldras_devotion',
+        { key: 'crimson_basilica.sister_aldra_3',      cell: 3, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
-        { key: 'crimson_basilica.grand_keeper',        cell: 3, item_id: 'divine_circlet' },
+        { key: 'crimson_basilica.grand_keeper',        cell: 1, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
         { key: 'crimson_basilica.aggrails_desecrator', cell: 2 },
@@ -311,7 +311,7 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.bone_knight',            cell: 0 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
         { key: 'chamber_of_unrest.wailing_ghost',          cell: 3 },
-        { key: 'chamber_of_unrest.malgrath_the_undying_1', cell: 2,
+        { key: 'chamber_of_unrest.malgrath_the_undying_1', cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 3 }] },
       ],
       rewards: {
@@ -322,7 +322,7 @@ const REGION_ENCOUNTERS = {
     },
     level_4: {
       enemies: [
-        { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 0, item_id: 'forbidden_vow' },
         { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.oathbound_martyr',       cell: 5 },
@@ -336,7 +336,7 @@ const REGION_ENCOUNTERS = {
     level_5: {
       enemies: [
         { key: 'chamber_of_unrest.death_knight',           cell: 0 },
-        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4, item_id: 'morning_star' },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
       ],
@@ -352,7 +352,7 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.death_knight',           cell: 4 },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
-        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2,
+        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 3 },
                    { spell_id: 'boss_deaths_verdict', power: 4 }] },
       ],
@@ -391,7 +391,7 @@ const REGION_ENCOUNTERS = {
     },
     level_9: {
       enemies: [
-        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2,
+        { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 3 },
                    { spell_id: 'boss_deaths_verdict', power: 4 }] },
         { key: 'chamber_of_unrest.death_knight',           cell: 0 },
@@ -408,7 +408,7 @@ const REGION_ENCOUNTERS = {
     },
     level_10: {
       enemies: [
-        { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 2,
+        { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 4 },
                    { spell_id: 'boss_deaths_verdict', power: 5 }] },
         { key: 'chamber_of_unrest.death_knight',           cell: 0 },

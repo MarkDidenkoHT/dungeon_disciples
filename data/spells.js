@@ -539,7 +539,6 @@ const SPELLS = {
       tier: 1,
       type: 'enemy',
       effect_icon: 'aura_of_decay',
-      // A player grid is 3 rows x 2 columns, so all_enemies IS the six of them.
       description: 'Lays decay on every enemy, eating the healing they receive.',
       description_ru: 'Накладывает тлен на всех врагов, поглощая получаемое ими исцеление.',
       power_cost: 3,

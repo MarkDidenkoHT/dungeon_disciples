@@ -2877,7 +2877,6 @@ const UNITS = {
         damage_source: 'life', action_power: 15, action_animation: 'cannon_shot',
         xp: 1430, passive: ['bleed 2', 'recuperate 1', 'stoicism 1'], ability: null,
       },
-
       sister_aldra_3: {
         id: 'opb_e511', f: 'opb', t: 4,
         name: 'Sister Aldra',
@@ -2891,7 +2890,6 @@ const UNITS = {
         xp: 1540, passive: ['bleed 3', 'recuperate 1', 'stoicism 1'], ability: null,
       },
     },
-
     glittering_abyss: {
       cryostax: {
         id: 'mv_e1', f: 'mv', t: 1,
@@ -3083,11 +3081,11 @@ const UNITS = {
         name_ru: 'Мученик Клятвы',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
-        hp: 50, armor: 10, initiative: 35,
+        hp: 30, armor: 10, initiative: 20,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
         damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
-        xp: 143, passive: 'sacrament 1', ability: 'sanctuary 1',
+        xp: 143, passive: ['sacrament 1', 'regenerate 1'], ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
         id: 'dm_21', f: 'dm', t: 2,
@@ -3095,11 +3093,11 @@ const UNITS = {
         name_ru: 'Присягнувший Мученик',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
-        hp: 55, armor: 15, initiative: 35,
+        hp: 40, armor: 15, initiative: 20,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
         damage_source: 'physical', action_power: 14, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
-        xp: 444, passive: ['sacrament 1', 'aegis 1'], ability: 'sanctuary 1',
+        xp: 444, passive: ['sacrament 1', 'regenerate 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
         id: 'dm_211', f: 'dm', t: 3,
@@ -3107,11 +3105,11 @@ const UNITS = {
         name_ru: 'Мученик Обета',
         tags: ['Zombie', 'Knight'],
         size: 'tile',
-        hp: 65, armor: 15, initiative: 35,
+        hp: 50, armor: 15, initiative: 20,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
         damage_source: 'physical', action_power: 18, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
-        xp: 845, passive: ['sacrament 1', 'aegis 1', 'undying 1'], ability: 'sanctuary 2',
+        xp: 845, passive: ['sacrament 1', 'regenerate 1', 'aegis 2'], ability: 'sanctuary 2',
       },
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,
