@@ -3816,7 +3816,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: flex-start;
   justify-content: center;
   flex-shrink: 0;
-  width: 95vw;
+  width: 100vw;
   margin: 0 auto;
 }
 
