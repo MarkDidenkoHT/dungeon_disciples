@@ -4,6 +4,7 @@ const { filterByTagRules } = require('./tag-rules.js');
 // preview draws from, so the rule is defined once, there.
 const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
+const { aiDoctrineFor } = require('../data/ai_profiles.js');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 
 // Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
@@ -277,6 +278,7 @@ class BattleEngine {
       _poison_dmg:        0,
       _dot_permanent:     0,
       _bleed_permanent:   0,
+      _chill_permanent:   0,
       _dot_source_key:    null,
       _poison_source_key: null,
       _bleed_source_key:  null,
@@ -1470,7 +1472,8 @@ class BattleEngine {
       const c = Math.max(chillRank, unit._chill_dmg);
       unit._chill_dmg = 0;
       tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
-      this.clearEffect(unit, 'chill');
+      if (unit.alive && unit._chill_permanent > 0) unit._chill_dmg = unit._chill_permanent;
+      else this.clearEffect(unit, 'chill');
     }
     // Burn (dot_dmg) — "deals X% of damage to target on their next turn", which
     // is exactly this moment. Clears after ticking unless made permanent (Mark
@@ -1904,12 +1907,16 @@ class BattleEngine {
       const pool    = wounded.length ? wounded : targets;
       return pool.slice().sort((a, b) => a.battle_hp - b.battle_hp)[0];
     }
+    const doctrine = aiDoctrineFor(actor);
     let best = null, bestScore = -Infinity;
     for (const t of targets) {
       const dmg    = this.calcDamageValue(actor, t);
       const lethal = dmg >= t.battle_hp ? 1 : 0;
       // Kills first; then raw damage; then favour finishing lower-HP targets.
-      const score = lethal * 100000 + dmg - t.battle_hp * 0.5;
+      let score = lethal * 100000 + dmg - t.battle_hp * 0.5;
+      // A frost line is worth more chilled targets than a focused beatdown:
+      // every chilled enemy is another Hungering Frost splash on every later hit.
+      if (doctrine === 'frost_spreader' && !lethal && (t._chill_dmg ?? 0) <= 0) score += 5000;
       if (score > bestScore) { bestScore = score; best = t; }
     }
     return best;
@@ -1950,6 +1957,13 @@ class BattleEngine {
       if (wounded) return wounded;
       const foes = targets.filter(c => c.side !== actor.side);
       return foes.length ? this.aiPickActionTarget(actor, foes) : null;
+    }
+    if (p.make_chill_permanent === true || p.make_bleed_permanent === true) {
+      const amt  = c => (p.make_chill_permanent === true ? (c._chill_dmg ?? 0) : (c._bleed_dmg ?? 0));
+      const perm = c => (p.make_chill_permanent === true ? (c._chill_permanent ?? 0) : (c._bleed_permanent ?? 0));
+      return targets
+        .filter(c => c.side !== actor.side && amt(c) > 0 && perm(c) <= 0)
+        .sort((a, b) => (amt(b) - amt(a)) || (b.battle_hp - a.battle_hp))[0] || null;
     }
     // Heal-type ability — only if someone is wounded.
     if (p.lowest_ally_heal_pct != null || p.heal_pct != null || p.ally_heal != null) {
@@ -2218,6 +2232,7 @@ class BattleEngine {
           _dot_type:           c._dot_type ?? null,
           _dot_permanent:      c._dot_permanent ?? 0,
           _bleed_permanent:    c._bleed_permanent ?? 0,
+          _chill_permanent:    c._chill_permanent ?? 0,
           _dot_source_key:   c._dot_source_key   ?? null,
           _poison_source_key: c._poison_source_key ?? null,
           _bleed_source_key: c._bleed_source_key ?? null,
@@ -2329,6 +2344,7 @@ class BattleEngine {
       c._chill_dmg         = b._chill_dmg         ?? 0;
       c._dot_permanent     = b._dot_permanent     ?? 0;
       c._bleed_permanent   = b._bleed_permanent   ?? 0;
+      c._chill_permanent   = b._chill_permanent   ?? 0;
       c._dodge_count       = b._dodge_count       ?? 0;
       c._effects           = b._effects           || [];
       c._effect_seq        = b._effect_seq        ?? 0;

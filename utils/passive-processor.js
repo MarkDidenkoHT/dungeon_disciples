@@ -960,7 +960,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         target._chill_source_key = abilityKey;
         engine.registerEffect(target, {
           key: 'chill', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-          clear: { _chill_dmg: 0, _chill_source_key: null },
+          clear: { _chill_dmg: 0, _chill_permanent: 0, _chill_source_key: null },
         });
         engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: add });
       }
@@ -1037,8 +1037,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.fellfire_pct != null || p.fellfire_pct_per_tag != null) {
       // Splash a fraction of the damage to every OTHER burning enemy.
+      const splashField = p.fellfire_dot === 'chill' ? '_chill_dmg' : 'dot_dmg';
       const burning = engine.combatants.filter(c =>
-        c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id && (c.dot_dmg ?? 0) > 0
+        c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id && (c[splashField] ?? 0) > 0
       );
       for (const b of burning) {
         const splash = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "fellfire_pct", "fellfire_pct_per_tag") / 100));
@@ -1614,9 +1615,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
   }
   if (p.make_chill_permanent === true && target) {
-    if ((target.dot_dmg ?? 0) > 0) {
-      target._dot_permanent = target.dot_dmg;
-      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name}'s Chill is now permanent (${target.dot_dmg}/turn)` });
+    if ((target._chill_dmg ?? 0) > 0) {
+      target._chill_permanent = target._chill_dmg;
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name}'s Chill is now permanent (${target._chill_dmg}/turn)` });
     } else {
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is not chilled` });
     }

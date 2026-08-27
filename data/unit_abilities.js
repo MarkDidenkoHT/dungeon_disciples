@@ -2247,9 +2247,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: "This unit's attacks also deal 20% of their damage to every burning enemy.",
+    description: "This unit's attacks also deal 20% of their damage to every chilled enemy.",
     description_ru: "Атаки этого юнита также наносят 20% своего урона каждому горящему врагу.",
-    params: { fellfire_pct: 20 },
+    params: { fellfire_pct: 20, fellfire_dot: 'chill' },
   },
   'hungering_frost 2': {
     id: 'hungering_frost 2',
@@ -2258,9 +2258,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: "This unit's attacks also deal 30% of their damage to every burning enemy.",
+    description: "This unit's attacks also deal 30% of their damage to every chilled enemy.",
     description_ru: "Атаки этого юнита также наносят 30% своего урона каждому горящему врагу.",
-    params: { fellfire_pct: 30 },
+    params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
   'mark_of_ash 1': {
     id: 'mark_of_ash 1',
