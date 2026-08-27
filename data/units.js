@@ -129,7 +129,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: 'inspiration_damage 1', ability: null,
+      passive: 'divided_flame 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
     choir_regent_path_a_t2: {
@@ -142,7 +142,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'vitality 1'], ability: null,
+      passive: ['divided_flame 1', 'choir 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_a_t3: {
@@ -155,7 +155,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'vitality 2'], ability: null,
+      passive: ['divided_flame 1', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
     choir_regent_path_a_t4: {
@@ -168,7 +168,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 2', 'vitality 2'], ability: null,
+      passive: ['divided_flame 2', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     choir_regent_path_a_t4_alt: {
@@ -181,7 +181,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 25, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'vitality 2', 'inspiration_max_hp 1'], ability: null,
+      passive: ['divided_flame 1', 'choir 2', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     choir_regent_path_b_t2: {
@@ -194,7 +194,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'command 1'], ability: null,
+      passive: ['divided_flame 1', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_b_t3: {
@@ -207,7 +207,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'command 2'], ability: null,
+      passive: ['divided_flame 1', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
     choir_regent_path_b_t4: {
@@ -220,7 +220,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 2', 'command 2'], ability: null,
+      passive: ['divided_flame 2', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     choir_regent_path_b_t4_alt: {
@@ -233,7 +233,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      passive: ['inspiration_damage 1', 'command 2'], ability: null,
+      passive: ['divided_flame 2', 'sovereigns_levy 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     infernal_ascendant: {
@@ -1897,7 +1897,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
-      passive: ['horde 2', 'protector 1', 'thorns 1'], ability: null,
+      passive: ['horde 2', 'protector 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     grail_warden_path_b_t2: {
@@ -2199,7 +2199,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
-      xp: 1300, passive: ['lifesteal 1', 'leech 1', 'banquet 1'], ability: 'exsanguinate 1',
+      xp: 1300, passive: ['lifesteal 1', 'bleed 1', 'banquet 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
       id: 'gs32', f: 'g', t: 2,
