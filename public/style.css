@@ -1838,7 +1838,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 1.55;
   white-space: pre-wrap;
   margin: 0;
-  padding: 5px;
 }
 
 .unit-core-stats {
@@ -3819,6 +3818,69 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-shrink: 0;
   width: 95vw;
   margin: 0 auto;
+}
+
+/* The attrition line, standing in the gap between the two grids. The arena is
+   95vw with padding either side of each half, so this costs no width the grids
+   were using — it fills space that was already empty.
+
+   One object, two phases: green is how much healing still works (full until
+   round 5, decaying to half by round 10); red climbs off the floor as the
+   Withering gains a step each round. Sized so that at the end state they meet
+   exactly in the middle rather than overlapping. */
+.attrition-line {
+  position: relative;
+  align-self: stretch;
+  flex: 0 0 auto;
+  width: 5px;
+  margin: 24px 2px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.attrition-line-green,
+.attrition-line-red {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  /* Slow, so a change reads as the round turning rather than as a flicker. */
+  transition: height 0.45s ease-out;
+}
+
+.attrition-line-green {
+  top: 0;
+  height: 100%;
+  background: linear-gradient(180deg, #7fd46a, #3f8f36);
+}
+
+/* Only once healing has actually been cut — a full line should look healthy and
+   inert, not like something already going wrong. */
+.attrition-line-green--decaying {
+  background: linear-gradient(180deg, #cbd46a, #6f8f36);
+}
+
+.attrition-line-red {
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(0deg, #c2102a, #7a0a1c);
+}
+
+.attrition-line-red--rising {
+  box-shadow: 0 0 8px rgba(194, 16, 42, 0.75);
+  animation: attrition-red-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes attrition-red-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(194, 16, 42, 0.6); }
+  50%      { box-shadow: 0 0 14px rgba(194, 16, 42, 0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attrition-line-red--rising { animation: none; }
+  .attrition-line-green,
+  .attrition-line-red { transition: none; }
 }
 
 .battle-half {

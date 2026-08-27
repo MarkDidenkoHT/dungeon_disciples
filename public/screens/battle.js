@@ -1437,14 +1437,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Mirrors BATTLE_FATIGUE in utils/battle-engine.js. Duplicated rather than
   // imported because that module is CommonJS and server-side; if the engine's
   // numbers change, change these too.
+  // Mirrors BATTLE_FATIGUE in utils/battle-engine.js — change both together.
+  // The wither ramp used to be invented here purely for the aura, because the
+  // mechanic was flat. It ramps for real now, so these are the same numbers the
+  // server deals damage with and the line below is telling the truth.
   const FATIGUE = {
     start: 5, perRound: 10, maxPct: 50,
-    witherStart: 10,
-    // The Withering does a flat 5% of max HP a turn — it does not ramp
-    // mechanically. The aura ramps anyway, over this many rounds, because what
-    // the player needs to feel is the pressure ACCUMULATING: every round spent
-    // here has cost more than the last.
-    witherRampRounds: 6,
+    witherStart: 10, witherPerStep: 5, witherMaxSteps: 5,
   };
 
   function fatigueHealPct() {
@@ -1472,14 +1471,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const overWither = round - FATIGUE.witherStart;
     const dire = overWither <= 0 ? 0
-      : Math.min(1, overWither / FATIGUE.witherRampRounds);
+      : Math.min(1, overWither / FATIGUE.witherMaxSteps);
 
     return { warm, dire };
+  }
+
+  // Green is what is LEFT of healing (100% down to 50%); red is how far the
+  // Withering has climbed (0 up to its cap). Scaled so the two exactly fill the
+  // line at the end state — half green, half red — rather than overlapping.
+  function applyAttritionLine() {
+    const green = root.querySelector('#attrition-green');
+    const red   = root.querySelector('#attrition-red');
+    if (!green || !red) return;
+    const round = state?.round ?? 1;
+
+    const lost = Math.min(FATIGUE.maxPct, Math.max(0, (round - FATIGUE.start) * FATIGUE.perRound));
+    const greenPct = 100 - lost;
+
+    const steps = Math.min(FATIGUE.witherMaxSteps, Math.max(0, round - FATIGUE.witherStart));
+    const redPct = (steps / FATIGUE.witherMaxSteps) * FATIGUE.maxPct;
+
+    green.style.height = `${greenPct}%`;
+    red.style.height   = `${redPct}%`;
+    green.classList.toggle('attrition-line-green--decaying', lost > 0);
+    red.classList.toggle('attrition-line-red--rising', steps > 0);
   }
 
   function applyAttritionAura() {
     const arena = root.querySelector('.battle-arena');
     if (!arena) return;
+    applyAttritionLine();
     const { warm, dire } = attritionLevels();
     arena.style.setProperty('--attrition-warm', warm.toFixed(2));
     arena.style.setProperty('--attrition-dire', dire.toFixed(2));
@@ -1593,6 +1614,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     root.innerHTML = `
       <div class="screen screen-battle">
         <div class="battle-arena">
+          <!-- The attrition line. Sits in the gap between the two grids, which
+               was empty padding, and carries both halves of the anti-stall
+               system on one object: a GREEN column that decays as healing is
+               cut back, and a RED one that climbs from the floor as the
+               Withering bites harder. Rounds 1-5 it is simply a full green
+               line, which is the point — you notice it only once it starts to
+               go. See applyAttritionAura. -->
+          <div class="attrition-line" id="attrition-line" aria-hidden="true">
+            <div class="attrition-line-green" id="attrition-green"></div>
+            <div class="attrition-line-red" id="attrition-red"></div>
+          </div>
           <div class="battle-half battle-half--player">
             <div class="battle-grid-wrap">
               <div class="battle-grid" id="battle-grid-player"></div>
