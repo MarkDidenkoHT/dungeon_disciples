@@ -62,7 +62,7 @@ const REGION_ENCOUNTERS = {
     },
     level_5: {
       enemies: [
-        { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+        { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.scarlet_recruit',  cell: 4 },
         { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
@@ -79,7 +79,7 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.exalted_herald',   cell: 2, item_id: 'aegis_of_the_first_ward' },
         { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
         { key: 'crimson_basilica.sister_aldra_2',   cell: 3, item_id: 'aldras_devotion',
-          spells: [{ spell_id: 'boss_heal', power: 2 }, { spell_id: 'boss_resurrect', power: 5 }] },
+          spells: [{ spell_id: 'boss_resurrect', power: 5 }] },
         { key: 'crimson_basilica.high_keeper', cell: 1 },
         { key: 'crimson_basilica.crimson_stalker',   cell: 5 },
       ],
@@ -119,7 +119,7 @@ const REGION_ENCOUNTERS = {
     level_9: {
       enemies: [
         { key: 'crimson_basilica.sister_aldra_2',     cell: 3, item_id: 'aldras_devotion',
-          spells: [{ spell_id: 'boss_heal', power: 2 }, { spell_id: 'boss_resurrect', power: 5 }] },
+          spells: [{ spell_id: 'boss_resurrect', power: 5 }] },
         { key: 'crimson_basilica.exalted_evangelist', cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',  cell: 4 },
         { key: 'crimson_basilica.exalted_herald',     cell: 2 },
@@ -135,7 +135,7 @@ const REGION_ENCOUNTERS = {
     level_10: {
       enemies: [
         { key: 'crimson_basilica.sister_aldra_3',      cell: 1, item_id: 'aldras_devotion',
-          spells: [{ spell_id: 'boss_heal', power: 3 }, { spell_id: 'boss_resurrect', power: 5 }] },
+          spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
         { key: 'crimson_basilica.grand_keeper',        cell: 3 },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
