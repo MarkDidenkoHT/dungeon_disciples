@@ -2812,7 +2812,6 @@ export function renderCastle(root, { player }) {
         };
       }),
       s => {
-        if (s.buildingId === 'mercenary_hall') { openMercenaryModal(slot); return; }
         if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
