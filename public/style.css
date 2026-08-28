@@ -7208,7 +7208,52 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .embark-event-badge { animation: none; }
 }
 
+/* The event panel is its OWN modal, not the shared bottom sheet. It is opened
+   from a small badge in a card's corner and holds a paragraph and two short
+   lists, so it is a centred card capped to a readable width — on a desktop-sized
+   screen the shared sheet slid a nearly empty full-width panel up from the floor
+   for this. */
+.modal-overlay--event {
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay--event .modal {
+  width: min(420px, 100%);
+  max-height: min(80vh, 680px);
+  margin: 0;
+  border-radius: 14px;
+  border: 1px solid var(--event-glow, var(--accent));
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.7);
+  animation: event-modal-in 160ms ease-out;
+}
+@keyframes event-modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay--event .modal { animation: none; }
+}
+
 .event-sheet { display: flex; flex-direction: column; gap: 10px; }
+
+/* The same art as the badge, so the panel is visibly the thing that was tapped. */
+.event-sheet-icon {
+  width: 84px;
+  height: 84px;
+  align-self: center;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--event-glow, var(--accent));
+  box-shadow: 0 0 18px var(--event-glow, var(--accent));
+}
+.event-sheet-desc {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
 .event-sheet-ends {
   align-self: flex-start;
   padding: 3px 10px;
@@ -7605,6 +7650,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 5px 10px;
 }
 
+/* Replaced the "it's on the second page, use the arrow" line: the panel knows
+   which slot the building sits in, so it takes the player there instead of
+   describing the route. See goToBuilding in screens/castle.js. */
 .locked-panel-goto {
   margin-top: 0.35rem;
   padding: 0.45rem 1.1rem;
@@ -7618,6 +7666,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .locked-panel-goto:active { filter: brightness(0.9); }
 
+/* The slot the player was just sent to, so the page they land on says which one
+   it meant. Same accent pulse the tutorial spotlight uses. */
 .castle-node--found {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

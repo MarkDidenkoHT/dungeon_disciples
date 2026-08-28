@@ -95,6 +95,10 @@ function eventPayload(event) {
   return {
     id:        event.id,
     name:      event.name,
+    // The events table's own column, not something in event_data. Written per
+    // event so the sheet can say what the event IS; without it the sheet opened
+    // straight into a drop table with no idea what was going on.
+    description: event.description ?? null,
     time_from: event.time_from,
     time_to:   event.time_to,
     trophy:    data.trophy ?? null,

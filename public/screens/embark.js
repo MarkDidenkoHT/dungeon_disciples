@@ -153,6 +153,16 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       .replace(/^_+|_+$/g, '');
   }
 
+  // The description column is localised the way everything else on the screen
+  // is: { en, ru }. A plain string is still accepted so an event written before
+  // this reads as English rather than as nothing.
+  function eventDescription(ev) {
+    const d = ev?.description;
+    if (!d) return '';
+    if (typeof d === 'string') return d;
+    return d[L] || d.en || '';
+  }
+
   // Top-right corner of the region card, glowing that region's colour.
   function eventBadgeHtml(regionId) {
     const ev = activeEvent();
@@ -205,10 +215,13 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
 
     openModal(ev.name || UI_TEXT.eventBadge[L], `
       <div class="event-sheet" style="--event-glow:${glow}">
+        <img class="event-sheet-icon" src="${assetUrl(`/assets/icons/events/${eventIconKey(ev)}.png`)}"
+             alt="" onerror="this.style.display='none'">
+        ${eventDescription(ev) ? `<p class="event-sheet-desc">${eventDescription(ev)}</p>` : ''}
         <div class="event-sheet-ends">${eventEndsInText()}</div>
         ${dropRows ? `<div class="event-section-label">${UI_TEXT.eventDrops[L]}</div>${dropRows}` : ''}
         ${bonusHtml ? `<div class="event-section-label">${UI_TEXT.eventBonus[L]}</div>${bonusHtml}` : ''}
-      </div>`);
+      </div>`, { variant: 'event' });
   }
 
   root.innerHTML = `
@@ -242,8 +255,15 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   const modalTitle    = root.querySelector('#modal-title');
   const modalCloseBtn = root.querySelector('#modal-close');
 
-  function openModal(title, bodyHtml, { closable = true } = {}) {
+  // `variant` puts a second class on the overlay so a caller can be styled
+  // independently. The shared .modal-overlay is a bottom sheet, which is right
+  // for the blocking flows this screen uses it for (reconnect, coming-soon) and
+  // wrong for the event card — a small panel about a badge in the corner should
+  // not slide up out of the floor of a desktop-sized screen.
+  function openModal(title, bodyHtml, { closable = true, variant = null } = {}) {
     if (!overlay || !modalBody || !modalTitle) return;
+    overlay.classList.remove('modal-overlay--event');
+    if (variant) overlay.classList.add(`modal-overlay--${variant}`);
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
     modalClosable = closable;
@@ -257,6 +277,7 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
 
   function closeModal(force = false) {
     if (!overlay || (!modalClosable && !force)) return;
+    overlay.classList.remove('modal-overlay--event');
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
     modalClosable = true;
