@@ -1138,8 +1138,11 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
       body: JSON.stringify({ unit_data: newUnitData }),
     });
 
-    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
-    res.json({ success: true, roster: updated[0] });
+    const [updated, resources] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ success: true, roster: updated[0], resources });
   } catch (err) {
     serverError(res, err);
   }
@@ -1189,8 +1192,11 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
       body: JSON.stringify({ unit_data: newUnitData }),
     });
 
-    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
-    res.json({ success: true, roster: updated[0] });
+    const [updated, resources] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ success: true, roster: updated[0], resources });
   } catch (err) {
     serverError(res, err);
   }
@@ -2384,7 +2390,14 @@ router.post('/structures/build', requireAuth, async (req, res) => {
       console.error('auto level-up after build failed:', err.message);
     }
 
-    res.json({ ...updated[0], auto_level_ups: autoLeveled });
+    // Roster and resources ride along: a build spawns a unit and spends the
+    // cost, and without them the client has to go and read the whole bootstrap
+    // back just to redraw what this call already knows.
+    const [rosterAfter, resourcesAfter] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ ...updated[0], auto_level_ups: autoLeveled, roster: rosterAfter, resources: resourcesAfter });
   } catch (err) {
     serverError(res, err);
   }

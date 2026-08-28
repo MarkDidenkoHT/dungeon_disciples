@@ -326,7 +326,7 @@ export function markTutorialDone(player, stepId) {
   _pendingFlags = { ...(_pendingFlags || {}), [stepId]: true };
   _flushPlayer  = player;
   if (_flushTimer) clearTimeout(_flushTimer);
-  _flushTimer = setTimeout(() => flushTutorialFlags(player), 400);
+  _flushTimer = setTimeout(() => flushTutorialFlags(player), 2500);
 }
 
 export function hideTutorial() {

@@ -17,7 +17,7 @@ export async function api(path, body = null) {
   };
   if (_sessionToken) options.headers['X-Session-Token'] = _sessionToken;
   if (body) options.body = JSON.stringify(body);
-  console.log('[API] request', { path: `/api${path}`, options });
+  console.log(`[API] -> ${options.method} /api${path}`);
   const res = await fetch(`/api${path}`, options);
   const text = await res.text();
   let data;
@@ -27,7 +27,7 @@ export async function api(path, body = null) {
     console.error('[API] invalid JSON response', { path: `/api${path}`, status: res.status, text });
     throw new Error(text.trim() || `HTTP ${res.status}`);
   }
-  console.log('[API] response', { path: `/api${path}`, status: res.status, data });
+  console.log(`[API] <- ${res.status} /api${path}`);
   if (!res.ok) {
     // `error` is an English developer string. When the endpoint also sends a
     // stable `code`, it rides along so callers can show a translated message

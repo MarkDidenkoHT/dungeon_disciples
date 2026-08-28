@@ -375,6 +375,14 @@ export function renderCastle(root, { player }) {
   // answer from a replica that has not caught up with that write, so where the
   // caller already holds the post-write row it wins — it cannot be behind — and
   // the cache is corrected to match, so the next screen to read it agrees.
+  function patchFromWrite(res) {
+    if (!res || (!res.roster && !res.resources)) return null;
+    return bootstrapCache.patch(cur => ({
+      ...(res.roster    ? { roster:    res.roster }    : {}),
+      ...(res.resources ? { resources: res.resources } : {}),
+    }));
+  }
+
   async function reloadFromBootstrap(knownStructures = null, knownBoot = null) {
     const boot = knownBoot || await bootstrapCache.refresh(player.chat_id);
     if (knownStructures) bootstrapCache.patch(() => ({ structures: knownStructures }));
@@ -1586,6 +1594,7 @@ export function renderCastle(root, { player }) {
   // the player just answered — and renderBuildings runs again the moment the
   // errand lookup resolves, a few hundred ms after the castle opens.
   let pendingStep = null;
+  let shownStep   = null;
   onSheetClose(() => {
     // Backed out without finishing: the step is live again.
     if (pendingStep) { pendingStep = null; runOnboarding(); }
@@ -1610,6 +1619,7 @@ export function renderCastle(root, { player }) {
       // found no target would otherwise fall through to the next step, which
       // opens ANOTHER sheet on top of it.
       if (!el) { if (opened) return; continue; }
+      shownStep = step.id;
       showTutorialSpotlight(player, step.id, el, {
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
@@ -1628,8 +1638,15 @@ export function renderCastle(root, { player }) {
       });
       return;
     }
-    hideTutorial();
-    maybeShowErrandsIntro(player);
+    // Only tear down a spotlight that is actually finished. ready() goes
+    // transiently false while a reload swaps rosterCache out, and hiding
+    // unconditionally here killed the live step a fraction of a second after it
+    // appeared.
+    if (!shownStep || isTutorialDone(player, shownStep)) {
+      shownStep = null;
+      hideTutorial();
+      maybeShowErrandsIntro(player);
+    }
   }
 
   function getMercBuildingDef(buildingId) {
@@ -2389,12 +2406,18 @@ export function renderCastle(root, { player }) {
         const stepId = resurrectBtn ? 'spell_revive' : 'spell_heal';
         (async () => {
           try {
-            await api(path, { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
+            const res = await api(path, { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
             if (!isTutorialDone(player, stepId)) {
-              await markTutorialDone(player, stepId);
+              markTutorialDone(player, stepId);
               hideTutorial();
             }
-            await reloadFromBootstrap();
+            const patched = res?.roster
+              ? bootstrapCache.patch(cur => ({
+                  roster: (cur.roster || []).map(r => String(r.id) === String(res.roster.id) ? res.roster : r),
+                  ...(res.resources ? { resources: res.resources } : {}),
+                }))
+              : null;
+            await reloadFromBootstrap(null, patched);
             openSlotUnitSheet(slot);
           } catch (err) {
             alert(err?.message || String(err));
@@ -3073,7 +3096,7 @@ export function renderCastle(root, { player }) {
         // units live in these slots now, so it stays here — reloading first so
         // the new unit and its gear are actually in rosterCache/itemsCache when
         // renderBuildings starts the chain.
-        await reloadFromBootstrap(updated);
+        await reloadFromBootstrap(updated, patchFromWrite(updated));
         return;
       }
       // A build changes the ROSTER, not just the structures: raising a dwelling
@@ -3083,7 +3106,7 @@ export function renderCastle(root, { player }) {
       // level until the player switched tabs — at which point the screen
       // re-mounted against a cache that refreshResourceBar had since refreshed,
       // and the level-up appeared to arrive late. Read the new roster here.
-      await reloadFromBootstrap(updated);
+      await reloadFromBootstrap(updated, patchFromWrite(updated));
       refreshNavLock(player).catch(() => {});
     } catch (err) {
       console.error(err);
