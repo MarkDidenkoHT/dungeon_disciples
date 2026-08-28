@@ -728,7 +728,7 @@ const ITEM_DEFS = {
     key:          'staff_of_thaumaturgy',
     name:         "Staff Of Thaumaturgy",
     name_ru:      'Посох Тауматургии',
-    faction:      'grail_of_sorrow',
+    faction:      null,
     tag_required: 'Caster',
     adds_tag:     'Vampire',
     stat_mods:    { action_power: 4, hp: 4 },

@@ -385,28 +385,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
       }
     }
-    // ── KINSHIP TEMPLATE ──────────────────────────────────────────────────────
-    // Horde, Iron Will, Choir, Banquet: the owner grows for each living ally
-    // carrying `tag_required`, itself included. Mix any of the four stat keys.
-    //
-    //   tag_required               the tag counted
-    //   hp_per_tagged_unit         max HP (and current) per tagged ally
-    //   armor_per_tagged_unit      armor per tagged ally
-    //   power_per_tagged_unit      action power per tagged ally
-    //   initiative_per_tagged_unit initiative per tagged ally
-    //
-    // The gate used to require hp_per_tagged_unit, which silently dropped any
-    // passive that grants no HP — Banquet (power + initiative) would have done
-    // nothing at all. It now fires when ANY of the four is declared.
-    //
-    //   tag_exclusive              OPTIONAL. The whole grant is refused unless
-    //                              this tag is on exactly one living unit on the
-    //                              owner's side. Sovereign's Levy is the first
-    //                              user: the horde answers to a single lord, so
-    //                              fielding a second Court unit turns it off
-    //                              rather than making it bigger. Read live, so a
-    //                              rival lord dying does NOT switch it back on —
-    //                              the grant only ever fires at battle start.
+
     if (p.tag_required != null && (p.hp_per_tagged_unit != null || p.armor_per_tagged_unit != null ||
                                    p.power_per_tagged_unit != null || p.initiative_per_tagged_unit != null)) {
       const n = tagCount(engine, owner.side, p.tag_required);
@@ -471,16 +450,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (amount > 0) engine.grantShield(owner, amount, def, owner);
     }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
-      // ADJACENT, as the description says — not "anywhere within a row or two".
-      // The old test compared rows only, so on a 3-row grid `range: 1` from the
-      // middle row covered every row, and from an outer row still covered two
-      // thirds of the field: the aura hit the whole enemy side and the range
-      // parameter did nothing.
-      //
-      // Adjacency here is the same shape the engine already uses for melee
-      // reach: the enemy must stand in the column FACING this unit, and be
-      // within `range` rows of it. Footprint-to-footprint, so a large unit is
-      // measured by the cells it actually occupies rather than its anchor.
+
       const enemies   = engine.combatants.filter(c => c.side !== owner.side);
       const fearRange = p.range ?? 1;
       const ownerRows = engine.getFootprint(owner).map(cellRow);
@@ -573,11 +543,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
       }
     }
-    // Resistance aura: +N of one school to every living ally, the carrier
-    // included. Written into unit_data.resistances so calcDamage's existing
-    // resistance step picks it up with no special case. Guarded by a flag —
-    // on_battle_start can fire more than once for a revived unit, and this must
-    // not stack with itself.
+
     if (p.resist_aura_school != null && (p.resist_aura_value != null || p.resist_aura_value_per_tag != null) &&
         !owner._flags[def.id + '_aura']) {
       owner._flags[def.id + '_aura'] = true;
@@ -607,11 +573,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
 
-    // Clear Mind — silence immunity. Recorded on the combatant rather than
-    // checked where passives are READ: _passives_locked gates getPassives(), so
-    // a silenced unit can no longer see this passive to invoke it. Every site
-    // that SETS the lock consults the flag instead (two in battle-engine.js, one
-    // in the Headshot/Skullcrack branch below). No _flags guard: idempotent.
     if (p.passive_lock_immune === true && !owner._flags[def.id + '_clear']) {
       owner._flags[def.id + '_clear'] = true;
       owner._passive_lock_immune = true;
@@ -636,15 +597,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       registerStatGrant(engine, owner, def, p.status_resist, `resists ${p.status_resist} of every affliction`);
     }
 
-    // Sole Artificer — the last engineer runs the whole line. Grants status
-    // resistance to every living ally carrying the target tag, but ONLY while
-    // this side fields exactly one of tag_required. Bringing a second engineer
-    // switches it off, which is the point: it is the first passive in the game
-    // that gets WORSE for being doubled up.
-    //
-    // Counted once at battle start like every other aura here, so it is a
-    // list-building decision rather than something that flickers on when your
-    // spare engineer dies mid-fight.
     if (p.grant_status_resist != null && !owner._flags[def.id + '_battery']) {
       owner._flags[def.id + '_battery'] = true;
       const soleTag = p.tag_required;
@@ -709,15 +661,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
 
-    // Guardian bonds: this unit gives half of itself to the ally in front and
-    // becomes an untouchable passenger. Unity (Holy) and Blood Bond (Vampire) are
-    // the same mechanic against different hosts, so the ability names WHICH
-    // synergy it forms and everything below is shared. `unity_bond: true` is the
-    // original spelling, kept working so no data has to move.
-    // Chorus of War: the bond is a CONDITION, not a transfer. The Caster behind
-    // decides whether this fires at all; the number of Casters fielded decides
-    // how much. Deferred with the guardian bonds for the same reason — the
-    // Warrior's other battle-start passives may still be moving its power.
     if (p.chorus_power_per_tag != null && p.partner_synergy && !owner._flags[def.id + '_chorus']) {
       owner._flags[def.id + '_chorus'] = true;
       const sing = () => {
@@ -777,20 +720,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.light_of_dawn === true) {
       const ownerRow = cellRow(owner.cellIndex);
 
-      // "The one in front" means the FIRST unit standing in that row — front
-      // column if anyone is there, otherwise the back one. It does not mean a
-      // fixed cell.
-      //
-      // The old version picked a column arithmetically from the OWNER's own
-      // column: the ally was whichever column the owner was not in (so a unit
-      // standing in the front column healed the one BEHIND it), and the enemy
-      // was the owner's column index mirrored onto the other side, ignoring
-      // that the enemy's front column is 0 while the player's is 1. Both
-      // therefore hit the wrong cell, and hit nothing at all whenever that one
-      // cell happened to be empty even though the row was occupied.
-      //
-      // Footprint-aware, because a 'row' unit stands in both columns and a
-      // 'column' unit covers two rows — matching on cellIndex alone misses them.
       const frontColOf = side => (side === 'enemy' ? 0 : 1);
       const firstInRow = (side, row, excludeId = null) => {
         const front = frontColOf(side);
@@ -849,17 +778,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
-    // The gate has to name BOTH keys. It used to check only the flat one, so
-    // Mithrail's Light — which declares nothing but
-    // lowest_ally_heal_pct_per_tag — never passed it and was a dead passive on
-    // all nine units carrying it, Paladin line included. Communion declares the
-    // flat key and was unaffected, which is why the hole went unseen. Same
-    // failure the KINSHIP TEMPLATE gate above already had and already fixed:
-    // when pctFor supports a flat key and a per-tag key, the gate must accept
-    // either, or the per-tag-only abilities are silently dropped.
-    // Pure Blood on the VICTIM stops the transfer at its source: no lifesteal
-    // and no communion may be drawn from this unit's wounds. Checked on the
-    // target rather than on the healer, so it holds however the drain is worded.
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
       const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
@@ -988,17 +906,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
       target._stacks[key] = (target._stacks[key] ?? 0) + 1;
       if (target._stacks[key] >= p.stacks_needed) {
         target._stacks[key] = 0;
-        // The burst used to be `stack_burst_damage - target.armor` — armor as a
-        // FLAT subtraction, which nothing else in the game does. Armor is a
-        // percentage everywhere else (calcDamageWithPassives: armorRed =
-        // armor/100, and the Armor tooltip says "each point reduces damage by
-        // 1%"), so Death Mark's 15 became 1 against any target with 15 armor.
-        // It read as the passive having stopped working, because against
-        // anything armoured it did nothing.
-        //
-        // `damage_type` was declared on the param and then ignored outright: a
-        // 'death' burst is not physical, so it goes through the target's
-        // resistance like every other typed hit, not through armor at all.
         const burst = typedAmount(target, p.stack_burst_damage, p.damage_type ?? 'physical');
         hurt(target, burst);
         if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
@@ -1100,15 +1007,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.fireTrigger('on_hit_received', { actor: owner, target: chainTarget, dmg: chainDmg, dying: null, _is_chain_hit: true });
       }
     }
-    // STACKS. It used to set a once-per-target-per-battle flag, so the second
-    // and every later hit on the same enemy shredded nothing — a Wraith could
-    // pound one target all fight and take 10 resistance off it in total.
-    //
-    // registerEffect was already built for this: it accumulates both `restore`
-    // and `amount` on a repeated key, and its own comment says "two Dissipates
-    // on one unit read as one record". Only the flag stood in the way. The
-    // shred still cannot overshoot, because `applied` is clamped to whatever
-    // resistance is actually left, so repeated hits grind toward 0 and stop.
+
     if (p.dissipate_resistance_pct != null) {
       {
         const damageSource = owner.unit_data?.damage_source ?? 'physical';
@@ -1118,21 +1017,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
             const current = resistances[damageSource] ?? 0;
             const reduction = target._debuff_reduction ?? 0;
             const effective = Math.floor(p.dissipate_resistance_pct * (1 - reduction / 100));
-            // How much was ACTUALLY taken. Clamped at zero, so a resistance
-            // already low gives back only what it lost — the undo has to match
-            // the deduction or a dispel would hand out resistance from nowhere.
             const applied = Math.min(effective, current);
             addResist(target, damageSource, -applied);
             if (applied > 0) {
-              // Registered so the shred is VISIBLE: a portrait badge like every
-              // other debuff, and dispellable. It was previously applied
-              // silently — the number moved on the inspector and nothing said
-              // why, and no cleanse could touch it.
-              // No `rounds`: nothing schedules an expiry for this record, so the
-              // shred stands until the battle ends or something dispels it.
-              // `amount` is what the badge prints — the record used to say only
-              // "Dissipate", which told the player nothing about how much
-              // resistance had gone or to which school.
               engine.registerEffect(target, {
                 key:  `dissipate:${damageSource}`,
                 name: `${def.name} · ${damageSource} resistance`,
@@ -1256,6 +1143,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         owner._fanaticism_bonus = (owner._fanaticism_bonus ?? 0) + grow;
         owner.max_hp    += grow;
         owner.battle_hp += grow;
+        engine.recordGrantedBuff(owner, 'max_hp', [owner], grow, null, def);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: grow, message: `${def.name} — max HP grows by ${grow} (${owner._fanaticism_bonus}/${cap})` });
       }
     }
@@ -1293,9 +1181,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
       const damageSource = actor?.unit_data?.damage_source ?? 'physical';
       if (damageSource === 'physical') {
-        owner._aegis_armor = (owner._aegis_armor ?? 0) + p.resist_gain;
-        owner._aegis_armor = (owner._aegis_armor ?? 0) + addArmor(owner, p.resist_gain);
-        engine.recordGrantedBuff(owner, 'armor', [owner], p.resist_gain);
+        // ONE increment. This used to add p.resist_gain and then add whatever
+        // addArmor returned on top, so the tally Aegis keeps of its own
+        // contribution came out at roughly double what it had actually granted —
+        // and anything reading that tally to undo it removed armor Aegis never
+        // gave.
+        //
+        // Recorded as what LANDED rather than what was asked for: armor is
+        // capped, so above the ceiling the two differ.
+        const aegisArmor = addArmor(owner, p.resist_gain);
+        owner._aegis_armor = (owner._aegis_armor ?? 0) + aegisArmor;
+        if (aegisArmor) engine.recordGrantedBuff(owner, 'armor', [owner], aegisArmor, null, def);
       } else {
         const res = owner.unit_data?.resistances ?? owner.resistances;
         if (res) {
@@ -1406,6 +1302,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
             owner.initiative += initAmt;
             owner._dmg_mult    = (owner._dmg_mult ?? 1) + dmgAmt;
             owner._clear_shot_active = true;
+            // Booked through the engine so the beacons scale it and it shows up
+            // as a buff like every other numeric grant. Recorded AFTER the base
+            // is applied, which is the contract recordGrantedBuff expects.
+            if (initAmt) engine.recordGrantedBuff(owner, 'initiative', [owner], initAmt, null, def);
             owner._clear_shot_initiative_amt = initAmt;
             owner._clear_shot_dmg_amt = dmgAmt;
             engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — clear line of sight, +${p.clear_shot_initiative_bonus_pct ?? 0}% initiative and damage`, value: p.clear_shot_dmg_bonus_pct ?? 0 });
@@ -1795,17 +1695,8 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (healed > 0) engine.fireHealTriggers(actor, actor, healed);
   }
 
-  // ── Furious Strike ────────────────────────────────────────────────────────
-  // A harder version of the unit's own attack, paid for in blood. Routed
-  // through engine.strikeTarget rather than reimplemented, so armor, resists,
-  // dodge, Protector intercepts, martyrdom and every on-hit passive behave
-  // exactly as they do for a normal swing.
   if (p.furious_strike_pct != null && target) {
     const mult = p.furious_strike_pct / 100;
-    // The boost is captured as a DELTA and taken back off afterwards, rather
-    // than saving and restoring the multiplier: passives that fire during the
-    // swing (Rage on a retaliation, a kill bonus) also write to _dmg_mult, and
-    // restoring a saved value would wipe what they earned.
     const boost = (actor._dmg_mult ?? 1) * (mult - 1);
     actor._dmg_mult = (actor._dmg_mult ?? 1) + boost;
 
@@ -1822,10 +1713,6 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
         targetId: actor.id, targetName: actor.unit_name, targetCell: actor.cellIndex,
         value: recoil, heal: false,
         message: `${def.name} — ${actor.unit_name} takes ${recoil} recoil` });
-      // The recoil is DAMAGE TAKEN, so it wakes the same passives a blow would —
-      // Rage in particular, which is the point of hurting yourself on purpose.
-      // (A unit carrying both Rage and a retaliation passive will also retaliate
-      // against itself here; that is what "taking damage" means to those two.)
       engine.fireTrigger('on_hit_received', { actor, target: actor, dmg: recoil, dying: null });
       engine.fireTrigger('on_take_damage',  { actor, target: actor, dmg: recoil, dying: null });
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }

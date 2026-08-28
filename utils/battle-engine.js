@@ -460,24 +460,44 @@ class BattleEngine {
       const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
       if (appliedByTarget && !landed) continue;   // nothing got through the cap
       source._granted_buffs.push({ type, targetIds: [t.id], value: landed });
-      if (def && landed) this.registerStatGrantEffect(t, def, landed, type);
-      // Self-buffs are not ally buffs — the same rule fireAllyBuffTriggers uses.
-      if (!t || !t.alive) continue;
-      // Signed: positive amplifies (Beacon of Hope / Despair on our side),
-      // negative shrinks (the enemy's Beacon of Despair). `=== 0` rather than
-      // `<= 0`, or the reduction half would be skipped entirely.
-      const pct = this.buffAmpPctFor(t.side);
-      if (pct === 0) continue;
-      // 'damage' carries a fraction (0.15 = +15%); every other type is a flat
-      // stat point and must stay whole. Truncated TOWARD ZERO, not floored —
-      // Math.floor(-2.5) is -3, which would remove more than the percentage
-      // asked for.
-      let extra = type === 'damage' ? value * pct / 100 : Math.trunc(value * pct / 100);
-      // A reduction can cancel a buff but never invert it into a penalty.
-      if (extra < 0) extra = Math.max(extra, -value);
-      if (!extra) continue;
-      const landedExtra = this.applyStatBuff(t, type, extra);
-      if (landedExtra) source._granted_buffs.push({ type, targetIds: [t.id], value: landedExtra });
+
+      // The beacon share is worked out BEFORE the icon is registered, so the
+      // number on the icon is the number the unit actually has. It used to be
+      // registered from `landed` alone and the amplified part applied after, so
+      // a unit with +8 initiative and a Beacon pushing it to +10 wore a badge
+      // reading +8 — the one place a player could check, disagreeing with the
+      // stat line right beside it.
+      let landedExtra = 0;
+      // `!t.alive` only: a dead target gains nothing. Self-buffs DO amplify —
+      // "buffs on allies" includes the unit carrying the beacon, and excluding
+      // them made a lone Holy unit's own buffs the only ones in the game the
+      // beacon ignored.
+      if (t && t.alive) {
+        // Signed: positive amplifies (our Beacon of Hope), negative shrinks (the
+        // enemy's Beacon of Despair). `!== 0` rather than `> 0`, or the
+        // reduction half would be skipped entirely.
+        const pct = this.buffAmpPctFor(t.side);
+        if (pct !== 0) {
+          // 'damage' carries a fraction (0.15 = +15%); every other type is a
+          // flat stat point and must stay whole. Truncated TOWARD ZERO, not
+          // floored — Math.floor(-2.5) is -3, which would remove more than the
+          // percentage asked for.
+          //
+          // Scaled off `landed`, not `value`: for a capped stat the two differ,
+          // and paying a percentage of an amount that never arrived handed out
+          // armor the cap had just refused.
+          let extra = type === 'damage' ? landed * pct / 100 : Math.trunc(landed * pct / 100);
+          // A reduction can cancel a buff but never invert it into a penalty.
+          if (extra < 0) extra = Math.max(extra, -landed);
+          if (extra) {
+            landedExtra = this.applyStatBuff(t, type, extra);
+            if (landedExtra) source._granted_buffs.push({ type, targetIds: [t.id], value: landedExtra });
+          }
+        }
+      }
+
+      const total = landed + landedExtra;
+      if (def && total) this.registerStatGrantEffect(t, def, total, type);
     }
     this.fireAllyBuffTriggers(source, targets);
   }
