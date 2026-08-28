@@ -140,15 +140,15 @@ const SPELLS = {
       // Was a round-3 delayed hit — which only made sense when the spell was
       // chosen before the battle began. Cast reactively, a nuke that lands two
       // rounds later is strictly worse than one that lands now.
-      description: 'Light falls on the whole enemy line for 20 life damage, +6 per extra power.',
-      description_ru: 'Свет обрушивается на весь вражеский строй: 20 урона жизнью, +6 за каждую доп. силу.',
+      description: 'Light falls on the whole enemy line for 15 life damage, +5 per extra power.',
+      description_ru: 'Свет обрушивается на весь вражеский строй: 15 урона жизнью, +5 за каждую доп. силу.',
       cost: { crystals: { Crystals_Life: 10, Crystals_Fire: 5 } },
       power_cost: 1,
-      scaling: { damage_flat: 6 },
+      scaling: { damage_flat: 5 },
       effect_type: 'damage',
       class: 'enemy',
       target_scope: 'all_enemies',
-      params: { damage_flat: 20, damage_type: 'life' },
+      params: { damage_flat: 15, damage_type: 'life' },
     },
     {
       id: 'e_spell_10',
