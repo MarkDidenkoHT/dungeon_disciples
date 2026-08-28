@@ -6,10 +6,10 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter, getLevelRewards } = require('../data/embark');
+const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
-const { RESPEC_COST_PCT, getRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
+const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
 const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
@@ -153,6 +153,11 @@ const STARTING_RESOURCES = [
   { item_type: 'resource', item: 'Crystals_Nature', amount: 50  },
   { item_type: 'resource', item: 'Crystals_Frost',  amount: 50  },
   { item_type: 'resource', item: 'Crystals_Air',    amount: 50  },
+  // One Crossroad Sigil to start with. A player who picks the wrong branch on
+  // their very first fork should not have to clear a whole region before they
+  // are allowed to change their mind — the first mistake is the one made with
+  // the least information.
+  { item_type: 'token',    item: 'crossroad_sigil', amount: 1   },
 ];
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
@@ -901,9 +906,14 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
     // them, and fetching them here costs one extra parallel query instead of a
     // separate round-trip per screen.
     const player = await getPlayerByChatId(chat_id);
-    const [resources, trophies, structRows, roster, items] = await Promise.all([
+    const [resources, trophies, tokens, structRows, roster, items] = await Promise.all([
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.resource`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.trophy`),
+      // Tokens are their own item_type rather than a resource, because they must
+      // NOT appear in the resource bar — it is full, and a Sigil is not something
+      // you spend on a build. They surface only where they are used: a badge on
+      // the respec button, a button in the unit sheet.
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
       player
@@ -913,6 +923,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
     res.json({
       resources,
       trophies,
+      tokens,
       items,
       structures: structRows[0] || null,
       roster,
@@ -1897,6 +1908,57 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
   }
 });
 
+// Tome of Knowledge: pour a flat 100 XP into one unit and auto-level it if that
+// carries it over a threshold. The catch-up tool — a player switching to a fresh
+// branch late should be able to field the new unit beside their veterans instead
+// of re-grinding a whole army's worth of history.
+//
+// Deliberately NOT gated on the unit being new or low-level: the player decides
+// what needs catching up. The gate is supply — six tomes exist, all first-clear.
+router.post('/roster/tome', requireAuth, async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
+  try {
+    const [rosterRows, tokenRows] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token&item=eq.tome_of_knowledge`),
+    ]);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+    const tomeRow = tokenRows[0];
+    if (!tomeRow || Number(tomeRow.amount) < 1) {
+      return res.status(400).json({ error: 'No Tome of Knowledge to use', code: 'no_tome' });
+    }
+
+    const entry    = rosterRows[0];
+    const unitData = entry.unit_data || {};
+    // A fallen unit cannot be taught. Resurrect first — same rule the heal
+    // button follows, and for the same reason: the roster screen should not let
+    // a player quietly spend something on a corpse.
+    if (unitData.alive === false) return res.status(400).json({ error: 'Cannot use a Tome on a fallen unit — resurrect it first' });
+
+    await supabase(`/resources?id=eq.${tomeRow.id}`, {
+      method: 'PATCH', body: JSON.stringify({ amount: Number(tomeRow.amount) - 1 }) });
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: { ...unitData, current_xp: Number(unitData.current_xp ?? 0) + TOME_XP } }),
+    });
+
+    // Same auto-level pass the promo and post-battle paths use, so a unit the
+    // tome pushes over its threshold advances right away — including the hero,
+    // whose level applyAutoLevelUps caps at the throne's.
+    let autoLeveled = [];
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    const fresh = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,unit_data,is_hero`);
+    try { autoLeveled = await applyAutoLevelUps(fresh, structRows[0]?.buildings_data); }
+    catch (err) { console.error('tome auto level-up failed:', err.message); }
+
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    res.json({ success: true, xp: TOME_XP, roster: updated[0], tomes_left: Number(tomeRow.amount) - 1, auto_level_ups: autoLeveled });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.post('/roster/levelup', requireAuth, async (req, res) => {
   // target_unit_id is optional: only sent to break a tie between branches that
   // are all consistent with the building standing in the slot.
@@ -2058,7 +2120,17 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     // The target must be an offered sibling — same category, same tier. This is
     // the whole guard against respeccing into a higher tier for a quarter price.
     const options = getRespecOptions(faction, current.building_id);
-    const target  = options.find(o => o.id === building_id);
+    let target    = options.find(o => o.id === building_id);
+
+    // Failing that, the target may be across a fork. That is a different move
+    // with a different price: the ordinary cost AND a Crossroad Sigil, which
+    // cannot be bought. The tier check still holds — getCrossBranchRespecOptions
+    // only ever returns buildings standing at the tier this slot is already at.
+    let usedSigil = false;
+    if (!target) {
+      target = getCrossBranchRespecOptions(faction, current.building_id).find(o => o.id === building_id);
+      if (target) usedSigil = true;
+    }
     if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
 
     const cost = getRespecCost(faction, target.id, current.level);
@@ -2068,6 +2140,14 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
       const row = inventory.find(r => r.item === key);
       if (!row || Number(row.amount) < amount) return res.status(400).json({ error: `Not enough ${key}. Need ${amount}` });
     }
+    // Checked before anything is spent, so a player short a Sigil does not pay
+    // the gold and then get refused.
+    const sigilRow = usedSigil
+      ? inventory.find(r => r.item === 'crossroad_sigil' && r.item_type === 'token')
+      : null;
+    if (usedSigil && (!sigilRow || Number(sigilRow.amount) < 1)) {
+      return res.status(400).json({ error: 'A Crossroad Sigil is needed to respec across branches', code: 'no_sigil' });
+    }
     // Together, not one after another: these are independent rows, and a build
     // costing gold + two crystals was three sequential trips to Supabase before
     // the player saw anything happen.
@@ -2076,6 +2156,11 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
       const row = inventory.find(r => r.item === key);
       return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
     }));
+
+    if (sigilRow) {
+      await supabase(`/resources?id=eq.${sigilRow.id}`, {
+        method: 'PATCH', body: JSON.stringify({ amount: Number(sigilRow.amount) - 1 }) });
+    }
 
     buildings[slot] = { level: current.level, building_id: target.id };
     const updated = await supabase(`/structures?id=eq.${record.id}`, { method: 'PATCH', body: JSON.stringify({ buildings_data: buildings }) });
@@ -2101,7 +2186,7 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
         swappedUnit = { roster_id: entry.id, unit_id: newDef.id };
       }
     }
-    res.json({ structures: updated[0], cost, swapped_unit: swappedUnit });
+    res.json({ structures: updated[0], cost, swapped_unit: swappedUnit, used_sigil: usedSigil });
   } catch (err) {
     serverError(res, err);
   }
@@ -2872,6 +2957,22 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
           result.progress_unlocked = true;
           result.next_level        = level + 1;
+
+          // Tokens drop HERE and nowhere else — inside the branch that advances
+          // progress, which is the game's own definition of a first clear. A
+          // replay of a level already beaten never reaches this line, so the
+          // drops cannot be farmed. See FIRST_CLEAR_TOKENS in data/embark.js.
+          const tokenDrops = getFirstClearTokens(level);
+          if (tokenDrops) {
+            const tokenRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token`);
+            await Promise.all(Object.entries(tokenDrops).map(([item, amount]) => {
+              const row = tokenRows.find(r => r.item === item);
+              return row
+                ? supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) })
+                : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'token', item, amount }) });
+            }));
+            result.tokens_gained = tokenDrops;   // { crossroad_sigil: 1 }
+          }
         }
       }
     }

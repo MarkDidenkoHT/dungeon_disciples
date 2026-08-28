@@ -537,11 +537,61 @@ const FACTION_CRYSTAL_FOR_REGION = {
   grail_of_sorrow:     'Crystals_Death',
 };
 
+// Tokens, awarded on the FIRST clear of a level only - in every region, so the
+// table is keyed by level rather than repeated per region.
+//
+// First clear only is the whole design. These are the two things in the game a
+// player cannot grind for, and that is what makes spending one a decision. The
+// award site keys off progress advancing (see /battle/complete), which is
+// already the game's definition of "you had not done this before".
+//
+// Supply, at three regions of ten levels:
+//   Crossroad Sigil   3  (level 3 of each region) + 1 granted at registration
+//   Tome of Knowledge 6  (levels 6 and 9 of each region)
+const FIRST_CLEAR_TOKENS = {
+  3: { crossroad_sigil:   1 },
+  6: { tome_of_knowledge: 1 },
+  9: { tome_of_knowledge: 1 },
+};
+
+// XP a single Tome of Knowledge pours into one unit.
+const TOME_XP = 100;
+
+// What the two tokens ARE, for every screen that has to name one. Kept beside
+// the drop table rather than in data/items.js: tokens are not equipment, never
+// crafted, never equipped, never sold - the only things true of them are where
+// they come from and what they unlock, and both live here.
+//
+// `icon` is a glyph because no art exists yet; a screen can prefer `art` once a
+// file is dropped in at that path.
+const TOKEN_DEFS = {
+  crossroad_sigil: {
+    id:   'crossroad_sigil',
+    name: 'Crossroad Sigil',
+    icon: '✦',
+    art:  'assets/icons/recources/crossroad_sigil.png',
+    desc: 'Respec a building into a branch it did not come from, at the same tier. The normal respec cost still applies.',
+    where:'First clear of level 3 in any region.',
+  },
+  tome_of_knowledge: {
+    id:   'tome_of_knowledge',
+    name: 'Tome of Knowledge',
+    icon: '📖',
+    art:  'assets/icons/items/tome_of_knowledge.png',
+    desc: 'Grants 100 XP to a single unit.',
+    where:'First clear of levels 6 and 9 in any region.',
+  },
+};
+
+function getFirstClearTokens(level) {
+  return FIRST_CLEAR_TOKENS[level] || null;
+}
+
 function getFactionHomeRegion(faction) {
   const crystal = FACTION_CRYSTAL_FOR_REGION[faction];
   const regions = crystal ? getRegionsForMaterial(crystal) : [];
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };

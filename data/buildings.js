@@ -1154,6 +1154,59 @@ function getRespecOptions(faction, buildingId) {
   );
 }
 
+// Respec ACROSS a fork, which ordinary respec cannot do.
+//
+// getRespecOptions above only offers direct siblings — the other upgrades of the
+// building that leads here. That is the cheap, local swap, and most of the tree
+// has none: a branch that forks at tier 2 and then runs straight to tier 4
+// leaves its tier 3 and tier 4 buildings with no sibling at all, so a player who
+// took the wrong road at tier 2 could only get back by demolishing everything.
+//
+// This walks UP to the nearest real fork, then back DOWN every other branch,
+// collecting the buildings that sit at the SAME TIER as the one standing now.
+// Same tier because the unit keeps its XP and its place in the army — this
+// changes which road it took, not how far along it is.
+//
+// Charged a token rather than gold; see the Crossroad Sigil in routes/index.js.
+function getCrossBranchRespecOptions(faction, buildingId) {
+  const pools = BUILDING_POOLS[faction];
+  if (!pools) return [];
+  const current = getBuildingDef(faction, buildingId);
+  // The throne is the hero, chosen once at registration — it must never become
+  // another hero's line, by any route.
+  if (!current || current.category === 'throne') return [];
+  const pool = pools[current.category] || [];
+
+  const parentOf = id => pool.find(b => (b.upgrades || []).includes(id)) || null;
+
+  // Climb until an ancestor offers more than one road, remembering which road we
+  // came up so it can be excluded on the way back down.
+  let child  = current;
+  let fork   = parentOf(current.id);
+  const seen = new Set([current.id]);
+  while (fork && (fork.upgrades || []).length < 2) {
+    if (seen.has(fork.id)) return [];        // guards a cycle in the data
+    seen.add(fork.id);
+    child = fork;
+    fork  = parentOf(fork.id);
+  }
+  if (!fork) return [];                      // linear all the way up: no choice was ever made
+
+  // Everything reachable from the roads NOT taken.
+  const out  = [];
+  const walk = id => {
+    const b = pool.find(x => x.id === id);
+    if (!b || seen.has(b.id)) return;
+    seen.add(b.id);
+    if (b.tier === current.tier && b.unit_id) out.push(b);
+    for (const up of b.upgrades || []) walk(up);
+  };
+  for (const road of fork.upgrades || []) {
+    if (road !== child.id) walk(road);
+  }
+  return out;
+}
+
 // A percentage of a cost map, rounded up so a respec is never free.
 function scaleCost(cost, pct) {
   const out = {};
@@ -1508,6 +1561,7 @@ module.exports = {
   BUILDING_COSTS,
   RESPEC_COST_PCT,
   getRespecOptions,
+  getCrossBranchRespecOptions,
   getRespecCost,
   scaleCost,
 };

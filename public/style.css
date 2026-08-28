@@ -2992,6 +2992,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .heal-btn[disabled] { opacity: 0.6; cursor: default; }
 
+/* Tome of Knowledge, in the same overlay as Heal and Resurrect. Purple rather
+   than green or red: it is neither a repair nor an emergency, and reading as a
+   third healing button would be a lie about what it does. */
+.tome-btn {
+  background: linear-gradient(180deg,#7c3aed,#5b21b6);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  cursor: pointer;
+}
+.tome-btn[disabled] { opacity: 0.6; cursor: default; }
+
 .favor-btn {
 
   flex-direction: column;
@@ -6642,6 +6656,34 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .frame-action:disabled:active { transform: none; background-image: var(--img-nav); }
 
 .frame-action--inert { opacity: 0.22; pointer-events: none; }
+
+/* Crossroad Sigil count, pinned to the top-right corner of the respec button.
+   The button is the only place Sigils are ever mentioned, so the badge is doing
+   the whole job of telling the player they own any.
+
+   `position: absolute` needs the button to be a containing block; .frame-action
+   is not positioned, so it is made relative here rather than in its own rule,
+   which several other rules already override. Sits ABOVE the corner so it reads
+   as a count on the action, not as part of the arrow glyph. */
+.frame-action { position: relative; }
+.frame-action-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: linear-gradient(180deg,#7c3aed,#5b21b6);
+  border: 1px solid rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;   /* the whole button is the target, not the number */
+}
 
 
 .frame-action-hint-wrap {

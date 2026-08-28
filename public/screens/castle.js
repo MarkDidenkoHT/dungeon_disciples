@@ -123,6 +123,15 @@ const CASTLE_TEXT = {
   upgradeOpen: { en: 'Upgrade',                                ru: 'Улучшить' },
   demolish:    { en: 'Demolish',                               ru: 'Снести' },
   changeBranch:{ en: 'Change branch',                          ru: 'Сменить ветку' },
+  sigilName:   { en: 'Crossroad Sigil',                        ru: 'Печать перепутья' },
+  sigilMark:   { en: 'Crossroad Sigil required',               ru: 'Нужна печать перепутья' },
+  needSigil:   { en: 'You need a Crossroad Sigil to change to a different branch.',
+                 ru: 'Чтобы перейти на другую ветку, нужна печать перепутья.' },
+  tomeName:    { en: 'Tome of Knowledge',                      ru: 'Том знаний' },
+  tomeUse:     { en: 'Use Tome',                               ru: 'Том знаний' },
+  tomeConfirm: { en: 'Use a Tome of Knowledge on %s? It grants 100 XP.',
+                 ru: 'Использовать том знаний на %s? Он даёт 100 опыта.' },
+  tomeDone:    { en: '+100 XP',                                ru: '+100 опыта' },
   backToUnit:  { en: 'Back',                                   ru: 'Назад' },
   noOptions:   { en: 'Nothing to change',                      ru: 'Менять нечего' },
   close:       { en: 'Close',                                 ru: 'Закрыть' },
@@ -273,6 +282,7 @@ export function renderCastle(root, { player }) {
   let throneMaxLevel     = 5;
   let mercenaryBuildings = {};
   let trophyInventory    = [];
+  let tokenInventory     = [];
   let resourceInventory  = [];
   let respecCostPct      = 25;   // overwritten from /bootstrap
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -337,6 +347,7 @@ export function renderCastle(root, { player }) {
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     trophyInventory     = trophies || [];
+    tokenInventory      = boot.tokens || [];
     resourceInventory   = inventory || [];
     structuresRecord   = structures;
     rosterCount        = Array.isArray(roster) ? roster.length : 0;
@@ -369,6 +380,7 @@ export function renderCastle(root, { player }) {
     if (knownStructures) bootstrapCache.patch(() => ({ structures: knownStructures }));
     structuresRecord = knownStructures || boot.structures;
     trophyInventory  = boot.trophies || [];
+    tokenInventory   = boot.tokens || [];
     resourceInventory = boot.resources || [];
     rosterCache      = boot.roster || [];
     rosterCount      = rosterCache.length;
@@ -458,6 +470,46 @@ export function renderCastle(root, { player }) {
     return pool.filter(b => b.id !== current.id && b.tier != null && b.tier === current.tier && b.unit_id);
   }
 
+  // The Crossroad Sigil options: same-tier buildings reachable down the OTHER
+  // roads out of the nearest fork above this one. Most of the tree has no sibling
+  // at all — a branch that forks at tier 2 and then runs straight leaves its tier
+  // 3 and 4 buildings with nothing to respec into — so without this a wrong turn
+  // could only be undone by demolishing everything below it.
+  //
+  // Mirrors getCrossBranchRespecOptions in data/buildings.js, which is what
+  // /structures/respec validates against; this copy only decides what is OFFERED,
+  // and the server is what charges the Sigil.
+  function crossBranchOptionsFor(buildingId) {
+    const pools = buildingPools?.[player.faction];
+    if (!pools) return [];
+    const current = getBuildingDef(player.faction, buildingId);
+    if (!current || current.category === 'throne') return [];
+    const pool = pools[current.category] || [];
+    const parentOf = id => pool.find(b => (b.upgrades || []).includes(id)) || null;
+
+    let child = current;
+    let fork  = parentOf(current.id);
+    const seen = new Set([current.id]);
+    while (fork && (fork.upgrades || []).length < 2) {
+      if (seen.has(fork.id)) return [];
+      seen.add(fork.id);
+      child = fork;
+      fork  = parentOf(fork.id);
+    }
+    if (!fork) return [];
+
+    const out = [];
+    const walk = id => {
+      const b = pool.find(x => x.id === id);
+      if (!b || seen.has(b.id)) return;
+      seen.add(b.id);
+      if (b.tier === current.tier && b.unit_id) out.push(b);
+      for (const up of b.upgrades || []) walk(up);
+    };
+    for (const road of fork.upgrades || []) if (road !== child.id) walk(road);
+    return out;
+  }
+
   function respecCostFor(buildingId, level) {
     const def = getBuildingDef(player.faction, buildingId);
     if (!def) return {};
@@ -484,6 +536,14 @@ export function renderCastle(root, { player }) {
     const key = item === 'gold' ? 'Gold' : item;
     const row = resourceInventory.find(r => r.item === key)
              || trophyInventory.find(r => r.item === key);
+    return row ? Number(row.amount) : 0;
+  }
+
+  // Tokens are their own item_type and are NOT searched by amountOf — nothing is
+  // ever PRICED in them, so they must not turn up as a payable cost. They are a
+  // separate gate, asked about by name.
+  function tokenCount(id) {
+    const row = tokenInventory.find(r => r.item === id);
     return row ? Number(row.amount) : 0;
   }
 
@@ -1691,7 +1751,21 @@ export function renderCastle(root, { player }) {
           ${CASTLE_TEXT.heal[castleLang]} (${spellCostLabel(healSpell)})
         </button>` : '';
 
-    if (!favorHtml && !resurrectHtml && !healHtml) return '';
+    // The Tome sits in the same overlay as Heal and Resurrect because it answers
+    // the same question — "this unit is behind, fix it" — and because that is the
+    // only place a player is already looking at ONE unit and deciding to spend on
+    // it. Unlike those two it is shown ONLY when tomes are held: a button that is
+    // permanently unaffordable teaches nothing, and unlike a spell there is no
+    // shop to send anyone to.
+    //
+    // A dead unit is refused by the server, so it is not offered here either.
+    const tomesHeld = tokenCount('tome_of_knowledge');
+    const tomeHtml  = alive && tomesHeld > 0 ? `
+        <button class="tome-btn" data-roster-id="${rosterUnit.id}">
+          ${CASTLE_TEXT.tomeUse[castleLang]} (${tomesHeld})
+        </button>` : '';
+
+    if (!favorHtml && !resurrectHtml && !healHtml && !tomeHtml) return '';
     // ONE overlay holding favor + spell, stacked, so favor sits directly above
     // the spell button instead of the two being positioned independently.
     // A dead unit's button owns the middle of the card; a wounded one is still
@@ -1701,6 +1775,7 @@ export function renderCastle(root, { player }) {
         ${favorHtml}
         ${resurrectHtml}
         ${healHtml}
+        ${tomeHtml}
       </div>`;
   }
 
@@ -1943,7 +2018,12 @@ export function renderCastle(root, { player }) {
     // same question upgrading asks (what does this slot become?), so it belongs
     // in the same place, and Deconstruct is left holding only Demolish.
     const respecOptions = respecOptionsFor(state.building_id) || [];
-    const canRespec     = respecOptions.length > 0;
+    // Offered in the SAME list as free siblings, marked, and priced with the
+    // Sigil on top. A separate tab would hide that these are the same decision —
+    // "what does this slot become?" — asked one fork higher up.
+    const sigilOptions  = crossBranchOptionsFor(state.building_id) || [];
+    const sigilsHeld    = tokenCount('crossroad_sigil');
+    const canRespec     = respecOptions.length > 0 || sigilOptions.length > 0;
 
     // Paths are keyed by the unit they lead to — except a layer-2 building
     // levels IN PLACE and leads to no unit at all, so `unit_id` is null and
@@ -1969,14 +2049,28 @@ export function renderCastle(root, { player }) {
     // segment is only a filter. `kind` is the one thing the confirm needs.
     function choicesFor(segment) {
       if (segment === 'respec') {
-        return respecOptions.map(o => ({
-          kind: 'respec',
-          key: o.id,
-          buildingId: o.id,
-          unit: getUnitByUnitId(o.unit_id),
-          def: o,
-          cost: respecCostFor(o.id, slotLevel),
-        }));
+        return [
+          ...respecOptions.map(o => ({
+            kind: 'respec',
+            key: o.id,
+            buildingId: o.id,
+            unit: getUnitByUnitId(o.unit_id),
+            def: o,
+            cost: respecCostFor(o.id, slotLevel),
+          })),
+          // A Sigil option costs the same resources PLUS one token, so it can
+          // still be refused for the ordinary reason (no gold) as well as the
+          // new one (no Sigil). Both are checked at confirm.
+          ...sigilOptions.map(o => ({
+            kind: 'respec',
+            key: o.id,
+            buildingId: o.id,
+            unit: getUnitByUnitId(o.unit_id),
+            def: o,
+            cost: respecCostFor(o.id, slotLevel),
+            needsSigil: true,
+          })),
+        ];
       }
       return (paths || []).map(pth => ({
         kind: 'advance',
@@ -1994,8 +2088,13 @@ export function renderCastle(root, { player }) {
       }));
     }
 
-    const labelForChoice = c =>
-      unitName(c.unit) || levelLabelFor(c.def, c.kind === 'respec' ? slotLevel : nextLevel);
+    // A Sigil option is marked in the label itself. It sits in the same list as
+    // the free sibling swaps, and without the mark the two are indistinguishable
+    // until the confirm refuses one of them.
+    const labelForChoice = c => {
+      const base = unitName(c.unit) || levelLabelFor(c.def, c.kind === 'respec' ? slotLevel : nextLevel);
+      return c.needsSigil ? `✦ ${base}` : base;
+    };
 
     // Why the arrow is dim, in the player's terms. A unit with no build to do
     // but a tier still ahead is waiting on XP, not finished — two different
@@ -2036,7 +2135,15 @@ export function renderCastle(root, { player }) {
             <button class="frame-action ${canRespec ? '' : 'frame-action--inert'}"
                     id="slot-to-respec" ${canRespec ? '' : 'disabled'}
                     title="${CASTLE_TEXT.changeBranch[castleLang]}"
-                    aria-label="${CASTLE_TEXT.changeBranch[castleLang]}">⇄</button>
+                    aria-label="${CASTLE_TEXT.changeBranch[castleLang]}">⇄${
+              // How the player learns Sigils exist at all: a count on the very
+              // button they are spent from, shown only when they hold some AND
+              // this slot could actually use one. There is no room in the
+              // resource bar and they do not deserve a screen of their own.
+              sigilsHeld > 0 && sigilOptions.length
+                ? `<span class="frame-action-badge" title="${CASTLE_TEXT.sigilName[castleLang]}">${sigilsHeld}</span>`
+                : ''
+            }</button>
             <button class="frame-action frame-action--deconstruct" id="slot-deconstruct"
                     title="${CASTLE_TEXT.demolish[castleLang]}"
                     aria-label="${CASTLE_TEXT.demolish[castleLang]}">⛏</button>
@@ -2167,6 +2274,10 @@ export function renderCastle(root, { player }) {
       if (!c) return;
 
       if (c.kind === 'respec') {
+        if (c.needsSigil && tokenCount('crossroad_sigil') < 1) {
+          alert(CASTLE_TEXT.needSigil[castleLang]);
+          return;
+        }
         if (!canAffordCost(c.cost)) {
           alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(c.cost)}`);
           return;
@@ -2251,6 +2362,9 @@ export function renderCastle(root, { player }) {
 
       const favorBtn = e.target.closest('.favor-btn:not([disabled])');
       if (favorBtn) { runFavor(slot, favorBtn.dataset.rosterId); return; }
+
+      const tomeBtn = e.target.closest('.tome-btn');
+      if (tomeBtn) { useTome(tomeBtn.dataset.rosterId, rosterUnit); return; }
 
       const resurrectBtn = e.target.closest('.resurrect-btn');
       const healBtn      = e.target.closest('.heal-btn');
@@ -2700,6 +2814,22 @@ export function renderCastle(root, { player }) {
     });
   }
 
+
+  // Six of these exist in the whole game. Confirmed before spending, by name, so
+  // it cannot go on the wrong unit with one stray tap on a crowded card.
+  async function useTome(roster_id, rosterUnit) {
+    const name = unitName(getUnitByUnitId(rosterUnit?.unit_data?.unit_id)) || '';
+    if (!confirm(CASTLE_TEXT.tomeConfirm[castleLang].replace('%s', name))) return;
+    try {
+      await api('/roster/tome', { chat_id: player.chat_id, roster_id });
+      closeModal();
+      // The XP may have levelled the unit, which changes the building track and
+      // what the slot can now build — the same reason a build reloads.
+      await reloadFromBootstrap();
+    } catch (err) {
+      alert(err.message || 'Could not use the Tome');
+    }
+  }
 
   async function performRespec(slot, building_id) {
     try {

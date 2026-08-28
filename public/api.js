@@ -177,6 +177,13 @@ export const itemsCache = {
   get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.items || []); },
   invalidate()  { bootstrapCache.invalidate(); },
 };
+// Tokens (Crossroad Sigil, Tome of Knowledge). Deliberately NOT folded into
+// resourceCache: they must never reach the resource bar, which has a fixed seven
+// slots and is already full. They surface only where they are spent.
+export const tokensCache = {
+  get(chat_id)  { return bootstrapCache.get(chat_id).then(b => b.tokens || []); },
+  invalidate()  { bootstrapCache.invalidate(); },
+};
 
 export function setActiveNav(screen) {
   document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => {
