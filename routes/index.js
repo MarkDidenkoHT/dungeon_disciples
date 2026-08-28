@@ -106,25 +106,60 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 // through putting it on.
 const STARTING_ITEM_KEYS = ['padded_armor'];
 
-// Shapes an ITEM_DEFS entry into an /items row. The item_stats snapshot is what
-// equip/craft read back, so this must stay the single source of that shape.
+// An owned item is IDENTITY ONLY: which item it is, and nothing about what it
+// does. Stats live in data/items.js and are attached on the way out, by
+// hydrateItems below.
+//
+// This used to write a full snapshot of the definition into the item_stats
+// jsonb, which meant a balance change in data/items.js only affected items
+// minted AFTER it. Every item already in a player's stash kept the numbers it
+// was born with, forever, and there is no migration that can fix that in
+// general — two players holding "the same" sword genuinely had different swords.
+// The snapshot had also drifted: it never carried `blocked_tags` or `rarity`, so
+// equip restrictions read from a stored item silently disagreed with the ones
+// read from the catalog.
+//
+// `key` stays the column it always was (`item_stats.key`) rather than becoming a
+// new `item_key` column, so no schema change and no backfill is needed — old fat
+// rows already carry the key, and everything else in them is now ignored.
 function makeItemRow(playerId, itemKey) {
   const def = ITEM_DEFS[itemKey];
   if (!def) return null;
   return {
     player_id:  playerId,
+    // Denormalised for legibility when reading the table by hand; the name that
+    // reaches the client comes from the catalog, not from here.
     item_name:  def.name,
-    item_stats: {
-      key:          def.key,
-      faction:      def.faction,
-      tag_required: def.tag_required,
-      adds_tag:     def.adds_tag,
-      stat_mods:    def.stat_mods,
-      passive:      def.passive,
-      icon:         def.icon,
-      unique:       def.unique ?? false,
-    },
+    item_stats: { key: def.key },
   };
+}
+
+// The key an /items row is FOR. `icon` is the fallback because the oldest rows
+// predate `key` and were only ever identifiable by their icon.
+function itemKeyOfRow(row) {
+  return row?.item_stats?.key || row?.item_stats?.icon || null;
+}
+
+// Replace each row's stored item_stats with the live definition. Every read of
+// the items table goes through here, so nothing downstream can see a stale
+// snapshot — the call sites keep reading `item_stats` exactly as before and get
+// current numbers for free.
+//
+// A row whose key is no longer in ITEM_DEFS keeps whatever it stored. Dropping
+// it instead would delete a player's item because a designer renamed a key, and
+// returning it bare would strip the stats off gear that is currently equipped.
+function hydrateItems(rows) {
+  if (!Array.isArray(rows)) return rows;
+  return rows.map(row => {
+    const def = ITEM_DEFS[itemKeyOfRow(row)];
+    if (!def) return row;
+    return { ...row, item_name: def.name, item_stats: def };
+  });
+}
+
+// Every items READ goes through this; writes still call supabase directly.
+async function fetchItems(path) {
+  return hydrateItems(await supabase(path));
 }
 
 // Sized against data/buildings.js AND the throne track, because the throne is
@@ -274,7 +309,7 @@ async function getItemsByRosterIds(rosterIds) {
   const ids = [...new Set((rosterIds || []).map(String))].filter(Boolean);
   if (!ids.length) return {};
   const orFilter = ids.map(id => `equipped_by.eq.${id}`).join(',');
-  const rows = await supabase(`/items?or=(${orFilter})&select=id,item_name,item_stats,equipped_by`);
+  const rows = await fetchItems(`/items?or=(${orFilter})&select=id,item_name,item_stats,equipped_by`);
   const map = {};
   for (const row of rows) map[String(row.equipped_by)] = row;
   return map;
@@ -917,7 +952,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
       player
-        ? supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
+        ? fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
         : Promise.resolve([]),
     ]);
     res.json({
@@ -1402,7 +1437,7 @@ async function errandRosterRows(chat_id, player) {
   const [roster, items] = await Promise.all([
     supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
     player?.id
-      ? supabase(`/items?player_id=eq.${player.id}&select=item_stats,equipped_by`)
+      ? fetchItems(`/items?player_id=eq.${player.id}&select=item_stats,equipped_by`)
       : Promise.resolve([]),
   ]);
   const byRosterId = new Map();
@@ -2214,7 +2249,7 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
     // Strip gear first: an item whose owner is deleted would otherwise stay
     // flagged as equipped by a roster id that no longer exists.
     for (const entry of doomed) {
-      const items = await supabase(`/items?equipped_by=eq.${encodeURIComponent(entry.id)}&select=id`);
+      const items = await fetchItems(`/items?equipped_by=eq.${encodeURIComponent(entry.id)}&select=id`);
       for (const item of items) await unequipItemFromRosterUnit(item, entry.id);
       await supabase(`/roster?id=eq.${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
     }
@@ -3184,7 +3219,7 @@ router.get('/items', requireAuth, async (req, res) => {
   try {
     const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
-    const rows = await supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
+    const rows = await fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
     res.json(rows);
   } catch (err) {
     serverError(res, err);
@@ -3199,7 +3234,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const [itemRows, rosterRows] = await Promise.all([
-      supabase(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      fetchItems(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
       supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
     ]);
     if (!itemRows.length)   return res.status(404).json({ error: 'Item not found' });
@@ -3233,7 +3268,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
     }
 
     // Each character can only equip one item at a time - unequip whatever this unit already has on.
-    const currentlyEquipped = await supabase(`/items?equipped_by=eq.${encodeURIComponent(roster_id)}&select=id,item_stats`);
+    const currentlyEquipped = await fetchItems(`/items?equipped_by=eq.${encodeURIComponent(roster_id)}&select=id,item_stats`);
     for (const old of currentlyEquipped) {
       if (String(old.id) === String(item_id)) continue;
       await unequipItemFromRosterUnit(old, roster_id);
@@ -3245,7 +3280,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
 
     const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`),
-      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
     // This SELECT can answer from a replica that has not caught up with the
@@ -3274,7 +3309,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
     const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const itemRows = await supabase(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
+    const itemRows = await fetchItems(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`);
     if (!itemRows.length) return res.status(404).json({ error: 'Item not found' });
     const item = itemRows[0];
     if (!item.equipped_by) return res.status(400).json({ error: 'Item is not equipped' });
@@ -3283,7 +3318,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
 
     const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero`),
-      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
     // Same read-after-write reconciliation as /items/equip: the replica can
@@ -3329,7 +3364,7 @@ router.post('/items/craft', requireAuth, async (req, res) => {
 
     const [inventoryRows, ownedItems] = await Promise.all([
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
-      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
     // Unique items are one-per-player: refuse a second copy (equipped or not).
@@ -3375,7 +3410,7 @@ router.post('/items/craft', requireAuth, async (req, res) => {
     });
 
     const [readItems, updatedResources] = await Promise.all([
-      supabase(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
+      fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
 
