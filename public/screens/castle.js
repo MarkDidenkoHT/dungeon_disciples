@@ -1437,6 +1437,12 @@ export function renderCastle(root, { player }) {
       wait:   true,
     },
     {
+      id: 'unit_fallen',
+      ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
+      target: () => nodeForSlot(slotOfUnit(deadTutorialUnit())),
+      onTap:  () => afterSheetSettles(runOnboarding),
+    },
+    {
       id: 'spell_revive',
       awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),

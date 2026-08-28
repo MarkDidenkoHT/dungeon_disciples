@@ -120,14 +120,24 @@ const TUTORIAL_STEPS = {
       text: 'Иметь бойца и вести его в бой — не одно и то же. Герой сражается всегда, но каждый спутник стоит верности, и этот счётчик — ваш предел: крупные бойцы стоят двух. Стройте широко, но выбирайте, кто выступит; повышайте уровень героя, чтобы брать с собой больше воинов.',
     },
   },
+  unit_fallen: {
+    en: {
+      title: 'A Follower Has Fallen',
+      text: 'One of your own did not survive your absence. A fallen unit stays fallen — it cannot march, and it cannot be healed. Tap them to see what can be done.',
+    },
+    ru: {
+      title: 'Павший спутник',
+      text: 'Один из ваших не пережил вашего отсутствия. Павший боец так и останется лежать: он не пойдёт в поход и его нельзя исцелить. Коснитесь его, чтобы увидеть, что можно сделать.',
+    },
+  },
   spell_revive: {
     en: {
       title: 'A Fallen Ally',
-      text: 'One of your recruits lies fallen. Your Revival spell can bring them back — tap Resurrect to raise them.',
+      text: 'Death is not the end while you can pay for it. Your Revival spell raises them for crystals — tap Resurrect. They come back alive, but barely.',
     },
     ru: {
       title: 'Павший союзник',
-      text: 'Один из ваших бойцов пал. Заклинание воскрешения вернёт его — нажмите «Воскресить», чтобы поднять его.',
+      text: 'Смерть не конец, пока есть чем платить. Заклинание воскрешения поднимет его за кристаллы — нажмите «Воскресить». Он вернётся живым, но еле-еле.',
     },
   },
   // The regen line is the important half. A player who never learns that wounds
