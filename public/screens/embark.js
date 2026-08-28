@@ -7,6 +7,7 @@ import { assetUrl } from '../asset_base.js';
 // presentation only; the level tables live in data/embark.js and are the single
 // source of truth for how many pips a region can ever show.
 import { REGIONS as REGION_DEFS } from '../../data/embark.js';
+import { MERCENARY_BUILDINGS } from '../../data/buildings.js';
 
 const LEVEL_COUNTS = Object.fromEntries(
   REGION_DEFS.map(r => [r.id, Object.keys(r.difficulties || {}).length]));
@@ -26,6 +27,7 @@ const UI_TEXT = {
   eventBadge:      { en: 'Event',                ru: 'Событие' },
   eventEnds:       { en: 'Ends in',              ru: 'Осталось' },
   eventDrops:      { en: 'Drops during the event', ru: 'Выпадает во время события' },
+  eventUnlocks: { en: 'Unlocks', ru: 'Открывает' },
   eventBonus:      { en: 'Bonus',                ru: 'Бонус' },
   eventLevel:      { en: 'Level',                ru: 'Уровень' },
   eventXp:         { en: 'XP',                   ru: 'Опыт' },
@@ -183,6 +185,72 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       </button>`;
   }
 
+  // Pretty name for a trophy id. Trophies have no def table of their own, so the
+  // id IS the name — bloodied_brooch reads as Bloodied Brooch.
+  function trophyLabel(id) {
+    return String(id).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // What this event's trophy is FOR. A drop table on its own tells a player what
+  // falls out, not why they should care — the brooch exists to raise one
+  // mercenary, and that is the reason to run the event before it closes.
+  function eventPayoffHtml(ev) {
+    if (!ev?.trophy) return '';
+    let merc = null;
+    for (const pool of Object.values(MERCENARY_BUILDINGS || {})) {
+      const hit = (pool || []).find(b => b.cost && b.cost[ev.trophy]);
+      if (hit) { merc = hit; break; }
+    }
+    if (!merc) return '';
+    const label = (L === 'ru' ? merc.label_ru : merc.label) || merc.label;
+    const cost  = Object.entries(merc.cost)
+      .map(([id, amt]) => `${trophyLabel(id)} \u00d7${amt}`).join(' + ');
+    return `
+      <div class="embark-event-section-label">${UI_TEXT.eventUnlocks[L]}</div>
+      <div class="embark-event-payoff">
+        <img class="embark-event-payoff-art"
+             src="${assetUrl(`/assets/character_portraits/p_${merc.unit_id}.png`)}"
+             alt="" onerror="this.style.display='none'">
+        <div class="embark-event-payoff-text">
+          <span class="embark-event-payoff-name">${label}</span>
+          <span class="embark-event-payoff-cost">${cost}</span>
+        </div>
+      </div>`;
+  }
+
+  // Pretty name for a trophy id. Trophies have no def table of their own, so the
+  // id IS the name — bloodied_brooch reads as Bloodied Brooch.
+  function trophyLabel(id) {
+    return String(id).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // What this event's trophy is FOR. A drop table on its own tells a player what
+  // falls out, not why they should care — the brooch exists to raise one
+  // mercenary, and that is the reason to run the event before it closes.
+  function eventPayoffHtml(ev) {
+    if (!ev?.trophy) return '';
+    let merc = null;
+    for (const pool of Object.values(MERCENARY_BUILDINGS || {})) {
+      const hit = (pool || []).find(b => b.cost && b.cost[ev.trophy]);
+      if (hit) { merc = hit; break; }
+    }
+    if (!merc) return '';
+    const label = (L === 'ru' ? merc.label_ru : merc.label) || merc.label;
+    const cost  = Object.entries(merc.cost)
+      .map(([id, amt]) => `${trophyLabel(id)} \u00d7${amt}`).join(' + ');
+    return `
+      <div class="embark-event-section-label">${UI_TEXT.eventUnlocks[L]}</div>
+      <div class="embark-event-payoff">
+        <img class="embark-event-payoff-art"
+             src="${assetUrl(`/assets/character_portraits/p_${merc.unit_id}.png`)}"
+             alt="" onerror="this.style.display='none'">
+        <div class="embark-event-payoff-text">
+          <span class="embark-event-payoff-name">${label}</span>
+          <span class="embark-event-payoff-cost">${cost}</span>
+        </div>
+      </div>`;
+  }
+
   function openEventSheet(regionId) {
     const ev = activeEvent();
     if (!ev) return;
@@ -190,16 +258,32 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
 
     // What drops where, level by level. Only this region's rows — the badge was
     // tapped on a specific card and that is the question being asked.
+    //
+    // Laid out as one column per level rather than a row per level: the levels
+    // are the axis a player is scanning ("how deep do I have to go?"), and at
+    // three or four of them the columns fit a phone without scrolling.
     const drops = ev.drops?.[regionId] || {};
-    const dropRows = Object.entries(drops)
-      .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([lvl, items]) => `
-        <div class="event-drop-row">
-          <span class="event-drop-level">${UI_TEXT.eventLevel[L]} ${lvl}</span>
-          <span class="event-drop-items">${Object.entries(items)
-            .map(([id, amt]) => `<span class="event-drop-item">${id.replace(/_/g, ' ')} ×${amt}</span>`)
-            .join('')}</span>
-        </div>`).join('');
+    const levels = Object.keys(drops).sort((a, b) => Number(a) - Number(b));
+    const dropTable = levels.length ? `
+      <div class="embark-drop-table">
+        <table class="embark-drop-grid">
+          <thead>
+            <tr>${levels.map(lvl =>
+              `<th>${UI_TEXT.eventLevel[L]} ${lvl}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            <tr>${levels.map(lvl => `
+              <td>${Object.entries(drops[lvl] || {}).map(([id, amt]) => `
+                <span class="embark-drop-pill" title="${trophyLabel(id)}">
+                  <img class="embark-drop-icon"
+                       src="${assetUrl(`/assets/icons/recources/${id}.png`)}"
+                       alt="${trophyLabel(id)}"
+                       onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'embark-drop-icon-fallback',textContent:'${trophyLabel(id)}'}))">
+                  <span class="embark-drop-amt">\u00d7${amt}</span>
+                </span>`).join('')}</td>`).join('')}</tr>
+          </tbody>
+        </table>
+      </div>` : '';
 
     // Global bonuses and this region's own, listed separately so the player can
     // see that they stack rather than replace.
@@ -208,28 +292,55 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       if (src?.xp_pct)      bits.push(`+${src.xp_pct}% ${UI_TEXT.eventXp[L]}`);
       if (src?.gold_pct)    bits.push(`+${src.gold_pct}% ${UI_TEXT.eventGold[L]}`);
       if (src?.crystal_pct) bits.push(`+${src.crystal_pct}% ${UI_TEXT.eventCrystals[L]}`);
-      return bits.length ? `<div class="event-bonus-row"><span>${label}</span><span>${bits.join(', ')}</span></div>` : '';
+      return bits.length ? `<div class="embark-bonus-row"><span>${label}</span><span class="embark-bonus-value">${bits.join(', ')}</span></div>` : '';
     };
     const bonusHtml = pctRow(ev.bonus, UI_TEXT.eventEverywhere[L])
                     + pctRow(ev.bonus?.regions?.[regionId], rLabel(REGIONS.find(r => r.id === regionId) || {}) || regionId);
 
-    openModal(ev.name || UI_TEXT.eventBadge[L], `
-      <div class="event-sheet" style="--event-glow:${glow}">
-        <img class="event-sheet-icon" src="${assetUrl(`/assets/icons/events/${eventIconKey(ev)}.png`)}"
+    const desc = eventDescription(ev);
+    openEventModal(ev.name || UI_TEXT.eventBadge[L], `
+      <div class="embark-event-sheet" style="--embark-event-glow:${glow}">
+        <img class="embark-event-icon"
+             src="${assetUrl(`/assets/icons/events/${eventIconKey(ev)}.png`)}"
              alt="" onerror="this.style.display='none'">
-        ${eventDescription(ev) ? `<p class="event-sheet-desc">${eventDescription(ev)}</p>` : ''}
-        <div class="event-sheet-ends">${eventEndsInText()}</div>
-        ${dropRows ? `<div class="event-section-label">${UI_TEXT.eventDrops[L]}</div>${dropRows}` : ''}
-        ${bonusHtml ? `<div class="event-section-label">${UI_TEXT.eventBonus[L]}</div>${bonusHtml}` : ''}
-      </div>`, { variant: 'event' });
+        ${desc ? `<p class="embark-event-desc">${desc}</p>` : ''}
+        <div class="embark-event-ends">${eventEndsInText()}</div>
+        ${dropTable ? `<div class="embark-event-section-label">${UI_TEXT.eventDrops[L]}</div>${dropTable}` : ''}
+        ${eventPayoffHtml(ev)}
+        ${bonusHtml ? `<div class="embark-event-section-label">${UI_TEXT.eventBonus[L]}</div>${bonusHtml}` : ''}
+      </div>`);
+  }
+
+  // The event gets its OWN overlay, built on demand and reused. It deliberately
+  // shares no class name with the screen's .modal-overlay: that one is a bottom
+  // sheet for blocking flows (reconnect, coming-soon), and every attempt to
+  // style the event through it fought those rules.
+  let _eventOverlay = null;
+  function openEventModal(title, bodyHtml) {
+    if (!_eventOverlay) {
+      _eventOverlay = document.createElement('div');
+      _eventOverlay.className = 'embark-modal-overlay embark-modal-overlay--event hidden';
+      _eventOverlay.innerHTML = `
+        <div class="embark-modal">
+          <div class="embark-modal-header">
+            <span class="embark-modal-title"></span>
+            <button class="embark-modal-close" aria-label="Close">\u2715</button>
+          </div>
+          <div class="embark-modal-body"></div>
+        </div>`;
+      const close = () => _eventOverlay.classList.add('hidden');
+      _eventOverlay.querySelector('.embark-modal-close').addEventListener('click', close);
+      _eventOverlay.addEventListener('click', e => { if (e.target === _eventOverlay) close(); });
+      root.appendChild(_eventOverlay);
+    }
+    _eventOverlay.querySelector('.embark-modal-title').textContent = title;
+    _eventOverlay.querySelector('.embark-modal-body').innerHTML = bodyHtml;
+    _eventOverlay.classList.remove('hidden');
   }
 
   root.innerHTML = `
     <div class="screen screen-embark">
       <main class="embark-main">
-        <div class="embark-header">
-          <h2>${UI_TEXT.selectRegion[L]}</h2>
-        </div>
         <div class="embark-regions-grid" id="embark-regions">
           <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
         </div>
@@ -255,15 +366,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   const modalTitle    = root.querySelector('#modal-title');
   const modalCloseBtn = root.querySelector('#modal-close');
 
-  // `variant` puts a second class on the overlay so a caller can be styled
-  // independently. The shared .modal-overlay is a bottom sheet, which is right
-  // for the blocking flows this screen uses it for (reconnect, coming-soon) and
-  // wrong for the event card — a small panel about a badge in the corner should
-  // not slide up out of the floor of a desktop-sized screen.
-  function openModal(title, bodyHtml, { closable = true, variant = null } = {}) {
+  function openModal(title, bodyHtml, { closable = true } = {}) {
     if (!overlay || !modalBody || !modalTitle) return;
-    overlay.classList.remove('modal-overlay--event');
-    if (variant) overlay.classList.add(`modal-overlay--${variant}`);
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
     modalClosable = closable;
@@ -277,7 +381,6 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
 
   function closeModal(force = false) {
     if (!overlay || (!modalClosable && !force)) return;
-    overlay.classList.remove('modal-overlay--event');
     overlay.classList.add('hidden');
     document.body.style.overflow = '';
     modalClosable = true;

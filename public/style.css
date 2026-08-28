@@ -7208,52 +7208,208 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .embark-event-badge { animation: none; }
 }
 
-/* The event panel is its OWN modal, not the shared bottom sheet. It is opened
-   from a small badge in a card's corner and holds a paragraph and two short
-   lists, so it is a centred card capped to a readable width — on a desktop-sized
-   screen the shared sheet slid a nearly empty full-width panel up from the floor
-   for this. */
-.modal-overlay--event {
+/* ── Event panel ───────────────────────────────────────────────────────────
+   Its own overlay and its own class names. The screen's .modal-overlay is a
+   bottom sheet built for blocking flows (reconnect, coming-soon), and an event
+   opened from a badge in a card's corner is not one — it is a small centred
+   card. Styling it through the shared class meant fighting those rules. */
+.embark-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
 }
-.modal-overlay--event .modal {
-  width: min(420px, 100%);
-  max-height: min(80vh, 680px);
-  margin: 0;
+.embark-modal-overlay.hidden { display: none; }
+
+.embark-modal {
+  width: 360px;
+  max-width: 100%;
+  /* Capped, and scrolled INSIDE rather than allowed to grow. The drop table and
+     the bonus rows come from event data, so the panel's height is not something
+     this file can know in advance. */
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: #1c1c22;
+  border: 1px solid #3a3a44;
   border-radius: 14px;
-  border: 1px solid var(--event-glow, var(--accent));
-  box-shadow: 0 0 28px rgba(0, 0, 0, 0.7);
-  animation: event-modal-in 160ms ease-out;
-}
-@keyframes event-modal-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .modal-overlay--event .modal { animation: none; }
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
-.event-sheet { display: flex; flex-direction: column; gap: 10px; }
+.embark-modal-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 16px 20px;
+}
+.embark-modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #f2e9e0;
+}
+.embark-modal-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: #d8a53e;
+  color: #1c1c22;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.embark-modal-close:active { transform: scale(0.96); }
 
-/* The same art as the badge, so the panel is visibly the thing that was tapped. */
-.event-sheet-icon {
-  width: 84px;
-  height: 84px;
-  align-self: center;
+.embark-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+}
+
+.embark-event-icon {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 4px auto 18px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--event-glow, var(--accent));
-  box-shadow: 0 0 18px var(--event-glow, var(--accent));
+  border: 2px solid var(--embark-event-glow, #8b1a1a);
+  box-shadow: 0 0 18px var(--embark-event-glow, #8b1a1a);
 }
-.event-sheet-desc {
-  margin: 0;
+.embark-event-desc {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #a8a5ac;
   text-align: center;
-  color: var(--muted);
-  font-size: 0.86rem;
-  line-height: 1.45;
 }
+.embark-event-ends {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 22px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid #7a2222;
+  color: #e0716f;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.embark-event-section-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7c7a82;
+  margin: 0 0 10px;
+}
+.embark-event-section-label + .embark-drop-table { margin-bottom: 22px; }
+
+.embark-drop-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px;
+  table-layout: fixed;
+}
+.embark-drop-grid th {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c9c6cf;
+  padding-bottom: 8px;
+  text-align: center;
+}
+.embark-drop-grid td {
+  background: #26262e;
+  border: 1px solid #37363f;
+  border-radius: 10px;
+  padding: 10px 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+.embark-drop-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.embark-drop-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+}
+/* Stands in for the art when a trophy has no icon file yet. */
+.embark-drop-icon-fallback {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #c9c6cf;
+}
+.embark-drop-amt {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #d8a53e;
+  line-height: 1;
+}
+
+/* What the trophy is actually for. */
+.embark-event-payoff {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 10px;
+  background: #26262e;
+  border: 1px solid #37363f;
+  border-radius: 10px;
+}
+.embark-event-payoff-art {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--embark-event-glow, #8b1a1a);
+}
+.embark-event-payoff-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.embark-event-payoff-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e4e1e8;
+}
+.embark-event-payoff-cost {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #d8a53e;
+}
+
+.embark-bonus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 2px;
+  border-top: 1px solid #2d2c34;
+  font-size: 13.5px;
+  color: #e4e1e8;
+  font-weight: 600;
+}
+.embark-bonus-row:last-child { border-bottom: 1px solid #2d2c34; }
+.embark-bonus-value { color: #6fbf73; font-weight: 700; }
+
 .event-sheet-ends {
   align-self: flex-start;
   padding: 3px 10px;
