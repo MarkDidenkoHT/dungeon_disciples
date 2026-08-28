@@ -1603,9 +1603,13 @@ export function renderCastle(root, { player }) {
       if (isTutorialDone(player, step.id)) { if (pendingStep === step.id) pendingStep = null; continue; }
       if (pendingStep === step.id) return;
       if (!step.ready()) continue;
+      const opened = !!step.open;
       step.open?.();
       const el = step.target();
-      if (!el) continue;
+      // Returning rather than continuing: a step that opened a sheet and then
+      // found no target would otherwise fall through to the next step, which
+      // opens ANOTHER sheet on top of it.
+      if (!el) { if (opened) return; continue; }
       showTutorialSpotlight(player, step.id, el, {
         showContinue: !!step.wait,
         extraText:    step.hint?.(),

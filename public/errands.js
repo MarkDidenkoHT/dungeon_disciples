@@ -384,6 +384,7 @@ export function maybeShowErrandsIntro(player) {
         onAdvance: () => {
           introRunning = false;
           markTutorialDone(player, 'errands_intro');
+          markTutorialDone(player, 'errands_away');
           openErrandsSheet(player);
         },
       });

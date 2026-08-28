@@ -451,6 +451,19 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
 
     bubble.style.left = `${bubbleLeft}px`;
     bubble.style.top  = `${bubbleTop}px`;
+
+    // The arrow follows the TARGET, not the bubble's middle. Once either clamp
+    // above has pushed the bubble away from its target, a centred arrow points
+    // at empty screen — and because it sits outside the bubble box it can hang
+    // off the viewport edge as a stray sliver.
+    const targetCx = hole.left + (hole.right - hole.left) / 2;
+    const arrowX   = Math.max(16, Math.min(bubbleRect.width - 16, targetCx - bubbleLeft));
+    bubble.style.setProperty('--arrow-x', `${arrowX}px`);
+
+    const wantedTop = placeBelow ? hole.bottom + GAP : hole.top - bubbleRect.height - GAP;
+    const detached  = Math.abs(bubbleTop - wantedTop) > 1
+                   || targetCx < bubbleLeft || targetCx > bubbleLeft + bubbleRect.width;
+    bubble.classList.toggle('tutorial-bubble--noarrow', detached);
   }
 
   layout();

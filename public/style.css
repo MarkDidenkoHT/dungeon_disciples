@@ -166,15 +166,16 @@ button:active:not(:disabled) { opacity: 0.75; }
 .tutorial-ring {
   position: fixed;
   border-radius: 14px;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 18px 4px rgba(var(--accent-rgb), 0.5);
+  border: 3px solid var(--accent);
+  --accent-ring-w: 3px;
+  box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0.30), 0 0 26px 6px rgba(var(--accent-rgb), 0.65);
   pointer-events: none;
   animation: tutorial-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes tutorial-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 18px 4px rgba(var(--accent-rgb), 0.5); }
-  50%      { box-shadow: 0 0 0 8px rgba(var(--accent-rgb), 0.15), 0 0 26px 8px rgba(var(--accent-rgb), 0.65); }
+  0%, 100% { box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0.30), 0 0 26px 6px rgba(var(--accent-rgb), 0.65); }
+  50%      { box-shadow: 0 0 0 10px rgba(var(--accent-rgb), 0.18), 0 0 36px 10px rgba(var(--accent-rgb), 0.85); }
 }
 
 .tutorial-bubble {
@@ -198,20 +199,23 @@ button:active:not(:disabled) { opacity: 0.75; }
 .tutorial-bubble::before {
   content: '';
   position: absolute;
-  left: 50%;
+  left: var(--arrow-x, 50%);
   transform: translateX(-50%);
-  border: 8px solid transparent;
+  border: 11px solid transparent;
+  filter: drop-shadow(0 0 7px rgba(var(--accent-rgb), 0.9));
 }
 
 .tutorial-bubble--below::before {
-  top: -16px;
+  top: -22px;
   border-bottom-color: var(--accent);
 }
 
 .tutorial-bubble--above::before {
-  bottom: -16px;
+  bottom: -22px;
   border-top-color: var(--accent);
 }
+
+.tutorial-bubble--noarrow::before { display: none; }
 
 .tutorial-bubble-title {
   color: var(--accent);
