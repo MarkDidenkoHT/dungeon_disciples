@@ -1,5 +1,5 @@
 import { api, navigate, bootstrapCache } from '../api.js';
-import { applyBackground } from '../utils.js';
+import { applyBackground, buildUnitCard, handleUnitInspect, resolveUnitDef } from '../utils.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import { assetUrl } from '../asset_base.js';
@@ -27,6 +27,7 @@ const UI_TEXT = {
   eventEnds:       { en: 'Ends in',              ru: 'Осталось' },
   eventDrops:      { en: 'Drops during the event', ru: 'Выпадает во время события' },
   eventUnlocks: { en: 'Unlocks', ru: 'Открывает' },
+    eventBack:    { en: 'Back', ru: 'Назад' },
   eventBonus:      { en: 'Bonus',                ru: 'Бонус' },
   eventLevel:      { en: 'Level',                ru: 'Уровень' },
   eventXp:         { en: 'XP',                   ru: 'Опыт' },
@@ -201,7 +202,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       .map(([id, amt]) => `${trophyLabel(id)} \u00d7${amt}`).join(' + ');
     return `
       <div class="embark-event-section-label">${UI_TEXT.eventUnlocks[L]}</div>
-      <div class="embark-event-payoff">
+      <button class="embark-event-payoff" data-payoff-unit="${merc.unit_id}"
+              aria-label="${label}">
         <img class="embark-event-payoff-art"
              src="${assetUrl(`/assets/character_portraits/p_${merc.unit_id}.png`)}"
              alt="" onerror="this.style.display='none'">
@@ -209,7 +211,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
           <span class="embark-event-payoff-name">${label}</span>
           <span class="embark-event-payoff-cost">${cost}</span>
         </div>
-      </div>`;
+        <span class="embark-event-payoff-chev">\u203a</span>
+      </button>`;
   }
 
 
@@ -262,11 +265,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     const desc = eventDescription(ev);
     openEventModal(ev.name || UI_TEXT.eventBadge[L], `
       <div class="embark-event-sheet" style="--embark-event-glow:${glow}">
-        <img class="embark-event-icon"
-             src="${assetUrl(`/assets/icons/events/${eventIconKey(ev)}.png`)}"
-             alt="" onerror="this.style.display='none'">
-        ${desc ? `<p class="embark-event-desc">${desc}</p>` : ''}
         <div class="embark-event-ends">${eventEndsInText()}</div>
+        ${desc ? `<p class="embark-event-desc">${desc}</p>` : ''}
         ${dropTable ? `<div class="embark-event-section-label">${UI_TEXT.eventDrops[L]}</div>${dropTable}` : ''}
         ${eventPayoffHtml(ev)}
         ${bonusHtml ? `<div class="embark-event-section-label">${UI_TEXT.eventBonus[L]}</div>${bonusHtml}` : ''}
@@ -293,11 +293,48 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       const close = () => _eventOverlay.classList.add('hidden');
       _eventOverlay.querySelector('.embark-modal-close').addEventListener('click', close);
       _eventOverlay.addEventListener('click', e => { if (e.target === _eventOverlay) close(); });
+      // Delegated, because the body is replaced whenever the panel drills into
+      // the unit and back — a listener bound to the row itself would die there.
+      _eventOverlay.addEventListener('click', e => {
+        const row = e.target.closest('[data-payoff-unit]');
+        if (row) openPayoffUnit(row.dataset.payoffUnit);
+      });
       root.appendChild(_eventOverlay);
     }
     _eventOverlay.querySelector('.embark-modal-title').textContent = title;
     _eventOverlay.querySelector('.embark-modal-body').innerHTML = bodyHtml;
     _eventOverlay.classList.remove('hidden');
+  }
+
+  // The payoff row opens the unit it names. A player being told to chase a
+  // trophy for ten runs deserves to see what they are chasing BEFORE committing
+  // the evening, not after they have paid for the hall.
+  //
+  // Swaps the panel's own body rather than opening a second overlay: this is the
+  // same question drilling one level deeper, and stacking two dark panels over a
+  // region card to answer it would bury the screen.
+  function openPayoffUnit(unitId) {
+    // resolveUnitDef walks the faction/branch nesting for us: the unit table is
+    // not a flat list, and mercenaries do not sit under a player faction.
+    const unit = resolveUnitDef({ unit_data: { unit_id: unitId } });
+    if (!unit || !_eventOverlay) return;
+    const body  = _eventOverlay.querySelector('.embark-modal-body');
+    const title = _eventOverlay.querySelector('.embark-modal-title');
+    const backTo = { title: title.textContent, html: body.innerHTML };
+
+    title.textContent = (L === 'ru' ? unit.name_ru : unit.name) || unit.name;
+    body.innerHTML = `
+      <div class="embark-event-unit">
+        ${buildUnitCard(unit, {})}
+        <button class="embark-event-back">\u2039 ${UI_TEXT.eventBack[L]}</button>
+      </div>`;
+
+    body.querySelector('.embark-event-back')?.addEventListener('click', () => {
+      title.textContent = backTo.title;
+      body.innerHTML = backTo.html;
+    });
+    // Stats and abilities on the card stay inspectable, the same as anywhere else.
+    body.addEventListener('click', e => handleUnitInspect(e, openEventModal), { once: false });
   }
 
   root.innerHTML = `
