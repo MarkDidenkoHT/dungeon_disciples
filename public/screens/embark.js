@@ -212,38 +212,6 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       </div>`;
   }
 
-  // Pretty name for a trophy id. Trophies have no def table of their own, so the
-  // id IS the name — bloodied_brooch reads as Bloodied Brooch.
-  function trophyLabel(id) {
-    return String(id).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  }
-
-  // What this event's trophy is FOR. A drop table on its own tells a player what
-  // falls out, not why they should care — the brooch exists to raise one
-  // mercenary, and that is the reason to run the event before it closes.
-  function eventPayoffHtml(ev) {
-    if (!ev?.trophy) return '';
-    let merc = null;
-    for (const pool of Object.values(MERCENARY_BUILDINGS || {})) {
-      const hit = (pool || []).find(b => b.cost && b.cost[ev.trophy]);
-      if (hit) { merc = hit; break; }
-    }
-    if (!merc) return '';
-    const label = (L === 'ru' ? merc.label_ru : merc.label) || merc.label;
-    const cost  = Object.entries(merc.cost)
-      .map(([id, amt]) => `${trophyLabel(id)} \u00d7${amt}`).join(' + ');
-    return `
-      <div class="embark-event-section-label">${UI_TEXT.eventUnlocks[L]}</div>
-      <div class="embark-event-payoff">
-        <img class="embark-event-payoff-art"
-             src="${assetUrl(`/assets/character_portraits/p_${merc.unit_id}.png`)}"
-             alt="" onerror="this.style.display='none'">
-        <div class="embark-event-payoff-text">
-          <span class="embark-event-payoff-name">${label}</span>
-          <span class="embark-event-payoff-cost">${cost}</span>
-        </div>
-      </div>`;
-  }
 
   function openEventSheet(regionId) {
     const ev = activeEvent();
