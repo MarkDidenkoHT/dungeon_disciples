@@ -375,8 +375,8 @@ export function renderCastle(root, { player }) {
   // answer from a replica that has not caught up with that write, so where the
   // caller already holds the post-write row it wins — it cannot be behind — and
   // the cache is corrected to match, so the next screen to read it agrees.
-  async function reloadFromBootstrap(knownStructures = null) {
-    const boot = await bootstrapCache.refresh(player.chat_id);
+  async function reloadFromBootstrap(knownStructures = null, knownBoot = null) {
+    const boot = knownBoot || await bootstrapCache.refresh(player.chat_id);
     if (knownStructures) bootstrapCache.patch(() => ({ structures: knownStructures }));
     structuresRecord = knownStructures || boot.structures;
     trophyInventory  = boot.trophies || [];
@@ -2751,16 +2751,24 @@ export function renderCastle(root, { player }) {
       const teachingEquip = !!equipBtn && !isTutorialDone(player, 'roster_equip');
       if (teachingEquip) onboardingBusy = true;
       try {
-        if (equipBtn) {
-          await api('/items/equip', {
-            chat_id: player.chat_id,
-            roster_id: equipBtn.dataset.rosterId,
-            item_id: equipBtn.dataset.itemId,
-          });
-        } else {
-          await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
-        }
-        await reloadFromBootstrap();
+        const res = equipBtn
+          ? await api('/items/equip', {
+              chat_id: player.chat_id,
+              roster_id: equipBtn.dataset.rosterId,
+              item_id: equipBtn.dataset.itemId,
+            })
+          : await api('/items/unequip', { chat_id: player.chat_id, item_id: unequipBtn.dataset.itemId });
+        // Both endpoints hand back the full item list and the updated roster
+        // row, so there is nothing left to go and read.
+        const patched = res?.items
+          ? bootstrapCache.patch(cur => ({
+              items:  res.items,
+              roster: res.roster
+                ? (cur.roster || []).map(r => String(r.id) === String(res.roster.id) ? res.roster : r)
+                : cur.roster,
+            }))
+          : null;
+        await reloadFromBootstrap(null, patched);
         closeSubSheet();
         openSlotUnitSheet(slot);   // re-open so the card shows the new loadout
         if (teachingEquip) {

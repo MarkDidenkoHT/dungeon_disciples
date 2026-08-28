@@ -402,6 +402,15 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
 
   function layout() {
     const rect = targetEl.getBoundingClientRect();
+    // A target with no box yet (sheet still animating, element detached, or
+    // display:none) reports an all-zero rect. Laying out against that puts the
+    // ring at the origin and the whole overlay off-screen, so stay hidden and
+    // wait for it to gain layout instead.
+    if (!targetEl.isConnected || (rect.width <= 0 && rect.height <= 0)) {
+      container.style.visibility = 'hidden';
+      return false;
+    }
+    container.style.visibility = '';
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const hole = {
@@ -464,13 +473,20 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
     const detached  = Math.abs(bubbleTop - wantedTop) > 1
                    || targetCx < bubbleLeft || targetCx > bubbleLeft + bubbleRect.width;
     bubble.classList.toggle('tutorial-bubble--noarrow', detached);
+    return true;
   }
 
-  layout();
-  requestAnimationFrame(layout);
-  // Insurance: if the target is still settling (a sheet sliding up, a late
-  // reflow), the first measurements put the hole in the wrong place and the
-  // blockers cover everything. Re-measure once more so that self-corrects.
+  // Keep re-measuring until the target actually has a box. A sheet sliding up
+  // can take several frames, and giving up after one leaves the overlay pinned
+  // to the origin.
+  let settleFrames = 0;
+  let rafId = null;
+  const settle = () => {
+    rafId = null;
+    if (layout() || ++settleFrames > 90) return;
+    rafId = requestAnimationFrame(settle);
+  };
+  settle();
   const settleTimer = setTimeout(layout, 300);
 
   activeResizeHandler = layout;
@@ -500,6 +516,7 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
 
   activeCleanup = () => {
     clearTimeout(settleTimer);
+    if (rafId) cancelAnimationFrame(rafId);
     container.remove();
     if (onTargetTap) targetEl.removeEventListener('click', onTargetTap);
   };
