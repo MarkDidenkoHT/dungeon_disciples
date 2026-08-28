@@ -25,13 +25,6 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --border:  #2e3240;
   --accent:  #c8973a;
   --accent-rgb: 200, 151, 58;
-  /* :root IS the Empire palette — the other two factions override it on
-     body[data-faction]. These two were declared as `var(--accent-2)` and
-     `var(--accent-bright)`, i.e. referring to themselves, which is invalid at
-     computed-value time: both resolved to nothing, so every rule using them
-     silently lost its whole declaration. The loading bar was the visible
-     casualty — its fill is a gradient ending in --accent-2, so it had no
-     background at all and never appeared to fill. */
   --accent-2: #8a5f1e;
   --accent-bright: #ecd08a;
   --danger:  #c84a3a;
@@ -1253,11 +1246,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
-  /* background-color: var(--surface); */
   background-image: var(--img-resource-bar);
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  /* border-bottom: 1px solid var(--border); */
   flex-shrink: 0;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -1639,9 +1630,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 4px 2px;
 }
 
-/* The branch connectors. Absolutely positioned so it takes no grid slot, and
-   BEHIND the cells so a line meeting a portrait is covered by it rather than
-   drawn across the art. Geometry comes from drawUnitTreeLinks in unit_tree.js. */
 .utree-links {
   position: absolute;
   inset: 0;
@@ -7171,31 +7159,42 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .embark-card { position: relative; }
 
+/* A round icon in the card's top-right corner. Fixed square so the circle stays
+   a circle whatever the art's aspect ratio, and sized to stay a comfortable tap
+   target on a phone. */
 .embark-event-badge {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 2;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
-  border-radius: 999px;
+  justify-content: center;
+  border-radius: 50%;
   border: 1px solid var(--event-glow, var(--accent));
   background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  overflow: hidden;
   cursor: pointer;
   box-shadow: 0 0 10px var(--event-glow, var(--accent));
   animation: event-badge-pulse 2.4s ease-in-out infinite;
 }
 .embark-event-badge:active { transform: scale(0.96); }
+.embark-event-badge-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  pointer-events: none;   /* the button is the target, not the art */
+}
+/* Shown by the img's onerror when an event has no art yet. */
 .embark-event-badge-dot {
-  width: 6px;
-  height: 6px;
+  display: none;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--event-glow, var(--accent));
   box-shadow: 0 0 6px var(--event-glow, var(--accent));
@@ -7606,9 +7605,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 5px 10px;
 }
 
-/* Replaced the "it's on the second page, use the arrow" line: the panel knows
-   which slot the building sits in, so it takes the player there instead of
-   describing the route. See goToBuilding in screens/castle.js. */
 .locked-panel-goto {
   margin-top: 0.35rem;
   padding: 0.45rem 1.1rem;
@@ -7622,8 +7618,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .locked-panel-goto:active { filter: brightness(0.9); }
 
-/* The slot the player was just sent to, so the page they land on says which one
-   it meant. Same accent pulse the tutorial spotlight uses. */
 .castle-node--found {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

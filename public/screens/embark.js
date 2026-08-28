@@ -137,16 +137,39 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     return `${UI_TEXT.eventEnds[L]} ${Math.max(1, hours)}${L === 'ru' ? 'ч' : 'h'}`;
   }
 
+  // The art file for an event is named after the event: "The Blood Vigil" is
+  // assets/icons/events/blood_vigil.png. Events are rows in a table typed by
+  // hand, so nothing enforces a slug column — deriving it from the name means a
+  // new event only needs its art dropped in under the matching filename.
+  //
+  // A leading "The" is dropped because it is part of the title, not the subject.
+  function eventIconKey(ev) {
+    if (ev?.icon) return ev.icon;               // explicit wins, if ever set
+    return String(ev?.name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^the\s+/, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
   // Top-right corner of the region card, glowing that region's colour.
   function eventBadgeHtml(regionId) {
     const ev = activeEvent();
     if (!ev || !ev.regions?.includes(regionId)) return '';
     const glow = REGION_GLOW[regionId] || DEFAULT_GLOW;
+    const label = ev.name || UI_TEXT.eventBadge[L];
+    const key   = eventIconKey(ev);
+    // The dot is the fallback, not decoration: an event whose art has not been
+    // added yet still needs something round, glowing and tappable in the corner
+    // rather than an empty box. `onerror` hides the broken image and reveals it.
     return `
       <button class="embark-event-badge" data-event-region="${regionId}"
-              style="--event-glow:${glow}" title="${ev.name || UI_TEXT.eventBadge[L]}">
+              style="--event-glow:${glow}" title="${label}" aria-label="${label}">
+        <img class="embark-event-badge-img"
+             src="${assetUrl(`/assets/icons/events/${key}.png`)}" alt=""
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
         <span class="embark-event-badge-dot"></span>
-        <span class="embark-event-badge-text">${UI_TEXT.eventBadge[L]}</span>
       </button>`;
   }
 
