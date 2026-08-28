@@ -400,7 +400,25 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   container.appendChild(bubble);
   document.body.appendChild(container);
 
+  // The target is re-resolved rather than held: a sheet re-render replaces the
+  // button this step points at, and the captured node is then detached forever.
+  let liveTarget  = targetEl;
+  let onTargetTap = null;
+
+  function reacquire() {
+    if (liveTarget.isConnected) return;
+    const next = opts.resolveTarget?.();
+    if (!next || next === liveTarget) return;
+    if (onTargetTap) {
+      liveTarget.removeEventListener('click', onTargetTap);
+      next.addEventListener('click', onTargetTap, { once: true });
+    }
+    liveTarget = next;
+  }
+
   function layout() {
+    reacquire();
+    const targetEl = liveTarget;
     const rect = targetEl.getBoundingClientRect();
     // A target with no box yet (sheet still animating, element detached, or
     // display:none) reports an all-zero rect. Laying out against that puts the
@@ -479,14 +497,18 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   // Keep re-measuring until the target actually has a box. A sheet sliding up
   // can take several frames, and giving up after one leaves the overlay pinned
   // to the origin.
-  let settleFrames = 0;
+  // Runs for as long as the spotlight is up, not just until it first measures:
+  // the target can be swapped out at any time by a re-render.
   let rafId = null;
-  const settle = () => {
-    rafId = null;
-    if (layout() || ++settleFrames > 90) return;
-    rafId = requestAnimationFrame(settle);
+  let lastKey = '';
+  const watch = () => {
+    const r = liveTarget.isConnected ? liveTarget.getBoundingClientRect() : null;
+    const key = r ? `${r.left},${r.top},${r.width},${r.height}` : 'gone';
+    if (key !== lastKey) { lastKey = key; layout(); }
+    rafId = requestAnimationFrame(watch);
   };
-  settle();
+  layout();
+  rafId = requestAnimationFrame(watch);
   const settleTimer = setTimeout(layout, 300);
 
   activeResizeHandler = layout;
@@ -508,16 +530,15 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   // An informational step only highlights its target to point at it — the ring
   // swallows taps so the player can't trigger the underlying control (and open a
   // sheet over the next spotlight). Its button is the only way onward.
-  let onTargetTap = null;
   if (!opts.showContinue) {
     onTargetTap = () => advance();
-    targetEl.addEventListener('click', onTargetTap, { once: true });
+    liveTarget.addEventListener('click', onTargetTap, { once: true });
   }
 
   activeCleanup = () => {
     clearTimeout(settleTimer);
     if (rafId) cancelAnimationFrame(rafId);
     container.remove();
-    if (onTargetTap) targetEl.removeEventListener('click', onTargetTap);
+    if (onTargetTap) liveTarget.removeEventListener('click', onTargetTap);
   };
 }

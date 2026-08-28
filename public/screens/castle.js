@@ -1621,6 +1621,7 @@ export function renderCastle(root, { player }) {
       if (!el) { if (opened) return; continue; }
       shownStep = step.id;
       showTutorialSpotlight(player, step.id, el, {
+        resolveTarget: step.target,
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
         onAdvance: () => {
