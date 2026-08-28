@@ -2278,10 +2278,31 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  /* Tight by default; the gap between a group's TITLE and its card is closed
+     below, so the rhythm is title-card ... gap ... title-card rather than an
+     even stack in which nothing looks attached to anything. */
+  gap: 18px;
   padding: 18px 16px;
   overflow-y: auto;
 }
+
+/* Group heading. Neutral — the display-name field used to borrow
+   .settings-danger-title, which painted a red DANGER-ZONE label over a text
+   input for typing your name into. */
+.settings-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-left: 2px;
+}
+/* A title sits with the block under it, not floating between two of them. */
+.settings-section-title + .settings-section,
+.settings-section-title + .promo-box {
+  margin-top: -10px;
+}
+.settings-section-title--danger { color: #e07a7a; }
 
 .settings-header {
   font-size: 1.1rem;
@@ -2304,7 +2325,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 11px 16px;
+  gap: 12px;
+  /* Fixed height: every row holds one label and one control, and letting them
+     size to content meant the switch row and the language row disagreed by a
+     couple of pixels down the whole list. */
+  min-height: 48px;
+  padding: 0 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
@@ -2324,29 +2350,78 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-transform: capitalize;
 }
 
+/* A real switch rather than a pill reading "On"/"Off". The knob is the button's
+   own ::after, so a row of seven toggles adds no elements at all — the label
+   text stays in the DOM for screen readers and is simply not painted. */
 .settings-toggle {
-  padding: 5px 16px;
-  border-radius: 20px;
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg);
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
   cursor: pointer;
-  min-width: 52px;
-  text-align: center;
+  /* Hides the On/Off text without removing it; the JS still writes it. */
+  font-size: 0;
+  color: transparent;
+  transition: background 140ms ease, border-color 140ms ease;
 }
-
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--muted);
+  transform: translateY(-50%);
+  transition: transform 140ms ease, background 140ms ease;
+}
 .settings-toggle--on {
   background: var(--accent);
-  color: #000;
   border-color: var(--accent);
 }
+.settings-toggle--on::after {
+  background: #000;
+  transform: translateY(-50%) translateX(20px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-toggle, .settings-toggle::after { transition: none; }
+}
+
+/* The language row picks a VALUE, so it stays a pill. Wearing the switch class
+   drew it as a toggle that was always on and could never be turned off. */
+.settings-pill {
+  flex: 0 0 auto;
+  min-width: 52px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.settings-pill:active { transform: scale(0.97); }
 
 .settings-section--danger {
   border-color: #7a2b2b;
+  background: var(--surface);
   padding: 14px 16px;
   gap: 10px;
+}
+/* Says what the button does before it is pressed, rather than only in the
+   confirm that follows it. */
+.settings-reset-note {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
 }
 
 .settings-danger-title {
@@ -7208,11 +7283,18 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .embark-event-badge { animation: none; }
 }
 
+/* ── Event panel ───────────────────────────────────────────────────────────
+   Its own overlay and its own class names. The screen's .modal-overlay is a
+   bottom sheet built for blocking flows (reconnect, coming-soon), and an event
+   opened from a badge in a card's corner is not one — it is a small centred
+   card. Styling it through the shared class meant fighting those rules. */
 .embark-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 60;
   display: flex;
+  /* Top-aligned, not centred: the panel's height depends on how many levels the
+     event drops at, and a centred panel would jump around between events. */
   align-items: flex-start;
   justify-content: center;
   padding: 24px;
@@ -7223,7 +7305,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .embark-modal {
   width: 360px;
   max-width: 100%;
-  margin-top: 50px;
+  margin-top: 25px;
+  /* Capped, and scrolled INSIDE rather than allowed to grow. The drop table and
+     the bonus rows come from event data, so the panel's height is not something
+     this file can know in advance. */
   max-height: min(85vh, 720px);
   display: flex;
   flex-direction: column;

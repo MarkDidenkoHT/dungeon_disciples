@@ -27,6 +27,10 @@ const UI_TEXT = {
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
   language:      { en: 'Language', ru: 'Язык' },
+  prefsTitle:  { en: 'Preferences',  ru: 'Настройки' },
+  promoTitle:  { en: 'Promo code',   ru: 'Промокод' },
+  resetNote:   { en: 'Wipes your castle, roster and progress. Cannot be undone.',
+                 ru: 'Удаляет замок, отряд и прогресс. Отменить нельзя.' },
   dangerZone:    { en: 'Danger Zone', ru: 'Опасная зона' },
   resetBtn:       { en: 'Reset Progress', ru: 'Сбросить прогресс' },
   resetConfirmText: {
@@ -93,7 +97,7 @@ export function renderSettings(root, { player }) {
         <!-- Borrows the promo box's layout: an input, a button beside it and a
              fixed-height message line. Same shape, so no styles of its own. -->
         <div class="promo-box">
-          <div class="settings-danger-title">${UI_TEXT.nameTitle[L]}</div>
+          <div class="settings-section-title">${UI_TEXT.nameTitle[L]}</div>
           <div class="promo-box-row">
             <input class="promo-box-input" id="username-input" type="text"
                    maxlength="24" autocomplete="off" spellcheck="false"
@@ -104,6 +108,7 @@ export function renderSettings(root, { player }) {
           <div class="promo-box-msg" id="username-msg"></div>
         </div>
 
+        <div class="settings-section-title">${UI_TEXT.prefsTitle[L]}</div>
         <div class="settings-section">
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.sfx[L]}</span>
@@ -143,9 +148,7 @@ export function renderSettings(root, { player }) {
           </div>
           <div class="settings-row">
             <span class="settings-label">${UI_TEXT.language[L]}</span>
-            <button class="settings-toggle settings-toggle--on" id="toggle-language">
-              ${languageLabel}
-            </button>
+            <button class="settings-pill" id="toggle-language">${languageLabel}</button>
           </div>
         </div>
 
@@ -153,6 +156,7 @@ export function renderSettings(root, { player }) {
              line, and the placeholder names the field. The message line below
              has a FIXED height so redeeming cannot grow the block and push the
              rows above it off screen. -->
+        <div class="settings-section-title">${UI_TEXT.promoTitle[L]}</div>
         <div class="promo-box">
           <div class="promo-box-row">
             <input class="promo-box-input" id="promo-input" type="text"
@@ -163,9 +167,10 @@ export function renderSettings(root, { player }) {
           <div class="promo-box-msg" id="promo-msg"></div>
         </div>
 
+        <div class="settings-section-title settings-section-title--danger">${UI_TEXT.dangerZone[L]}</div>
         <div class="settings-section settings-section--danger">
-          <div class="settings-danger-title">${UI_TEXT.dangerZone[L]}</div>
           <button class="settings-reset-btn" id="reset-progress-btn">${UI_TEXT.resetBtn[L]}</button>
+          <span class="settings-reset-note">${UI_TEXT.resetNote[L]}</span>
         </div>
       </main>
     </div>
