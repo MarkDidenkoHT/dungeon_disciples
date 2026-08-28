@@ -2278,17 +2278,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* Tight by default; the gap between a group's TITLE and its card is closed
-     below, so the rhythm is title-card ... gap ... title-card rather than an
-     even stack in which nothing looks attached to anything. */
   gap: 18px;
   padding: 18px 16px;
   overflow-y: auto;
 }
 
-/* Group heading. Neutral — the display-name field used to borrow
-   .settings-danger-title, which painted a red DANGER-ZONE label over a text
-   input for typing your name into. */
 .settings-section-title {
   font-size: 0.72rem;
   font-weight: 700;
@@ -2326,13 +2320,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  /* Fixed height: every row holds one label and one control, and letting them
-     size to content meant the switch row and the language row disagreed by a
-     couple of pixels down the whole list. */
   min-height: 48px;
   padding: 0 16px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
 }
 
 .settings-row:last-child {
@@ -2350,9 +2340,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-transform: capitalize;
 }
 
-/* A real switch rather than a pill reading "On"/"Off". The knob is the button's
-   own ::after, so a row of seven toggles adds no elements at all — the label
-   text stays in the DOM for screen readers and is simply not painted. */
 .settings-toggle {
   position: relative;
   flex: 0 0 auto;
@@ -3926,16 +3913,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   margin: 0 auto;
 }
 
-/* ── The attrition line ─────────────────────────────────────────────────────
-   Stands in the gap BETWEEN the two grids — the boundary the armies are
-   fighting across — so the state of the field is drawn on the field's own
-   dividing line. The arena is 95vw with padding either side of each half, so
-   this costs the grids no width.
-
-   Round number on top, then one column carrying both halves of the anti-stall
-   system: green is how much healing still works (full until round 5, decaying
-   to half by round 10), red climbs off the floor as the Withering gains a step
-   each round. Sized so at the end state they meet exactly in the middle. */
 .attrition-line {
   align-self: stretch;
   flex: 0 0 auto;
@@ -3947,8 +3924,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   width: 26px;
 }
 
-/* The round counter caps the line rather than floating loose, so the number and
-   the pressure it is causing are one object. */
 .attrition-round {
   flex: 0 0 auto;
   width: 24px;
@@ -4006,14 +3981,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   transition: height 0.45s ease-out, filter 0.45s;
 }
 
-/* Lit down the middle, dark at the edges — gives the column a rounded body
-   instead of a flat fill.
-
-   Anchored to the BOTTOM so that as healing is cut the top edge descends and
-   the line drains away downwards, leaving the gap at the top. Anchored to the
-   top it shrank the other way, which read as the line growing shorter from
-   below rather than being drained. The red then climbs from the floor back up
-   through what is left of it. */
 .attrition-line-green {
   bottom: 0;
   height: 100%;
@@ -4023,8 +3990,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 8px rgba(111, 206, 85, 0.45);
 }
 
-/* A slow sheen travelling down the living part of the line, so a healthy line
-   still looks alive rather than switched off. */
 .attrition-line-green::after {
   content: '';
   position: absolute;
@@ -4040,8 +4005,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   100% { background-position: 0 160%; }
 }
 
-/* Sickly and dimmer once healing has actually been cut — a full line should
-   look healthy and inert, not like something already going wrong. */
 .attrition-line-green--decaying {
   background:
     linear-gradient(90deg, rgba(0,0,0,0.5), transparent 40%, transparent 60%, rgba(0,0,0,0.5)),
@@ -4050,8 +4013,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   filter: saturate(0.75);
 }
 
-/* Above the green in the stacking order (it comes later in the DOM), so the
-   rising red visibly consumes what is left rather than hiding behind it. */
 .attrition-line-red {
   bottom: 0;
   height: 0;
