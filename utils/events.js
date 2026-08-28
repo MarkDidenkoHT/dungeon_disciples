@@ -26,6 +26,7 @@
 // battle end would be a Supabase round trip for an answer that is almost always
 // the same. 60s is short enough that opening or killing an event is felt
 // immediately in human terms.
+const { MERCENARY_BUILDINGS } = require('../data/buildings');
 const TTL_MS = 60 * 1000;
 let _cache = { at: 0, event: null };
 
@@ -89,6 +90,31 @@ function eventBonusFor(event, region_id) {
  * What the client needs to draw the banner and the event sheet. Deliberately
  * only the presentational slice — the payout maths stays server-side.
  */
+// What the event's trophy buys. Mercenary halls are the only thing priced in
+// event trophies, and the link is the trophy id appearing in a hall's cost —
+// no second table to keep in step.
+//
+// Resolved HERE rather than on the client because data/buildings.js is CommonJS
+// and server-only; the embark screen cannot import it, and shipping the whole
+// merc table to draw one row would be absurd.
+function eventPayoff(trophyId) {
+  if (!trophyId) return null;
+  for (const halls of Object.values(MERCENARY_BUILDINGS || {})) {
+    for (const hall of halls || []) {
+      if (hall?.cost && hall.cost[trophyId]) {
+        return {
+          building_id: hall.id,
+          unit_id:     hall.unit_id,
+          label:       hall.label,
+          label_ru:    hall.label_ru,
+          cost:        hall.cost,
+        };
+      }
+    }
+  }
+  return null;
+}
+
 function eventPayload(event) {
   if (!event) return null;
   const data = event.event_data || {};
@@ -102,6 +128,7 @@ function eventPayload(event) {
     time_from: event.time_from,
     time_to:   event.time_to,
     trophy:    data.trophy ?? null,
+    payoff:    eventPayoff(data.trophy),
     drops:     data.drops  ?? {},
     bonus:     data.bonus  ?? {},
     // Which regions to badge on the map: anywhere that drops something or

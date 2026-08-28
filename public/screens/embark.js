@@ -7,7 +7,6 @@ import { assetUrl } from '../asset_base.js';
 // presentation only; the level tables live in data/embark.js and are the single
 // source of truth for how many pips a region can ever show.
 import { REGIONS as REGION_DEFS } from '../../data/embark.js';
-import { MERCENARY_BUILDINGS } from '../../data/buildings.js';
 
 const LEVEL_COUNTS = Object.fromEntries(
   REGION_DEFS.map(r => [r.id, Object.keys(r.difficulties || {}).length]));
@@ -195,15 +194,10 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   // falls out, not why they should care — the brooch exists to raise one
   // mercenary, and that is the reason to run the event before it closes.
   function eventPayoffHtml(ev) {
-    if (!ev?.trophy) return '';
-    let merc = null;
-    for (const pool of Object.values(MERCENARY_BUILDINGS || {})) {
-      const hit = (pool || []).find(b => b.cost && b.cost[ev.trophy]);
-      if (hit) { merc = hit; break; }
-    }
+    const merc = ev?.payoff;
     if (!merc) return '';
     const label = (L === 'ru' ? merc.label_ru : merc.label) || merc.label;
-    const cost  = Object.entries(merc.cost)
+    const cost  = Object.entries(merc.cost || {})
       .map(([id, amt]) => `${trophyLabel(id)} \u00d7${amt}`).join(' + ');
     return `
       <div class="embark-event-section-label">${UI_TEXT.eventUnlocks[L]}</div>
