@@ -1481,9 +1481,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return { warm, dire };
   }
 
-  // Green is what is LEFT of healing (100% down to 50%); red is how far the
-  // Withering has climbed (0 up to its cap). Scaled so the two exactly fill the
-  // line at the end state — half green, half red — rather than overlapping.
+  // Green is how much of the healing phase is LEFT, red is how far the Withering
+  // has climbed — each drawn against the WHOLE track, not against its share of
+  // it.
+  //
+  // The percentages here are progress through a phase, deliberately NOT the
+  // mechanic's own numbers. Healing decays 10 points a round and stops at -50%
+  // (see BATTLE_FATIGUE), and feeding that straight into the height meant green
+  // fell to 50% by round 10 and simply stopped — the bar never emptied, so the
+  // one moment worth reading, the handover from fading heals to the field
+  // killing you, showed as a half-full bar sitting still.
+  //
+  // Against the full track the same five rounds read as a fifth each: green
+  // empties top-to-bottom across 6-10, then red fills bottom-to-top across
+  // 11-15. The mechanic is untouched; this is the line telling the truth about
+  // where in the phase you are.
   function applyAttritionLine() {
     const green = root.querySelector('#attrition-green');
     const red   = root.querySelector('#attrition-red');
@@ -1491,10 +1503,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const round = state?.round ?? 1;
 
     const lost = Math.min(FATIGUE.maxPct, Math.max(0, (round - FATIGUE.start) * FATIGUE.perRound));
-    const greenPct = 100 - lost;
+    // 10 points lost out of a 50-point cap is a fifth of the phase, so a fifth
+    // of the bar: 20% a round, empty at round 10.
+    const greenPct = 100 - (lost / FATIGUE.maxPct) * 100;
 
     const steps = Math.min(FATIGUE.witherMaxSteps, Math.max(0, round - FATIGUE.witherStart));
-    const redPct = (steps / FATIGUE.witherMaxSteps) * FATIGUE.maxPct;
+    const redPct = (steps / FATIGUE.witherMaxSteps) * 100;
 
     const badge = root.querySelector('#attrition-round');
     if (badge) {

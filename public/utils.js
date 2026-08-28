@@ -1038,6 +1038,9 @@ export function onSheetClose(fn) {
 
 export function closeSheet() {
   if (!_sheetEl) return;
+  // The sub-sheet stack belongs to the sheet underneath it; leaving layers
+  // parked here would pop them back up over an unrelated screen later.
+  closeAllSubSheets();
   _sheetEl.classList.add('hidden');
   document.body.style.overflow = '';
   for (const fn of [..._sheetCloseHandlers]) {
@@ -1076,17 +1079,59 @@ function ensureSubSheet() {
   return overlay;
 }
 
+// Sub-sheets STACK. There is one sub-sheet element, and opening a second thing
+// in it used to overwrite the first: opening the item picker from a unit card,
+// then inspecting an item's ability, replaced the picker with the ability — so
+// closing the ability landed back on the unit card and the picker was simply
+// gone. Any sub-sheet that can open another sub-sheet had the same problem.
+//
+// Pushing the layer instead means close returns to what you came from, however
+// deep, which is what a back button is expected to do.
+//
+// The saved layer is its DOM NODES, not its innerHTML. Screens bind listeners to
+// elements inside the body — the item picker binds equip and filtering to a
+// wrapper it created — and round-tripping through HTML would hand back an
+// identical-looking layer with every listener stripped off it.
+const _subSheetStack = [];   // [{ title, badges, nodes: Node[] }], oldest first
+
 export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
+  const body    = overlay.querySelector('.modal-body');
+
+  // Only stack over a sub-sheet that is actually on screen. A hidden one is a
+  // leftover from the last time, and pushing it would resurrect it on close.
+  if (!overlay.classList.contains('hidden')) {
+    _subSheetStack.push({
+      title:  overlay.querySelector('.modal-title-text').textContent,
+      badges: overlay.querySelector('.modal-header-badges').innerHTML,
+      nodes:  Array.from(body.childNodes),
+    });
+    body.replaceChildren();   // detaches the nodes; does not destroy them
+  }
+
   overlay.querySelector('.modal-title-text').textContent = title;
   overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
-  overlay.querySelector('.modal-body').innerHTML = bodyHtml;
+  body.innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
 }
 
+// Pops one layer. Only the LAST close hides the sub-sheet.
 export function closeSubSheet() {
   if (!_subSheetEl) return;
-  _subSheetEl.classList.add('hidden');
+  const prev = _subSheetStack.pop();
+  if (!prev) { _subSheetEl.classList.add('hidden'); return; }
+
+  const body = _subSheetEl.querySelector('.modal-body');
+  _subSheetEl.querySelector('.modal-title-text').textContent = prev.title;
+  _subSheetEl.querySelector('.modal-header-badges').innerHTML = prev.badges;
+  body.replaceChildren(...prev.nodes);   // the original elements, listeners intact
+}
+
+// Dismiss the whole stack at once — for leaving the screen, where popping back
+// through layers one at a time would be nonsense.
+export function closeAllSubSheets() {
+  _subSheetStack.length = 0;
+  _subSheetEl?.classList.add('hidden');
 }
 
 export function getSubSheetBody() {
