@@ -1451,6 +1451,12 @@ export function renderCastle(root, { player }) {
       target: () => getSheetBody()?.querySelector('.heal-btn'),
     },
     {
+      id: 'go_embark',
+      ready:  () => isTutorialDone(player, 'spell_heal')
+                 && !isTutorialDone(player, 'battle_done'),
+      target: () => document.querySelector('.nav-btn[data-screen="embark"]'),
+    },
+    {
       id: 'upgrades_page',
       ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt() && currentLayer !== 2,
       target: () => root.querySelector('#layer-next'),

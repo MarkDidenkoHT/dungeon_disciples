@@ -151,6 +151,16 @@ const TUTORIAL_STEPS = {
   // — combat spells are researched here once and then cast during the fight —
   // so that step taught a screen that no longer does what it described. New key
   // rather than reused, because everyone needs to see the corrected lesson.
+  go_embark: {
+    en: {
+      title: 'March Out',
+      text: 'Your army is fed, armed and on its feet. Tap Embark to choose where they fight — everything else in the castle is paid for out there.',
+    },
+    ru: {
+      title: 'В поход',
+      text: 'Ваша армия снаряжена и готова. Нажмите «Поход», чтобы выбрать, где они будут сражаться, — всё остальное в замке оплачивается там.',
+    },
+  },
   spell_research: {
     en: {
       title: 'Your Spellbook',
