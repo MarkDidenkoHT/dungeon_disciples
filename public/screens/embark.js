@@ -437,17 +437,19 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       const boot = await bootstrapCache.get(player.chat_id);
       const progress = boot?.progress || {};
 
-      // The reconnect check no longer gates the region list. It answers "is
-      // there a battle to return to", which is a modal on top of this screen —
-      // waiting for it before drawing meant a second serial round-trip before
-      // the player saw anything. Fired here, handled when it lands; the pips
-      // re-check at the moment of departure anyway (see the click handler).
+      // Shown only when a caller HANDS us an active battle — today that is
+      // battle-prep, bounced back here by /battle/create. This screen does not
+      // go looking for one.
+      //
+      // It used to fire its own /battle/active on arrival, and again on every
+      // departure tap. Both were redundant: main.js checks once at boot and
+      // blocks navigation entirely if a battle is open, so a battle this client
+      // does not know about can only have been started by another device — which
+      // that device's own boot check covers, and which /battle/create refuses
+      // outright either way. The arrival check also never had an activeCheck to
+      // skip, since nothing passed one, so it ran on every single embark nav.
       if (activeCheck?.active) {
         showReconnectModal(activeCheck.battle_id, activeCheck.battle_data);
-      } else if (!activeCheck) {
-        api(`/battle/active?chat_id=${player.chat_id}`)
-          .then(resp => { if (resp?.active) showReconnectModal(resp.battle_id, resp.battle_data); })
-          .catch(e => console.error('Failed to check active battle:', e));
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
@@ -524,22 +526,13 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         });
       });
 
-      // Re-check at the moment of departure, not just on screen load. The
-      // load-time modal can be dismissed by hand (desktop Telegram exposes
-      // devtools), and the server would then reject /battle/create with a bare
-      // error after the player had already built a formation. Send them back to
-      // reconnect-or-abandon instead, penalty included.
-      async function departTo(regionId, level) {
+      // Departs immediately. /battle/create is the authority on whether a second
+      // battle is allowed, and battle-prep sends the player back here with the
+      // active battle in hand if it refuses — so the only cost of not checking
+      // first is paid in the one case where a battle really is open, instead of
+      // by every honest departure.
+      function departTo(regionId, level) {
         if (!regionId || !level) return;
-        try {
-          const active = await api(`/battle/active?chat_id=${player.chat_id}`);
-          if (active?.active) {
-            showReconnectModal(active.battle_id, active.battle_data);
-            return;
-          }
-        } catch (e) {
-          console.error('Failed to check active battle:', e);
-        }
         markTutorialDone(player, 'embark_region');
         navigate('battle-prep', { player, region_id: regionId, level });
       }

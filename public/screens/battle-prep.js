@@ -1750,7 +1750,14 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       // Code, not prose — see the same change in screens/battle.js. The regex
       // stays as a deploy-window fallback only.
       if (err.code === 'battle_in_progress' || /already in progress/i.test(err.message || '')) {
-        navigate('embark', { player });
+        // Fetch the battle we are being refused for and hand it to embark, which
+        // puts reconnect-or-abandon in front of the player. Embark no longer
+        // looks it up itself — this is the one path that needs it, so this is
+        // the one place that pays for the request.
+        let activeCheck = null;
+        try { activeCheck = await api(`/battle/active?chat_id=${player.chat_id}`); }
+        catch (e) { console.error('Failed to check active battle:', e); }
+        navigate('embark', { player, activeCheck });
         return;
       }
       btn.disabled = false;

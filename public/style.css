@@ -7208,18 +7208,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .embark-event-badge { animation: none; }
 }
 
-/* ── Event panel ───────────────────────────────────────────────────────────
-   Its own overlay and its own class names. The screen's .modal-overlay is a
-   bottom sheet built for blocking flows (reconnect, coming-soon), and an event
-   opened from a badge in a card's corner is not one — it is a small centred
-   card. Styling it through the shared class meant fighting those rules. */
 .embark-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 60;
   display: flex;
-  /* Top-aligned, not centred: the panel's height depends on how many levels the
-     event drops at, and a centred panel would jump around between events. */
   align-items: flex-start;
   justify-content: center;
   padding: 24px;
@@ -7230,10 +7223,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .embark-modal {
   width: 360px;
   max-width: 100%;
-  margin-top: 25px;
-  /* Capped, and scrolled INSIDE rather than allowed to grow. The drop table and
-     the bonus rows come from event data, so the panel's height is not something
-     this file can know in advance. */
+  margin-top: 50px;
   max-height: min(85vh, 720px);
   display: flex;
   flex-direction: column;
