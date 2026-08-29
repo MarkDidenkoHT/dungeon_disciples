@@ -2823,7 +2823,7 @@ const UNITS = {
         name_ru: 'Хранитель Окровавленной Завесы',
         tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 65, armor: 10, initiative: 20,
+        hp: 60, armor: 15, initiative: 20,
         resistances: { air: 0, fire: 25, life: 40, death: 25, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'life', action_power: 20, action_icon: 'communion.jpg',
