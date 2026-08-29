@@ -18,7 +18,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 45,
         crystals:        [{ type: 'Crystals_Life', amount: 5 }, { type: 'Crystals_Fire', amount: 5 }],
-        trophies:        { vial_of_pure_blood: 1, aggrails_signet: 1 },
+        trophies:        { vial_of_pure_blood: 1 },
       },
     },
     level_2: {
@@ -30,7 +30,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 60,
         crystals:        [{ type: 'Crystals_Life', amount: 8 }, { type: 'Crystals_Fire', amount: 8 }],
-        trophies:        { aggrails_signet: 1, vial_of_pure_blood: 2 },
+        trophies:        { aggrails_signet: 1 },
       },
     },
     level_3: {
@@ -44,7 +44,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 45, xp: 85,
         crystals:        [{ type: 'Crystals_Life', amount: 10 }, { type: 'Crystals_Fire', amount: 10 }],
-        trophies:        { vial_of_pure_blood: 2, shard_of_devotion: 1 },
+        trophies:        { shard_of_devotion: 1 },
       },
     },
     level_4: {
@@ -57,7 +57,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 55, xp: 115,
         crystals:        [{ type: 'Crystals_Life', amount: 11 }, { type: 'Crystals_Fire', amount: 11 }],
-        trophies:        { aggrails_signet: 2, vial_of_pure_blood: 2 },
+        trophies:        { aggrails_signet: 1, vial_of_pure_blood: 2 },
       },
     },
     level_5: {
@@ -71,7 +71,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 65, xp: 150,
         crystals:        [{ type: 'Crystals_Life', amount: 13 }, { type: 'Crystals_Fire', amount: 13 }],
-        trophies:        { vial_of_pure_blood: 3, aggrails_signet: 2 },
+        trophies:        { vial_of_pure_blood: 1, aggrails_signet: 2 },
       },
     },
     level_6: {
@@ -86,7 +86,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 75, xp: 200,
         crystals:        [{ type: 'Crystals_Life', amount: 14 }, { type: 'Crystals_Fire', amount: 14 }],
-        trophies:        { shard_of_devotion: 3 },
+        trophies:        { shard_of_devotion: 2 },
       },
     },
     level_7: {
@@ -99,7 +99,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 85, xp: 250,
         crystals:        [{ type: 'Crystals_Life', amount: 16 }, { type: 'Crystals_Fire', amount: 16 }],
-        trophies:        { shard_of_devotion: 2, aggrails_signet: 3 },
+        trophies:        { vial_of_pure_blood: 2, aggrails_signet: 2 },
       },
     },
     level_8: {
@@ -108,12 +108,12 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.aggrails_champion',  cell: 0, item_id: 'divine_circlet' },
         { key: 'crimson_basilica.high_keeper',        cell: 3 },
         { key: 'crimson_basilica.crimson_stalker',    cell: 1 },
-        { key: 'crimson_basilica.keeper_of_purity',   cell: 5 },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil',   cell: 5 },
       ],
       rewards: {
         gold: 100, xp: 325,
         crystals:        [{ type: 'Crystals_Life', amount: 18 }, { type: 'Crystals_Fire', amount: 18 }],
-        trophies:        { shard_of_devotion: 3, vial_of_pure_blood: 4 },
+        trophies:        { aggrails_signet: 3, vial_of_pure_blood: 1 },
       },
     },
     level_9: {
@@ -124,28 +124,28 @@ const REGION_ENCOUNTERS = {
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 2 },
         { key: 'crimson_basilica.crimson_stalker',     cell: 1 },
-        { key: 'crimson_basilica.high_keeper',         cell: 5, item_id: 'divine_circlet' },
+        { key: 'crimson_basilica.high_keeper',         cell: 5 },
       ],
       rewards: {
         gold: 120, xp: 400,
         crystals:        [{ type: 'Crystals_Life', amount: 20 }, { type: 'Crystals_Fire', amount: 20 }],
-        trophies:        { shard_of_devotion: 4, aggrails_signet: 4 },
+        trophies:        { shard_of_devotion: 2, aggrails_signet: 1 },
       },
     },
     level_10: {
       enemies: [
         { key: 'crimson_basilica.sister_aldra_3',      cell: 3, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
-        { key: 'crimson_basilica.grand_keeper',        cell: 1, item_id: 'divine_circlet' },
-        { key: 'crimson_basilica.exalted_evangelist',  cell: 0 },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil',        cell: 1 },
+        { key: 'crimson_basilica.exalted_evangelist',  cell: 2 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
-        { key: 'crimson_basilica.aggrails_desecrator', cell: 2 },
+        { key: 'crimson_basilica.aggrails_desecrator', cell: 0 },
         { key: 'crimson_basilica.crimson_stalker',     cell: 5 },
       ],
       rewards: {
         gold: 150, xp: 500,
         crystals:        [{ type: 'Crystals_Life', amount: 22 }, { type: 'Crystals_Fire', amount: 22 }],
-        trophies:        { shard_of_devotion: 5, vial_of_pure_blood: 5, aggrails_signet: 5 },
+        trophies:        { shard_of_devotion: 3, vial_of_pure_blood: 1, aggrails_signet: 1 },
       },
     },
   },
@@ -158,7 +158,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 45,
         crystals:        [{ type: 'Crystals_Frost', amount: 6 }, { type: 'Crystals_Air', amount: 6 }],
-        trophies:        { crystal_dust: 1, crystal_shard: 1 },
+        trophies:        { crystal_dust: 1 },
       },
     },
     level_2: {
@@ -170,7 +170,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 60,
         crystals:        [{ type: 'Crystals_Frost', amount: 8 }, { type: 'Crystals_Air', amount: 8 }],
-        trophies:        { crystal_shard: 1, crystal_dust: 1 },
+        trophies:        { crystal_shard: 1 },
       },
     },
     level_3: {
@@ -182,7 +182,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 45, xp: 85,
         crystals:        [{ type: 'Crystals_Frost', amount: 10 }, { type: 'Crystals_Air', amount: 10 }],
-        trophies:        { living_geode: 2 },
+        trophies:        { living_geode: 1 },
       },
     },
     level_4: {
@@ -221,7 +221,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 75, xp: 200,
         crystals:        [{ type: 'Crystals_Frost', amount: 14 }, { type: 'Crystals_Air', amount: 14 }],
-        trophies:        { living_geode: 3 },
+        trophies:        { living_geode: 2 },
       },
     },
     level_7: {
@@ -234,7 +234,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 85, xp: 250,
         crystals:        [{ type: 'Crystals_Frost', amount: 16 }, { type: 'Crystals_Air', amount: 16 }],
-        trophies:        { crystal_shard: 3, living_geode: 2 },
+        trophies:        { crystal_shard: 1, crystal_dust: 2 },
       },
     },
     level_8: {
@@ -247,7 +247,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 100, xp: 325,
         crystals:        [{ type: 'Crystals_Frost', amount: 18 }, { type: 'Crystals_Air', amount: 18 }],
-        trophies:        { crystal_dust: 4, living_geode: 3 },
+        trophies:        { crystal_dust: 2, crystal_shard: 2 },
       },
     },
     level_9: {
@@ -262,7 +262,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 125, xp: 400,
         crystals:        [{ type: 'Crystals_Frost', amount: 20 }, { type: 'Crystals_Air', amount: 20 }],
-        trophies:        { living_geode: 4, crystal_shard: 4 },
+        trophies:        { living_geode: 2, crystal_shard: 1 },
       },
     },
     level_10: {
@@ -277,7 +277,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 150, xp: 500,
         crystals:        [{ type: 'Crystals_Frost', amount: 22 }, { type: 'Crystals_Air', amount: 22 }],
-        trophies:        { living_geode: 5, crystal_shard: 5, crystal_dust: 5 },
+        trophies:        { living_geode: 3, crystal_shard: 1, crystal_dust: 1 },
       },
     },
   },
@@ -291,7 +291,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 25, xp: 45,
         crystals:        [{ type: 'Crystals_Death', amount: 6 }, { type: 'Crystals_Nature', amount: 6 }],
-        trophies:        { grave_dust: 1, rusted_shackle: 1 },
+        trophies:        { grave_dust: 1 },
       },
     },
     level_2: {
@@ -303,7 +303,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 35, xp: 60,
         crystals:        [{ type: 'Crystals_Death', amount: 8 }, { type: 'Crystals_Nature', amount: 8 }],
-        trophies:        { rusted_shackle: 1, grave_dust: 1 },
+        trophies:        { rusted_shackle: 1 },
       },
     },
     level_3: {
@@ -317,7 +317,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 45, xp: 85,
         crystals:        [{ type: 'Crystals_Death', amount: 10 }, { type: 'Crystals_Nature', amount: 10 }],
-        trophies:        { shard_of_might: 2 },
+        trophies:        { shard_of_might: 1 },
       },
     },
     level_4: {
@@ -349,7 +349,7 @@ const REGION_ENCOUNTERS = {
     level_6: {
       enemies: [
         { key: 'chamber_of_unrest.dread_knight',           cell: 0 },
-        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4, item_id: 'veil_of_discord' },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 1 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
         { key: 'chamber_of_unrest.malgrath_the_undying_2', cell: 2, item_id: 'might_of_the_pure',
@@ -359,7 +359,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 75, xp: 200,
         crystals:        [{ type: 'Crystals_Death', amount: 14 }, { type: 'Crystals_Nature', amount: 14 }],
-        trophies:        { shard_of_might: 3 },
+        trophies:        { shard_of_might: 2 },
       },
     },
     level_7: {
@@ -372,21 +372,21 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 85, xp: 250,
         crystals:        [{ type: 'Crystals_Death', amount: 16 }, { type: 'Crystals_Nature', amount: 16 }],
-        trophies:        { shard_of_might: 2, rusted_shackle: 3 },
+        trophies:        { grave_dust: 1, rusted_shackle: 2 },
       },
     },
     level_8: {
       enemies: [
         { key: 'chamber_of_unrest.death_knight',           cell: 0 },
         { key: 'chamber_of_unrest.death_knight',           cell: 4 },
-        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1, item_id: 'veil_of_discord' },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
         { key: 'chamber_of_unrest.oathsworn_martyr',       cell: 5 },
       ],
       rewards: {
         gold: 100, xp: 325,
         crystals:        [{ type: 'Crystals_Death', amount: 18 }, { type: 'Crystals_Nature', amount: 18 }],
-        trophies:        { shard_of_might: 3, grave_dust: 4 },
+        trophies:        { grave_dust: 2, rusted_shackle: 2 },
       },
     },
     level_9: {
@@ -403,7 +403,7 @@ const REGION_ENCOUNTERS = {
       rewards: {
         gold: 125, xp: 400,
         crystals:        [{ type: 'Crystals_Death', amount: 20 }, { type: 'Crystals_Nature', amount: 20 }],
-        trophies:        { shard_of_might: 4, rusted_shackle: 4 },
+        trophies:        { shard_of_might: 2, rusted_shackle: 1 },
       },
     },
     level_10: {
@@ -411,16 +411,16 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 4 },
                    { spell_id: 'boss_deaths_verdict', power: 5 }] },
-        { key: 'chamber_of_unrest.death_knight',           cell: 0 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'veil_of_discord' },
         { key: 'chamber_of_unrest.death_knight',           cell: 4 },
         { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1, item_id: 'divine_circlet' },
-        { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3, item_id: 'life_resistance_potion' },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 5 },
       ],
       rewards: {
         gold: 150, xp: 500,
         crystals:        [{ type: 'Crystals_Death', amount: 22 }, { type: 'Crystals_Nature', amount: 22 }],
-        trophies:        { shard_of_might: 5, grave_dust: 5, rusted_shackle: 5 },
+        trophies:        { shard_of_might: 3, grave_dust: 1, rusted_shackle: 1 },
       },
     },
   },

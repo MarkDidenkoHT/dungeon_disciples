@@ -1281,7 +1281,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 40, death: 20, cold: 20, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 32, action_icon: 'iron_fist.jpg', action_animation: 'shield_bash', action_sfx: 'robot_hit',
-      xp: 2600, passive: ['unbreakable 2', 'aegis 1', 'beacon_of_hope 1'], ability: 'lions_roar 2',
+      xp: 2600, passive: ['unbreakable 2', 'aegis 1', 'clear_mind 1'], ability: 'lions_roar 2',
     },
     siege_engine: {
       id: 'e32', f: 'e', t: 2,
@@ -2812,10 +2812,10 @@ const UNITS = {
         tags: ['Demon', 'Holy'],
         size: 'tile',
         hp: 65, armor: 10, initiative: 20,
-        resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
-        action: 'heal', target_type: 'ally', targets: 6, range: 3,
-        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-        xp: 3080, passive: ['vitality 2', 'beacon_of_despair 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
+        resistances: { air: 0, fire: 25, life: 40, death: 25, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+        damage_source: 'life', action_power: 20, action_icon: 'communion.jpg',
+        xp: 3080, passive: ['choir 2', 'communion 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       crimson_scout: {
         id: 'opb_e4', f: 'opb', t: 1,

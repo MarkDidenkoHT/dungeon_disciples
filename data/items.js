@@ -50,7 +50,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { hp: 2, armor: 3, cold_resist: 5 },
-    passive:      'unbreakable 1',
+    passive:      'protector 2',
     icon:         'crystal_shield',
     rarity:       'epic',
     cost:         { crystal_shard: 1, Gold: 50, Crystals_Frost: 25 },
