@@ -238,6 +238,7 @@ function runTrigger(trigger, ctx) {
     on_death:              () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
     on_battle_start:       () => engine.combatants,
     on_turn_start:         () => [ctx.actor],
+    on_pool:               () => [ctx.actor],
     on_heal:               () => engine.combatants.filter(c => c.side === ctx.actor?.side),
     on_healed:             () => engine.combatants.filter(c => c.side === ctx.target?.side),
     on_take_damage:        () => engine.combatants.filter(c => c.side === ctx.target?.side),
@@ -1136,6 +1137,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (e.battle_hp <= 0) e.alive = false;
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: deathDmg, heal: false });
       }
+    }
+  }
+  // Shield and Decay actions. Polarity follows the side: a ward on an ally eases
+  // what is hurting them, a pool on an enemy eats what is helping them.
+  if (trigger === 'on_pool' && owner === actor && target && p.dispel_power != null) {
+    const polarity = target.side === owner.side ? 'negative' : 'positive';
+    const cut = engine.reduceEffect(target, polarity, p.dispel_power);
+    if (cut) {
+      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+        targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: polarity === 'negative',
+        message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `weakens to ${cut.to}` : 'is gone'}` });
     }
   }
   if (trigger === 'on_heal' && owner === actor) {

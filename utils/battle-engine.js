@@ -1003,6 +1003,9 @@ class BattleEngine {
         if (!t?.alive) continue;
         if (poolAction === 'shield') this.grantShield(t, power, label, actor);
         else                         this.applyDecay(t, power, label, actor);
+        // A pool action is neither a heal nor a hit, so it fired no trigger at
+        // all — a warder or a decayer carrying Dispel never got to use it.
+        this.fireTrigger('on_pool', { actor, target: t, dmg: power, dying: null });
       }
       actor.acted_this_round = true;
       return this.afterAction(actor);
