@@ -4662,12 +4662,65 @@ async function ember_riposte(cellEl, opts = {}) {
   layer.destroy({ children: true });
 }
 
+// ── dispel ───────────────────────────────────────────────────────────────────
+//
+// A purple mote gathers on the target and bursts. Short on purpose: Dispel can
+// fire on every heal, every hit and every ward, so it has to read at a glance
+// and then get out of the way.
+const DISPEL = { core: 0xf3e6ff, mid: 0x9b30ff, edge: 0xc77dff };
+
+async function dispel(cellEl) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  const { layer, glow, solid } = riderLayer(4);
+
+  const MOTES = 10;
+  const motes = Array.from({ length: MOTES }, (_, i) => ({
+    ang:   (i / MOTES) * Math.PI * 2 + Math.random() * 0.5,
+    speed: 0.7 + Math.random() * 0.55,
+  }));
+  const GATHER = 0.34;
+
+  await animate(340, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height);
+    glow.clear(); solid.clear();
+
+    if (t < GATHER) {
+      const p = t / GATHER;
+      softGlow(glow, cx, cy, r * (0.10 + p * 0.13), DISPEL.core, 0.4 + p * 0.55);
+      solid.beginFill(DISPEL.edge, 0.5 + p * 0.45);
+      solid.drawCircle(cx, cy, r * (0.06 + p * 0.07));
+      solid.endFill();
+      return;
+    }
+
+    const p = (t - GATHER) / (1 - GATHER);
+    const fade = 1 - p;
+    softGlow(glow, cx, cy, r * (0.22 + p * 0.32), DISPEL.mid, fade * 0.6);
+    solid.lineStyle(1 + 3 * fade, DISPEL.edge, fade * 0.9);
+    solid.drawCircle(cx, cy, r * (0.13 + p * 0.42));
+    for (const m of motes) {
+      const d = r * (0.13 + p * 0.46 * m.speed);
+      solid.beginFill(DISPEL.core, fade * 0.85);
+      solid.drawCircle(cx + Math.cos(m.ang) * d, cy + Math.sin(m.ang) * d, 0.6 + 2.2 * fade);
+      solid.endFill();
+    }
+  });
+  layer.destroy({ children: true });
+}
+
 Object.assign(EFFECTS, {
   blood_spatter,
   blood_drawback,
   rage_flare,
   steel_shell,
   ember_riposte,
+  dispel,
 });
 
 export { blood_spatter, blood_drawback, rage_flare, steel_shell, ember_riposte };
