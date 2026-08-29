@@ -253,7 +253,7 @@ function navigate(screen, params = {}) {
   // trophy bar, the castle's cost bar) are not cleared by emptying the root, so
   // they would follow the player onto the next screen.
   document.getElementById('roster-trophy-bar')?.remove();
-  document.getElementById('castle-cost-bar')?.remove();
+  document.getElementById('shared-cost-bar')?.remove();
 
   // The FX canvas and any running bond loops belong to the screen being left.
   // Clearing the root only detaches the canvas from the DOM — the PIXI app and

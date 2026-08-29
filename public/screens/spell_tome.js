@@ -1,7 +1,8 @@
 import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
+import { showCostBar, hideCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, onSheetClose, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
 
 // The tome is for RESEARCH, and the two non-combat spells (revive and mend) are
 // neither researched nor cast from here — every faction starts with both, and
@@ -84,6 +85,17 @@ export function renderSpellTome(root, { player }) {
     return assetUrl(`/assets/icons/spells/${spell.id}.png`);
   }
 
+  // Same shape the castle hands the shared bar: resource keys to amounts.
+  function costMap(spell) {
+    const out = {};
+    for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
+      if (amt > 0) out[type] = amt;
+    }
+    return out;
+  }
+
+  const crystalAmount = key => Number(playerCrystals[key] || 0);
+
   function canAfford(spell) {
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
       if (amt > 0 && (playerCrystals[type] || 0) < amt) return false;
@@ -138,12 +150,17 @@ export function renderSpellTome(root, { player }) {
         if (activeSpellId === spellId) {
           activeSpellId = null;
           renderSlider();
+          hideCostBar();
           closeSheet();
           return;
         }
         activeSpellId = spellId;
         renderSlider();
+        showCostBar(costMap(spell), { amountOf: crystalAmount, lang: L });
         openSpellModal(spell);
+        // Dismissing the sheet by the X or the backdrop has to take the bar with
+        // it, or it outlives the spell it was describing.
+        onSheetClose(() => { activeSpellId = null; hideCostBar(); renderSlider(); });
       });
     });
   }

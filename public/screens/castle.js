@@ -3,6 +3,7 @@ import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
 import { bootstrapCache } from '../api.js';
+import { showCostBar as sharedShowCostBar, hideCostBar } from '../cost-bar.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, firstRecruitHint } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
@@ -576,88 +577,11 @@ export function renderCastle(root, { player }) {
   // Costs are keyed 'gold' + 'Crystals_*' (data/buildings.js) — mercenary
   // upgrades are priced in trophies instead, which have no column in the strip
   // above, so those are appended after the seven fixed slots.
-  const COST_BAR_ID = 'castle-cost-bar';
-
-  function hideCostBar() {
-    document.getElementById(COST_BAR_ID)?.remove();
-  }
-
-  function showCostBar(cost) {
-    hideCostBar();
-    const entries = Object.entries(cost || {}).filter(([, amt]) => Number(amt) > 0);
-    if (!entries.length) return;
-
-    const resourceRow = document.getElementById('resource-bar-row');
-    if (!resourceRow) return;
-
-    // 'gold' in a cost map is the same resource as 'Gold' in the strip above.
-    const required = {};
-    for (const [item, amt] of entries) {
-      const key = item === 'gold' ? 'Gold' : item;
-      required[key] = (required[key] || 0) + Number(amt);
-    }
-
-    // The seven aligned slots. A slot with nothing to pay still renders, dimmed,
-    // so every column keeps its position under the strip above.
-    const slotHtml = (iconHtml, key, label, need) => {
-      const have  = amountOf(key);
-      const short = have < need;
-      // A cost you cannot meet is a question — "where do I get this?" — so the
-      // column answers it. Short ones become buttons carrying the material; the
-      // ones you can already pay stay inert, since there is nothing to go and
-      // find. Covers building costs and mercenary trophy costs alike: both are
-      // priced through this same bar.
-      const title = `${label}: ${castleLang === 'ru' ? `нужно ${need}, есть ${have}` : `need ${need}, have ${have}`}`;
-      if (!short) {
-        return `<div class="res-bar-item cost-bar-item cost-bar-item--ok" title="${title}">
-                  <span class="res-bar-icon">${iconHtml}</span>
-                  <span class="res-bar-val">${need}</span>
-                </div>`;
-      }
-      return `<button class="res-bar-item cost-bar-item cost-bar-item--short" data-material="${key}" title="${title}">
-                <span class="res-bar-icon">${iconHtml}</span>
-                <span class="res-bar-val">${need}</span>
-              </button>`;
-    };
-
-    const slots = RESOURCE_BAR_SLOTS.map(slot => {
-      const need = required[slot.key] ?? 0;
-      if (!need) {
-        return `<div class="res-bar-item cost-bar-item cost-bar-item--idle">
-                  <span class="res-bar-icon">${slot.icon}</span>
-                  <span class="res-bar-val">·</span>
-                </div>`;
-      }
-      return slotHtml(slot.icon, slot.key, slot.label, need);
-    }).join('');
-
-    // Trophy costs (mercenary upgrades) have no column above to line up with.
-    const extras = Object.entries(required)
-      .filter(([key]) => !RESOURCE_BAR_SLOTS.some(s => s.key === key))
-      .map(([key, need]) => {
-        const name = key.replace(/_/g, ' ');
-        const icon = `<img src="${assetUrl(`/assets/icons/recources/${key}.png`)}" class="res-icon-img" alt="${name}" onerror="this.style.visibility='hidden'">`;
-        return slotHtml(icon, key, name, need);
-      }).join('');
-
-    const bar = document.createElement('div');
-    bar.id = COST_BAR_ID;
-    bar.className = 'cost-bar-row';
-    // The two ghost cells stand in for the timeline / errands buttons that flank
-    // the strip above. Without them this bar would start at the screen edge and
-    // every column would sit one button-width to the left.
-    bar.innerHTML = `
-      <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>
-      <div class="resource-bar cost-bar">${slots}${extras}</div>
-      <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>`;
-    // The bar lives outside #content-root, next to the resource strip, so no
-    // screen-level delegation reaches it — it carries its own listener.
-    bar.addEventListener('click', e => {
-      const chip = e.target.closest('[data-material]');
-      if (chip) openMaterialSourceSheet(chip.dataset.material);
-    });
-    resourceRow.insertAdjacentElement('afterend', bar);
-  }
+  const showCostBar = (cost) => sharedShowCostBar(cost, {
+    amountOf,
+    lang: castleLang,
+    onMaterialClick: openMaterialSourceSheet,
+  });
 
   // ── Where does this come from? ────────────────────────────────────────────
   // Opened from a cost the player cannot meet. Crystals and trophies both drop

@@ -611,6 +611,17 @@ export function renderItems(root, { player }) {
 
     const sheetBody = getSheetBody();
 
+    // The cost chips inside this sheet are themselves materials, and any of them
+    // may be another crafted item with its own requirements. Without this the
+    // chain stopped one level down: you could open a component, see what it
+    // needed, and not be able to open THAT.
+    sheetBody?.addEventListener('click', e => {
+      const chip = e.target.closest('[data-material]');
+      if (!chip) return;
+      const next = chip.dataset.material;
+      if (next && next !== key) openMaterialSheet(next);
+    });
+
     sheetBody?.querySelector('#mat-craft-btn')?.addEventListener('click', async e => {
       const btn = e.currentTarget;
       btn.disabled = true;
