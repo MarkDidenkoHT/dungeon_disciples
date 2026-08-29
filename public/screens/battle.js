@@ -544,6 +544,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       });
   }
 
+  // Entry types that mean "this unit has taken its turn".
+  const ACTOR_ENTRY_TYPES = new Set(['action', 'ability', 'spell', 'defend', 'skip', 'pool', 'cast']);
+  const ROUND_BREATH_MS = 500;
+
   async function playbackSequence(entries) {
     const newEntries = (entries || []).filter(e => {
       if (e?.id == null) return true;          // no id (a local/optimistic entry) — always play
@@ -559,10 +563,47 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // still print and their HP still lands; only the repeat animation and its
     // repeat sound are skipped.
     const fxCovered = new Set();
+    // Who has already gone, so the queue can advance in step with the animation
+    // instead of sitting on last turn's order until playback ends. Seeded from
+    // the board, then reset by each 'round' entry.
+    const acted = new Set(state.combatants.filter(c => c.acted_this_round).map(c => c.id));
+    // `state` is the end state, so anything killed during THIS playback already
+    // reads as dead. Those units are still standing as far as the animation is
+    // concerned, so they belong in the queue until their death actually plays.
+    const dyingHere = new Set(newEntries.filter(e => e.killed && e.targetId).map(e => e.targetId));
+    const dead = new Set();
+    const idFor = e => {
+      if (e.actorId) return e.actorId;
+      const c = state.combatants.find(x => x.unit_name === e.actorName && x.cellIndex === e.actorCell);
+      return c?.id ?? null;
+    };
+    const queueNow = () => drawInitQueue(
+      state.combatants
+        .filter(c => (c.alive || dyingHere.has(c.id)) && !dead.has(c.id) && !acted.has(c.id))
+        .sort((a, b) => b.initiative - a.initiative));
+    queueNow();
+
     for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
       const entry = newEntries[entryIdx];
       // Track position in the log
       if (entry.id != null) lastLogId = entry.id;
+
+      // A new round: everyone is up again. Drawn and held for a beat BEFORE the
+      // round's first action, because when the enemy out-rolls the player that
+      // action follows immediately and the new order would otherwise never be
+      // on screen long enough to read.
+      if (entry.type === 'round') {
+        acted.clear();
+        queueNow();
+        await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
+      } else if (ACTOR_ENTRY_TYPES.has(entry.type)) {
+        const id = idFor(entry);
+        if (id && !acted.has(id)) { acted.add(id); queueNow(); }
+      }
+      if (entry.killed && entry.targetId && !dead.has(entry.targetId)) {
+        dead.add(entry.targetId);
+        queueNow();
+      }
       // Append this log line to the visible battle log
       const logEl = ui?.battleLog;
       if (logEl) {
@@ -2060,6 +2101,31 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return html.join('');
   }
 
+  // Split out of render() so playback can move the queue on as each unit acts.
+  // During playback `state` is already the END-of-turn state the server sent, so
+  // its acted_this_round flags describe the wrong moment — playbackSequence
+  // tracks who has gone and hands the remainder in here instead.
+  function drawInitQueue(order) {
+    if (!ui?.initQueue) return;
+    ui.initQueue.innerHTML = order.map((c, i) => {
+      const portrait = getPortraitUrl(c);
+      const isActive = i === 0;
+      const side     = c.side;
+      return `
+        <div class="portrait-card portrait-card--init portrait-card--${side}
+                    ${isActive ? 'portrait-card--selected' : ''}"
+             data-id="${c.id}" role="button" tabindex="0"
+             title="${cName(c)}">
+          ${portrait
+            ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
+            : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
+          }
+          <div class="init-side-strip"></div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function render() {
     ensureShell();
     const actor = currentActor();
@@ -2109,25 +2175,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     renderPowerStrips();
 
-    ui.initQueue.innerHTML = actingOrder.map((c, i) => {
-      const portrait = getPortraitUrl(c);
-      const isActive = i === 0;
-      const side     = c.side;
-      // Same frame art as the formation track; the unit acting next wears the
-      // lit variant (.portrait-card--selected), exactly as a selected card does.
-      return `
-        <div class="portrait-card portrait-card--init portrait-card--${side}
-                    ${isActive ? 'portrait-card--selected' : ''}"
-             data-id="${c.id}" role="button" tabindex="0"
-             title="${cName(c)}">
-          ${portrait
-            ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
-            : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
-          }
-          <div class="init-side-strip"></div>
-        </div>
-      `;
-    }).join('');
+    drawInitQueue(actingOrder);
 
     // Both attrition phases are keyed off the round, so this is refreshed
     // wherever the board is — turn transitions, reconnects, snapshot updates.
