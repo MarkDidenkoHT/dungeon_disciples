@@ -156,7 +156,7 @@ export function renderSpellTome(root, { player }) {
         }
         activeSpellId = spellId;
         renderSlider();
-        showCostBar(costMap(spell), { amountOf: crystalAmount, lang: L });
+        showCostBar(costMap(spell), { amountOf: crystalAmount, lang });
         openSpellModal(spell);
         // Dismissing the sheet by the X or the backdrop has to take the bar with
         // it, or it outlives the spell it was describing.
