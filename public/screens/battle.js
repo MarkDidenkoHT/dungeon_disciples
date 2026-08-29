@@ -1236,7 +1236,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     add(BL === 'ru' ? 'тлен'       : 'decay',      p.decay_amount);
     add(BL === 'ru' ? 'усилений'   : 'buffs',      p.dispel_count);
     add(BL === 'ru' ? 'урон'       : 'damage',     p.damage_boost_pct, '%');
-    add(BL === 'ru' ? 'перенаправление' : 'redirect', p.martyrdom_redirect_pct, '%');
+    add(BL === 'ru' ? 'принимает за соседей' : 'taken for allies', p.martyrdom_redirect_pct, '%');
     add(BL === 'ru' ? 'перехват'   : 'intercept',  p.intercept_chance_pct, '%');
     if (p.damage_dealt_reduction_pct) bits.push(`${BL === 'ru' ? 'урон врага' : 'enemy damage'} <strong>−${p.damage_dealt_reduction_pct}%</strong>`);
     if (p.armor_flat_reduction)       bits.push(`${BL === 'ru' ? 'броня' : 'armor'} <strong>−${p.armor_flat_reduction}</strong>`);
