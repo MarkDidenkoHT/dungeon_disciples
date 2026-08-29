@@ -1247,17 +1247,17 @@ const UNITS = {
       damage_source: null, action_power: 8, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 1300, passive: ['beacon_of_hope 2', 'iron_will 1'], ability: 'lions_roar 1',
     },
-      banneret: {
-      id: 'e131', f: 'e', t: 4,
-      name: 'Banneret',
-      name_ru: 'Баннерет',
+    gonfalonier: {
+      id: 'e1311', f: 'e', t: 4,
+      name: 'Gonfalonier',
+      name_ru: 'Гонфалоньер',
       tags: ['Knight', 'Holy'],
       size: 'tile',
       hp: 75, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 10, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 1300, passive: ['beacon_of_hope 2', 'iron_will 1', 'dispel 1'], ability: 'lions_roar 4',
+      xp: 2000, passive: ['beacon_of_hope 2', 'iron_will 1', 'dispel 1'], ability: 'lions_roar 4',
     },
     sentinel: {
       id: 'e3', f: 'e', t: 1,
@@ -2247,7 +2247,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 480, passive: ['infect 1', 'regenerate 1'], ability: null,
+      xp: 480, passive: ['infect 1', 'dispel 1'], ability: null,
     },
     plague_lord: {
       id: 'gs331', f: 'g', t: 3,
@@ -2259,7 +2259,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 1300, passive: ['infect 1', 'regenerate 1', 'horde 1'], ability: null,
+      xp: 1300, passive: ['infect 1', 'dispel 1', 'horde 1'], ability: null,
     },
     plague_archon: {
       id: 'gs3311', f: 'g', t: 4,
@@ -2271,7 +2271,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 30 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 2800, passive: ['infect 2', 'regenerate 1', 'horde 1'], ability: null,
+      xp: 2800, passive: ['infect 2', 'dispel 1', 'horde 1'], ability: null,
     },
     communicant: {
       id: 'gs2', f: 'g', t: 1,
@@ -2355,7 +2355,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
-      xp: 960, passive: ['vitality 1', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
+      xp: 960, passive: ['vitality 1', 'eternal_grief 1', 'dispel 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
       id: 'gs421', f: 'g', t: 3,
@@ -2367,7 +2367,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
-      xp: 2600, passive: ['vitality 2', 'eternal_grief 1', 'horde 1'], ability: 'raise_dead 2',
+      xp: 2600, passive: ['vitality 2', 'eternal_grief 1', 'dispel 1'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
       id: 'gs5', f: 'g', t: 1,
