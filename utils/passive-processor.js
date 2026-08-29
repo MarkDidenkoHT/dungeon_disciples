@@ -1053,9 +1053,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // from the middle row. The one unit it reliably spared was the attacker,
       // which is precisely who a retaliation is for.
       //
-      // Manhattan distance, so range 1 is the struck cell plus its orthogonal
-      // neighbours and a diagonal stays out. Footprint-to-footprint, because a
-      // 'row' or 'column' unit stands in more than one cell.
+      // The attacker's OWN COLUMN, within `range` rows — the same relation
+      // columnAdjacentCells defines for Inspiration and formation bonds, which
+      // is what "adjacent" means everywhere else in this game. Manhattan
+      // distance was wrong on a two-column board: it also caught the cell
+      // beside the attacker, so range 1 hit four of six cells.
       const splashDmg  = p.adjacent_aoe_damage_per_tag != null
         ? p.adjacent_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.adjacent_aoe_damage;
@@ -1063,7 +1065,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const actorCells = engine.getFootprint(actor);
       const withinRange = c => engine.getFootprint(c).some(tc =>
         actorCells.some(ac =>
-          Math.abs(cellRow(tc) - cellRow(ac)) + Math.abs(cellCol(tc) - cellCol(ac)) <= range));
+          cellCol(tc) === cellCol(ac) && Math.abs(cellRow(tc) - cellRow(ac)) <= range));
 
       const adjacent = engine.combatants.filter(c =>
         c.side === actor.side && c.alive && withinRange(c)
