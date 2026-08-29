@@ -1383,6 +1383,80 @@ class BattleEngine {
 
   // Removes up to `count` effects of the given polarity, reversing each. Returns
   // the removed records so the caller can log what was stripped.
+  // Effects whose size lives in a combatant field rather than in `restore`.
+  // The second entry is the "permanent" twin, which has to come down with it or
+  // the tick re-arms the pool the moment it is emptied.
+  static get EFFECT_POOLS() {
+    return {
+      bleed:  ['_bleed_dmg', '_bleed_permanent'],
+      chill:  ['_chill_dmg', '_chill_permanent'],
+      dot:    ['dot_dmg',    '_dot_permanent'],
+      poison: ['_poison_dmg', null],
+      decay:  ['_decay',     null],
+      shield: ['_shield',    null],
+      hot:    ['_hot',       null],
+    };
+  }
+
+  effectMagnitude(unit, eff) {
+    const pool = BattleEngine.EFFECT_POOLS[eff.key];
+    if (pool) return Math.max(0, Number(unit[pool[0]]) || 0);
+    let total = 0;
+    for (const amt of Object.values(eff.restore || {})) total += Math.abs(Number(amt) || 0);
+    return total;
+  }
+
+  // Shaves `points` off ONE effect instead of removing it whole: Bleed 4 under a
+  // Dispel 1 becomes Bleed 3. The strongest eligible effect is chosen, since
+  // that is the one actually threatening the unit. An effect reduced to nothing
+  // is removed and reverted like a normal dispel.
+  //
+  // Returns { key, name, from, to } for the log, or null when nothing applied.
+  reduceEffect(unit, polarity, points) {
+    if (!unit?._effects?.length || !(points > 0)) return null;
+    const eligible = unit._effects
+      .filter(e => e.polarity === polarity && e.dispellable !== false)
+      .map(e => ({ eff: e, mag: this.effectMagnitude(unit, e) }))
+      .filter(x => x.mag > 0)
+      .sort((a, b) => b.mag - a.mag);
+    if (!eligible.length) return null;
+
+    const { eff, mag } = eligible[0];
+    const taken = Math.min(points, mag);
+    const pool  = BattleEngine.EFFECT_POOLS[eff.key];
+    if (pool) {
+      const [field, permanent] = pool;
+      unit[field] = Math.max(0, (Number(unit[field]) || 0) - taken);
+      if (permanent) unit[permanent] = Math.min(Number(unit[permanent]) || 0, unit[field]);
+    } else {
+      // Hand back `taken` points of whatever the effect took, field by field.
+      let left = taken;
+      for (const [path, amount] of Object.entries(eff.restore || {})) {
+        if (left <= 0) break;
+        const size = Math.abs(Number(amount) || 0);
+        if (!size) continue;
+        const step = Math.min(left, size);
+        const sign = Number(amount) < 0 ? -1 : 1;
+        const parts = path.split('.');
+        const owner = this._effectPathOwner(unit, parts, false);
+        if (owner) {
+          const last = parts[parts.length - 1];
+          owner[last] = Math.max(0, (Number(owner[last]) || 0) + step * sign);
+        }
+        eff.restore[path] = (Number(amount) || 0) - step * sign;
+        left -= step;
+      }
+    }
+    if (eff.amount != null) eff.amount = Math.max(0, eff.amount - taken);
+
+    const now = this.effectMagnitude(unit, eff);
+    if (now <= 0) {
+      this.revertEffect(unit, eff);
+      unit._effects = unit._effects.filter(e => e !== eff);
+    }
+    return { key: eff.key, name: eff.name, from: mag, to: Math.max(0, mag - taken) };
+  }
+
   dispelEffects(unit, polarity, count = Infinity) {
     if (!unit?._effects?.length) return [];
     const matching = unit._effects

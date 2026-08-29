@@ -255,7 +255,10 @@ function runTrigger(trigger, ctx) {
   for (const unit of pool) {
     const defs = resolvePassiveDefs(unit, UNIT_ABILITIES);
     for (const def of defs) {
-      if (def.trigger !== trigger) continue;
+      // An ability may answer to more than one trigger: Dispel fires on the
+      // heal a mender gives and on the blow a striker lands.
+      const triggers = Array.isArray(def.trigger) ? def.trigger : [def.trigger];
+      if (!triggers.includes(trigger)) continue;
       dispatchPassive(trigger, unit, def, innerCtx);
     }
   }
@@ -778,6 +781,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
+    if (p.dispel_power != null) {
+      const cut = engine.reduceEffect(target, 'positive', p.dispel_power);
+      if (cut) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: false,
+          message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `weakens to ${cut.to}` : 'is stripped away'}` });
+      }
+    }
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
       const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
@@ -1128,6 +1139,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_heal' && owner === actor) {
+    if (p.dispel_power != null && target) {
+      const cut = engine.reduceEffect(target, 'negative', p.dispel_power);
+      if (cut) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: true,
+          message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `eases to ${cut.to}` : 'is cleansed'}` });
+      }
+    }
     if ((p.hot_pct != null || p.hot_pct_per_tag != null) && target) {
       target._hot = (target._hot ?? 0) + Math.floor(dmg * pctFor(p, engine, owner.side, "hot_pct", "hot_pct_per_tag") / 100);
       engine.registerEffect(target, {
