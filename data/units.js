@@ -193,7 +193,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -206,7 +206,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
@@ -219,7 +219,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 18, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -232,7 +232,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 18, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -362,7 +362,7 @@ const UNITS = {
       hp: 110, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 18, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 190, passive: ['rage 1', 'aggrails_blessing 1'], ability: 'pact 1',
     },
     tormentor: {
@@ -374,7 +374,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 24, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 960, passive: ['rage 1', 'aggrails_blessing 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     praetor: {
@@ -386,7 +386,7 @@ const UNITS = {
       hp: 140, armor: 15, initiative: 30,
       resistances: { air: 5, fire: 50, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 2600, passive: ['rage 2', 'aggrails_blessing 1', 'volcanic_skin 1'], ability: 'pact 1',
     },
     chorister: {
@@ -398,7 +398,7 @@ const UNITS = {
       hp: 130, armor: 0, initiative: 25,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 28, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 960, passive: ['rage 1', 'aggrails_blessing 1', 'burn 1'], ability: 'pact 1',
     },
     chanter: {
@@ -410,7 +410,7 @@ const UNITS = {
       hp: 140, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 36, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 28, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 2600, passive: ['rage 2', 'aggrails_blessing 1', 'burn 1'], ability: 'pact 1',
     },
     archchanter: {
@@ -422,7 +422,7 @@ const UNITS = {
       hp: 160, armor: 0, initiative: 35,
       resistances: { air: 10, fire: 50, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 40, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 34, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 5600, passive: ['rage 2', 'aggrails_blessing 1', 'burn 2'], ability: 'pact 1',
     },
     doomchanter: {
@@ -434,7 +434,7 @@ const UNITS = {
       hp: 150, armor: 10, initiative: 25,
       resistances: { air: 0, fire: 40, life: 0, death: 20, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
+      damage_source: 'death', action_power: 22, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 5600, passive: ['decay 3', 'infect 2'], ability: 'rite_of_reclamation 2',
     },
     ash_acolyte: {
@@ -978,7 +978,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 15, life: 50, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['exorcism 1', 'light_of_dawn 2', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -991,7 +991,7 @@ const UNITS = {
       hp: 75, armor: 6, initiative: 45,
       resistances: { air: 0, fire: 5, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 9, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 8, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['exorcism 1', 'aegis 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -1004,7 +1004,7 @@ const UNITS = {
       hp: 85, armor: 8, initiative: 50,
       resistances: { air: 0, fire: 10, life: 50, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 10, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['exorcism 2', 'aegis 1'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
@@ -1017,7 +1017,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['exorcism 2', 'aegis 1', 'vitality 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -1030,7 +1030,7 @@ const UNITS = {
       hp: 95, armor: 10, initiative: 55,
       resistances: { air: 0, fire: 10, life: 50, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'life', action_power: 15, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 12, action_icon: 'judgement.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['exorcism 2', 'aegis 1', 'beacon_of_hope 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -1617,7 +1617,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt', action_sfx: 'shock',
-      xp: 75, passive: 'inspiration_initiative 1', ability: null,
+      xp: 75, passive: 'concentration 1', ability: null,
     },
     red_mage: {
       id: 'e41', f: 'e', t: 2,
@@ -1629,7 +1629,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 430, passive: ['inspiration_initiative 1', 'burn 1'], ability: null,
+      xp: 430, passive: ['concentration 1', 'burn 1'], ability: null,
     },
     ash_priest: {
       id: 'e411', f: 'e', t: 3,
@@ -1641,7 +1641,7 @@ const UNITS = {
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 6,
       damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 1170, passive: ['inspiration_initiative 1', 'burn 2'], ability: null,
+      xp: 1170, passive: ['concentration 1', 'burn 2'], ability: null,
     },
     cinder_knight: {
       id: 'e412', f: 'e', t: 3,
@@ -1664,7 +1664,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 15, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'cold', action_power: 8, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt', action_sfx: 'frost_spell_impact',
+      damage_source: 'cold', action_power: 6, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt', action_sfx: 'frost_spell_impact',
       xp: 480, passive: ['resist_aura_cold 1', 'chill 1'], ability: 'frost_armor 1',
     },
     cryomancer: {
@@ -1676,7 +1676,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 30,
       resistances: { air: 5, fire: 0, life: 50, death: 5, cold: 25, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'fire', action_power: 12, action_icon: 'frost_shard.jpg', action_animation: 'fire_bolt', action_sfx: 'frost_spell_impact',
+      damage_source: 'fire', action_power: 8, action_icon: 'frost_shard.jpg', action_animation: 'fire_bolt', action_sfx: 'frost_spell_impact',
       xp: 1300, passive: ['resist_aura_cold 1', 'chill 2'], ability: 'frost_armor 2',
     },
     winter_magus: {
@@ -1688,7 +1688,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 30,
       resistances: { air: 10, fire: 5, life: 50, death: 10, cold: 35, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'cold', action_power: 16, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt', action_sfx: 'frost_spell_impact',
+      damage_source: 'cold', action_power: 10, action_icon: 'frost_shard.jpg', action_animation: 'frost_bolt', action_sfx: 'frost_spell_impact',
       xp: 2800, passive: ['resist_aura_cold 1', 'chill 2', 'clear_mind 1'], ability: 'frost_armor 2',
     },
     warder_adept: {
