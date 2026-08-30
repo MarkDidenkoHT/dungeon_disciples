@@ -809,7 +809,7 @@ const UNITS = {
       hp: 80, armor: 20, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 15, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 12, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
       passive: 'mithrails_light 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -819,10 +819,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 95, armor: 25, initiative: 45,
+      hp: 85, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 15, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
       passive: ['mithrails_light 1', 'protector 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -832,10 +832,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 120, armor: 25, initiative: 45,
+      hp: 95, armor: 25, initiative: 45,
       resistances: { air: 15, fire: 15, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
       passive: ['mithrails_light 1', 'protector 2'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
@@ -845,10 +845,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 125, armor: 30, initiative: 45,
+      hp: 105, armor: 25, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
       passive: ['mithrails_light 2', 'protector 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -858,10 +858,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 135, armor: 25, initiative: 45,
+      hp: 100, armor: 30, initiative: 45,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
       passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -871,7 +871,7 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 2, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 90, armor: 20, initiative: 45,
+      hp: 85, armor: 20, initiative: 50,
       resistances: { air: 5, fire: 5, life: 50, death: 10, cold: 5, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
@@ -884,7 +884,7 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 3, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 105, armor: 20, initiative: 50,
+      hp: 95, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
@@ -897,10 +897,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 120, armor: 20, initiative: 50,
+      hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 26, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['mithrails_light 2', 'beacon_of_hope 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -910,10 +910,10 @@ const UNITS = {
       name_ru: 'Паладин',
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
-      hp: 120, armor: 20, initiative: 50,
+      hp: 105, armor: 20, initiative: 50,
       resistances: { air: 10, fire: 10, life: 50, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 25, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 26, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['mithrails_light 2', 'beacon_of_hope 1', 'dissipate 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
@@ -1724,7 +1724,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 35,
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 15, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 14, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 12, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 2800, passive: ['inspiration_initiative 1', 'aegis 2', 'stoicism 1'], ability: 'frost_armor 2',
     },
     protector: {
@@ -1829,7 +1829,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 1', 'banquet 1',  'communion 1'], ability: null,
+      passive: ['duelist 1', 'banquet 1',  'impale 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_b_t3: {
@@ -1842,7 +1842,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'communion 1'], ability: null,
+      passive: ['duelist 2', 'banquet 1', 'impale 1'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
     mourning_prophet_path_b_t4: {
@@ -1855,7 +1855,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'communion 2'], ability: null,
+      passive: ['duelist 2', 'banquet 1', 'impale 2'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     mourning_prophet_path_b_t4_alt: {
@@ -1868,7 +1868,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 2', 'communion 1'], ability: null,
+      passive: ['duelist 2', 'banquet 2', 'impale 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     grail_warden: {
