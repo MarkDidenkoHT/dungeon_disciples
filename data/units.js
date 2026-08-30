@@ -785,10 +785,10 @@ const UNITS = {
       damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1040, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'mark_of_ash 1',
     },
-    ash_precentor: {
+    ash_liturgist: {
       id: 'd5211', f: 'd', t: 4,
-      name: 'Ash Precentor',
-      name_ru: 'Пепельный Регент',
+      name: 'Ash Hierophant',
+      name_ru: 'Пепельный Иерофант',
       tags: ['Caster', 'Demon'],
       size: 'tile',
       hp: 60, armor: 10, initiative: 30,

@@ -313,9 +313,6 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        // Level 1 is deliberately almost free: it is the tutorial's first build
-        // after the opening battle, and a wall there is a wall in onboarding.
-        // The levels that actually raise payouts carry the cost.
         cost: { gold: 10 },
         upgrade_costs: { 2: { gold: 200, Crystals_Life: 60 }, 3: { gold: 400, Crystals_Life: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -413,10 +410,9 @@ const BUILDING_POOLS = {
       { id: 'choir_servant_shrine', label: 'Choir Servant Shrine', label_ru: 'Святилище служек Хора', category: 'barracks', tier: 2, unit_id: 'd51', upgrades: ['choir_ascendant_shrine'],       cost: { gold: 100 } },
       { id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', label_ru: 'Святилище вознесённых Хора', category: 'barracks', tier: 3, unit_id: 'd511', upgrades: ['choir_exalted_shrine'] },
       { id: 'choir_exalted_shrine', label: 'Choir Exalted Shrine', label_ru: 'Святилище превознесённых Хора', category: 'barracks', tier: 4, unit_id: 'd5111', upgrades: [] },
-      // The mender branch off the Cultist. A chancel is where the choir stands
-      // to sing, which is what this half of the line does instead of burning.
       { id: 'ash_cantor_chancel',    label: 'Ash Cantor Chancel', label_ru: 'Клирос пепельного кантора',    category: 'barracks', tier: 2, unit_id: 'd52',  upgrades: ['ash_precentor_chancel'], cost: { gold: 100 } },
-      { id: 'ash_precentor_chancel', label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента', category: 'barracks', tier: 3, unit_id: 'd521', upgrades: [] },
+      { id: 'ash_precentor_chancel', label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента', category: 'barracks', tier: 3, unit_id: 'd521', upgrades: ['ash_hierophant_chancel'], cost: { gold: 200 } },
+      { id: 'ash_hierophant_chancel', label: 'Ash Hierophant Chancel', label_ru: 'Клирос пепельного иерофанта', category: 'barracks', tier: 4, unit_id: 'd5211', upgrades: [], cost: { gold: 400 } },
     ],
     special: [],
     hall_up: [
@@ -444,9 +440,6 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        // Level 1 is deliberately almost free: it is the tutorial's first build
-        // after the opening battle, and a wall there is a wall in onboarding.
-        // The levels that actually raise payouts carry the cost.
         cost: { gold: 10 },
         upgrade_costs: { 2: { gold: 200, Crystals_Fire: 60 }, 3: { gold: 400, Crystals_Fire: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -548,28 +541,18 @@ const BUILDING_POOLS = {
       { id: 'wraith_hall', label: 'Wraith Hall', label_ru: 'Зал духов', category: 'barracks', tier: 3, unit_id: 'gs611', upgrades: [] },
       { id: 'apparition_mist',       label: 'Apparition Mist', label_ru: 'Туман привидений',       category: 'barracks', tier: 2, unit_id: 'gs62', upgrades: ['phantom_mist'],                          cost: { gold: 100 } },
       { id: 'phantom_mist', label: 'Phantom Mist', label_ru: 'Туман фантомов', category: 'barracks', tier: 3, unit_id: 'gs621', upgrades: [] },
-      // Sorrow Maiden line — Mothers Voice starts with this one raised (see
-      // HERO_STARTING_UNITS in routes/index.js). A single chain, no branch.
       { id: 'pale_maiden_barrow',    label: 'Pale Maiden Barrow', label_ru: 'Курган бледных дев',    category: 'barracks', tier: 1, unit_id: 'gs7',   upgrades: ['pale_dame_barrow', 'pale_votaress_chantry', 'pale_mourner_shrine'], cost: { gold: 50 } },
       { id: 'pale_dame_barrow',      label: 'Pale Dame Barrow', label_ru: 'Курган бледных госпож',      category: 'barracks', tier: 2, unit_id: 'gs71',  upgrades: ['pale_matriarch_barrow'], cost: { gold: 100 } },
       { id: 'pale_matriarch_barrow', label: 'Pale Matriarch Barrow', label_ru: 'Курган бледных праматерей', category: 'barracks', tier: 3, unit_id: 'gs711', upgrades: [] },
-      // The mender branch. A chantry is where masses are sung for the dead,
-      // which is what this half of the line is for.
       { id: 'pale_votaress_chantry', label: 'Pale Votaress Chantry', label_ru: 'Часовня бледных послушниц', category: 'barracks', tier: 2, unit_id: 'gs72',  upgrades: ['pale_abbess_chantry'],   cost: { gold: 100 } },
       { id: 'pale_abbess_chantry',   label: 'Pale Abbess Chantry', label_ru: 'Часовня бледных аббатис',   category: 'barracks', tier: 3, unit_id: 'gs721', upgrades: [] },
       { id: 'pale_mourner_shrine',   label: 'Pale Mourner Shrine', label_ru: 'Святилище бледных плакальщиц',   category: 'barracks', tier: 2, unit_id: 'gs73',  upgrades: ['pale_lamenter_shrine'], cost: { gold: 100 } },
       { id: 'pale_lamenter_shrine',  label: 'Pale Lamenter Shrine', label_ru: 'Святилище бледных скорбниц',  category: 'barracks', tier: 3, unit_id: 'gs731', upgrades: [], cost: { gold: 200 } },
-      // Mother's Tear line. A font is the basin the tears are collected in.
       { id: 'mothers_tear_font',     label: "Mother's Tear Font", label_ru: 'Купель Слезы Матери',    category: 'barracks', tier: 1, unit_id: 'gs8',   upgrades: ['mothers_sorrow_font', 'mothers_vigil_reliquary', 'mothers_chalice_altar'], cost: { gold: 50 } },
-      // The greedy branch — vitality, it just drinks deeper.
       { id: 'mothers_sorrow_font',   label: "Mother's Sorrow Font", label_ru: 'Купель Скорби Матери',  category: 'barracks', tier: 2, unit_id: 'gs81',  upgrades: ['mothers_grief_font'], cost: { gold: 100 } },
       { id: 'mothers_grief_font',    label: "Mother's Grief Font", label_ru: 'Купель Горя Матери',   category: 'barracks', tier: 3, unit_id: 'gs811', upgrades: [], cost: { gold: 200 } },
-      // The protective branch — a reliquary shelters what it holds, which is
-      // what the nature resist aura does for the horde around it.
       { id: 'mothers_vigil_reliquary',  label: "Mother's Vigil Reliquary", label_ru: 'Реликварий Бдения Матери',  category: 'barracks', tier: 2, unit_id: 'gs82',  upgrades: ['mothers_shroud_reliquary'], cost: { gold: 100 } },
       { id: 'mothers_shroud_reliquary', label: "Mother's Shroud Reliquary", label_ru: 'Реликварий Покрова Матери', category: 'barracks', tier: 3, unit_id: 'gs821', upgrades: [], cost: { gold: 200 } },
-      // The offering branch — an altar is where something is given up, which is
-      // what a Blood Bond guardian does with itself.
       { id: 'mothers_chalice_altar', label: "Mother's Chalice Altar", label_ru: 'Алтарь Чаши Матери',  category: 'barracks', tier: 2, unit_id: 'gs83',  upgrades: ['mothers_vessel_altar'], cost: { gold: 100 } },
       { id: 'mothers_vessel_altar',  label: "Mother's Vessel Altar", label_ru: 'Алтарь Сосуда Матери', category: 'barracks', tier: 3, unit_id: 'gs831', upgrades: [], cost: { gold: 200 } },
     ],
@@ -599,9 +582,6 @@ const BUILDING_POOLS = {
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
         desc_ru: 'Открывает поручения. Каждый уровень увеличивает награду.',
-        // Level 1 is deliberately almost free: it is the tutorial's first build
-        // after the opening battle, and a wall there is a wall in onboarding.
-        // The levels that actually raise payouts carry the cost.
         cost: { gold: 10 },
         upgrade_costs: { 2: { gold: 200, Crystals_Death: 60 }, 3: { gold: 400, Crystals_Death: 120 } } },
       { id: 'mercenary_hall', label: 'Mercenary Hall', label_ru: 'Зал наёмников', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -647,7 +627,6 @@ const UNIT_UPGRADE_PATHS = {
     e113: [{ unit_id: 'e1131', building_id: 'blade_master_hall', label: 'Blade Master Hall', label_ru: 'Зал Мастеров Клинка' }],
     e3:   [{ unit_id: 'e31',  building_id: 'automaton_lab',     label: 'Automaton Lab', label_ru: 'Лаборатория автоматонов' },
            { unit_id: 'e32',  building_id: 'siege_workshop',    label: 'Siege Workshop', label_ru: 'Осадная мастерская' }],
-    // e5:   [{ unit_id: 'e51',  building_id: 'golden_pride_forge_2', label: 'Golden Pride Forge II' }],
     e6:   [{ unit_id: 'e61',  building_id: 'mechanic_den',      label: 'Mechanic Den', label_ru: 'Мастерская механиков' },
            { unit_id: 'e62',  building_id: 'rifleman_range',    label: 'Rifleman Range', label_ru: 'Стрельбище стрелков' }],
     e61:  [{ unit_id: 'e611', building_id: 'mechanic_den_2',    label: 'Mechanic Den II', label_ru: 'Мастерская механиков II' }],
@@ -731,6 +710,8 @@ const UNIT_UPGRADE_PATHS = {
     d7:  [{ unit_id: 'd71', building_id: 'greater_flame_spawn_pit', label: 'Greater Flame Spawn Pit', label_ru: 'Большая яма порождений пламени' }],
     d5:  [{ unit_id: 'd51', building_id: 'choir_servant_shrine', label: 'Choir Servant Shrine', label_ru: 'Святилище служек Хора' },
           { unit_id: 'd52', building_id: 'ash_cantor_chancel',   label: 'Ash Cantor Chancel', label_ru: 'Клирос пепельного кантора' }],
+    d52: [{ unit_id: 'd521', building_id: 'ash_precentor_chancel',  label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента' }],
+    d521: [{ unit_id: 'd5211', building_id: 'ash_hierophant_chancel', label: 'Ash Hierophant Chancel', label_ru: 'Клирос пепельного иерофанта' }],
     h_d_1:    [{ unit_id: 'h_d_1_a2', building_id: 'warlord_keep_2_a', label: 'Warlord Keep II A', label_ru: 'Твердыня военачальников II A' },
                { unit_id: 'h_d_1_b2', building_id: 'warlord_keep_2_b', label: 'Warlord Keep II B', label_ru: 'Твердыня военачальников II B' }],
     h_d_1_a2: [{ unit_id: 'h_d_1_a3', building_id: 'warlord_keep_3_a', label: 'Warlord Keep III A', label_ru: 'Твердыня военачальников III A' }],
@@ -761,7 +742,6 @@ const UNIT_UPGRADE_PATHS = {
     d711: [{ unit_id: 'd7111', building_id: 'inferno_scion_crucible', label: 'Inferno Scion Crucible', label_ru: 'Горнило отпрысков инферно' }],
     d51: [{ unit_id: 'd511', building_id: 'choir_ascendant_shrine', label: 'Choir Ascendant Shrine', label_ru: 'Святилище вознесённых Хора' }],
     d511: [{ unit_id: 'd5111', building_id: 'choir_exalted_shrine', label: 'Choir Exalted Shrine', label_ru: 'Святилище превознесённых Хора' }],
-    d52: [{ unit_id: 'd521', building_id: 'ash_precentor_chancel',  label: 'Ash Precentor Chancel', label_ru: 'Клирос пепельного регента' }],
   },
 
   grail_of_sorrow: {
@@ -989,7 +969,6 @@ const BUILDING_COSTS = {
   mithrails_champion_keep:       { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Fire: 12 },
   mithrails_warden_keep:         { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
   mithrails_paragon_keep:        { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Frost: 20 },
-  // Tier 4 — the first in the game, so it costs a clear step past every tier 3.
   mithrails_exemplar_keep:       { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Fire: 20 },
   priest_shrine:                 { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
   ardent_shrine:                 { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
@@ -1046,10 +1025,9 @@ const BUILDING_COSTS = {
   choir_servant_shrine:          { gold: 60, Crystals_Fire: 30, Crystals_Life: 8, Crystals_Death: 8 },
   choir_ascendant_shrine:        { gold: 96, Crystals_Fire: 48, Crystals_Life: 12, Crystals_Death: 12 },
   choir_exalted_shrine:          { gold: 160, Crystals_Fire: 80, Crystals_Life: 20, Crystals_Death: 20 },
-  // Priced against the shrine branch it forks from; the Life crystal is heavier
-  // because this half mends instead of burns.
   ash_cantor_chancel:            { gold: 60, Crystals_Fire: 30, Crystals_Life: 12, Crystals_Air: 5 },
   ash_precentor_chancel:         { gold: 96, Crystals_Fire: 48, Crystals_Life: 18, Crystals_Air: 8 },
+  ash_hierophant_chancel:        { gold: 154, Crystals_Fire: 77, Crystals_Life: 29, Crystals_Air: 19 },
 
   // ── grail_of_sorrow ───────────────────────────────────────────
   zombie_pit:                    { gold: 40, Crystals_Death: 20, Crystals_Air: 5, Crystals_Frost: 5 },
@@ -1081,8 +1059,6 @@ const BUILDING_COSTS = {
   grail_keeper_chamber:          { gold: 96, Crystals_Death: 48, Crystals_Fire: 12, Crystals_Frost: 12 },
   grieving_servant_chamber:      { gold: 60, Crystals_Death: 30, Crystals_Nature: 8 },
   grieving_custodian_chamber:    { gold: 96, Crystals_Death: 48, Crystals_Frost: 12 },
-  // Tier 4, priced off mithrails_exemplar_keep (the existing tier 4 barracks)
-  // with the Grail's own crystal in the lead.
   grieving_warden_chamber:       { gold: 160, Crystals_Death: 80, Crystals_Frost: 20, Crystals_Nature: 20 },
   ghost_manor:                   { gold: 40, Crystals_Death: 20, Crystals_Air: 5 },
   specter_hall:                  { gold: 60, Crystals_Death: 30, Crystals_Frost: 8 },
@@ -1200,12 +1176,12 @@ function getCrossBranchRespecOptions(faction, buildingId) {
   let fork   = parentOf(current.id);
   const seen = new Set([current.id]);
   while (fork && (fork.upgrades || []).length < 2) {
-    if (seen.has(fork.id)) return [];        // guards a cycle in the data
+    if (seen.has(fork.id)) return [];       
     seen.add(fork.id);
     child = fork;
     fork  = parentOf(fork.id);
   }
-  if (!fork) return [];                      // linear all the way up: no choice was ever made
+  if (!fork) return [];                     
 
   // Everything reachable from the roads NOT taken.
   const out  = [];
@@ -1363,10 +1339,6 @@ const MERCENARY_BUILDINGS = {
       cost:     { shard_of_devotion: 20, vial_of_pure_blood: 25 },
     },
     {
-      // EVENT BRANCH. `bloodied_brooch` drops only while a Basilica event runs
-      // (see the events table). The DROP expires with the event; this building
-      // never does — a player who banked brooches can raise it whenever, which
-      // is the whole reason the trophy is worth chasing during the window.
       id:       'cb_bloodied_veil',
       label:    'Keeper of the Bloodied Veil', label_ru: 'Хранитель Окровавленной Завесы',
       region:   'crimson_basilica',
@@ -1375,9 +1347,6 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { bloodied_brooch: 10, shard_of_devotion: 15 },
     },
-    // Archer line. The id stays cb_crimson_hunter — saved buildings_data rows
-    // reference it — but the label now names the unit it actually grants
-    // (opb_e4 is the Crimson Scout; the Hunter is its tier-2 upgrade).
     {
       id:       'cb_crimson_hunter',
       label:    'Crimson Scout', label_ru: 'Багровый разведчик',
@@ -1408,11 +1377,7 @@ const MERCENARY_BUILDINGS = {
     // Sister Aldra (opb_e5/opb_e51) is a boss — deliberately NOT recruitable.
   ],
 
-  // Living-crystal mercenaries of the Glittering Abyss. Costs use the region's
-  // trophies (crystal_dust / crystal_shard). The Prismatis line (mv_e4/mv_e41)
-  // is a boss and is intentionally absent — bosses are never mercenaries.
   glittering_abyss: [
-    // Geodeling line — repairing menders.
     {
       id:       'ga_geodeling',
       label:    'Geodeling', label_ru: 'Жеодыш',
@@ -1440,7 +1405,6 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
-    // Frostshard line — fast cold strikers.
     {
       id:       'ga_frostshard',
       label:    'Frostshard', label_ru: 'Морозный осколок',
@@ -1468,7 +1432,6 @@ const MERCENARY_BUILDINGS = {
       upgrades: [],
       cost:     { crystal_dust: 15, crystal_shard: 15 },
     },
-    // Cairnling line — row-holding protectors.
     {
       id:       'ga_cairnling',
       label:    'Cairnling', label_ru: 'Курганник',
