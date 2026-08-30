@@ -258,7 +258,7 @@ const BUILDING_POOLS = {
       { id: 'machinist_hall',      label: 'Machinist Hall', label_ru: 'Зал машинистов',      category: 'barracks', tier: 4, unit_id: 'e6111', upgrades: [], cost: { gold: 400 } },
       { id: 'armsmaster_hall',     label: 'Armsmaster Hall', label_ru: 'Зал оружейных мастеров', category: 'barracks', tier: 4, unit_id: 'e6112', upgrades: [], cost: { gold: 400 } },
       { id: 'rifleman_range',      label: 'Rifleman Range', label_ru: 'Стрельбище стрелков',      category: 'barracks', tier: 2, unit_id: 'e62',  upgrades: ['devastator_post', 'flamethrower_post'],          cost: { gold: 100 } },
-      { id: 'devastator_post',     label: 'Devastator Post', label_ru: 'Пост опустошителей',     category: 'barracks', tier: 3, unit_id: 'e621', upgrades: [],                        cost: { gold: 200 } },
+      { id: 'devastator_post',     label: 'Devastator Post', label_ru: 'Пост разрушителей',     category: 'barracks', tier: 3, unit_id: 'e621', upgrades: [],                        cost: { gold: 200 } },
       { id: 'flamethrower_post',   label: 'Flamethrower Post', label_ru: 'Пост огнемётчиков',   category: 'barracks', tier: 3, unit_id: 'e622', upgrades: [],                        cost: { gold: 200 } },
       { id: 'acolyte_shrine',      label: 'Acolyte Shrine', label_ru: 'Святилище послушников',      category: 'barracks', tier: 1, unit_id: 'e2',   upgrades: ['sun_temple', 'priest_shrine'],            cost: { gold: 50 } },
       { id: 'sun_temple',          label: 'Sun Temple', label_ru: 'Храм Солнца',          category: 'barracks', tier: 2, unit_id: 'e21',  upgrades: ['mithrails_champion_keep', 'mithrails_warden_keep'], cost: { gold: 100 } },
