@@ -96,7 +96,7 @@ const BT = {
   noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
   claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
-  unlocked:     { en: n => `\u{1F513} Level ${n} unlocked!`, ru: n => `\u{1F513} Уровень ${n} открыт!` },
+  unlocked:     { en: n => `Level ${n} unlocked!`, ru: n => `Уровень ${n} открыт!` },
   xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
   // The four action buttons are labelled by ROLE, always these four words —
   // never the unit's action name. "Mend Flesh" / "Repair" / "Holy Shock" told
