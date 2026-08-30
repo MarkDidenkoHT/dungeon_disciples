@@ -701,10 +701,10 @@ const UNITS = {
       damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
       xp: 1430, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: null,
     },
-    inferno_spawn: {
+    inferno_scion: {
       id: 'd7111', f: 'd', t: 4,
-      name: 'Inferno Spawn',
-      name_ru: 'Порождение Инферно',
+      name: 'Inferno Scion',
+      name_ru: 'Отпрыск Инферно',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 80, armor: 15, initiative: 10,
@@ -2333,10 +2333,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 2600, passive: ['sacrament 2', 'lifesteal 2'], ability: 'libation 2',
     },
-    chosen: {
+    anointed: {
       id: 'gs2111', f: 'g', t: 4,
-      name: 'Chosen',
-      name_ru: 'Избранный',
+      name: 'Anointed',
+      name_ru: 'Помазанник',
       tags: ['Vampire', 'Holy'],
       size: 'column',
       hp: 150, armor: 15, initiative: 30,
@@ -2345,10 +2345,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 4000, passive: ['sacrament 2', 'lifesteal 2', 'shatter 1'], ability: 'libation 2',
     },
-    chosen: {
+    consecrated: {
       id: 'gs2112', f: 'g', t: 4,
-      name: 'Chosen',
-      name_ru: 'Избранный',
+      name: 'Consecrated',
+      name_ru: 'Освящённый',
       tags: ['Vampire', 'Holy'],
       size: 'column',
       hp: 140, armor: 20, initiative: 35,
@@ -2453,10 +2453,10 @@ const UNITS = {
       damage_source: 'death', action_power: 16, action_icon: 'communion.jpg',
       xp: 1300, passive: ['communion 1', 'resist_aura_fire 1', 'dispel 1'], ability: 'purge 1',
     },
-    grail_keeper: {
+    grail_custodian: {
       id: 'gs5111', f: 'g', t: 4,
-      name: 'Grail Keeper',
-      name_ru: 'Хранитель Грааля',
+      name: 'Grail Custodian',
+      name_ru: 'Блюститель Грааля',
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 55, armor: 10, initiative: 30,
