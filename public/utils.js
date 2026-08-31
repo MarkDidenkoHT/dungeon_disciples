@@ -598,8 +598,17 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
     return Math.max(0, abilityRank(key) - abilityRank(was));
   };
 
+  // The ACTIVE slot, overridable. A hero has no unit ability — it acts by
+  // casting — so the castle's unit sheet hands its spell-tome button in here
+  // instead of letting the slot render as an empty disabled square. Callers
+  // that omit it get exactly what they got before.
+  const activeHtml = opts.activeSlotHtml
+    || (unit.ability
+        ? renderUnitAbilityIcon(unit.ability, 'active', { rankUp: rankUpFor(unit.ability) })
+        : renderUnitAbilityIcon('', 'empty'));
+
   const iconsHtml = [
-    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active',  { rankUp: rankUpFor(unit.ability) })  : renderUnitAbilityIcon('', 'empty'),
+    activeHtml,
     passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive', { rankUp: rankUpFor(passiveKeys[0]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive', { rankUp: rankUpFor(passiveKeys[1]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive', { rankUp: rankUpFor(passiveKeys[2]) }) : renderUnitAbilityIcon('', 'empty'),
@@ -752,7 +761,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false, artUrl = '', desc = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, artUrl = '', desc = '' } = opts;
 
   // A building that recruits nobody still has something to show: its own art and
   // what it does. Without `artUrl` this card was a bare ⚔ glyph, which is why
@@ -782,7 +791,7 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="unit-info">
         ${renderUnitProgressRow(progress, { reserve: reserveProgress })}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, compareUnit })}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, activeSlotHtml, compareUnit })}
       </div>
     </div>`;
 }

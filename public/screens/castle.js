@@ -158,6 +158,15 @@ const CASTLE_TEXT = {
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
   noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
   wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
+  // The hero's active slot. A hero has no unit ability — it acts by casting —
+  // so the slot carries the same spell icon the battle screen puts on the
+  // hero's cast button, and says where spells are actually managed.
+  spellsTitle: { en: 'Spells',                                ru: 'Заклинания' },
+  spellsCasts: { en: 'This hero has no unit ability. It acts by casting the spells you have researched.',
+                 ru: 'У этого героя нет способности бойца. Он действует, применяя изученные вами заклинания.' },
+  spellsWhere: { en: 'Spells are viewed and researched in the Spell Tome.',
+                 ru: 'Заклинания можно посмотреть и изучить в Книге заклинаний.' },
+  spellsGoto:  { en: 'Open Spell Tome',                       ru: 'Открыть Книгу заклинаний' },
   requires:    { en: 'Requires',                              ru: 'Требует' },
   // Item picker chrome. Same two axes the old roster sheet filtered on — what
   // the item does and how good it is — minus the craft tab, which now lives on
@@ -295,6 +304,26 @@ export function renderCastle(root, { player }) {
     openSubSheet(title, bodyHtml, badgesHtml);
   }
 
+  // What the hero's active slot says when tapped. It does not list the spells —
+  // the Spell Tome is where they are read and researched, and duplicating that
+  // list here would be a second place to keep in step. This only answers the
+  // question the empty slot used to raise: what does this unit do with its
+  // action, and where do spells come from.
+  function openHeroSpellsModal() {
+    openAbilityModal(CASTLE_TEXT.spellsTitle[castleLang], `
+      <div class="hero-spells-panel">
+        <p class="ability-modal-desc">${CASTLE_TEXT.spellsCasts[castleLang]}</p>
+        <p class="ability-modal-desc">${CASTLE_TEXT.spellsWhere[castleLang]}</p>
+        <button type="button" class="locked-panel-goto" id="hero-spells-goto">${CASTLE_TEXT.spellsGoto[castleLang]}</button>
+      </div>`);
+    getSubSheetBody()?.querySelector('#hero-spells-goto')?.addEventListener('click', () => {
+      // Both layers, then the screen: leaving the sub-sheet and the unit card
+      // standing would put the tome behind them on the way back.
+      closeModal();
+      navigate('spells');
+    });
+  }
+
   function closeAbilityModal() { closeSubSheet(); }
 
   const backgroundUrl = CASTLE_BACKGROUNDS[player.faction];
@@ -307,13 +336,21 @@ export function renderCastle(root, { player }) {
   }
 
   let rosterCount = 0;
-  let rosterCache = [];
+  let rosterCache = [];   // from /bootstrap; no separate /roster fetch
+  // Owned item rows. A castle slot now manages the unit that stands in it, so
+  // equipping happens here rather than on a separate roster screen.
   let itemsCache  = [];
+  // Divine favor budget, from /bootstrap — same source the roster reads.
+  // Roster ids that are away on an errand — the castle node marks them, since
+  // they vanish from battle prep and would otherwise just be missing.
   let errandAwayIds = new Set();
 
   let favorRemaining = 0;
   let favorSeconds   = 15;
 
+  // A building slot and the unit occupying it are linked by unit_data.building_slot,
+  // written by makeUnitData when the building raises the unit. That is what makes
+  // the slot addressable as a UNIT rather than as a blueprint.
   function rosterUnitForSlot(slot) {
     return rosterCache.find(u => u?.unit_data?.building_slot === slot) || null;
   }
@@ -2065,6 +2102,17 @@ export function renderCastle(root, { player }) {
       ? renderItemSlotIcon(item, rosterUnit.id, { player })
       : '';
 
+    // The hero's active-ability slot rendered as an empty disabled square,
+    // because a hero has none: it acts by casting. Same picture the battle
+    // screen puts on the cast button, so the two read as one thing.
+    const spellSlotHtml = rosterUnit?.is_hero
+      ? `<button class="ability-icon ability-icon--active" data-spell-tome
+                 title="${CASTLE_TEXT.spellsTitle[castleLang]}">
+           <img class="ability-icon-img" src="${assetUrl('/assets/icons/actions/spell.jpg')}"
+                alt="${CASTLE_TEXT.spellsTitle[castleLang]}" onerror="this.style.visibility='hidden'">
+         </button>`
+      : '';
+
     // Evolution tree. Opened as a SUB-sheet so the unit sheet underneath stays
     // where it was — closing the tree returns to the unit, not to the castle.
     const treeUnitId  = baseUnit?.id || null;
@@ -2250,7 +2298,7 @@ export function renderCastle(root, { player }) {
       <div class="castle-unit-card-wrap">
         ${buildUnitCard(liveUnit, {
           buildingLabel: levelLabelFor(def, slotLevel),
-          itemSlotHtml, extraSlotHtml: treeBtnHtml, progress,
+          itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
           artUrl: liveUnit ? '' : buildingArtUrl(def),
           desc:   liveUnit ? '' : (castleLang === 'ru' ? (def.desc_ru || def.desc || '') : (def.desc || '')),
         })}
@@ -2307,7 +2355,7 @@ export function renderCastle(root, { player }) {
           buildingLabel: levelLabelFor(c.def, nextLevel),
           artUrl: buildingArtUrl(c.def),
           desc:   castleLang === 'ru' ? (c.def?.desc_ru || c.def?.desc || '') : (c.def?.desc || ''),
-          itemSlotHtml,
+          itemSlotHtml, activeSlotHtml: spellSlotHtml,
         }) + actionOverlayHtml;
       } else if (cardWrap) {
         // compareUnit is the unit as it stands NOW (item included), so every
@@ -2317,6 +2365,7 @@ export function renderCastle(root, { player }) {
           buildingLabel: labelForChoice(c),
           compareUnit:   liveUnit,
           itemSlotHtml,
+          activeSlotHtml: spellSlotHtml,
           extraSlotHtml: treeButtonHtml(c.unit.id),
           // The REAL bars, not a placeholder. The unit standing in this slot
           // still has the HP and XP it had a moment ago — browsing a branch
@@ -2406,9 +2455,18 @@ export function renderCastle(root, { player }) {
     }
 
     body?.addEventListener('click', e => {
-
+      // Before handleUnitInspect: the tree button is an .ability-icon by shape,
+      // so the generic inspector would swallow it looking for an ability key.
+      // Reads the id off the BUTTON, not the closed-over one: the card is
+      // swapped for an upgrade preview while browsing branches, and the tree
+      // has to follow whichever unit is currently on show.
       const treeBtn = e.target.closest('#unit-tree-btn');
       if (treeBtn) { openUnitTreeSheet(treeBtn.dataset.treeUnit || treeUnitId); return; }
+
+      // Also before handleUnitInspect, and for the same reason: this is an
+      // .ability-icon by shape, so the generic inspector would swallow it
+      // looking for an ability key it has not got.
+      if (e.target.closest('[data-spell-tome]')) { openHeroSpellsModal(); return; }
 
       // Stat / ability / resist inspection, same as every other unit card.
       if (handleUnitInspect(e, openAbilityModal)) return;
@@ -3128,12 +3186,22 @@ export function renderCastle(root, { player }) {
       if (building_id === 'infirmary') markTutorialDone(player, 'build_infirmary');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
-
+        // The player now has a second unit and an unequipped starting item, so
+        // the equip lesson runs next. It used to hand off to the roster screen;
+        // units live in these slots now, so it stays here — reloading first so
+        // the new unit and its gear are actually in rosterCache/itemsCache when
+        // renderBuildings starts the chain.
         onboardingBusy = false;
         await reloadFromBootstrap(updated, patchFromWrite(updated));
         return;
       }
-
+      // A build changes the ROSTER, not just the structures: raising a dwelling
+      // spawns its unit, and the server auto-levels any unit that was only
+      // waiting on this building (applyAutoLevelUps in routes/index.js). This
+      // used to re-render off the stale rosterCache, so the unit kept its old
+      // level until the player switched tabs — at which point the screen
+      // re-mounted against a cache that refreshResourceBar had since refreshed,
+      // and the level-up appeared to arrive late. Read the new roster here.
       onboardingBusy = false;
       await reloadFromBootstrap(updated, patchFromWrite(updated));
       refreshNavLock(player).catch(() => {});
@@ -3158,11 +3226,22 @@ export function renderCastle(root, { player }) {
   }
 
   function openMercenaryModal(slot) {
+    // Tier-1 mercenaries from EVERY region — a merc's region trophies gate it
+    // implicitly (no trophies → not affordable → not shown), so unlocked-region
+    // logic is handled by resources, not a separate check.
     const tier1Defs = Object.values(mercenaryBuildings).flat().filter(b => b.tier === 1);
+
     const trophyAmount = item => { const row = trophyInventory.find(r => r.item === item); return row ? Number(row.amount) : 0; };
     const canAfford    = cost => Object.entries(cost || {}).every(([item, amt]) => trophyAmount(item) >= amt);
     const costLabel    = cost => Object.entries(cost || {}).map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`).join(' + ');
 
+    // EVERY tier-1 mercenary is listed, affordable or not. Filtering to what the
+    // player could pay for meant an empty hall said "no mercenaries you can
+    // afford" without naming a single one or the trophies it wanted — so there
+    // was no way to learn who exists, what they cost, or which region to embark
+    // to for them. An unaffordable merc is now shown with its price and refuses
+    // the recruit, the same way an unaffordable building does in the build
+    // slider.
     if (!tier1Defs.length) {
       openModal(CASTLE_TEXT.mercHall[castleLang],
         `<p class="modal-empty">${CASTLE_TEXT.mercNone[castleLang]}</p>`);
