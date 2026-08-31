@@ -52,10 +52,13 @@ export async function api(path, body = null) {
 // Not a correctness mechanism — every write already invalidates or patches, so
 // the cache is exact for anything THIS client did. It exists for the state that
 // changes without us: a build or errand finishing on a server timer, or the
-// player acting from a second device. Short enough that a stale timer is never
-// visible for long, long enough that castle → roster → castle is one request
-// instead of three.
-const CACHE_TTL_MS = 15000;
+// player acting from a second device.
+//
+// Was 15s, which is shorter than a player spends looking at one screen — so
+// almost every tab switch fell through it and paid for a round trip before it
+// could draw. A minute still catches a server-side timer well within the time
+// it takes to matter, and costs nothing while the player is moving around.
+const CACHE_TTL_MS = 60000;
 
 function makeCache(fetcher, ttlMs = CACHE_TTL_MS) {
   return {

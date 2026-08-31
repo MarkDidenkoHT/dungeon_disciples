@@ -252,7 +252,13 @@ export function renderSpellTome(root, { player }) {
         for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
           if (amt > 0) playerCrystals[type] = (playerCrystals[type] || 0) - amt;
         }
-        learnedSpells.push(spell.id);
+        // Written back to the player, not just to this screen's copy. The
+        // private array was why nothing else could rely on player.learned_spells
+        // — research it here and every other screen still believed the old set.
+        learnedSpells = Array.isArray(result.learned_spells)
+          ? result.learned_spells
+          : [...learnedSpells, spell.id];
+        player.learned_spells = learnedSpells;
         refreshResourceBar(player).catch(() => {});
         renderSlider();
         // No success banner: refreshModalBody already swaps the button for the
@@ -313,16 +319,18 @@ export function renderSpellTome(root, { player }) {
 
   async function init() {
     try {
-      const [structData, researchData, inventory] = await Promise.all([
+      const [structData, inventory] = await Promise.all([
         structuresCache.get(player.chat_id),
-        api(`/spells/research?chat_id=${player.chat_id}`),
         resourceCache.get(player.chat_id),
       ]);
 
       throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
-      learnedSpells = Array.isArray(researchData)
-        ? researchData
-        : (researchData?.researched_spells || []);
+      // Off the player, not the network. `learned_spells` is a column on the
+      // players row and arrives with /login, so the GET this replaced was
+      // fetching something the client already held — every time the tab was
+      // opened. doResearch below keeps it current, which is what makes it
+      // trustworthy as the only copy.
+      learnedSpells = Array.isArray(player.learned_spells) ? player.learned_spells : [];
 
       const find = name => inventory.find(r => r.item === name) || { amount: 0 };
       playerCrystals = {

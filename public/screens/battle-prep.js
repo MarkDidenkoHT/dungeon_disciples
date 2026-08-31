@@ -1651,15 +1651,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     }
   }
 
+  // Off the player row, which /login already carries and the tome keeps current
+  // — this used to be a GET on every entry to the prep screen for a list the
+  // client was holding the whole time. Async only because its caller awaits it.
   async function loadLearnedSpells() {
-    try {
-      const response = await api(`/spells/research?chat_id=${player.chat_id}`);
-      if (!response || typeof response !== 'object') return;
-      learnedSpells = Array.isArray(response) ? response : (response.researched_spells || []);
-    } catch (err) {
-      console.error('Failed to load learned spells:', err);
-      learnedSpells = [];
-    }
+    learnedSpells = Array.isArray(player.learned_spells) ? player.learned_spells : [];
   }
 
   // Go-or-go-back prompt on the way into a battle. Resolves true to continue.

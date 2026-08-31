@@ -20,6 +20,7 @@ import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme } from './u
 
 import {
   api,
+  bootstrapCache,
   setSessionToken,
   setNavigate,
   setActiveNav,
@@ -365,8 +366,22 @@ async function boot() {
   await resolveAssetBase();
 
   try {
+    const loginPromise = api('/login', { initData: tg.initData, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+
+    // Warm the game state inside the loading screen instead of after it. The
+    // preload sits on a 4.5s floor warming art, and every screen's first paint
+    // used to wait on a /bootstrap that could only start once that floor was
+    // over — so the loading screen ended and the castle was still empty.
+    //
+    // Chained off login rather than run beside it because chat_id comes from
+    // login, and NOT awaited: the preload must not get any slower on account of
+    // it, and a failure here is a cache miss, not a broken launch.
+    loginPromise
+      .then(r => r?.player?.chat_id && bootstrapCache.get(r.player.chat_id))
+      .catch(() => {});
+
     const [loginResult] = await Promise.all([
-      api('/login', { initData: tg.initData, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+      loginPromise,
       runPreload(app),
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
