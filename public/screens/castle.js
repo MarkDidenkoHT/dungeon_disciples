@@ -307,21 +307,13 @@ export function renderCastle(root, { player }) {
   }
 
   let rosterCount = 0;
-  let rosterCache = [];   // from /bootstrap; no separate /roster fetch
-  // Owned item rows. A castle slot now manages the unit that stands in it, so
-  // equipping happens here rather than on a separate roster screen.
+  let rosterCache = [];
   let itemsCache  = [];
-  // Divine favor budget, from /bootstrap — same source the roster reads.
-  // Roster ids that are away on an errand — the castle node marks them, since
-  // they vanish from battle prep and would otherwise just be missing.
   let errandAwayIds = new Set();
 
   let favorRemaining = 0;
   let favorSeconds   = 15;
 
-  // A building slot and the unit occupying it are linked by unit_data.building_slot,
-  // written by makeUnitData when the building raises the unit. That is what makes
-  // the slot addressable as a UNIT rather than as a blueprint.
   function rosterUnitForSlot(slot) {
     return rosterCache.find(u => u?.unit_data?.building_slot === slot) || null;
   }
@@ -2414,11 +2406,7 @@ export function renderCastle(root, { player }) {
     }
 
     body?.addEventListener('click', e => {
-      // Before handleUnitInspect: the tree button is an .ability-icon by shape,
-      // so the generic inspector would swallow it looking for an ability key.
-      // Reads the id off the BUTTON, not the closed-over one: the card is
-      // swapped for an upgrade preview while browsing branches, and the tree
-      // has to follow whichever unit is currently on show.
+
       const treeBtn = e.target.closest('#unit-tree-btn');
       if (treeBtn) { openUnitTreeSheet(treeBtn.dataset.treeUnit || treeUnitId); return; }
 
@@ -3140,22 +3128,12 @@ export function renderCastle(root, { player }) {
       if (building_id === 'infirmary') markTutorialDone(player, 'build_infirmary');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
-        // The player now has a second unit and an unequipped starting item, so
-        // the equip lesson runs next. It used to hand off to the roster screen;
-        // units live in these slots now, so it stays here — reloading first so
-        // the new unit and its gear are actually in rosterCache/itemsCache when
-        // renderBuildings starts the chain.
+
         onboardingBusy = false;
         await reloadFromBootstrap(updated, patchFromWrite(updated));
         return;
       }
-      // A build changes the ROSTER, not just the structures: raising a dwelling
-      // spawns its unit, and the server auto-levels any unit that was only
-      // waiting on this building (applyAutoLevelUps in routes/index.js). This
-      // used to re-render off the stale rosterCache, so the unit kept its old
-      // level until the player switched tabs — at which point the screen
-      // re-mounted against a cache that refreshResourceBar had since refreshed,
-      // and the level-up appeared to arrive late. Read the new roster here.
+
       onboardingBusy = false;
       await reloadFromBootstrap(updated, patchFromWrite(updated));
       refreshNavLock(player).catch(() => {});
@@ -3180,22 +3158,11 @@ export function renderCastle(root, { player }) {
   }
 
   function openMercenaryModal(slot) {
-    // Tier-1 mercenaries from EVERY region — a merc's region trophies gate it
-    // implicitly (no trophies → not affordable → not shown), so unlocked-region
-    // logic is handled by resources, not a separate check.
     const tier1Defs = Object.values(mercenaryBuildings).flat().filter(b => b.tier === 1);
-
     const trophyAmount = item => { const row = trophyInventory.find(r => r.item === item); return row ? Number(row.amount) : 0; };
     const canAfford    = cost => Object.entries(cost || {}).every(([item, amt]) => trophyAmount(item) >= amt);
     const costLabel    = cost => Object.entries(cost || {}).map(([item, amt]) => `${amt} ${item.replace(/_/g, ' ')}`).join(' + ');
 
-    // EVERY tier-1 mercenary is listed, affordable or not. Filtering to what the
-    // player could pay for meant an empty hall said "no mercenaries you can
-    // afford" without naming a single one or the trophies it wanted — so there
-    // was no way to learn who exists, what they cost, or which region to embark
-    // to for them. An unaffordable merc is now shown with its price and refuses
-    // the recruit, the same way an unaffordable building does in the build
-    // slider.
     if (!tier1Defs.length) {
       openModal(CASTLE_TEXT.mercHall[castleLang],
         `<p class="modal-empty">${CASTLE_TEXT.mercNone[castleLang]}</p>`);

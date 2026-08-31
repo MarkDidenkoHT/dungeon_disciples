@@ -4382,7 +4382,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .battle-cell--bark-active {
   overflow: visible;
-  z-index: 21;
+  z-index: 9999;
 }
 
 .battle-grid--bark { z-index: 20; }
