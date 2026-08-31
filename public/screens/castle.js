@@ -1300,12 +1300,22 @@ export function renderCastle(root, { player }) {
   //             (open a sheet, switch layer). May be async-ish via afterSheetSettles.
   //   target()  the element to point at. null = skip, same as !ready().
   //   hint()    optional second paragraph.
-  //   wait      true = the step is finished by a Continue button.
-  //             false = the player must use the real control.
+  //   wait      true = the step is finished by a Continue button. The tap IS
+  //             the completion.
+  //   awaits    true = the step is finished by a SERVER action the tap only
+  //             begins — a build the player still has to confirm, an equip, a
+  //             spell. The spotlight comes down on the tap, but the chain does
+  //             not move on: the step is held pending until the write lands and
+  //             its handler marks the flag. Without this the driver reads the
+  //             not-yet-changed state, decides the step is done, and flashes
+  //             past it.
+  //   neither   a purely local tap: open a sheet, turn a page, change screen.
+  //             The tap is the completion, so mark it and carry on.
   //
-  // Steps are marked done on the TAP, never on a server response: the flag
-  // write is local and queued (see markTutorialDone), and the chain moves on
-  // immediately. Nothing here waits for a round trip.
+  // No step BLOCKS on a request. The spotlight is torn down the instant the
+  // player taps, the flag write is local and queued (see markTutorialDone), and
+  // an `awaits` step simply has nothing to show until the action it started
+  // comes back — the reload that lands it re-enters the driver.
   const MESSENGER_SLOT = Object.keys(SLOT_FIXED_BUILDING)
     .find(sl => SLOT_FIXED_BUILDING[sl] === 'messenger_post');
 
@@ -1326,12 +1336,14 @@ export function renderCastle(root, { player }) {
   const ONBOARDING = [
     {
       id: 'throne_upgrade',
+      awaits: true,
       bare:   true,
       ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1,
       target: () => nodeForSlot('slot_0'),
     },
     {
       id: 'second_building',
+      awaits: true,
       bare:   true,
       ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) >= 1
                  && rosterCount < 3 && !!firstFreeBarracksSlot(),
@@ -1358,6 +1370,7 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'roster_equip',
+      awaits: true,
       // Only once the picker is actually open, which the step above did.
       ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
       target: equipButtonInPicker,
@@ -1385,12 +1398,14 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'spell_revive',
+      awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(deadTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.resurrect-btn'),
     },
     {
       id: 'spell_heal',
+      awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(woundedTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(woundedTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.heal-btn'),
@@ -1411,6 +1426,7 @@ export function renderCastle(root, { player }) {
     },
     {
       id: 'build_messenger_post',
+      awaits: true,
       bare:   true,
       ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt(),
       open:   () => setLayer(2),
@@ -1422,6 +1438,7 @@ export function renderCastle(root, { player }) {
     // battles — and level 1 costs nothing, so this step can never wall.
     {
       id: 'build_infirmary',
+      awaits: true,
       bare:   true,
       ready:  () => isTutorialDone(player, 'build_messenger_post') && !infirmaryBuilt(),
       open:   () => setLayer(2),
@@ -1542,14 +1559,27 @@ export function renderCastle(root, { player }) {
     }) || buttons[0] || null;
   }
 
-  let shownStep = null;
+  // The step the player has already acted on, waiting for that action to land.
+  // Without it, ANY re-render between the tap and the result re-shows the step
+  // the player just answered — and renderBuildings runs again the moment the
+  // errand lookup resolves, a few hundred ms after the castle opens.
+  let pendingStep = null;
+  let shownStep   = null;
 
   // onSheetClose handlers are ONE-SHOT (utils.js drops each after firing), so
-  // the driver re-arms itself every time. Closing a sheet re-evaluates the
-  // chain: a player who backed out of a step lands back on it, and a step that
-  // was waiting for the sheet above it to come down can now run.
+  // the driver re-arms itself every time. It used to be registered once, which
+  // meant only the FIRST sheet the player ever closed re-entered the chain.
   function watchSheetClose() {
-    onSheetClose(() => { watchSheetClose(); runOnboarding(); });
+    onSheetClose(() => {
+      watchSheetClose();
+      // Backed out without finishing: the step is live again. NOT while a
+      // handler is mid-action, though — a confirmed build closes its own sheet
+      // and only then talks to the server, and clearing the hold there would
+      // put the step the player just answered straight back up on top of the
+      // request that is answering it.
+      if (!onboardingBusy) pendingStep = null;
+      runOnboarding();
+    });
   }
   watchSheetClose();
 
@@ -1571,11 +1601,19 @@ export function renderCastle(root, { player }) {
 
   function driveOnboarding() {
     for (const step of ONBOARDING) {
-      if (isTutorialDone(player, step.id)) continue;
+      if (isTutorialDone(player, step.id)) { if (pendingStep === step.id) pendingStep = null; continue; }
+      // Held: the player has answered this step and the write is in flight.
+      // Nothing is shown until it lands — showing the NEXT step here would be
+      // reading a world the action has not changed yet.
+      if (pendingStep === step.id) return;
       if (!step.ready()) continue;
       // The previous step may have left its sheet standing over the castle.
-      // Take it down before pointing at anything underneath it.
-      if (step.bare) closeModal();
+      // Take it down before pointing at anything underneath it — otherwise the
+      // spotlight rings a node buried under the unit card, and the only thing
+      // the player can reach is the card. Checked rather than called blind:
+      // closeSheet() fires its close handlers even when nothing is open, and
+      // those re-enter this driver.
+      if (step.bare && document.querySelector('.modal-overlay:not(.hidden)')) closeModal();
       const opened = !!step.open;
       step.open?.();
       const el = step.target();
@@ -1589,17 +1627,26 @@ export function renderCastle(root, { player }) {
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
         onAdvance: () => {
-          // Marked on the tap, whatever finished the step — a Continue button,
-          // a navigation, or a control whose server call is still in flight.
-          // The write is queued locally, so the flag is true immediately and no
-          // re-render can put the step back up while the request travels.
+          // The spotlight is already down (showTutorialSpotlight tears it down
+          // before calling this), so the player is never waiting on anything
+          // below.
+          //
+          // Finished by a server action the tap only STARTED: hold the step so
+          // no re-render re-shows it, and let the handler that does the work
+          // mark the flag and re-enter the driver. Advancing here would run the
+          // chain against state the action has not produced yet.
+          if (step.awaits) { pendingStep = step.id; step.onTap?.(); return; }
+          // Everything else is finished by the tap itself — a Continue button
+          // or a local navigation. Mark it now (the write is queued, not
+          // awaited) and look for the next step.
           markTutorialDone(player, step.id);
-          if (step.onTap) step.onTap();
-          // No explicit follow-up: let the tap's own handler open whatever it
-          // opens, then look for the next step. Never awaits the request that
-          // tap may have fired — the step after it simply is not ready() yet,
-          // and the reload that lands the result re-enters the driver.
-          else afterSheetSettles(runOnboarding);
+          // A Continue button changes nothing on screen, so there is nothing to
+          // settle — going through afterSheetSettles here would sit out its
+          // 400ms fallback (the sheet is already open, so no animation fires)
+          // between two steps of the same card.
+          if (step.wait)      runOnboarding();
+          else if (step.onTap) step.onTap();
+          else                afterSheetSettles(runOnboarding);
         },
       });
       return;
@@ -2366,13 +2413,15 @@ export function renderCastle(root, { player }) {
         // this button — with its dataset — is gone by the time the call returns.
         const rosterId = btn.dataset.rosterId;
         const spellId  = btn.dataset.spellId;
-        // The onboarding flag is already set by the spotlight's own onAdvance,
-        // on the tap. Marking it again here would be a no-op, and the
-        // hideTutorial() that used to sit with it tore down whatever step the
-        // driver had put up in the meantime.
+        // The revive and heal onboarding steps are `awaits` steps: the driver
+        // holds them pending from the tap, and the handler that does the work
+        // marks the flag once the spell has actually gone through. The
+        // reloadFromBootstrap below re-enters the driver with the new state.
+        const stepId = resurrectBtn ? 'spell_revive' : 'spell_heal';
         (async () => {
           try {
             const res = await api(path, { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
+            markTutorialDone(player, stepId);
             const patched = res?.roster
               ? bootstrapCache.patch(cur => ({
                   roster: (cur.roster || []).map(r => String(r.id) === String(res.roster.id) ? res.roster : r),
@@ -2731,10 +2780,9 @@ export function renderCastle(root, { player }) {
       btn.disabled = true;
       // Whether this equip is onboarding's equip beat has to be read BEFORE the
       // await — reloadFromBootstrap re-runs renderBuildings, and with it the
-      // onboarding gate. The flag itself is already set, on the tap; this only
-      // decides whether to hold the gate shut across the reload and then hand
-      // the chain on to the next step.
-      const teachingEquip = !!equipBtn && shownStep === 'roster_equip';
+      // onboarding gate — but the step is only marked once the equip has really
+      // succeeded, never on the tap that requested it.
+      const teachingEquip = !!equipBtn && !isTutorialDone(player, 'roster_equip');
       if (teachingEquip) onboardingBusy = true;
       try {
         const res = equipBtn
@@ -2758,6 +2806,7 @@ export function renderCastle(root, { player }) {
         closeSubSheet();
         openSlotUnitSheet(slot);   // re-open so the card shows the new loadout
         if (teachingEquip) {
+          markTutorialDone(player, 'roster_equip');
           afterSheetSettles(() => { onboardingBusy = false; runOnboarding(); });
         }
       } catch (err) {
@@ -3030,6 +3079,11 @@ export function renderCastle(root, { player }) {
   }
 
   async function performBuildingUpgrade(slot, building_id) {
+    // Held across the whole write. closeModal() below fires the sheet-close
+    // handler, and the reload at the end re-renders the castle — both re-enter
+    // the onboarding driver, which must not run against the pre-build state.
+    const teaching = !!pendingStep;
+    if (teaching) onboardingBusy = true;
     closeModal();
     try {
       const updated = await api('/structures/build', {
@@ -3057,6 +3111,7 @@ export function renderCastle(root, { player }) {
         // units live in these slots now, so it stays here — reloading first so
         // the new unit and its gear are actually in rosterCache/itemsCache when
         // renderBuildings starts the chain.
+        onboardingBusy = false;
         await reloadFromBootstrap(updated, patchFromWrite(updated));
         return;
       }
@@ -3067,11 +3122,16 @@ export function renderCastle(root, { player }) {
       // level until the player switched tabs — at which point the screen
       // re-mounted against a cache that refreshResourceBar had since refreshed,
       // and the level-up appeared to arrive late. Read the new roster here.
+      onboardingBusy = false;
       await reloadFromBootstrap(updated, patchFromWrite(updated));
       refreshNavLock(player).catch(() => {});
     } catch (err) {
+      // The step goes back to being live: the player never completed it.
+      onboardingBusy = false;
+      pendingStep    = null;
       console.error(err);
       alert(err.message || 'Upgrade failed');
+      runOnboarding();
     }
   }
 
