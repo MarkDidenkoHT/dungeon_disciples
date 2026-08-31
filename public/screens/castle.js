@@ -320,7 +320,7 @@ export function renderCastle(root, { player }) {
       // Both layers, then the screen: leaving the sub-sheet and the unit card
       // standing would put the tome behind them on the way back.
       closeModal();
-      navigate('spells');
+      navigate('spells', { player });
     });
   }
 
