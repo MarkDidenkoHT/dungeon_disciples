@@ -2306,7 +2306,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: var(--muted);
   padding-left: 2px;
 }
-/* A title sits with the block under it, not floating between two of them. */
+
 .settings-section-title + .settings-section,
 .settings-section-title + .promo-box {
   margin-top: -10px;
@@ -2327,7 +2327,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 2px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  overflow: hidden;
 }
 
 .settings-row {
