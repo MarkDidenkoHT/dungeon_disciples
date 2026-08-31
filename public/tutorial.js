@@ -345,8 +345,11 @@ export function markTutorialDone(player, stepId) {
   player.tutorials = { ...(player.tutorials || {}), [stepId]: true };
   _pendingFlags = { ...(_pendingFlags || {}), [stepId]: true };
   _flushPlayer  = player;
-  if (_flushTimer) clearTimeout(_flushTimer);
-  _flushTimer = setTimeout(() => flushTutorialFlags(player), 2500);
+  // NOT restarted per mark. Restarting turned a run of quick marks into a
+  // sliding window that only closed once the player paused, and each mark that
+  // arrived after it closed became its own request. A fixed window from the
+  // first mark collects the whole burst into one write.
+  if (!_flushTimer) _flushTimer = setTimeout(() => flushTutorialFlags(player), 2500);
 }
 
 export function hideTutorial() {
