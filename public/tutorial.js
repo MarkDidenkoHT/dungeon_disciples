@@ -352,6 +352,17 @@ export function markTutorialDone(player, stepId) {
   if (!_flushTimer) _flushTimer = setTimeout(() => flushTutorialFlags(player), 2500);
 }
 
+// Throw away a queued flag write. A reset clears the column server-side, and a
+// batch still sitting in the debounce window would land a moment later and put
+// the flags straight back — leaving the player mid-onboarding with steps marked
+// done that they have never seen.
+export function discardTutorialFlags() {
+  if (_flushTimer) clearTimeout(_flushTimer);
+  _flushTimer   = null;
+  _pendingFlags = null;
+  _flushPlayer  = null;
+}
+
 export function hideTutorial() {
   if (activeResizeHandler) {
     window.removeEventListener('resize', activeResizeHandler);

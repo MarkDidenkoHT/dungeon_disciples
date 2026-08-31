@@ -1587,6 +1587,35 @@ export function renderCastle(root, { player }) {
   // sheet-close handler synchronously, which calls straight back in here.
   let driving = false;
 
+  // A step whose open() ran but whose target has not been written into the DOM
+  // yet. The driver used to `return` there, and nothing ever called it back —
+  // the chain simply stopped, with no error and no spotlight, which is
+  // indistinguishable from onboarding being over. Re-poll instead, and give up
+  // loudly rather than silently.
+  const RETRY_MS    = 120;
+  const RETRY_LIMIT = 16;          // ~2s
+  let retryTimer = null;
+  let retryFor   = null;
+  let retryCount = 0;
+
+  function clearRetry() {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
+    retryFor   = null;
+    retryCount = 0;
+  }
+
+  function retryOnboarding(stepId) {
+    if (retryFor !== stepId) { clearRetry(); retryFor = stepId; }
+    if (retryTimer) return true;
+    if (++retryCount > RETRY_LIMIT) {
+      console.warn(`[onboarding] step "${stepId}" is ready but its target never appeared — skipping`);
+      return false;
+    }
+    retryTimer = setTimeout(() => { retryTimer = null; runOnboarding(); }, RETRY_MS);
+    return true;
+  }
+
   function runOnboarding() {
     // The castle's async work (the errand-id lookup, a bootstrap refresh) can
     // resolve after the player has left the screen. Without this the driver ran
@@ -1617,10 +1646,15 @@ export function renderCastle(root, { player }) {
       const opened = !!step.open;
       step.open?.();
       const el = step.target();
-      // Returning rather than continuing: a step that opened a sheet and then
-      // found no target would otherwise fall through to the next step, which
-      // opens ANOTHER sheet on top of it.
-      if (!el) { if (opened) return; continue; }
+      if (!el) {
+        // A step that opened a sheet cannot fall through to the next one —
+        // that would open ANOTHER sheet on top of it — so it waits for its
+        // target instead. Only once the target has genuinely failed to turn up
+        // does the step get skipped and the chain carry on.
+        if (opened && retryOnboarding(step.id)) return;
+        continue;
+      }
+      clearRetry();
       shownStep = step.id;
       showTutorialSpotlight(player, step.id, el, {
         resolveTarget: step.target,
