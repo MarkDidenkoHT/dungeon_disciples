@@ -2249,8 +2249,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_healed',
-    description: 'Whenever this unit gains HP, its max HP grows by the same amount, up to 30% of its base max HP, for the rest of the battle.',
-    description_ru: "Каждый раз, когда этот юнит получает HP, его максимум HP растёт на ту же величину, до 30% базового максимума, до конца боя.",
+    description: 'Whenever this unit gains HP, its max HP grows by half of hat amount, up to 30% of its base max HP, for the rest of the battle.',
+    description_ru: "Каждый раз, когда этот юнит получает HP, его максимум HP растёт на половину этой величины, до 30% базового максимума, до конца боя.",
     params: { fanaticism_max_stack_pct: 30 },
   },
   'sacrament 2': {
@@ -2260,8 +2260,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_healed',
-    description: 'Whenever this unit gains HP, its max HP grows by the same amount, up to 50% of its base max HP, for the rest of the battle.',
-    description_ru: "Каждый раз, когда этот юнит получает HP, его максимум HP растёт на ту же величину, до 50% базового максимума, до конца боя.",
+    description: 'Whenever this unit gains HP, its max HP grows by half of hat amount, up to 50% of its base max HP, for the rest of the battle.',
+    description_ru: "Каждый раз, когда этот юнит получает HP, его максимум HP растёт на половину этой величины, до 50% базового максимума, до конца боя.",
     params: { fanaticism_max_stack_pct: 50 },
   },
   'libation 1': {

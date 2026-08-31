@@ -1171,7 +1171,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.fanaticism_max_stack_pct != null) {
       const cap       = Math.floor(owner._base_max_hp * p.fanaticism_max_stack_pct / 100);
       const remaining = Math.max(0, cap - (owner._fanaticism_bonus ?? 0));
-      const grow      = Math.min(dmg, remaining);
+      const grow      = Math.min(dmg / 2, remaining);
       if (grow > 0) {
         owner._fanaticism_bonus = (owner._fanaticism_bonus ?? 0) + grow;
         owner.max_hp    += grow;
