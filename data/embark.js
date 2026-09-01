@@ -136,7 +136,7 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'crimson_basilica.sister_aldra_3',      cell: 3, item_id: 'aldras_devotion',
           spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
-        { key: 'crimson_basilica.keeper_of_the_bloodied_veil',        cell: 1 },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil',  cell: 1, item_id: 'orb_of_light', },
         { key: 'crimson_basilica.exalted_evangelist',  cell: 2 },
         { key: 'crimson_basilica.aggrails_champion',   cell: 4 },
         { key: 'crimson_basilica.aggrails_desecrator', cell: 0 },

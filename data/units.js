@@ -1479,7 +1479,7 @@ const UNITS = {
       id: 'e6112', f: 'e', t: 4,
       name: 'Armsmaster',
       name_ru: 'Оружейный Мастер',
-      tags: ['Engineer', 'Knight'],
+      tags: ['Engineer', 'Construct'],
       size: 'tile',
       hp: 65, armor: 20, initiative: 30,
       resistances: { air: 0, fire: 10, life: 50, death: 0, cold: 0, nature: 10 },
