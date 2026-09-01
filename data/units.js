@@ -389,10 +389,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 30, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 2600, passive: ['rage 2', 'aggrails_blessing 2', 'volcanic_skin 1'], ability: 'pact 2',
     },
-    praetor2: {
+    conqueror: {
       id: 'd1111', f: 'd', t: 4,
-      name: 'Praetor',
-      name_ru: 'Претор',
+      name: 'Conqueror',
+      name_ru: 'Завоеватель',
       tags: ['Demon', 'Warrior'],
       size: 'column',
       hp: 160, armor: 15, initiative: 30,
@@ -819,7 +819,7 @@ const UNITS = {
       resistances: { air: 0, fire: 45, life: 25, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 24,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
-      xp: 2800, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
+      xp: 2600, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
     },
     ash_cantor: {
       id: 'd52', f: 'd', t: 2,
