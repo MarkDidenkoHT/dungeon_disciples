@@ -1583,7 +1583,7 @@ const UNITS = {
       damage_source: null, action_power: 16,
       xp: 1040, passive: ['unity 1', 'light_of_dawn 2'], ability: null,
     },
-    mithrails_will: {
+    mithrails_will2: {
       id: 'e7111', f: 'e', t: 4,
       name: 'Mithrails Will',
       name_ru: 'Воля Митраила',
