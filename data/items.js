@@ -733,7 +733,7 @@ const ITEM_DEFS = {
     key:          'shard_of_hate',
     name:         "Shard Of Hate",
     name_ru:      'Осколок Гнева',
-    faction:      'choir_of_the_cursed',,
+    faction:      'choir_of_the_cursed',
     tag_required: 'Warrior',
     requires_action: 'damage',
     adds_tag:     null,
