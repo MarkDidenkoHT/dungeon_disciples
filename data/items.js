@@ -749,7 +749,7 @@ const ITEM_DEFS = {
     key:          'hatemace',
     name:         "Hatemace",
     name_ru:      'Булава Ненависти',
-    faction:      'choir_of_the_cursed',,
+    faction:      'choir_of_the_cursed',
     tag_required: 'Warrior',
     requires_action: 'damage',
     adds_tag:     null,
