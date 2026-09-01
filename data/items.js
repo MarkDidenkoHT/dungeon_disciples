@@ -314,7 +314,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Zombie',
-    stat_mods:    { hp: 2, initiate: 2},
+    stat_mods:    { hp: 2, initiative: 2},
     passive:      'horde 1',
     icon:         'dark_determination',
     rarity:       'rare',
@@ -514,7 +514,7 @@ const ITEM_DEFS = {
     icon:         'caster_hat',
     rarity:       'rare',
     unique:       true,
-    cost:         { Crystals_Frost: 5,  },
+    cost:         { Crystals_Frost: 5, Crystals_Air: 5  },
     requires:     { region: 'any', level: 2 },
     item_cost:    { seal_of_power: 1, life_charm: 1}
   },
@@ -716,7 +716,7 @@ const ITEM_DEFS = {
   morning_star: {
     key:          'morning_star',
     name:         "Morning Star",
-    name_ru:      'Утренняя Здвезда',
+    name_ru:      'Утренняя Звезда',
     faction:      null,
     tag_required: null,
     requires_action: 'damage',
@@ -731,7 +731,7 @@ const ITEM_DEFS = {
   },
   shard_of_hate: {
     key:          'shard_of_hate',
-    name:         "Shard Of hate",
+    name:         "Shard Of Hate",
     name_ru:      'Осколок Гнева',
     faction:      'choir_of_the_cursed',,
     tag_required: 'Warrior',
