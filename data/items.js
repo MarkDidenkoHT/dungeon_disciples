@@ -77,7 +77,7 @@ const ITEM_DEFS = {
     name_ru:      'Заводной Доспех',
     faction:      null,
     tag_required: 'Engineer',
-    adds_tag:     null,
+    adds_tag:     'Construct',
     stat_mods:    { hp: 4, armor: 5 },
     passive:      'sole_artificer 1',
     icon:         'clockwork_plate',
