@@ -118,13 +118,6 @@ export const ACTION_INFO = {
       ru: 'Собирает мёртвых к себе: разом исцеляет всех союзников-духов на величину Силы. Тех, у кого ещё есть тело, обнять нельзя.',
     },
   },
-  'song_of_ash': {
-    name: { en: 'Song of Ash', ru: 'Песнь пепла' },
-    desc: {
-      en: "The Choir's restorative hymn: restores HP to Demon allies for the unit's Power. Only Demons can be sung to — nothing else in the army hears it.",
-      ru: 'Восстанавливающий гимн Хора: восстанавливает HP союзникам-демонам на величину Силы. Слышат его только демоны.',
-    },
-  },
   'sacrifice': {
     name: { en: 'Sacrifice', ru: 'Жертва' },
     desc: {
@@ -237,11 +230,6 @@ export const SCREEN_BACKGROUND_POSITIONS = {
   embark: 'left bottom',
 };
 
-export function applyFactionTheme(faction) {
-  if (!faction) return;
-  document.body.dataset.faction = faction;
-}
-
 export function applyBackground(root, faction, screen) {
   const url = SCREEN_BACKGROUNDS[screen]?.[faction];
   if (!url) return;
@@ -352,8 +340,6 @@ export function getActionLabel(actionKey) {
     pale_embrace: 'Pale Embrace',
     shield:       'Shield',       // grants an ally a damage-absorbing pool
     decay:        'Decay',        // saddles an enemy with a healing-absorbing one
-    song_of_ash:  'Song of Ash',  // the Choir's mass action - see ACTION_INFO
-    none:         'None',
   };
   return map[k.toLowerCase()] || cap(k);
 }
@@ -485,7 +471,7 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
       <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
       <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
       <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
-      <div class="core-stat" data-action-key="${unit.action ?? ''}" data-targets="${unit.targets ?? 1}" data-range="${unit.range ?? 1}" data-target-type="${unit.target_type ?? 'enemy'}"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
+      <div class="core-stat" data-action-key="${unit.action ?? ''}" data-targets="${unit.targets ?? 1}" data-range="${unit.range ?? 1}" data-target-type="${unit.target_type ?? ''}"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
       <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
       <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
@@ -598,17 +584,8 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
     return Math.max(0, abilityRank(key) - abilityRank(was));
   };
 
-  // The ACTIVE slot, overridable. A hero has no unit ability — it acts by
-  // casting — so the castle's unit sheet hands its spell-tome button in here
-  // instead of letting the slot render as an empty disabled square. Callers
-  // that omit it get exactly what they got before.
-  const activeHtml = opts.activeSlotHtml
-    || (unit.ability
-        ? renderUnitAbilityIcon(unit.ability, 'active', { rankUp: rankUpFor(unit.ability) })
-        : renderUnitAbilityIcon('', 'empty'));
-
   const iconsHtml = [
-    activeHtml,
+    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active',  { rankUp: rankUpFor(unit.ability) })  : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive', { rankUp: rankUpFor(passiveKeys[0]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive', { rankUp: rankUpFor(passiveKeys[1]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive', { rankUp: rankUpFor(passiveKeys[2]) }) : renderUnitAbilityIcon('', 'empty'),
@@ -644,22 +621,14 @@ const ANCHORED_DIFF_KEYS = new Set(['hp', 'initiative', 'action_power', 'armor']
 
 // Keyed by stat, so a renderer can ask "is there a delta for this cell?"
 // instead of the diffs being pre-baked into one detached row.
-// A stat as a number, understanding the "current/max" form a live combatant's
-// HP takes. Anything else non-numeric stays NaN so the caller can skip it.
-function statNumber(raw) {
-  if (typeof raw === 'string' && raw.includes('/')) return Number(raw.split('/')[1]);
-  return Number(raw ?? 0);
-}
-
 export function unitStatDiffs(unit, compareUnit) {
   if (!unit || !compareUnit) return {};
   const out = {};
   for (const s of STAT_DIFF_MAP) {
-    // HP arrives as "12/50" on a live combatant card. A plain Number() of that
-    // is NaN, and skipping it meant every max-HP buff in the game — Vitality,
-    // Iron Will, Horde, Inspiration — moved the number and showed no delta.
-    // The MAXIMUM is the half a buff moves, so that is the half compared.
-    const a = statNumber(unit[s.key]), b = statNumber(compareUnit[s.key]);
+    // HP arrives as "12/50" on a live combatant card, and a string subtraction
+    // yields NaN — which is !== 0 and would render a "NaN" badge. Only compare
+    // stats that are numbers on BOTH sides.
+    const a = Number(unit[s.key] ?? 0), b = Number(compareUnit[s.key] ?? 0);
     if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
     const diff = a - b;
     if (diff !== 0) out[s.key] = { label: s.label, diff };
@@ -761,19 +730,13 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, artUrl = '', desc = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false } = opts;
 
-  // A building that recruits nobody still has something to show: its own art and
-  // what it does. Without `artUrl` this card was a bare ⚔ glyph, which is why
-  // the Infirmary looked artless in the build sheet while its file existed.
   if (!unit) {
     return `
-      <div class="unit-card unit-card--building${artUrl ? ' unit-card--building-art' : ''}">
-        ${artUrl
-          ? `<img class="building-card-art" src="${artUrl}" alt="${buildingLabel}" onerror="this.style.display='none'">`
-          : '<div class="building-card-icon">⚔</div>'}
+      <div class="unit-card unit-card--building">
+        <div class="building-card-icon">⚔</div>
         <div class="building-card-label">${buildingLabel}</div>
-        ${desc ? `<p class="building-card-desc">${desc}</p>` : ''}
       </div>`;
   }
 
@@ -791,7 +754,7 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="unit-info">
         ${renderUnitProgressRow(progress, { reserve: reserveProgress })}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, activeSlotHtml, compareUnit })}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, compareUnit })}
       </div>
     </div>`;
 }
@@ -906,56 +869,98 @@ export function buildAbilityModalParts(def, type) {
   return { title: name, badges, body };
 }
 
+// One item, rendered exactly the way the Items tab renders it: icon aside with
+// rarity and unique flags, stat chips, the granted passive with its description,
+// and the tag chips. Lives here so the inspect modal in battle and battle prep
+// shows the same card the stash does instead of a plain list of lines.
+const ITEM_STAT_CHIP_META = {
+  hp:           { icon: '❤', en: 'HP',         ru: 'HP' },
+  armor:        { icon: '🛡', en: 'Armor',      ru: 'Броня' },
+  action_power: { icon: '⚔', en: 'Power',      ru: 'Сила' },
+  initiative:   { icon: '⚡', en: 'Initiative', ru: 'Инициатива' },
+};
+
+const ITEM_RARITY_LABELS = {
+  common: { en: 'Common', ru: 'Обычный' },
+  rare:   { en: 'Rare',   ru: 'Редкий' },
+  epic:   { en: 'Epic',   ru: 'Эпический' },
+  mythic: { en: 'Mythic', ru: 'Мифический' },
+};
+
+function itemStatChip(key, val) {
+  const sign = val >= 0 ? '+' : '';
+  const cls  = val >= 0 ? 'stat-chip--pos' : 'stat-chip--neg';
+
+  const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+  if (resistMatch) {
+    const r     = resistMatch[1];
+    const rl    = RESIST_LABELS[r];
+    const label = `${rl ? uiText(rl.en, rl.ru) : cap(r)} ${uiText('Resist', 'сопр.')}`;
+    return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+              <span class="stat-chip-icon">${RESIST_ICONS[r]?.icon ?? '◆'}</span>${sign}${val}
+            </span>`;
+  }
+
+  const meta  = ITEM_STAT_CHIP_META[key];
+  const label = meta ? uiText(meta.en, meta.ru) : cap(key);
+  return `<span class="stat-chip ${cls}" title="${label} ${sign}${val}">
+            <span class="stat-chip-icon">${meta?.icon ?? '◆'}</span>${sign}${val}
+          </span>`;
+}
+
+export function buildItemCard(item, player) {
+  const stats  = item.item_stats || item || {};
+  const iconId = stats.icon || stats.key || 'item';
+  const rarity = itemRarity(item);
+  const name   = itemName(item, player) || item.item_name || 'Item';
+  const chips  = Object.entries(stats.stat_mods || {}).map(([k, v]) => itemStatChip(k, v)).join('');
+  const rl     = ITEM_RARITY_LABELS[rarity];
+
+  const passiveDef  = stats.passive ? resolveAbility(stats.passive) : null;
+  const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
+  const passiveHtml = passiveDef
+    ? `<div class="item-passive item-passive--static">
+         <span class="item-passive-icon">✦</span>${abilityName(passiveDef)}
+       </div>
+       ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}`
+    : '';
+
+  const tagsHtml = [
+    stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${stats.tag_required}</span>` : '',
+    stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}</span>` : '',
+    stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${cap(String(stats.faction).replace(/_/g, ' '))}</span>` : '',
+  ].join('');
+
+  return `
+    <div class="item-card item-card--rarity-${rarity} item-card--modal">
+      <div class="item-card-body">
+        <div class="item-card-aside">
+          <div class="item-card-icon">
+            <img src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <span class="item-card-icon-fallback" style="display:none;">⚙</span>
+          </div>
+          <div class="item-card-rarity item-card-rarity--${rarity}">${rl ? uiText(rl.en, rl.ru) : cap(rarity)}</div>
+          ${stats.unique ? `<div class="item-card-unique">${uiText('Unique', 'Уникальный')}</div>` : ''}
+        </div>
+        <div class="item-card-main">
+          <div class="item-card-name">${name}</div>
+          <div class="item-card-stats">${chips}</div>
+          ${passiveHtml}
+          <div class="item-card-tags">${tagsHtml}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 export function buildItemModalParts(item, player) {
   if (!item) return { title: uiText('Item', 'Предмет'), badges: '', body: renderModalContent(uiText('No item equipped.', 'Предмет не надет.')) };
-  const stats = item.item_stats || {};
-  const lines = [];
-  if (stats.faction)      lines.push(`${uiText('Faction', 'Фракция')}: ${cap(stats.faction.replace(/_/g, ' '))}`);
-  if (stats.tag_required) lines.push(`${uiText('Requires tag', 'Требует метку')}: ${stats.tag_required}`);
-  if (stats.adds_tag)     lines.push(`${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}`);
-  // The passive an item grants is the whole point of most items, and it was
-  // missing from this panel entirely — the name and its full description now
-  // read in the viewer's language like every other ability description.
-  const passiveDef = stats.passive ? resolveAbility(stats.passive) : null;
-  if (passiveDef) {
-    lines.push(`✦ ${abilityName(passiveDef)}`);
-    const desc = buildStatDescription(passiveDef, 'passive');
-    if (desc) lines.push(desc);
-  }
-  const modParts = Object.entries(stats.stat_mods || {}).map(([key, val]) => {
-    const sign = val >= 0 ? '+' : '';
-    if (key === 'hp')    return `${sign}${val} HP`;
-    if (key === 'armor') return `${sign}${val} ${uiText('Armor', 'Броня')}`;
-    const resistMatch = key.match(/^(air|fire|nature|cold|life|death)_resist$/);
-    if (resistMatch) {
-      const rl = RESIST_LABELS[resistMatch[1]];
-      const name = rl ? uiText(rl.en, rl.ru) : cap(resistMatch[1]);
-      return `${sign}${val} ${name} ${uiText('Resist', 'сопр.')}`;
-    }
-    return `${sign}${val} ${cap(key)}`;
-  });
-  if (modParts.length) lines.push(modParts.join(', '));
   return {
     title:  itemName(item, player) || item.item_name || 'Item',
     badges: renderModalPill(uiText('Item', 'Предмет'), 'item'),
-    body:   `<div class="ability-modal-desc">${escapeHtml(lines.join('\n\n'))}</div>`,
+    body:   buildItemCard(item, player),
   };
 }
 
-// How an action's reach and spread read to a player, from the three fields the
-// unit definition already carries. Nothing here is a new rule -- it is the SAME
-// rule getValidTargets enforces in utils/battle-engine.js, put into words:
-//
-//   range 1   melee, and melee is genuinely restricted: the reachable column
-//             (the enemy front line while any of it stands) AND an adjacent row.
-//   range >1  no positional limit at all; every living enemy is reachable. The
-//             data carries both 3 and 6 for this and they behave identically, so
-//             both are described as "anywhere" rather than quoting a number the
-//             engine never compares against.
-//
-//   targets   how many of the valid targets are actually struck. The board is
-//             six cells a side, so 6 means "every one of them" and is worded
-//             that way instead of as a count the player has to interpret.
 // ACTION_INFO is keyed inconsistently -- 'holy shock' with a space, but
 // 'pale_embrace' with an underscore -- while the old lookup always searched the
 // space form built from the DISPLAY label. 'pale_embrace' and 'song_of_ash'
@@ -977,8 +982,8 @@ export function lookupActionInfo(...keys) {
 }
 
 // Which side an action may pick. The data says 'enemy' or 'ally', but Holy
-// Shock reaches BOTH — getValidTargets in utils/battle-engine.js has its own
-// branch for it — so the action id decides, not target_type.
+// Shock reaches BOTH -- getValidTargets in utils/battle-engine.js has its own
+// branch for it -- so the action id decides, not target_type.
 const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock']);
 export function actionTargetSide(actionKey, targetType) {
   if (DUAL_TARGET_ACTIONS.has(String(actionKey ?? '').toLowerCase())) {
@@ -1047,9 +1052,6 @@ export function onSheetClose(fn) {
 
 export function closeSheet() {
   if (!_sheetEl) return;
-  // The sub-sheet stack belongs to the sheet underneath it; leaving layers
-  // parked here would pop them back up over an unrelated screen later.
-  closeAllSubSheets();
   _sheetEl.classList.add('hidden');
   document.body.style.overflow = '';
   for (const fn of [..._sheetCloseHandlers]) {
@@ -1088,59 +1090,17 @@ function ensureSubSheet() {
   return overlay;
 }
 
-// Sub-sheets STACK. There is one sub-sheet element, and opening a second thing
-// in it used to overwrite the first: opening the item picker from a unit card,
-// then inspecting an item's ability, replaced the picker with the ability — so
-// closing the ability landed back on the unit card and the picker was simply
-// gone. Any sub-sheet that can open another sub-sheet had the same problem.
-//
-// Pushing the layer instead means close returns to what you came from, however
-// deep, which is what a back button is expected to do.
-//
-// The saved layer is its DOM NODES, not its innerHTML. Screens bind listeners to
-// elements inside the body — the item picker binds equip and filtering to a
-// wrapper it created — and round-tripping through HTML would hand back an
-// identical-looking layer with every listener stripped off it.
-const _subSheetStack = [];   // [{ title, badges, nodes: Node[] }], oldest first
-
 export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
-  const body    = overlay.querySelector('.modal-body');
-
-  // Only stack over a sub-sheet that is actually on screen. A hidden one is a
-  // leftover from the last time, and pushing it would resurrect it on close.
-  if (!overlay.classList.contains('hidden')) {
-    _subSheetStack.push({
-      title:  overlay.querySelector('.modal-title-text').textContent,
-      badges: overlay.querySelector('.modal-header-badges').innerHTML,
-      nodes:  Array.from(body.childNodes),
-    });
-    body.replaceChildren();   // detaches the nodes; does not destroy them
-  }
-
   overlay.querySelector('.modal-title-text').textContent = title;
   overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
-  body.innerHTML = bodyHtml;
+  overlay.querySelector('.modal-body').innerHTML = bodyHtml;
   overlay.classList.remove('hidden');
 }
 
-// Pops one layer. Only the LAST close hides the sub-sheet.
 export function closeSubSheet() {
   if (!_subSheetEl) return;
-  const prev = _subSheetStack.pop();
-  if (!prev) { _subSheetEl.classList.add('hidden'); return; }
-
-  const body = _subSheetEl.querySelector('.modal-body');
-  _subSheetEl.querySelector('.modal-title-text').textContent = prev.title;
-  _subSheetEl.querySelector('.modal-header-badges').innerHTML = prev.badges;
-  body.replaceChildren(...prev.nodes);   // the original elements, listeners intact
-}
-
-// Dismiss the whole stack at once — for leaving the screen, where popping back
-// through layers one at a time would be nonsense.
-export function closeAllSubSheets() {
-  _subSheetStack.length = 0;
-  _subSheetEl?.classList.add('hidden');
+  _subSheetEl.classList.add('hidden');
 }
 
 export function getSubSheetBody() {
@@ -1156,21 +1116,10 @@ export function mountModal(root) {
 
 // Fetches through a fixed-size pool rather than starting every request at once.
 // The old version was Promise.all over the whole list, which handed the browser
-// ~486 images in one go: the progress bar jumps around and slow images can stall
-// behind a burst. A pool keeps the pipe full without the pile-up.
-//
-// The pool was 8 because that is roughly the per-host connection limit — but
-// that limit is an HTTP/1.1 rule, and the asset CDN answers over HTTP/2 (it
-// advertises h3 as well), where one connection multiplexes every request and
-// six-connection queueing does not apply. 8 was leaving the pipe half empty.
-//
-// This matters most while the CDN still sends `max-age=0, must-revalidate`:
-// every asset then costs a conditional request even on a warm cache, the
-// preload is latency-bound rather than bandwidth-bound, and total time is
-// almost exactly (count / concurrency) x round trip. Raising the pool divides
-// that directly. Once the CDN caches properly a warm launch makes no requests
-// at all and this number stops mattering.
-const PRELOAD_CONCURRENCY = 16;
+// ~486 images in one go: it can only open a handful of connections per host, so
+// the rest queue anyway, but the progress bar jumps around and slow images can
+// stall behind a burst. A pool keeps the pipe full without the pile-up.
+const PRELOAD_CONCURRENCY = 8;
 
 export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENCY) {
   const unique = [...new Set(urls)].filter(Boolean);

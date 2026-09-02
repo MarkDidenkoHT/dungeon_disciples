@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, unitName, cellFootprint, spellName } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, withEquippedItem, unitName, cellFootprint, spellName } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
@@ -981,8 +981,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   function unitStatsHtml(c) {
     if (!c) return `<div class="battle-unit-detail-empty">${BTx('tapForStats')}</div>`;
-    const def = resolveUnitDef(c);
-    if (!def) return `<div class="battle-unit-detail-empty">${BTx('noUnitData')}</div>`;
+    const blueprint = resolveUnitDef(c);
+    if (!blueprint) return `<div class="battle-unit-detail-empty">${BTx('noUnitData')}</div>`;
+
+    // The blueprint knows nothing about what the combatant is carrying, so a
+    // unit wearing a tag-granting item read as untagged on this card and the
+    // item's own passive went missing from the ability row's bookkeeping. Fold
+    // the item in first — the live stat overrides below still win, so nothing is
+    // counted twice.
+    const equippedItem = combatantItem(c, equippedItemFor);
+    const def = withEquippedItem(blueprint, equippedItem);
 
     // The card is drawn from the LIVE combatant, not the blueprint: armor,
     // initiative and resistances are mutated in place by buffs, and damage
@@ -1077,7 +1085,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // through the owned-items table; enemies carry an item_id blueprint key from
     // the encounter (see data/embark.js getEncounter), which is why keying only
     // off _rosterId showed nothing on the enemy side.
-    const equippedItem = combatantItem(c, equippedItemFor);
     const itemSlotHtml = equippedItem
       ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
       : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');

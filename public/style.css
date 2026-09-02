@@ -7974,3 +7974,23 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   body[data-faction="grail_of_sorrow"] .utree-cell--current::before,
   body[data-faction="grail_of_sorrow"] .tutorial-ring::before { animation: none; }
 }
+.item-card--modal {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
+  scroll-snap-align: none;
+  overflow-y: visible;
+  text-align: left;
+}
+.item-card--modal .item-card-main {
+  align-items: flex-start;
+  text-align: left;
+}
+.item-passive--static { cursor: default; }
+.item-modal-passive-desc {
+  align-self: stretch;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
