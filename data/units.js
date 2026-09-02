@@ -485,10 +485,10 @@ const UNITS = {
       damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1040, passive: ['undying 1', 'shield 2'], ability: 'purge 1',
     },
-    pyre_warden2: {
+    ashen_warden: {
       id: 'd2111', f: 'd', t: 4,
-      name: 'Pyre Warden',
-      name_ru: 'Смотритель Костра',
+      name: 'Ashen Warden',
+      name_ru: 'Пепельный страж',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 60, armor: 5, initiative: 20,
@@ -497,10 +497,10 @@ const UNITS = {
       damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1040, passive: ['undying 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
     },
-    pyre_warden3: {
+    pyre_choir: {
       id: 'd2112', f: 'd', t: 4,
-      name: 'Pyre Warden',
-      name_ru: 'Смотритель Костра',
+      name: 'Pyre Choir',
+      name_ru: 'Хор погребального костра',
       tags: ['Demon', 'Caster'],
       size: 'tile',
       hp: 50, armor: 5, initiative: 20,
@@ -641,10 +641,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       xp: 1300, passive: ['chorus_of_war 1', 'rage 1', 'execute 1'], ability: 'furious_strike 1',
     },
-    vessel2: {
+    broken_vessel: {
       id: 'd4111', f: 'd', t: 4,
-      name: 'Vessel',
-      name_ru: 'Сосуд',
+      name: 'Broken Vessel',
+      name_ru: 'Сломленный сосуд',
       tags: ['Warrior', 'Demon'],
       size: 'tile',
       hp: 65, armor: 15, initiative: 50,
@@ -665,10 +665,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 15, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
       xp: 1300, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
-    pain_projector2: {
+    agony_engine: {
       id: 'd4121', f: 'd', t: 4,
-      name: 'Pain Projector',
-      name_ru: 'Проводник Боли',
+      name: 'Agony Engine',
+      name_ru: 'Машина агонии',
       tags: ['Warrior', 'Demon'],
       size: 'tile',
       hp: 80, armor: 5, initiative: 10,
@@ -1583,10 +1583,10 @@ const UNITS = {
       damage_source: null, action_power: 16,
       xp: 1040, passive: ['unity 1', 'light_of_dawn 2'], ability: null,
     },
-    mithrails_will2: {
+    mithrails_verdict: {
       id: 'e7111', f: 'e', t: 4,
-      name: 'Mithrails Will',
-      name_ru: 'Воля Митраила',
+      name: 'Mithrails Verdict',
+      name_ru: 'Приговор Митраила',
       tags: ['Spirit', 'Holy'],
       size: 'tile',
       hp: 70, armor: 0, initiative: 10,
