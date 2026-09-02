@@ -6,6 +6,11 @@ const AI_PROFILES = {
     mv_e21:  'frost_spreader',
     mv_e211: 'frost_spreader',
   },
+  chamber_of_unrest: {
+    dm_2:   'ward_keeper',
+    dm_21:  'ward_keeper',
+    dm_211: 'ward_keeper',
+  },
 };
 
 const DOCTRINE_BY_UNIT = {};

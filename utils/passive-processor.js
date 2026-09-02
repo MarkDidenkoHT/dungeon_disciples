@@ -1644,8 +1644,8 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   // to the live stats and given back by advanceRound — the same shape Sanctuary
   // uses, kept separate because this touches ONE resist rather than all six.
   if (p.frost_armor_armor != null && target) {
-    const armorAmt  = p.frost_armor_armor;
-    const resistAmt = p.frost_armor_resist ?? 0;
+    let armorAmt  = p.frost_armor_armor;
+    let resistAmt = p.frost_armor_resist ?? 0;
     const school    = p.frost_armor_resist_type || 'cold';
     // Stacking a second cast would leak the first one's bonuses (only one
     // amount can be given back), so a re-cast refreshes rather than adds.

@@ -122,6 +122,9 @@ const COLS = 2;
 function cellIndex(row, col) { return row * COLS + col; }
 function cellRow(i) { return Math.floor(i / COLS); }
 function cellCol(i) { return i % COLS; }
+
+// The six schools every resistance buff and shred moves together.
+const RESIST_SCHOOLS = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
 class BattleEngine {
   constructor(state) {
     this.ABILITIES = null;
@@ -1985,7 +1988,7 @@ class BattleEngine {
   // taken, `doomed` is taken AND already dying to that hit.
   aiClaimState() {
     if (!this._aiClaimState || this._aiClaimState.round !== this.round) {
-      this._aiClaimState = { round: this.round, claimed: new Set(), doomed: new Set() };
+      this._aiClaimState = { round: this.round, claimed: new Set(), doomed: new Set(), warded: new Set() };
     }
     return this._aiClaimState;
   }
@@ -2087,6 +2090,35 @@ class BattleEngine {
       return targets.filter(c => c.battle_hp < c.max_hp)
         .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0] || null;
     }
+    // A resistance ward is worth casting only where it actually lands. Every
+    // school is capped (MITIGATION_CAP_PCT), so an ally already at the ceiling
+    // gains literally nothing, and a second copy on a warded ally is thrown
+    // away — which is what two Martyrs both picking targets[0] used to do.
+    if (p.all_resist_bonus != null) {
+      const claims = this.aiClaimState();
+      const gainFor = c => {
+        const res = c.unit_data?.resistances ?? c.resistances ?? {};
+        return RESIST_SCHOOLS.reduce((sum, school) => {
+          const now = Math.max(0, Number(res[school]) || 0);
+          return sum + Math.max(0, Math.min(MITIGATION_CAP_PCT, now + p.all_resist_bonus) - now);
+        }, 0);
+      };
+      const scored = targets
+        .filter(c => c.alive && c.side === actor.side)
+        .filter(c => !claims.warded.has(c.id))
+        .filter(c => !(c._effects || []).some(e => e.key === 'sanctuary'))
+        .map(c => ({ c, gain: gainFor(c) }))
+        .filter(x => x.gain > 0);
+      if (!scored.length) return null;
+      // Ward whoever is actually going to be hit: the front line first, then
+      // whoever is furthest through their health.
+      const exposure = c => (cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1) ? 1 : 0);
+      scored.sort((a, b) =>
+        (exposure(b.c) - exposure(a.c)) ||
+        ((a.c.battle_hp / a.c.max_hp) - (b.c.battle_hp / b.c.max_hp)) ||
+        (b.gain - a.gain));
+      return scored[0].c;
+    }
     // Team/self buff (initiative, etc.) — cast it; earlier is better, and the
     // AI only gets one shot at it anyway.
     if (def.target === 'self' || def.target === 'all_allies' || def.target === 'ally' || def.target === 'ally_any' || def.target === 'ally_tagged') {
@@ -2146,7 +2178,10 @@ class BattleEngine {
       const abilityTargets = this.getValidTargets(actor, true);
       if (abilityTargets.length) {
         const pick = this.aiPickAbilityTarget(actor, def, abilityTargets);
-        if (pick) return { type: 'ability', target: pick };
+        if (pick) {
+          if (def?.params?.all_resist_bonus != null) this.aiClaimState().warded.add(pick.id);
+          return { type: 'ability', target: pick };
+        }
       }
     }
     if (this.aiShouldDefend(actor)) return { type: 'defend', target: null };
