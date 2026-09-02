@@ -49,6 +49,14 @@ const UI_TEXT = {
   abandon:         { en: 'Abandon',   ru: 'Бросить' },
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
   levelAria:       { en: 'Level',     ru: 'Уровень' },
+  pvpSoon:         { en: 'Soon',      ru: 'Скоро' },
+  comingSoonTitle: { en: 'Coming soon', ru: 'Скоро' },
+  comingSoonBody:  {
+    en: 'This mode is not open yet. It is being built — check back soon.',
+    ru: 'Этот режим ещё не открыт. Он в разработке — загляните позже.',
+  },
+  regionsAria:     { en: 'Regions',   ru: 'Регионы' },
+  arenaAria:       { en: 'Arena',     ru: 'Арена' },
   // Guaranteed-crystal line; crystalName is already localized per region.
   // Each region pays two fixed crystal types now — no random roll.
   guaranteed: (L, crystalName) => L === 'ru'
@@ -98,10 +106,48 @@ const REGIONS = [
     label: 'PvP Arena',
     label_ru: 'Арена PvP',
     icon: '⚔',
-    description: 'Challenge other players in ranked combat. Coming soon.',
-    description_ru: 'Сразитесь с другими игроками в рейтинговых боях. Скоро.',
+    description: 'Face other players in the arena — quick matches, ranked seasons and tournaments.',
+    description_ru: 'Сразитесь с другими игроками на арене — быстрые бои, рейтинговые сезоны и турниры.',
     crystal: null,
-    comingSoon: true,
+    // Not a region: tapping it slides to the arena page rather than departing.
+    toArena: true,
+  },
+];
+
+// ── PvP ──────────────────────────────────────────────────────────────────────
+// The arena is the SECOND page of this screen, not a screen of its own: it is
+// the other place a player departs from, and it reads that way with the same
+// cards, the same arrows and the same track the castle uses for its two layers.
+//
+// Art follows the region convention — /assets/embark/<id>.jpg — so a mode gets
+// its picture by dropping the file in and flipping `art` on. Until then the card
+// paints the gradient in .embark-card--pvp rather than an empty box; the inline
+// background is left off entirely, because an inline url() to a file that does
+// not exist beats the stylesheet and leaves a blank card.
+const PVP_MODES = [
+  {
+    id: 'pvp_quick',
+    label: 'Quick Match',
+    label_ru: 'Быстрый бой',
+    description: 'Unranked duels against a party close to your own strength. Nothing is at stake but the win.',
+    description_ru: 'Нерейтинговые дуэли против отряда, близкого вам по силе. На кону только победа.',
+    live: true,
+  },
+  {
+    id: 'pvp_ranked',
+    label: 'Ranked',
+    label_ru: 'Рейтинговый бой',
+    description: 'Season duels that move your rating, and your faction\u2019s standing with it.',
+    description_ru: 'Сезонные дуэли, влияющие на ваш рейтинг и на положение вашей фракции.',
+    live: false,
+  },
+  {
+    id: 'pvp_tournament',
+    label: 'Tournament',
+    label_ru: 'Турнир',
+    description: 'Bracketed runs on a schedule. Win through the bracket, claim a shard of the crown.',
+    description_ru: 'Турнирная сетка по расписанию. Пройдите её до конца и заберите осколок короны.',
+    live: false,
   },
 ];
 
@@ -340,10 +386,29 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   root.innerHTML = `
     <div class="screen screen-embark">
       <main class="embark-main">
-        <div class="embark-regions-grid" id="embark-regions">
-          <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
-        </div>
+        <div class="embark-layers">
+          <button class="embark-layer-arrow embark-layer-arrow--prev" id="embark-layer-prev"
+                  type="button" aria-label="${UI_TEXT.regionsAria[L]}"><span>‹</span></button>
 
+          <div class="embark-layer-viewport">
+            <div class="embark-layer-track" id="embark-layer-track">
+
+              <div class="embark-layer" data-layer="1">
+                <div class="embark-regions-grid" id="embark-regions">
+                  <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
+                </div>
+              </div>
+
+              <div class="embark-layer" data-layer="2">
+                <div class="embark-regions-grid" id="embark-pvp-modes"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <button class="embark-layer-arrow embark-layer-arrow--next" id="embark-layer-next"
+                  type="button" aria-label="${UI_TEXT.arenaAria[L]}"><span>›</span></button>
+        </div>
       </main>
 
       <div id="modal-overlay" class="modal-overlay hidden">
@@ -391,6 +456,90 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       if (modalClosable && e.target === overlay) closeModal();
     });
   }
+
+  // ── Pages ────────────────────────────────────────────────────────────────
+  // Same arrangement as the castle's two layers (see setLayer in castle.js):
+  // both pages sit side by side on one track and switching slides it, so
+  // neither is rebuilt and the arrows cannot race a render.
+  const LAYER_COUNT = 2;
+  let currentLayer = 1;
+
+  function applyLayer() {
+    const track = root.querySelector('#embark-layer-track');
+    if (track) track.style.transform = `translateX(-${(currentLayer - 1) * 100}%)`;
+    root.querySelectorAll('.embark-layer').forEach(el => {
+      const isCurrent = Number(el.dataset.layer) === currentLayer;
+      el.classList.toggle('embark-layer--active', isCurrent);
+      el.setAttribute('aria-hidden', String(!isCurrent));
+    });
+    // An arrow that leads nowhere is disabled rather than hidden: a control that
+    // vanishes moves everything beside it.
+    const prev = root.querySelector('#embark-layer-prev');
+    const next = root.querySelector('#embark-layer-next');
+    if (prev) {
+      const can = currentLayer > 1;
+      prev.disabled = !can;
+      prev.classList.toggle('embark-layer-arrow--live', can);
+    }
+    if (next) {
+      const can = currentLayer < LAYER_COUNT;
+      next.disabled = !can;
+      next.classList.toggle('embark-layer-arrow--live', can);
+    }
+  }
+
+  function setLayer(next) {
+    const clamped = Math.min(LAYER_COUNT, Math.max(1, next));
+    if (clamped === currentLayer) return;
+    currentLayer = clamped;
+    applyLayer();
+  }
+
+  root.querySelector('#embark-layer-prev')?.addEventListener('click', () => setLayer(currentLayer - 1));
+  root.querySelector('#embark-layer-next')?.addEventListener('click', () => setLayer(currentLayer + 1));
+
+  function comingSoon(label) {
+    openModal(label, `
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
+          ${UI_TEXT.comingSoonBody[L]}
+        </div>
+      </div>`);
+  }
+
+  // The arena page. Modes are region cards by design — same art frame, same
+  // label/desc block — because they are the same choice made in the same place.
+  function renderPvpModes() {
+    const host = root.querySelector('#embark-pvp-modes');
+    if (!host) return;
+
+    host.innerHTML = PVP_MODES.map(m => {
+      const label = (L === 'ru' && m.label_ru) || m.label;
+      const desc  = (L === 'ru' && m.description_ru) || m.description;
+      return `
+        <div class="embark-region-block">
+          <div class="embark-card embark-card--pvp${m.live ? '' : ' embark-card--locked'}"
+               data-pvp-mode="${m.id}" data-label="${label}"
+               style="${m.art ? regionBgStyle(m) : ''}">
+            <div class="embark-card-info">
+              <span class="embark-card-label">${label}</span>
+              <span class="embark-card-desc">${desc}</span>
+            </div>
+            ${m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.pvpSoon[L]}</span>`}
+          </div>
+        </div>`;
+    }).join('');
+
+    // Quick Match is the mode being built next, so it is the one that will stop
+    // saying this. The other two answer the same way on purpose — a placeholder
+    // that behaves differently from its neighbours reads as a bug.
+    host.querySelectorAll('[data-pvp-mode]').forEach(card => {
+      card.addEventListener('click', () => comingSoon(card.dataset.label));
+    });
+  }
+
+  renderPvpModes();
+  applyLayer();
 
   function showReconnectModal(battle_id, battle_data) {
     openModal(UI_TEXT.reconnectTitle[L], `
@@ -453,14 +602,15 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
-        if (r.comingSoon) {
+        if (r.toArena) {
           return `
-            <div class="embark-region-block embark-region-block--coming-soon">
-              <div class="embark-card embark-card--coming-soon" data-id="${r.id}" style="${regionBgStyle(r)}">
+            <div class="embark-region-block embark-region-block--arena">
+              <div class="embark-card embark-card--arena" data-to-arena="1" data-id="${r.id}" style="${regionBgStyle(r)}">
                 <div class="embark-card-info">
                   <span class="embark-card-label">${rLabel(r)}</span>
                   <span class="embark-card-desc">${rDesc(r)}</span>
                 </div>
+                <span class="embark-card-chev">\u203a</span>
               </div>
             </div>
           `;
@@ -547,9 +697,12 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       // they have unlocked, which is the one they almost always want; the pips
       // stay for replaying an earlier level. Coming-soon cards are excluded —
       // they have a data-id but nothing to enter.
-      root.querySelectorAll('.embark-card:not(.embark-card--coming-soon)').forEach(card => {
+      root.querySelectorAll('.embark-card:not(.embark-card--coming-soon):not([data-to-arena])').forEach(card => {
         card.addEventListener('click', () => departTo(card.dataset.id, parseInt(card.dataset.maxLevel)));
       });
+
+      root.querySelector('.embark-card[data-to-arena]')
+        ?.addEventListener('click', () => setLayer(2));
 
       // Deliberately gated on the castle step, not the roster ones: onboarding
       // order is enforced by navigation (castle -> roster -> here), so a player
