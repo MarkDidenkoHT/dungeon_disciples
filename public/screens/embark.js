@@ -530,11 +530,15 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         </div>`;
     }).join('');
 
-    // Quick Match is the mode being built next, so it is the one that will stop
-    // saying this. The other two answer the same way on purpose — a placeholder
-    // that behaves differently from its neighbours reads as a bug.
+    // A live mode departs for battle prep with no region and no level: prep
+    // knows from `mode` that the other grid stays fogged until the queue pairs
+    // the player. The two unbuilt modes answer with the placeholder.
     host.querySelectorAll('[data-pvp-mode]').forEach(card => {
-      card.addEventListener('click', () => comingSoon(card.dataset.label));
+      const mode = PVP_MODES.find(m => m.id === card.dataset.pvpMode);
+      card.addEventListener('click', () => {
+        if (!mode?.live) return comingSoon(card.dataset.label);
+        navigate('battle-prep', { player, mode: mode.id });
+      });
     });
   }
 

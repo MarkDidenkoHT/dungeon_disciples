@@ -64,6 +64,14 @@ const BP_TEXT = {
   hero:         { en: '★ Hero',       ru: '★ Герой' },
   enemy:        { en: 'Enemy',        ru: 'Враг' },
   toBattle:     { en: 'To Battle',    ru: 'В бой' },
+  enterQueue:   { en: 'Enter Queue',  ru: 'В очередь' },
+  opponentPower:{ en: 'Opponent',     ru: 'Противник' },
+  // Placeholder until matchmaking exists. The button is real and the formation
+  // it queues with is real — only the search on the other end is missing.
+  queueSoon:    {
+    en: 'Matchmaking is not connected yet. Your formation is saved — the queue opens soon.',
+    ru: 'Подбор соперника ещё не подключён. Ваша расстановка сохранена — очередь откроется скоро.',
+  },
   close:        { en: 'Close',        ru: 'Закрыть' },
   scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
   scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
@@ -155,8 +163,14 @@ function getLoyalty(heroUnit) {
   return tier >= 4 ? 5 : tier + 1;
 }
 
-export function renderBattlePrep(root, { player, region_id, level }) {
+export function renderBattlePrep(root, { player, region_id, level, mode = null }) {
   const L = lang(player);
+
+  // Quick match arrives here from the arena page of embark with no region and no
+  // level: the same screen, the same formation rules, but the other grid stays
+  // fogged because the opponent is not chosen yet — matchmaking picks it once
+  // the player queues. Every region-only step below is gated on this.
+  const isPvp = String(mode || '').startsWith('pvp');
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
@@ -186,13 +200,16 @@ export function renderBattlePrep(root, { player, region_id, level }) {
           </span>
         </div>
 
-        <button id="ready-btn" class="battle-prep-enter-btn" disabled aria-label="${BP_TEXT.toBattle[L]}">
-          <img src="${assetUrl(`/assets/icons/ui/to_battle.png`)}" alt="${BP_TEXT.toBattle[L]}"
-               onerror="this.replaceWith(document.createTextNode('⚔'))">
+        <button id="ready-btn" class="battle-prep-enter-btn${isPvp ? ' battle-prep-enter-btn--queue' : ''}"
+                disabled aria-label="${isPvp ? BP_TEXT.enterQueue[L] : BP_TEXT.toBattle[L]}">
+          ${isPvp
+            ? `<span class="battle-prep-queue-label">${BP_TEXT.enterQueue[L]}</span>`
+            : `<img src="${assetUrl(`/assets/icons/ui/to_battle.png`)}" alt="${BP_TEXT.toBattle[L]}"
+                    onerror="this.replaceWith(document.createTextNode('⚔'))">`}
         </button>
 
         <div class="prep-side prep-side--enemy">
-          <span class="prep-side-label">${BP_TEXT.enemyPower[L]}</span>
+          <span class="prep-side-label">${isPvp ? BP_TEXT.opponentPower[L] : BP_TEXT.enemyPower[L]}</span>
           <span class="prep-side-stats">
             <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="${BP_TEXT.hiddenSpell[L]}" style="display:none;">📖</span>
             <span id="enemy-army-power" class="army-power"></span>
@@ -1663,7 +1680,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
   }
 
   // Go-or-go-back prompt on the way into a battle. Resolves true to continue.
-  function askBeforeBattle(text) {
+  function askBeforeBattle(text, { confirmOnly = false } = {}) {
     return new Promise(resolve => {
       const overlay = document.createElement('div');
       overlay.className = 'confirm-overlay';
@@ -1671,11 +1688,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
         <div class="confirm-modal">
           <div class="confirm-modal-text">${text}</div>
           <div class="confirm-modal-actions">
-            <button class="confirm-modal-btn confirm-modal-btn--cancel">${BP_TEXT.goBack[L]}</button>
-            <button class="confirm-modal-btn confirm-modal-btn--confirm">${BP_TEXT.continueOn[L]}</button>
+            ${confirmOnly ? '' : `<button class="confirm-modal-btn confirm-modal-btn--cancel">${BP_TEXT.goBack[L]}</button>`}
+            <button class="confirm-modal-btn confirm-modal-btn--confirm">${confirmOnly ? BP_TEXT.close[L] : BP_TEXT.continueOn[L]}</button>
           </div>
         </div>`;
-      overlay.querySelector('.confirm-modal-btn--cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
+      overlay.querySelector('.confirm-modal-btn--cancel')?.addEventListener('click', () => { overlay.remove(); resolve(false); });
       overlay.querySelector('.confirm-modal-btn--confirm').addEventListener('click', () => { overlay.remove(); resolve(true); });
       document.body.appendChild(overlay);
     });
@@ -1683,6 +1700,15 @@ export function renderBattlePrep(root, { player, region_id, level }) {
 
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
+
+    // Quick match stops here for now. The formation is committed exactly as it
+    // would be for a region fight — what is missing is only the search on the
+    // other side, which is the next piece of work.
+    if (isPvp) {
+      saveFormation();
+      await askBeforeBattle(BP_TEXT.queueSoon[L], { confirmOnly: true });
+      return;
+    }
 
     const loyaltyUsed = placedLoyaltyUsed();
     const loyaltyLeft = maxNonHero - loyaltyUsed;
@@ -1793,7 +1819,9 @@ export function renderBattlePrep(root, { player, region_id, level }) {
       // loyalty and to know which unit is exempt from it.
       restoreFormation();
 
-      enemies = getEncounter(region_id, level);
+      // No encounter to load in quick match — the opposing formation belongs to
+      // another player and does not exist until the queue pairs them.
+      enemies = isPvp ? [] : getEncounter(region_id, level);
 
       // Was driven by the encounter's own hidden spell, which no longer exists.
       // The warning is still worth giving, so it now reads the enemies THEMSELVES
