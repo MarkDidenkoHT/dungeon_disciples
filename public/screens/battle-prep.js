@@ -389,7 +389,11 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const currentHp = baseMaxHp == null ? '—' : derived.current_hp;
     const maxHp     = baseMaxHp == null ? '—' : derived.max_hp;
 
-    const liveUnit = { ...def, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
+    // Armor, initiative, power, resistances, granted tags and the item's own
+    // passive all live on the item, not the blueprint — folding it in here is
+    // what makes this card agree with the one the castle and battle show.
+    const withItem = withEquippedItem(def, equippedItem);
+    const liveUnit = { ...withItem, hp: `${currentHp}/${maxHp}`, xp: stored.current_xp ?? 0 };
     const badge    = isHero ? BP_TEXT.hero[L] : sizeLabel(getUnitSize(unit));
     const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">${BP_TEXT.dead[L]}</div>`;
     const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false, player });
@@ -405,7 +409,7 @@ export function renderBattlePrep(root, { player, region_id, level }) {
     const itemSlotHtml = enemyItem
       ? renderItemSlotIcon(enemyItem, null, { interactive: false, player })
       : '';
-    return buildUnitCard(e, { badge: BP_TEXT.enemy[L], itemSlotHtml });
+    return buildUnitCard(withEquippedItem(e, enemyItem), { badge: BP_TEXT.enemy[L], itemSlotHtml });
   }
 
   function spellTargetLabel(spell) {
