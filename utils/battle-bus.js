@@ -97,7 +97,7 @@ function subscribe(battleId, chatId, res) {
  * entries it has not seen, and duplicating state into the event would give two
  * sources of truth that can disagree.
  */
-function publish(battleId, payload = {}, { exceptChatId = null } = {}) {
+function publish(battleId, payload = {}, { exceptChatId = null, event = 'battle' } = {}) {
   const room = rooms.get(battleId);
   if (!room || !room.size) return 0;
   let delivered = 0;
@@ -107,7 +107,7 @@ function publish(battleId, payload = {}, { exceptChatId = null } = {}) {
     // exchange animate a SECOND time, because the catch-up fetch it triggers
     // arrives after playback has finished and `processing` has gone false.
     if (exceptChatId != null && sub.chatId === String(exceptChatId)) continue;
-    if (writeFrame(sub.res, 'battle', { battle_id: battleId, ...payload })) delivered++;
+    if (writeFrame(sub.res, event, { battle_id: battleId, ...payload })) delivered++;
   }
   return delivered;
 }

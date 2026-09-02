@@ -8112,3 +8112,86 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   color: var(--accent-bright);
   text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.8);
 }
+
+.pvp-queue-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 10, 15, 0.86);
+  backdrop-filter: blur(2px);
+}
+
+.pvp-queue-overlay.hidden { display: none; }
+
+.pvp-queue-panel {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.pvp-queue-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(var(--accent-rgb), 0.22);
+  border-top-color: var(--accent);
+  animation: pvp-queue-spin 0.9s linear infinite;
+}
+
+@keyframes pvp-queue-spin { to { transform: rotate(360deg); } }
+
+.pvp-queue-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pvp-queue-timer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.pvp-queue-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.pvp-queue-cancel {
+  margin-top: 4px;
+  padding: 9px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pvp-queue-overlay--matched .pvp-queue-spinner {
+  animation: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.55);
+}
+
+.pvp-queue-overlay--matched .pvp-queue-timer { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pvp-queue-spinner { animation: none; }
+}

@@ -25,6 +25,7 @@ const {
   getBattleLogsSince,
 } = require('../utils/realtime');
 const battleBus = require('../utils/battle-bus');
+const pvpQueue  = require('../utils/pvp-queue');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
@@ -2763,6 +2764,173 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 
     res.json({ ok: true, done: engine.done, winner: engine.winner, logs: insertedLogs, state: engine.getSnapshot() });
   } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// ── PvP: quick match queue ──────────────────────────────────────────────────
+//
+// The queue lives in this process (utils/pvp-queue.js); pvp_queue in the
+// database is its durable record, written best-effort. A failed write there
+// must never cost a player their match, so every one of them is caught: the
+// authority on who is queued is the map, and the row exists so a restart and a
+// human looking at the table can both see what happened.
+//
+// A player waiting for an opponent holds an SSE connection on a room keyed by
+// their own chat_id rather than by a battle — there is no battle yet, which is
+// the whole point. GET /pvp/status is the same answer over HTTP, for the client
+// whose stream never connected.
+
+function pvpRoom(chatId) { return `pvp:${chatId}`; }
+
+// What one player is told about the other. Deliberately not the formation: the
+// opposing board is revealed by the battle, not by the queue.
+async function pvpOpponentCard(chat_id) {
+  try {
+    const rows = await supabase(
+      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`
+    );
+    return { chat_id: String(chat_id), faction: rows[0]?.faction ?? null };
+  } catch {
+    return { chat_id: String(chat_id), faction: null };
+  }
+}
+
+async function writeQueueRow(entry) {
+  try {
+    await supabase('/pvp_queue', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({
+        chat_id:     entry.chat_id,
+        mode:        entry.mode,
+        formation:   entry.formation,
+        power:       entry.power,
+        status:      'waiting',
+        battle_id:   null,
+        opponent_id: null,
+        enqueued_at: new Date(entry.enqueuedAt).toISOString(),
+        updated_at:  new Date().toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error('pvp_queue write failed (continuing):', err.message);
+  }
+}
+
+async function clearQueueRows(chatIds) {
+  const ids = chatIds.map(String).filter(Boolean);
+  if (!ids.length) return;
+  const list = ids.map(id => `"${id}"`).join(',');
+  try {
+    await supabase(`/pvp_queue?chat_id=in.(${encodeURIComponent(list)})`, { method: 'DELETE' });
+  } catch (err) {
+    console.error('pvp_queue delete failed (continuing):', err.message);
+  }
+}
+
+// POST /pvp/enqueue — join the queue with the formation just arranged in prep.
+router.post('/pvp/enqueue', requireAuth, async (req, res) => {
+  const { chat_id, mode = 'pvp_quick', formation, power = 0 } = req.body;
+  if (!chat_id || !formation) return res.status(400).json({ error: 'chat_id and formation required' });
+
+  const units     = Array.isArray(formation.playerUnitIds) ? formation.playerUnitIds : null;
+  const placement = formation.placement;
+  if (!units || !units.length || units.length > 6 || !placement || typeof placement !== 'object') {
+    return res.status(400).json({ error: 'formation must carry playerUnitIds (1-6) and placement' });
+  }
+
+  try {
+    // The same guard region battles use. Queueing while a fight is open would
+    // hand this player a second one the moment they matched.
+    const existing = await getActiveBattle(chat_id);
+    if (existing) {
+      return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+    }
+
+    pvpQueue.sweep();
+    const result = pvpQueue.enqueue({ chat_id: String(chat_id), mode, formation, power });
+
+    if (!result.matched) {
+      await writeQueueRow(result.entry);
+      return res.json({ status: 'waiting', queued_at: result.entry.enqueuedAt, waiting: pvpQueue.size() });
+    }
+
+    // Paired. Building the battle from the two stored formations is the next
+    // step; for now both sides are told who they drew, and the queue rows go.
+    const { a, b } = result;
+    await clearQueueRows([a.chat_id, b.chat_id]);
+
+    const [cardA, cardB] = await Promise.all([pvpOpponentCard(a.chat_id), pvpOpponentCard(b.chat_id)]);
+
+    // Only the OTHER player needs waking: this one is holding the response.
+    battleBus.publish(pvpRoom(b.chat_id), {
+      status: 'matched', mode, opponent: cardA,
+    }, { event: 'pvp' });
+
+    res.json({ status: 'matched', mode, opponent: cardB });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /pvp/leave — cancel. Idempotent: a player who was already matched or
+// already gone gets the same answer as one who was really removed.
+router.post('/pvp/leave', requireAuth, async (req, res) => {
+  const { chat_id } = req.body;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  const removed = pvpQueue.leave(chat_id);
+  await clearQueueRows([chat_id]);
+  res.json({ status: 'left', was_queued: removed });
+});
+
+// GET /pvp/status — the polling fallback for a client whose stream is down.
+router.get('/pvp/status', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  const entry = pvpQueue.get(chat_id);
+  if (entry) return res.json({ status: 'waiting', queued_at: entry.enqueuedAt, waiting: pvpQueue.size() });
+
+  // Not in the queue. Either matched (the battle will say so once step two
+  // builds one) or never queued — the client knows which it was expecting.
+  res.json({ status: 'idle' });
+});
+
+// GET /pvp/stream — server-sent events while waiting for an opponent.
+//
+// Same shape and same reasoning as /battle/stream, including the token in the
+// query string because EventSource cannot set headers. The room is this
+// player's own id: there is no battle to key on until they are matched.
+router.get('/pvp/stream', async (req, res) => {
+  const { chat_id, token } = req.query;
+  if (!chat_id || !token) return res.status(400).json({ error: 'chat_id and token required' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=session_token&limit=1`);
+    if (!rows.length || rows[0].session_token !== token) return res.status(401).json({ error: 'Unauthorized' });
+
+    res.writeHead(200, {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection':    'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    res.flushHeaders?.();
+
+    const room  = pvpRoom(String(chat_id));
+    const close = battleBus.subscribe(room, String(chat_id), res);
+    if (!close) {
+      res.write('event: full\ndata: {}\n\n');
+      return res.end();
+    }
+
+    res.write(`event: ready\ndata: ${JSON.stringify({ room })}\n\n`);
+    // Leaving the queue when the stream dies would be wrong: in the Telegram
+    // webview a locked phone closes the stream, and that player is still
+    // waiting. The queue is cleared by an explicit cancel, by a match, or by
+    // age (see sweep in utils/pvp-queue.js).
+    req.on('close', close);
+  } catch (err) {
+    if (res.headersSent) { try { res.end(); } catch {} return; }
     serverError(res, err);
   }
 });

@@ -10,6 +10,7 @@ import { getEncounter } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
+import { createQueueController } from '../pvp-queue.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 
@@ -65,13 +66,21 @@ const BP_TEXT = {
   enemy:        { en: 'Enemy',        ru: 'Враг' },
   toBattle:     { en: 'To Battle',    ru: 'В бой' },
   enterQueue:   { en: 'Enter Queue',  ru: 'В очередь' },
-  opponentPower:{ en: 'Opponent',     ru: 'Противник' },
-  // Placeholder until matchmaking exists. The button is real and the formation
-  // it queues with is real — only the search on the other end is missing.
-  queueSoon:    {
-    en: 'Matchmaking is not connected yet. Your formation is saved — the queue opens soon.',
-    ru: 'Подбор соперника ещё не подключён. Ваша расстановка сохранена — очередь откроется скоро.',
+  searching:    { en: 'Searching for an opponent', ru: 'Ищем соперника' },
+  searchingHint:{ en: 'Leave this screen open — you will be matched with the next player who queues.',
+                  ru: 'Не закрывайте экран — вас соединят со следующим игроком в очереди.' },
+  leaveQueue:   { en: 'Leave Queue',  ru: 'Выйти из очереди' },
+  matchFound:   { en: 'Match found',  ru: 'Соперник найден' },
+  // Placeholder for as long as a pairing produces no battle. The queue itself
+  // is real from here on — this is the only part still missing.
+  matchSoon:    {
+    en: 'You have been paired with an opponent. The duel itself is the next piece of work.',
+    ru: 'Вам подобран соперник. Сам бой — следующий этап работы.',
   },
+  queueEnded:   { en: 'The queue ended before a match was found. Try again.',
+                  ru: 'Очередь завершилась без подбора соперника. Попробуйте снова.' },
+  queueFailed:  { en: 'Could not join the queue.', ru: 'Не удалось встать в очередь.' },
+  opponentPower:{ en: 'Opponent',     ru: 'Противник' },
   close:        { en: 'Close',        ru: 'Закрыть' },
   scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
   scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
@@ -227,6 +236,16 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         </div>
       </div>
 
+    </div>
+
+    <div id="pvp-queue-overlay" class="pvp-queue-overlay hidden">
+      <div class="pvp-queue-panel">
+        <div class="pvp-queue-spinner" aria-hidden="true"></div>
+        <div class="pvp-queue-title" id="pvp-queue-title">${BP_TEXT.searching[L]}</div>
+        <div class="pvp-queue-timer" id="pvp-queue-timer">0:00</div>
+        <div class="pvp-queue-hint" id="pvp-queue-hint">${BP_TEXT.searchingHint[L]}</div>
+        <button class="pvp-queue-cancel" id="pvp-queue-cancel">${BP_TEXT.leaveQueue[L]}</button>
+      </div>
     </div>
 
     <div id="spell-sheet-overlay" class="spell-sheet-overlay hidden">
@@ -1698,17 +1717,123 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     });
   }
 
+  // ── Quick match queue ────────────────────────────────────────────────────
+  // The formation is committed the moment the player queues, exactly as it would
+  // be committed to a region fight: what they arranged is what they will fight
+  // with, and they are not asked for it again once an opponent is found.
+  let queueController = null;
+  let queueTimer      = null;
+
+  function queueEl(id) { return root.querySelector(id); }
+
+  function showQueueOverlay(startedAt) {
+    const overlay = queueEl('#pvp-queue-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    overlay.classList.remove('pvp-queue-overlay--matched');
+    queueEl('#pvp-queue-title').textContent = BP_TEXT.searching[L];
+    queueEl('#pvp-queue-hint').textContent  = BP_TEXT.searchingHint[L];
+    queueEl('#pvp-queue-cancel').textContent = BP_TEXT.leaveQueue[L];
+
+    clearInterval(queueTimer);
+    const tick = () => {
+      const secs = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+      const el = queueEl('#pvp-queue-timer');
+      if (el) el.textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+    };
+    tick();
+    queueTimer = setInterval(tick, 1000);
+  }
+
+  function hideQueueOverlay() {
+    clearInterval(queueTimer);
+    queueTimer = null;
+    queueEl('#pvp-queue-overlay')?.classList.add('hidden');
+    const btn = root.querySelector('#ready-btn');
+    if (btn) { btn.disabled = false; btn.classList.add('battle-prep-enter-btn--ready'); }
+  }
+
+  // Matched, with no duel to enter yet. The overlay stops counting and says so
+  // rather than closing — a player who queued deserves to see that it worked.
+  function showQueueMatched() {
+    clearInterval(queueTimer);
+    queueTimer = null;
+    const overlay = queueEl('#pvp-queue-overlay');
+    if (!overlay) return;
+    overlay.classList.add('pvp-queue-overlay--matched');
+    queueEl('#pvp-queue-title').textContent = BP_TEXT.matchFound[L];
+    queueEl('#pvp-queue-hint').textContent  = BP_TEXT.matchSoon[L];
+    queueEl('#pvp-queue-cancel').textContent = BP_TEXT.close[L];
+  }
+
+  function stopQueue({ cancel = false } = {}) {
+    const c = queueController;
+    queueController = null;
+    if (!c) return;
+    if (cancel) c.cancel(); else c.stop();
+  }
+
+  root.querySelector('#pvp-queue-cancel')?.addEventListener('click', () => {
+    stopQueue({ cancel: true });
+    hideQueueOverlay();
+  });
+
+  // Navigating away, closing the app, or a reload: the entry must not outlive
+  // the screen that made it, or this player is matched into a duel nobody is
+  // watching for.
+  window.addEventListener('pagehide', () => stopQueue({ cancel: true }), { once: true });
+
+  async function enterQueue() {
+    const playerUnitIds = roster
+      .filter(u => placedUnitIds().has(u.id))
+      .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));
+
+    const placement = {};
+    for (const [cellIdx, occ] of Object.entries(occupied)) {
+      if (occ.anchor === Number(cellIdx)) placement[occ.unitId] = Number(cellIdx);
+    }
+
+    saveFormation();
+
+    const btn = root.querySelector('#ready-btn');
+    if (btn) { btn.disabled = true; btn.classList.remove('battle-prep-enter-btn--ready'); }
+    showQueueOverlay(Date.now());
+
+    queueController = createQueueController({
+      playerId: player.chat_id,
+      mode:     mode || 'pvp_quick',
+      onMatched: () => { queueController = null; showQueueMatched(); },
+      onEnded:   () => {
+        queueController = null;
+        hideQueueOverlay();
+        askBeforeBattle(BP_TEXT.queueEnded[L], { confirmOnly: true });
+      },
+      onError: err => console.error('Queue error:', err),
+    });
+
+    try {
+      await queueController.start({ playerUnitIds, placement }, playerArmyPower());
+    } catch (err) {
+      console.error('Failed to join queue:', err);
+      stopQueue();
+      hideQueueOverlay();
+      // A battle already open is the one refusal worth explaining — it is the
+      // same guard region battles hit, and it sends the player to the same place.
+      if (err.code === 'battle_in_progress' || /already in progress/i.test(err.message || '')) {
+        let activeCheck = null;
+        try { activeCheck = await api(`/battle/active?chat_id=${player.chat_id}`); }
+        catch (e) { console.error('Failed to check active battle:', e); }
+        navigate('embark', { player, activeCheck });
+        return;
+      }
+      await askBeforeBattle(BP_TEXT.queueFailed[L], { confirmOnly: true });
+    }
+  }
+
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
-    // Quick match stops here for now. The formation is committed exactly as it
-    // would be for a region fight — what is missing is only the search on the
-    // other side, which is the next piece of work.
-    if (isPvp) {
-      saveFormation();
-      await askBeforeBattle(BP_TEXT.queueSoon[L], { confirmOnly: true });
-      return;
-    }
+    if (isPvp) { await enterQueue(); return; }
 
     const loyaltyUsed = placedLoyaltyUsed();
     const loyaltyLeft = maxNonHero - loyaltyUsed;
