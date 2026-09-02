@@ -78,6 +78,16 @@ export function setUiLanguage(language) {
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 
+// The faction's accent palette is a set of CSS variables hung off the BODY (see
+// the body[data-faction] blocks in style.css), so every screen, sheet and glow
+// picks it up without being told. Set once at boot and again the moment a new
+// player picks a faction, before their first screen is drawn.
+export function applyFactionTheme(faction) {
+  if (typeof document === 'undefined') return;
+  if (faction) document.body.dataset.faction = faction;
+  else delete document.body.dataset.faction;
+}
+
 // What each action actually does, in both languages. The Action stat used to
 // open a modal saying only "The type of action this unit performs each turn",
 // which told the player nothing about the difference between, say, Sacrifice and
