@@ -52,10 +52,12 @@ export function createQueueController({ playerId, mode = 'pvp_quick', onMatched,
       if (stopped || settled) return;
       try {
         const data = await api(`/pvp/status?chat_id=${encodeURIComponent(playerId)}`);
-        // Still queued: nothing to do. Gone from the queue without this client
-        // having been told why means it was matched on an instance whose event
-        // we missed, or it was swept for age. Once a match produces a battle,
-        // this is where /battle/active answers the question properly.
+        // The poll is the whole safety net when the stream is down, and it is
+        // also what drives a matchmaking pass server-side — the power bands
+        // widen with waiting, so a pair that was illegal on arrival becomes
+        // legal purely through time, and somebody has to ask.
+        if (data?.status === 'matched') { settle(onMatched, data); return; }
+        // Neither waiting nor matched: cancelled elsewhere, or swept for age.
         if (data?.status !== 'waiting') settle(onEnded, data);
       } catch (err) {
         onError?.(err);

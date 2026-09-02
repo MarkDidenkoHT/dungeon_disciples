@@ -81,6 +81,39 @@ function enqueue({ chat_id, mode = 'pvp_quick', formation, power = 0 }) {
   return { matched: false, entry };
 }
 
+// Re-check the whole queue for pairs that have become possible since anyone
+// last arrived.
+//
+// WHY THIS EXISTS: the bands widen with waiting, so two players who were too far
+// apart in power when the second one queued become a legal pair seconds later —
+// with nobody arriving to notice. Matching only on enqueue left exactly that
+// case waiting forever: both clients said "searching", both rows said "waiting",
+// and the queue was never looked at again. This is called on a timer and on
+// every status poll, so the passage of time alone is enough to pair people.
+//
+// Returns every pair it could make, each already removed from the queue.
+function matchWaiting(now = Date.now()) {
+  const pairs = [];
+  // Oldest first: the longest wait gets the widest band and the first chance.
+  let pool = [...waiting.values()].sort((a, b) => a.enqueuedAt - b.enqueuedAt);
+
+  for (let i = 0; i < pool.length; i++) {
+    const a = pool[i];
+    if (!waiting.has(a.chat_id)) continue;
+    for (let j = i + 1; j < pool.length; j++) {
+      const b = pool[j];
+      if (!waiting.has(b.chat_id)) continue;
+      if (a.mode !== b.mode) continue;
+      if (!compatible(a, b, now)) continue;
+      waiting.delete(a.chat_id);
+      waiting.delete(b.chat_id);
+      pairs.push({ a, b });
+      break;
+    }
+  }
+  return pairs;
+}
+
 function leave(chat_id) {
   return waiting.delete(String(chat_id));
 }
@@ -110,4 +143,4 @@ function sweep(now = Date.now()) {
   return dropped;
 }
 
-module.exports = { enqueue, leave, has, get, size, sweep, STALE_MS };
+module.exports = { enqueue, matchWaiting, leave, has, get, size, sweep, STALE_MS };

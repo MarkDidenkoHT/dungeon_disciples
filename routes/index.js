@@ -3100,6 +3100,60 @@ async function clearQueueRows(chatIds) {
   }
 }
 
+// A match that has already happened, kept just long enough for both clients to
+// find out about it. The SSE event is the fast path; this is what /pvp/status
+// answers with when a client's stream was down — without it, a polling client
+// sees itself gone from the queue and cannot tell "matched" from "dropped".
+const recentMatches = new Map();   // chat_id -> { battle_id, at }
+const RECENT_MATCH_MS = 2 * 60 * 1000;
+
+function noteMatch(chat_id, battle_id) {
+  const now = Date.now();
+  for (const [id, m] of recentMatches) if (now - m.at > RECENT_MATCH_MS) recentMatches.delete(id);
+  recentMatches.set(String(chat_id), { battle_id, at: now });
+}
+
+// Pair everyone who can now be paired, and build their duels.
+//
+// Runs on a timer as well as on every status poll, because the power bands
+// widen with waiting: two players out of range when the second one queued come
+// into range purely through time passing, and nothing else would ever look.
+let matchmakingRunning = false;
+async function runMatchmaking() {
+  if (matchmakingRunning) return;          // one pass at a time; the next tick retries
+  matchmakingRunning = true;
+  try {
+    pvpQueue.sweep();
+    for (const { a, b } of pvpQueue.matchWaiting()) {
+      try {
+        // The one who waited longer creates, so seating is deterministic.
+        const [first, second] = a.enqueuedAt <= b.enqueuedAt ? [a, b] : [b, a];
+        const created = await createPvpBattle(first, second);
+        await clearQueueRows([first.chat_id, second.chat_id]);
+
+        for (const [me, them] of [[first, second], [second, first]]) {
+          noteMatch(me.chat_id, created.battle_id);
+          const card = await pvpOpponentCard(them.chat_id);
+          battleBus.publish(pvpRoom(me.chat_id), {
+            status: 'matched', mode: me.mode, opponent: card, battle_id: created.battle_id,
+          }, { event: 'pvp' });
+        }
+      } catch (err) {
+        console.error('Failed to build a matched duel:', err);
+        // Neither player is left believing in a duel that does not exist.
+        for (const p of [a, b]) battleBus.publish(pvpRoom(p.chat_id), { status: 'failed' }, { event: 'pvp' });
+        await clearQueueRows([a.chat_id, b.chat_id]);
+      }
+    }
+  } finally {
+    matchmakingRunning = false;
+  }
+}
+
+// Unref'd: a queue nobody is in must not hold the process open.
+const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }, 3000);
+if (typeof matchmakingTimer.unref === 'function') matchmakingTimer.unref();
+
 // POST /pvp/enqueue — join the queue with the formation just arranged in prep.
 router.post('/pvp/enqueue', requireAuth, async (req, res) => {
   const { chat_id, mode = 'pvp_quick', formation, power = 0 } = req.body;
@@ -3145,6 +3199,9 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
       return res.status(500).json({ error: 'Could not start the duel', code: 'pvp_create_failed' });
     }
 
+    noteMatch(a.chat_id, created.battle_id);
+    noteMatch(b.chat_id, created.battle_id);
+
     // Only the OTHER player needs waking: this one is holding the response.
     battleBus.publish(pvpRoom(b.chat_id), {
       status: 'matched', mode, opponent: cardA, battle_id: created.battle_id,
@@ -3170,11 +3227,19 @@ router.post('/pvp/leave', requireAuth, async (req, res) => {
 router.get('/pvp/status', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+
+  // Every poll is also a matchmaking tick. The timer above would get there on
+  // its own, but a client asking "am I matched yet?" is the most natural moment
+  // to check, and it makes the queue work even if the timer is ever removed.
+  await runMatchmaking().catch(err => console.error('Matchmaking pass failed:', err));
+
+  const match = recentMatches.get(String(chat_id));
+  if (match) return res.json({ status: 'matched', battle_id: match.battle_id });
+
   const entry = pvpQueue.get(chat_id);
   if (entry) return res.json({ status: 'waiting', queued_at: entry.enqueuedAt, waiting: pvpQueue.size() });
 
-  // Not in the queue. Either matched (the battle will say so once step two
-  // builds one) or never queued — the client knows which it was expecting.
+  // Neither queued nor matched: cancelled elsewhere, or swept for age.
   res.json({ status: 'idle' });
 });
 
