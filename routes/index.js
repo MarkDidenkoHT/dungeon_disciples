@@ -406,6 +406,16 @@ async function buildArmyFor(chat_id, playerUnitIds) {
   });
 }
 
+// Deep enough to protect everything the engine mutates: unit_data and the
+// resistances inside it. Everything else on these objects is replaced wholesale
+// or never written.
+function cloneArmy(units) {
+  return (units || []).map(u => ({
+    ...u,
+    unit_data: { ...(u.unit_data || {}), resistances: { ...(u.unit_data?.resistances || {}) } },
+  }));
+}
+
 // The opposing army, shaped the way initCombatants expects an encounter: each
 // unit carries the cell it was placed in, because there is no second
 // `placement` argument.
@@ -489,6 +499,46 @@ async function persistPvpTurn(record, engine, { causedBy = null } = {}) {
   return { ...record, battle_data, _engine: engine, _insertedLogs: insertedLogs };
 }
 
+// The armies of a battle in progress, built once and kept.
+//
+// WHY: every request that touches a battle rehydrates the engine, and
+// rehydrating means rebuilding each army from its owner's roster and equipped
+// items — two Supabase queries per side. A PvP battle pays that FOUR times per
+// request, and a single exchange costs several requests: the actor's action, the
+// opponent's state fetch, and each side's follow-up reads. That was seconds of
+// round trips per move, on top of nothing having changed.
+//
+// Nothing here CAN change mid-battle: a roster row's HP is only written back
+// when the fight ends, and the battle's own numbers are applied on top by
+// BattleEngine.rehydrate. (An item equipped elsewhere mid-battle used to take
+// effect on the next action, which was a bug rather than a feature; the army a
+// battle started with is the army it finishes with.)
+const battleArmyCache = new Map();   // battle_id -> { armies, at }
+const ARMY_CACHE_MS  = 60 * 60 * 1000;
+const ARMY_CACHE_MAX = 200;
+
+function armyCacheGet(battle_id) {
+  const hit = battleArmyCache.get(battle_id);
+  if (!hit) return null;
+  if (Date.now() - hit.at > ARMY_CACHE_MS) { battleArmyCache.delete(battle_id); return null; }
+  return hit.armies;
+}
+
+function armyCacheSet(battle_id, armies) {
+  // Oldest out first. A cap rather than a sweep: the map is only ever touched
+  // on a request, so a timer would be the only thing keeping the process busy.
+  if (battleArmyCache.size >= ARMY_CACHE_MAX) {
+    const oldest = [...battleArmyCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) battleArmyCache.delete(oldest[0]);
+  }
+  battleArmyCache.set(battle_id, { armies, at: Date.now() });
+  return armies;
+}
+
+function armyCacheDrop(battle_id) {
+  battleArmyCache.delete(battle_id);
+}
+
 async function rehydrateEngine(record) {
   const bd = record.battle_data;
   const { playerUnitIds, placement } = bd.setup;
@@ -498,34 +548,39 @@ async function rehydrateEngine(record) {
   // THEIR roster exactly as this side is rebuilt from this one.
   if (isPvpRecord(record)) {
     const opp = bd.setup.opponent || {};
-    const [mine, theirs] = await Promise.all([
-      buildArmyFor(chat_id, playerUnitIds),
-      buildArmyFor(record.opponent_chat_id, opp.playerUnitIds || []),
-    ]);
+    let armies = armyCacheGet(record.battle_id);
+    if (!armies) {
+      const [mine, theirs] = await Promise.all([
+        buildArmyFor(chat_id, playerUnitIds),
+        buildArmyFor(record.opponent_chat_id, opp.playerUnitIds || []),
+      ]);
+      armies = armyCacheSet(record.battle_id, {
+        playerUnits: mine,
+        enemies: asEnemySide(theirs, opp.placement || {}),
+      });
+    }
+    // A fresh clone per rehydrate: the engine writes into unit_data (resist
+    // shreds, power buffs), and a cached army handed out by reference would
+    // carry one battle's damage into the next request's rebuild.
     return BattleEngine.rehydrate(
-      { playerUnits: mine, enemies: asEnemySide(theirs, opp.placement || {}), placement },
+      { playerUnits: cloneArmy(armies.playerUnits), enemies: cloneArmy(armies.enemies), placement },
       bd,
     );
   }
 
-  const [rosterRows, enemies] = await Promise.all([
-    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
-    Promise.resolve(getEncounter(bd.region_id, bd.level)),
-  ]);
+  let armies = armyCacheGet(record.battle_id);
+  if (!armies) {
+    armies = armyCacheSet(record.battle_id, {
+      playerUnits: await buildArmyFor(chat_id, playerUnitIds),
+      enemies:     getEncounter(bd.region_id, bd.level),
+    });
+  }
 
-  const rosterById = {};
-  for (const r of rosterRows) rosterById[String(r.id)] = r;
-
-  const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
-
-  const playerUnits = playerUnitIds.map(entry => {
-    const rosterId = String(entry._rosterId || entry.id);
-    const r = rosterById[rosterId];
-    if (!r) throw new Error(`Roster unit ${entry._rosterId || entry.id} not found`);
-    return buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId);
-  });
-
-  return BattleEngine.rehydrate({ playerUnits, enemies, placement }, bd);
+  return BattleEngine.rehydrate({
+    playerUnits: cloneArmy(armies.playerUnits),
+    enemies:     cloneArmy(armies.enemies),
+    placement,
+  }, bd);
 }
 
 function buildBattleData(engine, bd) {
@@ -3350,11 +3405,13 @@ router.post('/battle/end', requireAuth, async (req, res) => {
       const winner = mySide === 'player' ? 'enemy' : 'player';
       const battle_data = { ...record.battle_data, done: true, winner, abandoned_by: String(chat_id), turn_deadline: null };
       await updateBattleState(battle_id, battle_data);
+      armyCacheDrop(battle_id);
       battleBus.publish(battle_id, { done: true, last_log_id: null }, { exceptChatId: chat_id });
       return res.json({ success: true, abandoned, conceded_to: winner });
     }
 
     await closeBattleState(battle_id);
+    armyCacheDrop(battle_id);
     res.json({ success: true, abandoned });
   } catch (err) {
     serverError(res, err);
@@ -3438,13 +3495,14 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       // claims too (they get nothing, but the claim is what closes the battle
       // and frees them to queue again).
       const bothIn = [String(record.chat_id), String(record.opponent_chat_id)].every(id => claims[id]);
-      if (bothIn) await closeBattleState(battle_id);
+      if (bothIn) { await closeBattleState(battle_id); armyCacheDrop(battle_id); }
 
       return res.json(result);
     }
 
     const claimed = await claimBattleState(battle_id);
     if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
+    armyCacheDrop(battle_id);
 
     await persistBattleRosterState(chat_id, record.battle_data);
 

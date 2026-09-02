@@ -2792,6 +2792,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         processing = false;
         render();
       },
+      // Only in a duel: there is a person on the other end whose move can
+      // otherwise sit unseen behind a stream that died quietly. A solo battle
+      // resolves the enemy inside the player's own request and needs no poll.
+      heartbeatMs: isPvpBattle ? 2500 : 0,
     });
     if (lastLogId != null) realtimeController.setLastLogId(lastLogId);
     realtimeController.start();
