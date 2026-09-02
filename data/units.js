@@ -1369,8 +1369,8 @@ const UNITS = {
     },
     golden_lion: {
       id: 'e311', f: 'e', t: 3,
-      name: 'Golden Lion',
-      name_ru: 'Золотой Лев',
+      name: 'Golden Automaton',
+      name_ru: 'Золотой Автоматон',
       tags: ['Construct', 'Spirit'],
       size: 'column',
       hp: 130, armor: 30, initiative: 55,
@@ -1379,7 +1379,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 32, action_icon: 'iron_fist.jpg', action_animation: 'shield_bash', action_sfx: 'robot_hit',
       xp: 2600, passive: ['unbreakable 2', 'aegis 2', 'clear_mind 1'], ability: 'lions_roar 2',
     },
-    golden_lion: {
+    golden_lion_prime: {
       id: 'e3111', f: 'e', t: 4,
       name: 'Golden Lion',
       name_ru: 'Золотой Лев',
@@ -1415,10 +1415,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 20, action_icon: 'mortar_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
       xp: 2600, passive: ['unbreakable 2', 'shatter 2', 'slow 1'], ability: null,  
     },
-    siege_dreadnought: {
+    siege_leviathan: {
       id: 'e3211', f: 'e', t: 4,
-      name: 'Siege Dreadnought',
-      name_ru: 'Осадный Дредноут',
+      name: 'Siege Leviathan',
+      name_ru: 'Осадный Левиафан',
       tags: ['Construct', 'Spirit'],
       size: 'column',
       hp: 140, armor: 25, initiative: 30,
@@ -1511,10 +1511,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 18, action_icon: 'musket_shoot.jpg', action_animation: 'cannon_shot',  action_sfx: 'canon_shot',
       xp: 1300, passive: ['clear_shot 1', 'sanctified_ordnance 2'], ability: 'headshot 1',
     },
-    devastator: {
+    annihilator: {
       id: 'e6211', f: 'e', t: 4,
-      name: 'Devastator',
-      name_ru: 'Разрушитель',
+      name: 'Annihilator',
+      name_ru: 'Аннигилятор',
       tags: ['Engineer', null],
       size: 'tile',
       hp: 70, armor: 15, initiative: 35,
@@ -1535,10 +1535,10 @@ const UNITS = {
       damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'fire_bolt',
       xp: 1300, passive: ['burn 2', 'dissipate 1', 'scavenger 1'], ability: null,
     },
-    flamethrower: {
+    inferno_gunner: {
       id: 'e6221', f: 'e', t: 4,
-      name: 'Flamethrower',
-      name_ru: 'Огнемётчик',
+      name: 'Inferno Gunner',
+      name_ru: 'Огнемётчик Инферно',
       tags: ['Engineer', null],
       size: 'tile',
       hp: 70, armor: 15, initiative: 40,
@@ -1763,10 +1763,10 @@ const UNITS = {
       damage_source: 'fire', action_power: 18, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 1170, passive: ['concentration 1', 'burn 2'], ability: null,
     },
-    ash_priest: {
+    ash_hierophant: {
       id: 'e4111', f: 'e', t: 4,
-      name: 'Ash Priest',
-      name_ru: 'Пепельный Жрец',
+      name: 'Ash Hierophant',
+      name_ru: 'Пепельный Иерофант',
       tags: ['Caster', null],
       size: 'tile',
       hp: 65, armor: 5, initiative: 30,
