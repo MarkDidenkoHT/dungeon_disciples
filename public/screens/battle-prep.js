@@ -1761,11 +1761,16 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     const battleId = data?.battle_id;
     if (!battleId) return;   // paired but no duel: the overlay says what happened
     try {
-      const { state, logs } = await api(
+      const opening = await api(
         `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(player.chat_id)}`);
       navigate('battle', {
-        player, battle_id: battleId, snapshot: state, logs: logs || [],
+        player, battle_id: battleId, snapshot: opening.state, logs: opening.logs || [],
         selectedSpells: [], mode: mode || 'pvp_quick',
+        // The first turn is already running by the time either client gets here,
+        // so the clock arrives with the state rather than a refresh later.
+        turnMeta: {
+          kind: opening.kind, turn_deadline: opening.turn_deadline, your_turn: opening.your_turn,
+        },
       });
     } catch (err) {
       console.error('Failed to enter duel:', err);

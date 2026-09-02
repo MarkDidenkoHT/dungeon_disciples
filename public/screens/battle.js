@@ -75,6 +75,8 @@ function getPortraitUrl(unit, variant = 'default') {
 // strings on it — they were the last hardcoded English on the screen.
 const BT = {
   expandLog:    { en: 'Expand log',         ru: 'Развернуть журнал' },
+  yourTurn:     { en: 'Your turn',          ru: 'Ваш ход' },
+  theirTurn:    { en: 'Opponent',           ru: 'Соперник' },
   collapseLog:  { en: 'Collapse log',       ru: 'Свернуть журнал' },
   btnInfo:      { en: 'Info',               ru: 'Инфо' },
   showInfo:     { en: 'Show ability info',  ru: 'Показать информацию' },
@@ -204,7 +206,7 @@ const BT = {
   chipDamage:    { en: 'Damage',     ru: 'Урон' },
 };
 
-export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs }) {
+export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs, mode = null, turnMeta = null }) {
   const BL = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const BTx = k => BT[k][BL];
 
@@ -1361,6 +1363,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     try {
       const result = await api('/battle/cast', { chat_id: player.chat_id, battle_id, spell_id, power, target_id });
       if (result.error) throw new Error(result.error);
+      readTurnMeta(result);
       const newLogs = dedupeIncoming(result.logs);
       state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
       if (ui?.battleLog) {
@@ -1711,6 +1714,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
                it should only draw the eye once it starts to go. -->
           <div class="attrition-line" id="attrition-line">
             <div class="attrition-round" id="attrition-round">1</div>
+            <!-- PvP only: a person is on the other end and a turn they never
+                 take would otherwise stall the fight, so the clock that spends
+                 it for them is shown rather than left implicit. Hidden outright
+                 in PvE, where no turn is timed. -->
+            <div class="turn-timer" id="turn-timer" hidden>
+              <span class="turn-timer-secs" id="turn-timer-secs">30</span>
+              <span class="turn-timer-label" id="turn-timer-label"></span>
+            </div>
             <div class="attrition-track">
               <div class="attrition-line-green" id="attrition-green"></div>
               <div class="attrition-line-red" id="attrition-red"></div>
@@ -2133,10 +2144,66 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }).join('');
   }
 
+  // ── PvP turn clock ────────────────────────────────────────────────────────
+  // The DEADLINE is the server's (battle_data.turn_deadline); only the counting
+  // down happens here. The client never decides that a turn expired — it just
+  // stops showing time and asks the server, which resolves the expiry on read
+  // (see applyExpiredTurns in routes/index.js).
+  let isPvpBattle  = String(mode || '').startsWith('pvp');
+  let turnDeadline = null;
+  let yourTurn     = false;
+  let turnTicker   = null;
+  let expiryNudge  = 0;
+
+  // The screen is entered with the state already fetched (battle-prep does it on
+  // the way in), so the first turn is already running when we arrive.
+  readTurnMeta(turnMeta);
+
+  // Anything that carries the fields — an action response, a cast response, a
+  // state refresh — moves the clock. One place, so no path can forget.
+  function readTurnMeta(data) {
+    if (!data) return;
+    if (data.kind === 'pvp') isPvpBattle = true;
+    if (data.turn_deadline !== undefined) turnDeadline = data.turn_deadline;
+    if (data.your_turn     !== undefined) yourTurn     = !!data.your_turn;
+  }
+
+  function updateTurnTimer() {
+    const box = root.querySelector('#turn-timer');
+    if (!box) return;
+    if (!isPvpBattle || !turnDeadline || state?.done || battleResolved) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+
+    const left = Math.max(0, turnDeadline - Date.now());
+    const secs = Math.ceil(left / 1000);
+    root.querySelector('#turn-timer-secs').textContent = secs;
+    root.querySelector('#turn-timer-label').textContent = yourTurn ? BTx('yourTurn') : BTx('theirTurn');
+    box.classList.toggle('turn-timer--mine', yourTurn);
+    box.classList.toggle('turn-timer--urgent', secs <= 10);
+
+    // Out of time. The server spends the turn when someone reads the battle, and
+    // this client is the someone — throttled, because both players hit zero at
+    // the same moment and neither should hammer the endpoint.
+    if (left <= 0 && Date.now() - expiryNudge > 2000) {
+      expiryNudge = Date.now();
+      realtimeController?.refresh();
+    }
+  }
+
+  function startTurnTicker() {
+    if (turnTicker) return;
+    // Quarter-second, so the number never appears to skip or stall on a second.
+    turnTicker = setInterval(updateTurnTimer, 250);
+  }
+
   function render() {
     ensureShell();
     const actor = currentActor();
     if (!state) return;
+    updateTurnTimer();
 
     const isEnemyTurn  = !actor || actor.side === 'enemy';
     // A HERO has no ability — casting is what it does instead, and it takes over
@@ -2326,6 +2393,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     try {
       const result = await api('/battle/action', { chat_id: player.chat_id, battle_id, action, actor_id, target_id });
       if (result.error) throw new Error(result.error);
+      readTurnMeta(result);
 
       const newLogs = dedupeIncoming(result.logs);
       state = { ...(result.state || state), log: [...(state.log || []), ...newLogs] };
@@ -2507,6 +2575,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       realtimeController.stop();
       realtimeController = null;
     }
+    if (turnTicker) { clearInterval(turnTicker); turnTicker = null; }
+    updateTurnTimer();
 
     const won         = winner === 'player';
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
@@ -2681,6 +2751,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       battleId: battle_id,
       playerId: player.chat_id,
       onStateChange: async (data) => {
+        // BEFORE the guards below: a state refresh that carries no new log
+        // entries still carries a new deadline, and the clock has to follow the
+        // turn even when nothing else on the screen changes.
+        readTurnMeta(data);
         if (!data?.state || battleResolved) return;
         // Skip if sendAction is already handling this turn's entries directly.
         // The lastLogId guard means onStateChange will only have genuinely new
@@ -2721,5 +2795,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     });
     if (lastLogId != null) realtimeController.setLastLogId(lastLogId);
     realtimeController.start();
+    // After the controller exists: the ticker's expiry nudge calls it.
+    startTurnTicker();
   }
 }

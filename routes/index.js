@@ -2703,9 +2703,9 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       level:     bd.level,
       kind:      isPvpRecord(record) ? 'pvp' : 'pve',
       // Whose move it is, and how long they have left — the client needs both to
-      // draw "opponent's turn" and a countdown without inventing its own clock.
-      your_side:     battleSideFor(record, chat_id),
-      acting_side:   engine.done ? null : (engine.currentActor()?.side ?? null),
+      // draw the countdown without inventing a clock of its own. See the note on
+      // your_turn in POST /battle/action for why this is a boolean.
+      your_turn:     !bd.done && engine.currentActor()?.side === battleSideFor(record, chat_id),
       turn_deadline: bd.turn_deadline ?? null,
     });
   } catch (err) {
@@ -2878,7 +2878,18 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     }, { exceptChatId: chat_id });
 
     const view = viewFor(record, chat_id, { state: engine.getSnapshot(), logs: insertedLogs, winner: engine.winner });
-    res.json({ ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state });
+    res.json({
+      ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state,
+      // The clock for the turn this action just handed over, so the acting
+      // client starts counting from the same instant the server does.
+      kind:          isPvpRecord(record) ? 'pvp' : 'pve',
+      turn_deadline: battle_data.turn_deadline ?? null,
+      // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
+      // opponent's view, so handing the client either frame's label invites it to
+      // compare the wrong two things; whether it is your move is the same answer
+      // from both chairs.
+      your_turn:     !engine.done && engine.currentActor()?.side === battleSideFor(record, chat_id),
+    });
   } catch (err) {
     serverError(res, err);
   }
@@ -2989,7 +3000,18 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     }, { exceptChatId: chat_id });
 
     const view = viewFor(record, chat_id, { state: engine.getSnapshot(), logs: insertedLogs, winner: engine.winner });
-    res.json({ ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state });
+    res.json({
+      ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state,
+      // The clock for the turn this action just handed over, so the acting
+      // client starts counting from the same instant the server does.
+      kind:          isPvpRecord(record) ? 'pvp' : 'pve',
+      turn_deadline: battle_data.turn_deadline ?? null,
+      // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
+      // opponent's view, so handing the client either frame's label invites it to
+      // compare the wrong two things; whether it is your move is the same answer
+      // from both chairs.
+      your_turn:     !engine.done && engine.currentActor()?.side === battleSideFor(record, chat_id),
+    });
   } catch (err) {
     serverError(res, err);
   }

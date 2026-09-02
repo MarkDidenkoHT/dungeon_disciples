@@ -8195,3 +8195,45 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
 @media (prefers-reduced-motion: reduce) {
   .pvp-queue-spinner { animation: none; }
 }
+
+.turn-timer {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+  color: var(--muted);
+}
+
+.turn-timer-secs {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.turn-timer-label {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  writing-mode: vertical-rl;
+  margin-top: 3px;
+  max-height: 62px;
+  overflow: hidden;
+}
+
+.turn-timer--mine .turn-timer-secs { color: var(--accent); }
+
+.turn-timer--urgent .turn-timer-secs {
+  color: #e2503c;
+  animation: turn-timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes turn-timer-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-timer--urgent .turn-timer-secs { animation: none; }
+}
