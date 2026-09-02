@@ -18,9 +18,13 @@ function supabaseService(path, options = {}) {
   });
 }
 
+// A PvP battle belongs to two players: the creator in chat_id and the other in
+// opponent_chat_id. Either of them asking "am I in a battle?" has to find it, or
+// the second player is free to start another one while this is still running.
 async function getActiveBattle(chat_id) {
+  const id = encodeURIComponent(chat_id);
   const rows = await supabaseService(
-    `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_active=eq.true&order=created_at.desc&limit=1`
+    `/battle_state?or=(chat_id.eq.${id},opponent_chat_id.eq.${id})&battle_active=eq.true&order=created_at.desc&limit=1`
   );
   return rows[0] || null;
 }
@@ -32,10 +36,13 @@ async function getBattleState(battle_id) {
   return rows[0] || null;
 }
 
-async function createBattleState({ chat_id, battle_id, battle_data }) {
+async function createBattleState({ chat_id, battle_id, battle_data, opponent_chat_id = null, battle_kind = 'pve' }) {
   const created = await supabaseService('/battle_state', {
     method: 'POST',
-    body: JSON.stringify({ chat_id, battle_id, battle_data, battle_active: true }),
+    body: JSON.stringify({
+      chat_id, battle_id, battle_data, battle_active: true,
+      opponent_chat_id, battle_kind,
+    }),
   });
   return created[0];
 }

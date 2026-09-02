@@ -248,7 +248,11 @@ class BattleEngine {
     const uniqueId = `${side}:${cellIdx}`;
     const combatant = {
       id:         uniqueId,
-      _rosterId:  side === 'player' ? (unit._rosterId || unit.id || null) : null,
+      // In PvE only the player's units map back to roster rows. In PvP BOTH
+      // sides do — the "enemy" is another player's army, and its HP has to be
+      // written back to its owner when the fight ends — so an explicit
+      // _rosterId is honoured whichever side it arrives on.
+      _rosterId:  unit._rosterId ?? (side === 'player' ? (unit.id || null) : null),
       _sourceId:  unit.id || null,
       unit_name:  unit.unit_name || data.name || 'Unknown',
       // A COMBATANT-OWNED copy, not the caller's object.

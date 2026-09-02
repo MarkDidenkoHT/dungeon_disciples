@@ -1753,8 +1753,29 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     if (btn) { btn.disabled = false; btn.classList.add('battle-prep-enter-btn--ready'); }
   }
 
-  // Matched, with no duel to enter yet. The overlay stops counting and says so
-  // rather than closing — a player who queued deserves to see that it worked.
+  // Matched. The duel already exists server-side by the time either client is
+  // told — the queue builds it from the two stored formations — so this only has
+  // to fetch its opening state and walk into it.
+  async function enterDuel(data) {
+    showQueueMatched();
+    const battleId = data?.battle_id;
+    if (!battleId) return;   // paired but no duel: the overlay says what happened
+    try {
+      const { state, logs } = await api(
+        `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+      navigate('battle', {
+        player, battle_id: battleId, snapshot: state, logs: logs || [],
+        selectedSpells: [], mode: mode || 'pvp_quick',
+      });
+    } catch (err) {
+      console.error('Failed to enter duel:', err);
+      hideQueueOverlay();
+      await askBeforeBattle(BP_TEXT.queueFailed[L], { confirmOnly: true });
+    }
+  }
+
+  // Matched, with the duel still being fetched. The overlay stops counting and
+  // says so rather than closing — a player who queued deserves to see it worked.
   function showQueueMatched() {
     clearInterval(queueTimer);
     queueTimer = null;
@@ -1802,7 +1823,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     queueController = createQueueController({
       playerId: player.chat_id,
       mode:     mode || 'pvp_quick',
-      onMatched: () => { queueController = null; showQueueMatched(); },
+      onMatched: data => { queueController = null; enterDuel(data); },
       onEnded:   () => {
         queueController = null;
         hideQueueOverlay();
