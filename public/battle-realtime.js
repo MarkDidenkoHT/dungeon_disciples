@@ -17,6 +17,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
   let retryTimer = null;
   let onVisible = null;
   let heartbeat = null;
+  let lastEventAt = 0;
 
   // A connection in a Telegram webview does not survive being backgrounded — the
   // phone locks and the stream dies quietly. This is the safety net: an error is
@@ -72,6 +73,11 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
       // Backgrounded tabs get no useful work done and the visibility handler
       // catches up on return, so don't spend the request.
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      // A stream that spoke recently is a stream that works, and a poll on top
+      // of it is a wasted round trip — which costs most on the connection least
+      // able to spare it. The heartbeat is here for a stream that has gone
+      // quiet, not one that is doing its job.
+      if (Date.now() - lastEventAt < heartbeatMs) return;
       refreshFromServer();
     }, heartbeatMs);
   }
@@ -111,6 +117,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     });
 
     es.addEventListener('battle', () => {
+      lastEventAt = Date.now();
       refreshFromServer();
     });
 

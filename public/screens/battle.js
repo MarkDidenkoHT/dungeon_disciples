@@ -76,6 +76,13 @@ function getPortraitUrl(unit, variant = 'default') {
 const BT = {
   expandLog:    { en: 'Expand log',         ru: 'Развернуть журнал' },
   yourTurn:     { en: 'Your turn',          ru: 'Ваш ход' },
+  concede:      { en: 'Concede',            ru: 'Сдаться' },
+  concedeAsk:   {
+    en: 'Concede the duel? Your fallen stay dead and every survivor leaves at 1 HP.',
+    ru: 'Сдать бой? Павшие останутся мёртвыми, а выжившие уйдут с 1 HP.',
+  },
+  concedeYes:   { en: 'Concede',            ru: 'Сдаться' },
+  concedeNo:    { en: 'Keep fighting',      ru: 'Продолжить бой' },
   theirTurn:    { en: 'Opponent',           ru: 'Соперник' },
   collapseLog:  { en: 'Collapse log',       ru: 'Свернуть журнал' },
   btnInfo:      { en: 'Info',               ru: 'Инфо' },
@@ -1763,6 +1770,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
         <div class="battle-log-bar">
           <button class="battle-log-toggle" id="battle-log-toggle" aria-expanded="false"></button>
+          <!-- PvP only. A region fight can be walked out of from the reconnect
+               prompt on embark, but a duel has another person waiting in it —
+               leaving has to be a deliberate act with a stated cost, taken here
+               rather than by closing the app. -->
+          <button class="battle-concede-btn" id="battle-concede" hidden></button>
         </div>
         <div class="battle-log" id="battle-log"></div>
         <div class="battle-info hidden" id="battle-info"></div>
@@ -2142,6 +2154,53 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
       `;
     }).join('');
+  }
+
+  // ── Conceding ─────────────────────────────────────────────────────────────
+  // Same terms as abandoning a region fight, which is what the server applies:
+  // the fallen stay dead, survivors are written back at 1 HP, and the player
+  // still on the field is given the win. Nothing is escaped by leaving.
+  function setupConcede() {
+    const btn = root.querySelector('#battle-concede');
+    if (!btn) return;
+    btn.hidden = !isPvpBattle;
+    btn.textContent = BTx('concede');
+    btn.addEventListener('click', async () => {
+      if (battleResolved || btn.disabled) return;
+      if (!await askConfirm(BTx('concedeAsk'), BTx('concedeYes'), BTx('concedeNo'))) return;
+      btn.disabled = true;
+      try {
+        await api('/battle/end', { chat_id: player.chat_id, battle_id });
+      } catch (err) {
+        console.error('Failed to concede:', err);
+        btn.disabled = false;
+        return;
+      }
+      // Straight out: the result screen belongs to the player who stayed.
+      navigate('embark', { player });
+    });
+  }
+
+  // A yes/no over the board. Deliberately not the shared sheet — that one is for
+  // inspecting things, and this is a question that must be answered.
+  function askConfirm(text, yes, no) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.innerHTML = `
+        <div class="confirm-modal">
+          <div class="confirm-modal-text">${text}</div>
+          <div class="confirm-modal-actions">
+            <button class="confirm-modal-btn confirm-modal-btn--cancel">${no}</button>
+            <button class="confirm-modal-btn confirm-modal-btn--confirm">${yes}</button>
+          </div>
+        </div>`;
+      overlay.querySelector('.confirm-modal-btn--cancel')
+        .addEventListener('click', () => { overlay.remove(); resolve(false); });
+      overlay.querySelector('.confirm-modal-btn--confirm')
+        .addEventListener('click', () => { overlay.remove(); resolve(true); });
+      document.body.appendChild(overlay);
+    });
   }
 
   // ── PvP turn clock ────────────────────────────────────────────────────────
@@ -2577,6 +2636,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
     if (turnTicker) { clearInterval(turnTicker); turnTicker = null; }
     updateTurnTimer();
+    const concedeBtn = root.querySelector('#battle-concede');
+    if (concedeBtn) concedeBtn.hidden = true;
 
     const won         = winner === 'player';
     const survivors   = won ? state.combatants.filter(c => c.side === 'player' && c.alive && c._rosterId) : [];
@@ -2801,5 +2862,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     realtimeController.start();
     // After the controller exists: the ticker's expiry nudge calls it.
     startTurnTicker();
+    setupConcede();
   }
 }

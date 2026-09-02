@@ -8237,3 +8237,36 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
 @media (prefers-reduced-motion: reduce) {
   .turn-timer--urgent .turn-timer-secs { animation: none; }
 }
+
+.battle-log-bar { position: relative; }
+
+.battle-concede-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  border: 1px solid rgba(200, 74, 58, 0.55);
+  border-radius: 6px;
+  background: rgba(200, 74, 58, 0.12);
+  color: #d98b7e;
+  font-family: inherit;
+  font-size: 0.66rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.battle-concede-btn:disabled { opacity: 0.5; cursor: default; }
+
+.portrait-card--init .init-side-strip { height: 4px; }
+
+.portrait-card--init.portrait-card--player .init-side-strip { background: #4a9a4a; }
+.portrait-card--init.portrait-card--enemy  .init-side-strip { background: #c84a3a; }
+
+.portrait-card--init.portrait-card--player { box-shadow: inset 0 0 0 2px rgba(74, 154, 74, 0.9); }
+.portrait-card--init.portrait-card--enemy  { box-shadow: inset 0 0 0 2px rgba(200, 74, 58, 0.9); }
+
+.portrait-card--init.portrait-card--selected { box-shadow: inset 0 0 0 2px currentColor, 0 0 12px rgba(255, 214, 120, 0.55); }
+.portrait-card--init.portrait-card--player.portrait-card--selected { color: #6fd06f; }
+.portrait-card--init.portrait-card--enemy.portrait-card--selected  { color: #ff7a66; }

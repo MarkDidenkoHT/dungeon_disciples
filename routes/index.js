@@ -507,8 +507,8 @@ function withTurnDeadline(battle_data, record, engine) {
 // and wake the other player. Returns the record with its new battle_data so the
 // caller can answer from the same state it just stored.
 async function persistPvpTurn(record, engine, { causedBy = null } = {}) {
-  const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
-  const newEntries  = engine.log.slice(previousLog.length);
+  // Everything this request caused, and nothing else — see freshLog.
+  const newEntries  = engine.log;
   const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
 
   await updateBattleState(record.battle_id, battle_data);
@@ -571,6 +571,24 @@ function armyCacheDrop(battle_id) {
   battleArmyCache.delete(battle_id);
 }
 
+// Rebuilding an engine REPLAYS the opening of the battle: rehydrate goes through
+// fromSetup, which fires on_battle_start, which forms Unity bonds and hands out
+// battle-start shields — and each of those writes a log entry.
+//
+// Those entries are not new events. They describe something that happened once,
+// when the battle began, and they are already in battle_log. They were being
+// re-inserted on EVERY action, because battle_data carries no `log` field, so
+// the "everything since last time" slice was measured against an empty array and
+// took the whole thing. The client then replayed a Unity bond forming, over and
+// over, every turn.
+//
+// So the log starts empty here: from this point on it holds only what THIS
+// request causes, which is exactly what should be appended.
+function freshLog(engine) {
+  engine.log = [];
+  return engine;
+}
+
 async function rehydrateEngine(record) {
   const bd = record.battle_data;
   const { playerUnitIds, placement } = bd.setup;
@@ -594,10 +612,10 @@ async function rehydrateEngine(record) {
     // A fresh clone per rehydrate: the engine writes into unit_data (resist
     // shreds, power buffs), and a cached army handed out by reference would
     // carry one battle's damage into the next request's rebuild.
-    return BattleEngine.rehydrate(
+    return freshLog(BattleEngine.rehydrate(
       { playerUnits: cloneArmy(armies.playerUnits), enemies: cloneArmy(armies.enemies), placement },
       bd,
-    );
+    ));
   }
 
   let armies = armyCacheGet(record.battle_id);
@@ -608,11 +626,11 @@ async function rehydrateEngine(record) {
     });
   }
 
-  return BattleEngine.rehydrate({
+  return freshLog(BattleEngine.rehydrate({
     playerUnits: cloneArmy(armies.playerUnits),
     enemies:     cloneArmy(armies.enemies),
     placement,
-  }, bd);
+  }, bd));
 }
 
 function buildBattleData(engine, bd) {
@@ -2938,8 +2956,7 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     }
 
     const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
-    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
-    const newEntries  = engine.log.slice(previousLog.length);
+    const newEntries  = engine.log;   // see freshLog
 
     await updateBattleState(battle_id, battle_data);
     let insertedLogs = [];
@@ -3060,8 +3077,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 
     const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
 
-    const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
-    const newEntries = engine.log.slice(previousLog.length);
+    const newEntries = engine.log;   // see freshLog
 
     await updateBattleState(battle_id, battle_data);
     let insertedLogs = [];
@@ -3251,8 +3267,23 @@ async function clearQueueRows(chatIds) {
 const recentMatches = new Map();   // chat_id -> { battle_id, at }
 const RECENT_MATCH_MS = 2 * 60 * 1000;
 
+// Players who have left the queue because they were paired, but whose duel is
+// still being built.
+//
+// WHY: pairing removes both players from the queue map synchronously, and then
+// awaits several Supabase writes to create the battle. For that whole window a
+// player is in neither place — not queued, not yet matched — and a status poll
+// landing in it answered "idle", which the client reads as "no opponent found"
+// and gives up on. With polls every 1.5s and a creation taking about as long,
+// this was easy to hit: one player walked into the duel while the other was told
+// the queue had ended.
+const pairing = new Set();
+function markPairing(...chatIds) { for (const id of chatIds) pairing.add(String(id)); }
+function clearPairing(...chatIds) { for (const id of chatIds) pairing.delete(String(id)); }
+
 function noteMatch(chat_id, battle_id) {
   const now = Date.now();
+  clearPairing(chat_id);
   for (const [id, m] of recentMatches) if (now - m.at > RECENT_MATCH_MS) recentMatches.delete(id);
   recentMatches.set(String(chat_id), { battle_id, at: now });
 }
@@ -3269,6 +3300,9 @@ async function runMatchmaking() {
   try {
     pvpQueue.sweep();
     for (const { a, b } of pvpQueue.matchWaiting()) {
+      // BEFORE the first await: matchWaiting has already taken both out of the
+      // queue, so from here until noteMatch they exist only here.
+      markPairing(a.chat_id, b.chat_id);
       try {
         // The one who waited longer creates, so seating is deterministic.
         const [first, second] = a.enqueuedAt <= b.enqueuedAt ? [a, b] : [b, a];
@@ -3290,6 +3324,7 @@ async function runMatchmaking() {
       } catch (err) {
         console.error('Failed to build a matched duel:', err);
         // Neither player is left believing in a duel that does not exist.
+        clearPairing(a.chat_id, b.chat_id);
         for (const p of [a, b]) battleBus.publish(pvpRoom(p.chat_id), { status: 'failed' }, { event: 'pvp' });
         await clearQueueRows([a.chat_id, b.chat_id]);
       }
@@ -3333,6 +3368,9 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     // Paired. The duel is built here, from the two formations already stored,
     // so neither client is asked for anything again.
     const { a, b } = result;
+    // Same window as in runMatchmaking: `b` was taken out of the queue by
+    // enqueue() and has nothing to poll until the duel exists.
+    markPairing(a.chat_id, b.chat_id);
     await clearQueueRows([a.chat_id, b.chat_id]);
 
     const [cardA, cardB] = await Promise.all([pvpOpponentCard(a.chat_id), pvpOpponentCard(b.chat_id)]);
@@ -3344,6 +3382,7 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
       console.error('Failed to create PvP battle:', err);
       // Neither player is left believing they matched into something that does
       // not exist: both are told to queue again.
+      clearPairing(a.chat_id, b.chat_id);
       battleBus.publish(pvpRoom(b.chat_id), { status: 'failed' }, { event: 'pvp' });
       return res.status(500).json({ error: 'Could not start the duel', code: 'pvp_create_failed' });
     }
@@ -3368,6 +3407,7 @@ router.post('/pvp/leave', requireAuth, async (req, res) => {
   const { chat_id } = req.body;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   const removed = pvpQueue.leave(chat_id);
+  clearPairing(chat_id);
   await clearQueueRows([chat_id]);
   res.json({ status: 'left', was_queued: removed });
 });
@@ -3387,6 +3427,10 @@ router.get('/pvp/status', requireAuth, async (req, res) => {
 
   const entry = pvpQueue.get(chat_id);
   if (entry) return res.json({ status: 'waiting', queued_at: entry.enqueuedAt, waiting: pvpQueue.size() });
+
+  // Paired, duel still being built. Still 'waiting' as far as the player is
+  // concerned — they are seconds from a battle, not out of the queue.
+  if (pairing.has(String(chat_id))) return res.json({ status: 'waiting', pairing: true });
 
   // Neither queued nor matched: cancelled elsewhere, or swept for age.
   res.json({ status: 'idle' });
@@ -3465,7 +3509,16 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     // dead and the survivors leave at 1 HP.
     if (isPvpRecord(record) && abandoned) {
       const winner = mySide === 'player' ? 'enemy' : 'player';
-      const battle_data = { ...record.battle_data, done: true, winner, abandoned_by: String(chat_id), turn_deadline: null };
+      // The conceder has settled their own roster above and is owed nothing, so
+      // their claim is recorded here. Without it `rewards_claimed` could never
+      // hold both players, the row would stay battle_active forever, and BOTH
+      // of them would be blocked from queueing again by the active-battle guard.
+      const claims = { ...(record.battle_data?.rewards_claimed || {}), [String(chat_id)]: true };
+      const battle_data = {
+        ...record.battle_data,
+        done: true, winner, abandoned_by: String(chat_id),
+        turn_deadline: null, rewards_claimed: claims,
+      };
       await updateBattleState(battle_id, battle_data);
       armyCacheDrop(battle_id);
       battleBus.publish(battle_id, { done: true, last_log_id: null }, { exceptChatId: chat_id });
