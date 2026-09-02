@@ -71,11 +71,11 @@ const BP_TEXT = {
                   ru: 'Не закрывайте экран — вас соединят со следующим игроком в очереди.' },
   leaveQueue:   { en: 'Leave Queue',  ru: 'Выйти из очереди' },
   matchFound:   { en: 'Match found',  ru: 'Соперник найден' },
-  // Placeholder for as long as a pairing produces no battle. The queue itself
-  // is real from here on — this is the only part still missing.
+  // Shown for the moment between being paired and the duel's opening state
+  // arriving. Both already exist by the time either client is told.
   matchSoon:    {
-    en: 'You have been paired with an opponent. The duel itself is the next piece of work.',
-    ru: 'Вам подобран соперник. Сам бой — следующий этап работы.',
+    en: 'Entering the duel…',
+    ru: 'Входим в бой…',
   },
   queueEnded:   { en: 'The queue ended before a match was found. Try again.',
                   ru: 'Очередь завершилась без подбора соперника. Попробуйте снова.' },

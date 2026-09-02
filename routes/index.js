@@ -423,16 +423,6 @@ function asEnemySide(units, placement) {
   });
 }
 
-// Whose turn is it, as a chat_id — null when the battle is over or the actor is
-// AI. The turn clock is per ACTOR, not per round: a side with three units gets
-// three separate turns and three separate deadlines.
-function actingChatIdFor(record, engine) {
-  if (!isPvpRecord(record) || engine.done) return null;
-  const actor = engine.currentActor();
-  if (!actor) return null;
-  return actor.side === 'player' ? String(record.chat_id) : String(record.opponent_chat_id);
-}
-
 // A player who stops answering must not be able to freeze the other one's game.
 // The deadline lives in battle_data and is enforced lazily: whoever next reads
 // or writes this battle applies the timeout that has already expired. On a
@@ -3104,16 +3094,22 @@ async function createPvpBattle(a, b) {
 
 function pvpRoom(chatId) { return `pvp:${chatId}`; }
 
-// What one player is told about the other. Deliberately not the formation: the
-// opposing board is revealed by the battle, not by the queue.
+// What one player is told about the other: their chosen display name and their
+// faction, and nothing else.
+//
+// DELIBERATELY NOT chat_id. That column holds a real Telegram account id, and
+// putting it in an opponent's browser would let anyone who queues a few times
+// collect identifiers that are usable well outside this game. Nothing on the
+// client needs it — whose turn it is comes back as the boolean `your_turn` from
+// the battle endpoints, computed server-side where the seating is known.
 async function pvpOpponentCard(chat_id) {
   try {
     const rows = await supabase(
-      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`
+      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=username,faction&limit=1`
     );
-    return { chat_id: String(chat_id), faction: rows[0]?.faction ?? null };
+    return { name: rows[0]?.username || null, faction: rows[0]?.faction ?? null };
   } catch {
-    return { chat_id: String(chat_id), faction: null };
+    return { name: null, faction: null };
   }
 }
 
