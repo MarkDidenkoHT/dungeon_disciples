@@ -409,8 +409,18 @@ async function buildArmyFor(chat_id, playerUnitIds) {
 // The opposing army, shaped the way initCombatants expects an encounter: each
 // unit carries the cell it was placed in, because there is no second
 // `placement` argument.
+//
+// MIRRORED, because the two grids face each other. This player arranged their
+// formation on a PLAYER grid, where the front column is col 1; standing on the
+// enemy side the front column is col 0 (see getValidTargets in
+// utils/battle-engine.js). Copying the placement across verbatim put every
+// front line in the back and every back line in front — the shield wall stood
+// behind the archers, for both players at once.
 function asEnemySide(units, placement) {
-  return units.map((u, i) => ({ ...u, cell: placement[u.id] ?? placement[String(u.id)] ?? i }));
+  return units.map((u, i) => {
+    const own = placement[u.id] ?? placement[String(u.id)] ?? i;
+    return { ...u, cell: pvpView.mirrorCell(own, u.unit_data?.size ?? 'tile') };
+  });
 }
 
 // Whose turn is it, as a chat_id — null when the battle is over or the actor is
@@ -2665,9 +2675,16 @@ router.get('/battle/state', requireAuth, async (req, res) => {
     // The waiting player's own poll is what enforces the other player's clock.
     // Nothing schedules this: a read that finds an expired turn resolves it and
     // writes the result, so the battle cannot sit frozen behind a locked phone.
-    if (applyExpiredTurns(record, engine)) {
-      record = await persistPvpTurn(record, engine, { causedBy: null });
-      engine = record._engine || engine;
+    // Two things can leave the battle parked on a turn nobody will take: a clock
+    // that ran out, and a unit that has no action. Both are resolved by whoever
+    // reads next, and only written back if something actually moved.
+    if (isPvpRecord(record)) {
+      const expired = applyExpiredTurns(record, engine);
+      const idle    = engine.runIdleTurns() > 0;
+      if (expired || idle) {
+        record = await persistPvpTurn(record, engine, { causedBy: null });
+        engine = record._engine || engine;
+      }
     }
 
     const logs = await getBattleLogsSince(battle_id, last_log_id ? Number(last_log_id) : null);
@@ -2829,8 +2846,12 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     if (result.error) return res.status(400).json({ error: result.error });
 
     // The enemy answers immediately, exactly as after any other hero action —
-    // unless the enemy is a player, who answers in their own time.
-    if (!engine.done && !isPvpRecord(record)) engine.runAiTurns();
+    // unless the enemy is a player, who answers in their own time. Either way,
+    // turns nobody can take are spent rather than waited on.
+    if (!engine.done) {
+      if (isPvpRecord(record)) engine.runIdleTurns();
+      else                     engine.runAiTurns();
+    }
 
     const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
     const previousLog = Array.isArray(record.battle_data?.log) ? record.battle_data.log : [];
@@ -2882,6 +2903,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     // is also what stops a player who reconnects late from acting on a turn the
     // clock already spent.
     if (applyExpiredTurns(record, engine)) {
+      engine.runIdleTurns();
       const after = await persistPvpTurn(record, engine, { causedBy: null });
       return res.status(409).json({
         error: 'That turn expired', code: 'turn_expired',
@@ -2915,9 +2937,11 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     }
 
     // The other side is a person in PvP: the engine stops here and waits for
-    // them, rather than answering on their behalf.
-    if (!engine.done && !isPvpRecord(record)) {
-      engine.runAiTurns();
+    // them, rather than answering on their behalf — but only at a turn somebody
+    // can actually take.
+    if (!engine.done) {
+      if (isPvpRecord(record)) engine.runIdleTurns();
+      else                     engine.runAiTurns();
     }
 
     // Auto-process any unity-bonded player units whose turn is next —
@@ -2993,7 +3017,11 @@ async function createPvpBattle(a, b) {
 
   engine.firePendingRoundEffects();
   // Deliberately NO runAiTurns: both sides are people, and the first turn
-  // belongs to whichever unit initiative gives it to.
+  // belongs to whichever unit initiative gives it to. Units that have no turn to
+  // take are still spent here — a Mithrails Will winning initiative would
+  // otherwise freeze the duel on round one, with neither player able to act and
+  // only the turn clock to break the deadlock.
+  engine.runIdleTurns();
 
   const battle_data = {
     ...buildBattleData(engine, {
@@ -3151,7 +3179,7 @@ async function runMatchmaking() {
 }
 
 // Unref'd: a queue nobody is in must not hold the process open.
-const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }, 3000);
+const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }, 1500);
 if (typeof matchmakingTimer.unref === 'function') matchmakingTimer.unref();
 
 // POST /pvp/enqueue — join the queue with the formation just arranged in prep.

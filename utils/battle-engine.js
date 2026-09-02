@@ -2202,6 +2202,45 @@ class BattleEngine {
     return { type: 'attack', target: pick };
   }
 
+  // Spend the turns of units that have no turn to spend.
+  //
+  // Three kinds of unit cannot act: one whose action IS 'none' (Blessed Soul and
+  // the whole Mithrails line — their contribution is their passives), one bonded
+  // by Unity, and one standing invulnerable. In PvE these are cleared by
+  // runAiTurns on the enemy side and by the auto-step in POST /battle/action on
+  // the player's, so nobody ever waits on them.
+  //
+  // PvP has neither: both sides are people, no AI loop runs, and a unit that
+  // cannot act would sit on the initiative order until the turn clock defended
+  // for it — including on round one, which would freeze a duel before it began.
+  // This is side-agnostic on purpose: it is not the AI acting, it is a turn that
+  // has no decision in it being spent.
+  //
+  // executeAction fires on_turn_start itself, so the trigger is NOT fired here —
+  // doing both ran every on_turn_start passive twice (see the same note in
+  // routes/index.js).
+  runIdleTurns() {
+    let spent = 0;
+    while (!this.done) {
+      const actor = this.currentActor();
+      if (!actor || !this.cannotAct(actor)) break;
+      this.executeAction(actor, null, 'none');
+      spent++;
+      // A safety stop: six combatants a side, and a unit that somehow fails to
+      // clear acted_this_round must not spin the process.
+      if (spent > 24) break;
+    }
+    return spent;
+  }
+
+  cannotAct(actor) {
+    if (!actor) return false;
+    if (actor._unity_host_id != null || actor._invulnerable) return true;
+    const actionDef = actor.unit_data?.action;
+    const actionType = typeof actionDef === 'object' ? actionDef?.action_type : actionDef;
+    return actionType === 'none';
+  }
+
   runAiTurns() {
     const newLog = [];
     while (!this.done) {
