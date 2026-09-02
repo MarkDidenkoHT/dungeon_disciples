@@ -362,6 +362,13 @@ const PVP_TURN_MS = 30000;
 // resource faucet, and what they are worth is a design decision still to make.
 const PVP_WIN_XP = 100;
 
+// A player still walking to the board is not a player stalling. The first turn's
+// clock therefore does not start at creation — it starts when the player who has
+// to act first actually loads the battle (see stampFirstDeadline). A provisional
+// deadline covers the other case: an acting player who never turns up at all
+// must still lose the turn eventually, or their opponent waits forever.
+const PVP_JOIN_GRACE_MS = 45000;
+
 function isPvpRecord(record) {
   return record?.battle_kind === 'pvp' || record?.battle_data?.kind === 'pvp';
 }
@@ -459,6 +466,30 @@ function applyExpiredTurns(record, engine) {
   return acted;
 }
 
+// Start the first turn's clock on the reader's behalf.
+//
+// The acting player arriving is what starts it, and they get the full turn. If
+// the OTHER player gets there first, a provisional and longer deadline is set
+// instead — enough that a no-show cannot stall the duel, but marked so that the
+// acting player's own arrival replaces it with a clean full turn.
+//
+// Returns new battle_data when something changed, else null.
+function stampFirstDeadline(record, engine, chat_id) {
+  if (!isPvpRecord(record) || engine.done) return null;
+  const bd = record.battle_data || {};
+  const mine = engine.currentActor()?.side === battleSideFor(record, chat_id);
+
+  if (!bd.turn_deadline) {
+    return mine
+      ? { ...bd, turn_deadline: Date.now() + PVP_TURN_MS, turn_provisional: false }
+      : { ...bd, turn_deadline: Date.now() + PVP_TURN_MS + PVP_JOIN_GRACE_MS, turn_provisional: true };
+  }
+  if (bd.turn_provisional && mine) {
+    return { ...bd, turn_deadline: Date.now() + PVP_TURN_MS, turn_provisional: false };
+  }
+  return null;
+}
+
 // Stamped on every write, so the clock starts when the turn actually begins
 // rather than when the previous one was requested.
 function withTurnDeadline(battle_data, record, engine) {
@@ -467,6 +498,7 @@ function withTurnDeadline(battle_data, record, engine) {
     ...battle_data,
     kind: 'pvp',
     turn_deadline: engine.done ? null : Date.now() + PVP_TURN_MS,
+    turn_provisional: false,
     turn_ms: PVP_TURN_MS,
   };
 }
@@ -2729,6 +2761,13 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       if (expired || idle) {
         record = await persistPvpTurn(record, engine, { causedBy: null });
         engine = record._engine || engine;
+      } else {
+        // Nothing moved, but this may be the arrival that starts the clock.
+        const stamped = stampFirstDeadline(record, engine, chat_id);
+        if (stamped) {
+          await updateBattleState(battle_id, stamped);
+          record = { ...record, battle_data: stamped };
+        }
       }
     }
 
@@ -3107,7 +3146,11 @@ async function createPvpBattle(a, b) {
     }),
     kind:           'pvp',
     mode:           a.mode || 'pvp_quick',
-    turn_deadline:  Date.now() + PVP_TURN_MS,
+    // Deliberately null: the first turn is clocked from when its player has the
+    // board in front of them, not from when the pairing happened. Getting told
+    // about a duel and loading into it cost one player twenty seconds of their
+    // own first turn.
+    turn_deadline:  null,
     turn_ms:        PVP_TURN_MS,
     rewards_claimed: {},
   };
@@ -3235,9 +3278,14 @@ async function runMatchmaking() {
         for (const [me, them] of [[first, second], [second, first]]) {
           noteMatch(me.chat_id, created.battle_id);
           const card = await pvpOpponentCard(them.chat_id);
-          battleBus.publish(pvpRoom(me.chat_id), {
+          const delivered = battleBus.publish(pvpRoom(me.chat_id), {
             status: 'matched', mode: me.mode, opponent: card, battle_id: created.battle_id,
           }, { event: 'pvp' });
+          // 0 means nobody was listening: that player finds out on their next
+          // poll, or when their stream reconnects and replays it. Worth seeing
+          // in the log — it is the difference between an instant match and one
+          // that takes a poll interval to land.
+          console.log(`[pvp] match ${created.battle_id} -> ${me.chat_id}: delivered to ${delivered} stream(s)`);
         }
       } catch (err) {
         console.error('Failed to build a matched duel:', err);
@@ -3372,6 +3420,20 @@ router.get('/pvp/stream', async (req, res) => {
     }
 
     res.write(`event: ready\ndata: ${JSON.stringify({ room })}\n\n`);
+
+    // Replay a match this player has already been paired into.
+    //
+    // publish() reaches whoever is subscribed AT THAT INSTANT and nothing else —
+    // a match announced while this stream was still connecting, or between two
+    // reconnects, was gone for good and that player waited for their next poll
+    // instead. A phone waking up sits in exactly that window.
+    const pending = recentMatches.get(String(chat_id));
+    if (pending) {
+      res.write(`event: pvp
+data: ${JSON.stringify({ status: 'matched', battle_id: pending.battle_id })}
+
+`);
+    }
     // Leaving the queue when the stream dies would be wrong: in the Telegram
     // webview a locked phone closes the stream, and that player is still
     // waiting. The queue is cleared by an explicit cancel, by a match, or by
