@@ -10,7 +10,7 @@ import { getEncounter } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
-import { createQueueController } from '../pvp-queue.js';
+import { createQueueController } from '../queue-client.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 

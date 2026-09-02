@@ -9,13 +9,14 @@ import { api, getSessionToken } from './api.js';
 // The event is only a nudge. All state still comes from /battle/state, which
 // returns exactly the log entries this client has not seen — one source of truth.
 
-export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError }) {
+export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError, heartbeatMs = 0 }) {
   let es = null;
   let stopped = false;
   let lastLogId = null;
   let retries = 0;
   let retryTimer = null;
   let onVisible = null;
+  let heartbeat = null;
 
   // A connection in a Telegram webview does not survive being backgrounded — the
   // phone locks and the stream dies quietly. This is the safety net: an error is
@@ -55,9 +56,30 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     es = null;
   }
 
+  // A slow catch-up that runs whether or not the stream is healthy.
+  //
+  // WHY: the stream is the fast path, but a stream that has quietly died is
+  // indistinguishable from one with nothing to say — and the reconnect backoff
+  // reaches 20 seconds, so the only catch-ups on a bad connection were up to 20
+  // seconds apart. In a duel that is the OTHER player's move sitting unseen. PvE
+  // never noticed because the server resolves the enemy inside the same request.
+  //
+  // Off by default (heartbeatMs 0): a solo battle has nobody to wait for.
+  function startHeartbeat() {
+    if (!heartbeatMs || heartbeat) return;
+    heartbeat = setInterval(() => {
+      if (stopped) return;
+      // Backgrounded tabs get no useful work done and the visibility handler
+      // catches up on return, so don't spend the request.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      refreshFromServer();
+    }, heartbeatMs);
+  }
+
   function start() {
     if (!battleId || stopped) return;
     watchVisibility();
+    startHeartbeat();
     closeStream();
 
     const token = getSessionToken();
@@ -139,6 +161,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
   function stop() {
     stopped = true;
     if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    if (heartbeat)  { clearInterval(heartbeat); heartbeat = null; }
     if (onVisible) {
       document.removeEventListener('visibilitychange', onVisible);
       onVisible = null;

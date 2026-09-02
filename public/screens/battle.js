@@ -6,7 +6,7 @@ import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
-import { createBattleRealtimeController } from '../realtime.js';
+import { createBattleRealtimeController } from '../battle-realtime.js';
 import { assetUrl } from '../asset_base.js';
 import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower } from '../../data/spells.js';
 
