@@ -3189,7 +3189,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 50, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 12, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw',
-        xp: 253, passive: ['resist_aura_cold 1', 'rimeguard 1'], ability: null,
+        xp: 255, passive: ['resist_aura_cold 1', 'rimeguard 1'], ability: null,
       },
       rimewarden: {
         id: 'mv_e31', f: 'mv', t: 2,
@@ -3277,7 +3277,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 14, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 372, passive: ['iron_will 1', 'heartpiercer 1', 'infect 1'], ability: 'terror 1',
+        xp: 375, passive: ['iron_will 1', 'heartpiercer 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
         id: 'dm_e111', f: 'dm', t: 3,
@@ -3301,7 +3301,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
         damage_source: 'physical', action_power: 10, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
-        xp: 143, passive: ['sacrament 1', 'regenerate 1'], ability: 'sanctuary 1',
+        xp: 145, passive: ['sacrament 1', 'regenerate 1'], ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
         id: 'dm_21', f: 'dm', t: 2,
@@ -3313,7 +3313,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'sacrifice', target_type: 'ally', targets: 1, range: 3,
         damage_source: 'physical', action_power: 14, action_icon: 'sacrifice.jpg', action_animation: 'sacrifice', action_sfx: 'dark_spell',
-        xp: 444, passive: ['sacrament 1', 'regenerate 1', 'aegis 1'], ability: 'sanctuary 1',
+        xp: 450, passive: ['sacrament 1', 'regenerate 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
         id: 'dm_211', f: 'dm', t: 3,
