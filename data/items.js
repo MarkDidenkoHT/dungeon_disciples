@@ -326,7 +326,7 @@ const ITEM_DEFS = {
     key:          'vampirics_dagger',
     name:         "Vampiric Dagger",
     name_ru:      'Вампирский Кинжал',
-    faction:      'grail_of_sorrow',
+    faction:      null,
     tag_required: 'Vampire',
     adds_tag:     null,
     stat_mods:    { hp: 2 },
