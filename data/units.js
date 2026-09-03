@@ -2271,7 +2271,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 480, passive: ['horde 1', 'infect 1'], ability: 'shared_suffering 1',
+      xp: 480, passive: ['horde 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
       id: 'gs111', f: 'g', t: 3,
@@ -2283,7 +2283,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 12, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 1300, passive: ['horde 1', 'infect 1', 'poison 1'], ability: 'shared_suffering 1',
+      xp: 1300, passive: ['horde 1', 'poison 2', 'aura_of_decay 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
       id: 'gs12', f: 'g', t: 2,
