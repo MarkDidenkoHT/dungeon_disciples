@@ -1,30 +1,27 @@
-// Bulk Resurrect / Heal, mounted into the resource strip.
+// Bulk Resurrect / Heal, floated over the foot of the castle grid.
 //
 // Fixing a party after a bad fight was fifteen taps: open a slot sheet, tap
 // Heal, watch the sheet re-render and reopen, back out, next slot. These do the
 // whole roster in one press.
 //
-// They live in #resource-bar-row rather than in a strip of their own BECAUSE
-// the viewport is finite. That row already exists, it is already 70px tall, and
-// it is already a flex line with two fixed-width controls flanking a `flex: 1`
-// strip (see .resource-bar-row / .res-bar-btn in style.css). Two more buttons in
-// it cost horizontal space that the resource chips give up by compressing —
-// nothing below moves, --sheet-top stays correct, and the screen does not grow.
-// A separate row would have taken height the castle does not have to give.
+// PLACEMENT, and why it is an overlay: the viewport is finite. The castle grid
+// is a fixed 3x4 of slots and the bottom nav is pinned below it, so there is no
+// spare band between them to put a row in — a new row in the flow would push
+// the grid up and steal height the screen does not have. So this is
+// position: absolute inside .castle-grounds (already position: relative),
+// sitting over the bottom edge of the grid and just above the nav. It takes NO
+// layout height: nothing reflows, the grid keeps every pixel it had, and the
+// buttons cover the lower strip of the bottom slot row only while they exist.
 //
 // And they are not permanent residents: they mount only when there are at least
-// two casualties, so the chips have their full width back the moment the party
-// is whole.
+// two casualties, so the grid is unobscured the moment the party is whole.
 const RESTORE_ID = 'restore-controls';
 
 const TEXT = {
-  // Deliberately terse. Two of these stand between the resource chips and the
-  // screen edge, and every character they take is width the chips give up — the
-  // full sentence lives in the tooltip / accessible name instead.
-  resurrectAll: { en: 'Raise all',  ru: 'Воскресить' },
-  restoreAll:   { en: 'Raise+heal', ru: 'Воскр.+лечить' },
-  healAll:      { en: 'Heal all',   ru: 'Лечить всех' },
-  working:      { en: '…',          ru: '…' },
+  resurrectAll: { en: 'Resurrect all',    ru: 'Воскресить всех' },
+  restoreAll:   { en: 'Resurrect + heal', ru: 'Воскресить и лечить' },
+  healAll:      { en: 'Heal all',         ru: 'Вылечить всех' },
+  working:      { en: 'Working…',         ru: 'Выполняется…' },
   costOf:       {
     en: (n, cost) => `${n} units — ${cost}`,
     ru: (n, cost) => `${n} юнитов — ${cost}`,
@@ -100,10 +97,10 @@ function costLabel(cost) {
 }
 
 // `onRestore(mode)` does the request and the reload; this only draws.
-export function showRestoreControls(modes, { lang = 'en', onRestore } = {}) {
+// `host` is the castle's .castle-grounds — the overlay is positioned against it.
+export function showRestoreControls(modes, { host, lang = 'en', onRestore } = {}) {
   hideRestoreControls();
-  const row = document.getElementById('resource-bar-row');
-  if (!row || !modes?.length) return;
+  if (!host || !modes?.length) return;
 
   const wrap = document.createElement('div');
   wrap.id = RESTORE_ID;
@@ -115,15 +112,17 @@ export function showRestoreControls(modes, { lang = 'en', onRestore } = {}) {
     // lines of text: what this button is about to spend is the whole decision.
     const aria  = `${label} — ${TEXT.costOf[lang](m.count, sub)}`;
     return `
-      <button class="res-bar-btn restore-btn" data-mode="${m.mode}"
+      <button class="restore-btn" data-mode="${m.mode}"
               title="${aria}" aria-label="${aria}">
         <span class="restore-btn-label">${label}</span>
         <span class="restore-btn-cost">${sub}</span>
       </button>`;
   }).join('');
 
-  // Outside #content-root, so no screen-level delegation reaches it.
+  // Its own listener: the castle's delegation is bound to the slot nodes it
+  // floats over, and a press here must not read as a press on the slot beneath.
   wrap.addEventListener('click', e => {
+    e.stopPropagation();
     const btn = e.target.closest('.restore-btn:not([disabled])');
     if (!btn) return;
     // Every button in the group goes down together: the modes overlap (both
@@ -134,9 +133,5 @@ export function showRestoreControls(modes, { lang = 'en', onRestore } = {}) {
     onRestore?.(btn.dataset.mode);
   });
 
-  // Before the errands control, so the two restore buttons sit inboard of the
-  // permanent chrome rather than displacing it from the corner it always holds.
-  const errands = row.querySelector('.res-bar-errands');
-  if (errands) row.insertBefore(wrap, errands);
-  else row.appendChild(wrap);
+  host.appendChild(wrap);
 }

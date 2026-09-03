@@ -1144,7 +1144,9 @@ export function renderCastle(root, { player }) {
 
     const modes = restorePlan({ roster: rosterCache, resSpell, healSpell, amountOf });
     if (!modes) return;
-    showRestoreControls(modes, { lang: castleLang, onRestore: runRestore });
+    const host = root.querySelector('.castle-grounds');
+    if (!host) return;
+    showRestoreControls(modes, { host, lang: castleLang, onRestore: runRestore });
   }
 
   async function runRestore(mode) {
