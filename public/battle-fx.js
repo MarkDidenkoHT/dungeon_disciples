@@ -4056,6 +4056,149 @@ export async function frost_bolt(cellEl, opts = {}) {
 }
 
 
+// ── blood_mist — a bank of red fog rolled down a whole line ──────────────────
+// Consecrated strikes every enemy in the column at once, so this is a fan-out
+// (see FAN_OUT_FX in screens/battle.js): one mist leaves the caster, swallows
+// each victim as it reaches them, then drags back what it took.
+//
+// The fog is deliberately NOT additive — blood darkens what it covers instead
+// of lighting it, which is what separates this from the holy effects the rest
+// of the faction uses. Only the motes drawn back to the caster glow.
+export async function blood_mist(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] blood_mist START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !targetCells.length || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const FOG_DEEP = 0x2b0409;   // the shadow inside the bank
+  const FOG_BODY = 0x7c1020;   // the bank itself
+  const MOTE     = 0xff5a6e;   // what the mist carries home
+  const PALE     = 0xffd2d8;
+
+  const originId = originCellEl.dataset.id;
+  const ob0 = cellBoundsFor(originId);
+
+  // Arrival is ordered by DISTANCE from the caster, not by list order, so the
+  // bank reads as one thing rolling outward rather than six puffs taking turns.
+  const victims = targetCells.map(c => {
+    const id = c.dataset.id;
+    const b  = id ? cellBoundsFor(id) : null;
+    const dist = (b && ob0)
+      ? Math.hypot((b.x + b.width / 2) - (ob0.x + ob0.width / 2),
+                   (b.y + b.height / 2) - (ob0.y + ob0.height / 2))
+      : 0;
+    return {
+      id, dist, delay: 0,
+      puffs: Array.from({ length: 9 }, () => ({
+        ang: rand(0, TAU), orbit: rand(0.10, 0.42), size: rand(0.16, 0.34),
+        spin: rand(-0.5, 0.5), sink: rand(0.02, 0.16),
+      })),
+      drops: Array.from({ length: 7 }, () => ({
+        ang: rand(0, TAU), out: rand(0.15, 0.45), size: rand(1.4, 3.2), d: rand(0, 0.22),
+      })),
+    };
+  }).filter(v => v.id);
+  if (!victims.length) return;
+
+  const maxDist = Math.max(1, ...victims.map(v => v.dist));
+  for (const v of victims) v.delay = (v.dist / maxDist) * 0.26;
+
+  const layer     = new PIXI.Container();
+  const fogLayer  = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  fogLayer.filters  = [new PIXI.BlurFilter(13)];
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const fogG  = new PIXI.Graphics();                     // the bank, normal blend
+  const moteG = new PIXI.Graphics(); moteG.blendMode = ADD;
+  layer.addChild(fogLayer, glowLayer);
+  fogLayer.addChild(fogG);
+  glowLayer.addChild(moteG);
+  app.stage.addChild(layer);
+
+  await animate(980, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+    fogG.clear(); moteG.clear();
+
+    for (const v of victims) {
+      const tb = cellBoundsFor(v.id);
+      if (!tb) continue;
+      const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+      const R  = Math.min(tb.width, tb.height);
+
+      const local = clamp01((t - v.delay) / (1 - v.delay));
+      const roll  = clamp01(local / 0.24);              // the bank reaches this cell
+      const thin  = clamp01((local - 0.56) / 0.44);     // and then disperses
+      const alpha = 1 - thin;
+      if (alpha <= 0) continue;
+
+      // The smear the bank leaves between caster and victim while it rolls out.
+      if (roll < 1) {
+        const STEPS = 9;
+        for (let i = 1; i <= STEPS; i++) {
+          const f = (i / STEPS) * roll;
+          const sx = ox + (tx - ox) * f;
+          const sy = oy + (ty - oy) * f + Math.sin(f * Math.PI) * R * 0.10;
+          fogG.beginFill(FOG_BODY, 0.30 * alpha * (1 - f * 0.5));
+          fogG.drawCircle(sx, sy, R * (0.10 + 0.14 * f));
+          fogG.endFill();
+        }
+      }
+
+      // The bank sitting on the victim: puffs orbiting outward and settling.
+      for (const p of v.puffs) {
+        const a  = p.ang + p.spin * local * TAU * 0.5;
+        const d  = R * p.orbit * (0.30 + 0.70 * roll);
+        const px = tx + Math.cos(a) * d;
+        const py = ty + Math.sin(a) * d + local * R * p.sink;
+        const sz = R * p.size * (0.45 + 0.55 * roll) * (1 + thin * 0.7);
+        fogG.beginFill(FOG_BODY, 0.40 * alpha);
+        fogG.drawCircle(px, py, sz);
+        fogG.endFill();
+      }
+      fogG.beginFill(FOG_DEEP, 0.52 * alpha * roll);
+      fogG.drawCircle(tx, ty, R * 0.30 * (0.5 + 0.5 * roll));
+      fogG.endFill();
+
+      // Beads flung loose on impact, then the drain: everything the mist took
+      // is carried back to the caster.
+      const drain = clamp01((local - 0.46) / 0.54);
+      for (const dp of v.drops) {
+        const s = clamp01((roll - dp.d) / (1 - dp.d));
+        if (s <= 0) continue;
+        const bx = tx + Math.cos(dp.ang) * R * dp.out * s;
+        const by = ty + Math.sin(dp.ang) * R * dp.out * s;
+        if (drain <= 0) {
+          softGlow(moteG, bx, by, dp.size, MOTE, 0.75 * alpha);
+        } else {
+          const e  = drain * drain;                     // gathers pace as it goes
+          const mx = bx + (ox - bx) * e;
+          const my = by + (oy - by) * e - Math.sin(e * Math.PI) * R * 0.18;
+          softGlow(moteG, mx, my, dp.size * (1 - e * 0.4), MOTE, (1 - e * 0.7) * 0.9);
+        }
+      }
+    }
+
+    // The caster brightens as the mist comes home.
+    const home = clamp01((t - 0.62) / 0.38);
+    if (home > 0) {
+      const R0 = Math.min(ob.width, ob.height);
+      softGlow(moteG, ox, oy, R0 * 0.20 * home, PALE, (1 - home) * 0.55);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] blood_mist END', originId);
+}
+
+
 export const EFFECTS = {
   mithrails_light,
   aggrails_light,
@@ -4091,6 +4234,7 @@ export const EFFECTS = {
   frost_claw,
   holy_shock,
   fellfire,
+  blood_mist,
   aegis,
   mend_flesh,
   // Song of Ash is a mend, so it borrows the mend picture rather than shipping a

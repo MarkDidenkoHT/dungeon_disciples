@@ -36,7 +36,7 @@ const SRC_TARGET_FX = new Set([
 // radiance is here for both reasons at once: it fires on EVERY adjacent enemy
 // when the unit is healed, and the light leaves the caster for all of them in
 // the same instant.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace']);
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the

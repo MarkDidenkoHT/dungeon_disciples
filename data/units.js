@@ -2498,7 +2498,7 @@ const UNITS = {
       hp: 140, armor: 20, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'blood_mist', action_sfx: 'claw_light',
       xp: 4000, passive: ['sacrament 2', 'lifesteal 2', 'bleed 2'], ability: 'libation 2',
     },
     husk_colossus: {
