@@ -2583,7 +2583,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
-      xp: 480, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'purge 1',
+      xp: 480, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'blood_craze 1',
     },
     grail_keeper: {
       id: 'gs511', f: 'g', t: 3,
@@ -2595,7 +2595,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'communion.jpg',
-      xp: 1300, passive: ['communion 1', 'resist_aura_fire 1', 'dispel 1'], ability: 'purge 1',
+      xp: 1300, passive: ['communion 1', 'resist_aura_fire 1', 'dispel 1'], ability: 'blood_craze 1',
     },
     grail_custodian: {
       id: 'gs5111', f: 'g', t: 4,
@@ -2679,7 +2679,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 1170, passive: ['sorrow 1', 'procession_of_grief 1', 'slow 1',], ability: 'terror 1',
+      xp: 1170, passive: ['sorrow 1', 'procession_of_grief 1', 'slow 1',], ability: 'terror 2',
     },
     apparition: {
       id: 'gs62', f: 'g', t: 2,
@@ -2703,7 +2703,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
-      xp: 1170, passive: ['sorrow 1', 'dissipate 2', ], ability: 'terror 1',
+      xp: 1170, passive: ['sorrow 1', 'dissipate 2', ], ability: 'terror 2',
     },
     pale_maiden: {
       id: 'gs7', f: 'g', t: 1,
