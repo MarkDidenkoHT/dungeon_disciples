@@ -8304,42 +8304,98 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   cursor: pointer;
+  color: var(--text);
+  line-height: 1.1;
+  /* FULLY opaque. It sits on top of unit portraits, and a label competing with
+     a face behind it is not readable — so the panel is solid, not a tint. */
+  background:
+    linear-gradient(180deg, #262b36 0%, #191d25 55%, #12151b 100%);
   border: 1px solid var(--accent-2);
   border-radius: var(--radius);
-  color: var(--text);
-  /* Opaque, not translucent: it sits on top of unit portraits, and a label that
-     has to compete with a face behind it is not readable. */
-  background: rgba(17, 19, 24, 0.94);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.55);
-  line-height: 1.1;
-  transition: filter 0.15s, transform 0.1s;
+  /* The glow: a warm outer halo to lift the panel off the grid, a tight gold
+     rim just inside the border, and a highlight along the top edge so the
+     button reads as a raised plate rather than a flat rectangle. */
+  box-shadow:
+    0 0 14px rgba(var(--accent-rgb), 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px rgba(var(--accent-rgb), 0.22),
+    inset 0 1px 0 rgba(236, 208, 138, 0.28);
+  transition: filter 0.15s, transform 0.1s, box-shadow 0.2s;
+}
+
+/* A slow breath on the glow, so the pair catches the eye when it appears
+   without ever moving or resizing anything. */
+@media (prefers-reduced-motion: no-preference) {
+  .restore-controls .restore-btn {
+    animation: restore-glow 2.6s ease-in-out infinite;
+  }
+}
+
+@keyframes restore-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(var(--accent-rgb), 0.28),
+      0 4px 14px rgba(0, 0, 0, 0.75),
+      inset 0 0 0 1px rgba(var(--accent-rgb), 0.20),
+      inset 0 1px 0 rgba(236, 208, 138, 0.26);
+  }
+  50% {
+    box-shadow:
+      0 0 22px rgba(var(--accent-rgb), 0.55),
+      0 4px 14px rgba(0, 0, 0, 0.75),
+      inset 0 0 0 1px rgba(var(--accent-rgb), 0.38),
+      inset 0 1px 0 rgba(236, 208, 138, 0.40);
+  }
 }
 
 .restore-controls .restore-btn-label {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-align: center;
   color: var(--accent-bright);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(var(--accent-rgb), 0.35);
   overflow-wrap: anywhere;
 }
 
+/* The price, in the game's own crystal art rather than in words. */
 .restore-controls .restore-btn-cost {
-  font-size: 0.68rem;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   max-width: 100%;
+}
+
+.restore-controls .restore-btn-cost-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Sized here rather than inheriting .res-icon-img's 40px: these sit on a 48px
+   button beside a label, not alone in a 70px strip slot. */
+.restore-controls .restore-btn-cost-item .res-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(var(--accent-rgb), 0.5));
 }
 
 .restore-controls .restore-btn:not(:disabled):active {
   transform: scale(0.97);
-  filter: brightness(1.15);
+  filter: brightness(1.2);
 }
 
 .restore-controls .restore-btn:disabled {
   opacity: 0.55;
   cursor: default;
+  /* The glow is an invitation; a button already working must stop making it. */
+  animation: none;
 }

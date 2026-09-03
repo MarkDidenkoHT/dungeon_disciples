@@ -1,3 +1,5 @@
+import { CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
+
 // Bulk Resurrect / Heal, floated over the foot of the castle grid.
 //
 // Fixing a party after a bad fight was fifteen taps: open a slot sheet, tap
@@ -90,6 +92,20 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf }) {
   return modes.length ? modes : null;
 }
 
+// The same crystal art the resource strip uses, so the price on the button and
+// the pile it is spending from are recognisably the same thing. A crystal is
+// already an icon everywhere else in the game; spelling it "Death 24" here made
+// the player translate between two vocabularies mid-decision.
+function costHtml(cost) {
+  return Object.entries(cost).map(([type, amt]) => {
+    const icon = type === 'Gold' ? GOLD_ICON : CRYSTAL_ICONS[type];
+    // Named as well as drawn: the icon carries no text, so the accessible name
+    // below is where a screen reader gets the price.
+    return `<span class="restore-btn-cost-item">${icon || ''}<span>${amt}</span></span>`;
+  }).join('');
+}
+
+// Text, for the tooltip and the accessible name only.
 function costLabel(cost) {
   return Object.entries(cost)
     .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
@@ -115,7 +131,7 @@ export function showRestoreControls(modes, { host, lang = 'en', onRestore } = {}
       <button class="restore-btn" data-mode="${m.mode}"
               title="${aria}" aria-label="${aria}">
         <span class="restore-btn-label">${label}</span>
-        <span class="restore-btn-cost">${sub}</span>
+        <span class="restore-btn-cost">${costHtml(m.cost)}</span>
       </button>`;
   }).join('');
 
