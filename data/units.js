@@ -2499,7 +2499,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 4000, passive: ['sacrament 2', 'lifesteal 1', 'bleed 2'], ability: 'libation 2',
+      xp: 4000, passive: ['sacrament 2', 'lifesteal 2', 'bleed 2'], ability: 'libation 2',
     },
     husk_colossus: {
       id: 'gs4', f: 'g', t: 1,
