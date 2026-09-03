@@ -1908,7 +1908,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 12, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 1', 'banquet 1'], ability: null,
+      passive: ['lifesteal 1', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 100
     },
     mourning_prophet_path_a_t2: {
@@ -1921,7 +1921,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 1', 'banquet 1', 'lifesteal 1'], ability: null,
+      passive: ['lifesteal 1', 'banquet 2'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_a_t3: {
@@ -1934,7 +1934,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'lifesteal 1'], ability: null,
+      passive: ['lifesteal 2', 'banquet 2'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
     mourning_prophet_path_a_t4: {
@@ -1947,7 +1947,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'lifesteal 2'], ability: null,
+      passive: ['lifesteal 2', 'banquet 2', 'duelist 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     mourning_prophet_path_a_t4_alt: {
@@ -1960,7 +1960,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 2', 'lifesteal 1'], ability: null,
+      passive: ['lifesteal 2', 'banquet 2', 'iron_will 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     mourning_prophet_path_b_t2: {
@@ -1973,7 +1973,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 1', 'banquet 1',  'impale 1'], ability: null,
+      passive: ['communion 2', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_b_t3: {
@@ -1986,7 +1986,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'impale 1'], ability: null,
+      passive: ['communion 2', 'banquet 2'], ability: null,
       building_slot: 'slot_0', xp: 1300
     },
     mourning_prophet_path_b_t4: {
@@ -1999,7 +1999,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 1', 'impale 2'], ability: null,
+      passive: ['communion 2', 'banquet 2', 'impale 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     mourning_prophet_path_b_t4_alt: {
@@ -2012,7 +2012,7 @@ const UNITS = {
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
-      passive: ['duelist 2', 'banquet 2', 'impale 1'], ability: null,
+      passive: ['communion 2', 'banquet 2', 'recuperate 1'], ability: null,
       building_slot: 'slot_0', xp: 2380
     },
     grail_warden: {
@@ -2363,7 +2363,7 @@ const UNITS = {
       name_ru: 'Багровый Маг',
       tags: ['Vampire', 'Caster'],
       size: 'tile',
-      hp: 55, armor: 0, initiative: 40,
+      hp: 55, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 18, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
@@ -2580,10 +2580,10 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 45, armor: 5, initiative: 30,
-      resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 5, nature: 0 },
+      resistances: { air: 0, fire: 0, life: 5, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
-      xp: 480, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'blood_craze 1',
+      xp: 480, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'second_thirst 1',
     },
     grail_keeper: {
       id: 'gs511', f: 'g', t: 3,
@@ -2592,10 +2592,10 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 55, armor: 5, initiative: 30,
-      resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
+      resistances: { air: 0, fire: 0, life: 10, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'communion.jpg',
-      xp: 1300, passive: ['communion 1', 'resist_aura_fire 1', 'dispel 1'], ability: 'blood_craze 1',
+      xp: 1300, passive: ['communion 1', 'resist_aura_life 1', 'dispel 1'], ability: 'second_thirst 2',
     },
     grail_custodian: {
       id: 'gs5111', f: 'g', t: 4,
@@ -2604,10 +2604,10 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 55, armor: 10, initiative: 30,
-      resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 10, nature: 0 },
+      resistances: { air: 0, fire: 0, life: 10, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
-      xp: 1300, passive: ['communion 2', 'resist_aura_fire 1', 'dispel 1'], ability: 'blood_craze 2',
+      xp: 1300, passive: ['communion 2', 'resist_aura_life 1', 'dispel 1'], ability: 'second_thirst 2',
     },
     grieving_servant: {
       id: 'gs52', f: 'g', t: 2,
@@ -2616,7 +2616,7 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 50, armor: 0, initiative: 30,
-      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
       xp: 480, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
@@ -2628,7 +2628,7 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 60, armor: 0, initiative: 30,
-      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'communion.jpg',
       xp: 1300, passive: ['communion 2', 'lifesteal 1'], ability: 'blood_craze 2',
@@ -2640,7 +2640,7 @@ const UNITS = {
       tags: ['Vampire','Caster'],
       size: 'tile',
       hp: 65, armor: 0, initiative: 35,
-      resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+      resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
       xp: 2800, passive: ['communion 2', 'lifesteal 1', 'execute 1'], ability: 'blood_craze 2',
@@ -2774,7 +2774,7 @@ const UNITS = {
       hp: 50, armor: 15, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'decay', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
+      damage_source: null, action_power: 12, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
     },
     pale_lamenter: {
@@ -2786,7 +2786,7 @@ const UNITS = {
       hp: 60, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'decay', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
+      damage_source: null, action_power: 16, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
       xp: 1170, passive: ['ethereal_form 2', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
     },
     mothers_tear: {
@@ -3075,10 +3075,10 @@ const UNITS = {
         name_ru: 'Сестра Алдра',
         tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 85, armor: 10, initiative: 40,
+        hp: 85, armor: 10, initiative: 30,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'physical', action_power: 10, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 10, action_animation: 'cannon_shot',
         xp: 1320, passive: ['bleed 2', 'stoicism 1'], ability: null,
       },
       sister_aldra_2: {
@@ -3087,10 +3087,10 @@ const UNITS = {
         name_ru: 'Сестра Алдра',
         tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 125, armor: 15, initiative: 40,
+        hp: 125, armor: 15, initiative: 30,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 14, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 12, action_animation: 'cannon_shot',
         xp: 1430, passive: ['bleed 2', 'recuperate 1', 'stoicism 1'], ability: null,
       },
       sister_aldra_3: {
@@ -3099,10 +3099,10 @@ const UNITS = {
         name_ru: 'Сестра Алдра',
         tags: ['Demon', 'Holy'],
         size: 'tile',
-        hp: 145, armor: 25, initiative: 45,
+        hp: 145, armor: 25, initiative: 30,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 18, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 14, action_animation: 'cannon_shot',
         xp: 1540, passive: ['bleed 3', 'recuperate 1', 'stoicism 1'], ability: null,
       },
     },
