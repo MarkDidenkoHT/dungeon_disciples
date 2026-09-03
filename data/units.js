@@ -2486,7 +2486,7 @@ const UNITS = {
       hp: 145, armor: 15, initiative: 30,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'physical', action_power: 36, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 4000, passive: ['sacrament 2', 'lifesteal 2', 'shatter 2'], ability: 'libation 2',
     },
     consecrated: {
@@ -2497,7 +2497,7 @@ const UNITS = {
       size: 'column',
       hp: 140, armor: 20, initiative: 25,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
-      action: 'attack', target_type: 'enemy', targets: 6, range: 1,
+      action: 'attack', target_type: 'enemy', targets: 6, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 4000, passive: ['sacrament 2', 'lifesteal 1', 'bleed 2'], ability: 'libation 2',
     },
@@ -3043,7 +3043,7 @@ const UNITS = {
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 10, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 130, passive: ['bleed 1', 'heartpiercer 1'], ability: 'volley 1',
+        xp: 130, passive: ['bleed 1', 'clear_shot 1'], ability: 'volley 1',
       },
       crimson_hunter: {
         id: 'opb_e41', f: 'opb', t: 2,
@@ -3055,7 +3055,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 14, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 540, passive: ['bleed 1', 'heartpiercer 1', 'clear_shot 1'], ability: 'volley 1',
+        xp: 540, passive: ['bleed 1', 'clear_shot 1', 'find_weakness 1'], ability: 'volley 1',
       },
       crimson_stalker: {
         id: 'opb_e411', f: 'opb', t: 3,
@@ -3067,7 +3067,7 @@ const UNITS = {
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'physical', action_power: 18, action_icon: 'archery.jpg', action_animation: 'arrow_shot', action_sfx: 'arrow_shot',
-        xp: 1300, passive: ['bleed 2', 'heartpiercer 1', 'clear_shot 1'], ability: 'volley 2',
+        xp: 1300, passive: ['bleed 2', 'clear_shot 1', 'find_weakness 1'], ability: 'volley 2',
       },
       sister_aldra_1: {
         id: 'opb_e5', f: 'opb', t: 2,
