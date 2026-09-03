@@ -255,6 +255,9 @@ function navigate(screen, params = {}) {
   // they would follow the player onto the next screen.
   document.getElementById('roster-trophy-bar')?.remove();
   document.getElementById('shared-cost-bar')?.remove();
+  // The castle's bulk Resurrect / Heal buttons sit INSIDE the resource strip
+  // (see restore-bar.js), which is shell chrome and outlives the screen.
+  document.getElementById('restore-controls')?.remove();
 
   // The FX canvas and any running bond loops belong to the screen being left.
   // Clearing the root only detaches the canvas from the DOM — the PIXI app and

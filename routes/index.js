@@ -1474,6 +1474,116 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
   }
 });
 
+// ── Bulk restore ───────────────────────────────────────────────────────────
+// The single-unit routes above are for surgical use — fix THIS unit. After a
+// bad fight with four casualties they turn into fifteen taps: open slot sheet,
+// tap, sheet reopens, back out, next slot. This does the whole party in one
+// press.
+//
+// `mode` is what the castle's two buttons ask for:
+//   'resurrect'      raise every fallen unit (to 1 HP, exactly as the spell does)
+//   'resurrect_heal' raise them AND heal everyone hurt, in one bill
+//   'heal'           heal every wounded unit
+//
+// All or nothing. The client never offers a button it cannot pay for in full
+// (see castleRestorePlan), so a shortfall here means the state moved underneath
+// it — and half a restore, silently charged, is worse than a refusal. The
+// crystal bill is therefore computed for the WHOLE set and debited once, before
+// any roster row is touched.
+router.post('/roster/restore', requireAuth, async (req, res) => {
+  const { chat_id, mode } = req.body;
+  if (!chat_id || !['resurrect', 'resurrect_heal', 'heal'].includes(mode)) {
+    return res.status(400).json({ error: 'chat_id and a valid mode required' });
+  }
+
+  try {
+    const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=learned_spells,faction&limit=1`);
+    if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const player        = playerRows[0];
+    const learnedSpells = player.learned_spells || [];
+    const factionSpells = SPELLS[player.faction] || [];
+
+    const resSpell  = factionSpells.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
+    const healSpell = factionSpells.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
+
+    const needRes  = mode !== 'heal';
+    const needHeal = mode !== 'resurrect';
+    if (needRes  && !(resSpell  && learnedSpells.includes(resSpell.id)))  return res.status(403).json({ error: 'Spell not learned' });
+    if (needHeal && !(healSpell && learnedSpells.includes(healSpell.id))) return res.status(403).json({ error: 'Spell not learned' });
+
+    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+
+    // A unit is counted ONCE, for the thing it needs. In 'resurrect_heal' the
+    // fallen pay both spells — raised at 1 HP by one, brought to full by the
+    // other — which is exactly what the two presses would have cost.
+    const dead    = rosterRows.filter(r => r.unit_data?.alive === false);
+    const wounded = rosterRows.filter(r => {
+      const d = r.unit_data || {};
+      if (d.alive === false) return false;
+      const maxHp = Number(d.max_hp ?? 0);
+      const curHp = Number(d.current_hp ?? maxHp);
+      return maxHp > 0 && curHp < maxHp;
+    });
+
+    const resCount  = needRes  ? dead.length : 0;
+    const healCount = needHeal ? (mode === 'resurrect_heal' ? dead.length + wounded.length : wounded.length) : 0;
+    if (!resCount && !healCount) return res.status(400).json({ error: 'Nobody needs restoring' });
+
+    const bill = {};
+    const addCost = (spell, times) => {
+      for (const [type, amt] of Object.entries(spell?.cost?.crystals || {})) {
+        if (amt > 0 && times > 0) bill[type] = (bill[type] || 0) + amt * times;
+      }
+    };
+    addCost(resSpell,  resCount);
+    addCost(healSpell, healCount);
+
+    try {
+      await consumeCrystalCosts(chat_id, bill);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+
+    const healPct = healSpell?.params?.heal_pct ?? 1;
+    const restored = [];
+    for (const r of rosterRows) {
+      const d      = r.unit_data || {};
+      const isDead = d.alive === false;
+      if (isDead && !needRes) continue;
+      if (!isDead && !wounded.includes(r)) continue;
+      if (!isDead && !needHeal) continue;
+
+      const maxHp = Number(d.max_hp ?? 0);
+      let next;
+      if (isDead) {
+        // Raised at 1 HP; the heal half of 'resurrect_heal' then tops it up.
+        const raisedHp = mode === 'resurrect_heal' && maxHp > 0
+          ? Math.min(maxHp, 1 + Math.floor(maxHp * healPct))
+          : 1;
+        next = { ...d, alive: true, current_hp: raisedHp };
+      } else {
+        const curHp = Number(d.current_hp ?? maxHp);
+        next = { ...d, current_hp: Math.min(maxHp, curHp + Math.floor(maxHp * healPct)) };
+      }
+      restored.push({ id: r.id, unit_data: next });
+    }
+
+    await Promise.all(restored.map(u => supabase(`/roster?id=eq.${encodeURIComponent(u.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: u.unit_data }),
+    })));
+
+    const [updated, resources] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ success: true, count: restored.length, spent: bill, roster: updated, resources });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 // ── Divine favor (rewarded ad) ─────────────────────────────────────────────
 // A player watches an ad and one unit is revived (at 1 HP) or healed to full.
 // Revival is deliberately WORSE than the resurrection spell so the spell keeps

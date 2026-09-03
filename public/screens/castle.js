@@ -4,6 +4,7 @@ import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
 import { bootstrapCache } from '../api.js';
 import { showCostBar as sharedShowCostBar, hideCostBar } from '../cost-bar.js';
+import { showRestoreControls, hideRestoreControls, restorePlan } from '../restore-bar.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, firstRecruitHint } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
@@ -1122,12 +1123,49 @@ export function renderCastle(root, { player }) {
     applyLayer();
   }
 
+  // ── Bulk restore, in the resource strip ───────────────────────────────────
+  // Re-evaluated on every render, so the buttons follow the roster: raise the
+  // fallen and the pair collapses to a single Heal all; heal everyone and the
+  // group disappears and the resource chips get their width back.
+  //
+  // Hidden during onboarding for the same reason the per-unit shortcut is (see
+  // unitActionOverlay): the spell tutorial teaches Resurrect and Heal on exactly
+  // the units this would fix in one press.
+  function renderRestoreControls() {
+    hideRestoreControls();
+    if (!root.isConnected) return;
+    if (!isTutorialDone(player, 'spell_heal')) return;
+
+    const learned   = Array.isArray(player.learned_spells) ? player.learned_spells : [];
+    const factionSpells = SPELLS[player.faction] || [];
+    const known     = spell => (spell && learned.includes(spell.id)) ? spell : null;
+    const resSpell  = known(factionSpells.find(s => s.usage === 'roster' && s.target_scope === 'single_ally'));
+    const healSpell = known(factionSpells.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally'));
+
+    const modes = restorePlan({ roster: rosterCache, resSpell, healSpell, amountOf });
+    if (!modes) return;
+    showRestoreControls(modes, { lang: castleLang, onRestore: runRestore });
+  }
+
+  async function runRestore(mode) {
+    try {
+      const res = await api('/roster/restore', { chat_id: player.chat_id, mode });
+      await reloadFromBootstrap(null, patchFromWrite(res));
+    } catch (err) {
+      alert(err?.message || String(err));
+      // Whatever the failure was, the party state decides the buttons — so
+      // redraw from it rather than re-enabling the ones that just failed.
+      renderRestoreControls();
+    }
+  }
+
   function renderBuildings() {
     // The castle's async work (a bootstrap refresh, the errand lookup) can land
     // after the player has navigated away and `root` has been re-written by the
     // next screen. Everything below writes into nodes from THIS screen's
     // markup, so bail rather than throw on a detached / replaced root.
     if (!root.isConnected || !structuresRecord) return;
+    renderRestoreControls();
     const centerSlot = root.querySelector('#center-slot');
     const outerRing  = root.querySelector('#outer-ring');
     if (!centerSlot || !outerRing) return;

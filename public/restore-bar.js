@@ -1,0 +1,142 @@
+// Bulk Resurrect / Heal, mounted into the resource strip.
+//
+// Fixing a party after a bad fight was fifteen taps: open a slot sheet, tap
+// Heal, watch the sheet re-render and reopen, back out, next slot. These do the
+// whole roster in one press.
+//
+// They live in #resource-bar-row rather than in a strip of their own BECAUSE
+// the viewport is finite. That row already exists, it is already 70px tall, and
+// it is already a flex line with two fixed-width controls flanking a `flex: 1`
+// strip (see .resource-bar-row / .res-bar-btn in style.css). Two more buttons in
+// it cost horizontal space that the resource chips give up by compressing —
+// nothing below moves, --sheet-top stays correct, and the screen does not grow.
+// A separate row would have taken height the castle does not have to give.
+//
+// And they are not permanent residents: they mount only when there are at least
+// two casualties, so the chips have their full width back the moment the party
+// is whole.
+const RESTORE_ID = 'restore-controls';
+
+const TEXT = {
+  // Deliberately terse. Two of these stand between the resource chips and the
+  // screen edge, and every character they take is width the chips give up — the
+  // full sentence lives in the tooltip / accessible name instead.
+  resurrectAll: { en: 'Raise all',  ru: 'Воскресить' },
+  restoreAll:   { en: 'Raise+heal', ru: 'Воскр.+лечить' },
+  healAll:      { en: 'Heal all',   ru: 'Лечить всех' },
+  working:      { en: '…',          ru: '…' },
+  costOf:       {
+    en: (n, cost) => `${n} units — ${cost}`,
+    ru: (n, cost) => `${n} юнитов — ${cost}`,
+  },
+};
+
+export function hideRestoreControls() {
+  document.getElementById(RESTORE_ID)?.remove();
+}
+
+// What the party needs and what it would cost, or null when there is nothing to
+// offer. Exported so the caller can decide without the bar being built.
+//
+// AFFORDABILITY IS A VISIBILITY RULE, not an error to report. A button the
+// player cannot pay for teaches nothing here — the per-unit buttons in the slot
+// sheets are still there to show the price of a single fix, and the shop is one
+// tap away. So a mode whose full bill exceeds the purse is simply not shown, and
+// /roster/restore stays all-or-nothing behind it.
+export function restorePlan({ roster, resSpell, healSpell, amountOf }) {
+  const dead = [], wounded = [];
+  for (const r of roster || []) {
+    const d = r.unit_data || {};
+    if (d.alive === false) { dead.push(r); continue; }
+    const maxHp = Number(d.max_hp ?? 0);
+    const curHp = Number(d.current_hp ?? maxHp);
+    if (maxHp > 0 && curHp < maxHp) wounded.push(r);
+  }
+
+  // One casualty is not a bulk problem: the slot sheet's own button is one tap
+  // away and already says what it costs.
+  if (dead.length + wounded.length < 2) return null;
+
+  const bill = (spell, times) => {
+    const out = {};
+    for (const [type, amt] of Object.entries(spell?.cost?.crystals || {})) {
+      if (amt > 0 && times > 0) out[type] = amt * times;
+    }
+    return out;
+  };
+  const merge = (a, b) => {
+    const out = { ...a };
+    for (const [k, v] of Object.entries(b)) out[k] = (out[k] || 0) + v;
+    return out;
+  };
+  const affordable = cost => Object.entries(cost).every(([k, v]) => amountOf(k) >= v);
+
+  const modes = [];
+  if (dead.length && resSpell) {
+    const cost = bill(resSpell, dead.length);
+    if (affordable(cost)) modes.push({ mode: 'resurrect', label: 'resurrectAll', count: dead.length, cost });
+
+    if (healSpell) {
+      // The fallen pay both spells — raised by one, brought to full by the
+      // other — which is exactly what pressing the two per-unit buttons costs.
+      const full = merge(cost, bill(healSpell, dead.length + wounded.length));
+      if (affordable(full)) modes.push({ mode: 'resurrect_heal', label: 'restoreAll', count: dead.length + wounded.length, cost: full });
+    }
+  }
+  // Only when nobody is down. With dead units present this would be the third
+  // button in a row that has space for two, and it is the least useful of them.
+  if (!dead.length && wounded.length && healSpell) {
+    const cost = bill(healSpell, wounded.length);
+    if (affordable(cost)) modes.push({ mode: 'heal', label: 'healAll', count: wounded.length, cost });
+  }
+
+  return modes.length ? modes : null;
+}
+
+function costLabel(cost) {
+  return Object.entries(cost)
+    .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
+    .join(', ');
+}
+
+// `onRestore(mode)` does the request and the reload; this only draws.
+export function showRestoreControls(modes, { lang = 'en', onRestore } = {}) {
+  hideRestoreControls();
+  const row = document.getElementById('resource-bar-row');
+  if (!row || !modes?.length) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = RESTORE_ID;
+  wrap.className = 'restore-controls';
+  wrap.innerHTML = modes.map(m => {
+    const label = TEXT[m.label][lang];
+    const sub   = costLabel(m.cost);
+    // The count and the price are in the accessible name, not only in the two
+    // lines of text: what this button is about to spend is the whole decision.
+    const aria  = `${label} — ${TEXT.costOf[lang](m.count, sub)}`;
+    return `
+      <button class="res-bar-btn restore-btn" data-mode="${m.mode}"
+              title="${aria}" aria-label="${aria}">
+        <span class="restore-btn-label">${label}</span>
+        <span class="restore-btn-cost">${sub}</span>
+      </button>`;
+  }).join('');
+
+  // Outside #content-root, so no screen-level delegation reaches it.
+  wrap.addEventListener('click', e => {
+    const btn = e.target.closest('.restore-btn:not([disabled])');
+    if (!btn) return;
+    // Every button in the group goes down together: the modes overlap (both
+    // raise the same corpses), so leaving the others live would let a second
+    // press bill for work the first one is already doing.
+    for (const b of wrap.querySelectorAll('.restore-btn')) b.disabled = true;
+    btn.querySelector('.restore-btn-label').textContent = TEXT.working[lang];
+    onRestore?.(btn.dataset.mode);
+  });
+
+  // Before the errands control, so the two restore buttons sit inboard of the
+  // permanent chrome rather than displacing it from the corner it always holds.
+  const errands = row.querySelector('.res-bar-errands');
+  if (errands) row.insertBefore(wrap, errands);
+  else row.appendChild(wrap);
+}
