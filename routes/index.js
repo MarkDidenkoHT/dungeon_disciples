@@ -416,11 +416,18 @@ async function buildArmyFor(chat_id, playerUnitIds) {
 // Deep enough to protect everything the engine mutates: unit_data and the
 // resistances inside it. Everything else on these objects is replaced wholesale
 // or never written.
+// PvE encounter units are FLAT (see getEncounter): the stats live on the unit
+// itself, with no `unit_data` wrapper. Cloning one into a shape that always
+// carries `unit_data` handed createCombatant an EMPTY nested object — and
+// createCombatant reads `unit.unit_data || unit`, so it took the empty one:
+// every enemy lost its name ("Unknown"), its portrait, its action and its
+// passives. Only wrap what actually arrived wrapped.
 function cloneArmy(units) {
-  return (units || []).map(u => ({
-    ...u,
-    unit_data: { ...(u.unit_data || {}), resistances: { ...(u.unit_data?.resistances || {}) } },
-  }));
+  return (units || []).map(u => (
+    u.unit_data
+      ? { ...u, unit_data: { ...u.unit_data, resistances: { ...(u.unit_data.resistances || {}) } } }
+      : { ...u, resistances: { ...(u.resistances || {}) } }
+  ));
 }
 
 // The opposing army, shaped the way initCombatants expects an encounter: each

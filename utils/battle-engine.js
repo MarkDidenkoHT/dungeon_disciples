@@ -229,7 +229,9 @@ class BattleEngine {
     this.fireTrigger('on_battle_start', {});
   }
   createCombatant(unit, side, cellIdx) {
-    const rawData = unit.unit_data || unit;
+    // An EMPTY `unit_data` must not shadow a flat unit: a wrapper with no keys
+    // means the stats are on the unit itself (PvE encounters), not in it.
+    const rawData = (unit.unit_data && Object.keys(unit.unit_data).length) ? unit.unit_data : unit;
     const data    = { ...rawData };
     if (data.action && typeof data.action === 'object') {
       data.action_power = data.action.value;
