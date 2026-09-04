@@ -2,7 +2,10 @@ import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
 import { showCostBar, hideCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, onSheetClose, cap, playPageTurnSound, spellName, spellDesc } from '../utils.js';
+import { UNITS } from '../../data/units.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, getSheetBody, onSheetClose, cap,
+         playPageTurnSound, spellName, spellDesc, abilityName, abilityDescription, resolveAbility,
+         buildAbilityModalParts } from '../utils.js';
 
 // The tome is for RESEARCH, and the two non-combat spells (revive and mend) are
 // neither researched nor cast from here — every faction starts with both, and
@@ -11,6 +14,97 @@ import { CRYSTAL_ICONS, applyBackground, openSheet, closeSheet, getSheetBody, on
 // so the tome shows the combat categories only. Same filter battle-prep applies.
 const TOME_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
 
+
+// ── The Library: the tome's second page ──────────────────────────────────────
+//
+// Everything here is DERIVED, never authored: the player's faction picks a slice
+// of data/units.js, those units name their passives and actives, and those
+// abilities name the tags they care about. So a new unit or a new passive shows
+// up in the Library the moment it is written, with no list to keep in step.
+//
+// The loop the screen exists for is:
+//
+//   ability  ──its tags──▶  tag  ──who carries it──▶  units
+//
+// which is why the tag chips in an ability's sheet are buttons and the portraits
+// behind them are the answer to "so who does that actually mean, for me?".
+
+const LIB_TEXT = {
+  all:         { en: 'All',                ru: 'Все' },
+  passives:    { en: 'Passives',           ru: 'Пассивные' },
+  actives:     { en: 'Actives',            ru: 'Активные' },
+  empty:       { en: 'Nothing to study here yet.', ru: 'Здесь пока нечего изучать.' },
+  ranks:       { en: 'Ranks',              ru: 'Ранги' },
+  rank:        { en: 'Rank',               ru: 'Ранг' },
+  tags:        { en: 'Tags in play',       ru: 'Задействованные метки' },
+  carriedBy:   { en: 'Carried by',         ru: 'Носители' },
+  noCarriers:  { en: 'No unit in your faction carries this.', ru: 'Никто в вашей фракции этим не владеет.' },
+  tagUnits:    { en: n => `${n} in your faction`, ru: n => `${n} в вашей фракции` },
+  noTagUnits:  { en: 'No unit in your faction carries this tag.', ru: 'Никто в вашей фракции не носит эту метку.' },
+  tier:        { en: 'T',                  ru: 'Т' },
+  // What a tag is DOING in the ability it was read from. The same tag means very
+  // different things in "per Zombie ally" and "extra damage against Zombies",
+  // and a Library that printed both as a bare chip would teach the wrong lesson.
+  roles: {
+    scales:   { en: 'Scales per',      ru: 'Масштаб за' },
+    requires: { en: 'Requires',        ru: 'Требует' },
+    keyed:    { en: 'Keyed to',        ru: 'Завязано на' },
+    affects:  { en: 'Affects',         ru: 'Влияет на' },
+    vs:       { en: 'Strong against',  ru: 'Силён против' },
+    only:     { en: 'Only one of',     ru: 'Только один' },
+  },
+};
+
+// Params whose VALUE is a tag (or a list of them), and what that tag is doing.
+// `tag_required` is deliberately absent: it carries no single meaning across the
+// abilities that declare it, so it is resolved per ability in tagRolesFor().
+const TAG_PARAM_ROLES = {
+  ally_tag_required:      'affects',
+  grant_target_tag:       'affects',
+  inspiration_target_tag: 'affects',
+  vow_ash_tags:           'affects',
+  vs_tag:                 'vs',
+  tag_exclusive:          'only',
+};
+
+// A per-tag scaling key is what turns `tag_required` from a gate into a counter.
+const SCALING_KEY = /_per_tag$|_per_tagged_unit$/;
+
+// 'chorus_of_war 2' -> 'chorus_of_war'. The rank is a level of the same idea, and
+// the Library lists ideas — three Bleed icons taught nothing three times.
+function baseKey(id) {
+  return String(id || '').trim().replace(/\s+\d+$/, '').replace(/\s+/g, '_');
+}
+
+function abilityIconUrl(def) {
+  const file = baseKey(def?.id);
+  return file ? assetUrl(`/assets/icons/abilities/${file}.jpg`) : '';
+}
+
+function portraitUrl(unitDef) {
+  return assetUrl(`/assets/character_portraits/p_${unitDef.id}.png`);
+}
+
+// Every ability key a unit definition names, passives and its active alike.
+function abilityKeysOf(unitDef) {
+  const raw = unitDef?.passive;
+  const passives = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  return [...passives, unitDef?.ability].filter(Boolean);
+}
+
+// One entry per unit NAME, not per definition: data/units.js holds a row for
+// every tier and every branch of a unit, so an un-deduplicated grid showed the
+// Black Castellan seven times. The LOWEST tier that matches wins, because that
+// is the form the player meets first and recognises.
+function dedupeByName(defs) {
+  const byName = new Map();
+  for (const d of defs) {
+    const seen = byName.get(d.name);
+    if (!seen || (d.t ?? 99) < (seen.t ?? 99)) byName.set(d.name, d);
+  }
+  return [...byName.values()].sort((a, b) => (a.t ?? 0) - (b.t ?? 0) || a.name.localeCompare(b.name));
+}
+
 // Every user-facing string in this screen, in the same shape the other screens
 // use (CASTLE_TEXT and friends) so there is one place to add a language.
 const TOME_TEXT = {
@@ -18,6 +112,8 @@ const TOME_TEXT = {
   noCrystals:    { en: 'Not enough crystals',   ru: 'Недостаточно кристаллов' },
   researchFail:  { en: 'Research failed',       ru: 'Не удалось изучить' },
   emptyCategory: { en: 'No spells in this category.', ru: 'Нет заклинаний в этой категории.' },
+  tomeAria:      { en: 'Spells',                ru: 'Заклинания' },
+  libraryAria:   { en: 'Library',               ru: 'Библиотека' },
   throneRequired: {
     en: tier => `🔒 Throne level ${tier} required`,
     ru: tier => `🔒 Требуется тронный зал ${tier} уровня`,
@@ -38,20 +134,293 @@ export function renderSpellTome(root, { player }) {
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
-        <div class="tier-tabs" id="tier-tabs">
-          ${TOME_CATEGORIES.map((c, i) => `
-            <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
-          `).join('')}
-        </div>
+        <div class="tome-layers">
+          <button class="tome-layer-arrow tome-layer-arrow--prev" id="tome-layer-prev"
+                  type="button" aria-label="${TOME_TEXT.tomeAria[lang]}"><span>&lsaquo;</span></button>
 
-        <div class="spelltome-body">
-          <div class="spells-slider-wrap" id="spells-slider-wrap">
-            <div class="spells-slider" id="spells-slider"></div>
+          <div class="tome-layer-viewport">
+            <div class="tome-layer-track" id="tome-layer-track">
+
+              <div class="tome-layer" data-layer="1">
+                <div class="tier-tabs" id="tier-tabs">
+                  ${TOME_CATEGORIES.map((c, i) => `
+                    <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
+                  `).join('')}
+                </div>
+
+                <div class="spelltome-body">
+                  <div class="spells-slider-wrap" id="spells-slider-wrap">
+                    <div class="spells-slider" id="spells-slider"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tome-layer" data-layer="2" id="tome-library"></div>
+
+            </div>
           </div>
+
+          <button class="tome-layer-arrow tome-layer-arrow--next" id="tome-layer-next"
+                  type="button" aria-label="${TOME_TEXT.libraryAria[lang]}"><span>&rsaquo;</span></button>
         </div>
       </main>
     </div>
   `;
+
+  // ── Pages ─────────────────────────────────────────────────────────────────
+  // The tome's two pages, arranged exactly the way the castle's and embark's are
+  // (see applyLayer in embark.js): both sit side by side on one track and
+  // switching slides it, so neither is rebuilt and the arrows cannot race a
+  // render. The Library is built ONCE, here, because it derives everything from
+  // static data — nothing about it changes while the screen is open.
+  const LAYER_COUNT = 2;
+  let currentLayer = 1;
+
+  function applyLayer() {
+    const track = root.querySelector('#tome-layer-track');
+    if (track) track.style.transform = `translateX(-${(currentLayer - 1) * 100}%)`;
+    root.querySelectorAll('.tome-layer').forEach(el => {
+      const isCurrent = Number(el.dataset.layer) === currentLayer;
+      el.classList.toggle('tome-layer--active', isCurrent);
+      el.setAttribute('aria-hidden', String(!isCurrent));
+    });
+    // An arrow that leads nowhere is disabled rather than hidden: a control that
+    // vanishes moves everything beside it.
+    const prev = root.querySelector('#tome-layer-prev');
+    const next = root.querySelector('#tome-layer-next');
+    if (prev) {
+      const can = currentLayer > 1;
+      prev.disabled = !can;
+      prev.classList.toggle('tome-layer-arrow--live', can);
+    }
+    if (next) {
+      const can = currentLayer < LAYER_COUNT;
+      next.disabled = !can;
+      next.classList.toggle('tome-layer-arrow--live', can);
+    }
+  }
+
+  function setLayer(target) {
+    const clamped = Math.min(LAYER_COUNT, Math.max(1, target));
+    if (clamped === currentLayer) return;
+    currentLayer = clamped;
+    playPageTurnSound();
+    // The cost bar belongs to a selected spell on page one; carrying it onto the
+    // Library would leave a price tag hanging under a screen that sells nothing.
+    if (currentLayer !== 1) { hideCostBar(); closeSheet(); }
+    applyLayer();
+  }
+
+  root.querySelector('#tome-layer-prev')?.addEventListener('click', () => setLayer(currentLayer - 1));
+  root.querySelector('#tome-layer-next')?.addEventListener('click', () => setLayer(currentLayer + 1));
+  applyLayer();
+
+  // Layer two, built in place. It derives everything from static data, so it is
+  // rendered ONCE when the screen is: nothing about it changes while it is open.
+  function renderLibrary(container) {
+    // `lang` is the screen's, computed once at the top — the Library is part of
+    // this screen now, not a guest with its own copy.
+    const L = lang;
+    const t = key => LIB_TEXT[key][L];
+
+    const factionUnits = Object.values(UNITS[player.faction] || {});
+
+    // ── The faction's abilities, collapsed to one entry per idea ───────────────
+    //
+    // Built once. Each entry keeps EVERY rank it found (so the sheet can show the
+    // progression) and every unit definition that carries any of them (so "carried
+    // by" is answered without a second pass over units.js).
+    const entries = new Map();
+    for (const unitDef of factionUnits) {
+      for (const key of abilityKeysOf(unitDef)) {
+        const def = resolveAbility(key);
+        if (!def) continue;
+        const base = baseKey(def.id ?? key);
+        if (!entries.has(base)) entries.set(base, { base, def, ranks: [], carriers: [] });
+        const entry = entries.get(base);
+        if (!entry.ranks.some(r => r.id === def.id)) entry.ranks.push(def);
+        // The lowest rank is the one the grid shows and the sheet leads with.
+        if ((def.rank ?? 1) < (entry.def.rank ?? 1)) entry.def = def;
+        entry.carriers.push(unitDef);
+      }
+    }
+    for (const entry of entries.values()) {
+      entry.ranks.sort((a, b) => (a.rank ?? 1) - (b.rank ?? 1));
+      entry.carriers = dedupeByName(entry.carriers);
+    }
+    const allEntries = [...entries.values()]
+      .sort((a, b) => abilityName(a.def).localeCompare(abilityName(b.def)));
+
+    // What each tag named in an ability is DOING there. Returns [{ tag, role }].
+    function tagRolesFor(def) {
+      const p = def?.params || {};
+      const out = [];
+      const push = (tag, role) => {
+        if (!tag || out.some(o => o.tag === tag && o.role === role)) return;
+        out.push({ tag, role });
+      };
+
+      // `tag_required` is the one tag param with no fixed meaning, so it is read
+      // three ways rather than mislabelled one way:
+      //   a per-tag scaling key present -> the tag is being COUNTED  ("scales per")
+      //   an active                     -> the tag is a GATE on the target
+      //                                    ("requires" — Raise Dead needs a Zombie)
+      //   a passive                     -> anything from "only one of you" to
+      //                                    "split among these", which no single
+      //                                    verb covers honestly, so it is stated
+      //                                    neutrally and the description says the
+      //                                    rest.
+      if (p.tag_required) {
+        const scales = Object.keys(p).some(k => SCALING_KEY.test(k));
+        const role = scales ? 'scales' : (def.type === 'active' ? 'requires' : 'keyed');
+        push(p.tag_required, role);
+      }
+      for (const [key, role] of Object.entries(TAG_PARAM_ROLES)) {
+        const val = p[key];
+        if (!val) continue;
+        for (const tag of (Array.isArray(val) ? val : [val])) push(tag, role);
+      }
+      return out;
+    }
+
+    // ── Markup ────────────────────────────────────────────────────────────────
+    const FILTERS = [
+      { id: 'all',     label: t('all') },
+      { id: 'passive', label: t('passives') },
+      { id: 'active',  label: t('actives') },
+    ];
+    let activeFilter = 'all';
+
+    container.innerHTML = `
+      <div class="library">
+        <div class="tier-tabs library-filters" id="library-filters">
+          ${FILTERS.map((f, i) => `
+            <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-filter="${f.id}">${f.label}</button>
+          `).join('')}
+        </div>
+        <div class="library-grid" id="library-grid"></div>
+      </div>
+    `;
+
+    const grid = container.querySelector('#library-grid');
+
+    function visibleEntries() {
+      if (activeFilter === 'all') return allEntries;
+      return allEntries.filter(e => (e.def.type || 'passive') === activeFilter);
+    }
+
+    function renderGrid() {
+      const list = visibleEntries();
+      if (!list.length) {
+        grid.innerHTML = `<div class="library-empty">${t('empty')}</div>`;
+        return;
+      }
+      grid.innerHTML = list.map(entry => {
+        // The rank count sits on the icon rather than in the name: it is the one
+        // thing the grid can say that the name cannot, and it marks the abilities
+        // worth opening because they grow.
+        const ranks = entry.ranks.length > 1
+          ? `<span class="library-cell-ranks">${entry.ranks.length}</span>` : '';
+        return `
+          <button class="library-cell" type="button" data-base="${entry.base}">
+            <span class="library-cell-icon">
+              <img src="${abilityIconUrl(entry.def)}" alt="" onerror="this.style.visibility='hidden'">
+              ${ranks}
+            </span>
+            <span class="library-cell-name">${abilityName(entry.def)}</span>
+          </button>`;
+      }).join('');
+    }
+
+    function portraitsHtml(unitDefs) {
+      return `<div class="library-portraits">${unitDefs.map(u => `
+        <div class="library-portrait">
+          <span class="library-portrait-frame">
+            <img src="${portraitUrl(u)}" alt="${u.name}" onerror="this.style.visibility='hidden'">
+            ${u.t ? `<span class="library-portrait-tier">${t('tier')}${u.t}</span>` : ''}
+          </span>
+          <span class="library-portrait-name">${(L === 'ru' && u.name_ru) || u.name}</span>
+          <span class="library-portrait-tags">${(u.tags || []).join(' · ')}</span>
+        </div>`).join('')}</div>`;
+    }
+
+    // A tag, answered with faces. The SUB-sheet is used rather than replacing the
+    // ability sheet, so closing it returns the player to the ability they came
+    // from — which is what makes this a loop instead of a walk.
+    function openTagSheet(tag) {
+      const units = dedupeByName(factionUnits.filter(u => (u.tags || []).includes(tag)));
+      const body = units.length
+        ? `<div class="library-section-label">${LIB_TEXT.tagUnits[L](units.length)}</div>${portraitsHtml(units)}`
+        : `<div class="library-empty">${t('noTagUnits')}</div>`;
+      openSubSheet(tag, body);
+    }
+
+    function openAbilitySheet(entry) {
+      const parts = buildAbilityModalParts(entry.def, entry.def.type);
+
+      // Ranks beyond the first, as the numbers actually change. The lead
+      // description above is rank one's, so repeating it here would say nothing.
+      const higher = entry.ranks.slice(1);
+      const ranksHtml = higher.length ? `
+        <div class="library-section-label">${t('ranks')}</div>
+        <div class="library-ranks">
+          ${higher.map(r => `
+            <div class="library-rank">
+              <span class="library-rank-pill">${t('rank')} ${r.rank ?? '?'}</span>
+              <span class="library-rank-desc">${abilityDescription(r)}</span>
+            </div>`).join('')}
+        </div>` : '';
+
+      const roles = tagRolesFor(entry.def);
+      const tagsHtml = roles.length ? `
+        <div class="library-section-label">${t('tags')}</div>
+        <div class="library-tagchips">
+          ${roles.map(r => `
+            <button class="library-tagchip library-tagchip--${r.role}" type="button" data-tag="${r.tag}">
+              <span class="library-tagchip-role">${LIB_TEXT.roles[r.role][L]}</span>
+              <span class="library-tagchip-tag">${r.tag}</span>
+            </button>`).join('')}
+        </div>` : '';
+
+      const carriersHtml = `
+        <div class="library-section-label">${t('carriedBy')}</div>
+        ${entry.carriers.length
+          ? portraitsHtml(entry.carriers)
+          : `<div class="library-empty">${t('noCarriers')}</div>`}`;
+
+      openSheet(parts.title, `${parts.body}${ranksHtml}${tagsHtml}${carriersHtml}`, parts.badges);
+
+      // Bound on the freshly written body, once per open. openSheet replaces the
+      // body's innerHTML, so the previous ability's listener has already gone with
+      // the nodes it was attached to — nothing accumulates.
+      document.querySelector('.modal-overlay .modal-body')
+        ?.addEventListener('click', e => {
+          const chip = e.target.closest('.library-tagchip');
+          if (chip) openTagSheet(chip.dataset.tag);
+        });
+    }
+
+    grid.addEventListener('click', e => {
+      const cell = e.target.closest('.library-cell');
+      if (!cell) return;
+      const entry = entries.get(cell.dataset.base);
+      if (entry) openAbilitySheet(entry);
+    });
+
+    container.querySelector('#library-filters').addEventListener('click', e => {
+      const btn = e.target.closest('.tier-tab');
+      if (!btn || btn.dataset.filter === activeFilter) return;
+      playPageTurnSound();
+      activeFilter = btn.dataset.filter;
+      container.querySelectorAll('#library-filters .tier-tab').forEach(b =>
+        b.classList.toggle('tier-tab--active', b.dataset.filter === activeFilter));
+      renderGrid();
+    });
+
+    renderGrid();
+  }
+
+  renderLibrary(root.querySelector('#tome-library'));
 
   let playerCrystals  = {};
   let throneLevel     = 1;

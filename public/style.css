@@ -5004,6 +5004,308 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow-y: auto;
 }
 
+.tome-layers {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px 4px 6px;
+}
+
+.tome-layer-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tome-layer-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  transition: transform 0.28s ease;
+  will-change: transform;
+}
+
+.tome-layer {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tome-layer[aria-hidden="true"] { pointer-events: none; }
+
+.tome-layer-arrow {
+  flex: 0 0 26px;
+  align-self: stretch;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(28, 31, 40, 0.95), rgba(17, 19, 24, 0.95));
+  color: var(--muted);
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tome-layer-arrow span { display: block; transform: scaleY(1.6); }
+
+.tome-layer-arrow:disabled { opacity: 0.3; cursor: default; }
+
+.tome-layer-arrow--live {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.28), rgba(var(--accent-rgb), 0.10));
+  text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.45), inset 0 0 10px rgba(var(--accent-rgb), 0.18);
+}
+
+/* The tome's page art is bright parchment, and the Library's chrome is the
+   game's usual pale-on-dark. Without a scrim of its own the ability names sat
+   on the lit half of the page and vanished; the panel gives the whole page one
+   surface to read against instead of two. */
+.library {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(11, 14, 20, 0.86);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.library-filters {
+  padding: 0 4px;
+  background: transparent;
+  border-radius: 8px 8px 0 0;
+}
+
+.library-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 6px;
+  padding: 12px 6px 20px;
+  align-content: start;
+}
+
+.library-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.library-cell-icon {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(11, 14, 20, 0.7);
+  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.library-cell-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.library-cell:active .library-cell-icon,
+.library-cell:hover .library-cell-icon {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
+}
+
+.library-cell-ranks {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  min-width: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: rgba(11, 14, 20, 0.88);
+  border: 1px solid rgba(var(--accent-rgb), 0.7);
+  color: var(--accent);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+}
+
+.library-cell-name {
+  font-size: 0.6rem;
+  line-height: 1.15;
+  text-align: center;
+  color: #c9cbd2;
+}
+
+.library-empty {
+  grid-column: 1 / -1;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.library-section-label {
+  margin: 14px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.library-ranks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.library-rank {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.library-rank-pill {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.library-tagchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.library-tagchip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(11, 14, 20, 0.6);
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.library-tagchip:hover,
+.library-tagchip:active { border-color: var(--accent); }
+
+.library-tagchip-role {
+  color: var(--muted);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.library-tagchip-tag {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.library-tagchip--vs .library-tagchip-tag    { color: var(--danger); }
+.library-tagchip--keyed .library-tagchip-tag { color: #8fb7d9; }
+.library-tagchip--only .library-tagchip-tag { color: #c49a4a; }
+
+.library-portraits {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 6px;
+}
+
+.library-portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.library-portrait-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(11, 14, 20, 0.7);
+  display: block;
+}
+
+.library-portrait-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.library-portrait-tier {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: rgba(11, 14, 20, 0.88);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 13px;
+}
+
+.library-portrait-name {
+  font-size: 0.6rem;
+  line-height: 1.15;
+  color: var(--text, #ddd);
+}
+
+.library-portrait-tags {
+  font-size: 0.52rem;
+  line-height: 1.1;
+  color: var(--muted);
+}
+
 .spells-slider-wrap {
   flex-shrink: 0;
   padding: 12px 14px;
