@@ -63,6 +63,7 @@ const slotsOnLayer = layer => SLOT_IDS.filter(s => SLOT_LAYERS[s] === layer);
 // does not exist yet, and correctly offer nothing.
 const SLOT_FIXED_BUILDING = {
   slot_12: 'infirmary',
+  slot_15: 'blacksmith',
   slot_13: 'crystal_mine',
   slot_14: 'mage_guild',
   slot_16: 'messenger_post',
@@ -107,6 +108,15 @@ function buildingLevel(buildingsData, buildingId) {
     if (state?.building_id === buildingId) best = Math.max(best, state.level ?? 0);
   }
   return best;
+}
+
+// The forge gate. Crafting is the ONLY source of finished equipment in the
+// game (embarks drop shards, never items), so this is the single switch that
+// decides whether a player can make gear at all. Checked on the server in
+// POST /items/craft and mirrored in the items screen so the buttons explain
+// themselves rather than just failing.
+function craftingUnlocked(buildingsData) {
+  return buildingLevel(buildingsData, 'blacksmith') >= 1;
 }
 
 // ── Building effects ────────────────────────────────────────────────────────
@@ -314,6 +324,11 @@ const BUILDING_POOLS = {
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
         cost: { gold: 100, Crystals_Life: 30 },
         upgrade_costs: { 2: { gold: 240, Crystals_Life: 80 }, 3: { gold: 450, Crystals_Life: 150 } } },
+      { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'blacksmith',
+        desc: 'Opens the forge. Without it nothing can be crafted.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
+        cost: { gold: 80, Crystals_Life: 20 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -446,6 +461,11 @@ const BUILDING_POOLS = {
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
         cost: { gold: 100, Crystals_Fire: 30 },
         upgrade_costs: { 2: { gold: 240, Crystals_Fire: 80 }, 3: { gold: 450, Crystals_Fire: 150 } } },
+      { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'blacksmith',
+        desc: 'Opens the forge. Without it nothing can be crafted.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
+        cost: { gold: 80, Crystals_Fire: 20 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -588,6 +608,11 @@ const BUILDING_POOLS = {
         desc_ru: 'Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это.',
         cost: { gold: 100, Crystals_Death: 30 },
         upgrade_costs: { 2: { gold: 240, Crystals_Death: 80 }, 3: { gold: 450, Crystals_Death: 150 } } },
+      { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'blacksmith',
+        desc: 'Opens the forge. Without it nothing can be crafted.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
+        cost: { gold: 80, Crystals_Death: 20 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -1551,6 +1576,7 @@ module.exports = {
   SLOT_CATEGORIES,
   SLOT_IDS,
   SLOT_LAYERS,
+  craftingUnlocked,
   LAYER_COUNT,
   slotsOnLayer,
   SLOT_UNLOCKS,

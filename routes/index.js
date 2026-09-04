@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -107,7 +107,11 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 // Granted once, when the player picks a faction (see /player/faction). Neutral,
 // tag-free gear so it equips on any hero — the roster tutorial walks the player
 // through putting it on.
-const STARTING_ITEM_KEYS = ['padded_armor'];
+// EMPTY by design. Equipment now comes only from the forge, and the forge only
+// opens once the Blacksmith is built — which onboarding walks the player to
+// after their first embark. Handing out a free Padded Armor here would have the
+// tutorial tell them to craft an item they already owned.
+const STARTING_ITEM_KEYS = [];
 
 // An owned item is IDENTITY ONLY: which item it is, and nothing about what it
 // does. Stats live in data/items.js and are attached on the way out, by
@@ -1310,10 +1314,17 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   if (startingUnit) {
     structures[startingUnit.slot] = { level: 1, building_id: startingUnit.building_id };
   }
-  // slot_0 (Throne) intentionally starts empty (level 0) - the tutorial's first
-  // tap on the throne triggers a free build to level 1 via /structures/build
-  // (see the isNew branch there). The hero still gets building_slot: 'slot_0'
-  // now so upgrade-path resolution works once that build happens.
+  // slot_0 (Throne) is raised HERE rather than by the player. Its level-1
+  // building is not a choice: exactly one tier-1 throne per faction names the
+  // hero just picked as its unit_id, and the build was free. Asking the player
+  // to confirm it bought nothing — it only gated roster, embark and spell
+  // research (all keyed on throne level >= 1) behind a tap whose tutorial
+  // prompt /player/reset throws away, since a reset keeps tutorial flags but
+  // wipes structures. That combination left a reset player on a locked castle
+  // with nothing pointing at the throne.
+  const throneDef = (BUILDING_POOLS[faction]?.throne || [])
+    .find(b => b.tier === 1 && b.unit_id === hero_id);
+  if (throneDef) structures.slot_0 = { level: 1, building_id: throneDef.id };
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
   // The bonus unit starts DEAD so the opening spell tutorial has something to
   // revive (then heal). The hero is alive and armed as usual.
@@ -4301,6 +4312,15 @@ router.post('/items/craft', requireAuth, async (req, res) => {
 
     if (itemDef.faction && itemDef.faction !== player.faction) {
       return res.status(400).json({ error: 'This item cannot be crafted by your faction' });
+    }
+
+    // The forge gate. Crafting is the only source of finished equipment, so
+    // without a Blacksmith standing there is nothing to craft WITH. The items
+    // screen greys the buttons for the same reason, but this route is the
+    // authority.
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    if (!craftingUnlocked(structRows[0]?.buildings_data)) {
+      return res.status(400).json({ error: 'Build a Blacksmith before you can craft', code: 'no_blacksmith' });
     }
 
     // Progress gate. The roster catalog disables the button for the same reason,

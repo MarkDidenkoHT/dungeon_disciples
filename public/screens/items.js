@@ -4,6 +4,7 @@ import { navigate }            from '../api.js';
 import { refreshResourceBar }  from '../api.js';
 import { bootstrapCache }      from '../api.js';
 import { ITEM_DEFS, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
+import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
 import {
   RESIST_ICONS, cap,
@@ -46,6 +47,7 @@ const IT = {
   rarity_epic:  { en: 'Epic',             ru: 'Эпический' },
   rarity_mythic:{ en: 'Mythic',           ru: 'Мифический' },
   noMaterials:  { en: 'No materials',     ru: 'Без материалов' },
+  noForge:      { en: '🔒 Build a Blacksmith', ru: '🔒 Постройте кузницу' },
   nothingMatches:{ en: 'Nothing matches these filters.', ru: 'Ничего не найдено по фильтрам.' },
   unique:       { en: 'Unique',           ru: 'Уникальный' },
   owned:        { en: 'Owned',            ru: 'В наличии' },
@@ -74,6 +76,8 @@ export function renderItems(root, { player }) {
   let items     = [];
   let resources = [];
   let progress  = {};
+  // Whether a Blacksmith stands. No forge, no crafting.
+  let forgeOpen = false;
 
   // Screen state, same axes the roster sheet filtered on.
   let filter     = 'craft';   // 'owned' | 'craft'
@@ -83,6 +87,11 @@ export function renderItems(root, { player }) {
   let selected   = 0;
 
   const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
+
+  // What onboarding has the player forge first: the cheapest thing in the
+  // catalog (50 gold, no materials, no progress gate), so the step can never
+  // wall a new player who spent their embark rewards elsewhere.
+  const TUTORIAL_CRAFT_KEY = 'padded_armor';
 
   const RARITIES = ['common', 'rare', 'epic', 'mythic'];
   const STAT_FILTERS = [
@@ -258,6 +267,9 @@ export function renderItems(root, { player }) {
   }
 
   function canCraftNow(itemDef) {
+    // No forge, nothing is craftable now — this is the predicate behind both
+    // the material sheet button and the Craftable now filter.
+    if (!forgeOpen) return false;
     if (itemDef.faction && itemDef.faction !== player.faction) return false;
     if (!meetsCraftRequirements(itemDef, progress)) return false;
     const ownedCount = items.filter(it => itemKeyOf(it) === itemDef.key).length;
@@ -270,10 +282,14 @@ export function renderItems(root, { player }) {
     const factionOk   = !itemDef.faction || itemDef.faction === player.faction;
     const unlocked    = meetsCraftRequirements(itemDef, progress);
     const uniqueOwned = !!itemDef.unique && ownedCount > 0;
-    const canCraft    = factionOk && unlocked && hasCraftMaterials(itemDef) && !uniqueOwned;
+    const canCraft    = forgeOpen && factionOk && unlocked && hasCraftMaterials(itemDef) && !uniqueOwned;
 
     let blocked = '';
-    if (uniqueOwned)     blocked = T('uniqueOwned');
+    // The forge gate outranks every other reason: with no Blacksmith nothing on
+    // this page is craftable, so saying so once is clearer than listing each
+    // item's own unmet requirement behind a wall that hides them all anyway.
+    if (!forgeOpen)      blocked = T('noForge');
+    else if (uniqueOwned)     blocked = T('uniqueOwned');
     else if (!factionOk) blocked = T('wrongFaction');
     else if (!unlocked)  blocked = `🔒 ${craftRequirementText(itemDef, L)}`;
 
@@ -421,6 +437,37 @@ export function renderItems(root, { player }) {
       </div>`;
   }
 
+  // Onboarding's forge step. castle.js walks the player to the Blacksmith and
+  // then points at this tab (`go_craft`), but the lesson has to live here —
+  // only this screen knows where the Craft button is, and that button sits in
+  // the detail card, so a spotlight means nothing until the right blueprint is
+  // the one on show. Hence the select-then-point: the step drives the track to
+  // Padded Armor rather than asking the player to find it.
+  //
+  // Deliberately gives up rather than fighting the player: if they have changed
+  // a filter, whatever they are looking for outranks the tutorial, and the step
+  // waits for a clean render instead of yanking the list back.
+  function maybeShowCraftTutorial() {
+    if (!forgeOpen || isTutorialDone(player, 'craft_item')) return;
+    // Armed by some other route (an older save, a reset that kept the stash) —
+    // there is nothing left to teach, so retire the step rather than block on it.
+    if (items.length) { markTutorialDone(player, 'craft_item'); return; }
+    if (filter !== 'craft' || rarity !== 'all' || statFilter !== 'all' || readyOnly) return;
+
+    const list = currentList();
+    const idx  = list.findIndex(e => e.kind === 'blueprint' && e.def.key === TUTORIAL_CRAFT_KEY);
+    if (idx < 0) return;
+    if (idx !== selected) {
+      selected = idx;
+      refreshList({ keepSelection: true });
+    }
+    const btn = host.querySelector('.item-action-btn--craft:not([disabled])');
+    if (!btn) return;   // cannot afford it yet; the step waits
+    showTutorialSpotlight(player, 'craft_item', btn, {
+      resolveTarget: () => host.querySelector('.item-action-btn--craft:not([disabled])'),
+    });
+  }
+
   function centreSelectedItem(behavior = 'smooth') {
     host.querySelector('#items-track .portrait-card--selected')
       ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
@@ -492,6 +539,12 @@ export function renderItems(root, { player }) {
         await applyCraftResponse(crafted);
         refreshResourceBar(player).catch(() => {});
         showTrophyBar();
+        // Onboarding's forge step is finished by the forge, not by the tap: the
+        // lesson is that an item comes OUT, so it is only done once one has.
+        if (!isTutorialDone(player, 'craft_item')) {
+          markTutorialDone(player, 'craft_item');
+          hideTutorial();
+        }
         render();
       } catch (err) {
         alert(err.message || T('failCraft'));
@@ -657,6 +710,16 @@ export function renderItems(root, { player }) {
     });
   }
 
+  // Mirrors craftingUnlocked() in data/buildings.js. Mirrored rather than
+  // imported because that module is CommonJS only and this one is loaded as an
+  // ES module in the browser — the same reason castle.js keeps its own copy of
+  // SLOT_FIXED_BUILDING. The server re-checks it in POST /items/craft, which is
+  // the authority; this copy only decides what the buttons say.
+  function hasBlacksmith(buildingsData) {
+    return Object.entries(buildingsData || {}).some(([slot, state]) =>
+      /^slot_\d+$/.test(slot) && state?.building_id === 'blacksmith' && (state.level ?? 0) >= 1);
+  }
+
   // Every slice this screen needs comes from the single /bootstrap payload.
   function applyBootstrap(boot) {
     if (!boot) return null;
@@ -664,12 +727,14 @@ export function renderItems(root, { player }) {
     items     = boot.items || [];
     resources = [...(boot.resources || []), ...(boot.trophies || [])];
     progress  = boot.progress || {};
+    forgeOpen = hasBlacksmith(boot.structures?.buildings_data);
     return boot;
   }
 
   async function load() {
     applyBootstrap(await bootstrapCache.get(player.chat_id));
     render();
+    maybeShowCraftTutorial();
     showTrophyBar();
   }
 

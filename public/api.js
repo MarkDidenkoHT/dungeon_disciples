@@ -194,24 +194,27 @@ export function setActiveNav(screen) {
   });
 }
 
-const LOCKED_UNTIL_THRONE_1 = ['roster', 'embark', 'spells'];
+const LOCKED_UNTIL_ONBOARDED = ['roster', 'embark', 'spells'];
 
+// The step that opens them. Until the player has raised their first building,
+// these three tabs lead somewhere the tutorial has not explained yet, so they
+// stay shut and onboarding does the pointing.
+const NAV_UNLOCK_STEP = 'second_building';
+
+// This used to key off the throne being at level 1, which the player raised by
+// hand as the tutorial's opening step. The throne is now seeded with the hero
+// (see POST /player/faction), so that reading would lock nobody — and it was
+// already wrong for a reset: /player/reset wipes structures but deliberately
+// KEEPS tutorial flags, so a returning player got the lock back with the
+// tutorial that explains it already marked done, and nothing on screen to say
+// what to do. Keying on the tutorial flag instead means a first-timer is
+// guided as before, and anyone who has been through it once — reset or not —
+// walks straight in.
 export async function refreshNavLock(player) {
   const nav = document.getElementById('bottom-nav');
   if (!nav || !player?.chat_id) return;
-  let throneLevel = 0;
-  try {
-    // get(), not refresh(): this runs on EVERY navigation, and forcing a round
-    // trip here meant tab-switching cost a /bootstrap each time even though
-    // nothing had changed. Writes invalidate the cache themselves, and the TTL
-    // covers server-side changes, so the cached copy is trustworthy.
-    const boot = await bootstrapCache.get(player.chat_id);
-    throneLevel = boot.structures?.buildings_data?.slot_0?.level ?? 0;
-  } catch {
-    throneLevel = 0;
-  }
-  const locked = throneLevel < 1;
-  LOCKED_UNTIL_THRONE_1.forEach(screen => {
+  const locked = !player?.tutorials?.[NAV_UNLOCK_STEP];
+  LOCKED_UNTIL_ONBOARDED.forEach(screen => {
     const btn = nav.querySelector(`.nav-btn[data-screen="${screen}"]`);
     if (!btn) return;
     btn.classList.toggle('disabled', locked);

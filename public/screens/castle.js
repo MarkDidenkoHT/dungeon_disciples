@@ -64,6 +64,7 @@ const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
 // one named building per slot, not a category pool.
 const SLOT_FIXED_BUILDING = {
   slot_12: 'infirmary',
+  slot_15: 'blacksmith',
   slot_13: 'crystal_mine',
   slot_14: 'mage_guild',
   slot_16: 'messenger_post',
@@ -146,7 +147,6 @@ const CASTLE_TEXT = {
   // The build picker names the UNIT, not the building: the player is choosing
   // who will live there, and that is what the card in front of them shows.
   chooseUnit:  { en: 'Choose Unit',                           ru: 'Выберите бойца' },
-  beginReign:  { en: 'Begin Your Reign',                      ru: 'Начните правление' },
   noBuildings: { en: 'No buildings available for this slot.', ru: 'Для этого слота нет доступных зданий.' },
   mercHall:    { en: 'Mercenary Hall',                        ru: 'Зал наёмников' },
   mercRecruit: { en: 'Recruit',                               ru: 'Нанять' },
@@ -1290,7 +1290,10 @@ export function renderCastle(root, { player }) {
   // plays out here: inspect the building → its item slot → equip → the spells
   // that fix a fallen recruit → embark. The step IDs are unchanged, so a player
   // part-way through onboarding resumes rather than repeating.
-  const STARTING_ITEM_KEY = 'padded_armor';
+  // The item onboarding has the player forge (see items.js), and so the one the
+  // equip step should point at when the stash holds more than one. Not a
+  // STARTING item any more — nothing is handed out at faction select.
+  const TUTORIAL_ITEM_KEY = 'padded_armor';
 
   // True only while the revive → heal lesson is running, so the two spell
   // buttons advance the chain during onboarding and never spotlight for a
@@ -1403,54 +1406,31 @@ export function renderCastle(root, { player }) {
   const infirmaryBuilt = () =>
     structuresRecord?.buildings_data?.[INFIRMARY_SLOT]?.building_id === 'infirmary';
 
+  const BLACKSMITH_SLOT = Object.keys(SLOT_FIXED_BUILDING)
+    .find(sl => SLOT_FIXED_BUILDING[sl] === 'blacksmith');
+  const blacksmithBuilt = () =>
+    structuresRecord?.buildings_data?.[BLACKSMITH_SLOT]?.building_id === 'blacksmith';
+  // The forge produces the hero's first item, so the equip lesson cannot run
+  // until something has come out of it. `heroNeedsArmour` already requires an
+  // unequipped item to exist, which is the same condition from the other end —
+  // this only decides when to send the player to the Items tab.
+  const ownsAnyItem = () => itemsCache.length > 0;
+
+  // ORDER IS THE LESSON. The equip steps used to sit here, fourth, arming the
+  // hero from a free set of Padded Armor handed out at faction select. Both are
+  // gone: equipment now comes only from the forge, so the chain teaches the
+  // hero first, sends the player out to earn, opens the Blacksmith, forges the
+  // armor, and only then puts it on. The equip steps live at the END of this
+  // array for that reason — moving them back up would point at an empty stash.
   const ONBOARDING = [
     {
-      id: 'throne_upgrade',
-      awaits: true,
+      id: 'hero_intro',
       bare:   true,
-      ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1,
+      ready:  () => !!heroRosterUnit(),
       target: () => nodeForSlot('slot_0'),
-    },
-    {
-      id: 'second_building',
-      awaits: true,
-      bare:   true,
-      ready:  () => (structuresRecord?.buildings_data?.slot_0?.level ?? 0) >= 1
-                 && rosterCount < 3 && !!firstFreeBarracksSlot(),
-      target: () => nodeForSlot(firstFreeBarracksSlot()),
-      hint:   () => firstRecruitHint(player),
-    },
-    {
-      id: 'roster_intro',
-      bare:   true,
-      ready:  heroNeedsArmour,
-      target: () => nodeForSlot(heroSlot()),
-      // The tap opens the sheet through the node's own handler; the driver then
-      // finds the next step already on screen.
+      // The tap opens the hero's sheet through the node's own handler, and the
+      // passives step below is already pointing into it.
       onTap:  () => afterSheetSettles(runOnboarding),
-    },
-    {
-      id: 'roster_equip_slot',
-      ready:  heroNeedsArmour,
-      open:   () => openSlotUnitSheet(heroSlot()),
-      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
-      // The same tap opens the item picker through the sheet's delegated
-      // handler, which runs after this one — wait for the sub-sheet.
-      onTap:  () => afterSheetSettles(runOnboarding, true),
-    },
-    {
-      id: 'roster_equip',
-      awaits: true,
-      // Only once the picker is actually open, which the step above did.
-      ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
-      target: equipButtonInPicker,
-    },
-    {
-      id: 'roster_equipped',
-      ready:  () => { const h = heroRosterUnit(); return !!h && !!equippedItemFor(h.id); },
-      open:   () => openSlotUnitSheet(heroSlot()),
-      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
-      wait:   true,
     },
     {
       id: 'roster_passive_stack',
@@ -1458,6 +1438,14 @@ export function renderCastle(root, { player }) {
       open:   () => openSlotUnitSheet(heroSlot()),
       target: () => getSheetBody()?.querySelector('.unit-abilities-row'),
       wait:   true,
+    },
+    {
+      id: 'second_building',
+      awaits: true,
+      bare:   true,
+      ready:  () => rosterCount < 3 && !!firstFreeBarracksSlot(),
+      target: () => nodeForSlot(firstFreeBarracksSlot()),
+      hint:   () => firstRecruitHint(player),
     },
     // Both resurrection steps are off the table when death is disabled: there
     // is no fallen unit to teach on, and the Resurrect button they point at
@@ -1517,6 +1505,57 @@ export function renderCastle(root, { player }) {
       ready:  () => isTutorialDone(player, 'build_messenger_post') && !infirmaryBuilt(),
       open:   () => setLayer(2),
       target: () => nodeForSlot(INFIRMARY_SLOT),
+    },
+    // The forge, and everything downstream of it. Crafting is the only source
+    // of equipment in the game, so this is where the hero finally gets armed —
+    // with something the player made rather than something they were given.
+    {
+      id: 'build_blacksmith',
+      awaits: true,
+      bare:   true,
+      ready:  () => isTutorialDone(player, 'build_infirmary') && !blacksmithBuilt(),
+      open:   () => setLayer(2),
+      target: () => nodeForSlot(BLACKSMITH_SLOT),
+    },
+    // Hands off to the items screen, which runs `craft_item` itself and marks
+    // it when the forge delivers. This step only points at the tab.
+    {
+      id: 'go_craft',
+      bare:   true,
+      ready:  () => blacksmithBuilt() && !ownsAnyItem(),
+      target: () => document.querySelector('.nav-btn[data-screen="items"]'),
+    },
+    {
+      id: 'roster_intro',
+      bare:   true,
+      ready:  heroNeedsArmour,
+      target: () => nodeForSlot(heroSlot()),
+      // The tap opens the sheet through the node's own handler; the driver then
+      // finds the next step already on screen.
+      onTap:  () => afterSheetSettles(runOnboarding),
+    },
+    {
+      id: 'roster_equip_slot',
+      ready:  heroNeedsArmour,
+      open:   () => openSlotUnitSheet(heroSlot()),
+      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
+      // The same tap opens the item picker through the sheet's delegated
+      // handler, which runs after this one — wait for the sub-sheet.
+      onTap:  () => afterSheetSettles(runOnboarding, true),
+    },
+    {
+      id: 'roster_equip',
+      awaits: true,
+      // Only once the picker is actually open, which the step above did.
+      ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
+      target: equipButtonInPicker,
+    },
+    {
+      id: 'roster_equipped',
+      ready:  () => { const h = heroRosterUnit(); return !!h && !!equippedItemFor(h.id); },
+      open:   () => openSlotUnitSheet(heroSlot()),
+      target: () => getSheetBody()?.querySelector(`[data-item-slot][data-roster-id="${heroRosterUnit()?.id}"]`),
+      wait:   true,
     },
   ];
 
@@ -1629,7 +1668,7 @@ export function renderCastle(root, { player }) {
     const buttons = [...(getSubSheetBody()?.querySelectorAll('.item-action-btn--equip:not([disabled])') || [])];
     return buttons.find(b => {
       const item = itemsCache.find(it => String(it.id) === String(b.dataset.itemId));
-      return (item?.item_stats?.key || item?.item_stats?.icon) === STARTING_ITEM_KEY;
+      return (item?.item_stats?.key || item?.item_stats?.icon) === TUTORIAL_ITEM_KEY;
     }) || buttons[0] || null;
   }
 
@@ -3057,18 +3096,11 @@ export function renderCastle(root, { player }) {
 
     const factionPools = buildingPools[player.faction] || {};
     const pool         = factionPools[slotCategory] || [];
-    let available;
-    if (slot === 'slot_0') {
-      available = pool.filter(b => b.category === 'throne' && b.tier === 1 && b.unit_id === player.hero);
-      // Defensive fallback: player.hero should always be set by this point, but
-      // if it's ever missing, show every tier-1 throne option for the faction
-      // instead of a dead-end "no buildings available" screen.
-      if (!available.length) {
-        available = pool.filter(b => b.category === 'throne' && b.tier === 1);
-      }
-    } else {
-      available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
-    }
+    // The throne is never built from here. It is seeded at level 1 with the
+    // hero (POST /player/faction), so it always has a building_id, and the only
+    // caller of this function is the empty-slot branch of the node handler.
+    // Its upgrades go through openUpgradeModal like every other slot's.
+    let available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
 
     // Layer 2 is a fixed ladder: each slot accepts exactly the one building
     // named for it, and a slot with none named accepts NOTHING — it is reserved
@@ -3089,13 +3121,11 @@ export function renderCastle(root, { player }) {
     // the Mercenary Hall, Barracks II — is not a unit choice, and titling its
     // sheet that way asked the player to pick a soldier from a list of halls.
     const recruits = available.some(b => b.unit_id);
-    openSliderModal(slot === 'slot_0'
-      ? CASTLE_TEXT.beginReign[castleLang]
-      : recruits
-        ? CASTLE_TEXT.chooseUnit[castleLang]
-        : CASTLE_TEXT.build[castleLang],
+    openSliderModal(recruits
+      ? CASTLE_TEXT.chooseUnit[castleLang]
+      : CASTLE_TEXT.build[castleLang],
       available.map(b => {
-        const costText = slot === 'slot_0' ? '' : costLabelFor(b.cost);
+        const costText = costLabelFor(b.cost);
         return {
           unit:          getUnitByUnitId(b.unit_id),
           buildingLabel: buildingLabel(b),
@@ -3107,7 +3137,7 @@ export function renderCastle(root, { player }) {
           buildingId:    b.id,
           placeholder:   !!b.placeholder,
           cost:          b.cost,
-          affordable:    slot === 'slot_0' || b.placeholder || canAffordCost(b.cost),
+          affordable:    b.placeholder || canAffordCost(b.cost),
           slot,
         };
       }),
@@ -3115,11 +3145,7 @@ export function renderCastle(root, { player }) {
         if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
-      },
-      // The throne sheet is the first sheet anyone sees, and the ⚒ that raises
-      // it reads as decoration until you have used it once. The arrow points at
-      // it for that one build and never again.
-      { hintConfirm: slot === 'slot_0' && (structuresRecord?.buildings_data?.slot_0?.level ?? 0) < 1 }
+      }
     );
   }
 
@@ -3220,7 +3246,6 @@ export function renderCastle(root, { player }) {
       // replayed on every visit with a level 0 throne while every other step
       // stayed flagged. Chain-wise it is the first beat, and it is finished the
       // moment the throne exists.
-      if (slot === 'slot_0') markTutorialDone(player, 'throne_upgrade');
       // The post-battle chain ends the moment the Post is raised; errands take
       // over from there (onboardingIdle -> maybeShowErrandsIntro), now that the
       // building they need exists.

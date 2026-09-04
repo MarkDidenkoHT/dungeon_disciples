@@ -27,14 +27,14 @@ export function firstRecruitHint(player) {
 }
 
 const TUTORIAL_STEPS = {
-  throne_upgrade: {
+  hero_intro: {
     en: {
       title: 'Welcome, Ruler',
-      text: 'Your throne stands empty. Tap it to begin your reign and unlock your kingdom.',
+      text: 'The throne at the centre is yours, and the figure on it is your hero — the one unit that fights in every battle and can never be lost. Tap the throne to look them over.',
     },
     ru: {
       title: 'Добро пожаловать, Правитель',
-      text: 'Ваш трон пуст. Коснитесь его, чтобы начать правление и открыть королевство.',
+      text: 'Трон в центре — ваш, а на нём ваш герой: единственный боец, который участвует в каждом бою и которого нельзя потерять. Коснитесь трона, чтобы рассмотреть его.',
     },
   },
   second_building: {
@@ -63,11 +63,11 @@ const TUTORIAL_STEPS = {
   roster_equip_slot: {
     en: {
       title: 'Equipment Slot',
-      text: 'Every unit carries one item, and it sits in this slot. Your hero came with a set of Padded Armor — tap the empty slot to open your items.',
+      text: 'Every unit carries one item, and it sits in this slot. The armor you just forged is waiting — tap the empty slot to open your items.',
     },
     ru: {
       title: 'Слот снаряжения',
-      text: 'Каждый боец носит один предмет — он занимает этот слот. У вашего героя есть стёганый доспех: коснитесь пустого слота, чтобы открыть предметы.',
+      text: 'Каждый боец носит один предмет — он занимает этот слот. Выкованный вами доспех ждёт: коснитесь пустого слота, чтобы открыть предметы.',
     },
   },
   roster_equip: {
@@ -252,6 +252,36 @@ const TUTORIAL_STEPS = {
   // one building the tutorial asked for, and it turns on between-battle healing,
   // which a player who skips it will miss without ever knowing it existed.
   // Level 1 is free, so this step cannot wall a player who spent their gold.
+  build_blacksmith: {
+    en: {
+      title: 'The Blacksmith',
+      text: 'One more hall, and the most useful one yet. Nothing in this game drops finished equipment — every item your army will ever carry is made at the forge, and the forge does not open until this stands. Raise it.',
+    },
+    ru: {
+      title: 'Кузница',
+      text: 'Ещё один зал, и самый полезный. В этой игре не выпадает готовое снаряжение: каждый предмет, который понесёт ваша армия, куётся здесь, а кузня не откроется, пока её не построить. Постройте её.',
+    },
+  },
+  go_craft: {
+    en: {
+      title: 'To the Forge',
+      text: 'The forge is open. Your embarks bring back materials, never finished gear — turning one into the other happens in the Items tab. Tap it.',
+    },
+    ru: {
+      title: 'В кузню',
+      text: 'Кузня открыта. Походы приносят материалы, а не готовое снаряжение: превращать одно в другое нужно во вкладке «Предметы». Коснитесь её.',
+    },
+  },
+  craft_item: {
+    en: {
+      title: 'Forge Your First Item',
+      text: 'This is everything you can make. Padded Armor is the cheapest of it — 50 gold, no materials needed — and it grants +2 HP and +2 Armor. Tap Craft to forge it.',
+    },
+    ru: {
+      title: 'Выкуйте первый предмет',
+      text: 'Здесь всё, что вы можете создать. Стёганый доспех — самый дешёвый: 50 золота и никаких материалов, а даёт +2 к здоровью и +2 к броне. Нажмите «Создать», чтобы выковать его.',
+    },
+  },
   build_infirmary: {
     en: {
       title: 'The Infirmary',
