@@ -9,6 +9,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, 
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { SPELLS }            from '../../data/spells.js';
+import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
 import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
@@ -1458,17 +1459,21 @@ export function renderCastle(root, { player }) {
       target: () => getSheetBody()?.querySelector('.unit-abilities-row'),
       wait:   true,
     },
+    // Both resurrection steps are off the table when death is disabled: there
+    // is no fallen unit to teach on, and the Resurrect button they point at
+    // never renders. Guarded on the flag as well as on the unit so a legacy
+    // corpse left over from a death-enabled run cannot resurface the lesson.
     {
       id: 'unit_fallen',
       bare:   true,
-      ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
+      ready:  () => DEATH_ENABLED && !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
       target: () => nodeForSlot(slotOfUnit(deadTutorialUnit())),
       onTap:  () => afterSheetSettles(runOnboarding),
     },
     {
       id: 'spell_revive',
       awaits: true,
-      ready:  () => !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
+      ready:  () => DEATH_ENABLED && !!slotWithBuilding(slotOfUnit(deadTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(deadTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.resurrect-btn'),
     },

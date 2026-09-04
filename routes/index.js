@@ -31,6 +31,7 @@ const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
+const { DEATH_ENABLED } = require('../data/game_flags');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -672,12 +673,18 @@ async function persistBattleRosterState(chat_id, battle_data, { abandoned = fals
     const baseMaxHp = def?.hp ?? Number(current.unit_data?.max_hp ?? 0);
     const rawHp = Number.isFinite(Number(unit.battle_hp)) ? Number(unit.battle_hp) : 0;
     const clampedHp = Math.min(rawHp, baseMaxHp);
-    const alive = unit.alive !== false;
+    // With DEATH_ENABLED off, falling in battle is not permanent: the unit is
+    // written back alive on 1 HP rather than dead on 0. It still earns nothing
+    // for the fight — XP recipients are read off the battle record's own alive
+    // flags further down (getAlivePlayerRosterIds), never off the roster row we
+    // are writing here, so a revived corpse is still not a survivor.
+    const fell  = unit.alive === false;
+    const alive = DEATH_ENABLED ? !fell : true;
     const survivorHp = abandoned ? Math.min(1, baseMaxHp) : Math.max(0, clampedHp);
     const updatedUnitData = {
       ...current.unit_data,
       alive,
-      current_hp: alive ? survivorHp : 0,
+      current_hp: !alive ? 0 : (fell ? Math.min(1, baseMaxHp) : survivorHp),
       max_hp:     baseMaxHp,
     };
     await supabase(`/roster?id=eq.${encodeURIComponent(current.id)}`, {
@@ -1310,9 +1317,18 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   const unitDef = startingUnit ? getUnitByDataId(startingUnit.unit_id) : null;
   // The bonus unit starts DEAD so the opening spell tutorial has something to
   // revive (then heal). The hero is alive and armed as usual.
+  //
+  // With DEATH_ENABLED off it starts alive on 1 HP instead: badly wounded, so
+  // the `spell_heal` step still has a unit to teach on (it gates go_embark and
+  // the rest of onboarding, so it must still fire), while `unit_fallen` and
+  // `spell_revive` find no corpse and skip themselves.
+  const startingUnitData = unitDef
+    ? { ...makeUnitData(unitDef.id, startingUnit.slot),
+        ...(DEATH_ENABLED ? { alive: false, current_hp: 0 } : { alive: true, current_hp: 1 }) }
+    : null;
   const rosterEntries = [
     { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true },
-    ...(unitDef ? [{ chat_id, unit_data: { ...makeUnitData(unitDef.id, startingUnit.slot), alive: false, current_hp: 0 }, is_hero: false }] : []),
+    ...(startingUnitData ? [{ chat_id, unit_data: startingUnitData, is_hero: false }] : []),
   ];
   const startingItems = STARTING_ITEM_KEYS.map(k => makeItemRow(player_id, k)).filter(Boolean);
   try {
