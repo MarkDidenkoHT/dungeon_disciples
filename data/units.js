@@ -2583,7 +2583,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 5, death: 50, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
-      xp: 480, passive: ['communion 1', 'resist_aura_fire 1'], ability: 'second_thirst 1',
+      xp: 480, passive: ['communion 1', 'resist_aura_life 1'], ability: 'second_thirst 1',
     },
     grail_keeper: {
       id: 'gs511', f: 'g', t: 3,
@@ -2603,7 +2603,7 @@ const UNITS = {
       name_ru: 'Блюститель Грааля',
       tags: ['Vampire','Caster'],
       size: 'tile',
-      hp: 55, armor: 10, initiative: 30,
+      hp: 60, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 0, life: 10, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',

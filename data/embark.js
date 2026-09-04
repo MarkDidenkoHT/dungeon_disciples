@@ -550,7 +550,9 @@ const FACTION_CRYSTAL_FOR_REGION = {
 //   Tome of Knowledge 6  (levels 6 and 9 of each region)
 const FIRST_CLEAR_TOKENS = {
   3: { crossroad_sigil:   1 },
+  4: { tome_of_knowledge: 1 },
   6: { tome_of_knowledge: 1 },
+  7: { crossroad_sigil:   1 },
   9: { tome_of_knowledge: 1 },
 };
 
