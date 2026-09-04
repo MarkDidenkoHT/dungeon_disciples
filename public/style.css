@@ -43,6 +43,10 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --rarity-rare:   #3b82f6;
   --rarity-epic:   #a855f7;
   --rarity-mythic: #f59e0b;
+  /* Off the common→mythic ladder: its own class, for tournament item budgets.
+     Deliberately distinct from --danger (#c84a3a) so a shattered border never
+     reads as an error state. */
+  --rarity-shattered: #e0393e;
   --rarity-border: 2px;
 }
 
@@ -6475,6 +6479,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .ability-icon--rarity-rare   { border-color: var(--rarity-rare); }
 .ability-icon--rarity-epic   { border-color: var(--rarity-epic); }
 .ability-icon--rarity-mythic { border-color: var(--rarity-mythic); }
+.ability-icon--rarity-shattered { border-color: var(--rarity-shattered); }
 .ability-icon--item:not([disabled]):active {
   border-color: var(--accent);
 }
@@ -6574,10 +6579,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .items-chip--rarity-rare    { color: var(--rarity-rare); }
 .items-chip--rarity-epic    { color: var(--rarity-epic); }
 .items-chip--rarity-mythic  { color: var(--rarity-mythic); }
+.items-chip--rarity-shattered { color: var(--rarity-shattered); }
 .items-chip--rarity-common.items-chip--active  { border-color: var(--rarity-common); background: color-mix(in srgb, var(--rarity-common) 14%, transparent); }
 .items-chip--rarity-rare.items-chip--active    { border-color: var(--rarity-rare);   background: color-mix(in srgb, var(--rarity-rare) 14%, transparent); }
 .items-chip--rarity-epic.items-chip--active    { border-color: var(--rarity-epic);   background: color-mix(in srgb, var(--rarity-epic) 14%, transparent); }
 .items-chip--rarity-mythic.items-chip--active  { border-color: var(--rarity-mythic); background: color-mix(in srgb, var(--rarity-mythic) 14%, transparent); }
+.items-chip--rarity-shattered.items-chip--active { border-color: var(--rarity-shattered); background: color-mix(in srgb, var(--rarity-shattered) 14%, transparent); }
 
 .items-chip--toggle { font-weight: 700; }
 
@@ -6628,6 +6635,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .items-select--rarity-rare    { color: var(--rarity-rare);   border-color: var(--rarity-rare); }
 .items-select--rarity-epic    { color: var(--rarity-epic);   border-color: var(--rarity-epic); }
 .items-select--rarity-mythic  { color: var(--rarity-mythic); border-color: var(--rarity-mythic); }
+.items-select--rarity-shattered { color: var(--rarity-shattered); border-color: var(--rarity-shattered); }
 
 .items-slider {
   display: flex;
@@ -6664,6 +6672,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .item-card--rarity-rare   { border: var(--rarity-border) solid var(--rarity-rare); }
 .item-card--rarity-epic   { border: var(--rarity-border) solid var(--rarity-epic); }
 .item-card--rarity-mythic { border: var(--rarity-border) solid var(--rarity-mythic); }
+.item-card--rarity-shattered { border: var(--rarity-border) solid var(--rarity-shattered); }
 
 .item-card--equipped {
   box-shadow: 0 0 0 2px var(--accent);
@@ -7306,6 +7315,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .item-card-rarity--rare   { color: var(--rarity-rare); }
 .item-card-rarity--epic   { color: var(--rarity-epic); }
 .item-card-rarity--mythic { color: var(--rarity-mythic); }
+.item-card-rarity--shattered { color: var(--rarity-shattered); }
 
 .item-card-count-line {
   font-size: 0.68rem;

@@ -417,6 +417,7 @@
     .rarity-rare { color: #4c9aff; }
     .rarity-epic { color: #b47cff; }
     .rarity-mythic { color: #f5c542; }
+    .rarity-shattered { color: #e0393e; }
 
     .item-balance {
       display: inline-flex;
@@ -851,7 +852,10 @@
       'common': { scoreMin: 5, costMax: 50 },
       'rare': { scoreMin: 10, costMax: 150 },
       'epic': { scoreMin: 15, costMax: 300 },
-      'mythic': { scoreMin: 20, costMax: 500 }
+      'mythic': { scoreMin: 20, costMax: 500 },
+      // Budgeted as an epic: shattered is a separate tournament slot, not a
+      // separate power level, so the balance checker holds it to epic numbers.
+      'shattered': { scoreMin: 15, costMax: 300 }
     };
 
     const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];

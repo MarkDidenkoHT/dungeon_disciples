@@ -186,10 +186,12 @@ const CASTLE_TEXT = {
   rare:        { en: 'Rare',                                  ru: 'Редкие' },
   epic:        { en: 'Epic',                                  ru: 'Эпические' },
   mythic:      { en: 'Mythic',                                ru: 'Мифические' },
+  shattered:   { en: 'Shattered',                             ru: 'Расколотые' },
   rarity_common:{ en: 'Common',                               ru: 'Обычный' },
   rarity_rare: { en: 'Rare',                                  ru: 'Редкий' },
   rarity_epic: { en: 'Epic',                                  ru: 'Эпический' },
   rarity_mythic:{ en: 'Mythic',                               ru: 'Мифический' },
+  rarity_shattered:{ en: 'Shattered',                         ru: 'Расколотый' },
   statHp:      { en: 'HP',                                    ru: 'HP' },
   statArmor:   { en: 'Armor',                                 ru: 'Броня' },
   statInit:    { en: 'Init',                                  ru: 'Иниц.' },
@@ -2689,7 +2691,7 @@ export function renderCastle(root, { player }) {
     let selected   = 0;
 
     const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
-    const RARITIES  = ['common', 'rare', 'epic', 'mythic'];
+    const RARITIES  = ['common', 'rare', 'epic', 'mythic', 'shattered'];
     const STAT_FILTERS = [
       ['hp',           CASTLE_TEXT.statHp[castleLang]],
       ['armor',        CASTLE_TEXT.statArmor[castleLang]],

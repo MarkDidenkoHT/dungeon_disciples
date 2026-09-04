@@ -29,6 +29,7 @@ const IT = {
   rare:         { en: 'Rare',             ru: 'Редкие' },
   epic:         { en: 'Epic',             ru: 'Эпические' },
   mythic:       { en: 'Mythic',           ru: 'Мифические' },
+  shattered:    { en: 'Shattered',        ru: 'Расколотые' },
   all:          { en: 'All',              ru: 'Все' },
   hp:           { en: 'HP',               ru: 'HP' },
   armor:        { en: 'Armor',            ru: 'Броня' },
@@ -47,6 +48,7 @@ const IT = {
   rarity_rare:  { en: 'Rare',             ru: 'Редкий' },
   rarity_epic:  { en: 'Epic',             ru: 'Эпический' },
   rarity_mythic:{ en: 'Mythic',           ru: 'Мифический' },
+  rarity_shattered:{ en: 'Shattered',     ru: 'Расколотый' },
   noMaterials:  { en: 'No materials',     ru: 'Без материалов' },
   noForge:      { en: '🔒 Build a Blacksmith', ru: '🔒 Постройте кузницу' },
   nothingMatches:{ en: 'Nothing matches these filters.', ru: 'Ничего не найдено по фильтрам.' },
@@ -94,7 +96,10 @@ export function renderItems(root, { player }) {
   // wall a new player who spent their embark rewards elsewhere.
   const TUTORIAL_CRAFT_KEY = 'padded_armor';
 
-  const RARITIES = ['common', 'rare', 'epic', 'mythic'];
+  // Appended rather than slotted between epic and mythic: the first four ARE a
+  // power ladder and inserting shattered into it would claim a rank it does not
+  // have. It sits at the end as its own class.
+  const RARITIES = ['common', 'rare', 'epic', 'mythic', 'shattered'];
   const STAT_FILTERS = [
     ['all',          T('all')],
     ['hp',           T('hp')],

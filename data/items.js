@@ -5,6 +5,13 @@
 //                 second is refused). Absent/false = craft as many as you like.
 //                 By convention every epic/mythic item is unique; commons and
 //                 rares are stackable. Flip per-item as balance needs.
+//
+// Rarities: common, rare, epic, mythic — a power ladder — plus SHATTERED, which
+// is not on that ladder. A shattered item is epic in scale and epic in what it
+// costs to craft; it is its own rarity purely so tournament rules can budget it
+// separately ("1 mythic, 1 shattered, 2 epic"), because what these items do is
+// structural — they take a tag off a unit — rather than bigger numbers.
+//
 //   cost/item_cost resource + item-ingredient cost to craft.
 //   requires      embark progress the craft is gated behind. Omit for the
 //                 rarity default; see the craft gating block below ITEM_DEFS.
@@ -44,7 +51,7 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 4, armor: 2 },
     passive:      null,
     icon:         'broken_sigil',
-    rarity:       'epic',
+    rarity:       'shattered',
     unique:       true,
     cost:         { grave_dust: 2, shard_of_devotion: 1, Gold: 120 },
     item_cost:    { iron_armor: 1 },
@@ -1132,10 +1139,13 @@ const CRAFT_REGION_LABELS = {
 // these four lines re-gates the whole catalog at once; a per-item `requires`
 // always wins over them. Commons stay open so a new player has a starting kit.
 const CRAFT_GATE_BY_RARITY = {
-  common: null,
-  rare:   { region: 'any', level: 2 },
-  epic:   { region: 'any', level: 4 },
-  mythic: { region: 'any', level: 6 },
+  common:    null,
+  rare:      { region: 'any', level: 2 },
+  epic:      { region: 'any', level: 4 },
+  // Gated with the epics it sits beside in power, not above them: shattered is a
+  // separate BUDGET, not a separate tier of strength.
+  shattered: { region: 'any', level: 4 },
+  mythic:    { region: 'any', level: 6 },
 };
 
 // Normalises whatever an item declared into a flat list of {region, level}.

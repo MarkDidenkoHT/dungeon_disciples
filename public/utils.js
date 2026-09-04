@@ -57,7 +57,7 @@ export function buildingLabel(def, player) {
   return def.label || '';
 }
 
-// Rarity slug for an item (common/rare/epic/mythic), resolved from ITEM_DEFS by
+// Rarity slug for an item (common/rare/epic/shattered/mythic), from ITEM_DEFS by
 // key since owned rows don't store it. Drives the coloured card/slot border.
 export function itemRarity(item) {
   if (!item) return 'common';
@@ -902,6 +902,7 @@ const ITEM_RARITY_LABELS = {
   rare:   { en: 'Rare',   ru: 'Редкий' },
   epic:   { en: 'Epic',   ru: 'Эпический' },
   mythic: { en: 'Mythic', ru: 'Мифический' },
+  shattered: { en: 'Shattered', ru: 'Расколотый' },
 };
 
 function itemStatChip(key, val) {
