@@ -2982,7 +2982,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_battle_start',
     description: 'While this is your only Engineer, afflictions applied to every ally Construct are reduced by 1.',
     description_ru: "Пока это ваш единственный Инженер, накладываемые на всех союзных Конструктов негативные эффекты снижены на 1.",
-    params: { grant_status_resist: 1, tag_required: 'Engineer', grant_target_tag: 'Construct' },
+    params: { grant_status_resist: 2, tag_required: 'Engineer', grant_target_tag: 'Construct' },
     effect_name: 'sole_artificer',
   },
   'sole_artificer 2': {
@@ -2994,7 +2994,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_battle_start',
     description: 'While this is your only Engineer, afflictions applied to every ally Construct are reduced by 2.',
     description_ru: "Пока это ваш единственный Инженер, накладываемые на всех союзных Конструктов негативные эффекты снижены на на 2.",
-    params: { grant_status_resist: 2, tag_required: 'Engineer', grant_target_tag: 'Construct' },
+    params: { grant_status_resist: 3, tag_required: 'Engineer', grant_target_tag: 'Construct' },
     effect_name: 'sole_artificer',
   },
 };

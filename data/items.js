@@ -265,7 +265,7 @@ const ITEM_DEFS = {
   blood_of_a_saint: {
     key:          'blood_of_a_saint',
     name:         "Blood Of A Saint",
-    name_ru:      'Blood Of A Saint',
+    name_ru:      'Кровь Святого',
     faction:      null,
     tag_required: 'Holy',
     adds_tag:     'Spirit',
