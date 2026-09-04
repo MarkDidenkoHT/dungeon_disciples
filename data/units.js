@@ -1251,7 +1251,7 @@ const UNITS = {
       id: 'e112', f: 'e', t: 3,
       name: 'Heavy Infantry',
       name_ru: 'Тяжёлый Пехотинец',
-      tags: ['Knight', 'Warrior']
+      tags: ['Knight', 'Warrior'],
       size: 'tile',
       hp: 70, armor: 20, initiative: 40,
       resistances: { air: 5, fire: 0, life: 50, death: 10, cold: 10, nature: 10 },
