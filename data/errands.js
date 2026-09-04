@@ -192,7 +192,15 @@ function unitProfile(row, resolveDef, itemStats = row?._item_stats ?? null) {
   const list   = (Array.isArray(raw) ? raw : [raw]).filter(Boolean).map(String);
   const granted = itemStats?.adds_tag ? String(itemStats.adds_tag) : null;
   if (granted && !list.includes(granted)) list.push(granted);
-  return { tags: list };
+  // ...and a tag it TAKES AWAY (Broken Sigil). An errand judges the unit as the
+  // battlefield does, so a stripped tag must not satisfy a requirement here
+  // either. Kept inline rather than imported for the reason above; the authority
+  // is removedTags() in data/items.js and this must match it.
+  const stripSpec = itemStats?.removes_tag;
+  const strip = (Array.isArray(stripSpec) ? stripSpec : (stripSpec ? [stripSpec] : []))
+    .filter(Boolean).map(t => String(t).toLowerCase());
+  const kept = strip.length ? list.filter(t => !strip.includes(t.toLowerCase())) : list;
+  return { tags: kept };
 }
 
 // The two tags an errand accepts, in the order their reward parts are listed.

@@ -6434,6 +6434,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   color: #c49a4a;
 }
 
+.item-card-tag--removes {
+  color: #a05a5a;
+}
+
 .item-card-stats {
   font-size: 0.75rem;
   color: var(--accent);

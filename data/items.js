@@ -12,6 +12,11 @@
 // Equip restrictions (checked in data/item_rules.js, enforced by
 // POST /items/equip and mirrored by the roster UI):
 //   tag_required  unit must carry this tag
+// Tag composition:
+//   adds_tag      'Construct'    unit also counts as this tag while worn
+//   removes_tag   'Engineer'     unit STOPS counting as this tag while worn.
+//                 Applied after adds_tag. Enables the exclusivity passives
+//                 ("while this is your only Engineer") to be built for.
 //   blocked_tags    ['Construct']  refuse units carrying ANY of these
 //   blocked_actions ['heal']       refuse units whose action is of this kind
 //                                  ('damage' | 'heal' | 'sacrifice' | 'none')
@@ -21,6 +26,29 @@
 // preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
 // unit that cannot do that — no authoring required.
 const ITEM_DEFS = {
+
+  // The counterpart to every `adds_tag` item in this file. Wearing it makes the
+  // unit stop counting as the listed tag(s) — which is a downgrade on its face
+  // and the ONLY way to satisfy an exclusivity passive ("while this is your only
+  // Engineer") while still fielding a second unit that would otherwise break it.
+  // `removes_tag` takes a tag or a list; retune it per campaign without touching
+  // any code.
+  broken_sigil: {
+    key:          'broken_sigil',
+    name:         'Broken Sigil',
+    name_ru:      'Расколотая Печать',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    removes_tag:  'Engineer',
+    stat_mods:    { hp: 4, armor: 2 },
+    passive:      null,
+    icon:         'broken_sigil',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, shard_of_devotion: 1, Gold: 120 },
+    item_cost:    { iron_armor: 1 },
+  },
 
   crystal_exoskeleton: {
     key:          'crystal_exoskeleton',
@@ -1176,6 +1204,15 @@ function canonicalTag(tag) {
   return CANONICAL_TAG_BY_LOWER.get(String(tag).toLowerCase()) ?? String(tag);
 }
 
+// The tags an item strips, canonicalised, as a list — `removes_tag` may be a
+// single tag or an array of them. Shared by the roster/battle stat derivation
+// here and by the errand tag check in data/errands.js, so a stripped tag is
+// stripped everywhere or nowhere.
+function removedTags(spec) {
+  if (!spec) return [];
+  return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
+}
+
 // Stat keys that owned rows spell differently from what the loop below reads.
 // Same reason as the tags: `caster_hat` shipped with `power`, so every hat
 // already owned carries `power: 2` and silently granted nothing.
@@ -1195,9 +1232,22 @@ const STAT_MOD_ALIASES = { power: 'action_power', max_hp: 'hp' };
 function applyItemModifiers(unitData, itemStats) {
   if (!itemStats) return unitData;
 
-  const tags = Array.isArray(unitData.tags) ? [...unitData.tags] : [];
+  let tags = Array.isArray(unitData.tags) ? [...unitData.tags] : [];
   const granted = canonicalTag(itemStats.adds_tag);
   if (granted && !tags.includes(granted)) tags.push(granted);
+  // STRIPPING a tag, the mirror of adds_tag. Applied AFTER the grant so an item
+  // that both gives and takes reads left to right, and so `removes_tag` can undo
+  // a tag this same item granted rather than racing it.
+  //
+  // A removed tag is genuinely gone for every consumer: tag_required on abilities
+  // and items, engine.tagCountFor, vs_tag, errand requirements. That is the whole
+  // point — it is how a roster gets UNDER the "only one of me" clauses that
+  // Sole Artificer, Sovereign's Levy and Procession of Grief gate on.
+  //
+  // Accepts a single tag or a list, so one sigil can silence several tags at
+  // once without needing an item (and an icon) per tag.
+  const stripped = removedTags(itemStats.removes_tag);
+  if (stripped.length) tags = tags.filter(t => !stripped.includes(canonicalTag(t)));
 
   const resistances = { ...(unitData.resistances || {}) };
   const mods  = itemStats.stat_mods || {};
@@ -1247,12 +1297,12 @@ function applyItemModifiers(unitData, itemStats) {
 }
 
 export {
-  ITEM_DEFS, applyItemModifiers,
+  ITEM_DEFS, applyItemModifiers, removedTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ITEM_DEFS, applyItemModifiers,
+  ITEM_DEFS, applyItemModifiers, removedTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };

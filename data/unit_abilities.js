@@ -1076,9 +1076,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 power and +1 initiative for each Vampire ally on the field.',
-    description_ru: "В начале боя получает +2 к силе и +1 к инициативе за каждого союзного вампира на поле.",
-    params: { tag_required: 'Vampire', power_per_tagged_unit: 2, initiative_per_tagged_unit: 1 },
+    description: 'At battle start, gain +1 power and +2 initiative for each Vampire ally on the field.',
+    description_ru: "В начале боя получает +1 к силе и +2 к инициативе за каждого союзного вампира на поле.",
+    params: { tag_required: 'Vampire', power_per_tagged_unit: 1, initiative_per_tagged_unit: 2 },
   },
   'banquet 3': {
     id: 'banquet 3',
@@ -1087,9 +1087,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 power and +2 initiative for each Vampire ally on the field.',
-    description_ru: "В начале боя получает +2 к силе и +2 к инициативе за каждого союзного вампира на поле.",
-    params: { tag_required: 'Vampire', power_per_tagged_unit: 2, initiative_per_tagged_unit: 2 },
+    description: 'At battle start, gain +1 power, HP and +2 initiative for each Vampire ally on the field.',
+    description_ru: "В начале боя получает +1 к силе, HP и +2 к инициативе за каждого союзного вампира на поле.",
+    params: { tag_required: 'Vampire', power_per_tagged_unit: 1, initiative_per_tagged_unit: 2, hp_per_tagged_unit: 1 },
   },
   'renew 1': {
     id: 'renew 1',
@@ -2996,6 +2996,112 @@ const UNIT_ABILITIES = {
     description_ru: "Пока это ваш единственный Инженер, накладываемые на всех союзных Конструктов негативные эффекты снижены на на 2.",
     params: { grant_status_resist: 3, tag_required: 'Engineer', grant_target_tag: 'Construct' },
     effect_name: 'sole_artificer',
+  },
+
+  // ── Tag-combo passives ────────────────────────────────────────────────────
+  //
+  // Both hand their bonus to OTHER units, on the three independent dials the
+  // battle-start armor block reads: who receives it (ally_tag_required), what
+  // scales it (tag_required), and what switches it off (tag_exclusive).
+
+  'vampires_vigil 1': {
+    id: 'vampires_vigil 1',
+    name: "Vampire's Vigil",
+    name_ru: "Бдение вампира",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'While this is your only Vampire, every ally Zombie gains 2 armor. Fielding a second Vampire disables this entirely.',
+    description_ru: "Пока это ваш единственный Вампир, каждый союзный Зомби получает 2 брони. Второй Вампир полностью отключает это.",
+    params: { ally_armor_bonus: 2, ally_tag_required: 'Zombie', tag_exclusive: 'Vampire' },
+    effect_name: 'vampires_vigil',
+  },
+  'vampires_vigil 2': {
+    id: 'vampires_vigil 2',
+    name: "Vampire's Vigil",
+    name_ru: "Бдение вампира",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'While this is your only Vampire, every ally Zombie gains 4 armor. Fielding a second Vampire disables this entirely.',
+    description_ru: "Пока это ваш единственный Вампир, каждый союзный Зомби получает 4 брони. Второй Вампир полностью отключает это.",
+    params: { ally_armor_bonus: 4, ally_tag_required: 'Zombie', tag_exclusive: 'Vampire' },
+    effect_name: 'vampires_vigil',
+  },
+
+  'bone_armor 1': {
+    id: 'bone_armor 1',
+    name: 'Bone Armor',
+    name_ru: "Костяная броня",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, every ally Caster gains 2 armor for each Skeleton ally on the field.',
+    description_ru: "В начале боя каждый союзный Заклинатель получает 2 брони за каждого союзного Скелета на поле.",
+    params: { ally_armor_bonus_per_tag: 2, tag_required: 'Skeleton', ally_tag_required: 'Caster' },
+    effect_name: 'bone_armor',
+  },
+  'bone_armor 2': {
+    id: 'bone_armor 2',
+    name: 'Bone Armor',
+    name_ru: "Костяная броня",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, every ally Caster gains 3 armor for each Skeleton ally on the field.',
+    description_ru: "В начале боя каждый союзный Заклинатель получает 3 брони за каждого союзного Скелета на поле.",
+    params: { ally_armor_bonus_per_tag: 3, tag_required: 'Skeleton', ally_tag_required: 'Caster' },
+    effect_name: 'bone_armor',
+  },
+
+  // ── Vows ──────────────────────────────────────────────────────────────────
+  //
+  // A Vow does not buff its carrier. It sets a rule over the WHOLE BATTLEFIELD,
+  // both sides included, and its carrier lives under that rule too — which is
+  // what makes a Vow a tactical counter rather than a stat stick, and why the
+  // engine keeps their charges on itself (BattleEngine.vows) rather than on the
+  // unit.
+  //
+  // Vows STACK across carriers, enemy ones included: two Vows of the Grave on
+  // the field mean the next TWO resurrections fail, whoever brought them and
+  // whoever they would have saved. Bring the mirror of your opponent's vow and
+  // you have doubled the tax you are both paying.
+
+  'vow_of_the_grave 1': {
+    id: 'vow_of_the_grave 1',
+    name: 'Vow of the Grave',
+    name_ru: "Обет могилы",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'The first return from death on the field fails — a resurrection, a reanimation, or a unit surviving its own killing blow, on either side. Stacks: each Vow of the Grave fielded, allied or enemy, swallows one more.',
+    description_ru: "Первое возвращение из мёртвых на поле проваливается — воскрешение, оживление или переживание смертельного удара, с любой стороны. Складывается: каждый Обет могилы, свой или вражеский, поглощает ещё одно.",
+    params: { vow_grave_charges: 1 },
+    effect_name: 'vow_of_the_grave',
+  },
+  'vow_of_silence 1': {
+    id: 'vow_of_silence 1',
+    name: 'Vow of Silence',
+    name_ru: "Обет молчания",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'The first active ability used on the field fails, on either side, and is still spent. Stacks: each Vow of Silence fielded, allied or enemy, swallows one more.',
+    description_ru: "Первая активная способность на поле проваливается, с любой стороны, и всё равно считается использованной. Складывается: каждый Обет молчания, свой или вражеский, поглощает ещё одну.",
+    params: { vow_silence_charges: 1 },
+    effect_name: 'vow_of_silence',
+  },
+  'vow_of_ash 1': {
+    id: 'vow_of_ash 1',
+    name: 'Vow of Ash',
+    name_ru: "Обет пепла",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'At battle start, every Holy and every Demon on the field — allied and enemy, this unit included — loses 2 initiative for each Demon standing on its own side.',
+    description_ru: "В начале боя каждый Святой и каждый Демон на поле — свои и вражеские, включая этого бойца — теряет 2 инициативы за каждого Демона на своей стороне.",
+    params: { vow_ash_initiative_per_demon: 2, vow_ash_tags: ['Holy', 'Demon'] },
+    effect_name: 'vow_of_ash',
   },
 };
 

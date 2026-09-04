@@ -12,6 +12,7 @@ import {
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
   itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, abilityName,
+  tagListLabel,
 } from '../utils.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
@@ -160,6 +161,7 @@ export function renderItems(root, { player }) {
     return [
       stats.tag_required ? `<span class="item-card-tag">${ru ? 'Требует' : 'Requires'}: ${stats.tag_required}</span>` : '',
       stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${ru ? 'Даёт метку' : 'Grants tag'}: ${stats.adds_tag}</span>` : '',
+      stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${ru ? 'Снимает метку' : 'Strips tag'}: ${tagListLabel(stats.removes_tag)}</span>` : '',
     ].join('');
   }
 

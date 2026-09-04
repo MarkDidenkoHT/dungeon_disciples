@@ -78,6 +78,13 @@ export function setUiLanguage(language) {
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 
+// `removes_tag` (and anything else tag-shaped) may be authored as one tag or as
+// a list. One label rule, so the item card, the castle equip sheet and the item
+// screen all print the same thing.
+export function tagListLabel(spec) {
+  return (Array.isArray(spec) ? spec : [spec]).filter(Boolean).join(', ');
+}
+
 // The faction's accent palette is a set of CSS variables hung off the BODY (see
 // the body[data-faction] blocks in style.css), so every screen, sheet and glow
 // picks it up without being told. Set once at boot and again the moment a new
@@ -938,6 +945,7 @@ export function buildItemCard(item, player) {
   const tagsHtml = [
     stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${stats.tag_required}</span>` : '',
     stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}</span>` : '',
+    stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${uiText('Strips tag', 'Снимает метку')}: ${tagListLabel(stats.removes_tag)}</span>` : '',
     stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${cap(String(stats.faction).replace(/_/g, ' '))}</span>` : '',
   ].join('');
 

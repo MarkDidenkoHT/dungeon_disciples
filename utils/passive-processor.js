@@ -344,6 +344,43 @@ function dispatchPassive(trigger, owner, def, ctx) {
   const p = def.params || {};
   const abilityKey = def.id ?? def.name ?? null;
   if (trigger === 'on_battle_start') {
+    // ── Vows ────────────────────────────────────────────────────────────────
+    //
+    // Declared before anything else in this block so a Vow is already standing
+    // when the rest of battle start resolves. Charges bank on the ENGINE, not on
+    // the owner: a Vow binds the whole field, keeps binding it after its carrier
+    // dies, and stacks with the identical Vow the other side brought.
+    if (p.vow_grave_charges != null)   engine.declareVow('grave',   p.vow_grave_charges,   def, owner);
+    if (p.vow_silence_charges != null) engine.declareVow('silence', p.vow_silence_charges, def, owner);
+
+    // Vow of Ash is the one Vow that resolves entirely at battle start, so it
+    // needs no charge — it simply takes initiative off every unit of the listed
+    // tags on BOTH sides, the carrier included. The count is per side: each
+    // unit is slowed by the Demons standing with IT, not by the Demons standing
+    // opposite, so the two armies pay separately for their own damnation.
+    if (p.vow_ash_initiative_per_demon != null) {
+      const tags = p.vow_ash_tags ?? ['Holy', 'Demon'];
+      const perSide = { player: tagCount(engine, 'player', 'Demon'), enemy: tagCount(engine, 'enemy', 'Demon') };
+      for (const c of engine.combatants) {
+        if (!c.alive) continue;
+        const unitTags = c.unit_data?.tags ?? c.tags ?? [];
+        if (!tags.some(t => unitTags.includes(t))) continue;
+        const want = p.vow_ash_initiative_per_demon * (perSide[c.side] ?? 0);
+        // Floored at zero, and recorded by what was actually TAKEN — a unit that
+        // had less initiative than the Vow demanded gives what it has and no
+        // more, so anything that later hands the loss back is honest.
+        const lost = Math.min(want, Math.max(0, c.initiative ?? 0));
+        if (lost <= 0) continue;
+        c.initiative -= lost;
+        registerStatGrant(engine, c, def, -lost, `-${lost} initiative`);
+      }
+      engine.pushLog({
+        type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+        targetName: 'the field', heal: false, stat: 'initiative',
+        message: `${def.name} — the ash settles on every ${tags.join(' and ')} on the field`,
+      });
+    }
+
     // Shield handed out up front — the defensive shape of the ability, as
     // opposed to the on_hit one below that hardens a unit as it fights.
     // `shield_target: 'all_allies'` puts it on the whole side; anything else
@@ -366,27 +403,43 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // log renderer defaults to "healed" (entry.heal !== false).
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: 'all allies', value: hpEach, heal: false, stat: 'max HP' });
     }
-    if (p.ally_armor_bonus != null) {
+    if (p.ally_armor_bonus != null || p.ally_armor_bonus_per_tag != null) {
       // `ally_tag_required` narrows WHO RECEIVES the armor — distinct from
       // `tag_required`, which elsewhere scales HOW MUCH. Omit it and every ally
       // is covered, as before. Fortify uses it to plate only Constructs.
-      const allies = engine.combatants.filter(c =>
+      //
+      // Three dials, and they are deliberately independent:
+      //   ally_tag_required  who gets it        (Bone Armor: Casters)
+      //   tag_required       what scales it     (Bone Armor: per Skeleton)
+      //   tag_exclusive      what SWITCHES IT OFF when you field two
+      //                      (Vampire's Vigil: a second Vampire kills it)
+      // The exclusivity gate already existed for the per-tagged-unit stat block
+      // below; it is read here too so an "only one of me" passive can hand its
+      // bonus to OTHER units rather than only to itself.
+      const exclusiveOk = p.tag_exclusive == null || tagCount(engine, owner.side, p.tag_exclusive) <= 1;
+      const armorEach = p.ally_armor_bonus_per_tag != null
+        ? p.ally_armor_bonus_per_tag * tagCount(engine, owner.side, p.tag_required)
+        : p.ally_armor_bonus;
+      const allies = (!exclusiveOk || armorEach <= 0) ? [] : engine.combatants.filter(c =>
         c.side === owner.side &&
         (!p.ally_tag_required || (c.unit_data?.tags ?? c.tags ?? []).includes(p.ally_tag_required))
       );
+      if (!exclusiveOk) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: 0, heal: false, message: `${def.name} — inert: more than one ${p.tag_exclusive} ally fielded` });
+      }
       if (allies.length) {
         // Recorded PER TARGET: the cap can clip one ally and not another, so a
         // single shared value would over-revoke whoever it clipped.
         const applied = new Map();
-        for (const a of allies) applied.set(a.id, addArmor(a, p.ally_armor_bonus));
-        engine.recordGrantedBuff(owner, 'armor', allies, p.ally_armor_bonus, applied);
+        for (const a of allies) applied.set(a.id, addArmor(a, armorEach));
+        engine.recordGrantedBuff(owner, 'armor', allies, armorEach, applied);
         // Per target, using what LANDED: an ally the armor cap clipped shows the
         // armor it actually got, and one that got none shows no icon at all.
         for (const a of allies) {
           const got = applied.get(a.id);
           if (got) registerStatGrant(engine, a, def, got, `+${got} armor`);
         }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: p.ally_armor_bonus, heal: false, stat: 'armor' });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: armorEach, heal: false, stat: 'armor' });
       }
     }
 
@@ -1112,6 +1165,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_death' && owner === dying) {
     if (p.survive_uses != null && !owner._flags[def.id + '_used']) {
       owner._flags[def.id + '_used'] = true;
+      // A Vow of the Grave eats the return, but the USE is still spent — the
+      // flag is set above and stays set. Surviving a killing blow is a return
+      // from death like any other, so it queues for the same charges as a
+      // resurrect and a reanimate rather than slipping past them.
+      if (engine.consumeVow?.('grave')) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${owner.unit_name} down` });
+        return;
+      }
       owner.alive = true;
       owner.battle_hp = p.survive_heal_pct != null
         ? 1 + Math.floor(owner.max_hp * p.survive_heal_pct / 100)
@@ -1120,6 +1181,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.reanimate === true && !owner._flags[def.id + '_used']) {
       owner._flags[def.id + '_used'] = true;
+      if (engine.consumeVow?.('grave')) {
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${owner.unit_name} down` });
+        return;
+      }
       // Count Zombie-tagged units on this side (including self — already dead but still combatant)
       const zombieCount = engine.combatants.filter(c => c.side === owner.side && (c.unit_data?.tags ?? []).includes('Zombie')).length;
       const reviveHpPct = zombieCount * (p.reanimate_hp_pct_per_zombie ?? 10);
@@ -1564,6 +1629,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     }
   }
   if (p.resurrect_hp_pct != null && target) {
+    if (engine.consumeVow?.('grave')) {
+      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${target.unit_name} down` });
+      return true;
+    }
     target.alive = true;
     target.battle_hp = Math.floor(target.max_hp * p.resurrect_hp_pct / 100);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });

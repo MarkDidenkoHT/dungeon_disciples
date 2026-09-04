@@ -128,6 +128,12 @@ const RESIST_SCHOOLS = ['air', 'fire', 'life', 'death', 'cold', 'nature'];
 class BattleEngine {
   constructor(state) {
     this.ABILITIES = null;
+    // Vow charges. Battlefield-wide, not per side and not per unit: a Vow taxes
+    // the next N events on the board whoever causes them, so the counter cannot
+    // live on the unit that brought it (it would die with that unit) nor on a
+    // side (an enemy Vow binds you too). Filled at battle start by the
+    // vow_*_charges passives and spent through consumeVow().
+    this.vows = { grave: 0, silence: 0, ...(state?.vows || {}) };
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -167,6 +173,31 @@ class BattleEngine {
     return this.combatants.filter(c =>
       c.side === side && c.alive && (c.unit_data?.tags ?? c.tags ?? []).includes(tag)
     ).length;
+  }
+
+  // ── Vows ──────────────────────────────────────────────────────────────────
+  //
+  // declareVow banks charges at battle start; consumeVow spends one at the
+  // moment the forbidden thing is attempted and reports whether it was
+  // swallowed. Every site that can raise the dead calls consumeVow('grave') and
+  // every site that fires an active calls consumeVow('silence') — so a new
+  // resurrection mechanic is covered the day it routes through one of them, and
+  // is NOT covered if it invents its own path. That is deliberate: the list of
+  // guarded sites is short and explicit rather than inferred.
+  declareVow(kind, charges, def, owner) {
+    if (!charges) return;
+    this.vows[kind] = (this.vows[kind] ?? 0) + charges;
+    this.pushLog({
+      type: 'passive', passive: def?.name, actorId: owner?.id, actorName: owner?.unit_name, actorCell: owner?.cellIndex,
+      targetName: 'the field', heal: false,
+      message: `${def?.name} — sworn over the whole field (${this.vows[kind]} charge${this.vows[kind] !== 1 ? 's' : ''} standing)`,
+    });
+  }
+
+  consumeVow(kind) {
+    if (!(this.vows?.[kind] > 0)) return false;
+    this.vows[kind] -= 1;
+    return true;
   }
 
   // A protector's own intercept chance: flat, or scaled by how many of the tag
@@ -1756,6 +1787,19 @@ class BattleEngine {
     }
     actor.used_active      = true;
     actor.acted_this_round = true;
+    // Vow of Silence. The ability is spent either way — `used_active` is already
+    // set above — so the cost is paid and nothing happens. Swallowing it before
+    // executeActiveAbility means no half-resolved ability: no cost paid inside
+    // the ability, no trigger fired, no target touched.
+    if (this.consumeVow('silence')) {
+      const def = this.ABILITIES?.[key];
+      this.pushLog({
+        type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetName: actor.unit_name, targetCell: actor.cellIndex, heal: false,
+        message: `${def?.name || 'The ability'} dies in ${actor.unit_name}'s throat — a Vow of Silence swallows it`,
+      });
+      return this.afterAction(actor);
+    }
     executeActiveAbility(actor, target, this.combatants, this.ABILITIES, this);
     return this.afterAction(actor);
   }
@@ -2392,6 +2436,10 @@ class BattleEngine {
       // Per-battle, never carried between fights — but it must survive a reload
       // mid-fight or a hero would bank its power twice.
       power: this.power,
+      // Same reason: rehydrate() replays on_battle_start, which re-declares every
+      // Vow at full strength. Without the SPENT count carried across, a reload
+      // would silently refund every charge the battle had already burned.
+      vows: this.vows,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -2501,6 +2549,10 @@ class BattleEngine {
     // without this a player could reload to refill — and an enemy boss would
     // lose the charge it had built toward its own spell.
     engine.power = { player: 0, enemy: 0, ...(battleData.power || {}) };
+    // Overwrites the charges initCombatants just re-declared, so what is restored
+    // is what was LEFT. Battles saved before Vows existed have no `vows` key and
+    // keep the re-declared totals, which for them are zero.
+    if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -2682,6 +2734,14 @@ class BattleEngine {
       // Raising the fallen — the boss resurrect. Has to run before anything
       // else touches HP, and it is the one spell param that acts on a corpse.
       if (params.resurrect_hp_pct && !c.alive) {
+        if (this.consumeVow('grave')) {
+          this.pushLog({
+            type: 'passive', passive: params._spell_name || 'Resurrect',
+            targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex, heal: false,
+            message: `${c.unit_name} does not rise — a Vow of the Grave holds them down`,
+          });
+          continue;
+        }
         c.alive     = true;
         c.battle_hp = Math.max(1, Math.floor(c.max_hp * params.resurrect_hp_pct / 100));
         this.pushLog({

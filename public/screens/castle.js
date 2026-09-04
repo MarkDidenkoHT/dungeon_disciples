@@ -22,6 +22,7 @@ import {
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
   playAdPlaceholder as playAd,
+  tagListLabel,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -199,6 +200,7 @@ const CASTLE_TEXT = {
   traitNeeds:  { en: 'Needs Tag',                             ru: 'Нужна метка' },
   unique:      { en: 'Unique',                                ru: 'Уникальный' },
   grantsTag:   { en: 'Grants tag',                            ru: 'Даёт метку' },
+  stripsTag:   { en: 'Strips tag',                            ru: 'Снимает метку' },
   equippedElse:{ en: 'Equipped on another unit',              ru: 'Надет на другом бойце' },
   nothingMatches:{ en: 'Nothing matches these filters.',      ru: 'Ничего не найдено по фильтрам.' },
   equippedOn:  { en: 'on',                                    ru: 'у' },
@@ -2666,6 +2668,7 @@ export function renderCastle(root, { player }) {
     return [
       stats.tag_required ? `<span class="item-card-tag ${unmet ? 'item-card-tag--unmet' : ''}">${CASTLE_TEXT.requires[castleLang]}: ${stats.tag_required}</span>` : '',
       stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${CASTLE_TEXT.grantsTag[castleLang]}: ${stats.adds_tag}</span>` : '',
+      stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${CASTLE_TEXT.stripsTag[castleLang]}: ${tagListLabel(stats.removes_tag)}</span>` : '',
     ].join('');
   }
 
@@ -2704,6 +2707,7 @@ export function renderCastle(root, { player }) {
       if (statFilter === 'all') return true;
       if (statFilter === 'passive')    return !!stats?.passive;
       if (statFilter === 'grants_tag') return !!stats?.adds_tag;
+      if (statFilter === 'strips_tag') return !!stats?.removes_tag;
       if (statFilter === 'needs_tag')  return !!stats?.tag_required;
       const mods = stats?.stat_mods || {};
       if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
