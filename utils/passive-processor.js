@@ -1618,7 +1618,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       const randomEnemy = validTargets[Math.floor(Math.random() * validTargets.length)];
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — commands ${target.unit_name} to strike` });
       // Out-of-turn strike: don't tick the commanded unit's own turn-start DoTs.
-      engine.executeAction(target, randomEnemy, 'attack', { turnStart: false });
+      engine.executeAction(target, randomEnemy, 'attack', { turnStart: false, consumesTurn: false });
     }
     if (target.unit_data) target.unit_data = { ...target.unit_data, action_power: savedPower };
   }

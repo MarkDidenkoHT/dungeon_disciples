@@ -969,8 +969,18 @@ class BattleEngine {
   // opts.turnStart defaults true: this is the unit's own turn beginning, so its
   // turn-start DoTs tick here. Pass { turnStart: false } for out-of-turn strikes
   // (e.g. a commanded Infernal Mandate hit) so they don't tick the striker's DoTs.
+  // opts.consumesTurn defaults true. Pass false for a BORROWED strike — Blood
+  // Craze and Infernal Mandate spend the COMMANDER's turn to make an ally swing,
+  // so the striker is only lending a blow: it keeps its own action this round,
+  // its turn-start passives do not fire, it earns no power for the lent hit and
+  // it keeps whatever taunt is on it. afterAction puts all of that back.
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
-    this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
+    if (opts.consumesTurn === false) {
+      actor._borrowed_turn = { acted: actor.acted_this_round, taunt: actor._taunted_by_id };
+      actor._skip_power_gain = true;
+    } else {
+      this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
+    }
     if (opts.turnStart !== false) {
       this.applyTurnStartTicks(actor);
       // If the unit bled/chilled out at the start of its own turn, it doesn't act.
@@ -1756,6 +1766,20 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    // A borrowed turn is not the striker's turn (see executeAction). Undo the
+    // bookkeeping BEFORE the round check below — otherwise a commanded unit that
+    // was the last one left to act ends the round while its own turn is still
+    // owed to it.
+    if (actor?._borrowed_turn) {
+      const borrowed = actor._borrowed_turn;
+      actor._borrowed_turn   = null;
+      actor.acted_this_round = borrowed.acted;
+      actor._taunted_by_id   = borrowed.taunt;
+      actor._skip_power_gain = false;
+      const won = this.checkWin();
+      if (won) { this.done = true; this.winner = won; }
+      return true;
+    }
     // Every completed hero turn earns power. Sits here rather than in each
     // action so nothing can be added later that quietly skips it — a cast is
     // the one exception, and it opts out by flagging the actor.
