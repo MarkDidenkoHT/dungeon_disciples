@@ -328,7 +328,7 @@ const BUILDING_POOLS = {
         art: 'blacksmith',
         desc: 'Opens the forge. Without it nothing can be crafted.',
         desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 80, Crystals_Life: 20 } },
+        cost: { gold: 10 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -465,7 +465,7 @@ const BUILDING_POOLS = {
         art: 'blacksmith',
         desc: 'Opens the forge. Without it nothing can be crafted.',
         desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 80, Crystals_Fire: 20 } },
+        cost: { gold: 10 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -612,7 +612,7 @@ const BUILDING_POOLS = {
         art: 'blacksmith',
         desc: 'Opens the forge. Without it nothing can be crafted.',
         desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 80, Crystals_Death: 20 } },
+        cost: { gold: 10 } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
