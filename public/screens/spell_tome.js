@@ -81,8 +81,18 @@ function abilityIconUrl(def) {
   return file ? assetUrl(`/assets/icons/abilities/${file}.jpg`) : '';
 }
 
+// The same id rule battle and battle-prep use (getPortraitUrl in both).
+//
+// A HERO has one portrait for the whole tree: every tier and branch of it is
+// still the same face, so `h_d_1_a2` and `h_d_1_b4` both draw `p_h_d_1.png` and
+// only the `h_<faction>_<n>` stem is kept. Ordinary units are their own id.
+// Without this every hero in the Library rendered as an empty frame, because the
+// per-branch file it was asking for has never existed.
 function portraitUrl(unitDef) {
-  return assetUrl(`/assets/character_portraits/p_${unitDef.id}.png`);
+  const id = unitDef?.id;
+  if (!id) return '';
+  const portraitId = String(id).match(/^(h_[a-z]_\d)/)?.[1] ?? id;
+  return assetUrl(`/assets/character_portraits/p_${portraitId}.png`);
 }
 
 // Every ability key a unit definition names, passives and its active alike.
@@ -336,7 +346,10 @@ export function renderSpellTome(root, { player }) {
       return `<div class="library-portraits">${unitDefs.map(u => `
         <div class="library-portrait">
           <span class="library-portrait-frame">
-            <img src="${portraitUrl(u)}" alt="${u.name}" onerror="this.style.visibility='hidden'">
+            <!-- Empty alt, and the node is removed rather than hidden: a unit whose
+               art has not been drawn yet was spilling its own name across the
+               frame as alt text, on top of the name printed underneath. -->
+          <img src="${portraitUrl(u)}" alt="" onerror="this.remove()">
             ${u.t ? `<span class="library-portrait-tier">${t('tier')}${u.t}</span>` : ''}
           </span>
           <span class="library-portrait-name">${(L === 'ru' && u.name_ru) || u.name}</span>
