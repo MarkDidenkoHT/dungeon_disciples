@@ -768,7 +768,7 @@ const ITEM_DEFS = {
     requires_action: 'damage',
     adds_tag:     null,
     stat_mods:    { action_power: 5, initiative: 2 },
-    passive:      'aggrails_blessing 1',
+    passive:      'aggrails_blessing 2',
     icon:         'hatemace',
     rarity:       'epic',
     unique:       true,

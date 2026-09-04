@@ -710,7 +710,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   if (trigger === 'on_turn_start' && owner === actor) {
     if (p.regen_pct != null) {
-      const heal = Math.floor(owner.max_hp * p.regen_pct / 100);
+      const heal = engine.absorbWithDecay(owner, Math.floor(owner.max_hp * p.regen_pct / 100));
       const before = owner.battle_hp;
       owner.battle_hp = Math.min(owner.max_hp, owner.battle_hp + heal);
       const actual = owner.battle_hp - before;
@@ -741,7 +741,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const healBase = p.light_of_dawn_per_tag != null
           ? p.light_of_dawn_per_tag * tagCount(engine, owner.side, p.tag_required)
           : (p.light_of_dawn_heal ?? 15);
-        const healAmt = Math.min(Math.floor(healBase * engine.fatigueHealMult()), frontAlly.max_hp - frontAlly.battle_hp);
+        const healAmt = Math.min(engine.absorbWithDecay(frontAlly, Math.floor(healBase * engine.fatigueHealMult())), frontAlly.max_hp - frontAlly.battle_hp);
         if (healAmt > 0) {
           frontAlly.battle_hp += healAmt;
           engine.fireHealTriggers(owner, frontAlly, healAmt);
@@ -803,7 +803,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           }
           return aMissing > bMissing ? a : b;
         }, candidates[0]);
-        const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
+        const actual = Math.min(engine.absorbWithDecay(lowest, heal), lowest.max_hp - lowest.battle_hp);
         lowest.battle_hp += actual;
         if (actual > 0) {
           // Include sourceId/sourceCell so visual effects (e.g. communion) can
@@ -834,7 +834,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if (p.self_heal_pct != null && !target?._drain_immune) {
       const heal = Math.floor(dmg * p.self_heal_pct / 100 * engine.fatigueHealMult());
-      const actual = Math.min(heal, owner.max_hp - owner.battle_hp);
+      const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: actual });
@@ -1265,7 +1265,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.id !== owner.id);
         if (candidates.length > 0) {
           const lowest = candidates.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b);
-          const healed = Math.min(Math.floor(actualSacrifice * engine.fatigueHealMult()), lowest.max_hp - lowest.battle_hp);
+          const healed = Math.min(engine.absorbWithDecay(lowest, Math.floor(actualSacrifice * engine.fatigueHealMult())), lowest.max_hp - lowest.battle_hp);
           if (healed > 0) {
             lowest.battle_hp += healed;
             engine.fireHealTriggers(owner, lowest, healed);
@@ -1293,7 +1293,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (spent > 0) {
           owner.battle_hp -= spent;
           const before = drinker.battle_hp;
-          drinker.battle_hp = Math.min(drinker.max_hp, drinker.battle_hp + spent);
+          drinker.battle_hp = Math.min(drinker.max_hp, drinker.battle_hp + engine.absorbWithDecay(drinker, spent));
           const healed = drinker.battle_hp - before;
           engine.pushLog({
             type: 'passive', passive: def.name,
@@ -1474,8 +1474,8 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     if (target.side === actor.side) {
       const raw    = p.radiant_surge_heal ?? 0;
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
-      const heal   = Math.floor(Math.min(raw * factor * engine.fatigueHealMult(),
-                                         target.max_hp - target.battle_hp));
+      const heal   = Math.max(0, Math.min(engine.absorbWithDecay(target, Math.floor(raw * factor * engine.fatigueHealMult())),
+                                          target.max_hp - target.battle_hp));
       const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
       target.battle_hp += heal;
       engine.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
@@ -1574,7 +1574,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const drained  = Math.floor(target.max_hp * pctFor(p, engine, actor.side, "ally_drain_pct", "ally_drain_pct_per_tag") / 100);
     target.battle_hp = Math.max(1, target.battle_hp - drained);
     const healAmount = Math.floor(drained * (p.ally_drain_heal_mult ?? 1) * engine.fatigueHealMult());
-    const healed = Math.min(healAmount, actor.max_hp - actor.battle_hp);
+    const healed = Math.min(engine.absorbWithDecay(actor, healAmount), actor.max_hp - actor.battle_hp);
     actor.battle_hp += healed;
     if (p.devour_dmg_bonus_pct != null) {
       actor._dmg_mult = (actor._dmg_mult ?? 1) + p.devour_dmg_bonus_pct / 100;
@@ -1627,7 +1627,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const allies = combatants.filter(c => c.side === actor.side && c.alive);
     for (const a of allies) {
       const factor = 1 - ((a._healing_reduction ?? 0) / 100);
-      const healed = Math.min(Math.floor(p.heal_flat * factor * engine.fatigueHealMult()), a.max_hp - a.battle_hp);
+      const healed = Math.min(engine.absorbWithDecay(a, Math.floor(p.heal_flat * factor * engine.fatigueHealMult())), a.max_hp - a.battle_hp);
       if (healed > 0) {
         a.battle_hp += healed;
         engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: a.unit_name, targetCell: a.cellIndex, message: `${def.name} — healed ${a.unit_name} for ${healed}`, value: healed, heal: true });
@@ -1717,7 +1717,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const pct    = p.stone_form_heal_pct ?? 0;
     const factor = 1 - ((actor._healing_reduction ?? 0) / 100);
     const healed = Math.min(
-      Math.floor(actor.max_hp * pct / 100 * factor * engine.fatigueHealMult()),
+      engine.absorbWithDecay(actor, Math.floor(actor.max_hp * pct / 100 * factor * engine.fatigueHealMult())),
       actor.max_hp - actor.battle_hp);
     if (healed > 0) actor.battle_hp += healed;
 
@@ -1793,7 +1793,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const lowest = combatants
       .filter(c => c.side === actor.side && c.alive)
       .reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, actor);
-    const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
+    const actual = Math.min(engine.absorbWithDecay(lowest, heal), lowest.max_hp - lowest.battle_hp);
     if (actual > 0) {
       lowest.battle_hp += actual;
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, message: `${def.name} — healed ${lowest.unit_name} for ${actual}`, value: actual, heal: true });

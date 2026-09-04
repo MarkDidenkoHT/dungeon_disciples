@@ -1545,7 +1545,7 @@ class BattleEngine {
         // is what the animation collects to draw a soul to every one of them —
         // and they are one simultaneous play, not a queue (see FAN_OUT_FX).
         for (const a of allies) {
-          const actual = Math.min(heal, a.max_hp - a.battle_hp);
+          const actual = Math.min(this.absorbWithDecay(a, heal), a.max_hp - a.battle_hp);
           if (actual <= 0) continue;
           a.battle_hp += actual;
           this.fireHealTriggers(unit, a, actual);
@@ -1629,7 +1629,8 @@ class BattleEngine {
     }
     const raw    = this.calcHeal(actor);
     const factor = 1 - (target._healing_reduction ?? 0) / 100;
-    const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
+    const afterDecay = this.absorbWithDecay(target, Math.floor(raw * factor));
+    const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     target.battle_hp += heal;
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
     this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
@@ -1663,7 +1664,7 @@ class BattleEngine {
     actor.battle_hp = Math.max(1, actor.battle_hp - totalCost);
     this.pushLog({ type: 'passive', passive: "Mother's Kiss", actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: totalCost, heal: false });
     for (const a of allies) {
-      const healAmt = Math.min(Math.floor(sacrificePerAlly * this.fatigueHealMult()), a.max_hp - a.battle_hp);
+      const healAmt = Math.min(this.absorbWithDecay(a, Math.floor(sacrificePerAlly * this.fatigueHealMult())), a.max_hp - a.battle_hp);
       if (healAmt > 0) {
         a.battle_hp += healAmt;
         this.fireHealTriggers(actor, a, healAmt);
@@ -1895,7 +1896,7 @@ class BattleEngine {
         const healAmt = Math.floor(tagged.length * effect.heal_per_tagged_unit * this.fatigueHealMult());
         if (healAmt > 0) {
           for (const c of tagged) {
-            const healed = Math.min(healAmt, c.max_hp - c.battle_hp);
+            const healed = Math.min(this.absorbWithDecay(c, healAmt), c.max_hp - c.battle_hp);
             if (healed > 0) c.battle_hp += healed;
           }
           // targetId anchors the animation. light_of_dawn paints a screen-wide
@@ -2667,7 +2668,7 @@ class BattleEngine {
           message: `${c.unit_name} rises again`,
         });
       }
-      if (params.heal_pct)             { const heal = Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult()); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
+      if (params.heal_pct)             { const heal = this.absorbWithDecay(c, Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult())); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
       // Reverted by what LANDED, not by what the spell offered — a target
       // already at the ceiling gains nothing and must give nothing back.
       if (params.armor_boost)          { revert.armor = -addArmor(c, params.armor_boost); }
