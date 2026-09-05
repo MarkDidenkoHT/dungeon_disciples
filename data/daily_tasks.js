@@ -32,6 +32,11 @@ const DAILY_TASKS = [
 ];
 
 // Pick ONE. Deliberately generous while the goal is habit, not balance.
+//
+// `icon` is the FALLBACK glyph. Gold and crystals have real art and are drawn
+// with it (see rewardIconHtml in public/daily.js) — the crystal in the player's
+// own faction element — so only the tome, which has no art anywhere in the game
+// yet, actually renders the glyph below.
 const DAILY_REWARDS = [
   {
     id:    'gold',

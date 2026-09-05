@@ -1065,7 +1065,72 @@ button:active:not(:disabled) { opacity: 0.75; }
   opacity: 0.45;
 }
 
-.daily-sheet { display: flex; flex-direction: column; gap: 14px; }
+.daily-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(40, 20, 60, 0.55), rgba(0, 0, 0, 0.82));
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 14px;
+  animation: daily-fade 0.22s ease;
+}
+@keyframes daily-fade { from { opacity: 0; } to { opacity: 1; } }
+.daily-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), transparent 140px),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  animation: daily-rise 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes daily-rise { from { transform: translateY(18px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.daily-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.10), transparent 70%);
+}
+.daily-header::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent 60%);
+  opacity: 0.6;
+}
+.daily-header-title {
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-shadow: 0 1px 12px rgba(var(--accent-rgb), 0.25);
+}
+.daily-close {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 9px;
+  font-size: 1rem; cursor: pointer; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.daily-close:hover { background: rgba(255, 255, 255, 0.10); color: var(--text); }
+.daily-list {
+  overflow-y: auto;
+  padding: 20px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
 .daily-tasks { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1137,7 +1202,15 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .daily-reward:not(:disabled):active { transform: scale(0.97); }
 .daily-reward:disabled { opacity: 0.4; cursor: default; }
-.daily-reward-icon  { font-size: 1.6rem; line-height: 1; }
+.daily-reward-icon {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.daily-reward-icon .res-icon-img { width: 34px; height: 34px; }
 .daily-reward-label { font-size: 0.8rem; font-weight: 600; text-align: center; line-height: 1.3; }
 
 .daily-claimed {

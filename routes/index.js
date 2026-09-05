@@ -2299,9 +2299,18 @@ router.get('/daily', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,timezone,daily_tasks&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
-    res.json({ ...dailyPayload(rows[0]), tasks_def: DAILY_TASKS, rewards: DAILY_REWARDS });
+    // Which crystal stands for this player's faction, so the crystal reward can
+    // be drawn with their own element's art instead of a generic gem. The map
+    // lives in data/buildings.js, which is CommonJS and cannot be imported by
+    // the browser — so the answer is sent rather than re-derived client-side.
+    res.json({
+      ...dailyPayload(rows[0]),
+      faction_crystal: FACTION_CRYSTAL[rows[0].faction] || 'Crystals_Life',
+      tasks_def: DAILY_TASKS,
+      rewards: DAILY_REWARDS,
+    });
   } catch (err) {
     serverError(res, err);
   }

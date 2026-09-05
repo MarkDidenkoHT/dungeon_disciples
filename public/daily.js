@@ -1,23 +1,24 @@
 import { api, bootstrapCache, refreshResourceBar } from './api.js';
-import { openSheet, getSheetBody } from './utils.js';
+import { CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { DAILY_TASKS, DAILY_REWARDS } from '../data/daily_tasks.js';
 
 let lang = 'en';
 const T = (en, ru) => (lang === 'ru' ? ru : en);
 
 const ERRORS = {
-  daily_claimed:    ['Already claimed today.',       'Награда за сегодня уже получена.'],
-  daily_incomplete: ['Finish all three first.',      'Сначала выполните все три задания.'],
-  daily_bad_reward: ['Pick one of the rewards.',     'Выберите одну из наград.'],
+  daily_claimed:    ['Already claimed today.',   'Награда за сегодня уже получена.'],
+  daily_incomplete: ['Finish all three first.',  'Сначала выполните все три задания.'],
+  daily_bad_reward: ['Pick one of the rewards.', 'Выберите одну из наград.'],
 };
 
-function taskRowHtml(task) {
-  const def  = DAILY_TASKS.find(t => t.id === task.id);
+let activeOverlay = null;
+
+function taskHtml(task) {
+  const def = DAILY_TASKS.find(t => t.id === task.id);
   if (!def) return '';
-  const done = task.done;
   return `
-    <div class="daily-task${done ? ' daily-task--done' : ''}">
-      <span class="daily-check">${done ? '✓' : ''}</span>
+    <div class="daily-task${task.done ? ' daily-task--done' : ''}">
+      <span class="daily-check">${task.done ? '✓' : ''}</span>
       <div class="daily-task-body">
         <div class="daily-task-title">${def.title[lang]}</div>
         <div class="daily-task-desc">${def.desc[lang]}</div>
@@ -26,25 +27,85 @@ function taskRowHtml(task) {
     </div>`;
 }
 
-function rewardCardHtml(reward, locked) {
+// The reward's art. Gold and crystals have real icons and use them; the crystal
+// one is drawn in the player's OWN element, which the server names (see /daily)
+// because the faction map is CommonJS and cannot be imported here. The tome has
+// no art anywhere in the game yet, so it keeps its glyph.
+function rewardIconHtml(reward, factionCrystal) {
+  if (reward.resources?.Gold) return GOLD_ICON;
+  if (reward.id === 'crystals') return CRYSTAL_ICONS[factionCrystal] || CRYSTAL_ICONS.Crystals_Life;
+  return reward.icon;
+}
+
+function rewardHtml(reward, locked, factionCrystal) {
   return `
     <button class="daily-reward" data-reward="${reward.id}" ${locked ? 'disabled' : ''}>
-      <span class="daily-reward-icon">${reward.icon}</span>
+      <span class="daily-reward-icon">${rewardIconHtml(reward, factionCrystal)}</span>
       <span class="daily-reward-label">${reward.label[lang]}</span>
     </button>`;
 }
 
-export async function openDailySheet(player) {
-  lang = player?.settings?.language === 'ru' ? 'ru' : 'en';
-  openSheet(T('Daily Tasks', 'Ежедневные задания'), `<p class="modal-empty">…</p>`);
+function bodyHtml(state) {
+  const tasks = state.tasks.map(taskHtml).join('');
 
-  let state = null;
+  // Three states for the reward strip: locked while the day is unfinished,
+  // pickable once it is, and a single card naming what was taken after that.
+  if (state.claimed) {
+    const taken = DAILY_REWARDS.find(r => r.id === state.reward);
+    return `
+      <div class="daily-tasks">${tasks}</div>
+      <div class="daily-claimed">
+        <span class="daily-reward-icon">${taken ? rewardIconHtml(taken, state.faction_crystal) : '✓'}</span>
+        <span>${T('Claimed', 'Получено')}${taken ? ` — ${taken.label[lang]}` : ''}</span>
+        <span class="daily-claimed-note">${T('Come back tomorrow.', 'Возвращайтесь завтра.')}</span>
+      </div>`;
+  }
+  return `
+    <div class="daily-tasks">${tasks}</div>
+    <div class="daily-section-label">
+      ${state.complete
+        ? T('Choose your reward', 'Выберите награду')
+        : T('Finish all three to choose a reward', 'Выполните все три, чтобы выбрать награду')}
+    </div>
+    <div class="daily-rewards">
+      ${DAILY_REWARDS.map(r => rewardHtml(r, !state.complete, state.faction_crystal)).join('')}
+    </div>`;
+}
+
+export function openDailyTasks(player) {
+  closeDailyTasks();
+  lang = player?.settings?.language === 'ru' ? 'ru' : 'en';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'daily-overlay';
+  overlay.innerHTML = `
+    <div class="daily-modal" role="dialog" aria-label="Daily tasks">
+      <div class="daily-header">
+        <span class="daily-header-title">${T('Daily Tasks', 'Ежедневные задания')}</span>
+        <button class="daily-close" aria-label="Close">✕</button>
+      </div>
+      <div class="daily-list"><p class="modal-empty">…</p></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  activeOverlay = overlay;
+
+  overlay.querySelector('.daily-close').addEventListener('click', closeDailyTasks);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeDailyTasks(); });
+
+  const list = overlay.querySelector('.daily-list');
+
+  // Delegated, so a redraw after a claim never has to rebind anything.
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('.daily-reward');
+    if (btn && !btn.disabled) claim(btn.dataset.reward, btn);
+  });
 
   async function load() {
     // A deliberate open is worth a round-trip: the player is looking straight at
     // these numbers, and the badge on the button is the thing that reads cache.
-    state = await api(`/daily?chat_id=${player.chat_id}`);
-    render();
+    const state = await api(`/daily?chat_id=${player.chat_id}`);
+    if (activeOverlay !== overlay) return;
+    list.innerHTML = bodyHtml(state);
   }
 
   async function claim(rewardId, btn) {
@@ -52,7 +113,7 @@ export async function openDailySheet(player) {
     try {
       await api('/daily/claim', { chat_id: player.chat_id, reward: rewardId });
       // Gold, crystals and the tome all live in the resource table the strip and
-      // the token badges read, so both have to move before the sheet redraws.
+      // the token badges read, so both have to move before the modal redraws.
       await bootstrapCache.refresh(player.chat_id);
       refreshResourceBar(player).catch(() => {});
       await load();
@@ -64,52 +125,16 @@ export async function openDailySheet(player) {
     }
   }
 
-  function render() {
-    const body = getSheetBody();
-    if (!body || !state) return;
+  load().catch(err => {
+    if (activeOverlay !== overlay) return;
+    list.innerHTML = `<p class="modal-empty">${err?.message || T('Failed', 'Не удалось')}</p>`;
+  });
+}
 
-    const tasksHtml = state.tasks.map(taskRowHtml).join('');
-
-    // Three states for the reward strip: locked while the day is unfinished,
-    // pickable once it is, and a single claimed card once one has been taken.
-    let rewardHtml;
-    if (state.claimed) {
-      const taken = DAILY_REWARDS.find(r => r.id === state.reward);
-      rewardHtml = `
-        <div class="daily-claimed">
-          <span class="daily-reward-icon">${taken?.icon ?? '✓'}</span>
-          <span>${T('Claimed', 'Получено')}${taken ? ` — ${taken.label[lang]}` : ''}</span>
-          <span class="daily-claimed-note">${T('Come back tomorrow.', 'Возвращайтесь завтра.')}</span>
-        </div>`;
-    } else {
-      rewardHtml = `
-        <div class="daily-section-label">
-          ${state.complete
-            ? T('Choose your reward', 'Выберите награду')
-            : T('Finish all three to choose a reward', 'Выполните все три, чтобы выбрать награду')}
-        </div>
-        <div class="daily-rewards">
-          ${DAILY_REWARDS.map(r => rewardCardHtml(r, !state.complete)).join('')}
-        </div>`;
-    }
-
-    body.innerHTML = `
-      <div class="daily-sheet">
-        <div class="daily-tasks">${tasksHtml}</div>
-        ${rewardHtml}
-      </div>`;
-
-    body.querySelectorAll('.daily-reward').forEach(btn => {
-      btn.addEventListener('click', () => claim(btn.dataset.reward, btn));
-    });
-  }
-
-  try {
-    await load();
-  } catch (err) {
-    const body = getSheetBody();
-    if (body) body.innerHTML = `<p class="modal-empty">${err?.message || T('Failed', 'Не удалось')}</p>`;
-  }
+export function closeDailyTasks() {
+  if (!activeOverlay) return;
+  activeOverlay.remove();
+  activeOverlay = null;
 }
 
 // The badge: lit while a finished day is still unclaimed. Reads the bootstrap
