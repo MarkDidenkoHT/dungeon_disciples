@@ -1,4 +1,4 @@
-import { api }      from '../api.js';
+import { api, bootstrapCache, errandsCache } from '../api.js';
 import { navigate } from '../api.js';
 import { UNITS }    from '../../data/units.js';
 import { preloadAssets, buildUnitCard, handleUnitInspect, openSheet, closeSheet, enableTrackSwipe, applyFactionTheme } from '../utils.js';
@@ -415,6 +415,19 @@ export function renderRegister(root, { player } = {}) {
         hero_id:   hero.id,
       });
 
+      // /player/faction seeds the roster, structures and resources for the
+      // faction just chosen, so anything cached from before this call describes
+      // a different account — an earlier run of this screen after a reset, most
+      // of all. Refreshed rather than merely invalidated: the castle reads the
+      // roster to find the ruler, and going in dirty draws an empty throne for
+      // a frame before the fetch lands.
+      //
+      // Guarded: the faction is already committed server-side by this point, so
+      // a failed prefetch must not drop the player back on this screen with an
+      // error. Invalidate and let the castle fetch it again.
+      try { await bootstrapCache.refresh(updated.chat_id); }
+      catch { bootstrapCache.invalidate(); }
+      errandsCache.invalidate();
       navigate('castle', { player: updated });
     } catch (err) {
       error.textContent = err.message;

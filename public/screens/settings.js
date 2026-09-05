@@ -1,4 +1,4 @@
-import { api, navigate, refreshResourceBar, bootstrapCache } from '../api.js';
+import { api, navigate, refreshResourceBar, bootstrapCache, errandsCache } from '../api.js';
 import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
@@ -469,6 +469,14 @@ export function renderSettings(root, { player }) {
           chat_id:   player.chat_id,
         });
         overlay.remove();
+        // The account this cache describes no longer exists — roster, buildings,
+        // items, errands and resources were all just deleted server-side. The
+        // TTL is a minute, so without this the castle drawn after the player
+        // re-picks a faction is whatever was cached BEFORE the reset: the old
+        // ruler, in the old castle. Intermittent by nature, since a reset more
+        // than a minute after the last read expires the entry anyway.
+        bootstrapCache.invalidate();
+        errandsCache.invalidate();
         navigate('register', { player: result.player });
       } catch (err) {
         confirmBtn.disabled = false;
