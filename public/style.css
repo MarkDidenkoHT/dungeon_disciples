@@ -5065,7 +5065,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: stretch;
   gap: 4px;
   padding: 4px 4px 6px;
-  max-width: 90vw;
 }
 
 .tome-layer-viewport {
