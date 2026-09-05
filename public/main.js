@@ -13,7 +13,7 @@ import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache, startManifestFetch } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
-import { openDailySheet, refreshDailyButton } from './daily.js';
+import { openDailyTasks, closeDailyTasks, refreshDailyButton } from './daily.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme } from './utils.js';
@@ -145,11 +145,11 @@ function mountShell(player) {
 
   // The row is mounted once and never re-rendered (only the strip inside it is),
   // so the daily-tasks click is delegated from here.
-  // openDailySheet reads the language off the player it is given — called
+  // openDailyTasks reads the language off the player it is given — called
   // bare it fell back to English forever. Settings mutates player.settings in place, so
   // this closed-over reference stays current across language switches.
   document.getElementById('resource-bar-row').addEventListener('click', e => {
-    if (e.target.closest('.res-bar-daily')) openDailySheet(player);
+    if (e.target.closest('.res-bar-daily')) openDailyTasks(player);
     // Guarded as well as hidden: the button is only display:none before the
     // first battle, and a hidden control should not be openable by any route.
     if (e.target.closest('.res-bar-errands') && errandsUnlocked(player)) openErrandsSheet(player);
@@ -162,6 +162,10 @@ function navigate(screen, params = {}) {
   // Shared chrome (utils.js) has no player, so hand it the language here.
   setUiLanguage(lang(player));
   hideTutorial();
+  // The daily modal is appended to <body>, not into #content-root, so emptying
+  // the root does not take it down — it would otherwise follow the player onto
+  // the next screen.
+  closeDailyTasks();
   document.body.style.overflow = '';
 
   // How far off the bottom edge a sheet stops: the height of the bottom nav
