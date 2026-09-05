@@ -43,9 +43,6 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --rarity-rare:   #3b82f6;
   --rarity-epic:   #a855f7;
   --rarity-mythic: #f59e0b;
-  /* Off the common→mythic ladder: its own class, for tournament item budgets.
-     Deliberately distinct from --danger (#c84a3a) so a shattered border never
-     reads as an error state. */
   --rarity-shattered: #e0393e;
   --rarity-border: 2px;
 }
@@ -5123,10 +5120,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.45), inset 0 0 10px rgba(var(--accent-rgb), 0.18);
 }
 
-/* The tome's page art is bright parchment, and the Library's chrome is the
-   game's usual pale-on-dark. Without a scrim of its own the ability names sat
-   on the lit half of the page and vanished; the panel gives the whole page one
-   surface to read against instead of two. */
 .library {
   flex: 1;
   min-height: 0;
@@ -5147,9 +5140,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .library-grid {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px 2px;
   padding: 6px;
   align-content: start;
@@ -5160,6 +5154,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
   padding: 0;
   background: none;
   border: none;
@@ -5211,10 +5207,19 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .library-cell-name {
+  width: 100%;
+  min-width: 0;
+  height: 2.3em;
   font-size: 0.6rem;
   line-height: 1.15;
   text-align: center;
   color: #c9cbd2;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .library-empty {
@@ -5246,9 +5251,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   gap: 8px;
   align-items: baseline;
+  min-width: 0;
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--muted);
+}
+
+.library-rank-desc {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .library-rank-pill {
@@ -5304,7 +5315,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .library-portraits {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px 6px;
 }
 
@@ -5313,6 +5324,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  min-width: 0;
+  max-width: 100%;
   text-align: center;
 }
 
@@ -5349,15 +5362,21 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .library-portrait-name {
+  width: 100%;
+  min-width: 0;
   font-size: 0.6rem;
   line-height: 1.15;
   color: var(--text, #ddd);
+  overflow-wrap: anywhere;
 }
 
 .library-portrait-tags {
+  width: 100%;
+  min-width: 0;
   font-size: 0.52rem;
   line-height: 1.1;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .spells-slider-wrap {
