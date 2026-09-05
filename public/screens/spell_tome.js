@@ -1,11 +1,12 @@
 import { assetUrl } from '../asset_base.js';
-import { api, refreshResourceBar, resourceCache, structuresCache } from '../api.js';
+import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { showCostBar, hideCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
-import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, getSheetBody, onSheetClose, cap,
-         playPageTurnSound, spellName, spellDesc, abilityName, abilityDescription, resolveAbility,
-         buildAbilityModalParts } from '../utils.js';
+import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, closeSubSheet, getSheetBody,
+         onSheetClose, cap, playPageTurnSound, spellName, spellDesc, abilityName, abilityDescription,
+         resolveAbility, buildAbilityModalParts, buildUnitCard } from '../utils.js';
+import { rootOf } from '../unit_tree.js';
 
 // The tome is for RESEARCH, and the two non-combat spells (revive and mend) are
 // neither researched nor cast from here — every faction starts with both, and
@@ -42,6 +43,8 @@ const LIB_TEXT = {
   tagUnits:    { en: n => `${n} in your faction`, ru: n => `${n} в вашей фракции` },
   noTagUnits:  { en: 'No unit in your faction carries this tag.', ru: 'Никто в вашей фракции не носит эту метку.' },
   tier:        { en: 'T',                  ru: 'Т' },
+  backTo:      { en: t => `‹ ${t}`,   ru: t => `‹ ${t}` },
+  lineOf:      { en: n => `${n} line`,     ru: n => `Линия: ${n}` },
   // What a tag is DOING in the ability it was read from. The same tag means very
   // different things in "per Zombie ally" and "extra damage against Zombies",
   // and a Library that printed both as a bare chip would teach the wrong lesson.
@@ -234,6 +237,7 @@ export function renderSpellTome(root, { player }) {
     const t = key => LIB_TEXT[key][L];
 
     const factionUnits = Object.values(UNITS[player.faction] || {});
+    const unitById = new Map(factionUnits.map(u => [u.id, u]));
 
     // ── The faction's abilities, collapsed to one entry per idea ───────────────
     //
@@ -342,19 +346,62 @@ export function renderSpellTome(root, { player }) {
       }).join('');
     }
 
-    function portraitsHtml(unitDefs) {
-      return `<div class="library-portraits">${unitDefs.map(u => `
-        <div class="library-portrait">
+    const unitLabel = u => (L === 'ru' && u.name_ru) || u.name;
+
+    // Which upgrade LINE a unit belongs to, answered by the same walk the
+    // castle's evolution tree uses (rootOf in unit_tree.js) over the same map.
+    // A unit the map does not mention — a mercenary, or anything recruited
+    // outside the faction tree — is the root of its own one-unit line.
+    function lineRootId(u) {
+      const paths = upgradePaths[player.faction] || {};
+      return rootOf(paths, u.id) || u.id;
+    }
+
+    // Portraits were previously one flat run sorted by tier, which put four
+    // unrelated T1s beside each other and split every line apart. Grouping by
+    // line keeps a unit next to what it grows into, so the answer to "who has
+    // this tag" reads as a set of lines to invest in rather than a pile of
+    // faces.
+    function groupByLine(unitDefs) {
+      const groups = new Map();
+      for (const u of unitDefs) {
+        const rootId = lineRootId(u);
+        if (!groups.has(rootId)) groups.set(rootId, []);
+        groups.get(rootId).push(u);
+      }
+      return [...groups.entries()]
+        .map(([rootId, members]) => ({
+          // The root itself may not be in this list (a tag the line only picks
+          // up at tier 3, say) so it is looked up rather than taken from it.
+          root: unitById.get(rootId) || members[0],
+          members: members.sort((a, b) => (a.t ?? 0) - (b.t ?? 0) || String(a.id).localeCompare(String(b.id))),
+        }))
+        .sort((a, b) => (a.root.t ?? 0) - (b.root.t ?? 0)
+                     || unitLabel(a.root).localeCompare(unitLabel(b.root)));
+    }
+
+    function portraitTileHtml(u) {
+      return `
+        <button class="library-portrait" type="button" data-unit-id="${u.id}">
           <span class="library-portrait-frame">
-            <!-- Empty alt, and the node is removed rather than hidden: a unit whose
-               art has not been drawn yet was spilling its own name across the
-               frame as alt text, on top of the name printed underneath. -->
-          <img src="${portraitUrl(u)}" alt="" onerror="this.remove()">
+            <img src="${portraitUrl(u)}" alt="" onerror="this.remove()">
             ${u.t ? `<span class="library-portrait-tier">${t('tier')}${u.t}</span>` : ''}
           </span>
-          <span class="library-portrait-name">${(L === 'ru' && u.name_ru) || u.name}</span>
+          <span class="library-portrait-name">${unitLabel(u)}</span>
           <span class="library-portrait-tags">${(u.tags || []).join(' · ')}</span>
-        </div>`).join('')}</div>`;
+        </button>`;
+    }
+
+    // Every line is its own block, separated by a rule. A line of ONE — a hero,
+    // whose branches all share a name and collapse to a single tile — gets no
+    // header, since naming a line of one is noise; the rule is what keeps it
+    // from reading as the last member of the line above it.
+    function portraitsHtml(unitDefs) {
+      return groupByLine(unitDefs).map(g => `
+        <div class="library-line">
+          ${g.members.length > 1 ? `<div class="library-line-label">${LIB_TEXT.lineOf[L](unitLabel(g.root))}</div>` : ''}
+          <div class="library-portraits">${g.members.map(portraitTileHtml).join('')}</div>
+        </div>`).join('');
     }
 
     // A tag, answered with faces. The SUB-sheet is used rather than replacing the
@@ -365,7 +412,85 @@ export function renderSpellTome(root, { player }) {
       const body = units.length
         ? `<div class="library-section-label">${LIB_TEXT.tagUnits[L](units.length)}</div>${portraitsHtml(units)}`
         : `<div class="library-empty">${t('noTagUnits')}</div>`;
+      subBackTag = tag;
       openSubSheet(tag, body);
+      bindSheetsOnce();
+    }
+
+    // One unit, as the card the castle and battle prep already draw — same
+    // stats, same resistances, same ability row. buildUnitCard takes a raw
+    // definition, which is exactly what the Library is holding.
+    //
+    // Rendered into the SUB-sheet rather than a third overlay: two layers is as
+    // deep as this should go, so a unit reached from a tag replaces that tag's
+    // list and offers a way back to it.
+    function openUnitSheet(unitDef, backTag) {
+      const back = backTag
+        ? `<button class="library-back" type="button" data-back-tag="${backTag}">${LIB_TEXT.backTo[L](backTag)}</button>`
+        : '';
+      subBackTag = backTag;
+      openSubSheet(unitLabel(unitDef), `${back}${buildUnitCard(unitDef)}`);
+      bindSheetsOnce();
+    }
+
+    // Both sheets are created ONCE by utils.js and cached; opening one replaces
+    // its body's innerHTML, not the body element. So these handlers are
+    // installed exactly once and read the current view out of `subBackTag` —
+    // re-binding per open would stack a listener every time and fire a click as
+    // many times as the player had navigated.
+    let subBackTag = null;
+    // Tracked per sheet: utils.js builds each overlay lazily, so the sub-sheet
+    // does not exist until it is first opened, while the main one is already
+    // there. One shared flag would have left the main sheet unbound on the very
+    // first ability opened.
+    let mainBound = false;
+    let subBound  = false;
+
+    // The ability icons on a unit card are the loop closing: tapping one takes
+    // the MAIN sheet to that ability's Library entry and drops the sub-sheet,
+    // so ability -> tag -> unit -> another ability keeps going without ever
+    // stacking a third overlay.
+    function bindSheetsOnce() {
+      const main = document.querySelector('.modal-overlay:not(.modal-overlay--sub) .modal-body');
+      const sub  = document.querySelector('.modal-overlay--sub .modal-body');
+
+      if (main && !mainBound) {
+        mainBound = true;
+
+        // Selector-scoped, so these are inert while the sheet is showing a SPELL
+        // rather than a Library entry — the tome shares both overlays.
+        main.addEventListener('click', e => {
+          const chip = e.target.closest('.library-tagchip');
+          if (chip) { openTagSheet(chip.dataset.tag); return; }
+          // A carrier portrait opens straight onto that unit, with no tag to
+          // return to — the ability sheet behind it is already the way back.
+          const tile = e.target.closest('.library-portrait[data-unit-id]');
+          const u = tile && unitById.get(tile.dataset.unitId);
+          if (u) openUnitSheet(u, null);
+        });
+      }
+
+      if (sub && !subBound) {
+        subBound = true;
+        sub.addEventListener('click', e => {
+          const back = e.target.closest('.library-back');
+          if (back) { openTagSheet(back.dataset.backTag); return; }
+
+          const tile = e.target.closest('.library-portrait[data-unit-id]');
+          if (tile) {
+            const u = unitById.get(tile.dataset.unitId);
+            if (u) openUnitSheet(u, subBackTag);
+            return;
+          }
+
+          const icon = e.target.closest('.ability-icon[data-ability-key]');
+          if (icon && icon.dataset.abilityKey) {
+            const def = resolveAbility(icon.dataset.abilityKey);
+            const next = def && entries.get(baseKey(def.id ?? icon.dataset.abilityKey));
+            if (next) { closeSubSheet(); openAbilitySheet(next); }
+          }
+        });
+      }
     }
 
     function openAbilitySheet(entry) {
@@ -402,15 +527,7 @@ export function renderSpellTome(root, { player }) {
           : `<div class="library-empty">${t('noCarriers')}</div>`}`;
 
       openSheet(parts.title, `${parts.body}${ranksHtml}${tagsHtml}${carriersHtml}`, parts.badges);
-
-      // Bound on the freshly written body, once per open. openSheet replaces the
-      // body's innerHTML, so the previous ability's listener has already gone with
-      // the nodes it was attached to — nothing accumulates.
-      document.querySelector('.modal-overlay .modal-body')
-        ?.addEventListener('click', e => {
-          const chip = e.target.closest('.library-tagchip');
-          if (chip) openTagSheet(chip.dataset.tag);
-        });
+      bindSheetsOnce();
     }
 
     grid.addEventListener('click', e => {
@@ -435,6 +552,12 @@ export function renderSpellTome(root, { player }) {
 
   renderLibrary(root.querySelector('#tome-library'));
 
+  // The faction's upgrade map, for grouping Library portraits by unit line. It
+  // rides the bootstrap the castle already fetches, so this costs no request —
+  // but it arrives AFTER the first render. Everything that needs it is opened by
+  // a tap, long after init() has settled, and an empty map simply means every
+  // unit is its own line rather than an error.
+  let upgradePaths    = {};
   let playerCrystals  = {};
   let throneLevel     = 1;
   let learnedSpells   = [];
@@ -701,10 +824,14 @@ export function renderSpellTome(root, { player }) {
 
   async function init() {
     try {
-      const [structData, inventory] = await Promise.all([
+      const [structData, inventory, boot] = await Promise.all([
         structuresCache.get(player.chat_id),
         resourceCache.get(player.chat_id),
+        // Cached and already fetched by the castle, so this is a read, not a
+        // round-trip. Failing it must not take the spell list down with it.
+        bootstrapCache.get(player.chat_id).catch(() => null),
       ]);
+      upgradePaths = boot?.buildings?.upgrade_paths || {};
 
       throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
       // Off the player, not the network. `learned_spells` is a column on the
