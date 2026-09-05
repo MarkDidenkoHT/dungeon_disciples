@@ -1497,8 +1497,18 @@ export function renderCastle(root, { player }) {
     {
       id: 'go_embark',
       bare:   true,
-      ready:  () => isTutorialDone(player, 'spell_heal')
-                 && !isTutorialDone(player, 'battle_done'),
+      // DEADLOCK GUARD. This used to require spell_heal's flag outright, but
+      // spell_heal only RUNS when there is a wounded unit sitting in a building
+      // slot — and HP regen (which lives in Supabase, not here) quietly heals
+      // the starting recruit back to full over about an hour. A player who
+      // stepped away mid-onboarding came back to a healthy roster: spell_heal
+      // was skipped rather than completed, so its flag never landed, so this
+      // step could never become ready and the whole chain died silently right
+      // after the passives step. Ready once the lesson is DONE **or** there is
+      // nobody left for it to teach on.
+      ready:  () => !isTutorialDone(player, 'battle_done')
+                 && (isTutorialDone(player, 'spell_heal')
+                     || !slotWithBuilding(slotOfUnit(woundedTutorialUnit()))),
       target: () => document.querySelector('.nav-btn[data-screen="embark"]'),
     },
     // The daily card is the reason for everything below it. Shown the moment the
@@ -1539,7 +1549,12 @@ export function renderCastle(root, { player }) {
       id: 'build_infirmary',
       awaits: true,
       bare:   true,
-      ready:  () => isTutorialDone(player, 'build_messenger_post') && !infirmaryBuilt(),
+      // `|| postBuilt()` for the same reason go_embark carries its guard: this
+      // gate is on the PREVIOUS step's flag, which is never set when that step
+      // was skipped because its building already stood. The state is the real
+      // condition; the flag is only the usual way of reaching it.
+      ready:  () => (isTutorialDone(player, 'build_messenger_post') || postBuilt())
+                 && !infirmaryBuilt(),
       open:   () => setLayer(2),
       target: () => nodeForSlot(INFIRMARY_SLOT),
     },
@@ -1550,7 +1565,8 @@ export function renderCastle(root, { player }) {
       id: 'build_blacksmith',
       awaits: true,
       bare:   true,
-      ready:  () => isTutorialDone(player, 'build_infirmary') && !blacksmithBuilt(),
+      ready:  () => (isTutorialDone(player, 'build_infirmary') || infirmaryBuilt())
+                 && !blacksmithBuilt(),
       open:   () => setLayer(2),
       target: () => nodeForSlot(BLACKSMITH_SLOT),
     },

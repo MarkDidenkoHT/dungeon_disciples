@@ -90,14 +90,18 @@ const TUTORIAL_STEPS = {
       text: 'Доспех занял слот вашего героя, а его характеристики уже учтены. Коснитесь слота в любой момент, чтобы сменить снаряжение, — новое создаётся во вкладке «Предметы» внизу.',
     },
   },
+  // Taught inspection FIRST. This step used to open with passive rank stacking —
+  // a rule about a system the player had not been told they could look at. The
+  // whole card is tappable (handleUnitInspect in utils.js: stats, armor,
+  // resists, abilities all open an explainer), and nothing anywhere says so.
   roster_passive_stack: {
     en: {
-      title: 'Passives Stack',
-      text: 'Units and items both carry passives, and when they share one the ranks add together — two sources of Regenerate 1 become Regenerate 2. Rank 3 is the ceiling, so pair gear with a unit that already has the passive you want to push.',
+      title: 'Read Your Unit',
+      text: 'Anything on this card can be tapped — stats, resistances, abilities — and the game will tell you what it does. These four are its abilities: one active, the rest passive. When a unit and its gear carry the same passive, the ranks add up, to a maximum of 3.',
     },
     ru: {
-      title: 'Пассивки складываются',
-      text: 'Пассивки есть и у бойцов, и у предметов: если умение совпадает, ранги складываются — два источника «Регенерации 1» дают «Регенерацию 2». Потолок — 3 ранг, поэтому подбирайте снаряжение к бойцу, у которого нужная пассивка уже есть.',
+      title: 'Изучите бойца',
+      text: 'На этой карточке можно нажать на что угодно — характеристики, сопротивления, способности — и игра объяснит, что это. Вот эти четыре — способности бойца: одна активная, остальные пассивные. Если одна и та же пассивка есть и у бойца, и у его снаряжения, ранги складываются, максимум до 3-го.',
     },
   },
   battle_prep_lines: {
