@@ -376,18 +376,17 @@ export function maybeShowErrandsIntro(player) {
   introRunning = true;
   // Locked until the first refresh lands; the spotlight can't wait for it.
   btn.disabled = false;
+  // One bubble, not two. `errands_away` was a second "Got it" on this same
+  // button carrying the "they will be gone for hours" warning; it is the last
+  // sentence of errands_intro now. Its flag is still marked so a player who saw
+  // the old pair is not shown anything again.
   showTutorialSpotlight(player, 'errands_intro', btn, {
     showContinue: true,
     onAdvance: () => {
-      showTutorialSpotlight(player, 'errands_away', btn, {
-        showContinue: true,
-        onAdvance: () => {
-          introRunning = false;
-          markTutorialDone(player, 'errands_intro');
-          markTutorialDone(player, 'errands_away');
-          openErrandsSheet(player);
-        },
-      });
+      introRunning = false;
+      markTutorialDone(player, 'errands_intro');
+      markTutorialDone(player, 'errands_away');
+      openErrandsSheet(player);
     },
   });
 }

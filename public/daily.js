@@ -13,6 +13,16 @@ const ERRORS = {
 
 let activeOverlay = null;
 
+// One-shot close callbacks, the same contract onSheetClose uses: each fires
+// once and is dropped. Onboarding needs it because this modal is not part of
+// the sheet system, so closing it fires no sheet handler and the driver would
+// never learn the player was done reading.
+const _closeHandlers = new Set();
+export function onDailyClose(fn) {
+  _closeHandlers.add(fn);
+  return () => _closeHandlers.delete(fn);
+}
+
 function taskHtml(task) {
   const def = DAILY_TASKS.find(t => t.id === task.id);
   if (!def) return '';
@@ -135,6 +145,10 @@ export function closeDailyTasks() {
   if (!activeOverlay) return;
   activeOverlay.remove();
   activeOverlay = null;
+  for (const fn of [..._closeHandlers]) {
+    _closeHandlers.delete(fn);
+    try { fn(); } catch {}
+  }
 }
 
 // The badge: lit while a finished day is still unclaimed. Reads the bootstrap

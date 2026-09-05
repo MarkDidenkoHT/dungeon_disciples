@@ -93,11 +93,11 @@ const TUTORIAL_STEPS = {
   roster_passive_stack: {
     en: {
       title: 'Passives Stack',
-      text: 'Units and items both carry passives. When a unit and its gear share the same passive, the ranks add together — two sources of Regenerate 1 become Regenerate 2. Rank 3 is the ceiling, so pair gear with a unit that already has the passive you want to push.',
+      text: 'Units and items both carry passives, and when they share one the ranks add together — two sources of Regenerate 1 become Regenerate 2. Rank 3 is the ceiling, so pair gear with a unit that already has the passive you want to push.',
     },
     ru: {
       title: 'Пассивки складываются',
-      text: 'Пассивные умения есть и у бойцов, и у предметов. Если умение совпадает, ранги складываются: два источника «Регенерации 1» дают «Регенерацию 2». Потолок — 3 ранг, поэтому подбирайте снаряжение к бойцу, у которого нужная пассивка уже есть.',
+      text: 'Пассивки есть и у бойцов, и у предметов: если умение совпадает, ранги складываются — два источника «Регенерации 1» дают «Регенерацию 2». Потолок — 3 ранг, поэтому подбирайте снаряжение к бойцу, у которого нужная пассивка уже есть.',
     },
   },
   battle_prep_lines: {
@@ -186,11 +186,11 @@ const TUTORIAL_STEPS = {
   battle_power: {
     en: {
       title: 'Power',
-      text: 'This is your power. You start each battle with one and gain another every time your hero acts, up to five. Your hero fights by casting — that is what its action button does — and every cast spends power. A spell cast with more power hits harder, so the choice is a small spell now or a bigger one later. Power never carries over to the next battle, and it stops building if your hero falls.',
+      text: 'This is your power. You gain one every time your hero acts, up to five, and every cast spends it. More power behind a spell hits harder — so it is a small spell now or a bigger one later. Nothing carries over to the next battle.',
     },
     ru: {
       title: 'Сила',
-      text: 'Это ваша сила. В начале каждого боя у вас есть единица, и ещё одна прибавляется каждый раз, когда герой действует, максимум до пяти. Герой сражается заклинаниями — именно это делает его кнопка действия, — и каждое заклинание тратит силу. Чем больше силы вложено, тем сильнее эффект: выбирайте между слабым заклинанием сейчас и мощным позже. Сила не переносится в следующий бой и перестаёт расти, если герой пал.',
+      text: 'Это ваша сила. Она прибавляется каждый раз, когда герой действует, максимум до пяти, и каждое заклинание её тратит. Чем больше вложено, тем сильнее эффект — слабое заклинание сейчас или мощное позже. В следующий бой сила не переносится.',
     },
   },
   embark_region: {
@@ -228,6 +228,16 @@ const TUTORIAL_STEPS = {
   // Messenger's Post -> errands. Errands cannot be explained before the
   // building that runs them exists, which is why these two steps sit in front
   // of errands_intro rather than beside it.
+  daily_intro: {
+    en: {
+      title: 'Your Daily Tasks',
+      text: 'Three small jobs a day, one reward of your choosing — and that battle already counted. One of them wants a unit sent on an errand, which needs a building you have not raised yet. Let us go and build it.',
+    },
+    ru: {
+      title: 'Ежедневные задания',
+      text: 'Три небольших дела в день и награда на выбор — бой уже засчитан. Одно из них требует отправить бойца на поручение, а для этого нужно здание, которого у вас пока нет. Пойдём и построим его.',
+    },
+  },
   upgrades_page: {
     en: {
       title: 'A Second Page',
@@ -241,11 +251,11 @@ const TUTORIAL_STEPS = {
   build_messenger_post: {
     en: {
       title: "The Messenger's Post",
-      text: "This page is a whole shelf of halls, and you will raise most of them in time. Start with the Messenger's Post. It opens errands: work for a single soldier that pays while you play. It costs almost nothing to raise, and each later level pays more for every errand you run.",
+      text: "Start with the Messenger's Post — this is the building your daily task is waiting on. It opens errands: work for a single soldier that pays while you play, and it costs almost nothing to raise.",
     },
     ru: {
       title: 'Почтовый двор',
-      text: 'На этой странице целый ряд залов, и со временем вы построите почти все. Начните с Почтового двора. Он открывает поручения — работу для одного бойца, которая приносит доход, пока вы играете. Постройка стоит сущие гроши, а каждый следующий уровень увеличивает награду.',
+      text: 'Начните с Почтового двора — именно его ждёт ваше ежедневное задание. Он открывает поручения: работу для одного бойца, которая приносит доход, пока вы играете, и стоит сущие гроши.',
     },
   },
   // The second build on the same page: it proves the layer holds more than the
@@ -295,28 +305,23 @@ const TUTORIAL_STEPS = {
 
   // Shown once, after the Messenger's Post is raised — the errand button stays
   // dead until then (see errandsUnlocked in errands.js), so this step is also
-  // the moment it becomes usable. The warning is the
-  // important half: an errand takes a unit off the board, and a player who sends
-  // their only frontliner out for six hours and then cannot embark has been
-  // ambushed by a feature, not taught one.
+  // the moment it becomes usable.
+  //
+  // The warning used to be a second step (`errands_away`) with its own "Got it".
+  // Two taps on the same button taught nothing the one bubble could not, so it
+  // is the last sentence here instead. Both flags are still marked when this is
+  // dismissed, so a player who already saw the old pair never sees either again.
+  // It is the important half: an errand takes a unit off the board, and a player
+  // who sends their only frontliner out for six hours and then cannot embark has
+  // been ambushed by a feature, not taught one.
   errands_intro: {
     en: {
       title: 'Errands',
-      text: 'Word comes in from beyond the walls: work that needs one soldier, not an army. Send a unit out and it returns with XP, gold or crystals — no fighting, no risk of losing anyone. Each errand asks for two unit tags and pays a reward for each; a unit carrying both brings both halves home.',
+      text: 'Work that needs one soldier, not an army. Send a unit out and it returns with XP, gold or crystals — no fighting, nobody lost. But it is away for the whole trip, 2 to 6 hours, and cannot embark until it is back, so never send the unit you need for your next battle.',
     },
     ru: {
       title: 'Поручения',
-      text: 'Из-за стен приходят вести: есть дела, для которых нужен один боец, а не армия. Отправьте бойца — он вернётся с опытом, золотом или кристаллами. Ни боя, ни риска кого-то потерять. Каждое поручение требует два тега бойца и платит за каждый; тот, кто носит оба, принесёт обе половины.',
-    },
-  },
-  errands_away: {
-    en: {
-      title: 'They Will Be Gone',
-      text: 'Careful: a unit on an errand leaves your roster for the whole duration — 2, 4 or 6 hours — and cannot embark until it comes back. The longer the trip, the better the pay. Never send the unit you need for your next battle.',
-    },
-    ru: {
-      title: 'Его не будет на месте',
-      text: 'Внимание: боец на поручении покидает отряд на весь срок — 2, 4 или 6 часов — и до возвращения не сможет пойти в поход. Чем дольше поручение, тем выше плата. Не отправляйте того, кто нужен вам в следующем бою.',
+      text: 'Работа, для которой нужен один боец, а не армия. Отправьте его — он вернётся с опытом, золотом или кристаллами, без боя и без потерь. Но всё это время, от 2 до 6 часов, его не будет в отряде и он не сможет пойти в поход — не отправляйте того, кто нужен вам в следующем бою.',
     },
   },
 };
@@ -474,8 +479,8 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
     const next = opts.resolveTarget?.();
     if (!next || next === liveTarget) return;
     if (onTargetTap) {
-      liveTarget.removeEventListener('click', onTargetTap);
-      next.addEventListener('click', onTargetTap, { once: true });
+      liveTarget.removeEventListener('click', onTargetTap, true);
+      next.addEventListener('click', onTargetTap, { once: true, capture: true });
     }
     liveTarget = next;
   }
@@ -594,15 +599,22 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   // An informational step only highlights its target to point at it — the ring
   // swallows taps so the player can't trigger the underlying control (and open a
   // sheet over the next spotlight). Its button is the only way onward.
+  // CAPTURE, not bubble. The control being pointed at bound its own click
+  // handler when it rendered, which is BEFORE this one — so on the bubble phase
+  // the app acted first: the sheet opened, and anything in that path that
+  // re-entered the onboarding driver found this step still unmarked and re-drew
+  // the ring the player had just answered, over the sheet that had just opened.
+  // Capture always runs before any bubble handler regardless of who bound
+  // first, so the step is torn down and marked before the app can react.
   if (!opts.showContinue) {
     onTargetTap = () => advance();
-    liveTarget.addEventListener('click', onTargetTap, { once: true });
+    liveTarget.addEventListener('click', onTargetTap, { once: true, capture: true });
   }
 
   activeCleanup = () => {
     clearTimeout(settleTimer);
     if (rafId) cancelAnimationFrame(rafId);
     container.remove();
-    if (onTargetTap) liveTarget.removeEventListener('click', onTargetTap);
+    if (onTargetTap) liveTarget.removeEventListener('click', onTargetTap, true);
   };
 }

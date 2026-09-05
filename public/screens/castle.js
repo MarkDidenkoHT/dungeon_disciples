@@ -26,6 +26,7 @@ import {
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
+import { onDailyClose, closeDailyTasks } from '../daily.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml, drawUnitTreeLinks } from '../unit_tree.js';
 import { assetUrl } from '../asset_base.js';
 
@@ -1356,7 +1357,10 @@ export function renderCastle(root, { player }) {
       fn();
     };
     modal.addEventListener('animationend', run);
-    setTimeout(run, 400);   // in case the animation was skipped or already over
+    // 300ms, not 400: the sheet's own rise is 220ms (see sheet-up in style.css),
+    // so anything past that is dead air between two steps every time the
+    // animationend is missed.
+    setTimeout(run, 300);
   }
 
   // ── Onboarding ────────────────────────────────────────────────────────────
@@ -1482,6 +1486,21 @@ export function renderCastle(root, { player }) {
       ready:  () => isTutorialDone(player, 'spell_heal')
                  && !isTutorialDone(player, 'battle_done'),
       target: () => document.querySelector('.nav-btn[data-screen="embark"]'),
+    },
+    // The daily card is the reason for everything below it. Shown the moment the
+    // player is back from their first battle: one of its three lines asks for an
+    // errand, which needs a building they have not raised — so the build chain
+    // that follows is answering a request rather than issuing one.
+    //
+    // Not `awaits`: the tap only OPENS the card. The step is finished by reading
+    // it, so the driver waits on the modal closing (onDailyClose) instead — the
+    // daily modal is not part of the sheet system, so no sheet handler fires.
+    {
+      id: 'daily_intro',
+      bare:   true,
+      ready:  () => isTutorialDone(player, 'battle_done') && !postBuilt(),
+      target: () => document.querySelector('.res-bar-daily'),
+      onTap:  () => onDailyClose(runOnboarding),
     },
     {
       id: 'upgrades_page',
@@ -1760,6 +1779,8 @@ export function renderCastle(root, { player }) {
       // closeSheet() fires its close handlers even when nothing is open, and
       // those re-enter this driver.
       if (step.bare && document.querySelector('.modal-overlay:not(.hidden)')) closeModal();
+      // The daily card is its own overlay, not a sheet, so closeModal misses it.
+      if (step.bare && step.id !== 'daily_intro') closeDailyTasks();
       const opened = !!step.open;
       step.open?.();
       const el = step.target();
@@ -2745,6 +2766,11 @@ export function renderCastle(root, { player }) {
         stacks.set(key, entry);
         out.push(entry);
       }
+
+      // What the unit is already wearing leads: inspecting a unit is usually
+      // about the item it has on, so selected = 0 lands on it.
+      const wornAt = out.findIndex(e => String(e.item.equipped_by) === String(rosterId));
+      if (wornAt > 0) out.unshift(...out.splice(wornAt, 1));
       return out;
     }
 
