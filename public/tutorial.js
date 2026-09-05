@@ -140,6 +140,22 @@ const TUTORIAL_STEPS = {
       text: 'Смерть не конец, пока есть чем платить. Заклинание воскрешения поднимет его за кристаллы — нажмите «Воскресить». Он вернётся живым, но еле-еле.',
     },
   },
+  // Heal used to open the unit's card straight from the castle, so the player
+  // met the Heal button without ever being shown WHO was hurt or how they could
+  // have known. This is the missing half: the castle node carries an HP bar
+  // (nodeHpBar) that is already drawn red for this unit, so the lesson is to
+  // read the bar, not to trust the tutorial. Mirrors unit_fallen, which does the
+  // same job for a dead unit when DEATH_ENABLED is on.
+  unit_wounded: {
+    en: {
+      title: 'A Wounded Ally',
+      text: 'One of your own came back hurt — the bar under their portrait is how you spot it at a glance. Tap them to see what can be done.',
+    },
+    ru: {
+      title: 'Раненый союзник',
+      text: 'Один из ваших вернулся с ранами — полоса под портретом покажет это с одного взгляда. Коснитесь его, чтобы увидеть, что можно сделать.',
+    },
+  },
   // The regen line is the important half. A player who never learns that wounds
   // close on their own reads a half-empty HP bar as permanent damage, and either
   // hoards crystals to undo it or stops embarking. Taught here because this is

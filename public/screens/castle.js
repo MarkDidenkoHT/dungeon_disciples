@@ -1473,6 +1473,20 @@ export function renderCastle(root, { player }) {
       open:   () => openSlotUnitSheet(slotOfUnit(deadTutorialUnit())),
       target: () => getSheetBody()?.querySelector('.resurrect-btn'),
     },
+    // Who is hurt, before how to fix it. Without this the heal step opened the
+    // card by itself and pointed at the button, so the player was never shown
+    // the wounded unit on the castle — or the HP bar that says which one it is.
+    {
+      id: 'unit_wounded',
+      bare:   true,
+      // The spell_heal guard is for players who are already PAST this lesson:
+      // this flag is new, so without it the first unit they wounded after the
+      // update would have re-taught them what a health bar is.
+      ready:  () => !isTutorialDone(player, 'spell_heal')
+                 && !!slotWithBuilding(slotOfUnit(woundedTutorialUnit())),
+      target: () => nodeForSlot(slotOfUnit(woundedTutorialUnit())),
+      onTap:  () => afterSheetSettles(runOnboarding),
+    },
     {
       id: 'spell_heal',
       awaits: true,
@@ -2607,6 +2621,9 @@ export function renderCastle(root, { player }) {
         // marks the flag once the spell has actually gone through. The
         // reloadFromBootstrap below re-enters the driver with the new state.
         const stepId = resurrectBtn ? 'spell_revive' : 'spell_heal';
+        // Whether this cast is the ONBOARDING one, read before the flag moves.
+        // It decides what happens to the card afterwards — see below.
+        const teaching = !isTutorialDone(player, stepId);
         (async () => {
           try {
             const res = await api(path, { chat_id: player.chat_id, roster_id: rosterId, spell_id: spellId });
@@ -2617,8 +2634,17 @@ export function renderCastle(root, { player }) {
                   ...(res.resources ? { resources: res.resources } : {}),
                 }))
               : null;
+            // reloadFromBootstrap re-renders and re-enters the driver, so the
+            // NEXT step is already up by the time this line runs.
+            //
+            // Reopening the card shows off the unit that was just mended, which
+            // is right for an ordinary heal. During onboarding it was the bug:
+            // the step after this one (go_embark) points at the nav bar, and the
+            // card reopened directly on top of it — the spotlight ringed a
+            // button buried under a sheet the player had no reason to close, so
+            // the chain looked locked.
             await reloadFromBootstrap(null, patched);
-            openSlotUnitSheet(slot);
+            if (!teaching) openSlotUnitSheet(slot);
           } catch (err) {
             alert(err?.message || String(err));
             btn.disabled = false;
