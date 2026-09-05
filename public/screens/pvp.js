@@ -1,8 +1,8 @@
 import { applyBackground } from '../utils.js';
 import { lang } from './settings.js';
 
-// Placeholder until live PvP exists. Kept in step with the roadmap entry in
-// timeline.js: duels are real-time, matched on party strength, and every win
+// Placeholder until live PvP exists. Kept in step with the published roadmap:
+// duels are real-time, matched on party strength, and every win
 // counts toward the FACTION's season rather than only a personal rank — when a
 // season closes the leading faction claims a shard of the Shattered Crown.
 const PT = {

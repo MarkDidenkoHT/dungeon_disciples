@@ -13,7 +13,7 @@ import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache, startManifestFetch } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
-import { openTimeline }     from './timeline.js';
+import { openDailySheet, refreshDailyButton } from './daily.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
 import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme } from './utils.js';
@@ -34,7 +34,7 @@ const app = document.getElementById('app');
 
 // Tooltips for the two resource-bar controls.
 const SHELL_TEXT = {
-  timeline: { en: "What's Next", ru: 'Что дальше' },
+  daily:    { en: 'Daily Tasks',  ru: 'Ежедневные задания' },
   errands:  { en: 'Errands',     ru: 'Поручения' },
 };
 
@@ -79,13 +79,13 @@ function mountShell(player) {
 
   app.innerHTML = `
     <div id="shell">
-      <!-- Timeline and errands are CONTROLS, so they sit beside the framed
+      <!-- Daily tasks and errands are CONTROLS, so they sit beside the framed
            resource strip rather than inside it — the frame art is sized for
            resource slots and squeezed them flat. -->
       <div class="resource-bar-row" id="resource-bar-row">
-        <button class="res-bar-btn res-bar-timeline" title="${SHELL_TEXT.timeline[L]}" aria-label="${SHELL_TEXT.timeline[L]}">
-          <img src="${assetUrl(`/assets/icons/ui/timeline.png`)}" class="res-icon-img" alt="Timeline"
-               onerror="this.replaceWith(document.createTextNode('\u{1F552}'))">
+        <button class="res-bar-btn res-bar-daily" title="${SHELL_TEXT.daily[L]}" aria-label="${SHELL_TEXT.daily[L]}">
+          <img src="${assetUrl(`/assets/icons/ui/timeline.png`)}" class="res-icon-img" alt="Daily tasks"
+               onerror="this.replaceWith(document.createTextNode('\u{1F4DC}'))">
         </button>
         <div class="resource-bar" id="resource-bar"></div>
         <button class="res-bar-btn res-bar-errands" title="${SHELL_TEXT.errands[L]}" aria-label="${SHELL_TEXT.errands[L]}">
@@ -144,12 +144,12 @@ function mountShell(player) {
   });
 
   // The row is mounted once and never re-rendered (only the strip inside it is),
-  // so the timeline click is delegated from here.
-  // openTimeline reads the language off the player it is given — called bare it
-  // fell back to English forever. Settings mutates player.settings in place, so
+  // so the daily-tasks click is delegated from here.
+  // openDailySheet reads the language off the player it is given — called
+  // bare it fell back to English forever. Settings mutates player.settings in place, so
   // this closed-over reference stays current across language switches.
   document.getElementById('resource-bar-row').addEventListener('click', e => {
-    if (e.target.closest('.res-bar-timeline')) openTimeline(player);
+    if (e.target.closest('.res-bar-daily')) openDailySheet(player);
     // Guarded as well as hidden: the button is only display:none before the
     // first battle, and a hidden control should not be openable by any route.
     if (e.target.closest('.res-bar-errands') && errandsUnlocked(player)) openErrandsSheet(player);
@@ -216,6 +216,7 @@ function navigate(screen, params = {}) {
     // onboarding chain has decided it has nothing to show — see onboardingIdle
     // in screens/castle.js.
     refreshErrandButton(player).catch(() => {});
+    refreshDailyButton(player).catch(() => {});
   }
 
   const root = document.getElementById('content-root');

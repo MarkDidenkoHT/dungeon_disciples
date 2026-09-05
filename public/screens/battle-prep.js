@@ -321,7 +321,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   // The resource bar is collapsed in battle prep; slide it down while the spell
   // sheet is open so the player can see their crystals, then slide it back up.
   function setResourceBarVisible(visible) {
-    // The ROW, not the strip — the timeline and errands buttons are siblings of
+    // The ROW, not the strip — the daily-tasks and errands buttons are siblings of
     // the strip now and must collapse with it.
     const row = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
     if (row) row.classList.toggle('resource-bar--collapsed', !visible);

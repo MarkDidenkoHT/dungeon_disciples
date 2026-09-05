@@ -32,6 +32,7 @@ const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/teleg
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
+const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID } = require('../data/daily_tasks');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -332,8 +333,9 @@ async function getPlayerByChatId(chat_id) {
   // `progress` rides along for the craft gate (data/items.js `requires`), which
   // both /bootstrap and /items/craft read off this same lookup. `timezone` and
   // `adds_daily_view` are what /bootstrap needs to report the remaining daily
-  // favors — the day rollover is computed from the player's local date.
-  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view&limit=1`);
+  // favors — the day rollover is computed from the player's local date. The same
+  // timezone decides when `daily_tasks` rolls over.
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view,daily_tasks&limit=1`);
   return rows[0] || null;
 }
 
@@ -1280,6 +1282,11 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // The running event, or null. Presentational only — what it actually pays
       // is decided server-side at battle end, never from this.
       event: eventPayload(await getActiveEvent(supabase)),
+      // Today's tasks and their progress. Free — the player row is already
+      // loaded — so the shell can badge the button without a round-trip of its
+      // own. Claiming still goes through /daily/claim, which re-reads the row.
+      daily: player ? dailyPayload(player) : null,
+      daily_defs: { tasks: DAILY_TASKS, rewards: DAILY_REWARDS },
     });
   } catch (err) {
     serverError(res, err);
@@ -1705,6 +1712,82 @@ function writeFavorRecord(chat_id, record) {
   });
 }
 
+// ── Daily tasks ─────────────────────────────────────────────────────────────
+// Three small nudges a day — fight, send an errand, cast something real — and
+// one reward of the player's choosing for finishing all three. The point is
+// habit, not balance: the payout is deliberately generous while the systems it
+// points at are the ones players skip.
+//
+// Storage is players.daily_tasks (jsonb), NOT a table of its own. It is exactly
+// the shape adds_daily_view already has — a date stamp plus counters — and the
+// player row is fetched by /bootstrap anyway, so progress and the button badge
+// ride along at no extra query.
+//
+// Progress is only ever bumped by the server, from inside the routes that do
+// the thing being counted, AFTER those routes have committed. Nothing the
+// client sends can move a counter.
+
+// Today's record, rolled over when the player's local day has moved on. Never
+// null, and never trusts a stale `date`.
+function dailyRecordFor(player) {
+  const today = playerLocalDate(player?.timezone);
+  const rec   = player?.daily_tasks || {};
+  const blank = { date: today, claimed: false, reward: null };
+  for (const t of DAILY_TASKS) blank[t.id] = 0;
+  if (rec.date !== today) return blank;
+  return {
+    ...blank,
+    ...Object.fromEntries(DAILY_TASKS.map(t => [t.id, Number(rec[t.id]) || 0])),
+    claimed: rec.claimed === true,
+    reward:  rec.reward || null,
+  };
+}
+
+// What the client is told: per-task progress, whether the set is finished, and
+// whether the reward is still owed. Derived, so the client cannot disagree.
+function dailyPayload(player) {
+  const record = dailyRecordFor(player);
+  const tasks  = DAILY_TASKS.map(t => ({
+    id:       t.id,
+    target:   t.target,
+    progress: Math.min(record[t.id], t.target),
+    done:     record[t.id] >= t.target,
+  }));
+  return {
+    date:      record.date,
+    tasks,
+    complete:  tasks.every(t => t.done),
+    claimed:   record.claimed,
+    reward:    record.reward,
+    claimable: tasks.every(t => t.done) && !record.claimed,
+  };
+}
+
+// Add to one counter. Read-modify-write on the player row, like the ad
+// allowance — the three actions this counts are sequential in practice, and a
+// lost increment costs a player one step of one day's progress, which is not
+// worth a stored procedure.
+//
+// NEVER awaited by the route that calls it, and never allowed to throw: a
+// failed daily counter must not fail the battle, errand or cast that earned it.
+async function bumpDailyTask(chat_id, taskId, amount = 1) {
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
+    if (!rows.length) return;
+    const record = dailyRecordFor(rows[0]);
+    // Counting past the target is pointless and lets a number grow forever.
+    const target = DAILY_TASKS.find(t => t.id === taskId)?.target ?? 0;
+    if (record[taskId] >= target) return;
+    record[taskId] = Math.min(target, record[taskId] + amount);
+    await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ daily_tasks: record }),
+    });
+  } catch (err) {
+    console.error(`daily task bump failed (${taskId}):`, err.message);
+  }
+}
+
 // ── Errands ─────────────────────────────────────────────────────────────────
 // A daily solo task for one non-hero unit. Errands cannot fail; the cost is that
 // the unit is away until it returns.
@@ -2067,6 +2150,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
     }
 
+    bumpDailyTask(chat_id, 'errands');
     res.json({ success: true, errand: startedRow });
   } catch (err) {
     serverError(res, err);
@@ -2203,6 +2287,89 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
       remaining: FAVOR_DAILY_CAP - record.count,
       cap:       FAVOR_DAILY_CAP,
     });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// GET /daily — today's tasks, standalone. /bootstrap carries the same payload,
+// so this exists for the sheet, which wants a fresh read rather than whatever
+// the cache happened to hold when the player last navigated.
+router.get('/daily', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    res.json({ ...dailyPayload(rows[0]), tasks_def: DAILY_TASKS, rewards: DAILY_REWARDS });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /daily/claim — all three done, take one of the three rewards.
+//
+// The record is re-read here and every gate is re-checked against it: what the
+// client believed when it drew the sheet is never the authority on whether the
+// day is finished or already paid.
+router.post('/daily/claim', requireAuth, async (req, res) => {
+  const { chat_id, reward } = req.body;
+  if (!chat_id || !reward) return res.status(400).json({ error: 'chat_id and reward required' });
+  const rewardDef = DAILY_REWARDS_BY_ID[reward];
+  if (!rewardDef) return res.status(400).json({ error: 'Unknown reward', code: 'daily_bad_reward' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const record = dailyRecordFor(rows[0]);
+    if (record.claimed) return res.status(400).json({ error: 'Already claimed today', code: 'daily_claimed' });
+    if (!DAILY_TASKS.every(t => record[t.id] >= t.target)) {
+      return res.status(400).json({ error: 'Tasks not finished', code: 'daily_incomplete' });
+    }
+
+    // MARK IT CLAIMED BEFORE PAYING ANYTHING OUT — the same order /battle/reward
+    // uses, and for the same reason: every line below this awaits, and each of
+    // those awaits is a window in which a double-tap pays the reward twice. The
+    // filter makes the write itself the race guard, so a second request matches
+    // no row and comes back empty. The date is matched too, so a stale record
+    // from a previous day can never be mistaken for today's unclaimed one.
+    const marked = await supabase(
+      `/players?chat_id=eq.${encodeURIComponent(chat_id)}`
+      + `&daily_tasks->>date=eq.${encodeURIComponent(record.date)}`
+      + `&daily_tasks->>claimed=not.eq.true`, {
+        method: 'PATCH',
+        body: JSON.stringify({ daily_tasks: { ...record, claimed: true, reward } }),
+        headers: { Prefer: 'return=representation' },
+      });
+    if (!(Array.isArray(marked) ? marked.length : marked)) {
+      return res.status(400).json({ error: 'Already claimed today', code: 'daily_claimed' });
+    }
+
+    const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    const granted = { resources: {}, tokens: {} };
+
+    // Resources (gold, crystals) always have a row — they are seeded at
+    // registration — so a missing one means something is wrong with the account
+    // and is skipped rather than invented.
+    await Promise.all(Object.entries(rewardDef.resources || {}).map(([item, amount]) => {
+      const row = inventoryRows.find(r => r.item === item && r.item_type === 'resource');
+      if (!row) return null;
+      granted.resources[item] = amount;
+      return supabase(`/resources?id=eq.${row.id}`, {
+        method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
+    }));
+
+    // Tokens may genuinely be absent — a player who has never earned a tome has
+    // no row — so these upsert the way first-clear token drops do.
+    await Promise.all(Object.entries(rewardDef.tokens || {}).map(([item, amount]) => {
+      const row = inventoryRows.find(r => r.item === item && r.item_type === 'token');
+      granted.tokens[item] = amount;
+      return row
+        ? supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) })
+        : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'token', item, amount }) });
+    }));
+
+    res.json({ success: true, reward, granted });
   } catch (err) {
     serverError(res, err);
   }
@@ -3091,6 +3258,10 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     const result = engine.doCast(hero, spellDef, { power, targetId: target_id ?? null });
     if (result.error) return res.status(400).json({ error: result.error });
 
+    // The cast landed, so it counts toward the day. Power is 1-5; only a real
+    // investment qualifies. Not awaited — see bumpDailyTask.
+    if (Number(power) >= 3) bumpDailyTask(chat_id, 'spells');
+
     // The enemy answers immediately, exactly as after any other hero action —
     // unless the enemy is a player, who answers in their own time. Either way,
     // turns nobody can take are spent rather than waited on.
@@ -3762,6 +3933,12 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     const claimed = await claimBattleState(battle_id);
     if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
     armyCacheDrop(battle_id);
+
+    // Counted here rather than at /battle/end because this is the route a
+    // finished battle actually passes through, and claimBattleState above has
+    // already made it single-shot: a retry cannot count the same battle twice.
+    // A loss counts — the task is to fight, not to win.
+    bumpDailyTask(chat_id, 'battles');
 
     await persistBattleRosterState(chat_id, record.battle_data);
 

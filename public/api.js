@@ -230,7 +230,7 @@ export async function refreshResourceBar(player) {
   const find = name => inventory.find(r => r.item === name) || { amount: 0 };
   // Resources only — 7 slots: gold + 6 crystals, drawn from RESOURCE_BAR_SLOTS so
   // the build-cost bar that sits under this strip lines up column for column.
-  // The timeline and errands buttons live OUTSIDE this element (see the
+  // The daily-tasks and errands buttons live OUTSIDE this element (see the
   // resource-bar-row in main.js), so rebuilding the strip never touches them.
   bar.innerHTML = RESOURCE_BAR_SLOTS.map(slot => `
     <div class="res-bar-item">
