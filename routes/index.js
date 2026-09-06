@@ -831,10 +831,24 @@ async function applyAutoLevelUps(rows, buildingsData) {
   return upgraded;
 }
 
+// ── TEMPORARY: browser test login ───────────────────────────────────────────
+// Opening the game at /?test_mode_on logs straight in as the account below,
+// skipping Telegram entirely, so onboarding can be walked through in an
+// ordinary browser instead of only inside the Mini App.
+//
+// DELETE THIS AND ITS TWO USES BEFORE THE GAME IS PUBLIC. Anyone who knows the
+// URL is this account — there is no check beyond the query string.
+const TEST_MODE_CHAT_ID = '8290555721';
+
 router.post('/login', async (req, res) => {
-  const { initData, timezone } = req.body;
-  if (!initData) return res.status(400).json({ error: 'initData required' });
-  const telegramUser = validateTelegramInitData(initData);
+  const { initData, timezone, test_mode } = req.body;
+  let telegramUser;
+  if (test_mode) {
+    telegramUser = { id: TEST_MODE_CHAT_ID, username: 'test_mode', first_name: 'Test', language_code: 'en' };
+  } else {
+    if (!initData) return res.status(400).json({ error: 'initData required' });
+    telegramUser = validateTelegramInitData(initData);
+  }
   if (!telegramUser) return res.status(401).json({ error: 'Invalid Telegram auth' });
   const chat_id = String(telegramUser.id);
   const session_token = generateSessionToken();
