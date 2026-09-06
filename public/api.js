@@ -210,10 +210,25 @@ const NAV_UNLOCK_STEP = 'second_building';
 // what to do. Keying on the tutorial flag instead means a first-timer is
 // guided as before, and anyone who has been through it once — reset or not —
 // walks straight in.
+//
+// The flag is the usual way into the unlocked state, not the state itself.
+// `second_building` is SKIPPED rather than completed for anyone who already has
+// the units it would have given them (a full barracks, no free slot), and a
+// skipped step never sets its flag — which left those tabs shut for good, with
+// onboarding pointing at an Embark button the shell refuses to act on. Owning
+// more than the hero is the real condition, so it is checked too.
 export async function refreshNavLock(player) {
   const nav = document.getElementById('bottom-nav');
   if (!nav || !player?.chat_id) return;
-  const locked = !player?.tutorials?.[NAV_UNLOCK_STEP];
+  let locked = !player?.tutorials?.[NAV_UNLOCK_STEP];
+  if (locked) {
+    try {
+      const boot = await bootstrapCache.get(player.chat_id);
+      if ((boot?.roster || []).length > 1) locked = false;
+    } catch {
+      // Keep the flag's answer; a failed read must not hand out access.
+    }
+  }
   LOCKED_UNTIL_ONBOARDED.forEach(screen => {
     const btn = nav.querySelector(`.nav-btn[data-screen="${screen}"]`);
     if (!btn) return;

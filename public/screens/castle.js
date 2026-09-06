@@ -3337,6 +3337,14 @@ export function renderCastle(root, { player }) {
         // renderBuildings starts the chain.
         onboardingBusy = false;
         await reloadFromBootstrap(updated, patchFromWrite(updated));
+        // THIS build is the one that unlocks Items / Embark / Spells (see
+        // NAV_UNLOCK_STEP in api.js) — and this branch used to return without
+        // refreshing the nav, so the tabs kept their locked styling and their
+        // disabled class. The rest of onboarding never leaves the castle, so
+        // nothing called refreshNavLock again: by the time `go_embark` rang the
+        // Embark tab, the shell's click handler was still skipping it as
+        // disabled and the step could not be completed.
+        refreshNavLock(player).catch(() => {});
         return;
       }
       // A build changes the ROSTER, not just the structures: raising a dwelling
