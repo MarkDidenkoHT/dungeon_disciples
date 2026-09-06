@@ -708,11 +708,13 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       root.querySelector('.embark-card[data-to-arena]')
         ?.addEventListener('click', () => setLayer(2));
 
-      // Deliberately gated on the castle step, not the roster ones: onboarding
-      // order is enforced by navigation (castle -> roster -> here), so a player
-      // who reaches embark another way still gets this step instead of being
-      // stranded behind a roster step that never ran.
-      if (isTutorialDone(player, 'second_building') && !isTutorialDone(player, 'embark_region')) {
+      // Gated on having no battle behind them, not on an earlier step's flag.
+      // It used to require `second_building`, which is SKIPPED rather than
+      // completed for anyone whose barracks were already full — and a skipped
+      // step sets no flag, so those players reached this screen and were shown
+      // nothing at all. Standing here is the qualification: the tab that leads
+      // here is locked until the castle chain opens it.
+      if (!isTutorialDone(player, 'embark_region') && !isTutorialDone(player, 'battle_done')) {
         const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
         if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
       } else {

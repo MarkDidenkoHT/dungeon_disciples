@@ -1576,7 +1576,14 @@ export function renderCastle(root, { player }) {
       id: 'go_craft',
       bare:   true,
       ready:  () => blacksmithBuilt() && !ownsAnyItem(),
-      target: () => document.querySelector('.nav-btn[data-screen="items"]'),
+      // data-screen="roster", NOT "items". The tab is LABELLED Items and renders
+      // the items screen (see navigate in main.js), but its route key is still
+      // `roster` — the screen was renamed and the key deliberately left alone so
+      // deep links and nav locks kept working. This selector matched nothing, so
+      // the step was silently skipped and the chain ended here: every later step
+      // needs an item that only the forge can produce, and the player was never
+      // sent to it.
+      target: () => document.querySelector('.nav-btn[data-screen="roster"]'),
     },
     {
       id: 'roster_intro',
@@ -3328,6 +3335,7 @@ export function renderCastle(root, { player }) {
         markTutorialDone(player, 'build_messenger_post');
       }
       if (building_id === 'infirmary') markTutorialDone(player, 'build_infirmary');
+      if (building_id === 'blacksmith') markTutorialDone(player, 'build_blacksmith');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so
