@@ -1795,7 +1795,16 @@ export function renderCastle(root, { player }) {
     // on a dead screen, found nothing to teach, and hideTutorial()'d whatever
     // the NEXT screen had just put up — which is why the embark step vanished
     // the moment it appeared.
-    if (!root.isConnected) return;
+    //
+    // `root` is #content-root, which main.js EMPTIES on navigation but never
+    // removes — so root.isConnected is true forever and this guard never once
+    // fired. The castle's own markup is the real test: #outer-ring exists only
+    // while the castle is the screen being shown. Without it, tapping "March
+    // Out" ran this driver one more time from the castle's pending
+    // afterSheetSettles, found every remaining step gated behind battle_done,
+    // fell through to the terminal hideTutorial() — and wiped the embark step
+    // the new screen had just drawn.
+    if (!root.isConnected || !root.querySelector('#outer-ring')) return;
     if (onboardingBusy || driving) return;
     driving = true;
     try { driveOnboarding(); } finally { driving = false; }
