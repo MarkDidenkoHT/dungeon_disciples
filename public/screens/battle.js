@@ -229,6 +229,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   loadResearched().then(() => render()).catch(() => {});
   let state            = snapshot ? { ...snapshot, log: Array.isArray(logs) && logs.length ? logs : (snapshot.log || []) } : { combatants: [], log: [] };
   let selectingTarget  = null;
+  // True while `selectingTarget` holds the automatic first-turn arm rather than
+  // a choice the player made. Read only by the onboarding gate in render().
+  let autoArmed        = false;
   let pendingAction    = null;
   // The bottom panel shows one of two things: the combat log, or a breakdown of
   // the acting unit's action and ability with the numbers resolved against that
@@ -2293,16 +2296,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // reconnect, snapshot refresh), so there is no route that can land on an
     // unarmed player turn.
     //
-    // Read BEFORE the auto-arm, because the tutorial gate below has to tell the
-    // two states apart: a player who is genuinely part-way through picking a
-    // target (do not interrupt) versus the default arm this block applies to
-    // every player turn (nothing has happened yet — teach). Without the
-    // distinction the auto-arm left `selectingTarget` permanently set and the
-    // battle_power / battle_first_action steps could never run at all.
-    const wasSelectingTarget = !!selectingTarget;
+    // `autoArmed` records that THIS block did the arming rather than the player.
+    // The tutorial gate below has to tell the two apart: a player part-way
+    // through picking a target must not be interrupted, but the default arm
+    // applied to every player turn means nothing has happened yet and is
+    // exactly when the lesson belongs. Without the distinction `selectingTarget`
+    // is set on every player turn and the battle_power / battle_first_action
+    // steps can never run at all.
     if (!isEnemyTurn && !processing && actor && !pendingAction && !isNoneAction) {
       selectingTarget = actor;
       pendingAction   = 'attack';
+      autoArmed       = true;
     }
 
     const validTargetKeys = new Set();
@@ -2427,7 +2431,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
     const needsPower  = !isTutorialDone(player, 'battle_power');
     const needsAction = !isTutorialDone(player, 'battle_first_action');
-    if (!tutorialIsEnemyTurn && !processing && !wasSelectingTarget && (needsPower || needsAction)) {
+    if (!tutorialIsEnemyTurn && !processing && (autoArmed || !selectingTarget) && (needsPower || needsAction)) {
       const showAction = () => {
         if (!needsAction) return;
         const mainBtn = ui.mainBtn;
@@ -2455,6 +2459,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     hideTutorial();
     processing = true;
     selectingTarget = null;
+    autoArmed       = false;
     pendingAction   = null;
     render();
     try {
@@ -2551,6 +2556,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           }
           selectingTarget = actor;
           pendingAction   = 'attack';
+          autoArmed       = false;
           render();
           return;
         }
@@ -2570,6 +2576,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           }
           selectingTarget = actor;
           pendingAction   = 'ability';
+          autoArmed       = false;
           render();
           return;
         }
