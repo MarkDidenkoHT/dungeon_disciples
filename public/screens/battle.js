@@ -2292,6 +2292,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // the one place every path passes through (turn start, action resolved,
     // reconnect, snapshot refresh), so there is no route that can land on an
     // unarmed player turn.
+    //
+    // Read BEFORE the auto-arm, because the tutorial gate below has to tell the
+    // two states apart: a player who is genuinely part-way through picking a
+    // target (do not interrupt) versus the default arm this block applies to
+    // every player turn (nothing has happened yet — teach). Without the
+    // distinction the auto-arm left `selectingTarget` permanently set and the
+    // battle_power / battle_first_action steps could never run at all.
+    const wasSelectingTarget = !!selectingTarget;
     if (!isEnemyTurn && !processing && actor && !pendingAction && !isNoneAction) {
       selectingTarget = actor;
       pendingAction   = 'attack';
@@ -2419,7 +2427,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const tutorialIsEnemyTurn = !tutorialActor || tutorialActor.side === 'enemy';
     const needsPower  = !isTutorialDone(player, 'battle_power');
     const needsAction = !isTutorialDone(player, 'battle_first_action');
-    if (!tutorialIsEnemyTurn && !processing && !selectingTarget && (needsPower || needsAction)) {
+    if (!tutorialIsEnemyTurn && !processing && !wasSelectingTarget && (needsPower || needsAction)) {
       const showAction = () => {
         if (!needsAction) return;
         const mainBtn = ui.mainBtn;
