@@ -339,17 +339,13 @@ function showReconnectModal(player, battle_id, battle_data) {
 
 async function boot() {
   const tg = window.Telegram?.WebApp;
-  // TEMPORARY: /?test_mode_on logs in as the test account without Telegram, so
-  // the game can be walked through in a browser. Delete with its server half
-  // (TEST_MODE_CHAT_ID in routes/index.js) before the game is public.
-  const TEST_MODE = new URLSearchParams(location.search).has('test_mode_on');
 
-  if (!TEST_MODE && (!tg || !tg.initData)) {
+  if (!tg || !tg.initData) {
     app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#888;font-family:sans-serif;text-align:center;padding:2rem">Open this app inside Telegram.</div>`;
     return;
   }
 
-  tg?.ready();
+  tg.ready();
 
   // WHY THIS IS NOT OPTIONAL: a Mini App launched from an inline button or the
   // chat menu button opens COMPACT — a half-height sheet — while one launched
@@ -358,11 +354,11 @@ async function boot() {
   // itself from, so the layout dutifully shrank to half a screen while the
   // castle grid (a fixed 458px) did not. That is the dead block under the units
   // and the app "not fitting" on those two launch routes only.
-  tg?.expand?.();
+  tg.expand?.();
   // Drag-to-close competes with the game's own drags: pulling a unit downward
   // in battle prep could close the app. Available from Bot API 7.7; older
   // clients simply do not have it.
-  tg?.disableVerticalSwipes?.();
+  tg.disableVerticalSwipes?.();
 
   // Decide where the art comes from BEFORE anything renders or preloads: the
   // probe flips assetUrl's base to this server if the CDN is unreachable, and
@@ -375,10 +371,7 @@ async function boot() {
   await resolveAssetBase();
 
   try {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const loginPromise = api('/login', TEST_MODE
-      ? { test_mode: true, timezone }
-      : { initData: tg.initData, timezone });
+    const loginPromise = api('/login', { initData: tg.initData, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
 
     // Warm the game state inside the loading screen instead of after it. The
     // preload sits on a 4.5s floor warming art, and every screen's first paint

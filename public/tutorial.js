@@ -226,11 +226,11 @@ const TUTORIAL_STEPS = {
   battle_prep_start: {
     en: {
       title: 'Prepare for Battle',
-      text: 'Tap your hero, then place them on your formation grid. Once placed, tap Enter Battle to begin.',
+      text: 'Drag on your formation grid. Once placed, tap Enter Battle to begin.',
     },
     ru: {
       title: 'Подготовка к бою',
-      text: 'Коснитесь героя, затем разместите его на сетке построения. После этого нажмите «В бой», чтобы начать.',
+      text: 'Перенесети героя на сетку построения. После этого нажмите «В бой», чтобы начать.',
     },
   },
   battle_first_action: {
