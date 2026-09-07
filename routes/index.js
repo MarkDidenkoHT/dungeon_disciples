@@ -243,6 +243,61 @@ function supabase(path, options = {}) {
   });
 }
 
+// ── Atomic economy writes (sql/003_atomic_resources.sql) ────────────────────
+// Resource arithmetic does NOT happen here any more. It used to: read `amount`,
+// then PATCH the absolute value back — which meant two requests that read the
+// same balance both wrote the same result, and N parallel crafts cost one
+// craft's worth of gold. The arithmetic now happens in the database, where
+// `amount = amount - n` is one statement under a row lock and a whole cost
+// bundle is one transaction.
+//
+// These need their own transport: a `returns void` function answers 204 with an
+// empty body, and supabase() above calls r.json() unconditionally.
+async function rpc(fnName, args) {
+  const r = await fetch(`${SUPABASE_URL}/rpc/${fnName}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  });
+  const text = await r.text();
+  let data = null;
+  if (text) { try { data = JSON.parse(text); } catch { data = null; } }
+  if (!r.ok) throw new Error(data?.message || text || `rpc ${fnName} failed`);
+  return data;
+}
+
+// costs: { Gold: 100, Crystals_Fire: 14 }. Throws if ANY line cannot be paid,
+// having deducted nothing — the whole bundle rolls back together.
+function spendResources(chat_id, costs) {
+  const payload = Object.fromEntries(
+    Object.entries(costs || {}).filter(([, n]) => Number.isFinite(Number(n)) && Number(n) > 0)
+  );
+  if (!Object.keys(payload).length) return Promise.resolve(null);
+  return rpc('spend_resources', { p_chat_id: String(chat_id), p_costs: payload });
+}
+
+// grants: [{ item, amount, item_type }]. Upserts, so a trophy the player has
+// never held needs no separate INSERT path and cannot race into two rows.
+function grantResources(chat_id, grants) {
+  const payload = (grants || [])
+    .filter(g => g && g.item && Number.isFinite(Number(g.amount)) && Number(g.amount) !== 0)
+    .map(g => ({ item: g.item, amount: Number(g.amount), item_type: g.item_type || 'resource' }));
+  if (!payload.length) return Promise.resolve(null);
+  return rpc('grant_resources', { p_chat_id: String(chat_id), p_grants: payload });
+}
+
+// The database raises `insufficient:<item>` when a spend cannot be paid. That is
+// an EXPECTED failure — the player is short — so it must reach them as a 400
+// with a code, not fall through to serverError's 500.
+function shortfallItem(err) {
+  const m = /(?:^|\W)insufficient:(\S+)/.exec(err?.message || '');
+  return m ? m[1] : null;
+}
+
 function validateTelegramInitData(initData) {
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
@@ -295,22 +350,17 @@ function findEnemyUnit(region, unitId) {
   return Object.values(pool).find(u => u?.id === unitId) || null;
 }
 
+// The "can I afford this" check and the deduction are the same statement now, so
+// there is no window between them. A shortfall throws before anything is spent,
+// which is the contract every caller already relied on.
 async function consumeCrystalCosts(chat_id, crystals) {
-  const crystalEntries = Object.entries(crystals || {}).filter(([, amt]) => Number.isFinite(amt) && amt > 0);
-  if (!crystalEntries.length) return;
-
-  const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-  for (const [crystalType, needed] of crystalEntries) {
-    const row = inventoryRows.find(r => r.item === crystalType);
-    if (!row || row.amount < needed) {
-      throw new Error(`Not enough ${crystalType}. Need ${needed}`);
-    }
+  try {
+    await spendResources(chat_id, crystals);
+  } catch (err) {
+    const short = shortfallItem(err);
+    if (short) throw new Error(`Not enough ${short}`);
+    throw err;
   }
-
-  await Promise.all(crystalEntries.map(([crystalType, needed]) => {
-    const row = inventoryRows.find(r => r.item === crystalType);
-    return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: row.amount - needed }) });
-  }));
 }
 
 async function getItemsByRosterIds(rosterIds) {
@@ -999,33 +1049,26 @@ router.post('/player/promo', requireAuth, async (req, res) => {
 
     const data     = promo.promo_data || {};
     const granted  = { crystals: {}, trophies: {}, gold: 0, roster_xp: 0 };
-    const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
 
     // Resources and trophies live in the same table, keyed by `item`. A row the
-    // player has never held does not exist yet, so it is inserted rather than
-    // skipped — otherwise a promo granting an unseen crystal pays nothing.
-    const addItem = async (item, amount, bucket) => {
+    // player has never held does not exist yet, so grant_resources upserts —
+    // otherwise a promo granting an unseen crystal pays nothing.
+    const payouts = [];
+    const addItem = (item, amount, bucket) => {
       const amt = Number(amount);
       if (!item || !Number.isFinite(amt) || amt <= 0) return;
-      const row = inventory.find(r => r.item === item);
-      if (row) {
-        await supabase(`/resources?id=eq.${row.id}`, {
-          method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amt }) });
-      } else {
-        await supabase('/resources', { method: 'POST', body: JSON.stringify({
-          chat_id: String(chat_id),
-          item,
-          amount: amt,
-          item_type: bucket === 'trophies' ? 'trophy' : 'resource',
-        }) });
-      }
+      payouts.push({ item, amount: amt, item_type: bucket === 'trophies' ? 'trophy' : 'resource' });
       if (bucket === 'gold') granted.gold += amt;
       else granted[bucket][item] = (granted[bucket][item] || 0) + amt;
     };
 
-    if (data.gold) await addItem('Gold', data.gold, 'gold');
-    for (const [type, amt] of Object.entries(data.crystals || {})) await addItem(type, amt, 'crystals');
-    for (const [id,   amt] of Object.entries(data.trophies || {})) await addItem(id,   amt, 'trophies');
+    if (data.gold) addItem('Gold', data.gold, 'gold');
+    for (const [type, amt] of Object.entries(data.crystals || {})) addItem(type, amt, 'crystals');
+    for (const [id,   amt] of Object.entries(data.trophies || {})) addItem(id,   amt, 'trophies');
+
+    // One call, one transaction: a promo paying gold and three crystals can no
+    // longer half-apply and leave the code unburned but partly redeemed.
+    await grantResources(chat_id, payouts);
 
     // Roster XP goes to every unit, hero included. Auto level-ups run afterwards
     // so a unit pushed over its threshold by the promo advances immediately,
@@ -2356,27 +2399,26 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
 
     const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
     const granted = { resources: {}, tokens: {} };
+    const payouts = [];
 
     // Resources (gold, crystals) always have a row — they are seeded at
     // registration — so a missing one means something is wrong with the account
-    // and is skipped rather than invented.
-    await Promise.all(Object.entries(rewardDef.resources || {}).map(([item, amount]) => {
-      const row = inventoryRows.find(r => r.item === item && r.item_type === 'resource');
-      if (!row) return null;
+    // and is skipped rather than invented. The read still decides that; only the
+    // write moved into the database.
+    for (const [item, amount] of Object.entries(rewardDef.resources || {})) {
+      if (!inventoryRows.some(r => r.item === item && r.item_type === 'resource')) continue;
       granted.resources[item] = amount;
-      return supabase(`/resources?id=eq.${row.id}`, {
-        method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
-    }));
+      payouts.push({ item, amount, item_type: 'resource' });
+    }
 
     // Tokens may genuinely be absent — a player who has never earned a tome has
     // no row — so these upsert the way first-clear token drops do.
-    await Promise.all(Object.entries(rewardDef.tokens || {}).map(([item, amount]) => {
-      const row = inventoryRows.find(r => r.item === item && r.item_type === 'token');
+    for (const [item, amount] of Object.entries(rewardDef.tokens || {})) {
       granted.tokens[item] = amount;
-      return row
-        ? supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) })
-        : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'token', item, amount }) });
-    }));
+      payouts.push({ item, amount, item_type: 'token' });
+    }
+
+    await grantResources(chat_id, payouts);
 
     res.json({ success: true, reward, granted });
   } catch (err) {
@@ -2562,8 +2604,17 @@ router.post('/roster/tome', requireAuth, async (req, res) => {
     // a player quietly spend something on a corpse.
     if (unitData.alive === false) return res.status(400).json({ error: 'Cannot use a Tome on a fallen unit — resurrect it first' });
 
-    await supabase(`/resources?id=eq.${tomeRow.id}`, {
-      method: 'PATCH', body: JSON.stringify({ amount: Number(tomeRow.amount) - 1 }) });
+    // The tome is spent before the XP is granted, and the spend is the guard: a
+    // player double-tapping the button used to have both requests read amount=1
+    // and both write 0, teaching the unit twice for one tome.
+    try {
+      await spendResources(chat_id, { tome_of_knowledge: 1 });
+    } catch (err) {
+      if (shortfallItem(err)) {
+        return res.status(400).json({ error: 'No Tome of Knowledge to use', code: 'no_tome' });
+      }
+      throw err;
+    }
     await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
       method: 'PATCH',
       body: JSON.stringify({ unit_data: { ...unitData, current_xp: Number(unitData.current_xp ?? 0) + TOME_XP } }),
@@ -2760,32 +2811,24 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
 
     const cost = getRespecCost(faction, target.id, current.level);
-    const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    // The Sigil joins the same bill rather than being spent separately, so a
+    // player short of one does not pay the gold and then get refused. One call,
+    // one transaction: every line clears or nothing is taken.
+    const bill = {};
     for (const [item, amount] of Object.entries(cost)) {
-      const key = item === 'gold' ? 'Gold' : item;
-      const row = inventory.find(r => r.item === key);
-      if (!row || Number(row.amount) < amount) return res.status(400).json({ error: `Not enough ${key}. Need ${amount}` });
+      bill[item === 'gold' ? 'Gold' : item] = amount;
     }
-    // Checked before anything is spent, so a player short a Sigil does not pay
-    // the gold and then get refused.
-    const sigilRow = usedSigil
-      ? inventory.find(r => r.item === 'crossroad_sigil' && r.item_type === 'token')
-      : null;
-    if (usedSigil && (!sigilRow || Number(sigilRow.amount) < 1)) {
-      return res.status(400).json({ error: 'A Crossroad Sigil is needed to respec across branches', code: 'no_sigil' });
-    }
-    // Together, not one after another: these are independent rows, and a build
-    // costing gold + two crystals was three sequential trips to Supabase before
-    // the player saw anything happen.
-    await Promise.all(Object.entries(cost).map(([item, amount]) => {
-      const key = item === 'gold' ? 'Gold' : item;
-      const row = inventory.find(r => r.item === key);
-      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
-    }));
+    if (usedSigil) bill.crossroad_sigil = (bill.crossroad_sigil || 0) + 1;
 
-    if (sigilRow) {
-      await supabase(`/resources?id=eq.${sigilRow.id}`, {
-        method: 'PATCH', body: JSON.stringify({ amount: Number(sigilRow.amount) - 1 }) });
+    try {
+      await spendResources(chat_id, bill);
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short === 'crossroad_sigil') {
+        return res.status(400).json({ error: 'A Crossroad Sigil is needed to respec across branches', code: 'no_sigil' });
+      }
+      if (short) return res.status(400).json({ error: `Not enough ${short}` });
+      throw err;
     }
 
     buildings[slot] = { level: current.level, building_id: target.id };
@@ -2915,37 +2958,31 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     // perk is a building on layer 2. A `perk` in the body is ignored rather than
     // rejected, so an old client mid-session does not start failing.
 
-    if (slotCategory === 'throne' && !isNew) {
-      const cost = THRONE_UPGRADE_COSTS[nextLevel];
-      if (cost?.gold > 0) {
-        const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-        const goldRow   = inventory.find(r => r.item === 'Gold');
-        if (!goldRow || goldRow.amount < cost.gold) return res.status(400).json({ error: `Not enough Gold. Need ${cost.gold}` });
-        await supabase(`/resources?id=eq.${goldRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: goldRow.amount - cost.gold }) });
+    // The throne charges gold; every other slot charges gold + the faction's
+    // crystal (see applyBuildingCosts in data/buildings.js). Both end up in one
+    // bill, so a build costing gold and two crystals is a single transaction
+    // that either clears in full or takes nothing.
+    const bill = {};
+    if (slotCategory === 'throne') {
+      if (!isNew) {
+        const cost = THRONE_UPGRADE_COSTS[nextLevel];
+        if (cost?.gold > 0) bill.Gold = Number(cost.gold);
+      }
+    } else {
+      for (const [item, amount] of Object.entries(buildingCostForLevel(def, nextLevel))) {
+        const key = item === 'gold' ? 'Gold' : item;
+        if (Number(amount) > 0) bill[key] = (bill[key] || 0) + Number(amount);
       }
     }
 
-    // Dwellings cost gold + the faction's crystal (see applyBuildingCosts in
-    // data/buildings.js). This used to be declared on the building and never
-    // charged, so every barracks was free.
-    if (slotCategory !== 'throne') {
-      const cost = buildingCostForLevel(def, nextLevel);
-      const wanted = Object.entries(cost)
-        .map(([item, amount]) => [item === 'gold' ? 'Gold' : item, Number(amount)])
-        .filter(([, amount]) => amount > 0);
-      if (wanted.length) {
-        const inventory = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-        for (const [item, amount] of wanted) {
-          const row = inventory.find(r => r.item === item);
-          if (!row || Number(row.amount) < amount) {
-            return res.status(400).json({ error: `Not enough ${item.replace('Crystals_', '')}. Need ${amount}` });
-          }
-        }
-        await Promise.all(wanted.map(([item, amount]) => {
-          const row = inventory.find(r => r.item === item);
-          return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - amount }) });
-        }));
+    try {
+      await spendResources(chat_id, bill);
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) {
+        return res.status(400).json({ error: `Not enough ${short.replace('Crystals_', '')}` });
       }
+      throw err;
     }
 
     buildings[slot] = { level: nextLevel, building_id };
@@ -3961,10 +3998,17 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     const result  = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false };
     if (won) {
       const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-      const updateItem = async (itemName, amount) => {
-        const row = inventoryRows.find(r => r.item === itemName);
-        if (!row) return;
-        await supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) });
+      // Gold, crystals and trophies are collected here and paid out in ONE
+      // transaction below, rather than a write per line. A victory paying gold,
+      // two crystal types and six trophies was nine sequential round trips on
+      // the screen the player is staring at, and any of them could fail alone.
+      const payouts = [];
+      const updateItem = (itemName, amount) => {
+        // A resource row the player has never held is skipped, not invented:
+        // gold and crystals are seeded at registration, so a missing row means
+        // something is wrong with the account rather than a new currency.
+        if (!inventoryRows.some(r => r.item === itemName)) return;
+        payouts.push({ item: itemName, amount, item_type: 'resource' });
       };
       // Per-level payout, declared on the level itself (see getLevelRewards in
       // data/embark.js). No scaling formula — what the level says is what it pays.
@@ -4004,7 +4048,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
       // Gold, then the level's guaranteed crystals (exact types and amounts).
       const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
-      await updateItem('Gold', goldPayout);
+      updateItem('Gold', goldPayout);
       result.gold = goldPayout;
       // Reported per type, the way trophies are — a level paying 14 Fire and 14
       // Life is two different rewards, and collapsing them to "28 💎" hid both
@@ -4015,7 +4059,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       for (const { type, amount } of tuned.crystals) {
         if (!type || !amount) continue;
         const amt = Math.round(amount * crystalMult);
-        await updateItem(type, amt);
+        updateItem(type, amt);
         crystalsGained[type] = (crystalsGained[type] || 0) + amt;
         crystalTotal += amt;
       }
@@ -4039,14 +4083,15 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         if (id && amount) granted[id] = (granted[id] || 0) + amount;
       }
       result.event_trophies = eventDrops;
-      // Trophies land together — a six-trophy haul was six sequential writes on
-      // the victory screen, which is precisely where the player is waiting.
-      await Promise.all(Object.entries(granted).map(([id, amount]) => {
-        const trophyRow = inventoryRows.find(r => r.item === id);
-        return trophyRow
-          ? supabase(`/resources?id=eq.${trophyRow.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(trophyRow.amount) + amount }) })
-          : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'trophy', item: id, amount }) });
-      }));
+      // Trophies join the same bill. A trophy the player has never held is
+      // upserted rather than skipped — unlike gold, a first drop is normal.
+      for (const [id, amount] of Object.entries(granted)) {
+        payouts.push({ item: id, amount, item_type: 'trophy' });
+      }
+
+      // The whole haul, one transaction.
+      await grantResources(chat_id, payouts);
+
       if (Object.keys(granted).length) {
         result.trophies_gained = granted;             // { trophy_id: amount }
         result.trophy_gained   = Object.keys(granted)[0]; // legacy single-id field
@@ -4146,13 +4191,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           // drops cannot be farmed. See FIRST_CLEAR_TOKENS in data/embark.js.
           const tokenDrops = getFirstClearTokens(level);
           if (tokenDrops) {
-            const tokenRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token`);
-            await Promise.all(Object.entries(tokenDrops).map(([item, amount]) => {
-              const row = tokenRows.find(r => r.item === item);
-              return row
-                ? supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) + amount }) })
-                : supabase('/resources', { method: 'POST', body: JSON.stringify({ chat_id: String(chat_id), item_type: 'token', item, amount }) });
-            }));
+            await grantResources(chat_id, Object.entries(tokenDrops).map(([item, amount]) => ({
+              item, amount, item_type: 'token',
+            })));
             result.tokens_gained = tokenDrops;   // { crossroad_sigil: 1 }
           }
         }
@@ -4250,17 +4291,16 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
 
     const cost = bDef.cost || {};
-    for (const [item, required] of Object.entries(cost)) {
-      const row = inventoryRows.find(r => r.item === item);
-      const have = row ? Number(row.amount) : 0;
-      if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
+    try {
+      await spendResources(chat_id, cost);
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) {
+        const have = inventoryRows.find(r => r.item === short)?.amount ?? 0;
+        return res.status(400).json({ error: `Not enough ${short} (need ${cost[short]}, have ${have})` });
+      }
+      throw err;
     }
-
-    await Promise.all(Object.entries(cost).map(([item, required]) => {
-      const row = inventoryRows.find(r => r.item === item);
-      if (!row) return null;
-      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }));
 
     slots[slot] = { level: 1, building_id: mercenary_building_id };
     const [updatedStruct, inserted] = await Promise.all([
@@ -4316,17 +4356,16 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
     if (!unitTemplate) return res.status(500).json({ error: 'Unit definition not found' });
 
     const cost = bDef.cost || {};
-    for (const [item, required] of Object.entries(cost)) {
-      const row = inventoryRows.find(r => r.item === item);
-      const have = row ? Number(row.amount) : 0;
-      if (have < required) return res.status(400).json({ error: `Not enough ${item} (need ${required}, have ${have})` });
+    try {
+      await spendResources(chat_id, cost);
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) {
+        const have = inventoryRows.find(r => r.item === short)?.amount ?? 0;
+        return res.status(400).json({ error: `Not enough ${short} (need ${cost[short]}, have ${have})` });
+      }
+      throw err;
     }
-
-    await Promise.all(Object.entries(cost).map(([item, required]) => {
-      const row = inventoryRows.find(r => r.item === item);
-      if (!row) return null;
-      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }));
 
     // Upgrades the BUILDING only — it no longer swaps the unit out. This used to
     // hand the player a new tier the moment they could pay for it, which is not
@@ -4548,22 +4587,42 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       ingredientRows.push(...matches.slice(0, requiredCount));
     }
 
-    // Deduct resource costs
-    await Promise.all(Object.entries(cost).map(([resName, required]) => {
-      const row = inventoryRows.find(r => r.item === resName);
-      return supabase(`/resources?id=eq.${row.id}`, { method: 'PATCH', body: JSON.stringify({ amount: Number(row.amount) - required }) });
-    }));
-
-    // Consume item ingredients
-    await Promise.all(ingredientRows.map(it =>
-      supabase(`/items?id=eq.${it.id}`, { method: 'DELETE' })
-    ));
-
-    const inserted = await supabase('/items', {
-      method: 'POST',
-      body: JSON.stringify(makeItemRow(player.id, item_key)),
-      headers: { Prefer: 'return=representation' },
-    });
+    // Spend, consume and mint in ONE transaction (see craft_item in
+    // sql/003_atomic_resources.sql).
+    //
+    // The three checks above are all read-then-write, and every one of them was
+    // racing: two parallel crafts both saw the balance and both deducted from
+    // it, both saw zero copies of a unique item and both minted one, and both
+    // picked the SAME unequipped shard rows as ingredients — the second DELETE
+    // then matched nothing and the craft succeeded anyway. Craft is the most
+    // worthwhile endpoint in the game to race, so the checks are re-run inside
+    // the transaction and the whole thing rolls back if any of them now fails.
+    //
+    // The checks are still done here as well, because this is where the good
+    // error messages live; the database is the authority, not the messenger.
+    const row = makeItemRow(player.id, item_key);
+    let inserted;
+    try {
+      inserted = await rpc('craft_item', {
+        p_chat_id:        String(chat_id),
+        p_player_id:      player.id,
+        p_item_key:       item_key,
+        p_item_name:      row.item_name,
+        p_costs:          cost,
+        p_ingredient_ids: ingredientRows.map(it => Number(it.id)),
+        p_unique:         Boolean(itemDef.unique),
+      });
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) return res.status(400).json({ error: `Not enough ${short}`, code: 'craft_insufficient' });
+      if (/already_owned:/.test(err.message)) {
+        return res.status(400).json({ error: 'You already own this unique item', code: 'craft_duplicate' });
+      }
+      if (/ingredients_missing/.test(err.message)) {
+        return res.status(400).json({ error: 'Those ingredients are no longer available', code: 'craft_ingredients' });
+      }
+      throw err;
+    }
 
     const [readItems, updatedResources] = await Promise.all([
       fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
