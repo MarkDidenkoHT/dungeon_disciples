@@ -53,8 +53,7 @@ const ITEM_DEFS = {
     icon:         'broken_sigil',
     rarity:       'shattered',
     unique:       true,
-    cost:         { grave_dust: 2, shard_of_devotion: 1, Gold: 120 },
-    item_cost:    { iron_armor: 1 },
+    cost:         { Gold: 200, Crystals_Air: 30, Crystals_Nature: 30  },
   },
   blood_of_a_saint: {
     key:          'blood_of_a_saint',
@@ -69,8 +68,25 @@ const ITEM_DEFS = {
     icon:         'blood_of_a_saint',
     rarity:       'shattered',
     unique:       true,
-    cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Life: 30, Crystals_Death: 30 },
-    item_cost:    { orb_of_pure_blood: 1, life_resistance_potion: 2 },
+    cost:         { Gold: 200, Crystals_Life: 30, Crystals_Death: 30 },
+  },
+  bloodless: {
+    key:          '',
+    name:         "",
+    name_ru:      '',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Skeleton',
+    removes_tag:  'Vampire',
+    stat_mods:    { hp: 5, life_resist: 5},
+    passive:      'vampires_vigil 1',
+    icon:         '',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30 },
+    requires:     [
+      { region: 'glittering_abyss',  level: 4 }
+    ],
   },
   crystal_exoskeleton: {
     key:          'crystal_exoskeleton',
