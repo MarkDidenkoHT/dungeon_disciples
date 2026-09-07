@@ -22,7 +22,7 @@ import {
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
   playAdPlaceholder as playAd,
-  tagListLabel,
+  tagListLabel, renderHeroSpellSlot,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -2261,11 +2261,7 @@ export function renderCastle(root, { player }) {
     // because a hero has none: it acts by casting. Same picture the battle
     // screen puts on the cast button, so the two read as one thing.
     const spellSlotHtml = rosterUnit?.is_hero
-      ? `<button class="ability-icon ability-icon--active" data-spell-tome
-                 title="${CASTLE_TEXT.spellsTitle[castleLang]}">
-           <img class="ability-icon-img" src="${assetUrl('/assets/icons/actions/spell.jpg')}"
-                alt="${CASTLE_TEXT.spellsTitle[castleLang]}" onerror="this.style.visibility='hidden'">
-         </button>`
+      ? renderHeroSpellSlot({ interactive: true, title: CASTLE_TEXT.spellsTitle[castleLang] })
       : '';
 
     // Evolution tree. Opened as a SUB-sheet so the unit sheet underneath stays

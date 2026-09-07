@@ -391,6 +391,31 @@ export function renderUnitAbilityIcon(key, type, opts = {}) {
     </button>`;
 }
 
+// Heroes are the `h_<faction>_<n>` ids, upgrades included (h_e_1111, h_d_2_b3).
+// The same convention renderUnitPortrait already keys hero art off, kept in one
+// place so a card does not need to be TOLD it is holding a hero.
+export function isHeroUnit(unit) {
+  return /^h_[a-z]_/.test(String(unit?.id || ''));
+}
+
+// A hero has no active ability — it acts by casting — so its active slot holds
+// the CAST icon instead. Same picture the battle screen puts on the cast button
+// (see actorIsHero in screens/battle.js), so the slot reads as one thing
+// wherever the hero is shown: registration, the castle sheet, the roster.
+//
+// `interactive` adds the hook the castle uses to open the spell tome. Off by
+// default, because registration has no tome to open yet — the icon is there to
+// say what the slot IS, not to be pressed.
+export function renderHeroSpellSlot(opts = {}) {
+  const { interactive = false, title = uiText('Spells', 'Заклинания') } = opts;
+  return `
+    <button class="ability-icon ability-icon--active"${interactive ? ' data-spell-tome' : ''}
+            title="${title}">
+      <img class="ability-icon-img" src="${assetUrl('/assets/icons/actions/spell.jpg')}"
+           alt="${title}" onerror="this.style.visibility='hidden'">
+    </button>`;
+}
+
 export function renderUnitPortrait(unit, opts = {}) {
   const { badge = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
@@ -601,8 +626,22 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
     return Math.max(0, abilityRank(key) - abilityRank(was));
   };
 
+  // The active slot, in order of precedence: what the screen passed, then the
+  // hero's cast icon, then the unit's own ability, then empty.
+  //
+  // `activeSlotHtml` was being PASSED by the castle sheets and silently dropped
+  // here — which is why the hero's slot drew as an empty disabled square
+  // everywhere outside battle. Heroes are also detected directly, so a card does
+  // not have to opt in: every hero has `ability: null`, so the slot was ALWAYS
+  // going to be empty for them, and empty is the one thing it should never be.
+  const activeHtml = opts.activeSlotHtml
+    || (isHeroUnit(unit) ? renderHeroSpellSlot() : '')
+    || (unit.ability
+        ? renderUnitAbilityIcon(unit.ability, 'active', { rankUp: rankUpFor(unit.ability) })
+        : renderUnitAbilityIcon('', 'empty'));
+
   const iconsHtml = [
-    unit.ability   ? renderUnitAbilityIcon(unit.ability,   'active',  { rankUp: rankUpFor(unit.ability) })  : renderUnitAbilityIcon('', 'empty'),
+    activeHtml,
     passiveKeys[0] ? renderUnitAbilityIcon(passiveKeys[0], 'passive', { rankUp: rankUpFor(passiveKeys[0]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[1] ? renderUnitAbilityIcon(passiveKeys[1], 'passive', { rankUp: rankUpFor(passiveKeys[1]) }) : renderUnitAbilityIcon('', 'empty'),
     passiveKeys[2] ? renderUnitAbilityIcon(passiveKeys[2], 'passive', { rankUp: rankUpFor(passiveKeys[2]) }) : renderUnitAbilityIcon('', 'empty'),
@@ -747,7 +786,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', progress = null, reserveProgress = false } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false } = opts;
 
   if (!unit) {
     return `
@@ -771,7 +810,7 @@ export function buildUnitCard(unit, opts = {}) {
       <div class="unit-info">
         ${renderUnitProgressRow(progress, { reserve: reserveProgress })}
         ${descHtml}
-        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, compareUnit })}
+        ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, activeSlotHtml, compareUnit })}
       </div>
     </div>`;
 }

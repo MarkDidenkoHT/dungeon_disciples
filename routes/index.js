@@ -3187,6 +3187,24 @@ router.post('/battle/create', requireAuth, async (req, res) => {
   try {
     const existing = await getActiveBattle(chat_id);
     if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+
+    // The level has to be UNLOCKED, not merely real. The checks above only
+    // establish that the region and level exist, so a request naming level 10 on
+    // a fresh account was accepted and paid out at level 10 rates — the whole
+    // progression skipped, from the client that never offers it.
+    //
+    // `progress[region_id]` is the next level available, defaulting to 1, and it
+    // is advanced by /battle/reward on a first clear. A finished region reads
+    // maxLevel + 1, so replaying the last level still passes. This is the same
+    // bound the embark screen clamps its level pips to (see embark.js) — the
+    // difference is that this one is the authority.
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    const unlocked = Number(player.progress?.[region_id] ?? 1);
+    if (Number(level) > unlocked) {
+      return res.status(400).json({ error: 'That level is not unlocked yet', code: 'level_locked' });
+    }
+
     const rosterRows = await supabase(
       `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
     );
