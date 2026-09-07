@@ -71,9 +71,9 @@ const ITEM_DEFS = {
     cost:         { Gold: 200, Crystals_Life: 30, Crystals_Death: 30 },
   },
   bloodless: {
-    key:          '',
-    name:         "",
-    name_ru:      '',
+    key:          'bloodless',
+    name:         "Bloodless",
+    name_ru:      'Обескровленный',
     faction:      null,
     tag_required: null,
     adds_tag:     'Skeleton',
