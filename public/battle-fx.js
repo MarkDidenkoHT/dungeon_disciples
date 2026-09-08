@@ -4199,6 +4199,557 @@ export async function blood_mist(originCellEl, opts = {}) {
 }
 
 
+
+// ── conflagration ─────────────────────────────────────────────────────────────
+// Not a projectile. fire_bolt already covers "something is thrown"; this is the
+// caster REACHING and the victim catching, so nothing crosses the gap as a body
+// — a thin heat line opens between the two cells, then the fire is all on the
+// target, climbing off it in tongues that keep burning after the flash is gone.
+// That lingering tail is the picture of a stacking damage-over-time.
+export async function conflagration(cellEl, opts = {}) {
+  console.log('[battle-fx] conflagration START', cellEl?.dataset?.id, '->', opts.targetCell?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId   = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || null;
+  if (!targetId) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const EMBER = 0xff6a12;
+  const HOT   = 0xffd48a;
+  const DEEP  = 0x8c1c04;
+
+  // Tongues of flame, seeded once so they hold their shape across frames.
+  const tongues = Array.from({ length: 11 }, (_, i) => ({
+    off:  rand(-0.34, 0.34),      // horizontal offset across the cell
+    lean: rand(-0.22, 0.22),      // how far it curls as it rises
+    h:    rand(0.42, 0.95),       // height, as a fraction of the cell
+    w:    rand(0.06, 0.15),
+    d:    rand(0, 0.30),          // when it catches
+    life: rand(0.55, 1.0),
+    seed: i * 1.7,
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const fireG = new PIXI.Graphics(); fireG.blendMode = ADD;
+  const lineG = new PIXI.Graphics(); lineG.blendMode = ADD;
+  layer.addChild(glowLayer, lineG, fireG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  // One tongue: a tapering triangle bowed by `lean`, flickering on its own clock.
+  function drawTongue(g, bx, by, R, tg, grow, alpha, color, scale) {
+    if (alpha <= 0 || grow <= 0) return;
+    const flick = 1 + Math.sin(grow * 9 + tg.seed) * 0.13;
+    const h  = R * tg.h * grow * flick * scale;
+    const w  = R * tg.w * scale;
+    const x  = bx + R * tg.off;
+    const tipX = x + R * tg.lean * grow;
+    g.beginFill(color, alpha);
+    g.moveTo(x - w, by);
+    g.quadraticCurveTo(x - w * 0.5, by - h * 0.55, tipX, by - h);
+    g.quadraticCurveTo(x + w * 0.5, by - h * 0.55, x + w, by);
+    g.closePath();
+    g.endFill();
+  }
+
+  await animate(760, t => {
+    const ab = cellBoundsFor(dataId);
+    const tb = cellBoundsFor(targetId);
+    if (!ab || !tb) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ax = ab.x + ab.width / 2, ay = ab.y + ab.height / 2;
+    const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+    const R  = Math.min(tb.width, tb.height);
+
+    glowG.clear(); fireG.clear(); lineG.clear();
+
+    // The reach: a heat line that opens fast and is gone by a third of the way
+    // in. It never "arrives" — by the time it fades the target is already lit.
+    const reach = clamp01(t / 0.22);
+    const reachFade = 1 - clamp01((t - 0.16) / 0.20);
+    if (reachFade > 0) {
+      const ex = ax + (tx - ax) * reach, ey = ay + (ty - ay) * reach;
+      lineG.lineStyle(Math.max(1, R * 0.018), HOT, 0.75 * reachFade);
+      lineG.moveTo(ax, ay); lineG.lineTo(ex, ey);
+      lineG.lineStyle(0);
+      glowG.lineStyle(R * 0.06, EMBER, 0.30 * reachFade);
+      glowG.moveTo(ax, ay); glowG.lineTo(ex, ey);
+      glowG.lineStyle(0);
+      softGlow(glowG, ax, ay, R * 0.16 * reachFade, EMBER, 0.55 * reachFade);
+    }
+
+    // Ignition on the victim.
+    const burn = clamp01((t - 0.16) / 0.84);
+    if (burn > 0) {
+      const base = ty + R * 0.34;
+      const flash = Math.sin(clamp01(burn / 0.22) * Math.PI);
+      softGlow(glowG, tx, ty, R * 0.50 * (0.45 + flash * 0.55), EMBER, 0.30 + flash * 0.5);
+      softGlow(glowG, tx, ty, R * 0.22 * flash, HOT, 0.85 * flash);
+
+      for (const tg of tongues) {
+        const s = clamp01((burn - tg.d) / Math.max(0.01, tg.life - tg.d));
+        if (s <= 0) continue;
+        // Rises, then thins out — but never fully: the last 25% is held so the
+        // unit is still visibly alight when the animation hands back.
+        const grow  = s < 0.4 ? s / 0.4 : 1;
+        const alpha = (s < 0.4 ? 1 : 1 - (s - 0.4) / 0.6 * 0.55) * 0.9;
+        drawTongue(glowG, tx, base, R, tg, grow, alpha * 0.45, DEEP,  1.25);
+        drawTongue(fireG, tx, base, R, tg, grow, alpha * 0.80, EMBER, 1.00);
+        drawTongue(fireG, tx, base, R, tg, grow, alpha * 0.75, HOT,   0.45);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] conflagration END', targetId);
+}
+
+// ── ember_shroud ──────────────────────────────────────────────────────────────
+// A self-ward, so it has to read as protection rather than as damage even though
+// it is made of fire: embers ORBIT the unit on a closed ring instead of flying
+// off it, and the ring settles inward and holds rather than expanding away like
+// aegis does. The mend is the pale wash that rises through the middle at the end.
+export async function ember_shroud(cellEl) {
+  console.log('[battle-fx] ember_shroud START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+  const TAU     = Math.PI * 2;
+
+  const EMBER = 0xff7a1e;
+  const HOT   = 0xffd9a0;
+  const SOOT  = 0x30170a;
+
+  const motes = Array.from({ length: 16 }, () => ({
+    ang:  rand(0, TAU),
+    spin: rand(0.7, 1.5) * (Math.random() < 0.5 ? -1 : 1),
+    // The ring is drawn as a squashed ellipse, so a mote's vertical radius is a
+    // fraction of its horizontal one — that is what sells it as an orbit around
+    // the unit rather than a flat circle painted over it.
+    rx:   rand(0.34, 0.48),
+    squash: rand(0.32, 0.46),
+    size: rand(1.8, 4.2),
+    bob:  rand(0, TAU),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const ringG = new PIXI.Graphics(); ringG.blendMode = ADD;
+  const sootG = new PIXI.Graphics();                    // not additive: it darkens
+  layer.addChild(glowLayer, sootG, ringG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(820, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    glowG.clear(); ringG.clear(); sootG.clear();
+
+    // Gathers from outside, settles at 1.0, holds.
+    const gather = clamp01(t / 0.34);
+    const pull   = 1.55 - 0.55 * gather;
+    const hold   = t < 0.72 ? 1 : 1 - (t - 0.72) / 0.28 * 0.35;
+
+    // Two counter-turning ellipses read as a shell with depth; a single ring
+    // reads as a decal sitting on top of the portrait.
+    for (const dir of [1, -1]) {
+      const phase = t * TAU * 0.55 * dir;
+      const rx = R * 0.44 * pull, ry = rx * 0.38;
+      ringG.lineStyle(Math.max(1, R * 0.012), EMBER, 0.42 * gather * hold);
+      ringG.drawEllipse(cx, cy + Math.sin(phase) * R * 0.04, rx, ry);
+      ringG.lineStyle(0);
+    }
+
+    // The soot underlay: what makes it a shroud rather than a glow.
+    sootG.beginFill(SOOT, 0.24 * gather * hold);
+    sootG.drawEllipse(cx, cy, R * 0.46 * pull, R * 0.50 * pull);
+    sootG.endFill();
+
+    for (const m of motes) {
+      const a  = m.ang + t * TAU * m.spin * 0.8;
+      const rx = R * m.rx * pull;
+      const px = cx + Math.cos(a) * rx;
+      const py = cy + Math.sin(a) * rx * m.squash + Math.sin(t * 6 + m.bob) * R * 0.03;
+      // Motes on the far side of the orbit are dimmer, which is the whole trick
+      // for reading a flat ellipse as something going around the unit.
+      const depth = 0.45 + 0.55 * (0.5 + Math.sin(a) * 0.5);
+      softGlow(glowG, px, py, m.size * depth * hold, EMBER, 0.75 * gather * depth * hold);
+      softGlow(glowG, px, py, m.size * 0.45 * depth * hold, HOT, 0.85 * gather * depth * hold);
+    }
+
+    // The mend, last: a pale column lifting through the shroud.
+    const mend = clamp01((t - 0.46) / 0.54);
+    if (mend > 0) {
+      const rise = Math.sin(mend * Math.PI);
+      softGlow(glowG, cx, cy - R * 0.10 - mend * R * 0.24, R * 0.20 * rise, HOT, 0.60 * rise);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] ember_shroud END', dataId);
+}
+
+// ── dragons_breath ────────────────────────────────────────────────────────────
+// A JET, not a burst: the fire leaves the unit's mouth as a widening cone that
+// stays connected to it for the whole animation, and the row it lands on chars
+// under it. Every target is lit on the same clock — the row is one event.
+export async function dragons_breath(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] dragons_breath START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !targetCells.length || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+
+  const EMBER = 0xff6e14;
+  const HOT   = 0xffe0a6;
+  const CORE  = 0xfff3d6;
+  const SMOKE = 0x241208;
+
+  const originId = originCellEl.dataset.id;
+  const ids = targetCells.map(c => c.dataset?.id).filter(Boolean);
+
+  // Puffs riding up the jet, seeded once so the jet has texture that persists
+  // frame to frame instead of boiling randomly.
+  const puffs = Array.from({ length: 22 }, () => ({
+    f:    rand(0, 1),        // where along the jet it sits
+    off:  rand(-1, 1),       // across the jet's width
+    size: rand(0.05, 0.13),
+    spd:  rand(0.5, 1.1),
+    seed: rand(0, 10),
+  }));
+  const chars = ids.map(() => Array.from({ length: 7 }, () => ({
+    ang: rand(0, Math.PI * 2), dist: rand(0.15, 0.55), size: rand(1.8, 4.0), d: rand(0, 0.25),
+  })));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(7)];
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;
+  const smokeG = new PIXI.Graphics();                     // obstructs, so not additive
+  const jetG   = new PIXI.Graphics(); jetG.blendMode   = ADD;
+  layer.addChild(glowLayer, smokeG, jetG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(880, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    const bounds = ids.map(cellBoundsFor).filter(Boolean);
+    if (!bounds.length) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
+
+    glowG.clear(); smokeG.clear(); jetG.clear();
+
+    // The cone is aimed at the row's CENTRE and made wide enough to cover every
+    // cell in it, so one jet reads as hitting all of them rather than as a
+    // near-miss on whichever cell it was not pointed at.
+    let mx = 0, my = 0;
+    for (const b of bounds) { mx += b.x + b.width / 2; my += b.y + b.height / 2; }
+    mx /= bounds.length; my /= bounds.length;
+
+    const dx = mx - ox, dy = my - oy;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+
+    // Half-width at the mouth and at the far end: enough to swallow the row.
+    let spread = R * 0.30;
+    for (const b of bounds) {
+      const bx = b.x + b.width / 2 - mx, by = b.y + b.height / 2 - my;
+      spread = Math.max(spread, Math.abs(bx * nx + by * ny) + Math.min(b.width, b.height) * 0.42);
+    }
+
+    const open  = clamp01(t / 0.20);          // the jet opens
+    const close = 1 - clamp01((t - 0.62) / 0.38); // and dies back
+    const jet   = open * close;
+
+    if (jet > 0) {
+      const reach = len + R * 0.30;
+      const halfN = R * 0.09 * jet;           // at the mouth
+      const halfF = spread * jet;             // at the far end
+
+      const quad = (g, color, alpha, scale, cut) => {
+        if (alpha <= 0) return;
+        const rf = reach * cut;
+        g.beginFill(color, alpha);
+        g.moveTo(ox + nx * halfN * scale, oy + ny * halfN * scale);
+        g.lineTo(ox + ux * rf + nx * halfF * scale, oy + uy * rf + ny * halfF * scale);
+        g.lineTo(ox + ux * rf - nx * halfF * scale, oy + uy * rf - ny * halfF * scale);
+        g.lineTo(ox - nx * halfN * scale, oy - ny * halfN * scale);
+        g.closePath();
+        g.endFill();
+      };
+
+      quad(glowG,  EMBER, 0.34 * jet, 1.20, 1.00);
+      quad(smokeG, SMOKE, 0.30 * jet, 1.05, 1.00);
+      quad(jetG,   EMBER, 0.55 * jet, 0.88, 1.00);
+      quad(jetG,   HOT,   0.55 * jet, 0.48, 0.94);
+      quad(jetG,   CORE,  0.65 * jet, 0.20, 0.62);
+
+      for (const p of puffs) {
+        const f = (p.f + t * p.spd) % 1;
+        const px = ox + ux * reach * f + nx * p.off * (halfN + (halfF - halfN) * f);
+        const py = oy + uy * reach * f + ny * p.off * (halfN + (halfF - halfN) * f);
+        const s  = R * p.size * (0.5 + f) * jet;
+        softGlow(glowG, px, py, s, EMBER, 0.30 * jet * (1 - f * 0.4));
+        softGlow(jetG,  px, py, s * 0.4, HOT, 0.35 * jet * (1 - f * 0.5));
+      }
+    }
+
+    // Charring on each cell, once the jet has reached it.
+    const burn = clamp01((t - 0.24) / 0.76);
+    if (burn > 0) {
+      bounds.forEach((b, i) => {
+        const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+        const CR = Math.min(b.width, b.height);
+        const flare = Math.sin(clamp01(burn / 0.30) * Math.PI);
+        softGlow(glowG, cx, cy, CR * 0.40 * flare, EMBER, 0.70 * flare);
+        softGlow(glowG, cx, cy, CR * 0.18 * flare, CORE,  0.80 * flare);
+        for (const c of chars[i] || []) {
+          const s = clamp01((burn - c.d) / (1 - c.d));
+          if (s <= 0) continue;
+          const px = cx + Math.cos(c.ang) * CR * c.dist * s;
+          const py = cy + Math.sin(c.ang) * CR * c.dist * s - s * s * CR * 0.20;
+          softGlow(jetG, px, py, c.size * (1 - s * 0.6), EMBER, (1 - s) * 0.8);
+        }
+      });
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] dragons_breath END');
+}
+
+// ── verse_of_cataclysm ────────────────────────────────────────────────────────
+// The unit destroys itself, so the picture has to run the wrong way round from
+// every other AoE here: it COLLAPSES first — the singer's own light is pulled
+// into a point — and only then does anything leave the cell. The shockwave is a
+// ring of expanding rings rather than bolts aimed at victims, because nothing
+// was aimed: the field simply gave way.
+export async function verse_of_cataclysm(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  console.log('[battle-fx] verse_of_cataclysm START', originCellEl?.dataset?.id, '-> targets:', targetCells.length);
+  if (!originCellEl || !app || !window.PIXI) return;
+
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const ADD     = PIXI.BLEND_MODES.ADD;
+  const TAU     = Math.PI * 2;
+
+  const EMBER = 0xff5a0a;
+  const HOT   = 0xffcf7a;
+  const CORE  = 0xfff6e2;
+  const ASH   = 0x1d0e05;
+
+  const originId = originCellEl.dataset.id;
+  const ids = targetCells.map(c => c.dataset?.id).filter(Boolean);
+
+  // Shards thrown out of the collapse.
+  const shards = Array.from({ length: 20 }, () => ({
+    ang:  rand(0, TAU),
+    dist: rand(0.6, 2.1),
+    size: rand(1.6, 4.4),
+    d:    rand(0, 0.14),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(8)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const waveG = new PIXI.Graphics(); waveG.blendMode = ADD;
+  const ashG  = new PIXI.Graphics();                     // the corpse's smoke
+  layer.addChild(glowLayer, ashG, waveG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  await animate(980, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
+
+    glowG.clear(); waveG.clear(); ashG.clear();
+
+    // Beat 1 — the collapse. Light is drawn INWARD to a point.
+    const draw = clamp01(t / 0.30);
+    if (draw < 1) {
+      const r = R * 0.85 * (1 - draw);
+      glowG.lineStyle(Math.max(1, R * 0.03 * (0.4 + draw)), EMBER, 0.5 + draw * 0.4);
+      glowG.drawCircle(ox, oy, Math.max(1, r));
+      glowG.lineStyle(0);
+      softGlow(glowG, ox, oy, R * 0.10 * draw, CORE, draw);
+    }
+
+    // Beat 2 — the break.
+    const blow = clamp01((t - 0.28) / 0.72);
+    if (blow > 0) {
+      const flash = Math.sin(clamp01(blow / 0.16) * Math.PI);
+      softGlow(glowG, ox, oy, R * 0.90 * flash, CORE, 0.95 * flash);
+      softGlow(glowG, ox, oy, R * 1.50 * flash, EMBER, 0.55 * flash);
+
+      // Three rings, staggered, crossing the whole board.
+      const span = Math.max(...(app?.screen ? [app.screen.width, app.screen.height] : [R * 8]));
+      for (let i = 0; i < 3; i++) {
+        const s = clamp01((blow - i * 0.11) / (1 - i * 0.11));
+        if (s <= 0) continue;
+        const r = span * 0.62 * s;
+        const a = (1 - s) * (1 - s) * 0.85;
+        waveG.lineStyle(Math.max(1, R * 0.10 * (1 - s)), EMBER, a);
+        waveG.drawCircle(ox, oy, r);
+        waveG.lineStyle(Math.max(1, R * 0.030 * (1 - s)), HOT, a * 0.9);
+        waveG.drawCircle(ox, oy, r);
+        waveG.lineStyle(0);
+      }
+
+      for (const sh of shards) {
+        const s = clamp01((blow - sh.d) / (1 - sh.d));
+        if (s <= 0) continue;
+        const px = ox + Math.cos(sh.ang) * R * sh.dist * s;
+        const py = oy + Math.sin(sh.ang) * R * sh.dist * s + s * s * R * 0.30; // shards fall
+        softGlow(glowG, px, py, sh.size * (1 - s * 0.5), EMBER, (1 - s) * 0.9);
+      }
+
+      // What is left standing in the cell: ash, thickening as the fire goes out.
+      ashG.beginFill(ASH, 0.42 * blow * (1 - clamp01((blow - 0.7) / 0.3) * 0.5));
+      ashG.drawEllipse(ox, oy + R * 0.06, R * 0.34 * (0.6 + blow * 0.5), R * 0.30 * (0.6 + blow * 0.4));
+      ashG.endFill();
+
+      // A hit flare on each victim as the front reaches it. Distance-timed, so
+      // the far side of the board lights after the near side.
+      const maxD = ids.reduce((m, id) => {
+        const b = cellBoundsFor(id);
+        if (!b) return m;
+        return Math.max(m, Math.hypot(b.x + b.width / 2 - ox, b.y + b.height / 2 - oy));
+      }, 1);
+      for (const id of ids) {
+        const b = cellBoundsFor(id);
+        if (!b) continue;
+        const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+        const d  = Math.hypot(cx - ox, cy - oy) / maxD;
+        const s  = clamp01((blow - d * 0.35) / 0.30);
+        if (s <= 0 || s >= 1) continue;
+        const f = Math.sin(s * Math.PI);
+        const CR = Math.min(b.width, b.height);
+        softGlow(glowG, cx, cy, CR * 0.42 * f, EMBER, 0.75 * f);
+        softGlow(waveG, cx, cy, CR * 0.16 * f, HOT,   0.85 * f);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] verse_of_cataclysm END');
+}
+
+// ── blessing_of_protection ────────────────────────────────────────────────────
+// aegis is the same family of picture — a ward hardening on one unit — so this
+// deliberately differs in every beat that reads: it comes DOWN from above rather
+// than expanding outward, it is gold rather than steel-blue, and it ends on a
+// standing hexagonal shell that is still there when the animation hands back.
+// A player has to be able to tell "I am warded now" from "I was warded then".
+export async function blessing_of_protection(cellEl) {
+  console.log('[battle-fx] blessing_of_protection START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+  const dataId  = cellEl.dataset.id;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD     = PIXI.BLEND_MODES.ADD;
+  const TAU     = Math.PI * 2;
+
+  const GOLD = 0xffc94a;
+  const PALE = 0xfff2c8;
+  const DEEP = 0xb87316;
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(5)];
+  const glowG  = new PIXI.Graphics(); glowG.blendMode  = ADD;
+  const shellG = new PIXI.Graphics(); shellG.blendMode = ADD;
+  layer.addChild(glowLayer, shellG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  // A hexagon, drawn point-up so it reads as a shield facet rather than a ring.
+  function hex(g, cx, cy, r, squash, rot) {
+    g.moveTo(cx + Math.cos(rot) * r, cy + Math.sin(rot) * r * squash);
+    for (let i = 1; i <= 6; i++) {
+      const a = rot + i * TAU / 6;
+      g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * squash);
+    }
+  }
+
+  await animate(760, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+
+    glowG.clear(); shellG.clear();
+
+    // Beat 1 — the blessing falls. A column of light closing onto the unit from
+    // above; this is the half that says "granted BY someone".
+    const fall = clamp01(t / 0.34);
+    if (fall < 1) {
+      const y = cy - R * 1.1 * (1 - fall);
+      const a = 0.35 + fall * 0.55;
+      glowG.lineStyle(R * 0.16 * (1 - fall * 0.5), GOLD, 0.30 * a);
+      glowG.moveTo(cx, y - R * 0.6); glowG.lineTo(cx, y);
+      glowG.lineStyle(0);
+      softGlow(glowG, cx, y, R * 0.18, PALE, a);
+    }
+
+    // Beat 2 — the shell forms and STAYS. Three nested hexes, the outer one
+    // turning slowly; alpha settles rather than fading to nothing.
+    const form = clamp01((t - 0.26) / 0.30);
+    if (form > 0) {
+      const settle = t < 0.62 ? 1 : 1 - (t - 0.62) / 0.38 * 0.40;
+      const impact = Math.sin(clamp01(form) * Math.PI);
+      const scale  = 1.18 - 0.18 * form;
+
+      for (let i = 0; i < 3; i++) {
+        const r   = R * (0.30 + i * 0.10) * scale;
+        const rot = -Math.PI / 2 + t * TAU * 0.10 * (i % 2 ? -1 : 1);
+        const a   = (0.85 - i * 0.22) * form * settle;
+        shellG.lineStyle(Math.max(1, R * (0.020 - i * 0.005)), i === 0 ? PALE : GOLD, a);
+        hex(shellG, cx, cy, r, 0.82, rot);
+        shellG.lineStyle(0);
+      }
+
+      glowG.lineStyle(R * 0.07, DEEP, 0.35 * form * settle);
+      hex(glowG, cx, cy, R * 0.40 * scale, 0.82, -Math.PI / 2);
+      glowG.lineStyle(0);
+
+      if (impact > 0.02) softGlow(glowG, cx, cy, R * 0.34 * impact, PALE, 0.55 * impact);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] blessing_of_protection END', dataId);
+}
+
 export const EFFECTS = {
   mithrails_light,
   aggrails_light,
@@ -4249,6 +4800,11 @@ export const EFFECTS = {
   stone_throw,
   frost_bolt,
   repair,
+  conflagration,
+  ember_shroud,
+  dragons_breath,
+  verse_of_cataclysm,
+  blessing_of_protection,
 };
 // ── Formation bonds ───────────────────────────────────────────────────────────
 //

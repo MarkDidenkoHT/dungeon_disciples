@@ -3116,6 +3116,197 @@ const UNIT_ABILITIES = {
     params: { vow_ash_initiative_per_demon: 2, vow_ash_tags: ['Holy', 'Demon'] },
     effect_name: 'vow_of_ash',
   },
+
+  // ── Conflagration ─────────────────────────────────────────────────────────
+  // Not a nuke: it writes a Burn straight onto the target, sized by how many
+  // Casters are standing. Burn STACKS onto whatever is already there, so it
+  // feeds Mark of Ash and Fellfire rather than competing with them.
+  'conflagration 1': {
+    id: 'conflagration 1',
+    name: 'Conflagration',
+    name_ru: "Испепеление",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: 'Sets an enemy alight for 3 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 3 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 3, tag_required: 'Caster' },
+  },
+  'conflagration 2': {
+    id: 'conflagration 2',
+    name: 'Conflagration',
+    name_ru: "Испепеление",
+    rank: 2,
+    type: 'active',
+    target: 'enemy',
+    description: 'Sets an enemy alight for 4 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 4 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 4, tag_required: 'Caster' },
+  },
+  'conflagration 3': {
+    id: 'conflagration 3',
+    name: 'Conflagration',
+    name_ru: "Испепеление",
+    rank: 3,
+    type: 'active',
+    target: 'enemy',
+    description: 'Sets an enemy alight for 5 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 5 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 5, tag_required: 'Caster' },
+  },
+
+  // ── Ember Shroud ──────────────────────────────────────────────────────────
+  // Stone Form's shape with fire resistance in place of armor: a panic button
+  // for a caster that has no armor worth hardening in the first place.
+  'ember_shroud 1': {
+    id: 'ember_shroud 1',
+    name: 'Ember Shroud',
+    name_ru: "Пепельный покров",
+    rank: 1,
+    type: 'active',
+    target: 'self',
+    description: 'Wrap in embers: +25 fire resistance for 2 rounds and regenerate 15% of max HP.',
+    description_ru: "Окутывается углями: +25 к сопротивлению огню на 2 раунда и восстанавливает 15% максимального здоровья.",
+    params: { ember_shroud_resist: 25, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 15, duration_rounds: 2 },
+  },
+  'ember_shroud 2': {
+    id: 'ember_shroud 2',
+    name: 'Ember Shroud',
+    name_ru: "Пепельный покров",
+    rank: 2,
+    type: 'active',
+    target: 'self',
+    description: 'Wrap in embers: +35 fire resistance for 2 rounds and regenerate 20% of max HP.',
+    description_ru: "Окутывается углями: +35 к сопротивлению огню на 2 раунда и восстанавливает 20% максимального здоровья.",
+    params: { ember_shroud_resist: 35, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 20, duration_rounds: 2 },
+  },
+  'ember_shroud 3': {
+    id: 'ember_shroud 3',
+    name: 'Ember Shroud',
+    name_ru: "Пепельный покров",
+    rank: 3,
+    type: 'active',
+    target: 'self',
+    description: 'Wrap in embers: +45 fire resistance for 2 rounds and regenerate 25% of max HP.',
+    description_ru: "Окутывается углями: +45 к сопротивлению огню на 2 раунда и восстанавливает 25% максимального здоровья.",
+    params: { ember_shroud_resist: 45, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 25, duration_rounds: 2 },
+  },
+
+  // ── Dragon's Breath ───────────────────────────────────────────────────────
+  // Pick an enemy; the breath takes the whole ROW it stands in — both cells if
+  // both are held, one if only one is. Scaled twice over: the bulk of it comes
+  // from Knights, a smaller bonus from Dragons.
+  'dragons_breath 1': {
+    id: 'dragons_breath 1',
+    name: "Dragon's Breath",
+    name_ru: "Дыхание дракона",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: "Breathe fire down an enemy row: 3 fire damage per Knight ally, plus 1 per Dragon ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 3 урона огнём за каждого союзника-Рыцаря и ещё 1 за каждого союзника-Дракона всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 3, tag_required: 'Knight', row_damage_bonus_per_tag: 1, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+  },
+  'dragons_breath 2': {
+    id: 'dragons_breath 2',
+    name: "Dragon's Breath",
+    name_ru: "Дыхание дракона",
+    rank: 2,
+    type: 'active',
+    target: 'enemy',
+    description: "Breathe fire down an enemy row: 4 fire damage per Knight ally, plus 2 per Dragon ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 4 урона огнём за каждого союзника-Рыцаря и ещё 2 за каждого союзника-Дракона всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 4, tag_required: 'Knight', row_damage_bonus_per_tag: 2, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+  },
+  'dragons_breath 3': {
+    id: 'dragons_breath 3',
+    name: "Dragon's Breath",
+    name_ru: "Дыхание дракона",
+    rank: 3,
+    type: 'active',
+    target: 'enemy',
+    description: "Breathe fire down an enemy row: 5 fire damage per Knight ally, plus 3 per Dragon ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 5 урона огнём за каждого союзника-Рыцаря и ещё 3 за каждого союзника-Дракона всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 5, tag_required: 'Knight', row_damage_bonus_per_tag: 3, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+  },
+
+  // ── Verse of Cataclysm ────────────────────────────────────────────────────
+  // The unit ends itself. Death runs the normal path, so Last Verse and every
+  // other on-death passive fire on top of this — which is the whole point.
+  'verse_of_cataclysm 1': {
+    id: 'verse_of_cataclysm 1',
+    name: 'Verse of Cataclysm',
+    name_ru: "Стих катаклизма",
+    rank: 1,
+    type: 'active',
+    target: 'self',
+    dispellable: false,
+    description: 'This unit dies where it stands, dealing 5 fire damage to every enemy.',
+    description_ru: "Боец гибнет на месте, нанося 5 урона огнём каждому врагу.",
+    params: { self_kill: true, cataclysm_damage: 5, damage_type: 'fire' },
+  },
+  'verse_of_cataclysm 2': {
+    id: 'verse_of_cataclysm 2',
+    name: 'Verse of Cataclysm',
+    name_ru: "Стих катаклизма",
+    rank: 2,
+    type: 'active',
+    target: 'self',
+    dispellable: false,
+    description: 'This unit dies where it stands, dealing 10 fire damage to every enemy.',
+    description_ru: "Боец гибнет на месте, нанося 10 урона огнём каждому врагу.",
+    params: { self_kill: true, cataclysm_damage: 10, damage_type: 'fire' },
+  },
+  'verse_of_cataclysm 3': {
+    id: 'verse_of_cataclysm 3',
+    name: 'Verse of Cataclysm',
+    name_ru: "Стих катаклизма",
+    rank: 3,
+    type: 'active',
+    target: 'self',
+    dispellable: false,
+    description: 'This unit dies where it stands, dealing 15 fire damage to every enemy.',
+    description_ru: "Боец гибнет на месте, нанося 15 урона огнём каждому врагу.",
+    params: { self_kill: true, cataclysm_damage: 15, damage_type: 'fire' },
+  },
+
+  // ── Blessing of Protection ────────────────────────────────────────────────
+  // Targets any ally INCLUDING the caster, so a lone protector can bless itself
+  // and a support caster can hand it to the front line. Turns the intercept
+  // lottery into a certainty for two rounds and pays armor on top.
+  'blessing_of_protection 1': {
+    id: 'blessing_of_protection 1',
+    name: 'Blessing of Protection',
+    name_ru: "Благословение защиты",
+    rank: 1,
+    type: 'active',
+    target: 'ally_any',
+    description: 'For 2 rounds the target intercepts every attack aimed past it at the row behind, and gains 2 armor per Caster ally on the field.',
+    description_ru: "На 2 раунда цель перехватывает каждую атаку, направленную мимо неё в задний ряд, и получает 2 брони за каждого союзника-Заклинателя на поле.",
+    params: { guaranteed_intercept: true, armor_per_tag: 2, tag_required: 'Caster', duration_rounds: 2 },
+  },
+  'blessing_of_protection 2': {
+    id: 'blessing_of_protection 2',
+    name: 'Blessing of Protection',
+    name_ru: "Благословение защиты",
+    rank: 2,
+    type: 'active',
+    target: 'ally_any',
+    description: 'For 2 rounds the target intercepts every attack aimed past it at the row behind, and gains 3 armor per Caster ally on the field.',
+    description_ru: "На 2 раунда цель перехватывает каждую атаку, направленную мимо неё в задний ряд, и получает 3 брони за каждого союзника-Заклинателя на поле.",
+    params: { guaranteed_intercept: true, armor_per_tag: 3, tag_required: 'Caster', duration_rounds: 2 },
+  },
+  'blessing_of_protection 3': {
+    id: 'blessing_of_protection 3',
+    name: 'Blessing of Protection',
+    name_ru: "Благословение защиты",
+    rank: 3,
+    type: 'active',
+    target: 'ally_any',
+    description: 'For 2 rounds the target intercepts every attack aimed past it at the row behind, and gains 4 armor per Caster ally on the field.',
+    description_ru: "На 2 раунда цель перехватывает каждую атаку, направленную мимо неё в задний ряд, и получает 4 брони за каждого союзника-Заклинателя на поле.",
+    params: { guaranteed_intercept: true, armor_per_tag: 4, tag_required: 'Caster', duration_rounds: 2 },
+  },
 };
 
 export { UNIT_ABILITIES };

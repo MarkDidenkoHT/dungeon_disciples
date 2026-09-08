@@ -36,7 +36,10 @@ const SRC_TARGET_FX = new Set([
 // radiance is here for both reasons at once: it fires on EVERY adjacent enemy
 // when the unit is healed, and the light leaves the caster for all of them in
 // the same instant.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist']);
+// dragons_breath and verse_of_cataclysm belong here too — both log one entry
+// per victim (a row, and the whole enemy side) for what is a single jet and a
+// single detonation. Left out, a two-unit row would breathe fire twice.
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
@@ -44,7 +47,10 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
 // it fell through to the catch-all that anchors on the victim with no aim.
 // arrow_shot with no destination flies off in its default heading, so Volley
 // spawned an arrow on every enemy and sent them back at the archer.
-const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale']);
+// Conflagration is here for the same reason: the heat line has to leave the
+// caster and land on the victim, so it needs both cells rather than being
+// anchored on whoever it happened to.
+const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale', 'conflagration']);
 
 // Effects that RIDE an attack rather than being an event of their own —
 // EFFECTS[name](anchorCell, { actorCell, targetCell }), never awaited.
@@ -1860,6 +1866,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'shield',      icon: 'shield.jpg',            en: 'Shield',          ru: 'Щит',            n: c => num(c, '_shield'),             unit: 'dmg_absorb' },
     { key: 'frost-armor', icon: 'frost_armor.jpg',      en: 'Frost Armor',     ru: 'Ледяной доспех', n: c => num(c, '_frost_armor_rounds'), unit: 'rounds' },
     { key: 'stone-form',  icon: 'stone_form.jpg',       en: 'Stone Form',      ru: 'Каменная форма', n: c => num(c, '_stone_form_rounds'),  unit: 'rounds' },
+    { key: 'ember-shroud',icon: 'ember_shroud.jpg',     en: 'Ember Shroud',    ru: 'Пепельный покров', n: c => num(c, '_ember_shroud_rounds'), unit: 'rounds' },
+    { key: 'guard',       icon: 'blessing_of_protection.jpg', en: 'Blessing of Protection', ru: 'Благословение защиты', n: c => num(c, '_guard_rounds'), unit: 'rounds' },
     { key: 'sanctuary',   icon: 'sanctuary.jpg',        en: 'Sanctuary',       ru: 'Святилище',      n: c => num(c, '_sanctuary_rounds'),   unit: 'rounds' },
     { key: 'regenerate',  icon: 'regenerate.jpg',       en: 'Regeneration',    ru: 'Регенерация',    n: c => num(c, '_hot'),                unit: 'hp' },
     { key: 'blessing',    icon: 'mothers_blessing.jpg', en: "Mother's Blessing", ru: 'Благословение Матери', n: c => (st(c, '_mothers_blessing') ? 1 : 0) },

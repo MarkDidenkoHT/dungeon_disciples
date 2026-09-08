@@ -270,7 +270,7 @@
     // Fan-out effects take their victims as a LIST (see FAN_OUT_FX in
     // screens/battle.js). Handed only a `targetCell` they have nothing to draw
     // to and bail out silently, which looks like a broken effect in here.
-    const FAN_OUT = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing']);
+    const FAN_OUT = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'dragons_breath', 'verse_of_cataclysm']);
 
     function cellEl(key) { return key ? document.querySelector(`.battle-cell[data-id="${key}"]`) : null; }
 

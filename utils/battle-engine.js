@@ -347,6 +347,13 @@ class BattleEngine {
       _frost_armor_school: null,
       _stone_form_rounds:  0,
       _stone_form_armor:   0,
+      _ember_shroud_rounds: 0,
+      _ember_shroud_resist: 0,
+      _ember_shroud_school: null,
+      // Blessing of Protection. The rounds flag is read by
+      // resolveProtectorIntercept; the armor is held so it can be handed back.
+      _guard_rounds:      0,
+      _guard_armor:       0,
       _parry_available:   false,
       _aegis_armor:       0,
       _aegis_resists:     {},
@@ -1282,6 +1289,10 @@ class BattleEngine {
       const interceptDef  = defs.find(d => d.trigger === 'intercept');
       const passiveChance = this.interceptChanceOf(c, interceptDef);
       const spellChance   = c.intercept_bonus_pct ?? 0;
+      // A blessed guardian steps in whether or not it owns a Protector passive:
+      // the blessing IS the intercept for as long as it lasts, so a unit with no
+      // base chance still qualifies here.
+      if (c._guard_rounds > 0) return true;
       return (passiveChance + spellChance) > 0;
     });
     for (const protector of protectors) {
@@ -1289,8 +1300,9 @@ class BattleEngine {
       const interceptDef  = defs.find(d => d.trigger === 'intercept');
       const passiveChance = this.interceptChanceOf(protector, interceptDef);
       const spellChance   = protector.intercept_bonus_pct ?? 0;
+      const guaranteed = protector._guard_rounds > 0;
       const chance = (passiveChance + spellChance) / 100;
-      if (Math.random() < chance) {
+      if (guaranteed || Math.random() < chance) {
         // sourceId/sourceCell = the ATTACKER. The entry already named the
         // protector (actor) and the ally it saved (target), but not who the blow
         // came from — and the shield has to face that direction to read as a
@@ -1859,6 +1871,25 @@ class BattleEngine {
     unit._stone_form_armor  = 0;
   }
 
+  expireEmberShroud(unit) {
+    if (!unit) return;
+    const res = unit.unit_data?.resistances ?? unit.resistances;
+    if (res && unit._ember_shroud_school && unit._ember_shroud_resist) {
+      const school = unit._ember_shroud_school;
+      res[school] = Math.max(0, (res[school] ?? 0) - unit._ember_shroud_resist);
+    }
+    unit._ember_shroud_rounds = 0;
+    unit._ember_shroud_resist = 0;
+    unit._ember_shroud_school = null;
+  }
+
+  expireGuard(unit) {
+    if (!unit) return;
+    if (unit._guard_armor) unit.armor = Math.max(0, (unit.armor ?? 0) - unit._guard_armor);
+    unit._guard_rounds = 0;
+    unit._guard_armor  = 0;
+  }
+
   advanceRound() {
     for (const c of this.combatants) {
       this.clampPools(c);
@@ -1905,6 +1936,16 @@ class BattleEngine {
       if (c._stone_form_rounds > 0) {
         c._stone_form_rounds--;
         if (c._stone_form_rounds === 0) this.expireStoneForm(c);
+      }
+
+      if (c._ember_shroud_rounds > 0) {
+        c._ember_shroud_rounds--;
+        if (c._ember_shroud_rounds === 0) this.expireEmberShroud(c);
+      }
+
+      if (c._guard_rounds > 0) {
+        c._guard_rounds--;
+        if (c._guard_rounds === 0) this.expireGuard(c);
       }
 
       if (c._aegis_armor) { c.armor = Math.max(0, c.armor - c._aegis_armor); c._aegis_armor = 0; }
@@ -2496,6 +2537,11 @@ class BattleEngine {
           _frost_armor_school: c._frost_armor_school ?? null,
           _stone_form_rounds:  c._stone_form_rounds  ?? 0,
           _stone_form_armor:   c._stone_form_armor   ?? 0,
+          _ember_shroud_rounds: c._ember_shroud_rounds ?? 0,
+          _ember_shroud_resist: c._ember_shroud_resist ?? 0,
+          _ember_shroud_school: c._ember_shroud_school ?? null,
+          _guard_rounds:       c._guard_rounds ?? 0,
+          _guard_armor:        c._guard_armor  ?? 0,
           _parry_available:    c._parry_available,
           _aegis_armor:        c._aegis_armor,
           _aegis_resists:      c._aegis_resists,
@@ -2614,6 +2660,11 @@ class BattleEngine {
       c._frost_armor_school = b._frost_armor_school ?? null;
       c._stone_form_rounds  = b._stone_form_rounds  ?? 0;
       c._stone_form_armor   = b._stone_form_armor   ?? 0;
+      c._ember_shroud_rounds = b._ember_shroud_rounds ?? 0;
+      c._ember_shroud_resist = b._ember_shroud_resist ?? 0;
+      c._ember_shroud_school = b._ember_shroud_school ?? null;
+      c._guard_rounds       = b._guard_rounds       ?? 0;
+      c._guard_armor        = b._guard_armor        ?? 0;
       c._parry_available   = b._parry_available   ?? false;
       c._aegis_armor       = b._aegis_armor       ?? 0;
       c._aegis_resists     = b._aegis_resists     || {};
