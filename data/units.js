@@ -1271,7 +1271,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 1560, passive: ['impale 1', 'iron_will 1', 'protector 1'], ability: 'shield_bash 2', 
     },
-    heavy_infantry: {
+    vindicator: {
       id: 'e1121', f: 'e', t: 4,
       name: 'Vindicator',
       name_ru: 'Поборник',
