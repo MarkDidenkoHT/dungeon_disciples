@@ -2100,11 +2100,78 @@ class BattleEngine {
     return power > 0;
   }
 
+
+  // ── What the other side can actually DO to us ───────────────────────────────
+  //
+  // Every defensive ability in the game mitigates a NAMED thing: Terror cuts
+  // physical damage, Frost Armor adds armor and one school of resistance,
+  // Sanctuary adds the six schools. None of them was reading what the enemy
+  // actually deals, so a Wailing Ghost warded itself in armor and cold against a
+  // Paladin dealing life damage, and a Bone Knight terrified a healer that swings
+  // for nothing while a 40-power physical attacker went untouched.
+  //
+  // The fix is one shared question — "what is aimed at this unit, and of what
+  // school?" — answered from reach and the real damage pipeline rather than from
+  // unit tags. Everything below scores in DAMAGE PREVENTED, which is the only
+  // unit the three abilities can be compared in.
+
+  // The school a unit's basic action deals in. Healers and support actions deal
+  // none. Untyped damage is physical, matching calcDamage.
+  aiDamageSchool(unit) {
+    if (!unit || this.isHealer(unit)) return null;
+    const data = unit.unit_data || unit;
+    const power = data.action_power ?? data.action?.value ?? 0;
+    if (power <= 0) return null;
+    return data.damage_source ?? 'physical';
+  }
+
+  // The hardest single hit `foe` could land on the other side right now, and the
+  // school it would land in. Reach is asked of getValidTargets — the same
+  // function the unit's own turn uses — so a melee attacker that cannot make
+  // contact this round threatens nobody, and a taunted one threatens only its
+  // taunter. Returns 0 for healers and for anything with no target.
+  aiBestHitOf(foe) {
+    const school = this.aiDamageSchool(foe);
+    if (!school || !foe.alive) return { dmg: 0, school: null };
+    let dmg = 0;
+    for (const t of this.getValidTargets(foe)) {
+      if (t.side === foe.side) continue;
+      dmg = Math.max(dmg, this.calcDamageValue(foe, t));
+    }
+    return { dmg, school };
+  }
+
+  // Everything the OPPOSING side can land on `unit` this round, split by school.
+  // A multi-target action counts once per unit it would sweep, because that is
+  // what each of those units is actually about to take.
+  aiIncomingThreat(unit) {
+    const bySchool = {};
+    let total = 0;
+    for (const foe of this.combatants) {
+      if (!foe.alive || foe.side === unit.side) continue;
+      const school = this.aiDamageSchool(foe);
+      if (!school) continue;
+      if (!this.getValidTargets(foe).some(t => t.id === unit.id)) continue;
+      const dmg = this.calcDamageValue(foe, unit);
+      if (dmg <= 0) continue;
+      bySchool[school] = (bySchool[school] ?? 0) + dmg;
+      total += dmg;
+    }
+    return { total, bySchool };
+  }
+
+  // Percentage points of mitigation a grant actually buys, once the cap has
+  // clipped it. An ally already at the ceiling gains nothing and must not be
+  // warded — the same test the Sanctuary branch already made, generalised.
+  aiMitigationGain(current, bonus) {
+    const now = Math.max(0, Math.min(MITIGATION_CAP_PCT, Number(current) || 0));
+    return Math.max(0, Math.min(MITIGATION_CAP_PCT, now + (bonus || 0)) - now);
+  }
   // Targets already spoken for by an allied caster THIS round: `claimed` is
   // taken, `doomed` is taken AND already dying to that hit.
   aiClaimState() {
     if (!this._aiClaimState || this._aiClaimState.round !== this.round) {
-      this._aiClaimState = { round: this.round, claimed: new Set(), doomed: new Set(), warded: new Set() };
+      this._aiClaimState = { round: this.round, claimed: new Set(), doomed: new Set(), warded: new Set(), feared: new Set() };
     }
     return this._aiClaimState;
   }
@@ -2210,29 +2277,95 @@ class BattleEngine {
     // school is capped (MITIGATION_CAP_PCT), so an ally already at the ceiling
     // gains literally nothing, and a second copy on a warded ally is thrown
     // away — which is what two Martyrs both picking targets[0] used to do.
+    // Sanctuary raises the six RESISTANCES and never armor, so against a purely
+    // physical enemy it prevents nothing at all — and the headroom it buys in a
+    // school nobody is dealing is worth exactly as much. The gain is therefore
+    // weighted by what is actually incoming per school, and the ability is held
+    // rather than spent when the answer is "nothing".
     if (p.all_resist_bonus != null) {
       const claims = this.aiClaimState();
-      const gainFor = c => {
-        const res = c.unit_data?.resistances ?? c.resistances ?? {};
+      const savedFor = c => {
+        const res    = c.unit_data?.resistances ?? c.resistances ?? {};
+        const threat = this.aiIncomingThreat(c);
         return RESIST_SCHOOLS.reduce((sum, school) => {
-          const now = Math.max(0, Number(res[school]) || 0);
-          return sum + Math.max(0, Math.min(MITIGATION_CAP_PCT, now + p.all_resist_bonus) - now);
+          const incoming = threat.bySchool[school] ?? 0;
+          if (incoming <= 0) return sum;
+          return sum + incoming * this.aiMitigationGain(res[school], p.all_resist_bonus) / 100;
         }, 0);
       };
       const scored = targets
         .filter(c => c.alive && c.side === actor.side)
         .filter(c => !claims.warded.has(c.id))
         .filter(c => !(c._effects || []).some(e => e.key === 'sanctuary'))
-        .map(c => ({ c, gain: gainFor(c) }))
-        .filter(x => x.gain > 0);
+        .map(c => ({ c, saved: savedFor(c) }))
+        .filter(x => x.saved >= 1);
       if (!scored.length) return null;
-      // Ward whoever is actually going to be hit: the front line first, then
-      // whoever is furthest through their health.
-      const exposure = c => (cellCol(c.cellIndex) === (c.side === 'enemy' ? 0 : 1) ? 1 : 0);
+      // Most damage prevented wins; ties go to whoever is closest to dying.
       scored.sort((a, b) =>
-        (exposure(b.c) - exposure(a.c)) ||
-        ((a.c.battle_hp / a.c.max_hp) - (b.c.battle_hp / b.c.max_hp)) ||
-        (b.gain - a.gain));
+        (b.saved - a.saved) ||
+        ((a.c.battle_hp / a.c.max_hp) - (b.c.battle_hp / b.c.max_hp)));
+      return scored[0].c;
+    }
+
+    // Frost Armor — armor plus ONE school of resistance. It used to fall through
+    // to the generic ally-buff branch below, which returns the caster whenever
+    // the caster is a legal target: every Wailing Ghost warded itself, forever,
+    // including when nothing on the board could reach it and when the armor and
+    // cold resistance it bought were both worthless against the damage coming.
+    //
+    // Scored in damage prevented instead: armor is worth the physical damage
+    // aimed at that ally, the resistance is worth the damage of its own school,
+    // and both are clipped by the mitigation cap. Nothing to prevent, no cast.
+    if (p.frost_armor_armor != null) {
+      const claims = this.aiClaimState();
+      const school = p.frost_armor_resist_type || 'cold';
+      const savedFor = c => {
+        const threat = this.aiIncomingThreat(c);
+        if (threat.total <= 0) return 0;
+        const res = c.unit_data?.resistances ?? c.resistances ?? {};
+        const physSaved = (threat.bySchool.physical ?? 0)
+          * this.aiMitigationGain(c.armor, p.frost_armor_armor) / 100;
+        const resSaved  = (threat.bySchool[school] ?? 0)
+          * this.aiMitigationGain(res[school], p.frost_armor_resist ?? 0) / 100;
+        return physSaved + resSaved;
+      };
+      const scored = targets
+        .filter(c => c.alive && c.side === actor.side)
+        .filter(c => !claims.warded.has(c.id))
+        .filter(c => (c._frost_armor_rounds ?? 0) <= 0)
+        .map(c => ({ c, saved: savedFor(c) }))
+        .filter(x => x.saved >= 1);
+      if (!scored.length) return null;
+      scored.sort((a, b) =>
+        (b.saved - a.saved) ||
+        ((a.c.battle_hp / a.c.max_hp) - (b.c.battle_hp / b.c.max_hp)));
+      return scored[0].c;
+    }
+
+    // Terror — cuts PHYSICAL damage only, so the target has to be a physical
+    // attacker that can actually reach someone. It used to fall through to the
+    // attack-scoring path at the bottom, which picks whoever is easiest to kill:
+    // a Bone Knight would terrify an enemy healer (physical output: nothing)
+    // while an over-buffed 40-power attacker swung on untouched.
+    //
+    // Ranked by damage prevented — the biggest physical hit on the board — and
+    // claimed, so a second Bone Knight moves on to the next threat instead of
+    // stacking a debuff that does not stack.
+    if (p.physical_dmg_reduction_pct != null) {
+      const claims = this.aiClaimState();
+      const scored = targets
+        .filter(c => c.alive && c.side !== actor.side)
+        .filter(c => (c._terror_rounds ?? 0) <= 0 && !claims.feared.has(c.id))
+        .map(c => {
+          const best = this.aiBestHitOf(c);
+          const saved = best.school === 'physical'
+            ? best.dmg * p.physical_dmg_reduction_pct / 100
+            : 0;
+          return { c, saved };
+        })
+        .filter(x => x.saved >= 1);
+      if (!scored.length) return null;
+      scored.sort((a, b) => b.saved - a.saved);
       return scored[0].c;
     }
     // Team/self buff (initiative, etc.) — cast it; earlier is better, and the
@@ -2295,7 +2428,12 @@ class BattleEngine {
       if (abilityTargets.length) {
         const pick = this.aiPickAbilityTarget(actor, def, abilityTargets);
         if (pick) {
-          if (def?.params?.all_resist_bonus != null) this.aiClaimState().warded.add(pick.id);
+          // Claim the pick so a second caster this round moves on to the next
+          // unit instead of doubling up on a ward or a debuff that does not
+          // stack. Frost Armor and Terror join Sanctuary here for that reason.
+          const ap = def?.params || {};
+          if (ap.all_resist_bonus != null || ap.frost_armor_armor != null) this.aiClaimState().warded.add(pick.id);
+          if (ap.physical_dmg_reduction_pct != null) this.aiClaimState().feared.add(pick.id);
           return { type: 'ability', target: pick };
         }
       }
