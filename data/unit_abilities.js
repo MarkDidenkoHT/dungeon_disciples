@@ -966,8 +966,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +1 HP and +2 armor for each Knight ally on the field.',
-    description_ru: "В начале боя получает +1 HP и +2 брони за каждого союзного рыцаря на поле.",
+    description: 'At battle start, gain +1 HP and +1 armor for each Knight ally on the field.',
+    description_ru: "В начале боя получает +1 HP и +1 брони за каждого союзного рыцаря на поле.",
     params: { tag_required: 'Knight', hp_per_tagged_unit: 1, armor_per_tagged_unit: 1 },
   },
   'iron_will 2': {

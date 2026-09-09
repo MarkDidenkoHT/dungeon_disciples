@@ -2754,7 +2754,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-node-level {
   flex: 0 0 auto;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
   color: #f0e6d2;
@@ -2764,8 +2764,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-variant-numeric: tabular-nums;
 }
 
+/* 63% is the old 70% less a tenth: the width the bars gave up is what the tome
+   marker sits in, so the strip's total footprint is unchanged. */
 .castle-node-bar-stack {
-  flex: 0 0 70%;
+  flex: 0 0 63%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -2790,9 +2792,26 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-node-bars .portrait-hp-bar,
 .castle-node-bars .portrait-xp-bar {
-  height: 5px;
+  height: 10px;
+  border-radius: 3px;
   background: rgba(0,0,0,0.75);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
+}
+
+.castle-node-bars .portrait-hp-fill,
+.castle-node-bars .portrait-xp-fill { border-radius: 3px; }
+
+/* A marker, not a button: clicks fall through to the node, which opens the
+   sheet the tome is actually spent from. Sized against the two-bar stack it
+   stands beside (10 + 2 + 10), so it never drives the strip's height. */
+.castle-node-tome {
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  margin-left: 2px;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.9));
 }
 
 .portrait-xp-fill {

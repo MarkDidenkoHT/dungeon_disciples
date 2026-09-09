@@ -1066,6 +1066,18 @@ export function renderCastle(root, { player }) {
     // Both bars share one absolutely-positioned strip; stacking them separately
     // would have each fight the same bottom inset. The level sits beside that
     // stack rather than above it, so the whole readout is one short row.
+    // A tome marker rides at the END of the strip, in the width the bars gave
+    // up for it. Same rule as the button on the unit sheet — only when tomes are
+    // actually held — so the node says WHICH units a held tome could go to
+    // without opening every one of them. It is a marker, not a control: the tome
+    // is still spent from the sheet, and pointer events stay with the node so a
+    // tap anywhere on it still opens that sheet.
+    const tomeHtml = tokenCount('tome_of_knowledge') > 0
+      ? `<img class="castle-node-tome" src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}"
+              alt="" title="${CASTLE_TEXT.tomeName[castleLang]}"
+              onerror="this.style.display='none'">`
+      : '';
+
     return `
       <div class="castle-node-bars">
         ${level !== '' ? `<span class="castle-node-level" title="${CASTLE_TEXT.level[castleLang]} ${level}">${level}</span>` : ''}
@@ -1075,6 +1087,7 @@ export function renderCastle(root, { player }) {
           </div>
           ${nodeXpBar(u)}
         </div>
+        ${tomeHtml}
       </div>`;
   }
 
