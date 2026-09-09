@@ -465,6 +465,19 @@ class BattleEngine {
       const last = parts[parts.length - 1];
       owner[last] = Math.max(0, (Number(owner[last]) || 0) + Number(amount || 0));
     }
+    // `divide` is the multiplicative counterpart to `restore`: a damage boost is
+    // applied as `_dmg_mult *= factor`, and no amount of adding gives that back.
+    // Kept separate rather than folded into `restore` because the two undo by
+    // different arithmetic and one ledger cannot say which is which.
+    for (const [path, factor] of Object.entries(eff.divide || {})) {
+      const f = Number(factor);
+      if (!f) continue;
+      const parts = path.split('.');
+      const owner = this._effectPathOwner(unit, parts, false);
+      if (!owner) continue;
+      const last = parts[parts.length - 1];
+      owner[last] = Math.max(0.01, (Number(owner[last]) || 1) / f);
+    }
     for (const [path, value] of Object.entries(eff.clear || {})) {
       const parts = path.split('.');
       const owner = this._effectPathOwner(unit, parts, true);
@@ -1401,8 +1414,17 @@ class BattleEngine {
       // Shown on the badge, so it has to total the stacks the same way the undo
       // does — two Dissipates on one unit read as one record.
       if (rec.amount != null) existing.amount = (existing.amount || 0) + rec.amount;
+      // Multiplicative, so stacking them multiplies rather than adds.
+      for (const [f, factor] of Object.entries(rec.divide || {})) {
+        existing.divide = existing.divide || {};
+        existing.divide[f] = (existing.divide[f] ?? 1) * factor;
+      }
       existing.clear = { ...(existing.clear || {}), ...(rec.clear || {}) };
       existing.name  = rec.name || existing.name;
+      // A re-application restarts the clock. Without this the badge kept
+      // counting down from the FIRST cast and hit zero while the ward was still
+      // up, which is the one number on it a player can act on.
+      if (rec.rounds != null) existing.rounds = Math.max(existing.rounds || 0, rec.rounds);
       return existing;
     }
     const eff = {
@@ -1416,6 +1438,7 @@ class BattleEngine {
       // nothing in the engine reads them.
       ...(rec.icon   ? { icon: rec.icon }     : {}),
       ...(rec.rounds ? { rounds: rec.rounds } : {}),
+      ...(rec.divide && Object.keys(rec.divide).length ? { divide: rec.divide } : {}),
       // Magnitude, for effects whose size is the point (a resistance shred).
       // Display-only, like `icon` and `rounds`.
       ...(rec.amount != null ? { amount: rec.amount } : {}),
@@ -1475,6 +1498,41 @@ class BattleEngine {
     }
   }
 
+  // Translates a spell's undo ledger — the shape applyRoundEffects reads — into
+  // the shape an effect record reads. Kept as a translation rather than making
+  // the two agree, because applyRoundEffects' shape is also what sits in every
+  // saved battle and changing it would strand them.
+  //   armor / initiative  -> flat paths, unchanged
+  //   resistances: {fire}  -> 'unit_data.resistances.fire' (or 'resistances.*')
+  //   dmg_mult_div         -> a `divide` entry on _dmg_mult
+  spellEffectLedger(unit, revert = {}) {
+    const restore = {};
+    const divide  = {};
+    const resPath = unit?.unit_data?.resistances ? 'unit_data.resistances' : 'resistances';
+    for (const [key, val] of Object.entries(revert)) {
+      if (key === 'resistances') {
+        for (const [school, amount] of Object.entries(val || {})) {
+          if (amount) restore[`${resPath}.${school}`] = amount;
+        }
+      } else if (key === 'dmg_mult_div') {
+        if (val) divide._dmg_mult = val;
+      } else if (Number(val)) {
+        restore[key] = Number(val);
+      }
+    }
+    return { restore, divide };
+  }
+
+  // Drops the scheduled expiry belonging to one effect record. A timed spell
+  // books its undo TWICE — once on the effect record for a dispel, once as a
+  // pendingRoundEffect for the clock — so whichever fires first has to disarm
+  // the other or the stats are handed back twice.
+  cancelPendingExpiry(unit, effectKey) {
+    if (!effectKey || !this.pendingRoundEffects?.length) return;
+    this.pendingRoundEffects = this.pendingRoundEffects.filter(e =>
+      !(e.type === 'expire_modifier' && e.unitId === unit?.id && e.effectKey === effectKey));
+  }
+
   // Drops an effect record without reverting anything — for when the effect ends
   // naturally (e.g. a DoT ticks and expires) rather than being dispelled.
   clearEffect(unit, key) {
@@ -1504,6 +1562,11 @@ class BattleEngine {
     if (pool) return Math.max(0, Number(unit[pool[0]]) || 0);
     let total = 0;
     for (const amt of Object.values(eff.restore || {})) total += Math.abs(Number(amt) || 0);
+    // A pure damage buff has nothing in `restore`, so without this it measured
+    // zero and Dispel skipped the strongest effect on the board.
+    for (const f of Object.values(eff.divide || {})) {
+      total += Math.round(Math.abs(1 - (Number(f) || 1)) * 100);
+    }
     return total;
   }
 
@@ -1549,10 +1612,19 @@ class BattleEngine {
       }
     }
     if (eff.amount != null) eff.amount = Math.max(0, eff.amount - taken);
+    // `divide` undoes by division and has no "half of it" — once a shave gets
+    // this far it takes the effect whole rather than looping on it forever.
+    if (eff.divide && Object.keys(eff.divide).length) {
+      this.revertEffect(unit, eff);
+      this.cancelPendingExpiry(unit, eff.key);
+      unit._effects = unit._effects.filter(e => e !== eff);
+      return { key: eff.key, name: eff.name, from: mag, to: 0 };
+    }
 
     const now = this.effectMagnitude(unit, eff);
     if (now <= 0) {
       this.revertEffect(unit, eff);
+      this.cancelPendingExpiry(unit, eff.key);
       unit._effects = unit._effects.filter(e => e !== eff);
     }
     return { key: eff.key, name: eff.name, from: mag, to: Math.max(0, mag - taken) };
@@ -1565,7 +1637,10 @@ class BattleEngine {
       .slice(0, count);
     if (!matching.length) return [];
     // revertEffect handles dotted `_flags.x` paths and clamps stats at 0.
-    for (const eff of matching) this.revertEffect(unit, eff);
+    for (const eff of matching) {
+      this.revertEffect(unit, eff);
+      this.cancelPendingExpiry(unit, eff.key);
+    }
     const removed = new Set(matching);
     unit._effects = unit._effects.filter(e => !removed.has(e));
     return matching;
@@ -2133,6 +2208,9 @@ class BattleEngine {
             addResist(unit, rType, rVal);
           }
         }
+        // The stats are back, so the icon goes too — and with it the record a
+        // later dispel would otherwise have reverted a second time.
+        this.clearEffect(unit, effect.effectKey);
       }
     }
     this.pendingRoundEffects = remaining;
@@ -3094,20 +3172,41 @@ class BattleEngine {
         // see a spell buff, and the portrait had no way to show one either. The
         // record carries the spell's own icon, which is what lets the client
         // draw it beside the ability-driven statuses.
+        // Its OWN key per cast, and its OWN copy of the undo ledger.
+        //
+        // Both used to be shared. One key meant a second cast merged into the
+        // first record, and since `restore` was the very object the first
+        // cast's expiry entry holds, growing it grew that expiry too — the
+        // first timer then handed back both casts and the second handed its
+        // share back again. And the two ledgers do not even speak the same
+        // language: the expiry entry's is read by applyRoundEffects (`armor`,
+        // `dmg_mult_div`, a nested `resistances` map), while an effect record's
+        // is read by revertEffect as dotted paths and flat numbers. A dispel
+        // walking the spell ledger wrote junk fields and silently gave back no
+        // resistance and no damage at all. spellEffectLedger translates.
+        c._effect_seq = (Number(c._effect_seq) || 0) + 1;   // a battle saved before this field existed rehydrates without it
+        const effectKey = `spell:${params._spell_id || params._spell_name}#${c._effect_seq}`;
+        const { restore, divide } = this.spellEffectLedger(c, revert);
         this.registerEffect(c, {
-          key:      `spell:${params._spell_id || params._spell_name}`,
+          key:      effectKey,
           name:     params._spell_name || 'Spell',
           icon:     params._spell_icon || null,
           polarity,
           dispellable: true,
           rounds:   duration,
-          restore:  revert,
+          restore,
+          divide,
         });
         this.pendingRoundEffects.push({
           type:   'expire_modifier',
           round:  this.round + duration,
           unitId: c.id,
           revert,
+          // Names the icon this timer belongs to, so expiry takes the record
+          // down with the stats instead of leaving it on the portrait for the
+          // rest of the battle — where a later dispel would find it and revert
+          // stats that had already been handed back.
+          effectKey,
         });
       }
 
