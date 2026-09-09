@@ -735,7 +735,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 6, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
-      xp: 110, passive: ['volcanic_skin 1', 'unending_servitude 1'], ability: null,
+      xp: 110, passive: ['volcanic_skin 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     blaze_spawn: {
       id: 'd71', f: 'd', t: 2,
@@ -747,7 +747,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
-      xp: 540, passive: ['volcanic_skin 1', 'last_verse 1', 'unending_servitude 1'], ability: null,
+      xp: 540, passive: ['volcanic_skin 1', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     inferno_spawn: {
       id: 'd711', f: 'd', t: 3,
@@ -759,7 +759,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
-      xp: 1859, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: null,
+      xp: 1859, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     inferno_scion: {
       id: 'd7111', f: 'd', t: 4,
@@ -771,7 +771,7 @@ const UNITS = {
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 14, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
-      xp: 1859, passive: ['volcanic_skin 2', 'last_verse 2', 'unending_servitude 1'], ability: null,
+      xp: 1859, passive: ['volcanic_skin 2', 'last_verse 2', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     cultist: {
       id: 'd5', f: 'd', t: 1,
@@ -1773,7 +1773,7 @@ const UNITS = {
       resistances: { air: 5, fire: 5, life: 50, death: 5, cold: 5, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'air', action_power: 10, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt', action_sfx: 'shock',
-      xp: 75, passive: 'concentration 1', ability: null,
+      xp: 75, passive: 'concentration 1', ability: 'conflagration 1',
     },
     red_mage: {
       id: 'e41', f: 'e', t: 2,
@@ -1785,7 +1785,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'fire', action_power: 14, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 430, passive: ['concentration 1', 'burn 1'], ability: null,
+      xp: 430, passive: ['concentration 1', 'burn 1'], ability: 'conflagration 2',
     },
     ash_priest: {
       id: 'e411', f: 'e', t: 3,
@@ -1797,7 +1797,7 @@ const UNITS = {
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 6,
       damage_source: 'fire', action_power: 18, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 1520, passive: ['concentration 1', 'burn 2'], ability: null,
+      xp: 1520, passive: ['concentration 1', 'burn 2'], ability: 'conflagration 2',
     },
     ash_hierophant: {
       id: 'e4111', f: 'e', t: 4,
@@ -1809,7 +1809,7 @@ const UNITS = {
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 6,
       damage_source: 'fire', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
-      xp: 1520, passive: ['concentration 1', 'burn 2', 'dispel 1'], ability: null,
+      xp: 1520, passive: ['concentration 1', 'burn 2', 'dispel 1'], ability: 'conflagration 3',
     },
     cinder_knight: {
       id: 'e412', f: 'e', t: 3,
@@ -1821,7 +1821,7 @@ const UNITS = {
       resistances: { air: 5, fire: 25, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 20, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
-      xp: 1560, passive: ['concentration 1', 'burn 1', 'gravebane 1'], ability: null,
+      xp: 1560, passive: ['concentration 1', 'burn 1', 'gravebane 1'], ability: 'ember_shroud 2',
     },
     dragon_knight: {
       id: 'e4121', f: 'e', t: 4,
@@ -1833,7 +1833,7 @@ const UNITS = {
       resistances: { air: 5, fire: 30, life: 50, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'fire', action_power: 25, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
-      xp: 2730, passive: ['concentration 1', 'burn 2', 'gravebane 1'], ability: null,
+      xp: 2730, passive: ['concentration 1', 'burn 2', 'gravebane 1'], ability: 'ember_shroud 3',
     },
     blue_mage: {
       id: 'e42', f: 'e', t: 2,
@@ -1917,7 +1917,7 @@ const UNITS = {
       resistances: { air: 20, fire: 10, life: 50, death: 10, cold: 10, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 1560, passive: ['protector 2', 'aegis 1'], ability: 'frost_armor 2',
+      xp: 1560, passive: ['protector 2', 'aegis 1'], ability: 'blessing_of_protection 2',
     },
     aegis_sentinel: {
       id: 'e4321', f: 'e', t: 4,
@@ -1929,7 +1929,7 @@ const UNITS = {
       resistances: { air: 25, fire: 10, life: 50, death: 10, cold: 15, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
-      xp: 3640, passive: ['protector 2', 'aegis 1', 'stoicism 1'], ability: 'frost_armor 2',
+      xp: 3640, passive: ['protector 2', 'aegis 1', 'stoicism 1'], ability: 'blessing_of_protection 2',
     },
   },
 
@@ -2415,7 +2415,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
-      xp: 1560, passive: ['lifesteal 1', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
+      xp: 1560, passive: ['iron_will 1', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
       id: 'gs32', f: 'g', t: 2,
