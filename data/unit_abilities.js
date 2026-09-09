@@ -2444,9 +2444,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Attacks against bleeding targets deal 30% bonus damage.',
-    description_ru: "Атаки по истекающим кровью целям наносят на 30% больше урона.",
-    params: { leech_bleed_bonus_pct: 30 },
+    description: "Attacks against bleeding targets deal bonus damage equal to the target's current Bleed, and heal this unit for the same amount.",
+    description_ru: "Атаки по истекающим кровью целям наносят дополнительный урон, равный текущему Кровотечению цели, и исцеляют этого юнита на ту же величину.",
+    params: { leech_bleed_mult: 1 },
     effect_name: 'blood_spatter',
   },
   'fellfire 1': {

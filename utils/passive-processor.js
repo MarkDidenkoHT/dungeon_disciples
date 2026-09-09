@@ -894,6 +894,27 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.fireHealTriggers(owner, owner, actual);
       }
     }
+    // Leech: the blow tears the open wounds wider. Extra damage equal to the
+    // Bleed sitting on the target right now (so it scales with however many
+    // stacks are on it), and the owner drinks the same amount back. Read live
+    // rather than folded into `power` in calcDamageWithPassives, because the
+    // heal has to be paired with the damage actually dealt.
+    if (p.leech_bleed_mult != null && (target._bleed_dmg ?? 0) > 0) {
+      const extra = Math.max(1, Math.floor((target._bleed_dmg ?? 0) * p.leech_bleed_mult));
+      hurt(target, extra);
+      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: extra, heal: false, message: `${def.name} — tore open ${target.unit_name}'s wounds for ${extra}` });
+      if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
+      // Pure Blood blocks the drink, never the blow.
+      if (!target._drain_immune) {
+        const heal   = Math.floor(extra * engine.fatigueHealMult());
+        const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
+        owner.battle_hp += actual;
+        if (actual > 0) {
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, targetId: owner.id, value: actual, sourceId: target.id, sourceCell: target.cellIndex });
+          engine.fireHealTriggers(owner, owner, actual);
+        }
+      }
+    }
     if (p.dot_dmg_pct != null) {
       // Burn and Poison are now INDEPENDENT damage-over-time effects on separate
       // slots (burn -> dot_dmg, poison -> _poison_dmg), so a unit can carry both
@@ -1423,15 +1444,11 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
       power = Math.floor(power * (1 + p.execute_bonus_pct / 100));
     }
   }
-  // Leech: bonus damage against bleeding targets.
-  if (p.leech_bleed_bonus_pct != null && (target._bleed_dmg ?? 0) > 0) {
-    power = Math.floor(power * (1 + p.leech_bleed_bonus_pct / 100));
-  }
   // Slayer family (Exorcism and anything added beside it): bonus damage when
   // the TARGET carries `vs_tag`, optionally scaled by how many of
   // `tag_required` stand with the ATTACKER. Deliberately generic — a new
   // "hunts X" passive is a data entry in unit_abilities.js and nothing here.
-  // Applied to `power` alongside execute and leech, so it lands before armor
+  // Applied to `power` alongside execute, so it lands before armor
   // and resistance rather than on top of them.
   if (p.vs_tag && (target.unit_data?.tags ?? target.tags ?? []).includes(p.vs_tag)) {
     const bonus = pctFor(p, engine, actor.side, 'vs_tag_dmg_bonus_pct', 'vs_tag_dmg_bonus_pct_per_tag');
