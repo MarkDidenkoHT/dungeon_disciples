@@ -735,6 +735,23 @@ export function renderUnitStatDiffs(unit, compareUnit) {
 // placeholders are empty, not fake: no numbers, no fill, just the space the
 // real rows occupy.
 export function renderUnitProgressRow(progress, opts = {}) {
+  // The Tome rides on the XP bar itself — the one thing in the card it acts on
+  // — instead of a labelled button in the action overlay, which is where it used
+  // to live. It is the SAME control: `tome-btn` with the roster id, so the
+  // castle's existing click handler picks it up unchanged. The count is on the
+  // icon because a tome button with no number told the player nothing about how
+  // many were left to spend. Shown only when tomes are held, as before.
+  const tome = opts.tome;
+  const tomeHtml = tome && tome.count > 0
+    ? `<button class="tome-btn unit-progress-tome" data-roster-id="${tome.rosterId}"
+               title="${uiText('Use Tome of Knowledge', 'Использовать том знаний')}"
+               aria-label="${uiText('Use Tome of Knowledge', 'Использовать том знаний')}">
+         <img src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}" alt=""
+              onerror="this.style.display='none'">
+         <span class="unit-progress-tome-count">${tome.count}</span>
+       </button>`
+    : '';
+
   if (!progress) {
     if (!opts.reserve) return '';
     const blank = `
@@ -771,9 +788,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
         </div>
-        <img class="unit-progress-tome" src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}"
-             alt="" title="${uiText('Tome of Knowledge', 'Том знаний')}"
-             onerror="this.style.display='none'">
+        ${tomeHtml}
         <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
       </div>`);
   } else if (xp && xp.cur != null) {
@@ -789,7 +804,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null } = opts;
 
   if (!unit) {
     return `
@@ -811,7 +826,7 @@ export function buildUnitCard(unit, opts = {}) {
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
-        ${renderUnitProgressRow(progress, { reserve: reserveProgress })}
+        ${renderUnitProgressRow(progress, { reserve: reserveProgress, tome })}
         ${descHtml}
         ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, activeSlotHtml, compareUnit })}
       </div>

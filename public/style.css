@@ -2071,16 +2071,46 @@ button.cost-bar-item:active { transform: scale(0.9); }
    against it, so the two stay in step at any card width. */
 .unit-progress-row .levelup-xp-bar { height: 10px; }
 
-/* A marker, not a control: the tome is spent from the button in the sheet's
-   action overlay. Height is capped to the row so a 25px icon beside a 10px bar
-   cannot stretch it. */
+/* The Tome control, on the bar it acts on. Negative vertical margin keeps a
+   25px button beside a 10px bar from stretching the row. */
 .unit-progress-tome {
   flex: 0 0 auto;
+  position: relative;
   width: 25px;
   height: 25px;
   margin: -6px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.unit-progress-tome img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+}
+
+.unit-progress-tome:active { transform: translateY(1px); }
+
+/* How many are left, on the control they are spent from. */
+.unit-progress-tome-count {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  min-width: 12px;
+  padding: 0 2px;
+  border-radius: 6px;
+  background: #1a2235;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6);
+  color: #f0e6d2;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .unit-progress-key {
@@ -2766,7 +2796,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-end;
   gap: 4px;
 }
 
@@ -3129,17 +3159,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 /* Tome of Knowledge, in the same overlay as Heal and Resurrect. Purple rather
    than green or red: it is neither a repair nor an emergency, and reading as a
    third healing button would be a lie about what it does. */
-.tome-btn {
-  background: linear-gradient(180deg,#7c3aed,#5b21b6);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-  cursor: pointer;
-}
-.tome-btn[disabled] { opacity: 0.6; cursor: default; }
-
 .favor-btn {
 
   flex-direction: column;

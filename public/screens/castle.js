@@ -1066,18 +1066,6 @@ export function renderCastle(root, { player }) {
     // Both bars share one absolutely-positioned strip; stacking them separately
     // would have each fight the same bottom inset. The level sits beside that
     // stack rather than above it, so the whole readout is one short row.
-    // A tome marker rides at the END of the strip, in the width the bars gave
-    // up for it. Same rule as the button on the unit sheet — only when tomes are
-    // actually held — so the node says WHICH units a held tome could go to
-    // without opening every one of them. It is a marker, not a control: the tome
-    // is still spent from the sheet, and pointer events stay with the node so a
-    // tap anywhere on it still opens that sheet.
-    const tomeHtml = tokenCount('tome_of_knowledge') > 0
-      ? `<img class="castle-node-tome" src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}"
-              alt="" title="${CASTLE_TEXT.tomeName[castleLang]}"
-              onerror="this.style.display='none'">`
-      : '';
-
     return `
       <div class="castle-node-bars">
         ${level !== '' ? `<span class="castle-node-level" title="${CASTLE_TEXT.level[castleLang]} ${level}">${level}</span>` : ''}
@@ -1087,7 +1075,6 @@ export function renderCastle(root, { player }) {
           </div>
           ${nodeXpBar(u)}
         </div>
-        ${tomeHtml}
       </div>`;
   }
 
@@ -2018,21 +2005,12 @@ export function renderCastle(root, { player }) {
           ${CASTLE_TEXT.heal[castleLang]} (${spellCostLabel(healSpell)})
         </button>` : '';
 
-    // The Tome sits in the same overlay as Heal and Resurrect because it answers
-    // the same question — "this unit is behind, fix it" — and because that is the
-    // only place a player is already looking at ONE unit and deciding to spend on
-    // it. Unlike those two it is shown ONLY when tomes are held: a button that is
-    // permanently unaffordable teaches nothing, and unlike a spell there is no
-    // shop to send anyone to.
-    //
-    // A dead unit is refused by the server, so it is not offered here either.
-    const tomesHeld = tokenCount('tome_of_knowledge');
-    const tomeHtml  = alive && tomesHeld > 0 ? `
-        <button class="tome-btn" data-roster-id="${rosterUnit.id}">
-          ${CASTLE_TEXT.tomeUse[castleLang]} (${tomesHeld})
-        </button>` : '';
-
-    if (!favorHtml && !resurrectHtml && !healHtml && !tomeHtml) return '';
+    // The Tome is NOT here. It moved onto the XP bar in the card itself (see
+    // tomeForUnit and renderUnitProgressRow): the bar is the only thing a tome
+    // changes, so the control belongs on it, and the icon carries the count that
+    // the labelled button used to. Heal and Resurrect stay — they act on the
+    // portrait, not on a bar.
+    if (!favorHtml && !resurrectHtml && !healHtml) return '';
     // ONE overlay holding favor + spell, stacked, so favor sits directly above
     // the spell button instead of the two being positioned independently.
     // A dead unit's button owns the middle of the card; a wounded one is still
@@ -2042,8 +2020,16 @@ export function renderCastle(root, { player }) {
         ${favorHtml}
         ${resurrectHtml}
         ${healHtml}
-        ${tomeHtml}
       </div>`;
+  }
+
+  // What the card's XP bar needs to draw its Tome control: which roster row it
+  // would spend on, and how many are left. A dead unit is refused by the server,
+  // so it is not offered one here either.
+  function tomeForUnit(rosterUnit) {
+    if (!rosterUnit || rosterUnit.unit_data?.alive === false) return null;
+    const count = tokenCount('tome_of_knowledge');
+    return count > 0 ? { rosterId: rosterUnit.id, count } : null;
   }
 
   // ── Evolution tree ────────────────────────────────────────────────────────
@@ -2465,6 +2451,7 @@ export function renderCastle(root, { player }) {
         ${buildUnitCard(liveUnit, {
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
+          tome: tomeForUnit(rosterUnit),
           artUrl: liveUnit ? '' : buildingArtUrl(def),
           desc:   liveUnit ? '' : (castleLang === 'ru' ? (def.desc_ru || def.desc || '') : (def.desc || '')),
         })}
@@ -2634,6 +2621,12 @@ export function renderCastle(root, { player }) {
       // looking for an ability key it has not got.
       if (e.target.closest('[data-spell-tome]')) { openHeroSpellsModal(); return; }
 
+      // Before handleUnitInspect, for the same reason as the two above: the Tome
+      // now lives INSIDE the card, on the XP bar, so the generic inspector gets
+      // a crack at it first and must not be the one to answer.
+      const tomeBtn = e.target.closest('.tome-btn');
+      if (tomeBtn) { useTome(tomeBtn.dataset.rosterId, rosterUnit); return; }
+
       // Stat / ability / resist inspection, same as every other unit card.
       if (handleUnitInspect(e, openAbilityModal)) return;
 
@@ -2642,9 +2635,6 @@ export function renderCastle(root, { player }) {
 
       const favorBtn = e.target.closest('.favor-btn:not([disabled])');
       if (favorBtn) { runFavor(slot, favorBtn.dataset.rosterId); return; }
-
-      const tomeBtn = e.target.closest('.tome-btn');
-      if (tomeBtn) { useTome(tomeBtn.dataset.rosterId, rosterUnit); return; }
 
       const resurrectBtn = e.target.closest('.resurrect-btn');
       const healBtn      = e.target.closest('.heal-btn');
