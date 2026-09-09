@@ -2065,6 +2065,24 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .unit-progress-row { margin: 2px 0; }
 
+/* The inspect card's HP and XP read at a glance, so their bars are twice the
+   4px the compact rows use. The bar keeps flex:1 and simply gives up the width
+   the tome marker takes — about a tenth of the row — rather than being sized
+   against it, so the two stay in step at any card width. */
+.unit-progress-row .levelup-xp-bar { height: 10px; }
+
+/* A marker, not a control: the tome is spent from the button in the sheet's
+   action overlay. Height is capped to the row so a 25px icon beside a 10px bar
+   cannot stretch it. */
+.unit-progress-tome {
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  margin: -6px 0;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .unit-progress-key {
   font-size: 0.6rem;
   color: var(--muted);
@@ -2754,7 +2772,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-node-level {
   flex: 0 0 auto;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1;
   color: #f0e6d2;
@@ -2764,10 +2782,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-variant-numeric: tabular-nums;
 }
 
-/* 63% is the old 70% less a tenth: the width the bars gave up is what the tome
-   marker sits in, so the strip's total footprint is unchanged. */
 .castle-node-bar-stack {
-  flex: 0 0 63%;
+  flex: 0 0 70%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -2792,26 +2808,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-node-bars .portrait-hp-bar,
 .castle-node-bars .portrait-xp-bar {
-  height: 10px;
-  border-radius: 3px;
+  height: 5px;
   background: rgba(0,0,0,0.75);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
-}
-
-.castle-node-bars .portrait-hp-fill,
-.castle-node-bars .portrait-xp-fill { border-radius: 3px; }
-
-/* A marker, not a button: clicks fall through to the node, which opens the
-   sheet the tome is actually spent from. Sized against the two-bar stack it
-   stands beside (10 + 2 + 10), so it never drives the strip's height. */
-.castle-node-tome {
-  flex: 0 0 auto;
-  width: 25px;
-  height: 25px;
-  margin-left: 2px;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.9));
 }
 
 .portrait-xp-fill {

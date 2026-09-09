@@ -771,6 +771,9 @@ export function renderUnitProgressRow(progress, opts = {}) {
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
         </div>
+        <img class="unit-progress-tome" src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}"
+             alt="" title="${uiText('Tome of Knowledge', 'Том знаний')}"
+             onerror="this.style.display='none'">
         <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
       </div>`);
   } else if (xp && xp.cur != null) {
