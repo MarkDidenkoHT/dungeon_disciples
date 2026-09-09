@@ -2098,7 +2098,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
 /* How many are left, on the control they are spent from. */
 .unit-progress-tome-count {
   position: absolute;
-  right: -4px;
+  /* On the LEFT of the icon: the tome now sits at the end of the row, and a
+     badge hung off its right edge would overhang the card. */
+  left: -4px;
   bottom: -3px;
   min-width: 12px;
   padding: 0 2px;

@@ -788,8 +788,8 @@ export function renderUnitProgressRow(progress, opts = {}) {
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
         </div>
-        ${tomeHtml}
         <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
+        ${tomeHtml}
       </div>`);
   } else if (xp && xp.cur != null) {
     // Top tier: there is nothing left to advance into, so a bar would be a lie.
