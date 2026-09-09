@@ -884,14 +884,15 @@ const THRONE_UPGRADE_COSTS = {
   2: { gold: 150 },
   3: { gold: 300 },
   4: { gold: 500 },
-  5: { gold: 800 },
 };
 
 
-// The throne outgrew the hero line: it has five levels, the hero has four. They
-// were the same number and read off the same constant, so raising one silently
-// raised the other.
-const THRONE_MAX_LEVEL = 5;
+// Kept as its own constant from HERO_MAX_LEVEL so the two can diverge again,
+// but they are equal today and must be: the throne's ONLY effects are gating
+// the hero's tier (max 4) and unlocking spell tiers (max 4 in data/spells.js).
+// A fifth level bought nothing — it granted no hero tier and no spell — while
+// still offering a paid upgrade button on a slot whose hero was already maxed.
+const THRONE_MAX_LEVEL = 4;
 
 
 function getBuildingDef(faction, buildingId) {

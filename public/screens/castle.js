@@ -380,7 +380,7 @@ export function renderCastle(root, { player }) {
     upgradePaths       = buildingsResp.upgrade_paths || {};
     throneUpgradeCosts = buildingsResp.throne_upgrade_costs || {};
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
-    throneMaxLevel     = buildingsResp.throne_max_level || 5;
+    throneMaxLevel     = buildingsResp.throne_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     trophyInventory     = trophies || [];
@@ -739,9 +739,11 @@ export function renderCastle(root, { player }) {
         : [];
     }
 
-    // The throne's last level grants no new hero tier, so at level 4 the
-    // cathedral has no upgrade target left and the fifth level would be
-    // unreachable. Synthesised the same way.
+    // The throne can outlive the hero line: if it ever gains a level ABOVE the
+    // hero's top tier, the cathedral has no upgrade target left and that level
+    // would be unreachable, so one is synthesised the same way. While the two
+    // ceilings are equal this never fires — and it must not, or a maxed hero is
+    // offered a paid upgrade that grants nothing.
     if (slot === 'slot_0' && level >= heroMaxLevel && level < throneMaxLevel && state.building_id) {
       return [{ building_id: state.building_id, unit_id: unitDef?.id ?? null, throne_level_only: true }];
     }
