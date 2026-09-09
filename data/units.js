@@ -2391,7 +2391,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 14, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
-      xp: 400, passive: ['lifesteal 1', 'bleed 1'], ability: 'exsanguinate 1',
+      xp: 400, passive: ['lifesteal 1', 'bleed 1'], ability: 'hemorrhage 2',
     },
     crimson_mage: {
       id: 'gs312', f: 'g', t: 3,
@@ -2403,7 +2403,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 18, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
-      xp: 1560, passive: ['lifesteal 1', 'bleed 1', 'vitality 1'], ability: 'exsanguinate 1',
+      xp: 1560, passive: ['lifesteal 1', 'bleed 1', 'vitality 1'], ability: 'hemorrhage 2',
     },
     blood_knight: {
       id: 'gs311', f: 'g', t: 3,
@@ -2463,7 +2463,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 480, passive: ['poison 1', 'infect 1'], ability: 'grails_blessing 1',
+      xp: 480, passive: ['poison 1', 'infect 1'], ability: 'blight 1',
     },
     plague_lord: {
       id: 'gs331', f: 'g', t: 3,
@@ -2475,7 +2475,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 1560, passive: ['poison 1', 'infect 1', 'dispel 1'], ability: 'grails_blessing 1',
+      xp: 1560, passive: ['poison 1', 'infect 1', 'dispel 1'], ability: 'blight 2',
     },
     plague_archon: {
       id: 'gs3311', f: 'g', t: 4,
@@ -2487,7 +2487,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 30 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 24, action_icon: 'plague_bolt.jpg', action_animation: 'poison_dart', action_sfx: 'dark_spell',
-      xp: 3640, passive: ['poison 2', 'infect 1', 'dispel 1'], ability: 'grails_blessing 1',
+      xp: 3640, passive: ['poison 2', 'infect 1', 'dispel 1'], ability: 'blight 3',
     },
     communicant: {
       id: 'gs2', f: 'g', t: 1,

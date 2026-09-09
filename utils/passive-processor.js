@@ -1815,32 +1815,46 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   }
 
 
-  // ── Conflagration ─────────────────────────────────────────────────────────
-  // Burn written directly onto the target rather than rolled off a hit, so it
-  // does not care what the caster's attack would have done. It STACKS onto any
-  // burn already there, exactly like the on-hit path in applyOnHitPassives, and
-  // is blunted by the target's status resistance the same way dotAmount is.
-  if (p.burn_per_tag != null && target && def.target === 'enemy') {
+  // ── Conflagration / Hemorrhage / Virulence ────────────────────────────────
+  // One shape, three schools: a damage-over-time written DIRECTLY onto the
+  // target rather than rolled off a hit, so it does not care what the caster's
+  // attack would have done. Each STACKS onto whatever is already there, exactly
+  // like the on-hit path in applyOnHitPassives, and is blunted by the target's
+  // status resistance the same way dotAmount is. A fourth school is a row in
+  // this table plus a `<x>_per_tag` param on the ability — nothing else.
+  const PER_TAG_DOTS = [
+    { param: 'burn_per_tag',   key: 'dot',    verb: 'burns',  extra: t => { t._dot_type = 'burn'; },
+      field: 'dot_dmg',     sourceField: '_dot_source_key',
+      clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null } },
+    { param: 'bleed_per_tag',  key: 'bleed',  verb: 'bleeds',
+      field: '_bleed_dmg',  sourceField: '_bleed_source_key',
+      clear: { _bleed_dmg: 0, _bleed_permanent: 0, _bleed_source_key: null } },
+    { param: 'poison_per_tag', key: 'poison', verb: 'festers',
+      field: '_poison_dmg', sourceField: '_poison_source_key',
+      clear: { _poison_dmg: 0, _poison_source_key: null } },
+  ];
+  for (const dot of PER_TAG_DOTS) {
+    if (p[dot.param] == null || !target || def.target !== 'enemy') continue;
     const n      = tagCount(engine, actor.side, p.tag_required);
     const resist = Math.max(0, target._status_resist ?? 0);
-    const add    = Math.max(0, p.burn_per_tag * n - resist);
+    const add    = Math.max(0, p[dot.param] * n - resist);
     if (add <= 0) {
       engine.pushLog({ type: 'resisted', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
         targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: 0,
-        message: `${def.name} — ${target.unit_name} does not catch` });
-    } else {
-      target.dot_dmg = (target.dot_dmg ?? 0) + add;
-      target._dot_type = 'burn';
-      target._dot_source_key = abilityKey;
-      engine.registerEffect(target, {
-        key: 'dot', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-        clear: { dot_dmg: 0, _dot_permanent: 0, _dot_type: null, _dot_source_key: null },
-      });
-      engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
-        targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
-        value: add, heal: false,
-        message: `${def.name} — ${target.unit_name} burns for ${add}/turn (${n} ${p.tag_required})` });
+        message: `${def.name} — ${target.unit_name} shrugs it off` });
+      continue;
     }
+    target[dot.field]       = (target[dot.field] ?? 0) + add;
+    target[dot.sourceField] = abilityKey;
+    if (dot.extra) dot.extra(target);
+    engine.registerEffect(target, {
+      key: dot.key, name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
+      clear: dot.clear,
+    });
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: add, heal: false,
+      message: `${def.name} — ${target.unit_name} ${dot.verb} for ${add}/turn (${n} ${p.tag_required})` });
   }
 
   // ── Ember Shroud ──────────────────────────────────────────────────────────

@@ -3155,6 +3155,90 @@ const UNIT_ABILITIES = {
     params: { burn_per_tag: 5, tag_required: 'Caster' },
   },
 
+  // ── Hemorrhage ─────────────────────────────────────────────────────────────
+  // Conflagration's shape in another school: a Bleed written straight onto
+  // the target and sized by the Caster line behind it. Stacks onto whatever is
+  // already there, so it feeds the Bleed-hungry passives instead of
+  // competing with them.
+  'hemorrhage 1': {
+    id: 'hemorrhage 1',
+    name: 'Hemorrhage',
+    name_ru: "Кровоизлияние",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 3 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 3 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'blood_bolt',
+  },
+  'hemorrhage 2': {
+    id: 'hemorrhage 2',
+    name: 'Hemorrhage',
+    name_ru: "Кровоизлияние",
+    rank: 2,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 4 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 4 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 4, tag_required: 'Caster' },
+    effect_name: 'blood_bolt',
+  },
+  'hemorrhage 3': {
+    id: 'hemorrhage 3',
+    name: 'Hemorrhage',
+    name_ru: "Кровоизлияние",
+    rank: 3,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 5 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 5 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 5, tag_required: 'Caster' },
+    effect_name: 'blood_bolt',
+  },
+
+  // ── Blight ─────────────────────────────────────────────────────────────────
+  // Conflagration's shape in another school: a Poison written straight onto
+  // the target and sized by the Caster line behind it. Stacks onto whatever is
+  // already there, so it feeds the Poison-hungry passives instead of
+  // competing with them.
+  'blight 1': {
+    id: 'blight 1',
+    name: 'Blight',
+    name_ru: "Мор",
+    rank: 1,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 3 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 3 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'poison_dart',
+  },
+  'blight 2': {
+    id: 'blight 2',
+    name: 'Blight',
+    name_ru: "Мор",
+    rank: 2,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 4 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 4 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 4, tag_required: 'Caster' },
+    effect_name: 'poison_dart',
+  },
+  'blight 3': {
+    id: 'blight 3',
+    name: 'Blight',
+    name_ru: "Мор",
+    rank: 3,
+    type: 'active',
+    target: 'enemy',
+    description: 'Inflicts 5 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 5 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 5, tag_required: 'Caster' },
+    effect_name: 'poison_dart',
+  },
+
   // ── Ember Shroud ──────────────────────────────────────────────────────────
   // Stone Form's shape with fire resistance in place of armor: a panic button
   // for a caster that has no armor worth hardening in the first place.
