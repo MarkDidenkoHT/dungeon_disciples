@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -11,6 +12,12 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
+// Before every route, so it covers the static bundles as well as the API. The
+// client is served as ~40 unbundled ES modules plus the data tables — over a
+// megabyte of JavaScript and CSS that was going out uncompressed, which is paid
+// on cellular before the game can start. `compression` skips anything already
+// compressed (the PNG and JPG art), so this only touches text.
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 
@@ -57,8 +64,21 @@ const BUILD_ID_SOURCE = process.env.BUILD_TAG
     : 'boot timestamp (fallback)';
 console.log(`Build id: ${BUILD_ID}  [from ${BUILD_ID_SOURCE}]`);
 
-app.use('/v/:build/public', express.static(path.join(__dirname, 'public'), staticOpts));
-app.use('/v/:build/data',   express.static(path.join(__dirname, 'data'),   staticOpts));
+// Everything under /v/<build>/ is addressed by a URL that CHANGES whenever the
+// build does — index.html is served no-store and rewrites <base> to the current
+// build id (see below) — so nothing here can go stale and all of it can be
+// cached hard. Code was being served `no-cache` even on these versioned URLs,
+// which bought nothing and cost a revalidation round-trip per module on every
+// launch: with the client unbundled, that is ~40 blocking round-trips before
+// the first screen draws. Dev mode still opts out.
+const versionedOpts = NO_CACHE ? staticOpts : {
+  etag: false,
+  lastModified: false,
+  maxAge: '365d',
+  immutable: true,
+};
+app.use('/v/:build/public', express.static(path.join(__dirname, 'public'), versionedOpts));
+app.use('/v/:build/data',   express.static(path.join(__dirname, 'data'),   versionedOpts));
 
 const INDEX_FILE = path.join(__dirname, 'public', 'index.html');
 app.get(['/', '/index.html'], (req, res, next) => {
