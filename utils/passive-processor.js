@@ -30,6 +30,25 @@ function synergyUnitsFor(engine) {
     });
 }
 
+// Portrait art for an effect record, from the ability's own id — 'shatter 1'
+// becomes 'shatter', matching /assets/icons/abilities/<key>.jpg and the
+// convention registerStatGrantEffect uses. The client draws an effect record
+// ONLY when it carries an icon, so a status registered without one is applied
+// but invisible.
+function iconKeyFor(def) {
+  return String(def?.id ?? def?.name ?? '').replace(/\s+\d+$/, '').replace(/\s+/g, '_') || null;
+}
+
+// The display-only counter each Inspiration stat writes on its recipients. It
+// is what the portrait icon reads, so the grant has to name it to have it taken
+// back when the inspiring unit dies.
+const INSPIRATION_DISPLAY_FIELD = {
+  armor:      '_inspiration_armor',
+  initiative: '_inspiration_initiative',
+  max_hp:     '_inspiration_max_hp',
+  damage:     '_inspiration_damage',
+};
+
 // How many living units on `side` carry `tag`. The unit of account for every
 // "per Zombie / per Demon / per Holy" passive, so they all count the same way:
 // the owner counts itself when it carries the tag, and the dead never count.
@@ -596,7 +615,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (targets.length) {
         engine.recordGrantedBuff(owner, p.inspiration_stat, targets,
           p.inspiration_stat === 'damage' ? inspVal / 100 : inspVal,
-          p.inspiration_stat === 'armor' ? inspApplied : null);
+          p.inspiration_stat === 'armor' ? inspApplied : null,
+          null,
+          INSPIRATION_DISPLAY_FIELD[p.inspiration_stat] ?? null);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
       }
     }
@@ -703,7 +724,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
               t._dmg_mult = (t._dmg_mult ?? 1) * (1 + each / 100);
               t._inspiration_damage = (t._inspiration_damage ?? 0) + each;
             }
-            engine.recordGrantedBuff(owner, 'damage', share, each / 100);
+            engine.recordGrantedBuff(owner, 'damage', share, each / 100, null, null, '_inspiration_damage');
           } else {
             for (const t of share) engine.applyStatBuff(t, p.shared_pool_stat, each);
             engine.recordGrantedBuff(owner, p.shared_pool_stat, share, each);
@@ -976,6 +997,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       addArmor(target, -effective);
       engine.registerEffect(target, {
         key: 'armor_shred', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, restore: { armor: applied },
+        icon: iconKeyFor(def), amount: applied,
       });
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: effective, heal: false });
     }
@@ -984,6 +1006,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       target.initiative = Math.max(0, target.initiative - p.initiative_shred);
       engine.registerEffect(target, {
         key: 'initiative_shred', name: def.name, polarity: 'negative', dispellable: def.dispellable === true, restore: { initiative: applied },
+        icon: iconKeyFor(def), amount: applied,
       });
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: p.initiative_shred, heal: false });
     }
@@ -1791,10 +1814,13 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     armorAmt = addArmor(actor, armorAmt);
     actor._stone_form_rounds = p.duration_rounds ?? 2;
     actor._stone_form_armor  = armorAmt;
+    // Held so the ward can mend again on every round it survives, not just on
+    // the cast — see stoneFormMend in utils/battle-engine.js.
+    actor._stone_form_heal_pct = p.stone_form_heal_pct ?? 0;
     engine.registerEffect(actor, {
       key: 'stone_form', name: def.name, polarity: 'positive', dispellable: def.dispellable === true,
       restore: { armor: -armorAmt },
-      clear:   { _stone_form_rounds: 0, _stone_form_armor: 0 },
+      clear:   { _stone_form_rounds: 0, _stone_form_armor: 0, _stone_form_heal_pct: 0 },
     });
     engine.recordGrantedBuff(actor, 'armor', [actor], armorAmt);
 

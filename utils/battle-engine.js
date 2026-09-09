@@ -347,6 +347,7 @@ class BattleEngine {
       _frost_armor_school: null,
       _stone_form_rounds:  0,
       _stone_form_armor:   0,
+      _stone_form_heal_pct: 0,
       _ember_shroud_rounds: 0,
       _ember_shroud_resist: 0,
       _ember_shroud_school: null,
@@ -502,11 +503,17 @@ class BattleEngine {
   // This is the general fix for buffs that were only ever RECORDED and never
   // SHOWN: _granted_buffs is filed against the SOURCE, for revocation, so a unit
   // handed +8 initiative carried no sign of it anywhere.
-  recordGrantedBuff(source, type, targets, value, appliedByTarget = null, def = null) {
+  // `displayField` names the recipient field the CALLER bumped purely so the
+  // portrait has something to draw (the _inspiration_* counters). It is recorded
+  // here so revokeGrantedBuffs can take it back down: without it the stat
+  // reverted when the granting unit died and the icon stayed on the portrait
+  // forever, advertising a bonus that was no longer there.
+  recordGrantedBuff(source, type, targets, value, appliedByTarget = null, def = null, displayField = null) {
     for (const t of targets) {
       const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
       if (appliedByTarget && !landed) continue;   // nothing got through the cap
-      source._granted_buffs.push({ type, targetIds: [t.id], value: landed });
+      const rec = { type, targetIds: [t.id], value: landed, ...(displayField ? { displayField } : {}) };
+      source._granted_buffs.push(rec);
 
       // The beacon share is worked out BEFORE the icon is registered, so the
       // number on the icon is the number the unit actually has. It used to be
@@ -544,7 +551,14 @@ class BattleEngine {
       }
 
       const total = landed + landedExtra;
-      if (def && total) this.registerStatGrantEffect(t, def, total, type);
+      if (def && total) {
+        const eff = this.registerStatGrantEffect(t, def, total, type);
+        // Booked against the grant so the icon comes off with the stat.
+        if (eff) {
+          rec.effectKey    = eff.key;
+          rec.effectAmount = type === 'damage' ? Math.round(total * 100) : total;
+        }
+      }
     }
     this.fireAllyBuffTriggers(source, targets);
   }
@@ -664,6 +678,12 @@ class BattleEngine {
             action_power: Math.max(0, (target.unit_data.action_power ?? 0) - buff.value),
           };
         }
+        // Display-only counters and the portrait icon come off with the stat.
+        if (buff.displayField) {
+          const back = buff.type === 'damage' ? buff.value * 100 : buff.value;
+          target[buff.displayField] = Math.max(0, (target[buff.displayField] ?? 0) - back);
+        }
+        if (buff.effectKey) this.reduceStatGrantEffect(target, buff.effectKey, buff.effectAmount ?? 0);
       }
     }
     dying._granted_buffs = [];
@@ -1439,6 +1459,22 @@ class BattleEngine {
     });
   }
 
+  // Takes `amount` off a stat-grant icon and removes the record once nothing is
+  // left. Two sources of the same buff share one record (registerEffect sums
+  // them), so one of them dying must shrink the badge rather than erase it.
+  reduceStatGrantEffect(unit, key, amount) {
+    if (!unit?._effects?.length) return;
+    const eff = unit._effects.find(e => e.key === key);
+    if (!eff) return;
+    if (eff.amount != null && amount) eff.amount -= amount;
+    if (eff.amount == null || eff.amount <= 0) {
+      unit._effects = unit._effects.filter(e => e !== eff);
+    } else if (eff.detail) {
+      // The sentence was written for the old total; drop it rather than lie.
+      delete eff.detail;
+    }
+  }
+
   // Drops an effect record without reverting anything — for when the effect ends
   // naturally (e.g. a DoT ticks and expires) rather than being dispelled.
   clearEffect(unit, key) {
@@ -1862,6 +1898,7 @@ class BattleEngine {
     unit._frost_armor_armor  = 0;
     unit._frost_armor_resist = 0;
     unit._frost_armor_school = null;
+    this.clearEffect(unit, 'frost_armor');
   }
 
   expireStoneForm(unit) {
@@ -1869,6 +1906,32 @@ class BattleEngine {
     if (unit._stone_form_armor) unit.armor = Math.max(0, (unit.armor ?? 0) - unit._stone_form_armor);
     unit._stone_form_rounds = 0;
     unit._stone_form_armor  = 0;
+    unit._stone_form_heal_pct = 0;
+    this.clearEffect(unit, 'stone_form');
+  }
+
+  // Stone Form mends EVERY round it is up, not only on the cast. The unit gave
+  // up its action for the ward, so the heal is the ward — paying it once made
+  // the second round of armor the whole of the second round's value. Runs the
+  // same heal path as the cast (fatigue, healing reduction, decay, no overheal).
+  stoneFormMend(unit) {
+    const pct = unit?._stone_form_heal_pct ?? 0;
+    if (!unit?.alive || !(pct > 0)) return 0;
+    const factor = 1 - ((unit._healing_reduction ?? 0) / 100);
+    const healed = Math.min(
+      this.absorbWithDecay(unit, Math.floor(unit.max_hp * pct / 100 * factor * this.fatigueHealMult())),
+      unit.max_hp - unit.battle_hp);
+    if (healed <= 0) return 0;
+    unit.battle_hp += healed;
+    this.pushLog({
+      type: 'passive', passive: 'Stone Form',
+      actorId: unit.id, actorName: unit.unit_name, actorCell: unit.cellIndex,
+      targetId: unit.id, targetName: unit.unit_name, targetCell: unit.cellIndex,
+      value: healed, heal: true,
+      message: `Stone Form — mended ${healed}`,
+    });
+    this.fireHealTriggers(unit, unit, healed);
+    return healed;
   }
 
   expireEmberShroud(unit) {
@@ -1881,6 +1944,7 @@ class BattleEngine {
     unit._ember_shroud_rounds = 0;
     unit._ember_shroud_resist = 0;
     unit._ember_shroud_school = null;
+    this.clearEffect(unit, 'ember_shroud');
   }
 
   expireGuard(unit) {
@@ -1888,6 +1952,7 @@ class BattleEngine {
     if (unit._guard_armor) unit.armor = Math.max(0, (unit.armor ?? 0) - unit._guard_armor);
     unit._guard_rounds = 0;
     unit._guard_armor  = 0;
+    this.clearEffect(unit, 'guard');
   }
 
   advanceRound() {
@@ -1925,6 +1990,7 @@ class BattleEngine {
             }
           }
           c._sanctuary_resist = null;
+          this.clearEffect(c, 'sanctuary');
         }
       }
 
@@ -1936,6 +2002,7 @@ class BattleEngine {
       if (c._stone_form_rounds > 0) {
         c._stone_form_rounds--;
         if (c._stone_form_rounds === 0) this.expireStoneForm(c);
+        else this.stoneFormMend(c);
       }
 
       if (c._ember_shroud_rounds > 0) {
@@ -2675,6 +2742,7 @@ class BattleEngine {
           _frost_armor_school: c._frost_armor_school ?? null,
           _stone_form_rounds:  c._stone_form_rounds  ?? 0,
           _stone_form_armor:   c._stone_form_armor   ?? 0,
+          _stone_form_heal_pct: c._stone_form_heal_pct ?? 0,
           _ember_shroud_rounds: c._ember_shroud_rounds ?? 0,
           _ember_shroud_resist: c._ember_shroud_resist ?? 0,
           _ember_shroud_school: c._ember_shroud_school ?? null,
@@ -2798,6 +2866,7 @@ class BattleEngine {
       c._frost_armor_school = b._frost_armor_school ?? null;
       c._stone_form_rounds  = b._stone_form_rounds  ?? 0;
       c._stone_form_armor   = b._stone_form_armor   ?? 0;
+      c._stone_form_heal_pct = b._stone_form_heal_pct ?? 0;
       c._ember_shroud_rounds = b._ember_shroud_rounds ?? 0;
       c._ember_shroud_resist = b._ember_shroud_resist ?? 0;
       c._ember_shroud_school = b._ember_shroud_school ?? null;
