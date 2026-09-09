@@ -1244,6 +1244,28 @@ function removedTags(spec) {
 // already owned carries `power: 2` and silently granted nothing.
 const STAT_MOD_ALIASES = { power: 'action_power', max_hp: 'hp' };
 
+// A stat_mod may be NEGATIVE: an item is allowed to buy a strong bonus with a
+// real penalty somewhere else, and the item card already draws a negative as a
+// red chip with no `+`. What a penalty may never do is push a stat past the
+// bottom of its own range, because nothing downstream expects it:
+//
+//   action_power  a negative power reaches `hurt()` as a negative amount, and
+//                 `hurt` subtracts — so the "attack" would HEAL the target.
+//                 The final damage number is floored at 1, but the passives
+//                 that derive splash/chain/DoT from `dmg` run before that floor.
+//   initiative    turn order sorts on it; below zero is untested and means
+//                 nothing the design wants to say.
+//   hp            a max_hp at or below zero makes the unit unfieldable, and
+//                 createCombatant would quietly swap in its default.
+//
+// Armor and resistances are floored here as well. clampDefenses() in
+// utils/passive-processor.js already does it at combatant creation, so battle
+// was never at risk — but the roster and item screens read straight out of this
+// function, and a unit with 6 armor wearing a -10 armor item was showing "-4"
+// on its card. The UPPER bound stays with clampDefenses, which owns the
+// mitigation cap.
+const STAT_MOD_FLOORS = { action_power: 0, initiative: 0, hp: 1, armor: 0, resist: 0 };
+
 // Applies every modifier an item grants (hp, armor, action_power, initiative,
 // resistances, added tag, granted passive) on top of a unit_data object.
 //
@@ -1307,16 +1329,25 @@ function applyItemModifiers(unitData, itemStats) {
     else                        passive = itemStats.passive;
   }
 
+  action_power = Math.max(STAT_MOD_FLOORS.action_power, action_power);
+  initiative   = Math.max(STAT_MOD_FLOORS.initiative,   initiative);
+  armor        = Math.max(STAT_MOD_FLOORS.armor,        armor);
+  for (const k of Object.keys(resistances)) {
+    resistances[k] = Math.max(STAT_MOD_FLOORS.resist, resistances[k] ?? 0);
+  }
+
   const out = { ...unitData, tags, armor, action_power, initiative, resistances, passive, native_passive: nativePassive };
   if (hpBonus) {
-    if (typeof out.max_hp === 'number') out.max_hp = out.max_hp + hpBonus;
-    if (typeof out.hp     === 'number') out.hp     = out.hp     + hpBonus;
+    if (typeof out.max_hp === 'number') out.max_hp = Math.max(STAT_MOD_FLOORS.hp, out.max_hp + hpBonus);
+    if (typeof out.hp     === 'number') out.hp     = Math.max(STAT_MOD_FLOORS.hp, out.hp     + hpBonus);
     // The bonus is extra HP the unit actually gains, so current_hp rises with it
     // (a full unit stays full instead of entering battle already wounded), then
     // clamps to the new max. Derivation always runs from the stored BASE current_hp,
     // so this stays idempotent — re-deriving never stacks the bonus.
+    // A penalty takes current HP down with the maximum, but never to zero: a
+    // unit must not be able to die by being handed an item.
     if (typeof out.current_hp === 'number' && typeof out.max_hp === 'number') {
-      out.current_hp = Math.min(out.current_hp + hpBonus, out.max_hp);
+      out.current_hp = Math.max(1, Math.min(out.current_hp + hpBonus, out.max_hp));
     }
   }
   return out;
