@@ -1,4 +1,4 @@
-import { api, refreshResourceBar, bootstrapCache } from './api.js';
+import { api, refreshResourceBar, bootstrapCache, navigate } from './api.js';
 import { CRYSTAL_ICONS } from './utils.js';
 
 // Transmutation: the items screen's second page. Two DIFFERENT crystals go in,
@@ -51,6 +51,7 @@ const TX = {
   failed:    { en: 'Transmutation failed',     ru: 'Трансмутация не удалась' },
   locked:    { en: 'Build the Transmutation Lab in your castle to open this.',
                ru: 'Постройте Лабораторию трансмутации в замке, чтобы открыть это.' },
+  build:     { en: 'Build Transmutation Lab', ru: 'Построить лабораторию' },
 };
 
 const nameOf = key => key.replace('Crystals_', '');
@@ -193,9 +194,11 @@ export function mountTransmutation(host, { player, getResources, onResourcesChan
       host.innerHTML = `
         <div class="tx-panel tx-panel--locked">
           <div class="tx-title">${t('title')}</div>
-          <div class="tx-lock">🔒</div>
           <div class="tx-hint">${t('locked')}</div>
+          <button class="tx-go" id="tx-build" type="button">${t('build')}</button>
         </div>`;
+      host.querySelector('#tx-build').addEventListener('click', () =>
+        navigate('castle', { player, focusBuilding: 'transmute_lab' }));
       return;
     }
     const n = job ? job.amount : amount;

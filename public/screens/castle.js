@@ -250,7 +250,7 @@ const CASTLE_BACKGROUNDS = {
   grail_of_sorrow:     assetUrl('/assets/screens/grail.jpg'),
 };
 
-export function renderCastle(root, { player }) {
+export function renderCastle(root, { player, focusBuilding }) {
   // Needed inside the initial markup, which is written before the main
   // `castleLang` further down exists.
   const lang0 = player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -398,6 +398,9 @@ export function renderCastle(root, { player }) {
     // After the first render, so the arrows have nodes to reveal. Idempotent —
     // renderBuildings re-runs on every refresh, this does not.
     attachLayerControls();
+
+    // Sent here from another screen to build something specific.
+    if (focusBuilding) goToBuilding(focusBuilding);
 
     // Not awaited: who is out on an errand only decides a marker, and blocking
     // the whole castle on it would be paying for a badge.
