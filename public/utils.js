@@ -761,14 +761,23 @@ export function renderUnitProgressRow(progress, opts = {}) {
     uiText('Use Health Potion', 'Использовать зелье здоровья'),
     uiText('You have no Health Potions', 'У вас нет зелий здоровья'));
 
+  // Potion under the left stat column, tome under the right one, the two bars
+  // stacked between them within the buttons' height.
+  const block = (rowsHtml, left = '', right = '', ghost = false) => `
+    <div class="unit-progress-block"${ghost ? ' aria-hidden="true"' : ''}>
+      <div class="unit-progress-side">${left}</div>
+      <div class="unit-progress-bars">${rowsHtml}</div>
+      <div class="unit-progress-side">${right}</div>
+    </div>`;
+
   if (!progress) {
     if (!opts.reserve) return '';
     const blank = `
-      <div class="levelup-row unit-progress-row unit-progress-row--ghost" aria-hidden="true">
+      <div class="levelup-row unit-progress-row unit-progress-row--ghost">
         <span class="unit-progress-key"></span>
         <div class="levelup-xp-bar"></div>
       </div>`;
-    return blank + blank;
+    return block(blank + blank, '', '', true);
   }
   const rows = [];
 
@@ -784,7 +793,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
           <div class="levelup-xp-fill unit-hp-fill--${state}" style="width:${pct}%"></div>
           <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
         </div>
-        ${potionHtml}
       </div>`);
   }
 
@@ -798,7 +806,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
           <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
         </div>
-        ${tomeHtml}
       </div>`);
   } else if (xp && xp.cur != null) {
     // Top tier: there is nothing left to advance into, so a bar would be a lie.
@@ -809,7 +816,8 @@ export function renderUnitProgressRow(progress, opts = {}) {
       </div>`);
   }
 
-  return rows.join('');
+  if (!rows.length) return '';
+  return block(rows.join(''), potionHtml, tomeHtml);
 }
 
 export function buildUnitCard(unit, opts = {}) {
