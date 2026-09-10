@@ -12,8 +12,9 @@ import {
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
   itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, abilityName,
-  tagListLabel,
+  tagListLabel, playPageTurnSound,
 } from '../utils.js';
+import { mountTransmutation } from '../transmute.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
 // to be the third tab of the roster's item sheet — the roster tab is now the
@@ -66,14 +67,59 @@ export function renderItems(root, { player }) {
   const T = key => IT[key][L];
   applyBackground(root, player.faction, 'roster');
 
+  // Two pages on one sliding track, the same arrangement as the castle, embark
+  // and the spell tome: the forge, then Transmutation.
   root.innerHTML = `
     <div class="screen screen-items">
       <main class="items-main">
-        <div class="items-modal" id="items-screen"></div>
+        <div class="tome-layers">
+          <button class="tome-layer-arrow" id="items-layer-prev" type="button" aria-label="${T('title')}"><span>&lsaquo;</span></button>
+          <div class="tome-layer-viewport">
+            <div class="tome-layer-track" id="items-layer-track">
+              <div class="tome-layer" data-layer="1">
+                <div class="items-modal" id="items-screen"></div>
+              </div>
+              <div class="tome-layer" data-layer="2" id="items-transmute"></div>
+            </div>
+          </div>
+          <button class="tome-layer-arrow" id="items-layer-next" type="button" aria-label="Transmutation"><span>&rsaquo;</span></button>
+        </div>
       </main>
     </div>`;
 
   const host = root.querySelector('#items-screen');
+
+  let itemsLayer = 1;
+  function setItemsLayer(n) {
+    const next = Math.max(1, Math.min(2, n));
+    if (next !== itemsLayer) { itemsLayer = next; playPageTurnSound(); closeSheet(); }
+    const track = root.querySelector('#items-layer-track');
+    if (track) track.style.transform = `translateX(-${(itemsLayer - 1) * 100}%)`;
+    root.querySelectorAll('.tome-layer').forEach(el => {
+      el.setAttribute('aria-hidden', String(Number(el.dataset.layer) !== itemsLayer));
+    });
+    const prev = root.querySelector('#items-layer-prev');
+    const nextBtn = root.querySelector('#items-layer-next');
+    prev.disabled = itemsLayer === 1;
+    nextBtn.disabled = itemsLayer === 2;
+    prev.classList.toggle('tome-layer-arrow--live', itemsLayer > 1);
+    nextBtn.classList.toggle('tome-layer-arrow--live', itemsLayer < 2);
+    if (itemsLayer === 2) transmute.refresh();
+  }
+  root.querySelector('#items-layer-prev').addEventListener('click', () => setItemsLayer(itemsLayer - 1));
+  root.querySelector('#items-layer-next').addEventListener('click', () => setItemsLayer(itemsLayer + 1));
+
+  // `resources` is filled by this screen's own load below; read lazily.
+  const transmute = mountTransmutation(root.querySelector('#items-transmute'), {
+    player,
+    getResources: () => resources,
+    // Crystals were just paid or granted: re-read them so both pages agree.
+    onResourcesChanged: async () => {
+      bootstrapCache.invalidate();
+      const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
+      if (boot) resources = [...(boot.resources || []), ...(boot.trophies || [])];
+    },
+  });
 
   let units     = [];
   let items     = [];

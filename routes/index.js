@@ -2671,6 +2671,112 @@ router.post('/roster/potion', requireAuth, async (req, res) => {
   }
 });
 
+// ── Transmutation ─────────────────────────────────────────────────────────
+// Two DIFFERENT crystals in, one of each per crystal out, into a third crystal
+// of the player's choice. Timed like an errand: 1 hour + 1 minute per crystal
+// produced. The inputs are paid at start; the output is granted at claim.
+//
+// Stored on players.transmutation (jsonb, null when idle) — one job at a time.
+// Never on players.settings: /player/settings merges in whatever the client
+// sends, so a job kept there could be forged finished.
+const TRANSMUTE_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
+const TRANSMUTE_MAX = 999;
+const transmuteMinutes = amount => 60 + amount;
+
+async function readTransmutation(chat_id) {
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=transmutation&limit=1`);
+  if (!rows.length) return undefined;
+  return rows[0].transmutation || null;
+}
+
+router.get('/transmute', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const job = await readTransmutation(chat_id);
+    if (job === undefined) return res.status(404).json({ error: 'Player not found' });
+    res.json({ job, now: new Date().toISOString() });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+router.post('/transmute/start', requireAuth, async (req, res) => {
+  const { chat_id, target, a, b } = req.body;
+  const amount = Math.floor(Number(req.body.amount));
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  if (![target, a, b].every(k => TRANSMUTE_CRYSTALS.includes(k))) {
+    return res.status(400).json({ error: 'Choose three crystals', code: 'transmute_bad_crystal' });
+  }
+  if (new Set([target, a, b]).size !== 3) {
+    return res.status(400).json({ error: 'All three crystals must be different', code: 'transmute_same' });
+  }
+  if (!Number.isFinite(amount) || amount < 1 || amount > TRANSMUTE_MAX) {
+    return res.status(400).json({ error: `Amount must be 1–${TRANSMUTE_MAX}`, code: 'transmute_amount' });
+  }
+  try {
+    const current = await readTransmutation(chat_id);
+    if (current === undefined) return res.status(404).json({ error: 'Player not found' });
+    if (current) return res.status(400).json({ error: 'A transmutation is already running', code: 'transmute_busy' });
+
+    // Paid up front; the spend itself refuses a shortfall atomically.
+    try {
+      await spendResources(chat_id, { [a]: amount, [b]: amount });
+    } catch (err) {
+      if (shortfallItem(err)) return res.status(400).json({ error: 'Not enough crystals', code: 'transmute_short' });
+      throw err;
+    }
+
+    const now = Date.now();
+    const job = {
+      target, a, b, amount,
+      started_at: new Date(now).toISOString(),
+      ends_at:    new Date(now + transmuteMinutes(amount) * 60000).toISOString(),
+    };
+    // `transmutation=is.null` is the race guard: a second start landing after
+    // the first matches no row. Its crystals are then handed back.
+    const updated = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&transmutation=is.null`, {
+      method: 'PATCH',
+      body: JSON.stringify({ transmutation: job }),
+      headers: { Prefer: 'return=representation' },
+    });
+    if (!(Array.isArray(updated) ? updated[0] : updated)) {
+      await grantResources(chat_id, [{ item: a, amount }, { item: b, amount }]);
+      return res.status(400).json({ error: 'A transmutation is already running', code: 'transmute_busy' });
+    }
+    res.json({ success: true, job });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+router.post('/transmute/claim', requireAuth, async (req, res) => {
+  const { chat_id } = req.body;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const job = await readTransmutation(chat_id);
+    if (job === undefined) return res.status(404).json({ error: 'Player not found' });
+    if (!job) return res.status(400).json({ error: 'Nothing is transmuting', code: 'transmute_none' });
+    if (new Date(job.ends_at).getTime() > Date.now()) {
+      return res.status(400).json({ error: 'Not finished yet', code: 'transmute_running' });
+    }
+    // Clear first, conditioned on THIS job, so a double tap grants once.
+    const cleared = await supabase(
+      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&transmutation->>started_at=eq.${encodeURIComponent(job.started_at)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ transmutation: null }),
+        headers: { Prefer: 'return=representation' },
+      });
+    if (!(Array.isArray(cleared) ? cleared[0] : cleared)) {
+      return res.status(400).json({ error: 'Already collected', code: 'transmute_none' });
+    }
+    await grantResources(chat_id, [{ item: job.target, amount: job.amount }]);
+    res.json({ success: true, granted: { [job.target]: job.amount } });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.post('/roster/levelup', requireAuth, async (req, res) => {
   // target_unit_id is optional: only sent to break a tie between branches that
   // are all consistent with the building standing in the slot.
