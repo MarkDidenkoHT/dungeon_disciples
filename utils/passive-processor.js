@@ -604,21 +604,26 @@ function dispatchPassive(trigger, owner, def, ctx) {
           t.battle_hp += inspVal;
           t._inspiration_max_hp = (t._inspiration_max_hp ?? 0) + inspVal;
         } else if (p.inspiration_stat === 'damage') {
-          t._dmg_mult = (t._dmg_mult ?? 1) * (1 + inspVal / 100);
-          // Summed for DISPLAY while the multiplier above compounds, so two +3%
-          // sources read as 6% on the icon and are worth 6.09% in the maths. The
-          // icon is a summary of what is helping this unit, not a damage
-          // calculator, and a compounded figure there would be unreadable.
+          // FLAT action power: 'inspiration_damage 1' is +3 power, not +3%.
+          // It used to multiply _dmg_mult by 1.03, which on a 20-power hit was
+          // worth less than one point — and the icon said "3%" to match.
+          if (t.unit_data) {
+            t.unit_data = { ...t.unit_data, action_power: (t.unit_data.action_power ?? 0) + inspVal };
+          }
           t._inspiration_damage = (t._inspiration_damage ?? 0) + inspVal;
         }
       }
       if (targets.length) {
-        engine.recordGrantedBuff(owner, p.inspiration_stat, targets,
-          p.inspiration_stat === 'damage' ? inspVal / 100 : inspVal,
+        // Damage is granted as action_power, so it is recorded as that: the
+        // revoke then takes the power back with the same arithmetic that added it.
+        const grantType = p.inspiration_stat === 'damage' ? 'action_power' : p.inspiration_stat;
+        engine.recordGrantedBuff(owner, grantType, targets,
+          inspVal,
           p.inspiration_stat === 'armor' ? inspApplied : null,
           null,
           INSPIRATION_DISPLAY_FIELD[p.inspiration_stat] ?? null);
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal}${p.inspiration_stat === 'damage' ? '%' : ''} ${p.inspiration_stat} to adjacent allies in column` });
+        const statLabel = p.inspiration_stat === 'damage' ? 'power' : p.inspiration_stat;
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal} ${statLabel} to adjacent allies in column` });
       }
     }
 
@@ -720,11 +725,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const each = Math.floor(p.shared_pool_value / share.length);
         if (each > 0) {
           if (p.shared_pool_stat === 'damage') {
+            // Flat action power, like Inspiration — "splits 6 bonus damage" is
+            // six points of power shared out, not six percent. It shares the
+            // _inspiration_damage badge, so the two must count in the same unit.
             for (const t of share) {
-              t._dmg_mult = (t._dmg_mult ?? 1) * (1 + each / 100);
+              if (t.unit_data) {
+                t.unit_data = { ...t.unit_data, action_power: (t.unit_data.action_power ?? 0) + each };
+              }
               t._inspiration_damage = (t._inspiration_damage ?? 0) + each;
             }
-            engine.recordGrantedBuff(owner, 'damage', share, each / 100, null, null, '_inspiration_damage');
+            engine.recordGrantedBuff(owner, 'action_power', share, each, null, null, '_inspiration_damage');
           } else {
             for (const t of share) engine.applyStatBuff(t, p.shared_pool_stat, each);
             engine.recordGrantedBuff(owner, p.shared_pool_stat, share, each);

@@ -225,7 +225,8 @@ const FORMATION_SYNERGIES = {
     present:  'flash',
     effect:   'inspiration_flash',
     fx: INSPIRATION_FX,
-    buff: { icon: 'inspiration_damage.jpg', suffix: '%', valueParam: 'inspiration_value_per_tag' },
+    // Flat action power, so no suffix: the badge reads "3", matching +3 power.
+    buff: { icon: 'inspiration_damage.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 

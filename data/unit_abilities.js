@@ -1845,7 +1845,6 @@ const UNIT_ABILITIES = {
     description: 'Strike for 150% damage, taking 20% of the damage dealt as recoil.',
     description_ru: "Бьёт со 150% урона, получая 20% нанесённого урона в отдачу.",
     params: { furious_strike_pct: 150, furious_strike_recoil_pct: 20 },
-    effect_name: 'impale',
   },
   'sanctuary 1': {
     id: 'sanctuary 1',
@@ -2286,8 +2285,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain increased damage.',
-    description_ru: "Соседние союзники в том же столбце наносят повышенный урон.",
+    description: 'Adjacent allies in the same column gain +3 power.',
+    description_ru: "Соседние союзники в том же столбце получают +3 к силе.",
     params: { inspiration_stat: 'damage', inspiration_value: 3 },
   },
   'inspiration_damage 2': {
@@ -2297,8 +2296,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain increased damage.',
-    description_ru: "Соседние союзники в том же столбце наносят повышенный урон.",
+    description: 'Adjacent allies in the same column gain +5 power.',
+    description_ru: "Соседние союзники в том же столбце получают +5 к силе.",
     params: { inspiration_stat: 'damage', inspiration_value: 5 },
   },
   'sacrament 1': {

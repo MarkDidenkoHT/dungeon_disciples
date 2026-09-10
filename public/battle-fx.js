@@ -5321,10 +5321,18 @@ const steel_shell = defenderReaction(STEEL, { duration: 360 });
 // back down the line of the attack.
 async function ember_riposte(cellEl, opts = {}) {
   if (!app || !window.PIXI || !cellEl) return;
-  const defSel = cellSelectorFor(cellEl);
+  // Roles come from the log entry, not from the anchor. The engine logs the
+  // retaliation with the Volcanic Skin OWNER as actor and the ATTACKER being
+  // burned as target (see retaliation_damage in utils/passive-processor.js), and
+  // the rider dispatch anchors on the target — so `cellEl` is the attacker.
+  // Reading it as the defender drew the flare on the attacker and threw the
+  // ember back at the unit that owns the skin: the whole thing ran in reverse.
+  const defCell = opts.actorCell || cellEl;
+  const atkCell = opts.targetCell && opts.targetCell !== defCell ? opts.targetCell : null;
+  const defSel = cellSelectorFor(defCell);
   // The attacker is the one being burned. With no cell for it this degrades to
   // the plain flare, which is still truthful — just quieter.
-  const atkSel = opts.actorCell && cellSelectorFor(opts.actorCell);
+  const atkSel = atkCell && cellSelectorFor(atkCell);
   if (!defSel) return;
   const { layer, glow, solid } = riderLayer(4);
 
