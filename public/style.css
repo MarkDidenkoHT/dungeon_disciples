@@ -9152,3 +9152,104 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   /* The glow is an invitation; a button already working must stop making it. */
   animation: none;
 }
+/* ── Page arrows: ONE rule for every two-page screen ─────────────────────────
+   Castle, embark, spell tome and items (which reuses the tome's classes) used
+   to carry three near-copies that had drifted apart. This block comes last and
+   wins over all of them. The fill is SOLID dark grey in every state — the old
+   translucent fill and the 0.3 opacity of a disabled arrow vanished against
+   light screen backdrops. The faction accent is carried by the glow only. */
+.castle-layer-arrow,
+.embark-layer-arrow,
+.tome-layer-arrow {
+  flex: 0 0 5vw;
+  width: 5vw;
+  min-width: 18px;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #3a3f4b;
+  border-radius: 6px;
+  background: #23262e;
+  color: #8a8f9c;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.castle-layer-arrow span,
+.embark-layer-arrow span,
+.tome-layer-arrow span { display: block; transform: scaleY(1.6); }
+
+/* Nowhere to go: still solid, just dimmed — never see-through. */
+.castle-layer-arrow:disabled,
+.embark-layer-arrow:disabled,
+.tome-layer-arrow:disabled {
+  opacity: 1;
+  background: #1c1e24;
+  border-color: #2c2f37;
+  color: #4a4e58;
+  text-shadow: none;
+  box-shadow: none;
+  animation: none;
+  cursor: default;
+}
+
+.castle-layer-arrow--live,
+.embark-layer-arrow--live,
+.tome-layer-arrow--live {
+  background: #23262e;
+  color: var(--accent);
+  border-color: var(--accent);
+  text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+  animation: castle-arrow-glow 1.8s ease-in-out infinite;
+}
+
+.castle-layer-arrow--live:hover,  .castle-layer-arrow--live:active,
+.embark-layer-arrow--live:hover,  .embark-layer-arrow--live:active,
+.tome-layer-arrow--live:hover,    .tome-layer-arrow--live:active {
+  background: #2c3039;
+  color: var(--accent-bright);
+}
+
+/* The castle arrow's ring, on all of them, with the same rules: invisible by
+   default, and the Grail of Sorrow's spinning two-tone ring on that faction. */
+.embark-layer-arrow--live::before,
+.tome-layer-arrow--live::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--accent-ring-w, 2px);
+  background: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+body[data-faction="grail_of_sorrow"] .embark-layer-arrow--live::before,
+body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live::before {
+  background: conic-gradient(from var(--accent-spin),
+    var(--accent), var(--accent-2), var(--accent), var(--accent-2), var(--accent));
+  animation: accent-ring-spin 4s linear infinite;
+}
+body[data-faction="grail_of_sorrow"] .embark-layer-arrow--live,
+body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
+  border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .castle-layer-arrow--live,
+  .embark-layer-arrow--live,
+  .tome-layer-arrow--live { animation: none; }
+  body[data-faction="grail_of_sorrow"] .embark-layer-arrow--live::before,
+  body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live::before { animation: none; }
+}
