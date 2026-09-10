@@ -813,13 +813,16 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null, artUrl = '', desc = '' } = opts;
 
   if (!unit) {
     return `
       <div class="unit-card unit-card--building">
-        <div class="building-card-icon">⚔</div>
+        ${artUrl
+          ? `<img class="building-card-art" src="${artUrl}" alt="${buildingLabel}" onerror="this.style.display='none'">`
+          : '<div class="building-card-icon">⚔</div>'}
         <div class="building-card-label">${buildingLabel}</div>
+        ${desc ? `<div class="building-card-desc">${desc}</div>` : ''}
       </div>`;
   }
 

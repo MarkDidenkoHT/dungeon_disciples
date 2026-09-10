@@ -3127,11 +3127,25 @@ button.cost-bar-item:active { transform: scale(0.9); }
   opacity: 0.7;
 }
 
+.building-card-art {
+  width: min(70%, 280px);
+  aspect-ratio: 280 / 400;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
 .building-card-label {
   color: var(--accent);
   font-size: 1.1rem;
   font-weight: bold;
   text-align: center;
+}
+
+.building-card-desc {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  text-align: center;
+  padding: 0 12px;
 }
 
 .unit-card--dead {
