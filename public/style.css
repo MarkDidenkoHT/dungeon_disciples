@@ -1504,6 +1504,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .modal-title-text {
   flex: 1;
   min-width: 0;
+  text-align: center;
   font-size: 1rem;
   font-weight: bold;
   color: var(--accent);
@@ -2082,15 +2083,26 @@ button.cost-bar-item:active { transform: scale(0.9); }
    4px the compact rows use. The bar keeps flex:1 and simply gives up the width
    the tome marker takes — about a tenth of the row — rather than being sized
    against it, so the two stay in step at any card width. */
-.unit-progress-row .levelup-xp-bar { height: 10px; }
+.unit-progress-row .levelup-xp-bar {
+  height: 14px;
+  position: relative;
+}
 
-/* Room for "9999/9999" whatever the numbers are, so the bar beside it keeps
-   the same length as HP drops or XP grows — no layout shift between units.
-   Tabular digits make every digit the same width, so 9ch is exact. */
-.unit-progress-row .levelup-xp-label {
-  min-width: 9ch;
-  text-align: center;
+/* The HP / XP numbers sit INSIDE their bar, centred. Being inside, they can no
+   longer push the bar around, so the fixed 9ch slot they used to need is gone. */
+.levelup-xp-bar .levelup-xp-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #f0e6d2;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2px #000, 0 1px 2px #000;
+  pointer-events: none;
 }
 
 /* The Tome control, on the bar it acts on. Negative vertical margin keeps a
@@ -3068,36 +3080,26 @@ button.cost-bar-item:active { transform: scale(0.9); }
   word-break: break-all;
 }
 
-.unit-identity-bar {
+/* Tags across the TOP of the portrait. The unit's name used to sit in a bar at
+   the bottom; the sheet title carries it now, so the art is left clear. */
+.unit-portrait-top {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 10px 5px;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75) 40%);
-  z-index: 2;
-}
-
-.unit-identity-main {
-  display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-}
-
-.unit-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #eaecf2;
-  line-height: 1.1;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  padding: 6px 8px 14px;
+  background: linear-gradient(to top, transparent, rgba(0,0,0,0.65) 55%);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .unit-identity-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
 }
 

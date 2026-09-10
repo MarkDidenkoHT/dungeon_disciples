@@ -433,15 +433,13 @@ export function renderUnitPortrait(unit, opts = {}) {
       <div class="unit-portrait-fallback" style="display:none;">
         <span>${unit.id}</span>
       </div>
-      <div class="unit-identity-bar">
-        <div class="unit-identity-main">
-          <span class="unit-name">${unitName(unit)}</span>
-          ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
-        </div>
-        <div class="unit-identity-tags">
-          ${tagsHtml}
-        </div>
-      </div>
+      <!-- Tags ride the TOP of the art. The name is gone from here: the sheet
+           title already carries it, and the art stays clear at the bottom. -->
+      ${tagsHtml || badge ? `
+      <div class="unit-portrait-top">
+        <div class="unit-identity-tags">${tagsHtml}</div>
+        ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
+      </div>` : ''}
     </div>`;
 }
 
@@ -769,7 +767,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
       <div class="levelup-row unit-progress-row unit-progress-row--ghost" aria-hidden="true">
         <span class="unit-progress-key"></span>
         <div class="levelup-xp-bar"></div>
-        <span class="levelup-xp-label"></span>
       </div>`;
     return blank + blank;
   }
@@ -785,8 +782,8 @@ export function renderUnitProgressRow(progress, opts = {}) {
         <span class="unit-progress-key">HP</span>
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill unit-hp-fill--${state}" style="width:${pct}%"></div>
+          <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
         </div>
-        <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
         ${potionHtml}
       </div>`);
   }
@@ -799,8 +796,8 @@ export function renderUnitProgressRow(progress, opts = {}) {
         <span class="unit-progress-key">XP</span>
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
+          <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
         </div>
-        <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
         ${tomeHtml}
       </div>`);
   } else if (xp && xp.cur != null) {
