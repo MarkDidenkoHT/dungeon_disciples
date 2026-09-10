@@ -1203,6 +1203,40 @@ export function getSubSheetBody() {
   return ensureSubSheet().querySelector('.modal-body');
 }
 
+// In-game replacements for alert()/confirm(): the Telegram popups broke immersion.
+function gameDialog(message, buttons) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-modal-text"></div>
+        <div class="confirm-modal-actions">
+          ${buttons.map((b, i) => `<button type="button" class="confirm-modal-btn ${b.cls}" data-i="${i}">${b.label}</button>`).join('')}
+        </div>
+      </div>`;
+    overlay.querySelector('.confirm-modal-text').textContent = String(message ?? '');
+    overlay.addEventListener('click', e => {
+      const btn = e.target.closest('[data-i]');
+      if (!btn && e.target !== overlay) return;
+      overlay.remove();
+      resolve(btn ? buttons[btn.dataset.i].value : false);
+    });
+    document.body.appendChild(overlay);
+  });
+}
+
+export function gameAlert(message) {
+  return gameDialog(message, [{ label: 'OK', cls: 'confirm-modal-btn--confirm', value: true }]);
+}
+
+export function gameConfirm(message, { ok = uiText('Confirm', 'Подтвердить'), cancel = uiText('Cancel', 'Отмена') } = {}) {
+  return gameDialog(message, [
+    { label: cancel, cls: 'confirm-modal-btn--cancel', value: false },
+    { label: ok,     cls: 'confirm-modal-btn--confirm', value: true },
+  ]);
+}
+
 export function mountModal(root) {
   return {
     open:  (title, bodyHtml) => openSheet(title, bodyHtml),

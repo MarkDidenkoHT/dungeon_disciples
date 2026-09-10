@@ -16,7 +16,10 @@ import { hideTutorial }     from './tutorial.js';
 import { openDailyTasks, closeDailyTasks, refreshDailyButton } from './daily.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
-import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme } from './utils.js';
+import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme, gameAlert } from './utils.js';
+
+// Every alert() in the game goes through our own dialog, not Telegram's popup.
+window.alert = gameAlert;
 
 import {
   api,

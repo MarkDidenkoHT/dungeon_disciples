@@ -17,7 +17,7 @@ import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, abilityName, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
-  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS,
+  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
@@ -3144,7 +3144,7 @@ export function renderCastle(root, { player, focusBuilding }) {
   // it cannot go on the wrong unit with one stray tap on a crowded card.
   async function useTome(roster_id, rosterUnit) {
     const name = unitName(getUnitByUnitId(rosterUnit?.unit_data?.unit_id)) || '';
-    if (!confirm(CASTLE_TEXT.tomeConfirm[castleLang].replace('%s', name))) return;
+    if (!await gameConfirm(CASTLE_TEXT.tomeConfirm[castleLang].replace('%s', name))) return;
     try {
       await api('/roster/tome', { chat_id: player.chat_id, roster_id });
       closeModal();
@@ -3161,7 +3161,7 @@ export function renderCastle(root, { player, focusBuilding }) {
     const q = castleLang === 'ru'
       ? `Использовать зелье здоровья на «${name}»? Здоровье восстановится полностью.`
       : `Use a Health Potion on ${name}? It restores full health.`;
-    if (!confirm(q)) return;
+    if (!await gameConfirm(q)) return;
     try {
       await api('/roster/potion', { chat_id: player.chat_id, roster_id });
       closeModal();
