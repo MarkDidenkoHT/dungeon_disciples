@@ -543,9 +543,22 @@ export function renderItems(root, { player }) {
     });
   }
 
+  // Scrolls the TRACK only. scrollIntoView used to do this, but it scrolls every
+  // scrollable ancestor — including the two-page viewport, which is
+  // overflow:hidden yet still scrollable from script. Near the end of the list
+  // the track had no room left to centre the card, so the browser took the
+  // rest from the viewport and slid the Transmutation page into view.
   function centreSelectedItem(behavior = 'smooth') {
-    host.querySelector('#items-track .portrait-card--selected')
-      ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+    const track = host.querySelector('#items-track');
+    const card  = track?.querySelector('.portrait-card--selected');
+    if (!card) return;
+    // Whichever of the track or its wrapper actually overflows is the scroller.
+    const scroller = track.scrollWidth > track.clientWidth ? track : track.parentElement;
+    if (!scroller) return;
+    const c = card.getBoundingClientRect();
+    const s = scroller.getBoundingClientRect();
+    const delta = (c.left + c.width / 2) - (s.left + s.width / 2);
+    if (delta) scroller.scrollBy({ left: delta, behavior });
   }
 
   // The detail card and the selector track are two views of currentList(), so

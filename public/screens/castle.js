@@ -2477,7 +2477,11 @@ export function renderCastle(root, { player }) {
     let mode    = (canUpgrade || canRespec) ? initialMode : 'inspect';
     let segment = canUpgrade ? 'advance' : 'respec';
 
-    openModal(levelLabelFor(def, slotLevel), `
+    // Titled by the UNIT standing in the slot — that is what the player is
+    // inspecting. A slot with no unit (a utility building, an empty barracks)
+    // keeps the building's own name and level.
+    const sheetTitle = (liveUnit && unitName(liveUnit)) || levelLabelFor(def, slotLevel);
+    openModal(sheetTitle, `
       <div id="slot-sheet-root">
         ${cardHtml}
         <div id="slot-action-row">${actionRowHtml(mode, segment)}</div>
