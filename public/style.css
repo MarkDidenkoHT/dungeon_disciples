@@ -5379,6 +5379,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-variant-numeric: tabular-nums;
 }
 .tx-step {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
   width: 34px;
   height: 34px;
   border: 1px solid var(--border);

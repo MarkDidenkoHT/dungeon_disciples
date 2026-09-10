@@ -9,7 +9,7 @@ import { CRYSTAL_ICONS } from './utils.js';
 //     [2]          [3]       2, 3 — the two crystals paid, one each per unit
 //
 // It takes time, like an errand: 1 hour, plus 1 minute per crystal produced.
-// The server owns the job (players.transmutation); this page only draws it.
+// The server owns the job (the `transmutations` table); this page only draws it.
 
 const CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
 const MAX_AMOUNT = 999;
