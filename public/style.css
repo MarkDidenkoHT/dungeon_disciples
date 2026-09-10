@@ -2721,7 +2721,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 10px 6px;
 }
 .screen-items .items-modal {
   height: auto;
@@ -5228,61 +5227,132 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .tx-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; }
 .tx-hint  { font-size: 0.72rem; color: var(--muted); text-align: center; max-width: 280px; }
 
+/* The triangle is a 5:4 box; the SVG's 100×80 viewBox and every slot's %
+   position share that one geometry (see POS in transmute.js). */
 .tx-triangle {
   position: relative;
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
   aspect-ratio: 5 / 4;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  margin-bottom: 14px;
 }
-.tx-lines {
+.tx-magic {
   position: absolute;
-  inset: 22% 14% 18%;
-  width: 72%;
-  height: 60%;
-  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
 }
-.tx-lines polygon {
-  fill: rgba(var(--accent-rgb), 0.06);
-  stroke: rgba(var(--accent-rgb), 0.55);
-  stroke-width: 0.8;
-  stroke-dasharray: 3 2;
-  vector-effect: non-scaling-stroke;
+
+/* Faint etched guide: where power CAN flow before anything is chosen. */
+.tx-guide {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 0.5;
+  stroke-dasharray: 1.5 2;
 }
-.tx-top, .tx-bottom { position: relative; z-index: 1; display: flex; align-items: center; }
-.tx-top    { justify-content: center; gap: 10px; }
-.tx-bottom { justify-content: space-between; }
+
+/* A beam: the core draws itself in when its crystals are chosen, then a
+   brighter current keeps flowing along it toward the target. */
+.tx-beam-core {
+  fill: none;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.tx-beam-flow {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 6 14;
+  animation: tx-flow 1.6s linear infinite;
+}
+.tx-beam--form .tx-beam-core {
+  stroke-dasharray: 100;
+  animation: tx-form 0.9s cubic-bezier(.3,.7,.3,1) both;
+}
+.tx-beam--form .tx-beam-flow,
+.tx-beam--form .tx-mote {
+  animation: tx-flow 1.6s linear infinite, tx-fade-in 0.6s 0.7s both;
+}
+.tx-mote { filter: drop-shadow(0 0 1.5px currentColor); }
+
+@keyframes tx-form    { from { stroke-dashoffset: 100; opacity: 1; } to { stroke-dashoffset: 0; opacity: 0.55; } }
+@keyframes tx-flow    { to { stroke-dashoffset: -20; } }
+@keyframes tx-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* The rune ring around the wanted crystal, in its colour: two counter-turning
+   circles and six marks, slowly orbiting. */
+.tx-rune { color: var(--c); }
+.tx-rune-outer, .tx-rune-inner { fill: none; stroke: var(--c); transform-box: fill-box; transform-origin: center; }
+.tx-rune-outer { stroke-width: 0.5; stroke-dasharray: 1 2.2; opacity: 0.8; animation: tx-spin 16s linear infinite; }
+.tx-rune-inner { stroke-width: 0.35; stroke-dasharray: 5 2 1 2; opacity: 0.55; animation: tx-spin 11s linear infinite reverse; }
+.tx-rune-marks { fill: var(--c); opacity: 0.85; animation: tx-spin 24s linear infinite; transform-origin: 0 0; filter: drop-shadow(0 0 1px var(--c)); }
+@keyframes tx-spin { to { transform: rotate(360deg); } }
+
+/* Running: the current quickens and the rune turns faster. */
+.tx-triangle--running .tx-beam-flow { animation-duration: 0.8s; stroke-width: 2; }
+.tx-triangle--running .tx-rune-outer { animation-duration: 6s; }
+.tx-triangle--running .tx-rune-marks { animation-duration: 9s; }
+.tx-triangle--running .tx-slot--0 { animation: tx-breathe 1.6s ease-in-out infinite; }
+@keyframes tx-breathe {
+  0%, 100% { box-shadow: 0 0 8px 1px color-mix(in srgb, var(--c) 45%, transparent); }
+  50%      { box-shadow: 0 0 18px 4px color-mix(in srgb, var(--c) 80%, transparent); }
+}
+
+/* The moment a transmutation starts: a flare at the target. */
+.tx-triangle--burst .tx-slot--0 { animation: tx-burst 1.2s ease-out; }
+.tx-triangle--burst .tx-beam-flow { stroke-width: 3; }
+@keyframes tx-burst {
+  0%   { transform: translate(-50%, -50%) scale(1);    box-shadow: 0 0 0 0 var(--c); }
+  30%  { transform: translate(-50%, -50%) scale(1.18); box-shadow: 0 0 30px 12px var(--c); }
+  100% { transform: translate(-50%, -50%) scale(1);    box-shadow: 0 0 8px 1px transparent; }
+}
+
 .tx-amount {
-  position: relative;
-  z-index: 1;
-  align-self: center;
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  transform: translate(-50%, -50%);
   font-size: 1.3rem;
   font-weight: 700;
   color: #f0e6d2;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 3px #000;
+  text-shadow: 0 1px 3px #000, 0 0 10px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
 }
 
 .tx-slot {
-  position: relative;
-  width: 72px;
-  height: 72px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--c) 70%, #000);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(40, 46, 60, 0.95), rgba(14, 16, 22, 0.95));
+  background: radial-gradient(circle, color-mix(in srgb, var(--c) 22%, #1c2230), rgba(14, 16, 22, 0.96) 70%);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--c) 40%, transparent);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
+  transition: box-shadow 0.4s, border-color 0.4s;
 }
-.tx-slot--0 { border-color: var(--accent); box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.45); }
-.tx-slot--empty { border-style: dashed; }
-.tx-slot .res-icon-img { width: 100%; height: 100%; object-fit: contain; }
+.tx-slot--0 { width: 74px; height: 74px; }
+.tx-slot--empty { border: 1px dashed rgba(255, 255, 255, 0.25); box-shadow: none; background: rgba(14, 16, 22, 0.9); }
+.tx-slot .res-icon-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 4px var(--c)); }
 .tx-slot:disabled { cursor: default; }
+.tx-step--minus, .tx-step--plus { position: absolute; top: 21.25%; transform: translate(-50%, -50%); z-index: 1; }
+.tx-step--minus { left: 24%; }
+.tx-step--plus  { left: 76%; }
+.tx-picker-opt:not(:disabled):active { border-color: var(--c); box-shadow: 0 0 10px var(--c); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-beam-flow, .tx-mote, .tx-rune-outer, .tx-rune-inner, .tx-rune-marks,
+  .tx-beam--form .tx-beam-core, .tx-triangle--running .tx-slot--0 { animation: none; }
+}
 .tx-slot-q { font-size: 1.6rem; color: var(--muted); }
 .tx-slot-label {
   position: absolute;

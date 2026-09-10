@@ -73,7 +73,7 @@ export function renderItems(root, { player }) {
     <div class="screen screen-items">
       <main class="items-main">
         <div class="tome-layers">
-          <button class="tome-layer-arrow" id="items-layer-prev" type="button" aria-label="${T('title')}"><span>&lsaquo;</span></button>
+          <button class="tome-layer-arrow tome-layer-arrow--prev" id="items-layer-prev" type="button" aria-label="${T('title')}"><span>&lsaquo;</span></button>
           <div class="tome-layer-viewport">
             <div class="tome-layer-track" id="items-layer-track">
               <div class="tome-layer" data-layer="1">
@@ -82,21 +82,32 @@ export function renderItems(root, { player }) {
               <div class="tome-layer" data-layer="2" id="items-transmute"></div>
             </div>
           </div>
-          <button class="tome-layer-arrow" id="items-layer-next" type="button" aria-label="Transmutation"><span>&rsaquo;</span></button>
+          <button class="tome-layer-arrow tome-layer-arrow--next" id="items-layer-next" type="button" aria-label="Transmutation"><span>&rsaquo;</span></button>
         </div>
       </main>
     </div>`;
 
   const host = root.querySelector('#items-screen');
 
+  // Same logic as the tome's applyLayer/setLayer: applyItemsLayer draws the
+  // current page and the arrows' state, setItemsLayer moves and then applies.
   let itemsLayer = 1;
   function setItemsLayer(n) {
     const next = Math.max(1, Math.min(2, n));
-    if (next !== itemsLayer) { itemsLayer = next; playPageTurnSound(); closeSheet(); }
+    if (next === itemsLayer) return;
+    itemsLayer = next;
+    playPageTurnSound();
+    closeSheet();
+    applyItemsLayer();
+    if (itemsLayer === 2) transmute.refresh();
+  }
+  function applyItemsLayer() {
     const track = root.querySelector('#items-layer-track');
     if (track) track.style.transform = `translateX(-${(itemsLayer - 1) * 100}%)`;
     root.querySelectorAll('.tome-layer').forEach(el => {
-      el.setAttribute('aria-hidden', String(Number(el.dataset.layer) !== itemsLayer));
+      const isCurrent = Number(el.dataset.layer) === itemsLayer;
+      el.classList.toggle('tome-layer--active', isCurrent);
+      el.setAttribute('aria-hidden', String(!isCurrent));
     });
     const prev = root.querySelector('#items-layer-prev');
     const nextBtn = root.querySelector('#items-layer-next');
@@ -104,7 +115,6 @@ export function renderItems(root, { player }) {
     nextBtn.disabled = itemsLayer === 2;
     prev.classList.toggle('tome-layer-arrow--live', itemsLayer > 1);
     nextBtn.classList.toggle('tome-layer-arrow--live', itemsLayer < 2);
-    if (itemsLayer === 2) transmute.refresh();
   }
   root.querySelector('#items-layer-prev').addEventListener('click', () => setItemsLayer(itemsLayer - 1));
   root.querySelector('#items-layer-next').addEventListener('click', () => setItemsLayer(itemsLayer + 1));
@@ -120,6 +130,9 @@ export function renderItems(root, { player }) {
       if (boot) resources = [...(boot.resources || []), ...(boot.trophies || [])];
     },
   });
+  // Drawn once on mount, as the tome does — without it the arrows sat in their
+  // plain unstyled state until the first tap.
+  applyItemsLayer();
 
   let units     = [];
   let items     = [];
