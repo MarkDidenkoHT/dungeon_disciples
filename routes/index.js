@@ -2636,6 +2636,41 @@ router.post('/roster/tome', requireAuth, async (req, res) => {
   }
 });
 
+// Health Potion: the crystal Heal spell's effect (see /roster/heal) paid for with
+// a token instead of crystals — and to FULL health rather than heal_pct. Same
+// rules otherwise: not on a fallen unit, not on one already at full.
+router.post('/roster/potion', requireAuth, async (req, res) => {
+  const { chat_id, roster_id } = req.body;
+  if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
+  try {
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    const unitData = rosterRows[0].unit_data || {};
+    if (unitData.alive === false) return res.status(400).json({ error: 'Cannot heal a fallen unit — resurrect it first' });
+    const maxHp = Number(unitData.max_hp ?? 0);
+    const curHp = Number(unitData.current_hp ?? maxHp);
+    if (maxHp <= 0 || curHp >= maxHp) return res.status(400).json({ error: 'Unit is already at full health' });
+
+    // Spend first, as the tome does: the spend is the double-tap guard.
+    try {
+      await spendResources(chat_id, { health_potion: 1 });
+    } catch (err) {
+      if (shortfallItem(err)) return res.status(400).json({ error: 'No Health Potion to use', code: 'no_potion' });
+      throw err;
+    }
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: { ...unitData, current_hp: maxHp } }),
+    });
+
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    res.json({ success: true, roster: updated[0] });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.post('/roster/levelup', requireAuth, async (req, res) => {
   // target_unit_id is optional: only sent to break a tie between branches that
   // are all consistent with the building standing in the slot.

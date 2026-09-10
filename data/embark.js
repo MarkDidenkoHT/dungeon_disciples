@@ -548,8 +548,12 @@ const FACTION_CRYSTAL_FOR_REGION = {
 // Supply, at three regions of ten levels:
 //   Crossroad Sigil   3  (level 3 of each region) + 1 granted at registration
 //   Tome of Knowledge 6  (levels 6 and 9 of each region)
+//   Health Potion     9  (levels 1, 2 and 5 of each region)
 const FIRST_CLEAR_TOKENS = {
+  1: { health_potion:     1 },
+  2: { health_potion:     1 },
   3: { crossroad_sigil:   1 },
+  5: { health_potion:     1 },
   4: { tome_of_knowledge: 1 },
   6: { tome_of_knowledge: 1 },
   7: { crossroad_sigil:   1 },
@@ -582,6 +586,14 @@ const TOKEN_DEFS = {
     art:  'assets/icons/items/tome_of_knowledge.png',
     desc: 'Grants 100 XP to a single unit.',
     where:'First clear of levels 6 and 9 in any region.',
+  },
+  health_potion: {
+    id:   'health_potion',
+    name: 'Health Potion',
+    icon: '🧪',
+    art:  'assets/icons/ui/health_potion.png',
+    desc: 'Heals a single unit to full health.',
+    where:'First clear of levels 1, 2 and 5 in any region.',
   },
 };
 

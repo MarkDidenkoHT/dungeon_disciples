@@ -2026,10 +2026,24 @@ export function renderCastle(root, { player }) {
   // What the card's XP bar needs to draw its Tome control: which roster row it
   // would spend on, and how many are left. A dead unit is refused by the server,
   // so it is not offered one here either.
+  // At zero it is still returned (count 0), so the card draws it disabled.
   function tomeForUnit(rosterUnit) {
     if (!rosterUnit || rosterUnit.unit_data?.alive === false) return null;
-    const count = tokenCount('tome_of_knowledge');
-    return count > 0 ? { rosterId: rosterUnit.id, count } : null;
+    return { rosterId: rosterUnit.id, count: tokenCount('tome_of_knowledge') };
+  }
+
+  // Same for the Health Potion on the HP bar. A unit already at full health gets
+  // it disabled too, with its own reason, rather than a potion wasted.
+  function potionForUnit(rosterUnit) {
+    const d = rosterUnit?.unit_data;
+    if (!d || d.alive === false) return null;
+    const max = Number(d.max_hp ?? 0);
+    const cur = Number(d.current_hp ?? max);
+    return {
+      rosterId: rosterUnit.id,
+      count:    tokenCount('health_potion'),
+      blocked:  max > 0 && cur >= max ? (castleLang === 'ru' ? 'Боец полностью здоров' : 'Unit is already at full health') : '',
+    };
   }
 
   // ── Evolution tree ────────────────────────────────────────────────────────
@@ -2452,6 +2466,7 @@ export function renderCastle(root, { player }) {
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
           tome: tomeForUnit(rosterUnit),
+          potion: potionForUnit(rosterUnit),
           artUrl: liveUnit ? '' : buildingArtUrl(def),
           desc:   liveUnit ? '' : (castleLang === 'ru' ? (def.desc_ru || def.desc || '') : (def.desc || '')),
         })}
@@ -2624,8 +2639,10 @@ export function renderCastle(root, { player }) {
       // Before handleUnitInspect, for the same reason as the two above: the Tome
       // now lives INSIDE the card, on the XP bar, so the generic inspector gets
       // a crack at it first and must not be the one to answer.
-      const tomeBtn = e.target.closest('.tome-btn');
-      if (tomeBtn) { useTome(tomeBtn.dataset.rosterId, rosterUnit); return; }
+      const tokenBtn = e.target.closest('.tome-btn, .potion-btn');
+      if (tokenBtn?.dataset.emptyMsg) { alert(tokenBtn.dataset.emptyMsg); return; }
+      if (tokenBtn?.classList.contains('tome-btn')) { useTome(tokenBtn.dataset.rosterId, rosterUnit); return; }
+      if (tokenBtn) { usePotion(tokenBtn.dataset.rosterId, rosterUnit); return; }
 
       // Stat / ability / resist inspection, same as every other unit card.
       if (handleUnitInspect(e, openAbilityModal)) return;
@@ -3128,6 +3145,21 @@ export function renderCastle(root, { player }) {
       await reloadFromBootstrap();
     } catch (err) {
       alert(err.message || 'Could not use the Tome');
+    }
+  }
+
+  async function usePotion(roster_id, rosterUnit) {
+    const name = unitName(getUnitByUnitId(rosterUnit?.unit_data?.unit_id)) || '';
+    const q = castleLang === 'ru'
+      ? `Использовать зелье здоровья на «${name}»? Здоровье восстановится полностью.`
+      : `Use a Health Potion on ${name}? It restores full health.`;
+    if (!confirm(q)) return;
+    try {
+      await api('/roster/potion', { chat_id: player.chat_id, roster_id });
+      closeModal();
+      await reloadFromBootstrap();
+    } catch (err) {
+      alert(err.message || 'Could not use the Health Potion');
     }
   }
 

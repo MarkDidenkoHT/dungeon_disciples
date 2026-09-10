@@ -741,16 +741,27 @@ export function renderUnitProgressRow(progress, opts = {}) {
   // castle's existing click handler picks it up unchanged. The count is on the
   // icon because a tome button with no number told the player nothing about how
   // many were left to spend. Shown only when tomes are held, as before.
-  const tome = opts.tome;
-  const tomeHtml = tome && tome.count > 0
-    ? `<button class="tome-btn unit-progress-tome" data-roster-id="${tome.rosterId}"
-               title="${uiText('Use Tome of Knowledge', 'Использовать том знаний')}"
-               aria-label="${uiText('Use Tome of Knowledge', 'Использовать том знаний')}">
-         <img src="${assetUrl('/assets/icons/ui/tome_of_experience.png')}" alt=""
-              onerror="this.style.display='none'">
-         <span class="unit-progress-tome-count">${tome.count}</span>
-       </button>`
-    : '';
+  //
+  // Always drawn for a living unit now, glowing when there is one to spend and
+  // greyed out at zero — a player who never saw the control never learned the
+  // tome existed. The disabled one still takes the tap, to say why it is out.
+  // The Health Potion is the same control on the HP bar.
+  const tokenBtn = (t, cls, icon, label, emptyMsg) => {
+    if (!t) return '';
+    const off = !(t.count > 0) || t.blocked;
+    return `<button class="${cls} unit-progress-tome ${off ? 'unit-progress-tome--off' : ''}"
+               data-roster-id="${t.rosterId}" ${off ? `data-empty-msg="${t.blocked || emptyMsg}"` : ''}
+               title="${label}" aria-label="${label}">
+         <img src="${assetUrl(icon)}" alt="" onerror="this.style.display='none'">
+         <span class="unit-progress-tome-count">${t.count || 0}</span>
+       </button>`;
+  };
+  const tomeHtml = tokenBtn(opts.tome, 'tome-btn', '/assets/icons/ui/tome_of_experience.png',
+    uiText('Use Tome of Knowledge', 'Использовать том знаний'),
+    uiText('You have no Tomes of Knowledge', 'У вас нет томов знаний'));
+  const potionHtml = tokenBtn(opts.potion, 'potion-btn', '/assets/icons/ui/health_potion.png',
+    uiText('Use Health Potion', 'Использовать зелье здоровья'),
+    uiText('You have no Health Potions', 'У вас нет зелий здоровья'));
 
   if (!progress) {
     if (!opts.reserve) return '';
@@ -776,6 +787,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
           <div class="levelup-xp-fill unit-hp-fill--${state}" style="width:${pct}%"></div>
         </div>
         <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
+        ${potionHtml}
       </div>`);
   }
 
@@ -804,7 +816,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null } = opts;
 
   if (!unit) {
     return `
@@ -826,7 +838,7 @@ export function buildUnitCard(unit, opts = {}) {
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
-        ${renderUnitProgressRow(progress, { reserve: reserveProgress, tome })}
+        ${renderUnitProgressRow(progress, { reserve: reserveProgress, tome, potion })}
         ${descHtml}
         ${renderUnitAbilitiesRow(unit, { itemSlotHtml, extraSlotHtml, activeSlotHtml, compareUnit })}
       </div>
