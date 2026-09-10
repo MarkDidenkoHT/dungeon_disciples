@@ -2715,6 +2715,12 @@ router.post('/transmute/start', requireAuth, async (req, res) => {
     return res.status(400).json({ error: `Amount must be 1–${TRANSMUTE_MAX}`, code: 'transmute_amount' });
   }
   try {
+    // The Transmutation Lab opens this, the way the Blacksmith opens crafting.
+    // Only START is gated: a job already running can always be collected.
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    if (buildingLevel(structRows[0]?.buildings_data, 'transmute_lab') < 1) {
+      return res.status(400).json({ error: 'Build the Transmutation Lab first', code: 'transmute_no_lab' });
+    }
     if (await openTransmutation(chat_id)) {
       return res.status(400).json({ error: 'A transmutation is already running', code: 'transmute_busy' });
     }

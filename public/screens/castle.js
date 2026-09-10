@@ -71,6 +71,7 @@ const SLOT_FIXED_BUILDING = {
   slot_14: 'mage_guild',
   slot_16: 'messenger_post',
   slot_17: 'mercenary_hall',
+  slot_18: 'transmute_lab',
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
   slot_22: 'training_grounds',

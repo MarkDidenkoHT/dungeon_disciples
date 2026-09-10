@@ -89,6 +89,12 @@ export function renderItems(root, { player }) {
 
   const host = root.querySelector('#items-screen');
 
+  // Whether a Transmutation Lab stands — no lab, no transmutation page — and
+  // whether the castle has been read yet. Declared up here, before the
+  // transmutation page is mounted, because mounting draws it at once and reads both.
+  let labOpen = false;
+  let loaded  = false;
+
   // Same logic as the tome's applyLayer/setLayer: applyItemsLayer draws the
   // current page and the arrows' state, setItemsLayer moves and then applies.
   let itemsLayer = 1;
@@ -123,6 +129,9 @@ export function renderItems(root, { player }) {
   const transmute = mountTransmutation(root.querySelector('#items-transmute'), {
     player,
     getResources: () => resources,
+    // Null until the first load has read the castle: the page shows nothing
+    // rather than flashing "locked" at a player who has the lab.
+    isUnlocked: () => (loaded ? labOpen : null),
     // Crystals were just paid or granted: re-read them so both pages agree.
     onResourcesChanged: async () => {
       bootstrapCache.invalidate();
@@ -789,11 +798,17 @@ export function renderItems(root, { player }) {
   // Every slice this screen needs comes from the single /bootstrap payload.
   function applyBootstrap(boot) {
     if (!boot) return null;
+    loaded    = true;
     units     = boot.roster || [];
     items     = boot.items || [];
     resources = [...(boot.resources || []), ...(boot.trophies || [])];
     progress  = boot.progress || {};
     forgeOpen = hasBlacksmith(boot.structures?.buildings_data);
+    // Transmutation is opened by the Transmutation Lab, the same way the forge
+    // is opened by the Blacksmith. The server re-checks it in /transmute/start.
+    labOpen = Object.entries(boot.structures?.buildings_data || {})
+      .some(([k, st]) => /^slot_\d+$/.test(k) && st?.building_id === 'transmute_lab' && (st.level ?? 0) >= 1);
+    transmute?.refresh();
     return boot;
   }
 

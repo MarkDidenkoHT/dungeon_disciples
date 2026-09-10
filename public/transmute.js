@@ -49,6 +49,8 @@ const TX = {
   needAll:   { en: 'Choose all three crystals', ru: 'Выберите все три кристалла' },
   short:     { en: 'Not enough crystals',      ru: 'Недостаточно кристаллов' },
   failed:    { en: 'Transmutation failed',     ru: 'Трансмутация не удалась' },
+  locked:    { en: 'Build the Transmutation Lab in your castle to open this.',
+               ru: 'Постройте Лабораторию трансмутации в замке, чтобы открыть это.' },
 };
 
 const nameOf = key => key.replace('Crystals_', '');
@@ -69,7 +71,7 @@ function fmtDuration(ms, L) {
   return h ? `${h}h ${mm}m` : `${m}m ${ss}s`;
 }
 
-export function mountTransmutation(host, { player, getResources, onResourcesChanged }) {
+export function mountTransmutation(host, { player, getResources, onResourcesChanged, isUnlocked = () => true }) {
   const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const t = k => TX[k][L];
 
@@ -182,6 +184,20 @@ export function mountTransmutation(host, { player, getResources, onResourcesChan
 
   function render() {
     clearInterval(tick);
+    // Gated on the Transmutation Lab. `null` = the castle has not been read
+    // yet, so draw nothing rather than a lock the player may not have.
+    // A job already running is still shown: it was started with a lab.
+    const unlocked = isUnlocked();
+    if (!job && unlocked === null) { host.innerHTML = ''; return; }
+    if (!job && !unlocked) {
+      host.innerHTML = `
+        <div class="tx-panel tx-panel--locked">
+          <div class="tx-title">${t('title')}</div>
+          <div class="tx-lock">🔒</div>
+          <div class="tx-hint">${t('locked')}</div>
+        </div>`;
+      return;
+    }
     const n = job ? job.amount : amount;
     let footer;
     if (job) {
