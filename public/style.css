@@ -2084,6 +2084,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
    against it, so the two stay in step at any card width. */
 .unit-progress-row .levelup-xp-bar { height: 10px; }
 
+/* Room for "9999/9999" whatever the numbers are, so the bar beside it keeps
+   the same length as HP drops or XP grows — no layout shift between units.
+   Tabular digits make every digit the same width, so 9ch is exact. */
+.unit-progress-row .levelup-xp-label {
+  min-width: 9ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The Tome control, on the bar it acts on. Negative vertical margin keeps a
    25px button beside a 10px bar from stretching the row. */
 .unit-progress-tome {
@@ -2098,13 +2107,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: radial-gradient(circle at 50% 40%, rgba(255, 214, 110, 0.35), rgba(40, 28, 10, 0.85) 75%);
   cursor: pointer;
   line-height: 0;
-  animation: token-pulse 1.6s ease-in-out infinite;
+  animation: token-pulse 2.6s ease-in-out infinite;
 }
 
 /* The pulse is what makes it seen: a slow gold breath on border and glow. */
 @keyframes token-pulse {
-  0%, 100% { box-shadow: 0 0 3px 1px rgba(255, 200, 80, 0.45); border-color: #c9a24a; transform: scale(1); }
-  50%      { box-shadow: 0 0 10px 3px rgba(255, 210, 100, 0.9); border-color: #ffe39a; transform: scale(1.08); }
+  0%, 100% { box-shadow: 0 0 2px 0 rgba(255, 200, 80, 0.4); border-color: #c9a24a; transform: scale(1); }
+  50%      { box-shadow: 0 0 6px 1px rgba(255, 210, 100, 0.75); border-color: #ffe39a; transform: scale(1.04); }
 }
 
 /* The potion breathes red, so the two controls are told apart at a glance. */
@@ -2114,8 +2123,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   animation-name: potion-pulse;
 }
 @keyframes potion-pulse {
-  0%, 100% { box-shadow: 0 0 3px 1px rgba(255, 90, 90, 0.45); border-color: #c04848; transform: scale(1); }
-  50%      { box-shadow: 0 0 10px 3px rgba(255, 110, 110, 0.9); border-color: #ff9a9a; transform: scale(1.08); }
+  0%, 100% { box-shadow: 0 0 2px 0 rgba(255, 90, 90, 0.4); border-color: #c04848; transform: scale(1); }
+  50%      { box-shadow: 0 0 6px 1px rgba(255, 110, 110, 0.75); border-color: #ff9a9a; transform: scale(1.04); }
 }
 
 /* None to spend: still there, so the player knows the thing exists, but dead. */
@@ -3345,7 +3354,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 5px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
 .unit-slide-badge {
