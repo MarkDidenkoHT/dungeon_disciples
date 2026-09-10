@@ -488,6 +488,19 @@ button:active:not(:disabled) { opacity: 0.75; }
   gap: 20px;
 }
 
+/* Covers the first screen while it builds underneath (see revealWhenReady). */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: #000;
+  transition: opacity 0.3s ease;
+}
+.loading-overlay--out {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .loading-screen--fullbg {
   background-size: cover;
   background-position: center;

@@ -4,7 +4,7 @@ import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.4412';
+export const GAME_VERSION = '0.4413';
 
 const LOADING_IMAGES = [
   assetUrl('/assets/loading_screens/loading1.jpg'),
@@ -54,9 +54,21 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function renderLoadingScreen(root) {
+// The loading screen is an OVERLAY on <body>, not the contents of #app, so the
+// first real screen can be built, fetched and painted underneath it and only
+// revealed once it is complete (see revealWhenReady).
+let _overlay = null;
+let _setBar = () => {};
+
+export function renderLoadingScreen() {
   const lang = getLoadingLanguage();
   const tips = LOADING_TIPS[lang] || LOADING_TIPS.en;
+
+  _overlay?.remove();
+  const root = document.createElement('div');
+  root.className = 'loading-overlay';
+  document.body.appendChild(root);
+  _overlay = root;
 
   root.innerHTML = `
     <div class="loading-screen loading-screen--fullbg" style="background-image: url('${pick(LOADING_IMAGES)}')">
@@ -75,12 +87,83 @@ export function renderLoadingScreen(root) {
   `;
   // The bar is the whole progress readout — no numeric percentage.
   const fill = root.querySelector('#loading-bar-fill');
-  return {
-    setProgress(p) {
-      const clamped = Math.max(0, Math.min(1, p));
-      fill.style.width = `${Math.round(clamped * 100)}%`;
-    },
+  let shown = 0;
+  _setBar = p => {
+    // Never runs backwards: the phases hand over at fixed points on the bar.
+    shown = Math.max(shown, Math.max(0, Math.min(1, p)));
+    fill.style.width = `${Math.round(shown * 100)}%`;
   };
+  return { setProgress: p => _setBar(p) };
+}
+
+// Bar layout: manifest art 0–60%, game data 60–75%, the first screen's own
+// render and images 75–100%.
+const ART_END = 0.6;
+const DATA_END = 0.75;
+// Hard cap on the reveal phase, so one hung image cannot keep the game shut.
+const REVEAL_TIMEOUT_MS = 12000;
+// The DOM counts as settled after this long without a mutation. Screens render
+// in steps (shell, then skeleton, then data), so "rendered once" is not enough.
+const SETTLE_MS = 300;
+
+function waitForDomSettle(el, timeoutAt) {
+  return new Promise(resolve => {
+    let timer;
+    const done = () => { obs.disconnect(); clearTimeout(timer); resolve(); };
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(done, Math.max(0, Math.min(SETTLE_MS, timeoutAt - Date.now())));
+    };
+    const obs = new MutationObserver(arm);
+    obs.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'style', 'class'] });
+    arm();
+  });
+}
+
+// Every image the screen will paint: <img> sources plus CSS background images
+// (castle nodes, screen backdrops, framed bars are all backgrounds).
+function collectScreenImageUrls(el) {
+  const urls = new Set();
+  for (const img of el.querySelectorAll('img')) {
+    if (img.currentSrc || img.src) urls.add(img.currentSrc || img.src);
+  }
+  for (const node of [el, ...el.querySelectorAll('*')]) {
+    const bg = getComputedStyle(node).backgroundImage;
+    if (!bg || bg === 'none') continue;
+    for (const m of bg.matchAll(/url\(["']?([^"')]+)["']?\)/g)) urls.add(m[1]);
+  }
+  return [...urls];
+}
+
+// Keeps the loading screen up until the screen underneath is actually complete:
+// its data has arrived and rendered, and every image in it is loaded and
+// decoded. Only then does the overlay fade out.
+export async function revealWhenReady(el) {
+  if (!_overlay) return;
+  const timeoutAt = Date.now() + REVEAL_TIMEOUT_MS;
+  try {
+    await waitForDomSettle(el, timeoutAt);
+    // Lazy <img> would never load while covered; the screen is about to be seen.
+    el.querySelectorAll('img[loading="lazy"]').forEach(img => { img.loading = 'eager'; });
+    const urls = collectScreenImageUrls(el);
+    const remaining = Math.max(0, timeoutAt - Date.now());
+    await Promise.race([
+      preloadAssets(urls, p => _setBar(DATA_END + p * (1 - DATA_END))),
+      new Promise(r => setTimeout(r, remaining)),
+    ]);
+    // Images can add more DOM (fallbacks swapped in on error); let that land too.
+    await waitForDomSettle(el, Date.now() + SETTLE_MS * 2);
+  } catch {}
+  _setBar(1);
+  const overlay = _overlay;
+  _overlay = null;
+  overlay.classList.add('loading-overlay--out');
+  setTimeout(() => overlay.remove(), 350);
+}
+
+export function dismissLoadingScreen() {
+  _overlay?.remove();
+  _overlay = null;
 }
 
 // Manifest groups the player must WAIT for, because they are on screen the
@@ -134,21 +217,19 @@ export function startManifestFetch() {
   return _manifestPromise;
 }
 
-// Share of the bar given to game data (login + bootstrap); the rest is art.
-const DATA_SHARE = 0.2;
-// Upper bound on waiting for game data. Past this the screen opens anyway and
-// shows its own loading state — a slow API must not look like a hung launch.
+// Upper bound on waiting for game data. Past this the game opens anyway and the
+// screen shows its own loading state — a slow API must not look like a hung launch.
 const DATA_TIMEOUT_MS = 10000;
 
-// `dataReady` is the game state the first screen renders from. The bar used to
-// measure art alone, so it filled, the loading screen ended, and the castle then
-// sat empty waiting on /bootstrap — "what were we loading?".
-export async function runPreload(root, dataReady = Promise.resolve()) {
-  const { setProgress: setBar } = renderLoadingScreen(root);
+// Phase one of the launch: manifest art and game data. The loading screen is
+// NOT taken down here — main.js renders the first screen underneath and calls
+// revealWhenReady, which covers the last stretch of the bar.
+export async function runPreload(_root, dataReady = Promise.resolve()) {
+  const { setProgress: setBar } = renderLoadingScreen();
   const start = Date.now();
 
   let artP = 0, dataP = 0;
-  const setProgress = p => { artP = p; setBar(artP * (1 - DATA_SHARE) + dataP * DATA_SHARE); };
+  const setProgress = p => { artP = p; setBar(artP * ART_END + dataP * (DATA_END - ART_END)); };
   const dataDone = Promise.race([
     Promise.resolve(dataReady).catch(() => {}),
     new Promise(r => setTimeout(r, DATA_TIMEOUT_MS)),
@@ -185,8 +266,8 @@ export async function runPreload(root, dataReady = Promise.resolve()) {
   // Was 4500ms, which a returning player with a warm cache sat through for no
   // reason; the preload itself is now much shorter, so this is mostly what the
   // launch costs.
-  // Now that the bar covers real work (data included), a long floor only adds
-  // dead time for a warm-cache player; this is just enough to read the tip.
-  const minDuration = 2000;
+  // The reveal phase adds its own time on top, so this floor only needs to
+  // cover a warm-cache launch that would otherwise flash the tip.
+  const minDuration = 1500;
   if (elapsed < minDuration) await new Promise(r => setTimeout(r, minDuration - elapsed));
 }

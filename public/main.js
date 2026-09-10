@@ -11,7 +11,7 @@ import { destroyBattleFx } from './battle-fx.js';
 import { clearFormationSynergies } from './formation-synergy-view.js';
 import { renderBattle }     from './screens/battle.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
-import { runPreload, saveLanguageCache, startManifestFetch } from './screens/loading.js';
+import { runPreload, saveLanguageCache, startManifestFetch, revealWhenReady, dismissLoadingScreen } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
 import { openDailyTasks, closeDailyTasks, refreshDailyButton } from './daily.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
@@ -426,12 +426,17 @@ async function boot() {
           goOn(updated);
         },
       });
+      revealWhenReady(app);
       return;
     }
 
     applyAnalyticsConsent(player);
     goOn(player);
+    // The first screen is now building UNDER the loading screen; it lifts only
+    // once that screen has rendered its data and every image in it is decoded.
+    revealWhenReady(app);
   } catch (err) {
+    dismissLoadingScreen();
     app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#e74c3c;font-family:sans-serif;text-align:center;padding:2rem">Login failed: ${err.message}</div>`;
   }
 }
