@@ -1197,6 +1197,8 @@ export function mountModal(root) {
 // stall behind a burst. A pool keeps the pipe full without the pile-up.
 const PRELOAD_CONCURRENCY = 8;
 
+const _retainedImages = [];
+
 export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENCY) {
   const unique = [...new Set(urls)].filter(Boolean);
   const total  = unique.length;
@@ -1210,7 +1212,11 @@ export function preloadAssets(urls, onProgress, concurrency = PRELOAD_CONCURRENC
     // Resolve on error too: a missing asset must not hold the loading screen
     // hostage — it shows as a gap in the UI, which is the honest outcome.
     const done = () => { loaded++; onProgress?.(loaded / total); resolve(); };
-    img.onload = done;
+    // Held for the life of the page: a dropped Image can be evicted from the
+    // memory cache, and assets served no-store were then fetched all over again
+    // by the first screen. decode() also moves the decode off the first paint,
+    // which is where art used to pop in after the bar had already filled.
+    img.onload = () => { _retainedImages.push(img); (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(done); };
     img.onerror = done;
     img.src = url;
   });

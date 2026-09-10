@@ -381,13 +381,16 @@ async function boot() {
     // Chained off login rather than run beside it because chat_id comes from
     // login, and NOT awaited: the preload must not get any slower on account of
     // it, and a failure here is a cache miss, not a broken launch.
-    loginPromise
+    //
+    // It IS awaited by the loading screen now (capped there by a timeout), so the
+    // bar only fills once the castle has something to show.
+    const dataReady = loginPromise
       .then(r => r?.player?.chat_id && bootstrapCache.get(r.player.chat_id))
       .catch(() => {});
 
     const [loginResult] = await Promise.all([
       loginPromise,
-      runPreload(app),
+      runPreload(app, dataReady),
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
     setSessionToken(session_token);

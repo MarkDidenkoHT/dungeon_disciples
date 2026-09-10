@@ -4,7 +4,7 @@ import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.4411';
+export const GAME_VERSION = '0.4412';
 
 const LOADING_IMAGES = [
   assetUrl('/assets/loading_screens/loading1.jpg'),
@@ -134,9 +134,25 @@ export function startManifestFetch() {
   return _manifestPromise;
 }
 
-export async function runPreload(root) {
-  const { setProgress } = renderLoadingScreen(root);
+// Share of the bar given to game data (login + bootstrap); the rest is art.
+const DATA_SHARE = 0.2;
+// Upper bound on waiting for game data. Past this the screen opens anyway and
+// shows its own loading state — a slow API must not look like a hung launch.
+const DATA_TIMEOUT_MS = 10000;
+
+// `dataReady` is the game state the first screen renders from. The bar used to
+// measure art alone, so it filled, the loading screen ended, and the castle then
+// sat empty waiting on /bootstrap — "what were we loading?".
+export async function runPreload(root, dataReady = Promise.resolve()) {
+  const { setProgress: setBar } = renderLoadingScreen(root);
   const start = Date.now();
+
+  let artP = 0, dataP = 0;
+  const setProgress = p => { artP = p; setBar(artP * (1 - DATA_SHARE) + dataP * DATA_SHARE); };
+  const dataDone = Promise.race([
+    Promise.resolve(dataReady).catch(() => {}),
+    new Promise(r => setTimeout(r, DATA_TIMEOUT_MS)),
+  ]).then(() => { dataP = 1; setProgress(artP); });
 
   let critical = [];
   let deferred = [];
@@ -155,7 +171,7 @@ export async function runPreload(root) {
     deferred = [];
   }
 
-  await preloadAssets(critical, setProgress);
+  await Promise.all([preloadAssets(critical, setProgress), dataDone]);
 
   // Warm the rest in the background at low concurrency, so it competes with
   // neither the first render nor the player's first API calls. Deliberately not
@@ -169,6 +185,8 @@ export async function runPreload(root) {
   // Was 4500ms, which a returning player with a warm cache sat through for no
   // reason; the preload itself is now much shorter, so this is mostly what the
   // launch costs.
-  const minDuration = 4500;
+  // Now that the bar covers real work (data included), a long floor only adds
+  // dead time for a warm-cache player; this is just enough to read the tip.
+  const minDuration = 2000;
   if (elapsed < minDuration) await new Promise(r => setTimeout(r, minDuration - elapsed));
 }
