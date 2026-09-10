@@ -1019,6 +1019,7 @@ router.post('/player/consent', requireAuth, async (req, res) => {
 //     "crystals":  { "Crystals_Life": 50, ... },   // any resource row by name
 //     "gold":      100,
 //     "trophies":  { "grave_dust": 2 },
+//     "tokens":    { "tome_of_knowledge": 3 },    // item_type 'token': tomes, sigils, potions
 //     "roster_xp": 25                              // to EVERY unit on the roster
 //   }
 //
@@ -1048,7 +1049,7 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     if (taken[key]) return res.status(400).json({ error: 'Code already used', code: 'promo_used' });
 
     const data     = promo.promo_data || {};
-    const granted  = { crystals: {}, trophies: {}, gold: 0, roster_xp: 0 };
+    const granted  = { crystals: {}, trophies: {}, tokens: {}, gold: 0, roster_xp: 0 };
 
     // Resources and trophies live in the same table, keyed by `item`. A row the
     // player has never held does not exist yet, so grant_resources upserts —
@@ -1057,7 +1058,11 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     const addItem = (item, amount, bucket) => {
       const amt = Number(amount);
       if (!item || !Number.isFinite(amt) || amt <= 0) return;
-      payouts.push({ item, amount: amt, item_type: bucket === 'trophies' ? 'trophy' : 'resource' });
+      // Tokens are their own item_type — the Tome button and the sigil badge
+      // read `item_type=eq.token`, so a tome granted as a resource would be
+      // invisible to both.
+      const itemType = bucket === 'trophies' ? 'trophy' : bucket === 'tokens' ? 'token' : 'resource';
+      payouts.push({ item, amount: amt, item_type: itemType });
       if (bucket === 'gold') granted.gold += amt;
       else granted[bucket][item] = (granted[bucket][item] || 0) + amt;
     };
@@ -1065,6 +1070,7 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     if (data.gold) addItem('Gold', data.gold, 'gold');
     for (const [type, amt] of Object.entries(data.crystals || {})) addItem(type, amt, 'crystals');
     for (const [id,   amt] of Object.entries(data.trophies || {})) addItem(id,   amt, 'trophies');
+    for (const [id,   amt] of Object.entries(data.tokens   || {})) addItem(id,   amt, 'tokens');
 
     // One call, one transaction: a promo paying gold and three crystals can no
     // longer half-apply and leave the code unburned but partly redeemed.

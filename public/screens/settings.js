@@ -4,6 +4,7 @@ import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 import { saveLanguageCache } from './loading.js';
 import { CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, getSheetBody } from '../utils.js';
+import { assetUrl } from '../asset_base.js';
 
 // A name goes straight into a value="" attribute, and it is player-supplied.
 function escapeAttr(str) {
@@ -264,6 +265,20 @@ export function renderSettings(root, { player }) {
       if (amt) chips.push(`<span class="promo-reward-chip" title="${type.replace('Crystals_', '')}">${
         CRYSTAL_ICONS[type] || ''}<span>+${amt}</span></span>`);
     }
+    // Tokens (tomes, sigils, potions) with their own art; an unknown one falls
+    // back to its name, the same way trophies are shown.
+    const TOKEN_ICONS = {
+      tome_of_knowledge: '/assets/icons/ui/tome_of_experience.png',
+      health_potion:     '/assets/icons/ui/health_potion.png',
+      crossroad_sigil:   '/assets/icons/recources/crossroad_sigil.png',
+    };
+    for (const [id, amt] of Object.entries(g.tokens || {})) {
+      const name = id.replace(/_/g, ' ');
+      const icon = TOKEN_ICONS[id];
+      chips.push(`<span class="promo-reward-chip${icon ? '' : ' promo-reward-chip--wide'}" title="${name}">${
+        icon ? `<img src="${assetUrl(icon)}" class="res-icon-img" alt="${name}">` : name
+      }<span>+${amt}</span></span>`);
+    }
     for (const [id, amt] of Object.entries(g.trophies || {})) {
       chips.push(`<span class="promo-reward-chip promo-reward-chip--wide" title="${id.replace(/_/g, ' ')}">${
         id.replace(/_/g, ' ')} <span>+${amt}</span></span>`);
@@ -469,12 +484,6 @@ export function renderSettings(root, { player }) {
           chat_id:   player.chat_id,
         });
         overlay.remove();
-        // The account this cache describes no longer exists — roster, buildings,
-        // items, errands and resources were all just deleted server-side. The
-        // TTL is a minute, so without this the castle drawn after the player
-        // re-picks a faction is whatever was cached BEFORE the reset: the old
-        // ruler, in the old castle. Intermittent by nature, since a reset more
-        // than a minute after the last read expires the entry anyway.
         bootstrapCache.invalidate();
         errandsCache.invalidate();
         navigate('register', { player: result.player });
