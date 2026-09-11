@@ -2508,7 +2508,7 @@ const UNITS = {
       xp: 1560, passive: ['horde 1', 'poison 2'], ability: 'shared_suffering 1',
     },
     plague_knight2: {
-      id: 'gs111', f: 'g', t: 4,
+      id: 'gs1111', f: 'g', t: 4,
       name: 'Plague Knight',
       name_ru: 'Чумной Рыцарь',
       tags: ['Zombie', 'Knight'],
@@ -2538,6 +2538,7 @@ const UNITS = {
       name: 'Abominate',
       name_ru: 'Мерзость',
       tags: ['Vampire', 'Zombie'],
+      pref_position: 'front',
       size: 'tile',
       hp: 60, armor: 0, initiative: 45,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
@@ -2545,7 +2546,7 @@ const UNITS = {
       damage_source: 'physical', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1560, passive: ['horde 1', 'sustenance 1', 'lifesteal 2'], ability: 'shared_suffering 1',
     },
-    abominate: {
+    abominate2: {
       id: 'gs1211', f: 'g', t: 4,
       name: 'Abominate',
       name_ru: 'Мерзость',
@@ -3770,4 +3771,4 @@ const UNITS = {
 };
 
 export { UNITS, UNIT_ABILITIES };
-if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES }; 
+if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
