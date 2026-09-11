@@ -7,13 +7,14 @@
 // is still allowed, this only speaks up.
 //
 // PREFERRED POSITION
-//   A unit's preference is derived from its reach, which is the thing that
-//   actually matters on the grid:
-//     range >= 2  -> 'back'   (shoots or casts; the front column is where it dies)
-//     range == 1  -> 'front'  (must be in the front column to reach anything)
-//   A unit definition may override this with an explicit `pref_position` of
-//   'front' or 'back'. Anything without a usable range has no preference and
-//   never barks.
+//   Set per unit in data/units.js as `pref_position`:
+//     'front' -> objects when placed in the back column
+//     'back'  -> objects when placed in the front column
+//     'none'  -> never objects
+//   The initial values were seeded from reach (range >= 2 -> back, range 1 ->
+//   front; 2-wide units and units with no action -> none) and are meant to be
+//   tuned by hand per character. A def missing the field falls back to that
+//   same range rule — see derivePrefPosition().
 //
 // LARGE UNITS
 //   Preference is checked against the unit's whole FOOTPRINT, not its anchor.
@@ -585,11 +586,15 @@ const POSITION_BARKS = [
   },
 ];
 
-// range >= 2 shoots or casts and wants the back column; range 1 must be in the
-// front column to reach anything. An explicit `pref_position` on the unit
-// definition always wins.
+// Every unit def in data/units.js declares `pref_position`: 'front', 'back' or
+// 'none'. 'none' means the unit never objects to where it stands. The range
+// heuristic below is only a fallback for a def that lacks the field (e.g. a
+// unit added later without it) — the explicit value always wins.
+const PREF_POSITIONS = ['front', 'back', 'none'];
+
 function derivePrefPosition(def) {
   if (!def) return null;
+  if (def.pref_position === 'none') return null;
   if (def.pref_position === 'front' || def.pref_position === 'back') return def.pref_position;
   const range = Number(def.range);
   if (!Number.isFinite(range) || range <= 0) return null;
@@ -677,6 +682,7 @@ function pickPositionBark(def, prefers) {
 
 export {
   POSITION_BARKS,
+  PREF_POSITIONS,
   derivePrefPosition,
   isPositionSatisfied,
   pickPositionBark,
