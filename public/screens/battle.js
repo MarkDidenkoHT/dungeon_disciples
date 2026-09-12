@@ -565,8 +565,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Entry types that mean "this unit has taken its turn".
   const ACTOR_ENTRY_TYPES = new Set(['action', 'ability', 'spell', 'defend', 'skip', 'pool', 'cast']);
   const ROUND_BREATH_MS = 500;
+  // The beat between one character's turn and the next.
+  //
+  // Nothing in the loop below paced TURNS — it awaited each animation and moved
+  // straight on, and an entry with no animation (a defend, a skip, a bark, a
+  // passive note) cost nothing at all. That is invisible when the player acts
+  // between every enemy, and it is the whole experience when the enemy leads
+  // initiative: three or four AI turns arrive in ONE batch and play end to end
+  // as a single blur, with the log only readable once it is over.
+  const TURN_GAP_MS = 450;
 
-  async function playbackSequence(entries) {
+  // `leadIn` holds the board on screen before the FIRST turn plays. Only the
+  // opening batch wants it: round 1 gets no 'round' entry (the engine starts at
+  // round 1 rather than advancing into it), so the enemies who out-rolled the
+  // player used to start swinging in the same frame the screen mounted.
+  async function playbackSequence(entries, { leadIn = false } = {}) {
     const newEntries = (entries || []).filter(e => {
       if (e?.id == null) return true;          // no id (a local/optimistic entry) — always play
       if (playedLogIds.has(e.id)) return false;
@@ -601,6 +614,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         .sort((a, b) => b.initiative - a.initiative));
     queueNow();
 
+    // Whose turn is currently playing. Keyed off the actor ON THE ENTRY rather
+    // than the resolved combatant id: idFor can come back null (it matches by
+    // name and cell for everything but a bark), and a turn that cannot be looked
+    // up is still a different character stepping up and still needs its beat.
+    let lastTurnKey = null;
+    let turnsPlayed = 0;
+    let pendingLeadIn = leadIn;
+    const turnKeyOf = e => `${e.actorId ?? ''}|${e.actorName ?? ''}|${e.actorCell ?? ''}`;
+
     for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
       const entry = newEntries[entryIdx];
       // Track position in the log
@@ -613,10 +635,30 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (entry.type === 'round') {
         acted.clear();
         queueNow();
+        // The round breath IS this round's first beat, so neither the gap below
+        // nor the lead-in may stack a second one on top of it.
+        lastTurnKey = null;
+        turnsPlayed = 0;
+        pendingLeadIn = false;
         await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
       } else if (ACTOR_ENTRY_TYPES.has(entry.type)) {
         const id = idFor(entry);
         if (id && !acted.has(id)) { acted.add(id); queueNow(); }
+        const turnKey = turnKeyOf(entry);
+        if (turnKey !== lastTurnKey) {
+          lastTurnKey = turnKey;
+          if (pendingLeadIn) {
+            pendingLeadIn = false;
+            await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
+          }
+          // Held AFTER the queue has moved, so the beat is spent looking at the
+          // order the next unit is stepping out of — same shape as the round
+          // breath. Not before the FIRST turn of a batch: the player has just
+          // tapped an action and is waiting on it, and a round boundary has
+          // already had its own pause.
+          if (turnsPlayed > 0) await new Promise(r => setTimeout(r, TURN_GAP_MS));
+          turnsPlayed++;
+        }
       }
       if (entry.killed && entry.targetId && !dead.has(entry.targetId)) {
         dead.add(entry.targetId);
@@ -2824,7 +2866,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!reconnect && Array.isArray(logs) && logs.length) {
       processing = true;               // blocks input + the realtime handler during playback
       if (ui?.battleLog) ui.battleLog.innerHTML = '';
-      playbackSequence(logs)
+      playbackSequence(logs, { leadIn: true })
         .catch(err => console.error('Initial playback failed:', err))
         .finally(() => { processing = false; render(); });
     }
