@@ -29,6 +29,7 @@ import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
 import { onDailyClose, closeDailyTasks } from '../daily.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml, drawUnitTreeLinks } from '../unit_tree.js';
 import { assetUrl } from '../asset_base.js';
+import { setScreenReady } from './loading.js';
 
 // Mirror of SLOT_CATEGORIES in data/buildings.js — that file is CommonJS and
 // cannot be imported here, and the server validates every build against its own
@@ -3517,5 +3518,8 @@ export function renderCastle(root, { player, focusBuilding }) {
     }
   }
 
-  load();
+  // The launch overlay waits on this, so it cannot lift over a castle whose
+  // /bootstrap is still in the air — empty slots and a blank resource bar look
+  // exactly as settled to the DOM watcher as a finished screen does.
+  setScreenReady(load());
 }

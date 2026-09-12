@@ -371,7 +371,11 @@ async function boot() {
   // server and does not care where the art lives, so serialising it behind a
   // probe that can take up to 4s bought nothing (see startManifestFetch).
   startManifestFetch();
-  await resolveAssetBase();
+  // Neither does /login — and /bootstrap is chained to it, so awaiting the probe
+  // here put up to 4s in front of the only request the castle has anything to
+  // draw from. The probe is handed to runPreload, which awaits it at the one
+  // point that needs it: mapping the manifest through assetUrl.
+  const assetBaseReady = resolveAssetBase();
 
   try {
     const loginPromise = api('/login', { initData: tg.initData, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
@@ -393,7 +397,7 @@ async function boot() {
 
     const [loginResult] = await Promise.all([
       loginPromise,
-      runPreload(app, dataReady),
+      runPreload(app, dataReady, assetBaseReady),
     ]);
     const { player, session_token, isNew, active, battle_id, battle_data } = loginResult;
     setSessionToken(session_token);

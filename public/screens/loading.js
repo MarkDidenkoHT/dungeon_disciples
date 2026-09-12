@@ -4,7 +4,7 @@ import { assetUrl } from '../asset_base.js';
 
 // Shown in the corner of the loading screen so a player reporting a bug can say
 // which build they were on. Bump this on every release.
-export const GAME_VERSION = '0.4502';
+export const GAME_VERSION = '0.4503';
 
 const LOADING_IMAGES = [
   assetUrl('/assets/loading_screens/loading1.jpg'),
@@ -102,9 +102,25 @@ const ART_END = 0.6;
 const DATA_END = 0.75;
 // Hard cap on the reveal phase, so one hung image cannot keep the game shut.
 const REVEAL_TIMEOUT_MS = 12000;
+// And on the screen's own fetch. Separate from the budget above so a slow
+// /bootstrap does not eat the time the images need afterwards.
+const SCREEN_DATA_TIMEOUT_MS = 8000;
 // The DOM counts as settled after this long without a mutation. Screens render
 // in steps (shell, then skeleton, then data), so "rendered once" is not enough.
 const SETTLE_MS = 300;
+
+// The fetch the first screen's content depends on. A screen renders its shell
+// synchronously and fills it when its data lands, so DOM quiet alone says
+// nothing — an empty castle is as settled as a full one. The screen announces
+// its load() here and revealWhenReady waits for it before it starts measuring.
+let _screenReady = null;
+
+export function setScreenReady(promise) {
+  _screenReady = promise;
+  // Only the launch consumes this; on a later navigation nothing awaits it, and
+  // a rejection with no handler would surface as an unhandled one.
+  Promise.resolve(promise).catch(() => {});
+}
 
 function waitForDomSettle(el, timeoutAt) {
   return new Promise(resolve => {
@@ -140,6 +156,15 @@ function collectScreenImageUrls(el) {
 // decoded. Only then does the overlay fade out.
 export async function revealWhenReady(el) {
   if (!_overlay) return;
+  const ready = _screenReady;
+  _screenReady = null;
+  if (ready) {
+    await Promise.race([
+      Promise.resolve(ready).catch(() => {}),
+      new Promise(r => setTimeout(r, SCREEN_DATA_TIMEOUT_MS)),
+    ]);
+  }
+  // Started after the data wait, so the images get their full budget.
   const timeoutAt = Date.now() + REVEAL_TIMEOUT_MS;
   try {
     await waitForDomSettle(el, timeoutAt);
@@ -224,7 +249,7 @@ const DATA_TIMEOUT_MS = 10000;
 // Phase one of the launch: manifest art and game data. The loading screen is
 // NOT taken down here — main.js renders the first screen underneath and calls
 // revealWhenReady, which covers the last stretch of the bar.
-export async function runPreload(_root, dataReady = Promise.resolve()) {
+export async function runPreload(_root, dataReady = Promise.resolve(), assetBaseReady = Promise.resolve()) {
   const { setProgress: setBar } = renderLoadingScreen();
   const start = Date.now();
 
@@ -241,7 +266,10 @@ export async function runPreload(_root, dataReady = Promise.resolve()) {
     // The manifest lists ORIGIN paths (/assets/…). Preloading those would warm
     // the wrong origin and spend the bandwidth this move exists to save, so
     // every entry is routed through assetUrl — a no-op when the CDN is down.
-    const manifest = await startManifestFetch();
+    // assetUrl only answers correctly once the CDN probe has settled, so the
+    // probe is awaited HERE rather than before login — the art is what depends
+    // on it, and /login and /bootstrap were being held up for nothing.
+    const [manifest] = await Promise.all([startManifestFetch(), assetBaseReady]);
     if (!manifest) throw new Error('no manifest');
     for (const [group, paths] of Object.entries(manifest)) {
       const urls = paths.map(assetUrl);
