@@ -27,6 +27,7 @@ const {
 const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
+const { rosterUnitPower } = require('../utils/army-power');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
@@ -468,6 +469,54 @@ async function buildArmyFor(chat_id, playerUnitIds) {
     if (!r) throw new Error(`Roster unit ${rosterId} not found for ${chat_id}`);
     return buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId);
   });
+}
+
+// A hero, and loyalty within that hero's cap. Same rules as the prep screen.
+function checkSquad(units) {
+  const hero = units.find(u => u.is_hero);
+  if (!hero) return { error: 'Squad must include a hero' };
+  const heroTier   = hero.unit_data?.t ?? 1;
+  const maxLoyalty = heroTier >= 4 ? 5 : heroTier + 1;
+
+  // Each non-hero unit costs 1 loyalty; 2-tile units (row/column) cost 2
+  let loyaltyUsed = 0;
+  for (const u of units) {
+    if (u.is_hero) continue;
+    const size = u.unit_data?.size ?? 'tile';
+    loyaltyUsed += (size === 'row' || size === 'column') ? 2 : 1;
+  }
+  if (loyaltyUsed > maxLoyalty) {
+    return { error: `Squad exceeds loyalty cap (used ${loyaltyUsed}, max ${maxLoyalty} for a tier-${heroTier} hero)` };
+  }
+  return null;
+}
+
+// A queued squad rebuilt from the roster, checked, and its ⚔ counted here.
+// The client's power number is never used: bands and bots are picked from this one.
+async function loadSquad(chat_id, playerUnitIds) {
+  const rosterRows = await supabase(
+    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
+  );
+  const rosterById = {};
+  for (const r of rosterRows) rosterById[String(r.id)] = r;
+  const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
+
+  const units = [];
+  const seen  = new Set();
+  let power   = 0;
+  for (const entry of playerUnitIds) {
+    const rosterId = String(entry?._rosterId || entry?.id);
+    const r = rosterById[rosterId];
+    if (!r) return { error: `Roster unit ${rosterId} not found or does not belong to this player` };
+    if (seen.has(rosterId)) return { error: `Roster unit ${rosterId} is listed twice` };
+    seen.add(rosterId);
+    units.push(buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId));
+    power += rosterUnitPower(getUnitByDataId(r.unit_data?.unit_id), r.unit_data, itemsByRosterId[rosterId]);
+  }
+
+  const invalid = checkSquad(units);
+  if (invalid) return invalid;
+  return { units, power };
 }
 
 // Deep enough to protect everything the engine mutates: unit_data and the
@@ -3380,23 +3429,8 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId));
     }
 
-    const heroDef    = playerUnits.find(u => u.is_hero);
-    if (!heroDef) return res.status(400).json({ error: 'Squad must include a hero' });
-    const heroTier   = heroDef.unit_data?.t ?? 1;
-    const maxLoyalty = heroTier >= 4 ? 5 : heroTier + 1;
-
-    // Each non-hero unit costs 1 loyalty; 2-tile units (row/column) cost 2
-    let loyaltyUsed = 0;
-    for (const u of playerUnits) {
-      if (u.is_hero) continue;
-      const size = u.unit_data?.size ?? 'tile';
-      loyaltyUsed += (size === 'row' || size === 'column') ? 2 : 1;
-    }
-    if (loyaltyUsed > maxLoyalty) {
-      return res.status(400).json({
-        error: `Squad exceeds loyalty cap (used ${loyaltyUsed}, max ${maxLoyalty} for a tier-${heroTier} hero)`,
-      });
-    }
+    const invalidSquad = checkSquad(playerUnits);
+    if (invalidSquad) return res.status(400).json({ error: invalidSquad.error });
 
     const enemies = getEncounter(region_id, level);
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
@@ -3876,7 +3910,7 @@ if (typeof matchmakingTimer.unref === 'function') matchmakingTimer.unref();
 
 // POST /pvp/enqueue — join the queue with the formation just arranged in prep.
 router.post('/pvp/enqueue', requireAuth, async (req, res) => {
-  const { chat_id, mode = 'pvp_quick', formation, power = 0 } = req.body;
+  const { chat_id, mode = 'pvp_quick', formation } = req.body;
   if (!chat_id || !formation) return res.status(400).json({ error: 'chat_id and formation required' });
 
   const units     = Array.isArray(formation.playerUnitIds) ? formation.playerUnitIds : null;
@@ -3893,8 +3927,11 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
     }
 
+    const squad = await loadSquad(chat_id, units);
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
     pvpQueue.sweep();
-    const result = pvpQueue.enqueue({ chat_id: String(chat_id), mode, formation, power });
+    const result = pvpQueue.enqueue({ chat_id: String(chat_id), mode, formation, power: squad.power });
 
     if (!result.matched) {
       await writeQueueRow(result.entry);
