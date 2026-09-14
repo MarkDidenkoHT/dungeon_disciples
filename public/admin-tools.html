@@ -457,6 +457,32 @@
       .compare-panel { max-height: 50vh; }
       .legend { margin-left: 0; }
     }
+    .bot-list { display: flex; flex-wrap: wrap; gap: 16px; }
+    .bot-card {
+      background: #1b1e28;
+      border: 1px solid #2b2f3d;
+      border-radius: 14px;
+      padding: 14px;
+      width: 380px;
+      max-width: 100%;
+    }
+    .bot-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 4px; }
+    .bot-card-name { font-weight: 600; font-size: 15px; }
+    .bot-card-meta { color: #8a8fa8; font-size: 12px; margin-bottom: 10px; }
+    .bot-power { font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .bot-power.ok { color: #5fdc62; }
+    .bot-power.off { color: #f5c542; }
+    .bot-grid-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; color: #6a7090; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
+    .bot-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, minmax(64px, auto)); gap: 6px; }
+    .bot-cell { background: #262b38; border: 1px solid #363c4e; border-radius: 8px; padding: 6px 8px; font-size: 12px; line-height: 1.35; }
+    .bot-cell.empty { background: transparent; border-style: dashed; }
+    .bot-cell.hero { border-color: #f5c542; }
+    .bot-cell-name { font-weight: 600; }
+    .bot-cell-sub { color: #8a8fa8; }
+    .bot-cell-item { color: #9fb4ff; }
+    .bot-cell-spells { color: #d59bff; }
+    .bot-problems { margin-top: 10px; font-size: 12px; color: #ff8a8a; padding-left: 16px; }
+    .bot-clean { margin-top: 10px; font-size: 12px; color: #5fdc62; }
   </style>
 </head>
 <body>
@@ -469,6 +495,7 @@
 <div class="tabs">
   <button class="tab-btn active" data-tab="units">Units</button>
   <button class="tab-btn" data-tab="items">Items</button>
+  <button class="tab-btn" data-tab="bots">Bots</button>
 </div>
 
 <div id="tab-units" class="tab-content active">
@@ -550,6 +577,23 @@
     <div class="compare-panel" id="itemComparePanel">
       <div class="empty-msg">Select items from the left panel to compare.</div>
     </div>
+  </div>
+</div>
+
+<div id="tab-bots" class="tab-content">
+  <div class="sub">
+    PvP bot templates from <strong>/data/bot_templates.js</strong>. Power is the same ⚔ the prep screen shows for an enemy army. Front line is the left column.
+  </div>
+  <div class="toolbar">
+    <span class="status" id="botLoadStatus">⏳ Loading bot templates...</span>
+    <div class="filter-group">
+      <select id="botFactionFilter"><option value="">Faction</option></select>
+      <select id="botBandFilter"><option value="">Band</option></select>
+      <select id="botProblemFilter"><option value="">All</option><option value="problems">⚠️ With problems</option><option value="clean">✅ Clean</option></select>
+    </div>
+  </div>
+  <div id="botList" class="bot-list">
+    <div class="empty-msg">Loading templates...</div>
   </div>
 </div>
 
@@ -2036,6 +2080,102 @@
     loadStatus.className = 'status';
     itemLoadStatus.className = 'status';
   })();
+</script>
+
+<script type="module">
+  const status = document.getElementById('botLoadStatus');
+  const list = document.getElementById('botList');
+  const factionFilter = document.getElementById('botFactionFilter');
+  const bandFilter = document.getElementById('botBandFilter');
+  const problemFilter = document.getElementById('botProblemFilter');
+
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const bandLabel = b => `${b.min}–${b.max === Infinity ? '∞' : b.max}`;
+
+  try {
+    const { calcUnitPower } = await import('/utils.js');
+    const { ITEM_DEFS } = await import('/data/items.js');
+    const {
+      BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, buildBotArmy, checkBotTemplates,
+    } = await import('/data/bot_templates.js');
+
+    for (const f of BOT_FACTIONS) factionFilter.insertAdjacentHTML('beforeend', `<option value="${f}">${f}</option>`);
+    for (const b of BOT_BANDS) bandFilter.insertAdjacentHTML('beforeend', `<option value="${b.id}">${b.id} (${bandLabel(b)})</option>`);
+
+    const cellHtml = (slot, army) => {
+      const def = findBotUnit(slot.unit);
+      const unit = army.find(u => u.cell === slot.cell);
+      const size = def?.size ?? 'tile';
+      const row = Math.floor(slot.cell / 2) + 1;
+      const col = (slot.cell % 2) + 1;
+      const place = size === 'row'
+        ? `grid-row:${row};grid-column:1 / span 2;`
+        : size === 'column'
+          ? `grid-row:${row} / span 2;grid-column:${col};`
+          : `grid-row:${row};grid-column:${col};`;
+      const item = slot.item_id ? (ITEM_DEFS[slot.item_id]?.name || slot.item_id) : '';
+      const spells = (slot.spells || []).map(s => `${findBotSpell(s.spell_id)?.name || s.spell_id}${s.power ? ' ×' + s.power : ''}`).join(', ');
+      return `
+        <div class="bot-cell${slot.hero ? ' hero' : ''}" style="${place}">
+          <div class="bot-cell-name">${slot.hero ? '★ ' : ''}${esc(def?.name || slot.unit)}</div>
+          <div class="bot-cell-sub">${esc(slot.unit)} · t${esc(def?.t ?? '?')} · ${esc(size)} · ⚔ ${unit ? calcUnitPower(unit) : '?'}</div>
+          ${item ? `<div class="bot-cell-item">${esc(item)}</div>` : ''}
+          ${spells ? `<div class="bot-cell-spells">${esc(spells)}</div>` : ''}
+        </div>`;
+    };
+
+    const render = () => {
+      const problemsById = checkBotTemplates();
+      const cards = [];
+      for (const t of BOT_TEMPLATES) {
+        if (factionFilter.value && t.faction !== factionFilter.value) continue;
+        for (const [bandId, slots] of Object.entries(t.bands || {})) {
+          if (bandFilter.value && bandId !== bandFilter.value) continue;
+          const band = BOT_BANDS.find(b => b.id === bandId);
+          const problems = (problemsById[t.id] || []).filter(p => !/^band_\d+:/.test(p) || p.startsWith(bandId + ':'));
+          if (problemFilter.value === 'problems' && !problems.length) continue;
+          if (problemFilter.value === 'clean' && problems.length) continue;
+
+          const army = buildBotArmy(t, bandId);
+          const power = army.reduce((sum, u) => sum + calcUnitPower(u), 0);
+          const inBand = band && power >= band.min && power < band.max;
+          const covered = new Set();
+          for (const s of slots || []) {
+            const size = findBotUnit(s.unit)?.size ?? 'tile';
+            covered.add(s.cell);
+            if (size === 'row') covered.add(s.cell + 1);
+            if (size === 'column') covered.add(s.cell + 2);
+          }
+          const empties = [0, 1, 2, 3, 4, 5].filter(c => !covered.has(c))
+            .map(c => `<div class="bot-cell empty" style="grid-row:${Math.floor(c / 2) + 1};grid-column:${(c % 2) + 1};"></div>`).join('');
+
+          cards.push(`
+            <div class="bot-card">
+              <div class="bot-card-head">
+                <span class="bot-card-name">${esc(t.name || t.id)}</span>
+                <span class="bot-power ${inBand ? 'ok' : 'off'}">⚔ ${power}</span>
+              </div>
+              <div class="bot-card-meta">${esc(t.id)} · ${esc(t.faction)} · ${esc(bandId)}${band ? ` (${bandLabel(band)})` : ''}${inBand ? '' : ' · power outside band'}</div>
+              <div class="bot-grid-labels"><span>Front</span><span>Back</span></div>
+              <div class="bot-grid">${(slots || []).filter(s => Number.isInteger(s.cell) && s.cell >= 0 && s.cell <= 5).map(s => cellHtml(s, army)).join('')}${empties}</div>
+              ${problems.length
+                ? `<ul class="bot-problems">${problems.map(p => `<li>${esc(p)}</li>`).join('')}</ul>`
+                : '<div class="bot-clean">✅ No problems</div>'}
+            </div>`);
+        }
+      }
+      list.innerHTML = cards.length ? cards.join('') : '<div class="empty-msg">No templates match.</div>';
+    };
+
+    [factionFilter, bandFilter, problemFilter].forEach(el => el.addEventListener('change', render));
+    render();
+    const total = BOT_TEMPLATES.reduce((n, t) => n + Object.keys(t.bands || {}).length, 0);
+    status.textContent = `✅ ${BOT_TEMPLATES.length} templates · ${total} band versions`;
+  } catch (err) {
+    console.error(err);
+    status.textContent = `❌ ${err.message}`;
+    list.innerHTML = '<div class="empty-msg">Failed to load /data/bot_templates.js</div>';
+  }
 </script>
 </body>
 </html>
