@@ -26,6 +26,13 @@ const COLOSSUS_KILL_POINTS = { 1: 3, 2: 2, 3: 1 };
 // A phase is picked from the pool's HP when an attempt starts, and holds for
 // that whole battle. `below_pct` is inclusive: at exactly 75% the boss is in
 // phase 2. Overrides replace fields on the base unit in data/units.js.
+//
+// Phase 1 is meant to be easy. From phase 2 the sweep leaves physical damage
+// (so armor stops carrying the fight) and every hit cuts healing on the whole
+// line (infect, then decay), because a healer line outlasts a flat sweep forever.
+// Each later phase carries ONE spell so the boss saves up for it: the boss AI
+// casts the most expensive spell it can afford, and a cheap second spell kept it
+// from ever reaching Death's Verdict.
 const COLOSSUS_PHASES = [
   {
     id: 1, below_pct: 100,
@@ -38,26 +45,26 @@ const COLOSSUS_PHASES = [
   {
     id: 2, below_pct: 75,
     name: 'Roots Take Hold', name_ru: 'Корни впиваются',
-    description: 'Thorned roots answer every blow, and rot spreads through your line.',
-    description_ru: 'Шипастые корни отвечают на каждый удар, а по строю ползёт гниль.',
-    overrides: { action_power: 16, passive: ['unbreakable 2', 'stoicism 1', 'thorns 1'] },
+    description: 'Thorned roots strike past armor, sap healing and spread rot.',
+    description_ru: 'Шипастые корни бьют сквозь броню, ослабляют лечение и сеют гниль.',
+    overrides: { action_power: 22, damage_source: 'nature', passive: ['unbreakable 2', 'stoicism 1', 'thorns 1', 'infect 1'] },
     spells: [{ spell_id: 'boss_grave_rot', power: 3 }],
   },
   {
     id: 3, below_pct: 50,
     name: 'The Bells Toll', name_ru: 'Звонят колокола',
-    description: 'The cathedral bells ring out a sentence on the weakest.',
-    description_ru: 'Колокола собора выносят приговор слабейшему.',
-    overrides: { action_power: 19, passive: ['unbreakable 2', 'stoicism 1', 'thorns 1'] },
-    spells: [{ spell_id: 'boss_grave_rot', power: 3 }, { spell_id: 'boss_deaths_verdict', power: 4 }],
+    description: 'Death rings through the line, and the bells pass sentence on the weakest.',
+    description_ru: 'Смерть звенит над строем, а колокола выносят приговор слабейшему.',
+    overrides: { action_power: 28, damage_source: 'death', passive: ['unbreakable 2', 'stoicism 1', 'thorns 1', 'infect 2'] },
+    spells: [{ spell_id: 'boss_deaths_verdict', power: 4 }],
   },
   {
     id: 4, below_pct: 25,
     name: 'Last Light', name_ru: 'Последний свет',
-    description: 'The stone cracks open. Faster, harder, and easier to hurt.',
-    description_ru: 'Камень трескается. Быстрее, сильнее — и уязвимее.',
-    overrides: { action_power: 23, initiative: 55, armor: 15, passive: ['unbreakable 2', 'stoicism 1', 'thorns 2'] },
-    spells: [{ spell_id: 'boss_grave_rot', power: 3 }, { spell_id: 'boss_deaths_verdict', power: 4 }],
+    description: 'The stone cracks open and burns. Faster, deadlier, easier to hurt.',
+    description_ru: 'Камень трескается и пылает. Быстрее, смертоноснее — и уязвимее.',
+    overrides: { action_power: 34, damage_source: 'fire', initiative: 55, armor: 15, passive: ['unbreakable 2', 'stoicism 1', 'thorns 2', 'infect 2', 'decay 2'] },
+    spells: [{ spell_id: 'boss_deaths_verdict', power: 4 }],
   },
 ];
 

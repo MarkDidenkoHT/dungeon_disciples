@@ -9,9 +9,7 @@ import { COLOSSUS_PHASES, COLOSSUS_CURRENCY } from '../data/colossus.js';
 // the player is owed.
 
 const CT = {
-  title:       { en: 'Faction Colossus',  ru: 'Колосс фракций' },
-  back:        { en: 'Regions',           ru: 'Регионы' },
-  you:         { en: 'You',               ru: 'Вы' },
+  you:       { en: 'You',               ru: 'Вы' },
   phase:       { en: n => `Phase ${n}`,   ru: n => `Фаза ${n}` },
   hp:          { en: (hp, max) => `${hp} / ${max} HP`, ru: (hp, max) => `${hp} / ${max} HP` },
   attack:      { en: 'Attack',            ru: 'В бой' },
@@ -106,7 +104,7 @@ function portraitUrl(unitId) {
   return assetUrl(`/assets/character_portraits/p_${id}.png`);
 }
 
-export async function renderColossusPage(host, state, { player, L, onBack, onAttack }) {
+export async function renderColossusPage(host, state, { player, L, onAttack }) {
   if (!host) return;
   const mine  = state.bosses?.[0];
   const phase = COLOSSUS_PHASES.find(p => p.id === mine?.phase);
@@ -130,12 +128,6 @@ export async function renderColossusPage(host, state, { player, L, onBack, onAtt
 
   host.innerHTML = `
     <div class="colossus-page-inner">
-      <div class="colossus-head">
-        <button class="colossus-back" type="button">‹ ${CT.back[L]}</button>
-        <span class="colossus-title">${CT.title[L]}</span>
-        <span class="colossus-muted" title="${CT.resets[L]}">⏱ ${timeLeft(state.week.resets_at - Date.now(), L)}</span>
-      </div>
-
       ${state.kill_rewards?.length ? `
         <div class="colossus-notice">
           ${CT.killReward[L]}
@@ -143,6 +135,7 @@ export async function renderColossusPage(host, state, { player, L, onBack, onAtt
         </div>` : ''}
 
       <div class="colossus-hero" style="background-image:url('${assetUrl('/assets/embark/colossus.jpg')}')">
+        <span class="colossus-timer" title="${CT.resets[L]}">⏱ ${timeLeft(state.week.resets_at - Date.now(), L)}</span>
         <div class="colossus-hero-text">
           <span class="colossus-hero-name">${L === 'ru' ? 'Соборный Колосс' : 'Cathedral Colossus'}</span>
           ${phase && !mine?.killed_at ? `<span class="colossus-hero-phase">${esc(L === 'ru' ? phase.name_ru : phase.name)} — ${esc(L === 'ru' ? phase.description_ru : phase.description)}</span>` : ''}
@@ -181,7 +174,6 @@ export async function renderColossusPage(host, state, { player, L, onBack, onAtt
       </div>
     </div>`;
 
-  host.querySelector('.colossus-back')?.addEventListener('click', () => onBack?.());
   host.querySelector('.colossus-attack')?.addEventListener('click', () => onAttack?.());
 }
 

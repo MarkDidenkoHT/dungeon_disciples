@@ -582,7 +582,6 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         paintColossusCard();
         return renderColossusPage(host, state, {
           player, L,
-          onBack:   () => setLayer(2),
           onAttack: () => navigate('battle-prep', { player, mode: 'colossus' }),
         });
       })

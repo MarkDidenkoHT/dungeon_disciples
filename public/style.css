@@ -9300,15 +9300,13 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .embark-layer .colossus-page { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .colossus-page-inner { display: flex; flex-direction: column; gap: 10px; padding: 8px 4px 16px; }
 .colossus-page-error { align-items: center; padding: 2rem 1rem; text-align: center; }
-.colossus-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.colossus-title { font-weight: bold; font-size: 1.05rem; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-.colossus-back { background: none; border: 0; color: var(--muted); font-size: 0.85rem; padding: 4px 0; cursor: pointer; }
 .colossus-muted { color: var(--muted); font-size: 0.78rem; }
 .colossus-notice {
   background: var(--surface); border: 1px solid var(--accent); border-radius: 10px;
   padding: 8px 10px; font-size: 0.8rem; color: #fff;
 }
 .colossus-hero {
+  position: relative;
   min-height: 130px; border-radius: 10px; border: 1px solid var(--border);
   background-color: #1a1d26; background-size: cover; background-position: center 20%;
   display: flex; align-items: flex-end; padding: 10px;
@@ -9341,7 +9339,16 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .colossus-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
 .colossus-stat span { font-size: 0.68rem; color: var(--muted); }
 .colossus-stat b { font-size: 1.05rem; color: #fff; }
-.colossus-section { display: flex; flex-direction: column; gap: 6px; }
+/* Milestone, resting units and top contributors share the boss cards' frame. */
+.colossus-section {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
+}
+.colossus-timer {
+  position: absolute; top: 8px; left: 8px;
+  font-size: 0.75rem; color: #fff; background: rgba(0,0,0,0.55);
+  border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px;
+}
 .colossus-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .colossus-chip { font-size: 0.72rem; color: #fff; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; display: inline-flex; align-items: center; gap: 3px; }
 .colossus-chip img { width: 14px; height: 14px; }

@@ -188,9 +188,14 @@ Decisions taken while building (change in `data/colossus.js`):
   `embark/colossus.jpg` (page and card).
 - **Reset:** Monday 18:00 UTC (21:00 Moscow). Unit rest follows each player's local day,
   the same as daily tasks.
-- **Phases** are fixed for a whole attempt, from the pool's HP when it starts:
-  1 Awakened (sweeps the line) · 2 Roots Take Hold (+Thorns, Grave Rot) ·
-  3 The Bells Toll (harder, + Death's Verdict) · 4 Last Light (faster, harder, less armor).
+- **Phases** are fixed for a whole attempt, from the pool's HP when it starts. Phase 1 is
+  deliberately easy; from phase 2 the sweep stops being physical and cuts healing, because
+  tester feedback showed a flat 14-physical sweep is outhealed by any t2.5+ army:
+  1 Awakened (14 physical to all) ·
+  2 Roots Take Hold (22 nature, Infect 1, Thorns 1, Grave Rot) ·
+  3 The Bells Toll (28 death, Infect 2, Death's Verdict) ·
+  4 Last Light (34 fire, faster, less armor, Infect 2, Decay 2, Thorns 2, Death's Verdict).
+  One spell per phase, so the boss saves power for it.
 - **The hero never rests.** A hero is required, so resting it would make one attempt per
   day the whole allowance. Only followers rest.
 - **Units enter at full HP** and the attempt never writes roster HP.
