@@ -1,4 +1,4 @@
-// The day's three nudges. Build-time constants read from BOTH sides —
+// The day's nudges. Build-time constants read from BOTH sides —
 // `require`d by routes/index.js and imported as an ES module by public/daily.js
 // — so the server and the sheet can never disagree about what is being asked or
 // what it pays.
@@ -29,7 +29,30 @@ const DAILY_TASKS = [
     desc:   { en: 'In battle, spend at least 3 power on one cast.',
               ru: 'В бою потратьте на одно заклинание не менее 3 силы.' },
   },
+  // `min_hero_tier`: the task is part of the day only once the player's hero has
+  // reached that tier. Below it the task is neither shown nor needed to claim.
+  {
+    id:     'colossus',
+    target: 1,
+    min_hero_tier: 2,
+    title:  { en: 'Fight the Colossus',         ru: 'Сразитесь с Колоссом' },
+    desc:   { en: 'One attempt on your faction’s weekly boss. Any damage counts.',
+              ru: 'Одна попытка против еженедельного босса вашей фракции. Засчитывается любой урон.' },
+  },
+  {
+    id:     'pvp',
+    target: 1,
+    min_hero_tier: 3,
+    title:  { en: 'Fight a quick match',        ru: 'Проведите быстрый бой' },
+    desc:   { en: 'Any unranked duel, against a player or a bot. Win or lose.',
+              ru: 'Любая нерейтинговая дуэль — с игроком или ботом. Победа или поражение.' },
+  },
 ];
+
+// The tasks that make up the day for a hero of `heroTier`.
+function dailyTasksForTier(heroTier = 1) {
+  return DAILY_TASKS.filter(t => (t.min_hero_tier ?? 1) <= heroTier);
+}
 
 // Pick ONE. Deliberately generous while the goal is habit, not balance.
 //
@@ -67,7 +90,7 @@ const DAILY_REWARDS = [
 const DAILY_TASKS_BY_ID   = Object.fromEntries(DAILY_TASKS.map(t => [t.id, t]));
 const DAILY_REWARDS_BY_ID = Object.fromEntries(DAILY_REWARDS.map(r => [r.id, r]));
 
-export { DAILY_TASKS, DAILY_REWARDS, DAILY_TASKS_BY_ID, DAILY_REWARDS_BY_ID };
+export { DAILY_TASKS, DAILY_REWARDS, DAILY_TASKS_BY_ID, DAILY_REWARDS_BY_ID, dailyTasksForTier };
 if (typeof module !== 'undefined') {
-  module.exports = { DAILY_TASKS, DAILY_REWARDS, DAILY_TASKS_BY_ID, DAILY_REWARDS_BY_ID };
+  module.exports = { DAILY_TASKS, DAILY_REWARDS, DAILY_TASKS_BY_ID, DAILY_REWARDS_BY_ID, dailyTasksForTier };
 }

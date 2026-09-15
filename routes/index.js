@@ -33,7 +33,7 @@ const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/teleg
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
-const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID } = require('../data/daily_tasks');
+const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID, dailyTasksForTier } = require('../data/daily_tasks');
 const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
 const COL = require('../data/colossus');
 
@@ -1420,7 +1420,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // Today's tasks and their progress. Free — the player row is already
       // loaded — so the shell can badge the button without a round-trip of its
       // own. Claiming still goes through /daily/claim, which re-reads the row.
-      daily: player ? dailyPayload(player) : null,
+      daily: player ? dailyPayload(player, heroTierOf(roster)) : null,
       daily_defs: { tasks: DAILY_TASKS, rewards: DAILY_REWARDS },
     });
   } catch (err) {
@@ -1878,11 +1878,27 @@ function dailyRecordFor(player) {
   };
 }
 
+// The hero's tier, which decides which tasks make up the day (see
+// min_hero_tier in data/daily_tasks.js). Tier lives on the unit definition.
+function heroTierOf(rosterRows) {
+  const hero = (rosterRows || []).find(r => r.is_hero);
+  if (!hero) return 1;
+  return getUnitByDataId(hero.unit_data?.unit_id)?.t ?? hero.unit_data?.t ?? 1;
+}
+
+async function heroTierFor(chat_id) {
+  const rows = await supabase(
+    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&is_hero=eq.true&select=unit_data,is_hero&limit=1`
+  );
+  return heroTierOf(rows);
+}
+
 // What the client is told: per-task progress, whether the set is finished, and
 // whether the reward is still owed. Derived, so the client cannot disagree.
-function dailyPayload(player) {
+// Only the tasks this hero's tier has unlocked are part of the day.
+function dailyPayload(player, heroTier = 1) {
   const record = dailyRecordFor(player);
-  const tasks  = DAILY_TASKS.map(t => ({
+  const tasks  = dailyTasksForTier(heroTier).map(t => ({
     id:       t.id,
     target:   t.target,
     progress: Math.min(record[t.id], t.target),
@@ -2441,7 +2457,7 @@ router.get('/daily', requireAuth, async (req, res) => {
     // lives in data/buildings.js, which is CommonJS and cannot be imported by
     // the browser — so the answer is sent rather than re-derived client-side.
     res.json({
-      ...dailyPayload(rows[0]),
+      ...dailyPayload(rows[0], await heroTierFor(chat_id)),
       faction_crystal: FACTION_CRYSTAL[rows[0].faction] || 'Crystals_Life',
       tasks_def: DAILY_TASKS,
       rewards: DAILY_REWARDS,
@@ -2467,7 +2483,7 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
 
     const record = dailyRecordFor(rows[0]);
     if (record.claimed) return res.status(400).json({ error: 'Already claimed today', code: 'daily_claimed' });
-    if (!DAILY_TASKS.every(t => record[t.id] >= t.target)) {
+    if (!dailyTasksForTier(await heroTierFor(chat_id)).every(t => record[t.id] >= t.target)) {
       return res.status(400).json({ error: 'Tasks not finished', code: 'daily_incomplete' });
     }
 
@@ -4580,6 +4596,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
       bumpDailyTask(chat_id, 'battles');
+      bumpDailyTask(chat_id, 'colossus');
       const colossus = await settleColossusAttempt(record);
       return res.json({
         xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false,
@@ -4594,6 +4611,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
       await persistBattleRosterState(chat_id, record.battle_data);
+      // A bot duel is a quick match for the day's task, win or lose.
+      bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === 'player';
       const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won };
@@ -4619,6 +4638,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       }
 
       await persistBattleRosterState(chat_id, record.battle_data, { side: mySide });
+      // Counts for both players, win or lose. A player who concedes claims
+      // through /battle/end instead and does not count: walking out is not a fight.
+      bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === mySide;
       const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won };

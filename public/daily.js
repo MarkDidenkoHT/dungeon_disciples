@@ -7,7 +7,7 @@ const T = (en, ru) => (lang === 'ru' ? ru : en);
 
 const ERRORS = {
   daily_claimed:    ['Already claimed today.',   'Награда за сегодня уже получена.'],
-  daily_incomplete: ['Finish all three first.',  'Сначала выполните все три задания.'],
+  daily_incomplete: ['Finish every task first.', 'Сначала выполните все задания.'],
   daily_bad_reward: ['Pick one of the rewards.', 'Выберите одну из наград.'],
 };
 
@@ -75,7 +75,7 @@ function bodyHtml(state) {
     <div class="daily-section-label">
       ${state.complete
         ? T('Choose your reward', 'Выберите награду')
-        : T('Finish all three to choose a reward', 'Выполните все три, чтобы выбрать награду')}
+        : T('Finish every task to choose a reward', 'Выполните все задания, чтобы выбрать награду')}
     </div>
     <div class="daily-rewards">
       ${DAILY_REWARDS.map(r => rewardHtml(r, !state.complete, state.faction_crystal)).join('')}

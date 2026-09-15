@@ -322,6 +322,20 @@ Parked because Colossus + Tourney are enough for the next 1–2 weeks of testing
 
 ---
 
+## Daily tasks
+
+The daily set grows with the hero (`min_hero_tier` in `data/daily_tasks.js`):
+
+| Hero tier | Tasks |
+|---|---|
+| 1 | Fight 3 battles · Send an errand · Cast a spell at 3+ power |
+| 2+ | + Fight the Colossus (one attempt, any damage) |
+| 3+ | + Fight a quick match (human or bot, win or lose) |
+
+Counted when the battle's result is claimed. A player who concedes a duel does not count it.
+
+---
+
 ## Build order
 
 1. **PvP bots.** Unranked stops being dead. The bot army builder takes a rule set
