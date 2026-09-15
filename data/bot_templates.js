@@ -7,7 +7,8 @@ import { SPELLS } from './spells.js';
 //   0 1
 //   2 3
 //   4 5
-// Column 0 is the front line. A row unit anchors on 0/2/4, a column unit on its top cell.
+// Column 0 (cells 0/2/4) is the front line, column 1 (cells 1/3/5) the back.
+// A row unit anchors on 0/2/4, a column unit on its top cell.
 // `hero: true` marks the hero; `spells` are cast by the boss spell AI.
 
 // Inclusive on both ends. Players below 200 meet band_200 (see botBandFor).
@@ -71,8 +72,8 @@ const BOT_TEMPLATES = [
     bands: {
       band_500: [
         { unit: 'd3211',     cell: 0 },
-        { unit: 'h_d_2_a41', cell: 2, hero: true },
-        { unit: 'd711',      cell: 3 },
+        { unit: 'h_d_2_a41', cell: 3, hero: true },
+        { unit: 'd711',      cell: 2 },
         { unit: 'd3111',     cell: 4 },
       ],
     },
@@ -215,6 +216,12 @@ function checkBotTemplate(template) {
       for (const c of footprint(cell, size)) {
         if (taken.has(c)) at(`${label}: cell ${c} already holds ${taken.get(c)}`);
         else taken.set(c, label);
+      }
+      // Front line is column 0 (cells 0/2/4). A row unit spans both lines, so it has no wrong one.
+      if (size !== 'row') {
+        const col = cell % 2;
+        if (def.pref_position === 'front' && col === 1) at(`${label}: front-line unit stands in the back line (cell ${cell})`);
+        if (def.pref_position === 'back'  && col === 0) at(`${label}: back-line unit stands in the front line (cell ${cell})`);
       }
 
       const spells = slot.spells || [];

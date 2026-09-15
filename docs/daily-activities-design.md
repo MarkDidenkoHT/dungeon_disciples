@@ -148,6 +148,28 @@ Bots are **hand-made templates**, not generated armies.
 Picking order when rules clash: never the same template twice (unless it is the only one in
 the band), then faction rotation, then random.
 
+### Found in testing
+
+- **Placement.** On the enemy side the front line is **column 0: cells 0 / 2 / 4**, and the
+  back line is column 1: cells 1 / 3 / 5. Dual Gargoyles first had the ranged hero on 2
+  (front) and the melee Inferno Spawn on 3 (back): the hero was exposed and the Spawn had
+  nothing in reach. Fixed by swapping them. Units already carry `pref_position`, so the
+  template check can warn when a `front` unit stands in column 1 or a `back` unit in column 0.
+- **Ability use.** Bots fire abilities with no reason to. Both gargoyles used Stone Form
+  (a heal) on their first turn, at full HP. The enemy AI (`chooseAiAction` →
+  `aiPickAbilityTarget` in `utils/battle-engine.js`) has to judge an ability by what it
+  would do now: no heal on a full-HP unit, no buff that is already up, and keep it for when
+  it matters. This AI also plays region encounters, so a fix improves both.
+
+### Next tasks
+
+6. Template check: warn on `pref_position` against the column a unit stands in. **Done.**
+7. Bot ability AI: use abilities only when their effect applies (see Ability use above).
+   **Done** for every ally/self ability that used to fire on sight: Stone Form, Ember Shroud,
+   Prayer of Healing, Mother's Blessing, Shared Suffering, Verse of Cataclysm (a self-kill),
+   Blessing of Protection. Lion's Roar, Blood Craze and Infernal Mandate still fire early,
+   which is when they are worth most.
+
 ---
 
 ## 2. Faction Colossus

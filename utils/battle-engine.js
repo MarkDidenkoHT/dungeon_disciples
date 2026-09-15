@@ -2513,8 +2513,93 @@ class BattleEngine {
       scored.sort((a, b) => b.saved - a.saved);
       return scored[0].c;
     }
-    // Team/self buff (initiative, etc.) — cast it; earlier is better, and the
-    // AI only gets one shot at it anyway.
+    // ── Abilities that are only worth their moment ──────────────────────────
+    // Every active is spent once per battle (used_active), so one cast with
+    // nothing to do is gone for the whole fight. These all used to fall through
+    // to the buff branch below and fire on the first turn: PvP bots showed it,
+    // with both gargoyles of a template opening on Stone Form at full HP.
+
+    // Stone Form / Ember Shroud — a short self ward with a heal. Worth it once
+    // the heal lands in full, or when what can reach the unit this round would
+    // take half of what it has left.
+    if (p.stone_form_heal_pct != null || p.ember_shroud_heal_pct != null) {
+      if (!targets.includes(actor)) return null;
+      const pct     = p.stone_form_heal_pct ?? p.ember_shroud_heal_pct;
+      const heal    = Math.floor(actor.max_hp * pct / 100);
+      const missing = actor.max_hp - actor.battle_hp;
+      const threat  = this.aiIncomingThreat(actor).total;
+      return (missing >= heal || threat >= actor.battle_hp / 2) ? actor : null;
+    }
+
+    // Prayer of Healing — a flat heal on every ally. Held until at least two
+    // allies' worth of it would actually land.
+    if (p.heal_flat != null && def.target === 'all_allies') {
+      const lands = this.combatants
+        .filter(c => c.side === actor.side && c.alive)
+        .reduce((sum, c) => sum + Math.min(p.heal_flat, c.max_hp - c.battle_hp), 0);
+      if (lands < p.heal_flat * 2) return null;
+      return targets.includes(actor) ? actor : targets[0];
+    }
+
+    // Mother's Blessing — pays a slice of her own HP every turn, for the rest of
+    // the battle, to mend the OTHER allies. Only once they are hurt enough to
+    // take it, and while she can afford to pay.
+    if (p.mothers_blessing) {
+      if (actor._mothers_blessing || !targets.includes(actor)) return null;
+      const cost = Math.max(1, Math.floor(actor.max_hp * (p.mothers_blessing_hp_cost_pct ?? 10) / 100));
+      const lands = this.combatants
+        .filter(c => c.side === actor.side && c.alive && c.id !== actor.id)
+        .reduce((sum, c) => sum + Math.min(cost, c.max_hp - c.battle_hp), 0);
+      return (lands >= cost * 2 && actor.battle_hp > actor.max_hp / 2) ? actor : null;
+    }
+
+    // Shared Suffering — drains a Zombie ally to heal the caster, and does
+    // nothing else. Only when the caster is meaningfully hurt, and only from a
+    // donor that can spare it.
+    if (p.ally_drain_pct_per_tag != null) {
+      if (actor.battle_hp / actor.max_hp > 0.6) return null;
+      return targets.filter(c => c.id !== actor.id && c.battle_hp / c.max_hp > 0.5)
+        .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
+    }
+
+    // Verse of Cataclysm — the unit dies to hit every enemy. Only when it is
+    // dying anyway (what can reach it this round would finish it), or when the
+    // blast itself kills someone.
+    if (p.self_kill) {
+      if (!targets.includes(actor)) return null;
+      const doomed = this.aiIncomingThreat(actor).total >= actor.battle_hp;
+      const kills = this.combatants.some(e => {
+        if (!e.alive || e.side === actor.side) return false;
+        const res = p.damage_type ? ((e.unit_data?.resistances ?? e.resistances ?? {})[p.damage_type] ?? 0) : 0;
+        const dmg = Math.floor((p.cataclysm_damage ?? 0) * (1 - Math.min(MITIGATION_CAP_PCT, res) / 100));
+        return dmg >= e.battle_hp;
+      });
+      return (doomed || kills) ? actor : null;
+    }
+
+    // Blessing of Protection — the target intercepts every attack aimed past it
+    // at the row behind. Worth something only on a front-line ally with a
+    // threatened ally behind it; the most damage covered wins.
+    if (p.guaranteed_intercept) {
+      const frontCol = actor.side === 'enemy' ? 0 : 1;
+      const inFront  = c => this.getFootprint(c).some(cell => cellCol(cell) === frontCol);
+      const scored = targets
+        .filter(c => c.alive && c.side === actor.side && (c._guard_rounds ?? 0) <= 0 && inFront(c))
+        .map(c => {
+          const rows = new Set(this.getFootprint(c).map(cellRow));
+          const covered = this.combatants
+            .filter(b => b.alive && b.side === actor.side && b.id !== c.id && !inFront(b)
+              && this.getFootprint(b).some(cell => rows.has(cellRow(cell))))
+            .reduce((sum, b) => sum + this.aiIncomingThreat(b).total, 0);
+          return { c, covered };
+        })
+        .filter(x => x.covered > 0)
+        .sort((a, b) => (b.covered - a.covered) || (b.c.battle_hp - a.c.battle_hp));
+      return scored[0]?.c ?? null;
+    }
+
+    // Team/self buff (initiative, a commanded strike) — cast it; earlier is
+    // better, and the AI only gets one shot at it anyway.
     if (def.target === 'self' || def.target === 'all_allies' || def.target === 'ally' || def.target === 'ally_any' || def.target === 'ally_tagged') {
       return targets.includes(actor) ? actor : targets[0];
     }
