@@ -5011,24 +5011,26 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
 
 router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
   const { chat_id, roster_id, mercenary_building_id, slot } = req.body;
-  if (!chat_id || !roster_id || !mercenary_building_id || !slot) return res.status(400).json({ error: 'chat_id, roster_id, mercenary_building_id, and slot required' });
+  // roster_id is optional: this upgrades the building, and the units it can
+  // auto-level are found by slot. A dead or dismissed mercenary must not block it.
+  if (!chat_id || !mercenary_building_id || !slot) return res.status(400).json({ error: 'chat_id, mercenary_building_id, and slot required' });
   try {
     const allMercBuildings = Object.values(MERCENARY_BUILDINGS).flat();
     const bDef = allMercBuildings.find(b => b.id === mercenary_building_id);
     if (!bDef) return res.status(404).json({ error: 'Mercenary building not found' });
 
-    const [rosterRows, structRows, inventoryRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+    const [allRosterRows, structRows, inventoryRows] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&is_hero=eq.false&select=id,chat_id,unit_data,is_hero`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
-    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
     if (!structRows.length) return res.status(404).json({ error: 'Structures not found' });
+    const rosterRows = allRosterRows.filter(r =>
+      roster_id ? String(r.id) === String(roster_id) : r.unit_data?.building_slot === slot);
 
     const record  = structRows[0];
     const slots   = record.buildings_data || {};
-    if (slots[slot]?.building_id !== rosterRows[0].unit_data?.mercenary_building_id_ref &&
-        !allMercBuildings.some(b => b.id === slots[slot]?.building_id)) {
+    if (!allMercBuildings.some(b => b.id === slots[slot]?.building_id)) {
       return res.status(400).json({ error: 'Slot does not contain a mercenary' });
     }
 
@@ -5069,7 +5071,10 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
       console.error('auto level-up after mercenary upgrade failed:', err.message);
     }
 
-    const updatedRoster = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
+    const rosterEntryId = rosterRows[0]?.id;
+    const updatedRoster = rosterEntryId
+      ? await supabase(`/roster?id=eq.${encodeURIComponent(rosterEntryId)}&select=id,chat_id,unit_data,is_hero`)
+      : [];
     res.json({
       success: true,
       structures: Array.isArray(updatedStruct) ? updatedStruct[0] : updatedStruct,

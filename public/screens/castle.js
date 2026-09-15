@@ -2577,11 +2577,11 @@ export function renderCastle(root, { player, focusBuilding }) {
         // region + unit rather than by slot.
         const short = Object.entries(c.cost || {}).some(([item, amt]) => amountOf(item) < amt);
         if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
-        const currentUnit = getUnitByUnitId(mercDef.unit_id);
+        // Roster rows carry `unit_id` + `building_slot` (makeUnitData), never
+        // `id`, so the slot is the reliable key. The server resolves it again
+        // if this comes back empty.
         const rosterEntry = rosterCache.find(r =>
-          r.unit_data?.mercenary &&
-          r.unit_data?.mercenary_region === mercDef.region &&
-          r.unit_data?.id === currentUnit?.id);
+          r.unit_data?.mercenary && r.unit_data?.building_slot === slot);
         performMercenaryUpgrade(c.buildingId, slot, rosterEntry?.id);
         return;
       }
@@ -3296,7 +3296,8 @@ export function renderCastle(root, { player, focusBuilding }) {
     }
 
     // Roster comes from the bootstrap payload the screen already loaded.
-    const rosterEntry = rosterCache.find(r => r.unit_data?.mercenary && r.unit_data?.mercenary_region === def.region && r.unit_data?.id === currentUnit?.id);
+    // Keyed by slot: roster rows carry `unit_id` + `building_slot`, not `id`.
+    const rosterEntry = rosterCache.find(r => r.unit_data?.mercenary && r.unit_data?.building_slot === slot);
 
     openSliderModal(buildingLabel(def),
       paths.map(path => {
