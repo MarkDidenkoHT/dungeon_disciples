@@ -2296,7 +2296,7 @@ const UNITS = {
       hp: 90, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2310,7 +2310,7 @@ const UNITS = {
       hp: 95, armor: 25, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2324,7 +2324,7 @@ const UNITS = {
       hp: 105, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2', 'undying 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2338,7 +2338,7 @@ const UNITS = {
       hp: 105, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 2', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
