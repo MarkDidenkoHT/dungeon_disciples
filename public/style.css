@@ -9376,3 +9376,33 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .colossus-result { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .colossus-result-dealt { font-size: 1.2rem; font-weight: bold; color: #fff; text-align: center; }
 .colossus-result-meta { font-size: 0.78rem; color: var(--muted); text-align: center; }
+
+.api-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 10, 0.35);
+  animation: api-loader-in 0.15s ease-out;
+}
+
+.api-loader-spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid rgba(var(--accent-rgb), 0.22);
+  border-top-color: var(--accent);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.35);
+  animation: api-loader-spin 0.9s linear infinite;
+}
+
+@keyframes api-loader-spin { to { transform: rotate(360deg); } }
+@keyframes api-loader-in { from { opacity: 0; } }
+
+.api-loader[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .api-loader-spinner { animation-duration: 2.4s; }
+}

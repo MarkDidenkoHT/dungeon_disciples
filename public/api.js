@@ -10,7 +10,51 @@ export function setSessionToken(token) {
 // token in its query string. This is the one place that hands it out.
 export function getSessionToken() { return _sessionToken; }
 
+// Player-initiated writes (heal, upgrade, craft, build...) can take a second or
+// two, so they get a spinner. Reads stay silent, and so do writes that run in
+// the background or already have their own feedback (combat, queue, tutorial
+// flag flushes). The delay keeps fast calls from flashing it.
+const LOADER_SILENT_PATHS = new Set([
+  '/login', '/battle/action', '/battle/cast', '/battle/end',
+  '/pvp/enqueue', '/pvp/leave', '/player/tutorials', '/errands/seen',
+]);
+const LOADER_DELAY_MS = 250;
+let _loaderPending = 0;
+let _loaderTimer = null;
+let _loaderEl = null;
+
+function loaderStart() {
+  _loaderPending++;
+  if (_loaderPending > 1) return;
+  _loaderTimer = setTimeout(() => {
+    if (!_loaderEl) {
+      _loaderEl = document.createElement('div');
+      _loaderEl.className = 'api-loader';
+      _loaderEl.innerHTML = '<div class="api-loader-spinner"></div>';
+      document.body.appendChild(_loaderEl);
+    }
+    _loaderEl.hidden = false;
+  }, LOADER_DELAY_MS);
+}
+
+function loaderEnd() {
+  _loaderPending = Math.max(0, _loaderPending - 1);
+  if (_loaderPending > 0) return;
+  clearTimeout(_loaderTimer);
+  if (_loaderEl) _loaderEl.hidden = true;
+}
+
 export async function api(path, body = null) {
+  const showLoader = body && !LOADER_SILENT_PATHS.has(path);
+  if (showLoader) loaderStart();
+  try {
+    return await request(path, body);
+  } finally {
+    if (showLoader) loaderEnd();
+  }
+}
+
+async function request(path, body) {
   const options = {
     method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' },
