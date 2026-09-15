@@ -109,6 +109,11 @@ const BT = {
   returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
   calculating:  { en: 'Calculating rewards…', ru: 'Подсчёт наград…' },
   noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
+  colossusSlain: { en: 'Colossus slain',   ru: 'Колосс повержен' },
+  colossusOver:  { en: 'Attempt over',     ru: 'Попытка окончена' },
+  colossusDealt: { en: n => `${n} damage dealt`, ru: n => `Нанесено урона: ${n}` },
+  colossusLeft:  { en: (hp, max) => `Boss HP ${hp} / ${max}`, ru: (hp, max) => `HP босса ${hp} / ${max}` },
+  colossusWeek:  { en: n => `Your week: ${n}`, ru: n => `Ваш урон за неделю: ${n}` },
   claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
   unlocked:     { en: n => `Level ${n} unlocked!`, ru: n => `Уровень ${n} открыт!` },
@@ -2757,7 +2762,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // have been missing from the pips as well.
       bootstrapCache.invalidate();
       const rewardsEl = root.querySelector('#result-rewards');
-      if (won) {
+      if (result.colossus) {
+        // A Colossus attempt pays in damage, won or lost: what came off the
+        // shared pool, where the pool now stands, and any milestone it passed.
+        const c   = result.colossus;
+        const pct = c.max_hp ? Math.max(0, Math.min(100, (c.hp_left / c.max_hp) * 100)) : 0;
+        const chips = (c.milestones || []).flatMap(m => m.grants).map(g => `
+          <div class="reward-chip" title="${g.item}">
+            <span class="reward-chip-icon">${CRYSTAL_ICONS[g.item] || (g.item === 'Gold' ? GOLD_ICON : '⚜')}</span>
+            <span class="reward-chip-amt">+${g.amount}</span>
+          </div>`).join('');
+        rewardsEl.innerHTML = `
+          <div class="result-outcome ${c.killed ? 'result-outcome--win' : 'result-outcome--loss'}">${c.killed ? BTx('colossusSlain') : BTx('colossusOver')}</div>
+          <div class="colossus-result">
+            <div class="colossus-result-dealt">${BT.colossusDealt[BL](c.applied)}</div>
+            <div class="colossus-bar"><div class="colossus-bar-fill" style="width:${pct}%"></div></div>
+            <div class="colossus-result-meta">${BT.colossusLeft[BL](c.hp_left, c.max_hp)} · ${BT.colossusWeek[BL](c.week_total)}</div>
+          </div>
+          ${chips ? `<div class="reward-grid">${chips}</div>` : ''}`;
+      } else if (won) {
         // Icon-forward reward chips: real art for gold, crystals and trophies.
         // Trophy icons are /assets/icons/recources/<trophy_id>.png, named after
         // the id in data/embark.js. No onerror fallback by design - a missing

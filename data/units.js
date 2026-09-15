@@ -3767,6 +3767,23 @@ const UNITS = {
         xp: 2915, passive: ['iron_will 2', 'undying 2', 'stoicism 1'], ability: null,
       },
     },
+    // The Faction Colossus. Base stats only: its HP pool, phases and spells come
+    // from data/colossus.js, which builds the unit for each attempt.
+    colossus: {
+      cathedral_colossus: {
+        id: 'colossus', f: 'col', t: 4,
+        name: 'Cathedral Colossus',
+        name_ru: 'Соборный Колосс',
+        tags: ['Holy'],
+        pref_position: 'none',
+        size: 'row',
+        hp: 10000, armor: 25, initiative: 40,
+        resistances: { air: 25, fire: 25, life: 40, death: 15, cold: 25, nature: 25 },
+        action: 'attack', target_type: 'enemy', targets: 6, range: 3,
+        damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+        xp: 0, passive: ['unbreakable 2', 'stoicism 1'], ability: null,
+      },
+    },
   },
 };
 

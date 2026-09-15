@@ -82,6 +82,11 @@ const BP_TEXT = {
                   ru: 'Очередь завершилась без подбора соперника. Попробуйте снова.' },
   queueFailed:  { en: 'Could not join the queue.', ru: 'Не удалось встать в очередь.' },
   opponentPower:{ en: 'Opponent',     ru: 'Противник' },
+  colossus:     { en: 'Colossus',     ru: 'Колосс' },
+  colossusFailed: {
+    en: 'The attempt could not start. A unit may have already fought the Colossus today, or the boss has fallen.',
+    ru: 'Не удалось начать бой. Возможно, кто-то из отряда уже сражался с Колоссом сегодня или босс уже повержен.',
+  },
   close:        { en: 'Close',        ru: 'Закрыть' },
   scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
   scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
@@ -181,6 +186,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   // fogged because the opponent is not chosen yet — matchmaking picks it once
   // the player queues. Every region-only step below is gated on this.
   const isPvp = String(mode || '').startsWith('pvp');
+  // The faction Colossus, from its embark page: the enemy is this week's boss at
+  // the pool's current HP, and followers that already fought it today sit out.
+  const isColossus = mode === 'colossus';
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
@@ -219,7 +227,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         </button>
 
         <div class="prep-side prep-side--enemy">
-          <span class="prep-side-label">${isPvp ? BP_TEXT.opponentPower[L] : BP_TEXT.enemyPower[L]}</span>
+          <span class="prep-side-label">${isPvp ? BP_TEXT.opponentPower[L] : isColossus ? BP_TEXT.colossus[L] : BP_TEXT.enemyPower[L]}</span>
           <span class="prep-side-stats">
             <span class="enemy-spell-indicator" id="enemy-spell-indicator" title="${BP_TEXT.hiddenSpell[L]}" style="display:none;">📖</span>
             <span id="enemy-army-power" class="army-power"></span>
@@ -1097,7 +1105,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         <img class="battle-cell-portrait" src="${assetUrl(`/assets/character_portraits/p_${e.id}.png`)}" alt="${e.name}" onerror="this.style.display='none'">
         <div class="battle-cell-info">
           <span class="battle-cell-name">${e.name}</span>
-          <span class="battle-cell-sub">❤ ${e.hp}</span>
+          <span class="battle-cell-sub">❤ ${e.current_hp ?? e.hp}</span>
         </div>
         ${eInsp}
       </div>`;
@@ -1106,7 +1114,8 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     const enemyPowerEl = root.querySelector('#enemy-army-power');
     if (enemyPowerEl) {
       const total = enemyArmyPower();
-      enemyPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
+      // A Colossus's ⚔ is mostly its 10,000 HP pool, which says nothing useful.
+      enemyPowerEl.textContent = total > 0 && !isColossus ? `⚔ ${total}` : '';
     }
 
     grid.querySelectorAll('.battle-cell--enemy').forEach(cell => {
@@ -1881,7 +1890,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     // warnings, not blocks — a deliberate underdog run is allowed.
     const myPower    = playerArmyPower();
     const theirPower = enemyArmyPower();
-    if (theirPower > 0 && myPower < theirPower * WEAK_ARMY_RATIO) {
+    if (!isColossus && theirPower > 0 && myPower < theirPower * WEAK_ARMY_RATIO) {
       if (!await askBeforeBattle(BP_TEXT.weakerArmy[L](myPower, theirPower))) return;
     }
 
@@ -1907,6 +1916,14 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     saveFormation();
 
     try {
+      if (isColossus) {
+        const result = await api('/colossus/attack', { chat_id: player.chat_id, playerUnitIds, placement });
+        navigate('battle', {
+          player, battle_id: result.battle_id, snapshot: result.state, selectedSpells,
+          logs: result.logs || [], mode: 'colossus',
+        });
+        return;
+      }
       const battle_id = `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const result = await api('/battle/create', {
         chat_id: player.chat_id,
@@ -1942,6 +1959,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       }
       btn.disabled = false;
       btn.classList.add('battle-prep-enter-btn--ready');
+      if (isColossus) await askBeforeBattle(BP_TEXT.colossusFailed[L], { confirmOnly: true });
     }
   });
 
@@ -1960,8 +1978,15 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       // trade. Filtered rather than shown-and-disabled: a formation slot it can
       // never fill today is just a puzzle piece that does not exist.
       const awayIds = await errandRosterIds(player.chat_id);
+      // Followers that already fought the Colossus today are left out the same
+      // way; the hero leads every attempt and never rests.
+      const colossusState = isColossus
+        ? await api(`/colossus?chat_id=${encodeURIComponent(player.chat_id)}`)
+        : null;
+      const restingIds = new Set(colossusState?.resting_roster_ids || []);
       roster = rosterData
         .filter(u => !awayIds.has(String(u.id)))
+        .filter(u => u.is_hero === true || !restingIds.has(String(u.id)))
         .map((u, i) => ({ ...u, id: u.id != null ? u.id : String(i) }))
         .sort((a, b) => (b.is_hero === true) - (a.is_hero === true));
 
@@ -1975,7 +2000,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
       // No encounter to load in quick match — the opposing formation belongs to
       // another player and does not exist until the queue pairs them.
-      enemies = isPvp ? [] : getEncounter(region_id, level);
+      enemies = isPvp      ? []
+              : isColossus ? (colossusState?.boss ? [colossusState.boss] : [])
+              : getEncounter(region_id, level);
 
       // Was driven by the encounter's own hidden spell, which no longer exists.
       // The warning is still worth giving, so it now reads the enemies THEMSELVES

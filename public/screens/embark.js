@@ -7,6 +7,7 @@ import { assetUrl } from '../asset_base.js';
 // presentation only; the level tables live in data/embark.js and are the single
 // source of truth for how many pips a region can ever show.
 import { REGIONS as REGION_DEFS } from '../../data/embark.js';
+import { loadColossus, renderColossusPage, renderColossusError, colossusCardStatus } from '../colossus-page.js';
 
 const LEVEL_COUNTS = Object.fromEntries(
   REGION_DEFS.map(r => [r.id, Object.keys(r.difficulties || {}).length]));
@@ -100,6 +101,17 @@ const REGIONS = [
     description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, бредущие ужасы и Малграт Неумирающий, что уже умирал однажды.',
     crystal: 'Death & Nature',
     crystal_ru: 'Смерти и Природы',
+  },
+  {
+    id: 'colossus',
+    label: 'Faction Colossus',
+    label_ru: 'Колосс фракций',
+    icon: '♜',
+    description: 'A weekly boss your whole faction fights together. Every hit counts.',
+    description_ru: 'Еженедельный босс, с которым сражается вся фракция. Каждый удар на счету.',
+    crystal: null,
+    // Not a region: tapping it slides to the Colossus page, left of the regions.
+    toColossus: true,
   },
   {
     id: 'pvp',
@@ -391,15 +403,21 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
                   type="button" aria-label="${UI_TEXT.regionsAria[L]}"><span>‹</span></button>
 
           <div class="embark-layer-viewport">
-            <div class="embark-layer-track" id="embark-layer-track">
+            <div class="embark-layer-track" id="embark-layer-track" style="transform:translateX(-100%)">
 
               <div class="embark-layer" data-layer="1">
-                <div class="embark-regions-grid" id="embark-regions">
+                <div class="colossus-page" id="colossus-page">
                   <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
                 </div>
               </div>
 
               <div class="embark-layer" data-layer="2">
+                <div class="embark-regions-grid" id="embark-regions">
+                  <div style="color:var(--muted);text-align:center;padding:2rem">${UI_TEXT.checking[L]}</div>
+                </div>
+              </div>
+
+              <div class="embark-layer" data-layer="3">
                 <div class="embark-regions-grid" id="embark-pvp-modes"></div>
               </div>
 
@@ -461,8 +479,9 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   // Same arrangement as the castle's two layers (see setLayer in castle.js):
   // both pages sit side by side on one track and switching slides it, so
   // neither is rebuilt and the arrows cannot race a render.
-  const LAYER_COUNT = 2;
-  let currentLayer = 1;
+  // 1 Colossus · 2 Regions · 3 Arena. The screen opens on the regions.
+  const LAYER_COUNT = 3;
+  let currentLayer = 2;
 
   function applyLayer() {
     const track = root.querySelector('#embark-layer-track');
@@ -545,6 +564,35 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   renderPvpModes();
   applyLayer();
 
+  // ── Colossus page ────────────────────────────────────────────────────────
+  // Loaded once on arrival: the same answer fills the page and the line on its
+  // card in the regions list, whichever of the two is drawn first.
+  let colossusState = null;
+
+  function paintColossusCard() {
+    const el = root.querySelector('#colossus-card-status');
+    if (el && colossusState) el.textContent = colossusCardStatus(colossusState, L);
+  }
+
+  function loadColossusPage() {
+    const host = root.querySelector('#colossus-page');
+    loadColossus(player)
+      .then(state => {
+        colossusState = state;
+        paintColossusCard();
+        return renderColossusPage(host, state, {
+          player, L,
+          onBack:   () => setLayer(2),
+          onAttack: () => navigate('battle-prep', { player, mode: 'colossus' }),
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load Colossus:', err);
+        renderColossusError(host, { L, onRetry: loadColossusPage });
+      });
+  }
+  loadColossusPage();
+
   function showReconnectModal(battle_id, battle_data) {
     openModal(UI_TEXT.reconnectTitle[L], `
       <div style="display:flex;flex-direction:column;gap:1rem;">
@@ -606,6 +654,20 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       }
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
+        if (r.toColossus) {
+          return `
+            <div class="embark-region-block embark-region-block--arena">
+              <div class="embark-card embark-card--arena" data-to-colossus="1" data-id="${r.id}" style="${regionBgStyle(r)}">
+                <div class="embark-card-info">
+                  <span class="embark-card-label">${rLabel(r)}</span>
+                  <span class="embark-card-desc">${rDesc(r)}</span>
+                  <span class="embark-card-crystal" id="colossus-card-status"></span>
+                </div>
+                <span class="embark-card-chev">‹</span>
+              </div>
+            </div>
+          `;
+        }
         if (r.toArena) {
           return `
             <div class="embark-region-block embark-region-block--arena">
@@ -701,12 +763,15 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       // they have unlocked, which is the one they almost always want; the pips
       // stay for replaying an earlier level. Coming-soon cards are excluded —
       // they have a data-id but nothing to enter.
-      root.querySelectorAll('.embark-card:not(.embark-card--coming-soon):not([data-to-arena])').forEach(card => {
+      root.querySelectorAll('.embark-card:not(.embark-card--coming-soon):not([data-to-arena]):not([data-to-colossus])').forEach(card => {
         card.addEventListener('click', () => departTo(card.dataset.id, parseInt(card.dataset.maxLevel)));
       });
 
       root.querySelector('.embark-card[data-to-arena]')
-        ?.addEventListener('click', () => setLayer(2));
+        ?.addEventListener('click', () => setLayer(3));
+      root.querySelector('.embark-card[data-to-colossus]')
+        ?.addEventListener('click', () => setLayer(1));
+      paintColossusCard();
 
       // Gated on having no battle behind them, not on an earlier step's flag.
       // It used to require `second_building`, which is SKIPPED rather than

@@ -177,6 +177,32 @@ the band), then faction rotation, then random.
 A **weekly boss per faction** (Empire, Grail, Choir), with HP far larger than one
 battle can remove. The faction chips it down together.
 
+**Built** (2026-09-15). Run `sql/colossus.sql` in Supabase before deploying. All tuning
+lives in `data/colossus.js`.
+
+Decisions taken while building (change in `data/colossus.js`):
+
+- **Boss:** new unit `colossus` (Cathedral Colossus), a row unit on the middle row, so
+  melee and ranged both reach it. Art: `character_portraits/p_colossus.png`,
+  `character_portraits/p2_colossus.png` (grid), `character_art/colossus.png`,
+  `embark/colossus.jpg` (page and card).
+- **Reset:** Monday 18:00 UTC (21:00 Moscow). Unit rest follows each player's local day,
+  the same as daily tasks.
+- **Phases** are fixed for a whole attempt, from the pool's HP when it starts:
+  1 Awakened (sweeps the line) · 2 Roots Take Hold (+Thorns, Grave Rot) ·
+  3 The Bells Toll (harder, + Death's Verdict) · 4 Last Light (faster, harder, less armor).
+- **The hero never rests.** A hero is required, so resting it would make one attempt per
+  day the whole allowance. Only followers rest.
+- **Units enter at full HP** and the attempt never writes roster HP.
+- **Abandoning** an attempt still counts the damage dealt.
+- **Currency:** "Valor" (name still open), banked as a resource.
+- **Season score:** kill order is stored with 3 / 2 / 1 points on the weekly boss row.
+  Nothing sums it yet; that waits for a season system.
+- **Kill reward** is paid the next time each contributor opens the Colossus page.
+
+Measured offline: a 300–500 ⚔ army deals roughly 300–400 damage per attempt, so a
+10,000 pool needs ~30 attempts per faction. Tune the pool to tester numbers.
+
 - **Boss HP:** ~10,000 to start (tune to current numbers; not millions).
 - **Week:** resets on a fixed day and time. Each faction fights its **own copy**.
 - **Every attempt is one battle.** Damage dealt to the boss is taken off the shared

@@ -1672,7 +1672,9 @@ class BattleEngine {
     // Withering — after wither_start_round, every unit loses a % of its max HP as
     // true damage at the start of its turn (can kill; both sides). Forces a
     // resolution when heals + reduced healing still aren't ending the fight.
-    if (this.round > BATTLE_FATIGUE.wither_start_round) {
+    // A `wither_immune` unit (the Faction Colossus) is the one exception: there
+    // the Withering is the attempt's timer, wearing down only the attackers.
+    if (this.round > BATTLE_FATIGUE.wither_start_round && !unit.unit_data?.wither_immune) {
       const wither = Math.max(1, Math.floor(unit.max_hp * this.witherPctForRound() / 100));
       tick(wither, 'Withering', '🥀', { dot_kind: 'wither' });
       if (!unit.alive) return;

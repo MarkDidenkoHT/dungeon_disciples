@@ -35,6 +35,7 @@ const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID } = require('../data/daily_tasks');
 const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
+const COL = require('../data/colossus');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -439,6 +440,13 @@ function isBotRecord(record) {
   return record?.battle_kind === 'pvp_bot' || record?.battle_data?.kind === 'pvp_bot';
 }
 
+// An attempt on the faction's weekly Colossus (data/colossus.js). PvE in every
+// way but three: the boss is stored on the record, units enter at full HP and
+// leave with their roster HP untouched, and the payout is damage to a shared pool.
+function isColossusRecord(record) {
+  return record?.battle_kind === 'colossus' || record?.battle_data?.kind === 'colossus';
+}
+
 function isClockedRecord(record) {
   return isPvpRecord(record) || isBotRecord(record);
 }
@@ -757,7 +765,9 @@ async function rehydrateEngine(record) {
       playerUnits: await buildArmyFor(chat_id, playerUnitIds),
       // A bot's army is the one it was built with, stored on the record, so a
       // template edited mid-battle does not change the fight.
-      enemies:     isBotRecord(record) ? (bd.bot?.army || []) : getEncounter(bd.region_id, bd.level),
+      enemies:     isBotRecord(record)      ? (bd.bot?.army || [])
+                 : isColossusRecord(record) ? [bd.colossus?.boss].filter(Boolean)
+                 : getEncounter(bd.region_id, bd.level),
     });
   }
 
@@ -778,6 +788,8 @@ function buildBattleData(engine, bd) {
     // A bot battle's army and template id. Carried on every write: rehydrate
     // rebuilds the enemy from it, and faction rotation reads the template id.
     ...(bd.bot ? { bot: bd.bot } : {}),
+    // A Colossus attempt: which weekly boss, and the HP and unit it started with.
+    ...(bd.colossus ? { colossus: bd.colossus, kind: 'colossus' } : {}),
   };
 }
 
@@ -3784,6 +3796,271 @@ async function createPvpBattle(a, b) {
   return { record, battle_id, engine, initialLogs };
 }
 
+// ── Faction Colossus ────────────────────────────────────────────────────────
+// A weekly boss per faction with a shared HP pool (data/colossus.js,
+// sql/colossus.sql). Each attempt is one battle; whatever it takes off the boss
+// comes off the pool when the battle is claimed or abandoned.
+
+// This week's three bosses, created on first sight. Insert-or-ignore on the
+// (week_start, faction) key, so two first visitors cannot make two bosses.
+async function ensureColossusWeek(weekStart) {
+  const read = () => supabase(`/colossus_instances?week_start=eq.${weekStart}&select=*`);
+  const rows = await read();
+  const missing = VALID_FACTIONS.filter(f => !rows.some(r => r.faction === f));
+  if (!missing.length) return rows;
+  await supabase('/colossus_instances?on_conflict=week_start,faction', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify(missing.map(faction => ({
+      week_start: weekStart, faction, max_hp: COL.COLOSSUS_MAX_HP, hp: COL.COLOSSUS_MAX_HP,
+    }))),
+  });
+  return read();
+}
+
+// Roster ids resting on the player's local `day`.
+async function colossusRestingIds(chat_id, day) {
+  const rows = await supabase(
+    `/colossus_exhaustion?chat_id=eq.${encodeURIComponent(chat_id)}&day=eq.${day}&select=roster_id`
+  );
+  return new Set(rows.map(r => String(r.roster_id)));
+}
+
+// Kill rewards owed to this player from any killed boss they hit, this week or
+// an earlier one. Each is claimed by a filtered PATCH, so a double request pays once.
+async function claimColossusKillRewards(player) {
+  const chat_id = String(player.chat_id);
+  const owed = await supabase(
+    `/colossus_contributions?chat_id=eq.${encodeURIComponent(chat_id)}&kill_reward_claimed=eq.false&damage=gt.0`
+    + `&select=instance_id,colossus_instances!inner(week_start,faction,killed_at)`
+    + `&colossus_instances.killed_at=not.is.null`
+  );
+  const paid = [];
+  for (const row of owed) {
+    const claimed = await supabase(
+      `/colossus_contributions?instance_id=eq.${row.instance_id}&chat_id=eq.${encodeURIComponent(chat_id)}&kill_reward_claimed=eq.false`,
+      { method: 'PATCH', body: JSON.stringify({ kill_reward_claimed: true }) }
+    );
+    if (!claimed.length) continue;
+    const grants = COL.colossusGrants(COL.COLOSSUS_KILL_REWARD, FACTION_CRYSTAL[player.faction]);
+    await grantResources(chat_id, grants);
+    paid.push({ faction: row.colossus_instances.faction, week_start: row.colossus_instances.week_start, grants });
+  }
+  return paid;
+}
+
+// Apply what an attempt dealt, then pay any damage milestones it passed.
+async function settleColossusAttempt(record) {
+  const bd  = record.battle_data || {};
+  const col = bd.colossus;
+  if (!col) return null;
+  const chat_id = String(record.chat_id);
+
+  const boss  = (bd.units || []).find(u => u.side === 'enemy');
+  const endHp = Math.max(0, Number(boss?.battle_hp ?? col.start_hp));
+  const dealt = Math.max(0, col.start_hp - endHp);
+
+  const [row] = await rpc('colossus_apply_damage', {
+    p_instance_id: col.instance_id, p_chat_id: chat_id, p_damage: dealt,
+  });
+  if (!row) return null;
+
+  if (row.killed) {
+    await supabase(`/colossus_instances?id=eq.${col.instance_id}`, {
+      method: 'PATCH', body: JSON.stringify({ season_points: COL.COLOSSUS_KILL_POINTS[row.kill_rank] ?? 0 }),
+    }).catch(err => console.error('Colossus season points write failed:', err.message));
+  }
+
+  const player  = await getPlayerByChatId(chat_id);
+  const crystal = FACTION_CRYSTAL[player?.faction];
+  const milestones = COL.colossusMilestonesCrossed(row.damage_before, row.damage_after)
+    .map(m => ({ damage: m.damage, grants: COL.colossusGrants(m.rewards, crystal) }));
+  const grants = milestones.flatMap(m => m.grants);
+  if (grants.length) await grantResources(chat_id, grants);
+
+  return {
+    dealt,
+    applied:    row.applied,
+    hp_left:    row.hp_left,
+    max_hp:     COL.COLOSSUS_MAX_HP,
+    killed:     row.killed,
+    kill_rank:  row.kill_rank,
+    phase:      col.phase,
+    week_total: row.damage_after,
+    milestones,
+  };
+}
+
+// GET /colossus — everything the Colossus page shows, and any kill rewards
+// owed, paid on the way.
+router.get('/colossus', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    if (!player.faction) return res.status(400).json({ error: 'Choose a faction first', code: 'no_faction' });
+
+    const week      = COL.colossusWeek();
+    const instances = await ensureColossusWeek(week.weekStart);
+    const mine      = instances.find(i => i.faction === player.faction);
+    if (!mine) return res.status(500).json({ error: 'Colossus not found for this faction' });
+
+    const [contribs, resting, kill_rewards] = await Promise.all([
+      supabase(`/colossus_contributions?instance_id=eq.${mine.id}&damage=gt.0&select=chat_id,damage,attempts&order=damage.desc`),
+      colossusRestingIds(chat_id, playerLocalDate(player.timezone)),
+      claimColossusKillRewards({ ...player, chat_id }).catch(err => {
+        console.error('Colossus kill reward claim failed:', err.message);
+        return [];
+      }),
+    ]);
+
+    const myIndex = contribs.findIndex(c => String(c.chat_id) === String(chat_id));
+    const myRow   = myIndex >= 0 ? contribs[myIndex] : null;
+
+    // Names only. chat_id is a real Telegram id and never leaves the server.
+    const shown = contribs.slice(0, 3);
+    if (myRow && myIndex >= 3) shown.push(myRow);
+    const names = {};
+    if (shown.length) {
+      const list = shown.map(c => `"${c.chat_id}"`).join(',');
+      const rows = await supabase(`/players?chat_id=in.(${encodeURIComponent(list)})&select=chat_id,username`);
+      for (const r of rows) names[String(r.chat_id)] = r.username;
+    }
+    const top = shown.map(c => ({
+      rank:   contribs.indexOf(c) + 1,
+      name:   names[String(c.chat_id)] || null,
+      damage: c.damage,
+      me:     String(c.chat_id) === String(chat_id),
+    }));
+
+    const order  = [player.faction, ...VALID_FACTIONS.filter(f => f !== player.faction)];
+    const bosses = order.map(f => instances.find(i => i.faction === f)).filter(Boolean).map(i => ({
+      faction:   i.faction,
+      max_hp:    i.max_hp,
+      hp:        i.hp,
+      phase:     COL.colossusPhaseFor(i.hp, i.max_hp).id,
+      killed_at: i.killed_at,
+      kill_rank: i.kill_rank,
+    }));
+
+    const damage = myRow?.damage ?? 0;
+    res.json({
+      week:      { week_start: week.weekStart, resets_at: week.resetsAt },
+      faction:   player.faction,
+      bosses,
+      boss:      mine.killed_at ? null : COL.buildColossusBoss(mine.hp),
+      me: {
+        damage,
+        attempts:       myRow?.attempts ?? 0,
+        rank:           myRow ? myIndex + 1 : null,
+        next_milestone: COL.COLOSSUS_MILESTONES.find(m => m.damage > damage) ?? null,
+      },
+      resting_roster_ids: [...resting],
+      top,
+      kill_rewards,
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /colossus/attack — start an attempt with the formation from battle prep.
+router.post('/colossus/attack', requireAuth, async (req, res) => {
+  const { chat_id, playerUnitIds, placement } = req.body;
+  if (!chat_id || !Array.isArray(playerUnitIds) || !playerUnitIds.length || playerUnitIds.length > 6
+      || !placement || typeof placement !== 'object') {
+    return res.status(400).json({ error: 'chat_id, playerUnitIds (1-6) and placement required' });
+  }
+  try {
+    const existing = await getActiveBattle(chat_id);
+    if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+
+    const player = await getPlayerByChatId(chat_id);
+    if (!player?.faction) return res.status(400).json({ error: 'Choose a faction first', code: 'no_faction' });
+
+    const week      = COL.colossusWeek();
+    const instances = await ensureColossusWeek(week.weekStart);
+    const mine      = instances.find(i => i.faction === player.faction);
+    if (!mine || mine.killed_at || mine.hp <= 0) {
+      return res.status(400).json({ error: 'Your faction has already slain this week\'s Colossus', code: 'colossus_killed' });
+    }
+
+    const squad = await loadSquad(chat_id, playerUnitIds);
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
+    // The hero leads every attempt, so only its followers rest. Resting the hero
+    // too would make one attempt a day the whole allowance.
+    const today   = playerLocalDate(player.timezone);
+    const resting = await colossusRestingIds(chat_id, today);
+    if (squad.units.some(u => !u.is_hero && resting.has(String(u._rosterId)))) {
+      return res.status(400).json({ error: 'A unit in this squad has already fought the Colossus today', code: 'colossus_unit_resting' });
+    }
+
+    // Everyday HP never gates this: every unit enters whole.
+    const playerUnits = squad.units.map(u => {
+      const maxHp = Number(u.unit_data?.max_hp ?? u.unit_data?.hp) || undefined;
+      return { ...u, unit_data: { ...u.unit_data, current_hp: maxHp, alive: true } };
+    });
+
+    const boss = COL.buildColossusBoss(mine.hp);
+    if (!boss) return res.status(500).json({ error: 'Colossus unit is missing from data/units.js' });
+
+    const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy([boss]), placement);
+    engine.firePendingRoundEffects();
+    if (!engine.done) engine.runAiTurns();
+
+    const battle_id = `colossus_${chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const battle_data = buildBattleData(engine, {
+      region_id: null,
+      level:     null,
+      selected_spells: [],
+      setup: {
+        playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })),
+        placement,
+      },
+      colossus: {
+        instance_id: mine.id,
+        week_start:  week.weekStart,
+        faction:     player.faction,
+        phase:       boss.phase,
+        start_hp:    boss.current_hp,
+        boss,
+      },
+    });
+
+    const record = await createBattleState({ chat_id: String(chat_id), battle_id, battle_data, battle_kind: 'colossus' });
+
+    // Rested once the attempt exists, so a failed start costs nothing, and
+    // before any result, so abandoning the attempt does not hand the units back.
+    const restRows = playerUnits
+      .filter(u => !u.is_hero)
+      .map(u => ({ chat_id: String(chat_id), day: today, roster_id: String(u._rosterId) }));
+    if (restRows.length) {
+      await supabase('/colossus_exhaustion?on_conflict=chat_id,day,roster_id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+        body: JSON.stringify(restRows),
+      });
+    }
+
+    let initialLogs = [];
+    try {
+      const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+      if (initialEvents.length) {
+        const inserted = await appendBattleLogEntries(battle_id, initialEvents);
+        initialLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+      }
+    } catch (err) {
+      console.error('Failed to persist initial Colossus log:', err);
+    }
+
+    res.json({ record, battle_id, state: engine.getSnapshot(), logs: initialLogs });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 // ── PvP: bots ───────────────────────────────────────────────────────────────
 // Nobody to fight within BOT_FALLBACK_MS: a hand-made template army from
 // data/bot_templates.js takes the enemy side. The player keeps the duel's
@@ -4202,6 +4479,16 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     // had not resolved is an abandonment. A finished battle closed through here
     // keeps its real HP; nothing is being escaped.
     const abandoned = !record.battle_data?.done;
+
+    // Leaving a Colossus attempt early still counts what was dealt, and costs no
+    // HP: roster HP is never read or written by these battles.
+    if (isColossusRecord(record)) {
+      const claimed = await claimBattleState(battle_id);
+      armyCacheDrop(battle_id);
+      const colossus = claimed ? await settleColossusAttempt(record) : null;
+      return res.json({ success: true, abandoned, colossus });
+    }
+
     await persistBattleRosterState(chat_id, record.battle_data, { abandoned, side: mySide });
 
     // Walking out of a duel is a concession, not a draw: the player still on the
@@ -4285,6 +4572,21 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // `battle_active=eq.true` in the same statement, so Postgres decides the
     // winner under a row lock: exactly one caller gets a row back, everyone else
     // gets null and stops here having paid out nothing.
+    // ── Colossus payout ────────────────────────────────────────────────────
+    // Won or lost, the attempt pays in damage to the pool; the claim makes that
+    // single-shot, the same as a region reward.
+    if (isColossusRecord(record)) {
+      const claimed = await claimBattleState(battle_id);
+      if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
+      armyCacheDrop(battle_id);
+      bumpDailyTask(chat_id, 'battles');
+      const colossus = await settleColossusAttempt(record);
+      return res.json({
+        xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false,
+        won: record.battle_data?.winner === 'player', colossus,
+      });
+    }
+
     // ── Bot payout ─────────────────────────────────────────────────────────
     // One owner, so the PvE claim applies as it is. Same 100 XP as a duel won.
     if (isBotRecord(record)) {
