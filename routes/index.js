@@ -3923,7 +3923,7 @@ router.get('/colossus', requireAuth, async (req, res) => {
     if (!mine) return res.status(500).json({ error: 'Colossus not found for this faction' });
 
     const [contribs, resting, kill_rewards] = await Promise.all([
-      supabase(`/colossus_contributions?instance_id=eq.${mine.id}&damage=gt.0&select=chat_id,damage,attempts&order=damage.desc`),
+      supabase(`/colossus_contributions?instance_id=in.(${instances.map(i => i.id).join(',')})&damage=gt.0&select=instance_id,chat_id,damage,attempts&order=damage.desc`),
       colossusRestingIds(chat_id, playerLocalDate(player.timezone)),
       claimColossusKillRewards({ ...player, chat_id }).catch(err => {
         console.error('Colossus kill reward claim failed:', err.message);
@@ -3931,34 +3931,50 @@ router.get('/colossus', requireAuth, async (req, res) => {
       }),
     ]);
 
-    const myIndex = contribs.findIndex(c => String(c.chat_id) === String(chat_id));
-    const myRow   = myIndex >= 0 ? contribs[myIndex] : null;
+    // Each faction's hitters, strongest first. The top five are shown, plus the
+    // player's own row when it falls below them.
+    const TOP_SHOWN  = 5;
+    const isMe       = c => String(c.chat_id) === String(chat_id);
+    const byInstance = new Map(instances.map(i => [i.id, contribs.filter(c => c.instance_id === i.id)]));
+    const mineList   = byInstance.get(mine.id) || [];
+    const myIndex    = mineList.findIndex(isMe);
+    const myRow      = myIndex >= 0 ? mineList[myIndex] : null;
+    const shownFor   = list => {
+      const shown = list.slice(0, TOP_SHOWN);
+      const meAt  = list.findIndex(isMe);
+      if (meAt >= TOP_SHOWN) shown.push(list[meAt]);
+      return shown;
+    };
 
     // Names only. chat_id is a real Telegram id and never leaves the server.
-    const shown = contribs.slice(0, 3);
-    if (myRow && myIndex >= 3) shown.push(myRow);
+    const shownIds = [...new Set(instances.flatMap(i => shownFor(byInstance.get(i.id) || [])).map(c => String(c.chat_id)))];
     const names = {};
-    if (shown.length) {
-      const list = shown.map(c => `"${c.chat_id}"`).join(',');
+    if (shownIds.length) {
+      const list = shownIds.map(id => `"${id}"`).join(',');
       const rows = await supabase(`/players?chat_id=in.(${encodeURIComponent(list)})&select=chat_id,username`);
       for (const r of rows) names[String(r.chat_id)] = r.username;
     }
-    const top = shown.map(c => ({
-      rank:   contribs.indexOf(c) + 1,
-      name:   names[String(c.chat_id)] || null,
-      damage: c.damage,
-      me:     String(c.chat_id) === String(chat_id),
-    }));
 
     const order  = [player.faction, ...VALID_FACTIONS.filter(f => f !== player.faction)];
-    const bosses = order.map(f => instances.find(i => i.faction === f)).filter(Boolean).map(i => ({
-      faction:   i.faction,
-      max_hp:    i.max_hp,
-      hp:        i.hp,
-      phase:     COL.colossusPhaseFor(i.hp, i.max_hp).id,
-      killed_at: i.killed_at,
-      kill_rank: i.kill_rank,
-    }));
+    const bosses = order.map(f => instances.find(i => i.faction === f)).filter(Boolean).map(i => {
+      const list = byInstance.get(i.id) || [];
+      return {
+        faction:      i.faction,
+        max_hp:       i.max_hp,
+        hp:           i.hp,
+        phase:        COL.colossusPhaseFor(i.hp, i.max_hp).id,
+        killed_at:    i.killed_at,
+        kill_rank:    i.kill_rank,
+        contributors: list.length,
+        attempts:     list.reduce((sum, c) => sum + (c.attempts || 0), 0),
+        top: shownFor(list).map(c => ({
+          rank:   list.indexOf(c) + 1,
+          name:   names[String(c.chat_id)] || null,
+          damage: c.damage,
+          me:     isMe(c),
+        })),
+      };
+    });
 
     const damage = myRow?.damage ?? 0;
     res.json({
@@ -3973,7 +3989,6 @@ router.get('/colossus', requireAuth, async (req, res) => {
         next_milestone: COL.COLOSSUS_MILESTONES.find(m => m.damage > damage) ?? null,
       },
       resting_roster_ids: [...resting],
-      top,
       kill_rewards,
     });
   } catch (err) {

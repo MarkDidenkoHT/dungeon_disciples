@@ -2307,7 +2307,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .embark-card {
   display: flex;
   align-items: flex-end;
-  min-height: 120px;
+  min-height: 150px;
   background: var(--surface);
   background-size: cover;
   background-position: center;
@@ -9307,7 +9307,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 }
 .colossus-hero {
   position: relative;
-  min-height: 130px; border-radius: 10px; border: 1px solid var(--border);
+  min-height: 150px; border-radius: 10px; border: 1px solid var(--border);
   background-color: #1a1d26; background-size: cover; background-position: center 20%;
   display: flex; align-items: flex-end; padding: 10px;
 }
@@ -9315,6 +9315,20 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .colossus-hero-name { font-weight: bold; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
 .colossus-hero-phase { font-size: 0.72rem; color: #e8d9b0; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
 .colossus-boss { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+/* The card's top half is one button: tapping it opens this faction's detail and
+   closes whichever other faction was open. */
+.colossus-boss-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.colossus-boss-main { flex: 1 1 auto; min-width: 0; }
+.colossus-crest { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; }
+.colossus-chev { flex: 0 0 auto; color: var(--muted); font-size: 1.2rem; line-height: 1; transition: transform 0.2s ease; }
+.colossus-boss--open .colossus-chev { transform: rotate(90deg); color: var(--accent); }
+.colossus-boss-detail { display: none; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.colossus-boss--open .colossus-boss-detail { display: flex; }
+.colossus-detail-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; font-size: 0.75rem; color: var(--muted); }
+.colossus-detail-stats b { color: #fff; font-weight: bold; }
 .colossus-boss--mine { border-color: var(--accent); }
 .colossus-boss-top, .colossus-boss-bottom, .colossus-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .colossus-boss-bottom { margin-top: 6px; }

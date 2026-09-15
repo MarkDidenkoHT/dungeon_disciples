@@ -101,7 +101,7 @@ function colossusPhaseFor(hp, maxHp = COLOSSUS_MAX_HP) {
 }
 
 function colossusBaseDef() {
-  return UNITS.enemies?.colossus?.cathedral_colossus ?? null;
+  return UNITS.enemies?.colossus?.reliquary_titan ?? null;
 }
 
 // The boss as it stands for an attempt: base unit, the phase's changes, and the

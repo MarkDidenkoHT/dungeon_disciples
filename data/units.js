@@ -2296,7 +2296,7 @@ const UNITS = {
       hp: 90, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2310,7 +2310,7 @@ const UNITS = {
       hp: 95, armor: 25, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2324,7 +2324,7 @@ const UNITS = {
       hp: 105, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 1', 'infect 2', 'undying 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2338,7 +2338,7 @@ const UNITS = {
       hp: 105, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       passive: ['horde 2', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2810,7 +2810,7 @@ const UNITS = {
       id: 'gs41', f: 'g', t: 2,
       name: 'Grail Seraph',
       name_ru: 'Серафим Грааля',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Zombie', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 120, armor: 10, initiative: 30,
@@ -2823,7 +2823,7 @@ const UNITS = {
       id: 'gs411', f: 'g', t: 3,
       name: 'Grail Angel',
       name_ru: 'Ангел Грааля',
-      tags: ['Zombie', 'Caster'],
+      tags: ['Zombie', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 140, armor: 10, initiative: 30,
@@ -3770,10 +3770,10 @@ const UNITS = {
     // The Faction Colossus. Base stats only: its HP pool, phases and spells come
     // from data/colossus.js, which builds the unit for each attempt.
     colossus: {
-      cathedral_colossus: {
+      reliquary_titan: {
         id: 'colossus', f: 'col', t: 4,
-        name: 'Cathedral Colossus',
-        name_ru: 'Соборный Колосс',
+        name: 'Reliquary Titan',
+        name_ru: 'Титан-Реликварий',
         tags: ['Holy'],
         pref_position: 'none',
         size: 'row',

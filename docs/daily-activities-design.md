@@ -182,7 +182,7 @@ lives in `data/colossus.js`.
 
 Decisions taken while building (change in `data/colossus.js`):
 
-- **Boss:** new unit `colossus` (Cathedral Colossus), a row unit on the middle row, so
+- **Boss:** new unit `colossus` (Reliquary Titan / Титан-Реликварий), a row unit on the middle row, so
   melee and ranged both reach it. Art: `character_portraits/p_colossus.png`,
   `character_portraits/p2_colossus.png` (grid), `character_art/colossus.png`,
   `embark/colossus.jpg` (page and card).
