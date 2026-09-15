@@ -315,6 +315,18 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { ally_drain_pct: 25, tag_required: 'Zombie', devour_dmg_bonus_pct: 10 },
   },
+    'grails_blessing 1': {
+    id: 'grails_blessing 1',
+    name: "Grail's Blessing",
+    name_ru: "Благословение Грааля",
+    rank: 1,
+    type: 'active',
+    target: 'ally_tagged',
+    description: 'Drain 25% HP from a Zombie ally. Heal self for the drained amount and gain +20% damage until end of battle.',
+    description_ru: "Вытягивает 25% HP у союзного зомби. Исцеляет себя на это количество и получает +20% урона до конца боя.",
+    dispellable: false,
+    params: { ally_drain_pct: 25, tag_required: 'Zombie', devour_dmg_bonus_pct: 20 },
+  },
   'burn 1': {
     id: 'burn 1',
     name: 'Burn',
