@@ -2351,20 +2351,25 @@ export function renderCastle(root, { player, focusBuilding }) {
           })),
         ];
       }
-      return (paths || []).map(pth => ({
-        kind: 'advance',
-        key: pathKey(pth),
-        buildingId: pth.building_id,
-        unit: getUnitByUnitId(pth.unit_id),
-        def: getBuildingDef(player.faction, pth.building_id),
-        path: pth,
-        // Mercenaries are priced in trophies; a throne by the LEVEL it moves to
-        // rather than by the building, which is why they come from different
-        // tables (mirrors openUpgradeModal and POST /structures/build).
-        cost: mercDef  ? (getMercBuildingDef(pth.building_id)?.cost ?? pth.cost ?? null)
-            : isThrone ? (throneUpgradeCosts[nextLevel] || null)
-            : buildingCostForLevel(getBuildingDef(player.faction, pth.building_id), nextLevel),
-      }));
+      return (paths || []).map(pth => {
+        // Faction paths carry `building_id`; mercenary paths are building defs
+        // and carry `id` (same rule as upgradePathsForSlotUnit).
+        const buildingId = pth.building_id ?? pth.id;
+        return {
+          kind: 'advance',
+          key: pathKey(pth),
+          buildingId,
+          unit: getUnitByUnitId(pth.unit_id),
+          def: mercDef ? getMercBuildingDef(buildingId) : getBuildingDef(player.faction, buildingId),
+          path: pth,
+          // Mercenaries are priced in trophies; a throne by the LEVEL it moves to
+          // rather than by the building, which is why they come from different
+          // tables (mirrors openUpgradeModal and POST /structures/build).
+          cost: mercDef  ? (getMercBuildingDef(buildingId)?.cost ?? pth.cost ?? null)
+              : isThrone ? (throneUpgradeCosts[nextLevel] || null)
+              : buildingCostForLevel(getBuildingDef(player.faction, buildingId), nextLevel),
+        };
+      });
     }
 
     // A Sigil option is marked in the label itself. It sits in the same list as
@@ -2573,8 +2578,7 @@ export function renderCastle(root, { player, focusBuilding }) {
       }
 
       if (mercDef) {
-        // Mercenaries are priced in trophies, and their roster row is found by
-        // region + unit rather than by slot.
+        // Mercenaries are priced in trophies.
         const short = Object.entries(c.cost || {}).some(([item, amt]) => amountOf(item) < amt);
         if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
         // Roster rows carry `unit_id` + `building_slot` (makeUnitData), never
