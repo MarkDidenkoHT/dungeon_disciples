@@ -1877,6 +1877,7 @@ class BattleEngine {
       // exactly one, so a single-target cast reads as a sentence rather than
       // as "1 target".
       targets: willHit.length,
+      targetIds: willHit.map(u => u.id),
       targetName: willHit.length === 1 ? willHit[0].unit_name : null,
       targetCell: willHit.length === 1 ? willHit[0].cellIndex : undefined,
       scope: spellDef.target_scope || null,

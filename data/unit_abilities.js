@@ -9,6 +9,7 @@ const UNIT_ABILITIES = {
     description: 'Strips all positive effects (buffs) from an enemy.',
     description_ru: "Снимает с врага все положительные эффекты (усиления).",
     params: { dispel_positive: true },
+    effect_name: 'dispel',
   },
   'cleanse 1': {
     id: 'cleanse 1',
@@ -315,11 +316,11 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { ally_drain_pct: 25, tag_required: 'Zombie', devour_dmg_bonus_pct: 10 },
   },
-    'grails_blessing 1': {
-    id: 'grails_blessing 1',
+    'grails_blessing 2': {
+    id: 'grails_blessing 2',
     name: "Grail's Blessing",
     name_ru: "Благословение Грааля",
-    rank: 1,
+    rank: 2,
     type: 'active',
     target: 'ally_tagged',
     description: 'Drain 25% HP from a Zombie ally. Heal self for the drained amount and gain +20% damage until end of battle.',

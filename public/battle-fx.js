@@ -4750,7 +4750,357 @@ export async function blessing_of_protection(cellEl) {
   console.log('[battle-fx] blessing_of_protection END', dataId);
 }
 
+// ── lions_roar ────────────────────────────────────────────────────────────────
+// A rally, not a blast: rings roll off the caster, and every ally answers with
+// streaks rising off it — initiative drawn as speed.
+export async function lions_roar(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!originCellEl || !app || !window.PIXI) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const AMBER = 0xffa62b;
+  const GOLD  = 0xffd36b;
+  const PALE  = 0xfff4d6;
+
+  const originId = originCellEl.dataset.id;
+  const allies = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0.22, 0.34),
+    streaks: Array.from({ length: 6 }, () => ({
+      x: rand(-0.38, 0.38), len: rand(0.25, 0.45), d: rand(0, 0.25),
+    })),
+  })).filter(a => a.id);
+
+  const { layer, glow, solid } = riderLayer(5);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(950, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const R = Math.min(ob.width, ob.height);
+    const shake = t < 0.3 ? (1 - t / 0.3) * R * 0.03 : 0;
+    const ox = ob.x + ob.width / 2 + (Math.random() - 0.5) * shake;
+    const oy = ob.y + ob.height / 2 + (Math.random() - 0.5) * shake;
+
+    const roar = clamp01(t / 0.18);
+    const fade = 1 - clamp01((t - 0.18) / 0.35);
+    softGlow(glow, ox, oy, R * (0.3 + 0.25 * roar), AMBER, 0.8 * roar * fade);
+    softGlow(glow, ox, oy, R * 0.18 * roar, PALE, 0.9 * fade);
+
+    for (let i = 0; i < 3; i++) {
+      const p = clamp01((t - i * 0.09) / 0.5);
+      if (p <= 0 || p >= 1) continue;
+      solid.lineStyle(Math.max(1, R * 0.05 * (1 - p)), i === 0 ? PALE : GOLD, (1 - p) * 0.85);
+      solid.drawCircle(ox, oy, R * (0.25 + p * 1.6));
+    }
+    solid.lineStyle(0);
+
+    for (const a of allies) {
+      const b = cellBoundsFor(a.id);
+      if (!b) continue;
+      const p = clamp01((t - a.delay) / (1 - a.delay));
+      if (p <= 0) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r  = Math.min(b.width, b.height);
+
+      softGlow(glow, cx, cy + r * 0.3, r * (0.25 + 0.15 * p), GOLD, 0.55 * Math.sin(p * Math.PI));
+
+      for (const s of a.streaks) {
+        const sp = clamp01((p - s.d) / 0.7);
+        if (sp <= 0 || sp >= 1) continue;
+        const x = cx + s.x * r;
+        const head = cy + r * 0.4 - sp * r * 0.95;
+        solid.lineStyle(Math.max(1, r * 0.025), PALE, (1 - sp) * 0.9);
+        solid.moveTo(x, head + r * s.len); solid.lineTo(x, head);
+      }
+
+      const cp = clamp01((p - 0.1) / 0.6);
+      if (cp > 0 && cp < 1) {
+        const y = cy + r * 0.1 - cp * r * 0.45;
+        const w = r * 0.18;
+        solid.lineStyle(Math.max(1.5, r * 0.04), GOLD, (1 - cp) * 0.9);
+        solid.moveTo(cx - w, y + w * 0.6); solid.lineTo(cx, y); solid.lineTo(cx + w, y + w * 0.6);
+      }
+      solid.lineStyle(0);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── mark_of_ash ───────────────────────────────────────────────────────────────
+// Embers are pulled IN rather than thrown out, a sigil is seared onto the unit,
+// and it cools to a dull red instead of just vanishing — the burn is staying.
+export async function mark_of_ash(cellEl) {
+  if (!cellEl || !app || !window.PIXI) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const HOT   = 0xfff0c0;
+  const FLAME = 0xff7a1a;
+  const CHAR  = 0x9e1a08;
+
+  const embers = Array.from({ length: 16 }, () => ({
+    ang: rand(0, TAU), dist: rand(0.55, 0.85), d: rand(0, 0.3), size: rand(1.5, 3),
+  }));
+  const rising = Array.from({ length: 7 }, () => ({
+    x: rand(-0.3, 0.3), d: rand(0, 0.3), drift: rand(-0.08, 0.08),
+  }));
+
+  const { layer, glow, solid } = riderLayer(4);
+
+  // A ring, then a downward triangle traced edge by edge inside it.
+  function sigil(g, cx, cy, r, prog, width, color, alpha) {
+    if (prog <= 0 || alpha <= 0) return;
+    g.lineStyle(width, color, alpha);
+    const ringP = clamp01(prog / 0.5);
+    g.moveTo(cx, cy - r);
+    g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * ringP);
+
+    const triP = clamp01((prog - 0.35) / 0.65) * 3;
+    if (triP > 0) {
+      const pts = [0.5, 7 / 6, 11 / 6].map(k => [cx + Math.cos(k * Math.PI) * r * 0.72, cy + Math.sin(k * Math.PI) * r * 0.72]);
+      g.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 0; i < 3; i++) {
+        const s = clamp01(triP - i);
+        if (s <= 0) break;
+        const [x0, y0] = pts[i];
+        const [x1, y1] = pts[(i + 1) % 3];
+        g.lineTo(x0 + (x1 - x0) * s, y0 + (y1 - y0) * s);
+      }
+    }
+    g.lineStyle(0);
+  }
+
+  await animate(1050, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height);
+
+    const pull = clamp01(t / 0.3);
+    for (const e of embers) {
+      const p = clamp01((pull - e.d) / (1 - e.d));
+      if (p <= 0 || p >= 1) continue;
+      const d = r * e.dist * (1 - p);
+      const a = e.ang + p * 1.2;
+      softGlow(glow, cx + Math.cos(a) * d, cy + Math.sin(a) * d, e.size * 2, FLAME, 0.9 * p);
+    }
+
+    const brand = clamp01((t - 0.26) / 0.3);
+    const flash = Math.sin(clamp01((t - 0.5) / 0.2) * Math.PI);
+    const cool  = clamp01((t - 0.56) / 0.3);
+    const alpha = brand * (1 - clamp01((t - 0.8) / 0.2));
+    const R = r * 0.34;
+
+    softGlow(glow, cx, cy, r * 0.45, FLAME, 0.45 * alpha * (1 - cool * 0.5));
+    sigil(glow,  cx, cy, R, brand, Math.max(2, r * 0.06), FLAME, 0.7 * alpha);
+    sigil(solid, cx, cy, R, brand, Math.max(1.5, r * 0.028), HOT,  alpha * (1 - cool));
+    sigil(solid, cx, cy, R, brand, Math.max(1.5, r * 0.028), CHAR, alpha * cool);
+    if (flash > 0) softGlow(glow, cx, cy, r * 0.6 * flash, HOT, 0.7 * flash);
+
+    for (const s of rising) {
+      const p = clamp01((t - 0.55 - s.d * 0.5) / 0.4);
+      if (p <= 0 || p >= 1) continue;
+      softGlow(glow, cx + (s.x + s.drift * p) * r, cy + r * 0.2 - p * r * 0.6, 2.5, FLAME, (1 - p) * 0.9);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── pact ──────────────────────────────────────────────────────────────────────
+// Called caster first (see SRC_TARGET_FX in battle.js), but the life runs the
+// other way: a brand flares under the Demon ally, fire is pulled out of it along
+// an arc, and the caster catches alight with what it took.
+export async function pact(casterCellEl, allyCellEl) {
+  if (!casterCellEl?.dataset || !app || !window.PIXI) return;
+  const casterId = casterCellEl.dataset.id;
+  const allyId   = allyCellEl?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const CORE  = 0xffc26b;
+  const FIRE  = 0xff4a14;
+  const BLOOD = 0x8a0c0c;
+
+  const motes = Array.from({ length: 20 }, () => ({
+    d: rand(0, 0.35), off: rand(-1, 1), size: rand(3, 7),
+  }));
+  const tongues = Array.from({ length: 7 }, () => ({
+    x: rand(-0.35, 0.35), h: rand(0.35, 0.65), ph: rand(0, TAU),
+  }));
+
+  const { layer, glow, solid } = riderLayer(5);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(1150, t => {
+    const c = cellBoundsFor(casterId);
+    const a = allyId ? cellBoundsFor(allyId) : null;
+    if (!c) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const R  = Math.min(c.width, c.height);
+    const cx = c.x + c.width / 2, cy = c.y + c.height / 2;
+
+    const seal   = clamp01(t / 0.25);
+    const drain  = clamp01((t - 0.18) / 0.5);
+    const ignite = clamp01((t - 0.6) / 0.4);
+
+    if (a) {
+      const shake = Math.sin(drain * Math.PI) * R * 0.04;
+      const ax = a.x + a.width / 2 + (Math.random() - 0.5) * shake;
+      const ay = a.y + a.height / 2 + (Math.random() - 0.5) * shake;
+
+      const sealA = seal * (1 - clamp01((t - 0.55) / 0.3));
+      softGlow(glow, ax, ay, R * 0.5, BLOOD, 0.6 * sealA);
+      solid.lineStyle(Math.max(1.5, R * 0.03), FIRE, 0.85 * sealA);
+      solid.drawEllipse(ax, ay + R * 0.28, R * 0.42 * seal, R * 0.14 * seal);
+      solid.lineStyle(0);
+
+      const mx = (ax + cx) / 2, my = Math.min(ay, cy) - R * 0.6;
+      for (const m of motes) {
+        const p = clamp01((drain - m.d) / (1 - m.d));
+        if (p <= 0 || p >= 1) continue;
+        const u = 1 - p;
+        const bx = u * u * ax + 2 * u * p * mx + p * p * cx;
+        const by = u * u * ay + 2 * u * p * my + p * p * cy;
+        const w  = Math.sin(p * Math.PI);
+        const nx = bx + m.off * R * 0.12 * w;
+        const ny = by + Math.sin(p * TAU * 1.5 + m.off * 3) * R * 0.06 * w;
+        softGlow(glow, nx, ny, m.size * (1.2 - p * 0.4), FIRE, 0.85 * w);
+        solid.beginFill(CORE, 0.8 * w);
+        solid.drawCircle(nx, ny, m.size * 0.25);
+        solid.endFill();
+      }
+    }
+
+    if (ignite > 0) {
+      const pop  = Math.sin(ignite * Math.PI);
+      const hold = 1 - clamp01((ignite - 0.6) / 0.4);
+      softGlow(glow, cx, cy, R * (0.35 + 0.2 * ignite), FIRE, 0.7 * hold);
+      softGlow(glow, cx, cy, R * 0.2 * pop, CORE, 0.9 * pop);
+
+      for (const f of tongues) {
+        const h  = R * f.h * hold * (0.8 + 0.2 * Math.sin(t * 40 + f.ph));
+        const bx = cx + f.x * R, by = cy + R * 0.35;
+        solid.lineStyle(Math.max(2, R * 0.05), FIRE, 0.55 * hold);
+        solid.moveTo(bx, by);
+        solid.quadraticCurveTo(bx + Math.sin(t * 25 + f.ph) * R * 0.06, by - h * 0.6, bx, by - h);
+        solid.lineStyle(Math.max(1, R * 0.02), CORE, 0.8 * hold);
+        solid.moveTo(bx, by); solid.lineTo(bx, by - h * 0.6);
+      }
+      solid.lineStyle(Math.max(1, R * 0.025), CORE, (1 - ignite) * 0.8);
+      solid.drawCircle(cx, cy, R * (0.2 + ignite * 0.55));
+      solid.lineStyle(0);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── wrath_of_heaven ───────────────────────────────────────────────────────────
+// Radiance throws light sideways from the caster; this comes from ABOVE. A
+// pillar drops on every enemy at once and bursts where it lands, so the caster
+// only gets a brief upward flare.
+export async function wrath_of_heaven(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const WHITE = 0xfffdf2;
+  const GOLD  = 0xffe08a;
+  const SKY   = 0xbfe4ff;
+
+  const strikes = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.1),
+    sparks: Array.from({ length: 10 }, () => ({
+      ang: rand(Math.PI, TAU), dist: rand(0.3, 0.85), size: rand(1.5, 3.2),
+    })),
+  })).filter(s => s.id);
+
+  const { layer, glow, solid } = riderLayer(6);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(1000, t => {
+    glow.clear(); solid.clear();
+
+    const ob = originId ? cellBoundsFor(originId) : null;
+    if (ob) {
+      const f   = clamp01(t / 0.2);
+      const out = 1 - clamp01((t - 0.2) / 0.25);
+      const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+      const R  = Math.min(ob.width, ob.height);
+      softGlow(glow, ox, oy - R * 0.2 * f, R * 0.3, GOLD, 0.7 * f * out);
+      solid.lineStyle(Math.max(1.5, R * 0.04), WHITE, 0.8 * f * out);
+      solid.moveTo(ox, oy); solid.lineTo(ox, oy - R * 0.7 * f);
+      solid.lineStyle(0);
+    }
+
+    for (const s of strikes) {
+      const b = cellBoundsFor(s.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+
+      const fall = clamp01((t - 0.15 - s.delay) / 0.18);
+      if (fall <= 0) continue;
+      const hit = clamp01((t - 0.33 - s.delay) / 0.55);
+
+      const top     = cy - R * 2.4;
+      const headY   = top + (cy - top) * fall;
+      const pillarA = hit > 0 ? 1 - hit : fall;
+      const width   = R * 0.22 * (1 - hit * 0.6);
+      solid.lineStyle(width, GOLD, 0.35 * pillarA);
+      solid.moveTo(cx, top); solid.lineTo(cx, headY);
+      solid.lineStyle(width * 0.4, WHITE, 0.9 * pillarA);
+      solid.moveTo(cx, top); solid.lineTo(cx, headY);
+      solid.lineStyle(0);
+      softGlow(glow, cx, headY, R * 0.22, WHITE, 0.9 * pillarA);
+
+      if (hit <= 0) continue;
+      const pop = 1 - hit;
+      softGlow(glow, cx, cy, R * (0.3 + 0.4 * hit), GOLD, 0.85 * pop);
+      softGlow(glow, cx, cy, R * (0.15 + 0.2 * hit), WHITE, 0.95 * pop);
+      solid.lineStyle(Math.max(1, R * 0.03), SKY, 0.8 * pop);
+      solid.drawEllipse(cx, cy + R * 0.25, R * (0.2 + 0.6 * hit), R * (0.07 + 0.2 * hit));
+      solid.lineStyle(0);
+
+      const sp = clamp01(hit / 0.7);
+      if (sp < 1) {
+        for (const k of s.sparks) {
+          solid.beginFill(WHITE, (1 - sp) * 0.9);
+          solid.drawCircle(cx + Math.cos(k.ang) * R * k.dist * sp, cy + Math.sin(k.ang) * R * k.dist * sp, k.size * (1 - sp * 0.5));
+          solid.endFill();
+        }
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
 export const EFFECTS = {
+  lions_roar,
+  mark_of_ash,
+  pact,
+  wrath_of_heaven,
   mithrails_light,
   aggrails_light,
   renew,

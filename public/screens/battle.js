@@ -22,7 +22,7 @@ const COLS = 2;
 // they belong in this set. Every bond in data/formation_synergies.js is added
 // automatically; a new one needs no edit here.
 const SRC_TARGET_FX = new Set([
-  'communion', 'shared_suffering', 'sacrifice', 'terror',
+  'communion', 'shared_suffering', 'sacrifice', 'terror', 'pact',
   ...Object.values(FORMATION_SYNERGIES).map(d => d.effect).filter(Boolean),
 ]);
 
@@ -39,7 +39,13 @@ const SRC_TARGET_FX = new Set([
 // dragons_breath and verse_of_cataclysm belong here too — both log one entry
 // per victim (a row, and the whole enemy side) for what is a single jet and a
 // single detonation. Left out, a two-unit row would breathe fire twice.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm']);
+// A spell cast is one entry for every victim, so it lists them as targetIds.
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven']);
+
+// Effects on the actor's whole side whose log names nobody (Lion's Roar logs
+// "all allies" with no ids), so the cells are read off the board instead —
+// EFFECTS[name](actorCell, { targetCells }).
+const SIDE_WIDE_FX = new Set(['lions_roar']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
@@ -429,7 +435,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // still do not, which is what keeps the interleaved-trigger case working.
   function closesFxGroup(e, entry) {
     if (e.type === 'round') return true;
-    if (e.type === 'action' || e.type === 'ability' || e.type === 'spell') {
+    if (e.type === 'action' || e.type === 'ability' || e.type === 'spell' || e.type === 'cast') {
       return !sameFxGroup(e, entry);
     }
     return false;
@@ -752,13 +758,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               if (j !== entryIdx && closesFxGroup(e, entry)) break;
               if (!sameFxGroup(e, entry)) continue;
               fxCovered.add(j);
-              const c = e.targetId
-                ? document.querySelector(`.battle-cell[data-id="${e.targetId}"]`)
-                : null;
-              if (c) cells.push(c);
+              const ids = e.targetIds || (e.targetId ? [e.targetId] : []);
+              for (const tid of ids) {
+                const c = document.querySelector(`.battle-cell[data-id="${tid}"]`);
+                if (c) cells.push(c);
+              }
             }
             const origin = actorCell || cells[0];
             if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells });
+          }
+        } else if (SIDE_WIDE_FX.has(effectName)) {
+          if (actor && actorCell && !fxCovered.has(entryIdx)) {
+            fxCovered.add(entryIdx);
+            const cells = state.combatants
+              .filter(u => u.side === actor.side && (u.alive || dyingHere.has(u.id)))
+              .map(u => document.querySelector(`.battle-cell[data-id="${u.id}"]`))
+              .filter(Boolean);
+            await EFFECTS[effectName](actorCell, { targetCells: cells });
           }
         } else if (SRC_TARGET_FX.has(effectName)) {
           // Two-cell effects: life/blood flows between a source and a target.

@@ -148,6 +148,7 @@ const SPELLS = {
       effect_type: 'damage',
       class: 'enemy',
       target_scope: 'all_enemies',
+      effect_name: 'wrath_of_heaven',
       params: { damage_flat: 15, damage_type: 'life' },
     },
     {
@@ -187,6 +188,7 @@ const SPELLS = {
       effect_type: 'dispel',
       class: 'enemy',
       target_scope: 'single_enemy',
+      effect_name: 'dispel',
       params: { dispel_polarity: 'positive', dispel_count: 1 },
     },
   ],
