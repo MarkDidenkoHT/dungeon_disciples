@@ -114,6 +114,14 @@ function matchWaiting(now = Date.now()) {
   return pairs;
 }
 
+// Everyone in `mode` who has waited at least `ms`, oldest first. Not removed:
+// the caller takes an entry out with leave() once it has something to give it.
+function overdue(ms, mode, now = Date.now()) {
+  return [...waiting.values()]
+    .filter(e => e.mode === mode && now - e.enqueuedAt >= ms)
+    .sort((a, b) => a.enqueuedAt - b.enqueuedAt);
+}
+
 function leave(chat_id) {
   return waiting.delete(String(chat_id));
 }
@@ -143,4 +151,4 @@ function sweep(now = Date.now()) {
   return dropped;
 }
 
-module.exports = { enqueue, matchWaiting, leave, has, get, size, sweep, STALE_MS };
+module.exports = { enqueue, matchWaiting, overdue, leave, has, get, size, sweep, STALE_MS };

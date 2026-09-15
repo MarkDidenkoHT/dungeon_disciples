@@ -34,6 +34,7 @@ const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementT
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID } = require('../data/daily_tasks');
+const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
 const MANIFEST_FOLDERS = {
@@ -431,6 +432,25 @@ function isPvpRecord(record) {
   return record?.battle_kind === 'pvp' || record?.battle_data?.kind === 'pvp';
 }
 
+// A quick match against a bot template (data/bot_templates.js). One owner, the
+// enemy army stored in battle_data and played by runAiTurns, but the same 30 s
+// turn clock as a duel.
+function isBotRecord(record) {
+  return record?.battle_kind === 'pvp_bot' || record?.battle_data?.kind === 'pvp_bot';
+}
+
+function isClockedRecord(record) {
+  return isPvpRecord(record) || isBotRecord(record);
+}
+
+// After a move: a person on the other side answers in their own time, anything
+// else answers now. Turns nobody can take are spent either way.
+function answerTurns(record, engine) {
+  if (engine.done) return;
+  if (isPvpRecord(record)) engine.runIdleTurns();
+  else                     engine.runAiTurns();
+}
+
 // Which engine side this player commands, or null if the battle is not theirs.
 function battleSideFor(record, chat_id) {
   const id = String(chat_id);
@@ -563,7 +583,7 @@ function asEnemySide(units, placement) {
 // the most for the unit that took it, which is the honest reading of a player
 // who did not answer: they were not choosing to attack.
 function applyExpiredTurns(record, engine) {
-  if (!isPvpRecord(record) || engine.done) return false;
+  if (!isClockedRecord(record) || engine.done) return false;
   const deadline = record.battle_data?.turn_deadline;
   if (!deadline || Date.now() < deadline) return false;
 
@@ -588,7 +608,7 @@ function applyExpiredTurns(record, engine) {
 //
 // Returns new battle_data when something changed, else null.
 function stampFirstDeadline(record, engine, chat_id) {
-  if (!isPvpRecord(record) || engine.done) return null;
+  if (!isClockedRecord(record) || engine.done) return null;
   const bd = record.battle_data || {};
   const mine = engine.currentActor()?.side === battleSideFor(record, chat_id);
 
@@ -606,10 +626,10 @@ function stampFirstDeadline(record, engine, chat_id) {
 // Stamped on every write, so the clock starts when the turn actually begins
 // rather than when the previous one was requested.
 function withTurnDeadline(battle_data, record, engine) {
-  if (!isPvpRecord(record)) return battle_data;
+  if (!isClockedRecord(record)) return battle_data;
   return {
     ...battle_data,
-    kind: 'pvp',
+    kind: isBotRecord(record) ? 'pvp_bot' : 'pvp',
     turn_deadline: engine.done ? null : Date.now() + PVP_TURN_MS,
     turn_provisional: false,
     turn_ms: PVP_TURN_MS,
@@ -735,7 +755,9 @@ async function rehydrateEngine(record) {
   if (!armies) {
     armies = armyCacheSet(record.battle_id, {
       playerUnits: await buildArmyFor(chat_id, playerUnitIds),
-      enemies:     getEncounter(bd.region_id, bd.level),
+      // A bot's army is the one it was built with, stored on the record, so a
+      // template edited mid-battle does not change the fight.
+      enemies:     isBotRecord(record) ? (bd.bot?.army || []) : getEncounter(bd.region_id, bd.level),
     });
   }
 
@@ -753,6 +775,9 @@ function buildBattleData(engine, bd) {
     level:           bd.level,
     setup:           bd.setup,
     selected_spells: bd.selected_spells || [],
+    // A bot battle's army and template id. Carried on every write: rehydrate
+    // rebuilds the enemy from it, and faction rotation reads the template id.
+    ...(bd.bot ? { bot: bd.bot } : {}),
   };
 }
 
@@ -3336,9 +3361,11 @@ router.get('/battle/state', requireAuth, async (req, res) => {
     // Two things can leave the battle parked on a turn nobody will take: a clock
     // that ran out, and a unit that has no action. Both are resolved by whoever
     // reads next, and only written back if something actually moved.
-    if (isPvpRecord(record)) {
+    if (isClockedRecord(record)) {
       const expired = applyExpiredTurns(record, engine);
-      const idle    = engine.runIdleTurns() > 0;
+      // A bot answers the defended turn straight away; a person answers in theirs.
+      if (expired && isBotRecord(record)) answerTurns(record, engine);
+      const idle    = isPvpRecord(record) && engine.runIdleTurns() > 0;
       if (expired || idle) {
         record = await persistPvpTurn(record, engine, { causedBy: null });
         engine = record._engine || engine;
@@ -3366,7 +3393,7 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       winner:    view.winner,
       region_id: bd.region_id,
       level:     bd.level,
-      kind:      isPvpRecord(record) ? 'pvp' : 'pve',
+      kind:      isClockedRecord(record) ? 'pvp' : 'pve',
       // Whose move it is, and how long they have left — the client needs both to
       // draw the countdown without inventing a clock of its own. See the note on
       // your_turn in POST /battle/action for why this is a boolean.
@@ -3520,10 +3547,7 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     // The enemy answers immediately, exactly as after any other hero action —
     // unless the enemy is a player, who answers in their own time. Either way,
     // turns nobody can take are spent rather than waited on.
-    if (!engine.done) {
-      if (isPvpRecord(record)) engine.runIdleTurns();
-      else                     engine.runAiTurns();
-    }
+    answerTurns(record, engine);
 
     const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
     const newEntries  = engine.log;   // see freshLog
@@ -3553,7 +3577,7 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
       ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state,
       // The clock for the turn this action just handed over, so the acting
       // client starts counting from the same instant the server does.
-      kind:          isPvpRecord(record) ? 'pvp' : 'pve',
+      kind:          isClockedRecord(record) ? 'pvp' : 'pve',
       turn_deadline: battle_data.turn_deadline ?? null,
       // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
       // opponent's view, so handing the client either frame's label invites it to
@@ -3585,7 +3609,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     // is also what stops a player who reconnects late from acting on a turn the
     // clock already spent.
     if (applyExpiredTurns(record, engine)) {
-      engine.runIdleTurns();
+      answerTurns(record, engine);
       const after = await persistPvpTurn(record, engine, { causedBy: null });
       return res.status(409).json({
         error: 'That turn expired', code: 'turn_expired',
@@ -3621,10 +3645,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
     // The other side is a person in PvP: the engine stops here and waits for
     // them, rather than answering on their behalf — but only at a turn somebody
     // can actually take.
-    if (!engine.done) {
-      if (isPvpRecord(record)) engine.runIdleTurns();
-      else                     engine.runAiTurns();
-    }
+    answerTurns(record, engine);
 
     // Auto-process any unity-bonded player units whose turn is next —
     // they can't act but their passives should still trigger, same as the AI loop.
@@ -3674,7 +3695,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       ok: true, done: engine.done, winner: view.winner, logs: view.logs, state: view.state,
       // The clock for the turn this action just handed over, so the acting
       // client starts counting from the same instant the server does.
-      kind:          isPvpRecord(record) ? 'pvp' : 'pve',
+      kind:          isClockedRecord(record) ? 'pvp' : 'pve',
       turn_deadline: battle_data.turn_deadline ?? null,
       // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
       // opponent's view, so handing the client either frame's label invites it to
@@ -3761,6 +3782,112 @@ async function createPvpBattle(a, b) {
   }
 
   return { record, battle_id, engine, initialLogs };
+}
+
+// ── PvP: bots ───────────────────────────────────────────────────────────────
+// Nobody to fight within BOT_FALLBACK_MS: a hand-made template army from
+// data/bot_templates.js takes the enemy side. The player keeps the duel's
+// turn clock; the bot moves inside the player's own requests, as a region
+// encounter does.
+
+const BOT_FALLBACK_MS = 30000;
+
+// The template ids of this player's last bot battles, newest first, for faction
+// rotation. Read from the records so a restart does not reset it.
+async function recentBotTemplateIds(chat_id) {
+  try {
+    const rows = await supabase(
+      `/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&battle_kind=eq.pvp_bot`
+      + `&select=template_id:battle_data->bot->>template_id&order=created_at.desc&limit=5`
+    );
+    return rows.map(r => r.template_id).filter(Boolean);
+  } catch (err) {
+    console.error('Bot history read failed (rotating without it):', err.message);
+    return [];
+  }
+}
+
+function botOpponentCard(template) {
+  return { name: template.name || template.id, faction: template.faction, bot: true };
+}
+
+async function createBotBattle(entry, { template, bandId }) {
+  const battle_id = `pvpbot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  const army = buildBotArmy(template, bandId);
+  if (!army.length) throw new Error(`Bot template ${template.id} has no units for ${bandId}`);
+
+  const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);
+  const placement   = entry.formation.placement || {};
+
+  const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy(army), placement);
+  engine.firePendingRoundEffects();
+  // The bot may hold the first turn; it takes it now, as a region encounter does.
+  if (!engine.done) engine.runAiTurns();
+
+  const battle_data = {
+    ...buildBattleData(engine, {
+      region_id: null,
+      level:     null,
+      selected_spells: [],
+      setup: {
+        playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })),
+        placement,
+      },
+      bot: { template_id: template.id, band: bandId, faction: template.faction, name: template.name || template.id, army },
+    }),
+    kind:          'pvp_bot',
+    mode:          entry.mode || 'pvp_quick',
+    turn_deadline: null,   // started when the player loads the board, see stampFirstDeadline
+    turn_ms:       PVP_TURN_MS,
+  };
+
+  const record = await createBattleState({
+    chat_id: String(entry.chat_id),
+    battle_id,
+    battle_data,
+    battle_kind: 'pvp_bot',
+  });
+
+  try {
+    const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+    if (initialEvents.length) await appendBattleLogEntries(battle_id, initialEvents);
+  } catch (err) {
+    console.error('Failed to persist initial bot battle log:', err);
+  }
+
+  return { record, battle_id };
+}
+
+// Hand everyone who has waited past BOT_FALLBACK_MS a bot. Called from
+// runMatchmaking after human pairs, so a person who turns up in time still wins.
+async function assignBots() {
+  for (const entry of pvpQueue.overdue(BOT_FALLBACK_MS, 'pvp_quick')) {
+    const recent = await recentBotTemplateIds(entry.chat_id);
+    // The read above is a window: the player may have left, re-queued or been paired.
+    if (pvpQueue.get(entry.chat_id) !== entry) continue;
+
+    const picked = pickBotTemplate({ power: entry.power, recent });
+    if (!picked) continue;   // no templates at all: keep waiting for a person
+
+    pvpQueue.leave(entry.chat_id);
+    markPairing(entry.chat_id);
+    try {
+      const created = await createBotBattle(entry, picked);
+      await clearQueueRows([entry.chat_id]);
+      const card = botOpponentCard(picked.template);
+      noteMatch(entry.chat_id, created.battle_id, card);
+      const delivered = battleBus.publish(pvpRoom(entry.chat_id), {
+        status: 'matched', mode: entry.mode, opponent: card, battle_id: created.battle_id,
+      }, { event: 'pvp' });
+      console.log(`[pvp] bot ${picked.template.id}/${picked.bandId} -> ${entry.chat_id} (⚔ ${entry.power}): delivered to ${delivered} stream(s)`);
+    } catch (err) {
+      console.error('Failed to build a bot duel:', err);
+      clearPairing(entry.chat_id);
+      battleBus.publish(pvpRoom(entry.chat_id), { status: 'failed' }, { event: 'pvp' });
+      await clearQueueRows([entry.chat_id]);
+    }
+  }
 }
 
 // ── PvP: quick match queue ──────────────────────────────────────────────────
@@ -3851,11 +3978,11 @@ const pairing = new Set();
 function markPairing(...chatIds) { for (const id of chatIds) pairing.add(String(id)); }
 function clearPairing(...chatIds) { for (const id of chatIds) pairing.delete(String(id)); }
 
-function noteMatch(chat_id, battle_id) {
+function noteMatch(chat_id, battle_id, opponent = null) {
   const now = Date.now();
   clearPairing(chat_id);
   for (const [id, m] of recentMatches) if (now - m.at > RECENT_MATCH_MS) recentMatches.delete(id);
-  recentMatches.set(String(chat_id), { battle_id, at: now });
+  recentMatches.set(String(chat_id), { battle_id, opponent, at: now });
 }
 
 // Pair everyone who can now be paired, and build their duels.
@@ -3899,6 +4026,7 @@ async function runMatchmaking() {
         await clearQueueRows([a.chat_id, b.chat_id]);
       }
     }
+    await assignBots();
   } finally {
     matchmakingRunning = false;
   }
@@ -3996,7 +4124,7 @@ router.get('/pvp/status', requireAuth, async (req, res) => {
   await runMatchmaking().catch(err => console.error('Matchmaking pass failed:', err));
 
   const match = recentMatches.get(String(chat_id));
-  if (match) return res.json({ status: 'matched', battle_id: match.battle_id });
+  if (match) return res.json({ status: 'matched', battle_id: match.battle_id, opponent: match.opponent });
 
   const entry = pvpQueue.get(chat_id);
   if (entry) return res.json({ status: 'waiting', queued_at: entry.enqueuedAt, waiting: pvpQueue.size() });
@@ -4047,7 +4175,7 @@ router.get('/pvp/stream', async (req, res) => {
     const pending = recentMatches.get(String(chat_id));
     if (pending) {
       res.write(`event: pvp
-data: ${JSON.stringify({ status: 'matched', battle_id: pending.battle_id })}
+data: ${JSON.stringify({ status: 'matched', battle_id: pending.battle_id, opponent: pending.opponent })}
 
 `);
     }
@@ -4106,6 +4234,31 @@ router.post('/battle/end', requireAuth, async (req, res) => {
   }
 });
 
+// PVP_WIN_XP to every unit of `side` that fought, survivor or not.
+async function grantPvpWinXp(chat_id, battle_data, side) {
+  const ids = (battle_data.units || [])
+    .filter(u => u.side === side && u._rosterId != null)
+    .map(u => String(u._rosterId));
+  const rows = ids.length
+    ? await supabase(`/roster?id=in.(${ids.join(',')})&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`)
+    : [];
+
+  const xp_awards = [];
+  await Promise.all(rows.map(async row => {
+    const unitData = { ...(row.unit_data || {}), current_xp: ((row.unit_data || {}).current_xp ?? 0) + PVP_WIN_XP };
+    xp_awards.push({
+      roster_id:  String(row.id),
+      unit_id:    unitData.unit_id,
+      xp_gained:  PVP_WIN_XP,
+      current_xp: unitData.current_xp,
+      alive:      unitData.alive !== false,
+    });
+    await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
+  }));
+  xp_awards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));
+  return { xp_granted: PVP_WIN_XP, xp_awards };
+}
+
 router.post('/battle/reward', requireAuth, async (req, res) => {
   const { chat_id, battle_id, survivor_ids } = req.body;
   if (!chat_id || !battle_id) {
@@ -4132,6 +4285,20 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // `battle_active=eq.true` in the same statement, so Postgres decides the
     // winner under a row lock: exactly one caller gets a row back, everyone else
     // gets null and stops here having paid out nothing.
+    // ── Bot payout ─────────────────────────────────────────────────────────
+    // One owner, so the PvE claim applies as it is. Same 100 XP as a duel won.
+    if (isBotRecord(record)) {
+      const claimed = await claimBattleState(battle_id);
+      if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
+      armyCacheDrop(battle_id);
+      await persistBattleRosterState(chat_id, record.battle_data);
+
+      const won = record.battle_data?.winner === 'player';
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won };
+      if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
+      return res.json(result);
+    }
+
     // ── PvP payout ─────────────────────────────────────────────────────────
     // Both players claim their own rewards from the same row, so the PvE claim —
     // which flips battle_active and would lock the second player out — is not
@@ -4154,28 +4321,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const won = record.battle_data?.winner === mySide;
       const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won };
 
-      if (won) {
-        const myUnits = (record.battle_data.units || [])
-          .filter(u => u.side === mySide && u._rosterId != null);
-        const ids = myUnits.map(u => String(u._rosterId));
-        const rows = ids.length
-          ? await supabase(`/roster?id=in.(${ids.join(',')})&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`)
-          : [];
-
-        result.xp_granted = PVP_WIN_XP;
-        await Promise.all(rows.map(async row => {
-          const unitData = { ...(row.unit_data || {}), current_xp: ((row.unit_data || {}).current_xp ?? 0) + PVP_WIN_XP };
-          result.xp_awards.push({
-            roster_id:  String(row.id),
-            unit_id:    unitData.unit_id,
-            xp_gained:  PVP_WIN_XP,
-            current_xp: unitData.current_xp,
-            alive:      unitData.alive !== false,
-          });
-          await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
-        }));
-        result.xp_awards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));
-      }
+      if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
 
       const claims = { ...alreadyClaimed, [String(chat_id)]: true };
       await updateBattleState(battle_id, { ...record.battle_data, rewards_claimed: claims });

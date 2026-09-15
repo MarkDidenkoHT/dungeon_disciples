@@ -67,8 +67,9 @@ const BP_TEXT = {
   toBattle:     { en: 'To Battle',    ru: 'В бой' },
   enterQueue:   { en: 'Enter Queue',  ru: 'В очередь' },
   searching:    { en: 'Searching for an opponent', ru: 'Ищем соперника' },
-  searchingHint:{ en: 'Leave this screen open — you will be matched with the next player who queues.',
-                  ru: 'Не закрывайте экран — вас соединят со следующим игроком в очереди.' },
+  searchingHint:{ en: 'Leave this screen open. If no player turns up within 30 seconds, you will face a bot.',
+                  ru: 'Не закрывайте экран. Если за 30 секунд соперник не найдётся, вы сразитесь с ботом.' },
+  botOpponent:  { en: 'Opponent: {name} · Bot', ru: 'Противник: {name} · Бот' },
   leaveQueue:   { en: 'Leave Queue',  ru: 'Выйти из очереди' },
   matchFound:   { en: 'Match found',  ru: 'Соперник найден' },
   // Shown for the moment between being paired and the duel's opening state
@@ -1757,7 +1758,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   // told — the queue builds it from the two stored formations — so this only has
   // to fetch its opening state and walk into it.
   async function enterDuel(data) {
-    showQueueMatched();
+    showQueueMatched(data?.opponent);
     const battleId = data?.battle_id;
     if (!battleId) return;   // paired but no duel: the overlay says what happened
     try {
@@ -1781,14 +1782,16 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
   // Matched, with the duel still being fetched. The overlay stops counting and
   // says so rather than closing — a player who queued deserves to see it worked.
-  function showQueueMatched() {
+  function showQueueMatched(opponent = null) {
     clearInterval(queueTimer);
     queueTimer = null;
     const overlay = queueEl('#pvp-queue-overlay');
     if (!overlay) return;
     overlay.classList.add('pvp-queue-overlay--matched');
     queueEl('#pvp-queue-title').textContent = BP_TEXT.matchFound[L];
-    queueEl('#pvp-queue-hint').textContent  = BP_TEXT.matchSoon[L];
+    queueEl('#pvp-queue-hint').textContent  = opponent?.bot
+      ? BP_TEXT.botOpponent[L].replace('{name}', opponent.name || '')
+      : BP_TEXT.matchSoon[L];
     queueEl('#pvp-queue-cancel').textContent = BP_TEXT.close[L];
   }
 

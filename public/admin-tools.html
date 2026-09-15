@@ -2138,7 +2138,7 @@
 
           const army = buildBotArmy(t, bandId);
           const power = army.reduce((sum, u) => sum + calcUnitPower(u), 0);
-          const inBand = band && power >= band.min && power < band.max;
+          const inBand = band && power >= band.min && power <= band.max;
           const covered = new Set();
           for (const s of slots || []) {
             const size = findBotUnit(s.unit)?.size ?? 'tile';

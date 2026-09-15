@@ -1,6 +1,6 @@
 # Daily Activities — Design
 
-Status: agreed direction, not built. Last updated 2026-09-14.
+Status: PvP bots wired (templates still being tuned); the rest not built. Last updated 2026-09-15.
 
 ## Why
 
@@ -103,10 +103,11 @@ Bots are **hand-made templates**, not generated armies.
 | Band | Roughly |
 |---|---|
 | 200–300 | t2 armies |
-| 300–500 | t3 armies |
-| 500+ | t4 armies |
+| 301–500 | t3 armies |
+| 501+ | t4 armies |
 
 - Players below 200 meet the 200–300 band. They lose some and come back for revenge.
+- A band with no templates falls back to the nearest band that has some (lower first).
 - No ceiling needed yet: a maxed army is ~685 power today.
 - The band is picked from **power computed on the server**, never the client's number.
 
@@ -139,10 +140,13 @@ Bots are **hand-made templates**, not generated armies.
 ### Tasks
 
 1. Server-side squad check and power on `/pvp/enqueue`. **Done.**
-2. Template data file, loader, admin preview.
-3. `pvp_bot` battle kind.
-4. 30 s queue fallback + faction rotation.
+2. Template data file, loader, admin preview. **Done.**
+3. `pvp_bot` battle kind. **Done.**
+4. 30 s queue fallback + faction rotation. **Done.**
 5. Author and tune templates with testers.
+
+Picking order when rules clash: never the same template twice (unless it is the only one in
+the band), then faction rotation, then random.
 
 ---
 

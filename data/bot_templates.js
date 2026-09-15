@@ -10,10 +10,11 @@ import { SPELLS } from './spells.js';
 // Column 0 is the front line. A row unit anchors on 0/2/4, a column unit on its top cell.
 // `hero: true` marks the hero; `spells` are cast by the boss spell AI.
 
+// Inclusive on both ends. Players below 200 meet band_200 (see botBandFor).
 const BOT_BANDS = [
-  { id: 'band_200', min: 0,   max: 300 },
-  { id: 'band_300', min: 300, max: 500 },
-  { id: 'band_500', min: 500, max: Infinity },
+  { id: 'band_200', min: 200, max: 300 },
+  { id: 'band_300', min: 301, max: 500 },
+  { id: 'band_500', min: 501, max: Infinity },
 ];
 
 const BOT_FACTIONS = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow'];
@@ -112,7 +113,53 @@ function findBotSpell(id) {
 }
 
 function botBandFor(power) {
-  return (BOT_BANDS.find(b => power < b.max) ?? BOT_BANDS[BOT_BANDS.length - 1]).id;
+  return (BOT_BANDS.find(b => power <= b.max) ?? BOT_BANDS[BOT_BANDS.length - 1]).id;
+}
+
+// Any 5 bot battles in a row hold every faction at least once.
+const BOT_ROTATION_WINDOW = 5;
+
+// The template for the next bot battle.
+// `recent` is this player's last bot template ids, newest first.
+//
+// Band: the player's own, else the nearest band that has templates (lower first on a tie).
+// Faction: a faction whose last appearance is about to fall out of the window is forced;
+// otherwise random. Only factions with a template in the band take part.
+// Never the same template twice in a row, unless it is the only one.
+function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = Math.random }) {
+  const home = BOT_BANDS.findIndex(b => b.id === botBandFor(power));
+  const byDistance = BOT_BANDS
+    .map((b, i) => ({ id: b.id, d: Math.abs(i - home), i }))
+    .sort((a, b) => a.d - b.d || a.i - b.i);
+
+  let bandId = null;
+  let pool = [];
+  for (const { id } of byDistance) {
+    pool = templates.filter(t => Array.isArray(t.bands?.[id]) && t.bands[id].length);
+    if (pool.length) { bandId = id; break; }
+  }
+  if (!bandId) return null;
+
+  const last = recent[0];
+  if (pool.length > 1) pool = pool.filter(t => t.id !== last);
+
+  // Picks left (this one included) before each faction must appear. Seen at recent[i]
+  // leaves 5 - i; a faction missing from the last 5 is overdue and must go now.
+  const factionOf = id => templates.find(t => t.id === id)?.faction;
+  const history = recent.slice(0, BOT_ROTATION_WINDOW).map(factionOf);
+  const factions = [...new Set(pool.map(t => t.faction))];
+  const deadline = f => {
+    const i = history.indexOf(f);
+    return BOT_ROTATION_WINDOW - (i >= 0 ? i : Math.min(recent.length, BOT_ROTATION_WINDOW));
+  };
+  // Earliest deadline first: if k factions all fall due within k picks, one of them goes now.
+  for (let k = 1; k <= factions.length; k++) {
+    const due = factions.filter(f => deadline(f) <= k);
+    if (due.length >= k) { pool = pool.filter(t => due.includes(t.faction)); break; }
+  }
+
+  const template = pool[Math.floor(rng() * pool.length)];
+  return { template, bandId };
 }
 
 // Flat units, the same shape getEncounter returns.
@@ -194,5 +241,5 @@ function checkBotTemplates(templates = BOT_TEMPLATES) {
   return out;
 }
 
-export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, buildBotArmy, checkBotTemplate, checkBotTemplates };
-if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, buildBotArmy, checkBotTemplate, checkBotTemplates };
+export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, checkBotTemplate, checkBotTemplates };
+if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, checkBotTemplate, checkBotTemplates };
