@@ -154,6 +154,7 @@ journey intact. They remember being alive well enough for it to hurt.
 | **The Menders** (Zombie + Caster) | Stitcher → Flesh Mender → Blight Surgeon, Necromancer, Death Lord, Plague Scholar → Lord → Archon, Mother's Hand / Vigil / Shroud, Sorrow Bearer / Vessel | The rotted who still think clearly. They work on the dead because someone has to |
 | **The Unfinished** (Spirit + Caster) | Mother's Voice, Ghost → Specter → Wraith, Apparition, Phantom | The ones who arrived without any body at all. Quiet, thin, half-remembering |
 | **The Pale Sisters** (Spirit + Knight) | Pale Maiden → Dame → Matriarch, Votaress, Abbess, Mourner, Lamenter | Mourners who took up arms. Vowed, formal, grieving in ritual |
+| **Adept** (Caster) | Adept only | Its own voice — see §4.4 ruling 6 |
 
 #### The Risen — how a rotted mouth speaks
 
@@ -185,11 +186,10 @@ journey intact. They remember being alive well enough for it to hurt.
 4. **The Pale Sisters** — confirmed as written.
 5. **Grail Seraph, Grail Angel** follow the general tag rules — Risen voice.
 
-**Still open — Adept (`gs3`).** Adept is the Grail's tier-1 caster and the root of three
-branches: Blood Adept (becomes a **vampire**), Necromancer and Plague Scholar (become
-**zombies**). Adept itself carries only `Caster` — no Vampire, Zombie or Spirit tag — so
-it fits none of the families above. Before choosing a path, how does it speak: as a
-young Envious vampire, as a Mender, or with a voice of its own?
+6. **Adept (`gs3`)** has **its own bark set and its own voice** — not Envious, not a
+   Mender. It is the tier-1 root of Blood Adept (vampire) and Necromancer / Plague
+   Scholar (zombie), carries only `Caster`, and its voice is defined in its branch
+   entry (§5) when the set is written. Its upgrades speak with their own families.
 
 ### Choir of the Cursed — *born of song*
 
