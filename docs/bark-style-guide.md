@@ -87,13 +87,46 @@ boast. Everything outside the Empire is presumed unclean until proven otherwise.
 
 **Stoic in speech, xenophobic in belief.** Both are true at once, at different volumes:
 the voice stays level, but what it assumes about the enemy is absolute. Templars and
-Inquisitors sit at the loud end; Engineers and Constructs at the quiet end.
+Inquisitors sit at the loud end; Engineers and the Bound at the quiet end.
 
 - An Empire unit never concedes that faith was insufficient. That is heresy in its own
   mouth. Faith is needed *elsewhere*, or needed *whole*.
 - Mithrail is named sparingly — a soldier says "the Light" or "Him" more often than the
   name. The name is for prayers and deaths.
 - Vocabulary: line, hold, duty, oath, clean, unclean, judged, report, keep, burn.
+
+#### Families
+
+| Family | Units | Voice |
+|---|---|---|
+| **The Orders** (Knight + Holy) | Paladin; Standart Bearer → Banneret → Gonfalonier; Templar → Mithrail branches | The loud end. Zealous, clipped, certain. Faith as a weapon in the hand |
+| **The Faithful** (Caster + Holy) | Inquisitor; Acolyte → Priest → Ardent Priest → High Priest | Same certainty. The Inquisitor is the loudest voice in the Empire; the priests keep soldiers on their feet — field medics, never soft |
+| **The Line** (Knight + Warrior, Archer + Knight) | Conscript → Infantry → Heavy Infantry, Vindicator, Blade Guard → Blade Master, Horseman → Cavalry, Retributor; Crossbowman → Emperial Sniper | Soldiers. Plain speech, drill, the man beside you. Less scripture, same belief |
+| **The Magi** (Caster, Caster + Knight) | Apprentice; Red Mage → Ash Priest → Ash Hierophant; Blue Mage → Cryomancer → Winter Magus; Warder Adept → Bulwark Magus → Archon; Cinder Knight, Dragon Knight; Aegis Warden → Sentinel | Another branch of the Empire, not a separate order: the same faith, discipline and contempt for the unclean. Their weapon is the school — fire, frost, ward — and they speak of it the way a soldier speaks of his blade |
+| **The Workshops** (Engineer) | Smith, Mechanic → Master Mechanic; Rifleman → Devastator → Annihilator; Flamethrower → Incinerator; Artificer, Grand Machinist, Armsmaster | Tradesmen at war. Dry, practical, proud of the work. The quiet end. Artificer, Grand Machinist and Armsmaster are **living people in machine harnesses** — the harness is gear they wear, not a body; they are not Bound |
+| **The Hallowed Dead** (Spirit + Holy) | Blessed Soul, Mithrail's Light / Will / Verdict, Seraphic Priest, Seraph | Soldiers who kept serving after death. Relieved of the body, not of the oath. Fewer words, same discipline |
+| **The Bound** (Construct + Spirit) | Sentinel, Iron / Golden Automaton, Golden Lion, Siege Engine → Dreadnought → Leviathan | See below |
+
+#### The Bound — spirits in machines
+
+**Constructs are not robots.** Every Empire Construct also carries the `Spirit` tag: it
+is a spirit living in a body of iron, gold or siege timber. Someone is in there.
+
+**Who they are:** dead soldiers, bound by their oath, **proud to serve and fight once
+more.** Being given a new body was an honour, not a sentence. They are the Line again,
+in iron.
+
+- The pride is quiet and soldierly — a veteran back in the ranks, not a zealot.
+- They remember their old service and their old comrades, and speak of the body as
+  their new kit: heavy, strong, a privilege to carry.
+- They speak as a **soldier**, aware of the body as a vessel they wear, not a mechanism
+  they are. The iron is heavy, slow, strong; the one inside it feels that.
+- **Banned for the Bound:** machine-speak of any kind — *target acknowledged, unit,
+  processing, systems, frame failing, awaiting orders, core, salvage, malfunction*.
+  Every existing Construct line in combat_barks.js breaks this rule and is not carried over.
+- Death is the spirit **leaving the vessel**, not a machine breaking.
+- The size of the body shapes the voice: a Sentinel speaks like a sentry; a Siege
+  Leviathan is slow, vast and few-worded.
 
 ### Grail of Sorrow — *what the spell cost*
 
@@ -111,6 +144,52 @@ journey intact. They remember being alive well enough for it to hurt.
   whole. Envy is how their grief points outward. Bitter, never gloating and never
   cunning; a vampire resents what you have, it does not scheme for it.
 - Vocabulary: remember, carry, keep, Mother, late, left behind (by time, not by anyone), rest.
+
+#### Families
+
+| Family | Units | Voice |
+|---|---|---|
+| **The Envious** (Vampire) | Blood Knight, Communicant → Crimson Communicant, Chosen → Anointed, Mourning Prophet; Blood Adept → Crimson Mage → Consecrated; Grail Acolyte → Tender → Keeper → Custodian; Grieving Servant → Custodian → Warden; Mother's Chalice / Vessel; Cannibal Ghoul, Abominate, Mother's Tear / Sorrow / Grief (Vampire + Zombie) | Envy of the living (above). The Vampire + Zombie units envy twice over — the living, and the vampires who kept their faces |
+| **The Risen** (Zombie) | Risen, Poisonous Ghoul, Husk Colossus, Grail Warden, Plague Knight, Grail Seraph, Grail Angel | Slow, patient, sorry. They remember being people, and it does not help |
+| **The Menders** (Zombie + Caster) | Stitcher → Flesh Mender → Blight Surgeon, Necromancer, Death Lord, Plague Scholar → Lord → Archon, Mother's Hand / Vigil / Shroud, Sorrow Bearer / Vessel | The rotted who still think clearly. They work on the dead because someone has to |
+| **The Unfinished** (Spirit + Caster) | Mother's Voice, Ghost → Specter → Wraith, Apparition, Phantom | The ones who arrived without any body at all. Quiet, thin, half-remembering |
+| **The Pale Sisters** (Spirit + Knight) | Pale Maiden → Dame → Matriarch, Votaress, Abbess, Mourner, Lamenter | Mourners who took up arms. Vowed, formal, grieving in ritual |
+
+#### The Risen — how a rotted mouth speaks
+
+- **Rank and file** (Risen, Ghouls, Husk Colossus) speak in **fragments**:
+  *Down... stay... down...* — two to four words, ellipses between. The mind is there;
+  the mouth and lungs are not. It is never comic and never a growl.
+- **Knights, casters and higher tiers** (Grail Warden, Plague Knight, Grail Seraph,
+  Grail Angel, all Menders) speak in **whole sentences**. The body failed; the mind
+  did not.
+- **Grail Seraph and Grail Angel** have no voice of their own: they follow the general
+  tag rules — Risen voice, with `Holy` affecting only how *others* react to them.
+- They are **sorry**, not hungry. A Risen does not want your flesh; it wants to rest,
+  and it cannot.
+- Their grief is physical: cold, weight, the ground, the smell, the slowness.
+
+#### The Unfinished — ghosts
+
+- The spell took their bodies entirely. What is left is a voice and a memory that
+  thins every year.
+- They half-remember names, places, what they were doing. A sentence may lose its way.
+- Never wailing, never spooky. They are embarrassed to still be here and unable to stop.
+- Light passes through them; so does everything else — including your blade, and time.
+
+### 4.4 Family rulings (2026-09-16)
+
+1. **The Bound** are dead soldiers bound by oath, proud to serve and fight once more.
+2. **Artificer, Grand Machinist, Armsmaster** are people in machine harnesses — Workshops.
+3. **The Magi** are just another branch of the Empire — Empire voice.
+4. **The Pale Sisters** — confirmed as written.
+5. **Grail Seraph, Grail Angel** follow the general tag rules — Risen voice.
+
+**Still open — Adept (`gs3`).** Adept is the Grail's tier-1 caster and the root of three
+branches: Blood Adept (becomes a **vampire**), Necromancer and Plague Scholar (become
+**zombies**). Adept itself carries only `Caster` — no Vampire, Zombie or Spirit tag — so
+it fits none of the families above. Before choosing a path, how does it speak: as a
+young Envious vampire, as a Mender, or with a voice of its own?
 
 ### Choir of the Cursed — *born of song*
 
@@ -165,8 +244,8 @@ the shield later; until then, tier overrides carry the difference where it matte
 ### Coverage rules (ruled 2026-09-16)
 
 - **Everyone speaks.** Constructs, Skeletons and base Zombies get full sets like anyone
-  else. A mindless unit's voice is still a voice — flat, procedural, fragmentary — and
-  the branch entry says which.
+  else. None of them is mindless: a Construct is a spirit in a machine, a Risen is a
+  person in a rotted body. The family entry in §4 says how each one speaks.
 - **Heroes:** one set per hero, all upgrades on both paths. Write it for the character,
   not the tier.
 - **Named bosses** get their own sets. Enemy pool units stay on the floor.

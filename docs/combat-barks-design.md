@@ -262,7 +262,7 @@ coverage per faction and trigger.
 
 | Question | Ruling |
 |---|---|
-| Do mindless units speak (Constructs, Skeletons, Zombies)? | **Everyone speaks.** Every unit gets a real set; the floor is a safety net, not a destination |
+| Do Constructs, Skeletons and base Zombies speak? | **Everyone speaks.** Every unit gets a real set; the floor is a safety net, not a destination. Constructs are spirits in machines, not robots (style guide §4) |
 | Heroes: one set per path, or one for the whole hero? | **One set per hero, covering every upgrade on both paths** (e.g. Paladin = all 9 `h_e_1*` ids). A tier may still override with a smaller set (§1.1) |
 | Named enemy bosses (Malgrath etc.) get own sets? | **Yes.** Pool units stay on the floor |
 | Templar branch: Champion/Exemplar and Warden/Paragon — one voice or two? | **One shared voice for now** (`e21, e211, e2111, e212, e2121`); may split later |
