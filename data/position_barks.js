@@ -33,21 +33,22 @@
 //     own mouth. It says faith is needed ELSEWHERE, or needed whole.
 //   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton ) — NOT ancient.
 //     They are barely a decade dead, the collateral of a time spell that went
-//     wrong, and ASTALOTH mourns what became of his worshippers. So the register
+//     wrong, and ASTALOTH mourns what became of her worshippers. So the register
 //     is recent grief and confusion, not centuries of practised menace: they
 //     remember being alive, and the memory is fresh enough to hurt. Never
-//     cunning, never gloating — a vampire here is a frightened person who has
-//     only just learned what they are now.
+//     cunning, never gloating — a vampire here is ENVIOUS: of the living, and of
+//     everything they still have that the vampire lost on the way through time.
 //     ASTALOTH IS FEMALE — the Mother, and "Mother" is used interchangeably with
 //     her name. She is a grieving parent, not a captor: what happened to them
 //     was done TO her children, not BY her. So she watches, keeps, shelters and
 //     mourns. She never takes, spends, leaves short or withholds — a line like
 //     "Astaloth left me so little" makes her the author of their state, which is
 //     the opposite of the faction's whole premise.
-//   Choir of the Cursed (Demon / Court / Choir / Beast) — born out of song, and
-//     it shows: everything is music, terms, debt and appetite. Greedy, evil and
-//     genuinely CUNNING — they bargain, they read the contract back to you, they
-//     let someone cheaper bleed first. Their scripture is THE FIRST SONG, and
+//   Choir of the Cursed (Demon / Court) — born out of song, and it shows:
+//     everything is music and appetite. Evil and genuinely CUNNING, willing to do
+//     anything for power — they turn your words back on you, they let someone
+//     else bleed first. NO bargaining, no trade, no terms: they take, they never
+//     deal. Their scripture is THE FIRST SONG, and
 //     they lapse into a tongue nobody else speaks mid-sentence — the words are
 //     deliberately untranslated, and are transliterated the same way in both
 //     languages so the strangeness survives the translation.
@@ -67,7 +68,7 @@
 //   voices are incompatible.
 //     Knight     — e, g and d. An Empire knight is a zealot; a Grail knight is
 //                  a dead man keeping a promise he made while breathing; a
-//                  Choir knight is a contractor. The Empire lines were being
+//                  Choir knight serves whatever brings it power. The Empire lines were being
 //                  put in all three mouths.
 //     Holy       — e and g. Empire holy burns the unclean. Grail holy IS the
 //                  unclean, and mourns it.
@@ -392,8 +393,8 @@ const POSITION_BARKS = [
     ],
   },
   {
-    // Choir knight — the Black Castellan and company. A knight by contract, not
-    // by vow: he is here because the terms say front rank pays better.
+    // Choir knight — the Black Castellan and company. A knight for power, not
+    // by vow: he stands in the front rank because that is where power is taken.
     prefers: 'front', actor: { tag: 'Knight', faction: 'd' },
     lines: [
       'The verse said front rank. This is the back.',
