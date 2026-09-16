@@ -20,6 +20,10 @@
 //   kills:<Tag>       enemy units slain carrying that tag
 // The rest are bumped by the routes that do the thing.
 //
+// `min_hero_tier`: hidden, unclaimable and left out of battle reports until the
+// player's hero reaches that tier — the same gate data/daily_tasks.js uses, so a
+// new player is never shown a goal they cannot start. Progress still counts.
+//
 // `go` is where the quest's button takes the player:
 //   embark | colossus | arena | spells | errands
 //
@@ -140,6 +144,7 @@ const QUESTS = [
     id:      'colossus_damage',
     counter: 'colossus_damage',
     base:    1000,
+    min_hero_tier: 2,
     go:      'colossus',
     title:   { en: 'Giant Slayer',     ru: 'Убийца гигантов' },
     desc:    { en: 'Deal {n} damage to the Colossus.', ru: 'Нанесите Колоссу {n} урона.' },
@@ -155,6 +160,7 @@ const QUESTS = [
     id:      'pvp_matches',
     counter: 'pvp_matches',
     base:    3,
+    min_hero_tier: 3,
     go:      'arena',
     title:   { en: 'Duelist',          ru: 'Дуэлянт' },
     desc:    { en: 'Fight {n} quick matches, win or lose.', ru: 'Проведите {n} быстрых боёв — победа или поражение.' },
@@ -205,9 +211,13 @@ function questTiers(quest) {
   return quest.tiers || TIER_STEPS.map(m => Math.round(quest.base * m));
 }
 
+function questsForTier(heroTier = 1) {
+  return QUESTS.filter(q => (q.min_hero_tier ?? 1) <= heroTier);
+}
+
 const QUESTS_BY_ID = Object.fromEntries(QUESTS.map(q => [q.id, q]));
 
-export { QUESTS, QUESTS_BY_ID, TIER_STEPS, questTiers };
+export { QUESTS, QUESTS_BY_ID, TIER_STEPS, questTiers, questsForTier };
 if (typeof module !== 'undefined') {
-  module.exports = { QUESTS, QUESTS_BY_ID, TIER_STEPS, questTiers };
+  module.exports = { QUESTS, QUESTS_BY_ID, TIER_STEPS, questTiers, questsForTier };
 }

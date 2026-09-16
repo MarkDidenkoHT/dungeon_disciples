@@ -9,6 +9,8 @@ import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../battle-realtime.js';
 import { assetUrl } from '../asset_base.js';
 import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower } from '../../data/spells.js';
+import { QUESTS_BY_ID } from '../../data/quests.js';
+import { openDailyTasks } from '../daily.js';
 
 const ROWS = 3;
 const COLS = 2;
@@ -121,6 +123,9 @@ const BT = {
   colossusLeft:  { en: (hp, max) => `Boss HP ${hp} / ${max}`, ru: (hp, max) => `HP босса ${hp} / ${max}` },
   colossusWeek:  { en: n => `Your week: ${n}`, ru: n => `Ваш урон за неделю: ${n}` },
   claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
+  questsHead:   { en: 'Quests',                     ru: 'Задания' },
+  questReached: { en: 'Milestone reached!',         ru: 'Этап пройден!' },
+  questClaim:   { en: 'Claim in Quests',            ru: 'Забрать в заданиях' },
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
   unlocked:     { en: n => `Level ${n} unlocked!`, ru: n => `Уровень ${n} открыт!` },
   xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
@@ -2763,6 +2768,50 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const outcomeHtml =
       `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}</div>`;
 
+    // What the battle moved on the quest board. The bars are drawn at where each
+    // quest WAS and slide to where it is now once they are on screen, so the
+    // gain reads as movement rather than a number to compare.
+    const questRowsLimit = 4;
+    const questProgressHtml = (report) => {
+      const rows = (report || [])
+        .filter(r => QUESTS_BY_ID[r.id])
+        .sort((a, b) => (Number(b.reached) - Number(a.reached))
+          || ((b.after - b.before) / b.target - (a.after - a.before) / a.target))
+        .slice(0, questRowsLimit);
+      if (!rows.length) return '';
+      const fmt = n => Number(n).toLocaleString(BL === 'ru' ? 'ru-RU' : 'en-US');
+      const pct = n => Math.max(0, Math.min(100, n));
+      return `
+        <div class="result-quests">
+          <div class="reward-xp-head">${BTx('questsHead')}</div>
+          ${rows.map(r => {
+            const def = QUESTS_BY_ID[r.id];
+            return `
+              <div class="result-quest${r.reached ? ' result-quest--reached' : ''}">
+                <div class="result-quest-top">
+                  <span class="result-quest-name">${def.title[BL]}</span>
+                  <span class="result-quest-gain">+${fmt(r.after - r.before)}</span>
+                </div>
+                <div class="quest-bar"><span data-to="${pct(r.after / r.target * 100)}" style="width:${pct(r.before / r.target * 100)}%"></span></div>
+                <div class="result-quest-meta">${r.reached
+                  ? `<span class="result-quest-badge">${BTx('questReached')}</span>`
+                  : `${fmt(r.after)} / ${fmt(r.target)}`}</div>
+              </div>`;
+          }).join('')}
+          ${rows.some(r => r.reached) ? `<button class="quest-btn quest-btn--claim result-quest-claim" id="result-quest-claim">${BTx('questClaim')}</button>` : ''}
+        </div>`;
+    };
+    const animateQuestBars = () => {
+      const bars = root.querySelectorAll('.result-quests .quest-bar > span[data-to]');
+      if (!bars.length) return;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        bars.forEach(bar => { bar.style.width = `${bar.dataset.to}%`; });
+      }));
+      root.querySelector('#result-quest-claim')?.addEventListener('click', () => {
+        openDailyTasks(player, { tab: 'quests' });
+      });
+    };
+
     rewardRequestInFlight = true;
     try {
       const result = await api('/battle/reward', {
@@ -2795,7 +2844,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <div class="colossus-bar"><div class="colossus-bar-fill" style="width:${pct}%"></div></div>
             <div class="colossus-result-meta">${BT.colossusLeft[BL](c.hp_left, c.max_hp)} · ${BT.colossusWeek[BL](c.week_total)}</div>
           </div>
-          ${chips ? `<div class="reward-grid">${chips}</div>` : ''}`;
+          ${chips ? `<div class="reward-grid">${chips}</div>` : ''}
+          ${questProgressHtml(result.quest_progress)}`;
       } else if (won) {
         // Icon-forward reward chips: real art for gold, crystals and trophies.
         // Trophy icons are /assets/icons/recources/<trophy_id>.png, named after
@@ -2866,10 +2916,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               ${xpRows}
             </div>` : ''}
           ${result.progress_unlocked ? `<div class="reward-unlock">${BT.unlocked[BL](result.next_level)}</div>` : ''}
+          ${questProgressHtml(result.quest_progress)}
         `;
       } else {
-        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">${BTx('noRewards')}</p>`;
+        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">${BTx('noRewards')}</p>${questProgressHtml(result.quest_progress)}`;
       }
+      animateQuestBars();
     } catch (err) {
       // Branch on the CODE, not the prose. This used to read
       // `/already claimed|already/i.test(err.message)`, which meant any rewording

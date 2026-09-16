@@ -16,6 +16,7 @@ const ERRORS = {
   daily_bad_reward: ['Pick one of the rewards.', 'Выберите одну из наград.'],
   quest_claimed:    ['Already claimed.',         'Уже получено.'],
   quest_incomplete: ['Milestone not reached yet.', 'Этап ещё не пройден.'],
+  quest_locked:     ['Your hero is not strong enough for this quest yet.', 'Ваш герой ещё недостаточно силён для этого задания.'],
 };
 
 let activeOverlay = null;
@@ -193,6 +194,22 @@ function questsBodyHtml(state, player) {
   return `<div class="quest-list">${sortQuests(state.quests).map(q => questHtml(q, state.faction_crystal, player)).join('')}</div>`;
 }
 
+// What a claim paid, lifted off the button it was claimed from. Positioned on
+// <body> rather than inside the list, so the redraw that follows the claim
+// cannot take it down mid-flight.
+function celebrateClaim(btn, chipsHtml) {
+  const rect = btn?.getBoundingClientRect?.();
+  if (!rect || !chipsHtml) return;
+  const burst = document.createElement('div');
+  burst.className = 'claim-burst';
+  burst.style.left = `${rect.left + rect.width / 2}px`;
+  burst.style.top  = `${rect.top}px`;
+  burst.innerHTML = chipsHtml;
+  document.body.appendChild(burst);
+  btn.closest('.quest, .daily-rewards')?.classList.add('claim-flash');
+  setTimeout(() => burst.remove(), 1500);
+}
+
 // ── Window ──────────────────────────────────────────────────────────────────
 
 export function openDailyTasks(player, { tab } = {}) {
@@ -305,6 +322,10 @@ export function openDailyTasks(player, { tab } = {}) {
     btn.disabled = true;
     try {
       await api('/daily/claim', { chat_id: player.chat_id, reward: rewardId });
+      const def = DAILY_REWARDS.find(r => r.id === rewardId);
+      if (def) {
+        celebrateClaim(btn, `<span class="quest-reward">${questIcon(rewardIconHtml(def, bootstrapCache.data?.faction_crystal))}<span>${def.label[lang]}</span></span>`);
+      }
       await afterClaim();
     } catch (err) {
       claimFailed(err, btn);
@@ -314,7 +335,9 @@ export function openDailyTasks(player, { tab } = {}) {
   async function claimQuest(questId, btn) {
     btn.disabled = true;
     try {
+      const tier = bootstrapCache.data?.quests?.find(q => q.id === questId)?.tier ?? 0;
       await api('/quests/claim', { chat_id: player.chat_id, quest: questId });
+      celebrateClaim(btn, questRewardHtml(QUESTS_BY_ID[questId]?.rewards[tier], bootstrapCache.data?.faction_crystal));
       await afterClaim();
     } catch (err) {
       claimFailed(err, btn);

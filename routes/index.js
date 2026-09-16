@@ -34,7 +34,7 @@ const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementT
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID, dailyTasksForTier } = require('../data/daily_tasks');
-const { QUESTS, QUESTS_BY_ID, questTiers } = require('../data/quests');
+const { QUESTS_BY_ID, questTiers, questsForTier, QUESTS } = require('../data/quests');
 const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
 const COL = require('../data/colossus');
 
@@ -1426,8 +1426,8 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // Quests ride along too, so the daily window draws the moment it opens
       // instead of waiting on /quests. The crystal names the player's own
       // element for reward art in both tabs.
-      quests: player ? questsPayload(player) : [],
-      quests_claimable: player ? questsPayload(player).filter(q => q.claimable).length : 0,
+      quests: player ? questsPayload(player, heroTierOf(roster)) : [],
+      quests_claimable: player ? questsPayload(player, heroTierOf(roster)).filter(q => q.claimable).length : 0,
       faction_crystal: FACTION_CRYSTAL[player?.faction] || 'Crystals_Life',
     });
   } catch (err) {
@@ -1970,8 +1970,9 @@ function questState(player, quest) {
   };
 }
 
-function questsPayload(player) {
-  return QUESTS.map(q => questState(player, q));
+// Only the quests this hero's tier has unlocked (min_hero_tier in data/quests.js).
+function questsPayload(player, heroTier = 1) {
+  return questsForTier(heroTier).map(q => questState(player, q));
 }
 
 // counters: { damage_physical: 412, 'kills:Demon': 2, battles_won: 1 }.
@@ -1998,6 +1999,48 @@ async function bumpQuests(chat_id, counters) {
 // What one side of a finished battle did, as quest counters.
 function battleQuestCounters(battle_data, side, extra = {}) {
   return { ...(battle_data?.tally?.[side] || {}), ...extra };
+}
+
+// Bumps the counters AND reports what that did, for the battle result screen:
+// every visible quest the battle moved, where it was, where it is now, and
+// whether a milestone was crossed. Worked out from a read taken just before the
+// bump, capped exactly as quest_bump caps. Never throws — an empty report is
+// the worst case, and the bump itself still runs.
+async function bumpQuestsWithReport(chat_id, counters) {
+  let report = [];
+  try {
+    const [rows, heroTier] = await Promise.all([
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=quests&limit=1`),
+      heroTierFor(chat_id),
+    ]);
+    const player = rows[0];
+    if (player) {
+      for (const q of questsForTier(heroTier)) {
+        const gain = Math.floor(Number(counters?.[q.counter]) || 0);
+        if (gain <= 0) continue;
+        const state = questState(player, q);
+        if (state.finished) continue;
+        const cap    = state.tiers[state.tiers.length - 1];
+        const before = Math.min(cap, Number(player.quests?.[q.id]?.progress) || 0);
+        const after  = Math.min(cap, before + gain);
+        if (after === before) continue;
+        report.push({
+          id:      q.id,
+          before,
+          after,
+          target:  state.target,
+          tier:    state.tier,
+          tiers:   state.tiers.length,
+          reached: before < state.target && after >= state.target,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('quest report failed:', err.message);
+    report = [];
+  }
+  await bumpQuests(chat_id, counters);
+  return report;
 }
 
 // ── Errands ─────────────────────────────────────────────────────────────────
@@ -2604,7 +2647,7 @@ router.get('/quests', requireAuth, async (req, res) => {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,quests&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
     res.json({
-      quests: questsPayload(rows[0]),
+      quests: questsPayload(rows[0], await heroTierFor(chat_id)),
       faction_crystal: FACTION_CRYSTAL[rows[0].faction] || 'Crystals_Life',
     });
   } catch (err) {
@@ -2626,6 +2669,9 @@ router.post('/quests/claim', requireAuth, async (req, res) => {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,quests&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
 
+    if ((def.min_hero_tier ?? 1) > await heroTierFor(chat_id)) {
+      return res.status(400).json({ error: 'Quest locked', code: 'quest_locked' });
+    }
     const state = questState(rows[0], def);
     if (!state.claimable) return res.status(400).json({ error: 'Milestone not reached', code: 'quest_incomplete' });
 
@@ -4732,13 +4778,13 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'battles');
       bumpDailyTask(chat_id, 'colossus');
       const colossus = await settleColossusAttempt(record);
-      bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', {
+      const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', {
         colossus_damage: colossus?.dealt || 0,
         battles_won:     record.battle_data?.winner === 'player' ? 1 : 0,
       }));
       return res.json({
         xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false,
-        won: record.battle_data?.winner === 'player', colossus,
+        won: record.battle_data?.winner === 'player', colossus, quest_progress,
       });
     }
 
@@ -4753,8 +4799,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === 'player';
-      bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won };
+      const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, quest_progress };
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
       return res.json(result);
     }
@@ -4782,8 +4828,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === mySide;
-      bumpQuests(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won };
+      const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, quest_progress };
 
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
 
@@ -4812,7 +4858,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
     const { region_id, level } = record.battle_data;
     const won = record.battle_data?.winner === 'player';
-    bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', { battles_won: won ? 1 : 0 }));
+    // Started now, awaited just before responding: it runs alongside the payout
+    // rather than in front of it.
+    const questReport = bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { battles_won: won ? 1 : 0 }));
     const region = REGIONS.find(r => r.id === region_id);
     if (!region) return res.status(404).json({ error: 'Region not found' });
     const levelDef = region.difficulties?.[`level_${level}`];
@@ -5026,6 +5074,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // Already closed by the claim above — closing again here would be harmless
     // but misleading, since it would read as the point where the battle ends.
 
+    result.quest_progress = await questReport;
     res.json(result);
   } catch (err) {
     serverError(res, err);
