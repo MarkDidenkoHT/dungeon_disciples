@@ -1423,8 +1423,12 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // own. Claiming still goes through /daily/claim, which re-reads the row.
       daily: player ? dailyPayload(player, heroTierOf(roster)) : null,
       daily_defs: { tasks: DAILY_TASKS, rewards: DAILY_REWARDS },
-      // Only the count of milestones waiting, for the same badge.
+      // Quests ride along too, so the daily window draws the moment it opens
+      // instead of waiting on /quests. The crystal names the player's own
+      // element for reward art in both tabs.
+      quests: player ? questsPayload(player) : [],
       quests_claimable: player ? questsPayload(player).filter(q => q.claimable).length : 0,
+      faction_crystal: FACTION_CRYSTAL[player?.faction] || 'Crystals_Life',
     });
   } catch (err) {
     serverError(res, err);

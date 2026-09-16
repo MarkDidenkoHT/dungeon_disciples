@@ -242,9 +242,8 @@ export function openDailyTasks(player, { tab } = {}) {
     btn.addEventListener('click', () => {
       if (btn.dataset.tab === activeTab) return;
       activeTab = btn.dataset.tab;
-      paintTabs();
-      list.innerHTML = '<p class="modal-empty">…</p>';
-      load().catch(showError);
+      list.scrollTop = 0;
+      paint();
     });
   });
 
@@ -258,19 +257,32 @@ export function openDailyTasks(player, { tab } = {}) {
     if (goBtn && !goBtn.disabled) goTo(goBtn.dataset.go, player);
   });
 
-  async function load() {
-    // A deliberate open is worth a round-trip: the player is looking straight at
-    // these numbers, and the badge on the button is the thing that reads cache.
-    const tabAtStart = activeTab;
-    const state = tabAtStart === 'quests'
-      ? await api(`/quests?chat_id=${player.chat_id}`)
-      : await api(`/daily?chat_id=${player.chat_id}`);
-    if (activeOverlay !== overlay || activeTab !== tabAtStart) return;
-    list.innerHTML = tabAtStart === 'quests' ? questsBodyHtml(state, player) : dailyBodyHtml(state);
+  // Both tabs draw from the bootstrap payload, which is loaded behind the
+  // loading screen — so opening the window and switching tabs never wait on
+  // the network. The markup is only swapped when it actually changed, so a
+  // background refresh that finds nothing new leaves the list untouched.
+  function paint() {
+    if (activeOverlay !== overlay) return;
+    paintTabs();
+    const boot = bootstrapCache.data;
+    let html;
+    if (activeTab === 'quests') {
+      if (!boot?.quests) return;
+      html = questsBodyHtml({ quests: boot.quests, faction_crystal: boot.faction_crystal }, player);
+    } else {
+      if (!boot?.daily) return;
+      html = dailyBodyHtml({ ...boot.daily, faction_crystal: boot.faction_crystal });
+    }
+    if (list.dataset.tab === activeTab && list._html === html) return;
+    const scroll = list.scrollTop;
+    list.innerHTML = html;
+    list._html = html;
+    list.dataset.tab = activeTab;
+    list.scrollTop = scroll;
   }
 
   function showError(err) {
-    if (activeOverlay !== overlay) return;
+    if (activeOverlay !== overlay || list._html) return;
     list.innerHTML = `<p class="modal-empty">${err?.message || T('Failed', 'Не удалось')}</p>`;
   }
 
@@ -279,8 +291,7 @@ export function openDailyTasks(player, { tab } = {}) {
   async function afterClaim() {
     await bootstrapCache.refresh(player.chat_id);
     refreshResourceBar(player).catch(() => {});
-    await load();
-    if (activeOverlay === overlay) paintTabs();
+    paint();
     refreshDailyButton(player).catch(() => {});
   }
 
@@ -310,10 +321,15 @@ export function openDailyTasks(player, { tab } = {}) {
     }
   }
 
-  paintTabs();
-  load().catch(showError);
-  // The dots read the cache; make sure there is one to read.
-  bootstrapCache.get(player.chat_id).then(() => { if (activeOverlay === overlay) paintTabs(); }).catch(() => {});
+  // Whatever is cached goes up at once. Then one quiet refresh, because a
+  // battle or errand may have moved the counters since the cache was filled;
+  // if nothing moved, paint() changes nothing on screen.
+  paint();
+  const ready = bootstrapCache.data ? Promise.resolve() : bootstrapCache.get(player.chat_id).then(paint);
+  ready
+    .then(() => bootstrapCache.refresh(player.chat_id))
+    .then(() => { paint(); refreshDailyButton(player).catch(() => {}); })
+    .catch(showError);
 }
 
 export function closeDailyTasks() {
