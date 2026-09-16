@@ -872,7 +872,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   function openStatsModal(c) {
     selectedCombatant = c;
-    const name = c.name ?? c.unit_data?.unit_id ?? 'Unit';
+    const name = cName(c) || c.name || c.unit_data?.unit_id || 'Unit';
     openSheet(name, unitStatsHtml(c));
   }
 

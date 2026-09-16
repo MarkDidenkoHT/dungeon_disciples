@@ -2561,8 +2561,8 @@ const UNITS = {
     },
     cesswalker: {
       id: 'gs13', f: 'g', t: 2,
-      name: 'Cesswalker',
-      name_ru: 'Бродящий Скверны',
+      name: 'Stitcher',
+      name_ru: 'Сшиватель',
       tags: ['Caster', 'Zombie'],
       pref_position: 'back',
       size: 'tile',
@@ -2574,8 +2574,8 @@ const UNITS = {
     },
     blightwalker: {
       id: 'gs131', f: 'g', t: 3,
-      name: 'Blightwalker',
-      name_ru: 'Бродящий Порчи',
+      name: 'Flesh Mender',
+      name_ru: 'Ткач Плоти',
       tags: ['Caster', 'Zombie'],
       pref_position: 'back',
       size: 'tile',
@@ -2587,8 +2587,8 @@ const UNITS = {
     },
     blightwalker2: {
       id: 'gs1311', f: 'g', t: 4,
-      name: 'Blightwalker',
-      name_ru: 'Бродящий Порчи',
+      name: 'Blight Surgeon',
+      name_ru: 'Врачеватель Порчи',
       tags: ['Caster', 'Zombie'],
       pref_position: 'back',
       size: 'tile',
