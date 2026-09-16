@@ -26,7 +26,7 @@ import {
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
-import { onDailyClose, closeDailyTasks } from '../daily.js';
+import { onDailyClose, closeDailyTasks, maybeAutoOpenDaily } from '../daily.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml, drawUnitTreeLinks } from '../unit_tree.js';
 import { assetUrl } from '../asset_base.js';
 import { setScreenReady } from './loading.js';
@@ -1884,6 +1884,7 @@ export function renderCastle(root, { player, focusBuilding }) {
       shownStep = null;
       hideTutorial();
       maybeShowErrandsIntro(player);
+      maybeAutoOpenDaily(player);
     }
   }
 

@@ -1,6 +1,11 @@
-import { api, bootstrapCache, refreshResourceBar } from './api.js';
+import { api, bootstrapCache, refreshResourceBar, navigate } from './api.js';
 import { CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
+import { assetUrl } from './asset_base.js';
 import { DAILY_TASKS, DAILY_REWARDS } from '../data/daily_tasks.js';
+import { QUESTS_BY_ID } from '../data/quests.js';
+import { TOKEN_DEFS } from '../data/embark.js';
+import { isTutorialDone } from './tutorial.js';
+import { openErrandsSheet, errandsUnlocked } from './errands.js';
 
 let lang = 'en';
 const T = (en, ru) => (lang === 'ru' ? ru : en);
@@ -9,9 +14,14 @@ const ERRORS = {
   daily_claimed:    ['Already claimed today.',   'Награда за сегодня уже получена.'],
   daily_incomplete: ['Finish every task first.', 'Сначала выполните все задания.'],
   daily_bad_reward: ['Pick one of the rewards.', 'Выберите одну из наград.'],
+  quest_claimed:    ['Already claimed.',         'Уже получено.'],
+  quest_incomplete: ['Milestone not reached yet.', 'Этап ещё не пройден.'],
 };
 
 let activeOverlay = null;
+
+// The tab the window was last left on, so reopening it lands where the player was.
+let activeTab = 'daily';
 
 // One-shot close callbacks, the same contract onSheetClose uses: each fires
 // once and is dropped. Onboarding needs it because this modal is not part of
@@ -55,7 +65,7 @@ function rewardHtml(reward, locked, factionCrystal) {
     </button>`;
 }
 
-function bodyHtml(state) {
+function dailyBodyHtml(state) {
   const tasks = state.tasks.map(taskHtml).join('');
 
   // Three states for the reward strip: locked while the day is unfinished,
@@ -82,16 +92,127 @@ function bodyHtml(state) {
     </div>`;
 }
 
-export function openDailyTasks(player) {
+// ── Quests ──────────────────────────────────────────────────────────────────
+
+const TOKEN_NAMES = {
+  health_potion:     ['Health Potion',     'Зелье здоровья'],
+  tome_of_knowledge: ['Tome of Knowledge', 'Том знаний'],
+};
+
+const questIcon = html => `<span class="quest-reward-icon">${html}</span>`;
+
+// One chip per thing a milestone pays: gold, the faction crystal, tokens.
+function questRewardHtml(reward, factionCrystal) {
+  const chips = [];
+  if (reward?.resources?.Gold) chips.push([questIcon(GOLD_ICON), reward.resources.Gold, T('Gold', 'Золото')]);
+  if (reward?.crystals) {
+    chips.push([questIcon(CRYSTAL_ICONS[factionCrystal] || CRYSTAL_ICONS.Crystals_Life), reward.crystals, T('Crystals', 'Кристаллы')]);
+  }
+  for (const [id, amount] of Object.entries(reward?.tokens || {})) {
+    const def = TOKEN_DEFS[id];
+    const art = def?.art
+      ? `<img src="${assetUrl(`/${def.art}`)}" class="res-icon-img" alt="">`
+      : (def?.icon || '✦');
+    const name = TOKEN_NAMES[id] ? T(...TOKEN_NAMES[id]) : (def?.name || id);
+    chips.push([questIcon(art), amount, name]);
+  }
+  return chips.map(([icon, amount, name]) =>
+    `<span class="quest-reward" title="${name}">${icon}<span>×${amount}</span></span>`).join('');
+}
+
+// Where a quest's button leads, and whether that place is open to the player
+// yet. A locked nav tab means the tutorial has not reached it.
+const GO_TARGETS = {
+  embark:   { screen: 'embark' },
+  colossus: { screen: 'embark', params: { layer: 'colossus' } },
+  arena:    { screen: 'embark', params: { layer: 'arena' } },
+  spells:   { screen: 'spells' },
+};
+
+function goAvailable(go, player) {
+  if (go === 'errands') return errandsUnlocked(player);
+  const target = GO_TARGETS[go];
+  if (!target) return false;
+  const nav = document.querySelector(`.nav-btn[data-screen="${target.screen}"]`);
+  return !nav?.classList.contains('nav-btn--locked');
+}
+
+function goTo(go, player) {
+  if (go === 'errands') {
+    closeDailyTasks();
+    openErrandsSheet(player);
+    return;
+  }
+  const target = GO_TARGETS[go];
+  if (target) navigate(target.screen, { player, ...(target.params || {}) });
+}
+
+const formatNumber = n => Number(n).toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US');
+
+function questHtml(q, factionCrystal, player) {
+  const def = QUESTS_BY_ID[q.id];
+  if (!def) return '';
+  const pct  = q.finished ? 100 : Math.min(100, Math.round((q.progress / q.target) * 100));
+  const pips = q.tiers.map((_, i) =>
+    `<span class="quest-pip${i < q.tier ? ' quest-pip--done' : ''}${i === q.tier && q.claimable ? ' quest-pip--ready' : ''}"></span>`).join('');
+
+  let action;
+  if (q.finished) {
+    action = `<span class="quest-done">${T('Complete', 'Выполнено')}</span>`;
+  } else if (q.claimable) {
+    action = `<button class="quest-btn quest-btn--claim" data-claim="${q.id}">${T('Claim', 'Забрать')}</button>`;
+  } else {
+    const open = goAvailable(def.go, player);
+    action = `<button class="quest-btn" data-go="${def.go}" ${open ? '' : 'disabled'}>${T('Go', 'Вперёд')}</button>`;
+  }
+
+  return `
+    <div class="quest${q.claimable ? ' quest--ready' : ''}${q.finished ? ' quest--finished' : ''}">
+      <div class="quest-head">
+        <div class="quest-title">${def.title[lang]}</div>
+        <div class="quest-pips" aria-label="${q.tier}/${q.tiers.length}">${pips}</div>
+      </div>
+      <div class="quest-desc">${def.desc[lang].replace('{n}', formatNumber(q.target))}</div>
+      <div class="quest-bar"><span style="width:${pct}%"></span></div>
+      <div class="quest-foot">
+        <span class="quest-count">${formatNumber(q.progress)} / ${formatNumber(q.target)}</span>
+        ${q.finished ? '' : `<span class="quest-rewards">${questRewardHtml(def.rewards[q.tier], factionCrystal)}</span>`}
+        ${action}
+      </div>
+    </div>`;
+}
+
+// Ready to claim first, then the closest to done, finished chains last.
+function sortQuests(quests) {
+  const rank = q => q.finished ? 2 : q.claimable ? 0 : 1;
+  return [...quests].sort((a, b) =>
+    (rank(a) - rank(b)) || ((b.progress / b.target) - (a.progress / a.target)));
+}
+
+function questsBodyHtml(state, player) {
+  return `<div class="quest-list">${sortQuests(state.quests).map(q => questHtml(q, state.faction_crystal, player)).join('')}</div>`;
+}
+
+// ── Window ──────────────────────────────────────────────────────────────────
+
+export function openDailyTasks(player, { tab } = {}) {
   closeDailyTasks();
   lang = player?.settings?.language === 'ru' ? 'ru' : 'en';
+  if (tab) activeTab = tab;
 
   const overlay = document.createElement('div');
   overlay.className = 'daily-overlay';
   overlay.innerHTML = `
     <div class="daily-modal" role="dialog" aria-label="Daily tasks">
       <div class="daily-header">
-        <span class="daily-header-title">${T('Daily Tasks', 'Ежедневные задания')}</span>
+        <div class="daily-tabs" role="tablist">
+          <button class="daily-tab" role="tab" data-tab="daily">
+            ${T('Daily', 'Ежедневные')}<span class="daily-tab-dot"></span>
+          </button>
+          <button class="daily-tab" role="tab" data-tab="quests">
+            ${T('Quests', 'Задания')}<span class="daily-tab-dot"></span>
+          </button>
+        </div>
         <button class="daily-close" aria-label="Close">✕</button>
       </div>
       <div class="daily-list"><p class="modal-empty">…</p></div>
@@ -104,41 +225,95 @@ export function openDailyTasks(player) {
 
   const list = overlay.querySelector('.daily-list');
 
+  function paintTabs() {
+    overlay.querySelectorAll('.daily-tab').forEach(btn => {
+      const on = btn.dataset.tab === activeTab;
+      btn.classList.toggle('daily-tab--active', on);
+      btn.setAttribute('aria-selected', String(on));
+    });
+    const boot = bootstrapCache.data;
+    overlay.querySelector('[data-tab="daily"] .daily-tab-dot')
+      .classList.toggle('daily-tab-dot--on', !!boot?.daily?.claimable);
+    overlay.querySelector('[data-tab="quests"] .daily-tab-dot')
+      .classList.toggle('daily-tab-dot--on', (boot?.quests_claimable || 0) > 0);
+  }
+
+  overlay.querySelectorAll('.daily-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === activeTab) return;
+      activeTab = btn.dataset.tab;
+      paintTabs();
+      list.innerHTML = '<p class="modal-empty">…</p>';
+      load().catch(showError);
+    });
+  });
+
   // Delegated, so a redraw after a claim never has to rebind anything.
   list.addEventListener('click', e => {
-    const btn = e.target.closest('.daily-reward');
-    if (btn && !btn.disabled) claim(btn.dataset.reward, btn);
+    const reward = e.target.closest('.daily-reward');
+    if (reward && !reward.disabled) return claimDaily(reward.dataset.reward, reward);
+    const claimBtn = e.target.closest('[data-claim]');
+    if (claimBtn && !claimBtn.disabled) return claimQuest(claimBtn.dataset.claim, claimBtn);
+    const goBtn = e.target.closest('[data-go]');
+    if (goBtn && !goBtn.disabled) goTo(goBtn.dataset.go, player);
   });
 
   async function load() {
     // A deliberate open is worth a round-trip: the player is looking straight at
     // these numbers, and the badge on the button is the thing that reads cache.
-    const state = await api(`/daily?chat_id=${player.chat_id}`);
-    if (activeOverlay !== overlay) return;
-    list.innerHTML = bodyHtml(state);
+    const tabAtStart = activeTab;
+    const state = tabAtStart === 'quests'
+      ? await api(`/quests?chat_id=${player.chat_id}`)
+      : await api(`/daily?chat_id=${player.chat_id}`);
+    if (activeOverlay !== overlay || activeTab !== tabAtStart) return;
+    list.innerHTML = tabAtStart === 'quests' ? questsBodyHtml(state, player) : dailyBodyHtml(state);
   }
 
-  async function claim(rewardId, btn) {
+  function showError(err) {
+    if (activeOverlay !== overlay) return;
+    list.innerHTML = `<p class="modal-empty">${err?.message || T('Failed', 'Не удалось')}</p>`;
+  }
+
+  // Gold, crystals and tokens all live in the resource table the strip and the
+  // token badges read, so both have to move before the window redraws.
+  async function afterClaim() {
+    await bootstrapCache.refresh(player.chat_id);
+    refreshResourceBar(player).catch(() => {});
+    await load();
+    if (activeOverlay === overlay) paintTabs();
+    refreshDailyButton(player).catch(() => {});
+  }
+
+  function claimFailed(err, btn) {
+    const pair = ERRORS[err?.code];
+    alert(pair ? T(pair[0], pair[1]) : (err?.message || T('Failed', 'Не удалось')));
+    btn.disabled = false;
+  }
+
+  async function claimDaily(rewardId, btn) {
     btn.disabled = true;
     try {
       await api('/daily/claim', { chat_id: player.chat_id, reward: rewardId });
-      // Gold, crystals and the tome all live in the resource table the strip and
-      // the token badges read, so both have to move before the modal redraws.
-      await bootstrapCache.refresh(player.chat_id);
-      refreshResourceBar(player).catch(() => {});
-      await load();
-      refreshDailyButton(player).catch(() => {});
+      await afterClaim();
     } catch (err) {
-      const pair = ERRORS[err?.code];
-      alert(pair ? T(pair[0], pair[1]) : (err?.message || T('Failed', 'Не удалось')));
-      btn.disabled = false;
+      claimFailed(err, btn);
     }
   }
 
-  load().catch(err => {
-    if (activeOverlay !== overlay) return;
-    list.innerHTML = `<p class="modal-empty">${err?.message || T('Failed', 'Не удалось')}</p>`;
-  });
+  async function claimQuest(questId, btn) {
+    btn.disabled = true;
+    try {
+      await api('/quests/claim', { chat_id: player.chat_id, quest: questId });
+      await afterClaim();
+    } catch (err) {
+      claimFailed(err, btn);
+    }
+  }
+
+  paintTabs();
+  load().catch(showError);
+  // The dots read the cache; make sure there is one to read.
+  bootstrapCache.get(player.chat_id).then(() => { if (activeOverlay === overlay) paintTabs(); }).catch(() => {});
 }
 
 export function closeDailyTasks() {
@@ -151,15 +326,37 @@ export function closeDailyTasks() {
   }
 }
 
-// The badge: lit while a finished day is still unclaimed. Reads the bootstrap
-// cache rather than asking, so it costs nothing on every navigation.
+// The badge: lit while a finished day is still unclaimed or a quest milestone
+// is waiting. Reads the bootstrap cache rather than asking, so it costs nothing
+// on every navigation.
 export async function refreshDailyButton(player) {
   const btn = document.querySelector('.res-bar-daily');
   if (!btn || !player?.chat_id) return;
   try {
     const boot = await bootstrapCache.get(player.chat_id);
-    btn.classList.toggle('res-bar-daily--ready', !!boot?.daily?.claimable);
+    btn.classList.toggle('res-bar-daily--ready', !!boot?.daily?.claimable || (boot?.quests_claimable || 0) > 0);
   } catch {
     // Never let this take the shell down; the button just stays quiet.
+  }
+}
+
+// Once per session, the window greets a returning player whose day is not
+// done — tasks unfinished or the reward still unclaimed. Held back until the
+// castle onboarding and the errands intro are behind them, and never opened on
+// top of anything else.
+let autoOpened = false;
+export async function maybeAutoOpenDaily(player) {
+  if (autoOpened || activeOverlay || !player?.chat_id) return;
+  if (!errandsUnlocked(player) || !isTutorialDone(player, 'errands_intro')) return;
+  try {
+    const boot = await bootstrapCache.get(player.chat_id);
+    if (autoOpened || activeOverlay) return;
+    if (!boot?.daily || boot.daily.claimed) { autoOpened = true; return; }
+    if (!document.querySelector('#outer-ring')) return;
+    if (document.querySelector('.tutorial-overlay, .modal-overlay:not(.hidden)')) return;
+    autoOpened = true;
+    openDailyTasks(player, { tab: 'daily' });
+  } catch {
+    // A failed read just means no greeting this time.
   }
 }

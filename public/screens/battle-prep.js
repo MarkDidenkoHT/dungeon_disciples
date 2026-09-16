@@ -323,10 +323,6 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   const targetBody      = root.querySelector('#spell-target-body');
   const targetTitle     = root.querySelector('#spell-target-title');
 
-  // Guards the one-time research prompt so checkReady (which runs often) can't
-  // re-trigger it.
-  let spellResearchPrompted = false;
-
   // The resource bar is collapsed in battle prep; slide it down while the spell
   // sheet is open so the player can see their crystals, then slide it back up.
   function setResourceBarVisible(visible) {
@@ -1193,19 +1189,6 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     if (heroPlaced) {
       markTutorialDone(player, 'battle_prep_start');
       hideTutorial();
-      // Next onboarding beat: point at the spellbook. It used to say "cast your
-      // buff before the fight", which no longer exists — spells are researched
-      // there and cast in battle — so the step now explains that split.
-      if (!isTutorialDone(player, 'spell_research') && !spellResearchPrompted) {
-        spellResearchPrompted = true;
-        const navBtn = document.querySelector('.nav-btn[data-screen="spells"]');
-        if (navBtn) {
-          showTutorialSpotlight(player, 'spell_research', navBtn, {
-            showContinue: true,
-            onAdvance: () => markTutorialDone(player, 'spell_research'),
-          });
-        }
-      }
     } else if (!isTutorialDone(player, 'battle_prep_start')) {
       // First visit runs a short chain before the "place your hero" step: the
       // two rules a new player cannot infer from the grid alone.

@@ -195,10 +195,11 @@ function typedAmount(target, amount, type) {
   return Math.max(1, Math.floor(amount * (1 - effectiveResist(target, type) / 100)));
 }
 
-function hurt(unit, amount) {
+function hurt(unit, amount, engine, school) {
   if (!unit || !unit.alive || unit._invulnerable) return 0;
   const before = unit.battle_hp;
   unit.battle_hp = Math.max(0, before - amount);
+  engine?.tallyDamage?.(unit, before - unit.battle_hp, school);
   return before - unit.battle_hp;
 }
 function resolveAbilityDef(unit, UNIT_ABILITIES, type) {
@@ -840,7 +841,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           ? p.light_of_dawn_per_tag * tagCount(engine, owner.side, p.tag_required)
           : (p.light_of_dawn_dmg ?? 15);
         const dmgAmt = typedAmount(frontEnemy, dmgBase, p.light_of_dawn_damage_type ?? 'life');
-        hurt(frontEnemy, dmgAmt);
+        hurt(frontEnemy, dmgAmt, engine, p.light_of_dawn_damage_type ?? 'life');
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: frontEnemy.unit_name, targetId: frontEnemy.id, targetCell: frontEnemy.cellIndex, value: dmgAmt, heal: false });
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
       }
@@ -911,7 +912,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (enemies.length > 0) {
         const lowest = enemies.reduce((a, b) => a.battle_hp < b.battle_hp ? a : b, enemies[0]);
         const extra = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "lowest_enemy_dmg_pct", "lowest_enemy_dmg_pct_per_tag") / 100));
-        hurt(lowest, extra);
+        hurt(lowest, extra, engine, owner.unit_data?.damage_source);
         if (lowest.battle_hp <= 0) { lowest.alive = false; engine.applyOnDeathPassives(lowest); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
       }
@@ -932,7 +933,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // heal has to be paired with the damage actually dealt.
     if (p.leech_bleed_mult != null && (target._bleed_dmg ?? 0) > 0) {
       const extra = Math.max(1, Math.floor((target._bleed_dmg ?? 0) * p.leech_bleed_mult));
-      hurt(target, extra);
+      hurt(target, extra, engine, 'physical');
       engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: extra, heal: false, message: `${def.name} — tore open ${target.unit_name}'s wounds for ${extra}` });
       if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
       // Pure Blood blocks the drink, never the blow.
@@ -1026,7 +1027,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (target._stacks[key] >= p.stacks_needed) {
         target._stacks[key] = 0;
         const burst = typedAmount(target, p.stack_burst_damage, p.damage_type ?? 'physical');
-        hurt(target, burst);
+        hurt(target, burst, engine, p.damage_type ?? 'physical');
         if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
         // targetId, so the client can place the animation on the struck cell —
         // the FX layer resolves its target by id (see effectForEntry/playback in
@@ -1056,7 +1057,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       if (behind) {
         const splash = Math.floor(dmg * p.behind_splash_pct / 100);
-        hurt(behind, splash);
+        hurt(behind, splash, engine, owner.unit_data?.damage_source);
         if (behind.battle_hp <= 0) { behind.alive = false; engine.applyOnDeathPassives(behind); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: behind.unit_name, targetCell: behind.cellIndex, value: splash, heal: false });
       }
@@ -1069,7 +1070,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       );
       for (const b of burning) {
         const splash = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "fellfire_pct", "fellfire_pct_per_tag") / 100));
-        hurt(b, splash);
+        hurt(b, splash, engine, p.fellfire_dot === 'chill' ? 'cold' : 'fire');
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: b.unit_name, targetId: b.id, targetCell: b.cellIndex, value: splash, heal: false });
         if (b.battle_hp <= 0) {
           b.alive = false;
@@ -1114,7 +1115,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       for (let i = 0; i < count; i++) {
         const chainTarget = shuffled[i];
         const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
-        hurt(chainTarget, chainDmg);
+        hurt(chainTarget, chainDmg, engine, owner.unit_data?.damage_source);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
         if (chainTarget.battle_hp <= 0) {
           chainTarget.alive = false;
@@ -1158,7 +1159,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   if (trigger === 'on_hit_received' && owner === target && dmg > 0) {
     if (p.reflect_pct != null) {
       const reflect = Math.floor(dmg * p.reflect_pct / 100);
-      hurt(actor, reflect);
+      hurt(actor, reflect, engine, owner.unit_data?.damage_source);
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: reflect, heal: false });
     }
@@ -1190,13 +1191,13 @@ function dispatchPassive(trigger, owner, def, ctx) {
         c.side === actor.side && c.alive && withinRange(c)
       );
       for (const adj of adjacent) {
-        hurt(adj, splashDmg);
+        hurt(adj, splashDmg, engine, p.damage_type);
         if (adj.battle_hp <= 0) { adj.alive = false; engine.applyOnDeathPassives(adj); }
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: adj.unit_name, targetCell: adj.cellIndex, value: splashDmg, heal: false });
       }
     }
     if (p.retaliation_damage != null) {
-      hurt(actor, p.retaliation_damage);
+      hurt(actor, p.retaliation_damage, engine, 'physical');
       if (actor.battle_hp <= 0) { actor.alive = false; engine.applyOnDeathPassives(actor); }
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, value: p.retaliation_damage, heal: false });
     }
@@ -1252,7 +1253,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         ? p.death_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.death_aoe_damage;
       for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable)) {
-        hurt(e, deathDmg);
+        hurt(e, deathDmg, engine, p.damage_type);
         if (e.battle_hp <= 0) e.alive = false;
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: deathDmg, heal: false });
       }
@@ -1316,7 +1317,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
           Math.abs(cellRow(c.cellIndex) - ownerRow) <= 1
         );
         for (const e of adjEnemies) {
-          hurt(e, radDmg);
+          hurt(e, radDmg, engine, owner.unit_data?.damage_source);
           // targetId is what the client resolves the victim's cell by — a player
           // and an enemy routinely share a cellIndex, so the cell alone cannot
           // find it, and without this Radiance logged correctly but never
@@ -1576,7 +1577,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       actor.battle_hp -= cost;
       const armor = effectiveArmor(target);
       const dmg = Math.max(1, Math.floor(cost * (1 - armor / 100)));
-      hurt(target, dmg);
+      hurt(target, dmg, engine, 'physical');
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
       engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${actor.unit_name} sacrifices ${cost} HP to strike ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
@@ -1604,7 +1605,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       const resist   = (target.unit_data?.resistances || {})[school] ?? 0;
       const reduction = Math.max(0, Math.min(90, resist));
       const dmg      = Math.max(1, Math.floor((p.radiant_surge_damage ?? 0) * (1 - reduction / 100)));
-      hurt(target, dmg);
+      hurt(target, dmg, engine, school);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
       engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
@@ -1801,7 +1802,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     for (const e of enemies) {
       const armor = effectiveArmor(e);
       const dmg   = Math.max(1, Math.floor(p.volley_damage * (1 - armor / 100)));
-      hurt(e, dmg);
+      hurt(e, dmg, engine, 'physical');
       const dead = e.battle_hp <= 0;
       if (dead) { e.alive = false; engine.applyOnDeathPassives(e); }
       engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
@@ -1948,7 +1949,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
         .sort((a, b) => cellCol(a.cellIndex) - cellCol(b.cellIndex));
       for (const v of victims) {
         const dmg = typedAmount(v, raw, p.damage_type);
-        hurt(v, dmg);
+        hurt(v, dmg, engine, p.damage_type);
         const dead = v.battle_hp <= 0;
         if (dead) { v.alive = false; engine.applyOnDeathPassives(v); }
         engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
@@ -1967,7 +1968,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     const enemies = combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable && !c._invulnerable);
     for (const e of enemies) {
       const dmg = typedAmount(e, p.cataclysm_damage ?? 0, p.damage_type);
-      hurt(e, dmg);
+      hurt(e, dmg, engine, p.damage_type);
       const dead = e.battle_hp <= 0;
       if (dead) { e.alive = false; engine.applyOnDeathPassives(e); }
       engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
@@ -2064,7 +2065,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.damage_flat != null && p.lowest_ally_heal_pct != null && target && def.target === 'enemy') {
     const armor = effectiveArmor(target);
     const dmg = Math.max(1, Math.floor(p.damage_flat * (1 - armor / 100)));
-    hurt(target, dmg);
+    hurt(target, dmg, engine, 'physical');
     const dead = target.battle_hp <= 0;
     if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — smote ${target.unit_name} for ${dmg}`, value: dmg, heal: false });
@@ -2096,7 +2097,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       const power = actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0;
       const armor = effectiveArmor(target);
       const dmg   = Math.max(1, Math.floor(power * p.power_pct_damage / 100 * (1 - armor / 100)));
-      hurt(target, dmg);
+      hurt(target, dmg, engine, 'physical');
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
 

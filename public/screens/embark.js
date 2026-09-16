@@ -172,7 +172,7 @@ function regionBgStyle(r) {
 // `highlightRegions` arrives from the item sheet's material detail: the regions
 // that drop the material the player tapped. They flash green for a few seconds
 // on arrival, then settle — long enough to notice, short enough not to nag.
-export function renderEmbark(root, { player, activeCheck, highlightRegions, highlightMaterial } = {}) {
+export function renderEmbark(root, { player, activeCheck, highlightRegions, highlightMaterial, layer } = {}) {
   applyBackground(root, player.faction, 'embark');
 
   const L = lang(player);
@@ -479,9 +479,10 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   // Same arrangement as the castle's two layers (see setLayer in castle.js):
   // both pages sit side by side on one track and switching slides it, so
   // neither is rebuilt and the arrows cannot race a render.
-  // 1 Colossus · 2 Regions · 3 Arena. The screen opens on the regions.
+  // 1 Colossus · 2 Regions · 3 Arena. The screen opens on the regions unless
+  // the caller asked for a page by name (a quest's Go button does).
   const LAYER_COUNT = 3;
-  let currentLayer = 2;
+  let currentLayer = layer === 'colossus' ? 1 : layer === 'arena' ? 3 : 2;
 
   function applyLayer() {
     const track = root.querySelector('#embark-layer-track');

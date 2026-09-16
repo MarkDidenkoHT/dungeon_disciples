@@ -134,6 +134,9 @@ class BattleEngine {
     // side (an enemy Vow binds you too). Filled at battle start by the
     // vow_*_charges passives and spent through consumeVow().
     this.vows = { grave: 0, silence: 0, ...(state?.vows || {}) };
+    // What each side has dealt and slain, for quests (data/quests.js). Keyed by
+    // the quest counter names so the route can hand it straight over.
+    this.tally = { player: {}, enemy: {}, ...(state?.tally || {}) };
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -159,6 +162,27 @@ class BattleEngine {
       // all. One is enough to make round one a decision — cheapest spell now, or
       // attack and bank toward something bigger.
       this.power = { player: POWER_START, enemy: POWER_START };
+    }
+  }
+
+  // Credited to the side opposite the one that took it: whoever struck, a DoT
+  // or a spell always came from the other army. Withering is nobody's doing and
+  // is not passed in.
+  tallyDamage(target, amount, type) {
+    if (!target || !(amount > 0)) return;
+    const side = target.side === 'player' ? 'enemy' : 'player';
+    const key  = (!type || type === 'physical') ? 'damage_physical' : 'damage_elemental';
+    const t    = this.tally[side] || (this.tally[side] = {});
+    t[key] = (t[key] || 0) + amount;
+  }
+
+  tallyKill(dying) {
+    if (!dying) return;
+    const side = dying.side === 'player' ? 'enemy' : 'player';
+    const t    = this.tally[side] || (this.tally[side] = {});
+    t.kills = (t.kills || 0) + 1;
+    for (const tag of new Set((dying.unit_data?.tags ?? []).filter(Boolean))) {
+      t[`kills:${tag}`] = (t[`kills:${tag}`] || 0) + 1;
     }
   }
 
@@ -725,12 +749,14 @@ class BattleEngine {
     }
   }
   applyOnDeathPassives(dying) {
+    this.tallyKill(dying);
     this.revokeGrantedBuffs(dying);
     this.recomputeTagScaledGrants(dying.side, dying.unit_data?.tags ?? []);
     this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
     const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
     if (bonded) {
       bonded.alive = false;
+      this.tallyKill(bonded);
       this.pushLog({ type: 'passive', passive: 'Unity', actorId: bonded.id, actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetName: bonded.unit_name, targetCell: bonded.cellIndex, message: `${bonded.unit_name} perishes with their host.` });
       this.revokeGrantedBuffs(bonded);
       this.fireTrigger('on_death', { dying: bonded, actor: bonded, target: null, dmg: 0 });
@@ -1199,6 +1225,7 @@ class BattleEngine {
           if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
           if (remaining > 0) {
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
+            this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
@@ -1285,6 +1312,7 @@ class BattleEngine {
     if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
     if (remaining > 0) {
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
+      this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
@@ -1664,8 +1692,10 @@ class BattleEngine {
     // Skipped entirely rather than logged as zero — a tick that cannot land is
     // not an event worth a line in the battle log.
     if (unit._invulnerable) return;
-    const tick = (amount, passive, actorName, extra = {}) => {
+    const tick = (amount, passive, actorName, extra = {}, school = null) => {
+      const before = unit.battle_hp;
       unit.battle_hp = Math.max(0, unit.battle_hp - amount);
+      if (school) this.tallyDamage(unit, before - unit.battle_hp, school);
       this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: amount, heal: false, ...extra });
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     };
@@ -1681,7 +1711,7 @@ class BattleEngine {
     }
     if (unit._deferred_dmg > 0) {
       const d = unit._deferred_dmg; unit._deferred_dmg = 0;
-      tick(d, 'Recuperate (deferred)', '⏳');
+      tick(d, 'Recuperate (deferred)', '⏳', {}, 'physical');
     }
     // Mother's Blessing — the caster pays a slice of her own maximum HP and
     // every living ally is healed for that amount. Lives here rather than in a
@@ -1732,7 +1762,7 @@ class BattleEngine {
         : 1;
       const b = Math.max(bleedRank, unit._bleed_dmg);
       unit._bleed_dmg = 0;
-      tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' });
+      tick(b, 'Bleed', '🩸', { dot_kind: 'bleed' }, 'physical');
       if (unit.alive && unit._bleed_permanent > 0) unit._bleed_dmg = unit._bleed_permanent;
       else this.clearEffect(unit, 'bleed');
     }
@@ -1743,7 +1773,7 @@ class BattleEngine {
         : 1;
       const c = Math.max(chillRank, unit._chill_dmg);
       unit._chill_dmg = 0;
-      tick(c, 'Chill', '❄️', { dot_kind: 'chill' });
+      tick(c, 'Chill', '❄️', { dot_kind: 'chill' }, 'cold');
       if (unit.alive && unit._chill_permanent > 0) unit._chill_dmg = unit._chill_permanent;
       else this.clearEffect(unit, 'chill');
     }
@@ -1757,7 +1787,7 @@ class BattleEngine {
         : 1;
       const d = Math.max(dotRank, unit.dot_dmg);
       unit.dot_dmg = 0;
-      tick(d, 'Burn', '🔥', { dot_kind: 'burn' });
+      tick(d, 'Burn', '🔥', { dot_kind: 'burn' }, 'fire');
       if (unit.alive && unit._dot_permanent > 0) unit.dot_dmg = unit._dot_permanent;
       else { unit._dot_type = null; this.clearEffect(unit, 'dot'); }
     }
@@ -1769,7 +1799,7 @@ class BattleEngine {
       const p = Math.max(psnRank, unit._poison_dmg);
       unit._poison_dmg = 0;
       unit._poison_source_key = null;
-      tick(p, 'Poison', '☠️', { dot_kind: 'poison' });
+      tick(p, 'Poison', '☠️', { dot_kind: 'poison' }, 'nature');
       this.clearEffect(unit, 'poison');
     }
     // Renew (_hot) — the heal-over-time ticks on the same schedule as the damage
@@ -2168,6 +2198,7 @@ class BattleEngine {
         const dmg    = Math.max(1, Math.floor(effect.amount * (1 - resist / 100)));
         if (unit._invulnerable) continue;   // Unity guardian: spells cannot touch it either
         unit.battle_hp = Math.max(0, unit.battle_hp - dmg);
+        this.tallyDamage(unit, dmg, effect.damage_type);
         this.pushLog({ type: 'spell', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: dmg, heal: false, message: `${unit.unit_name} takes ${dmg} ${effect.damage_type} damage` });
         if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
       }
@@ -2852,6 +2883,7 @@ class BattleEngine {
       // Vow at full strength. Without the SPENT count carried across, a reload
       // would silently refund every charge the battle had already burned.
       vows: this.vows,
+      tally: this.tally,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -2971,6 +3003,7 @@ class BattleEngine {
     // is what was LEFT. Battles saved before Vows existed have no `vows` key and
     // keep the re-declared totals, which for them are zero.
     if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
+    engine.tally = { player: {}, enemy: {}, ...(battleData.tally || {}) };
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -3214,6 +3247,7 @@ class BattleEngine {
           dmg = Math.max(1, Math.floor(params.damage_flat * (1 - effectiveResist(c, type) / 100)));
         }
         c.battle_hp = Math.max(0, (c.battle_hp || 0) - dmg);
+        this.tallyDamage(c, dmg, type);
         this.pushLog({
           type: 'spell', targetName: c.unit_name, targetId: c.id, targetCell: c.cellIndex,
           value: dmg, heal: false,

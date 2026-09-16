@@ -176,11 +176,6 @@ const TUTORIAL_STEPS = {
       text: 'Он вернулся почти без здоровья. Живой боец восстанавливается сам — 10% от максимума здоровья каждые 5 минут, — так что время вылечит его бесплатно. Заклинание исцеления нужно, когда ждать некогда: нажмите «Лечить», чтобы подлечить его сейчас.',
     },
   },
-  // Replaces the old `spell_buff` step, which told the player to cast a buff on
-  // a unit before the fight. Spells are no longer charged or cast out of battle
-  // — combat spells are researched here once and then cast during the fight —
-  // so that step taught a screen that no longer does what it described. New key
-  // rather than reused, because everyone needs to see the corrected lesson.
   go_embark: {
     en: {
       title: 'March Out',
@@ -189,16 +184,6 @@ const TUTORIAL_STEPS = {
     ru: {
       title: 'В поход',
       text: 'Ваша армия снаряжена и готова. Нажмите «Поход», чтобы выбрать, где они будут сражаться, — всё остальное в замке оплачивается там.',
-    },
-  },
-  spell_research: {
-    en: {
-      title: 'Your Spellbook',
-      text: 'Spells are learned here, once, with crystals — a spell you research is yours for good. Battle spells are not cast from this screen: you cast them during the fight itself, from the Spell button.',
-    },
-    ru: {
-      title: 'Книга заклинаний',
-      text: 'Заклинания изучаются здесь один раз за кристаллы — изученное остаётся с вами навсегда. Боевые заклинания не читаются с этого экрана: их вы применяете прямо в бою, кнопкой «Заклинание».',
     },
   },
   // Two things a player cannot infer from the strip: where power comes from, and

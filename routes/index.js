@@ -34,6 +34,7 @@ const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementT
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID, dailyTasksForTier } = require('../data/daily_tasks');
+const { QUESTS, QUESTS_BY_ID, questTiers } = require('../data/quests');
 const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
 const COL = require('../data/colossus');
 
@@ -388,7 +389,7 @@ async function getPlayerByChatId(chat_id) {
   // `adds_daily_view` are what /bootstrap needs to report the remaining daily
   // favors — the day rollover is computed from the player's local date. The same
   // timezone decides when `daily_tasks` rolls over.
-  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view,daily_tasks&limit=1`);
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view,daily_tasks,quests&limit=1`);
   return rows[0] || null;
 }
 
@@ -1422,6 +1423,8 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // own. Claiming still goes through /daily/claim, which re-reads the row.
       daily: player ? dailyPayload(player, heroTierOf(roster)) : null,
       daily_defs: { tasks: DAILY_TASKS, rewards: DAILY_REWARDS },
+      // Only the count of milestones waiting, for the same badge.
+      quests_claimable: player ? questsPayload(player).filter(q => q.claimable).length : 0,
     });
   } catch (err) {
     serverError(res, err);
@@ -1939,6 +1942,60 @@ async function bumpDailyTask(chat_id, taskId, amount = 1) {
   }
 }
 
+// ── Quests ──────────────────────────────────────────────────────────────────
+// Milestone chains that never roll over (data/quests.js). Stored in
+// players.quests; both the bump and the claim run as database functions (see
+// sql/005_quests.sql) because a battle's counters land fire-and-forget while
+// the player may be claiming on the same row.
+
+function questState(player, quest) {
+  const rec   = player?.quests?.[quest.id] || {};
+  const tiers = questTiers(quest);
+  const tier  = Math.max(0, Number(rec.tier) || 0);
+  const progress = Number(rec.progress) || 0;
+  const finished = tier >= tiers.length;
+  return {
+    id:        quest.id,
+    tier,
+    tiers,
+    progress:  Math.min(progress, tiers[tiers.length - 1]),
+    target:    finished ? tiers[tiers.length - 1] : tiers[tier],
+    finished,
+    cycles:    Number(rec.cycles) || 0,
+    claimable: !finished && progress >= tiers[tier],
+  };
+}
+
+function questsPayload(player) {
+  return QUESTS.map(q => questState(player, q));
+}
+
+// counters: { damage_physical: 412, 'kills:Demon': 2, battles_won: 1 }.
+// Every quest reading one of those counters moves. NEVER awaited by the route
+// that calls it, and never allowed to throw — same contract as bumpDailyTask.
+async function bumpQuests(chat_id, counters) {
+  try {
+    const amounts = {};
+    const caps    = {};
+    for (const q of QUESTS) {
+      const n = Math.floor(Number(counters?.[q.counter]) || 0);
+      if (n <= 0) continue;
+      const tiers = questTiers(q);
+      amounts[q.id] = n;
+      caps[q.id]    = tiers[tiers.length - 1];
+    }
+    if (!Object.keys(amounts).length) return;
+    await rpc('quest_bump', { p_chat_id: String(chat_id), p_amounts: amounts, p_caps: caps });
+  } catch (err) {
+    console.error('quest bump failed:', err.message);
+  }
+}
+
+// What one side of a finished battle did, as quest counters.
+function battleQuestCounters(battle_data, side, extra = {}) {
+  return { ...(battle_data?.tally?.[side] || {}), ...extra };
+}
+
 // ── Errands ─────────────────────────────────────────────────────────────────
 // A daily solo task for one non-hero unit. Errands cannot fail; the cost is that
 // the unit is away until it returns.
@@ -2302,6 +2359,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
     }
 
     bumpDailyTask(chat_id, 'errands');
+    bumpQuests(chat_id, { errands: 1 });
     res.json({ success: true, errand: startedRow });
   } catch (err) {
     serverError(res, err);
@@ -2529,6 +2587,63 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
     await grantResources(chat_id, payouts);
 
     res.json({ success: true, reward, granted });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// GET /quests — every quest's chain position and progress.
+router.get('/quests', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,quests&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+    res.json({
+      quests: questsPayload(rows[0]),
+      faction_crystal: FACTION_CRYSTAL[rows[0].faction] || 'Crystals_Life',
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /quests/claim — take the next milestone of one quest.
+//
+// The claim is the database's decision (quest_claim), made before anything is
+// paid: it only moves the tier when that tier is still the next one and its
+// target is met, so a double-tap pays once.
+router.post('/quests/claim', requireAuth, async (req, res) => {
+  const { chat_id, quest } = req.body;
+  if (!chat_id || !quest) return res.status(400).json({ error: 'chat_id and quest required' });
+  const def = QUESTS_BY_ID[quest];
+  if (!def) return res.status(400).json({ error: 'Unknown quest', code: 'quest_unknown' });
+  try {
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,quests&limit=1`);
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const state = questState(rows[0], def);
+    if (!state.claimable) return res.status(400).json({ error: 'Milestone not reached', code: 'quest_incomplete' });
+
+    const taken = await rpc('quest_claim', {
+      p_chat_id: String(chat_id),
+      p_quest:   def.id,
+      p_tier:    state.tier,
+      p_target:  state.target,
+      p_last:    state.tier === state.tiers.length - 1,
+      p_repeat:  def.repeat !== false,
+    });
+    if (taken !== true) return res.status(400).json({ error: 'Already claimed', code: 'quest_claimed' });
+
+    const reward  = def.rewards[state.tier] || {};
+    const crystal = FACTION_CRYSTAL[rows[0].faction] || 'Crystals_Life';
+    const payouts = [];
+    for (const [item, amount] of Object.entries(reward.resources || {})) payouts.push({ item, amount, item_type: 'resource' });
+    if (reward.crystals) payouts.push({ item: crystal, amount: reward.crystals, item_type: 'resource' });
+    for (const [item, amount] of Object.entries(reward.tokens || {})) payouts.push({ item, amount, item_type: 'token' });
+    await grantResources(chat_id, payouts);
+
+    res.json({ success: true, granted: payouts });
   } catch (err) {
     serverError(res, err);
   }
@@ -4613,6 +4728,10 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'battles');
       bumpDailyTask(chat_id, 'colossus');
       const colossus = await settleColossusAttempt(record);
+      bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', {
+        colossus_damage: colossus?.dealt || 0,
+        battles_won:     record.battle_data?.winner === 'player' ? 1 : 0,
+      }));
       return res.json({
         xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false,
         won: record.battle_data?.winner === 'player', colossus,
@@ -4630,6 +4749,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === 'player';
+      bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
       const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won };
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
       return res.json(result);
@@ -4658,6 +4778,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       bumpDailyTask(chat_id, 'pvp');
 
       const won = record.battle_data?.winner === mySide;
+      bumpQuests(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
       const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won };
 
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
@@ -4687,6 +4808,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
     const { region_id, level } = record.battle_data;
     const won = record.battle_data?.winner === 'player';
+    bumpQuests(chat_id, battleQuestCounters(record.battle_data, 'player', { battles_won: won ? 1 : 0 }));
     const region = REGIONS.find(r => r.id === region_id);
     if (!region) return res.status(404).json({ error: 'Region not found' });
     const levelDef = region.difficulties?.[`level_${level}`];
@@ -4951,6 +5073,7 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     }
     const newLearned = [...learned, spell_id];
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ learned_spells: newLearned }) });
+    bumpQuests(chat_id, { spells_learned: 1 });
     res.json({ success: true, learned_spells: newLearned });
   } catch (err) {
     serverError(res, err);

@@ -1119,13 +1119,40 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: linear-gradient(90deg, var(--accent), transparent 60%);
   opacity: 0.6;
 }
-.daily-header-title {
+.daily-tabs {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.daily-tab {
+  position: relative;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 7px 14px;
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   letter-spacing: 0.02em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.daily-tab--active {
   color: var(--text);
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background: rgba(var(--accent-rgb), 0.10);
   text-shadow: 0 1px 12px rgba(var(--accent-rgb), 0.25);
 }
+.daily-tab-dot {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  display: none;
+}
+.daily-tab-dot--on { display: block; }
 .daily-close {
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
   color: var(--muted); border-radius: 9px;
@@ -1236,6 +1263,108 @@ button:active:not(:disabled) { opacity: 0.75; }
   font-weight: 700;
 }
 .daily-claimed-note { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
+
+.quest-list { display: flex; flex-direction: column; gap: 10px; }
+
+.quest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.quest--ready {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  background: rgba(var(--accent-rgb), 0.08);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.18);
+}
+.quest--finished { opacity: 0.55; }
+.quest-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.quest-title { font-weight: 700; color: var(--text); font-size: 1rem; line-height: 1.3; min-width: 0; }
+.quest-desc  { font-size: 0.82rem; color: var(--muted); line-height: 1.45; }
+.quest-pips { display: flex; gap: 4px; flex: 0 0 auto; }
+.quest-pip {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+}
+.quest-pip--done { background: var(--accent); border-color: var(--accent); }
+.quest-pip--ready { border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.quest-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.quest-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.6), var(--accent));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.quest-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quest-count {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.quest-rewards {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.quest-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.quest-reward-icon { display: inline-flex; }
+.quest-reward-icon .res-icon-img { width: 22px; height: 22px; }
+.quest-btn {
+  flex: 0 0 auto;
+  min-width: 76px;
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.quest-btn:not(:disabled):hover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.10); }
+.quest-btn:not(:disabled):active { transform: scale(0.97); }
+.quest-btn:disabled { opacity: 0.4; cursor: default; }
+.quest-btn--claim {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.22);
+}
+.quest-done {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
 
 .res-bar-daily--ready {
   opacity: 1;
