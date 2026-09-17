@@ -39,7 +39,7 @@ const BOT_TEMPLATES = [
         { unit: 'h_g_2_a3', cell: 4, item_id: 'gift_of_eternity', hero: true },
         { unit: 'gs5211',   cell: 1, item_id: 'shroud_of_the_fallen' },
       ],
-      band_300: [
+      band_200: [
         { unit: 'gs21',    cell: 0, item_id: 'dark_determination' },
         { unit: 'gs83',    cell: 3, item_id: 'mothers_gift' },
         { unit: 'h_g_2_a2', cell: 4, item_id: 'gift_of_eternity', hero: true },
