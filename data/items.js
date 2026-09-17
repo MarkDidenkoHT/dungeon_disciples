@@ -573,7 +573,6 @@ const ITEM_DEFS = {
     requires:     { region: 'any', level: 2 },
     item_cost:    { cold_resistance_potion: 2 }
   },
-  // Resist auras for the schools that had none. Rank 2, the frost_cloak pattern.
   ember_mantle: {
     key:          'ember_mantle',
     name:         'Ember Mantle',
@@ -1008,23 +1007,6 @@ const ITEM_DEFS = {
     cost:         { grave_dust: 2, Gold: 90 },
     item_cost:    { cold_resistance_potion: 1, air_resistance_potion: 1, life_resistance_potion: 2 },
   },
-  gravewardens_shroud: {
-    key:          'gravewardens_shroud',
-    name:         "Gravewarden's Shroud",
-    name_ru:      'Саван Стража Могил',
-    faction:      null,
-    tag_required: null,
-    adds_tag:     null,
-    stat_mods:    { death_resist: 10, hp: 3 },
-    passive:      'resist_aura_death 2',
-    icon:         'gravewardens_shroud',
-    rarity:       'epic',
-    unique:       true,
-    cost:         { grave_dust: 2, Gold: 90 },
-    item_cost:    { death_resistance_potion: 2, life_resistance_potion: 1 },
-  },
-  // Rank 3 aura on an epic with no tag gate: the wearer need not be a Caster,
-  // so it pays off only in an army that already fields several.
   reliquary_of_dawn: {
     key:          'reliquary_of_dawn',
     name:         'Reliquary Of Dawn',
@@ -1032,8 +1014,8 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { life_resist: 10, hp: 3 },
-    passive:      'resist_aura_life 3',
+    stat_mods:    { death_resist: 10, hp: 3 },
+    passive:      'resist_aura_death 2',
     icon:         'reliquary_of_dawn',
     rarity:       'epic',
     unique:       true,
@@ -1179,23 +1161,6 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { Gold: 25, Crystals_Nature: 10, Crystals_Fire: 10 },
     item_cost:    { dragon_step: 1, dragon_scale: 1}
-  },
-  // Rank 3 auras, Caster-only: the wearer is always one of the Casters the aura
-  // counts, so it is never worth nothing.
-  conclave_firerobe: {
-    key:          'conclave_firerobe',
-    name:         'Conclave Firerobe',
-    name_ru:      'Огненная Ряса Конклава',
-    faction:      null,
-    tag_required: 'Caster',
-    adds_tag:     null,
-    stat_mods:    { hp: 4, fire_resist: 10 },
-    passive:      'resist_aura_fire 3',
-    icon:         'conclave_firerobe',
-    rarity:       'mythic',
-    unique:       true,
-    cost:         { Gold: 125, Crystals_Fire: 30 },
-    item_cost:    { ember_mantle: 1, seal_of_power: 1 },
   },
   stormglass_diadem: {
     key:          'stormglass_diadem',
