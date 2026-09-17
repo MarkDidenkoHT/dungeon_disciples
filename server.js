@@ -94,6 +94,23 @@ app.get(['/', '/index.html'], (req, res, next) => {
   });
 });
 
+const ITEM_ICON_DIR = path.join(__dirname, 'public', 'assets', 'icons', 'items');
+app.get('/admin-tools/item-icons', (req, res, next) => {
+  fs.readdir(ITEM_ICON_DIR, (err, names) => {
+    if (err) return next(err);
+    const files = names.filter(n => /\.(?:png|jpe?g|webp|gif)$/i.test(n)).sort();
+    const refs = {};
+    const dataDir = path.join(__dirname, 'data');
+    for (const f of fs.readdirSync(dataDir).filter(n => n.endsWith('.js'))) {
+      const src = fs.readFileSync(path.join(dataDir, f), 'utf8');
+      for (const m of src.matchAll(/icons\/items\/([\w.-]+)\.\w+/g)) {
+        (refs[m[1]] ||= new Set()).add(f);
+      }
+    }
+    res.set('Cache-Control', 'no-store');
+    res.json({ files, refs: Object.fromEntries(Object.entries(refs).map(([k, v]) => [k, [...v]])) });
+  });
+});
 
 app.use('/data', express.static(path.join(__dirname, 'data'), staticOpts));
 app.use(express.static(path.join(__dirname, 'public'), staticOpts));

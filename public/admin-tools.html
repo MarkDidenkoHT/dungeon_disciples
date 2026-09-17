@@ -457,6 +457,25 @@
       .compare-panel { max-height: 50vh; }
       .legend { margin-left: 0; }
     }
+    .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--icon-size, 96px) + 24px), 1fr)); gap: 10px; }
+    .icon-card {
+      background: #1b1e28;
+      border: 1px solid #2b2f3d;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      min-width: 0;
+    }
+    .icon-card img { width: var(--icon-size, 96px); height: var(--icon-size, 96px); object-fit: contain; background: #12141b; border-radius: 6px; }
+    .icon-card .file { color: #e4e6ed; word-break: break-all; text-align: center; }
+    .icon-card .users { color: #8a8fa8; text-align: center; word-break: break-word; }
+    .icon-card.unused { border-color: #2f6f4a; }
+    .icon-card.unused .users { color: #5fd08a; }
+    .icon-card.shared { border-color: #a07a2a; }
     .bot-list { display: flex; flex-wrap: wrap; gap: 16px; }
     .bot-card {
       background: #1b1e28;
@@ -496,6 +515,7 @@
   <button class="tab-btn active" data-tab="units">Units</button>
   <button class="tab-btn" data-tab="items">Items</button>
   <button class="tab-btn" data-tab="bots">Bots</button>
+  <button class="tab-btn" data-tab="icons">Icons</button>
 </div>
 
 <div id="tab-units" class="tab-content active">
@@ -594,6 +614,33 @@
   </div>
   <div id="botList" class="bot-list">
     <div class="empty-msg">Loading templates...</div>
+  </div>
+</div>
+
+<div id="tab-icons" class="tab-content">
+  <div class="sub">
+    Every file in <strong>public/assets/icons/items/</strong>. An icon counts as used when an item in <strong>/data/items.js</strong> points at it (<code>icon</code> or its key) or a data file references its path.
+  </div>
+  <div class="toolbar">
+    <span class="status" id="iconLoadStatus">⏳ Loading icons...</span>
+    <div class="filter-group">
+      <input type="text" id="iconSearchBox" placeholder="🔍 file, item…" style="min-width:140px;">
+      <select id="iconUsageFilter">
+        <option value="">All</option>
+        <option value="unused">⬜ Unused</option>
+        <option value="used">✅ Used</option>
+        <option value="shared">⚠️ Used by 2+</option>
+      </select>
+      <select id="iconSize">
+        <option value="64">Small</option>
+        <option value="96" selected>Medium</option>
+        <option value="144">Large</option>
+      </select>
+    </div>
+  </div>
+  <div id="iconStats" class="asset-stats"></div>
+  <div id="iconGrid" class="icon-grid">
+    <div class="empty-msg">Loading icons...</div>
   </div>
 </div>
 
@@ -2080,6 +2127,97 @@
     loadStatus.className = 'status';
     itemLoadStatus.className = 'status';
   })();
+</script>
+
+<script type="module">
+  const status = document.getElementById('iconLoadStatus');
+  const grid = document.getElementById('iconGrid');
+  const stats = document.getElementById('iconStats');
+  const searchBox = document.getElementById('iconSearchBox');
+  const usageFilter = document.getElementById('iconUsageFilter');
+  const sizeSelect = document.getElementById('iconSize');
+
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  try {
+    const [{ ITEM_DEFS }, listing] = await Promise.all([
+      import('/data/items.js'),
+      fetch('/admin-tools/item-icons').then(r => {
+        if (!r.ok) throw new Error(`icon list: ${r.status}`);
+        return r.json();
+      }),
+    ]);
+
+    const usersByIcon = new Map();
+    for (const [key, def] of Object.entries(ITEM_DEFS)) {
+      if (!def || typeof def !== 'object') continue;
+      const icon = def.icon || def.key || key;
+      const id = icon.toLowerCase();
+      if (!usersByIcon.has(id)) usersByIcon.set(id, []);
+      usersByIcon.get(id).push({ name: def.name || key, icon });
+    }
+
+    const icons = listing.files.map(file => {
+      const base = file.replace(/\.[^.]+$/, '');
+      const users = usersByIcon.get(base.toLowerCase()) || [];
+      const items = users.map(u => u.name);
+      const caseMismatch = users.some(u => u.icon !== base);
+      const refs = listing.refs[base] || [];
+      const pngReachable = /\.png$/i.test(file);
+      return { file, base, items, refs, pngReachable, caseMismatch, uses: items.length + refs.length };
+    });
+
+    const fileBases = new Set(icons.map(i => i.base.toLowerCase()));
+    const missing = [...usersByIcon.keys()].filter(b => !fileBases.has(b));
+
+    const render = () => {
+      grid.style.setProperty('--icon-size', sizeSelect.value + 'px');
+      const q = searchBox.value.trim().toLowerCase();
+      const usage = usageFilter.value;
+      const shown = icons.filter(i => {
+        if (usage === 'unused' && i.uses) return false;
+        if (usage === 'used' && !i.uses) return false;
+        if (usage === 'shared' && i.items.length < 2) return false;
+        if (!q) return true;
+        return i.file.toLowerCase().includes(q) || i.items.some(n => n.toLowerCase().includes(q));
+      });
+      grid.innerHTML = shown.length ? shown.map(i => {
+        const cls = !i.uses ? 'unused' : i.items.length > 1 ? 'shared' : '';
+        const who = [
+          ...i.items,
+          ...i.refs.map(f => `ref in ${f}`),
+        ];
+        let warn = i.items.length && !i.pngReachable ? ' · ⚠️ game loads .png' : '';
+        if (i.caseMismatch) warn += ' · ⚠️ name case differs (breaks on Linux)';
+        return `<div class="icon-card ${cls}" title="${esc(i.file)}">
+          <img src="/assets/icons/items/${encodeURIComponent(i.file)}" alt="${esc(i.base)}" loading="lazy">
+          <div class="file">${esc(i.file)}</div>
+          <div class="users">${who.length ? esc(who.join(', ')) : 'unused'}${warn}</div>
+        </div>`;
+      }).join('') : '<div class="empty-msg">No icons match.</div>';
+    };
+
+    const unused = icons.filter(i => !i.uses).length;
+    const shared = icons.filter(i => i.items.length > 1).length;
+    stats.innerHTML = `
+      <div class="stat-item"><span class="label">Files</span> <span class="count">${icons.length}</span></div>
+      <div class="stat-item"><span class="label">Unused</span> <span class="count ok">${unused}</span></div>
+      <div class="stat-item"><span class="label">Shared</span> <span class="count">${shared}</span></div>
+      <div class="stat-item" title="${esc(missing.join(', '))}"><span class="label">Items w/o file</span> <span class="count ${missing.length ? 'missing' : 'ok'}">${missing.length}</span></div>
+    `;
+    status.textContent = `✅ ${icons.length} icons, ${unused} unused.`;
+    status.className = 'status ok';
+
+    [searchBox, usageFilter, sizeSelect].forEach(el => {
+      el.addEventListener('input', render);
+      el.addEventListener('change', render);
+    });
+    render();
+  } catch (err) {
+    status.textContent = '❌ ' + err.message;
+    status.className = 'status err';
+    grid.innerHTML = '<div class="empty-msg">Failed to load icons. The list comes from the server, so open this page through node server.js.</div>';
+  }
 </script>
 
 <script type="module">
