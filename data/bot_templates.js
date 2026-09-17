@@ -72,7 +72,7 @@ const BOT_TEMPLATES = [
         { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
         { unit: 'd521',      cell: 5, item_id: 'veil_of_discord' },
         { unit: 'opb_e411',  cell: 3, item_id: 'aldras_patience' },
-        { unit: 'h_d_1_a4',  cell: 4, item_id: 'burning_fury', hero: true },
+        { unit: 'h_d_1_a41',  cell: 4, item_id: 'burning_fury', hero: true },
         { unit: 'd111',      cell: 0, item_id: 'crystal_shield' },
       ],
       band_300: [
