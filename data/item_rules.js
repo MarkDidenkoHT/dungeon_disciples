@@ -9,6 +9,11 @@
 //        blocked_tags:    ['Construct']   unit carrying ANY of these is refused
 //        blocked_actions: ['heal']        unit whose action is of this kind is refused
 //        requires_action: 'damage'        unit must have an action of this kind
+//        max_targets:     1               unit's action may hit at most this many
+//                                         targets. For per-hit effects (bleed,
+//                                         burn, poison…) that would otherwise
+//                                         multiply on an AoE unit — a targets:6
+//                                         caster applies the effect six times.
 //      Use these when an item is a special case the derived layer cannot know
 //      about. They always win over the derived rules.
 //
@@ -104,6 +109,22 @@ function getEquipBlock(itemStats, unitDef, unitAbilities = {}) {
         ? 'Только целители могут это носить'
         : 'Только атакующие бойцы могут это носить',
     };
+  }
+
+  if (stats.max_targets != null) {
+    const cap     = Number(stats.max_targets);
+    const targets = Math.max(1, Number(unitDef.targets ?? unitDef.action?.targets ?? 1));
+    if (targets > cap) {
+      return {
+        code: 'max_targets',
+        reason:    cap === 1
+          ? 'Only single-target units can carry this'
+          : `Only units with up to ${cap} targets can carry this`,
+        reason_ru: cap === 1
+          ? 'Только бойцы с одной целью могут это носить'
+          : `Только бойцы с не более чем ${cap} целями могут это носить`,
+      };
+    }
   }
 
   // ---- 2. derived from the item's passive -----------------------------------

@@ -28,6 +28,10 @@
 //   blocked_actions ['heal']       refuse units whose action is of this kind
 //                                  ('damage' | 'heal' | 'sacrifice' | 'none')
 //   requires_action 'damage'       unit's action MUST be of this kind
+//   max_targets     1              unit's action may hit at most this many
+//                                  targets. Put it on per-hit effects (bleed,
+//                                  burn, poison) so an AoE unit cannot apply
+//                                  them to the whole enemy line at once.
 // The last three are only needed for special cases: an item whose `passive`
 // declares a trigger that requires attacking (on_hit / on_kill /
 // preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
@@ -80,7 +84,7 @@ const ITEM_DEFS = {
     removes_tag:  'Vampire',
     stat_mods:    { hp: 5, life_resist: 5},
     passive:      'vampires_vigil 1',
-    icon:         '',
+    icon:         'bloodless',
     rarity:       'shattered',
     unique:       true,
     cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30 },
@@ -497,6 +501,7 @@ const ITEM_DEFS = {
     name_ru:      'Сфера Пламени',
     faction:      null,
     tag_required: 'Caster',
+    max_targets:  1,
     adds_tag:     null,
     stat_mods:    { fire_resist: 5 },
     passive:      'burn 1',
@@ -512,6 +517,7 @@ const ITEM_DEFS = {
     name_ru:      'Посох Пламени',
     faction:      null,
     tag_required: 'Caster',
+    max_targets:  1,
     adds_tag:     null,
     stat_mods:    { fire_resist: 10 },
     passive:      'burn 2',
@@ -528,6 +534,7 @@ const ITEM_DEFS = {
     name_ru:      'Пылающий Тиран',
     faction:      'choir_of_the_cursed',
     tag_required: 'Caster',
+    max_targets:  1,
     adds_tag:     null,
     stat_mods:    { fire_resist: 7, hp: 2, action_power: 2, armor: 2 },
     passive:      'burn 2',
@@ -872,6 +879,7 @@ const ITEM_DEFS = {
     name_ru:      'Сфера Чистой Крови',
     faction:      null,
     tag_required: 'Caster',
+    max_targets:  1,
     adds_tag:     null,
     stat_mods:    { hp: 4 },
     passive:      'bleed 1',
@@ -886,6 +894,7 @@ const ITEM_DEFS = {
     name_ru:      'Посох Тауматургии',
     faction:      null,
     tag_required: 'Caster',
+    max_targets:  1,
     requires_action: 'damage',
     adds_tag:     'Vampire',
     stat_mods:    { action_power: 3, hp: 3 },
@@ -917,6 +926,7 @@ const ITEM_DEFS = {
     name_ru:      'Ядовитый Кинжал',
     faction:      null,
     tag_required: null,
+    max_targets:  1,
     adds_tag:     null,
     stat_mods:    null,
     passive:      'poison 1',
