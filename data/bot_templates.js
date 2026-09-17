@@ -40,6 +40,12 @@ const BOT_TEMPLATES = [
         { unit: 'gs5211',   cell: 4, item_id: 'shroud_of_the_fallen' },
         { unit: 'gs121',    cell: 5 },
       ],
+      band_300: [
+        { unit: 'gs421',    cell: 0, item_id: 'veil_of_discord' },
+        { unit: 'gs831',    cell: 2, item_id: 'mothers_gift' },
+        { unit: 'h_g_2_a2', cell: 3, item_id: 'gift_of_eternity', hero: true },
+        { unit: 'gs5211',   cell: 4, item_id: 'shroud_of_the_fallen' },
+      ],
     },
   },
   {
@@ -77,7 +83,7 @@ const BOT_TEMPLATES = [
       ],
       band_200: [
         { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
-        { unit: 'h_d_2_a2',  cell: 5, item_id: 'veil_of_discord', hero: true },
+        { unit: 'h_d_2_a2',  cell: 3, item_id: 'veil_of_discord', hero: true },
         { unit: 'd11',      cell: 0, item_id: 'crystal_shield' },
       ],
     },
@@ -115,7 +121,7 @@ const BOT_TEMPLATES = [
       band_300: [
         { unit: 'e621',     cell: 1, item_id: 'crystal_exoskeleton' },
         { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e7',      cell: 3, item_id: 'codex_aeternum' },
+        { unit: 'e71',      cell: 3, item_id: 'codex_aeternum' },
         { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true },
       ],
       band_200: [
