@@ -56,12 +56,11 @@ const BOT_TEMPLATES = [
     name: 'Demon Archers',
     bands: {
       band_300: [
-        { unit: 'opb_e411',  cell: 0, item_id: 'ranger_boots' },
-        { unit: 'opb_e211',  cell: 1, item_id: 'aldras_patience' },
-        { unit: 'opb_e3111', cell: 2, item_id: 'aldras_devotion' },
-        { unit: 'h_d_1_a3',  cell: 3, item_id: 'burning_fury', hero: true },
-        { unit: 'd611',      cell: 4 },
-        { unit: 'd411',      cell: 5, item_id: 'crystal_shield' },
+        { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
+        { unit: 'd521',      cell: 5, item_id: 'veil_of_discord' },
+        { unit: 'opb_e411',  cell: 3, item_id: 'aldras_patience' },
+        { unit: 'h_d_1_a3',  cell: 4, item_id: 'burning_fury', hero: true },
+        { unit: 'd111',      cell: 0, item_id: 'crystal_shield' },
       ],
     },
   },

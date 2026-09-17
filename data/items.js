@@ -969,7 +969,7 @@ const ITEM_DEFS = {
     name_ru:      'Покров Раздора',
     faction:      null,
     tag_required: null,
-    adds_tag:     'Vampire',
+    adds_tag:     null,
     stat_mods:    { cold_resist: 5, air_resist: 5 },
     passive:      'resist_aura_life 2',
     icon:         'veil_of_discord',

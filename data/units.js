@@ -898,7 +898,7 @@ const UNITS = {
       resistances: { air: 5, fire: 30, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'mark_of_ash 1',
+      xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'rite_of_reclamation 1',
     },
     ash_precentor: {
       id: 'd521', f: 'd', t: 3,
@@ -911,7 +911,7 @@ const UNITS = {
       resistances: { air: 10, fire: 35, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'mark_of_ash 1',
+      xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'rite_of_reclamation 2',
     },
     ash_liturgist: {
       id: 'd5211', f: 'd', t: 4,
@@ -924,7 +924,7 @@ const UNITS = {
       resistances: { air: 10, fire: 40, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
-      xp: 1820, passive: ['renew 1', 'resist_aura_fire 2', 'dispel 1'], ability: 'mark_of_ash 1',
+      xp: 1820, passive: ['renew 1', 'resist_aura_fire 2', 'dispel 1'], ability: 'rite_of_reclamation 2',
     },
   },
 
