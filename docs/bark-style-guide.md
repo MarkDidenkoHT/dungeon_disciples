@@ -1,6 +1,6 @@
 # Combat Barks — Style Guide
 
-Status: **draft for agreement.** Last updated 2026-09-16.
+Status: **draft for agreement.** Last updated 2026-09-17.
 Companion doc: [combat-barks-design.md](combat-barks-design.md) — how lines are chosen. This doc is what they say.
 
 A bark is a sentence shouted across a battle line by someone who is busy. Everything
@@ -241,6 +241,9 @@ Never:    Doubt. Mercy offered to the unclean.
 (holy_shock, purge) and Warden/Paragon (mace, sanctuary) may split into the burner and
 the shield later; until then, tier overrides carry the difference where it matters.
 
+Any Templar-branch unit can take either chorus cell in `profane_chorus`; the verses are
+written for the branch, not for a tier.
+
 ### Coverage rules (ruled 2026-09-16)
 
 - **Everyone speaks.** Constructs, Skeletons and base Zombies get full sets like anyone
@@ -271,15 +274,17 @@ not the same words.
 - Never leave a pair with an English placeholder in the RU slot — the client has no
   English fallback by design.
 
-**Worked example — `profane_chorus`:**
+**Worked example — `profane_chorus` (final):**
 
-| | EN | RU |
-|---|---|---|
-| Paladin | I am His shield against the talons in the night! |Я Его щит от когтей в ночи! |
-| Templar | I am His light that burns the unclean! | Я Его свет испепеляющий нечистых! |
-| Templar | I am His hammer and your end! | Я его Молот и твоя смерть! |
+| # | Speaker | EN | RU |
+|---|---|---|---|
+| 1 | Templar (front column, top) | I am His shield against the talons in the night! | Я Его щит от когтей в ночи! |
+| 2 | Templar (front column, bottom) | I am His light that burns the unclean! | Я Его свет испепеляющий нечистых! |
+| 3 | Paladin (front column, middle) | I am His hammer and your end! | Я его Молот и твоя смерть! |
 
-With one Templar alive the Templar says verses 2 and 3 together — see design doc §5.1.
+One litany, one creed, three voices: shield, light, hammer. The Paladin speaks **last**,
+on the killing blow. There is no shortened version — if the three cells are not manned,
+there is no litany at all (design doc §5.2).
 
 ---
 

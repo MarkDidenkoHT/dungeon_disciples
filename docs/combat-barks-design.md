@@ -1,6 +1,6 @@
 # Combat Barks v2 — Design
 
-Status: **draft for agreement, nothing built.** Last updated 2026-09-16.
+Status: **draft for agreement, nothing built.** Last updated 2026-09-17.
 Companion doc: [bark-style-guide.md](bark-style-guide.md) — what the lines say. This doc is how they are chosen.
 
 ## Why
@@ -167,77 +167,178 @@ Added:
 - **Event budget.** One action produces at most **two** barks: the actor's, plus one of
   (victim's `death`, a witness's `synergy_*`). `death` wins that slot — last words
   outrank commentary.
-- **Litany suppresses everything** for that action (§5).
+- **Litany replaces everything** for that action (§5): no actor bark, no victim
+  `death`, no witness `synergy_*`.
 - `battle_start`, `low_hp`, `last_standing` fire at most once per unit per battle.
 
 ---
 
 ## 5. Litanies
 
-A litany is a scripted sequence of verses, each spoken by a different unit, fired by
-one event when a formation condition holds. It is owned by the formation, so it lives
-in `LITANIES`, not in any unit's set.
+Revised 2026-09-17. A litany is **not** a reaction to a kill. It is a **staged
+execution**: the killing blow is held back, two chorus members strike first for show,
+and the lead lands the real blow on the last verse. It fires only when the formation
+the litany describes is actually standing on the board, and it pays out a mechanical
+reward — so it teaches positioning instead of only decorating it.
 
-### 5.1 Schema
+One litany exists for now (`profane_chorus`). It ships alone and gets played before a
+second one is written.
+
+### 5.1 `profane_chorus`
 
 ```js
+const TEMPLAR_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
+const PALADIN_IDS = ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
+                     'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'];
+// Choir heroes carrying the Demon tag: Black Castellan and Infernal Ascendant,
+// every tier of both paths. h_d_2 (Choir Regent) is Court, not Demon, and is out.
+const DEMON_HERO_IDS = [
+  'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
+           'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
+  'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
+           'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
+];
+
 {
   id: 'profane_chorus',
-  faction: 'e',
-  trigger: 'kill',
-  lead:   { ids: ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-                  'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'] },   // Paladin, all paths
-  target: { tag: 'Demon' },
-  chorus: {
-    ids: ['e21', 'e211', 'e2111', 'e212', 'e2121'],  // Templar + both Mithrail branches
-    count: 2,
-    position: 'front',                               // required, not a preference
+  trigger: 'lethal',                 // the lead's action is ABOUT to kill (§5.2)
+  lead:    { ids: PALADIN_IDS },
+  target:  { ids: DEMON_HERO_IDS },
+  // The formation IS the condition: the lead's own front column, all three rows
+  // manned, chorus above and below. Hardcoded rows, not a count.
+  formation: {
+    column: 'front',                 // col 1 for a player side, col 0 for an enemy side
+    rows: [
+      { row: 0, role: 'chorus', ids: TEMPLAR_IDS },
+      { row: 1, role: 'lead' },      // must be the acting unit itself
+      { row: 2, role: 'chorus', ids: TEMPLAR_IDS },
+    ],
   },
-  once_per: 'battle',
   verses: [
-    ['Against the profane chorus —', 'Против хора нечестивого —'],  // lead
-    ['Against the unclean voices —', 'Против голосов нечистых —'],  // chorus 1
-    ['I shall know no fear!',        'Не познаю страха!'],          // chorus 2
+    { speaker: 'row0', strike: 'visual',
+      line: ['I am His shield against the talons in the night!',
+             'Я Его щит от когтей в ночи!'] },
+    { speaker: 'row2', strike: 'visual',
+      line: ['I am His light that burns the unclean!',
+             'Я Его свет испепеляющий нечистых!'] },
+    { speaker: 'row1', strike: 'lethal',
+      line: ['I am His hammer and your end!',
+             'Я его Молот и твоя смерть!'] },
   ],
+  reward: { initiative_flat_reduction: 5, scope: 'enemies_alive', duration: 'battle' },
+  once_per: 'battle',
 }
 ```
 
-- Verse 1 is the **lead** (the unit that triggered it). Verses 2..n go to the chorus
-  in order.
-- **The formation check is all-or-nothing.** At the moment the event resolves there
-  must be `count` chorus units that are **alive, on the lead's side, and standing in
-  `position`**. If the units or their positions fail the check, there is **no litany**
-  — no shorter version, no substitute speakers. The normal barks fire instead.
-- A litany ignores `BARK_CHANCES` but respects `once_per`.
+Notes on the shape:
 
-### 5.2 Log and playback
+- **The lead speaks last.** The killing blow and its verse land together; the two
+  chorus verses lead up to it. This inverts the previous draft, where verse 1 belonged
+  to the lead.
+- **No count, no substitutes, no shorter version.** Three named cells or nothing. The
+  single-Templar fallback mentioned in the style guide is dropped.
+- **The two chorus cells may hold different Templar tiers**, including two of the same
+  unit. Any ids from `TEMPLAR_IDS`.
+- The lead is `size: 'tile'` and so is every Templar, so footprints never complicate
+  the check. A litany whose lead or chorus is a `row`/`column` unit is out of scope.
 
-The engine pushes one `bark` entry per verse, each on its own speaker's cell:
+### 5.2 Firing — the lethal pre-empt
 
-```js
-{ type: 'bark', actorId, actorCell, text, text_ru, litany: { id: 'profane_chorus', i: 0, n: 3 } }
+The litany has to be decided **before** the kill is written to the log, because the
+chorus strikes precede it. In `executeAction`, once damage is resolved to a final
+number and the target is known to be reduced to 0 HP, and before the `action` entry is
+pushed:
+
+```
+if (lethal && litanyApplies(actor, target)) → emit litany (§5.3)
 ```
 
-Client ([public/screens/battle.js](../public/screens/battle.js) `showBarkToast`):
+`litanyApplies` is a pure check, in order:
 
-- Verses play in order, ~700 ms apart, and hold until the last verse has shown for its
-  full duration — they read as one chant, not three toasts.
-- A distinct toast style (`bark-toast--litany`) so a player learns to recognise it.
-- The combat log renders the three verses as one grouped entry.
-- `barks_enabled: false` suppresses litanies too.
+1. `once_per: 'battle'` not yet spent for this litany on this side.
+2. Actor's unit id ∈ `lead.ids`; target's unit id ∈ `target.ids`.
+3. Actor stands in its own front column, row 1.
+4. Rows 0 and 2 of that same column, same side, hold **alive** units whose ids ∈
+   `TEMPLAR_IDS`.
 
----
+Any failure → nothing happens and the kill resolves normally, with the ordinary
+`on_kill` / `on_death` barks. There is no partial litany and no log entry saying one
+nearly happened.
 
+**Which actions can trigger it.** Any lethal action by the lead — basic attack,
+`holy_shock`, an ability, a spell the player cast through it. The line is about the
+blow, not the weapon.
+
+**Both sides.** The check is symmetric: a PvP opponent fielding Paladin + two Templars
+in a front column against a demon hero gets the same litany and the same reward. It is
+a formation rule, not a player perk.
+
+### 5.3 Emission
+
+The damage is applied once, as normal. The litany changes **how it is told** and adds
+the reward. The engine pushes, in order:
+
+| # | Entry | Notes |
+|---|---|---|
+| 1 | `{ type: 'litany', id, i: 0, n: 3, actorId, actorCell, targetCell, strike: 'visual', text, text_ru }` | chorus, row 0 |
+| 2 | same, `i: 1`, row 2 | chorus |
+| 3 | same, `i: 2`, `strike: 'lethal'` | the lead's verse only — the blow is entry 4 |
+| 4 | the ordinary `action` entry for the kill (`killed: true`) | unchanged |
+| 5 | the reward entry (§5.4) | |
+| — | no `kill` bark, no `death` bark, no `synergy_*` for this action | the litany owns the moment |
+
+A `strike: 'visual'` entry means: play that speaker's `action_animation` and
+`action_sfx` at the target's cell, and **nothing else**. No damage, no `on_hit`, no
+passives, no triggers, no fatigue, no `acted_this_round`. The chorus units have not
+acted; they still take their own turns this round.
+
+### 5.4 The reward
+
+Every enemy **alive after the kill** loses **5 initiative for the rest of the battle**
+(floor 1), through the existing `initiative_flat_reduction` path used by passives,
+applied once and never reverted. Units summoned after the litany are unaffected.
+
+Rulings:
+
+- The reward is a **mechanic**, not a bark. With `barks_enabled: false` the verses and
+  the staging are suppressed, but the kill and the −5 still happen.
+- `once_per: 'battle'` covers the reward too — a second qualifying kill neither replays
+  the litany nor stacks another −5.
+- −5 against a base of 25–45 is about one enemy sliding behind one of yours in the turn
+  order. That is the intended size: felt, not a stun.
+
+### 5.5 Playback and pacing
+
+Target: **~3.5–4 s** from the first verse to the corpse. Client
+([public/screens/battle.js](../public/screens/battle.js)):
+
+| t | What |
+|---|---|
+| 0 ms | verse 1 toast on row 0 + that unit's attack animation on the target |
+| ~1200 ms | verse 2 toast on row 2 + its attack animation |
+| ~2400 ms | verse 3 toast on the lead + the real killing blow, damage number, death |
+| ~3600 ms | toasts clear; the reward line appears in the log |
+
+- Verse toasts use `bark-toast--litany` and do **not** dismiss on tap mid-sequence;
+  earlier verses stay up while later ones appear, so the three read as one chant.
+- Normal per-entry playback pacing is suspended for the duration: the litany plays as
+  one uninterrupted beat.
+- The combat log renders the three verses, the kill and the reward as one grouped entry.
 ## 6. Validator
 
 `scripts/validate-barks.js`, run in CI and before a content commit. Errors:
 
-- An id in `ids`, `lead` or `chorus` that does not exist in units.js.
+- An id in `ids`, or in a litany's `lead`, `target` or `formation` rows, that does not
+  exist in units.js.
 - A key that does not parse against §1.2 — unknown trigger, tag or faction.
 - A pair that is not exactly `[en, ru]` with both non-empty.
 - Two sets with the same id count both defining one key for one unit.
 - A key holding more than 2 pairs.
 - A line over the length limits in the style guide.
+- A litany whose `verses` count does not equal its `formation` speaker count, or whose
+  `speaker` names a row the formation does not define.
+- A litany with no verse marked `strike: 'lethal'`, or with more than one.
+- A litany `lead` or `formation` id whose unit is not `size: 'tile'` (§5.1).
 
 Report (not errors): units with no set at all; units covered only by the floor;
 coverage per faction and trigger.
@@ -251,7 +352,8 @@ coverage per faction and trigger.
 2. Client: litany pacing, toast style, grouped log entry.
 3. Validator.
 4. Content, one faction at a time, starting with **Empire → Templar branch + Paladin +
-   `profane_chorus`** as the pilot. Grail and Choir keep speaking from the floor until
+   `profane_chorus`** as the pilot. `profane_chorus` can be built and played on its own,
+   ahead of the sets, since it depends on nothing but ids and the formation check. Grail and Choir keep speaking from the floor until
    their sets land.
 
 ---
@@ -266,11 +368,23 @@ coverage per faction and trigger.
 | Heroes: one set per path, or one for the whole hero? | **One set per hero, covering every upgrade on both paths** (e.g. Paladin = all 9 `h_e_1*` ids). A tier may still override with a smaller set (§1.1) |
 | Named enemy bosses (Malgrath etc.) get own sets? | **Yes.** Pool units stay on the floor |
 | Templar branch: Champion/Exemplar and Warden/Paragon — one voice or two? | **One shared voice for now** (`e21, e211, e2111, e212, e2121`); may split later |
-| Litany when the formation check fails (too few units, or wrong positions)? | **No litany.** All-or-nothing (§5.1) |
+| Litany when the formation check fails (too few units, or wrong positions)? | **No litany.** All-or-nothing (§5.2) |
 | Unused tags (`Choir`, `Beast`) | **Deleted** from position_barks.js |
 | Voice-guide conflicts | **Ruled** — see style guide §7 |
 | Litany RU verse 3 | **«Не познаю страха!»** |
 | Astaloth's gender | **Female** — the Mother |
+
+### Resolved 2026-09-17 — `profane_chorus`
+
+| Question | Ruling |
+|---|---|
+| What does a litany do besides speak? | It **stages the kill** — chorus strikes for show, lead lands the real blow — and grants a reward (§5) |
+| Trigger | The lead's action is **about to kill** a hardcoded demon hero (§5.1) |
+| Formation | Hardcoded front column: Templar top, Paladin middle, Templar bottom (§5.1) |
+| Verse order | Chorus, chorus, **lead last** with the killing blow |
+| Reward | All enemies alive after the kill: **−5 initiative for the rest of the battle**, once per battle |
+| Reward vs `barks_enabled: false` | Verses suppressed, **kill and −5 still apply** (§5.4) |
+| Chorus strikes | Purely visual — no damage, no triggers, no turn spent (§5.3) |
 
 ### Still open
 
