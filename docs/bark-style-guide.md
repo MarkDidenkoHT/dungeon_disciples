@@ -275,13 +275,9 @@ not the same words.
 
 | | EN | RU |
 |---|---|---|
-| Paladin | Against the profane chorus — | Против хора нечестивого — |
-| Templar | Against the unclean voices — | Против голосов нечистых — |
-| Templar | I shall know no fear! | Не познаю страха! |
-
-The inversion *хора нечестивого / голосов нечистых* gives the Slavonic cadence.
-«Не познаю страха!» keeps the vow in the future tense and the object last, so the
-chant closes on its strongest word (ruled 2026-09-16).
+| Paladin | I am His shield against the talons in the night! |Я Его щит от когтей в ночи! |
+| Templar | I am His light that burns the unclean! | Я Его свет испепеляющий нечистых! |
+| Templar | I am His hammer and your end! | Я его Молот и твоя смерть! |
 
 With one Templar alive the Templar says verses 2 and 3 together — see design doc §5.1.
 
