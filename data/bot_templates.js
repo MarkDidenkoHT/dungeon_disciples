@@ -26,6 +26,13 @@ const BOT_TEMPLATES = [
     faction: 'grail_of_sorrow',
     name: 'Zombie-Vamp Hybrid',
     bands: {
+      band_500: [
+        { unit: 'gs421',    cell: 0, item_id: 'veil_of_discord' },
+        { unit: 'gs831',    cell: 2, item_id: 'mothers_gift' },
+        { unit: 'h_g_2_a4', cell: 3, item_id: 'gift_of_eternity', hero: true },
+        { unit: 'gs5211',   cell: 4, item_id: 'shroud_of_the_fallen' },
+        { unit: 'gs121',    cell: 5 },
+      ],
       band_300: [
         { unit: 'gs421',    cell: 0, item_id: 'veil_of_discord' },
         { unit: 'gs831',    cell: 2, item_id: 'mothers_gift' },
@@ -40,11 +47,11 @@ const BOT_TEMPLATES = [
     faction: 'grail_of_sorrow',
     name: 'Plague',
     bands: {
-      band_300: [
+      band_500: [
         { unit: 'gs611',    cell: 0, item_id: 'shroud_of_the_fallen' },
         { unit: 'gs331',    cell: 1, item_id: 'iron_armor' },
         { unit: 'gs831',    cell: 2, item_id: 'dark_determination' },
-        { unit: 'h_g_2_a3', cell: 3, item_id: 'gift_of_eternity', hero: true },
+        { unit: 'h_g_2_a4', cell: 3, item_id: 'gift_of_eternity', hero: true },
         { unit: 'gs321',    cell: 4, item_id: 'veil_of_discord' },
         { unit: 'gs111',    cell: 5, item_id: 'might_of_the_pure' },
       ],
@@ -55,12 +62,18 @@ const BOT_TEMPLATES = [
     faction: 'choir_of_the_cursed',
     name: 'Demon Archers',
     bands: {
-      band_300: [
+      band_500: [
         { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
         { unit: 'd521',      cell: 5, item_id: 'veil_of_discord' },
         { unit: 'opb_e411',  cell: 3, item_id: 'aldras_patience' },
-        { unit: 'h_d_1_a3',  cell: 4, item_id: 'burning_fury', hero: true },
+        { unit: 'h_d_1_a4',  cell: 4, item_id: 'burning_fury', hero: true },
         { unit: 'd111',      cell: 0, item_id: 'crystal_shield' },
+      ],
+      band_300: [
+        { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
+        { unit: 'opb_e41',  cell: 3, item_id: 'aldras_patience' },
+        { unit: 'h_d_2_a3',  cell: 5, item_id: 'veil_of_discord', hero: true },
+        { unit: 'd11',      cell: 0, item_id: 'crystal_shield' },
       ],
     },
   },
@@ -82,6 +95,13 @@ const BOT_TEMPLATES = [
     faction: 'empire',
     name: 'Holy Construct',
     bands: {
+      band_500: [
+        { unit: 'e621',     cell: 0, item_id: 'crystal_exoskeleton' },
+        { unit: 'e311',     cell: 1, item_id: 'sanctified_bulwark' },
+        { unit: 'e71',      cell: 2, item_id: 'knights_oath' },
+        { unit: 'h_e_3_a4', cell: 4, item_id: 'might_of_the_pure', hero: true },
+        { unit: 'e6112',    cell: 5, item_id: 'everliving_stalk' },
+      ],
       band_300: [
         { unit: 'e621',     cell: 0, item_id: 'crystal_exoskeleton' },
         { unit: 'e311',     cell: 1, item_id: 'sanctified_bulwark' },
