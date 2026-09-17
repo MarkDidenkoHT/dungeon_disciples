@@ -3828,6 +3828,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
 .log-entry--skip  { color: #444; }
 .log-entry--bark  { color: var(--accent); font-style: italic; }
+.log-entry--litany { color: #e0bb62; font-style: italic; font-weight: 600; }
 .log-entry--notice { color: var(--accent); text-align: center; font-style: italic; font-size: 0.7rem; }
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: var(--text); }
@@ -4784,6 +4785,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .prep-bark-toast--ok {
   border-color: #6aaa5a;
   color: #d6ebd0;
+}
+
+.bark-toast--litany {
+  background: rgba(30, 24, 12, 0.96);
+  border-color: #e0bb62;
+  color: #f4e6c2;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 8px rgba(224, 187, 98, 0.45);
+  box-shadow: 0 0 14px rgba(224, 187, 98, 0.35), 0 3px 10px rgba(0,0,0,0.65);
 }
 
 @keyframes bark-toast-in {

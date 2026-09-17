@@ -21,46 +21,46 @@ const BOT_BANDS = [
 const BOT_FACTIONS = ['empire', 'choir_of_the_cursed', 'grail_of_sorrow'];
 
 const BOT_TEMPLATES = [
-  {
-    id: 'grail_zombie_vamp',
-    faction: 'grail_of_sorrow',
-    name: 'Zombie-Vamp Hybrid',
-    bands: {
-      band_500: [
-        { unit: 'gs2111',     cell: 0,  item_id: 'dark_determination' },          
-        { unit: 'gs831',     cell: 3,  item_id: 'mothers_gift' },                 
-        { unit: 'h_g_2_a41', cell: 4,  item_id: 'gift_of_eternity', hero: true }, 
-        { unit: 'gs5211',    cell: 1,  item_id: 'shroud_of_the_fallen' },         
-        { unit: 'gs3311',     cell: 5, item_id: 'staff_of_thaumaturgy' },                            
-      ],
-      band_300: [
-        { unit: 'gs211',    cell: 0, item_id: 'dark_determination' },
-        { unit: 'gs83',    cell: 3, item_id: 'mothers_gift' },
-        { unit: 'h_g_2_a3', cell: 4, item_id: 'gift_of_eternity', hero: true },
-        { unit: 'gs5211',   cell: 1, item_id: 'shroud_of_the_fallen' },
-      ],
-      band_200: [
-        { unit: 'gs21',    cell: 0, item_id: 'dark_determination' },
-        { unit: 'gs83',    cell: 3, item_id: 'mothers_gift' },
-        { unit: 'h_g_2_a2', cell: 4, item_id: 'gift_of_eternity', hero: true },
-      ],
-    },
-  },
-  {
-    id: 'grail_plague',
-    faction: 'grail_of_sorrow',
-    name: 'Plague',
-    bands: {
-      band_500: [
-        { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
-        { unit: 'gs1111',     cell: 4, item_id: 'iron_armor' },
-        { unit: 'gs831',     cell: 3, item_id: 'dark_determination' },
-        { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true },
-        { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
-        { unit: 'gs1111',     cell: 0, item_id: 'might_of_the_pure' },
-      ],
-    },
-  },
+  // {
+  //   id: 'grail_zombie_vamp',
+  //   faction: 'grail_of_sorrow',
+  //   name: 'Zombie-Vamp Hybrid',
+  //   bands: {
+  //     band_500: [
+  //       { unit: 'gs2111',     cell: 0,  item_id: 'dark_determination' },          
+  //       { unit: 'gs831',     cell: 3,  item_id: 'mothers_gift' },                 
+  //       { unit: 'h_g_2_a41', cell: 4,  item_id: 'gift_of_eternity', hero: true }, 
+  //       { unit: 'gs5211',    cell: 1,  item_id: 'shroud_of_the_fallen' },         
+  //       { unit: 'gs3311',     cell: 5, item_id: 'staff_of_thaumaturgy' },                            
+  //     ],
+  //     band_300: [
+  //       { unit: 'gs211',    cell: 0, item_id: 'dark_determination' },
+  //       { unit: 'gs83',    cell: 3, item_id: 'mothers_gift' },
+  //       { unit: 'h_g_2_a3', cell: 4, item_id: 'gift_of_eternity', hero: true },
+  //       { unit: 'gs5211',   cell: 1, item_id: 'shroud_of_the_fallen' },
+  //     ],
+  //     band_200: [
+  //       { unit: 'gs21',    cell: 0, item_id: 'dark_determination' },
+  //       { unit: 'gs83',    cell: 3, item_id: 'mothers_gift' },
+  //       { unit: 'h_g_2_a2', cell: 4, item_id: 'gift_of_eternity', hero: true },
+  //     ],
+  //   },
+  // },
+  // {
+  //   id: 'grail_plague',
+  //   faction: 'grail_of_sorrow',
+  //   name: 'Plague',
+  //   bands: {
+  //     band_500: [
+  //       { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
+  //       { unit: 'gs1111',     cell: 4, item_id: 'iron_armor' },
+  //       { unit: 'gs831',     cell: 3, item_id: 'dark_determination' },
+  //       { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true },
+  //       { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
+  //       { unit: 'gs1111',     cell: 0, item_id: 'might_of_the_pure' },
+  //     ],
+  //   },
+  // },
   {
     id: 'choir_demon_archers',
     faction: 'choir_of_the_cursed',
@@ -104,31 +104,31 @@ const BOT_TEMPLATES = [
       ],
     },
   },
-  {
-    id: 'empire_holy_construct',
-    faction: 'empire',
-    name: 'Holy Construct',
-    bands: {
-      band_500: [
-        { unit: 'e621',      cell: 1, item_id: 'crystal_exoskeleton' },
-        { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',       cell: 3, item_id: 'codex_aeternum' },
-        { unit: 'h_e_3_a41', cell: 5, item_id: 'might_of_the_pure', hero: true },
-        { unit: 'e6112',     cell: 4, item_id: 'everliving_stalk' },
-      ],
-      band_300: [
-        { unit: 'e621',     cell: 1, item_id: 'crystal_exoskeleton' },
-        { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',      cell: 3, item_id: 'codex_aeternum' },
-        { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true },
-      ],
-      band_200: [
-        { unit: 'e62',      cell: 1, item_id: 'everliving_stalk' },
-        { unit: 'e31',      cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'h_e_3_a2', cell: 3, item_id: 'lion_signet', hero: true },
-      ],
-    },
-  },
+  // {
+  //   id: 'empire_holy_construct',
+  //   faction: 'empire',
+  //   name: 'Holy Construct',
+  //   bands: {
+  //     band_500: [
+  //       { unit: 'e621',      cell: 1, item_id: 'crystal_exoskeleton' },
+  //       { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
+  //       { unit: 'e71',       cell: 3, item_id: 'codex_aeternum' },
+  //       { unit: 'h_e_3_a41', cell: 5, item_id: 'might_of_the_pure', hero: true },
+  //       { unit: 'e6112',     cell: 4, item_id: 'everliving_stalk' },
+  //     ],
+  //     band_300: [
+  //       { unit: 'e621',     cell: 1, item_id: 'crystal_exoskeleton' },
+  //       { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
+  //       { unit: 'e71',      cell: 3, item_id: 'codex_aeternum' },
+  //       { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true },
+  //     ],
+  //     band_200: [
+  //       { unit: 'e62',      cell: 1, item_id: 'everliving_stalk' },
+  //       { unit: 'e31',      cell: 0, item_id: 'sanctified_bulwark' },
+  //       { unit: 'h_e_3_a2', cell: 3, item_id: 'lion_signet', hero: true },
+  //     ],
+  //   },
+  // },
 ];
 
 let _unitIndex = null;

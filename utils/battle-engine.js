@@ -6,6 +6,7 @@ const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
+const { LITANIES } = require('../data/litanies');
 
 // Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
 // sides equally, so it also works for PvP later. All tunable here.
@@ -137,6 +138,10 @@ class BattleEngine {
     // What each side has dealt and slain, for quests (data/quests.js). Keyed by
     // the quest counter names so the route can hand it straight over.
     this.tally = { player: {}, enemy: {}, ...(state?.tally || {}) };
+    // Litanies already spent this battle, as `<litany id>:<side>` (see
+    // data/litanies.js). Carried through getBattleData/rehydrate so a reload
+    // cannot replay one — and with it, hand out its reward a second time.
+    this.litaniesFired = [...(state?.litaniesFired || [])];
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -1224,6 +1229,11 @@ class BattleEngine {
           // blow and the body.
           if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
           if (remaining > 0) {
+            // Decided BEFORE the blow is logged: a litany's chorus verses and
+            // their cosmetic strikes have to be in the log ahead of the kill
+            // they are staging (docs/combat-barks-design.md §5.2).
+            const litany = (target.battle_hp - remaining) <= 0
+              ? this.fireLitany(actor, target) : null;
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
             const dead = target.battle_hp <= 0;
@@ -1235,8 +1245,13 @@ class BattleEngine {
             if (dead && !target.alive) {
               this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
               this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-              this.checkBark('kill', actor, { target });
-              this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
+              // A litany owns the whole moment: no kill bark, no last words.
+              if (litany) {
+                this.applyLitanyReward(litany, actor);
+              } else {
+                this.checkBark('kill', actor, { target });
+                this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
+              }
             } else {
               this.checkBark('attack', actor, { target });
             }
@@ -1311,6 +1326,9 @@ class BattleEngine {
     if (remaining > 0) remaining = this.applyRecuperate(target, remaining);
     if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
     if (remaining > 0) {
+      // See the same check in executeAction — the chorus speaks before the kill.
+      const litany = (target.battle_hp - remaining) <= 0
+        ? this.fireLitany(actor, target) : null;
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
       this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
       const dead = target.battle_hp <= 0;
@@ -1322,8 +1340,12 @@ class BattleEngine {
       if (dead && !target.alive) {
         this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
         this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-        this.checkBark('kill', actor, { target });
-        this.checkBark('death', target, { target: actor });
+        if (litany) {
+          this.applyLitanyReward(litany, actor);
+        } else {
+          this.checkBark('kill', actor, { target });
+          this.checkBark('death', target, { target: actor });
+        }
       } else {
         this.checkBark('attack', actor, { target });
       }
@@ -2884,6 +2906,8 @@ class BattleEngine {
       // would silently refund every charge the battle had already burned.
       vows: this.vows,
       tally: this.tally,
+      // Once per battle means once per battle, reload or not.
+      litaniesFired: this.litaniesFired,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -3004,6 +3028,7 @@ class BattleEngine {
     // keep the re-declared totals, which for them are zero.
     if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
     engine.tally = { player: {}, enemy: {}, ...(battleData.tally || {}) };
+    engine.litaniesFired = [...(battleData.litaniesFired || [])];
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -3510,6 +3535,79 @@ class BattleEngine {
       if (tags.includes(t)) return -1;
     }
     return score;
+  }
+
+  // ── Litanies ───────────────────────────────────────────────────────────────
+  // A scripted execution: the chorus strikes for show, the lead lands the real
+  // blow on the last verse, and the survivors pay for it. See
+  // docs/combat-barks-design.md §5 and data/litanies.js.
+  //
+  // Everything is matched by UNIT DEFINITION ID, never by tag or faction.
+  litanyUnitId(c) {
+    return c?.unit_data?.unit_id ?? c?.unit_data?.id ?? null;
+  }
+
+  // The speakers a litany's formation demands, as { row0, row1, ... }, or null
+  // if a single cell of it is wrong. All-or-nothing: no substitutes, no shorter
+  // version. The column is the ACTING side's own front column.
+  litanySpeakers(def, actor) {
+    const col = actor.side === 'enemy' ? 0 : 1;
+    const speakers = {};
+    for (const row of def.formation.rows) {
+      const occ = this.combatants.find(c =>
+        c.side === actor.side && c.alive && c.cellIndex === cellIndex(row.row, col));
+      if (!occ) return null;
+      if (row.role === 'lead') {
+        if (occ !== actor) return null;
+      } else if (!row.ids.includes(this.litanyUnitId(occ))) {
+        return null;
+      }
+      speakers[`row${row.row}`] = occ;
+    }
+    return speakers;
+  }
+
+  // Called with a blow already known to be lethal, BEFORE the kill is logged —
+  // the chorus has to speak ahead of it. Returns the litany that fired (so the
+  // caller can pay the reward and suppress the ordinary kill/death barks), or
+  // null.
+  fireLitany(actor, target) {
+    for (const def of LITANIES) {
+      if (def.once_per === 'battle' && this.litaniesFired.includes(`${def.id}:${actor.side}`)) continue;
+      if (!def.lead.ids.includes(this.litanyUnitId(actor))) continue;
+      if (!def.target.ids.includes(this.litanyUnitId(target))) continue;
+      const speakers = this.litanySpeakers(def, actor);
+      if (!speakers) continue;
+      this.litaniesFired.push(`${def.id}:${actor.side}`);
+      def.verses.forEach((v, i) => {
+        const sp = speakers[v.speaker];
+        if (!sp) return;
+        this.pushLog({
+          type: 'litany', litany: def.id, i, n: def.verses.length, strike: v.strike,
+          actorId: sp.id, actorName: sp.unit_name, actorCell: sp.cellIndex,
+          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+          text: v.line[0], text_ru: v.line[1],
+        });
+      });
+      return def;
+    }
+    return null;
+  }
+
+  // Paid once the kill has been logged, so "every enemy still alive" means
+  // alive AFTER the body has dropped. Flat, floored at 1, never reverted — it
+  // lasts the battle, and `initiative` is carried through getBattleData, so a
+  // reload keeps it without any duration bookkeeping.
+  applyLitanyReward(def, actor) {
+    const amount = def?.reward?.initiative_flat_reduction;
+    if (!(amount > 0)) return;
+    const foes = this.combatants.filter(c => c.side !== actor.side && c.alive);
+    if (!foes.length) return;
+    for (const c of foes) c.initiative = Math.max(1, (c.initiative || 40) - amount);
+    this.pushLog({
+      type: 'notice', litany: def.id,
+      message: def.reward.message, message_ru: def.reward.message_ru,
+    });
   }
 
   checkBark(triggerKey, owner, ctx = {}) {

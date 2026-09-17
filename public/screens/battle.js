@@ -329,7 +329,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return entry.text ?? '';
   }
 
-  function showBarkToast(actorId, text) {
+  // opts.litany: a verse of a litany. Those hold until the whole chant has
+  // played (they are meant to be read as one), so they get their own style, a
+  // longer life and NO tap-to-dismiss — a tap mid-chant would clear a line the
+  // next one is answering.
+  function showBarkToast(actorId, text, opts = {}) {
     if (player?.settings?.barks_enabled === false) return;
     if (!text) return;
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
@@ -340,7 +344,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const grid = cell.closest('.battle-grid');
     grid?.classList.add('battle-grid--bark');
     const toast = document.createElement('div');
-    toast.className = 'bark-toast';
+    toast.className = opts.litany ? 'bark-toast bark-toast--litany' : 'bark-toast';
     toast.textContent = text;
     cell.appendChild(toast);
 
@@ -359,11 +363,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     };
     // Any interaction anywhere closes it - deferred so the click that triggered
     // this render (e.g. the action button press) doesn't instantly dismiss it.
-    setTimeout(() => {
-      document.addEventListener('click', dismiss, true);
-      document.addEventListener('touchstart', dismiss, true);
-    }, 0);
-    setTimeout(dismiss, 6000);
+    if (!opts.litany) {
+      setTimeout(() => {
+        document.addEventListener('click', dismiss, true);
+        document.addEventListener('touchstart', dismiss, true);
+      }, 0);
+    }
+    setTimeout(dismiss, opts.litany ? LITANY_TOAST_MS : 6000);
   }
 
   // Resolves the animation effect name for a log entry.
@@ -579,6 +585,29 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   // Entry types that mean "this unit has taken its turn".
+  // One verse of a litany: the speaker's toast, and for a chorus verse the
+  // speaker's own attack animation played at the victim. The strike is COSMETIC
+  // — no damage, no triggers, no turn spent (the engine never rolled one) — so
+  // range is not checked either: a mace swing plays on a back-column target just
+  // the same. See docs/combat-barks-design.md §5.3.
+  async function playLitanyVerse(entry) {
+    const t0 = Date.now();
+    showBarkToast(entry.actorId, barkText(entry), { litany: true });
+    if (entry.strike === 'visual') {
+      const speaker = state.combatants.find(u => u.id === entry.actorId);
+      const effectName = speaker?.unit_data?.action_animation;
+      const actorCell  = root.querySelector(`.battle-cell[data-id="${entry.actorId}"]`);
+      const targetCell = targetCellFor(entry);
+      const sfx = speaker?.unit_data?.action_sfx;
+      if (sfx) playAbilitySound(String(sfx).replace(/\.mp3$/i, ''));
+      if (effectName && EFFECTS[effectName] && actorCell) {
+        await EFFECTS[effectName](actorCell, { isEnemy: speaker?.side === 'enemy', targetCell, isHeal: false });
+      }
+      const rest = LITANY_VERSE_MS - (Date.now() - t0);
+      if (rest > 0) await new Promise(r => setTimeout(r, rest));
+    }
+  }
+
   const ACTOR_ENTRY_TYPES = new Set(['action', 'ability', 'spell', 'defend', 'skip', 'pool', 'cast']);
   const ROUND_BREATH_MS = 500;
   // The beat between one character's turn and the next.
@@ -590,6 +619,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // initiative: three or four AI turns arrive in ONE batch and play end to end
   // as a single blur, with the log only readable once it is over.
   const TURN_GAP_MS = 450;
+  // Litany pacing (docs/combat-barks-design.md §5.5). A chorus verse holds the
+  // playback for LITANY_VERSE_MS including its own strike animation; the lead's
+  // verse holds for nothing, because the killing blow it belongs to follows
+  // immediately after it in the log.
+  const LITANY_VERSE_MS = 1200;
+  const LITANY_TOAST_MS = 4500;
 
   // `leadIn` holds the board on screen before the FIRST turn plays. Only the
   // opening batch wants it: round 1 gets no 'round' entry (the engine starts at
@@ -697,6 +732,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
       // 4. Show bark toast if applicable
       if (entry.type === 'bark') showBarkToast(entry.actorId, barkText(entry));
+
+      // A litany verse plays itself and nothing else: the generic FX dispatcher
+      // below would resolve it as an ordinary entry and draw a second animation.
+      // With barks off the whole staging is skipped and the kill plays plain —
+      // the reward has already been applied server-side either way.
+      if (entry.type === 'litany') {
+        if (player?.settings?.barks_enabled !== false) await playLitanyVerse(entry);
+        applyEntryHp(entry);
+        continue;
+      }
 
       // Flash the portrait when a damage-over-time effect ticks on it.
       const dotKind = dotTickKind(entry);
@@ -1569,7 +1614,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (player?.settings?.barks_enabled === false) return '';
       return `<div class="log-entry log-entry--bark">${actor()}: "${barkText(entry)}"</div>`;
     }
-    if (entry.type === 'notice') return `<div class="log-entry log-entry--notice">${entry.message}</div>`;
+    if (entry.type === 'litany') {
+      if (player?.settings?.barks_enabled === false) return '';
+      return `<div class="log-entry log-entry--bark log-entry--litany">${actor()}: "${barkText(entry)}"</div>`;
+    }
+    if (entry.type === 'notice') {
+      const lang = player?.settings?.language;
+      const msg  = (lang && lang !== 'en' && entry.message_ru) ? entry.message_ru : entry.message;
+      return `<div class="log-entry log-entry--notice">${msg}</div>`;
+    }
     return '';
   }
 

@@ -31,13 +31,13 @@ Guiding rules:
 
 ## 1. Data model
 
-One file, `data/combat_barks.js` (decided). It exports three things:
+One file, `data/combat_barks.js` (decided). It exports:
 
 | Export | What it is |
 |---|---|
 | `BARK_SETS` | Per-character sets, keyed by unit ids |
 | `BARK_FLOOR` | Small generic sets per faction × tag — the safety net |
-| `LITANIES` | Multi-speaker sequences with formation conditions |
+| `LITANIES` | *Moved out.* Litanies are mechanical, not cosmetic, and shipped first — they live in [data/litanies.js](../data/litanies.js) (built 2026-09-17) |
 
 ### 1.1 Bark sets
 
@@ -175,7 +175,10 @@ Added:
 
 ## 5. Litanies
 
-Revised 2026-09-17. A litany is **not** a reaction to a kill. It is a **staged
+Revised 2026-09-17. **`profane_chorus` is built** — [data/litanies.js](../data/litanies.js),
+`fireLitany` / `applyLitanyReward` in [utils/battle-engine.js](../utils/battle-engine.js),
+playback in [public/screens/battle.js](../public/screens/battle.js). The rest of this
+document is still design. A litany is **not** a reaction to a kill. It is a **staged
 execution**: the killing blow is held back, two chorus members strike first for show,
 and the lead lands the real blow on the last verse. It fires only when the formation
 the litany describes is actually standing on the board, and it pays out a mechanical
@@ -186,32 +189,43 @@ second one is written.
 
 ### 5.1 `profane_chorus`
 
+**Everything is a hardcoded id list.** No tags, no factions, no filters. Tags do not
+describe roles well enough to drive a scripted moment — the Choir Regent carries
+`Caster, Court` and no `Demon` tag, and is still a heretic to be purged. Which unit may
+fill which role is an authoring decision, made by name, here.
+
 ```js
-const TEMPLAR_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
-const PALADIN_IDS = ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-                     'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'];
-// Choir heroes carrying the Demon tag: Black Castellan and Infernal Ascendant,
-// every tier of both paths. h_d_2 (Choir Regent) is Court, not Demon, and is out.
-const DEMON_HERO_IDS = [
+// Who may stand in the chorus cells — Templar and both Mithrail branches.
+const LITANY_CHORUS_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
+
+// Who may lead — Paladin, every tier of both paths.
+const LITANY_LEAD_IDS = ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
+                         'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'];
+
+// Whose death triggers it — every Choir hero, all three lines, both paths.
+// Black Castellan, Choir Regent and Infernal Ascendant: heretics, tags irrelevant.
+const LITANY_TARGET_IDS = [
   'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
            'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
+  'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
+           'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
   'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
            'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
 ];
 
 {
   id: 'profane_chorus',
-  trigger: 'lethal',                 // the lead's action is ABOUT to kill (§5.2)
-  lead:    { ids: PALADIN_IDS },
-  target:  { ids: DEMON_HERO_IDS },
+  trigger: 'lethal',                 // the lead's attack is ABOUT to kill (§5.2)
+  lead:    { ids: LITANY_LEAD_IDS },
+  target:  { ids: LITANY_TARGET_IDS },
   // The formation IS the condition: the lead's own front column, all three rows
   // manned, chorus above and below. Hardcoded rows, not a count.
   formation: {
     column: 'front',                 // col 1 for a player side, col 0 for an enemy side
     rows: [
-      { row: 0, role: 'chorus', ids: TEMPLAR_IDS },
+      { row: 0, role: 'chorus', ids: LITANY_CHORUS_IDS },
       { row: 1, role: 'lead' },      // must be the acting unit itself
-      { row: 2, role: 'chorus', ids: TEMPLAR_IDS },
+      { row: 2, role: 'chorus', ids: LITANY_CHORUS_IDS },
     ],
   },
   verses: [
@@ -230,6 +244,9 @@ const DEMON_HERO_IDS = [
 }
 ```
 
+Adding a unit to a role is editing one of these arrays. Nothing about the unit's tags,
+faction or tier is consulted at any point.
+
 Notes on the shape:
 
 - **The lead speaks last.** The killing blow and its verse land together; the two
@@ -238,7 +255,7 @@ Notes on the shape:
 - **No count, no substitutes, no shorter version.** Three named cells or nothing. The
   single-Templar fallback mentioned in the style guide is dropped.
 - **The two chorus cells may hold different Templar tiers**, including two of the same
-  unit. Any ids from `TEMPLAR_IDS`.
+  unit. Any ids from `LITANY_CHORUS_IDS`.
 - The lead is `size: 'tile'` and so is every Templar, so footprints never complicate
   the check. A litany whose lead or chorus is a `row`/`column` unit is out of scope.
 
@@ -259,15 +276,22 @@ if (lethal && litanyApplies(actor, target)) → emit litany (§5.3)
 2. Actor's unit id ∈ `lead.ids`; target's unit id ∈ `target.ids`.
 3. Actor stands in its own front column, row 1.
 4. Rows 0 and 2 of that same column, same side, hold **alive** units whose ids ∈
-   `TEMPLAR_IDS`.
+   `LITANY_CHORUS_IDS`.
 
 Any failure → nothing happens and the kill resolves normally, with the ordinary
 `on_kill` / `on_death` barks. There is no partial litany and no log entry saying one
 nearly happened.
 
-**Which actions can trigger it.** Any lethal action by the lead — basic attack,
-`holy_shock`, an ability, a spell the player cast through it. The line is about the
-blow, not the weapon.
+**Which actions can trigger it.** The lead's own **action** — for the Paladin, its
+attack. Heroes have no abilities; they cast spells, and a spell's damage is applied
+side-wide by `castSpell` → `applySpellParams`, where no acting unit is attached to the
+kill (utils/battle-engine.js:3414, :3256). A spell kill therefore cannot be attributed
+to the Paladin without reworking that path, and is **out of scope**: the litany fires on
+the hero's own blow.
+
+Two code sites apply a lethal attack today — `executeAction`
+(utils/battle-engine.js:1230) and the per-target helper (:1317). Both get the hook, via
+one shared `maybeLitany(actor, target)` rather than a copy in each.
 
 **Both sides.** The check is symmetric: a PvP opponent fielding Paladin + two Templars
 in a front column against a demon hero gets the same litany and the same reward. It is
@@ -284,11 +308,13 @@ the reward. The engine pushes, in order:
 | 2 | same, `i: 1`, row 2 | chorus |
 | 3 | same, `i: 2`, `strike: 'lethal'` | the lead's verse only — the blow is entry 4 |
 | 4 | the ordinary `action` entry for the kill (`killed: true`) | unchanged |
-| 5 | the reward entry (§5.4) | |
+| 5 | `{ type: 'notice', litany: id, message, message_ru }` | the reward line (§5.4) |
 | — | no `kill` bark, no `death` bark, no `synergy_*` for this action | the litany owns the moment |
 
 A `strike: 'visual'` entry means: play that speaker's `action_animation` and
-`action_sfx` at the target's cell, and **nothing else**. No damage, no `on_hit`, no
+`action_sfx` at the target's cell, and **nothing else**. **Range is not checked** — a
+Templar's mace swing plays on a back-column target just the same. The strikes are
+cosmetic flavour; reach is not part of the fiction here. No damage, no `on_hit`, no
 passives, no triggers, no fatigue, no `acted_this_round`. The chorus units have not
 acted; they still take their own turns this round.
 
@@ -339,6 +365,7 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
   `speaker` names a row the formation does not define.
 - A litany with no verse marked `strike: 'lethal'`, or with more than one.
 - A litany `lead` or `formation` id whose unit is not `size: 'tile'` (§5.1).
+- An id listed in two roles of the same litany.
 
 Report (not errors): units with no set at all; units covered only by the floor;
 coverage per faction and trigger.
@@ -379,8 +406,10 @@ coverage per faction and trigger.
 | Question | Ruling |
 |---|---|
 | What does a litany do besides speak? | It **stages the kill** — chorus strikes for show, lead lands the real blow — and grants a reward (§5) |
-| Trigger | The lead's action is **about to kill** a hardcoded demon hero (§5.1) |
-| Formation | Hardcoded front column: Templar top, Paladin middle, Templar bottom (§5.1) |
+| Trigger | The lead's **attack** is about to kill a unit on the hardcoded target list (§5.2). Spell kills are out of scope — no actor is attached to spell damage |
+| Filters | **None. Every role is a hardcoded id list** — lead, target and chorus. Tags do not describe roles reliably (the Choir Regent has no `Demon` tag and is still a heretic) |
+| Chorus strikes out of range | **Play anyway** — cosmetic flavour, no reach check |
+| Formation | Hardcoded front column: chorus id top, lead middle, chorus id bottom (§5.1) |
 | Verse order | Chorus, chorus, **lead last** with the killing blow |
 | Reward | All enemies alive after the kill: **−5 initiative for the rest of the battle**, once per battle |
 | Reward vs `barks_enabled: false` | Verses suppressed, **kill and −5 still apply** (§5.4) |
