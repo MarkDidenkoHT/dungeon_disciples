@@ -706,7 +706,6 @@ const ITEM_DEFS = {
     icon:         'air_resistance_potion',
     rarity:       'common',
     cost:         { Gold: 30, Crystals_Air: 10 },
-    // Resistance is a lesson you learn by losing to an element, not a day-one buy.
     requires:     { region: 'any', level: 1 },
   },
   crude_sword: {
@@ -715,7 +714,7 @@ const ITEM_DEFS = {
     name_ru:      'Грубый Меч',
     faction:      null,
     tag_required: null,
-    requires_action: 'damage',      // a blade is dead weight on a unit that never strikes
+    requires_action: 'damage',
     adds_tag:     null,
     stat_mods:    { action_power: 1, initiative: 1 },
     passive:      null,
@@ -837,7 +836,7 @@ const ITEM_DEFS = {
     name:         "Shard Of Hate",
     name_ru:      'Осколок Гнева',
     faction:      null,
-    tag_required: 'Warrior',
+    tag_required: null,
     requires_action: 'damage',
     adds_tag:     null,
     stat_mods:    { action_power: 3 },
@@ -853,7 +852,7 @@ const ITEM_DEFS = {
     name:         "Hatemace",
     name_ru:      'Булава Ненависти',
     faction:      null,
-    tag_required: 'Warrior',
+    tag_required: null,
     requires_action: 'damage',
     adds_tag:     null,
     stat_mods:    { action_power: 5, initiative: 2 },

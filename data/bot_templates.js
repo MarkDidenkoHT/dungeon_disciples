@@ -127,7 +127,7 @@ const BOT_TEMPLATES = [
       band_200: [
         { unit: 'e62',      cell: 1, item_id: 'everliving_stalk' },
         { unit: 'e31',      cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'h_e_3_a2', cell: 3, item_id: 'might_of_the_pure', hero: true },
+        { unit: 'h_e_3_a2', cell: 3, item_id: 'lion_signet', hero: true },
       ],
     },
   },
