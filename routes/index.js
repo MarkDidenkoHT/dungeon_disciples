@@ -1928,21 +1928,31 @@ function dailyPayload(player, heroTier = 1) {
 //
 // NEVER awaited by the route that calls it, and never allowed to throw: a
 // failed daily counter must not fail the battle, errand or cast that earned it.
+// `taskId` may be a list: counters earned by the same action MUST be bumped in
+// one call. Two unawaited calls each read the row, bump their own counter and
+// write the whole record back, so the later write erased the earlier one — a
+// Colossus attempt bumped 'battles' and 'colossus' side by side and lost one.
 async function bumpDailyTask(chat_id, taskId, amount = 1) {
+  const ids = Array.isArray(taskId) ? taskId : [taskId];
   try {
     const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
     if (!rows.length) return;
     const record = dailyRecordFor(rows[0]);
-    // Counting past the target is pointless and lets a number grow forever.
-    const target = DAILY_TASKS.find(t => t.id === taskId)?.target ?? 0;
-    if (record[taskId] >= target) return;
-    record[taskId] = Math.min(target, record[taskId] + amount);
+    let changed = false;
+    for (const id of ids) {
+      // Counting past the target is pointless and lets a number grow forever.
+      const target = DAILY_TASKS.find(t => t.id === id)?.target ?? 0;
+      if (record[id] >= target) continue;
+      record[id] = Math.min(target, record[id] + amount);
+      changed = true;
+    }
+    if (!changed) return;
     await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
       body: JSON.stringify({ daily_tasks: record }),
     });
   } catch (err) {
-    console.error(`daily task bump failed (${taskId}):`, err.message);
+    console.error(`daily task bump failed (${ids.join(',')}):`, err.message);
   }
 }
 
@@ -4682,6 +4692,9 @@ router.post('/battle/end', requireAuth, async (req, res) => {
       const claimed = await claimBattleState(battle_id);
       armyCacheDrop(battle_id);
       const colossus = claimed ? await settleColossusAttempt(record) : null;
+      // The task is "any damage counts", so an attempt left early that dealt
+      // some still earns it.
+      if (colossus?.dealt > 0) bumpDailyTask(chat_id, 'colossus');
       return res.json({ success: true, abandoned, colossus });
     }
 
@@ -4775,8 +4788,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const claimed = await claimBattleState(battle_id);
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
-      bumpDailyTask(chat_id, 'battles');
-      bumpDailyTask(chat_id, 'colossus');
+      bumpDailyTask(chat_id, ['battles', 'colossus']);
       const colossus = await settleColossusAttempt(record);
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', {
         colossus_damage: colossus?.dealt || 0,
