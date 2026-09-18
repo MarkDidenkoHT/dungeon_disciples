@@ -683,10 +683,20 @@ export function renderItems(root, { player }) {
 
   function showTrophyBar() {
     const entry = currentList()[selected];
-    const keys  = costTrophyKeys(entry);
+    // Most recipes (47 of 77 items) ask for no trophy at all — they are paid for
+    // in gold, crystals and crafted parts. Narrowing the strip to "what THIS
+    // craft needs" would leave it blank on all of those, so it falls back to
+    // everything the player owns, which is what it always showed.
+    const needed = costTrophyKeys(entry);
+    const keys   = needed.length
+      ? needed
+      : resources.filter(r => r.item_type === 'trophy' && r.amount > 0).map(r => r.item);
+    const showNeed = needed.length > 0;
     document.getElementById('roster-trophy-bar')?.remove();
-    if (!keys.length) return;
 
+    // Mounted even with nothing in it. The strip sits above the whole screen,
+    // so adding and removing it as the selection changes shoved the card and
+    // the track up and down — the height is reserved instead.
     const bar = document.createElement('div');
     bar.id = 'roster-trophy-bar';
     bar.className = 'roster-trophy-bar';
@@ -695,11 +705,12 @@ export function renderItems(root, { player }) {
     // drops it — was already a tap away from a cost chip but not from the bar
     // that shows what they own.
     bar.innerHTML = keys.map(key => {
-      const need = requiredAmount(entry, key);
+      const need = showNeed ? requiredAmount(entry, key) : 0;
       const have = ownedAmount(key);
+      const label = showNeed ? `${have}/${need}` : String(have);
       return `
       <button class="trophy-bar-item ${have >= need ? '' : 'trophy-bar-item--short'}" data-material="${key}"
-              title="${materialName(key)} — ${have}/${need}">
+              title="${materialName(key)} — ${label}">
         <div class="trophy-bar-icon-wrap">
           <img src="${assetUrl(`/assets/icons/recources/${key}.png`)}"
               class="trophy-bar-icon"
@@ -707,7 +718,7 @@ export function renderItems(root, { player }) {
               onerror="this.style.display='none';this.nextSibling.style.display='flex';">
           <span class="trophy-bar-icon-fallback">🏆</span>
         </div>
-        <span class="trophy-bar-val">${have}/${need}</span>
+        <span class="trophy-bar-val">${label}</span>
       </button>`;
     }).join('');
 
