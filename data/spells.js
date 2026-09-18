@@ -75,6 +75,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_3',
+      effect_name: 'aegis',
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       category: 'buff',
@@ -94,6 +95,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_7',
+      effect_name: 'shared_suffering',
       name: 'Martyrdom',
       name_ru: 'Мученичество',
       category: 'buff',
@@ -113,6 +115,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_8',
+      effect_name: 'blessing_of_protection',
       name: 'Vow of Protection',
       name_ru: 'Обет защиты',
       category: 'buff',
@@ -153,6 +156,7 @@ const SPELLS = {
     },
     {
       id: 'e_spell_10',
+      effect_name: 'condemn',
       name: 'Condemn',
       name_ru: 'Осуждение',
       category: 'debuff',
@@ -266,6 +270,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_5',
+      effect_name: 'shield_ward',
       name: 'Hymn of Warding',
       name_ru: 'Гимн оберега',
       category: 'buff',
@@ -303,6 +308,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_10',
+      effect_name: 'pyre_requiem',
       name: 'Pyre Requiem',
       name_ru: 'Погребальный реквием',
       category: 'debuff',
@@ -412,6 +418,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_5',
+      effect_name: 'terror',
       name: 'Pall of Sorrow',
       name_ru: 'Покров скорби',
       category: 'special',
@@ -431,6 +438,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_7',
+      effect_name: 'condemn',
       name: "Sorrow's Weight",
       name_ru: 'Бремя скорби',
       category: 'debuff',
@@ -449,6 +457,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_9',
+      effect_name: 'decay_touch',
       name: 'The Long Rot',
       name_ru: 'Долгий тлен',
       category: 'debuff',
@@ -469,6 +478,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_11',
+      effect_name: 'haunt',
       name: 'A Second Longer',
       name_ru: 'Ещё секунда',
       category: 'debuff',
@@ -497,6 +507,7 @@ const SPELLS = {
     // surviving, which turns its power strip into a clock the player can race.
     {
       id: 'boss_heal',
+      effect_name: 'holy_heal',
       name: 'Ministration',
       name_ru: 'Врачевание',
       category: 'buff',
@@ -514,6 +525,7 @@ const SPELLS = {
     },
     {
       id: 'boss_resurrect',
+      effect_name: 'raise_dead',
       name: 'Called Back',
       name_ru: 'Призванный обратно',
       category: 'special',
@@ -552,6 +564,7 @@ const SPELLS = {
     },
     {
       id: 'boss_deaths_verdict',
+      effect_name: 'haunt',
       name: "Death's Verdict",
       name_ru: 'Приговор смерти',
       category: 'debuff',

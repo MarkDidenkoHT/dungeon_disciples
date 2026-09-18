@@ -5096,7 +5096,252 @@ export async function wrath_of_heaven(originCellEl, opts = {}) {
   layer.destroy({ children: true });
 }
 
+// ── pyre_requiem ──────────────────────────────────────────────────────────────
+// Wrath of Heaven falls from above; the Choir's fire comes UP. A pyre lights
+// under every enemy at once, burns, and collapses into drifting ash.
+export async function pyre_requiem(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const FIRE  = 0xff5a12;
+  const EMBER = 0xffc061;
+  const PALE  = 0xfff0cc;
+
+  const pyres = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.12),
+    tongues: Array.from({ length: 9 }, () => ({
+      x: rand(-0.4, 0.4), h: rand(0.5, 1), ph: rand(0, TAU), sway: rand(0.5, 1.4),
+    })),
+    ash: Array.from({ length: 10 }, () => ({
+      x: rand(-0.4, 0.4), d: rand(0, 0.35), drift: rand(-0.12, 0.12), size: rand(1.5, 3),
+    })),
+  })).filter(p => p.id);
+
+  const { layer, glow, solid } = riderLayer(5);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(1100, t => {
+    glow.clear(); solid.clear();
+
+    const ob = originId ? cellBoundsFor(originId) : null;
+    if (ob) {
+      const f = Math.sin(clamp01(t / 0.3) * Math.PI);
+      softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2, Math.min(ob.width, ob.height) * 0.32, FIRE, 0.6 * f);
+    }
+
+    for (const p of pyres) {
+      const b = cellBoundsFor(p.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+      const base = cy + R * 0.42;
+
+      const lit = clamp01((t - p.delay) / 0.2);
+      if (lit <= 0) continue;
+      const burn = clamp01((t - 0.18 - p.delay) / 0.45);
+      const out  = 1 - clamp01((t - 0.62 - p.delay) / 0.38);
+
+      softGlow(glow, cx, base, R * 0.45 * lit, FIRE, 0.5 * lit * out);
+      solid.lineStyle(Math.max(1, R * 0.025), EMBER, 0.7 * lit * out);
+      solid.drawEllipse(cx, base, R * 0.4 * lit, R * 0.12 * lit);
+      solid.lineStyle(0);
+
+      const rise = Math.sin(clamp01(burn) * Math.PI * 0.85);
+      for (const tg of p.tongues) {
+        const h = R * tg.h * rise * out * (0.75 + 0.25 * Math.sin(t * 38 + tg.ph));
+        if (h <= 0) continue;
+        const x    = cx + tg.x * R;
+        const sway = Math.sin(t * 22 * tg.sway + tg.ph) * R * 0.07;
+        solid.lineStyle(Math.max(2, R * 0.055), FIRE, 0.5 * out);
+        solid.moveTo(x, base);
+        solid.quadraticCurveTo(x + sway, base - h * 0.55, x + sway * 0.6, base - h);
+        solid.lineStyle(Math.max(1, R * 0.022), PALE, 0.75 * out);
+        solid.moveTo(x, base);
+        solid.quadraticCurveTo(x + sway * 0.7, base - h * 0.45, x + sway * 0.4, base - h * 0.7);
+      }
+      solid.lineStyle(0);
+      softGlow(glow, cx, base - R * 0.25 * rise, R * 0.35 * rise, FIRE, 0.7 * out);
+
+      for (const a of p.ash) {
+        const ap = clamp01((t - 0.45 - a.d) / 0.5);
+        if (ap <= 0 || ap >= 1) continue;
+        softGlow(glow, cx + (a.x + a.drift * ap) * R, base - ap * R * 1.1, a.size, EMBER, (1 - ap) * 0.8);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── condemn ───────────────────────────────────────────────────────────────────
+// A verdict, not a blast. A seal is stamped DOWN onto every enemy and the ground
+// cracks under it, so every beat is downward pressure and nothing is thrown.
+export async function condemn(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const GOLD  = 0xffd98a;
+  const WHITE = 0xfff7e2;
+  const CRACK = 0x2b1a06;
+
+  const marks = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.1),
+    cracks: Array.from({ length: 5 }, (_, i) => ({
+      ang:  (i / 5) * TAU + rand(-0.3, 0.3),
+      segs: Array.from({ length: 3 }, () => ({ j: rand(-0.35, 0.35), r: rand(0.18, 0.3) })),
+    })),
+  })).filter(m => m.id);
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(950, t => {
+    glow.clear(); solid.clear();
+
+    const ob = originId ? cellBoundsFor(originId) : null;
+    if (ob) {
+      const f = Math.sin(clamp01(t / 0.28) * Math.PI);
+      softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2, Math.min(ob.width, ob.height) * 0.28, GOLD, 0.6 * f);
+    }
+
+    for (const m of marks) {
+      const b = cellBoundsFor(m.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+
+      const stamp = clamp01((t - 0.1 - m.delay) / 0.28);
+      if (stamp <= 0) continue;
+      const hit  = clamp01((t - 0.38 - m.delay) / 0.62);
+      const fade = 1 - clamp01((t - 0.72) / 0.28);
+
+      const r    = R * (0.85 - 0.45 * stamp);
+      const rot  = -Math.PI / 2 + stamp * 0.8;
+      const a    = (hit > 0 ? 0.9 - hit * 0.5 : stamp) * fade;
+      const flat = 0.55;
+
+      softGlow(glow, cx, cy, r * 0.8, GOLD, 0.45 * a);
+      solid.lineStyle(Math.max(1.5, R * 0.035), GOLD, 0.9 * a);
+      solid.drawEllipse(cx, cy, r, r * flat);
+      solid.lineStyle(Math.max(1, R * 0.02), WHITE, 0.75 * a);
+      solid.drawEllipse(cx, cy, r * 0.68, r * 0.68 * flat);
+      for (let i = 0; i < 6; i++) {
+        const ta = rot + (i / 6) * TAU;
+        const c0 = Math.cos(ta), s0 = Math.sin(ta);
+        solid.moveTo(cx + c0 * r * 0.72, cy + s0 * r * 0.72 * flat);
+        solid.lineTo(cx + c0 * r, cy + s0 * r * flat);
+      }
+      solid.lineStyle(0);
+
+      if (hit > 0) {
+        const grow = clamp01(hit / 0.45);
+        if (hit < 0.3) softGlow(glow, cx, cy, R * 0.5 * (1 - hit / 0.3), WHITE, 0.8 * (1 - hit / 0.3));
+        solid.lineStyle(Math.max(1, R * 0.03), CRACK, 0.85 * fade);
+        for (const cr of m.cracks) {
+          solid.moveTo(cx, cy);
+          let acc = 0;
+          for (const s of cr.segs) {
+            acc += s.r;
+            const d  = R * acc * grow;
+            const a2 = cr.ang + s.j;
+            solid.lineTo(cx + Math.cos(a2) * d, cy + Math.sin(a2) * d * 0.7);
+          }
+        }
+        solid.lineStyle(0);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── prayer_of_healing ─────────────────────────────────────────────────────────
+// Side-wide (see SIDE_WIDE_FX in battle.js): the log names no ids, so the cells
+// come off the board. A wave leaves the caster and every ally answers with
+// rising motes, in the same green the other mends use.
+export async function prayer_of_healing(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!originCellEl || !app || !window.PIXI) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const originId = originCellEl.dataset.id;
+  const allies = targetCells.map((c, i) => ({
+    id: c.dataset?.id,
+    delay: 0.2 + i * 0.05,
+    motes: Array.from({ length: 7 }, () => ({
+      x: rand(-0.35, 0.35), d: rand(0, 0.3), size: rand(2, 4), drift: rand(-0.06, 0.06),
+    })),
+  })).filter(a => a.id);
+
+  const { layer, glow, solid } = riderLayer(5);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(1000, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const ox = ob.x + ob.width / 2, oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
+
+    const gather = clamp01(t / 0.22);
+    const out    = 1 - clamp01((t - 0.3) / 0.3);
+    softGlow(glow, ox, oy - R * 0.1 * gather, R * 0.3 * gather, VITAL_GREEN.core, 0.75 * out);
+    softGlow(glow, ox, oy, R * 0.45 * gather, VITAL_GREEN.mid, 0.4 * out);
+
+    const wave = clamp01((t - 0.16) / 0.5);
+    if (wave > 0 && wave < 1) {
+      solid.lineStyle(Math.max(1, R * 0.05 * (1 - wave)), VITAL_GREEN.mote, (1 - wave) * 0.7);
+      solid.drawEllipse(ox, oy, R * (0.3 + wave * 2.6), R * (0.15 + wave * 1.3));
+      solid.lineStyle(0);
+    }
+
+    for (const a of allies) {
+      const b = cellBoundsFor(a.id);
+      if (!b) continue;
+      const p = clamp01((t - a.delay) / (1 - a.delay));
+      if (p <= 0) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r  = Math.min(b.width, b.height);
+      const pop = Math.sin(p * Math.PI);
+
+      softGlow(glow, cx, cy, r * (0.25 + 0.2 * p), VITAL_GREEN.mid, 0.5 * pop);
+
+      const gp = clamp01(p / 0.5);
+      if (gp > 0 && gp < 1) {
+        const s = r * 0.16 * gp;
+        solid.lineStyle(Math.max(1.5, r * 0.045), VITAL_GREEN.core, (1 - gp) * 0.95);
+        solid.moveTo(cx, cy - s); solid.lineTo(cx, cy + s);
+        solid.moveTo(cx - s * 0.7, cy); solid.lineTo(cx + s * 0.7, cy);
+        solid.lineStyle(0);
+      }
+
+      for (const m of a.motes) {
+        const mp = clamp01((p - m.d) / 0.6);
+        if (mp <= 0 || mp >= 1) continue;
+        softGlow(glow, cx + (m.x + m.drift * mp) * r, cy + r * 0.3 - mp * r * 0.8, m.size, VITAL_GREEN.mote, (1 - mp) * 0.85);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
 export const EFFECTS = {
+  pyre_requiem,
+  condemn,
+  prayer_of_healing,
   lions_roar,
   mark_of_ash,
   pact,

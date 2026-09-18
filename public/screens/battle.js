@@ -42,12 +42,14 @@ const SRC_TARGET_FX = new Set([
 // per victim (a row, and the whole enemy side) for what is a single jet and a
 // single detonation. Left out, a two-unit row would breathe fire twice.
 // A spell cast is one entry for every victim, so it lists them as targetIds.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven']);
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
 // EFFECTS[name](actorCell, { targetCells }).
-const SIDE_WIDE_FX = new Set(['lions_roar']);
+// Prayer of Healing is here for the same reason: it logs one heal per ally by
+// NAME, skips anyone already at full HP, and carries no ids at all.
+const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
