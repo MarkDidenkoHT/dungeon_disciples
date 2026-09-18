@@ -1550,6 +1550,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   cursor: pointer;
 }
 .trophy-bar-item:active { transform: scale(0.92); }
+/* Short of what this craft needs — the one thing worth acting on here. */
+.trophy-bar-item--short .trophy-bar-val { color: var(--danger); }
+.trophy-bar-item--short .trophy-bar-icon { opacity: 0.55; }
 
 .mat-region-list {
   display: flex;

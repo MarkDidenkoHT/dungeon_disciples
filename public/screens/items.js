@@ -510,6 +510,8 @@ export function renderItems(root, { player }) {
       <div class="prep-track-wrap items-track-wrap">
         <div class="portrait-track" id="items-track">${trackCards(list)}</div>
       </div>`;
+
+    showTrophyBar();
   }
 
   // Onboarding's forge step. castle.js walks the player to the Blacksmith and
@@ -602,6 +604,8 @@ export function renderItems(root, { player }) {
       host.querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
         c.classList.toggle('portrait-card--selected', ci === selected));
       centreSelectedItem();
+      // The strip below the resource bar tracks whatever is on show.
+      showTrophyBar();
       return;
     }
 
@@ -656,11 +660,32 @@ export function renderItems(root, { player }) {
 
   // ── Trophy bar ────────────────────────────────────────────────────────────
   // Craft costs are largely trophies, so the strip that shows them belongs to
-  // this screen for as long as it is mounted.
+  // this screen for as long as it is mounted. It shows the trophies the item on
+  // show is crafted from — owned / required — rather than everything the player
+  // owns: a wall of unrelated trophies answered no question, and the one thing
+  // a player wants from this strip is how far off THIS craft they are.
+  function costTrophyKeys(entry) {
+    const def = entry?.kind === 'blueprint'
+      ? entry.def
+      : ITEM_DEFS[entry?.item ? itemKeyOf(entry.item) : null];
+    // Currencies have the resource strip above; crafted parts are shown as cost
+    // chips on the card itself. What is left is the trophies.
+    return Object.keys(def?.cost || {})
+      .filter(k => k !== 'Gold' && !k.startsWith('Crystals_') && !ITEM_DEFS[k]);
+  }
+
+  function requiredAmount(entry, key) {
+    const def = entry?.kind === 'blueprint'
+      ? entry.def
+      : ITEM_DEFS[entry?.item ? itemKeyOf(entry.item) : null];
+    return Number(def?.cost?.[key]) || 0;
+  }
+
   function showTrophyBar() {
-    const trophyItems = resources.filter(r => r.item_type === 'trophy' && r.amount > 0);
+    const entry = currentList()[selected];
+    const keys  = costTrophyKeys(entry);
     document.getElementById('roster-trophy-bar')?.remove();
-    if (!trophyItems.length) return;
+    if (!keys.length) return;
 
     const bar = document.createElement('div');
     bar.id = 'roster-trophy-bar';
@@ -669,18 +694,22 @@ export function renderItems(root, { player }) {
     // thing on this screen they want to act on, and the answer — which region
     // drops it — was already a tap away from a cost chip but not from the bar
     // that shows what they own.
-    bar.innerHTML = trophyItems.map(t => `
-      <button class="trophy-bar-item" data-material="${t.item}"
-              title="${materialName(t.item)} — ${t.amount}">
+    bar.innerHTML = keys.map(key => {
+      const need = requiredAmount(entry, key);
+      const have = ownedAmount(key);
+      return `
+      <button class="trophy-bar-item ${have >= need ? '' : 'trophy-bar-item--short'}" data-material="${key}"
+              title="${materialName(key)} — ${have}/${need}">
         <div class="trophy-bar-icon-wrap">
-          <img src="${assetUrl(`/assets/icons/recources/${t.item}.png`)}"
+          <img src="${assetUrl(`/assets/icons/recources/${key}.png`)}"
               class="trophy-bar-icon"
-              alt="${t.item}"
+              alt="${key}"
               onerror="this.style.display='none';this.nextSibling.style.display='flex';">
           <span class="trophy-bar-icon-fallback">🏆</span>
         </div>
-        <span class="trophy-bar-val">${t.amount}</span>
-      </button>`).join('');
+        <span class="trophy-bar-val">${have}/${need}</span>
+      </button>`;
+    }).join('');
 
     // The bar is mounted OUTSIDE this screen's host (it sits under the resource
     // strip), so the host's delegated click never reaches it — it needs its own.
