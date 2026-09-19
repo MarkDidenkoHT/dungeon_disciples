@@ -314,6 +314,58 @@ Players go to bed planning their roster. This is the "return later" hook.
 
 ---
 
+## Invites and sharing
+
+Not built. Agreed 2026-09-19.
+
+Every player gets a **share code** and a **Copy invite link** button, in settings
+directly under the promo code section. Telegram is the whole distribution channel, so
+a link a player can paste into a chat is the cheapest growth there is — and it gives
+the "play with friends" pull the Colossus and the tourney assume.
+
+### The invited player gets, on sign-up
+
+- 3 Health Potions
+- 1 spell tome
+- 50 gold
+- 20 of every crystal
+
+### The inviter is paid over time, not at once
+
+| When | Reward |
+|---|---|
+| The invited player signs up | 1 Tome of Experience |
+| Their first battle is finished | 50 gold |
+| Each daily set they complete | 5 crystals |
+
+The third line is the interesting one: it pays the inviter **every day their friend
+plays**, so an invite is worth something for as long as the friend stays. It also
+gives the inviter a reason to care whether their friend is still playing — the closest
+thing to a social loop before guilds exist.
+
+### Open questions
+
+- Is the daily payout capped (per day, per invitee, or in total), and does it stop
+  after some number of days? Without a cap, a player with many invitees earns crystals
+  passively forever.
+- Which crystal: the inviter's faction crystal, or the invitee's?
+- Is there a limit on how many invites one player can be paid for?
+- Self-invites and throwaway accounts: rewards land only when the invitee actually
+  finishes a battle or a daily, which raises the cost of faking, but a cap on the
+  sign-up reward may still be needed.
+- Does the invited player have to enter the code, or does the Telegram deep link carry
+  it (`?start=<code>`) so nothing is typed?
+
+### Wiring notes
+
+- A `share_code` per player, and an `invited_by` on the invitee.
+- Payouts are events, not a total: sign-up, first battle finished, each daily claimed.
+  Each needs its own idempotency, the way `/daily/claim` marks before paying.
+- The daily hook belongs next to the existing daily claim, which already runs once per
+  player per day.
+
+---
+
 ## Parked: Daily Omen
 
 One fixed enemy formation per day, same for everyone, unlimited retries, best result

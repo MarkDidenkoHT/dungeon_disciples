@@ -79,7 +79,7 @@ const SLOT_FIXED_BUILDING = {
 };
 
 const BUILDING_MAX_LEVELS = {
-  infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
+  blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
   mercenary_hall: 3, garrison_annex: 3, proving_grounds: 2, training_grounds: 2,
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
