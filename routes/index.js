@@ -30,7 +30,11 @@ const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
 const { ENGRAVING_CURRENCY, engravingCost, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
-const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
+const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername } = require('../utils/telegram');
+const {
+  generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
+  INVITER_DAILY_CAP, INVITE_MAX_ACCEPTED,
+} = require('../data/invites');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
@@ -320,7 +324,10 @@ function validateTelegramInitData(initData) {
   const userRaw = params.get('user');
   if (!userRaw) return null;
   try {
-    return JSON.parse(userRaw);
+    // start_param rides along: it is what a t.me/<bot>?start=<code> link carries,
+    // and it is inside the signed payload, so an invite code cannot be forged
+    // by a client that simply posts one.
+    return { ...JSON.parse(userRaw), start_param: params.get('start_param') || null };
   } catch {
     return null;
   }
@@ -1000,6 +1007,8 @@ router.post('/login', async (req, res) => {
       // reroll or stack errands. Never fatal: a player who cannot get an offer
       // (no structures yet, empty roster) still logs in.
       try { await ensureErrandOffer(chat_id, updated[0]); } catch (e) {}
+      // Every player needs a code to share; older accounts predate the column.
+      try { updated[0].share_code = await ensureShareCode(updated[0]); } catch (e) {}
       return res.json({
         player: updated[0],
         session_token,
@@ -1030,13 +1039,172 @@ router.post('/login', async (req, res) => {
     // failing Telegram API must not delay (or fail) the player's first login.
     notifyAdminNewPlayer(created[0]).catch(err =>
       console.error('Admin new-player notify failed:', err.message));
+
+    // The invite code rides inside the SIGNED initData (start_param), so it
+    // cannot be forged by a client posting one. Never fatal: a broken invite
+    // must not cost someone their first login.
+    let invite = null;
+    try {
+      created[0].share_code = await ensureShareCode(created[0]);
+      if (telegramUser.start_param) invite = await acceptInvite(created[0], telegramUser.start_param);
+    } catch (err) {
+      console.error('Invite accept failed:', err.message);
+    }
     res.json({
       player: created[0],
       session_token,
       isNew: true,
+      invited_by: invite ? invite.inviter : null,
       active: Boolean(activeRec),
       battle_id: activeRec ? activeRec.battle_id : null,
       battle_data: activeRec ? activeRec.battle_data : null,
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+
+// ── Invites ────────────────────────────────────────────────────────────────
+// Every player carries a share code; a player who arrives through someone's
+// link records `invited_by` once and pays that someone back as they play
+// (data/invites.js holds the rewards, docs/daily-activities-design.md the why).
+
+// The player's own code, minted on first need. A collision on the unique index
+// is retried rather than reported: the code is random, not meaningful.
+async function ensureShareCode(player) {
+  if (player?.share_code) return player.share_code;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateInviteCode();
+    try {
+      const rows = await supabase(
+        `/players?chat_id=eq.${encodeURIComponent(player.chat_id)}&share_code=is.null`, {
+          method: 'PATCH',
+          body: JSON.stringify({ share_code: code }),
+          headers: { Prefer: 'return=representation' },
+        });
+      if (Array.isArray(rows) && rows.length) return rows[0].share_code;
+      // No row matched: another request minted one first. Read it back.
+      const fresh = await supabase(`/players?chat_id=eq.${encodeURIComponent(player.chat_id)}&select=share_code&limit=1`);
+      if (fresh[0]?.share_code) return fresh[0].share_code;
+    } catch (err) {
+      if (attempt === 4) throw err;
+    }
+  }
+  return null;
+}
+
+function inviteLinkFor(botUsername, code) {
+  return botUsername && code ? `https://t.me/${botUsername}?start=${code}` : null;
+}
+
+// Grant lines from a reward block. `crystals` pays the player's own faction
+// crystal, which is why the faction is needed rather than the block alone.
+function inviteGrants(reward, faction) {
+  const grants = [];
+  for (const [item, amount] of Object.entries(reward?.resources || {})) {
+    grants.push({ item, amount, item_type: 'resource' });
+  }
+  for (const [item, amount] of Object.entries(reward?.tokens || {})) {
+    grants.push({ item, amount, item_type: 'token' });
+  }
+  if (reward?.crystals) {
+    grants.push({ item: FACTION_CRYSTAL[faction] || 'Crystals_Life', amount: reward.crystals, item_type: 'resource' });
+  }
+  return grants;
+}
+
+// Pay the inviter for something their invitee just did.
+//
+// `invite_progress` lives on the INVITEE and is what makes each moment payable
+// once: the write that records it is filtered on the old value, so two requests
+// racing on the same moment leave exactly one of them holding the payout.
+async function payInviter(invitee, moment) {
+  const inviterId = invitee?.invited_by;
+  if (!inviterId) return null;
+  const progress = invitee.invite_progress || {};
+
+  let next;
+  if (moment === 'daily') {
+    const done = Number(progress.dailies) || 0;
+    if (done >= INVITER_DAILY_CAP) return null;
+    next = { ...progress, dailies: done + 1 };
+  } else {
+    if (progress[moment]) return null;
+    next = { ...progress, [moment]: true };
+  }
+
+  const claimed = await supabase(
+    `/players?chat_id=eq.${encodeURIComponent(invitee.chat_id)}`
+    + `&invite_progress=${progress && Object.keys(progress).length ? `eq.${encodeURIComponent(JSON.stringify(progress))}` : 'is.null'}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ invite_progress: next }),
+      headers: { Prefer: 'return=representation' },
+    });
+  if (!(Array.isArray(claimed) && claimed.length)) return null;
+
+  const inviterRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(inviterId)}&select=chat_id,faction&limit=1`);
+  if (!inviterRows.length) return null;
+
+  const grants = inviteGrants(INVITER_REWARDS[moment], inviterRows[0].faction);
+  if (grants.length) await grantResources(inviterId, grants);
+  return { moment, grants };
+}
+
+// The invitee's first login through a link: the bond is recorded, both sides are
+// paid, and nothing here is ever fatal to the login itself.
+async function acceptInvite(newPlayer, rawCode) {
+  const code = normalizeInviteCode(rawCode);
+  if (!code) return null;
+
+  const inviterRows = await supabase(
+    `/players?share_code=eq.${encodeURIComponent(code)}&select=chat_id,faction&limit=1`
+  );
+  const inviter = inviterRows[0];
+  if (!inviter || String(inviter.chat_id) === String(newPlayer.chat_id)) return null;
+
+  const acceptedRows = await supabase(
+    `/players?invited_by=eq.${encodeURIComponent(inviter.chat_id)}&select=chat_id`
+  );
+  if ((acceptedRows || []).length >= INVITE_MAX_ACCEPTED) return null;
+
+  // Only ever set once, and only on a player who has none: the filter is the
+  // guard, so a second login with a link cannot rewrite who invited whom.
+  const bonded = await supabase(
+    `/players?chat_id=eq.${encodeURIComponent(newPlayer.chat_id)}&invited_by=is.null`, {
+      method: 'PATCH',
+      body: JSON.stringify({ invited_by: String(inviter.chat_id), invite_progress: {} }),
+      headers: { Prefer: 'return=representation' },
+    });
+  if (!(Array.isArray(bonded) && bonded.length)) return null;
+
+  const welcome = inviteGrants(INVITEE_WELCOME, newPlayer.faction);
+  if (welcome.length) await grantResources(newPlayer.chat_id, welcome);
+  await payInviter(bonded[0], 'signup').catch(err => console.error('Inviter signup payout failed:', err.message));
+  return { inviter: String(inviter.chat_id), granted: welcome };
+}
+
+// GET /invite — this player's code, their link, and how many have joined.
+router.get('/invite', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const rows = await supabase(
+      `/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=chat_id,share_code&limit=1`
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Player not found' });
+
+    const code = await ensureShareCode(rows[0]);
+    const [botUsername, accepted] = await Promise.all([
+      getBotUsername(),
+      supabase(`/players?invited_by=eq.${encodeURIComponent(chat_id)}&select=chat_id`),
+    ]);
+
+    res.json({
+      code,
+      link: inviteLinkFor(botUsername, code),
+      accepted: (accepted || []).length,
+      max: INVITE_MAX_ACCEPTED,
     });
   } catch (err) {
     serverError(res, err);

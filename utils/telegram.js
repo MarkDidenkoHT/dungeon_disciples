@@ -1,6 +1,23 @@
 const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://shattered-crown-lhso.onrender.com';
 
+// The bot's @name, needed to build an invite link (t.me/<bot>?start=<code>).
+// TELEGRAM_BOT_USERNAME skips the lookup; otherwise getMe answers once and the
+// answer is kept for the life of the process.
+let _botUsername = process.env.TELEGRAM_BOT_USERNAME || null;
+async function getBotUsername() {
+  if (_botUsername) return _botUsername;
+  if (!BOT_TOKEN) return null;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMe`);
+    const body = await res.json();
+    if (body?.ok && body.result?.username) _botUsername = body.result.username;
+  } catch (err) {
+    console.error('getMe failed:', err.message);
+  }
+  return _botUsername;
+}
+
 const BOT_WELCOME = {
   en: {
     text:
@@ -100,4 +117,4 @@ function telegramWebhookHandler(req, res) {
   handleTelegramUpdate(req.body).catch(err => console.error('Telegram webhook error:', err.message));
 }
 
-module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer };
+module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer, getBotUsername };

@@ -57,6 +57,15 @@ const UI_TEXT = {
   promoOk:          { en: 'Rewards claimed', ru: 'Награды получены' },
   promoXp:          { en: 'XP to every unit', ru: 'опыта каждому бойцу' },
   promoGotIt:       { en: 'Good',            ru: 'Отлично' },
+  inviteTitle:      { en: 'Invite friends',  ru: 'Пригласить друзей' },
+  inviteNote:       { en: 'They start with gold, crystals and potions. You earn while they play.',
+                      ru: 'Они начнут с золотом, кристаллами и зельями. Вы получаете награды, пока они играют.' },
+  inviteCopy:       { en: 'Copy invite link', ru: 'Скопировать ссылку' },
+  inviteCopied:     { en: 'Link copied',     ru: 'Ссылка скопирована' },
+  inviteFailed:     { en: 'Could not copy — long-press the code instead',
+                      ru: 'Не удалось скопировать — зажмите код' },
+  inviteJoined:     { en: n => `${n} joined`, ru: n => `Присоединились: ${n}` },
+  inviteLoading:    { en: 'Loading…',        ru: 'Загрузка…' },
   promoLeveled:     { en: n => `${n} unit${n > 1 ? 's' : ''} advanced a tier`,
                       ru: n => `Бойцов повысило ранг: ${n}` },
 };
@@ -168,6 +177,18 @@ export function renderSettings(root, { player }) {
           <div class="promo-box-msg" id="promo-msg"></div>
         </div>
 
+        <!-- Same box as the promo code above it: the code on one line, the
+             copy button beside it, a message line of fixed height below. -->
+        <div class="settings-section-title">${UI_TEXT.inviteTitle[L]}</div>
+        <div class="promo-box">
+          <div class="promo-box-row">
+            <input class="promo-box-input" id="invite-code" type="text" readonly
+                   value="${UI_TEXT.inviteLoading[L]}">
+            <button class="promo-box-btn" id="invite-btn" disabled>${UI_TEXT.inviteCopy[L]}</button>
+          </div>
+          <div class="promo-box-msg" id="invite-msg">${UI_TEXT.inviteNote[L]}</div>
+        </div>
+
         <div class="settings-section-title settings-section-title--danger">${UI_TEXT.dangerZone[L]}</div>
         <div class="settings-section settings-section--danger">
           <button class="settings-reset-btn" id="reset-progress-btn">${UI_TEXT.resetBtn[L]}</button>
@@ -176,6 +197,54 @@ export function renderSettings(root, { player }) {
       </main>
     </div>
   `;
+
+  // ── Invite ────────────────────────────────────────────────────────────────
+  // The link is built on the server (it needs the bot's @name), so the field
+  // stays read-only and the button is dead until it arrives.
+  let inviteLink = null;
+  const inviteCodeEl = root.querySelector('#invite-code');
+  const inviteBtn    = root.querySelector('#invite-btn');
+  const inviteMsg    = root.querySelector('#invite-msg');
+
+  api(`/invite?chat_id=${encodeURIComponent(player.chat_id)}`)
+    .then(data => {
+      inviteLink = data?.link || null;
+      inviteCodeEl.value = data?.code || '—';
+      inviteBtn.disabled = !inviteLink;
+      if (data?.accepted) inviteMsg.textContent = UI_TEXT.inviteJoined[L](data.accepted);
+    })
+    .catch(() => { inviteCodeEl.value = '—'; });
+
+  // navigator.clipboard is not granted in every Telegram WebView, so a hidden
+  // textarea and execCommand stand behind it. Both can fail; the player is told
+  // to long-press the code rather than left wondering.
+  async function copyInvite() {
+    if (!inviteLink) return false;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      return true;
+    } catch { /* fall through */ }
+    try {
+      const box = document.createElement('textarea');
+      box.value = inviteLink;
+      box.setAttribute('readonly', '');
+      box.style.position = 'fixed';
+      box.style.opacity = '0';
+      document.body.appendChild(box);
+      box.select();
+      const ok = document.execCommand('copy');
+      box.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  inviteBtn.addEventListener('click', async () => {
+    const ok = await copyInvite();
+    inviteMsg.textContent = ok ? UI_TEXT.inviteCopied[L] : UI_TEXT.inviteFailed[L];
+    if (ok) inviteCodeEl.value = inviteLink;
+  });
 
   const sfxBtn = root.querySelector('#toggle-sfx');
   sfxBtn.addEventListener('click', async () => {
