@@ -263,7 +263,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
             ${spent() || paid() ? `<button class="eg-reset" id="eg-reset" type="button">${t('reset')}</button>` : ''}
           </div>
           <div class="eg-status">
-            <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} · ${valor()}</span>
+            <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} ⚔</span>
             ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
           </div>
           <button class="eg-go" id="eg-go" type="button" ${why || busy ? 'disabled' : ''}>${label}</button>

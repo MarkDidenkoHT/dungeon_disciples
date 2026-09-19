@@ -28,19 +28,19 @@ function engravingCost(tierId) {
   return getEngravingTier(tierId)?.cost ?? 0;
 }
 
-// One point of Power is worth 1 Initiative, 2 Armor, 2 HP or 2 Resist, so a
-// stat's plus follows that scale and its minus is twice its plus.
+// One point of Power is worth 1 Initiative, 2 Armor, 2 HP or 2 Resist. `step` is
+// what one point moves the stat by, the same size whichever way it goes.
 const ENGRAVING_STATS = {
-  hp:            { key: 'hp',            name: 'HP',         name_ru: 'ОЗ',            plus: 2, minus: 4 },
-  armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         plus: 2, minus: 4 },
-  initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    plus: 1, minus: 2 },
-  action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          plus: 1, minus: 2 },
-  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    plus: 2, minus: 4 },
-  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   plus: 2, minus: 4 },
-  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     plus: 2, minus: 4 },
-  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   plus: 2, minus: 4 },
-  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  plus: 2, minus: 4 },
-  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  plus: 2, minus: 4 },
+  hp:            { key: 'hp',            name: 'HP',         name_ru: 'ОЗ',            step: 2 },
+  armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         step: 2 },
+  initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    step: 1 },
+  action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          step: 1 },
+  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    step: 2 },
+  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   step: 2 },
+  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     step: 2 },
+  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   step: 2 },
+  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  step: 2 },
+  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  step: 2 },
 };
 
 const ENGRAVING_COMBOS = [
@@ -104,7 +104,7 @@ function checkEngravingForUnit(unitData, engraving) {
 
   for (const [stat, points] of Object.entries(engraving.minus || {})) {
     const def = ENGRAVING_STATS[stat];
-    const cost = def.minus * points;
+    const cost = def.step * points;
     const resist = def.key.match(/^(air|fire|nature|cold|life|death)_resist$/);
     const current = resist
       ? (unitData.resistances?.[resist[1]] ?? 0)
@@ -117,12 +117,11 @@ function checkEngravingForUnit(unitData, engraving) {
   return null;
 }
 
-// What one point moves a stat by. A point of − is worth twice a point of +,
-// which is what makes the sacrifice real.
+// What one point moves a stat by — the same size up or down.
 function engravingStep(stat, negative) {
   const def = ENGRAVING_STATS[stat];
   if (!def) return 0;
-  return negative ? -def.minus : def.plus;
+  return negative ? -def.step : def.step;
 }
 
 // [{ stat, key, value, points, name, name_ru }] — the gains first, the costs last.

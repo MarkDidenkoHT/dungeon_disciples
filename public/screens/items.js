@@ -16,6 +16,7 @@ import {
 } from '../utils.js';
 import { mountTransmutation } from '../transmute.js';
 import { mountEngraving } from '../engrave.js';
+import { ENGRAVING_CURRENCY } from '../../data/engravings.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
 // to be the third tab of the roster's item sheet — the roster tab is now the
@@ -110,6 +111,8 @@ export function renderItems(root, { player }) {
     applyItemsLayer();
     if (itemsLayer === 1) engrave.refresh();
     if (itemsLayer === 3) transmute.refresh();
+    // The strip under the resource bar belongs to whichever page is showing.
+    showTrophyBar();
   }
   function applyItemsLayer() {
     const track = root.querySelector('#items-layer-track');
@@ -706,7 +709,11 @@ export function renderItems(root, { player }) {
     return Number(def?.cost?.[key]) || 0;
   }
 
+  // The strip under the resource bar. On the forge it is the trophies a craft
+  // needs; on the Engraving page it is the Valor the player holds, which is the
+  // only currency that page spends.
   function showTrophyBar() {
+    if (itemsLayer === 1) { showValorBar(); return; }
     const entry = currentList()[selected];
     // Most recipes (47 of 77 items) ask for no trophy at all — they are paid for
     // in gold, crystals and crafted parts. Narrowing the strip to "what THIS
@@ -753,6 +760,28 @@ export function renderItems(root, { player }) {
       const chip = e.target.closest('[data-material]');
       if (chip) openMaterialSheet(chip.dataset.material);
     });
+
+    const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
+    resourceRow?.insertAdjacentElement('afterend', bar);
+  }
+
+  function showValorBar() {
+    document.getElementById('roster-trophy-bar')?.remove();
+    const have = resources.find(r => r.item === ENGRAVING_CURRENCY)?.amount ?? 0;
+
+    const bar = document.createElement('div');
+    bar.id = 'roster-trophy-bar';
+    bar.className = 'roster-trophy-bar';
+    bar.innerHTML = `
+      <div class="trophy-bar-item" title="${ENGRAVING_CURRENCY} — ${have}">
+        <div class="trophy-bar-icon-wrap">
+          <img src="${assetUrl(`/assets/icons/recources/${ENGRAVING_CURRENCY.toLowerCase()}.png`)}"
+               class="trophy-bar-icon" alt="${ENGRAVING_CURRENCY}"
+               onerror="this.style.display='none';this.nextSibling.style.display='flex';">
+          <span class="trophy-bar-icon-fallback">⚔</span>
+        </div>
+        <span class="trophy-bar-val">${have}</span>
+      </div>`;
 
     const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
     resourceRow?.insertAdjacentElement('afterend', bar);
