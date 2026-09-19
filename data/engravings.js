@@ -9,7 +9,24 @@ import { applyItemModifiers, STAT_MOD_FLOORS } from './items.js';
 // time, so retuning these values retunes every engraving already in the game.
 
 const ENGRAVING_CURRENCY = 'Valor';
-const ENGRAVING_COST = 50;
+
+// Tiers multiply the whole triangle: an epic is three times an uncommon, both
+// ways up and down. Costs are meant to be an endgame goal — a strong player
+// earns roughly 280 Valor a week from the Colossus, so uncommon is about a
+// week, rare about three, epic about seven.
+const ENGRAVING_TIERS = [
+  { id: 'uncommon', name: 'Uncommon', name_ru: 'Необычная', steps: 1, cost: 250 },
+  { id: 'rare',     name: 'Rare',     name_ru: 'Редкая',    steps: 2, cost: 750 },
+  { id: 'epic',     name: 'Epic',     name_ru: 'Эпическая', steps: 3, cost: 2000 },
+];
+
+function getEngravingTier(id) {
+  return ENGRAVING_TIERS.find(t => t.id === id) ?? null;
+}
+
+function engravingCost(tierId) {
+  return getEngravingTier(tierId)?.cost ?? 0;
+}
 
 // One point of Power is worth 1 Initiative, 2 Armor, 2 HP or 2 Resist, so a
 // stat's plus follows that scale and its minus is twice its plus.
@@ -51,6 +68,7 @@ function checkEngraving(engraving) {
   if (!combo.stats.includes(engraving.minus)) {
     return `"${engraving.minus}" is not part of ${combo.id}`;
   }
+  if (!getEngravingTier(engraving.tier)) return `Unknown tier "${engraving.tier}"`;
   return null;
 }
 
@@ -65,6 +83,7 @@ function checkEngravingForUnit(unitData, engraving) {
 
   const stat = ENGRAVING_STATS[engraving.minus];
   if (!stat) return `Unknown stat "${engraving.minus}"`;
+  const cost = stat.minus * (getEngravingTier(engraving.tier)?.steps ?? 1);
 
   const resist = stat.key.match(/^(air|fire|nature|cold|life|death)_resist$/);
   const current = resist
@@ -74,8 +93,8 @@ function checkEngravingForUnit(unitData, engraving) {
       : (unitData[stat.key] ?? 0);
   const floor = resist ? STAT_MOD_FLOORS.resist : (STAT_MOD_FLOORS[stat.key] ?? 0);
 
-  if (current - stat.minus < floor) {
-    return `${stat.name} is ${current}; this engraving takes ${stat.minus}`;
+  if (current - cost < floor) {
+    return `${stat.name} is ${current}; this engraving takes ${cost}`;
   }
   return null;
 }
@@ -84,12 +103,16 @@ function checkEngravingForUnit(unitData, engraving) {
 function engravingValues(engraving) {
   const combo = getEngravingCombo(engraving?.combo);
   if (!combo || checkEngraving(engraving)) return [];
+  const steps = getEngravingTier(engraving.tier)?.steps ?? 1;
   return combo.stats
     .map(stat => {
       const def = ENGRAVING_STATS[stat];
       if (!def) return null;
       const negative = stat === engraving.minus;
-      return { stat, key: def.key, name: def.name, name_ru: def.name_ru, value: negative ? -def.minus : def.plus };
+      return {
+        stat, key: def.key, name: def.name, name_ru: def.name_ru,
+        value: (negative ? -def.minus : def.plus) * steps,
+      };
     })
     .filter(Boolean)
     .sort((a, b) => (a.value < 0) - (b.value < 0));
@@ -111,10 +134,12 @@ function applyEngraving(unitData, engraving) {
 }
 
 export {
-  ENGRAVING_CURRENCY, ENGRAVING_COST, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
+  ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, getEngravingTier, engravingCost,
+  checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ENGRAVING_CURRENCY, ENGRAVING_COST, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
+  ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, getEngravingTier, engravingCost,
+  checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };

@@ -28,7 +28,7 @@ const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
-const { ENGRAVING_CURRENCY, ENGRAVING_COST, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
+const { ENGRAVING_CURRENCY, engravingCost, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
@@ -1664,9 +1664,9 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 // The penalty is checked against the unit AS WORN. Stats floor at zero, so
 // -10 fire resist on a unit holding none of it would be two free bonuses.
 router.post('/roster/engrave', requireAuth, async (req, res) => {
-  const { chat_id, roster_id, combo, minus } = req.body;
-  if (!chat_id || !roster_id || !combo || !minus) {
-    return res.status(400).json({ error: 'chat_id, roster_id, combo and minus required' });
+  const { chat_id, roster_id, combo, minus, tier } = req.body;
+  if (!chat_id || !roster_id || !combo || !minus || !tier) {
+    return res.status(400).json({ error: 'chat_id, roster_id, combo, minus and tier required' });
   }
 
   try {
@@ -1687,12 +1687,12 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
     let unitData = { ...def, ...(entry.unit_data || {}) };
     if (item) unitData = applyItemModifiers(unitData, item.item_stats);
 
-    const engraving = { combo: String(combo), minus: String(minus) };
+    const engraving = { combo: String(combo), minus: String(minus), tier: String(tier) };
     const invalid = checkEngravingForUnit(unitData, engraving);
     if (invalid) return res.status(400).json({ error: invalid, code: 'engraving_invalid' });
 
     try {
-      await spendResources(chat_id, { [ENGRAVING_CURRENCY]: ENGRAVING_COST });
+      await spendResources(chat_id, { [ENGRAVING_CURRENCY]: engravingCost(engraving.tier) });
     } catch (err) {
       const short = shortfallItem(err);
       if (short) return res.status(400).json({ error: `Not enough ${short}`, code: 'insufficient', item: short });
