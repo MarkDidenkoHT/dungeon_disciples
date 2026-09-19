@@ -55,6 +55,11 @@ function taskHtml(task) {
 function rewardIconHtml(reward, factionCrystal) {
   if (reward.resources?.Gold) return GOLD_ICON;
   if (reward.id === 'crystals') return CRYSTAL_ICONS[factionCrystal] || CRYSTAL_ICONS.Crystals_Life;
+  // A reward with art draws it; the emoji stays as the fallback if it 404s.
+  if (reward.art) {
+    return `<img class="daily-reward-img" src="${assetUrl('/' + reward.art.replace(/^\//, ''))}" alt=""
+                 onerror="this.replaceWith(document.createTextNode('${reward.icon}'))">`;
+  }
   return reward.icon;
 }
 

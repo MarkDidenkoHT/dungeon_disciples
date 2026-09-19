@@ -71,6 +71,9 @@ const DAILY_REWARDS = [
   {
     id:    'tome',
     icon:  '\u{1F4D6}',
+    // Drawn as art when the screen can (see rewardIconHtml in public/daily.js);
+    // `icon` stays as the fallback.
+    art:   'assets/icons/ui/tome_of_experience.png',
     label: { en: 'Tome of Knowledge', ru: 'Том знаний' },
     // Tokens are their own item_type and may not exist as a row yet, so this is
     // granted with an upsert rather than a patch.
@@ -84,6 +87,17 @@ const DAILY_REWARDS = [
       Crystals_Life: 10, Crystals_Fire:  10, Crystals_Death: 10,
       Crystals_Nature: 10, Crystals_Frost: 10, Crystals_Air:  10,
     },
+  },
+  {
+    id:    'valor',
+    icon:  '⚔',
+    label: { en: '25 Valor', ru: '25 Доблести' },
+    // The engraving currency, otherwise earned only from the Colossus.
+    resources: { Valor: 25 },
+    // Gold and crystals are seeded at registration, so a missing row means a
+    // broken account and the claim skips it. Valor is not seeded: a player who
+    // has never fought the Colossus has no row, and skipping would pay nothing.
+    upsert: true,
   },
 ];
 

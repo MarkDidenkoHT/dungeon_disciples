@@ -1,4 +1,4 @@
-import { api, refreshResourceBar, bootstrapCache } from './api.js';
+import { api, refreshResourceBar, bootstrapCache, navigate } from './api.js';
 import { assetUrl } from './asset_base.js';
 import { resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe } from './utils.js';
 import {
@@ -41,9 +41,12 @@ const EG = {
   same:      { en: 'Already engraved this way', ru: 'Эта гравировка уже стоит' },
   failed:    { en: 'Engraving failed', ru: 'Не удалось выгравировать' },
   empty:     { en: 'No units yet.',    ru: 'Пока нет юнитов.' },
+  locked:    { en: 'Raise the Blacksmith to level 2 to open Engraving.',
+               ru: 'Поднимите Кузницу до 2 уровня, чтобы открыть Гравировку.' },
+  build:     { en: 'Upgrade the Blacksmith', ru: 'Улучшить Кузницу' },
 };
 
-export function mountEngraving(host, { player, getUnits, getItems, getResources, onChanged }) {
+export function mountEngraving(host, { player, getUnits, getItems, getResources, onChanged, isUnlocked = () => true }) {
   const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const t = k => EG[k][L];
   const statName = key => (L === 'ru' ? ENGRAVING_STATS[key]?.name_ru : ENGRAVING_STATS[key]?.name) || key;
@@ -212,6 +215,24 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   }
 
   function render() {
+    // `null` = the castle has not been read yet, so draw nothing rather than a
+    // lock the player may not have.
+    const unlocked = isUnlocked();
+    if (unlocked === null) { host.innerHTML = ''; return; }
+    if (!unlocked) {
+      host.innerHTML = `
+        <div class="eg-page">
+          <div class="eg-panel eg-panel--locked">
+            <div class="eg-title">${t('title')}</div>
+            <div class="eg-hint">${t('locked')}</div>
+            <button class="eg-go" id="eg-build" type="button">${t('build')}</button>
+          </div>
+        </div>`;
+      host.querySelector('#eg-build').addEventListener('click', () =>
+        navigate('castle', { player, focusBuilding: 'blacksmith' }));
+      return;
+    }
+
     const row = unitRow();
     const worn = row ? wornUnit(row) : null;
     const c = combo();

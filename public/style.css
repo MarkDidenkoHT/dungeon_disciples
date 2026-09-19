@@ -9821,3 +9821,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   cursor: pointer;
 }
 .eg-go:disabled { opacity: 0.45; cursor: default; }
+
+.eg-panel--locked { justify-content: center; }
+.daily-reward-icon .daily-reward-img { width: 34px; height: 34px; object-fit: contain; }

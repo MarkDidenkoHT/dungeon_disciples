@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -1670,6 +1670,12 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
   }
 
   try {
+    // The Blacksmith's second level opens this, the way its first opens crafting.
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    if (!engravingUnlocked(structRows[0]?.buildings_data)) {
+      return res.status(400).json({ error: 'Raise the Blacksmith to level 2 first', code: 'engraving_locked' });
+    }
+
     const rosterRows = await supabase(
       `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`
     );
@@ -2658,7 +2664,7 @@ router.get('/daily', requireAuth, async (req, res) => {
   }
 });
 
-// POST /daily/claim — all three done, take one of the three rewards.
+// POST /daily/claim — every task done, take one of the rewards.
 //
 // The record is re-read here and every gate is re-checked against it: what the
 // client believed when it drew the sheet is never the authority on whether the
@@ -2705,7 +2711,7 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
     // and is skipped rather than invented. The read still decides that; only the
     // write moved into the database.
     for (const [item, amount] of Object.entries(rewardDef.resources || {})) {
-      if (!inventoryRows.some(r => r.item === item && r.item_type === 'resource')) continue;
+      if (!rewardDef.upsert && !inventoryRows.some(r => r.item === item && r.item_type === 'resource')) continue;
       granted.resources[item] = amount;
       payouts.push({ item, amount, item_type: 'resource' });
     }

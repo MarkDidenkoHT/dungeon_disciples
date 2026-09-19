@@ -77,6 +77,7 @@ const SLOT_FIXED_BUILDING = {
 // How many times a building can be raised. Absent = 1 (build it and it is done).
 // The throne is not here: it has its own ladder (THRONE_UPGRADE_COSTS).
 const BUILDING_MAX_LEVELS = {
+  blacksmith:       2,
   infirmary:        3,
   crystal_mine:     2,
   mage_guild:       2,
@@ -118,6 +119,12 @@ function buildingLevel(buildingsData, buildingId) {
 // themselves rather than just failing.
 function craftingUnlocked(buildingsData) {
   return buildingLevel(buildingsData, 'blacksmith') >= 1;
+}
+
+// Engraving is the Blacksmith's second level, the way crafting is its first.
+// Checked on the server in POST /roster/engrave and mirrored on the items screen.
+function engravingUnlocked(buildingsData) {
+  return buildingLevel(buildingsData, 'blacksmith') >= 2;
 }
 
 // ── Building effects ────────────────────────────────────────────────────────
@@ -330,9 +337,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 240, Crystals_Life: 80 }, 3: { gold: 450, Crystals_Life: 150 } } },
       { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'blacksmith',
-        desc: 'Opens the forge. Without it nothing can be crafted.',
-        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 10 } },
+        desc: 'Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.',
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 400, Crystals_Life: 120 } } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -472,9 +480,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 240, Crystals_Fire: 80 }, 3: { gold: 450, Crystals_Fire: 150 } } },
       { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'blacksmith',
-        desc: 'Opens the forge. Without it nothing can be crafted.',
-        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 10 } },
+        desc: 'Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.',
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 400, Crystals_Fire: 120 } } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -628,9 +637,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 240, Crystals_Death: 80 }, 3: { gold: 450, Crystals_Death: 150 } } },
       { id: 'blacksmith', label: 'Blacksmith', label_ru: 'Кузница', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'blacksmith',
-        desc: 'Opens the forge. Without it nothing can be crafted.',
-        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать.',
-        cost: { gold: 10 } },
+        desc: 'Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.',
+        desc_ru: 'Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.',
+        cost: { gold: 10 },
+        upgrade_costs: { 2: { gold: 400, Crystals_Death: 120 } } },
     ],
     merc_up: [
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
@@ -1611,7 +1621,7 @@ module.exports = {
   SLOT_CATEGORIES,
   SLOT_IDS,
   SLOT_LAYERS,
-  craftingUnlocked,
+  craftingUnlocked, engravingUnlocked,
   LAYER_COUNT,
   slotsOnLayer,
   SLOT_UNLOCKS,

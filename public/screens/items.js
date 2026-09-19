@@ -153,6 +153,8 @@ export function renderItems(root, { player }) {
   let progress  = {};
   // Whether a Blacksmith stands. No forge, no crafting.
   let forgeOpen = false;
+  // Whether it has reached level 2, which opens Engraving.
+  let engraveOpen = false;
 
   // Mounted AFTER the state above: it draws itself at once and reads the roster,
   // the items and the resources while doing so.
@@ -161,6 +163,9 @@ export function renderItems(root, { player }) {
     getUnits:     () => units,
     getItems:     () => items,
     getResources: () => resources,
+    // Null until the first load has read the castle: the page shows nothing
+    // rather than flashing "locked" at a player who has the levels.
+    isUnlocked: () => (loaded ? engraveOpen : null),
     // A unit was just engraved: re-read the roster so the strip and the triangle
     // agree with what was paid for.
     onChanged: async () => {
@@ -863,9 +868,9 @@ export function renderItems(root, { player }) {
   // ES module in the browser — the same reason castle.js keeps its own copy of
   // SLOT_FIXED_BUILDING. The server re-checks it in POST /items/craft, which is
   // the authority; this copy only decides what the buttons say.
-  function hasBlacksmith(buildingsData) {
+  function hasBlacksmith(buildingsData, level = 1) {
     return Object.entries(buildingsData || {}).some(([slot, state]) =>
-      /^slot_\d+$/.test(slot) && state?.building_id === 'blacksmith' && (state.level ?? 0) >= 1);
+      /^slot_\d+$/.test(slot) && state?.building_id === 'blacksmith' && (state.level ?? 0) >= level);
   }
 
   // Every slice this screen needs comes from the single /bootstrap payload.
@@ -877,6 +882,9 @@ export function renderItems(root, { player }) {
     resources = [...(boot.resources || []), ...(boot.trophies || [])];
     progress  = boot.progress || {};
     forgeOpen = hasBlacksmith(boot.structures?.buildings_data);
+    // Engraving is the Blacksmith's second level. The server re-checks it in
+    // POST /roster/engrave.
+    engraveOpen = hasBlacksmith(boot.structures?.buildings_data, 2);
     // Transmutation is opened by the Transmutation Lab, the same way the forge
     // is opened by the Blacksmith. The server re-checks it in /transmute/start.
     labOpen = Object.entries(boot.structures?.buildings_data || {})
