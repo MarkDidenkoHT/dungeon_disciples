@@ -1,0 +1,118 @@
+import { applyItemModifiers, STAT_MOD_FLOORS } from './items.js';
+
+// Engravings (Гравировки): permanent, small stat changes on one unit.
+// A combo is three stats; the player marks ONE of them negative and the other two
+// positive. Magnitudes come from the stat, never from the player — the negative is
+// worth about twice its positive, so the sacrifice pays for the pair.
+//
+// Stored on the roster row as { combo, minus }. The numbers are read from here every
+// time, so retuning these values retunes every engraving already in the game.
+
+const ENGRAVING_CURRENCY = 'Valor';
+const ENGRAVING_COST = 50;
+
+const ENGRAVING_STATS = {
+  hp:            { key: 'hp',            name: 'HP',         name_ru: 'ОЗ',            plus: 10, minus: 20 },
+  armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         plus: 2,  minus: 4 },
+  initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    plus: 3,  minus: 6 },
+  action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          plus: 1,  minus: 2 },
+  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    plus: 5,  minus: 10 },
+  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   plus: 5,  minus: 10 },
+  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     plus: 5,  minus: 10 },
+  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   plus: 5,  minus: 10 },
+  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  plus: 5,  minus: 10 },
+  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  plus: 5,  minus: 10 },
+};
+
+const ENGRAVING_COMBOS = [
+  { id: 'bulwark',     name: 'Bulwark',      name_ru: 'Оплот',        stats: ['hp', 'armor', 'initiative'] },
+  { id: 'duelist',     name: 'Duelist',      name_ru: 'Дуэлянт',      stats: ['action_power', 'initiative', 'hp'] },
+  { id: 'zealot',      name: 'Zealot',       name_ru: 'Фанатик',      stats: ['action_power', 'hp', 'life_resist'] },
+  { id: 'ironhide',    name: 'Ironhide',     name_ru: 'Железная шкура', stats: ['armor', 'death_resist', 'action_power'] },
+  { id: 'emberward',   name: 'Emberward',    name_ru: 'Стража углей', stats: ['fire_resist', 'armor', 'initiative'] },
+  { id: 'rimeward',    name: 'Rimeward',     name_ru: 'Стража инея',  stats: ['cold_resist', 'hp', 'action_power'] },
+  { id: 'windrunner',  name: 'Windrunner',   name_ru: 'Бег ветра',    stats: ['air_resist', 'initiative', 'armor'] },
+  { id: 'grovebound',  name: 'Grovebound',   name_ru: 'Узы рощи',     stats: ['nature_resist', 'hp', 'armor'] },
+  { id: 'gravewatch',  name: 'Gravewatch',   name_ru: 'Могильный дозор', stats: ['death_resist', 'life_resist', 'initiative'] },
+  { id: 'thaumaturge', name: 'Thaumaturge',  name_ru: 'Тауматург',    stats: ['action_power', 'fire_resist', 'air_resist'] },
+];
+
+function getEngravingCombo(id) {
+  return ENGRAVING_COMBOS.find(c => c.id === id) ?? null;
+}
+
+// null when the engraving is usable, else why not.
+function checkEngraving(engraving) {
+  if (!engraving) return null;
+  const combo = getEngravingCombo(engraving.combo);
+  if (!combo) return `Unknown combo "${engraving.combo}"`;
+  if (!combo.stats.includes(engraving.minus)) {
+    return `"${engraving.minus}" is not part of ${combo.id}`;
+  }
+  return null;
+}
+
+// Stats floor at STAT_MOD_FLOORS, so a penalty a unit cannot afford is a free
+// engraving: -10 fire resist on a unit with 0 fire resist costs it nothing. The
+// sacrifice has to land in full, on the unit as it stands (items included).
+// null when it does, else why not.
+function checkEngravingForUnit(unitData, engraving) {
+  const shape = checkEngraving(engraving);
+  if (shape) return shape;
+  if (!unitData || !engraving) return null;
+
+  const stat = ENGRAVING_STATS[engraving.minus];
+  if (!stat) return `Unknown stat "${engraving.minus}"`;
+
+  const resist = stat.key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+  const current = resist
+    ? (unitData.resistances?.[resist[1]] ?? 0)
+    : stat.key === 'hp'
+      ? (unitData.max_hp ?? unitData.hp ?? 0)
+      : (unitData[stat.key] ?? 0);
+  const floor = resist ? STAT_MOD_FLOORS.resist : (STAT_MOD_FLOORS[stat.key] ?? 0);
+
+  if (current - stat.minus < floor) {
+    return `${stat.name} is ${current}; this engraving takes ${stat.minus}`;
+  }
+  return null;
+}
+
+// [{ stat, key, value, name, name_ru }] — the two positives first, the negative last.
+function engravingValues(engraving) {
+  const combo = getEngravingCombo(engraving?.combo);
+  if (!combo || checkEngraving(engraving)) return [];
+  return combo.stats
+    .map(stat => {
+      const def = ENGRAVING_STATS[stat];
+      if (!def) return null;
+      const negative = stat === engraving.minus;
+      return { stat, key: def.key, name: def.name, name_ru: def.name_ru, value: negative ? -def.minus : def.plus };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.value < 0) - (b.value < 0));
+}
+
+// The same shape an item's stat_mods take, so the engine path is shared.
+function engravingStatMods(engraving) {
+  const mods = {};
+  for (const v of engravingValues(engraving)) mods[v.key] = (mods[v.key] || 0) + v.value;
+  return mods;
+}
+
+// Applied like an item: the floors that keep a penalty from breaking a unit live there.
+function applyEngraving(unitData, engraving) {
+  if (!unitData || !engraving || checkEngraving(engraving)) return unitData;
+  const stat_mods = engravingStatMods(engraving);
+  if (!Object.keys(stat_mods).length) return unitData;
+  return applyItemModifiers(unitData, { stat_mods });
+}
+
+export {
+  ENGRAVING_CURRENCY, ENGRAVING_COST, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
+};
+if (typeof module !== 'undefined') module.exports = {
+  ENGRAVING_CURRENCY, ENGRAVING_COST, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
+};

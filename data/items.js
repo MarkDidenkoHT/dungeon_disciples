@@ -1423,12 +1423,12 @@ function applyItemModifiers(unitData, itemStats) {
 }
 
 export {
-  ITEM_DEFS, applyItemModifiers, removedTags,
+  ITEM_DEFS, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ITEM_DEFS, applyItemModifiers, removedTags,
+  ITEM_DEFS, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
