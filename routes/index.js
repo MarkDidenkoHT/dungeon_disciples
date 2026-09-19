@@ -28,6 +28,7 @@ const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
+const { ENGRAVING_CURRENCY, ENGRAVING_COST, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer } = require('../utils/telegram');
 const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
@@ -399,6 +400,8 @@ function buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId = {}) {
   let unit_data = { ...def, ...(r.unit_data || {}) };
   const item = itemsByRosterId[String(r.id)];
   if (item) unit_data = applyItemModifiers(unit_data, item.item_stats);
+  // After the item, so an engraving's penalty is paid on the unit as it is worn.
+  if (r.engraving) unit_data = applyEngraving(unit_data, r.engraving);
   return {
     id:              String(entry.id),
     _rosterId:       String(entry._rosterId || entry.id),
@@ -486,7 +489,7 @@ function viewFor(record, chat_id, { state, logs, winner }) {
 // item or a level applies identically whichever grid a unit is standing on.
 async function buildArmyFor(chat_id, playerUnitIds) {
   const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
+    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
   );
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
@@ -524,7 +527,7 @@ function checkSquad(units) {
 // The client's power number is never used: bands and bots are picked from this one.
 async function loadSquad(chat_id, playerUnitIds) {
   const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
+    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
   );
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
@@ -540,7 +543,7 @@ async function loadSquad(chat_id, playerUnitIds) {
     if (seen.has(rosterId)) return { error: `Roster unit ${rosterId} is listed twice` };
     seen.add(rosterId);
     units.push(buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId));
-    power += rosterUnitPower(getUnitByDataId(r.unit_data?.unit_id), r.unit_data, itemsByRosterId[rosterId]);
+    power += rosterUnitPower(getUnitByDataId(r.unit_data?.unit_id), r.unit_data, itemsByRosterId[rosterId], r.engraving);
   }
 
   const invalid = checkSquad(units);
@@ -1169,7 +1172,7 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     let autoLeveled = [];
     if (Number(data.roster_xp) > 0) {
       const xp = Number(data.roster_xp);
-      const roster = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const roster = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`);
       await Promise.all(roster.map(r => supabase(`/roster?id=eq.${encodeURIComponent(r.id)}`, {
         method: 'PATCH',
         body: JSON.stringify({ unit_data: { ...(r.unit_data || {}),
@@ -1178,7 +1181,7 @@ router.post('/player/promo', requireAuth, async (req, res) => {
       granted.roster_xp = xp;
 
       const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
-      const fresh = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const fresh = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`);
       try { autoLeveled = await applyAutoLevelUps(fresh, structRows[0]?.buildings_data); }
       catch (err) { console.error('promo auto level-up failed:', err.message); }
     }
@@ -1371,7 +1374,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // the respec button, a button in the unit sheet.
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       player
         ? fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
         : Promise.resolve([]),
@@ -1548,7 +1551,7 @@ router.get('/roster', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     res.json(rows);
   } catch (err) {
     serverError(res, err);
@@ -1571,7 +1574,7 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
     const spellDef = factionSpells.find(s => s.id === spell_id && s.usage === 'roster' && s.target_scope === 'single_ally');
     if (!spellDef) return res.status(400).json({ error: 'Invalid roster spell' });
 
-    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const entry = rosterRows[0];
@@ -1587,7 +1590,7 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
     });
 
     const [updated, resources] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
     res.json({ success: true, roster: updated[0], resources });
@@ -1614,7 +1617,7 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
     const spellDef = factionSpells.find(s => s.id === spell_id && s.effect_type === 'heal' && s.target_scope === 'single_ally');
     if (!spellDef) return res.status(400).json({ error: 'Invalid roster spell' });
 
-    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const entry = rosterRows[0];
@@ -1641,7 +1644,68 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
     });
 
     const [updated, resources] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ success: true, roster: updated[0], resources });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// ── Engravings ─────────────────────────────────────────────────────────────
+// A permanent stat triangle on one unit (data/engravings.js): two stats up, one
+// down. Only the CHOICE is stored; the numbers are read from the data file every
+// time the unit's stats are derived, so retuning a stat retunes every engraving.
+//
+// Replacing overwrites the whole triangle and costs the full price again — an
+// engraving can be changed, never removed, and never edited a corner at a time.
+//
+// The penalty is checked against the unit AS WORN. Stats floor at zero, so
+// -10 fire resist on a unit holding none of it would be two free bonuses.
+router.post('/roster/engrave', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, combo, minus } = req.body;
+  if (!chat_id || !roster_id || !combo || !minus) {
+    return res.status(400).json({ error: 'chat_id, roster_id, combo and minus required' });
+  }
+
+  try {
+    const rosterRows = await supabase(
+      `/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`
+    );
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    const entry = rosterRows[0];
+    const def = getUnitByDataId(entry.unit_data?.unit_id);
+    if (!def) return res.status(400).json({ error: 'Unit definition not found' });
+
+    // The unit as it stands: definition, its own values, then the worn item.
+    // The engraving already on it is deliberately NOT applied — the new one
+    // replaces it, so it is paid for by the unit without it.
+    const itemsByRosterId = await getItemsByRosterIds([entry.id]);
+    const item = itemsByRosterId[String(entry.id)];
+    let unitData = { ...def, ...(entry.unit_data || {}) };
+    if (item) unitData = applyItemModifiers(unitData, item.item_stats);
+
+    const engraving = { combo: String(combo), minus: String(minus) };
+    const invalid = checkEngravingForUnit(unitData, engraving);
+    if (invalid) return res.status(400).json({ error: invalid, code: 'engraving_invalid' });
+
+    try {
+      await spendResources(chat_id, { [ENGRAVING_CURRENCY]: ENGRAVING_COST });
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) return res.status(400).json({ error: `Not enough ${short}`, code: 'insufficient', item: short });
+      throw err;
+    }
+
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ engraving }),
+    });
+
+    const [updated, resources] = await Promise.all([
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
     res.json({ success: true, roster: updated[0], resources });
@@ -1688,7 +1752,7 @@ router.post('/roster/restore', requireAuth, async (req, res) => {
     if (needRes  && !(resSpell  && learnedSpells.includes(resSpell.id)))  return res.status(403).json({ error: 'Spell not learned' });
     if (needHeal && !(healSpell && learnedSpells.includes(healSpell.id))) return res.status(403).json({ error: 'Spell not learned' });
 
-    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
 
     // A unit is counted ONCE, for the thing it needs. In 'resurrect_heal' the
     // fallen pay both spells — raised at 1 HP by one, brought to full by the
@@ -1751,7 +1815,7 @@ router.post('/roster/restore', requireAuth, async (req, res) => {
     })));
 
     const [updated, resources] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
     res.json({ success: true, count: restored.length, spent: bill, roster: updated, resources });
@@ -2198,7 +2262,7 @@ function offerPayload(offer, freeRows, postLevel) {
 // data/errands.js, which reads `_item_stats` off the row.
 async function errandRosterRows(chat_id, player) {
   const [roster, items] = await Promise.all([
-    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`),
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
     player?.id
       ? fetchItems(`/items?player_id=eq.${player.id}&select=item_stats,equipped_by`)
       : Promise.resolve([]),
@@ -2517,7 +2581,7 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
 
     // Re-read rather than trusting what was true at /favor/start — the unit may
     // have been healed, revived or killed in between.
-    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found', code: 'favor_no_unit' });
 
     const unitData = rosterRows[0].unit_data || {};
@@ -2545,7 +2609,7 @@ router.post('/favor/claim', requireAuth, async (req, res) => {
     record.pending = null;
     await writeFavorRecord(chat_id, record);
 
-    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(pending.roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     res.json({
       success:   true,
       kind,
@@ -2871,7 +2935,7 @@ router.post('/roster/tome', requireAuth, async (req, res) => {
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
     const [rosterRows, tokenRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token&item=eq.tome_of_knowledge`),
     ]);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
@@ -2908,11 +2972,11 @@ router.post('/roster/tome', requireAuth, async (req, res) => {
     // whose level applyAutoLevelUps caps at the throne's.
     let autoLeveled = [];
     const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
-    const fresh = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,unit_data,is_hero`);
+    const fresh = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,unit_data,is_hero,engraving`);
     try { autoLeveled = await applyAutoLevelUps(fresh, structRows[0]?.buildings_data); }
     catch (err) { console.error('tome auto level-up failed:', err.message); }
 
-    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     res.json({ success: true, xp: TOME_XP, roster: updated[0], tomes_left: Number(tomeRow.amount) - 1, auto_level_ups: autoLeveled });
   } catch (err) {
     serverError(res, err);
@@ -2926,7 +2990,7 @@ router.post('/roster/potion', requireAuth, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
-    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const unitData = rosterRows[0].unit_data || {};
@@ -2947,7 +3011,7 @@ router.post('/roster/potion', requireAuth, async (req, res) => {
       body: JSON.stringify({ unit_data: { ...unitData, current_hp: maxHp } }),
     });
 
-    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero`);
+    const updated = await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&select=id,chat_id,unit_data,is_hero,engraving`);
     res.json({ success: true, roster: updated[0] });
   } catch (err) {
     serverError(res, err);
@@ -3077,7 +3141,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
     const [rosterRows, structRows] = await Promise.all([
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
     ]);
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
@@ -3200,7 +3264,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       }
     }
     await Promise.all(updatePromises);
-    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`);
+    const updated = await supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero,engraving`);
     res.json(updated[0]);
   } catch (err) {
     serverError(res, err);
@@ -3273,7 +3337,7 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     // unit's definition, since max_hp differs between lines.
     let swappedUnit = null;
     if (target.unit_id) {
-      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`);
       const entry = rosterRows.find(r => r.unit_data?.building_slot === slot);
       const newDef = getUnitByDataId(target.unit_id);
       if (entry && newDef) {
@@ -3311,7 +3375,7 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
     const current   = buildings[slot];
     if (!current || !current.building_id) return res.status(400).json({ error: 'That slot is already empty' });
 
-    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+    const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`);
     const doomed = rosterRows.filter(r => r.unit_data?.building_slot === slot && r.is_hero !== true);
 
     // Strip gear first: an item whose owner is deleted would otherwise stay
@@ -3436,7 +3500,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     // occupants of this slot (plus the hero, whom the throne gates).
     let autoLeveled = [];
     try {
-      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`);
+      const rosterRows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`);
       const affected = (rosterRows || []).filter(r =>
         r.unit_data?.building_slot === slot || (r.is_hero && slotCategory === 'throne'));
       autoLeveled = await applyAutoLevelUps(affected, buildings);
@@ -3450,7 +3514,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     // cost, and without them the client has to go and read the whole bootstrap
     // back just to redraw what this call already knows.
     const [rosterAfter, resourcesAfter] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
     res.json({ ...updated[0], auto_level_ups: autoLeveled, roster: rosterAfter, resources: resourcesAfter });
@@ -3642,7 +3706,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     }
 
     const rosterRows = await supabase(
-      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`
+      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
     );
     const rosterById = {};
     for (const r of rosterRows) rosterById[String(r.id)] = r;
@@ -4736,7 +4800,7 @@ async function grantPvpWinXp(chat_id, battle_data, side) {
     .filter(u => u.side === side && u._rosterId != null)
     .map(u => String(u._rosterId));
   const rows = ids.length
-    ? await supabase(`/roster?id=in.(${ids.join(',')})&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero`)
+    ? await supabase(`/roster?id=in.(${ids.join(',')})&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`)
     : [];
 
   const xp_awards = [];
@@ -4906,7 +4970,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const participantRows = participantIds.length
         // is_hero rides along for the post-battle auto level-up, which gates the
         // hero on the throne's level.
-        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data,is_hero`)
+        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data,is_hero,engraving`)
         : [];
       const embarkItems = await getItemsByRosterIds(participantIds);
       const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
@@ -5223,7 +5287,7 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
     if (!bDef) return res.status(404).json({ error: 'Mercenary building not found' });
 
     const [allRosterRows, structRows, inventoryRows] = await Promise.all([
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&is_hero=eq.false&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&is_hero=eq.false&select=id,chat_id,unit_data,is_hero,engraving`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
@@ -5276,7 +5340,7 @@ router.post('/structures/mercenary/upgrade', requireAuth, async (req, res) => {
 
     const rosterEntryId = rosterRows[0]?.id;
     const updatedRoster = rosterEntryId
-      ? await supabase(`/roster?id=eq.${encodeURIComponent(rosterEntryId)}&select=id,chat_id,unit_data,is_hero`)
+      ? await supabase(`/roster?id=eq.${encodeURIComponent(rosterEntryId)}&select=id,chat_id,unit_data,is_hero,engraving`)
       : [];
     res.json({
       success: true,
@@ -5311,7 +5375,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
 
     const [itemRows, rosterRows] = await Promise.all([
       fetchItems(`/items?id=eq.${encodeURIComponent(item_id)}&player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
-      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
     ]);
     if (!itemRows.length)   return res.status(404).json({ error: 'Item not found' });
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster unit not found' });
@@ -5355,7 +5419,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
     await supabase(`/items?id=eq.${item_id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) });
 
     const [updatedRoster, readItems] = await Promise.all([
-      supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero,engraving`),
       fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 
@@ -5393,7 +5457,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
     await unequipItemFromRosterUnit(item, item.equipped_by);
 
     const [updatedRoster, readItems] = await Promise.all([
-      supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero`),
+      supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero,engraving`),
       fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`),
     ]);
 

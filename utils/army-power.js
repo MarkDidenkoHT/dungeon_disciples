@@ -1,4 +1,5 @@
 const { applyItemModifiers } = require('../data/items');
+const { applyEngraving } = require('../data/engravings');
 
 // Server copy of calcUnitPower in public/utils.js. Keep the two in step.
 function calcUnitPower(unit) {
@@ -17,11 +18,14 @@ function calcUnitPower(unit) {
   return Math.round(vitality + dps);
 }
 
-// Built the same way the prep screen builds it: definition, roster max HP, worn item.
-function rosterUnitPower(def, rosterUnitData, item) {
+// Built the same way the prep screen builds it: definition, roster max HP, worn
+// item, then the engraving.
+function rosterUnitPower(def, rosterUnitData, item, engraving) {
   if (!def) return 0;
-  const base = { ...def, hp: rosterUnitData?.max_hp ?? def.hp };
-  return calcUnitPower(item ? applyItemModifiers(base, item.item_stats) : base);
+  let unit = { ...def, hp: rosterUnitData?.max_hp ?? def.hp };
+  if (item) unit = applyItemModifiers(unit, item.item_stats);
+  if (engraving) unit = applyEngraving(unit, engraving);
+  return calcUnitPower(unit);
 }
 
 module.exports = { calcUnitPower, rosterUnitPower };

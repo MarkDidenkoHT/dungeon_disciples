@@ -15,6 +15,7 @@ import {
   tagListLabel, playPageTurnSound,
 } from '../utils.js';
 import { mountTransmutation } from '../transmute.js';
+import { mountEngraving } from '../engrave.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
 // to be the third tab of the roster's item sheet — the roster tab is now the
@@ -67,8 +68,9 @@ export function renderItems(root, { player }) {
   const T = key => IT[key][L];
   applyBackground(root, player.faction, 'roster');
 
-  // Two pages on one sliding track, the same arrangement as the castle, embark
-  // and the spell tome: the forge, then Transmutation.
+  // Three pages on one sliding track, the same arrangement as the castle, embark
+  // and the spell tome: Engraving, the forge, then Transmutation. The forge opens
+  // in the middle — it is what this screen is for.
   root.innerHTML = `
     <div class="screen screen-items">
       <main class="items-main">
@@ -76,10 +78,11 @@ export function renderItems(root, { player }) {
           <button class="tome-layer-arrow tome-layer-arrow--prev" id="items-layer-prev" type="button" aria-label="${T('title')}"><span>&lsaquo;</span></button>
           <div class="tome-layer-viewport">
             <div class="tome-layer-track" id="items-layer-track">
-              <div class="tome-layer" data-layer="1">
+              <div class="tome-layer" data-layer="1" id="items-engrave"></div>
+              <div class="tome-layer" data-layer="2">
                 <div class="items-modal" id="items-screen"></div>
               </div>
-              <div class="tome-layer" data-layer="2" id="items-transmute"></div>
+              <div class="tome-layer" data-layer="3" id="items-transmute"></div>
             </div>
           </div>
           <button class="tome-layer-arrow tome-layer-arrow--next" id="items-layer-next" type="button" aria-label="Transmutation"><span>&rsaquo;</span></button>
@@ -97,15 +100,16 @@ export function renderItems(root, { player }) {
 
   // Same logic as the tome's applyLayer/setLayer: applyItemsLayer draws the
   // current page and the arrows' state, setItemsLayer moves and then applies.
-  let itemsLayer = 1;
+  let itemsLayer = 2;
   function setItemsLayer(n) {
-    const next = Math.max(1, Math.min(2, n));
+    const next = Math.max(1, Math.min(3, n));
     if (next === itemsLayer) return;
     itemsLayer = next;
     playPageTurnSound();
     closeSheet();
     applyItemsLayer();
-    if (itemsLayer === 2) transmute.refresh();
+    if (itemsLayer === 1) engrave.refresh();
+    if (itemsLayer === 3) transmute.refresh();
   }
   function applyItemsLayer() {
     const track = root.querySelector('#items-layer-track');
@@ -118,9 +122,9 @@ export function renderItems(root, { player }) {
     const prev = root.querySelector('#items-layer-prev');
     const nextBtn = root.querySelector('#items-layer-next');
     prev.disabled = itemsLayer === 1;
-    nextBtn.disabled = itemsLayer === 2;
+    nextBtn.disabled = itemsLayer === 3;
     prev.classList.toggle('tome-layer-arrow--live', itemsLayer > 1);
-    nextBtn.classList.toggle('tome-layer-arrow--live', itemsLayer < 2);
+    nextBtn.classList.toggle('tome-layer-arrow--live', itemsLayer < 3);
   }
   root.querySelector('#items-layer-prev').addEventListener('click', () => setItemsLayer(itemsLayer - 1));
   root.querySelector('#items-layer-next').addEventListener('click', () => setItemsLayer(itemsLayer + 1));
@@ -149,6 +153,22 @@ export function renderItems(root, { player }) {
   let progress  = {};
   // Whether a Blacksmith stands. No forge, no crafting.
   let forgeOpen = false;
+
+  // Mounted AFTER the state above: it draws itself at once and reads the roster,
+  // the items and the resources while doing so.
+  const engrave = mountEngraving(root.querySelector('#items-engrave'), {
+    player,
+    getUnits:     () => units,
+    getItems:     () => items,
+    getResources: () => resources,
+    // A unit was just engraved: re-read the roster so the strip and the triangle
+    // agree with what was paid for.
+    onChanged: async () => {
+      const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
+      if (boot) applyBootstrap(boot);
+      render();
+    },
+  });
 
   // Screen state, same axes the roster sheet filtered on.
   let filter     = 'craft';   // 'owned' | 'craft'
