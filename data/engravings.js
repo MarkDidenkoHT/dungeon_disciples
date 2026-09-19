@@ -11,17 +11,19 @@ import { applyItemModifiers, STAT_MOD_FLOORS } from './items.js';
 const ENGRAVING_CURRENCY = 'Valor';
 const ENGRAVING_COST = 50;
 
+// One point of Power is worth 1 Initiative, 2 Armor, 2 HP or 2 Resist, so a
+// stat's plus follows that scale and its minus is twice its plus.
 const ENGRAVING_STATS = {
-  hp:            { key: 'hp',            name: 'HP',         name_ru: 'ОЗ',            plus: 10, minus: 20 },
-  armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         plus: 2,  minus: 4 },
-  initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    plus: 3,  minus: 6 },
-  action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          plus: 1,  minus: 2 },
-  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    plus: 5,  minus: 10 },
-  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   plus: 5,  minus: 10 },
-  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     plus: 5,  minus: 10 },
-  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   plus: 5,  minus: 10 },
-  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  plus: 5,  minus: 10 },
-  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  plus: 5,  minus: 10 },
+  hp:            { key: 'hp',            name: 'HP',         name_ru: 'ОЗ',            plus: 2, minus: 4 },
+  armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         plus: 2, minus: 4 },
+  initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    plus: 1, minus: 2 },
+  action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          plus: 1, minus: 2 },
+  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    plus: 2, minus: 4 },
+  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   plus: 2, minus: 4 },
+  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     plus: 2, minus: 4 },
+  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   plus: 2, minus: 4 },
+  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  plus: 2, minus: 4 },
+  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  plus: 2, minus: 4 },
 };
 
 const ENGRAVING_COMBOS = [

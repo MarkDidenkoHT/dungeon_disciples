@@ -1,6 +1,6 @@
 import { api, refreshResourceBar, bootstrapCache } from './api.js';
 import { assetUrl } from './asset_base.js';
-import { resolveUnitDef, withEquippedItem, unitName, escapeHtml } from './utils.js';
+import { resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe } from './utils.js';
 import {
   ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_COST, ENGRAVING_CURRENCY,
   getEngravingCombo, checkEngravingForUnit, engravingValues,
@@ -86,22 +86,39 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return null;
   }
 
-  function unitStripHtml() {
+  // The same bottom slider every other screen uses: portrait cards on a track,
+  // the chosen one centred when tapped.
+  function trackCardsHtml() {
     const rows = units();
-    if (!rows.length) return `<div class="eg-empty">${t('empty')}</div>`;
+    if (!rows.length) return `<span class="track-empty-hint">${t('empty')}</span>`;
     return rows.map(row => {
       const def = resolveUnitDef(row);
       const id  = def?.id || '';
       const portraitId = id.match(/^(h_[a-z]_\d)/)?.[1] ?? id;
+      const name = escapeHtml(unitName(def || {}, player));
       const on = String(row.id) === String(rosterId);
       return `
-        <button class="eg-unit${on ? ' eg-unit--on' : ''}${row.engraving ? ' eg-unit--engraved' : ''}"
-                data-roster="${escapeHtml(String(row.id))}" type="button" title="${escapeHtml(unitName(def || {}, player))}">
-          <img src="${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}" alt=""
-               onerror="this.style.display='none'">
-          ${row.engraving ? '<span class="eg-unit-mark">✦</span>' : ''}
-        </button>`;
+        <div class="portrait-card ${on ? 'portrait-card--selected' : ''} ${row.is_hero ? 'portrait-card--hero' : ''}"
+             data-roster="${escapeHtml(String(row.id))}" title="${name}">
+          <img class="portrait-art-img" src="${assetUrl(`/assets/character_portraits/p_${portraitId}.png`)}"
+               alt="${name}" onerror="this.style.display='none'">
+          ${row.engraving ? '<span class="eg-card-mark">✦</span>' : ''}
+        </div>`;
     }).join('');
+  }
+
+  // Scrolls the TRACK only, never an ancestor: the items screen's three pages sit
+  // in an overflow:hidden viewport that scripted scrolling can still slide.
+  function centreSelected(behavior = 'smooth') {
+    const track = host.querySelector('#eg-track');
+    const card  = track?.querySelector('.portrait-card--selected');
+    if (!card) return;
+    const scroller = track.scrollWidth > track.clientWidth ? track : track.parentElement;
+    if (!scroller) return;
+    const c = card.getBoundingClientRect();
+    const s = scroller.getBoundingClientRect();
+    const delta = (c.left + c.width / 2) - (s.left + s.width / 2);
+    if (delta) scroller.scrollBy({ left: delta, behavior });
   }
 
   function currentHtml(row) {
@@ -139,10 +156,10 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     const label = busy ? t('working') : (row?.engraving ? t('replace') : t('engrave'));
 
     host.innerHTML = `
-      <div class="eg-panel">
+      <div class="eg-page">
+        <div class="eg-panel">
         <div class="eg-title">${t('title')}</div>
         <div class="eg-hint">${t('hint')}</div>
-        <div class="eg-units">${unitStripHtml()}</div>
         ${currentHtml(row)}
         <div class="eg-triangle">
           <button class="eg-combo" id="eg-combo" type="button">
@@ -156,7 +173,14 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
           ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
         </div>
         <button class="eg-go" id="eg-go" type="button" ${why || busy ? 'disabled' : ''}>${label}</button>
+        </div>
+        <div class="prep-track-wrap eg-track-wrap">
+          <div class="portrait-track" id="eg-track">${trackCardsHtml()}</div>
+        </div>
       </div>`;
+
+    enableTrackSwipe(host.querySelector('.eg-track-wrap'));
+    centreSelected('auto');
   }
 
   async function engrave() {
@@ -178,7 +202,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
 
   host.addEventListener('click', e => {
     if (busy) return;
-    const unitBtn = e.target.closest('.eg-unit');
+    const unitBtn = e.target.closest('.portrait-card[data-roster]');
     if (unitBtn) {
       rosterId = unitBtn.dataset.roster;
       const row = unitRow();
@@ -187,6 +211,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       comboIdx = carried ? ENGRAVING_COMBOS.findIndex(c => c.id === carried.id) : comboIdx;
       minus = carried ? row.engraving.minus : null;
       render();
+      centreSelected();
       return;
     }
     if (e.target.closest('#eg-combo')) {
