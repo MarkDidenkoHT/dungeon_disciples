@@ -1664,9 +1664,9 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 // The penalty is checked against the unit AS WORN. Stats floor at zero, so
 // -10 fire resist on a unit holding none of it would be two free bonuses.
 router.post('/roster/engrave', requireAuth, async (req, res) => {
-  const { chat_id, roster_id, combo, minus, tier } = req.body;
-  if (!chat_id || !roster_id || !combo || !minus || !tier) {
-    return res.status(400).json({ error: 'chat_id, roster_id, combo, minus and tier required' });
+  const { chat_id, roster_id, combo, minus, plus, tier } = req.body;
+  if (!chat_id || !roster_id || !combo || !tier || !plus || !minus) {
+    return res.status(400).json({ error: 'chat_id, roster_id, combo, tier, plus and minus required' });
   }
 
   try {
@@ -1687,7 +1687,19 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
     let unitData = { ...def, ...(entry.unit_data || {}) };
     if (item) unitData = applyItemModifiers(unitData, item.item_stats);
 
-    const engraving = { combo: String(combo), minus: String(minus), tier: String(tier) };
+    // Point maps are taken as sent and validated whole: checkEngravingForUnit
+    // rejects an unknown stat, a stat outside the combo, a stat moving both
+    // ways, a point count that does not match the tier, and a penalty the unit
+    // cannot pay. Nothing else is trusted.
+    const asPoints = map => Object.fromEntries(
+      Object.entries(map || {}).map(([stat, n]) => [String(stat), Number(n)])
+    );
+    const engraving = {
+      combo: String(combo),
+      tier:  String(tier),
+      plus:  asPoints(plus),
+      minus: asPoints(minus),
+    };
     const invalid = checkEngravingForUnit(unitData, engraving);
     if (invalid) return res.status(400).json({ error: invalid, code: 'engraving_invalid' });
 

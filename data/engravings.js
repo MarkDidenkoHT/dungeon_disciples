@@ -60,15 +60,36 @@ function getEngravingCombo(id) {
   return ENGRAVING_COMBOS.find(c => c.id === id) ?? null;
 }
 
+// An engraving is { combo, tier, plus: { stat: points }, minus: { stat: points } }.
+// A tier hands out points: every point spent on + has to be paid for with a
+// point of − on a DIFFERENT stat, so the two sides always balance.
+function engravingPoints(map) {
+  return Object.values(map || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
+}
+
 // null when the engraving is usable, else why not.
 function checkEngraving(engraving) {
   if (!engraving) return null;
   const combo = getEngravingCombo(engraving.combo);
   if (!combo) return `Unknown combo "${engraving.combo}"`;
-  if (!combo.stats.includes(engraving.minus)) {
-    return `"${engraving.minus}" is not part of ${combo.id}`;
+  const tier = getEngravingTier(engraving.tier);
+  if (!tier) return `Unknown tier "${engraving.tier}"`;
+
+  const plus  = engraving.plus  || {};
+  const minus = engraving.minus || {};
+  for (const [stat, points] of [...Object.entries(plus), ...Object.entries(minus)]) {
+    if (!combo.stats.includes(stat)) return `"${stat}" is not part of ${combo.id}`;
+    if (!ENGRAVING_STATS[stat])      return `Unknown stat "${stat}"`;
+    if (!Number.isInteger(points) || points < 1) return `"${stat}" has no whole points`;
   }
-  if (!getEngravingTier(engraving.tier)) return `Unknown tier "${engraving.tier}"`;
+  for (const stat of Object.keys(plus)) {
+    if (minus[stat]) return `${ENGRAVING_STATS[stat].name} cannot rise and fall at once`;
+  }
+
+  const up = engravingPoints(plus);
+  const down = engravingPoints(minus);
+  if (up !== tier.steps)   return `${tier.name} spends ${tier.steps} point${tier.steps > 1 ? 's' : ''}, this spends ${up}`;
+  if (down !== tier.steps) return `${up} point${up > 1 ? 's' : ''} up needs ${up} down, this pays ${down}`;
   return null;
 }
 
@@ -81,41 +102,43 @@ function checkEngravingForUnit(unitData, engraving) {
   if (shape) return shape;
   if (!unitData || !engraving) return null;
 
-  const stat = ENGRAVING_STATS[engraving.minus];
-  if (!stat) return `Unknown stat "${engraving.minus}"`;
-  const cost = stat.minus * (getEngravingTier(engraving.tier)?.steps ?? 1);
-
-  const resist = stat.key.match(/^(air|fire|nature|cold|life|death)_resist$/);
-  const current = resist
-    ? (unitData.resistances?.[resist[1]] ?? 0)
-    : stat.key === 'hp'
-      ? (unitData.max_hp ?? unitData.hp ?? 0)
-      : (unitData[stat.key] ?? 0);
-  const floor = resist ? STAT_MOD_FLOORS.resist : (STAT_MOD_FLOORS[stat.key] ?? 0);
-
-  if (current - cost < floor) {
-    return `${stat.name} is ${current}; this engraving takes ${cost}`;
+  for (const [stat, points] of Object.entries(engraving.minus || {})) {
+    const def = ENGRAVING_STATS[stat];
+    const cost = def.minus * points;
+    const resist = def.key.match(/^(air|fire|nature|cold|life|death)_resist$/);
+    const current = resist
+      ? (unitData.resistances?.[resist[1]] ?? 0)
+      : def.key === 'hp'
+        ? (unitData.max_hp ?? unitData.hp ?? 0)
+        : (unitData[def.key] ?? 0);
+    const floor = resist ? STAT_MOD_FLOORS.resist : (STAT_MOD_FLOORS[def.key] ?? 0);
+    if (current - cost < floor) return `${def.name} is ${current}; this engraving takes ${cost}`;
   }
   return null;
 }
 
-// [{ stat, key, value, name, name_ru }] — the two positives first, the negative last.
+// What one point moves a stat by. A point of − is worth twice a point of +,
+// which is what makes the sacrifice real.
+function engravingStep(stat, negative) {
+  const def = ENGRAVING_STATS[stat];
+  if (!def) return 0;
+  return negative ? -def.minus : def.plus;
+}
+
+// [{ stat, key, value, points, name, name_ru }] — the gains first, the costs last.
 function engravingValues(engraving) {
   const combo = getEngravingCombo(engraving?.combo);
   if (!combo || checkEngraving(engraving)) return [];
-  const steps = getEngravingTier(engraving.tier)?.steps ?? 1;
-  return combo.stats
-    .map(stat => {
-      const def = ENGRAVING_STATS[stat];
-      if (!def) return null;
-      const negative = stat === engraving.minus;
-      return {
-        stat, key: def.key, name: def.name, name_ru: def.name_ru,
-        value: (negative ? -def.minus : def.plus) * steps,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (a.value < 0) - (b.value < 0));
+  const out = [];
+  for (const [stat, points] of Object.entries(engraving.plus || {})) {
+    const def = ENGRAVING_STATS[stat];
+    out.push({ stat, key: def.key, name: def.name, name_ru: def.name_ru, points, value: engravingStep(stat, false) * points });
+  }
+  for (const [stat, points] of Object.entries(engraving.minus || {})) {
+    const def = ENGRAVING_STATS[stat];
+    out.push({ stat, key: def.key, name: def.name, name_ru: def.name_ru, points, value: engravingStep(stat, true) * points });
+  }
+  return out.sort((a, b) => (a.value < 0) - (b.value < 0));
 }
 
 // The same shape an item's stat_mods take, so the engine path is shared.
@@ -135,11 +158,11 @@ function applyEngraving(unitData, engraving) {
 
 export {
   ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, getEngravingTier, engravingCost,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };
 if (typeof module !== 'undefined') module.exports = {
   ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, getEngravingTier, engravingCost,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };

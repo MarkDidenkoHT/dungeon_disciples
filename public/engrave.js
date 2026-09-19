@@ -3,15 +3,20 @@ import { assetUrl } from './asset_base.js';
 import { resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe } from './utils.js';
 import {
   ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_TIERS, ENGRAVING_CURRENCY,
-  getEngravingCombo, getEngravingTier, engravingCost, checkEngravingForUnit, engravingValues,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
+  checkEngravingForUnit, engravingValues,
 } from '../data/engravings.js';
 
 // Engraving: the items screen's left page. One unit, one combo of three stats,
-// one tier, and a + / − under each stat — exactly one of them goes down.
+// one tier, and a + / − under each stat.
 //
 //     52        20        35      what the stat BECOMES
 //     HP      Armor  Initiative
-//   [−][+]   [−][+]   [−][+]      − moves the cost here; the rest go up
+//   [−][+]   [−][+]   [−][+]      each + must be paid by a − elsewhere
+//
+// A tier hands out points. Every + spends one, every − pays one back, and the
+// two have to match before anything can be engraved. Tapping a sign past the
+// last point wraps that stat back to zero, which is how a choice is undone.
 //
 // Replacing overwrites the whole triangle and costs the full price again. The
 // server re-checks everything in POST /roster/engrave.
@@ -24,7 +29,10 @@ const EG = {
   current:   { en: 'Current',          ru: 'Сейчас' },
   none:      { en: 'Not engraved',     ru: 'Без гравировки' },
   combo:     { en: 'Tap to change',    ru: 'Нажмите, чтобы сменить' },
-  minusHint: { en: 'Mark one stat with −', ru: 'Отметьте один стат знаком −' },
+  pointsHint:{ en: 'Spend the points: every + needs a − elsewhere',
+               ru: 'Потратьте очки: каждый + требует − на другом стате' },
+  points:    { en: 'Points',           ru: 'Очки' },
+  reset:     { en: 'Reset',            ru: 'Сброс' },
   engrave:   { en: 'Engrave',          ru: 'Выгравировать' },
   replace:   { en: 'Replace',          ru: 'Заменить' },
   working:   { en: 'Engraving…',       ru: 'Гравировка…' },
@@ -44,7 +52,8 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
 
   let rosterId = null;
   let comboIdx = 0;
-  let minus    = null;
+  let plus     = {};
+  let minus    = {};
   let tierId   = ENGRAVING_TIERS[0].id;
   let busy     = false;
 
@@ -75,29 +84,39 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return Number(unit[statKey] ?? 0);
   }
 
+  const tier = () => getEngravingTier(tierId);
+  const spent = () => engravingPoints(plus);
+  const paid  = () => engravingPoints(minus);
+
   function selection() {
     const c = combo();
-    return c && minus ? { combo: c.id, minus, tier: tierId } : null;
+    if (!c) return null;
+    return { combo: c.id, tier: tierId, plus: { ...plus }, minus: { ...minus } };
   }
 
-  // What each stat is worth at the chosen tier, before anything is picked.
-  function stepFor(statKey, negative) {
-    const def = ENGRAVING_STATS[statKey];
-    const steps = getEngravingTier(tierId)?.steps ?? 1;
-    if (!def) return 0;
-    return (negative ? -def.minus : def.plus) * steps;
+  // A sign is taken when points remain and the stat is not already moving the
+  // other way; otherwise the tap wraps that stat back to nothing.
+  function tapSign(statKey, negative) {
+    const mine  = negative ? minus : plus;
+    const other = negative ? plus  : minus;
+    const room  = (tier()?.steps ?? 1) - engravingPoints(mine);
+    if (other[statKey] || room <= 0) { delete mine[statKey]; return; }
+    mine[statKey] = (mine[statKey] || 0) + 1;
   }
+
+  function clearPicks() { plus = {}; minus = {}; }
 
   function problem() {
     const row = unitRow();
     if (!row) return t('pickUnit');
     const sel = selection();
-    if (!sel) return t('minusHint');
+    if (!sel) return t('pickUnit');
+    if (!spent() && !paid()) return t('pointsHint');
     const worn = wornUnit(row);
     const invalid = worn ? checkEngravingForUnit(worn, sel) : null;
     if (invalid) return invalid;
     const now = row.engraving;
-    if (now && now.combo === sel.combo && now.minus === sel.minus && now.tier === sel.tier) return t('same');
+    if (now && JSON.stringify(now) === JSON.stringify(sel)) return t('same');
     if (valor() < engravingCost(tierId)) return t('short');
     return null;
   }
@@ -141,7 +160,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     if (!row) return `<div class="eg-current"><span class="eg-current-label">${t('pickUnit')}</span></div>`;
     const def = resolveUnitDef(row);
     const vals = row.engraving ? engravingValues(row.engraving) : [];
-    const tier = row.engraving ? getEngravingTier(row.engraving.tier) : null;
+    const tierDef = row.engraving ? getEngravingTier(row.engraving.tier) : null;
     const chips = vals.map(v =>
       `<span class="eg-chip ${v.value < 0 ? 'eg-chip--neg' : 'eg-chip--pos'}">${statName(v.stat)} ${v.value > 0 ? '+' : ''}${v.value}</span>`
     ).join('');
@@ -149,31 +168,37 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       <div class="eg-current">
         <span class="eg-current-name">${escapeHtml(unitName(def || {}, player))}</span>
         <span class="eg-current-label">${t('current')}:</span>
-        ${tier ? `<span class="eg-chip eg-chip--tier eg-chip--${tier.id}">${tierName(tier)}</span>` : ''}
+        ${tierDef ? `<span class="eg-chip eg-chip--tier eg-chip--${tierDef.id}">${tierName(tierDef)}</span>` : ''}
         ${chips || `<span class="eg-chip eg-chip--none">${t('none')}</span>`}
       </div>`;
   }
 
-  // One column: what the stat becomes, its name, and the − / + that decide which
-  // way it moves. Pressing − moves the cost here; pressing + on the current cost
-  // clears it, so there is always at most one negative.
+  // One column: what the stat becomes, its name, and the − / + that move it.
+  // Each sign shows how many points this stat is carrying.
   function columnHtml(statKey, worn) {
-    const negative = minus === statKey;
-    const delta = minus ? stepFor(statKey, negative) : null;
+    const up = plus[statKey] || 0;
+    const down = minus[statKey] || 0;
+    const delta = up ? engravingStep(statKey, false) * up
+                : down ? engravingStep(statKey, true) * down
+                : 0;
     const base = statOf(worn, statKey);
-    const total = base == null ? null : (delta == null ? base : Math.max(statKey === 'hp' ? 1 : 0, base + delta));
-    const deltaLabel = delta == null ? '' :
-      `<span class="eg-col-delta ${delta < 0 ? 'eg-col-delta--neg' : 'eg-col-delta--pos'}">${delta > 0 ? '+' : ''}${delta}</span>`;
+    const total = base == null ? null : Math.max(statKey === 'hp' ? 1 : 0, base + delta);
     return `
-      <div class="eg-col ${negative ? 'eg-col--neg' : (minus ? 'eg-col--pos' : '')}">
+      <div class="eg-col ${down ? 'eg-col--neg' : (up ? 'eg-col--pos' : '')}">
         <div class="eg-col-total">${total == null ? '—' : total}</div>
-        ${deltaLabel}
+        <div class="eg-col-delta ${delta < 0 ? 'eg-col-delta--neg' : 'eg-col-delta--pos'}">
+          ${delta ? `${delta > 0 ? '+' : ''}${delta}` : '&nbsp;'}
+        </div>
         <div class="eg-col-stat">${statName(statKey)}</div>
         <div class="eg-col-signs">
-          <button class="eg-sign ${negative ? 'eg-sign--on' : ''}" data-minus="${statKey}" type="button"
-                  title="${escapeHtml(statName(statKey))} ${stepFor(statKey, true)}">−</button>
-          <button class="eg-sign ${minus && !negative ? 'eg-sign--on' : ''}" data-plus="${statKey}" type="button"
-                  title="${escapeHtml(statName(statKey))} +${stepFor(statKey, false)}">+</button>
+          <button class="eg-sign ${down ? 'eg-sign--on' : ''}" data-minus="${statKey}" type="button"
+                  title="${escapeHtml(statName(statKey))} ${engravingStep(statKey, true)} / point">
+            <span class="eg-sign-mark">−</span>${down ? `<span class="eg-sign-pts">${down}</span>` : ''}
+          </button>
+          <button class="eg-sign ${up ? 'eg-sign--on' : ''}" data-plus="${statKey}" type="button"
+                  title="${escapeHtml(statName(statKey))} +${engravingStep(statKey, false)} / point">
+            <span class="eg-sign-mark">+</span>${up ? `<span class="eg-sign-pts">${up}</span>` : ''}
+          </button>
         </div>
       </div>`;
   }
@@ -190,6 +215,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     const row = unitRow();
     const worn = row ? wornUnit(row) : null;
     const c = combo();
+    const steps = tier()?.steps ?? 1;
     const why = problem();
     const label = busy ? t('working') : (row?.engraving ? t('replace') : t('engrave'));
 
@@ -209,6 +235,12 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
           </button>
           <div class="eg-tiers">${tiersHtml()}</div>
           <div class="eg-cols">${c.stats.map(s => columnHtml(s, worn)).join('')}</div>
+          <div class="eg-points">
+            <span class="eg-points-count ${spent() === steps && paid() === steps ? 'eg-points-count--done' : ''}">
+              ${t('points')} +${spent()}/${steps} · −${paid()}/${steps}
+            </span>
+            ${spent() || paid() ? `<button class="eg-reset" id="eg-reset" type="button">${t('reset')}</button>` : ''}
+          </div>
           <div class="eg-status">
             <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} · ${valor()}</span>
             ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
@@ -231,7 +263,8 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     busy = true; render();
     try {
       await api('/roster/engrave', {
-        chat_id: player.chat_id, roster_id: row.id, combo: sel.combo, minus: sel.minus, tier: sel.tier,
+        chat_id: player.chat_id, roster_id: row.id,
+        combo: sel.combo, tier: sel.tier, plus: sel.plus, minus: sel.minus,
       });
       bootstrapCache.invalidate();
       if (onChanged) await onChanged();
@@ -253,8 +286,12 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       // Open on what the unit already carries, so replacing starts from it.
       const carried = row?.engraving && getEngravingCombo(row.engraving.combo);
       comboIdx = carried ? ENGRAVING_COMBOS.findIndex(c => c.id === carried.id) : comboIdx;
-      minus = carried ? row.engraving.minus : null;
-      if (carried && getEngravingTier(row.engraving.tier)) tierId = row.engraving.tier;
+      clearPicks();
+      if (carried) {
+        plus  = { ...(row.engraving.plus  || {}) };
+        minus = { ...(row.engraving.minus || {}) };
+        if (getEngravingTier(row.engraving.tier)) tierId = row.engraving.tier;
+      }
       render();
       centreSelected();
       return;
@@ -262,25 +299,23 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
 
     if (e.target.closest('#eg-combo')) {
       comboIdx = (comboIdx + 1) % ENGRAVING_COMBOS.length;
-      minus = null;
+      clearPicks();
       render();
       return;
     }
 
+    // A tier is a different number of points, so whatever was spent under the
+    // old one no longer balances.
     const tierBtn = e.target.closest('[data-tier]');
-    if (tierBtn) { tierId = tierBtn.dataset.tier; render(); return; }
+    if (tierBtn) { tierId = tierBtn.dataset.tier; clearPicks(); render(); return; }
+
+    if (e.target.closest('#eg-reset')) { clearPicks(); render(); return; }
 
     const down = e.target.closest('[data-minus]');
-    if (down) { minus = down.dataset.minus; render(); return; }
+    if (down) { tapSign(down.dataset.minus, true); render(); return; }
 
     const up = e.target.closest('[data-plus]');
-    if (up) {
-      // + on the stat currently carrying the cost: nothing is paying for the
-      // triangle any more, so the choice is cleared rather than silently moved.
-      if (minus === up.dataset.plus) minus = null;
-      render();
-      return;
-    }
+    if (up) { tapSign(up.dataset.plus, false); render(); return; }
 
     if (e.target.closest('#eg-go')) engrave();
   });

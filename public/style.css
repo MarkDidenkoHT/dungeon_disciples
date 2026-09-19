@@ -9721,7 +9721,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 8px 4px;
+  padding: 8px 6px 7px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.4);
@@ -9732,22 +9732,71 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .eg-col-delta { font-size: 0.68rem; font-weight: 700; }
 .eg-col-delta--pos { color: #6ec87e; }
 .eg-col-delta--neg { color: #e0715f; }
-.eg-col-stat { font-size: 0.64rem; color: var(--muted); text-align: center; min-height: 1.6em; }
-.eg-col-signs { display: flex; gap: 4px; margin-top: 2px; }
+.eg-col-stat {
+  font-size: 0.64rem;
+  color: var(--muted);
+  text-align: center;
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+.eg-col-signs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 4px;
+}
 .eg-sign {
-  width: 30px;
-  height: 26px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 5px;
   background: rgba(0, 0, 0, 0.45);
   color: #cbbfa8;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1;
   cursor: pointer;
+}
+.eg-sign-mark { font-size: 1rem; font-weight: 700; line-height: 1; }
+.eg-sign-pts {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: #1b1e28;
+  border: 1px solid currentColor;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 13px;
 }
 .eg-sign[data-minus].eg-sign--on { border-color: #e0715f; background: rgba(224, 113, 95, 0.25); color: #ffd9d1; }
 .eg-sign[data-plus].eg-sign--on { border-color: #6ec87e; background: rgba(110, 200, 126, 0.2); color: #ddf5e1; }
+.eg-points {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.eg-points-count--done { color: #6ec87e; font-weight: 700; }
+.eg-reset {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #cbbfa8;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
 .eg-chip--tier { font-weight: 700; }
 .eg-chip--uncommon { color: #6ec87e; border-color: rgba(110, 200, 126, 0.5); }
 .eg-chip--rare { color: #5aa9e6; border-color: rgba(90, 169, 230, 0.5); }
