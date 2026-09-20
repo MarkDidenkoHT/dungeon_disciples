@@ -626,6 +626,27 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     return `<span class="embark-card-badge embark-card-badge--tourney">${parts.join(' · ')}</span>`;
   }
 
+  // The clock alone changes each second, so only the clock is rewritten. Repainting
+  // the whole grid once a second rebuilt all three cards — a tap landing in that
+  // moment hit a node that was already gone.
+  function tickTourneyCard() {
+    const card = root.querySelector('[data-pvp-mode="pvp_tourney"]');
+    if (!card) return false;
+    const badge = card.querySelector('.embark-card-badge--tourney');
+    const desc  = card.querySelector('.embark-card-desc');
+    const html  = tourneyBadgeHtml();
+    if (badge && html) {
+      const next = html.replace(/^<span[^>]*>|<\/span>$/g, '');
+      if (badge.innerHTML !== next) badge.innerHTML = next;
+    } else if (!badge !== !html) {
+      return false;   // the badge appeared or vanished: a full render draws it
+    }
+    const line = tourneyLine();
+    if (desc && desc.textContent !== line) desc.textContent = line;
+    card.classList.toggle('embark-card--locked', !tourneyIsOpen());
+    return true;
+  }
+
   async function loadTourney() {
     try {
       tourneyState = await api(`/tourney?chat_id=${encodeURIComponent(player.chat_id)}`);
@@ -648,7 +669,7 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     tourneyTimer = setInterval(() => {
       if (!host?.isConnected) { clearInterval(tourneyTimer); return; }
       if (tourneyIsOpen() !== wasOpen) { wasOpen = tourneyIsOpen(); loadTourney(); return; }
-      renderPvpModes();
+      if (!tickTourneyCard()) renderPvpModes();
     }, 1000);
   }
 

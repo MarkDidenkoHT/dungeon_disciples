@@ -164,7 +164,10 @@ const BOT_ROTATION_WINDOW = 5;
 // Faction: a faction whose last appearance is about to fall out of the window is forced;
 // otherwise random. Only factions with a template in the band take part.
 // Never the same template twice in a row, unless it is the only one.
-function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = Math.random }) {
+// `allow(template, bandId)` narrows the pool before anything else is decided —
+// the tourney passes one so a bot cannot field what the player was forbidden to
+// bring. A band with nothing allowed is skipped like an empty one.
+function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = Math.random, allow = null }) {
   const home = BOT_BANDS.findIndex(b => b.id === botBandFor(power));
   const byDistance = BOT_BANDS
     .map((b, i) => ({ id: b.id, d: Math.abs(i - home), i }))
@@ -174,6 +177,7 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
   let pool = [];
   for (const { id } of byDistance) {
     pool = templates.filter(t => Array.isArray(t.bands?.[id]) && t.bands[id].length);
+    if (allow) pool = pool.filter(t => allow(t, id));
     if (pool.length) { bandId = id; break; }
   }
   if (!bandId) return null;
@@ -213,6 +217,19 @@ function buildBotArmy(template, bandId) {
       return { ...unit, cell: slot.cell, item_id: slot.item_id || null, is_hero: !!slot.hero, spells: slot.spells || [] };
     })
     .filter(Boolean);
+}
+
+// A bot army in the shape the squad checks expect: unit_data per unit, the hero
+// flagged, and the worn items keyed the way a roster's are. Lets the tourney run
+// its own rule check over a template before offering it as an opponent.
+function botArmyAsSquad(template, bandId) {
+  const army = buildBotArmy(template, bandId);
+  const units = army.map((u, i) => ({ id: String(i), _rosterId: String(i), is_hero: !!u.is_hero, unit_data: u }));
+  const itemsByRosterId = {};
+  army.forEach((u, i) => {
+    if (u.item_id) itemsByRosterId[String(i)] = { item_name: u.item_id, item_stats: { key: u.item_id } };
+  });
+  return { units, itemsByRosterId };
 }
 
 function footprint(cell, size) {
@@ -285,5 +302,5 @@ function checkBotTemplates(templates = BOT_TEMPLATES) {
   return out;
 }
 
-export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, checkBotTemplate, checkBotTemplates };
-if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, checkBotTemplate, checkBotTemplates };
+export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
+if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };

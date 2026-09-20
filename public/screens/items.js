@@ -143,7 +143,7 @@ export function renderItems(root, { player }) {
     onResourcesChanged: async () => {
       bootstrapCache.invalidate();
       const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
-      if (boot) resources = [...(boot.resources || []), ...(boot.trophies || [])];
+      if (boot) resources = [...(boot.resources || []), ...(boot.trophies || []), ...(boot.tokens || [])];
     },
   });
   // Drawn once on mount, as the tome does — without it the arrows sat in their
@@ -913,7 +913,10 @@ export function renderItems(root, { player }) {
     loaded    = true;
     units     = boot.roster || [];
     items     = boot.items || [];
-    resources = [...(boot.resources || []), ...(boot.trophies || [])];
+    // Tokens ride along with the rest: engraving tokens are spent on this
+    // screen, and leaving them out made the engraving page read every player as
+    // holding none.
+    resources = [...(boot.resources || []), ...(boot.trophies || []), ...(boot.tokens || [])];
     progress  = boot.progress || {};
     forgeOpen = hasBlacksmith(boot.structures?.buildings_data);
     // Engraving is the Blacksmith's second level. The server re-checks it in

@@ -43,7 +43,7 @@ const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID, dailyTasksForTier } = require('../data/daily_tasks');
 const { QUESTS_BY_ID, questTiers, questsForTier, QUESTS } = require('../data/quests');
-const { pickBotTemplate, buildBotArmy } = require('../data/bot_templates');
+const { pickBotTemplate, buildBotArmy, botArmyAsSquad } = require('../data/bot_templates');
 const COL = require('../data/colossus');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'public', 'assets');
@@ -4710,7 +4710,20 @@ async function assignBots() {
     // The read above is a window: the player may have left, re-queued or been paired.
     if (pvpQueue.get(entry.chat_id) !== entry) continue;
 
-    const picked = pickBotTemplate({ power: entry.power, recent });
+    // In a tourney the bot fights under the same rules as the player: a
+    // template whose army breaks them is not offered as an opponent.
+    let allow = null;
+    if (entry.tourney_id) {
+      const rules = await tourneyRulesFor(entry.tourney_id);
+      if (rules?.length) {
+        allow = (template, bandId) => {
+          const squad = botArmyAsSquad(template, bandId);
+          return checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
+        };
+      }
+    }
+
+    const picked = pickBotTemplate({ power: entry.power, recent, allow });
     if (!picked) continue;   // no templates at all: keep waiting for a person
 
     pvpQueue.leave(entry.chat_id);
@@ -4752,6 +4765,18 @@ async function nextTourney() {
   const now = new Date().toISOString();
   const rows = await supabase(`/tourneys?starts_at=gt.${now}&select=*&order=starts_at.asc&limit=1`);
   return rows[0] || null;
+}
+
+// The rules of one tourney, remembered for the evening: the bot fallback asks
+// for them on every assignment, and they never change once the row exists.
+const tourneyRuleCache = new Map();
+async function tourneyRulesFor(tourney_id) {
+  const hit = tourneyRuleCache.get(String(tourney_id));
+  if (hit) return hit;
+  const rows = await supabase(`/tourneys?id=eq.${tourney_id}&select=rules&limit=1`);
+  const rules = rows[0]?.rules || [];
+  tourneyRuleCache.set(String(tourney_id), rules);
+  return rules;
 }
 
 async function tourneyEntry(tourney_id, chat_id) {
