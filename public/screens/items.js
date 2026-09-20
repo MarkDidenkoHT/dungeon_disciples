@@ -16,7 +16,7 @@ import {
 } from '../utils.js';
 import { mountTransmutation } from '../transmute.js';
 import { mountEngraving } from '../engrave.js';
-import { ENGRAVING_CURRENCY } from '../../data/engravings.js';
+import { ENGRAVING_CURRENCY, ENGRAVING_TOKEN } from '../../data/engravings.js';
 
 // The stash + forge, as a screen of its own. This is the craft section that used
 // to be the third tab of the roster's item sheet — the roster tab is now the
@@ -767,21 +767,26 @@ export function renderItems(root, { player }) {
 
   function showValorBar() {
     document.getElementById('roster-trophy-bar')?.remove();
-    const have = resources.find(r => r.item === ENGRAVING_CURRENCY)?.amount ?? 0;
+    const amountOf = item => resources.find(r => r.item === item)?.amount ?? 0;
+    // What the page spends: Valor, and the tokens won in the Crown Tourney.
+    const chips = [
+      { item: ENGRAVING_CURRENCY, icon: 'valor',           fallback: '⚔' },
+      { item: ENGRAVING_TOKEN,    icon: ENGRAVING_TOKEN,   fallback: '✦' },
+    ];
 
     const bar = document.createElement('div');
     bar.id = 'roster-trophy-bar';
     bar.className = 'roster-trophy-bar';
-    bar.innerHTML = `
-      <div class="trophy-bar-item" title="${ENGRAVING_CURRENCY} — ${have}">
+    bar.innerHTML = chips.map(c => `
+      <div class="trophy-bar-item" title="${c.item} — ${amountOf(c.item)}">
         <div class="trophy-bar-icon-wrap">
-          <img src="${assetUrl(`/assets/icons/recources/${ENGRAVING_CURRENCY.toLowerCase()}.png`)}"
-               class="trophy-bar-icon" alt="${ENGRAVING_CURRENCY}"
+          <img src="${assetUrl(`/assets/icons/recources/${c.icon}.png`)}"
+               class="trophy-bar-icon" alt="${c.item}"
                onerror="this.style.display='none';this.nextSibling.style.display='flex';">
-          <span class="trophy-bar-icon-fallback">⚔</span>
+          <span class="trophy-bar-icon-fallback">${c.fallback}</span>
         </div>
-        <span class="trophy-bar-val">${have}</span>
-      </div>`;
+        <span class="trophy-bar-val">${amountOf(c.item)}</span>
+      </div>`).join('');
 
     const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
     resourceRow?.insertAdjacentElement('afterend', bar);

@@ -20,18 +20,37 @@ Guiding rules:
 
 | # | Activity | Pull | Status |
 |---|---|---|---|
-| 1 | PvP bots | Unranked is never empty | Build first |
-| 2 | Faction Colossus | Shared weekly boss, faction race | Build second |
-| 3 | Engravings | The long-term thing everything pays into | Build before the tourney |
-| 4 | Crown Tourney | Evening competition with known prizes | Build last |
+| 1 | PvP bots | Unranked is never empty | **Built** — templates still being tuned |
+| 2 | Faction Colossus | Shared weekly boss, faction race | **Built** 2026-09-15 |
+| 3 | Engravings | The long-term thing everything pays into | **Built** 2026-09-19 |
+| 4 | Crown Tourney | Evening competition with known prizes | **Next** |
+| — | Invites and sharing | Bring a friend, earn while they play | **Built** 2026-09-20 (foundation) |
 | — | Daily Omen | Shared daily puzzle | Parked |
 
 ---
 
 ## Engravings (progression)
 
-Permanent small stat changes on a unit. Built on the transmutation triangle layout:
-**two positive slots and one negative**.
+**Built** (2026-09-19). Run `sql/006_engravings.sql`. All tuning lives in
+`data/engravings.js`; the screen is the items screen's left page, opened by the
+Blacksmith's second level.
+
+As built, which differs from the sketch below:
+
+- A **combo** is three stats; a **tier** (Uncommon 1 / Rare 2 / Epic 3) hands out points.
+  Every **+** spends a point, every **−** on a different stat pays one back, and the two
+  must balance. Nothing is chosen for the player.
+- A point moves a stat by the same amount either way, on the 1 Power = 1 Initiative =
+  2 Armor = 2 HP = 2 Resist scale.
+- Costs **Valor and engraving tokens**: 250 + 3, 750 + 6, 2000 + 10. Valor accrues
+  (Colossus, dailies); tokens are won only by placing in the Crown Tourney, so the
+  tier a player can afford is set by how they place, not by how long they save.
+- The negative must land **in full** on the unit as worn, so a resist the unit does not
+  have cannot be sold for free.
+- Stored as `{ combo, tier, plus, minus }`; the numbers are read from the data file
+  every time, so retuning applies to every engraving already in the game.
+
+Original sketch:
 
 - Values stay small: +2 / +1 / −2.
 - Examples: (+Power, +Initiative, −HP), (+Armor, +Life resist, −Power).
@@ -258,9 +277,10 @@ A dedicated screen showing:
 A **daily evening tournament**. Start with **one per day**: the testers keep the same
 hours. Later: 2–3 per day, including a newcomer tourney.
 
-- **Duration:** 1 hour.
+- **Duration:** 2 hours, 19:00–21:00.
 - **Format:** real-time PvP, like the current quick match.
-- **Limit: 5 battles per player per tourney**, so free time alone doesn't win.
+- **Limit: 5 battles per player per tourney**, so free time alone doesn't win. Two
+  hours is room enough for five without rushing, and it covers a wider evening.
 - **Matchmaking:** a separate queue mode for the tourney. Prefer opponents with a
   similar tourney score, within ⚔ power bands. Fall back to a **bot** (built under the
   tourney's rules) so nobody waits out the hour.
@@ -285,15 +305,18 @@ Tier caps belong to the **newcomer tourney** only.
 
 ### Announce tomorrow today
 
-Tomorrow's tourney **rules and top prize engraving** are visible today.
+Tomorrow's tourney **rules and prizes** are visible today.
 Players go to bed planning their roster. This is the "return later" hook.
 
 ### Scoring and rewards
 
 - Points per battle (e.g. win 3, loss 1 if the battle is played out, 0 for a forfeit).
 - Tiebreakers: fewer units lost, then earlier finish time.
-- **All participants:** currency scaled by results.
-- **Top places:** the announced pre-made engraving(s).
+- **All participants:** Valor scaled by results.
+- **Top 3: engraving tokens, 3 / 2 / 1**, plus Valor. Tokens are the only source of
+  the second half of an engraving's price (uncommon 3, rare 6, epic 10), so an epic is
+  about ten podium finishes rather than a daily handout. A pre-made engraving as a
+  prize was dropped: handing one out every evening is far too much.
 - **Bots never take a podium place.** A bot win still counts for the human who beat
   it, but bots are left out of the final ranking.
 - **Faction season score:** tourney wins add to the player's faction standing.

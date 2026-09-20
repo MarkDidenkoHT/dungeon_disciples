@@ -10,14 +10,18 @@ import { applyItemModifiers, STAT_MOD_FLOORS } from './items.js';
 
 const ENGRAVING_CURRENCY = 'Valor';
 
+// The second half of the price, and the one that cannot be farmed: tokens come
+// from placing in the Crown Tourney (3 / 2 / 1 for the top three), so an epic is
+// won rather than saved up for.
+const ENGRAVING_TOKEN = 'engraving_token';
+
 // Tiers multiply the whole triangle: an epic is three times an uncommon, both
-// ways up and down. Costs are meant to be an endgame goal — a strong player
-// earns roughly 280 Valor a week from the Colossus, so uncommon is about a
-// week, rare about three, epic about seven.
+// ways up and down. Valor is the bulk of the price — a strong player earns
+// roughly 280 a week from the Colossus — and tokens are the gate.
 const ENGRAVING_TIERS = [
-  { id: 'uncommon', name: 'Uncommon', name_ru: 'Необычная', steps: 1, cost: 250 },
-  { id: 'rare',     name: 'Rare',     name_ru: 'Редкая',    steps: 2, cost: 750 },
-  { id: 'epic',     name: 'Epic',     name_ru: 'Эпическая', steps: 3, cost: 2000 },
+  { id: 'uncommon', name: 'Uncommon', name_ru: 'Необычная', steps: 1, cost: 250,  tokens: 3 },
+  { id: 'rare',     name: 'Rare',     name_ru: 'Редкая',    steps: 2, cost: 750,  tokens: 6 },
+  { id: 'epic',     name: 'Epic',     name_ru: 'Эпическая', steps: 3, cost: 2000, tokens: 10 },
 ];
 
 function getEngravingTier(id) {
@@ -26,6 +30,20 @@ function getEngravingTier(id) {
 
 function engravingCost(tierId) {
   return getEngravingTier(tierId)?.cost ?? 0;
+}
+
+function engravingTokenCost(tierId) {
+  return getEngravingTier(tierId)?.tokens ?? 0;
+}
+
+// The whole bill, shaped for spendResources.
+function engravingBill(tierId) {
+  const bill = {};
+  const valor = engravingCost(tierId);
+  const tokens = engravingTokenCost(tierId);
+  if (valor)  bill[ENGRAVING_CURRENCY] = valor;
+  if (tokens) bill[ENGRAVING_TOKEN] = tokens;
+  return bill;
 }
 
 // One point of Power is worth 1 Initiative, 2 Armor, 2 HP or 2 Resist. `step` is
@@ -156,12 +174,12 @@ function applyEngraving(unitData, engraving) {
 }
 
 export {
-  ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
+  ENGRAVING_CURRENCY, ENGRAVING_TOKEN, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingBill, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ENGRAVING_CURRENCY, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
+  ENGRAVING_CURRENCY, ENGRAVING_TOKEN, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingBill, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
 };

@@ -2,8 +2,8 @@ import { api, refreshResourceBar, bootstrapCache, navigate } from './api.js';
 import { assetUrl } from './asset_base.js';
 import { resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe } from './utils.js';
 import {
-  ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_TIERS, ENGRAVING_CURRENCY,
-  getEngravingCombo, getEngravingTier, engravingCost, engravingStep, engravingPoints,
+  ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_TIERS, ENGRAVING_CURRENCY, ENGRAVING_TOKEN,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingStep, engravingPoints,
   checkEngravingForUnit, engravingValues,
 } from '../data/engravings.js';
 
@@ -38,6 +38,7 @@ const EG = {
   working:   { en: 'Engraving…',       ru: 'Гравировка…' },
   cost:      { en: 'Cost',             ru: 'Цена' },
   short:     { en: 'Not enough Valor', ru: 'Недостаточно Доблести' },
+  shortToken:{ en: 'Not enough engraving tokens', ru: 'Недостаточно жетонов гравировки' },
   same:      { en: 'Already engraved this way', ru: 'Эта гравировка уже стоит' },
   failed:    { en: 'Engraving failed', ru: 'Не удалось выгравировать' },
   empty:     { en: 'No units yet.',    ru: 'Пока нет юнитов.' },
@@ -64,10 +65,12 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   const unitRow = () => units().find(u => String(u.id) === String(rosterId)) || null;
   const combo = () => ENGRAVING_COMBOS[comboIdx];
 
-  const valor = () => {
-    const row = (getResources() || []).find(r => r.item === ENGRAVING_CURRENCY);
+  const owned = item => {
+    const row = (getResources() || []).find(r => r.item === item);
     return row ? Number(row.amount) || 0 : 0;
   };
+  const valor  = () => owned(ENGRAVING_CURRENCY);
+  const tokens = () => owned(ENGRAVING_TOKEN);
 
   // The unit as it is worn: definition, its own max HP, then the equipped item.
   // The engraving already on it is left off — a new one replaces it, so it is
@@ -121,6 +124,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     const now = row.engraving;
     if (now && JSON.stringify(now) === JSON.stringify(sel)) return t('same');
     if (valor() < engravingCost(tierId)) return t('short');
+    if (tokens() < engravingTokenCost(tierId)) return t('shortToken');
     return null;
   }
 
@@ -210,7 +214,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return ENGRAVING_TIERS.map(tr => `
       <button class="eg-tier ${tr.id === tierId ? 'eg-tier--on' : ''} eg-tier--${tr.id}" data-tier="${tr.id}" type="button">
         <span class="eg-tier-name">${tierName(tr)}</span>
-        <span class="eg-tier-cost">${tr.cost}</span>
+        <span class="eg-tier-cost">${tr.cost} ⚔ · ${tr.tokens} ✦</span>
       </button>`).join('');
   }
 
@@ -263,7 +267,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
             ${spent() || paid() ? `<button class="eg-reset" id="eg-reset" type="button">${t('reset')}</button>` : ''}
           </div>
           <div class="eg-status">
-            <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} ⚔</span>
+            <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} ⚔ · ${engravingTokenCost(tierId)} ✦</span>
             ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
           </div>
           <button class="eg-go" id="eg-go" type="button" ${why || busy ? 'disabled' : ''}>${label}</button>

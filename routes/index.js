@@ -28,7 +28,7 @@ const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
-const { ENGRAVING_CURRENCY, engravingCost, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
+const { engravingBill, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
@@ -1956,7 +1956,9 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
     if (invalid) return res.status(400).json({ error: invalid, code: 'engraving_invalid' });
 
     try {
-      await spendResources(chat_id, { [ENGRAVING_CURRENCY]: engravingCost(engraving.tier) });
+      // Valor and tokens in one spend: the database refuses the whole bill if
+      // either is short, so a player cannot lose Valor to a missing token.
+      await spendResources(chat_id, engravingBill(engraving.tier));
     } catch (err) {
       const short = shortfallItem(err);
       if (short) return res.status(400).json({ error: `Not enough ${short}`, code: 'insufficient', item: short });
