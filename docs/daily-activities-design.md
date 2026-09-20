@@ -326,10 +326,32 @@ Players go to bed planning their roster. This is the "return later" hook.
 - Tier cap plus one extra constraint, tailored so new players can place and earn.
 - Entry limited by account progress, so veterans can't farm it.
 
+### The start notification (out of repo)
+
+A **Supabase edge function on a cron** tells every player the evening tourney has
+opened. It is not in this repo — like the errand payout function — so the repo side
+only has to leave it something to read.
+
+What it needs from us:
+
+- A **tourney row** carrying its start and end time, its rules and its state, so the
+  function can find "the tourney opening now" without knowing the schedule itself.
+- A **sent marker on that row** (e.g. `notified_at`), written by the function before it
+  sends. A cron that fires twice, or a retry after a timeout, must not message everyone
+  twice.
+- The **players to message**: `chat_id`, `settings->>language` for EN/RU text, and
+  `settings->>notifications` — which is already set at registration and must be
+  honoured; a player who turned notifications off gets nothing.
+- Message text in **both languages**, naming the rules and the prizes, with a button
+  into the Mini App.
+
+Worth keeping in mind: Telegram limits broadcasts (about 30 messages a second), so the
+function should pace itself and treat a failed send as skippable, not fatal.
+
 ### Wiring notes
 
 - Tourney definitions: start / end time, rules, prizes, state
-  (announced → open → closed → paid out).
+  (announced → open → closed → paid out), plus `notified_at` for the cron above.
 - Per-player entry: battles used, points, tiebreak values.
 - Rules are validated **on the server** when a formation is queued, and the same
   rule set is handed to the bot builder.
