@@ -2170,7 +2170,7 @@ const UNITS = {
       hp: 70, armor: 15, initiative: 40,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg',
       passive: ['communion 1', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2184,7 +2184,7 @@ const UNITS = {
       hp: 80, armor: 15, initiative: 40,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg',
       passive: ['communion 2', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2198,7 +2198,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 45,
       resistances: { air: 10, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
       passive: ['communion 2', 'banquet 1', 'concentration 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2212,7 +2212,7 @@ const UNITS = {
       hp: 90, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 10, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg',
       passive: ['communion 2', 'banquet 1', 'recuperate 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
