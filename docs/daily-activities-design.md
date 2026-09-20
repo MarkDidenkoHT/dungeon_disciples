@@ -326,16 +326,25 @@ Players go to bed planning their roster. This is the "return later" hook.
 - Tier cap plus one extra constraint, tailored so new players can place and earn.
 - Entry limited by account progress, so veterans can't farm it.
 
-### The start notification (out of repo)
+### Generation and the start notification (Supabase cron)
 
-A **Supabase edge function on a cron** tells every player the evening tourney has
-opened. It is not in this repo — like the errand payout function — so the repo side
-only has to leave it something to read.
+**Supabase owns both**: a cron'd edge function rolls each day's rules, creates the
+tourney rows, and announces the one that opens. The game server never creates a
+tourney — it reads the rows and writes entries. Code lives at
+`supabase/functions/tourney-notify/index.ts` in this repo for reference, but it is
+deployed to Supabase, not to Render.
 
-What it needs from us:
+Each run:
 
-- A **tourney row** carrying its start and end time, its rules and its state, so the
-  function can find "the tourney opening now" without knowing the schedule itself.
+1. Ensures **today's and tomorrow's** rows exist, rolling 1–2 rules for any that do
+   not — never two rules of a kind, never the same set as the previous tourney.
+   Tomorrow's exists so its rules can be announced today.
+2. Claims and announces the tourney whose window is open, if it has not been.
+
+What it needs from the schema:
+
+- A **tourney row** carrying its start and end time, its rules and its state.
+- A **unique `starts_at`**, so two cron runs cannot create the same day twice.
 - A **sent marker on that row** (e.g. `notified_at`), written by the function before it
   sends. A cron that fires twice, or a retry after a timeout, must not message everyone
   twice.
