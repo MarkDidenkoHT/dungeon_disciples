@@ -340,6 +340,13 @@ Each run:
    not — never two rules of a kind, never the same set as the previous tourney.
    Tomorrow's exists so its rules can be announced today.
 2. Claims and announces the tourney whose window is open, if it has not been.
+3. Pays out every closed, unpaid tourney and tells each entrant what they won.
+   Payouts go through the **`grant_resources` RPC**, never a direct write to the
+   resources table, and `paid_at` is claimed before anything is paid.
+
+**Two rules are not rolled yet:** `raw_stats` (engravings off) and the twists change
+how a battle is BUILT, and the server does not honour them — they need engine support
+first. They stay in `data/tourney.js` and out of the cron's pool until then.
 
 What it needs from the schema:
 
@@ -356,6 +363,22 @@ What it needs from the schema:
 
 Worth keeping in mind: Telegram limits broadcasts (about 30 messages a second), so the
 function should pace itself and treat a failed send as skippable, not fatal.
+
+### Built server-side (2026-09-20)
+
+Run `sql/008_tourney.sql`. The server only reads tourneys and writes entries.
+
+- `GET /tourney` — the open tourney, tomorrow's (for the announcement), this player's
+  entry, battles left, and the top 20 standings.
+- `POST /pvp/enqueue` with mode `pvp_tourney` — checks the window is open, that
+  battles remain, and that the squad obeys today's rules, then queues. The mode keeps
+  tourney entrants matched only with each other; bots fill in after 30 s as in quick
+  match.
+- A battle is **counted when it starts**, for both sides, so walking out of a losing
+  fight still spends one of the five.
+- Points, wins, units lost and finish time are written when the result is claimed.
+
+Still to build: the tourney screen itself.
 
 ### Wiring notes
 

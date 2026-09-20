@@ -58,12 +58,14 @@ function compatible(a, b, now) {
  * Returns { matched: false, entry } or { matched: true, a, b } with both
  * entries already removed from the queue.
  */
-function enqueue({ chat_id, mode = 'pvp_quick', formation, power = 0 }) {
+function enqueue({ chat_id, mode = 'pvp_quick', formation, power = 0, tourney_id = null }) {
   const id = String(chat_id);
   waiting.delete(id);
 
   const now = Date.now();
-  const entry = { chat_id: id, mode, formation, power: Number(power) || 0, enqueuedAt: now };
+  // tourney_id rides along so the battle built from this entry knows which
+  // tourney it counts for; it is null for a quick match.
+  const entry = { chat_id: id, mode, formation, power: Number(power) || 0, tourney_id, enqueuedAt: now };
 
   // Oldest first, so the queue is fair and nobody starves behind a stream of
   // better-matched newcomers.

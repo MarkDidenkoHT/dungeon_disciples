@@ -28,6 +28,9 @@ const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
+const {
+  TOURNEY_BATTLES, TOURNEY_POINTS, TOURNEY_MODE, checkTourneyRules, ruleName,
+} = require('../data/tourney');
 const { engravingBill, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
@@ -555,7 +558,7 @@ async function loadSquad(chat_id, playerUnitIds) {
 
   const invalid = checkSquad(units);
   if (invalid) return invalid;
-  return { units, power };
+  return { units, power, itemsByRosterId };
 }
 
 // Deep enough to protect everything the engine mutates: unit_data and the
@@ -4290,6 +4293,9 @@ async function createPvpBattle(a, b) {
     }),
     kind:           'pvp',
     mode:           a.mode || 'pvp_quick',
+    // Null for a quick match. Present, this battle counts toward that tourney
+    // for BOTH players — they queued into the same one.
+    tourney_id:     a.tourney_id ?? b.tourney_id ?? null,
     // Deliberately null: the first turn is clocked from when its player has the
     // board in front of them, not from when the pairing happened. Getting told
     // about a duel and loading into it cost one player twenty seconds of their
@@ -4306,6 +4312,14 @@ async function createPvpBattle(a, b) {
     opponent_chat_id: String(b.chat_id),
     battle_kind: 'pvp',
   });
+
+  // Counted at the START, for both sides: a player who walks out of a losing
+  // fight has still spent one of their five.
+  if (battle_data.tourney_id) {
+    await Promise.all([a, b].map(p =>
+      countTourneyBattle(battle_data.tourney_id, p.chat_id)
+        .catch(err => console.error('Tourney battle count failed:', err.message))));
+  }
 
   let initialLogs = [];
   try {
@@ -4655,6 +4669,7 @@ async function createBotBattle(entry, { template, bandId }) {
     }),
     kind:          'pvp_bot',
     mode:          entry.mode || 'pvp_quick',
+    tourney_id:    entry.tourney_id ?? null,
     turn_deadline: null,   // started when the player loads the board, see stampFirstDeadline
     turn_ms:       PVP_TURN_MS,
   };
@@ -4665,6 +4680,11 @@ async function createBotBattle(entry, { template, bandId }) {
     battle_data,
     battle_kind: 'pvp_bot',
   });
+
+  if (battle_data.tourney_id) {
+    await countTourneyBattle(battle_data.tourney_id, entry.chat_id)
+      .catch(err => console.error('Tourney battle count failed:', err.message));
+  }
 
   try {
     const initialEvents = Array.isArray(engine.log) ? engine.log : [];
@@ -4679,7 +4699,13 @@ async function createBotBattle(entry, { template, bandId }) {
 // Hand everyone who has waited past BOT_FALLBACK_MS a bot. Called from
 // runMatchmaking after human pairs, so a person who turns up in time still wins.
 async function assignBots() {
-  for (const entry of pvpQueue.overdue(BOT_FALLBACK_MS, 'pvp_quick')) {
+  // Both queues: nobody should sit out their tourney evening because the other
+  // entrants happen to be between battles.
+  const waiting = [
+    ...pvpQueue.overdue(BOT_FALLBACK_MS, 'pvp_quick'),
+    ...pvpQueue.overdue(BOT_FALLBACK_MS, TOURNEY_MODE),
+  ];
+  for (const entry of waiting) {
     const recent = await recentBotTemplateIds(entry.chat_id);
     // The read above is a window: the player may have left, re-queued or been paired.
     if (pvpQueue.get(entry.chat_id) !== entry) continue;
@@ -4706,6 +4732,133 @@ async function assignBots() {
     }
   }
 }
+
+
+// ── Crown Tourney ──────────────────────────────────────────────────────────
+// The tourney rows themselves are created and announced by a Supabase cron
+// (supabase/functions/tourney-notify) and paid out by the same function when the
+// window closes. This server only READS them, and writes what players do:
+// entering, and the result of each battle.
+
+async function openTourney() {
+  const now = new Date().toISOString();
+  const rows = await supabase(
+    `/tourneys?starts_at=lte.${now}&ends_at=gt.${now}&select=*&order=starts_at.asc&limit=1`
+  );
+  return rows[0] || null;
+}
+
+async function nextTourney() {
+  const now = new Date().toISOString();
+  const rows = await supabase(`/tourneys?starts_at=gt.${now}&select=*&order=starts_at.asc&limit=1`);
+  return rows[0] || null;
+}
+
+async function tourneyEntry(tourney_id, chat_id) {
+  const rows = await supabase(
+    `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}&select=*&limit=1`
+  );
+  return rows[0] || null;
+}
+
+// The entry is created on the player's FIRST battle of the evening, not when
+// they look at the screen: an entry that exists is an entry that played, which
+// is what the payout pays.
+async function ensureTourneyEntry(tourney_id, chat_id) {
+  const existing = await tourneyEntry(tourney_id, chat_id);
+  if (existing) return existing;
+  const rows = await supabase('/tourney_entries', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify({ tourney_id, chat_id: String(chat_id) }),
+  });
+  return rows?.[0] || (await tourneyEntry(tourney_id, chat_id));
+}
+
+// A battle is counted the moment it STARTS. Otherwise walking out of a losing
+// fight would cost nothing and five battles would mean five wins or nothing.
+async function countTourneyBattle(tourney_id, chat_id) {
+  const entry = await ensureTourneyEntry(tourney_id, chat_id);
+  if (!entry) return null;
+  const rows = await supabase(
+    `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}&battles=eq.${entry.battles}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ battles: entry.battles + 1 }),
+      headers: { Prefer: 'return=representation' },
+    });
+  return rows?.[0] || null;
+}
+
+// The result, once the player claims it. Points, how many of their units fell,
+// and when they finished — the three the standings sort on.
+async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost }) {
+  const entry = await tourneyEntry(tourney_id, chat_id);
+  if (!entry) return null;
+  const points = won ? TOURNEY_POINTS.win : TOURNEY_POINTS.loss;
+  await supabase(
+    `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        points:      (entry.points || 0) + points,
+        wins:        (entry.wins || 0) + (won ? 1 : 0),
+        units_lost:  (entry.units_lost || 0) + unitsLost,
+        finished_at: new Date().toISOString(),
+      }),
+    });
+  return { points, won };
+}
+
+function unitsLostFor(battle_data, side) {
+  return (battle_data?.units || [])
+    .filter(u => u.side === side && (u.alive === false || Number(u.battle_hp) <= 0))
+    .length;
+}
+
+// Called when a tourney battle's reward is claimed, from every kind of duel.
+async function settleTourneyBattle(record, chat_id, side) {
+  const tourney_id = record?.battle_data?.tourney_id;
+  if (!tourney_id) return null;
+  try {
+    return await recordTourneyResult(tourney_id, chat_id, {
+      won: record.battle_data?.winner === side,
+      unitsLost: unitsLostFor(record.battle_data, side),
+    });
+  } catch (err) {
+    console.error('Tourney result failed:', err.message);
+    return null;
+  }
+}
+
+// GET /tourney — what the tourney page draws: the open tourney and the next
+// one's rules (announced a day ahead), this player's entry, and the standings.
+router.get('/tourney', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const [open, next] = await Promise.all([openTourney(), nextTourney()]);
+    const live = open || null;
+
+    let entry = null;
+    let standings = [];
+    if (live) {
+      entry = await tourneyEntry(live.id, chat_id);
+      standings = await supabase(
+        `/tourney_entries?tourney_id=eq.${live.id}&select=chat_id,points,wins,battles,units_lost,finished_at`
+        + `&order=points.desc,units_lost.asc,finished_at.asc&limit=20`
+      );
+    }
+
+    res.json({
+      tourney: live,
+      next,
+      battles_left: live ? Math.max(0, TOURNEY_BATTLES - (entry?.battles || 0)) : 0,
+      entry,
+      standings,
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
 
 // ── PvP: quick match queue ──────────────────────────────────────────────────
 //
@@ -4875,8 +5028,30 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     const squad = await loadSquad(chat_id, units);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
 
+    // A tourney entry is a quick match with three extra gates: the window has to
+    // be open, the player has to have battles left, and the squad has to obey
+    // today's rules. All three are re-checked here because the client's copy of
+    // them is only there to explain itself.
+    let tourney = null;
+    if (mode === TOURNEY_MODE) {
+      tourney = await openTourney();
+      if (!tourney) return res.status(400).json({ error: 'No tourney is running', code: 'tourney_closed' });
+
+      const entry = await ensureTourneyEntry(tourney.id, chat_id);
+      if ((entry?.battles || 0) >= TOURNEY_BATTLES) {
+        return res.status(400).json({ error: 'No battles left today', code: 'tourney_spent' });
+      }
+
+      const broken = checkTourneyRules(squad.units, tourney.rules, { itemsByRosterId: squad.itemsByRosterId });
+      if (broken.length) {
+        return res.status(400).json({ error: broken[0], code: 'tourney_rules', problems: broken });
+      }
+    }
+
     pvpQueue.sweep();
-    const result = pvpQueue.enqueue({ chat_id: String(chat_id), mode, formation, power: squad.power });
+    const result = pvpQueue.enqueue({
+      chat_id: String(chat_id), mode, formation, power: squad.power, tourney_id: tourney?.id ?? null,
+    });
 
     if (!result.matched) {
       await writeQueueRow(result.entry);
@@ -5147,8 +5322,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === 'player';
+      const tourney = await settleTourneyBattle(record, chat_id, 'player');
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, tourney, quest_progress };
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
       return res.json(result);
     }
@@ -5177,8 +5353,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === mySide;
+      const tourney = await settleTourneyBattle(record, chat_id, mySide);
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, tourney, quest_progress };
 
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
 

@@ -8,6 +8,10 @@ import { ITEM_DEFS } from './items.js';
 const TOURNEY_START_UTC_HOUR = 16;
 const TOURNEY_END_UTC_HOUR   = 18;
 
+// The queue mode. Its own mode means tourney entrants only ever meet each other:
+// utils/pvp-queue.js pairs within a mode.
+const TOURNEY_MODE = 'pvp_tourney';
+
 // A format, not a stamina bar: five battles is the tournament's length, and two
 // hours is room to play them without hurrying.
 const TOURNEY_BATTLES = 5;
@@ -144,12 +148,12 @@ function battleRulesOf(rules) {
 }
 
 export {
-  TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_BATTLES, TOURNEY_POINTS,
+  TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
   TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
   ruleName, checkTourneyRules, battleRulesOf, loyaltyOf,
 };
 if (typeof module !== 'undefined') module.exports = {
-  TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_BATTLES, TOURNEY_POINTS,
+  TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
   TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
   ruleName, checkTourneyRules, battleRulesOf, loyaltyOf,
 };
