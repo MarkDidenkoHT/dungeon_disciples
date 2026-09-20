@@ -1009,6 +1009,13 @@ router.post('/login', async (req, res) => {
       try { await ensureErrandOffer(chat_id, updated[0]); } catch (e) {}
       // Every player needs a code to share; older accounts predate the column.
       try { updated[0].share_code = await ensureShareCode(updated[0]); } catch (e) {}
+      // A bond that was made while the payout failed (or before it worked) is
+      // settled here rather than being lost: payInviter pays a moment once, so
+      // an inviter who already has their tome gets nothing further.
+      if (updated[0].invited_by && !(updated[0].invite_progress || {}).signup) {
+        payInviter(updated[0], 'signup').catch(err =>
+          console.error('Inviter signup payout failed:', err.message));
+      }
       return res.json({
         player: updated[0],
         session_token,
@@ -1144,9 +1151,13 @@ async function payInviter(invitee, moment) {
     next = { ...progress, [moment]: true };
   }
 
+  // The filter matches the value AS IT IS STORED, which is not the same as "has
+  // no keys": a freshly bonded invitee holds `{}`, and filtering that on is.null
+  // matched no row, so the sign-up payout was skipped without a word.
+  const raw = invitee.invite_progress;
   const claimed = await supabase(
     `/players?chat_id=eq.${encodeURIComponent(invitee.chat_id)}`
-    + `&invite_progress=${progress && Object.keys(progress).length ? `eq.${encodeURIComponent(JSON.stringify(progress))}` : 'is.null'}`, {
+    + `&invite_progress=${raw == null ? 'is.null' : `eq.${encodeURIComponent(JSON.stringify(raw))}`}`, {
       method: 'PATCH',
       body: JSON.stringify({ invite_progress: next }),
       headers: { Prefer: 'return=representation' },
