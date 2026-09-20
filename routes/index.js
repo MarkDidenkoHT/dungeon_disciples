@@ -4948,6 +4948,15 @@ const pairing = new Set();
 function markPairing(...chatIds) { for (const id of chatIds) pairing.add(String(id)); }
 function clearPairing(...chatIds) { for (const id of chatIds) pairing.delete(String(id)); }
 
+// The match a player was handed is theirs until they queue again or the battle
+// ends. Forgetting it here is what stops the NEXT queue from being answered with
+// the LAST battle: recentMatches is replayed to a connecting stream, so a player
+// who finished a duel and re-queued inside the window was thrown straight back
+// into the battle they had just claimed — which then refused its own reward.
+function forgetMatch(chat_id) {
+  recentMatches.delete(String(chat_id));
+}
+
 function noteMatch(chat_id, battle_id, opponent = null) {
   const now = Date.now();
   clearPairing(chat_id);
@@ -5024,6 +5033,10 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     if (existing) {
       return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
     }
+
+    // Whatever this player was matched into before, they are asking for a NEW
+    // opponent now.
+    forgetMatch(chat_id);
 
     const squad = await loadSquad(chat_id, units);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
@@ -5215,6 +5228,8 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     }
 
     await persistBattleRosterState(chat_id, record.battle_data, { abandoned, side: mySide });
+    // Walking out ends the match as surely as claiming it does.
+    forgetMatch(chat_id);
 
     // Walking out of a duel is a concession, not a draw: the player still on the
     // field wins it, and is told so through the battle stream they are already
@@ -5324,10 +5339,12 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
       await persistBattleRosterState(chat_id, record.battle_data);
-      // A bot duel is a quick match for the day's task, win or lose. A tourney
-      // battle is also a battle: it counts for both.
-      bumpDailyTask(chat_id, record.battle_data?.tourney_id ? ['pvp', 'battles'] : 'pvp');
+      // A bot duel is a quick match for the day's task, win or lose — and a
+      // duel is a battle, so it counts for both.
+      bumpDailyTask(chat_id, ['pvp', 'battles']);
       noteInviteMoment(chat_id, 'first_battle');
+      // Settled: this match is history, and must never be replayed to a stream.
+      forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === 'player';
       const tourney = await settleTourneyBattle(record, chat_id, 'player');
@@ -5357,9 +5374,11 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       await persistBattleRosterState(chat_id, record.battle_data, { side: mySide });
       // Counts for both players, win or lose. A player who concedes claims
       // through /battle/end instead and does not count: walking out is not a fight.
-      // A tourney battle counts as a battle too, not only as a duel.
-      bumpDailyTask(chat_id, record.battle_data?.tourney_id ? ['pvp', 'battles'] : 'pvp');
+      // A duel is also a battle, so it counts for both tasks.
+      bumpDailyTask(chat_id, ['pvp', 'battles']);
       noteInviteMoment(chat_id, 'first_battle');
+      // Settled: this match is history, and must never be replayed to a stream.
+      forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === mySide;
       const tourney = await settleTourneyBattle(record, chat_id, mySide);
