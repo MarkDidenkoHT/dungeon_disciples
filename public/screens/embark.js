@@ -637,9 +637,16 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     clearInterval(tourneyTimer);
     // The clock ticks locally; the state is re-read only when the window flips,
     // which is the one moment the card means something different.
+    //
+    // The interval dies with the PAGE, not with `root`: screens are swapped by
+    // clearing #content-root's innerHTML, so root itself is connected forever.
+    // Watching it left one live interval per visit to the arena, each holding
+    // its own snapshot of the standings — after a fight they fought over the
+    // badge, flipping "4 battles left" and "5" every second.
+    const host = root.querySelector('#embark-pvp-modes');
     let wasOpen = tourneyIsOpen();
     tourneyTimer = setInterval(() => {
-      if (!root.isConnected) { clearInterval(tourneyTimer); return; }
+      if (!host?.isConnected) { clearInterval(tourneyTimer); return; }
       if (tourneyIsOpen() !== wasOpen) { wasOpen = tourneyIsOpen(); loadTourney(); return; }
       renderPvpModes();
     }, 1000);

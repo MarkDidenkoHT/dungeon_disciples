@@ -90,7 +90,9 @@ function loyaltyOf(units) {
   return used;
 }
 
-// What a squad breaks, as readable lines. Empty means it may enter.
+// What a squad breaks, as { rule, text } — the rule id so the client can name it
+// in its own language, the text so the server has something to log and return.
+// Empty means it may enter.
 //
 // `items` is the equipped item per roster id, because two of the rules are about
 // gear the unit is wearing rather than the unit itself.
@@ -101,22 +103,22 @@ function checkTourneyRules(units, rules, { itemsByRosterId = {} } = {}) {
   for (const rule of list) {
     if (rule.kind === 'ban_tag') {
       const guilty = units.filter(u => unitTags(u).includes(rule.tag));
-      if (guilty.length) problems.push(`${rule.tag} units are banned today`);
+      if (guilty.length) problems.push({ rule: rule.id, text: `${rule.tag} units are banned today` });
     }
 
     if (rule.kind === 'require_tag') {
       const have = units.filter(u => unitTags(u).includes(rule.tag)).length;
-      if (have < rule.count) problems.push(`Needs ${rule.count} ${rule.tag} units, has ${have}`);
+      if (have < rule.count) problems.push({ rule: rule.id, text: `Needs ${rule.count} ${rule.tag} units, has ${have}` });
     }
 
     if (rule.kind === 'size_only') {
       const guilty = units.filter(u => !rule.sizes.includes(unitSize(u)));
-      if (guilty.length) problems.push(`Only ${rule.sizes.join(' / ')} units today`);
+      if (guilty.length) problems.push({ rule: rule.id, text: `Only ${rule.sizes.join(' / ')} units today` });
     }
 
     if (rule.kind === 'loyalty_max') {
       const used = loyaltyOf(units);
-      if (used > rule.max) problems.push(`Loyalty ${used}, limit is ${rule.max}`);
+      if (used > rule.max) problems.push({ rule: rule.id, text: `Loyalty ${used}, limit is ${rule.max}` });
     }
 
     if (rule.kind === 'item_rarity_max') {
@@ -125,13 +127,13 @@ function checkTourneyRules(units, rules, { itemsByRosterId = {} } = {}) {
         const item = itemsByRosterId[String(u._rosterId ?? u.id)];
         const key  = item?.item_stats?.key;
         const rank = RARITY_ORDER.indexOf(ITEM_DEFS[key]?.rarity ?? 'common');
-        if (cap >= 0 && rank > cap) problems.push(`${item.item_name || key} is above ${rule.rarity}`);
+        if (cap >= 0 && rank > cap) problems.push({ rule: rule.id, text: `${item.item_name || key} is above ${rule.rarity}` });
       }
     }
 
     if (rule.kind === 'no_items') {
       const worn = units.filter(u => itemsByRosterId[String(u._rosterId ?? u.id)]);
-      if (worn.length) problems.push('No items may be worn today');
+      if (worn.length) problems.push({ rule: rule.id, text: 'No items may be worn today' });
     }
   }
 

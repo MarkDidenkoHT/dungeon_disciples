@@ -5044,7 +5044,14 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
 
       const broken = checkTourneyRules(squad.units, tourney.rules, { itemsByRosterId: squad.itemsByRosterId });
       if (broken.length) {
-        return res.status(400).json({ error: broken[0], code: 'tourney_rules', problems: broken });
+        // `rules` so the client can name them in its own language; `problems`
+        // is the English prose, for the log and for anything without the names.
+        return res.status(400).json({
+          error:    broken[0].text,
+          code:     'tourney_rules',
+          rules:    broken.map(b => b.rule),
+          problems: broken.map(b => b.text),
+        });
       }
     }
 

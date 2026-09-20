@@ -78,6 +78,13 @@ async function request(path, body) {
     // instead of surfacing the raw English to the player.
     const err = new Error(data.error || `HTTP ${res.status}`);
     if (data.code) err.code = data.code;
+    // The whole payload rides along too: a refusal often carries the detail a
+    // screen needs to explain itself — which tourney rules were broken, what a
+    // craft is short of — and copying `code` alone threw that away.
+    err.data = data;
+    for (const [key, value] of Object.entries(data)) {
+      if (key !== 'error' && key !== 'code' && err[key] === undefined) err[key] = value;
+    }
     // An unexpected server failure now answers with a stable code instead of the
     // raw exception text (see serverError in routes/index.js). Several screens
     // put err.message straight in front of the player via alert(), so translate

@@ -11,6 +11,7 @@ import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
 import { createQueueController } from '../queue-client.js';
+import { ruleName } from '../../data/tourney.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 
@@ -81,6 +82,12 @@ const BP_TEXT = {
   queueEnded:   { en: 'The queue ended before a match was found. Try again.',
                   ru: 'Очередь завершилась без подбора соперника. Попробуйте снова.' },
   queueFailed:  { en: 'Could not join the queue.', ru: 'Не удалось встать в очередь.' },
+  tourneyRules: { en: rules => `Your squad breaks today's rules: ${rules}`,
+                  ru: rules => `Ваш отряд нарушает правила дня: ${rules}` },
+  tourneySpent: { en: 'You have used all five battles tonight.',
+                  ru: 'Вы израсходовали все пять боёв на сегодня.' },
+  tourneyClosed:{ en: 'The tourney is not running right now.',
+                  ru: 'Турнир сейчас не идёт.' },
   opponentPower:{ en: 'Opponent',     ru: 'Противник' },
   colossus:     { en: 'Colossus',     ru: 'Колосс' },
   colossusFailed: {
@@ -1847,7 +1854,17 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         navigate('embark', { player, activeCheck });
         return;
       }
-      await askBeforeBattle(BP_TEXT.queueFailed[L], { confirmOnly: true });
+      // A refusal the player can act on is told in their own words. The broken
+      // rules come back as ids so they can be named in the player's language
+      // rather than in the server's English.
+      const named = (err.rules || []).map(id => ruleName(id, L)).filter(Boolean).join(' · ');
+      const reason =
+        err.code === 'tourney_rules' && named ? BP_TEXT.tourneyRules[L](named)
+        : err.code === 'tourney_spent'        ? BP_TEXT.tourneySpent[L]
+        : err.code === 'tourney_closed'       ? BP_TEXT.tourneyClosed[L]
+        : err.code === 'invalid_squad'        ? (err.message || BP_TEXT.queueFailed[L])
+        : BP_TEXT.queueFailed[L];
+      await askBeforeBattle(reason, { confirmOnly: true });
     }
   }
 
