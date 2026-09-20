@@ -97,11 +97,39 @@ async function notifyAdminNewPlayer(player) {
   );
 }
 
+// An invite code seen in `/start <code>`, held until that player's first login.
+//
+// WHY THIS EXISTS: a t.me/<bot>?startapp=<code> link hands the code to the Mini
+// App inside the signed initData, which is the path that should normally fire.
+// A ?start=<code> link does not — it only sends the bot a message — so the code
+// would be lost for every link of that shape already shared. This is the catch:
+// the bot remembers what it was told, and /login uses it when initData carries
+// nothing. In memory only; a restart forgets, and the player can still type the
+// code into the promo box.
+const PENDING_INVITE_MS = 30 * 60 * 1000;
+const pendingInvites = new Map();   // chat_id -> { code, at }
+
+function rememberPendingInvite(chatId, code) {
+  if (!chatId || !code) return;
+  pendingInvites.set(String(chatId), { code: String(code), at: Date.now() });
+}
+
+// Read once: the code is spent whether or not the login can use it, so a stale
+// one cannot attach itself to some later account on the same device.
+function takePendingInvite(chatId) {
+  const hit = pendingInvites.get(String(chatId));
+  pendingInvites.delete(String(chatId));
+  if (!hit) return null;
+  return Date.now() - hit.at > PENDING_INVITE_MS ? null : hit.code;
+}
+
 async function handleTelegramUpdate(update) {
   const msg = update?.message;
   if (!msg || typeof msg.text !== 'string') return;
 
   if (!msg.text.startsWith('/start')) return;
+  const startArg = msg.text.slice('/start'.length).trim().split(/\s+/)[0];
+  if (startArg) rememberPendingInvite(msg.from?.id ?? msg.chat?.id, startArg);
   const w = BOT_WELCOME[pickLang(msg.from?.language_code)];
   await sendTelegramMessage(msg.chat.id, w.text, {
     reply_markup: { inline_keyboard: [[{ text: w.play, web_app: { url: WEBAPP_URL } }]] },
@@ -117,4 +145,4 @@ function telegramWebhookHandler(req, res) {
   handleTelegramUpdate(req.body).catch(err => console.error('Telegram webhook error:', err.message));
 }
 
-module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer, getBotUsername };
+module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer, getBotUsername, takePendingInvite };

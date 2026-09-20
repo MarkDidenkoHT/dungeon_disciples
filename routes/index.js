@@ -30,7 +30,7 @@ const pvpView   = require('../utils/pvp-view');
 const { rosterUnitPower } = require('../utils/army-power');
 const { ENGRAVING_CURRENCY, engravingCost, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
-const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername } = require('../utils/telegram');
+const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
   INVITER_DAILY_CAP, INVITE_MAX_ACCEPTED,
@@ -1046,7 +1046,13 @@ router.post('/login', async (req, res) => {
     let invite = null;
     try {
       created[0].share_code = await ensureShareCode(created[0]);
-      if (telegramUser.start_param) invite = await acceptInvite(created[0], telegramUser.start_param);
+      // The signed start_param first; failing that, whatever the bot was told in
+      // a `/start <code>` message moments ago.
+      const carried = telegramUser.start_param || takePendingInvite(chat_id);
+      if (carried) {
+        const result = await acceptInvite(created[0], carried);
+        invite = result?.ok ? result : null;
+      }
     } catch (err) {
       console.error('Invite accept failed:', err.message);
     }
@@ -1094,8 +1100,12 @@ async function ensureShareCode(player) {
   return null;
 }
 
+// startapp, NOT start: ?start= opens the bot chat and sends it a message, which
+// leaves the Mini App launched with nothing. ?startapp= opens the app itself and
+// Telegram puts the value in initData.start_param, which is what /login reads.
+// Needs a Main Mini App configured in BotFather.
 function inviteLinkFor(botUsername, code) {
-  return botUsername && code ? `https://t.me/${botUsername}?start=${code}` : null;
+  return botUsername && code ? `https://t.me/${botUsername}?startapp=${code}` : null;
 }
 
 // Grant lines from a reward block. `crystals` pays the player's own faction
@@ -1151,37 +1161,41 @@ async function payInviter(invitee, moment) {
   return { moment, grants };
 }
 
-// The invitee's first login through a link: the bond is recorded, both sides are
-// paid, and nothing here is ever fatal to the login itself.
-async function acceptInvite(newPlayer, rawCode) {
+// Bind a player to whoever invited them and pay both sides. Reached from the
+// link (at first login) and from the promo box, where a player types the code by
+// hand — so it answers with a REASON rather than a bare null, and the promo box
+// can say which of them happened.
+//
+// A player can be invited once, ever. `invited_by=is.null` in the write is the
+// guard, so two requests cannot both bind the same player.
+async function acceptInvite(player, rawCode) {
   const code = normalizeInviteCode(rawCode);
-  if (!code) return null;
+  if (!code) return { error: 'invite_unknown' };
 
   const inviterRows = await supabase(
     `/players?share_code=eq.${encodeURIComponent(code)}&select=chat_id,faction&limit=1`
   );
   const inviter = inviterRows[0];
-  if (!inviter || String(inviter.chat_id) === String(newPlayer.chat_id)) return null;
+  if (!inviter) return { error: 'invite_unknown' };
+  if (String(inviter.chat_id) === String(player.chat_id)) return { error: 'invite_self' };
 
   const acceptedRows = await supabase(
     `/players?invited_by=eq.${encodeURIComponent(inviter.chat_id)}&select=chat_id`
   );
-  if ((acceptedRows || []).length >= INVITE_MAX_ACCEPTED) return null;
+  if ((acceptedRows || []).length >= INVITE_MAX_ACCEPTED) return { error: 'invite_full' };
 
-  // Only ever set once, and only on a player who has none: the filter is the
-  // guard, so a second login with a link cannot rewrite who invited whom.
   const bonded = await supabase(
-    `/players?chat_id=eq.${encodeURIComponent(newPlayer.chat_id)}&invited_by=is.null`, {
+    `/players?chat_id=eq.${encodeURIComponent(player.chat_id)}&invited_by=is.null`, {
       method: 'PATCH',
       body: JSON.stringify({ invited_by: String(inviter.chat_id), invite_progress: {} }),
       headers: { Prefer: 'return=representation' },
     });
-  if (!(Array.isArray(bonded) && bonded.length)) return null;
+  if (!(Array.isArray(bonded) && bonded.length)) return { error: 'invite_used' };
 
-  const welcome = inviteGrants(INVITEE_WELCOME, newPlayer.faction);
-  if (welcome.length) await grantResources(newPlayer.chat_id, welcome);
+  const welcome = inviteGrants(INVITEE_WELCOME, player.faction);
+  if (welcome.length) await grantResources(player.chat_id, welcome);
   await payInviter(bonded[0], 'signup').catch(err => console.error('Inviter signup payout failed:', err.message));
-  return { inviter: String(inviter.chat_id), granted: welcome };
+  return { ok: true, inviter: String(inviter.chat_id), granted: welcome };
 }
 
 // GET /invite — this player's code, their link, and how many have joined.
@@ -1292,12 +1306,35 @@ router.post('/player/promo', requireAuth, async (req, res) => {
 
   try {
     const [playerRows, promoRows] = await Promise.all([
-      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,promos&limit=1`),
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,promos,faction,invited_by&limit=1`),
       // ilike rather than eq: the stored name may carry different casing.
       supabase(`/promos?promo_name=ilike.${encodeURIComponent(key)}&limit=1`),
     ]);
     if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
-    if (!promoRows.length)  return res.status(404).json({ error: 'Unknown code', code: 'promo_unknown' });
+
+    // No such promo: the box doubles as where a friend's invite code is typed,
+    // for the player who opened the game without ever tapping a link. Tried
+    // second, so a promo can never be shadowed by a share code.
+    if (!promoRows.length) {
+      if (playerRows[0].invited_by) {
+        return res.status(400).json({ error: 'You have already been invited', code: 'invite_used' });
+      }
+      const invite = await acceptInvite({ chat_id, faction: playerRows[0].faction }, code);
+      if (invite?.ok) {
+        // Shaped like a promo payout so the reward modal draws it unchanged:
+        // gold on its own, crystals and tokens keyed by item.
+        const granted = { gold: 0, crystals: {}, tokens: {}, trophies: {} };
+        for (const g of invite.granted || []) {
+          if (g.item === 'Gold') granted.gold += g.amount;
+          else if (g.item_type === 'token') granted.tokens[g.item] = (granted.tokens[g.item] || 0) + g.amount;
+          else granted.crystals[g.item] = (granted.crystals[g.item] || 0) + g.amount;
+        }
+        return res.json({ success: true, invite: true, name: 'Invite', granted });
+      }
+      const reason = invite?.error || 'promo_unknown';
+      const status = reason === 'invite_unknown' ? 404 : 400;
+      return res.status(status).json({ error: 'Code cannot be used', code: reason === 'invite_unknown' ? 'promo_unknown' : reason });
+    }
 
     const player = playerRows[0];
     const promo  = promoRows[0];

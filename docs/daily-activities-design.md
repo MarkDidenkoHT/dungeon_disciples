@@ -343,6 +343,30 @@ plays**, so an invite is worth something for as long as the friend stays. It als
 gives the inviter a reason to care whether their friend is still playing — the closest
 thing to a social loop before guilds exist.
 
+### Built (2026-09-20)
+
+Foundation only: codes, the link, and the sign-up payouts.
+Run `sql/007_invites.sql` before deploying.
+
+- Codes are 6 characters, no `0/O/1/I/L`, minted on login for every player.
+- The link is `t.me/<bot>?startapp=<CODE>`. **Not `?start=`** — that only opens the bot
+  chat and sends it a message, so the Mini App launches with nothing and the invite is
+  lost. `?startapp=` puts the code in the signed `initData.start_param`.
+  Needs a Main Mini App configured in BotFather.
+- A `/start <code>` message is still caught: the bot remembers the code for 30 minutes
+  and the next login of that chat_id uses it. In memory only.
+- **The code can also be typed into the promo box.** Promos are matched first, so a
+  share code can never shadow one. A player can be invited once, ever, and not by
+  themselves.
+- Settings shows the code and a Copy button (the link goes to the clipboard, never on
+  screen).
+- Caps decided: **60 dailies per invitee** (~2 months), **25 invitees** per player.
+- The daily crystals are the **inviter's** faction crystal.
+- Both tome rewards use `tome_of_knowledge` — there is no separate spell tome.
+
+Still to wire: the **first battle** and **per-daily** payouts. `payInviter()` exists and
+is safe against paying twice; nothing calls it for those two moments yet.
+
 ### Open questions
 
 - Is the daily payout capped (per day, per invitee, or in total), and does it stop

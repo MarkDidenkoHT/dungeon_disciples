@@ -51,7 +51,7 @@ const UI_TEXT = {
   nameEmpty:       { en: 'Name cannot be empty', ru: 'Имя не может быть пустым' },
   nameFailed:      { en: 'Failed to save name',  ru: 'Не удалось сохранить имя' },
   promoTitle:       { en: 'Promo Code',      ru: 'Промокод' },
-  promoPlaceholder: { en: 'Enter a code',    ru: 'Введите код' },
+  promoPlaceholder: { en: 'Promo or invite code', ru: 'Промокод или код друга' },
   promoRedeem:      { en: 'Redeem',          ru: 'Активировать' },
   promoRedeeming:   { en: 'Checking…',       ru: 'Проверяем…' },
   promoOk:          { en: 'Rewards claimed', ru: 'Награды получены' },
@@ -60,7 +60,7 @@ const UI_TEXT = {
   inviteTitle:      { en: 'Invite friends',  ru: 'Пригласить друзей' },
   inviteNote:       { en: 'They start with gold, crystals and potions. You earn while they play.',
                       ru: 'Они начнут с золотом, кристаллами и зельями. Вы получаете награды, пока они играют.' },
-  inviteCopy:       { en: 'Copy invite link', ru: 'Скопировать ссылку' },
+  inviteCopy:       { en: 'Copy',            ru: 'Копировать' },
   inviteCopied:     { en: 'Link copied',     ru: 'Ссылка скопирована' },
   inviteFailed:     { en: 'Could not copy — long-press the code instead',
                       ru: 'Не удалось скопировать — зажмите код' },
@@ -76,6 +76,9 @@ const PROMO_ERRORS = {
   promo_unknown: { en: 'No such code',        ru: 'Такого кода нет' },
   promo_used:    { en: 'Already used',        ru: 'Код уже использован' },
   promo_empty:   { en: 'Enter a code first',  ru: 'Сначала введите код' },
+  invite_used:   { en: 'You have already been invited', ru: 'Вас уже пригласили' },
+  invite_self:   { en: 'That is your own code', ru: 'Это ваш собственный код' },
+  invite_full:   { en: 'That player has no invites left', ru: 'У этого игрока не осталось приглашений' },
 };
 
 export function renderSettings(root, { player }) {
@@ -242,8 +245,10 @@ export function renderSettings(root, { player }) {
 
   inviteBtn.addEventListener('click', async () => {
     const ok = await copyInvite();
+    // The field keeps showing the CODE: the link is long, unreadable on a phone
+    // and useless on screen — it is only ever wanted in the clipboard, or typed
+    // as a code into the promo box above.
     inviteMsg.textContent = ok ? UI_TEXT.inviteCopied[L] : UI_TEXT.inviteFailed[L];
-    if (ok) inviteCodeEl.value = inviteLink;
   });
 
   const sfxBtn = root.querySelector('#toggle-sfx');
