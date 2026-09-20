@@ -1136,7 +1136,7 @@ function inviteGrants(reward, faction) {
 // `invite_progress` lives on the INVITEE and is what makes each moment payable
 // once: the write that records it is filtered on the old value, so two requests
 // racing on the same moment leave exactly one of them holding the payout.
-async function payInviter(invitee, moment) {
+async function payInviter(invitee, moment, attempt = 0) {
   const inviterId = invitee?.invited_by;
   if (!inviterId) return null;
   const progress = invitee.invite_progress || {};
@@ -1162,7 +1162,20 @@ async function payInviter(invitee, moment) {
       body: JSON.stringify({ invite_progress: next }),
       headers: { Prefer: 'return=representation' },
     });
-  if (!(Array.isArray(claimed) && claimed.length)) return null;
+
+  // A LOSER RETRIES rather than giving up. Two different moments can land
+  // together — a daily claimed as a battle ends — and the one that lost the
+  // write has not been paid at all; re-reading and trying again is the
+  // difference between "another moment got there first" and "this payout was
+  // dropped".
+  if (!(Array.isArray(claimed) && claimed.length)) {
+    if (attempt >= 2) return null;
+    const fresh = await supabase(
+      `/players?chat_id=eq.${encodeURIComponent(invitee.chat_id)}&select=chat_id,invited_by,invite_progress&limit=1`
+    );
+    if (!fresh?.length) return null;
+    return payInviter(fresh[0], moment, attempt + 1);
+  }
 
   const inviterRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(inviterId)}&select=chat_id,faction&limit=1`);
   if (!inviterRows.length) return null;
@@ -1170,6 +1183,23 @@ async function payInviter(invitee, moment) {
   const grants = inviteGrants(INVITER_REWARDS[moment], inviterRows[0].faction);
   if (grants.length) await grantResources(inviterId, grants);
   return { moment, grants };
+}
+
+// "This player just did something their inviter is paid for."
+//
+// Fire-and-forget, like bumpDailyTask: a reward that belongs to somebody else
+// must never slow down, or fail, the thing the player actually asked for. The
+// row is read here rather than passed in because every caller holds only a
+// chat_id, and payInviter needs the progress this moment is checked against.
+function noteInviteMoment(chat_id, moment) {
+  supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=chat_id,invited_by,invite_progress&limit=1`)
+    .then(rows => {
+      const invitee = rows?.[0];
+      if (!invitee?.invited_by) return null;
+      if (moment !== 'daily' && (invitee.invite_progress || {})[moment]) return null;
+      return payInviter(invitee, moment);
+    })
+    .catch(err => console.error(`Inviter ${moment} payout failed:`, err.message));
 }
 
 // Bind a player to whoever invited them and pay both sides. Reached from the
@@ -2940,6 +2970,10 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
     }
 
     await grantResources(chat_id, payouts);
+
+    // The day is done and paid: the inviter earns their crystals for it, capped
+    // per invitee in data/invites.js.
+    noteInviteMoment(chat_id, 'daily');
 
     res.json({ success: true, reward, granted });
   } catch (err) {
@@ -5087,6 +5121,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
       bumpDailyTask(chat_id, ['battles', 'colossus']);
+      noteInviteMoment(chat_id, 'first_battle');
       const colossus = await settleColossusAttempt(record);
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', {
         colossus_damage: colossus?.dealt || 0,
@@ -5107,6 +5142,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       await persistBattleRosterState(chat_id, record.battle_data);
       // A bot duel is a quick match for the day's task, win or lose.
       bumpDailyTask(chat_id, 'pvp');
+      noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === 'player';
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
@@ -5136,6 +5172,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       // Counts for both players, win or lose. A player who concedes claims
       // through /battle/end instead and does not count: walking out is not a fight.
       bumpDailyTask(chat_id, 'pvp');
+      noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === mySide;
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
@@ -5163,6 +5200,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // already made it single-shot: a retry cannot count the same battle twice.
     // A loss counts — the task is to fight, not to win.
     bumpDailyTask(chat_id, 'battles');
+    // Any finished battle is "their first battle" for the invite payout; it pays
+    // once, so whichever kind comes first is the one that counts.
+    noteInviteMoment(chat_id, 'first_battle');
 
     await persistBattleRosterState(chat_id, record.battle_data);
 
