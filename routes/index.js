@@ -5324,8 +5324,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       if (!claimed) return res.status(400).json({ error: 'Rewards already claimed', code: 'battle_rewards_claimed' });
       armyCacheDrop(battle_id);
       await persistBattleRosterState(chat_id, record.battle_data);
-      // A bot duel is a quick match for the day's task, win or lose.
-      bumpDailyTask(chat_id, 'pvp');
+      // A bot duel is a quick match for the day's task, win or lose. A tourney
+      // battle is also a battle: it counts for both.
+      bumpDailyTask(chat_id, record.battle_data?.tourney_id ? ['pvp', 'battles'] : 'pvp');
       noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === 'player';
@@ -5356,7 +5357,8 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       await persistBattleRosterState(chat_id, record.battle_data, { side: mySide });
       // Counts for both players, win or lose. A player who concedes claims
       // through /battle/end instead and does not count: walking out is not a fight.
-      bumpDailyTask(chat_id, 'pvp');
+      // A tourney battle counts as a battle too, not only as a duel.
+      bumpDailyTask(chat_id, record.battle_data?.tourney_id ? ['pvp', 'battles'] : 'pvp');
       noteInviteMoment(chat_id, 'first_battle');
 
       const won = record.battle_data?.winner === mySide;
