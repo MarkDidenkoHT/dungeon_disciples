@@ -9824,3 +9824,12 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 
 .eg-panel--locked { justify-content: center; }
 .daily-reward-icon .daily-reward-img { width: 34px; height: 34px; object-fit: contain; }
+
+.embark-card-badge--tourney {
+  background: rgba(11, 14, 20, 0.82);
+  border: 1px solid var(--accent);
+  color: #f0e6d2;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}

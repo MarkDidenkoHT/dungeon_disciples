@@ -26,9 +26,9 @@ const TOURNEY_TIEBREAKERS = ['points', 'units_lost', 'finished_at'];
 // Valor for everyone by result; tokens only for the podium, because tokens are
 // the half of an engraving's price that cannot be farmed (data/engravings.js).
 const TOURNEY_PRIZES = {
-  valor_per_win:    15,
-  valor_per_battle: 5,
-  podium_valor:     [60, 40, 25],
+  valor_per_win:    7,
+  valor_per_battle: 2,
+  podium_valor:     [30, 20, 12],
   podium_tokens:    [3, 2, 1],
 };
 

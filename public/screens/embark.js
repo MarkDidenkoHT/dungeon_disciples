@@ -7,6 +7,7 @@ import { assetUrl } from '../asset_base.js';
 // presentation only; the level tables live in data/embark.js and are the single
 // source of truth for how many pips a region can ever show.
 import { REGIONS as REGION_DEFS } from '../../data/embark.js';
+import { ruleName } from '../../data/tourney.js';
 import { loadColossus, renderColossusPage, renderColossusError, colossusCardStatus } from '../colossus-page.js';
 
 const LEVEL_COUNTS = Object.fromEntries(
@@ -51,6 +52,10 @@ const UI_TEXT = {
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
   levelAria:       { en: 'Level',     ru: 'Уровень' },
   pvpSoon:         { en: 'Soon',      ru: 'Скоро' },
+  tourneyLoading:  { en: 'Loading…',        ru: 'Загрузка…' },
+  tourneyToday:    { en: 'Today',           ru: 'Сегодня' },
+  tourneyNext:     { en: 'Next',            ru: 'Следующий' },
+  tourneyNoRules:  { en: 'No special rules', ru: 'Без особых правил' },
   comingSoonTitle: { en: 'Coming soon', ru: 'Скоро' },
   comingSoonBody:  {
     en: 'This mode is not open yet. It is being built — check back soon.',
@@ -154,12 +159,15 @@ const PVP_MODES = [
     live: false,
   },
   {
-    id: 'pvp_tournament',
-    label: 'Tournament',
-    label_ru: 'Турнир',
-    description: 'Bracketed runs on a schedule. Win through the bracket, claim a shard of the crown.',
-    description_ru: 'Турнирная сетка по расписанию. Пройдите её до конца и заберите осколок короны.',
-    live: false,
+    id: 'pvp_tourney',
+    label: 'Crown Tourney',
+    label_ru: 'Турнир Короны',
+    description: 'Five battles every evening under changing rules.',
+    description_ru: 'Пять боёв каждый вечер по меняющимся правилам.',
+    live: true,
+    // Drawn from GET /tourney rather than from this table: the card carries the
+    // clock and the player's record, which is the whole tourney UI.
+    tourney: true,
   },
 ];
 
@@ -536,16 +544,17 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     host.innerHTML = PVP_MODES.map(m => {
       const label = (L === 'ru' && m.label_ru) || m.label;
       const desc  = (L === 'ru' && m.description_ru) || m.description;
+      const open  = m.tourney ? tourneyIsOpen() : m.live;
       return `
         <div class="embark-region-block">
-          <div class="embark-card embark-card--pvp${m.live ? '' : ' embark-card--locked'}"
+          <div class="embark-card embark-card--pvp${open ? '' : ' embark-card--locked'}"
                data-pvp-mode="${m.id}" data-label="${label}"
                style="${m.art ? regionBgStyle(m) : ''}">
             <div class="embark-card-info">
               <span class="embark-card-label">${label}</span>
-              <span class="embark-card-desc">${desc}</span>
+              <span class="embark-card-desc">${m.tourney ? tourneyLine() : desc}</span>
             </div>
-            ${m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.pvpSoon[L]}</span>`}
+            ${m.tourney ? tourneyBadgeHtml() : (m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.pvpSoon[L]}</span>`)}
           </div>
         </div>`;
     }).join('');
@@ -556,13 +565,88 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     host.querySelectorAll('[data-pvp-mode]').forEach(card => {
       const mode = PVP_MODES.find(m => m.id === card.dataset.pvpMode);
       card.addEventListener('click', () => {
+        // The tourney card refuses on its own terms: the badge already says when
+        // it opens and how many battles are left, so a tap that cannot enter is
+        // answered by the card rather than by a popup.
+        if (mode?.tourney) {
+          if (!tourneyIsOpen() || tourneyBattlesLeft() <= 0) return;
+          return navigate('battle-prep', { player, mode: mode.id });
+        }
         if (!mode?.live) return comingSoon(card.dataset.label);
         navigate('battle-prep', { player, mode: mode.id });
       });
     });
   }
 
+  // ── Crown Tourney ─────────────────────────────────────────────────────────
+  // There is no tourney screen: the arena card IS it. The badge carries the
+  // clock — time left while it runs, time until it opens while it does not —
+  // plus wins and battles remaining once it is running.
+  let tourneyState = null;
+  let tourneyTimer = null;
+
+  function tourneyIsOpen() {
+    const t = tourneyState?.tourney;
+    if (!t) return false;
+    const now = Date.now();
+    return now >= new Date(t.starts_at).getTime() && now < new Date(t.ends_at).getTime();
+  }
+
+  function tourneyBattlesLeft() {
+    return Number(tourneyState?.battles_left ?? 0);
+  }
+
+  function countdown(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h ? `${h}:${String(m).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  // Today's rules while it runs, the next one's while it does not — a player who
+  // knows tomorrow's rules tonight has something to plan.
+  function tourneyLine() {
+    if (!tourneyState) return UI_TEXT.tourneyLoading[L];
+    const open = tourneyIsOpen();
+    const t = open ? tourneyState.tourney : (tourneyState.next || tourneyState.tourney);
+    const rules = (t?.rules || []).map(id => ruleName(id, L)).filter(Boolean);
+    if (!rules.length) return UI_TEXT.tourneyNoRules[L];
+    return `${open ? UI_TEXT.tourneyToday[L] : UI_TEXT.tourneyNext[L]}: ${rules.join(' · ')}`;
+  }
+
+  function tourneyBadgeHtml() {
+    const t = tourneyState?.tourney || tourneyState?.next;
+    if (!t) return '';
+    const open = tourneyIsOpen();
+    const target = open ? t.ends_at : (tourneyState.next || t).starts_at;
+    const left = new Date(target).getTime() - Date.now();
+    const parts = [`${open ? '⏳' : '🕔'} ${countdown(left)}`];
+    if (open) parts.push(`🏅 ${Number(tourneyState.entry?.wins ?? 0)}`, `⚔ ${tourneyBattlesLeft()}`);
+    return `<span class="embark-card-badge embark-card-badge--tourney">${parts.join(' · ')}</span>`;
+  }
+
+  async function loadTourney() {
+    try {
+      tourneyState = await api(`/tourney?chat_id=${encodeURIComponent(player.chat_id)}`);
+    } catch (err) {
+      console.error('Tourney read failed:', err);
+      return;
+    }
+    renderPvpModes();
+    clearInterval(tourneyTimer);
+    // The clock ticks locally; the state is re-read only when the window flips,
+    // which is the one moment the card means something different.
+    let wasOpen = tourneyIsOpen();
+    tourneyTimer = setInterval(() => {
+      if (!root.isConnected) { clearInterval(tourneyTimer); return; }
+      if (tourneyIsOpen() !== wasOpen) { wasOpen = tourneyIsOpen(); loadTourney(); return; }
+      renderPvpModes();
+    }, 1000);
+  }
+
   renderPvpModes();
+  loadTourney();
   applyLayer();
 
   // ── Colossus page ────────────────────────────────────────────────────────
