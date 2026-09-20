@@ -1082,7 +1082,6 @@ const BUILDING_COSTS = {
   ardent_shrine:                 { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
   high_priest_shrine:            { gold: 160, Crystals_Life: 80, Crystals_Fire: 20, Crystals_Nature: 20 },
   seraphic_shrine:               { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Nature: 12 },
-  seraph_shrine:                 { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Nature: 20 },
   blessed_soul_shrine:           { gold: 40, Crystals_Life: 20, Crystals_Air: 5, Crystals_Fire: 5 },
   mithrails_light_temple:        { gold: 60, Crystals_Life: 30, Crystals_Air: 8, Crystals_Fire: 8 },
   mithrails_will_temple:         { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Fire: 12 },
@@ -1186,6 +1185,14 @@ const BUILDING_COSTS = {
   pale_abbess_chantry:           { gold: 96, Crystals_Death: 48, Crystals_Air: 12, Crystals_Frost: 12 },
 };
 
+// BUILDING_COSTS is keyed by building id alone, so an id used by two factions
+// can only hold one price. Anything listed here wins for that faction.
+const BUILDING_COSTS_BY_FACTION = {
+  empire: {
+    seraph_shrine: { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Nature: 20 },
+  },
+};
+
 const FACTION_CRYSTAL = {
   empire:              'Crystals_Life',
   choir_of_the_cursed: 'Crystals_Fire',
@@ -1196,11 +1203,11 @@ const FACTION_CRYSTAL = {
 // declares inline; only the throne (THRONE_UPGRADE_COSTS) and the mercenary
 // halls (trophy costs) are deliberately absent from the table.
 function applyBuildingCosts() {
-  for (const pools of Object.values(BUILDING_POOLS)) {
+  for (const [faction, pools] of Object.entries(BUILDING_POOLS)) {
     for (const [category, list] of Object.entries(pools)) {
       if (category === 'throne') continue;
       for (const def of list) {
-        const cost = BUILDING_COSTS[def.id];
+        const cost = BUILDING_COSTS_BY_FACTION[faction]?.[def.id] ?? BUILDING_COSTS[def.id];
         if (cost) def.cost = { ...cost };
       }
     }

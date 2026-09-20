@@ -515,8 +515,10 @@ async function buildArmyFor(chat_id, playerUnitIds) {
 
 // A hero, and loyalty within that hero's cap. Same rules as the prep screen.
 function checkSquad(units) {
-  const hero = units.find(u => u.is_hero);
-  if (!hero) return { error: 'Squad must include a hero' };
+  const heroes = units.filter(u => u.is_hero);
+  if (!heroes.length)     return { error: 'Squad must include a hero' };
+  if (heroes.length > 1)  return { error: 'Squad may only include one hero' };
+  const hero       = heroes[0];
   const heroTier   = hero.unit_data?.t ?? 1;
   const maxLoyalty = heroTier >= 4 ? 5 : heroTier + 1;
 
@@ -1352,14 +1354,19 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     const [playerRows, promoRows] = await Promise.all([
       supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,promos,faction,invited_by&limit=1`),
       // ilike rather than eq: the stored name may carry different casing.
-      supabase(`/promos?promo_name=ilike.${encodeURIComponent(key)}&limit=1`),
+      supabase(`/promos?promo_name=ilike.${encodeURIComponent(key)}&limit=20`),
     ]);
     if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
+
+    // PostgREST reads `*` (and `%`) in an ilike filter as a wildcard, so the
+    // query alone would let `*` match whatever promo happens to come back
+    // first. The name has to equal the typed code, not merely match it.
+    const promo = promoRows.find(p => String(p.promo_name ?? '').trim().toLowerCase() === key);
 
     // No such promo: the box doubles as where a friend's invite code is typed,
     // for the player who opened the game without ever tapping a link. Tried
     // second, so a promo can never be shadowed by a share code.
-    if (!promoRows.length) {
+    if (!promo) {
       if (playerRows[0].invited_by) {
         return res.status(400).json({ error: 'You have already been invited', code: 'invite_used' });
       }
@@ -1381,7 +1388,6 @@ router.post('/player/promo', requireAuth, async (req, res) => {
     }
 
     const player = playerRows[0];
-    const promo  = promoRows[0];
     const taken  = player.promos || {};
     // Keyed on the NORMALISED code, so re-entering it in different casing is
     // still recognised as already used.
@@ -3988,10 +3994,13 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 
     const playerUnits = [];
     let   heroRosterId = null;
+    const seenRosterIds = new Set();
     for (const entry of playerUnitIds) {
       const rosterId = String(entry._rosterId || entry.id);
       const r = rosterById[rosterId];
       if (!r) return res.status(400).json({ error: `Roster unit ${rosterId} not found or does not belong to this player` });
+      if (seenRosterIds.has(rosterId)) return res.status(400).json({ error: `Roster unit ${rosterId} is listed twice` });
+      seenRosterIds.add(rosterId);
       if (r.is_hero) heroRosterId = rosterId;
       playerUnits.push(buildPlayerUnitFromRosterEntry(r, entry, itemsByRosterId));
     }
