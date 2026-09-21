@@ -43,7 +43,7 @@ const QUESTS = [
     desc:    { en: 'Deal {n} physical damage in battle.', ru: 'Нанесите {n} физического урона в бою.' },
     rewards: [
       { resources: { Gold: 100 } },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { resources: { Gold: 300 } },
       { crystals:  40 },
       { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 300 } },
@@ -60,7 +60,7 @@ const QUESTS = [
     rewards: [
       { crystals:  15 },
       { resources: { Gold: 200 } },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  50 },
       { tokens:    { tome_of_knowledge: 1 }, crystals: 30 },
     ],
@@ -75,7 +75,7 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 150 } },
       { crystals:  25 },
-      { tokens:    { health_potion: 2 } },
+      { tokens:    { health_potion: 5 } },
       { resources: { Gold: 500 } },
       { tokens:    { tome_of_knowledge: 1 }, crystals: 40 },
     ],
@@ -88,10 +88,10 @@ const QUESTS = [
     title:   { en: 'Demonbane',        ru: 'Гроза демонов' },
     desc:    { en: 'Slay {n} Demons.', ru: 'Уничтожьте {n} демонов.' },
     rewards: [
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 3 } },
       { resources: { Gold: 250 } },
       { crystals:  35 },
-      { tokens:    { health_potion: 2 } },
+      { tokens:    { health_potion: 5 } },
       { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 400 } },
     ],
   },
@@ -104,7 +104,7 @@ const QUESTS = [
     desc:    { en: 'Slay {n} Knights.', ru: 'Уничтожьте {n} рыцарей.' },
     rewards: [
       { resources: { Gold: 150 } },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  35 },
       { resources: { Gold: 450 } },
       { tokens:    { tome_of_knowledge: 1 }, crystals: 40 },
@@ -120,7 +120,7 @@ const QUESTS = [
     rewards: [
       { crystals:  15 },
       { resources: { Gold: 250 } },
-      { tokens:    { health_potion: 2 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  50 },
       { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 400 } },
     ],
@@ -135,7 +135,7 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 200 } },
       { crystals:  30 },
-      { tokens:    { health_potion: 2 } },
+      { tokens:    { health_potion: 5 } },
       { resources: { Gold: 600 } },
       { tokens:    { tome_of_knowledge: 2 } },
     ],
@@ -151,7 +151,7 @@ const QUESTS = [
     rewards: [
       { crystals:  25 },
       { resources: { Gold: 300 } },
-      { tokens:    { health_potion: 2 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  60 },
       { tokens:    { tome_of_knowledge: 2 }, resources: { Gold: 500 } },
     ],
@@ -167,7 +167,7 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 150 } },
       { crystals:  20 },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { resources: { Gold: 400 } },
       { tokens:    { tome_of_knowledge: 1 }, crystals: 30 },
     ],
@@ -181,10 +181,10 @@ const QUESTS = [
     desc:    { en: 'Send units on {n} errands.', ru: 'Отправьте бойцов на {n} поручений.' },
     rewards: [
       { resources: { Gold: 100 } },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  30 },
       { resources: { Gold: 350 } },
-      { tokens:    { tome_of_knowledge: 1 } },
+      { tokens:    { tome_of_knowledge: 3 } },
     ],
   },
   // A faction has a fixed number of spells, so this ladder is spelled out rather
@@ -200,7 +200,7 @@ const QUESTS = [
     rewards: [
       { crystals:  20 },
       { resources: { Gold: 200 } },
-      { tokens:    { health_potion: 1 } },
+      { tokens:    { health_potion: 5 } },
       { crystals:  50 },
       { tokens:    { tome_of_knowledge: 2 } },
     ],
