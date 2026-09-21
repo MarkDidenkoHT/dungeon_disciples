@@ -2637,10 +2637,10 @@ const UNITS = {
       damage_source: 'death', action_power: 18, action_icon: 'blood_bolt.jpg', action_animation: 'blood_bolt',
       xp: 1560, passive: ['banquet 1', 'bleed 1', 'vitality 1'], ability: 'hemorrhage 2',
     },
-    crimson_mage: {
+    crimson_archon: {
       id: 'gs3121', f: 'g', t: 4,
-      name: 'Crimson Mage',
-      name_ru: 'Багровый Маг',
+      name: 'Crimson Archon',
+      name_ru: 'Багровый Архонт',
       tags: ['Vampire', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -2663,10 +2663,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
       xp: 1560, passive: ['iron_will 1', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
     },
-    blood_knight: {
+    sanguine_lord: {
       id: 'gs3111', f: 'g', t: 4,
-      name: 'Blood Knight',
-      name_ru: 'Рыцарь Крови',
+      name: 'Sanguine Lord',
+      name_ru: 'Кровавый Владыка',
       tags: ['Vampire', 'Knight'],
       pref_position: 'front',
       size: 'tile',
@@ -2674,7 +2674,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
-      xp: 2900, passive: ['iron_will 2', 'parry 1', 'leech 2'], ability: 'exsanguinate 1',
+      xp: 2900, passive: ['iron_will 2', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
       id: 'gs32', f: 'g', t: 2,
@@ -2858,10 +2858,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 32, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 4055, passive: ['infect 1', 'poison 2', 'horde 2'], ability: 'grails_blessing 2',
     },
-    grail_angel: {
+    grail_archangel: {
       id: 'gs4111', f: 'g', t: 4,
-      name: 'Grail Angel',
-      name_ru: 'Ангел Грааля',
+      name: 'Grail Archangel',
+      name_ru: 'Архангел Грааля',
       tags: ['Zombie', 'Holy'],
       pref_position: 'none',
       size: 'row',
@@ -2897,10 +2897,10 @@ const UNITS = {
       damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
       xp: 4055, passive: ['vitality 2', 'eternal_grief 1', 'dispel 2'], ability: 'raise_dead 2',
     },
-    sorrow_vessel: {
-      id: 'gs421', f: 'g', t: 4,
-      name: 'Sorrow Vessel',
-      name_ru: 'Сосуд Скорби',
+    sorrow_reliquary: {
+      id: 'gs4211', f: 'g', t: 4,
+      name: 'Sorrow Reliquary',
+      name_ru: 'Реликварий Скорби',
       tags: ['Zombie','Caster'],
       pref_position: 'none',
       size: 'row',
@@ -3040,10 +3040,10 @@ const UNITS = {
       damage_source: 'death', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 1520, passive: ['sorrow 1', 'procession_of_grief 1', 'vow_of_the_grave 1',], ability: 'terror 2',
     },
-    wraith: {
+    revenant: {
       id: 'gs6111', f: 'g', t: 4,
-      name: 'Wraith',
-      name_ru: 'Дух',
+      name: 'Revenant',
+      name_ru: 'Ревенант',
       tags: ['Spirit', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -3079,10 +3079,10 @@ const UNITS = {
       damage_source: 'death', action_power: 16, action_icon: 'haunt.jpg', action_animation: 'haunt', action_sfx: 'haunt',
       xp: 1520, passive: ['sorrow 1', 'dissipate 1', 'resist_aura_cold 1'], ability: 'terror 2',
     },
-    phantom: {
+    nightmare: {
       id: 'gs6211', f: 'g', t: 4,
-      name: 'Phantom',
-      name_ru: 'Фантом',
+      name: 'Nightmare',
+      name_ru: 'Кошмар',
       tags: ['Spirit', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -3131,10 +3131,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'fear 1'], ability: 'terror 1',
     },
-    pale_matriarch: {
+    pale_sovereign: {
       id: 'gs7111', f: 'g', t: 4,
-      name: 'Pale Matriarch',
-      name_ru: 'Бледная Праматерь',
+      name: 'Pale Sovereign',
+      name_ru: 'Бледная Владычица',
       tags: ['Spirit', 'Knight'],
       pref_position: 'front',
       size: 'tile',
@@ -3170,10 +3170,10 @@ const UNITS = {
       damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
-    pale_abbess: {
+    pale_prioress: {
       id: 'gs7211', f: 'g', t: 4,
-      name: 'Pale Abbess',
-      name_ru: 'Бледная Аббатиса',
+      name: 'Pale Prioress',
+      name_ru: 'Бледная Приоресса',
       tags: ['Spirit', 'Knight'],
       pref_position: 'none',
       size: 'tile',
@@ -3209,10 +3209,10 @@ const UNITS = {
       damage_source: null, action_power: 16, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
     },
-    pale_lamenter: {
-      id: 'gs731', f: 'g', t: 4,
-      name: 'Pale Lamenter',
-      name_ru: 'Бледная Скорбница',
+    pale_dirge: {
+      id: 'gs7311', f: 'g', t: 4,
+      name: 'Pale Dirge',
+      name_ru: 'Бледная Панихида',
       tags: ['Spirit', 'Knight'],
       pref_position: 'front',
       size: 'tile',
@@ -3261,10 +3261,10 @@ const UNITS = {
       damage_source: null, action_power: 8, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
       xp: 1860, passive: ['bleed 2', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
-    mothers_grief: {
+    mothers_anguish: {
       id: 'gs8111', f: 'g', t: 4,
-      name: "Mother's Grief",
-      name_ru: 'Горе Матери',
+      name: "Mother's Anguish",
+      name_ru: 'Мука Матери',
       tags: ['Zombie', 'Vampire'],
       pref_position: 'back',
       size: 'tile',
@@ -3300,10 +3300,10 @@ const UNITS = {
       damage_source: 'death', action_power: 16, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1860, passive: ['poison 2', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
-    mothers_shroud: {
+    mothers_mantle: {
       id: 'gs8211', f: 'g', t: 4,
-      name: "Mother's Shroud",
-      name_ru: 'Покров Матери',
+      name: "Mother's Mantle",
+      name_ru: 'Мантия Матери',
       tags: ['Zombie', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -3339,10 +3339,10 @@ const UNITS = {
       damage_source: null, action_power: 16,
       xp: 1860, passive: ['blood_bond 1', 'banquet 2', 'vitality 1'], ability: null,
     },
-    mothers_vessel: {
+    mothers_font: {
       id: 'gs8311', f: 'g', t: 4,
-      name: "Mother's Vessel",
-      name_ru: 'Сосуд Матери',
+      name: "Mother's Font",
+      name_ru: 'Купель Матери',
       tags: ['Vampire', 'Caster'],
       pref_position: 'none',
       size: 'tile',
