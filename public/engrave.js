@@ -98,13 +98,19 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return { combo: c.id, tier: tierId, plus: { ...plus }, minus: { ...minus } };
   }
 
-  // A sign is taken when points remain and the stat is not already moving the
-  // other way; otherwise the tap wraps that stat back to nothing.
+  // A sign moves the stat one step that way. Tapping the opposite sign first
+  // takes back a point already put in — − then + leaves the stat where it was —
+  // and only once the stat is back at nothing does a tap start moving it the
+  // other way. Past the tier's last point a tap does nothing.
   function tapSign(statKey, negative) {
     const mine  = negative ? minus : plus;
     const other = negative ? plus  : minus;
-    const room  = (tier()?.steps ?? 1) - engravingPoints(mine);
-    if (other[statKey] || room <= 0) { delete mine[statKey]; return; }
+    if (other[statKey]) {
+      if (--other[statKey] <= 0) delete other[statKey];
+      return;
+    }
+    const room = (tier()?.steps ?? 1) - engravingPoints(mine);
+    if (room <= 0) return;
     mine[statKey] = (mine[statKey] || 0) + 1;
   }
 
