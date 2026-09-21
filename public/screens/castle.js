@@ -151,6 +151,11 @@ const CASTLE_TEXT = {
   // The build picker names the UNIT, not the building: the player is choosing
   // who will live there, and that is what the card in front of them shows.
   chooseUnit:  { en: 'Choose Unit',                           ru: 'Выберите бойца' },
+  // Which of the options is on the card. The picker's title says "Choose Unit"
+  // and renderUnitPortrait dropped the name from the art on the grounds that
+  // "the sheet title already carries it" — true everywhere EXCEPT here, where
+  // the title is the question, so the unit being chosen was nameless.
+  pickOf:      { en: (i, n) => `${i} / ${n}`,                 ru: (i, n) => `${i} / ${n}` },
   noBuildings: { en: 'No buildings available for this slot.', ru: 'Для этого слота нет доступных зданий.' },
   mercHall:    { en: 'Mercenary Hall',                        ru: 'Зал наёмников' },
   mercRecruit: { en: 'Recruit',                               ru: 'Нанять' },
@@ -785,6 +790,12 @@ export function renderCastle(root, { player, focusBuilding }) {
       // Build sits to the LEFT of the portraits, deconstruct to the RIGHT, so
       // the whole bottom strip is one thumb-height row: act, choose, remove.
       const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
+      // The button used to be a bare ⚒ with its words in `title` — which a touch
+      // device never shows, so the control that spends the resources was an
+      // unlabelled glyph. `confirmLabel` is the long form (action · building ·
+      // cost) and stays on title/aria; this short one is printed IN the button.
+      const actionLabel  = s.actionLabel || opts.actionLabel || CASTLE_TEXT.confirm[castleLang];
+      const pickName     = unitName(s.unit) || s.buildingLabel || '';
       const cards = slides.map((slide, i) => {
         // Layer 2 holds halls, not soldiers, so a branch card there had nothing
         // to show and came out as an empty frame. Building art is drawn to the
@@ -795,15 +806,28 @@ export function renderCastle(root, { player, focusBuilding }) {
         const art   = slide.unit
           ? branchPortraitUrl(slide.unit)
           : (layerOf(slide.slot) === 2 ? (slide.artUrl || '') : '');
+        // The name is PRINTED on the card, not left in `title`. A strip of
+        // unlabelled portraits does not read as a list of soldiers to choose
+        // between — it reads as decoration, which is exactly how testers treated
+        // it. (.portrait-card--branch .portrait-name has been styled for this
+        // since the strip was written; nothing ever emitted the element.)
         return `
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${label}">
           ${art ? `<img class="portrait-art-img" src="${art}" alt="${label}" onerror="this.style.display='none'">` : ''}
+          ${label ? `<div class="portrait-name">${label}</div>` : ''}
         </div>`;
       }).join('');
 
       return `
-        <div class="castle-unit-slider">
+        <div class="castle-unit-slider"${opts.sheetKey ? ` data-sheet-key="${opts.sheetKey}"` : ''}>
+          ${pickName ? `
+          <div class="castle-slider-pick">
+            <span class="castle-slider-pick-name">${pickName}</span>
+            ${slides.length > 1
+              ? `<span class="castle-slider-pick-of">${CASTLE_TEXT.pickOf[castleLang](idx + 1, slides.length)}</span>`
+              : ''}
+          </div>` : ''}
           <div class="castle-slider-track" id="slider-track">
             ${buildUnitCard(s.unit, {
               buildingLabel: s.buildingLabel,
@@ -829,7 +853,10 @@ export function renderCastle(root, { player, focusBuilding }) {
           <div class="frame-action-hint-wrap">
             ${opts.hintConfirm ? '<span class="frame-action-hint" aria-hidden="true">▼</span>' : ''}
             <button class="frame-action frame-action--confirm" id="slider-confirm"
-                    title="${confirmLabel}" aria-label="${confirmLabel}">⚒</button>
+                    title="${confirmLabel}" aria-label="${confirmLabel}">
+              <span class="frame-action-glyph" aria-hidden="true">⚒</span>
+              <span class="frame-action-label">${actionLabel}</span>
+            </button>
           </div>
           <div class="prep-track-wrap branch-track-wrap">
             <div class="portrait-track" id="branch-track">${cards}</div>
@@ -837,7 +864,13 @@ export function renderCastle(root, { player, focusBuilding }) {
           ${opts.deconstructSlot
             ? `<button class="frame-action frame-action--deconstruct" id="slider-deconstruct"
                        title="${CASTLE_TEXT.deconstruct[castleLang]}"
-                       aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">⛏</button>`
+                       aria-label="${CASTLE_TEXT.deconstruct[castleLang]}">
+                 <span class="frame-action-glyph" aria-hidden="true">⛏</span>
+                 <!-- The SHORT word in the button ("Demolish"), the full one on
+                      title/aria: "Deconstruct" is wider than the button and came
+                      out as "DECONSTR…", which is worse than either. -->
+                 <span class="frame-action-label">${CASTLE_TEXT.demolish[castleLang]}</span>
+               </button>`
             : '<span class="frame-action frame-action--spacer" aria-hidden="true"></span>'}
         </div>`;
     }
@@ -1388,6 +1421,8 @@ export function renderCastle(root, { player, focusBuilding }) {
   //             (open a sheet, switch layer). May be async-ish via afterSheetSettles.
   //   target()  the element to point at. null = skip, same as !ready().
   //   hint()    optional second paragraph.
+  //   tapWithin a CSS selector, for a step whose target is a CONTAINER: only a
+  //             tap landing on something matching it completes the step.
   //   wait      true = the step is finished by a Continue button. The tap IS
   //             the completion.
   //   awaits    true = the step is finished by a SERVER action the tap only
@@ -1415,6 +1450,33 @@ export function renderCastle(root, { player, focusBuilding }) {
   };
   const postBuilt = () =>
     structuresRecord?.buildings_data?.[MESSENGER_SLOT]?.building_id === 'messenger_post';
+
+  // ── The first build, taught from inside the sheet ─────────────────────────
+  // All three of its steps answer the same question, so they share one
+  // predicate: the moment any of them completes the build, `second_building` is
+  // flagged and the whole trio is done. The flag is checked here as well as by
+  // the driver because the two steps in FRONT of it are new — without it, a
+  // player who finished onboarding before they existed, and still has an empty
+  // plot, would be marched back through the build sheet.
+  const needsFirstRecruit = () => rosterCount < 3
+                              && !isTutorialDone(player, 'second_building')
+                              && !!firstFreeBarracksSlot();
+  // How many soldiers this plot actually offers. One choice is not a choice, so
+  // the "pick a recruit" step is skipped rather than ringing a strip of one.
+  const recruitChoiceCount = () => {
+    const slot = firstFreeBarracksSlot();
+    return slot ? availableBuildingsForSlot(slot).length : 0;
+  };
+  // open() runs on EVERY pass of the driver, and the two sheet steps below run
+  // back to back in the same sheet — so this has to be idempotent. Re-opening
+  // would reset the slider to its first slide and silently discard the recruit
+  // the player had just chosen, which is the one thing the chain must not do.
+  const ensureBuildSheet = () => {
+    const slot = firstFreeBarracksSlot();
+    if (!slot) return;
+    if (getSheetBody()?.querySelector(`[data-sheet-key="build:${slot}"]`)) return;
+    openBuildModal(slot);
+  };
 
   const INFIRMARY_SLOT = Object.keys(SLOT_FIXED_BUILDING)
     .find(sl => SLOT_FIXED_BUILDING[sl] === 'infirmary');
@@ -1454,13 +1516,50 @@ export function renderCastle(root, { player, focusBuilding }) {
       target: () => getSheetBody()?.querySelector('.unit-abilities-row'),
       wait:   true,
     },
+    // THREE BEATS, ONE BUILD. This was a single step — ring the empty plot,
+    // "build another structure here" — and it ended at the tap: the sheet opened
+    // and the tutorial went quiet, leaving the player to work out on their own
+    // that the portrait strip was the unit choice and the ⚒ glyph was the button
+    // that paid for it. Testers got lost here more than anywhere else, so the
+    // sheet is now taught from the inside.
+    {
+      id: 'build_slot',
+      bare:   true,
+      ready:  needsFirstRecruit,
+      target: () => nodeForSlot(firstFreeBarracksSlot()),
+      // The node's own handler opens the build sheet; the next step is already
+      // pointing into it.
+      onTap:  () => afterSheetSettles(runOnboarding),
+    },
+    {
+      id: 'build_pick_unit',
+      ready:  () => needsFirstRecruit() && recruitChoiceCount() > 1,
+      open:   ensureBuildSheet,
+      target: () => getSheetBody()?.querySelector('#branch-track'),
+      // The ring is around the STRIP, so only a tap that lands on a portrait
+      // counts. A tap on the gap between two of them used to advance the chain
+      // with nothing chosen — and the next step's blockers then sealed the
+      // player's selection at whatever the sheet happened to open on.
+      tapWithin: '.portrait-card',
+      // NOT a Continue step. An informational spotlight makes its ring swallow
+      // taps (see showTutorialSpotlight), so a bubble that says "tap a portrait"
+      // would be sitting on top of the one thing it just asked for. The tap on
+      // the strip IS the completion, and it lands on the picker underneath.
+      hint:   () => firstRecruitHint(player),
+      // One frame, not afterSheetSettles: the tap the driver just handled (in
+      // the CAPTURE phase) has not reached the picker yet, and the picker
+      // redraws the sheet body — including the build button the next step points
+      // at. A frame is enough to let that land; afterSheetSettles would sit out
+      // its full 300ms fallback, because a sheet that is already open never
+      // fires the animation it waits for.
+      onTap:  () => requestAnimationFrame(runOnboarding),
+    },
     {
       id: 'second_building',
       awaits: true,
-      bare:   true,
-      ready:  () => rosterCount < 3 && !!firstFreeBarracksSlot(),
-      target: () => nodeForSlot(firstFreeBarracksSlot()),
-      hint:   () => firstRecruitHint(player),
+      ready:  needsFirstRecruit,
+      open:   ensureBuildSheet,
+      target: () => getSheetBody()?.querySelector('#slider-confirm'),
     },
     // Both resurrection steps are off the table when death is disabled: there
     // is no fallen unit to teach on, and the Resurrect button they point at
@@ -1851,6 +1950,7 @@ export function renderCastle(root, { player, focusBuilding }) {
         resolveTarget: step.target,
         showContinue: !!step.wait,
         extraText:    step.hint?.(),
+        tapWithin:    step.tapWithin,
         onAdvance: () => {
           // The spotlight is already down (showTutorialSpotlight tears it down
           // before calling this), so the player is never waiting on anything
@@ -3223,6 +3323,32 @@ export function renderCastle(root, { player, focusBuilding }) {
     document.body.appendChild(overlay);
   }
 
+  // Split out of openBuildModal so the onboarding chain can count the recruits
+  // a plot offers without opening the sheet to find out — the "choose your
+  // recruit" step is pointless when the plot offers exactly one.
+  function availableBuildingsForSlot(slot) {
+    const slotCategory = SLOT_CATEGORIES[slot];
+    if (!slotCategory || slotCategory === 'special') return [];
+
+    const factionPools = buildingPools[player.faction] || {};
+    const pool         = factionPools[slotCategory] || [];
+    // The throne is never built from here. It is seeded at level 1 with the
+    // hero (POST /player/faction), so it always has a building_id, and the only
+    // caller of this function is the empty-slot branch of the node handler.
+    // Its upgrades go through openUpgradeModal like every other slot's.
+    const available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
+
+    // Layer 2 is a fixed ladder: each slot accepts exactly the one building
+    // named for it, and a slot with none named accepts NOTHING — it is reserved
+    // for content that does not exist yet. Falling back to the category pool
+    // there offered the Mercenary Hall in all four mercenary slots.
+    const fixedBuilding = SLOT_FIXED_BUILDING[slot];
+    if (layerOf(slot) === 2) {
+      return fixedBuilding ? available.filter(b => b.id === fixedBuilding) : [];
+    }
+    return available;
+  }
+
   function openBuildModal(slot) {
     const slotCategory = SLOT_CATEGORIES[slot];
     if (!slotCategory) return;
@@ -3231,22 +3357,7 @@ export function renderCastle(root, { player, focusBuilding }) {
     // instead of building an empty hall first.
     if (slotCategory === 'special') { openMercenaryModal(slot); return; }
 
-    const factionPools = buildingPools[player.faction] || {};
-    const pool         = factionPools[slotCategory] || [];
-    // The throne is never built from here. It is seeded at level 1 with the
-    // hero (POST /player/faction), so it always has a building_id, and the only
-    // caller of this function is the empty-slot branch of the node handler.
-    // Its upgrades go through openUpgradeModal like every other slot's.
-    let available = pool.filter(b => b.category !== 'throne' && (b.tier === 1 || b.tier === undefined));
-
-    // Layer 2 is a fixed ladder: each slot accepts exactly the one building
-    // named for it, and a slot with none named accepts NOTHING — it is reserved
-    // for content that does not exist yet. Falling back to the category pool
-    // there offered the Mercenary Hall in all four mercenary slots.
-    const fixedBuilding = SLOT_FIXED_BUILDING[slot];
-    if (layerOf(slot) === 2) {
-      available = fixedBuilding ? available.filter(b => b.id === fixedBuilding) : [];
-    }
+    const available = availableBuildingsForSlot(slot);
 
     if (!available.length) {
       openModal(CASTLE_TEXT.build[castleLang],
@@ -3282,6 +3393,21 @@ export function renderCastle(root, { player, focusBuilding }) {
         if (s.placeholder) { openPlaceholderModal(s.buildingId); return; }
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
+      },
+      {
+        actionLabel: CASTLE_TEXT.build[castleLang],
+        // Read by the onboarding driver: its build steps must be able to tell
+        // "this sheet is already the one I want" from "open it", because
+        // re-opening it would throw away the recruit the player just picked.
+        sheetKey:    `build:${slot}`,
+        // The ▼ bob over the build button, while the first-build lesson is
+        // still live. It was written for exactly this and then never passed by
+        // anyone, so the glyph sat there unmarked through the whole tutorial.
+        // The same predicate as the step, not the flag alone: `second_building`
+        // is SKIPPED rather than completed for a player who already has the
+        // units, and the flag they never got would have left this bobbing over
+        // every build sheet they ever opened.
+        hintConfirm: needsFirstRecruit(),
       }
     );
   }
@@ -3324,7 +3450,7 @@ export function renderCastle(root, { player, focusBuilding }) {
         if (short) { alert(CASTLE_TEXT.notEnough[castleLang]); return; }
         performMercenaryUpgrade(s.mercBuildingId, slot, s.rosterId);
       },
-      { deconstructSlot: slot, startIndex }
+      { deconstructSlot: slot, startIndex, actionLabel: CASTLE_TEXT.upgrade[castleLang] }
     );
   }
 
@@ -3363,7 +3489,7 @@ export function renderCastle(root, { player, focusBuilding }) {
         if (s.affordable === false) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabelFor(s.cost)}`); return; }
         performBuildingUpgrade(s.slot, s.buildingId);
       },
-      { deconstructSlot: slot, startIndex }
+      { deconstructSlot: slot, startIndex, actionLabel: CASTLE_TEXT.upgrade[castleLang] }
     );
   }
 
@@ -3394,6 +3520,12 @@ export function renderCastle(root, { player, focusBuilding }) {
       if (building_id === 'infirmary') markTutorialDone(player, 'build_infirmary');
       if (building_id === 'blacksmith') markTutorialDone(player, 'build_blacksmith');
       if (slot !== 'slot_0' && !isTutorialDone(player, 'second_building')) {
+        // The two steps in front of it are finished by the build as well,
+        // however the player got here — a plot tapped while the spotlight was
+        // between steps, or a recruit chosen without touching the strip. Left
+        // unflagged, they would replay on the next empty plot.
+        markTutorialDone(player, 'build_slot');
+        markTutorialDone(player, 'build_pick_unit');
         markTutorialDone(player, 'second_building');
         // The player now has a second unit and an unequipped starting item, so
         // the equip lesson runs next. It used to hand off to the roster screen;
@@ -3481,7 +3613,8 @@ export function renderCastle(root, { player, focusBuilding }) {
       s => {
         if (!s.affordable) { alert(`${CASTLE_TEXT.cannotAfford[castleLang]} ${costLabel(s.mercCost)}`); return; }
         performMercenaryRecruit(s.mercBuildingId, slot);
-      }
+      },
+      { actionLabel: CASTLE_TEXT.mercRecruit[castleLang] }
     );
   }
 

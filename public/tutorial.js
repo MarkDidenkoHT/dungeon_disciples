@@ -3,9 +3,11 @@ import { api } from './api.js';
 // Label for the bubble's dismiss button on informational steps (opts.showContinue).
 const CONTINUE_LABEL = { en: 'Got it', ru: 'Понятно' };
 
-// Faction-specific advice appended to the `second_building` step — the moment
-// the player is actually about to pick their first recruit. It used to sit on
-// the hero-selection screen, several steps too early to act on.
+// Faction-specific advice appended to the `build_pick_unit` step — the moment
+// the player is actually looking at the recruits and about to tap one. It used
+// to sit on the hero-selection screen, several steps too early to act on, and
+// then on `second_building`, which is now the PAYING half of the build and one
+// beat too late to change anyone's mind.
 const FIRST_RECRUIT_HINT = {
   empire: {
     en: 'New to the Empire? Your first recruit should be a Conscript — sturdy enough to hold the front line while you learn the ropes. Casters and scouts hit hard, but they won’t survive long without a shield ahead of them.',
@@ -37,14 +39,45 @@ const TUTORIAL_STEPS = {
       text: 'Трон в центре — ваш, а на нём ваш герой: единственный боец, который участвует в каждом бою и которого нельзя потерять. Коснитесь трона, чтобы рассмотреть его.',
     },
   },
-  second_building: {
+  // THE FIRST BUILD, IN THREE BEATS. This used to be one step: a ring on an
+  // empty square, captioned "build another structure here". The tap opened the
+  // build sheet and onboarding stopped dead — leaving the player alone with a
+  // strip of nameless portraits and a bare ⚒ glyph, with nothing saying that the
+  // portraits were the unit choice or that the hammer was the button that paid
+  // for it. It is the step testers get lost on, so the sheet is now taught from
+  // the inside: find the plot, choose the soldier, then pay.
+  //
+  // `second_building` keeps its id and stays LAST of the three because it is the
+  // flag the rest of the app reads — it unlocks the nav tabs (NAV_UNLOCK_STEP in
+  // api.js) and it is written by the build itself, not by the tap.
+  build_slot: {
     en: {
-      title: 'Grow Your Army',
-      text: 'A hero alone cannot win every battle. Build another structure here to recruit a second unit.',
+      title: 'An Empty Plot',
+      text: 'A hero alone cannot win every battle, and every soldier you recruit needs somewhere to live. This empty plot is one — tap it to see who can be raised here.',
     },
     ru: {
-      title: 'Растите армию',
-      text: 'Один герой не выиграет каждую битву. Постройте здание здесь, чтобы набрать второго бойца.',
+      title: 'Пустой участок',
+      text: 'Один герой не выиграет каждую битву, а каждому новому бойцу нужно где-то жить. Вот пустой участок — коснитесь его, чтобы увидеть, кого здесь можно поднять.',
+    },
+  },
+  build_pick_unit: {
+    en: {
+      title: 'Choose Your Recruit',
+      text: 'Every portrait in the bottom row is a different soldier this plot can raise. Tap one and the big card above shows their stats, abilities and price. Pick the recruit you want.',
+    },
+    ru: {
+      title: 'Выберите новобранца',
+      text: 'Каждый портрет в нижнем ряду — это другой боец, которого можно поднять на этом участке. Коснитесь портрета, и карточка сверху покажет его характеристики, способности и цену. Выберите того, кто вам нужен.',
+    },
+  },
+  second_building: {
+    en: {
+      title: 'Raise the Building',
+      text: 'The ⚒ Build button to the left of the portraits is the one that spends the gold. Tap it and the building goes up with your new soldier already in it.',
+    },
+    ru: {
+      title: 'Постройте здание',
+      text: 'Кнопка «⚒ Построить» слева от портретов — та самая, что тратит золото. Нажмите её, и здание поднимется вместе с новым бойцом внутри.',
     },
   },
   // Kept under the roster_* keys so players mid-onboarding do not repeat steps
@@ -422,6 +455,12 @@ export function hideTutorial() {
  *                   explain something instead of asking for a specific tap
  * opts.extraText    a second paragraph under the step copy, for advice that
  *                   varies by player (e.g. the faction's first-recruit hint)
+ * opts.tapWithin    CSS selector. When the ring is around a CONTAINER rather
+ *                   than a single control — a strip of cards — only a tap that
+ *                   lands on something matching this counts as the answer; a
+ *                   tap on the gaps between them is ignored and the step stays
+ *                   up. Without it a stray tap inside the strip advances the
+ *                   chain without the player having chosen anything.
  * opts.onAdvance    called once, when the player taps the target (or the
  *                   continue button). Use it to chain the next step.
  */
@@ -485,7 +524,7 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
     if (!next || next === liveTarget) return;
     if (onTargetTap) {
       liveTarget.removeEventListener('click', onTargetTap, true);
-      next.addEventListener('click', onTargetTap, { once: true, capture: true });
+      next.addEventListener('click', onTargetTap, { capture: true });
     }
     liveTarget = next;
   }
@@ -612,8 +651,14 @@ export function showTutorialSpotlight(player, stepId, targetEl, opts = {}) {
   // Capture always runs before any bubble handler regardless of who bound
   // first, so the step is torn down and marked before the app can react.
   if (!opts.showContinue) {
-    onTargetTap = () => advance();
-    liveTarget.addEventListener('click', onTargetTap, { once: true, capture: true });
+    // NOT `once`: a tap that tapWithin rejects must leave the listener in place,
+    // and advance() is already single-shot on its own flag. activeCleanup takes
+    // the listener off either way.
+    onTargetTap = e => {
+      if (opts.tapWithin && !e.target.closest?.(opts.tapWithin)) return;
+      advance();
+    };
+    liveTarget.addEventListener('click', onTargetTap, { capture: true });
   }
 
   activeCleanup = () => {

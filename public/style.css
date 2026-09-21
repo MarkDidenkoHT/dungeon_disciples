@@ -7595,6 +7595,35 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .portrait-card--branch .portrait-name {
   max-width: 100%;
   font-size: 0.5rem;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Which option is on the card. The picker's sheet title is the QUESTION
+   ("Choose Unit"), and the portrait art deliberately carries no name, so the
+   unit being chosen was the one thing on screen without one. */
+.castle-slider-pick {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px 4px;
+}
+
+.castle-slider-pick-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+.castle-slider-pick-of {
+  font-size: 0.66rem;
+  color: var(--muted);
+  flex: 0 0 auto;
 }
 
 .track-action-row {
@@ -7683,6 +7712,30 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .frame-action { color: var(--accent); }
+
+/* A GLYPH IS NOT A LABEL. These buttons carried their words in `title` only,
+   which a touch device never shows — so the control that spends the player's
+   gold read as an ornament, and the build step of the tutorial was the one
+   testers got stuck on. The word is stacked under the glyph, inside the button,
+   so the framed row keeps its height and the track beside it is untouched.
+   Buttons that pass a bare glyph as their text are unaffected: a single child
+   centres in a column exactly as it did in a row. */
+.frame-action { flex-direction: column; gap: 1px; padding: 2px; }
+
+.frame-action-glyph { font-size: 1.4rem; line-height: 1; }
+
+.frame-action-label {
+  max-width: 100%;
+  font-size: 0.5rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  /* Clipped rather than wrapped: "Deconstruct" over two lines pushes the glyph
+     off centre and the two buttons in the row stop matching. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .frame-action--deconstruct { color: var(--danger); }
 
