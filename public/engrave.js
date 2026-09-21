@@ -28,7 +28,6 @@ const EG = {
   pickUnit:  { en: 'Choose a unit',    ru: 'Выберите юнита' },
   current:   { en: 'Current',          ru: 'Сейчас' },
   none:      { en: 'Not engraved',     ru: 'Без гравировки' },
-  combo:     { en: 'Tap to change',    ru: 'Нажмите, чтобы сменить' },
   pointsHint:{ en: 'Spend the points: every + needs a − elsewhere',
                ru: 'Потратьте очки: каждый + требует − на другом стате' },
   points:    { en: 'Points',           ru: 'Очки' },
@@ -36,7 +35,6 @@ const EG = {
   engrave:   { en: 'Engrave',          ru: 'Выгравировать' },
   replace:   { en: 'Replace',          ru: 'Заменить' },
   working:   { en: 'Engraving…',       ru: 'Гравировка…' },
-  cost:      { en: 'Cost',             ru: 'Цена' },
   short:     { en: 'Not enough Valor', ru: 'Недостаточно Доблести' },
   shortToken:{ en: 'Not enough engraving tokens', ru: 'Недостаточно жетонов гравировки' },
   same:      { en: 'Already engraved this way', ru: 'Эта гравировка уже стоит' },
@@ -193,9 +191,6 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return `
       <div class="eg-col ${down ? 'eg-col--neg' : (up ? 'eg-col--pos' : '')}">
         <div class="eg-col-total">${total == null ? '—' : total}</div>
-        <div class="eg-col-delta ${delta < 0 ? 'eg-col-delta--neg' : 'eg-col-delta--pos'}">
-          ${delta ? `${delta > 0 ? '+' : ''}${delta}` : '&nbsp;'}
-        </div>
         <div class="eg-col-stat">${statName(statKey)}</div>
         <div class="eg-col-signs">
           <button class="eg-sign ${down ? 'eg-sign--on' : ''}" data-minus="${statKey}" type="button"
@@ -208,6 +203,18 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
           </button>
         </div>
       </div>`;
+  }
+
+  // Every combo as an icon in one row; the chosen one is lit.
+  function combosHtml() {
+    return ENGRAVING_COMBOS.map((cb, i) => {
+      const name = escapeHtml(comboName(cb));
+      return `
+        <button class="eg-combo ${i === comboIdx ? 'eg-combo--on' : ''}" data-combo="${i}" type="button" title="${name}">
+          <img class="eg-combo-icon" src="${assetUrl(`/assets/icons/engravings/${cb.id}.png`)}" alt="${name}"
+               onerror="this.style.display='none'">
+        </button>`;
+    }).join('');
   }
 
   function tiersHtml() {
@@ -250,14 +257,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
           <div class="eg-title">${t('title')}</div>
           <div class="eg-hint">${t('hint')}</div>
           ${currentHtml(row)}
-          <button class="eg-combo" id="eg-combo" type="button">
-            <img class="eg-combo-icon" src="${assetUrl(`/assets/icons/engravings/${c.id}.png`)}" alt=""
-                 onerror="this.style.display='none'">
-            <span class="eg-combo-text">
-              <span class="eg-combo-name">${escapeHtml(comboName(c))}</span>
-              <span class="eg-combo-hint">${t('combo')}</span>
-            </span>
-          </button>
+          <div class="eg-combos">${combosHtml()}</div>
           <div class="eg-tiers">${tiersHtml()}</div>
           <div class="eg-cols">${c.stats.map(s => columnHtml(s, worn)).join('')}</div>
           <div class="eg-points">
@@ -267,7 +267,6 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
             ${spent() || paid() ? `<button class="eg-reset" id="eg-reset" type="button">${t('reset')}</button>` : ''}
           </div>
           <div class="eg-status">
-            <span class="eg-cost">${t('cost')} ${engravingCost(tierId)} ⚔ · ${engravingTokenCost(tierId)} ✦</span>
             ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
           </div>
           <button class="eg-go" id="eg-go" type="button" ${why || busy ? 'disabled' : ''}>${label}</button>
@@ -322,8 +321,9 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       return;
     }
 
-    if (e.target.closest('#eg-combo')) {
-      comboIdx = (comboIdx + 1) % ENGRAVING_COMBOS.length;
+    const comboBtn = e.target.closest('[data-combo]');
+    if (comboBtn) {
+      comboIdx = Number(comboBtn.dataset.combo);
       clearPicks();
       render();
       return;

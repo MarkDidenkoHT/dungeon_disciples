@@ -9630,7 +9630,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 14px 10px;
+  padding: 6px;
   background: rgba(11, 14, 20, 0.86);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -9673,22 +9673,31 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .eg-chip--pos { color: #6ec87e; border-color: rgba(110, 200, 126, 0.45); }
 .eg-chip--neg { color: #e0715f; border-color: rgba(224, 113, 95, 0.45); }
 .eg-chip--none { color: var(--muted); }
+.eg-combos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
 .eg-combo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 190px;
-  padding: 8px 12px;
-  border: 1px solid var(--accent);
+  justify-content: center;
+  padding: 3px;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(var(--accent-rgb), 0.12);
+  background: rgba(255, 255, 255, 0.04);
   color: #f0e6d2;
   cursor: pointer;
+  opacity: 0.6;
 }
-.eg-combo-icon { width: 34px; height: 34px; object-fit: contain; }
-.eg-combo-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.eg-combo-name { font-weight: 700; font-size: 0.86rem; }
-.eg-combo-hint { font-size: 0.62rem; color: var(--muted); }
+.eg-combo--on {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.16);
+  opacity: 1;
+}
+.eg-combo-icon { width: 30px; height: 30px; object-fit: contain; }
 .eg-tiers { display: flex; gap: 6px; }
 .eg-tier {
   display: flex;
@@ -9729,9 +9738,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .eg-col--pos { border-color: rgba(110, 200, 126, 0.45); }
 .eg-col--neg { border-color: rgba(224, 113, 95, 0.7); background: rgba(224, 113, 95, 0.1); }
 .eg-col-total { font-size: 1.25rem; font-weight: 700; color: #f0e6d2; line-height: 1.1; }
-.eg-col-delta { font-size: 0.68rem; font-weight: 700; }
-.eg-col-delta--pos { color: #6ec87e; }
-.eg-col-delta--neg { color: #e0715f; }
 .eg-col-stat {
   font-size: 0.64rem;
   color: var(--muted);
