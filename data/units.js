@@ -47,7 +47,7 @@ const UNITS = {
     black_castellan_path_a_t4: {
       id: 'h_d_1_a41',
       name: 'Black Castellan',
-      name_ru: 'Чёрный каКастелянстелян',
+      name_ru: 'Чёрный Кастелян',
       f: 'd', t: 4, size: 'tile',
       tags: ['Warrior', 'Demon'],
       pref_position: 'front',
@@ -915,8 +915,8 @@ const UNITS = {
     },
     ash_liturgist: {
       id: 'd5211', f: 'd', t: 4,
-      name: 'Ash Hierophant',
-      name_ru: 'Пепельный Иерофант',
+      name: 'Ash Liturgist',
+      name_ru: 'Пепельный Литургист',
       tags: ['Caster', 'Demon'],
       pref_position: 'back',
       size: 'tile',
@@ -2509,8 +2509,8 @@ const UNITS = {
     },
     plague_knight2: {
       id: 'gs1111', f: 'g', t: 4,
-      name: 'Plague Knight',
-      name_ru: 'Чумной Рыцарь',
+      name: 'Plague Champion',
+      name_ru: 'Чумной Поборник',
       tags: ['Zombie', 'Knight'],
       pref_position: 'front',
       size: 'tile',
@@ -2548,8 +2548,8 @@ const UNITS = {
     },
     abominate2: {
       id: 'gs1211', f: 'g', t: 4,
-      name: 'Abominate',
-      name_ru: 'Мерзость',
+      name: 'Blood Abomination',
+      name_ru: 'Кровавая Мерзость',
       tags: ['Vampire', 'Zombie'],
       pref_position: 'front',
       size: 'tile',
