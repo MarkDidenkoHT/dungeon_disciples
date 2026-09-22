@@ -208,12 +208,14 @@ export function renderSpellTome(root, { player }) {
       <main class="spelltome-main">
         <div class="tome-layers">
           <button class="tome-layer-arrow tome-layer-arrow--prev" id="tome-layer-prev"
-                  type="button" aria-label="${TOME_TEXT.tomeAria[lang]}"><span>&lsaquo;</span></button>
+                  type="button" aria-label="${TOME_TEXT.litaniesAria[lang]}"><span>&lsaquo;</span></button>
 
           <div class="tome-layer-viewport">
             <div class="tome-layer-track" id="tome-layer-track">
 
-              <div class="tome-layer" data-layer="1">
+              <div class="tome-layer" data-layer="1" id="tome-litanies"></div>
+
+              <div class="tome-layer" data-layer="2">
                 <div class="tier-tabs" id="tier-tabs">
                   ${TOME_CATEGORIES.map((c, i) => `
                     <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
@@ -227,16 +229,13 @@ export function renderSpellTome(root, { player }) {
                 </div>
               </div>
 
-              <div class="tome-layer" data-layer="2" id="tome-library"></div>
-
-              <div class="tome-layer" data-layer="3" id="tome-litanies"></div>
+              <div class="tome-layer" data-layer="3" id="tome-library"></div>
 
             </div>
           </div>
 
           <button class="tome-layer-arrow tome-layer-arrow--next" id="tome-layer-next"
-                  type="button" aria-label="${TOME_TEXT.libraryAria[lang]}"
-                  id="tome-layer-next-label"><span>&rsaquo;</span></button>
+                  type="button" aria-label="${TOME_TEXT.libraryAria[lang]}"><span>&rsaquo;</span></button>
         </div>
       </main>
     </div>
@@ -248,9 +247,23 @@ export function renderSpellTome(root, { player }) {
   // switching slides it, so neither is rebuilt and the arrows cannot race a
   // render. The Library is built ONCE, here, because it derives everything from
   // static data — nothing about it changes while the screen is open.
-  // 1 spells · 2 Library · 3 Litanies.
-  const LAYER_COUNT = 3;
-  let currentLayer = 1;
+  // The book reads Litanies ← Spells → Library, and it OPENS on the spells:
+  // that is what the tab is for, with a page to either side of it. Named rather
+  // than numbered, because the order is a layout decision and these indices are
+  // read in five places.
+  const LAYER_LITANIES = 1;
+  const LAYER_SPELLS   = 2;
+  const LAYER_LIBRARY  = 3;
+  const LAYER_COUNT    = 3;
+  const LAYER_LABELS = {
+    [LAYER_LITANIES]: 'litaniesAria',
+    [LAYER_SPELLS]:   'tomeAria',
+    [LAYER_LIBRARY]:  'libraryAria',
+  };
+  // An arrow is named for where it LEADS, not where it sits.
+  const labelForLayer = n => TOME_TEXT[LAYER_LABELS[n] || 'tomeAria'][lang];
+
+  let currentLayer = LAYER_SPELLS;
 
   function applyLayer() {
     const track = root.querySelector('#tome-layer-track');
@@ -264,20 +277,18 @@ export function renderSpellTome(root, { player }) {
     // vanishes moves everything beside it.
     const prev = root.querySelector('#tome-layer-prev');
     const next = root.querySelector('#tome-layer-next');
-    // Three pages now, so neither arrow always leads to the same one.
+    // Three pages, so neither arrow always leads to the same one.
     if (prev) {
       const can = currentLayer > 1;
       prev.disabled = !can;
       prev.classList.toggle('tome-layer-arrow--live', can);
-      prev.setAttribute('aria-label',
-        currentLayer === 3 ? TOME_TEXT.libraryAria[lang] : TOME_TEXT.tomeAria[lang]);
+      prev.setAttribute('aria-label', labelForLayer(can ? currentLayer - 1 : currentLayer));
     }
     if (next) {
       const can = currentLayer < LAYER_COUNT;
       next.disabled = !can;
       next.classList.toggle('tome-layer-arrow--live', can);
-      next.setAttribute('aria-label',
-        currentLayer === 1 ? TOME_TEXT.libraryAria[lang] : TOME_TEXT.litaniesAria[lang]);
+      next.setAttribute('aria-label', labelForLayer(can ? currentLayer + 1 : currentLayer));
     }
   }
 
@@ -286,9 +297,10 @@ export function renderSpellTome(root, { player }) {
     if (clamped === currentLayer) return;
     currentLayer = clamped;
     playPageTurnSound();
-    // The cost bar belongs to a selected spell on page one; carrying it onto the
-    // Library would leave a price tag hanging under a screen that sells nothing.
-    if (currentLayer !== 1) { primeCostBar(costBarOpts()); closeSheet(); }
+    // The cost bar belongs to a selected spell; carrying it onto the Library or
+    // the Litanies would leave a price tag hanging under a page that sells
+    // nothing.
+    if (currentLayer !== LAYER_SPELLS) { primeCostBar(costBarOpts()); closeSheet(); }
     applyLayer();
   }
 
