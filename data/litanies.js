@@ -59,9 +59,9 @@ const LITANIES = [
                'Я его Молот и твоя смерть!'] },
     ],
     reward: {
-      initiative_flat_reduction: 5,
-      message:    'Profane Chorus - the Light breaks them: every enemy loses 5 initiative.',
-      message_ru: 'Нечестивый Хор — Свет ломает их: все враги теряют 5 инициативы.',
+      initiative_flat_reduction: 10,
+      message:    'Profane Chorus - the Light breaks them: every enemy loses 10 initiative.',
+      message_ru: 'Нечестивый Хор — Свет ломает их: все враги теряют 10 инициативы.',
     },
     once_per: 'battle',
   },
