@@ -1507,6 +1507,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-shrink: 0;
 }
 
+/* .cost-bar-row sets display:flex, which outranks the [hidden] attribute's own
+   display:none — so a primed-but-not-yet-priced row needs this to stay down. */
+.cost-bar-row[hidden] { display: none; }
+
 .cost-bar {
   z-index: 299;
 }

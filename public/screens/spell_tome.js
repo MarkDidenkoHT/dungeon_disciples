@@ -1,6 +1,6 @@
 import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache } from '../api.js';
-import { showCostBar, hideCostBar } from '../cost-bar.js';
+import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
 import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, closeSubSheet, getSheetBody,
@@ -220,7 +220,7 @@ export function renderSpellTome(root, { player }) {
     playPageTurnSound();
     // The cost bar belongs to a selected spell on page one; carrying it onto the
     // Library would leave a price tag hanging under a screen that sells nothing.
-    if (currentLayer !== 1) { hideCostBar(); closeSheet(); }
+    if (currentLayer !== 1) { primeCostBar(costBarOpts()); closeSheet(); }
     applyLayer();
   }
 
@@ -600,6 +600,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   const crystalAmount = key => Number(playerCrystals[key] || 0);
+  const costBarOpts = () => ({ amountOf: crystalAmount, lang });
 
   function canAfford(spell) {
     for (const [type, amt] of Object.entries(spell.cost.crystals || {})) {
@@ -655,17 +656,17 @@ export function renderSpellTome(root, { player }) {
         if (activeSpellId === spellId) {
           activeSpellId = null;
           renderSlider();
-          hideCostBar();
+          primeCostBar(costBarOpts());
           closeSheet();
           return;
         }
         activeSpellId = spellId;
         renderSlider();
-        showCostBar(costMap(spell), { amountOf: crystalAmount, lang });
+        showCostBar(costMap(spell), costBarOpts());
         openSpellModal(spell);
         // Dismissing the sheet by the X or the backdrop has to take the bar with
         // it, or it outlives the spell it was describing.
-        onSheetClose(() => { activeSpellId = null; hideCostBar(); renderSlider(); });
+        onSheetClose(() => { activeSpellId = null; primeCostBar(costBarOpts()); renderSlider(); });
       });
     });
   }

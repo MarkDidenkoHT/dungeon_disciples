@@ -229,7 +229,7 @@ export function openDailyTasks(player, { tab } = {}) {
       <div class="daily-header">
         <div class="daily-tabs" role="tablist">
           <button class="daily-tab" role="tab" data-tab="daily">
-            ${T('Daily', 'Ежедневные')}<span class="daily-tab-dot"></span>
+            ${T('Daily', 'Сегодня')}<span class="daily-tab-dot"></span>
           </button>
           <button class="daily-tab" role="tab" data-tab="quests">
             ${T('Quests', 'Задания')}<span class="daily-tab-dot"></span>

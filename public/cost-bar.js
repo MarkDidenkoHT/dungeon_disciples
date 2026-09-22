@@ -7,13 +7,29 @@ export function hideCostBar() {
   document.getElementById(COST_BAR_ID)?.remove();
 }
 
+// Put the row in the DOM without showing it. A screen that WILL price something
+// — the castle, the spell tome — can pay for the mount on the way in, so the
+// first sheet the player opens reveals a row that is already built and already
+// laid out rather than inserting one next to the resource strip mid-interaction.
+// Nothing is priced yet at that point, so the row stays hidden until it is.
+export function primeCostBar(opts = {}) {
+  mountCostBar(null, opts, { hidden: true });
+}
+
 // `amountOf(key)` tells the bar what the player holds, `lang` picks the tooltip
 // wording, and `onMaterialClick(key)` is what a shortfall column opens. Injected
 // so the castle can answer with its own sub-sheet and the spell tome with its own.
-export function showCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}) {
+export function showCostBar(cost, opts = {}) {
+  const entries = Object.entries(cost || {}).filter(([, amt]) => Number(amt) > 0);
+  // Nothing to pay is not a reason to tear the row out: it drops back to the
+  // primed state so the next sheet still finds it mounted.
+  if (!entries.length) { primeCostBar(opts); return; }
+  mountCostBar(cost, opts, { hidden: false });
+}
+
+function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { hidden } = {}) {
   hideCostBar();
   const entries = Object.entries(cost || {}).filter(([, amt]) => Number(amt) > 0);
-  if (!entries.length) return;
 
   const resourceRow = document.getElementById('resource-bar-row');
   if (!resourceRow) return;
@@ -71,6 +87,10 @@ export function showCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {
   const bar = document.createElement('div');
   bar.id = COST_BAR_ID;
   bar.className = 'cost-bar-row';
+  // Mounted but not shown. `hidden` (not a display:none of our own) so the row
+  // is out of the layout AND out of the accessibility tree — a priced-nothing
+  // strip of dimmed dots is noise to a screen reader too.
+  if (hidden) bar.hidden = true;
   // The two ghost cells stand in for the timeline / errands buttons that flank
   // the strip above. Without them this bar would start at the screen edge and
   // every column would sit one button-width to the left.

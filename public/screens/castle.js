@@ -3,7 +3,7 @@ import { navigate }          from '../api.js';
 import { refreshResourceBar } from '../api.js';
 import { refreshNavLock }    from '../api.js';
 import { bootstrapCache } from '../api.js';
-import { showCostBar as sharedShowCostBar, hideCostBar } from '../cost-bar.js';
+import { showCostBar as sharedShowCostBar, hideCostBar, primeCostBar as sharedPrimeCostBar } from '../cost-bar.js';
 import { showRestoreControls, hideRestoreControls, restorePlan } from '../restore-bar.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, firstRecruitHint } from '../tutorial.js';
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
@@ -416,6 +416,11 @@ export function renderCastle(root, params = {}) {
     // renderBuildings re-runs on every refresh, this does not.
     attachLayerControls();
 
+    // The build-cost strip is built here rather than when the first slot sheet
+    // opens, so opening one reveals a row that is already mounted. It carries no
+    // cost yet and stays hidden until a sheet hands it one.
+    primeCostBar();
+
     // Sent here from another screen to build something specific. Once.
     if (focusBuilding) { goToBuilding(focusBuilding); focusBuilding = null; }
 
@@ -634,11 +639,14 @@ export function renderCastle(root, params = {}) {
   // Costs are keyed 'gold' + 'Crystals_*' (data/buildings.js) — mercenary
   // upgrades are priced in trophies instead, which have no column in the strip
   // above, so those are appended after the seven fixed slots.
-  const showCostBar = (cost) => sharedShowCostBar(cost, {
+  const costBarOpts = () => ({
     amountOf,
     lang: castleLang,
     onMaterialClick: openMaterialSourceSheet,
   });
+  const showCostBar = (cost) => sharedShowCostBar(cost, costBarOpts());
+  // Mounted on the way in, shown only once a sheet prices something.
+  const primeCostBar = () => sharedPrimeCostBar(costBarOpts());
 
   // ── Where does this come from? ────────────────────────────────────────────
   // Opened from a cost the player cannot meet. Crystals and trophies both drop
@@ -891,7 +899,9 @@ export function renderCastle(root, params = {}) {
     // The cost belongs to the SELECTED slide, so it is refreshed on every branch
     // change alongside the card, and torn down with the sheet however it closes.
     showCostBar(slides[current]?.cost ?? slides[current]?.mercCost);
-    onSheetClose(hideCostBar);
+    // Back to primed, not unmounted: the player is still on the castle and the
+    // next sheet should find the row already built.
+    onSheetClose(primeCostBar);
 
     function attachAbilityListeners() {
       // The tree button shares the .ability-icon shape but has no ability key,
@@ -2627,7 +2637,7 @@ export function renderCastle(root, params = {}) {
       if (cardWrap) cardWrap.innerHTML = ownCardHtml;
       const confirmBtn = body?.querySelector('#slot-confirm');
       if (confirmBtn) confirmBtn.disabled = true;
-      hideCostBar();
+      primeCostBar();
       body?.querySelectorAll('#slot-upgrade-track .portrait-card')
           .forEach(c => c.classList.remove('portrait-card--selected'));
     }
@@ -2832,7 +2842,9 @@ export function renderCastle(root, params = {}) {
 
     // The cost bar lives outside the sheet, so it has to be torn down with it —
     // however the sheet closes.
-    onSheetClose(hideCostBar);
+    // Back to primed, not unmounted: the player is still on the castle and the
+    // next sheet should find the row already built.
+    onSheetClose(primeCostBar);
   }
 
   // ── Item equipping, in the castle ─────────────────────────────────────────
