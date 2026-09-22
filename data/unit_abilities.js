@@ -61,7 +61,7 @@ const UNIT_ABILITIES = {
   'raise_dead 1': {
     id: 'raise_dead 1',
     name: 'Raise Dead',
-    name_ru: "Поднятие мёртвых",
+    name_ru: "Поднятие Мёртвых",
     rank: 1,
     type: 'active',
     target: 'ally_dead',
@@ -72,7 +72,7 @@ const UNIT_ABILITIES = {
   'raise_dead 2': {
     id: 'raise_dead 2',
     name: 'Raise Dead',
-    name_ru: "Поднятие мёртвых",
+    name_ru: "Поднятие Мёртвых",
     rank: 2,
     type: 'active',
     target: 'ally_dead',
@@ -149,7 +149,7 @@ const UNIT_ABILITIES = {
   'rite_of_reclamation 1': {
     id: 'rite_of_reclamation 1',
     name: 'Rite of Reclamation',
-    name_ru: "Обряд возвращения",
+    name_ru: "Обряд Возвращения",
     rank: 1,
     type: 'active',
     target: 'ally_dead',
@@ -160,7 +160,7 @@ const UNIT_ABILITIES = {
   'rite_of_reclamation 2': {
     id: 'rite_of_reclamation 2',
     name: 'Rite of Reclamation',
-    name_ru: "Обряд возвращения",
+    name_ru: "Обряд Возвращения",
     rank: 2,
     type: 'active',
     target: 'ally_dead',
@@ -171,7 +171,7 @@ const UNIT_ABILITIES = {
   'blood_frenzy 1': {
     id: 'blood_frenzy 1',
     name: 'Blood Frenzy',
-    name_ru: "Кровавая ярость",
+    name_ru: "Кровавая Ярость",
     rank: 1,
     type: 'passive',
     trigger: 'on_kill',
@@ -183,7 +183,7 @@ const UNIT_ABILITIES = {
   'blood_frenzy 2': {
     id: 'blood_frenzy 2',
     name: 'Blood Frenzy',
-    name_ru: "Кровавая ярость",
+    name_ru: "Кровавая Ярость",
     rank: 2,
     type: 'passive',
     trigger: 'on_kill',
@@ -217,7 +217,7 @@ const UNIT_ABILITIES = {
   'beacon_of_hope 1': {
     id: 'beacon_of_hope 1',
     name: 'Beacon of Hope',
-    name_ru: "Маяк надежды",
+    name_ru: "Маяк Надежды",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -228,7 +228,7 @@ const UNIT_ABILITIES = {
   'beacon_of_hope 2': {
     id: 'beacon_of_hope 2',
     name: 'Beacon of Hope',
-    name_ru: "Маяк надежды",
+    name_ru: "Маяк Надежды",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -239,7 +239,7 @@ const UNIT_ABILITIES = {
   'beacon_of_despair 1': {
     id: 'beacon_of_despair 1',
     name: 'Beacon of Despair',
-    name_ru: "Маяк отчаяния",
+    name_ru: "Маяк Отчаяния",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -250,7 +250,7 @@ const UNIT_ABILITIES = {
   'beacon_of_despair 2': {
     id: 'beacon_of_despair 2',
     name: 'Beacon of Despair',
-    name_ru: "Маяк отчаяния",
+    name_ru: "Маяк Отчаяния",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -261,7 +261,7 @@ const UNIT_ABILITIES = {
   'lions_roar 1': {
     id: 'lions_roar 1',
     name: "Lion's Roar",
-    name_ru: "Рык льва",
+    name_ru: "Рык Льва",
     rank: 1,
     type: 'active',
     target: 'self',
@@ -272,7 +272,7 @@ const UNIT_ABILITIES = {
   'lions_roar 2': {
     id: 'lions_roar 2',
     name: "Lion's Roar",
-    name_ru: "Рык льва",
+    name_ru: "Рык Льва",
     rank: 2,
     type: 'active',
     target: 'self',
@@ -367,7 +367,7 @@ const UNIT_ABILITIES = {
   'death_mark 1': {
     id: 'death_mark 1',
     name: 'Death Mark',
-    name_ru: "Печать смерти",
+    name_ru: "Печать Смерти",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -378,7 +378,7 @@ const UNIT_ABILITIES = {
   'death_mark 2': {
     id: 'death_mark 2',
     name: 'Death Mark',
-    name_ru: "Печать смерти",
+    name_ru: "Печать Смерти",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -529,7 +529,7 @@ const UNIT_ABILITIES = {
   'lifesteal 1': {
     id: 'lifesteal 1',
     name: 'Lifesteal',
-    name_ru: "Похищение жизни",
+    name_ru: "Похищение Жизни",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -541,7 +541,7 @@ const UNIT_ABILITIES = {
   'lifesteal 2': {
     id: 'lifesteal 2',
     name: 'Lifesteal',
-    name_ru: "Похищение жизни",
+    name_ru: "Похищение Жизни",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -603,7 +603,7 @@ const UNIT_ABILITIES = {
   'last_verse 1': {
     id: 'last_verse 1',
     name: 'Last Verse',
-    name_ru: "Последний стих",
+    name_ru: "Последний Стих",
     rank: 1,
     type: 'passive',
     trigger: 'on_death',
@@ -616,7 +616,7 @@ const UNIT_ABILITIES = {
   'last_verse 2': {
     id: 'last_verse 2',
     name: 'Last Verse',
-    name_ru: "Последний стих",
+    name_ru: "Последний Стих",
     rank: 2,
     type: 'passive',
     trigger: 'on_death',
@@ -629,7 +629,7 @@ const UNIT_ABILITIES = {
   'noxious_death 1': {
     id: 'noxious_death 1',
     name: 'Noxious Death',
-    name_ru: "Ядовитая смерть",
+    name_ru: "Ядовитая Смерть",
     rank: 1,
     type: 'passive',
     trigger: 'on_death',
@@ -642,7 +642,7 @@ const UNIT_ABILITIES = {
   'noxious_death 2': {
     id: 'noxious_death 2',
     name: 'Noxious Death',
-    name_ru: "Ядовитая смерть",
+    name_ru: "Ядовитая Смерть",
     rank: 2,
     type: 'passive',
     trigger: 'on_death',
@@ -655,7 +655,7 @@ const UNIT_ABILITIES = {
   'find_weakness 1': {
     id: 'find_weakness 1',
     name: 'Find Weakness',
-    name_ru: "Поиск слабости",
+    name_ru: "Поиск Слабости",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -666,7 +666,7 @@ const UNIT_ABILITIES = {
   'find_weakness 2': {
     id: 'find_weakness 2',
     name: 'Find Weakness',
-    name_ru: "Поиск слабости",
+    name_ru: "Поиск Слабости",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -829,7 +829,7 @@ const UNIT_ABILITIES = {
   'gravebane 1': {
     id: 'gravebane 1',
     name: 'Gravebane',
-    name_ru: "Могильная погибель",
+    name_ru: "Могильная Погибель",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -840,7 +840,7 @@ const UNIT_ABILITIES = {
   'gravebane 2': {
     id: 'gravebane 2',
     name: 'Gravebane',
-    name_ru: "Могильная погибель",
+    name_ru: "Могильная Погибель",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -851,7 +851,7 @@ const UNIT_ABILITIES = {
   'gravebane 3': {
     id: 'gravebane 3',
     name: 'Gravebane',
-    name_ru: "Могильная погибель",
+    name_ru: "Могильная Погибель",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
@@ -862,7 +862,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 1': {
     id: 'heartpiercer 1',
     name: 'Heartpiercer',
-    name_ru: "Удар В Сердце",
+    name_ru: "Удар в Сердце",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -873,7 +873,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 2': {
     id: 'heartpiercer 2',
     name: 'Heartpiercer',
-    name_ru: "Удар В Сердце",
+    name_ru: "Удар в Сердце",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -884,7 +884,7 @@ const UNIT_ABILITIES = {
   'heartpiercer 3': {
     id: 'heartpiercer 3',
     name: 'Heartpiercer',
-    name_ru: "Удар В Сердце",
+    name_ru: "Удар в Сердце",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
@@ -975,7 +975,7 @@ const UNIT_ABILITIES = {
   'iron_will 1': {
     id: 'iron_will 1',
     name: 'Iron Will',
-    name_ru: "Железная воля",
+    name_ru: "Железная Воля",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -986,7 +986,7 @@ const UNIT_ABILITIES = {
   'iron_will 2': {
     id: 'iron_will 2',
     name: 'Iron Will',
-    name_ru: "Железная воля",
+    name_ru: "Железная Воля",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -997,7 +997,7 @@ const UNIT_ABILITIES = {
   'iron_will 3': {
     id: 'iron_will 3',
     name: 'Iron Will',
-    name_ru: "Железная воля",
+    name_ru: "Железная Воля",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -1181,7 +1181,7 @@ const UNIT_ABILITIES = {
   'ethereal_form 1': {
     id: 'ethereal_form 1',
     name: 'Ethereal Form',
-    name_ru: "Бесплотная форма",
+    name_ru: "Бесплотная Форма",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -1194,7 +1194,7 @@ const UNIT_ABILITIES = {
   'ethereal_form 2': {
     id: 'ethereal_form 2',
     name: 'Ethereal Form',
-    name_ru: "Бесплотная форма",
+    name_ru: "Бесплотная Форма",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -1207,7 +1207,7 @@ const UNIT_ABILITIES = {
   'aura_of_decay 1': {
     id: 'aura_of_decay 1',
     name: 'Aura of Decay',
-    name_ru: "Аура тлена",
+    name_ru: "Аура Тлена",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1218,7 +1218,7 @@ const UNIT_ABILITIES = {
   'aura_of_decay 2': {
     id: 'aura_of_decay 2',
     name: 'Aura of Decay',
-    name_ru: "Аура тлена",
+    name_ru: "Аура Тлена",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1229,7 +1229,7 @@ const UNIT_ABILITIES = {
   'rimeguard 1': {
     id: 'rimeguard 1',
     name: 'Rimeguard',
-    name_ru: "Ледяной страж",
+    name_ru: "Ледяной Страж",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1241,7 +1241,7 @@ const UNIT_ABILITIES = {
   'rimeguard 2': {
     id: 'rimeguard 2',
     name: 'Rimeguard',
-    name_ru: "Ледяной страж",
+    name_ru: "Ледяной Страж",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1332,7 +1332,7 @@ const UNIT_ABILITIES = {
   'volcanic_skin 1': {
     id: 'volcanic_skin 1',
     name: 'Volcanic Skin',
-    name_ru: "Вулканическая кожа",
+    name_ru: "Вулканическая Кожа",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1344,7 +1344,7 @@ const UNIT_ABILITIES = {
   'volcanic_skin 2': {
     id: 'volcanic_skin 2',
     name: 'Volcanic Skin',
-    name_ru: "Вулканическая кожа",
+    name_ru: "Вулканическая Кожа",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1356,7 +1356,7 @@ const UNIT_ABILITIES = {
   'volcanic_skin 3': {
     id: 'volcanic_skin 3',
     name: 'Volcanic Skin',
-    name_ru: "Вулканическая кожа",
+    name_ru: "Вулканическая Кожа",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit_received',
@@ -1576,7 +1576,7 @@ const UNIT_ABILITIES = {
   'blood_craze 1': {
     id: 'blood_craze 1',
     name: 'Blood Craze',
-    name_ru: "Кровавое безумие",
+    name_ru: "Кровавое Безумие",
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
@@ -1587,7 +1587,7 @@ const UNIT_ABILITIES = {
   'blood_craze 2': {
     id: 'blood_craze 2',
     name: 'Blood Craze',
-    name_ru: "Кровавое безумие",
+    name_ru: "Кровавое Безумие",
     rank: 2,
     type: 'active',
     target: 'ally_tagged',
@@ -1598,7 +1598,7 @@ const UNIT_ABILITIES = {
   'blood_craze 3': {
     id: 'blood_craze 3',
     name: 'Blood Craze',
-    name_ru: "Кровавое безумие",
+    name_ru: "Кровавое Безумие",
     rank: 3,
     type: 'active',
     target: 'ally_tagged',
@@ -1609,7 +1609,7 @@ const UNIT_ABILITIES = {
   'infernal_mandate 1': {
     id: 'infernal_mandate 1',
     name: 'Infernal Mandate',
-    name_ru: "Инфернальный указ",
+    name_ru: "Инфернальный Указ",
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
@@ -1620,7 +1620,7 @@ const UNIT_ABILITIES = {
   'infernal_mandate 2': {
     id: 'infernal_mandate 2',
     name: 'Infernal Mandate',
-    name_ru: "Инфернальный указ",
+    name_ru: "Инфернальный Указ",
     rank: 2,
     type: 'active',
     target: 'ally_tagged',
@@ -1631,7 +1631,7 @@ const UNIT_ABILITIES = {
   'infernal_mandate 3': {
     id: 'infernal_mandate 3',
     name: 'Infernal Mandate',
-    name_ru: "Инфернальный указ",
+    name_ru: "Инфернальный Указ",
     rank: 3,
     type: 'active',
     target: 'ally_tagged',
@@ -1642,7 +1642,7 @@ const UNIT_ABILITIES = {
   'prayer_of_healing 1': {
     id: 'prayer_of_healing 1',
     name: 'Prayer of Healing',
-    name_ru: "Молитва исцеления",
+    name_ru: "Молитва Исцеления",
     rank: 1,
     type: 'active',
     target: 'all_allies',
@@ -1654,7 +1654,7 @@ const UNIT_ABILITIES = {
   'prayer_of_healing 2': {
     id: 'prayer_of_healing 2',
     name: 'Prayer of Healing',
-    name_ru: "Молитва исцеления",
+    name_ru: "Молитва Исцеления",
     rank: 2,
     type: 'active',
     target: 'all_allies',
@@ -1710,7 +1710,7 @@ const UNIT_ABILITIES = {
   'frost_armor 1': {
     id: 'frost_armor 1',
     name: 'Frost Armor',
-    name_ru: "Ледяная броня",
+    name_ru: "Ледяная Броня",
     rank: 1,
     type: 'active',
     target: 'ally_any',
@@ -1723,7 +1723,7 @@ const UNIT_ABILITIES = {
   'frost_armor 2': {
     id: 'frost_armor 2',
     name: 'Frost Armor',
-    name_ru: "Ледяная броня",
+    name_ru: "Ледяная Броня",
     rank: 2,
     type: 'active',
     target: 'ally_any',
@@ -1736,7 +1736,7 @@ const UNIT_ABILITIES = {
   'headshot 1': {
     id: 'headshot 1',
     name: 'Headshot',
-    name_ru: "Выстрел в голову",
+    name_ru: "Выстрел в Голову",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -1749,7 +1749,7 @@ const UNIT_ABILITIES = {
   'headshot 2': {
     id: 'headshot 2',
     name: 'Headshot',
-    name_ru: "Выстрел в голову",
+    name_ru: "Выстрел в Голову",
     rank: 2,
     type: 'active',
     target: 'enemy',
@@ -1762,7 +1762,7 @@ const UNIT_ABILITIES = {
   'skullcrack 1': {
     id: 'skullcrack 1',
     name: 'Skullcrack',
-    name_ru: "Раскол черепа",
+    name_ru: "Раскол Черепа",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -1775,7 +1775,7 @@ const UNIT_ABILITIES = {
   'shield_bash 1': {
     id: 'shield_bash 1',
     name: 'Shield Bash',
-    name_ru: "Удар щитом",
+    name_ru: "Удар Щитом",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -1788,7 +1788,7 @@ const UNIT_ABILITIES = {
   'shield_bash 2': {
     id: 'shield_bash 2',
     name: 'Shield Bash',
-    name_ru: "Удар щитом",
+    name_ru: "Удар Щитом",
     rank: 2,
     type: 'active',
     target: 'enemy',
@@ -1825,7 +1825,7 @@ const UNIT_ABILITIES = {
   'stone_form 1': {
     id: 'stone_form 1',
     name: 'Stone Form',
-    name_ru: "Каменная форма",
+    name_ru: "Каменная Форма",
     rank: 1,
     type: 'active',
     target: 'self',
@@ -1838,7 +1838,7 @@ const UNIT_ABILITIES = {
   'stone_form 2': {
     id: 'stone_form 2',
     name: 'Stone Form',
-    name_ru: "Каменная форма",
+    name_ru: "Каменная Форма",
     rank: 2,
     type: 'active',
     target: 'self',
@@ -1851,7 +1851,7 @@ const UNIT_ABILITIES = {
   'furious_strike 1': {
     id: 'furious_strike 1',
     name: 'Furious Strike',
-    name_ru: "Яростный удар",
+    name_ru: "Яростный Удар",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -2013,7 +2013,7 @@ const UNIT_ABILITIES = {
   'chorus_of_war 1': {
     id: 'chorus_of_war 1',
     name: 'Chorus of War',
-    name_ru: "Хор войны",
+    name_ru: "Хор Войны",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2025,7 +2025,7 @@ const UNIT_ABILITIES = {
   'chorus_of_war 2': {
     id: 'chorus_of_war 2',
     name: 'Chorus of War',
-    name_ru: "Хор войны",
+    name_ru: "Хор Войны",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2037,7 +2037,7 @@ const UNIT_ABILITIES = {
   'sovereigns_levy 1': {
     id: 'sovereigns_levy 1',
     name: "Sovereign's Levy",
-    name_ru: "Сюзеренский сбор",
+    name_ru: "Сюзеренский Сбор",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2053,7 +2053,7 @@ const UNIT_ABILITIES = {
   'sovereigns_levy 2': {
     id: 'sovereigns_levy 2',
     name: "Sovereign's Levy",
-    name_ru: "Сюзеренский сбор",
+    name_ru: "Сюзеренский Сбор",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2069,7 +2069,7 @@ const UNIT_ABILITIES = {
   'sanctified_ordnance 1': {
     id: 'sanctified_ordnance 1',
     name: 'Sanctified Ordnance',
-    name_ru: "Освящённый боеприпас",
+    name_ru: "Освящённый Боеприпас",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -2086,7 +2086,7 @@ const UNIT_ABILITIES = {
   'sanctified_ordnance 2': {
     id: 'sanctified_ordnance 2',
     name: 'Sanctified Ordnance',
-    name_ru: "Освящённый боеприпас",
+    name_ru: "Освящённый Боеприпас",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -2103,7 +2103,7 @@ const UNIT_ABILITIES = {
   'procession_of_grief 1': {
     id: 'procession_of_grief 1',
     name: 'Procession of Grief',
-    name_ru: "Процессия скорби",
+    name_ru: "Процессия Скорби",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -2120,7 +2120,7 @@ const UNIT_ABILITIES = {
   'blood_bond 1': {
     id: 'blood_bond 1',
     name: 'Blood Bond',
-    name_ru: "Кровные узы",
+    name_ru: "Кровные Узы",
     rank: 1,
     type: 'none',
     trigger: 'on_battle_start',
@@ -2168,7 +2168,7 @@ const UNIT_ABILITIES = {
   'light_of_dawn 1': {
     id: 'light_of_dawn 1',
     name: 'Light of Dawn',
-    name_ru: "Свет зари",
+    name_ru: "Свет Зари",
     rank: 1,
     type: 'passive',
     trigger: 'on_turn_start',
@@ -2181,7 +2181,7 @@ const UNIT_ABILITIES = {
   'light_of_dawn 2': {
     id: 'light_of_dawn 2',
     name: 'Light of Dawn',
-    name_ru: "Свет зари",
+    name_ru: "Свет Зари",
     rank: 2,
     type: 'passive',
     trigger: 'on_turn_start',
@@ -2194,7 +2194,7 @@ const UNIT_ABILITIES = {
   'eternal_grief 1': {
     id: 'eternal_grief 1',
     name: 'Eternal Grief',
-    name_ru: "Вечная скорбь",
+    name_ru: "Вечная Скорбь",
     rank: 1,
     type: 'passive',
     trigger: 'on_ally_death',
@@ -2205,7 +2205,7 @@ const UNIT_ABILITIES = {
   'eternal_grief 2': {
     id: 'eternal_grief 2',
     name: 'Eternal Grief',
-    name_ru: "Вечная скорбь",
+    name_ru: "Вечная Скорбь",
     rank: 2,
     type: 'passive',
     trigger: 'on_ally_death',
@@ -2384,7 +2384,7 @@ const UNIT_ABILITIES = {
   'shared_suffering 1': {
     id: 'shared_suffering 1',
     name: 'Shared Suffering',
-    name_ru: "Разделённое страдание",
+    name_ru: "Разделённое Страдание",
     rank: 1,
     type: 'active',
     target: 'ally_tagged',
@@ -2396,7 +2396,7 @@ const UNIT_ABILITIES = {
   'clear_shot 1': {
     id: 'clear_shot 1',
     name: 'Clear Shot',
-    name_ru: "Чистый выстрел",
+    name_ru: "Чистый Выстрел",
     rank: 1,
     type: 'passive',
     trigger: 'on_round_start',
@@ -2486,7 +2486,7 @@ const UNIT_ABILITIES = {
   'fellfire 1': {
     id: 'fellfire 1',
     name: 'Fellfire',
-    name_ru: "Злое пламя",
+    name_ru: "Злое Пламя",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -2498,7 +2498,7 @@ const UNIT_ABILITIES = {
   'fellfire 2': {
     id: 'fellfire 2',
     name: 'Fellfire',
-    name_ru: "Злое пламя",
+    name_ru: "Злое Пламя",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -2510,7 +2510,7 @@ const UNIT_ABILITIES = {
   'hungering_frost 1': {
     id: 'hungering_frost 1',
     name: 'Hungering Frost',
-    name_ru: "Голодный мороз",
+    name_ru: "Голодный Мороз",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -2521,7 +2521,7 @@ const UNIT_ABILITIES = {
   'hungering_frost 2': {
     id: 'hungering_frost 2',
     name: 'Hungering Frost',
-    name_ru: "Голодный мороз",
+    name_ru: "Голодный Мороз",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -2532,7 +2532,7 @@ const UNIT_ABILITIES = {
   'mark_of_ash 1': {
     id: 'mark_of_ash 1',
     name: 'Mark of Ash',
-    name_ru: "Печать пепла",
+    name_ru: "Печать Пепла",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -2543,7 +2543,7 @@ const UNIT_ABILITIES = {
   'permafrost 1': {
     id: 'permafrost 1',
     name: 'Permafrost',
-    name_ru: "Вечная мерзлота",
+    name_ru: "Вечная Мерзлота",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -2565,7 +2565,7 @@ const UNIT_ABILITIES = {
   'field_medic 1': {
     id: 'field_medic 1',
     name: 'Field Medic',
-    name_ru: "Полевой лекарь",
+    name_ru: "Полевой Лекарь",
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2576,7 +2576,7 @@ const UNIT_ABILITIES = {
   'field_medic 2': {
     id: 'field_medic 2',
     name: 'Field Medic',
-    name_ru: "Полевой лекарь",
+    name_ru: "Полевой Лекарь",
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2587,7 +2587,7 @@ const UNIT_ABILITIES = {
   'field_medic 3': {
     id: 'field_medic 3',
     name: 'Field Medic',
-    name_ru: "Полевой лекарь",
+    name_ru: "Полевой Лекарь",
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2598,7 +2598,7 @@ const UNIT_ABILITIES = {
   'combat_veteran 1': {
     id: 'combat_veteran 1',
     name: 'Combat Veteran',
-    name_ru: "Ветеран боёв",
+    name_ru: "Ветеран Боёв",
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2609,7 +2609,7 @@ const UNIT_ABILITIES = {
   'combat_veteran 2': {
     id: 'combat_veteran 2',
     name: 'Combat Veteran',
-    name_ru: "Ветеран боёв",
+    name_ru: "Ветеран Боёв",
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2620,7 +2620,7 @@ const UNIT_ABILITIES = {
   'combat_veteran 3': {
     id: 'combat_veteran 3',
     name: 'Combat Veteran',
-    name_ru: "Ветеран боёв",
+    name_ru: "Ветеран Боёв",
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2631,7 +2631,7 @@ const UNIT_ABILITIES = {
   'unending_servitude 1': {
     id: 'unending_servitude 1',
     name: 'Unending Servitude',
-    name_ru: "Вечное служение",
+    name_ru: "Вечное Служение",
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2675,7 +2675,7 @@ const UNIT_ABILITIES = {
   'magic_attunement 1': {
     id: 'magic_attunement 1',
     name: 'Magic Attunement',
-    name_ru: "Магическое созвучие",
+    name_ru: "Магическое Созвучие",
     rank: 1,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2686,7 +2686,7 @@ const UNIT_ABILITIES = {
   'magic_attunement 2': {
     id: 'magic_attunement 2',
     name: 'Magic Attunement',
-    name_ru: "Магическое созвучие",
+    name_ru: "Магическое Созвучие",
     rank: 2,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2697,7 +2697,7 @@ const UNIT_ABILITIES = {
   'magic_attunement 3': {
     id: 'magic_attunement 3',
     name: 'Magic Attunement',
-    name_ru: "Магическое созвучие",
+    name_ru: "Магическое Созвучие",
     rank: 3,
     type: 'passive',
     trigger: 'on_embark_complete',
@@ -2708,7 +2708,7 @@ const UNIT_ABILITIES = {
   'resist_aura_air 1': {
     id: 'resist_aura_air 1',
     name: 'Gale Ward',
-    name_ru: "Штормовой оберег",
+    name_ru: "Штормовой Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2719,7 +2719,7 @@ const UNIT_ABILITIES = {
   'resist_aura_air 2': {
     id: 'resist_aura_air 2',
     name: 'Gale Ward',
-    name_ru: "Штормовой оберег",
+    name_ru: "Штормовой Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2730,7 +2730,7 @@ const UNIT_ABILITIES = {
   'resist_aura_air 3': {
     id: 'resist_aura_air 3',
     name: 'Gale Ward',
-    name_ru: "Штормовой оберег",
+    name_ru: "Штормовой Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2741,7 +2741,7 @@ const UNIT_ABILITIES = {
   'resist_aura_fire 1': {
     id: 'resist_aura_fire 1',
     name: 'Ember Ward',
-    name_ru: "Тлеющий оберег",
+    name_ru: "Тлеющий Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2752,7 +2752,7 @@ const UNIT_ABILITIES = {
   'resist_aura_fire 2': {
     id: 'resist_aura_fire 2',
     name: 'Ember Ward',
-    name_ru: "Тлеющий оберег",
+    name_ru: "Тлеющий Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2763,7 +2763,7 @@ const UNIT_ABILITIES = {
   'resist_aura_fire 3': {
     id: 'resist_aura_fire 3',
     name: 'Ember Ward',
-    name_ru: "Тлеющий оберег",
+    name_ru: "Тлеющий Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2774,7 +2774,7 @@ const UNIT_ABILITIES = {
   'resist_aura_nature 1': {
     id: 'resist_aura_nature 1',
     name: 'Verdant Ward',
-    name_ru: "Природный оберег",
+    name_ru: "Природный Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2785,7 +2785,7 @@ const UNIT_ABILITIES = {
   'resist_aura_nature 2': {
     id: 'resist_aura_nature 2',
     name: 'Verdant Ward',
-    name_ru: "Природный оберег",
+    name_ru: "Природный Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2796,7 +2796,7 @@ const UNIT_ABILITIES = {
   'resist_aura_nature 3': {
     id: 'resist_aura_nature 3',
     name: 'Verdant Ward',
-    name_ru: "Природный оберег",
+    name_ru: "Природный Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2807,7 +2807,7 @@ const UNIT_ABILITIES = {
   'resist_aura_cold 1': {
     id: 'resist_aura_cold 1',
     name: 'Rime Ward',
-    name_ru: "Ледяной оберег",
+    name_ru: "Ледяной Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2818,7 +2818,7 @@ const UNIT_ABILITIES = {
   'resist_aura_cold 2': {
     id: 'resist_aura_cold 2',
     name: 'Rime Ward',
-    name_ru: "Ледяной оберег",
+    name_ru: "Ледяной Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2829,7 +2829,7 @@ const UNIT_ABILITIES = {
   'resist_aura_cold 3': {
     id: 'resist_aura_cold 3',
     name: 'Rime Ward',
-    name_ru: "Ледяной оберег",
+    name_ru: "Ледяной Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2840,7 +2840,7 @@ const UNIT_ABILITIES = {
   'resist_aura_life 1': {
     id: 'resist_aura_life 1',
     name: 'Radiant Ward',
-    name_ru: "Светлый оберег",
+    name_ru: "Светлый Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2851,7 +2851,7 @@ const UNIT_ABILITIES = {
   'resist_aura_life 2': {
     id: 'resist_aura_life 2',
     name: 'Radiant Ward',
-    name_ru: "Светлый оберег",
+    name_ru: "Светлый Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2862,7 +2862,7 @@ const UNIT_ABILITIES = {
   'resist_aura_life 3': {
     id: 'resist_aura_life 3',
     name: 'Radiant Ward',
-    name_ru: "Светлый оберег",
+    name_ru: "Светлый Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2873,7 +2873,7 @@ const UNIT_ABILITIES = {
   'resist_aura_death 1': {
     id: 'resist_aura_death 1',
     name: 'Grave Ward',
-    name_ru: "Могильный оберег",
+    name_ru: "Могильный Оберег",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2884,7 +2884,7 @@ const UNIT_ABILITIES = {
   'resist_aura_death 2': {
     id: 'resist_aura_death 2',
     name: 'Grave Ward',
-    name_ru: "Могильный оберег",
+    name_ru: "Могильный Оберег",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2895,7 +2895,7 @@ const UNIT_ABILITIES = {
   'resist_aura_death 3': {
     id: 'resist_aura_death 3',
     name: 'Grave Ward',
-    name_ru: "Могильный оберег",
+    name_ru: "Могильный Оберег",
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2939,7 +2939,7 @@ const UNIT_ABILITIES = {
   'divided_flame 1': {
     id: 'divided_flame 1',
     name: 'Divided Flame',
-    name_ru: "Разделённое пламя",
+    name_ru: "Разделённое Пламя",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2951,7 +2951,7 @@ const UNIT_ABILITIES = {
   'divided_flame 2': {
     id: 'divided_flame 2',
     name: 'Divided Flame',
-    name_ru: "Разделённое пламя",
+    name_ru: "Разделённое Пламя",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2963,7 +2963,7 @@ const UNIT_ABILITIES = {
   'inner_fire 1': {
     id: 'inner_fire 1',
     name: 'Divided Flame',
-    name_ru: "Разделённое пламя",
+    name_ru: "Разделённое Пламя",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2975,7 +2975,7 @@ const UNIT_ABILITIES = {
   'clear_mind 1': {
     id: 'clear_mind 1',
     name: 'Clear Mind',
-    name_ru: "Ясный разум",
+    name_ru: "Ясный Разум",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -2987,7 +2987,7 @@ const UNIT_ABILITIES = {
   'pure_blood 1': {
     id: 'pure_blood 1',
     name: 'Pure Blood',
-    name_ru: "Чистая кровь",
+    name_ru: "Чистая Кровь",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3023,7 +3023,7 @@ const UNIT_ABILITIES = {
   'sole_artificer 1': {
     id: 'sole_artificer 1',
     name: 'Sole Artificer',
-    name_ru: "Единственный механик",
+    name_ru: "Единственный Механик",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3035,7 +3035,7 @@ const UNIT_ABILITIES = {
   'sole_artificer 2': {
     id: 'sole_artificer 2',
     name: 'Sole Artificer',
-    name_ru: "Единственный механик",
+    name_ru: "Единственный Механик",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3054,7 +3054,7 @@ const UNIT_ABILITIES = {
   'vampires_vigil 1': {
     id: 'vampires_vigil 1',
     name: "Vampire's Vigil",
-    name_ru: "Бдение вампира",
+    name_ru: "Бдение Вампира",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3066,7 +3066,7 @@ const UNIT_ABILITIES = {
   'vampires_vigil 2': {
     id: 'vampires_vigil 2',
     name: "Vampire's Vigil",
-    name_ru: "Бдение вампира",
+    name_ru: "Бдение Вампира",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3079,7 +3079,7 @@ const UNIT_ABILITIES = {
   'bone_armor 1': {
     id: 'bone_armor 1',
     name: 'Bone Armor',
-    name_ru: "Костяная броня",
+    name_ru: "Костяная Броня",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3091,7 +3091,7 @@ const UNIT_ABILITIES = {
   'bone_armor 2': {
     id: 'bone_armor 2',
     name: 'Bone Armor',
-    name_ru: "Костяная броня",
+    name_ru: "Костяная Броня",
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3117,7 +3117,7 @@ const UNIT_ABILITIES = {
   'vow_of_the_grave 1': {
     id: 'vow_of_the_grave 1',
     name: 'Vow of the Grave',
-    name_ru: "Обет могилы",
+    name_ru: "Обет Могилы",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3129,7 +3129,7 @@ const UNIT_ABILITIES = {
   'vow_of_silence 1': {
     id: 'vow_of_silence 1',
     name: 'Vow of Silence',
-    name_ru: "Обет молчания",
+    name_ru: "Обет Молчания",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3141,7 +3141,7 @@ const UNIT_ABILITIES = {
   'vow_of_ash 1': {
     id: 'vow_of_ash 1',
     name: 'Vow of Ash',
-    name_ru: "Обет пепла",
+    name_ru: "Обет Пепла",
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3279,7 +3279,7 @@ const UNIT_ABILITIES = {
   'ember_shroud 1': {
     id: 'ember_shroud 1',
     name: 'Ember Shroud',
-    name_ru: "Пепельный покров",
+    name_ru: "Пепельный Покров",
     rank: 1,
     type: 'active',
     target: 'self',
@@ -3290,7 +3290,7 @@ const UNIT_ABILITIES = {
   'ember_shroud 2': {
     id: 'ember_shroud 2',
     name: 'Ember Shroud',
-    name_ru: "Пепельный покров",
+    name_ru: "Пепельный Покров",
     rank: 2,
     type: 'active',
     target: 'self',
@@ -3301,7 +3301,7 @@ const UNIT_ABILITIES = {
   'ember_shroud 3': {
     id: 'ember_shroud 3',
     name: 'Ember Shroud',
-    name_ru: "Пепельный покров",
+    name_ru: "Пепельный Покров",
     rank: 3,
     type: 'active',
     target: 'self',
@@ -3317,7 +3317,7 @@ const UNIT_ABILITIES = {
   'dragons_breath 1': {
     id: 'dragons_breath 1',
     name: "Dragon's Breath",
-    name_ru: "Дыхание дракона",
+    name_ru: "Дыхание Дракона",
     rank: 1,
     type: 'active',
     target: 'enemy',
@@ -3328,7 +3328,7 @@ const UNIT_ABILITIES = {
   'dragons_breath 2': {
     id: 'dragons_breath 2',
     name: "Dragon's Breath",
-    name_ru: "Дыхание дракона",
+    name_ru: "Дыхание Дракона",
     rank: 2,
     type: 'active',
     target: 'enemy',
@@ -3339,7 +3339,7 @@ const UNIT_ABILITIES = {
   'dragons_breath 3': {
     id: 'dragons_breath 3',
     name: "Dragon's Breath",
-    name_ru: "Дыхание дракона",
+    name_ru: "Дыхание Дракона",
     rank: 3,
     type: 'active',
     target: 'enemy',
@@ -3354,7 +3354,7 @@ const UNIT_ABILITIES = {
   'verse_of_cataclysm 1': {
     id: 'verse_of_cataclysm 1',
     name: 'Verse of Cataclysm',
-    name_ru: "Стих катаклизма",
+    name_ru: "Стих Катаклизма",
     rank: 1,
     type: 'active',
     target: 'self',
@@ -3366,7 +3366,7 @@ const UNIT_ABILITIES = {
   'verse_of_cataclysm 2': {
     id: 'verse_of_cataclysm 2',
     name: 'Verse of Cataclysm',
-    name_ru: "Стих катаклизма",
+    name_ru: "Стих Катаклизма",
     rank: 2,
     type: 'active',
     target: 'self',
@@ -3378,7 +3378,7 @@ const UNIT_ABILITIES = {
   'verse_of_cataclysm 3': {
     id: 'verse_of_cataclysm 3',
     name: 'Verse of Cataclysm',
-    name_ru: "Стих катаклизма",
+    name_ru: "Стих Катаклизма",
     rank: 3,
     type: 'active',
     target: 'self',
@@ -3395,7 +3395,7 @@ const UNIT_ABILITIES = {
   'blessing_of_protection 1': {
     id: 'blessing_of_protection 1',
     name: 'Blessing of Protection',
-    name_ru: "Благословение защиты",
+    name_ru: "Благословение Защиты",
     rank: 1,
     type: 'active',
     target: 'ally_any',
@@ -3406,7 +3406,7 @@ const UNIT_ABILITIES = {
   'blessing_of_protection 2': {
     id: 'blessing_of_protection 2',
     name: 'Blessing of Protection',
-    name_ru: "Благословение защиты",
+    name_ru: "Благословение Защиты",
     rank: 2,
     type: 'active',
     target: 'ally_any',
@@ -3417,7 +3417,7 @@ const UNIT_ABILITIES = {
   'blessing_of_protection 3': {
     id: 'blessing_of_protection 3',
     name: 'Blessing of Protection',
-    name_ru: "Благословение защиты",
+    name_ru: "Благословение Защиты",
     rank: 3,
     type: 'active',
     target: 'ally_any',

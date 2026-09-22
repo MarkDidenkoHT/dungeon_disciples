@@ -289,7 +289,7 @@ const FORMATION_SYNERGIES = {
       core: 0xe9d2ff,
     },
     buff: { icon: 'command.jpg', suffix: '', valueParam: 'chorus_power_per_tag' },
-    label: 'Chorus of War', label_ru: 'Хор войны',
+    label: 'Chorus of War', label_ru: 'Хор Войны',
   },
 
   // Empire. A Priest walking the gunline. Unlike every other bond here this one

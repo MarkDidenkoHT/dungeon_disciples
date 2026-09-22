@@ -2015,7 +2015,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // Construct is the same picture — and Chorus borrows command.jpg. Neither
     // has art of its own yet.
     { key: 'fortify',     icon: 'reforge.jpg', en: 'Fortify',       ru: 'Укрепление', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
-    { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
+    { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор Войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
   ];
 
   const DEBUFF_DEFS = [

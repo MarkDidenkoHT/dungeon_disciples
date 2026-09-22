@@ -526,7 +526,7 @@ const UNITS = {
     ashen_warden: {
       id: 'd2111', f: 'd', t: 4,
       name: 'Ashen Warden',
-      name_ru: 'Пепельный страж',
+      name_ru: 'Пепельный Страж',
       tags: ['Demon', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -539,7 +539,7 @@ const UNITS = {
     pyre_choir: {
       id: 'd2112', f: 'd', t: 4,
       name: 'Pyre Choir',
-      name_ru: 'Хор погребального костра',
+      name_ru: 'Хор Погребального Костра',
       tags: ['Demon', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -695,7 +695,7 @@ const UNITS = {
     broken_vessel: {
       id: 'd4111', f: 'd', t: 4,
       name: 'Broken Vessel',
-      name_ru: 'Сломленный сосуд',
+      name_ru: 'Сломленный Сосуд',
       tags: ['Warrior', 'Demon'],
       pref_position: 'front',
       size: 'tile',
@@ -721,7 +721,7 @@ const UNITS = {
     agony_engine: {
       id: 'd4121', f: 'd', t: 4,
       name: 'Agony Engine',
-      name_ru: 'Машина агонии',
+      name_ru: 'Машина Агонии',
       tags: ['Warrior', 'Demon'],
       pref_position: 'none',
       size: 'tile',
@@ -2523,7 +2523,7 @@ const UNITS = {
     cannibal_ghoul: {
       id: 'gs12', f: 'g', t: 2,
       name: 'Cannibal Ghoul',
-      name_ru: 'Упырь-людоед',
+      name_ru: 'Упырь-Людоед',
       tags: ['Vampire', 'Zombie'],
       pref_position: 'front',
       size: 'tile',
