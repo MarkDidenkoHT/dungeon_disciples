@@ -5338,7 +5338,304 @@ export async function prayer_of_healing(originCellEl, opts = {}) {
   layer.destroy({ children: true });
 }
 
+// ── burn / poison / chill ─────────────────────────────────────────────────────
+// The fourth member of this family is already drawn: Bleed's blood_spatter. All
+// four are RIDERS (see RIDER_FX in battle.js) — they layer over the swing that
+// applied them instead of queueing behind it, so a unit that lands three
+// statuses in one hit still costs a single beat.
+const BURN_PAL   = { glow: 0xff6a12, core: 0xffd79a };
+const POISON_PAL = { glow: 0x5fbf2a, core: 0xd6ff9e };
+const CHILL_PAL  = { glow: 0x4aa8ff, core: 0xdff1ff };
+
+function statusRider(pal, mode) {
+  return async function (cellEl) {
+    if (!app || !window.PIXI || !cellEl) return;
+    const sel = cellSelectorFor(cellEl);
+    if (!sel) return;
+    const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+    const rand    = (a, b) => a + Math.random() * (b - a);
+    const TAU     = Math.PI * 2;
+
+    const bits = Array.from({ length: 10 }, (_, i) => ({
+      ang:  (i / 10) * TAU + rand(-0.3, 0.3),
+      x:    rand(-0.38, 0.38),
+      d:    rand(0, 0.3),
+      size: rand(1.6, 3.4),
+      sway: rand(-0.1, 0.1),
+    }));
+
+    const { layer, glow, solid } = riderLayer(4);
+    solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+    await animate(380, t => {
+      const b = boundsForSelector(sel);
+      if (!b) { layer.visible = false; return; }
+      layer.visible = true;
+      glow.clear(); solid.clear();
+
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r  = Math.min(b.width, b.height);
+      const wash = Math.sin(clamp01(t / 0.8) * Math.PI);
+      softGlow(glow, cx, cy, r * 0.5, pal.glow, 0.5 * wash);
+
+      for (const p of bits) {
+        const lp = clamp01((t - p.d) / (1 - p.d));
+        if (lp <= 0 || lp >= 1) continue;
+        const fade = 1 - lp;
+        const size = p.size * (mode === 'shard' ? 1 : 1 - lp * 0.4);
+        let x, y;
+        if (mode === 'rise') {
+          x = cx + (p.x + p.sway * lp) * r;
+          y = cy + r * 0.35 - lp * r * 0.8;
+        } else if (mode === 'drip') {
+          x = cx + p.x * r + Math.sin(lp * 6 + p.d * 9) * r * 0.05;
+          y = cy - r * 0.15 + lp * r * 0.6;
+        } else {
+          const d = r * 0.55 * (1 - lp);
+          x = cx + Math.cos(p.ang) * d;
+          y = cy + Math.sin(p.ang) * d * 0.85;
+        }
+        softGlow(glow, x, y, size * 2.2, pal.glow, fade * 0.85);
+        solid.beginFill(pal.core, fade * 0.9);
+        solid.drawCircle(x, y, size * 0.5);
+        solid.endFill();
+      }
+
+      if (mode === 'rise') {
+        softGlow(glow, cx, cy + r * 0.35, r * 0.3 * wash, pal.core, 0.4 * wash);
+      } else if (mode === 'drip') {
+        solid.lineStyle(Math.max(1, r * 0.02), pal.core, wash * 0.5);
+        solid.drawEllipse(cx, cy + r * 0.42, r * 0.34 * wash, r * 0.1 * wash);
+        solid.lineStyle(0);
+      } else {
+        const s = clamp01(t / 0.6);
+        solid.lineStyle(Math.max(1, r * 0.03 * (1 - s)), pal.core, (1 - s) * 0.8);
+        solid.drawCircle(cx, cy, r * (0.55 - s * 0.3));
+        solid.lineStyle(0);
+      }
+    });
+
+    layer.destroy({ children: true });
+  };
+}
+
+const burn   = statusRider(BURN_PAL,   'rise');
+const poison = statusRider(POISON_PAL, 'drip');
+const chill  = statusRider(CHILL_PAL,  'shard');
+
+// ── undying ───────────────────────────────────────────────────────────────────
+// The unit was dead for an instant. The light gathers UNDER it and lifts, so the
+// whole beat is a catch — nothing bursts outward, nothing falls. Stamped on the
+// SUCCESS log entry only (see passive-processor.js): a Vow of the Grave can eat
+// the return, and that failure must not draw a rescue.
+export async function undying(cellEl) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const PALE = 0xfff6dc;
+  const GOLD = 0xffd27a;
+  const SOUL = 0xbfe9ff;
+
+  const motes = Array.from({ length: 9 }, () => ({
+    x: rand(-0.35, 0.35), d: rand(0, 0.35), size: rand(1.8, 3.6),
+  }));
+
+  const { layer, glow, solid } = riderLayer(5);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(900, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height);
+    const base = cy + r * 0.42;
+
+    const gather = clamp01(t / 0.3);
+    const lift   = clamp01((t - 0.25) / 0.4);
+    const out    = 1 - clamp01((t - 0.7) / 0.3);
+
+    softGlow(glow, cx, base, r * 0.45 * gather, SOUL, 0.5 * gather * out);
+
+    for (let i = 0; i < 2; i++) {
+      const p = clamp01((lift - i * 0.18) / 0.82);
+      if (p <= 0 || p >= 1) continue;
+      solid.lineStyle(Math.max(1, r * 0.035 * (1 - p)), i ? GOLD : PALE, (1 - p) * 0.9 * out);
+      solid.drawEllipse(cx, base - p * r, r * (0.42 - 0.1 * p), r * (0.13 - 0.03 * p));
+      solid.lineStyle(0);
+    }
+
+    const halo = clamp01((t - 0.45) / 0.3);
+    if (halo > 0) {
+      softGlow(glow, cx, cy - r * 0.05, r * (0.22 + 0.12 * halo), PALE, 0.8 * halo * out);
+      solid.lineStyle(Math.max(1, r * 0.022), GOLD, 0.7 * halo * out);
+      solid.drawEllipse(cx, cy - r * 0.3, r * 0.26 * halo, r * 0.08 * halo);
+      solid.lineStyle(0);
+    }
+
+    for (const m of motes) {
+      const p = clamp01((t - 0.3 - m.d) / 0.5);
+      if (p <= 0 || p >= 1) continue;
+      softGlow(glow, cx + m.x * r, base - p * r * 1.1, m.size * (1 - p * 0.4), SOUL, (1 - p) * 0.9 * out);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── sanctuary ─────────────────────────────────────────────────────────────────
+// Three wards already harden ON a unit (aegis, shield_ward,
+// blessing_of_protection), so this one SHELTERS it instead: a dome closes over
+// the ally from the ground up and settles rather than snapping shut.
+export async function sanctuary(cellEl) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const TEAL = 0x6fd8cf;
+  const PALE = 0xe6fffb;
+  const DEEP = 0x1f7d78;
+
+  const motes = Array.from({ length: 8 }, () => ({
+    x: rand(-0.4, 0.4), y: rand(-0.5, 0.1), d: rand(0, 0.35), size: rand(1.6, 3),
+  }));
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  function dome(g, cx, by, rx, ry, p, width, color, alpha) {
+    if (p <= 0 || alpha <= 0) return;
+    g.lineStyle(width, color, alpha);
+    const steps = 28;
+    for (let i = 0; i <= steps; i++) {
+      const a = Math.PI + Math.PI * p * (i / steps);
+      const x = cx + Math.cos(a) * rx;
+      const y = by + Math.sin(a) * ry;
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.lineStyle(0);
+  }
+
+  await animate(850, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height);
+    const base = cy + r * 0.4;
+
+    const ring  = clamp01(t / 0.3);
+    const close = clamp01((t - 0.18) / 0.42);
+    const hold  = 1 - clamp01((t - 0.72) / 0.28) * 0.55;
+
+    solid.lineStyle(Math.max(1.5, r * 0.03), TEAL, 0.85 * ring * hold);
+    solid.drawEllipse(cx, base, r * 0.46 * ring, r * 0.14 * ring);
+    solid.lineStyle(0);
+    softGlow(glow, cx, base, r * 0.4 * ring, DEEP, 0.4 * ring * hold);
+
+    dome(solid, cx, base, r * 0.46, r * 0.78, close, Math.max(1.5, r * 0.032), PALE, 0.9 * hold);
+    dome(solid, cx, base, r * 0.34, r * 0.6,  clamp01(close * 1.15), Math.max(1, r * 0.02), TEAL, 0.6 * hold);
+    dome(glow,  cx, base, r * 0.46, r * 0.78, close, Math.max(2, r * 0.07), TEAL, 0.45 * hold);
+
+    if (close >= 1) {
+      const settle = Math.sin(clamp01((t - 0.55) / 0.45) * Math.PI);
+      softGlow(glow, cx, cy, r * 0.42, TEAL, 0.3 * settle);
+    }
+
+    for (const m of motes) {
+      const p = clamp01((t - 0.3 - m.d) / 0.55);
+      if (p <= 0 || p >= 1) continue;
+      softGlow(glow, cx + m.x * r, cy + m.y * r + p * r * 0.3, m.size, PALE, Math.sin(p * Math.PI) * 0.7);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── infernal_mandate / blood_craze ────────────────────────────────────────────
+// A command, not a blow: the caster never touches anybody. The ally it names
+// strikes immediately afterwards with its OWN attack animation, so this stays
+// short and stays clear of it — a sigil, a line of will, the ally lit up.
+function commandStrike(pal) {
+  return async function (casterCellEl, allyCellEl) {
+    if (!casterCellEl?.dataset || !app || !window.PIXI) return;
+    const casterId = casterCellEl.dataset.id;
+    const allyId   = allyCellEl?.dataset?.id || null;
+    const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+    const TAU     = Math.PI * 2;
+
+    const { layer, glow, solid } = riderLayer(4);
+    solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+    await animate(620, t => {
+      const c = cellBoundsFor(casterId);
+      if (!c) { layer.visible = false; return; }
+      layer.visible = true;
+      glow.clear(); solid.clear();
+
+      const cx = c.x + c.width / 2, cy = c.y + c.height / 2;
+      const R  = Math.min(c.width, c.height);
+
+      const call = clamp01(t / 0.25);
+      const send = clamp01((t - 0.2) / 0.35);
+      const ans  = clamp01((t - 0.5) / 0.5);
+      const out  = 1 - clamp01((t - 0.55) / 0.45);
+
+      softGlow(glow, cx, cy, R * 0.3 * call, pal.edge, 0.7 * call * out);
+      solid.lineStyle(Math.max(1.5, R * 0.03), pal.core, 0.85 * call * out);
+      solid.drawCircle(cx, cy, R * 0.28 * call);
+      for (let i = 0; i < 4; i++) {
+        const a = -Math.PI / 2 + (i / 4) * TAU + call * 0.6;
+        solid.moveTo(cx + Math.cos(a) * R * 0.3, cy + Math.sin(a) * R * 0.3);
+        solid.lineTo(cx + Math.cos(a) * R * 0.42, cy + Math.sin(a) * R * 0.42);
+      }
+      solid.lineStyle(0);
+
+      const a = allyId ? cellBoundsFor(allyId) : null;
+      if (!a || send <= 0) return;
+      const ax = a.x + a.width / 2, ay = a.y + a.height / 2;
+      const hx = cx + (ax - cx) * send, hy = cy + (ay - cy) * send;
+      const tail = Math.max(0, send - 0.4);
+      const tx = cx + (ax - cx) * tail, ty = cy + (ay - cy) * tail;
+
+      solid.lineStyle(Math.max(1.5, R * 0.05), pal.edge, 0.55 * (1 - ans * 0.7));
+      solid.moveTo(tx, ty); solid.lineTo(hx, hy);
+      solid.lineStyle(Math.max(1, R * 0.022), pal.core, 0.9 * (1 - ans * 0.7));
+      solid.moveTo(tx, ty); solid.lineTo(hx, hy);
+      solid.lineStyle(0);
+      softGlow(glow, hx, hy, R * 0.16, pal.core, 0.9 * (1 - ans * 0.6));
+
+      if (ans <= 0) return;
+      const pop = Math.sin(ans * Math.PI);
+      softGlow(glow, ax, ay, R * (0.3 + 0.2 * ans), pal.edge, 0.8 * pop);
+      solid.lineStyle(Math.max(1, R * 0.03), pal.core, pop * 0.9);
+      solid.drawCircle(ax, ay, R * (0.2 + 0.4 * ans));
+      solid.lineStyle(0);
+    });
+
+    layer.destroy({ children: true });
+  };
+}
+
+const infernal_mandate = commandStrike({ edge: 0xff4a14, core: 0xffc26b });
+const blood_craze      = commandStrike({ edge: 0xc2102a, core: 0xff8a99 });
+
 export const EFFECTS = {
+  burn,
+  poison,
+  chill,
+  undying,
+  sanctuary,
+  infernal_mandate,
+  blood_craze,
   pyre_requiem,
   condemn,
   prayer_of_healing,

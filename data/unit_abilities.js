@@ -330,6 +330,7 @@ const UNIT_ABILITIES = {
   },
   'burn 1': {
     id: 'burn 1',
+    effect_name: 'burn',
     name: 'Burn',
     name_ru: "Горение",
     rank: 1,
@@ -342,6 +343,7 @@ const UNIT_ABILITIES = {
   },
   'burn 2': {
     id: 'burn 2',
+    effect_name: 'burn',
     name: 'Burn',
     name_ru: "Горение",
     rank: 2,
@@ -354,6 +356,7 @@ const UNIT_ABILITIES = {
   },
   'burn 3': {
     id: 'burn 3',
+    effect_name: 'burn',
     name: 'Burn',
     name_ru: "Горение",
     rank: 3,
@@ -698,6 +701,7 @@ const UNIT_ABILITIES = {
   },
   'poison 1': {
     id: 'poison 1',
+    effect_name: 'poison',
     name: 'Poison',
     name_ru: "Яд",
     rank: 1,
@@ -710,6 +714,7 @@ const UNIT_ABILITIES = {
   },
   'poison 2': {
     id: 'poison 2',
+    effect_name: 'poison',
     name: 'Poison',
     name_ru: "Яд",
     rank: 2,
@@ -722,6 +727,7 @@ const UNIT_ABILITIES = {
   },
   'poison 3': {
     id: 'poison 3',
+    effect_name: 'poison',
     name: 'Poison',
     name_ru: "Яд",
     rank: 3,
@@ -1551,6 +1557,7 @@ const UNIT_ABILITIES = {
   },
   'chill 1': {
     id: 'chill 1',
+    effect_name: 'chill',
     name: 'Chill',
     name_ru: "Озноб",
     rank: 1,
@@ -1563,6 +1570,7 @@ const UNIT_ABILITIES = {
   },
   'chill 2': {
     id: 'chill 2',
+    effect_name: 'chill',
     name: 'Chill',
     name_ru: "Озноб",
     rank: 2,

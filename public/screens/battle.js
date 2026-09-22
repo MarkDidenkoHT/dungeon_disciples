@@ -25,6 +25,8 @@ const COLS = 2;
 // automatically; a new one needs no edit here.
 const SRC_TARGET_FX = new Set([
   'communion', 'shared_suffering', 'sacrifice', 'terror', 'pact',
+  // A command travels from the caster to the ALLY it orders to strike.
+  'infernal_mandate', 'blood_craze',
   ...Object.values(FORMATION_SYNERGIES).map(d => d.effect).filter(Boolean),
 ]);
 
@@ -73,6 +75,9 @@ const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale', 'conflagration']);
 const RIDER_FX = new Set([
   'blood_spatter', 'blood_drawback',
   'rage_flare', 'steel_shell', 'ember_riposte',
+  // Bleed's siblings. One hit can land all four at once, and awaiting them
+  // would play four animations for one swing.
+  'burn', 'poison', 'chill',
 ]);
 
 function cellIndex(row, col) { return row * COLS + col; }
