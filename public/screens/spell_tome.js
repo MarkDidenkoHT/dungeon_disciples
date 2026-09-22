@@ -191,7 +191,10 @@ const TOME_TEXT = {
     chorus: { en: 'Chorus', ru: 'Хор' },
     lead:   { en: 'Lead',   ru: 'Вождь' },
   },
-  litanyNone: { en: 'No litanies are known.', ru: 'Литании неизвестны.' },
+  litanyNone: {
+    en: 'Your host knows no litanies.',
+    ru: 'Вашему войску литании неведомы.',
+  },
 };
 
 export function renderSpellTome(root, { player }) {
@@ -644,17 +647,37 @@ export function renderSpellTome(root, { player }) {
     if (!container) return;
     const t = key => TOME_TEXT[key][lang];
 
-    // Role ids are matched against unit DEFINITION ids, which are not unique to
-    // one faction — the lead and the target can sit on opposite sides of a
-    // litany. So the index is every unit in the game, not the player's faction.
+    // Role ids are matched against unit DEFINITION ids, and a litany spans two
+    // sides — profane_chorus is spoken by Empire units over a Choir hero — so
+    // the index is every unit in the game, not the player's faction.
     const unitById = new Map();
-    for (const faction of Object.values(UNITS)) {
+    const factionOfUnitId = new Map();
+    for (const [factionKey, faction] of Object.entries(UNITS)) {
       for (const def of Object.values(faction)) {
-        if (def?.id && !unitById.has(def.id)) unitById.set(def.id, def);
+        if (!def?.id) continue;
+        if (!unitById.has(def.id)) unitById.set(def.id, def);
+        if (!factionOfUnitId.has(def.id)) factionOfUnitId.set(def.id, factionKey);
       }
     }
 
-    const cards = LITANIES.map(def => {
+    // Whose drill is this? The litany is performed by the side that supplies the
+    // LEAD — the unit that lands the real blow — so the player's own faction has
+    // to be able to field one. Derived rather than declared on the litany: the
+    // role id lists in data/litanies.js are already the authoring decision, and a
+    // `faction` field beside them would be a second copy to keep in step.
+    //
+    // No mercenary supplies a litany role, so the player's faction is the whole
+    // of what they can field for this purpose.
+    const canPerform = def =>
+      (def.lead?.ids || []).some(id => factionOfUnitId.get(id) === player.faction);
+
+    // Only the litanies this player could actually stage. A Choir player has no
+    // Paladin to lead profane_chorus and never will, so listing it would be a
+    // page of units they cannot recruit — staging the execution of their own
+    // heroes, at that.
+    const performable = LITANIES.filter(canPerform);
+
+    const cards = performable.map(def => {
       const rows = (def.formation?.rows || []).map(row => {
         const roleLabel = TOME_TEXT.litanyRoles[row.role]?.[lang] || cap(row.role || '');
         // A 'lead' row names no ids of its own — the litany's own lead list is
@@ -703,16 +726,21 @@ export function renderSpellTome(root, { player }) {
         </article>`;
     }).join('');
 
+    // The lock only has something to say when this faction HAS a litany to
+    // unlock. Telling a host with none to go raise the Proving Grounds would
+    // point them at a building that would give them nothing.
+    const showLock = performable.length > 0 && !litaniesReady;
+
     container.innerHTML = `
       <div class="litany-page">
         <header class="litany-page-head">
           <h2 class="litany-page-title">${escapeHtml(t('litaniesTitle'))}</h2>
           <p class="litany-page-blurb">${escapeHtml(t('litaniesBlurb'))}</p>
-          ${litaniesReady ? '' : `
+          ${showLock ? `
             <p class="litany-page-lock">
               <span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>
               <span class="litany-lock-hint">${escapeHtml(t('litanyLockedHint'))}</span>
-            </p>`}
+            </p>` : ''}
         </header>
         <div class="litany-list">${cards || `<p class="spells-empty">${escapeHtml(t('litanyNone'))}</p>`}</div>
       </div>`;
