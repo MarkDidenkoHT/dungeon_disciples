@@ -78,9 +78,13 @@ const SLOT_FIXED_BUILDING = {
   slot_22: 'training_grounds',
 };
 
+// Mirrors BUILDING_MAX_LEVELS in data/buildings.js, which is CommonJS and
+// cannot be imported here. Keep the two in step: this copy is what decides
+// whether the castle OFFERS an upgrade, so a building left behind here reads as
+// already maxed and its next level becomes unreachable in the UI.
 const BUILDING_MAX_LEVELS = {
   blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
-  mercenary_hall: 3, garrison_annex: 3, proving_grounds: 2, training_grounds: 2,
+  mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 2,
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
 
