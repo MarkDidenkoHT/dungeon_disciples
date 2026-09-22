@@ -64,7 +64,13 @@ const IT = {
   free:         { en: 'Free',             ru: 'В хранилище' },
 };
 
-export function renderItems(root, { player }) {
+export function renderItems(root, params = {}) {
+  const { player } = params;
+  // False for a PREBUILD: a screen built ahead of time on idle draws itself and
+  // sits still. The craft tutorial and the trophy strip both assume the player
+  // is looking at this screen — one teaches, the other mounts itself next to
+  // the resource bar, where it would appear over whatever screen IS on show.
+  let hostVisible = !params.prebuild;
   const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const T = key => IT[key][L];
   applyBackground(root, player.faction, 'roster');
@@ -933,9 +939,34 @@ export function renderItems(root, { player }) {
   async function load() {
     applyBootstrap(await bootstrapCache.get(player.chat_id));
     render();
+    if (!hostVisible) return;
     maybeShowCraftTutorial();
     showTrophyBar();
   }
 
   load();
+
+  // Kept alive between visits. Two things follow from that:
+  //
+  // Freshness — this screen spends and receives what every other screen also
+  // touches (trophies from battle, gold from the castle), so load() re-reads
+  // the bootstrap and repaints on the way in. Inside the cache TTL that is a
+  // repaint with no request behind it.
+  //
+  // Reach — the trophy strip is mounted next to the resource bar, OUTSIDE this
+  // host, so hiding the host does not hide it. It would otherwise follow the
+  // player onto the castle. load() puts it back up on the way in.
+  return {
+    onShow: () => { hostVisible = true; load(); },
+    onHide: () => {
+      hostVisible = false;
+      document.getElementById('roster-trophy-bar')?.remove();
+      transmute?.stop();
+    },
+    destroy: () => {
+      hostVisible = false;
+      document.getElementById('roster-trophy-bar')?.remove();
+      transmute?.stop();
+    },
+  };
 }

@@ -358,5 +358,12 @@ export function mountTransmutation(host, { player, getResources, onResourcesChan
     .then(res => { job = res?.job || null; render(); })
     .catch(() => {});
 
-  return { refresh: render };
+  // `tick` is cleared at the top of every render, which was enough while the
+  // items screen was destroyed on every leave. It is kept alive now, so the
+  // countdown needs a way to be stopped by the screen that owns it — otherwise
+  // it runs once a second forever behind whatever the player went to look at.
+  return {
+    refresh: render,
+    stop: () => clearInterval(tick),
+  };
 }

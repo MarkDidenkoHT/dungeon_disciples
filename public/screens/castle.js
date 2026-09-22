@@ -256,7 +256,13 @@ const CASTLE_BACKGROUNDS = {
   grail_of_sorrow:     assetUrl('/assets/screens/grail.jpg'),
 };
 
-export function renderCastle(root, { player, focusBuilding }) {
+export function renderCastle(root, params = {}) {
+  const { player } = params;
+  // An INSTRUCTION, not state: the forge and the transmutation lab send the
+  // player here to build one specific thing. It is consumed by the load it
+  // arrives with, and cleared — the castle is kept alive between visits now,
+  // and re-opening it a week later must not reopen that building.
+  let focusBuilding = params.focusBuilding;
   // Needed inside the initial markup, which is written before the main
   // `castleLang` further down exists.
   const lang0 = player?.settings?.language === 'ru' ? 'ru' : 'en';
@@ -310,6 +316,11 @@ export function renderCastle(root, { player, focusBuilding }) {
   let resourceInventory  = [];
   let respecCostPct      = 25;   // overwritten from /bootstrap
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
+  // Whether the player is actually looking at the castle. Hidden screens keep
+  // every node they ever had (see the screen stack in main.js), so no question
+  // asked of the DOM can answer this — onShow and onHide set it. False for a
+  // prebuild, which must draw itself without teaching anything.
+  let hostVisible = !params.prebuild;
 
   function openModal(title, bodyHtml, badgesHtml = '') { openSheet(title, bodyHtml, badgesHtml); }
   function closeModal() { closeSheet(); closeSubSheet(); }
@@ -405,8 +416,8 @@ export function renderCastle(root, { player, focusBuilding }) {
     // renderBuildings re-runs on every refresh, this does not.
     attachLayerControls();
 
-    // Sent here from another screen to build something specific.
-    if (focusBuilding) goToBuilding(focusBuilding);
+    // Sent here from another screen to build something specific. Once.
+    if (focusBuilding) { goToBuilding(focusBuilding); focusBuilding = null; }
 
     // Not awaited: who is out on an errand only decides a marker, and blocking
     // the whole castle on it would be paying for a badge.
@@ -1902,15 +1913,15 @@ export function renderCastle(root, { player, focusBuilding }) {
     // the NEXT screen had just put up — which is why the embark step vanished
     // the moment it appeared.
     //
-    // `root` is #content-root, which main.js EMPTIES on navigation but never
-    // removes — so root.isConnected is true forever and this guard never once
-    // fired. The castle's own markup is the real test: #outer-ring exists only
-    // while the castle is the screen being shown. Without it, tapping "March
-    // Out" ran this driver one more time from the castle's pending
-    // afterSheetSettles, found every remaining step gated behind battle_done,
-    // fell through to the terminal hideTutorial() — and wiped the embark step
-    // the new screen had just drawn.
-    if (!root.isConnected || !root.querySelector('#outer-ring')) return;
+    // This used to ask the DOM — first root.isConnected, which was true forever
+    // because #content-root was emptied rather than removed, then #outer-ring,
+    // which existed only while the castle was the screen on show. Neither works
+    // now: a hidden castle keeps its markup, #outer-ring and all. Without a
+    // truthful answer here, tapping "March Out" runs this driver once more from
+    // the castle's pending afterSheetSettles, finds every remaining step gated
+    // behind battle_done, falls through to the terminal hideTutorial() — and
+    // wipes the embark step the new screen has just drawn.
+    if (!hostVisible) return;
     if (onboardingBusy || driving) return;
     driving = true;
     try { driveOnboarding(); } finally { driving = false; }
@@ -3661,4 +3672,37 @@ export function renderCastle(root, { player, focusBuilding }) {
   // /bootstrap is still in the air — empty slots and a blank resource bar look
   // exactly as settled to the DOM watcher as a finished screen does.
   setScreenReady(load());
+
+  // The castle is kept alive between visits, so what used to be guaranteed by
+  // being rebuilt has to be said out loud:
+  //
+  // Freshness — everything the castle draws (resources, roster, structures) is
+  // spent and won on other screens, so load() re-reads the bootstrap on the way
+  // in. Inside the cache TTL that is a repaint, not a request.
+  //
+  // Onboarding — it drives off timers and settling sheets, and both can fire
+  // after the player has walked away. hostVisible is what the driver now
+  // consults, and the pending retry is dropped on the way out rather than
+  // waking up on a screen nobody is looking at.
+  //
+  // Reach — the build-cost strip is mounted next to the resource bar, OUTSIDE
+  // this host, so hiding the host does not hide it.
+  return {
+    acceptsParams: true,
+    onShow: (next = {}) => {
+      hostVisible   = true;
+      focusBuilding = next.focusBuilding;
+      load();
+    },
+    onHide: () => {
+      hostVisible = false;
+      clearRetry();
+      hideCostBar();
+    },
+    destroy: () => {
+      hostVisible = false;
+      clearRetry();
+      hideCostBar();
+    },
+  };
 }

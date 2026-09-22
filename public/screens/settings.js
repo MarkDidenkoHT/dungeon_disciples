@@ -81,7 +81,8 @@ const PROMO_ERRORS = {
   invite_full:   { en: 'That player has no invites left', ru: 'У этого игрока не осталось приглашений' },
 };
 
-export function renderSettings(root, { player }) {
+export function renderSettings(root, params = {}) {
+  const { player } = params;
   const L = lang(player);
 
   // Read from the same place sfx.js reads it (initSfx). It used to come from
@@ -209,14 +210,24 @@ export function renderSettings(root, { player }) {
   const inviteBtn    = root.querySelector('#invite-btn');
   const inviteMsg    = root.querySelector('#invite-msg');
 
-  api(`/invite?chat_id=${encodeURIComponent(player.chat_id)}`)
-    .then(data => {
-      inviteLink = data?.link || null;
-      inviteCodeEl.value = data?.code || '—';
-      inviteBtn.disabled = !inviteLink;
-      if (data?.accepted) inviteMsg.textContent = UI_TEXT.inviteJoined[L](data.accepted);
-    })
-    .catch(() => { inviteCodeEl.value = '—'; });
+  // Fetched once, and not at all by a PREBUILD — a screen built ahead of time on
+  // idle should not spend a request at launch for a tab nobody has opened. The
+  // first visit asks for it; later visits keep what came back, because an
+  // invite code does not change.
+  let inviteAsked = false;
+  function loadInvite() {
+    if (inviteAsked) return;
+    inviteAsked = true;
+    api(`/invite?chat_id=${encodeURIComponent(player.chat_id)}`)
+      .then(data => {
+        inviteLink = data?.link || null;
+        inviteCodeEl.value = data?.code || '—';
+        inviteBtn.disabled = !inviteLink;
+        if (data?.accepted) inviteMsg.textContent = UI_TEXT.inviteJoined[L](data.accepted);
+      })
+      .catch(() => { inviteAsked = false; inviteCodeEl.value = '—'; });
+  }
+  if (!params.prebuild) loadInvite();
 
   // navigator.clipboard is not granted in every Telegram WebView, so a hidden
   // textarea and execCommand stand behind it. Both can fail; the player is told
@@ -533,6 +544,31 @@ export function renderSettings(root, { player }) {
     }
   });
 
+  // The settings screen is kept alive between visits (see the screen stack in
+  // main.js), so its markup is no longer proof of what the player has chosen:
+  // it is a snapshot of player.settings as it stood when the screen was built.
+  // Everything here writes through player.settings, so repainting from that on
+  // the way in is enough to keep the two honest — and it costs no request.
+  //
+  // The language pill is deliberately absent: a language change retires the
+  // whole host, because the markup around these toggles is translated too.
+  function syncToggles() {
+    const rows = [
+      ['#toggle-sfx',           player?.settings?.sfx_enabled        !== false],
+      ['#toggle-music',         player?.settings?.music_enabled      !== false],
+      ['#toggle-notifications', player?.settings?.notifications      !== false],
+      ['#toggle-analytics',     player?.analytics_consent            === true ],
+      ['#toggle-barks',         player?.settings?.barks_enabled      !== false],
+      ['#toggle-formation',     player?.settings?.remember_formation === true ],
+    ];
+    for (const [sel, on] of rows) {
+      const btn = root.querySelector(sel);
+      if (!btn) continue;
+      btn.textContent = on ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      btn.classList.toggle('settings-toggle--on', on);
+    }
+  }
+
   root.querySelector('#reset-progress-btn').addEventListener('click', () => {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
@@ -568,4 +604,13 @@ export function renderSettings(root, { player }) {
       }
     });
   });
+
+  // Nothing here runs on a timer, reaches outside the host or holds a
+  // document-level listener, so there is nothing to stop on the way out and
+  // nothing to tear down. The invite link is fetched once on purpose: it does
+  // not change, and refetching it on every visit was the old router's doing
+  // rather than a requirement.
+  return {
+    onShow: () => { loadInvite(); syncToggles(); },
+  };
 }

@@ -75,19 +75,40 @@ html, body {
   width: 100%;
 }
 
+/* The screen STACK, not the screen. Every screen owns a host element inside
+   this one and navigation toggles which host is displayed, so a tab switch
+   costs a class change rather than a full rebuild (see showScreen in main.js).
+   Scrolling belongs to the hosts now — left here as well it would nest two
+   scrollers, and the stack's own scroll position is shared by every screen. */
 #content-root {
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
-#content-root[data-screen="embark"] {
+/* Hidden with display:none rather than visibility/opacity: an off-screen host
+   must cost nothing to lay out, and display:none → flex restarts the entry
+   animation below, so a screen still arrives the way it used to. */
+.screen-host {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.screen-host--active {
+  display: flex;
+  animation: screen-in 0.16s ease-out both;
+}
+
+.screen-host[data-screen="embark"] {
   scrollbar-width: none;
 }
 
-#content-root[data-screen="embark"]::-webkit-scrollbar { display: none; }
+.screen-host[data-screen="embark"]::-webkit-scrollbar { display: none; }
 
 #content-root[data-screen="castle"] {
 
@@ -104,13 +125,21 @@ html, body {
   animation: screen-in 0.16s ease-out both;
 }
 
+/* Inside a host the entry animation is the HOST's — running both plays it
+   twice over. Register and welcome render .screen straight into #app and keep
+   theirs. */
+.screen-host .screen {
+  animation: none;
+}
+
 @keyframes screen-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen { animation: none; }
+  .screen,
+  .screen-host--active { animation: none; }
 }
 
 h1, h2 { color: var(--accent); margin-bottom: 8px; }

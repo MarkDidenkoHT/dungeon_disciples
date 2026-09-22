@@ -180,7 +180,20 @@ function regionBgStyle(r) {
 // `highlightRegions` arrives from the item sheet's material detail: the regions
 // that drop the material the player tapped. They flash green for a few seconds
 // on arrival, then settle — long enough to notice, short enough not to nag.
-export function renderEmbark(root, { player, activeCheck, highlightRegions, highlightMaterial, layer } = {}) {
+export function renderEmbark(root, params = {}) {
+  const { player } = params;
+  // INSTRUCTIONS, not state: each is consumed by the load it arrives with and
+  // then cleared. The screen outlives a visit now, so leaving them standing
+  // would replay a reconnect prompt, or flash the regions a player was pointed
+  // at an hour ago, every time they came back. onShow takes the new ones.
+  let { activeCheck, highlightRegions, layer } = params;
+
+  // Whether the player is actually looking at this screen. Hidden screens keep
+  // every node they ever had (see the screen stack in main.js), so nothing
+  // asked of the DOM can answer this. It starts false for a PREBUILD — a screen
+  // built ahead of time on idle, which must draw itself and then sit still: no
+  // tutorial, no clock, nothing that assumes it is being looked at.
+  let hostVisible = !params.prebuild;
   applyBackground(root, player.faction, 'embark');
 
   const L = lang(player);
@@ -656,25 +669,34 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
     }
     renderPvpModes();
     clearInterval(tourneyTimer);
+    // The player left while this read was in the air. Draw what came back — the
+    // card is theirs to find next time — but do not start a clock behind them.
+    if (!hostVisible) return;
     // The clock ticks locally; the state is re-read only when the window flips,
     // which is the one moment the card means something different.
     //
-    // The interval dies with the PAGE, not with `root`: screens are swapped by
-    // clearing #content-root's innerHTML, so root itself is connected forever.
-    // Watching it left one live interval per visit to the arena, each holding
-    // its own snapshot of the standings — after a fight they fought over the
-    // badge, flipping "4 battles left" and "5" every second.
-    const host = root.querySelector('#embark-pvp-modes');
+    // Aliveness is asked of the SCREEN, not the DOM. This used to watch a node
+    // for isConnected, which was already a half-truth — #content-root was never
+    // removed, only emptied — and is now simply false: a screen that is hidden
+    // keeps every node it ever had. Without this the arena's clock would tick on
+    // behind the castle, re-reading the standings once a minute forever.
+    //
+    // onHide stops it and onShow starts it again; the check here catches the
+    // narrow case of a loadTourney already in flight when the player left.
     let wasOpen = tourneyIsOpen();
     tourneyTimer = setInterval(() => {
-      if (!host?.isConnected) { clearInterval(tourneyTimer); return; }
+      if (!hostVisible) { clearInterval(tourneyTimer); return; }
       if (tourneyIsOpen() !== wasOpen) { wasOpen = tourneyIsOpen(); loadTourney(); return; }
       if (!tickTourneyCard()) renderPvpModes();
     }, 1000);
   }
 
   renderPvpModes();
-  loadTourney();
+  // The standings and the Colossus are the two things here that are NOT read
+  // from a cache, and onShow reads them again on arrival anyway — so a prebuild
+  // draws the page from what it already has and leaves the round trips for the
+  // visit that needs them.
+  if (hostVisible) loadTourney();
   applyLayer();
 
   // ── Colossus page ────────────────────────────────────────────────────────
@@ -703,7 +725,7 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         renderColossusError(host, { L, onRetry: loadColossusPage });
       });
   }
-  loadColossusPage();
+  if (hostVisible) loadColossusPage();
 
   function showReconnectModal(battle_id, battle_data) {
     openModal(UI_TEXT.reconnectTitle[L], `
@@ -764,6 +786,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       if (activeCheck?.active) {
         showReconnectModal(activeCheck.battle_id, activeCheck.battle_data);
       }
+      // Answered. A later visit is not the visit that was bounced back here.
+      activeCheck = null;
 
       root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
         if (r.toColossus) {
@@ -842,6 +866,8 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
         const first = root.querySelector('.embark-card--highlight');
         first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
+      // Shown. The player was pointed here once, for one material.
+      highlightRegions = null;
 
       // Bound before the level pips and stopping propagation: the badge sits on
       // the region card, and without this a tap would open the sheet AND count
@@ -891,11 +917,16 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
       // step sets no flag, so those players reached this screen and were shown
       // nothing at all. Standing here is the qualification: the tab that leads
       // here is locked until the castle chain opens it.
-      if (!isTutorialDone(player, 'embark_region') && !isTutorialDone(player, 'battle_done')) {
-        const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
-        if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
-      } else {
-        hideTutorial();
+      // Both branches teach, and neither may run from behind another screen: a
+      // prebuilt embark would spotlight a region the player cannot see, or
+      // hideTutorial() the step the castle is in the middle of showing.
+      if (hostVisible) {
+        if (!isTutorialDone(player, 'embark_region') && !isTutorialDone(player, 'battle_done')) {
+          const firstPip = root.querySelector('.embark-level-pip[data-region="crimson_basilica"][data-level="1"]');
+          if (firstPip) showTutorialSpotlight(player, 'embark_region', firstPip);
+        } else {
+          hideTutorial();
+        }
       }
     } catch (err) {
       console.error('Failed to load regions:', err);
@@ -903,4 +934,36 @@ export function renderEmbark(root, { player, activeCheck, highlightRegions, high
   }
 
   loadRegions();
+
+  // Embark is kept alive between visits, and it is the screen most often
+  // arrived at WITH something to do — a material to flash, a battle to
+  // reconnect to, a page to open on — so it takes its params on the way in
+  // rather than being rebuilt for them (acceptsParams).
+  //
+  // The page the player left it on is NOT reset: coming back from a tourney
+  // battle should land on the arena, not send them across the track again. A
+  // caller that means otherwise says so with `layer`.
+  return {
+    acceptsParams: true,
+    onShow: (next = {}) => {
+      hostVisible      = true;
+      activeCheck      = next.activeCheck;
+      highlightRegions = next.highlightRegions;
+      if (next.layer) setLayer(next.layer === 'colossus' ? 1 : next.layer === 'arena' ? 3 : 2);
+      // Regions open as the player progresses, the tourney window turns over on
+      // a server clock, and the Colossus is beaten down by everyone at once —
+      // none of it is state this screen can keep on its own.
+      loadRegions();
+      loadTourney();
+      loadColossusPage();
+    },
+    onHide: () => {
+      hostVisible = false;
+      clearInterval(tourneyTimer);
+    },
+    destroy: () => {
+      hostVisible = false;
+      clearInterval(tourneyTimer);
+    },
+  };
 }

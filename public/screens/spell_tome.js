@@ -858,4 +858,24 @@ export function renderSpellTome(root, { player }) {
   }
 
   init();
+
+  // The tome survives between visits now. Nothing here runs on a timer or
+  // reaches outside the host, so the only obligation on the way back in is
+  // freshness: crystals are spent in battle and research is granted by the
+  // throne, both off this screen. init() re-reads the caches (a hit inside the
+  // TTL costs no request) and repaints, which is exactly what the old router
+  // got by rebuilding the screen from nothing.
+  // The build-cost strip is mounted beside the resource bar, OUTSIDE this host,
+  // so hiding the host does not hide it — and a selected spell is what puts it
+  // there. Dropping the selection on the way out is what onSheetClose already
+  // does when the player dismisses the card themselves.
+  return {
+    onShow: () => { init(); },
+    onHide: () => {
+      activeSpellId = null;
+      hideCostBar();
+      renderSlider();
+    },
+    destroy: () => { hideCostBar(); },
+  };
 }

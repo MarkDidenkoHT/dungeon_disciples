@@ -159,6 +159,161 @@ function mountShell(player) {
   });
 }
 
+// ── Screen container ──────────────────────────────────────────
+// Screens used to be rendered into one shared #content-root: every tab switch
+// reparsed a whole screen's markup, re-attached every listener and re-decoded
+// every image in it. #content-root is a STACK now — each screen owns a host
+// element that is built once, and navigation toggles which host is displayed.
+//
+// A screen opts into that by returning a lifecycle handle from its render:
+//
+//   return { onShow(params), onHide(), destroy() };
+//
+//   onShow  — re-read data, resume timers, fire tutorials. Runs on every
+//             return visit, NOT on the build: a prebuilt host is hidden, and
+//             nothing that measures or teaches may fire while it is.
+//   onHide  — stop intervals, drop document-level listeners, hide any strip
+//             the screen owns outside its host.
+//   destroy — full teardown; the host is removed after it runs.
+//
+// A screen that returns nothing is destroyed and rebuilt on every visit, which
+// is exactly what happened before — so screens migrate one at a time.
+const RENDERERS = {
+  castle:        renderCastle,
+  roster:        renderItems,
+  embark:        renderEmbark,
+  'battle-prep': renderBattlePrep,
+  battle:        renderBattle,
+  spells:        renderSpellTome,
+  settings:      renderSettings,
+};
+
+// screen name -> { host, handle, player }
+const hosts = new Map();
+
+function destroyScreen(name) {
+  const rec = hosts.get(name);
+  if (!rec) return;
+  try { rec.handle?.destroy?.(); } catch (err) { console.error(`destroy(${name}) failed:`, err); }
+  rec.host.remove();
+  hosts.delete(name);
+}
+
+// Called when the shell itself comes down: register wipes #app, taking
+// #content-root and every host in it.
+function destroyAllScreens() {
+  for (const name of [...hosts.keys()]) destroyScreen(name);
+}
+
+// A standing host is reused only when it can honestly answer for these params.
+function needsRebuild(rec, params) {
+  // No lifecycle handle: the screen has not been migrated, so the only thing it
+  // knows how to be is freshly built.
+  if (!rec.handle) return true;
+  // A different player OBJECT — not a mutated one. Screens close over the player
+  // they were built with, and register/settings can hand out a replacement.
+  if (rec.player !== params.player) return true;
+  // Every screen bakes its language into its markup at build time. Rather than
+  // ask each one to retranslate itself in place, a switch retires the host: it
+  // happens once, from a screen the player is standing on, and the rebuild is
+  // the same work the old router did on every single navigation.
+  if (rec.lang !== lang(params.player)) return true;
+  // Anything beyond the player is an instruction (focusBuilding, highlightRegions,
+  // activeCheck…). A screen claims those by declaring acceptsParams on its handle
+  // and reading them in onShow; otherwise the honest answer is a rebuild.
+  const extra = Object.keys(params).some(k => k !== 'player' && params[k] !== undefined);
+  if (extra && !rec.handle.acceptsParams) return true;
+  return false;
+}
+
+function showScreen(name, params) {
+  // Whatever is standing goes quiet FIRST, so a screen's onHide runs before the
+  // next screen's onShow can touch the chrome they share.
+  for (const [other, rec] of hosts) {
+    if (other === name || !rec.host.classList.contains('screen-host--active')) continue;
+    rec.host.classList.remove('screen-host--active');
+    if (rec.handle) {
+      try { rec.handle.onHide?.(); } catch (err) { console.error(`onHide(${other}) failed:`, err); }
+    } else {
+      // Un-migrated screens keep the old contract: they do not survive a leave.
+      destroyScreen(other);
+    }
+  }
+
+  let rec = hosts.get(name);
+  if (rec && needsRebuild(rec, params)) { destroyScreen(name); rec = null; }
+
+  if (rec) {
+    // Toggling display restarts the host's entry animation, so the screen still
+    // arrives the way it used to — without the DOM being rebuilt to do it.
+    rec.host.classList.add('screen-host--active');
+    try { rec.handle.onShow?.(params); } catch (err) { console.error(`onShow(${name}) failed:`, err); }
+    return;
+  }
+
+  buildScreen(name, params, true);
+}
+
+// Builds a host and renders the screen into it. `active` is false for a
+// prebuild: the host is attached and rendered but stays hidden, and no onShow
+// runs until the player actually goes there.
+function buildScreen(name, params, active) {
+  const stack = document.getElementById('content-root');
+  const render = RENDERERS[name];
+  if (!stack) return null;
+  if (!render) {
+    if (active) stack.insertAdjacentHTML('beforeend', `<p style="color:red">Unknown screen: ${name}</p>`);
+    return null;
+  }
+
+  const host = document.createElement('div');
+  host.className = 'screen-host';
+  // Screens style themselves off their own host now (backgrounds, scrolling,
+  // per-screen rules), so this is the hook that used to sit on #content-root.
+  host.dataset.screen = name;
+  if (active) host.classList.add('screen-host--active');
+  stack.appendChild(host);
+
+  const rec = { host, handle: null, player: params.player, lang: lang(params.player) };
+  hosts.set(name, rec);
+  try {
+    // A prebuilt screen is told so, because "am I on screen?" is not a question
+    // the DOM can answer for it: it must draw itself and then sit still — no
+    // tutorial, no clock, nothing mounted outside its own host.
+    rec.handle = render(host, active ? params : { ...params, prebuild: true }) || null;
+  } catch (err) {
+    console.error(`render(${name}) failed:`, err);
+  }
+  return rec;
+}
+
+// The four tabs the player has not opened yet. Building them costs a parse and
+// a cache read each — the art they draw is already decoded by the launch
+// preload — and buys a first visit to every tab that is a class change rather
+// than a build. One per idle slice, so this never competes with the screen the
+// player is actually looking at.
+const PREBUILD_SCREENS = ['roster', 'embark', 'spells', 'settings'];
+
+function schedulePrebuild(player) {
+  if (!player?.chat_id) return;
+  const idle = window.requestIdleCallback
+    ? (fn) => window.requestIdleCallback(fn, { timeout: 3000 })
+    : (fn) => setTimeout(fn, 300);
+
+  let i = 0;
+  const step = () => {
+    // The shell can have come down under us (a reset sends the player back to
+    // register), and a battle is the one place where a spare parse is worth
+    // more than the tab it saves.
+    if (!shellMounted || currentScreen === 'battle' || currentScreen === 'battle-prep') return;
+    const name = PREBUILD_SCREENS[i++];
+    if (!name) return;
+    if (!hosts.has(name)) buildScreen(name, { player }, false);
+    idle(step);
+  };
+  idle(step);
+}
+
 function navigate(screen, params = {}) {
   const { player } = params;
 
@@ -184,6 +339,8 @@ function navigate(screen, params = {}) {
     document.documentElement.style.setProperty('--sheet-top', px);
 
   if (screen === 'register') {
+    // #app is about to be emptied, taking #content-root and every host with it.
+    destroyAllScreens();
     shellMounted = false;
     currentScreen = 'register';
     setSheetBottom('0px');
@@ -258,9 +415,10 @@ function navigate(screen, params = {}) {
     if (embarkNav._battlePrepHandler) { embarkNav.removeEventListener('click', embarkNav._battlePrepHandler, true); delete embarkNav._battlePrepHandler; }
   }
 
-  // Screen-owned strips that live OUTSIDE #content-root (the items screen's
-  // trophy bar, the castle's cost bar) are not cleared by emptying the root, so
-  // they would follow the player onto the next screen.
+  // Screen-owned strips that live OUTSIDE the host (the items screen's trophy
+  // bar, the castle's cost bar) are not taken down by hiding one, so they would
+  // follow the player onto the next screen. A migrated screen hides its own in
+  // onHide(); this covers every screen that has not been migrated yet.
   document.getElementById('roster-trophy-bar')?.remove();
   document.getElementById('shared-cost-bar')?.remove();
 
@@ -271,29 +429,14 @@ function navigate(screen, params = {}) {
   clearFormationSynergies();
   destroyBattleFx();
 
-  root.innerHTML = '';
-  root.style.backgroundImage    = '';
-  root.style.backgroundSize     = '';
-  root.style.backgroundPosition = '';
-  root.style.backgroundRepeat   = '';
-  root.style.backgroundColor    = '';
-
   currentScreen = screen;
   // Lets CSS target a single screen without every screen paying for it — see
-  // #content-root[data-screen="castle"] in style.css.
+  // #content-root[data-screen="castle"] in style.css. Backgrounds and scrolling
+  // moved onto the hosts, but this stays: the rules keyed off it are about the
+  // AREA a screen is given, not about the screen itself.
   root.dataset.screen = screen;
 
-  switch (screen) {
-    case 'castle':      renderCastle(root, params);     break;
-    case 'roster':      renderItems(root, params);      break;
-    case 'embark':      renderEmbark(root, params);     break;
-    case 'battle-prep': renderBattlePrep(root, params); break;
-    case 'battle':      renderBattle(root, params);     break;
-    case 'spells':      renderSpellTome(root, params);  break;
-    case 'settings':    renderSettings(root, params);   break;
-    default:
-      root.innerHTML = `<p style="color:red">Unknown screen: ${screen}</p>`;
-  }
+  showScreen(screen, params);
 }
 
 setNavigate(navigate);
@@ -431,6 +574,7 @@ async function boot() {
         onDone: (updated) => {
           if (updated.settings?.language) saveLanguageCache(updated.settings.language);
           goOn(updated);
+          schedulePrebuild(updated);
         },
       });
       revealWhenReady(app);
@@ -441,7 +585,11 @@ async function boot() {
     goOn(player);
     // The first screen is now building UNDER the loading screen; it lifts only
     // once that screen has rendered its data and every image in it is decoded.
-    revealWhenReady(app);
+    //
+    // The other tabs are built AFTER it lifts, never before: revealWhenReady
+    // measures every image under #app, so a screen prebuilt underneath it would
+    // hold the launch hostage to art for a tab nobody has asked for yet.
+    revealWhenReady(app).then(() => schedulePrebuild(player));
   } catch (err) {
     dismissLoadingScreen();
     app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#e74c3c;font-family:sans-serif;text-align:center;padding:2rem">Login failed: ${err.message}</div>`;
