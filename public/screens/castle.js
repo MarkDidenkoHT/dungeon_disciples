@@ -419,7 +419,12 @@ export function renderCastle(root, params = {}) {
     // The build-cost strip is built here rather than when the first slot sheet
     // opens, so opening one reveals a row that is already mounted. It carries no
     // cost yet and stays hidden until a sheet hands it one.
-    primeCostBar();
+    //
+    // Not on a prebuild. The strip mounts OUTSIDE this host, next to the
+    // resource bar, and mounting it drops whatever #shared-cost-bar is already
+    // there — so a castle built hidden at startup would reach across and tear
+    // down the spell tome's own priced row.
+    if (hostVisible) primeCostBar();
 
     // Sent here from another screen to build something specific. Once.
     if (focusBuilding) { goToBuilding(focusBuilding); focusBuilding = null; }

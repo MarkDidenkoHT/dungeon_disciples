@@ -718,7 +718,17 @@ export function renderItems(root, params = {}) {
   // The strip under the resource bar. On the forge it is the trophies a craft
   // needs; on the Engraving page it is the Valor the player holds, which is the
   // only currency that page spends.
+  //
+  // Mounted OUTSIDE this screen's host, next to the resource strip, so it is not
+  // hidden by the host being hidden — which makes it the one thing on this
+  // screen that a prebuild must not draw. main.js builds the un-opened tabs at
+  // startup and renders them hidden (see buildScreen), and render() below calls
+  // this on the way through, so without this guard a player who has never opened
+  // the Items tab still got its trophy strip stapled under the castle's resource
+  // bar on the very first load. load() checks hostVisible too, but only AFTER
+  // render() has already run.
   function showTrophyBar() {
+    if (!hostVisible) return;
     if (itemsLayer === 1) { showValorBar(); return; }
     const entry = currentList()[selected];
     // Most recipes (47 of 77 items) ask for no trophy at all — they are paid for
