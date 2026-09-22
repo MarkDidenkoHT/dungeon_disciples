@@ -142,6 +142,12 @@ class BattleEngine {
     // data/litanies.js). Carried through getBattleData/rehydrate so a reload
     // cannot replay one — and with it, hand out its reward a second time.
     this.litaniesFired = [...(state?.litaniesFired || [])];
+    // The Proving Grounds' third level (litaniesUnlocked in data/buildings.js).
+    // Gates the PLAYER side only — an enemy formation that earns a litany stages
+    // it whatever the player has built, since it is their drill, not ours.
+    // Absent means unlocked: battles saved before the gate existed, and callers
+    // with no castle to read (bot sims, tests), must keep behaving as they did.
+    this.litaniesUnlocked = state?.litaniesUnlocked !== false;
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -2908,6 +2914,9 @@ class BattleEngine {
       tally: this.tally,
       // Once per battle means once per battle, reload or not.
       litaniesFired: this.litaniesFired,
+      // Carried so a mid-battle reload cannot re-read a castle that has changed
+      // since the fight started.
+      litaniesUnlocked: this.litaniesUnlocked,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -3029,6 +3038,7 @@ class BattleEngine {
     if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
     engine.tally = { player: {}, enemy: {}, ...(battleData.tally || {}) };
     engine.litaniesFired = [...(battleData.litaniesFired || [])];
+    engine.litaniesUnlocked = battleData.litaniesUnlocked !== false;
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -3572,6 +3582,9 @@ class BattleEngine {
   // caller can pay the reward and suppress the ordinary kill/death barks), or
   // null.
   fireLitany(actor, target) {
+    // Not yet drilled. The blow still lands — it is simply an ordinary kill,
+    // with the ordinary kill and death barks the litany would have replaced.
+    if (actor.side === 'player' && !this.litaniesUnlocked) return null;
     for (const def of LITANIES) {
       if (def.once_per === 'battle' && this.litaniesFired.includes(`${def.id}:${actor.side}`)) continue;
       if (!def.lead.ids.includes(this.litanyUnitId(actor))) continue;

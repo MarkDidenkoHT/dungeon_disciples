@@ -36,7 +36,7 @@ const LITANIES = [
   {
     id:    'profane_chorus',
     name:  'Profane Chorus',
-    name_ru: 'Нечестивый хор',
+    name_ru: 'Нечестивый Хор',
     lead:   { ids: LITANY_LEAD_IDS },
     target: { ids: LITANY_TARGET_IDS },
     formation: {
@@ -61,7 +61,7 @@ const LITANIES = [
     reward: {
       initiative_flat_reduction: 5,
       message:    'Profane Chorus - the Light breaks them: every enemy loses 5 initiative.',
-      message_ru: 'Нечестивый хор — Свет ломает их: все враги теряют 5 инициативы.',
+      message_ru: 'Нечестивый Хор — Свет ломает их: все враги теряют 5 инициативы.',
     },
     once_per: 'battle',
   },

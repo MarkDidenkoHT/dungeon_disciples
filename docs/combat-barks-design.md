@@ -187,6 +187,18 @@ reward — so it teaches positioning instead of only decorating it.
 One litany exists for now (`profane_chorus`). It ships alone and gets played before a
 second one is written.
 
+**Unlocked by the Proving Grounds' third level** (`litaniesUnlocked` in
+[data/buildings.js](../data/buildings.js)). Levels 1 and 2 of that building raise the
+unit tier ceiling; level 3 pays in litanies instead, so `maxUnitTier` is clamped to
+tier 4 rather than read straight off the building's level. The gate gives the
+**player** side only: an enemy formation that earns a litany stages it whatever the
+player has built. It is read once when a battle is created
+(`litaniesUnlockedFor` in [routes/index.js](../routes/index.js)), carried in
+`battle_data` so a castle raised mid-fight cannot change a fight already under way,
+and enforced in `fireLitany`. A battle saved before the gate existed, and any caller
+with no castle to read, defaults to unlocked. The spell tome's third page mirrors the
+same condition to decide whether it draws the litany locked.
+
 ### 5.1 `profane_chorus`
 
 **Everything is a hardcoded id list.** No tags, no factions, no filters. Tags do not

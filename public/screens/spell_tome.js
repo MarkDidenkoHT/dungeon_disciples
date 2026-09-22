@@ -3,8 +3,34 @@ import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache
 import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
+import { LITANIES } from '../../data/litanies.js';
+
+// Mirrors litaniesUnlocked / LITANY_BUILDING_LEVEL in data/buildings.js — that
+// file is CommonJS (server-side only) and cannot be imported here, so the value
+// is copied the way castle.js copies its slot tables. The SERVER is what
+// actually enforces this (see litaniesUnlockedFor in routes/index.js, which
+// decides engine.litaniesUnlocked); the copy below only decides what this page
+// draws, so the two disagreeing costs a wrong label, never a wrong battle.
+const LITANY_BUILDING = 'proving_grounds';
+const LITANY_BUILDING_LEVEL = 3;
+
+// Mirrors buildingLevel in data/buildings.js: a building's level anywhere in
+// the castle, 0 when unbuilt.
+function buildingLevelOf(buildingsData, buildingId) {
+  if (!buildingsData || !buildingId) return 0;
+  let best = 0;
+  for (const [key, state] of Object.entries(buildingsData)) {
+    if (!/^slot_\d+$/.test(key)) continue;
+    if (state?.building_id === buildingId) best = Math.max(best, state.level ?? 0);
+  }
+  return best;
+}
+
+function litaniesUnlocked(buildingsData) {
+  return buildingLevelOf(buildingsData, LITANY_BUILDING) >= LITANY_BUILDING_LEVEL;
+}
 import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, closeSubSheet, getSheetBody,
-         onSheetClose, cap, playPageTurnSound, spellName, spellDesc, abilityName, abilityDescription,
+         onSheetClose, cap, playPageTurnSound, escapeHtml, spellName, spellDesc, abilityName, abilityDescription,
          resolveAbility, buildAbilityModalParts, buildUnitCard } from '../utils.js';
 import { rootOf } from '../unit_tree.js';
 
@@ -105,6 +131,13 @@ function abilityKeysOf(unitDef) {
   return [...passives, unitDef?.ability].filter(Boolean);
 }
 
+// A unit's name in the reader's language. renderLibrary has a local of its own
+// that closes over the screen's `lang`; this is the module-level form, for the
+// litany page, which indexes units from every faction rather than one.
+function unitLabelFor(def, lang) {
+  return (lang === 'ru' && def?.name_ru) || def?.name || '';
+}
+
 // One entry per unit NAME, not per definition: data/units.js holds a row for
 // every tier and every branch of a unit, so an un-deduplicated grid showed the
 // Black Castellan seven times. The LOWEST tier that matches wins, because that
@@ -136,6 +169,29 @@ const TOME_TEXT = {
     debuff:    { en: 'Debuff',    ru: 'Ослабление' },
     resurrect: { en: 'Resurrect', ru: 'Воскрешение' },
   },
+  litaniesAria:  { en: 'Litanies',             ru: 'Литании' },
+  litaniesTitle: { en: 'Litanies',             ru: 'Литании' },
+  litaniesBlurb: {
+    en: 'A litany is a staged execution. Stand the exact formation below and the chorus speaks before the lead strikes — the killing blow is held back for the last verse.',
+    ru: 'Литания — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и хор заговорит раньше, чем вождь нанесёт удар: смертельный удар придержан до последнего стиха.',
+  },
+  litanyLocked: {
+    en: `🔒 Requires Proving Grounds level ${LITANY_BUILDING_LEVEL}`,
+    ru: `🔒 Требуется Ристалище ${LITANY_BUILDING_LEVEL} уровня`,
+  },
+  litanyLockedHint: {
+    en: 'Raise the Proving Grounds in your castle to drill your host in the litanies.',
+    ru: 'Возведите Ристалище в замке, чтобы обучить войско литаниям.',
+  },
+  litanyFormation: { en: 'Formation',   ru: 'Построение' },
+  litanyVerses:    { en: 'Verses',      ru: 'Стихи' },
+  litanyReward:    { en: 'Reward',      ru: 'Награда' },
+  litanyFrontCol:  { en: 'Front column, top to bottom', ru: 'Передняя колонна, сверху вниз' },
+  litanyRoles: {
+    chorus: { en: 'Chorus', ru: 'Хор' },
+    lead:   { en: 'Lead',   ru: 'Вождь' },
+  },
+  litanyNone: { en: 'No litanies are known.', ru: 'Литании неизвестны.' },
 };
 
 export function renderSpellTome(root, { player }) {
@@ -170,11 +226,14 @@ export function renderSpellTome(root, { player }) {
 
               <div class="tome-layer" data-layer="2" id="tome-library"></div>
 
+              <div class="tome-layer" data-layer="3" id="tome-litanies"></div>
+
             </div>
           </div>
 
           <button class="tome-layer-arrow tome-layer-arrow--next" id="tome-layer-next"
-                  type="button" aria-label="${TOME_TEXT.libraryAria[lang]}"><span>&rsaquo;</span></button>
+                  type="button" aria-label="${TOME_TEXT.libraryAria[lang]}"
+                  id="tome-layer-next-label"><span>&rsaquo;</span></button>
         </div>
       </main>
     </div>
@@ -186,7 +245,8 @@ export function renderSpellTome(root, { player }) {
   // switching slides it, so neither is rebuilt and the arrows cannot race a
   // render. The Library is built ONCE, here, because it derives everything from
   // static data — nothing about it changes while the screen is open.
-  const LAYER_COUNT = 2;
+  // 1 spells · 2 Library · 3 Litanies.
+  const LAYER_COUNT = 3;
   let currentLayer = 1;
 
   function applyLayer() {
@@ -201,15 +261,20 @@ export function renderSpellTome(root, { player }) {
     // vanishes moves everything beside it.
     const prev = root.querySelector('#tome-layer-prev');
     const next = root.querySelector('#tome-layer-next');
+    // Three pages now, so neither arrow always leads to the same one.
     if (prev) {
       const can = currentLayer > 1;
       prev.disabled = !can;
       prev.classList.toggle('tome-layer-arrow--live', can);
+      prev.setAttribute('aria-label',
+        currentLayer === 3 ? TOME_TEXT.libraryAria[lang] : TOME_TEXT.tomeAria[lang]);
     }
     if (next) {
       const can = currentLayer < LAYER_COUNT;
       next.disabled = !can;
       next.classList.toggle('tome-layer-arrow--live', can);
+      next.setAttribute('aria-label',
+        currentLayer === 1 ? TOME_TEXT.libraryAria[lang] : TOME_TEXT.litaniesAria[lang]);
     }
   }
 
@@ -552,6 +617,109 @@ export function renderSpellTome(root, { player }) {
 
   renderLibrary(root.querySelector('#tome-library'));
 
+  // ── Layer three: the Litanies ─────────────────────────────────────────────
+  // A codex page, not a shop: nothing here is bought. It shows the formation a
+  // litany demands, who may stand in each cell, what is said and what it pays.
+  // Locked until the Proving Grounds reaches its third level — shown rather than
+  // hidden, so the page teaches that the drill exists and what buys it.
+  //
+  // The lock is cosmetic here and real in utils/battle-engine.js (fireLitany);
+  // this page only mirrors it.
+  let litaniesReady = false;
+
+  function litanyUnitChips(ids, unitById) {
+    // One chip per NAME: data/litanies.js lists every tier and branch of a unit
+    // that may fill a role, which is the same unit over and over to a reader.
+    const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
+    if (!defs.length) return '';
+    return `<div class="litany-unit-chips">${defs.map(d => `
+      <span class="litany-unit-chip" title="${escapeHtml(unitLabelFor(d, lang))}">
+        <img src="${portraitUrl(d)}" alt="" class="litany-unit-portrait"
+             onerror="this.style.visibility='hidden'">
+        <span class="litany-unit-name">${escapeHtml(unitLabelFor(d, lang))}</span>
+      </span>`).join('')}</div>`;
+  }
+
+  function renderLitanies(container) {
+    if (!container) return;
+    const t = key => TOME_TEXT[key][lang];
+
+    // Role ids are matched against unit DEFINITION ids, which are not unique to
+    // one faction — the lead and the target can sit on opposite sides of a
+    // litany. So the index is every unit in the game, not the player's faction.
+    const unitById = new Map();
+    for (const faction of Object.values(UNITS)) {
+      for (const def of Object.values(faction)) {
+        if (def?.id && !unitById.has(def.id)) unitById.set(def.id, def);
+      }
+    }
+
+    const cards = LITANIES.map(def => {
+      const rows = (def.formation?.rows || []).map(row => {
+        const roleLabel = TOME_TEXT.litanyRoles[row.role]?.[lang] || cap(row.role || '');
+        // A 'lead' row names no ids of its own — the litany's own lead list is
+        // what may stand there, and it must be the unit landing the blow.
+        const ids = row.role === 'lead' ? (def.lead?.ids || []) : (row.ids || []);
+        return `
+          <div class="litany-row litany-row--${row.role}">
+            <span class="litany-row-role">${escapeHtml(roleLabel)}</span>
+            ${litanyUnitChips(ids, unitById)}
+          </div>`;
+      }).join('');
+
+      const verses = (def.verses || []).map(v => `
+        <li class="litany-verse litany-verse--${v.strike}">
+          <span class="litany-verse-strike" aria-hidden="true">${v.strike === 'lethal' ? '⚔' : '✧'}</span>
+          <span class="litany-verse-line">${escapeHtml(lang === 'ru' ? (v.line?.[1] ?? v.line?.[0] ?? '') : (v.line?.[0] ?? ''))}</span>
+        </li>`).join('');
+
+      const reward = lang === 'ru'
+        ? (def.reward?.message_ru || def.reward?.message || '')
+        : (def.reward?.message || '');
+
+      return `
+        <article class="litany-card${litaniesReady ? '' : ' litany-card--locked'}">
+          <header class="litany-card-head">
+            <h3 class="litany-name">${escapeHtml(lang === 'ru' ? (def.name_ru || def.name) : def.name)}</h3>
+            ${litaniesReady ? '' : `<span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>`}
+          </header>
+
+          <section class="litany-section">
+            <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
+            <p class="litany-section-note">${escapeHtml(t('litanyFrontCol'))}</p>
+            <div class="litany-formation">${rows}</div>
+          </section>
+
+          <section class="litany-section">
+            <h4 class="litany-section-title">${escapeHtml(t('litanyVerses'))}</h4>
+            <ol class="litany-verses">${verses}</ol>
+          </section>
+
+          ${reward ? `
+            <section class="litany-section">
+              <h4 class="litany-section-title">${escapeHtml(t('litanyReward'))}</h4>
+              <p class="litany-reward">${escapeHtml(reward)}</p>
+            </section>` : ''}
+        </article>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="litany-page">
+        <header class="litany-page-head">
+          <h2 class="litany-page-title">${escapeHtml(t('litaniesTitle'))}</h2>
+          <p class="litany-page-blurb">${escapeHtml(t('litaniesBlurb'))}</p>
+          ${litaniesReady ? '' : `
+            <p class="litany-page-lock">
+              <span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>
+              <span class="litany-lock-hint">${escapeHtml(t('litanyLockedHint'))}</span>
+            </p>`}
+        </header>
+        <div class="litany-list">${cards || `<p class="spells-empty">${escapeHtml(t('litanyNone'))}</p>`}</div>
+      </div>`;
+  }
+
+  renderLitanies(root.querySelector('#tome-litanies'));
+
   // The faction's upgrade map, for grouping Library portraits by unit line. It
   // rides the bootstrap the castle already fetches, so this costs no request —
   // but it arrives AFTER the first render. Everything that needs it is opened by
@@ -835,6 +1003,11 @@ export function renderSpellTome(root, { player }) {
       upgradePaths = boot?.buildings?.upgrade_paths || {};
 
       throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
+      // Same structures read the throne level comes from, so the litany page
+      // costs no extra request. Re-rendered rather than patched: the page is
+      // static apart from this one flag.
+      litaniesReady = litaniesUnlocked(structData?.buildings_data);
+      renderLitanies(root.querySelector('#tome-litanies'));
       // Off the player, not the network. `learned_spells` is a column on the
       // players row and arrives with /login, so the GET this replaced was
       // fetching something the client already held — every time the tab was

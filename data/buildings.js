@@ -84,7 +84,7 @@ const BUILDING_MAX_LEVELS = {
   messenger_post:   3,
   mercenary_hall:   3,
   garrison_annex:   3,
-  proving_grounds:  2,
+  proving_grounds:  3,
   training_grounds: 2,
 };
 
@@ -125,6 +125,17 @@ function craftingUnlocked(buildingsData) {
 // Checked on the server in POST /roster/engrave and mirrored on the items screen.
 function engravingUnlocked(buildingsData) {
   return buildingLevel(buildingsData, 'blacksmith') >= 2;
+}
+
+// Litanies — the scripted executions in data/litanies.js — are the Proving
+// Grounds' third level. Levels 1 and 2 raise the tier ceiling; level 3 teaches
+// the drill instead. Checked on the server before a battle runs and mirrored in
+// the spell tome's third page, which shows the litany locked until then.
+const LITANY_BUILDING = 'proving_grounds';
+const LITANY_BUILDING_LEVEL = 3;
+
+function litaniesUnlocked(buildingsData) {
+  return buildingLevel(buildingsData, LITANY_BUILDING) >= LITANY_BUILDING_LEVEL;
 }
 
 // ── Building effects ────────────────────────────────────────────────────────
@@ -192,8 +203,17 @@ function getEmbarkBuildingBonuses(buildingsData) {
 // still the building it stands in.
 const BASE_MAX_UNIT_TIER = 2;
 
+// Tier 4 is the last tier that EXISTS (see data/units.js — nothing is authored
+// above t: 4). The Proving Grounds used to max at 2 and so could never overshoot
+// it; its third level pays in litanies rather than tiers, so the ceiling is now
+// clamped here instead of being read straight off the building's level.
+const MAX_UNIT_TIER = 4;
+
 function maxUnitTier(buildingsData) {
-  return BASE_MAX_UNIT_TIER + buildingLevel(buildingsData, 'proving_grounds');
+  return Math.min(
+    MAX_UNIT_TIER,
+    BASE_MAX_UNIT_TIER + buildingLevel(buildingsData, 'proving_grounds'),
+  );
 }
 
 // { building, level } — the unlocker and the level it must have reached. The
@@ -370,10 +390,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Life: 110 }, 3: { gold: 560, Crystals_Life: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.',
         cost: { gold: 200, Crystals_Life: 60 },
-        upgrade_costs: { 2: { gold: 500, Crystals_Life: 160 } } },
+        upgrade_costs: { 2: { gold: 500, Crystals_Life: 160 }, 3: { gold: 900, Crystals_Life: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
         desc: 'Every embark pays more XP: +5%, then +10%.',
@@ -513,10 +533,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Fire: 110 }, 3: { gold: 560, Crystals_Fire: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.',
         cost: { gold: 200, Crystals_Fire: 60 },
-        upgrade_costs: { 2: { gold: 500, Crystals_Fire: 160 } } },
+        upgrade_costs: { 2: { gold: 500, Crystals_Fire: 160 }, 3: { gold: 900, Crystals_Fire: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
         desc: 'Every embark pays more XP: +5%, then +10%.',
@@ -682,10 +702,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Death: 110 }, 3: { gold: 560, Crystals_Death: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.',
         cost: { gold: 200, Crystals_Death: 60 },
-        upgrade_costs: { 2: { gold: 500, Crystals_Death: 160 } } },
+        upgrade_costs: { 2: { gold: 500, Crystals_Death: 160 }, 3: { gold: 900, Crystals_Death: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
         desc: 'Every embark pays more XP: +5%, then +10%.',
@@ -1663,6 +1683,10 @@ module.exports = {
   buildingLevel,
   BASE_MAX_UNIT_TIER,
   maxUnitTier,
+  MAX_UNIT_TIER,
+  litaniesUnlocked,
+  LITANY_BUILDING,
+  LITANY_BUILDING_LEVEL,
   BUILDING_EFFECTS,
   buildingEffects,
   getSpellCostReductionPct,

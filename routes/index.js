@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -2425,6 +2425,21 @@ function throneLevelOf(structures) {
   return structures?.buildings_data?.slot_0?.level ?? 0;
 }
 
+// The Proving Grounds' third level, read once when a battle is CREATED and then
+// carried in battle_data — a castle raised mid-fight must not change a fight
+// already under way. One read, so a battle that cannot reach the castle (a bot
+// sim, a test) simply keeps the engine's unlocked default.
+async function litaniesUnlockedFor(chat_id) {
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    return litaniesUnlocked(rows[0]?.buildings_data);
+  } catch {
+    // A castle we cannot read is not a reason to take the drill away from
+    // someone who has earned it; the formation still has to be exact.
+    return true;
+  }
+}
+
 // Unit defs live in data/units.js keyed by faction; a roster row only carries
 // unit_id, so the def is looked up the way the client's resolveUnitDef does.
 let _errandUnitIndex = null;
@@ -4012,6 +4027,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
 
     const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
+    engine.litaniesUnlocked = await litaniesUnlockedFor(chat_id);
 
     // Spells are no longer chosen before the fight. They are cast IN battle by
     // the hero, paid for with power earned during it (POST /battle/cast), so
@@ -4276,6 +4292,9 @@ async function createPvpBattle(a, b) {
     asEnemySide(armyB, b.formation.placement || {}),
     a.formation.placement || {},
   );
+  // Only the 'player' side is gated, and in a duel that side is A's army. B
+  // fights from the 'enemy' side, which is ungated by design — see fireLitany.
+  engine.litaniesUnlocked = await litaniesUnlockedFor(a.chat_id);
 
   engine.firePendingRoundEffects();
   // Deliberately NO runAiTurns: both sides are people, and the first turn
@@ -4570,6 +4589,7 @@ router.post('/colossus/attack', requireAuth, async (req, res) => {
     if (!boss) return res.status(500).json({ error: 'Colossus unit is missing from data/units.js' });
 
     const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy([boss]), placement);
+    engine.litaniesUnlocked = await litaniesUnlockedFor(chat_id);
     engine.firePendingRoundEffects();
     if (!engine.done) engine.runAiTurns();
 
@@ -4661,6 +4681,7 @@ async function createBotBattle(entry, { template, bandId }) {
   const placement   = entry.formation.placement || {};
 
   const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy(army), placement);
+  engine.litaniesUnlocked = await litaniesUnlockedFor(entry.chat_id);
   engine.firePendingRoundEffects();
   // The bot may hold the first turn; it takes it now, as a region encounter does.
   if (!engine.done) engine.runAiTurns();

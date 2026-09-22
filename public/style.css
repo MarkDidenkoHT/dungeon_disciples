@@ -9925,3 +9925,234 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
+
+/* ── Spell tome, layer three: the Litanies ─────────────────────────────────
+   A codex page. Nothing here is bought, so there are no buttons and no costs —
+   it reads top to bottom: what the formation must be, what is said, what it
+   pays. Locked until the Proving Grounds' third level, and shown locked rather
+   than hidden, so the page can teach what buys it. */
+.litany-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 18px;
+}
+
+/* The tome's parchment art sits directly behind this page, and pale body text
+   on it is unreadable — so the header gets the same backing the cards have. */
+.litany-page-head {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 120px), var(--surface);
+}
+
+.litany-page-title {
+  color: var(--accent);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin: 0 0 4px;
+}
+
+.litany-page-blurb {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.litany-page-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  border-radius: 8px;
+  background: rgba(var(--accent-rgb), 0.07);
+}
+
+.litany-lock {
+  color: var(--accent-bright);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.litany-lock-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.litany-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.litany-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 120px), var(--surface);
+  padding: 12px;
+}
+
+/* Legible, not unreadable: a locked litany still has to teach the formation
+   that unlocks its use, so it drains of colour rather than blurring. A filter
+   rather than `opacity`, which would have let the tome's parchment art bleed
+   up through the card and left the text muddier than it is dimmed. */
+.litany-card--locked { filter: grayscale(0.6) brightness(0.9); }
+
+.litany-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.litany-name {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.litany-section { margin-top: 12px; }
+
+.litany-section-title {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.litany-section-note {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin: 0 0 6px;
+}
+
+/* The formation reads as the column it describes: one band per row, stacked in
+   the order the units actually stand in. */
+.litany-formation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.litany-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* The lead lands the real blow, so its band carries the accent. */
+.litany-row--lead {
+  border-left-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+.litany-row-role {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.litany-unit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.litany-unit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 7px 3px 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.litany-unit-portrait {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.litany-unit-name {
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.litany-verses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* The verses are spoken in order and the last one kills, so they are numbered
+     by position — a counter, not a bullet. */
+  counter-reset: litany-verse;
+}
+
+.litany-verse {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.litany-verse-strike {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.4;
+}
+
+/* The killing verse, marked so the staging reads at a glance. */
+.litany-verse--lethal {
+  background: rgba(var(--accent-rgb), 0.10);
+  border: 1px solid rgba(var(--accent-rgb), 0.30);
+}
+
+.litany-verse--lethal .litany-verse-strike { color: var(--accent-bright); }
+
+.litany-reward {
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 7px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--accent-rgb), 0.07);
+}
