@@ -184,6 +184,18 @@ const TOME_TEXT = {
     ru: 'Возведите Ристалище в замке, чтобы обучить войско литаниям.',
   },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
+  litanyTarget:    { en: 'Target',      ru: 'Цель' },
+  // A row of faces reads as "all of these stand here" unless it says otherwise,
+  // and every role in a litany is a CHOICE of exactly ONE. The count of the
+  // choice is spelled out because a bare "any 5" reads as "take any five".
+  litanyAnyOf: {
+    en: n => `any 1 of ${n}`,
+    ru: n => `любой 1 из ${n}`,
+  },
+  litanyTargetNote: {
+    en: 'Fires as the lead is about to kill one of these',
+    ru: 'Срабатывает, когда вождь готов убить одного из них',
+  },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   litanyFrontCol:  { en: 'Front column, top to bottom', ru: 'Передняя колонна, сверху вниз' },
   litanyRoles: {
@@ -641,11 +653,10 @@ export function renderSpellTome(root, { player }) {
   // this page only mirrors it.
   let litaniesReady = false;
 
-  function litanyUnitChips(ids, unitById) {
-    // One portrait per NAME: data/litanies.js lists every tier and branch of a
-    // unit that may fill a role, which is the same face over and over to a
-    // reader.
-    const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
+  // Takes unit DEFS, already deduplicated by name — data/litanies.js lists every
+  // tier and branch that may fill a role, which is the same face over and over
+  // to a reader, and the caller needs that count for its "any N" line anyway.
+  function litanyUnitChips(defs) {
     if (!defs.length) return '';
     // Faces, not a list. The name rides on `title` and `alt` so the portrait is
     // still identifiable on hover and to a screen reader — which is the only
@@ -693,18 +704,42 @@ export function renderSpellTome(root, { player }) {
     // heroes, at that.
     const performable = LITANIES.filter(canPerform);
 
-    const cards = performable.map(def => {
+    // One band: a role label, how many of the faces beside it are needed, and
+    // the faces. Used for the formation's rows and for the target alike — they
+    // are the same question ("which unit?") asked of a different side.
+    const bandHtml = (role, label, ids) => {
+      const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
+      // A row of five faces reads as "stand all five here" unless something says
+      // otherwise. Every role is a choice of ONE, so say so — but only where
+      // there is a choice to make: "any 1" beside a single portrait is noise.
+      const hint = defs.length > 1 ? TOME_TEXT.litanyAnyOf[lang](defs.length) : '';
+      return `
+        <div class="litany-row litany-row--${role}">
+          ${label || hint ? `
+            <div class="litany-row-head">
+              ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
+              ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
+            </div>` : ''}
+          ${litanyUnitChips(defs)}
+        </div>`;
+    };
+
+    const cards = performable.map((def, i) => {
       const rows = (def.formation?.rows || []).map(row => {
         const roleLabel = TOME_TEXT.litanyRoles[row.role]?.[lang] || cap(row.role || '');
         // A 'lead' row names no ids of its own — the litany's own lead list is
         // what may stand there, and it must be the unit landing the blow.
         const ids = row.role === 'lead' ? (def.lead?.ids || []) : (row.ids || []);
-        return `
-          <div class="litany-row litany-row--${row.role}">
-            <span class="litany-row-role">${escapeHtml(roleLabel)}</span>
-            ${litanyUnitChips(ids, unitById)}
-          </div>`;
+        return bandHtml(row.role, roleLabel, ids);
       }).join('');
+
+      // Whose death the litany is staged around. An enemy, so it sits in its own
+      // section rather than among the formation's rows — those are cells the
+      // player fills, this is one they have to find on the other side.
+      const targetIds = def.target?.ids || [];
+      // No band label: the section heading above it already says Target, and
+      // saying it twice in two lines reads as two different things.
+      const targetHtml = targetIds.length ? bandHtml('target', '', targetIds) : '';
 
       // The verses are deliberately NOT listed here. They are the moment itself,
       // and reading them off a page before the battle spends them — the card
@@ -713,12 +748,21 @@ export function renderSpellTome(root, { player }) {
         ? (def.reward?.message_ru || def.reward?.message || '')
         : (def.reward?.message || '');
 
+      // <details> rather than a button and a class: the open/closed state, the
+      // keyboard handling and the aria-expanded wiring are the element's job,
+      // and there is no JS here to get them wrong.
+      //
+      // The first card opens and the rest start shut. There is one litany per
+      // faction today, so this reads as "open" now; once a faction has one per
+      // hero the page arrives as a list of names to pick from rather than a
+      // scroll through every formation.
       return `
-        <article class="litany-card${litaniesReady ? '' : ' litany-card--locked'}">
-          <header class="litany-card-head">
+        <details class="litany-card${litaniesReady ? '' : ' litany-card--locked'}"${i === 0 ? ' open' : ''}>
+          <summary class="litany-card-head">
+            <span class="litany-card-caret" aria-hidden="true"></span>
             <h3 class="litany-name">${escapeHtml(lang === 'ru' ? (def.name_ru || def.name) : def.name)}</h3>
             ${litaniesReady ? '' : `<span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>`}
-          </header>
+          </summary>
 
           <section class="litany-section">
             <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
@@ -726,12 +770,19 @@ export function renderSpellTome(root, { player }) {
             <div class="litany-formation">${rows}</div>
           </section>
 
+          ${targetHtml ? `
+            <section class="litany-section">
+              <h4 class="litany-section-title">${escapeHtml(t('litanyTarget'))}</h4>
+              <p class="litany-section-note">${escapeHtml(t('litanyTargetNote'))}</p>
+              <div class="litany-formation">${targetHtml}</div>
+            </section>` : ''}
+
           ${reward ? `
             <section class="litany-section">
               <h4 class="litany-section-title">${escapeHtml(t('litanyReward'))}</h4>
               <p class="litany-reward">${escapeHtml(reward)}</p>
             </section>` : ''}
-        </article>`;
+        </details>`;
     }).join('');
 
     // The lock only has something to say when this faction HAS a litany to

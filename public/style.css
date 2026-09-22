@@ -10006,14 +10006,48 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
    up through the card and left the text muddier than it is dimmed. */
 .litany-card--locked { filter: grayscale(0.6) brightness(0.9); }
 
+/* The card is a <details>; this is its <summary>, so it is the whole hit area
+   for opening and closing. */
 .litany-card-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
 }
+
+/* Safari draws its own disclosure triangle through a pseudo-element that
+   `list-style: none` does not reach. */
+.litany-card-head::-webkit-details-marker { display: none; }
+
+.litany-card-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* A caret of our own, so the affordance matches the rest of the page rather
+   than the browser's default glyph. */
+.litany-card-caret {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--accent);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: transform 0.18s ease;
+}
+
+.litany-card[open] .litany-card-caret { transform: rotate(90deg); }
+
+/* Only when open: a collapsed card is a name in a list and needs no gap under
+   it. */
+.litany-card[open] .litany-card-head { margin-bottom: 10px; }
+
+/* The name takes the slack so a lock badge sits hard right. */
+.litany-card-head .litany-name { flex: 1; }
 
 .litany-name {
   color: var(--text);
@@ -10064,12 +10098,40 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   background: rgba(var(--accent-rgb), 0.08);
 }
 
+.litany-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .litany-row-role {
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+}
+
+/* "any 5" — the row is a CHOICE, which a line of portraits does not say on its
+   own. Accented rather than muted: it changes what the row means, so it has to
+   survive a glance that skips the label. */
+.litany-row-any {
+  color: var(--accent-bright);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* The target is the other side's unit, so its band reads as a threat rather
+   than as a cell to fill. */
+.litany-row--target {
+  border-left-color: var(--danger);
+  background: rgba(200, 74, 58, 0.08);
+}
+
+.litany-row--target .litany-unit-chip {
+  box-shadow: 0 0 0 2px var(--danger);
 }
 
 /* Faces in a row. Names are gone, so the portrait has to carry the whole
