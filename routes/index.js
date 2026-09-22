@@ -1479,6 +1479,13 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'player_id and chat_id required' });
   }
   try {
+    // player_id comes from the client and requireAuth only proves chat_id, so
+    // the items DELETE below — the one thing here keyed on player_id rather
+    // than chat_id — would happily wipe another account's stash. Confirm the
+    // two belong to the same player before anything is deleted.
+    const owner = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
+    if (!owner.length) return res.status(404).json({ error: 'Player not found' });
+
     const battles = await supabase(`/battle_state?chat_id=eq.${encodeURIComponent(chat_id)}&select=battle_id`);
     const battleIds = [...new Set((battles || []).map(b => b.battle_id).filter(Boolean))];
     await Promise.all(battleIds.map(id =>
@@ -1527,8 +1534,7 @@ router.post('/player/reset', requireAuth, async (req, res) => {
       body: JSON.stringify(STARTING_RESOURCES.map(r => ({ ...r, chat_id }))),
     });
 
-    const existingPlayer = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone&limit=1`);
-    const preservedTimezone = existingPlayer[0]?.timezone ?? null;
+    const preservedTimezone = owner[0]?.timezone ?? null;
     // Tutorials are KEPT. A reset takes the faction, hero, units, buildings and
     // resources, but it does not take back what the player already knows, and
     // walking them through onboarding again is a punishment rather than a help.
