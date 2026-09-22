@@ -129,6 +129,34 @@ const BOT_TEMPLATES = [
       ],
     },
   },
+  {
+    id: 'grail_ghost',
+    faction: 'grail_of_sorrow',
+    name: 'Grail Ghosts',
+    bands: {
+      band_500: [
+        { unit: 'h_g_3_b41',     cell: 3,  item_id: 'knights_oath', hero: true },          
+        { unit: 'gs7111',        cell: 2,  item_id: 'crystal_shield' },                 
+        { unit: 'gs7311',        cell: 4,  item_id: 'iron_greaves' }, 
+        { unit: 'gs7211',        cell: 0,  item_id: 'caster_hat' },
+        { unit: 'gs6211',        cell: 1,  item_id: 'veil_of_discord' },          
+        { unit: 'dm_e311',       cell: 5,  item_id: 'ember_mantle' },                            
+      ],
+      band_300: [
+        { unit: 'h_g_3_b3',    cell: 3, item_id: 'knights_oath', hero: true },
+        { unit: 'gs711',       cell: 0, item_id: 'crystal_shield' },
+        { unit: 'gs711',       cell: 4, item_id: 'iron_greaves' },
+        { unit: 'gs721',       cell: 1, item_id: 'caster_hat' },   
+        { unit: 'dm_e311',     cell: 5, item_id: 'ember_mantle' },
+      ],
+      band_200: [
+        { unit: 'h_g_3_b2',    cell: 3, item_id: 'knights_oath', hero: true },
+        { unit: 'gs711',       cell: 2, item_id: 'iron_shield' },
+        { unit: 'gs72',        cell: 1, item_id: 'caster_hat' },
+        { unit: 'dm_e31',      cell: 5, item_id: 'ember_mantle' },
+      ],
+    },
+  },
 ];
 
 let _unitIndex = null;
