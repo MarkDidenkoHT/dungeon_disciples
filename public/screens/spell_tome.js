@@ -184,7 +184,6 @@ const TOME_TEXT = {
     ru: 'Возведите Ристалище в замке, чтобы обучить войско литаниям.',
   },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
-  litanyVerses:    { en: 'Verses',      ru: 'Стихи' },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   litanyFrontCol:  { en: 'Front column, top to bottom', ru: 'Передняя колонна, сверху вниз' },
   litanyRoles: {
@@ -643,16 +642,21 @@ export function renderSpellTome(root, { player }) {
   let litaniesReady = false;
 
   function litanyUnitChips(ids, unitById) {
-    // One chip per NAME: data/litanies.js lists every tier and branch of a unit
-    // that may fill a role, which is the same unit over and over to a reader.
+    // One portrait per NAME: data/litanies.js lists every tier and branch of a
+    // unit that may fill a role, which is the same face over and over to a
+    // reader.
     const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
     if (!defs.length) return '';
-    return `<div class="litany-unit-chips">${defs.map(d => `
-      <span class="litany-unit-chip" title="${escapeHtml(unitLabelFor(d, lang))}">
-        <img src="${portraitUrl(d)}" alt="" class="litany-unit-portrait"
+    // Faces, not a list. The name rides on `title` and `alt` so the portrait is
+    // still identifiable on hover and to a screen reader — which is the only
+    // way to read it now that the label is gone.
+    return `<div class="litany-unit-chips">${defs.map(d => {
+      const name = escapeHtml(unitLabelFor(d, lang));
+      return `<span class="litany-unit-chip" title="${name}">
+        <img src="${portraitUrl(d)}" alt="${name}" class="litany-unit-portrait"
              onerror="this.style.visibility='hidden'">
-        <span class="litany-unit-name">${escapeHtml(unitLabelFor(d, lang))}</span>
-      </span>`).join('')}</div>`;
+      </span>`;
+    }).join('')}</div>`;
   }
 
   function renderLitanies(container) {
@@ -702,12 +706,9 @@ export function renderSpellTome(root, { player }) {
           </div>`;
       }).join('');
 
-      const verses = (def.verses || []).map(v => `
-        <li class="litany-verse litany-verse--${v.strike}">
-          <span class="litany-verse-strike" aria-hidden="true">${v.strike === 'lethal' ? '⚔' : '✧'}</span>
-          <span class="litany-verse-line">${escapeHtml(lang === 'ru' ? (v.line?.[1] ?? v.line?.[0] ?? '') : (v.line?.[0] ?? ''))}</span>
-        </li>`).join('');
-
+      // The verses are deliberately NOT listed here. They are the moment itself,
+      // and reading them off a page before the battle spends them — the card
+      // teaches the formation and the payout, and the fight delivers the words.
       const reward = lang === 'ru'
         ? (def.reward?.message_ru || def.reward?.message || '')
         : (def.reward?.message || '');
@@ -723,11 +724,6 @@ export function renderSpellTome(root, { player }) {
             <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
             <p class="litany-section-note">${escapeHtml(t('litanyFrontCol'))}</p>
             <div class="litany-formation">${rows}</div>
-          </section>
-
-          <section class="litany-section">
-            <h4 class="litany-section-title">${escapeHtml(t('litanyVerses'))}</h4>
-            <ol class="litany-verses">${verses}</ol>
           </section>
 
           ${reward ? `

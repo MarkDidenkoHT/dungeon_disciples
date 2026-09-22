@@ -10050,8 +10050,8 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .litany-row {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 7px 9px;
+  gap: 7px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
   border-radius: 7px;
@@ -10072,79 +10072,48 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   text-transform: uppercase;
 }
 
+/* Faces in a row. Names are gone, so the portrait has to carry the whole
+   recognition — hence the size. Wraps rather than scrolls: a role with five
+   candidates must not hide the fifth behind a gesture nobody knows is there.
+
+   The portraits FLEX rather than taking a fixed width. The tome's two side
+   arrows cost 26px each, so this page is ~322px inside a 375px phone, and five
+   48px faces plus their gaps need 268 of the 248 a row actually gets — one
+   orphan on a second line. Sharing the line down to a floor of 34px keeps a
+   role's candidates together on any width, and the 48px cap stops a lone lead
+   portrait from ballooning across the row. */
 .litany-unit-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
 }
 
 .litany-unit-chip {
   display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  max-width: 100%;
-  padding: 3px 7px 3px 3px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
+  flex: 1 1 0;
+  min-width: 34px;
+  max-width: 48px;
+  border-radius: 50%;
+  /* The ring reads as a frame around the face rather than a chip around a
+     label, now that there is no label to enclose. */
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 .litany-unit-portrait {
-  width: 20px;
-  height: 20px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
+  display: block;
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.litany-unit-name {
-  color: var(--text);
-  font-size: 0.74rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The lead is the one face that matters most in the column, so its frame is
+   the accent the row's left edge already uses. */
+.litany-row--lead .litany-unit-chip {
+  box-shadow: 0 0 0 2px var(--accent);
 }
-
-.litany-verses {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  /* The verses are spoken in order and the last one kills, so they are numbered
-     by position — a counter, not a bullet. */
-  counter-reset: litany-verse;
-}
-
-.litany-verse {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--text);
-  font-size: 0.8rem;
-  font-style: italic;
-  line-height: 1.4;
-}
-
-.litany-verse-strike {
-  flex-shrink: 0;
-  color: var(--muted);
-  font-style: normal;
-  line-height: 1.4;
-}
-
-/* The killing verse, marked so the staging reads at a glance. */
-.litany-verse--lethal {
-  background: rgba(var(--accent-rgb), 0.10);
-  border: 1px solid rgba(var(--accent-rgb), 0.30);
-}
-
-.litany-verse--lethal .litany-verse-strike { color: var(--accent-bright); }
 
 .litany-reward {
   color: var(--text);
