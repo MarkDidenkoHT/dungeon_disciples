@@ -942,6 +942,14 @@ export function renderItems(root, params = {}) {
     // is opened by the Blacksmith. The server re-checks it in /transmute/start.
     labOpen = Object.entries(boot.structures?.buildings_data || {})
       .some(([k, st]) => /^slot_\d+$/.test(k) && st?.building_id === 'transmute_lab' && (st.level ?? 0) >= 1);
+    // Both sub-pages are redrawn here, not just transmutation. The engraving
+    // page is drawn once at mount, when the castle has not been read yet, and
+    // its own refresh otherwise only fires on a layer change (setItemsLayer) —
+    // so a player standing on layer 1, going to the castle to raise the
+    // Blacksmith to level 2 and coming back kept the locked panel until a full
+    // reload, because onShow -> load() -> applyBootstrap flipped engraveOpen
+    // without telling the page.
+    engrave?.refresh();
     transmute?.refresh();
     return boot;
   }
