@@ -865,11 +865,13 @@ export function renderCastle(root, params = {}) {
               extraSlotHtml: treeButtonHtml(s.unit?.id),
               // The slot's own HP/XP when the caller has them (an upgrade opened
               // from an occupied slot), so the card keeps the two rows it had on
-              // the sheet before this opened. Where there is no unit yet — the
-              // build picker on an empty slot — the space is held instead, so
-              // the card is the same height either way.
+              // the sheet before this opened. Where there is no unit yet the
+              // space is normally HELD, so the card is the same height either
+              // way — but the build sheet opts out (`hideProgress`): every one
+              // of its slides is an unbuilt option with nothing to reserve for,
+              // so the ghost bars were dead space on every card at once.
               progress:        s.progress || null,
-              reserveProgress: !s.progress,
+              reserveProgress: !s.progress && !opts.hideProgress,
             })}
           </div>
         </div>
@@ -3428,6 +3430,9 @@ export function renderCastle(root, params = {}) {
         // "this sheet is already the one I want" from "open it", because
         // re-opening it would throw away the recruit the player just picked.
         sheetKey:    `build:${slot}`,
+        // Nothing on this sheet is built yet, so there is no HP/XP to show and
+        // no later state to reserve room for: drop the ghost progress bars.
+        hideProgress: true,
         // The ▼ bob over the build button, while the first-build lesson is
         // still live. It was written for exactly this and then never passed by
         // anyone, so the glyph sat there unmarked through the whole tutorial.
