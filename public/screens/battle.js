@@ -132,7 +132,7 @@ const BT = {
   claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
   questsHead:   { en: 'Quests',                     ru: 'Задания' },
   questReached: { en: 'Milestone reached!',         ru: 'Этап пройден!' },
-  questClaim:   { en: 'Claim in Quests',            ru: 'Забрать в заданиях' },
+  questClaim:   { en: 'Claim in Quests',            ru: 'Забрать награды за задания!' },
   saveFailed:   { en: m => `Failed to save rewards: ${m}`, ru: m => `Не удалось сохранить награды: ${m}` },
   unlocked:     { en: n => `Level ${n} unlocked!`, ru: n => `Уровень ${n} открыт!` },
   xpEach:       { en: 'XP each',            ru: 'опыта каждому' },
