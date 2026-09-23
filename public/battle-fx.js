@@ -5628,7 +5628,98 @@ function commandStrike(pal) {
 const infernal_mandate = commandStrike({ edge: 0xff4a14, core: 0xffc26b });
 const blood_craze      = commandStrike({ edge: 0xc2102a, core: 0xff8a99 });
 
+// ── battle-start traits ───────────────────────────────────────────────────────
+// Stoicism, the Vows, Divided Flame, Pure Blood, Clear Mind, Vampire's Vigil.
+// Every one of these resolves in the SAME instant, and a board can carry a dozen
+// of them, so they are dispatched as TRAIT_FX (see battle.js): anchored on the
+// carrier, never awaited, so they all breathe at once instead of queueing into a
+// light show before round one. Small and short for the same reason.
+//
+// One generator, a palette and a mark per trait — the arrangement the formation
+// bonds already use, so a new trait is a row here rather than a new effect.
+function traitMark(g, kind, cx, cy, r, color, alpha, w) {
+  if (alpha <= 0) return;
+  g.lineStyle(w, color, alpha);
+  if (kind === 'bar') {
+    g.moveTo(cx - r, cy); g.lineTo(cx + r, cy);
+    g.moveTo(cx - r * 0.7, cy + r * 0.45); g.lineTo(cx + r * 0.7, cy + r * 0.45);
+  } else if (kind === 'drop') {
+    g.moveTo(cx, cy - r);
+    g.quadraticCurveTo(cx + r * 0.85, cy + r * 0.35, cx, cy + r * 0.8);
+    g.quadraticCurveTo(cx - r * 0.85, cy + r * 0.35, cx, cy - r);
+  } else if (kind === 'ring') {
+    g.drawCircle(cx, cy, r * 0.8);
+  } else if (kind === 'slash') {
+    g.drawCircle(cx, cy, r * 0.8);
+    g.moveTo(cx - r * 0.6, cy + r * 0.6); g.lineTo(cx + r * 0.6, cy - r * 0.6);
+  } else if (kind === 'cross') {
+    g.moveTo(cx, cy - r); g.lineTo(cx, cy + r);
+    g.moveTo(cx - r * 0.6, cy - r * 0.35); g.lineTo(cx + r * 0.6, cy - r * 0.35);
+  } else {
+    g.moveTo(cx - r * 0.55, cy + r * 0.7);
+    g.quadraticCurveTo(cx - r * 0.2, cy - r * 0.1, cx, cy - r);
+    g.quadraticCurveTo(cx + r * 0.2, cy - r * 0.1, cx + r * 0.55, cy + r * 0.7);
+  }
+  g.lineStyle(0);
+}
+
+function traitFlash(pal, kind) {
+  return async function (cellEl) {
+    if (!app || !window.PIXI || !cellEl) return;
+    const sel = cellSelectorFor(cellEl);
+    if (!sel) return;
+    const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+    const { layer, glow, solid } = riderLayer(4);
+    solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+    await animate(520, t => {
+      const b = boundsForSelector(sel);
+      if (!b) { layer.visible = false; return; }
+      layer.visible = true;
+      glow.clear(); solid.clear();
+
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r  = Math.min(b.width, b.height);
+
+      const wash = Math.sin(clamp01(t / 0.75) * Math.PI);
+      softGlow(glow, cx, cy, r * 0.42, pal.glow, 0.5 * wash);
+
+      const ring = clamp01(t / 0.55);
+      if (ring < 1) {
+        solid.lineStyle(Math.max(1, r * 0.03 * (1 - ring)), pal.core, (1 - ring) * 0.75);
+        solid.drawCircle(cx, cy, r * (0.16 + ring * 0.36));
+        solid.lineStyle(0);
+      }
+
+      const rise = clamp01((t - 0.08) / 0.5);
+      const hold = 1 - clamp01((t - 0.55) / 0.45);
+      const my   = cy - r * 0.12 * rise;
+      traitMark(glow,  kind, cx, my, r * 0.2 * (0.7 + 0.3 * rise), pal.glow, 0.55 * rise * hold, Math.max(2, r * 0.05));
+      traitMark(solid, kind, cx, my, r * 0.2 * (0.7 + 0.3 * rise), pal.core, 0.95 * rise * hold, Math.max(1.2, r * 0.022));
+    });
+
+    layer.destroy({ children: true });
+  };
+}
+
+const stoicism         = traitFlash({ glow: 0x5d7a99, core: 0xd6e6f5 }, 'bar');
+const pure_blood       = traitFlash({ glow: 0xc2102a, core: 0xffe3e8 }, 'drop');
+const clear_mind       = traitFlash({ glow: 0x8a6fd8, core: 0xefe8ff }, 'ring');
+const vow_of_silence   = traitFlash({ glow: 0x6b6480, core: 0xdcd6ea }, 'slash');
+const vow_of_the_grave = traitFlash({ glow: 0x4a3b63, core: 0xe8e2d2 }, 'cross');
+const vow_of_ash       = traitFlash({ glow: 0x8a5a3c, core: 0xffd9a8 }, 'flame');
+const divided_flame    = traitFlash({ glow: 0xff5a12, core: 0xffd79a }, 'flame');
+const vampires_vigil   = traitFlash({ glow: 0x8a0c1e, core: 0xff9aa8 }, 'drop');
+
 export const EFFECTS = {
+  stoicism,
+  pure_blood,
+  clear_mind,
+  vow_of_silence,
+  vow_of_the_grave,
+  vow_of_ash,
+  divided_flame,
+  vampires_vigil,
   burn,
   poison,
   chill,

@@ -661,6 +661,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
       owner._flags[def.id + '_clear'] = true;
       owner._passive_lock_immune = true;
       registerStatGrant(engine, owner, def, 0, 'passives cannot be silenced');
+      // Logged so the trait is visible at all: it granted a portrait badge and
+      // nothing else, so the player was never told it was there — and with no
+      // entry there is nothing for the battle-start flash to draw on.
+      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} — ${owner.unit_name}'s passives cannot be silenced` });
     }
 
     // Pure Blood — this unit's HP cannot feed anyone. Read by the two drain
@@ -669,6 +673,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       owner._flags[def.id + '_pure'] = true;
       owner._drain_immune = true;
       registerStatGrant(engine, owner, def, 0, 'cannot be drained');
+      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} — ${owner.unit_name} cannot be drained` });
     }
 
     // Stoicism — status resistance. Additive with the Sole Artificer grant
@@ -679,6 +684,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       owner._flags[def.id + '_stoic'] = true;
       owner._status_resist = (owner._status_resist ?? 0) + p.status_resist;
       registerStatGrant(engine, owner, def, p.status_resist, `resists ${p.status_resist} of every affliction`);
+      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: p.status_resist, heal: false, message: `${def.name} — ${owner.unit_name} resists ${p.status_resist} of every affliction` });
     }
 
     if (p.grant_status_resist != null && !owner._flags[def.id + '_battery']) {

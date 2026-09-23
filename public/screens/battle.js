@@ -80,6 +80,20 @@ const RIDER_FX = new Set([
   'burn', 'poison', 'chill',
 ]);
 
+// Battle-start traits — EFFECTS[name](carrierCell), never awaited.
+//
+// Anchored on the ACTOR, not the target: these are things a unit simply IS, and
+// their log lines say so — a Vow is sworn over "the field" and Divided Flame
+// names every ally it splits between, so neither carries a target cell to draw
+// on. They also all resolve in the same instant, which is why they are fired and
+// forgotten rather than awaited: a board with a dozen traits would otherwise
+// spend a dozen animations getting to round one.
+const TRAIT_FX = new Set([
+  'stoicism', 'pure_blood', 'clear_mind',
+  'vow_of_the_grave', 'vow_of_silence', 'vow_of_ash',
+  'divided_flame', 'vampires_vigil',
+]);
+
 function cellIndex(row, col) { return row * COLS + col; }
 
 function getPortraitUrl(unit, variant = 'default') {
@@ -801,6 +815,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (RIDER_FX.has(effectName)) {
           const anchor = targetCell || actorCell;
           if (anchor) EFFECTS[effectName](anchor, { actorCell, targetCell });
+        } else if (TRAIT_FX.has(effectName)) {
+          const anchor = actorCell || targetCell;
+          if (anchor) EFFECTS[effectName](anchor);
         } else if (FAN_OUT_FX.has(effectName)) {
           // Collapse the consecutive run of entries this actor produced for the
           // same passive, and play once against every victim. Grouping by RUN
