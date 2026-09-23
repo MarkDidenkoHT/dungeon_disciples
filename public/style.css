@@ -2217,7 +2217,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .unit-resists-grid {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .core-stat--levelup {
@@ -3231,7 +3231,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-core-stats--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 64px;
+  width: 60px;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3240,6 +3240,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   justify-content: center;
   padding: 2px 2px;
+  width: 60px;
 }
 
 .unit-core-stats--side .core-stat-label { font-size: 0.48rem; }
@@ -3249,7 +3250,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-resists-grid--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 48px;
+  width: 60px;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3617,10 +3618,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .portrait-card--dead .portrait-art-img { filter: grayscale(60%) brightness(0.6); }
 
 .unit-info {
-  padding: 5px;
+  padding: 0px 5px 5px 5px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .unit-slide-badge {
