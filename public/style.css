@@ -2217,7 +2217,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .unit-resists-grid {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .core-stat--levelup {
@@ -3231,7 +3231,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-core-stats--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 60px;
+  width: 64px;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3240,7 +3240,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   justify-content: center;
   padding: 2px 2px;
-  width: 60px;
 }
 
 .unit-core-stats--side .core-stat-label { font-size: 0.48rem; }
@@ -3250,7 +3249,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-resists-grid--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 60px;
+  width: 48px;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3618,10 +3617,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .portrait-card--dead .portrait-art-img { filter: grayscale(60%) brightness(0.6); }
 
 .unit-info {
-  padding: 0px 5px 5px 5px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
 .unit-slide-badge {
@@ -10072,6 +10071,83 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   color: var(--muted);
   font-size: 0.72rem;
   margin: 0 0 6px;
+}
+
+/* The player's half of the board, drawn small. Two columns with the FRONT one
+   on the right, matching how battle prep lays the player's side out, so the
+   diagram and the thing it describes are the same shape. The marked cells carry
+   the letters the bands below are keyed to. */
+.litany-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.litany-grid-col-label {
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: center;
+  padding-bottom: 1px;
+}
+
+/* An empty cell is drawn, not omitted: "the front column" only means anything
+   against a back column the reader can see. */
+.litany-grid-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px dashed var(--border);
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.litany-grid-cell--filled {
+  border-style: solid;
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-bright);
+}
+
+/* The lead cell is the blow itself, so it reads louder than the chorus around
+   it — the same accent its band already carries. */
+.litany-grid-cell--lead {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.22);
+}
+
+/* The band's letter, tying it back to a cell in the diagram above. */
+.litany-row-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent-bright);
+  font-size: 0.66rem;
+  font-weight: 800;
+  align-self: center;
+}
+
+.litany-row--lead .litany-row-key {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.24);
 }
 
 /* The formation reads as the column it describes: one band per row, stacked in

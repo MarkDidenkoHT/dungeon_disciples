@@ -14,6 +14,17 @@ import { LITANIES } from '../../data/litanies.js';
 const LITANY_BUILDING = 'proving_grounds';
 const LITANY_BUILDING_LEVEL = 3;
 
+// The battle grid a litany's formation is read against: three rows deep, and the
+// card draws both columns so "front" is a place on a picture rather than a word.
+// Mirrors ROWS in public/battle-system.js — a diagram, so a stale copy would
+// draw a wrong board, never fight a wrong battle.
+const GRID_ROWS = 3;
+
+// Cell keys, front column top to bottom. Letters rather than 1/2/3: the rows
+// already carry numbers in the data and a second set of numbers on the page
+// would read as the same thing.
+const KEY_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 // Mirrors buildingLevel in data/buildings.js: a building's level anywhere in
 // the castle, 0 when unbuilt.
 function buildingLevelOf(buildingsData, buildingId) {
@@ -197,7 +208,20 @@ const TOME_TEXT = {
     ru: 'Срабатывает, когда вождь готов убить одного из них',
   },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
-  litanyFrontCol:  { en: 'Front column, top to bottom', ru: 'Передняя колонна, сверху вниз' },
+  // The formation is a PLACE on the board, not a list, so the card draws the
+  // player's half of the battle grid and keys each marked cell to the band that
+  // fills it. "Front column, top to bottom" made the reader rebuild that picture
+  // from a sentence every time.
+  litanyGridNote:  {
+    en: 'Your half of the battle grid — man the marked cells:',
+    ru: 'Ваша половина боевой сетки — займите отмеченные клетки:',
+  },
+  litanyColBack:   { en: 'Back',  ru: 'Тыл' },
+  litanyColFront:  { en: 'Front', ru: 'Фронт' },
+  litanyGridAria:  {
+    en: keys => `Front column, top to bottom: ${keys}. Back column empty.`,
+    ru: keys => `Передняя колонна, сверху вниз: ${keys}. Задняя колонна пуста.`,
+  },
   litanyRoles: {
     chorus: { en: 'Chorus', ru: 'Хор' },
     lead:   { en: 'Lead',   ru: 'Вождь' },
@@ -707,7 +731,7 @@ export function renderSpellTome(root, { player }) {
     // One band: a role label, how many of the faces beside it are needed, and
     // the faces. Used for the formation's rows and for the target alike — they
     // are the same question ("which unit?") asked of a different side.
-    const bandHtml = (role, label, ids) => {
+    const bandHtml = (role, label, ids, key = '') => {
       const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
       // A row of five faces reads as "stand all five here" unless something says
       // otherwise. Every role is a choice of ONE, so say so — but only where
@@ -715,8 +739,9 @@ export function renderSpellTome(root, { player }) {
       const hint = defs.length > 1 ? TOME_TEXT.litanyAnyOf[lang](defs.length) : '';
       return `
         <div class="litany-row litany-row--${role}">
-          ${label || hint ? `
+          ${key || label || hint ? `
             <div class="litany-row-head">
+              ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
               ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
               ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
             </div>` : ''}
@@ -725,13 +750,42 @@ export function renderSpellTome(root, { player }) {
     };
 
     const cards = performable.map((def, i) => {
-      const rows = (def.formation?.rows || []).map(row => {
+      // The board's cells are keyed A, B, C down the front column in the order
+      // the litany names them, and every band below carries its own letter. The
+      // formation's `row` is the grid row it stands in — NOT its position in the
+      // list — so the keys are assigned against that number and a litany that
+      // skips a row leaves that cell blank instead of sliding the rest up.
+      const formationRows = [...(def.formation?.rows || [])]
+        .sort((a, b) => (a.row ?? 0) - (b.row ?? 0));
+      const keyOfRow = new Map(formationRows.map((row, n) => [row.row ?? n, KEY_LETTERS[n] || '']));
+
+      const rows = formationRows.map((row, n) => {
         const roleLabel = TOME_TEXT.litanyRoles[row.role]?.[lang] || cap(row.role || '');
         // A 'lead' row names no ids of its own — the litany's own lead list is
         // what may stand there, and it must be the unit landing the blow.
         const ids = row.role === 'lead' ? (def.lead?.ids || []) : (row.ids || []);
-        return bandHtml(row.role, roleLabel, ids);
+        return bandHtml(row.role, roleLabel, ids, KEY_LETTERS[n] || '');
       }).join('');
+
+      // The player's own half of the board, drawn at the size of a diagram: two
+      // columns, three rows, the front one on the RIGHT exactly as battle prep
+      // lays it out for the player's side (frontColFor in data/formation_synergies.js).
+      // The back column is drawn and left empty because a litany that cared only
+      // about the front column still has to say which column that is.
+      const gridHtml = `
+        <div class="litany-grid" role="img"
+             aria-label="${escapeHtml(TOME_TEXT.litanyGridAria[lang](
+               formationRows.map((r, n) => KEY_LETTERS[n] || '').filter(Boolean).join(', ')))}">
+          <span class="litany-grid-col-label">${escapeHtml(t('litanyColBack'))}</span>
+          <span class="litany-grid-col-label">${escapeHtml(t('litanyColFront'))}</span>
+          ${Array.from({ length: GRID_ROWS }, (_, r) => {
+            const key  = keyOfRow.get(r) || '';
+            const role = formationRows.find(row => (row.row ?? -1) === r)?.role || '';
+            return `
+              <span class="litany-grid-cell"></span>
+              <span class="litany-grid-cell${key ? ` litany-grid-cell--filled litany-grid-cell--${role}` : ''}">${escapeHtml(key)}</span>`;
+          }).join('')}
+        </div>`;
 
       // Whose death the litany is staged around. An enemy, so it sits in its own
       // section rather than among the formation's rows — those are cells the
@@ -766,7 +820,8 @@ export function renderSpellTome(root, { player }) {
 
           <section class="litany-section">
             <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
-            <p class="litany-section-note">${escapeHtml(t('litanyFrontCol'))}</p>
+            <p class="litany-section-note">${escapeHtml(t('litanyGridNote'))}</p>
+            ${gridHtml}
             <div class="litany-formation">${rows}</div>
           </section>
 
