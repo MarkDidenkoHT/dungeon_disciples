@@ -834,16 +834,12 @@ export function renderCastle(root, params = {}) {
         const art   = slide.unit
           ? branchPortraitUrl(slide.unit)
           : (layerOf(slide.slot) === 2 ? (slide.artUrl || '') : '');
-        // The name is PRINTED on the card, not left in `title`. A strip of
-        // unlabelled portraits does not read as a list of soldiers to choose
-        // between — it reads as decoration, which is exactly how testers treated
-        // it. (.portrait-card--branch .portrait-name has been styled for this
-        // since the strip was written; nothing ever emitted the element.)
+        // The name rides `title` only: the card is art, and the sheet's own
+        // pick line above the strip already names the selected slide.
         return `
         <div class="portrait-card portrait-card--branch ${i === idx ? 'portrait-card--selected' : ''}"
              data-i="${i}" title="${label}">
           ${art ? `<img class="portrait-art-img" src="${art}" alt="${label}" onerror="this.style.display='none'">` : ''}
-          ${label ? `<div class="portrait-name">${label}</div>` : ''}
         </div>`;
       }).join('');
 
@@ -899,7 +895,7 @@ export function renderCastle(root, params = {}) {
                       out as "DECONSTR…", which is worse than either. -->
                  <span class="frame-action-label">${CASTLE_TEXT.demolish[castleLang]}</span>
                </button>`
-            : '<span class="frame-action frame-action--spacer" aria-hidden="true"></span>'}
+            : ''}
         </div>`;
     }
 
