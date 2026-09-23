@@ -175,7 +175,7 @@ Added:
 
 ## 5. Litanies
 
-Revised 2026-09-17. **`profane_chorus` is built** — [data/litanies.js](../data/litanies.js),
+Revised 2026-09-23. **`profane_chorus`, `clean_passage` and `taken_breath` are built** — [data/litanies.js](../data/litanies.js),
 `fireLitany` / `applyLitanyReward` in [utils/battle-engine.js](../utils/battle-engine.js),
 playback in [public/screens/battle.js](../public/screens/battle.js). The rest of this
 document is still design. A litany is **not** a reaction to a kill. It is a **staged
@@ -184,8 +184,26 @@ and the lead lands the real blow on the last verse. It fires only when the forma
 the litany describes is actually standing on the board, and it pays out a mechanical
 reward — so it teaches positioning instead of only decorating it.
 
-One litany exists for now (`profane_chorus`). It ships alone and gets played before a
-second one is written.
+One litany per faction: `profane_chorus` (Empire), `clean_passage` (Grail of Sorrow),
+`taken_breath` (Choir of the Cursed). All three are pure data in
+[data/litanies.js](../data/litanies.js) — same three-row front-column formation, same
+`initiative_flat_reduction` reward — so the engine and the tome page carry no
+per-litany code. The two new sets ship with placeholder verses (`1` / `2` / `3`); the
+lines are written separately.
+
+The tome shows a player only the litanies their own faction can LEAD, so each faction
+sees exactly one card.
+
+**A chorus id must be a `size: 'tile'` unit.** A chorus cell holds one unit, and a
+`column` unit fills rows 0, 1 and 2 as a single body — it can never man row 0 and row 2
+as two separate speakers. This is why `taken_breath` is sung by the Choir Servant and
+Ash Cantor lines rather than by the Chorister branch (`d12`, `d121`, `d1211`, `d1212`),
+which is the obvious chorus by name and is column-sized.
+
+**Every target list needs a PvE name on it.** A list of enemy heroes alone makes the
+litany a drill that can only ever fire in a PvP match, and most hosts would never see
+it. `profane_chorus` and `clean_passage` both carry Sister Aldra; `taken_breath`
+carries Malgrath the Undying.
 
 **Unlocked by the Proving Grounds' third level** (`litaniesUnlocked` in
 [data/buildings.js](../data/buildings.js)). Levels 1 and 2 of that building raise the
