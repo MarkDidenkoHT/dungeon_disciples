@@ -22,7 +22,11 @@ const LITANY_LEAD_IDS = [
   'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
 ];
 
-// Every Choir hero: Black Castellan, Choir Regent, Infernal Ascendant.
+// Every Choir hero: Black Castellan, Choir Regent, Infernal Ascendant — plus
+// Sister Aldra, every tier. She is a Demon who wears Holy, which is exactly the
+// heresy the chorus is sung over, and she is the only such target outside a PvP
+// match: without her the litany is a drill the player can only ever perform
+// against another player, and most hosts would never see it fire.
 const LITANY_TARGET_IDS = [
   'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
            'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
@@ -30,6 +34,8 @@ const LITANY_TARGET_IDS = [
            'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
   'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
            'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
+  // Sister Aldra, the Crimson Basilica's boss (data/units.js, enemies).
+  'opb_e5', 'opb_e51', 'opb_e511',
 ];
 
 const LITANIES = [

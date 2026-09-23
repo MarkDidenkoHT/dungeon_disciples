@@ -701,15 +701,26 @@ export function renderSpellTome(root, { player }) {
     // Role ids are matched against unit DEFINITION ids, and a litany spans two
     // sides — profane_chorus is spoken by Empire units over a Choir hero — so
     // the index is every unit in the game, not the player's faction.
+    //
+    // UNITS.enemies nests one level deeper than the playable factions — its
+    // values are encounter groups (crimson_basilica and the rest), not defs —
+    // so the walk recurses instead of reading one level. A flat read skipped
+    // every enemy silently, which is how Sister Aldra could be a litany target
+    // and still leave a blank space where her face belongs.
     const unitById = new Map();
     const factionOfUnitId = new Map();
-    for (const [factionKey, faction] of Object.entries(UNITS)) {
-      for (const def of Object.values(faction)) {
-        if (!def?.id) continue;
-        if (!unitById.has(def.id)) unitById.set(def.id, def);
-        if (!factionOfUnitId.has(def.id)) factionOfUnitId.set(def.id, factionKey);
+    const indexUnits = (node, factionKey) => {
+      for (const value of Object.values(node || {})) {
+        if (!value || typeof value !== 'object') continue;
+        if (value.id) {
+          if (!unitById.has(value.id)) unitById.set(value.id, value);
+          if (!factionOfUnitId.has(value.id)) factionOfUnitId.set(value.id, factionKey);
+        } else {
+          indexUnits(value, factionKey);
+        }
       }
-    }
+    };
+    for (const [factionKey, faction] of Object.entries(UNITS)) indexUnits(faction, factionKey);
 
     // Whose drill is this? The litany is performed by the side that supplies the
     // LEAD — the unit that lands the real blow — so the player's own faction has
