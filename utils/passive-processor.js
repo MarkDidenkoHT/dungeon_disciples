@@ -63,11 +63,12 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
   return p[flatKey] ?? 0;
 }
 
-// Eternal Hunger's multiplier on a drinker. `_drain_amp_pct` is set once at
-// battle start by the aura and never revoked, so reading it here costs nothing
-// and a unit standing outside any aura multiplies by exactly 1.
-function drainAmp(unit) {
-  return 1 + (unit?._drain_amp_pct ?? 0) / 100;
+// Eternal Hunger on a drinker: percentage points added to the drain's own rate,
+// so Lifesteal 2 drinks 45% + 10 = 55%. `_drain_amp_pct` is set once at battle
+// start by the aura and never revoked, so reading it here costs nothing and a
+// unit standing outside any aura gets its printed rate back unchanged.
+function drainPct(basePct, unit) {
+  return Math.max(0, basePct + (unit?._drain_amp_pct ?? 0));
 }
 
 // Puts a battle-start stat grant on the portrait.
@@ -683,14 +684,14 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const allies = engine.combatants.filter(c => c.side === owner.side && c.alive);
       for (const t of allies) {
         t._drain_amp_pct = (t._drain_amp_pct ?? 0) + p.drain_amp_pct;
-        registerStatGrant(engine, t, def, p.drain_amp_pct, `+${p.drain_amp_pct}% lifesteal and communion healing`);
+        registerStatGrant(engine, t, def, p.drain_amp_pct, `+${p.drain_amp_pct} points of lifesteal and communion`);
       }
       if (allies.length) {
         engine.pushLog({
           type: 'passive', passive: def.name,
           actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
           targetName: 'all allies', value: p.drain_amp_pct, heal: false,
-          message: `${def.name} — the party drinks ${p.drain_amp_pct}% deeper`,
+          message: `${def.name} — every drain across the party bites ${p.drain_amp_pct} points deeper`,
         });
       }
     }
@@ -919,7 +920,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
-      const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult() * drainAmp(owner));
+      const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * engine.fatigueHealMult());
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
       if (candidates.length > 0) {
         const lowest = candidates.reduce((a, b) => {
@@ -960,7 +961,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.self_heal_pct != null && !target?._drain_immune) {
-      const heal = Math.floor(dmg * p.self_heal_pct / 100 * engine.fatigueHealMult() * drainAmp(owner));
+      const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * engine.fatigueHealMult());
       const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) {

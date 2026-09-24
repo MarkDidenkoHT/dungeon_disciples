@@ -548,9 +548,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Heals self for 55% of damage dealt.',
-    description_ru: "Исцеляет себя на 55% нанесённого урона.",
-    params: { self_heal_pct: 55 },
+    description: 'Heals self for 45% of damage dealt.',
+    description_ru: "Исцеляет себя на 45% нанесённого урона.",
+    params: { self_heal_pct: 45 },
     effect_name: 'blood_drawback',
   },
   'communion 1': {
@@ -3004,9 +3004,10 @@ const UNIT_ABILITIES = {
     effect_name: 'clear_mind',
   },
   // Eternal Hunger — an aura over the whole party that makes every drain bite
-  // deeper: Lifesteal's self-heal and Communion's ally-heal both come back
-  // larger. It amplifies what is already there rather than granting a drain, so
-  // a party with no drinker in it gains nothing. Two carriers stack additively.
+  // deeper. PERCENTAGE POINTS on the drain's own rate, not a multiplier on the
+  // heal: rank 1 turns Lifesteal 2's 45% into 55% and Communion 1's 25% into
+  // 35%. It raises a rate that is already there rather than granting a drain,
+  // so a party with no drinker in it gains nothing. Two carriers stack.
   'eternal_hunger 1': {
     id: 'eternal_hunger 1',
     name: 'Eternal Hunger',
@@ -3014,8 +3015,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Lifesteal and Communion heal 10% more for every ally.',
-    description_ru: "Похищение жизни и Причастие исцеляют на 10% сильнее у всех союзников.",
+    description: "Adds 10 percentage points to every ally's Lifesteal and Communion.",
+    description_ru: "Добавляет 10 процентных пунктов к Похищению жизни и Причастию всех союзников.",
     params: { drain_amp_pct: 10 },
     effect_name: 'eternal_hunger',
   },
@@ -3026,8 +3027,8 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Lifesteal and Communion heal 20% more for every ally.',
-    description_ru: "Похищение жизни и Причастие исцеляют на 20% сильнее у всех союзников.",
+    description: "Adds 20 percentage points to every ally's Lifesteal and Communion.",
+    description_ru: "Добавляет 20 процентных пунктов к Похищению жизни и Причастию всех союзников.",
     params: { drain_amp_pct: 20 },
     effect_name: 'eternal_hunger',
   },
