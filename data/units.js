@@ -2973,7 +2973,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'communion.jpg',
-      xp: 480, passive: ['communion 1', 'lifesteal 1'], ability: 'blood_craze 1',
+      xp: 480, passive: ['communion 1', 'eternal_hunger 1'], ability: 'blood_craze 1',
     },
     grieving_custodian: {
       id: 'gs521', f: 'g', t: 3,
@@ -2986,7 +2986,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 0, death: 50, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'communion.jpg',
-      xp: 1560, passive: ['communion 2', 'lifesteal 1'], ability: 'blood_craze 2',
+      xp: 1560, passive: ['communion 2', 'eternal_hunger 1'], ability: 'blood_craze 2',
     },
     grieving_warden: {
       id: 'gs5211', f: 'g', t: 4,
@@ -2999,7 +2999,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 0, death: 50, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'communion.jpg',
-      xp: 3640, passive: ['communion 2', 'lifesteal 1', 'execute 1'], ability: 'blood_craze 2',
+      xp: 3640, passive: ['communion 2', 'eternal_hunger 1', 'execute 1'], ability: 'blood_craze 2',
     },
     ghost: {
       id: 'gs6', f: 'g', t: 1,
