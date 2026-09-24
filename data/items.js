@@ -382,7 +382,7 @@ const ITEM_DEFS = {
     name_ru:      'Мантия Теней',
     faction:      'grail_of_sorrow',
     tag_required: 'Caster',
-    adds_tag:     none,
+    adds_tag:     null,
     stat_mods:    { hp: 3 },
     passive:      'banquet 2',
     icon:         'shadow_robe',
