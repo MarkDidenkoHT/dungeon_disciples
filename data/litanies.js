@@ -144,9 +144,9 @@ const LITANIES = [
       ],
     },
     verses: [
-      { speaker: 'row0', strike: 'visual', line: ['1', '1'] },
-      { speaker: 'row2', strike: 'visual', line: ['2', '2'] },
-      { speaker: 'row1', strike: 'lethal', line: ['3', '3'] },
+      { speaker: 'row0', strike: 'visual', line: ['placeholder', 'текст'] },
+      { speaker: 'row2', strike: 'visual', line: ['placeholder', 'текст'] },
+      { speaker: 'row1', strike: 'lethal', line: ['placeholder', 'текст'] },
     ],
     reward: {
       initiative_flat_reduction: 10,
@@ -170,9 +170,9 @@ const LITANIES = [
       ],
     },
     verses: [
-      { speaker: 'row0', strike: 'visual', line: ['1', '1'] },
-      { speaker: 'row2', strike: 'visual', line: ['2', '2'] },
-      { speaker: 'row1', strike: 'lethal', line: ['3', '3'] },
+      { speaker: 'row0', strike: 'visual', line: ['placeholder', 'текст'] },
+      { speaker: 'row2', strike: 'visual', line: ['placeholder', 'текст'] },
+      { speaker: 'row1', strike: 'lethal', line: ['placeholder', 'текст'] },
     ],
     reward: {
       initiative_flat_reduction: 10,
