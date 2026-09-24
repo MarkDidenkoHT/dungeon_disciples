@@ -1,8 +1,25 @@
-// Spells are grouped by CATEGORY (which drives the Spell Tome tabs) and gated by
-// TIER (which is the throne level required to research them).
+// Spells are grouped by TIER (which drives the Spell Tome tabs AND gates
+// research) and described by CATEGORY.
 //
+//   tier:     1 = Mage Guild 1, 2 = Mage Guild 2, 3 = Mage Guild 3
 //   category: 'non_combat' | 'buff' | 'debuff' | 'special'
-//   tier:     1 = throne 1, 2 = throne 2, ...
+//
+// TIER used to mean the throne level, and the tome used to tab by category. Both
+// moved: the throne already gates everything else in the castle, so hanging
+// spells off it made research a side effect of unrelated spending rather than a
+// choice. The Mage Guild now buys exactly one thing — the next tier of spells —
+// and it is the ONLY thing it buys. It used to also discount research by
+// 10%/20%, which meant the building both unlocked nothing and mattered little.
+//
+// CATEGORY is now descriptive. Only 'non_combat' is load-bearing (it keeps the
+// two support spells roster-only, alongside `usage: 'roster'`); buff / debuff /
+// special are shown as a label on the spell card and nothing branches on them.
+//
+// Each faction has six researchable spells, two per tier, and the tier-1 pair is
+// deliberately lopsided: one of the two is granted at faction pick, so a brand
+// new player owns a tier-1 spell whose shelfmate needs a building they have not
+// raised yet. That reads oddly and is known; it is the price of pre-teaching a
+// real combat spell in the tutorial.
 //
 // ── Two currencies, two moments ────────────────────────────────────────────
 // CRYSTALS are paid ONCE, to research a spell (POST /spells/research). They are
@@ -79,7 +96,7 @@ const SPELLS = {
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'aegis',
       description: 'Bless one ally with divine protection: +15 armor for 2 rounds, +5 per extra power. At full power it lasts 3 rounds.',
@@ -104,7 +121,7 @@ const SPELLS = {
       effect_icon: 'shared_suffering',
       description: 'One ally shoulders 10% of every blow struck against the allies beside it, taking that share onto itself for 2 rounds. +5% per extra power; at full power it lasts 3 rounds.',
       description_ru: 'Союзник принимает на себя 10% каждого удара по соседним союзникам на 2 раунда. +5% за доп. силу; на полной силе — 3 раунда.',
-      cost: { crystals: { Crystals_Life: 10, Crystals_Frost: 5 } },
+      cost: { crystals: { Crystals_Life: 15, Crystals_Frost: 5 } },
       power_cost: 1,
       scaling: { martyrdom_redirect_pct: 5 },
       max_power_bonus: { duration_rounds: 1 },
@@ -124,7 +141,7 @@ const SPELLS = {
       effect_icon: 'protector',
       description: 'One ally guards the line: 25% chance to intercept blows aimed at its row, +5% per extra power, and +10 armor. 2 rounds.',
       description_ru: 'Союзник прикрывает строй: 25% шанс перехватить удар по своему ряду, +5% за доп. силу, и +10 брони. 2 раунда.',
-      cost: { crystals: { Crystals_Life: 15, Crystals_Fire: 5 } },
+      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 5 } },
       power_cost: 1,
       scaling: { intercept_chance_pct: 5 },
       effect_type: 'buff',
@@ -137,7 +154,7 @@ const SPELLS = {
       name: 'Wrath of Heaven',
       name_ru: 'Гнев небес',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'light_of_dawn',
       // Was a round-3 delayed hit — which only made sense when the spell was
@@ -160,7 +177,7 @@ const SPELLS = {
       name: 'Condemn',
       name_ru: 'Осуждение',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'find_weakness',
       description: 'The enemy line is judged: −10 life resistance and −10 armor for 2 rounds, −5 more per extra power. At full power it lasts 3 rounds.',
@@ -179,7 +196,7 @@ const SPELLS = {
       name: 'Purgation',
       name_ru: 'Очищение',
       category: 'debuff',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'purge',
       // One blessing per point of power, on ONE enemy. Stripping the whole line
@@ -235,7 +252,7 @@ const SPELLS = {
       name: 'Song of Frenzy',
       name_ru: 'Песнь исступления',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'rage',
       description: 'One ally sings itself into a fury: +15% damage for 2 rounds, +5% per extra power. At full power it lasts 3 rounds.',
@@ -292,7 +309,7 @@ const SPELLS = {
       name: 'Song of Weakness',
       name_ru: 'Песнь слабости',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'slow',
       description: 'The enemy line falters: −10% damage dealt for 1 round, −5% per extra power. At full power it lasts 2 rounds.',
@@ -312,12 +329,12 @@ const SPELLS = {
       name: 'Pyre Requiem',
       name_ru: 'Погребальный реквием',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'burn',
       description: 'Fire answers the verse: 15 fire damage to the whole enemy line, +6 per extra power.',
       description_ru: 'Огонь отвечает на песнь: 15 урона огнём всему вражескому строю, +6 за доп. силу.',
-      cost: { crystals: { Crystals_Fire: 20, Crystals_Frost: 5 } },
+      cost: { crystals: { Crystals_Fire: 15, Crystals_Frost: 5 } },
       power_cost: 1,
       scaling: { damage_flat: 6 },
       effect_type: 'damage',
@@ -330,7 +347,7 @@ const SPELLS = {
       name: 'Unsung',
       name_ru: 'Неспетые',
       category: 'special',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'dissipate',
       // In a faction where everything is song, the punishment is being left out
@@ -385,7 +402,7 @@ const SPELLS = {
       name: "Sorrow's Haste",
       name_ru: 'Скорая скорбь',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'inspiration_initiative',
       description: 'One ally moves ahead of its grief: +15 initiative for 2 rounds, +5 per extra power.',
@@ -408,7 +425,7 @@ const SPELLS = {
       effect_icon: 'command',
       description: 'The whole line is spoken over: +10 initiative to every ally for 2 rounds, +4 per extra power.',
       description_ru: 'Над всем строем читают отходную: +10 инициативы каждому союзнику на 2 раунда, +4 за доп. силу.',
-      cost: { crystals: { Crystals_Death: 15, Crystals_Life: 5 } },
+      cost: { crystals: { Crystals_Death: 20, Crystals_Life: 5 } },
       power_cost: 1,
       scaling: { initiative_boost: 4 },
       effect_type: 'buff',
@@ -428,7 +445,7 @@ const SPELLS = {
       // The drain fantasy in one cast: they are weakened, your own is veiled.
       description: 'A shroud settles over one enemy — −10% damage dealt for 2 rounds, −5% per extra power — and your hero is veiled with an 8-point shield, +4 per extra power.',
       description_ru: 'Покров ложится на врага — −10% наносимого урона на 2 раунда, −5% за доп. силу — а вашего героя укрывает щит на 8 единиц, +4 за доп. силу.',
-      cost: { crystals: { Crystals_Death: 10, Crystals_Fire: 5 } },
+      cost: { crystals: { Crystals_Death: 15, Crystals_Fire: 5 } },
       power_cost: 1,
       scaling: { damage_dealt_reduction_pct: 5, shield_caster: 4 },
       effect_type: 'debuff',
@@ -442,7 +459,7 @@ const SPELLS = {
       name: "Sorrow's Weight",
       name_ru: 'Бремя скорби',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'find_weakness',
       description: 'Grief presses on the enemy line: −10 death resistance for 2 rounds, −5 per extra power.',
@@ -461,7 +478,7 @@ const SPELLS = {
       name: 'The Long Rot',
       name_ru: 'Долгий тлен',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'aura_of_decay',
       // The game's only answer to an enemy healer. Uses the Decay pool: healing
@@ -482,7 +499,7 @@ const SPELLS = {
       name: 'A Second Longer',
       name_ru: 'Ещё секунда',
       category: 'debuff',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'death_mark',
       // Named for the spell that ruined them: one second, and a century passed.
@@ -620,6 +637,15 @@ const SPELLS = {
     },
   ],};
 
+// The tome's tabs. A tier is a research gate, so the label carries the Mage
+// Guild level that opens it rather than a bare numeral.
+const SPELL_TIERS = [
+  { id: 1, name: 'Tier I',   name_ru: 'Круг I'   },
+  { id: 2, name: 'Tier II',  name_ru: 'Круг II'  },
+  { id: 3, name: 'Tier III', name_ru: 'Круг III' },
+];
+const SPELL_TIER_MAX = SPELL_TIERS.length;
+
 const SPELL_CATEGORIES = [
   { id: 'non_combat', name: 'Non-Combat', name_ru: 'Вне боя' },
   { id: 'buff',       name: 'Buffs',      name_ru: 'Усиления' },
@@ -663,5 +689,5 @@ function spellParamsAtPower(spell, power) {
   return out;
 }
 
-export { SPELLS, SPELL_CATEGORIES, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
-if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
+export { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, SPELL_TIER_MAX, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
+if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, SPELL_TIER_MAX, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };

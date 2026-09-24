@@ -1,7 +1,7 @@
 import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
-import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
+import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
 import { LITANIES } from '../../data/litanies.js';
 
@@ -45,12 +45,17 @@ import { CRYSTAL_ICONS, applyBackground, openSheet, openSubSheet, closeSheet, cl
          resolveAbility, buildAbilityModalParts, buildUnitCard } from '../utils.js';
 import { rootOf } from '../unit_tree.js';
 
-// The tome is for RESEARCH, and the two non-combat spells (revive and mend) are
-// neither researched nor cast from here — every faction starts with both, and
-// they are used from a unit's sheet in the castle. A tab listing two spells that
-// are always already learned and have no action attached to them is a dead page,
-// so the tome shows the combat categories only. Same filter battle-prep applies.
-const TOME_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
+// The tome tabs by TIER, which is the Mage Guild level that opens the tier —
+// so the tabs read as the research ladder they are, rather than as a taxonomy.
+//
+// The two non-combat spells (revive and mend) are neither researched nor cast
+// from here: every faction starts with both, and they are used from a unit's
+// sheet in the castle. They carry tier 1 in the data, so they would otherwise
+// land in the first tab as two permanently-learned entries with no action on
+// them — hence TOME_SPELLS below drops them.
+const TOME_TIERS = SPELL_TIERS;
+// The Mage Guild is the research gate: level N opens tier N.
+const RESEARCH_BUILDING = 'mage_guild';
 
 
 // ── The Library: the tome's second page ──────────────────────────────────────
@@ -168,12 +173,12 @@ const TOME_TEXT = {
   research:      { en: 'Research Spell',        ru: 'Изучить заклинание' },
   noCrystals:    { en: 'Not enough crystals',   ru: 'Недостаточно кристаллов' },
   researchFail:  { en: 'Research failed',       ru: 'Не удалось изучить' },
-  emptyCategory: { en: 'No spells in this category.', ru: 'Нет заклинаний в этой категории.' },
+  emptyCategory: { en: 'No spells in this tier.', ru: 'Нет заклинаний в этом круге.' },
   tomeAria:      { en: 'Spells',                ru: 'Заклинания' },
   libraryAria:   { en: 'Library',               ru: 'Библиотека' },
-  throneRequired: {
-    en: tier => `🔒 Throne level ${tier} required`,
-    ru: tier => `🔒 Требуется тронный зал ${tier} уровня`,
+  guildRequired: {
+    en: tier => `🔒 Mage Guild level ${tier} required`,
+    ru: tier => `🔒 Требуется гильдия магов ${tier} уровня`,
   },
   types: {
     buff:      { en: 'Buff',      ru: 'Усиление' },
@@ -252,8 +257,8 @@ export function renderSpellTome(root, { player }) {
 
               <div class="tome-layer" data-layer="2">
                 <div class="tier-tabs" id="tier-tabs">
-                  ${TOME_CATEGORIES.map((c, i) => `
-                    <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-category="${c.id}">${isRu ? c.name_ru : c.name}</button>
+                  ${TOME_TIERS.map((t, i) => `
+                    <button class="tier-tab${i === 0 ? ' tier-tab--active' : ''}" data-tier="${t.id}">${isRu ? t.name_ru : t.name}</button>
                   `).join('')}
                 </div>
 
@@ -880,11 +885,14 @@ export function renderSpellTome(root, { player }) {
   // unit is its own line rather than an error.
   let upgradePaths    = {};
   let playerCrystals  = {};
-  let throneLevel     = 1;
+  let guildLevel      = 0;
   let learnedSpells   = [];
   let activeSpellId   = null;
-  let activeCategory  = TOME_CATEGORIES[0].id;
+  let activeTier      = TOME_TIERS[0].id;
   const factionSpells = SPELLS[player.faction] || [];
+  // What the tome will show: everything researchable, which is everything bar
+  // the two roster-only support spells.
+  const tomeSpells    = factionSpells.filter(s => s.category !== 'non_combat');
 
   const slider      = root.querySelector('#spells-slider');
   const sliderWrap  = root.querySelector('#spells-slider-wrap');
@@ -931,11 +939,13 @@ export function renderSpellTome(root, { player }) {
   }
 
   function renderSlider() {
-    // Tabs are categories now; the lock is per-spell, since the three spells in
-    // a combat category unlock at throne 2 / 3 / 4 rather than as a block.
-    const catSpells = factionSpells
-      .filter(s => s.category === activeCategory)
-      .sort((a, b) => a.tier - b.tier);
+    // A tab IS the gate now: every spell in it opens at the same Mage Guild
+    // level, so the tier either reads as locked whole or not at all. The one
+    // exception is tier 1, where the faction's starting buff is pre-granted and
+    // its shelfmate still needs the guild built.
+    const catSpells = tomeSpells
+      .filter(s => s.tier === activeTier)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     if (!catSpells.length) {
       slider.innerHTML = `<div class="spells-empty">${TOME_TEXT.emptyCategory[lang]}</div>`;
@@ -946,7 +956,7 @@ export function renderSpellTome(root, { player }) {
       const isLearned  = learnedSpells.includes(spell.id);
       const affordable = canAfford(spell);
       const isActive   = activeSpellId === spell.id;
-      const unlocked   = throneLevel >= spell.tier;
+      const unlocked   = guildLevel >= spell.tier;
 
       let cardCls = 'spell-card';
       if (isLearned)                                       cardCls += ' spell-card--learned';
@@ -970,7 +980,7 @@ export function renderSpellTome(root, { player }) {
 
     slider.querySelectorAll('.spell-card').forEach(card => {
       const spellId = card.dataset.spellId;
-      const spell   = factionSpells.find(s => s.id === spellId);
+      const spell   = tomeSpells.find(s => s.id === spellId);
       if (!spell) return;
 
       card.addEventListener('click', () => {
@@ -995,7 +1005,7 @@ export function renderSpellTome(root, { player }) {
   function modalBodyHtml(spell) {
     const isLearned    = learnedSpells.includes(spell.id);
     const affordable   = canAfford(spell);
-    const tierUnlocked = throneLevel >= spell.tier;
+    const tierUnlocked = guildLevel >= spell.tier;
     const canResearch  = tierUnlocked && !isLearned && affordable;
 
     // A learned spell has nothing left to act on: no button to press and no
@@ -1010,7 +1020,7 @@ export function renderSpellTome(root, { player }) {
           ${canResearch ? TOME_TEXT.research[lang] : TOME_TEXT.noCrystals[lang]}
         </button>
       `
-        : `<span class="spell-detail-status spell-detail-status--locked">${TOME_TEXT.throneRequired[lang](spell.tier)}</span>`;
+        : `<span class="spell-detail-status spell-detail-status--locked">${TOME_TEXT.guildRequired[lang](spell.tier)}</span>`;
     }
 
     const typeLabel = TOME_TEXT.types[spell.effect_type]?.[lang] || cap(spell.effect_type || '');
@@ -1104,26 +1114,27 @@ export function renderSpellTome(root, { player }) {
     }
   }
 
-  function setCategory(categoryId) {
-    if (!categoryId || categoryId === activeCategory) return;
+  function setTier(tierId) {
+    const tier = Number(tierId);
+    if (!tier || tier === activeTier) return;
     playPageTurnSound();
-    activeCategory = categoryId;
-    activeSpellId  = null;
+    activeTier    = tier;
+    activeSpellId = null;
     tierTabs.querySelectorAll('.tier-tab').forEach(t =>
-      t.classList.toggle('tier-tab--active', t.dataset.category === categoryId));
+      t.classList.toggle('tier-tab--active', Number(t.dataset.tier) === tier));
     renderSlider();
     closeSheet();
   }
 
-  // Swiping steps one tab along the TOME_CATEGORIES order, stopping at the ends.
+  // Swiping steps one tab along the TOME_TIERS order, stopping at the ends.
   function stepCategory(delta) {
-    const i    = TOME_CATEGORIES.findIndex(c => c.id === activeCategory);
-    const next = Math.max(0, Math.min(TOME_CATEGORIES.length - 1, i + delta));
-    setCategory(TOME_CATEGORIES[next].id);
+    const i    = TOME_TIERS.findIndex(t => t.id === activeTier);
+    const next = Math.max(0, Math.min(TOME_TIERS.length - 1, i + delta));
+    setTier(TOME_TIERS[next].id);
   }
 
   tierTabs.querySelectorAll('.tier-tab').forEach(tab => {
-    tab.addEventListener('click', () => setCategory(tab.dataset.category));
+    tab.addEventListener('click', () => setTier(tab.dataset.tier));
   });
 
   // Most of the game switches views by swiping; the spell tome's tabs are tabs,
@@ -1155,8 +1166,8 @@ export function renderSpellTome(root, { player }) {
       ]);
       upgradePaths = boot?.buildings?.upgrade_paths || {};
 
-      throneLevel   = structData?.buildings_data?.slot_0?.level ?? 0;
-      // Same structures read the throne level comes from, so the litany page
+      guildLevel    = buildingLevelOf(structData?.buildings_data, RESEARCH_BUILDING);
+      // Same structures read the guild level comes from, so the litany page
       // costs no extra request. Re-rendered rather than patched: the page is
       // static apart from this one flag.
       litaniesReady = litaniesUnlocked(structData?.buildings_data);
@@ -1188,8 +1199,8 @@ export function renderSpellTome(root, { player }) {
 
   // The tome survives between visits now. Nothing here runs on a timer or
   // reaches outside the host, so the only obligation on the way back in is
-  // freshness: crystals are spent in battle and research is granted by the
-  // throne, both off this screen. init() re-reads the caches (a hit inside the
+  // freshness: crystals are spent in battle and the Mage Guild that opens a
+  // research tier is raised in the castle, both off this screen. init() re-reads the caches (a hit inside the
   // TTL costs no request) and repaints, which is exactly what the old router
   // got by rebuilding the screen from nothing.
   // The build-cost strip is mounted beside the resource bar, OUTSIDE this host,

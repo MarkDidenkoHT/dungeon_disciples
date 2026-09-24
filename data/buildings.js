@@ -80,7 +80,7 @@ const BUILDING_MAX_LEVELS = {
   blacksmith:       2,
   infirmary:        3,
   crystal_mine:     2,
-  mage_guild:       2,
+  mage_guild:       3,
   messenger_post:   3,
   mercenary_hall:   3,
   garrison_annex:   3,
@@ -147,13 +147,11 @@ function litaniesUnlocked(buildingsData) {
 // from something the player keeps investing in.
 //
 //   daily_crystal_bonus_pct  read by the Supabase daily-reward function
-//   spell_cost_reduction_pct routes /spells/research
 //   embark_gold_pct / embark_xp_pct / embark_crystal_pct
 //                            routes /battle/reward, same pipeline as the
 //                            expedition passives and timed events
 const BUILDING_EFFECTS = {
   crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
-  mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
   training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
 };
 
@@ -164,7 +162,6 @@ const BUILDING_EFFECTS = {
 function buildingEffects(buildingsData) {
   const totals = {
     daily_crystal_bonus_pct: 0,
-    spell_cost_reduction_pct: 0,
     embark_gold_pct: 0,
     embark_xp_pct: 0,
     embark_crystal_pct: 0,
@@ -180,10 +177,6 @@ function buildingEffects(buildingsData) {
     }
   }
   return totals;
-}
-
-function getSpellCostReductionPct(buildingsData) {
-  return buildingEffects(buildingsData).spell_cost_reduction_pct;
 }
 
 function getDailyCrystalBonusPct(buildingsData) {
@@ -345,10 +338,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Life: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Unlocks spell research: one tier of the Spell Tome per level.',
+        desc_ru: 'Открывает изучение заклинаний: один круг Книги заклинаний за уровень.',
         cost: { gold: 150, Crystals_Life: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 }, 3: { gold: 700, Crystals_Life: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -488,10 +481,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Fire: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Unlocks spell research: one tier of the Spell Tome per level.',
+        desc_ru: 'Открывает изучение заклинаний: один круг Книги заклинаний за уровень.',
         cost: { gold: 150, Crystals_Fire: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 }, 3: { gold: 700, Crystals_Fire: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -657,10 +650,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Death: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Unlocks spell research: one tier of the Spell Tome per level.',
+        desc_ru: 'Открывает изучение заклинаний: один круг Книги заклинаний за уровень.',
         cost: { gold: 150, Crystals_Death: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 }, 3: { gold: 700, Crystals_Death: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -1689,7 +1682,6 @@ module.exports = {
   LITANY_BUILDING_LEVEL,
   BUILDING_EFFECTS,
   buildingEffects,
-  getSpellCostReductionPct,
   getDailyCrystalBonusPct,
   getEmbarkBuildingBonuses,
   slotLockedBy,

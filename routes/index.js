@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -217,7 +217,9 @@ const STARTING_RESOURCES = [
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
 // the opening spell tutorial can teach revive, heal, and buff. The buff is
-// normally throne-2 gated, but pre-granting bypasses the research gate.
+// normally gated behind a Mage Guild, but pre-granting bypasses the research
+// gate — which is why a new player owns one tier-1 spell and cannot yet research
+// the other.
 const FACTION_STARTING_SPELLS = {
   empire:              ['e_spell_1', 'e_spell_2', 'e_spell_3'],
   choir_of_the_cursed: ['d_spell_1', 'd_spell_2', 'd_spell_3'],
@@ -5726,19 +5728,21 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const factionSpells = SPELLS[faction] || [];
     const spell = factionSpells.find(s => s.id === spell_id);
     if (!spell) return res.status(404).json({ error: 'Spell not found for your faction' });
-    const learned     = playerRows[0].learned_spells || [];
-    const throneLevel = structRows[0].buildings_data['slot_0']?.level ?? 0;
-    const spellTier   = spell.tier || 1;
+    const learned    = playerRows[0].learned_spells || [];
+    // The Mage Guild is the whole gate: level N opens tier N, and an unbuilt
+    // guild (level 0) opens nothing. The throne used to gate this, which made
+    // research a side effect of castle spending rather than a choice.
+    const guildLevel = buildingLevel(structRows[0].buildings_data, 'mage_guild');
+    const spellTier  = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
-    if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
-    // Mage Guild throne perk discounts the crystal cost.
-    const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data) / 100;
-    const discountedCost = {};
-    for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
-      discountedCost[type] = Math.max(0, Math.ceil(amt * (1 - spellDiscount)));
+    if (guildLevel < spellTier) {
+      return res.status(400).json({
+        error: `Mage Guild level ${spellTier} required to research this spell`,
+        code: 'guild_level', requires: spellTier, have: guildLevel,
+      });
     }
     try {
-      await consumeCrystalCosts(chat_id, discountedCost);
+      await consumeCrystalCosts(chat_id, spell.cost?.crystals || {});
     } catch (e) {
       return res.status(400).json({ error: e.message });
     }
