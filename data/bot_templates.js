@@ -130,6 +130,58 @@ const BOT_TEMPLATES = [
     },
   },
   {
+    id: 'empire_mage_college',
+    faction: 'empire',
+    name: 'Mage College',
+    bands: {
+      band_500: [
+        { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
+        { unit: 'e4121',     cell: 4, item_id: 'lightbringer' },
+        { unit: 'e4111',     cell: 1, item_id: 'fire_staff' },
+        { unit: 'e4211',     cell: 3, item_id: 'arcane_staff' },
+        { unit: 'h_e_2_a41', cell: 5, item_id: 'might_of_the_pure', hero: true },
+      ],
+      band_300: [
+        { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
+        { unit: 'e412',     cell: 4, item_id: 'lightbringer' },
+        { unit: 'e411',     cell: 1, item_id: 'fire_staff' },
+        { unit: 'h_e_2_a3', cell: 3, item_id: 'might_of_the_pure', hero: true },
+      ],
+      band_200: [
+        { unit: 'e31',      cell: 0, item_id: 'sanctified_bulwark' },
+        { unit: 'e41',      cell: 1, item_id: 'orb_of_fire' },
+        { unit: 'h_e_2_a2', cell: 3, item_id: 'codex_militarum', hero: true },
+      ],
+    },
+  },
+  {
+    id: 'choir_infernal_court',
+    faction: 'choir_of_the_cursed',
+    name: 'Infernal Court',
+    bands: {
+      band_500: [
+        { unit: 'd7111',     cell: 0, item_id: 'burning_fury' },
+        { unit: 'd7111',     cell: 2, item_id: 'dragon_skin' },
+        { unit: 'd4111',     cell: 4, item_id: 'crystal_shield' },
+        { unit: 'd6111',     cell: 1, item_id: 'court_regalia' },
+        { unit: 'h_d_3_a41', cell: 3, item_id: 'burning_tyrant', hero: true },
+        { unit: 'd5211',     cell: 5, item_id: 'ember_mantle' },
+      ],
+      band_300: [
+        { unit: 'd711',     cell: 0, item_id: 'burning_fury' },
+        { unit: 'd411',     cell: 2, item_id: 'crystal_shield' },
+        { unit: 'd611',     cell: 1, item_id: 'court_regalia' },
+        { unit: 'h_d_3_a3', cell: 3, item_id: 'orb_of_fire', hero: true },
+        { unit: 'd521',     cell: 5, item_id: 'ember_mantle' },
+      ],
+      band_200: [
+        { unit: 'd71',      cell: 0, item_id: 'burning_fury' },
+        { unit: 'd61',      cell: 1, item_id: 'court_regalia' },
+        { unit: 'h_d_3_a2', cell: 3, item_id: 'orb_of_fire', hero: true },
+      ],
+    },
+  },
+  {
     id: 'grail_ghost',
     faction: 'grail_of_sorrow',
     name: 'Grail Ghosts',
