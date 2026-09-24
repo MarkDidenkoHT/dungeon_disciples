@@ -92,6 +92,7 @@ const TRAIT_FX = new Set([
   'stoicism', 'pure_blood', 'clear_mind',
   'vow_of_the_grave', 'vow_of_silence', 'vow_of_ash',
   'divided_flame', 'vampires_vigil',
+  'eternal_hunger', 'essence_of_power',
 ]);
 
 function cellIndex(row, col) { return row * COLS + col; }

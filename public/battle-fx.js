@@ -5710,6 +5710,8 @@ const vow_of_the_grave = traitFlash({ glow: 0x4a3b63, core: 0xe8e2d2 }, 'cross')
 const vow_of_ash       = traitFlash({ glow: 0x8a5a3c, core: 0xffd9a8 }, 'flame');
 const divided_flame    = traitFlash({ glow: 0xff5a12, core: 0xffd79a }, 'flame');
 const vampires_vigil   = traitFlash({ glow: 0x8a0c1e, core: 0xff9aa8 }, 'drop');
+const eternal_hunger   = traitFlash({ glow: 0x6d0f2b, core: 0xff8fb0 }, 'drop');
+const essence_of_power = traitFlash({ glow: 0x2f6fd0, core: 0xbfe0ff }, 'ring');
 
 export const EFFECTS = {
   stoicism,
@@ -5720,6 +5722,8 @@ export const EFFECTS = {
   vow_of_ash,
   divided_flame,
   vampires_vigil,
+  eternal_hunger,
+  essence_of_power,
   burn,
   poison,
   chill,

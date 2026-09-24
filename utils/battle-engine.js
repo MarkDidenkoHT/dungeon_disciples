@@ -269,6 +269,25 @@ class BattleEngine {
       actorCell: actor.cellIndex, value: after - before, total: after,
     });
   }
+  // Essence of Power — power banked at battle start rather than earned by
+  // acting. Capped at POWER_MAX like gainPower, and credited to the SIDE, not
+  // the unit: power is a side-wide pool and the carrier need not be the hero.
+  //
+  // Safe to run on rehydrate's replay of on_battle_start: rehydrate overwrites
+  // `power` with the saved bank afterwards, so a reload cannot re-bank it.
+  grantStartPower(side, amount, def, owner) {
+    if (!(amount > 0)) return;
+    const before = this.powerFor(side);
+    const after  = Math.min(POWER_MAX, before + amount);
+    if (after === before) return;
+    this.power[side] = after;
+    this.pushLog({
+      type: 'power', side, actorId: owner?.id, actorName: owner?.unit_name,
+      actorCell: owner?.cellIndex, value: after - before, total: after,
+      message: `${def?.name} — ${after - before} power banked before the first blow`,
+    });
+  }
+
   async init() {
     this.ABILITIES = await getAbilities();
   }

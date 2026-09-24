@@ -63,6 +63,13 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
   return p[flatKey] ?? 0;
 }
 
+// Eternal Hunger's multiplier on a drinker. `_drain_amp_pct` is set once at
+// battle start by the aura and never revoked, so reading it here costs nothing
+// and a unit standing outside any aura multiplies by exactly 1.
+function drainAmp(unit) {
+  return 1 + (unit?._drain_amp_pct ?? 0) / 100;
+}
+
 // Puts a battle-start stat grant on the portrait.
 //
 // Vitality, Iron Will, Horde, Choir, Banquet, Fortify and the resistance auras
@@ -667,6 +674,35 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} — ${owner.unit_name}'s passives cannot be silenced` });
     }
 
+    // Eternal Hunger — every ally drinks deeper. Read by the same two drain
+    // paths Pure Blood guards (self_heal_pct and lowest_ally_heal_pct), so it
+    // amplifies Lifesteal and Communion and nothing else. Flag-guarded because
+    // it ACCUMULATES: two carriers stack, but a revived one must not pay twice.
+    if (p.drain_amp_pct != null && !owner._flags[def.id + '_hunger']) {
+      owner._flags[def.id + '_hunger'] = true;
+      const allies = engine.combatants.filter(c => c.side === owner.side && c.alive);
+      for (const t of allies) {
+        t._drain_amp_pct = (t._drain_amp_pct ?? 0) + p.drain_amp_pct;
+        registerStatGrant(engine, t, def, p.drain_amp_pct, `+${p.drain_amp_pct}% lifesteal and communion healing`);
+      }
+      if (allies.length) {
+        engine.pushLog({
+          type: 'passive', passive: def.name,
+          actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetName: 'all allies', value: p.drain_amp_pct, heal: false,
+          message: `${def.name} — the party drinks ${p.drain_amp_pct}% deeper`,
+        });
+      }
+    }
+
+    // Essence of Power — power banked before the first blow. Flag-guarded on the
+    // same reasoning as the aura above; the cap is applied by the engine.
+    if (p.start_power_bonus != null && !owner._flags[def.id + '_essence']) {
+      owner._flags[def.id + '_essence'] = true;
+      engine.grantStartPower(owner.side, p.start_power_bonus, def, owner);
+      registerStatGrant(engine, owner, def, p.start_power_bonus, `+${p.start_power_bonus} power at the opening`);
+    }
+
     // Pure Blood — this unit's HP cannot feed anyone. Read by the two drain
     // paths (self_heal_pct and lowest_ally_heal_pct) when they pick a victim.
     if (p.drain_immune === true && !owner._flags[def.id + '_pure']) {
@@ -883,7 +919,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
-      const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult());
+      const heal = Math.floor(dmg * healPct / 100 * engine.fatigueHealMult() * drainAmp(owner));
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
       if (candidates.length > 0) {
         const lowest = candidates.reduce((a, b) => {
@@ -924,7 +960,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.self_heal_pct != null && !target?._drain_immune) {
-      const heal = Math.floor(dmg * p.self_heal_pct / 100 * engine.fatigueHealMult());
+      const heal = Math.floor(dmg * p.self_heal_pct / 100 * engine.fatigueHealMult() * drainAmp(owner));
       const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) {

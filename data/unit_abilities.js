@@ -548,9 +548,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'Heals self for 45% of damage dealt.',
-    description_ru: "Исцеляет себя на 45% нанесённого урона.",
-    params: { self_heal_pct: 45 },
+    description: 'Heals self for 55% of damage dealt.',
+    description_ru: "Исцеляет себя на 55% нанесённого урона.",
+    params: { self_heal_pct: 55 },
     effect_name: 'blood_drawback',
   },
   'communion 1': {
@@ -3002,6 +3002,61 @@ const UNIT_ABILITIES = {
     description_ru: "Пассивные способности этого юнита нельзя заглушить или отключить.",
     params: { passive_lock_immune: true },
     effect_name: 'clear_mind',
+  },
+  // Eternal Hunger — an aura over the whole party that makes every drain bite
+  // deeper: Lifesteal's self-heal and Communion's ally-heal both come back
+  // larger. It amplifies what is already there rather than granting a drain, so
+  // a party with no drinker in it gains nothing. Two carriers stack additively.
+  'eternal_hunger 1': {
+    id: 'eternal_hunger 1',
+    name: 'Eternal Hunger',
+    name_ru: "Вечный Голод",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Lifesteal and Communion heal 10% more for every ally.',
+    description_ru: "Похищение жизни и Причастие исцеляют на 10% сильнее у всех союзников.",
+    params: { drain_amp_pct: 10 },
+    effect_name: 'eternal_hunger',
+  },
+  'eternal_hunger 2': {
+    id: 'eternal_hunger 2',
+    name: 'Eternal Hunger',
+    name_ru: "Вечный Голод",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Lifesteal and Communion heal 20% more for every ally.',
+    description_ru: "Похищение жизни и Причастие исцеляют на 20% сильнее у всех союзников.",
+    params: { drain_amp_pct: 20 },
+    effect_name: 'eternal_hunger',
+  },
+  // Essence of Power — the side opens the fight with extra power banked, so the
+  // hero can reach for a bigger spell in round one instead of attacking to save
+  // up for it. Banked once at battle start and capped like any other power gain.
+  'essence_of_power 1': {
+    id: 'essence_of_power 1',
+    name: 'Essence of Power',
+    name_ru: "Сущность Силы",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Your hero starts the battle with 1 extra power.',
+    description_ru: "Ваш герой начинает бой с 1 дополнительной единицей силы.",
+    params: { start_power_bonus: 1 },
+    effect_name: 'essence_of_power',
+  },
+  'essence_of_power 2': {
+    id: 'essence_of_power 2',
+    name: 'Essence of Power',
+    name_ru: "Сущность Силы",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Your hero starts the battle with 2 extra power.',
+    description_ru: "Ваш герой начинает бой с 2 дополнительными единицами силы.",
+    params: { start_power_bonus: 2 },
+    effect_name: 'essence_of_power',
   },
   'pure_blood 1': {
     id: 'pure_blood 1',
