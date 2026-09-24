@@ -3150,7 +3150,6 @@ const UNIT_ABILITIES = {
     params: { ally_armor_bonus: 4, ally_tag_required: 'Zombie', tag_exclusive: 'Vampire' },
     effect_name: 'vampires_vigil',
   },
-
   'bone_armor 1': {
     id: 'bone_armor 1',
     name: 'Bone Armor',
