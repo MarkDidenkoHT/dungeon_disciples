@@ -3246,7 +3246,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 15 },
       action: 'decay', target_type: 'enemy', targets: 6, range: 3,
       damage_source: null, action_power: 6, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
-      xp: 600, passive: ['bleed 1', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
+      xp: 600, passive: ['bleed 1', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_grief: {
       id: 'gs811', f: 'g', t: 3,
@@ -3259,7 +3259,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 20 },
       action: 'decay', target_type: 'enemy', targets: 6, range: 3,
       damage_source: null, action_power: 8, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
-      xp: 1860, passive: ['bleed 2', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
+      xp: 1860, passive: ['bleed 2', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_anguish: {
       id: 'gs8111', f: 'g', t: 4,
@@ -3272,7 +3272,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 10, nature: 20 },
       action: 'decay', target_type: 'enemy', targets: 6, range: 3,
       damage_source: null, action_power: 10, action_icon: 'aura_of_decay.jpg', action_animation: 'decay_touch', action_sfx: 'noxious_death',
-      xp: 2930, passive: ['bleed 3', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
+      xp: 2930, passive: ['bleed 3', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_vigil: {
       id: 'gs82', f: 'g', t: 2,
@@ -3285,7 +3285,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 12, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 600, passive: ['poison 1', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
+      xp: 600, passive: ['poison 1', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_shroud: {
       id: 'gs821', f: 'g', t: 3,
@@ -3298,7 +3298,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 16, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 1860, passive: ['poison 2', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
+      xp: 1860, passive: ['poison 2', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_mantle: {
       id: 'gs8211', f: 'g', t: 4,
@@ -3311,7 +3311,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 25 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 20, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 2860, passive: ['poison 3', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
+      xp: 2860, passive: ['poison 3', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_chalice: {
       id: 'gs83', f: 'g', t: 2,
