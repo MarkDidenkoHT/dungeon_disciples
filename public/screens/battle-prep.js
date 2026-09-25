@@ -1944,6 +1944,14 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       // here means the embark guard was bypassed (hand-dismissed modal, direct
       // navigation), so send the player back to embark, which puts the
       // reconnect-or-abandon choice in front of them.
+      // Out of supplies between opening this screen and committing to it — a
+      // second device, or a bootstrap that went stale while the player arranged
+      // their formation. Embark draws the pool and explains the gate, so send
+      // them back to it rather than explaining it a second time here.
+      if (err.code === 'no_supplies') {
+        navigate('embark', { player });
+        return;
+      }
       // Code, not prose — see the same change in screens/battle.js. The regex
       // stays as a deploy-window fallback only.
       if (err.code === 'battle_in_progress' || /already in progress/i.test(err.message || '')) {

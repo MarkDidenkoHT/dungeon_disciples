@@ -73,6 +73,7 @@ const SLOT_FIXED_BUILDING = {
   slot_16: 'messenger_post',
   slot_17: 'mercenary_hall',
   slot_18: 'transmute_lab',
+  slot_19: 'supply_depot',
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
   slot_22: 'training_grounds',
@@ -83,8 +84,9 @@ const SLOT_FIXED_BUILDING = {
 // whether the castle OFFERS an upgrade, so a building left behind here reads as
 // already maxed and its next level becomes unreachable in the UI.
 const BUILDING_MAX_LEVELS = {
-  blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 3, messenger_post: 3,
+  blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
   mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 2,
+  supply_depot: 3,
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
 
@@ -3253,13 +3255,19 @@ export function renderCastle(root, params = {}) {
     const state = structuresRecord.buildings_data[slot];
     if (!state?.building_id) return;
     const def      = getBuildingDef(player.faction, state.building_id);
-    const isThrone = slot === 'slot_0';
+    // Granted buildings are undemolishable for the same reason the throne is:
+    // they were never bought, so tearing one down only discards the levels the
+    // player DID buy. Mirrors DEFAULT_BUILDINGS in data/buildings.js, which is
+    // what /structures/clear enforces.
+    const isFixed = slot === 'slot_0' || slot === 'slot_19';
     const ru = castleLang === 'ru';
 
     openModal(ru ? 'Разбор' : 'Deconstruct', `
       <div class="deconstruct-body">
-        ${isThrone
-          ? `<p class="deconstruct-note">${ru ? 'Трон нельзя снести.' : 'The throne cannot be demolished.'}</p>`
+        ${isFixed
+          ? `<p class="deconstruct-note">${slot === 'slot_0'
+               ? (ru ? 'Трон нельзя снести.' : 'The throne cannot be demolished.')
+               : (ru ? 'Это здание нельзя снести.' : 'That building cannot be demolished.')}</p>`
           : `<button class="deconstruct-btn" id="deconstruct-clear">
                ${ru ? 'Снести здание' : 'Demolish Building'}
              </button>

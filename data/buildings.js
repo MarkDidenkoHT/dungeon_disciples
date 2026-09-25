@@ -69,6 +69,7 @@ const SLOT_FIXED_BUILDING = {
   slot_16: 'messenger_post',
   slot_17: 'mercenary_hall',
   slot_18: 'transmute_lab',
+  slot_19: 'supply_depot',
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
   slot_22: 'training_grounds',
@@ -80,9 +81,10 @@ const BUILDING_MAX_LEVELS = {
   blacksmith:       2,
   infirmary:        3,
   crystal_mine:     2,
-  mage_guild:       3,
+  mage_guild:       2,
   messenger_post:   3,
   mercenary_hall:   3,
+  supply_depot:     3,
   garrison_annex:   3,
   proving_grounds:  3,
   training_grounds: 2,
@@ -147,11 +149,13 @@ function litaniesUnlocked(buildingsData) {
 // from something the player keeps investing in.
 //
 //   daily_crystal_bonus_pct  read by the Supabase daily-reward function
+//   spell_cost_reduction_pct routes /spells/research
 //   embark_gold_pct / embark_xp_pct / embark_crystal_pct
 //                            routes /battle/reward, same pipeline as the
 //                            expedition passives and timed events
 const BUILDING_EFFECTS = {
   crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
+  mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
   training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
 };
 
@@ -162,6 +166,7 @@ const BUILDING_EFFECTS = {
 function buildingEffects(buildingsData) {
   const totals = {
     daily_crystal_bonus_pct: 0,
+    spell_cost_reduction_pct: 0,
     embark_gold_pct: 0,
     embark_xp_pct: 0,
     embark_crystal_pct: 0,
@@ -179,6 +184,10 @@ function buildingEffects(buildingsData) {
   return totals;
 }
 
+function getSpellCostReductionPct(buildingsData) {
+  return buildingEffects(buildingsData).spell_cost_reduction_pct;
+}
+
 function getDailyCrystalBonusPct(buildingsData) {
   return buildingEffects(buildingsData).daily_crystal_bonus_pct;
 }
@@ -188,6 +197,60 @@ function getDailyCrystalBonusPct(buildingsData) {
 function getEmbarkBuildingBonuses(buildingsData) {
   const e = buildingEffects(buildingsData);
   return { gold_pct: e.embark_gold_pct, xp_pct: e.embark_xp_pct, crystal_pct: e.embark_crystal_pct };
+}
+
+// ── Supplies ────────────────────────────────────────────────────
+// The embark gate. One supply per region embark, nothing else in the game
+// spends them: PvP, the Colossus and the tourney are deliberately free, so an
+// empty pool pushes the player at those rather than at nothing.
+//
+// The pool refills on a Supabase cron (supabase/functions/supply-tick), which
+// reads the supply building's level to find the ceiling and adds one if the
+// player is under it. That is the ONLY writer of the refill; nothing here ticks.
+const SUPPLY_BUILDING   = 'supply_depot';
+
+// Its own item_type, not 'resource'. The seven-slot resource bar is full and a
+// supply is not something you spend on a build, so it is queried and drawn
+// separately — the same reasoning that keeps tokens out of the bar.
+const SUPPLY_ITEM_TYPE  = 'supplies';
+
+// The row name is per faction and is what lands in resources.item. It is the EN
+// string in both languages: `ru` is a display label only, so renaming it later
+// cannot orphan a player's balance.
+const SUPPLY_ITEMS = {
+  empire:              { item: 'Camping Supplies',     ru: 'Походные припасы' },
+  choir_of_the_cursed: { item: 'Liquid Sin',           ru: 'Жидкий грех' },
+  grail_of_sorrow:     { item: 'Chalice Of Sustenance', ru: 'Чаша насыщения' },
+};
+
+// Cap per building level. The building is granted at level 1 to every player
+// (see emptyStructures and sql/009_supplies.sql), so level 0 is not a state the
+// game is supposed to reach — it reads as level 1 rather than as a lockout,
+// because a missing backfill row should not take embark away from someone.
+const SUPPLY_MAX_BY_LEVEL = { 1: 10, 2: 15, 3: 20 };
+
+// What the cron is scheduled at. Kept here so the countdown the embark screen
+// shows and the job that actually pays out are one number; change the schedule
+// and change this with it.
+const SUPPLY_TICK_MINUTES = 30;
+
+const EMBARK_SUPPLY_COST = 1;
+
+function maxSupplies(buildingsData) {
+  const level = buildingLevel(buildingsData, SUPPLY_BUILDING) || 1;
+  const declared = Object.keys(SUPPLY_MAX_BY_LEVEL).map(Number).filter(n => n <= level);
+  return SUPPLY_MAX_BY_LEVEL[Math.max(...declared)];
+}
+
+// The resources.item name for a faction, or null before one is picked.
+function supplyItemName(faction) {
+  return SUPPLY_ITEMS[faction]?.item ?? null;
+}
+
+function supplyLabel(faction, lang) {
+  const entry = SUPPLY_ITEMS[faction];
+  if (!entry) return '';
+  return lang === 'ru' ? entry.ru : entry.item;
 }
 
 // ── Unit tier ceiling ───────────────────────────────────────────────────────
@@ -338,10 +401,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Life: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Unlocks spell research: Tier I, then II, then III of the Spell Tome.',
-        desc_ru: 'Открывает изучение заклинаний: круг I, затем II, затем III Книги заклинаний.',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Life: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 }, 3: { gold: 700, Crystals_Life: 260 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -356,6 +419,15 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 400, Crystals_Life: 120 } } },
     ],
     merc_up: [
+      { id: 'supply_depot', label: "Quartermaster's Yard", label_ru: 'Двор квартирмейстера', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        desc: 'Holds your Camping Supplies. Every embark spends one, and they come back on their own over time. Holds 10, then 15, then 20.',
+        desc_ru: 'Хранит Походные припасы. Каждый поход тратит один, и они восполняются сами со временем. Вмещает 10, затем 15, затем 20.',
+        // Granted at level 1, never bought — `cost` is unreachable and only the
+        // upgrades are priced. They are deliberately steep: raising the ceiling
+        // is the one thing that lets a player bank more embarks, so it has to
+        // compete with a whole tier of army for the same gold.
+        cost: {},
+        upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
@@ -481,10 +553,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Fire: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Unlocks spell research: Tier I, then II, then III of the Spell Tome.',
-        desc_ru: 'Открывает изучение заклинаний: круг I, затем II, затем III Книги заклинаний.',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Fire: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 }, 3: { gold: 700, Crystals_Fire: 260 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -499,6 +571,15 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 400, Crystals_Fire: 120 } } },
     ],
     merc_up: [
+      { id: 'supply_depot', label: 'Sin Distillery', label_ru: 'Винокурня греха', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        desc: 'Holds your Liquid Sin. Every embark spends one to open the way, and the vats refill on their own over time. Holds 10, then 15, then 20.',
+        desc_ru: 'Хранит Жидкий грех. Каждый поход тратит один, чтобы открыть путь, а чаны наполняются сами со временем. Вмещает 10, затем 15, затем 20.',
+        // Granted at level 1, never bought — `cost` is unreachable and only the
+        // upgrades are priced. They are deliberately steep: raising the ceiling
+        // is the one thing that lets a player bank more embarks, so it has to
+        // compete with a whole tier of army for the same gold.
+        cost: {},
+        upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
@@ -650,10 +731,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Death: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Unlocks spell research: Tier I, then II, then III of the Spell Tome.',
-        desc_ru: 'Открывает изучение заклинаний: круг I, затем II, затем III Книги заклинаний.',
+        desc: 'Spell research costs less: 10% off, then 20%.',
+        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Death: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 }, 3: { gold: 700, Crystals_Death: 260 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -668,6 +749,15 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 400, Crystals_Death: 120 } } },
     ],
     merc_up: [
+      { id: 'supply_depot', label: 'Reliquary of the Chalice', label_ru: 'Реликварий чаши', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        desc: 'Holds your Chalice Of Sustenance. Every embark spends one, and the chalices fill again on their own over time. Holds 10, then 15, then 20.',
+        desc_ru: 'Хранит Чашу насыщения. Каждый поход тратит одну, и чаши наполняются сами со временем. Вмещает 10, затем 15, затем 20.',
+        // Granted at level 1, never bought — `cost` is unreachable and only the
+        // upgrades are priced. They are deliberately steep: raising the ceiling
+        // is the one thing that lets a player bank more embarks, so it has to
+        // compete with a whole tier of army for the same gold.
+        cost: {},
+        upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
         desc: 'Opens errands. Each level pays more for every errand run.',
@@ -1374,6 +1464,9 @@ function getRespecCost(faction, buildingId, level) {
   return scaleCost(base, RESPEC_COST_PCT);
 }
 
+// Buildings every castle starts with, at level 1, without paying for them.
+const DEFAULT_BUILDINGS = { slot_19: SUPPLY_BUILDING };
+
 // Driven off SLOT_CATEGORIES so adding a slot there is the only edit needed.
 // Existing records are NOT migrated: a slot missing from a saved buildings_data
 // simply reads as empty everywhere (`buildings[slot] || { level: 0 }`), and is
@@ -1381,6 +1474,13 @@ function getRespecCost(faction, buildingId, level) {
 function emptyStructures() {
   const slots = {};
   for (const slot of SLOT_IDS) slots[slot] = { level: 0, building_id: null };
+  // Granted, not built. The supply building is the embark gate, so a castle
+  // without it cannot embark at all — it is part of what a new player IS, the
+  // way the throne is, rather than something they are asked to choose.
+  // Existing players get the same row from sql/009_supplies.sql.
+  for (const [slot, building_id] of Object.entries(DEFAULT_BUILDINGS)) {
+    slots[slot] = { level: 1, building_id };
+  }
   return slots;
 }
 
@@ -1682,6 +1782,7 @@ module.exports = {
   LITANY_BUILDING_LEVEL,
   BUILDING_EFFECTS,
   buildingEffects,
+  getSpellCostReductionPct,
   getDailyCrystalBonusPct,
   getEmbarkBuildingBonuses,
   slotLockedBy,
@@ -1695,6 +1796,16 @@ module.exports = {
   resolveUpgradeBranch,
   upgradeBranchCandidates,
   emptyStructures,
+  DEFAULT_BUILDINGS,
+  SUPPLY_BUILDING,
+  SUPPLY_ITEM_TYPE,
+  SUPPLY_ITEMS,
+  SUPPLY_MAX_BY_LEVEL,
+  SUPPLY_TICK_MINUTES,
+  EMBARK_SUPPLY_COST,
+  maxSupplies,
+  supplyItemName,
+  supplyLabel,
   FACTION_CRYSTAL,
   BUILDING_COSTS,
   RESPEC_COST_PCT,

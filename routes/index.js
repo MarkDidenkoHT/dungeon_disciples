@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -214,6 +214,12 @@ const STARTING_RESOURCES = [
   // the least information.
   { item_type: 'token',    item: 'crossroad_sigil', amount: 1   },
 ];
+
+// Supplies are seeded separately: the row name depends on the faction (see
+// SUPPLY_ITEMS), so it cannot live in the table above, which is written once
+// before a faction is picked. Five is half a level-1 ceiling — enough to get
+// through onboarding without the gate being the first thing a new player meets.
+const STARTING_SUPPLIES = 5;
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
 // the opening spell tutorial can teach revive, heal, and buff. The buff is
@@ -1626,7 +1632,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
     // them, and fetching them here costs one extra parallel query instead of a
     // separate round-trip per screen.
     const player = await getPlayerByChatId(chat_id);
-    const [resources, trophies, tokens, structRows, roster, items] = await Promise.all([
+    const [resources, trophies, tokens, supplyRows, structRows, roster, items] = await Promise.all([
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.resource`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.trophy`),
       // Tokens are their own item_type rather than a resource, because they must
@@ -1634,16 +1640,34 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // you spend on a build. They surface only where they are used: a badge on
       // the respec button, a button in the unit sheet.
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.token`),
+      // Supplies are their own item_type for the same reason tokens are: the
+      // resource bar has seven slots and all seven are spoken for. They are
+      // drawn by the embark screen, which is the only place they mean anything.
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.${SUPPLY_ITEM_TYPE}`),
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
       player
         ? fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
         : Promise.resolve([]),
     ]);
+    // Everything the embark screen needs to draw the gate and the countdown,
+    // resolved here because data/buildings.js is CommonJS and the client cannot
+    // read SUPPLY_MAX_BY_LEVEL or the tick length for itself.
+    const supplyItem = supplyItemName(player?.faction);
+    const supplies = supplyItem ? {
+      item:          supplyItem,
+      label_ru:      SUPPLY_ITEMS[player.faction]?.ru || supplyItem,
+      amount:        Number(supplyRows.find(r => r.item === supplyItem)?.amount ?? 0),
+      max:           maxSupplies(structRows[0]?.buildings_data),
+      tick_minutes:  SUPPLY_TICK_MINUTES,
+      embark_cost:   EMBARK_SUPPLY_COST,
+    } : null;
+
     res.json({
       resources,
       trophies,
       tokens,
+      supplies,
       items,
       structures: structRows[0] || null,
       roster,
@@ -1784,7 +1808,14 @@ router.post('/player/faction', requireAuth, async (req, res) => {
           amount: r.item === FACTION_CRYSTAL[faction]
             ? Math.max(r.amount, STARTING_FACTION_CRYSTAL)
             : r.amount,
-        }))
+        })).concat(
+          // The embark gate's opening balance. The building itself came from
+          // emptyStructures() in `structures` above, so the ceiling this fills
+          // towards is already in place.
+          supplyItemName(faction)
+            ? [{ chat_id, item_type: SUPPLY_ITEM_TYPE, item: supplyItemName(faction), amount: STARTING_SUPPLIES }]
+            : []
+        )
       ) }),
       structuresWrite,
       ...(startingItems.length ? [supabase('/items', { method: 'POST', body: JSON.stringify(startingItems) })] : []),
@@ -3667,6 +3698,12 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
   const { chat_id, slot } = req.body;
   if (!chat_id || !slot) return res.status(400).json({ error: 'chat_id and slot required' });
   if (slot === 'slot_0') return res.status(400).json({ error: 'The throne cannot be demolished' });
+  // Exempt for the same reason as the throne: it was granted rather than built,
+  // and demolishing it only throws away the levels the player paid for. The
+  // ceiling would fall back to the level-1 value rather than locking embark
+  // (see maxSupplies), so this is not a safety check — it is refusing to let
+  // someone spend gold on a building and then delete it by accident.
+  if (DEFAULT_BUILDINGS[slot]) return res.status(400).json({ error: 'That building cannot be demolished' });
   try {
     const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Structures not found' });
@@ -4053,7 +4090,51 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })),
       placement,
     }});
-    const record = await createBattleState({ chat_id, battle_id, battle_data });
+
+    // THE EMBARK GATE. One supply per region embark, charged here and nowhere
+    // else — this route is reached only from the embark screen (the Colossus
+    // goes through /colossus/attack and the arena through the queue), so
+    // charging it here is what makes PvP, the Colossus and the tourney free.
+    //
+    // Charged at the LAST possible moment before the battle exists. Everything
+    // above is validation and pure engine work with no side effects, so a squad
+    // that fails checkSquad or a level that is not unlocked costs nothing; a
+    // player who is charged is a player who got a battle.
+    //
+    // Flat, regardless of region or level. A tier-3 army spending its supply on
+    // level 1 is wasting it, and that is the whole mechanism: the resource is
+    // scarce, so where it is spent becomes a decision.
+    const supplyItem = supplyItemName(player.faction);
+    if (supplyItem) {
+      try {
+        await spendResources(chat_id, { [supplyItem]: EMBARK_SUPPLY_COST });
+      } catch (err) {
+        if (shortfallItem(err)) {
+          return res.status(400).json({
+            error: `Out of ${supplyItem}`,
+            code:  'no_supplies',
+            item:  supplyItem,
+          });
+        }
+        throw err;
+      }
+    }
+
+    let record;
+    try {
+      record = await createBattleState({ chat_id, battle_id, battle_data });
+    } catch (err) {
+      // The supply was taken for a battle that does not exist. Hand it back
+      // rather than leaving the player short for something they never got.
+      if (supplyItem) {
+        try {
+          await grantResources(chat_id, [{ item: supplyItem, amount: EMBARK_SUPPLY_COST, item_type: SUPPLY_ITEM_TYPE }]);
+        } catch (refundErr) {
+          console.error('Failed to refund supply after battle create failed:', refundErr);
+        }
+      }
+      throw err;
+    }
     let initialLogs = [];
     try {
       const initialEvents = Array.isArray(engine.log) ? engine.log : [];

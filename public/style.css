@@ -2665,6 +2665,49 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-shrink: 0;
 }
 
+.embark-supply-pill {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 12px;
+  margin-bottom: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.embark-supply-name {
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.embark-supply-count {
+  color: var(--accent-bright);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.embark-supply-note {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.embark-supply-pill--empty {
+  border-color: var(--danger);
+}
+
+.embark-supply-pill--empty .embark-supply-count {
+  color: var(--danger);
+}
+
+.embark-supply-next {
+  color: var(--accent-bright);
+  font-variant-numeric: tabular-nums;
+}
+
 .embark-controls {
   flex: 1;
   display: flex;

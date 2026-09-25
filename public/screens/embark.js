@@ -51,6 +51,14 @@ const UI_TEXT = {
   abandon:         { en: 'Abandon',   ru: 'Бросить' },
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },
   levelAria:       { en: 'Level',     ru: 'Уровень' },
+  supplyOutTitle:  { en: 'Out of supplies', ru: 'Припасы кончились' },
+  supplyOutBody:   {
+    en: 'Every embark costs one. They come back on their own — the Arena, the Colossus and the Crown Tourney cost none, so there is still a fight to be had.',
+    ru: 'Каждый поход стоит одного. Они восполняются сами — Арена, Колосс и Турнир Короны не требуют припасов, так что бой всё ещё есть.',
+  },
+  supplyNextIn:    { en: 'Next in',   ru: 'Следующий через' },
+  supplyFull:      { en: 'Full',      ru: 'Полно' },
+  supplyMin:       { en: 'min',       ru: 'мин' },
   pvpSoon:         { en: 'Soon',      ru: 'Скоро' },
   tourneyLoading:  { en: 'Loading…',        ru: 'Загрузка…' },
   tourneyToday:    { en: 'Today',           ru: 'Сегодня' },
@@ -203,6 +211,45 @@ export function renderEmbark(root, params = {}) {
   applyBackground(root, player.faction, 'embark');
 
   const L = lang(player);
+
+  // The embark gate, as /bootstrap resolved it: { item, label_ru, amount, max,
+  // tick_minutes, embark_cost }, or null before a faction is picked. Refreshed
+  // by every loadRegions, which is what a return from battle goes through.
+  let supplies = null;
+
+  const supplyName = () => (L === 'ru' && supplies?.label_ru) || supplies?.item || '';
+
+  // The refill is a Supabase cron on a fixed minute step, so the next tick is
+  // the next wall-clock minute divisible by it — the same instant for everyone
+  // regardless of timezone. That is why no per-player timestamp is stored for
+  // it and why this can be worked out on the client.
+  function minutesToNextTick() {
+    const step = Number(supplies?.tick_minutes) || 30;
+    const now = new Date();
+    const past = now.getMinutes() % step;
+    const mins = step - past;
+    // A tick that is 40 seconds away should read "1 min", not "0 min".
+    return now.getSeconds() > 0 ? mins : mins || step;
+  }
+
+  const canEmbark = () => !supplies || supplies.amount >= (supplies.embark_cost ?? 1);
+
+  // Drawn above the regions rather than in the resource bar: the bar's seven
+  // slots are full, and a supply only means anything on this screen.
+  function supplyPillHtml() {
+    if (!supplies) return '';
+    const full = supplies.amount >= supplies.max;
+    const note = full
+      ? UI_TEXT.supplyFull[L]
+      : `${UI_TEXT.supplyNextIn[L]} ${minutesToNextTick()} ${UI_TEXT.supplyMin[L]}`;
+    return `
+      <div class="embark-supply-pill${canEmbark() ? '' : ' embark-supply-pill--empty'}">
+        <span class="embark-supply-name">${supplyName()}</span>
+        <span class="embark-supply-count">${supplies.amount} / ${supplies.max}</span>
+        <span class="embark-supply-note">${note}</span>
+      </div>`;
+  }
+
   const rLabel = r => (L === 'ru' && r.label_ru)       || r.label;
   const rDesc  = r => (L === 'ru' && r.description_ru)  || r.description;
   const rCrystal = r => (L === 'ru' && r.crystal_ru)   || r.crystal;
@@ -821,6 +868,7 @@ export function renderEmbark(root, params = {}) {
       // memory, and it was AWAITED before anything was drawn.
       const boot = await bootstrapCache.get(player.chat_id);
       const progress = boot?.progress || {};
+      supplies = boot?.supplies || null;
 
       // Shown only when a caller HANDS us an active battle — today that is
       // battle-prep, bounced back here by /battle/create. This screen does not
@@ -839,7 +887,7 @@ export function renderEmbark(root, params = {}) {
       // Answered. A later visit is not the visit that was bounced back here.
       activeCheck = null;
 
-      root.querySelector('#embark-regions').innerHTML = REGIONS.map(r => {
+      root.querySelector('#embark-regions').innerHTML = supplyPillHtml() + REGIONS.map(r => {
         if (r.toColossus) {
           return `
             <div class="embark-region-block embark-region-block--arena">
@@ -937,6 +985,19 @@ export function renderEmbark(root, params = {}) {
       // by every honest departure.
       function departTo(regionId, level) {
         if (!regionId || !level) return;
+        // The gate is explained, not hidden. Nothing on this screen is disabled
+        // for want of supplies — the same cards sit beside the Arena, the
+        // Colossus and the Tourney, none of which cost any, so a dead button
+        // would read as "embark is broken" rather than "spend your evening
+        // somewhere else". /battle/create is the authority either way and
+        // answers `no_supplies`; this only saves the round-trip.
+        if (!canEmbark()) {
+          openModal(UI_TEXT.supplyOutTitle[L], `
+            <p>${UI_TEXT.supplyOutBody[L]}</p>
+            <p class="embark-supply-next">${UI_TEXT.supplyNextIn[L]} ${minutesToNextTick()} ${UI_TEXT.supplyMin[L]}</p>
+          `);
+          return;
+        }
         markTutorialDone(player, 'embark_region');
         navigate('battle-prep', { player, region_id: regionId, level });
       }
