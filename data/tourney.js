@@ -35,15 +35,29 @@ const TOURNEY_PRIZES = {
 // The pool a day's tourney draws one or two rules from. `kind` is what the check
 // below switches on; everything else is the rule's own parameters.
 //
-// `engravings_off` and `twist` are not squad rules — they change how the battle
-// is built, not who may enter — so checkTourneyRules passes them through.
+// Every rule here is a SQUAD rule: it decides who may enter, and the server
+// enforces it at the queue gate. `engravings_off` and `twist` were the other
+// half — rules that change how the battle is BUILT — and they are gone:
+//
+//   • `swift` gave every unit +2 Initiative, which is no rule at all. Shifting
+//     the whole turn order by the same amount leaves the same turn order.
+//   • `raw_stats` (engravings off) was a real rule that nothing in the engine
+//     honours — a promise on the card the battle did not keep.
+//   • `warband` (3+ Warriors) asked for a tag most rosters cannot field three
+//     of, and locked those players out of the evening rather than making them
+//     think about their squad.
+//
+// `grim` is the one twist left. It is listed so the name and the shape survive,
+// but the cron does not roll it either (RULE_KINDS in the tourney-notify edge
+// function) until the engine halves healing. Anything added here must be
+// enforced somewhere before the cron is allowed to draw it. The
+// cron does not roll them either (RULE_KINDS in supabase/functions/tourney-notify):
+// rolling a rule nothing enforces would read as a bug to the player.
 const TOURNEY_RULES = [
   { id: 'no_demons',     kind: 'ban_tag',         tag: 'Demon',
     name: 'No Demons',            name_ru: 'Без демонов' },
   { id: 'no_undead',     kind: 'ban_tag',         tag: 'Undead',
     name: 'No Undead',            name_ru: 'Без нежити' },
-  { id: 'warband',       kind: 'require_tag',     tag: 'Warrior', count: 3,
-    name: '3+ Warriors',          name_ru: '3+ воина' },
   { id: 'tiles_only',    kind: 'size_only',       sizes: ['tile'],
     name: 'Tile-size units only', name_ru: 'Только одноклеточные' },
   { id: 'lean_squad',    kind: 'loyalty_max',     max: 3,
@@ -52,10 +66,6 @@ const TOURNEY_RULES = [
     name: 'Nothing above Rare',   name_ru: 'Не выше редкого' },
   { id: 'bare_steel',    kind: 'no_items',
     name: 'No items at all',      name_ru: 'Совсем без предметов' },
-  { id: 'raw_stats',     kind: 'engravings_off',
-    name: 'Engravings off',       name_ru: 'Без гравировок' },
-  { id: 'swift',         kind: 'twist',           effect: { initiative: 2 },
-    name: 'All units +2 Initiative', name_ru: 'Всем +2 к инициативе' },
   { id: 'grim',          kind: 'twist',           effect: { healing_pct: 50 },
     name: 'Healing halved',       name_ru: 'Лечение вдвое слабее' },
 ];
@@ -106,11 +116,6 @@ function checkTourneyRules(units, rules, { itemsByRosterId = {} } = {}) {
       if (guilty.length) problems.push({ rule: rule.id, text: `${rule.tag} units are banned today` });
     }
 
-    if (rule.kind === 'require_tag') {
-      const have = units.filter(u => unitTags(u).includes(rule.tag)).length;
-      if (have < rule.count) problems.push({ rule: rule.id, text: `Needs ${rule.count} ${rule.tag} units, has ${have}` });
-    }
-
     if (rule.kind === 'size_only') {
       const guilty = units.filter(u => !rule.sizes.includes(unitSize(u)));
       if (guilty.length) problems.push({ rule: rule.id, text: `Only ${rule.sizes.join(' / ')} units today` });
@@ -141,6 +146,8 @@ function checkTourneyRules(units, rules, { itemsByRosterId = {} } = {}) {
 }
 
 // Rules that change the BATTLE rather than the squad, for whoever builds it.
+// No rule in the pool produces either of these today (see the note above) — it
+// is kept so the battle builder has somewhere to read them from when one does.
 function battleRulesOf(rules) {
   const list = (rules || []).map(r => (typeof r === 'string' ? TOURNEY_RULES_BY_ID[r] : r)).filter(Boolean);
   return {

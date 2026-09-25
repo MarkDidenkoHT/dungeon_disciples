@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, MERCENARY_BUILDINGS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -217,9 +217,7 @@ const STARTING_RESOURCES = [
 
 // Both support (non-combat) spells plus the faction's first buff, pre-learned so
 // the opening spell tutorial can teach revive, heal, and buff. The buff is
-// normally gated behind a Mage Guild, but pre-granting bypasses the research
-// gate — which is why a new player owns one tier-1 spell and cannot yet research
-// the other.
+// normally throne-2 gated, but pre-granting bypasses the research gate.
 const FACTION_STARTING_SPELLS = {
   empire:              ['e_spell_1', 'e_spell_2', 'e_spell_3'],
   choir_of_the_cursed: ['d_spell_1', 'd_spell_2', 'd_spell_3'],
@@ -4824,9 +4822,9 @@ async function tourneyEntry(tourney_id, chat_id) {
   return rows[0] || null;
 }
 
-// The entry is created on the player's FIRST battle of the evening, not when
-// they look at the screen: an entry that exists is an entry that played, which
-// is what the payout pays.
+// Created when the player QUEUES, not when they look at the screen — the gate
+// below needs a row to read `battles` from. A row is therefore not proof of
+// having played, so the payout pays on `battles > 0` rather than on existence.
 async function ensureTourneyEntry(tourney_id, chat_id) {
   const existing = await tourneyEntry(tourney_id, chat_id);
   if (existing) return existing;
@@ -4840,16 +4838,22 @@ async function ensureTourneyEntry(tourney_id, chat_id) {
 
 // A battle is counted the moment it STARTS. Otherwise walking out of a losing
 // fight would cost nothing and five battles would mean five wins or nothing.
+// The compare-and-set can lose a race, and losing it silently would hand the
+// player a free sixth battle, so a miss re-reads and tries once more.
 async function countTourneyBattle(tourney_id, chat_id) {
-  const entry = await ensureTourneyEntry(tourney_id, chat_id);
-  if (!entry) return null;
-  const rows = await supabase(
-    `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}&battles=eq.${entry.battles}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ battles: entry.battles + 1 }),
-      headers: { Prefer: 'return=representation' },
-    });
-  return rows?.[0] || null;
+  let entry = await ensureTourneyEntry(tourney_id, chat_id);
+  for (let attempt = 0; entry && attempt < 3; attempt++) {
+    const rows = await supabase(
+      `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}&battles=eq.${entry.battles}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ battles: entry.battles + 1 }),
+        headers: { Prefer: 'return=representation' },
+      });
+    if (rows?.[0]) return rows[0];
+    entry = await tourneyEntry(tourney_id, chat_id);
+  }
+  console.error(`Tourney battle count lost the race: ${tourney_id} / ${chat_id}`);
+  return null;
 }
 
 // The result, once the player claims it. Points, how many of their units fell,
@@ -4892,24 +4896,62 @@ async function settleTourneyBattle(record, chat_id, side) {
   }
 }
 
-// GET /tourney — what the tourney page draws: the open tourney and the next
-// one's rules (announced a day ahead), this player's entry, and the standings.
+// Tonight's board: the top ten in tiebreaker order, which is the order the
+// payout pays in — the player is looking at the same list that decides the
+// podium, not a decoration.
+//
+// Only entries that have fought are on it: a row is created when a player
+// queues, so an untouched one is somebody who looked and left.
+//
+// tourney_entries has no foreign key to players, so the names are a second
+// read. It returns `name`, never chat_id — the same rule as pvpOpponentCard:
+// that column is a real Telegram account id and does not belong in a browser.
+// `you` is how the client finds the player's own row without one.
+const TOURNEY_BOARD_LIMIT = 10;
+async function tourneyStandings(tourney_id, chat_id) {
+  const rows = await supabase(
+    `/tourney_entries?tourney_id=eq.${tourney_id}&battles=gt.0`
+    + `&select=chat_id,points,wins,battles,units_lost`
+    + `&order=points.desc,units_lost.asc,finished_at.asc&limit=${TOURNEY_BOARD_LIMIT}`
+  );
+  if (!rows.length) return [];
+
+  // A failed name read costs the names, not the board.
+  const players = new Map();
+  try {
+    const list = rows.map(r => `"${String(r.chat_id)}"`).join(',');
+    const found = await supabase(
+      `/players?chat_id=in.(${encodeURIComponent(list)})&select=chat_id,username,faction`
+    );
+    for (const p of found) players.set(String(p.chat_id), p);
+  } catch (err) {
+    console.error('Tourney board names failed (continuing):', err.message);
+  }
+
+  return rows.map((r, i) => {
+    const p = players.get(String(r.chat_id));
+    return {
+      place:      i + 1,
+      name:       p?.username || null,
+      faction:    p?.faction ?? null,
+      points:     r.points || 0,
+      wins:       r.wins || 0,
+      battles:    r.battles || 0,
+      units_lost: r.units_lost || 0,
+      you:        String(r.chat_id) === String(chat_id),
+    };
+  });
+}
+
+// GET /tourney — what the arena card draws: the open tourney and the next one's
+// rules (announced a day ahead), this player's entry, and tonight's board.
 router.get('/tourney', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    const [open, next] = await Promise.all([openTourney(), nextTourney()]);
-    const live = open || null;
-
-    let entry = null;
-    let standings = [];
-    if (live) {
-      entry = await tourneyEntry(live.id, chat_id);
-      standings = await supabase(
-        `/tourney_entries?tourney_id=eq.${live.id}&select=chat_id,points,wins,battles,units_lost,finished_at`
-        + `&order=points.desc,units_lost.asc,finished_at.asc&limit=20`
-      );
-    }
+    const [live, next] = await Promise.all([openTourney(), nextTourney()]);
+    const entry = live ? await tourneyEntry(live.id, chat_id) : null;
+    const standings = live ? await tourneyStandings(live.id, chat_id) : [];
 
     res.json({
       tourney: live,
@@ -5728,21 +5770,19 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const factionSpells = SPELLS[faction] || [];
     const spell = factionSpells.find(s => s.id === spell_id);
     if (!spell) return res.status(404).json({ error: 'Spell not found for your faction' });
-    const learned    = playerRows[0].learned_spells || [];
-    // The Mage Guild is the whole gate: level N opens tier N, and an unbuilt
-    // guild (level 0) opens nothing. The throne used to gate this, which made
-    // research a side effect of castle spending rather than a choice.
-    const guildLevel = buildingLevel(structRows[0].buildings_data, 'mage_guild');
-    const spellTier  = spell.tier || 1;
+    const learned     = playerRows[0].learned_spells || [];
+    const throneLevel = structRows[0].buildings_data['slot_0']?.level ?? 0;
+    const spellTier   = spell.tier || 1;
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
-    if (guildLevel < spellTier) {
-      return res.status(400).json({
-        error: `Mage Guild level ${spellTier} required to research this spell`,
-        code: 'guild_level', requires: spellTier, have: guildLevel,
-      });
+    if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
+    // Mage Guild throne perk discounts the crystal cost.
+    const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data) / 100;
+    const discountedCost = {};
+    for (const [type, amt] of Object.entries(spell.cost?.crystals || {})) {
+      discountedCost[type] = Math.max(0, Math.ceil(amt * (1 - spellDiscount)));
     }
     try {
-      await consumeCrystalCosts(chat_id, spell.cost?.crystals || {});
+      await consumeCrystalCosts(chat_id, discountedCost);
     } catch (e) {
       return res.status(400).json({ error: e.message });
     }

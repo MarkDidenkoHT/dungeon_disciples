@@ -56,6 +56,12 @@ const UI_TEXT = {
   tourneyToday:    { en: 'Today',           ru: 'Сегодня' },
   tourneyNext:     { en: 'Next',            ru: 'Следующий' },
   tourneyNoRules:  { en: 'No special rules', ru: 'Без особых правил' },
+  tourneyBoard:    { en: 'Standings',       ru: 'Турнирная таблица' },
+  tourneyEmpty:    { en: 'No one has fought yet tonight.',
+                     ru: 'Сегодня ещё никто не сражался.' },
+  tourneyYou:      { en: 'You',             ru: 'Вы' },
+  tourneyAnon:     { en: 'Challenger',      ru: 'Боец' },
+  tourneyPts:      { en: 'pts',             ru: 'очк.' },
   comingSoonTitle: { en: 'Coming soon', ru: 'Скоро' },
   comingSoonBody:  {
     en: 'This mode is not open yet. It is being built — check back soon.',
@@ -569,6 +575,7 @@ export function renderEmbark(root, params = {}) {
             </div>
             ${m.tourney ? tourneyBadgeHtml() : (m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.pvpSoon[L]}</span>`)}
           </div>
+          ${m.tourney ? tourneyBoardHtml() : ''}
         </div>`;
     }).join('');
 
@@ -597,6 +604,7 @@ export function renderEmbark(root, params = {}) {
   // plus wins and battles remaining once it is running.
   let tourneyState = null;
   let tourneyTimer = null;
+  const BOARD_REFRESH_TICKS = 30;
 
   function tourneyIsOpen() {
     const t = tourneyState?.tourney;
@@ -637,6 +645,41 @@ export function renderEmbark(root, params = {}) {
     const parts = [`${open ? '⏳' : '🕔'} ${countdown(left)}`];
     if (open) parts.push(`🏅 ${Number(tourneyState.entry?.wins ?? 0)}`, `⚔ ${tourneyBattlesLeft()}`);
     return `<span class="embark-card-badge embark-card-badge--tourney">${parts.join(' · ')}</span>`;
+  }
+
+  // Usernames come from Telegram, so they are somebody else's text in this
+  // player's DOM. Nothing here interpolates a name without passing it through.
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  // The board, drawn BELOW the card rather than on it: the card is a control
+  // with art behind it, and a ten-row table on top of art is neither readable
+  // nor tappable. The block grows taller; the card itself is untouched, so the
+  // tap target and the art frame stay exactly what they were.
+  //
+  // Only while a tourney is running. Between evenings there is nothing to stand
+  // in — the card shows the next one's rules, and an empty board under it would
+  // read as "nobody is playing this" rather than "it has not started".
+  function tourneyBoardHtml() {
+    if (!tourneyIsOpen()) return '';
+    const rows = tourneyState?.standings || [];
+    const body = rows.length
+      ? rows.map(r => `
+          <li class="tourney-board-row${r.you ? ' tourney-board-row--you' : ''}">
+            <span class="tourney-board-place">${r.place}</span>
+            <span class="tourney-board-name">${escapeHtml(r.you ? UI_TEXT.tourneyYou[L] : (r.name || UI_TEXT.tourneyAnon[L]))}</span>
+            <span class="tourney-board-record">🏅 ${r.wins}/${r.battles}</span>
+            <span class="tourney-board-points">${r.points} ${UI_TEXT.tourneyPts[L]}</span>
+          </li>`).join('')
+      : `<li class="tourney-board-empty">${UI_TEXT.tourneyEmpty[L]}</li>`;
+    return `
+      <div class="tourney-board">
+        <div class="tourney-board-title">${UI_TEXT.tourneyBoard[L]}</div>
+        <ol class="tourney-board-list">${body}</ol>
+      </div>`;
   }
 
   // The clock alone changes each second, so only the clock is rewritten. Repainting
@@ -684,9 +727,16 @@ export function renderEmbark(root, params = {}) {
     // onHide stops it and onShow starts it again; the check here catches the
     // narrow case of a loadTourney already in flight when the player left.
     let wasOpen = tourneyIsOpen();
+    let ticks = 0;
     tourneyTimer = setInterval(() => {
       if (!hostVisible) { clearInterval(tourneyTimer); return; }
       if (tourneyIsOpen() !== wasOpen) { wasOpen = tourneyIsOpen(); loadTourney(); return; }
+      // The clock is local, but the board is not: the places on it change as
+      // other people finish their fights. While the tourney is running it is
+      // re-read on a slow beat — often enough that a player watching it sees
+      // themselves move, rarely enough that a card showing two numbers is not
+      // polling the database every second.
+      if (wasOpen && ++ticks % BOARD_REFRESH_TICKS === 0) { loadTourney(); return; }
       if (!tickTourneyCard()) renderPvpModes();
     }, 1000);
   }
