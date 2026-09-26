@@ -81,7 +81,7 @@ const BUILDING_MAX_LEVELS = {
   blacksmith:       2,
   infirmary:        3,
   crystal_mine:     2,
-  mage_guild:       2,
+  mage_guild:       3,   // one level per spell tier (SPELL_TIERS in data/spells.js)
   messenger_post:   3,
   mercenary_hall:   3,
   supply_depot:     3,
@@ -155,6 +155,9 @@ function litaniesUnlocked(buildingsData) {
 //                            expedition passives and timed events
 const BUILDING_EFFECTS = {
   crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
+  // Level 3 deliberately adds no further discount: what it buys is the third
+  // circle of spell research (see SPELL_TIERS in data/spells.js). The fallback
+  // below keeps it at 20% rather than dropping it to zero.
   mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
   training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
 };
@@ -401,10 +404,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Life: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Life: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 }, 3: { gold: 800, Crystals_Life: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -553,10 +556,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Fire: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Fire: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 }, 3: { gold: 800, Crystals_Fire: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -731,10 +734,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Death: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Spell research costs less: 10% off, then 20%.',
-        desc_ru: 'Изучение заклинаний дешевле: на 10%, затем на 20%.',
+        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Death: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 }, 3: { gold: 800, Crystals_Death: 260 } } },
       { id: 'infirmary', label: 'Infirmary', label_ru: 'Лазарет', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'infirmary',
         desc: 'Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.',
@@ -1049,10 +1052,13 @@ const THRONE_UPGRADE_COSTS = {
 
 
 // Kept as its own constant from HERO_MAX_LEVEL so the two can diverge again,
-// but they are equal today and must be: the throne's ONLY effects are gating
-// the hero's tier (max 4) and unlocking spell tiers (max 4 in data/spells.js).
-// A fifth level bought nothing — it granted no hero tier and no spell — while
-// still offering a paid upgrade button on a slot whose hero was already maxed.
+// but they are equal today and must be: the throne gates the hero's tier, which
+// runs to 4. A fifth level would buy nothing while still offering a paid upgrade
+// button on a slot whose hero was already maxed.
+//
+// It no longer gates spells. Research moved to the Mage Guild, which is the
+// building the Spell Tome names and now has one level per tier — so the throne's
+// fourth level buys a hero tier and nothing else.
 const THRONE_MAX_LEVEL = 4;
 
 

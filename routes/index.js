@@ -5866,11 +5866,20 @@ router.post('/spells/research', requireAuth, async (req, res) => {
     const factionSpells = SPELLS[faction] || [];
     const spell = factionSpells.find(s => s.id === spell_id);
     if (!spell) return res.status(404).json({ error: 'Spell not found for your faction' });
-    const learned     = playerRows[0].learned_spells || [];
-    const throneLevel = structRows[0].buildings_data['slot_0']?.level ?? 0;
-    const spellTier   = spell.tier || 1;
+    const learned = playerRows[0].learned_spells || [];
+    // The Mage Guild is the research gate, one level per tier — the same rule the
+    // Spell Tome draws its tabs from. This used to read the THRONE instead, which
+    // the tome never mentioned: a player with the guild built saw a spell offered
+    // and was refused here, and one with a tall throne and no guild was refused by
+    // the tome for something the server would have allowed.
+    const guildLevel = buildingLevel(structRows[0].buildings_data, 'mage_guild');
+    // A spell with no tier is not researched at all — the two non-combat spells are
+    // granted at character creation (FACTION_STARTING_SPELLS) and cast from a unit's
+    // sheet. Refused outright rather than defaulted to tier 1, so the tome's own
+    // rule ("this is not researched here") holds on the server too.
+    if (spell.tier == null) return res.status(400).json({ error: 'That spell is not researched' });
     if (learned.includes(spell_id)) return res.status(400).json({ error: 'Spell already researched' });
-    if (throneLevel < spellTier) return res.status(400).json({ error: `Throne level ${spellTier} required to research this spell` });
+    if (guildLevel < spell.tier) return res.status(400).json({ error: `Mage Guild level ${spell.tier} required to research this spell` });
     // Mage Guild throne perk discounts the crystal cost.
     const spellDiscount = getSpellCostReductionPct(structRows[0].buildings_data) / 100;
     const discountedCost = {};

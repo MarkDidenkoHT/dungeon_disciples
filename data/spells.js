@@ -2,7 +2,9 @@
 // TIER (which is the throne level required to research them).
 //
 //   category: 'non_combat' | 'buff' | 'debuff' | 'special'
-//   tier:     1 = throne 1, 2 = throne 2, ...
+//   tier:     the Mage Guild level that opens it — 1, 2 or 3. The two
+//             non-combat spells carry no tier at all: they are granted at
+//             character creation and are never researched.
 //
 // ── Two currencies, two moments ────────────────────────────────────────────
 // CRYSTALS are paid ONCE, to research a spell (POST /spells/research). They are
@@ -46,7 +48,6 @@ const SPELLS = {
       name: 'Revival Prayer',
       name_ru: 'Молитва воскрешения',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Resurrect one fallen ally at 1 HP.',
       description_ru: 'Воскрешает одного павшего союзника с 1 HP.',
@@ -62,7 +63,6 @@ const SPELLS = {
       name: 'Divine Mending',
       name_ru: 'Божественное исцеление',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Restore one wounded ally to half their maximum HP.',
       description_ru: 'Восстанавливает одному раненому союзнику половину максимального здоровья.',
@@ -79,7 +79,7 @@ const SPELLS = {
       name: 'Holy Aegis',
       name_ru: 'Священная эгида',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'aegis',
       description: 'Bless one ally with divine protection: +15 armor for 2 rounds, +5 per extra power. At full power it lasts 3 rounds.',
@@ -99,7 +99,7 @@ const SPELLS = {
       name: 'Martyrdom',
       name_ru: 'Мученичество',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'shared_suffering',
       description: 'One ally shoulders 10% of every blow struck against the allies beside it, taking that share onto itself for 2 rounds. +5% per extra power; at full power it lasts 3 rounds.',
@@ -119,7 +119,7 @@ const SPELLS = {
       name: 'Vow of Protection',
       name_ru: 'Обет защиты',
       category: 'buff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'protector',
       description: 'One ally guards the line: 25% chance to intercept blows aimed at its row, +5% per extra power, and +10 armor. 2 rounds.',
@@ -137,7 +137,7 @@ const SPELLS = {
       name: 'Wrath of Heaven',
       name_ru: 'Гнев небес',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'light_of_dawn',
       // Was a round-3 delayed hit — which only made sense when the spell was
@@ -160,7 +160,7 @@ const SPELLS = {
       name: 'Condemn',
       name_ru: 'Осуждение',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'find_weakness',
       description: 'The enemy line is judged: −10 life resistance and −10 armor for 2 rounds, −5 more per extra power. At full power it lasts 3 rounds.',
@@ -179,7 +179,7 @@ const SPELLS = {
       name: 'Purgation',
       name_ru: 'Очищение',
       category: 'debuff',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'purge',
       // One blessing per point of power, on ONE enemy. Stripping the whole line
@@ -203,7 +203,6 @@ const SPELLS = {
       name: 'Rite of Return',
       name_ru: 'Обряд возвращения',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Resurrect one fallen ally at 1 HP.',
       description_ru: 'Воскрешает одного павшего союзника с 1 HP.',
@@ -219,7 +218,6 @@ const SPELLS = {
       name: 'Ember Mending',
       name_ru: 'Исцеление углями',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Restore one wounded ally to half their maximum HP.',
       description_ru: 'Восстанавливает одному раненому союзнику половину максимального здоровья.',
@@ -235,7 +233,7 @@ const SPELLS = {
       name: 'Song of Frenzy',
       name_ru: 'Песнь исступления',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'rage',
       description: 'One ally sings itself into a fury: +15% damage for 2 rounds, +5% per extra power. At full power it lasts 3 rounds.',
@@ -254,7 +252,7 @@ const SPELLS = {
       name: 'Chorus of Wrath',
       name_ru: 'Хор ярости',
       category: 'buff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'fanaticism',
       description: 'The whole choir takes up the verse: +8% damage to every ally for 2 rounds, +3% per extra power. At full power it lasts 3 rounds.',
@@ -274,7 +272,7 @@ const SPELLS = {
       name: 'Hymn of Warding',
       name_ru: 'Гимн оберега',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'resist_aura_cold',
       description: 'One ally is warded against air and cold: +15 to both for 2 rounds, +5 per extra power.',
@@ -292,7 +290,7 @@ const SPELLS = {
       name: 'Song of Weakness',
       name_ru: 'Песнь слабости',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'slow',
       description: 'The enemy line falters: −10% damage dealt for 1 round, −5% per extra power. At full power it lasts 2 rounds.',
@@ -312,7 +310,7 @@ const SPELLS = {
       name: 'Pyre Requiem',
       name_ru: 'Погребальный реквием',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'burn',
       description: 'Fire answers the verse: 15 fire damage to the whole enemy line, +6 per extra power.',
@@ -330,7 +328,7 @@ const SPELLS = {
       name: 'Unsung',
       name_ru: 'Неспетые',
       category: 'special',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'dissipate',
       // In a faction where everything is song, the punishment is being left out
@@ -353,7 +351,6 @@ const SPELLS = {
       name: 'Mourning Rite',
       name_ru: 'Траурный обряд',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Resurrect one fallen ally at 1 HP.',
       description_ru: 'Воскрешает одного павшего союзника с 1 HP.',
@@ -369,7 +366,6 @@ const SPELLS = {
       name: "Mother's Mending",
       name_ru: 'Исцеление Матери',
       category: 'non_combat',
-      tier: 1,
       type: 'roster',
       description: 'Restore one wounded ally to half their maximum HP.',
       description_ru: 'Восстанавливает одному раненому союзнику половину максимального здоровья.',
@@ -385,7 +381,7 @@ const SPELLS = {
       name: "Sorrow's Haste",
       name_ru: 'Скорая скорбь',
       category: 'buff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'inspiration_initiative',
       description: 'One ally moves ahead of its grief: +15 initiative for 2 rounds, +5 per extra power.',
@@ -403,7 +399,7 @@ const SPELLS = {
       name: 'Last Rites',
       name_ru: 'Последние обряды',
       category: 'buff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'command',
       description: 'The whole line is spoken over: +10 initiative to every ally for 2 rounds, +4 per extra power.',
@@ -422,7 +418,7 @@ const SPELLS = {
       name: 'Pall of Sorrow',
       name_ru: 'Покров скорби',
       category: 'special',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'sorrow',
       // The drain fantasy in one cast: they are weakened, your own is veiled.
@@ -442,7 +438,7 @@ const SPELLS = {
       name: "Sorrow's Weight",
       name_ru: 'Бремя скорби',
       category: 'debuff',
-      tier: 2,
+      tier: 1,
       type: 'combat',
       effect_icon: 'find_weakness',
       description: 'Grief presses on the enemy line: −10 death resistance for 2 rounds, −5 per extra power.',
@@ -461,7 +457,7 @@ const SPELLS = {
       name: 'The Long Rot',
       name_ru: 'Долгий тлен',
       category: 'debuff',
-      tier: 3,
+      tier: 2,
       type: 'combat',
       effect_icon: 'aura_of_decay',
       // The game's only answer to an enemy healer. Uses the Decay pool: healing
@@ -482,7 +478,7 @@ const SPELLS = {
       name: 'A Second Longer',
       name_ru: 'Ещё секунда',
       category: 'debuff',
-      tier: 4,
+      tier: 3,
       type: 'combat',
       effect_icon: 'death_mark',
       // Named for the spell that ruined them: one second, and a century passed.
@@ -621,6 +617,22 @@ const SPELLS = {
     },
   ],};
 
+// The tome tabs by TIER, and a tier is exactly one Mage Guild level: tab N opens
+// at guild N, with no offset to keep in anyone's head. `id` is a NUMBER because
+// that is what a spell's own `tier` is, and the tome compares the two directly
+// (see renderSlider in public/screens/spell_tome.js).
+//
+// There are three, not four. The combat spells used to start at tier 2 because
+// tier 1 held nothing but the two non-combat spells — which the tome does not
+// list — so the first tab was permanently empty and it was the one the tome
+// opened on. The non-combat pair is out of the ladder now and the combat spells
+// have moved down to fill it.
+const SPELL_TIERS = [
+  { id: 1, name: 'First Circle',  name_ru: 'Первый круг'     },
+  { id: 2, name: 'Second Circle', name_ru: 'Второй круг'     },
+  { id: 3, name: 'Third Circle',  name_ru: 'Третий круг'     },
+];
+
 const SPELL_CATEGORIES = [
   { id: 'non_combat', name: 'Non-Combat', name_ru: 'Вне боя' },
   { id: 'buff',       name: 'Buffs',      name_ru: 'Усиления' },
@@ -664,5 +676,5 @@ function spellParamsAtPower(spell, power) {
   return out;
 }
 
-export { SPELLS, SPELL_CATEGORIES, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
-if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
+export { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
+if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
