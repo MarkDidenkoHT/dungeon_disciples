@@ -958,6 +958,7 @@ const UNIT_ABILITIES = {
   },
   'horde 1': {
     id: 'horde 1',
+    effect_name: 'tag_muster',
     name: 'Horde',
     name_ru: "Орда",
     rank: 1,
@@ -969,6 +970,7 @@ const UNIT_ABILITIES = {
   },
   'horde 2': {
     id: 'horde 2',
+    effect_name: 'tag_muster',
     name: 'Horde',
     name_ru: "Орда",
     rank: 2,
@@ -980,6 +982,7 @@ const UNIT_ABILITIES = {
   },
   'horde 3': {
     id: 'horde 3',
+    effect_name: 'tag_muster',
     name: 'Horde',
     name_ru: "Орда",
     rank: 3,
@@ -991,6 +994,7 @@ const UNIT_ABILITIES = {
   },
   'iron_will 1': {
     id: 'iron_will 1',
+    effect_name: 'tag_muster',
     name: 'Iron Will',
     name_ru: "Железная Воля",
     rank: 1,
@@ -1002,6 +1006,7 @@ const UNIT_ABILITIES = {
   },
   'iron_will 2': {
     id: 'iron_will 2',
+    effect_name: 'tag_muster',
     name: 'Iron Will',
     name_ru: "Железная Воля",
     rank: 2,
@@ -1013,6 +1018,7 @@ const UNIT_ABILITIES = {
   },
   'iron_will 3': {
     id: 'iron_will 3',
+    effect_name: 'tag_muster',
     name: 'Iron Will',
     name_ru: "Железная Воля",
     rank: 3,
@@ -1024,6 +1030,7 @@ const UNIT_ABILITIES = {
   },
   'choir 1': {
     id: 'choir 1',
+    effect_name: 'tag_muster',
     name: 'Choir',
     name_ru: "Хор",
     rank: 1,
@@ -1035,6 +1042,7 @@ const UNIT_ABILITIES = {
   },
   'choir 2': {
     id: 'choir 2',
+    effect_name: 'tag_muster',
     name: 'Choir',
     name_ru: "Хор",
     rank: 2,
@@ -1046,6 +1054,7 @@ const UNIT_ABILITIES = {
   },
   'choir 3': {
     id: 'choir 3',
+    effect_name: 'tag_muster',
     name: 'Choir',
     name_ru: "Хор",
     rank: 3,
@@ -1057,6 +1066,7 @@ const UNIT_ABILITIES = {
   },
   'concentration 1': {
     id: 'concentration 1',
+    effect_name: 'tag_muster',
     name: 'Concentration',
     name_ru: "Концентрация",
     rank: 1,
@@ -1068,6 +1078,7 @@ const UNIT_ABILITIES = {
   },
   'concentration 2': {
     id: 'concentration 2',
+    effect_name: 'tag_muster',
     name: 'Concentration',
     name_ru: "Концентрация",
     rank: 2,
@@ -1079,6 +1090,7 @@ const UNIT_ABILITIES = {
   },
   'concentration 3': {
     id: 'concentration 3',
+    effect_name: 'tag_muster',
     name: 'Concentration',
     name_ru: "Концентрация",
     rank: 3,
@@ -1090,6 +1102,7 @@ const UNIT_ABILITIES = {
   },
   'banquet 1': {
     id: 'banquet 1',
+    effect_name: 'tag_muster',
     name: 'Banquet',
     name_ru: "Пиршество",
     rank: 1,
@@ -1101,6 +1114,7 @@ const UNIT_ABILITIES = {
   },
   'banquet 2': {
     id: 'banquet 2',
+    effect_name: 'tag_muster',
     name: 'Banquet',
     name_ru: "Пиршество",
     rank: 2,
@@ -1112,6 +1126,7 @@ const UNIT_ABILITIES = {
   },
   'banquet 3': {
     id: 'banquet 3',
+    effect_name: 'tag_muster',
     name: 'Banquet',
     name_ru: "Пиршество",
     rank: 3,
@@ -2056,6 +2071,7 @@ const UNIT_ABILITIES = {
   },
   'sovereigns_levy 1': {
     id: 'sovereigns_levy 1',
+    effect_name: 'tag_muster',
     name: "Sovereign's Levy",
     name_ru: "Сюзеренский Сбор",
     rank: 1,
@@ -2072,6 +2088,7 @@ const UNIT_ABILITIES = {
   },
   'sovereigns_levy 2': {
     id: 'sovereigns_levy 2',
+    effect_name: 'tag_muster',
     name: "Sovereign's Levy",
     name_ru: "Сюзеренский Сбор",
     rank: 2,
@@ -2736,6 +2753,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Air resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления воздуху за каждого союзного заклинателя.",
     params: { resist_aura_school: 'air', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_air',
   },
   'resist_aura_air 2': {
     id: 'resist_aura_air 2',
@@ -2747,6 +2765,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Air resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления воздуху за каждого союзного заклинателя.",
     params: { resist_aura_school: 'air', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_air',
   },
   'resist_aura_air 3': {
     id: 'resist_aura_air 3',
@@ -2758,6 +2777,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Air resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления воздуху за каждого союзного заклинателя.",
     params: { resist_aura_school: 'air', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_air',
   },
   'resist_aura_fire 1': {
     id: 'resist_aura_fire 1',
@@ -2769,6 +2789,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Fire resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления огню за каждого союзного заклинателя.",
     params: { resist_aura_school: 'fire', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_fire',
   },
   'resist_aura_fire 2': {
     id: 'resist_aura_fire 2',
@@ -2780,6 +2801,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Fire resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления огню за каждого союзного заклинателя.",
     params: { resist_aura_school: 'fire', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_fire',
   },
   'resist_aura_fire 3': {
     id: 'resist_aura_fire 3',
@@ -2791,6 +2813,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Fire resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления огню за каждого союзного заклинателя.",
     params: { resist_aura_school: 'fire', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_fire',
   },
   'resist_aura_nature 1': {
     id: 'resist_aura_nature 1',
@@ -2802,6 +2825,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Nature resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления природе за каждого союзного заклинателя.",
     params: { resist_aura_school: 'nature', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_nature',
   },
   'resist_aura_nature 2': {
     id: 'resist_aura_nature 2',
@@ -2813,6 +2837,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Nature resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления природе за каждого союзного заклинателя.",
     params: { resist_aura_school: 'nature', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_nature',
   },
   'resist_aura_nature 3': {
     id: 'resist_aura_nature 3',
@@ -2824,6 +2849,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Nature resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления природе за каждого союзного заклинателя.",
     params: { resist_aura_school: 'nature', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_nature',
   },
   'resist_aura_cold 1': {
     id: 'resist_aura_cold 1',
@@ -2835,6 +2861,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Cold resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления холоду за каждого союзного заклинателя.",
     params: { resist_aura_school: 'cold', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_cold',
   },
   'resist_aura_cold 2': {
     id: 'resist_aura_cold 2',
@@ -2846,6 +2873,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Cold resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления холоду за каждого союзного заклинателя.",
     params: { resist_aura_school: 'cold', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_cold',
   },
   'resist_aura_cold 3': {
     id: 'resist_aura_cold 3',
@@ -2857,6 +2885,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Cold resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления холоду за каждого союзного заклинателя.",
     params: { resist_aura_school: 'cold', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_cold',
   },
   'resist_aura_life 1': {
     id: 'resist_aura_life 1',
@@ -2868,6 +2897,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Life resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления жизни за каждого союзного заклинателя.",
     params: { resist_aura_school: 'life', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_life',
   },
   'resist_aura_life 2': {
     id: 'resist_aura_life 2',
@@ -2879,6 +2909,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Life resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления жизни за каждого союзного заклинателя.",
     params: { resist_aura_school: 'life', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_life',
   },
   'resist_aura_life 3': {
     id: 'resist_aura_life 3',
@@ -2890,6 +2921,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Life resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления жизни за каждого союзного заклинателя.",
     params: { resist_aura_school: 'life', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_life',
   },
   'resist_aura_death 1': {
     id: 'resist_aura_death 1',
@@ -2901,6 +2933,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +1 Death resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +1 сопротивления смерти за каждого союзного заклинателя.",
     params: { resist_aura_school: 'death', resist_aura_value_per_tag: 1, tag_required: 'Caster' },
+    effect_name: 'resist_aura_death',
   },
   'resist_aura_death 2': {
     id: 'resist_aura_death 2',
@@ -2912,6 +2945,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +2 Death resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +2 сопротивления смерти за каждого союзного заклинателя.",
     params: { resist_aura_school: 'death', resist_aura_value_per_tag: 2, tag_required: 'Caster' },
+    effect_name: 'resist_aura_death',
   },
   'resist_aura_death 3': {
     id: 'resist_aura_death 3',
@@ -2923,6 +2957,7 @@ const UNIT_ABILITIES = {
     description: 'Every ally gains +3 Death resistance per Caster ally on the field.',
     description_ru: "Каждый союзник получает +3 сопротивления смерти за каждого союзного заклинателя.",
     params: { resist_aura_school: 'death', resist_aura_value_per_tag: 3, tag_required: 'Caster' },
+    effect_name: 'resist_aura_death',
   },
   'radiant_surge 1': {
     id: 'radiant_surge 1',

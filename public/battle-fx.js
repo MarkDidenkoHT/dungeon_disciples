@@ -5711,6 +5711,361 @@ const vow_of_ash       = traitFlash({ glow: 0x8a5a3c, core: 0xffd9a8 }, 'flame')
 const divided_flame    = traitFlash({ glow: 0xff5a12, core: 0xffd79a }, 'flame');
 const vampires_vigil   = traitFlash({ glow: 0x8a0c1e, core: 0xff9aa8 }, 'drop');
 
+// ── battle-start grants ───────────────────────────────────────────────────────
+// The Wards, Inspiration/Fortify and Bone Armor. Traits above say what a unit
+// IS; these say what it GIVES, so all three are drawn as something leaving the
+// carrier and arriving somewhere else, and all three are dispatched with the
+// cells they reached — SIDE_WIDE_FX for a Ward, which covers the whole line, and
+// FAN_OUT_FX for the other two, which pay only some of it (see battle.js).
+//
+// Staggering by distance is what keeps a six-ally grant from reading as one
+// simultaneous flash: the carrier goes first and the far corner last, so the eye
+// is told where the help came FROM.
+function grantStagger(ox, oy, cells) {
+  const marks = cells.map(b => ({
+    x: b.x + b.width / 2,
+    y: b.y + b.height / 2,
+    r: Math.min(b.width, b.height),
+    d: Math.hypot(b.x + b.width / 2 - ox, b.y + b.height / 2 - oy),
+  }));
+  const far = Math.max(1, ...marks.map(m => m.d));
+  for (const m of marks) m.delay = (m.d / far) * 0.34;
+  return marks;
+}
+
+// Every cell the effect touches, resolved fresh each frame — the board re-renders
+// under a running animation and a cached rect would leave the picture behind.
+function liveBounds(originSel, targetSels) {
+  const o = boundsForSelector(originSel);
+  if (!o) return null;
+  const cells = targetSels.map(boundsForSelector).filter(Boolean);
+  return { o, cells };
+}
+
+function grantSelectors(originCellEl, opts) {
+  const originSel = cellSelectorFor(originCellEl);
+  if (!originSel) return null;
+  const targetSels = (opts.targetCells || [])
+    .filter(Boolean)
+    .map(cellSelectorFor)
+    .filter(Boolean);
+  return { originSel, targetSels };
+}
+
+// ── the Wards ─────────────────────────────────────────────────────────────────
+// Ember, Gale, Grave, Radiant, Rime and Verdant: the same picture in six
+// palettes, because they are the same mechanic in six schools. A tide of the
+// school's colour rolls off the caster across the whole line, and every ally it
+// reaches keeps a hex plate — the ward standing, not the ward arriving.
+//
+// The plate is a hexagon rather than a circle on purpose: the existing shields
+// (aegis, shield_ward) are round, and a resistance aura is a different promise —
+// it does not stop a blow, it blunts one KIND of harm. A faceted plate reads as
+// "warded against" where a bubble reads as "shielded".
+function wardHex(g, cx, cy, r, rot) {
+  const TAU = Math.PI * 2;
+  for (let i = 0; i <= 6; i++) {
+    const a = rot + (i / 6) * TAU;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+}
+
+function wardAura(pal) {
+  return async function (originCellEl, opts = {}) {
+    if (!app || !window.PIXI || !originCellEl) return;
+    const sels = grantSelectors(originCellEl, opts);
+    if (!sels) return;
+    const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+    const { layer, glow, solid } = riderLayer(5);
+    solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+    await animate(700, t => {
+      const live = liveBounds(sels.originSel, sels.targetSels);
+      if (!live) { layer.visible = false; return; }
+      layer.visible = true;
+      glow.clear(); solid.clear();
+
+      const ox = live.o.x + live.o.width / 2, oy = live.o.y + live.o.height / 2;
+      const oR = Math.min(live.o.width, live.o.height);
+
+      // The caster's own sign, held for the first third and then handed away.
+      const call = clamp01(t / 0.22);
+      const keep = 1 - clamp01((t - 0.3) / 0.4);
+      softGlow(glow, ox, oy, oR * 0.34 * call, pal.glow, 0.7 * call * keep);
+      solid.lineStyle(Math.max(1.2, oR * 0.025), pal.core, 0.8 * call * keep);
+      wardHex(solid, ox, oy, oR * 0.2 * call, -Math.PI / 2);
+      solid.lineStyle(0);
+
+      const marks = grantStagger(ox, oy, live.cells);
+      for (const m of marks) {
+        // Each ally runs the same three beats on its own clock: the tide reaches
+        // it, the plate snaps shut, the plate settles to a rim.
+        const local = clamp01((t - m.delay) / (1 - m.delay));
+        if (local <= 0) continue;
+        const arrive = clamp01(local / 0.3);
+        const snap   = clamp01((local - 0.22) / 0.34);
+        const settle = clamp01((local - 0.56) / 0.44);
+        const fade   = 1 - clamp01((local - 0.78) / 0.22);
+
+        // The tide: a wash that runs ahead of the plate and is gone under it.
+        softGlow(glow, m.x, m.y, m.r * 0.4 * arrive, pal.glow, 0.5 * arrive * (1 - snap * 0.6) * fade);
+
+        if (snap <= 0) continue;
+        // Overshoots and comes back — a plate that grows into place looks like
+        // it is inflating, one that slams and rebounds looks like it locked.
+        const over = 1 + 0.16 * Math.sin(snap * Math.PI) * (1 - settle);
+        const pr   = m.r * 0.34 * over;
+        const spin = -Math.PI / 2 + (1 - snap) * 0.5;
+
+        solid.lineStyle(Math.max(1.4, m.r * 0.035) * (1 - settle * 0.45), pal.core, (0.35 + 0.6 * snap) * fade);
+        wardHex(solid, m.x, m.y, pr, spin);
+        solid.lineStyle(0);
+        solid.lineStyle(Math.max(1, m.r * 0.018), pal.glow, 0.5 * snap * fade);
+        wardHex(solid, m.x, m.y, pr * 0.78, spin);
+        solid.lineStyle(0);
+        softGlow(glow, m.x, m.y, pr * 0.9, pal.glow, 0.42 * Math.sin(snap * Math.PI) * fade);
+
+        // Facet sparks on the six corners as it locks — the only part that says
+        // which school this is at a glance, so it carries the brightest colour.
+        if (snap > 0.4 && settle < 1) {
+          const TAU = Math.PI * 2;
+          const spark = Math.sin(clamp01((snap - 0.4) / 0.6) * Math.PI);
+          for (let i = 0; i < 6; i++) {
+            const a = spin + (i / 6) * TAU;
+            softGlow(glow, m.x + Math.cos(a) * pr, m.y + Math.sin(a) * pr, m.r * 0.07, pal.core, 0.7 * spark * fade);
+          }
+        }
+      }
+    });
+
+    layer.destroy({ children: true });
+  };
+}
+
+const resist_aura_fire   = wardAura({ glow: 0xff5a12, core: 0xffd79a });
+const resist_aura_air    = wardAura({ glow: 0x5fd0e6, core: 0xe6fbff });
+const resist_aura_cold   = wardAura({ glow: 0x4a8fd8, core: 0xd6ecff });
+const resist_aura_nature = wardAura({ glow: 0x4faa3e, core: 0xdcf7bd });
+const resist_aura_life   = wardAura({ glow: 0xe8c65a, core: 0xfff6d6 });
+const resist_aura_death  = wardAura({ glow: 0x6b4a8a, core: 0xdcc8f0 });
+
+// ── tag_muster ────────────────────────────────────────────────────────────────
+// Horde, Choir, Iron Will, Concentration, Banquet and Sovereign's Levy. Six
+// abilities, one mechanic: the carrier is stronger for every one of its kin
+// standing on the field, and the engine logs the COUNT as the entry's `value`
+// (see the tag-scaled block in utils/passive-processor.js).
+//
+// So the count is the picture. N motes light around the carrier and fall into
+// it, and N notches are struck on a tally ring — a player can read "four Zombies
+// are up" off the cell without opening the log, which is the number the ability
+// actually asks them to manage. Everything else here is deliberately plain: this
+// fires on up to six units at once at battle start, so it is short, single-cell
+// and never awaited (TRAIT_FX in screens/battle.js).
+async function tag_muster(cellEl, opts = {}) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const sel = cellSelectorFor(cellEl);
+  if (!sel) return;
+  // The board is six cells, so the count cannot honestly exceed six; a missing
+  // value still draws one mote rather than an empty ring.
+  const n = Math.max(1, Math.min(6, Math.round(Number(opts.value) || 1)));
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const pal = { glow: 0xc08a3e, core: 0xffe6b0 };
+  const TAU = Math.PI * 2;
+  const { layer, glow, solid } = riderLayer(4);
+  solid.blendMode = PIXI.BLEND_MODES.ADD;
+
+  await animate(560, t => {
+    const b = boundsForSelector(sel);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const r  = Math.min(b.width, b.height);
+    const out = 1 - clamp01((t - 0.72) / 0.28);
+
+    for (let i = 0; i < n; i++) {
+      // Motes light in turn and then fall together, so the count is legible
+      // before the collapse rather than during it.
+      const lit  = clamp01((t - i * (0.26 / n)) / 0.2);
+      if (lit <= 0) continue;
+      const fall = clamp01((t - 0.34) / 0.34);
+      const ang  = -Math.PI / 2 + (i / n) * TAU;
+      const rad  = r * 0.52 * (1 - fall * 0.92);
+      const mx = cx + Math.cos(ang) * rad, my = cy + Math.sin(ang) * rad;
+
+      // The spoke behind each mote — a short trail, so the fall has direction.
+      if (fall > 0 && fall < 1) {
+        const back = r * 0.52 * (1 - clamp01(fall - 0.18) * 0.92);
+        solid.lineStyle(Math.max(1, r * 0.018), pal.glow, 0.5 * (1 - fall) * out);
+        solid.moveTo(cx + Math.cos(ang) * back, cy + Math.sin(ang) * back);
+        solid.lineTo(mx, my);
+        solid.lineStyle(0);
+      }
+      softGlow(glow, mx, my, r * 0.075 * lit, pal.core, 0.9 * lit * out);
+    }
+
+    // The tally ring: an arc struck for each counted ally, filling as the motes
+    // arrive and staying put once they have.
+    const struck = clamp01((t - 0.3) / 0.4);
+    const ringR  = r * 0.3;
+    for (let i = 0; i < n; i++) {
+      const on = clamp01(struck * n - i);
+      if (on <= 0) continue;
+      const a0 = -Math.PI / 2 + (i / n) * TAU + 0.12;
+      const a1 = a0 + (TAU / n) * on - 0.24;
+      solid.lineStyle(Math.max(1.6, r * 0.032), pal.core, 0.85 * out);
+      const segs = 8;
+      for (let k = 0; k <= segs; k++) {
+        const a = a0 + (a1 - a0) * (k / segs);
+        const x = cx + Math.cos(a) * ringR, y = cy + Math.sin(a) * ringR;
+        if (k === 0) solid.moveTo(x, y); else solid.lineTo(x, y);
+      }
+      solid.lineStyle(0);
+    }
+
+    // The landing: one warm pulse as the last mote goes in.
+    const land = Math.sin(clamp01((t - 0.52) / 0.3) * Math.PI);
+    if (land > 0) softGlow(glow, cx, cy, r * 0.3 * land, pal.glow, 0.7 * land * out);
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── bone_armor ────────────────────────────────────────────────────────────────
+// Skeletons give up their own frames to plate the casters behind them. So this
+// is the one grant that does not glow: bone is dry, pale and opaque, and the
+// picture is assembly — ribs swinging in from off-cell and closing into a cage —
+// rather than light arriving. The dust puff at the end is what sells it as
+// something physical being fitted, not a blessing being cast.
+// One rib: hinged on the spine at (cx, cy + dy), bowing out to `side` (-1 left,
+// +1 right) and swung shut by `open` (1 = still wide, 0 = closed on the wearer).
+//
+// Ribs rather than a ring, and this is the whole point of the shape: four arcs on
+// the cardinals closed into something indistinguishable from aegis and
+// shield_ward, which are bubbles and mean a different thing. A stack of paired
+// ribs around a spine cannot be mistaken for a shield — it is a skeleton's gift,
+// and it should look like one.
+function boneRib(g, cx, cy, dy, halfW, halfH, side, open) {
+  const w = halfW * (1 + open * 0.75);
+  const x0 = cx + side * halfW * 0.16;
+  g.moveTo(x0, cy + dy - halfH);
+  g.quadraticCurveTo(cx + side * w, cy + dy - halfH * 0.1, x0 + side * halfW * 0.34, cy + dy + halfH);
+}
+
+// The spine the ribs hang off, drawn as short vertebrae so it does not read as a
+// plain line down the portrait.
+function boneSpine(g, cx, cy, halfH) {
+  for (let i = -2; i <= 2; i++) {
+    const y = cy + (i / 2) * halfH;
+    g.moveTo(cx - halfH * 0.11, y);
+    g.lineTo(cx + halfH * 0.11, y);
+  }
+}
+
+async function bone_armor(originCellEl, opts = {}) {
+  if (!app || !window.PIXI || !originCellEl) return;
+  const sels = grantSelectors(originCellEl, opts);
+  if (!sels) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const pal = { bone: 0xe8e0cc, deep: 0x9c8f72, dust: 0xbfae8e };
+  const { layer, glow, solid } = riderLayer(3);
+  // NOT additive: bone is matter. Every other grant here adds light to the cell;
+  // this one has to sit ON the portrait and hide part of it, or it reads as
+  // another aura.
+  solid.blendMode = PIXI.BLEND_MODES.NORMAL;
+
+  await animate(720, t => {
+    const live = liveBounds(sels.originSel, sels.targetSels);
+    if (!live) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const ox = live.o.x + live.o.width / 2, oy = live.o.y + live.o.height / 2;
+    const oR = Math.min(live.o.width, live.o.height);
+
+    // The donor buckles first — a short inward crush on the Skeleton's own cell,
+    // which is the cost the ability describes and nothing else on the board
+    // shows.
+    const give = Math.sin(clamp01(t / 0.3) * Math.PI);
+    if (give > 0) {
+      solid.lineStyle(Math.max(2, oR * 0.045), pal.deep, 0.7 * give);
+      solid.drawCircle(ox, oy, oR * (0.36 - 0.14 * give));
+      solid.lineStyle(Math.max(1.2, oR * 0.024), pal.bone, 0.85 * give);
+      solid.drawCircle(ox, oy, oR * (0.36 - 0.14 * give));
+      solid.lineStyle(0);
+      softGlow(glow, ox, oy, oR * 0.3 * give, pal.dust, 0.45 * give);
+    }
+
+    const marks = grantStagger(ox, oy, live.cells);
+    for (const m of marks) {
+      const local = clamp01((t - 0.12 - m.delay * 0.5) / (0.88 - m.delay * 0.5));
+      if (local <= 0) continue;
+
+      // Shards fly the gap, then the cage closes, then it dries into a rim.
+      const fly   = clamp01(local / 0.34);
+      const close = clamp01((local - 0.26) / 0.4);
+      const set   = clamp01((local - 0.62) / 0.38);
+      const fade  = 1 - clamp01((local - 0.86) / 0.14);
+
+      if (fly < 1) {
+        // Five splinters on staggered, bowed paths, so the delivery has grain and
+        // a direction. Each is a SEGMENT along its own path rather than a dot —
+        // a shard in flight needs length or it reads as dust.
+        for (let i = 0; i < 5; i++) {
+          const p = clamp01((fly - i * 0.07) / (1 - i * 0.07));
+          if (p <= 0) continue;
+          const bow = (i % 2 ? 1 : -1) * (0.16 + i * 0.045);
+          const nx  = -(m.y - oy), ny = (m.x - ox);
+          const nl  = Math.hypot(nx, ny) || 1;
+          const at  = (u) => {
+            const uu = clamp01(u);
+            const arc = Math.sin(uu * Math.PI) * m.r * bow;
+            return [ox + (m.x - ox) * uu + (nx / nl) * arc, oy + (m.y - oy) * uu + (ny / nl) * arc];
+          };
+          const [hx, hy] = at(p);
+          const [tx, ty] = at(p - 0.16);
+          solid.lineStyle(Math.max(1.6, m.r * 0.04), pal.deep, 0.5 * (1 - p * 0.3));
+          solid.moveTo(tx, ty); solid.lineTo(hx, hy);
+          solid.lineStyle(Math.max(1, m.r * 0.022), pal.bone, 0.9 * (1 - p * 0.25));
+          solid.moveTo(tx, ty); solid.lineTo(hx, hy);
+          solid.lineStyle(0);
+        }
+      }
+
+      if (close <= 0) continue;
+      const open   = 1 - close;
+      const halfW  = m.r * 0.3;
+      const halfH  = m.r * 0.115;
+      // Three rib pairs around a spine. Drawn twice — a dark under-stroke and a
+      // pale over-stroke — because flat bone against a dark portrait needs an
+      // edge to be legible at grid size.
+      const draw = () => {
+        boneSpine(solid, m.x, m.y, m.r * 0.3);
+        for (let i = -1; i <= 1; i++) {
+          const dy = i * m.r * 0.19;
+          boneRib(solid, m.x, m.y, dy, halfW * (1 - Math.abs(i) * 0.18), halfH, -1, open);
+          boneRib(solid, m.x, m.y, dy, halfW * (1 - Math.abs(i) * 0.18), halfH, +1, open);
+        }
+      };
+      solid.lineStyle(Math.max(2.4, m.r * 0.058), pal.deep, 0.85 * fade);
+      draw();
+      solid.lineStyle(Math.max(1.4, m.r * 0.03), pal.bone, (0.7 + 0.3 * close) * fade);
+      draw();
+      solid.lineStyle(0);
+      // A dry pale wash once the cage has met, so the plating settles onto the
+      // portrait instead of hovering over it.
+      if (set > 0) softGlow(glow, m.x, m.y, m.r * 0.34, pal.bone, 0.3 * set * fade);
+      // Dust, kicked out on the frame the cage shuts.
+      const puff = Math.sin(clamp01((close - 0.62) / 0.38) * Math.PI);
+      if (puff > 0) softGlow(glow, m.x, m.y, m.r * 0.4 * puff, pal.dust, 0.5 * puff * fade);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
 // ── sorrow ────────────────────────────────────────────────────────────────────
 // The only effect that washes the OPPOSING line (see FOE_WIDE_FX in battle.js).
 // A pall wells up at the Spirit's feet and creeps low across the enemy board,
@@ -6055,6 +6410,16 @@ export const EFFECTS = {
   dragons_breath,
   verse_of_cataclysm,
   blessing_of_protection,
+  // Battle-start grants. The six Wards are one factory in six palettes;
+  // Fortify is Inspiration under another name.
+  resist_aura_fire,
+  resist_aura_air,
+  resist_aura_cold,
+  resist_aura_nature,
+  resist_aura_life,
+  resist_aura_death,
+  bone_armor,
+  tag_muster,
 };
 // ── Formation bonds ───────────────────────────────────────────────────────────
 //

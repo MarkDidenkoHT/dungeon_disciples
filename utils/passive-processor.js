@@ -467,7 +467,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
           const got = applied.get(a.id);
           if (got) registerStatGrant(engine, a, def, got, `+${got} armor`);
         }
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', value: armorEach, heal: false, stat: 'armor' });
+        // `targetIds` names exactly who was plated. The log line has always said
+        // "all Caster allies" and left the client to guess which cells that
+        // meant, so the animation had nothing to play against; a side-wide wash
+        // would have lit the units the armor never reached.
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: p.ally_tag_required ? `all ${p.ally_tag_required} allies` : 'all allies', targetIds: allies.map(a => a.id), value: armorEach, heal: false, stat: 'armor' });
       }
     }
 

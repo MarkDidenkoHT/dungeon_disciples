@@ -46,14 +46,29 @@ const SRC_TARGET_FX = new Set([
 // per victim (a row, and the whole enemy side) for what is a single jet and a
 // single detonation. Left out, a two-unit row would breathe fire twice.
 // A spell cast is one entry for every victim, so it lists them as targetIds.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn', 'glacial_burst']);
+// Bone Armor belongs here for the same reason, one step removed: it is a SINGLE
+// entry that reached several allies at once, and the engine now names them on the
+// entry (`targetIds`, see passive-processor.js). A side-wide wash would have lit
+// units the plating never reached.
+//
+// Inspiration and Fortify look like they belong here and do NOT: both are
+// registry entries in data/formation_synergies.js, drawn as bonds by
+// syncFormationSynergies off the combatants, in prep as well as in battle.
+// Adding them here would play the same grant twice on the same cells.
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn', 'glacial_burst',
+  'bone_armor']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
 // EFFECTS[name](actorCell, { targetCells }).
 // Prayer of Healing is here for the same reason: it logs one heal per ally by
 // NAME, skips anyone already at full HP, and carries no ids at all.
-const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing']);
+// The six Wards are here too: a resistance aura covers the whole living line and
+// its log says exactly that ('all allies', no ids), so the cells are read off
+// the board the same way Lion's Roar reads them.
+const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing',
+  'resist_aura_fire', 'resist_aura_air', 'resist_aura_cold',
+  'resist_aura_nature', 'resist_aura_life', 'resist_aura_death']);
 
 // The same idea aimed the other way: the cells are every living unit on the side
 // OPPOSITE the actor. Sorrow logs "all enemies" with no ids, and it is the only
@@ -99,6 +114,11 @@ const TRAIT_FX = new Set([
   'stoicism', 'pure_blood', 'clear_mind',
   'vow_of_the_grave', 'vow_of_silence', 'vow_of_ash',
   'divided_flame', 'vampires_vigil',
+  // The tag-scaled musters (Horde, Choir, Iron Will, Concentration, Banquet,
+  // Sovereign's Levy). They pay only their own carrier, so they are single-cell
+  // like the traits above — but their whole subject is HOW MANY of the tag are
+  // standing, which is why this branch hands the effect the entry's value.
+  'tag_muster',
 ]);
 
 function cellIndex(row, col) { return row * COLS + col; }
@@ -580,13 +600,28 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // hands the whole log back, and without this the first catch-up would replay
   // the entire fight — the worst case of the duplicate problem, and the reason
   // it looked so much worse early on.
+  //
+  // `logs` on a FRESH battle is the opposite case: those entries have never been
+  // seen, and the mount below exists precisely to play them. Seeding them here
+  // marked the whole opening batch as history, so playbackSequence filtered every
+  // one of them out and returned before its first iteration — which is why no
+  // on_battle_start passive has ever animated, however well its FX was authored,
+  // and why round 1's opening enemy turns went to static text despite the replay
+  // that was added for them. The ids are still tracked (lastLogId has to lead the
+  // realtime stream either way); only the played-marking is withheld, and
+  // playbackSequence marks each entry as it reaches it.
   (function seedPlayedLogs() {
-    for (const e of [...(logs || []), ...(snapshot?.log || [])]) {
-      if (e?.id != null) {
-        playedLogIds.add(e.id);
-        if (lastLogId == null || e.id > lastLogId) lastLogId = e.id;
-      }
+    const seen = [...(logs || []), ...(snapshot?.log || [])];
+    for (const e of seen) {
+      if (e?.id == null) continue;
+      if (lastLogId == null || e.id > lastLogId) lastLogId = e.id;
     }
+    if (!reconnect) {
+      // Only the snapshot's own log is history on a fresh mount.
+      for (const e of (snapshot?.log || [])) if (e?.id != null) playedLogIds.add(e.id);
+      return;
+    }
+    for (const e of seen) if (e?.id != null) playedLogIds.add(e.id);
   })();
 
   // The shape data/formation_synergies.js reads, built from live combatants.
@@ -824,7 +859,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           if (anchor) EFFECTS[effectName](anchor, { actorCell, targetCell });
         } else if (TRAIT_FX.has(effectName)) {
           const anchor = actorCell || targetCell;
-          if (anchor) EFFECTS[effectName](anchor);
+          // `value` is what the entry counted — the tag total for a muster. The
+          // traits that predate it take a single argument and ignore the rest.
+          if (anchor) EFFECTS[effectName](anchor, { value: entry.value });
         } else if (FAN_OUT_FX.has(effectName)) {
           // Collapse the consecutive run of entries this actor produced for the
           // same passive, and play once against every victim. Grouping by RUN

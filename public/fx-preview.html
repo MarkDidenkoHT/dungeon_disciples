@@ -105,6 +105,19 @@
   <script type="module">
     import { EFFECTS, initBattleFx, reattachBattleFx } from '/battle-fx.js';
     import { UNITS } from '/data/units.js';
+    import { UNIT_ABILITIES } from '/data/unit_abilities.js';
+    import { FORMATION_SYNERGIES } from '/data/formation_synergies.js';
+
+    // A passive can reach its picture two ways: through its own `effect_name`,
+    // or by being a bond in the synergy registry, which battle-fx.js registers an
+    // effect for and the synergy view draws off the combatants. The second kind
+    // never touches the log dispatcher, so the coverage scan below has to know
+    // about it or it reports Inspiration and Fortify as gaps they are not.
+    const BONDED_ABILITIES = new Set(
+      Object.values(FORMATION_SYNERGIES)
+        .map(d => d.source?.ability)
+        .filter(Boolean)
+        .map(a => String(a).split(' ')[0]));
 
     const ROWS = 3, COLS = 2;
     const setStatus = m => { document.getElementById('fx-status').textContent = m; };
@@ -270,7 +283,15 @@
     // Fan-out effects take their victims as a LIST (see FAN_OUT_FX in
     // screens/battle.js). Handed only a `targetCell` they have nothing to draw
     // to and bail out silently, which looks like a broken effect in here.
-    const FAN_OUT = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'dragons_breath', 'verse_of_cataclysm']);
+    const FAN_OUT = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'dragons_breath', 'verse_of_cataclysm',
+      'bone_armor']);
+    // Side-wide effects read their cells off the BOARD, not off a log, so in here
+    // they are handed every unit standing on the caster's side. Without this a
+    // Ward drew its caster sign and nothing else, which is the half of the effect
+    // that matters least.
+    const SIDE_WIDE = new Set(['lions_roar', 'prayer_of_healing',
+      'resist_aura_fire', 'resist_aura_air', 'resist_aura_cold',
+      'resist_aura_nature', 'resist_aura_life', 'resist_aura_death']);
 
     function cellEl(key) { return key ? document.querySelector(`.battle-cell[data-id="${key}"]`) : null; }
 
@@ -294,10 +315,20 @@
         if (SOURCE_TARGET.has(key)) {
           if (!target) { setStatus(`${key} needs a target (Target mode).`); return; }
           await fn(caster, target);
+        } else if (SIDE_WIDE.has(key)) {
+          const side = cKey.split(':')[0];
+          const cells = Object.keys(board[side])
+            .map(i => cellEl(`${side}:${i}`))
+            .filter(Boolean);
+          await fn(caster, { targetCells: cells, isEnemy });
         } else if (FAN_OUT.has(key)) {
           await fn(caster, { targetCells: target ? [target] : [], isEnemy });
         } else {
-          await fn(caster, { targetCell: target, isEnemy });
+          // `value` is what a counted effect reads (tag_muster draws one mote per
+          // ally of the tag). In a real battle it comes off the log entry; in here
+          // there is no log, so the board's own player count stands in for it.
+          const value = Object.keys(board[cKey.split(':')[0]]).length;
+          await fn(caster, { targetCell: target, isEnemy, value });
         }
         setStatus(`Played ${key}${target ? ` → target` : ''}.`);
       } catch (err) {
@@ -336,11 +367,28 @@
       const used = new Set();       // effect keys reachable from some unit
       const missing = new Map();    // ability/action name -> example unit, no effect
       for (const u of ALL_UNITS) {
+        // Passives resolve their effect through the ability def's `effect_name`,
+        // not through the key (see effectForEntry in screens/battle.js). Left out
+        // of this scan, every passive-only effect — the Vows, Stoicism, the Wards
+        // — was reported as an "unused effect", which is exactly backwards: those
+        // are the ones that were never being drawn at all.
+        const passiveKeys = [u.passive, u.passive_ability]
+          .flatMap(v => Array.isArray(v) ? v : [v])
+          .filter(Boolean);
         const names = [
           u.action_animation,
           ...(Array.isArray(u.ability) ? u.ability : [u.ability]).map(a => a && String(a).split(' ')[0]),
+          ...passiveKeys.map(k => UNIT_ABILITIES[k]?.effect_name),
           typeof u.action === 'string' ? u.action : null,
         ].filter(Boolean);
+        // A passive whose def names no effect at all is a gap too, and the one
+        // this report existed to surface.
+        for (const k of passiveKeys) {
+          const def = UNIT_ABILITIES[k];
+          if (!def || def.effect_name) continue;
+          if (BONDED_ABILITIES.has(String(k).split(' ')[0])) continue;
+          if (!missing.has(def.name)) missing.set(def.name, u.name);
+        }
         for (const n of names) {
           if (EFFECTS[n]) used.add(n);
         }
