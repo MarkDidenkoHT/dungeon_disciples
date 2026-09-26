@@ -559,7 +559,7 @@ const FIRST_CLEAR_TOKENS = {
   1: { health_potion:     1 },
   2: { supplies:          1 },
   3: { crossroad_sigil:   1 },
-  5: { health_potion:     1 },
+  5: { health_potion:     2 },
   4: { tome_of_knowledge: 1 },
   6: { tome_of_knowledge: 1 },
   7: { crossroad_sigil:   1 },
