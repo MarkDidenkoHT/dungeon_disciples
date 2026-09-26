@@ -2652,13 +2652,6 @@ async function ensureErrandOffer(chat_id, player) {
   });
   if (!offer) return { rows, active, offerRow: null, roster, structRows };
 
-  // Carried on the OFFER row for the same reason /errands/start carries them on
-  // the running row: the reminder edge function has to name the errand in the
-  // bot message, and it cannot import data/errands.js (CommonJS, and Deno would
-  // have to reimplement the lookup). An offer written before this existed simply
-  // has no title, and the reminder falls back to its generic line.
-  const offerDef = ERR.ERRANDS_BY_ID[offer.errand_id];
-
   const inserted = await supabase(ERRAND_TABLE, {
     method: 'POST',
     body: JSON.stringify({
@@ -2668,8 +2661,6 @@ async function ensureErrandOffer(chat_id, player) {
         offered:     true,
         tier:        offer.tier,
         requirement: offer.requirement,
-        title:       offerDef?.title ?? null,
-        desc:        offerDef?.desc  ?? null,
         offered_at:  new Date().toISOString(),
       },
       active: false,
