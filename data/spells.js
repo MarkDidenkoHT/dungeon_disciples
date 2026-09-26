@@ -628,9 +628,9 @@ const SPELLS = {
 // opened on. The non-combat pair is out of the ladder now and the combat spells
 // have moved down to fill it.
 const SPELL_TIERS = [
-  { id: 1, name: 'First Circle',  name_ru: 'Первый круг'     },
-  { id: 2, name: 'Second Circle', name_ru: 'Второй круг'     },
-  { id: 3, name: 'Third Circle',  name_ru: 'Третий круг'     },
+  { id: 1, name: 'Tier I',   name_ru: 'Круг I'   },
+  { id: 2, name: 'Tier II',  name_ru: 'Круг II'  },
+  { id: 3, name: 'Tier III', name_ru: 'Круг III' },
 ];
 
 const SPELL_CATEGORIES = [

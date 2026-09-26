@@ -156,7 +156,7 @@ function litaniesUnlocked(buildingsData) {
 const BUILDING_EFFECTS = {
   crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
   // Level 3 deliberately adds no further discount: what it buys is the third
-  // circle of spell research (see SPELL_TIERS in data/spells.js). The fallback
+  // tier of spell research (see SPELL_TIERS in data/spells.js). The fallback
   // below keeps it at 20% rather than dropping it to zero.
   mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
   training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
@@ -404,7 +404,7 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Life: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc: 'Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.',
         desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Life: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 }, 3: { gold: 800, Crystals_Life: 260 } } },
@@ -556,7 +556,7 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Fire: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc: 'Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.',
         desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Fire: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 }, 3: { gold: 800, Crystals_Fire: 260 } } },
@@ -734,7 +734,7 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 300, Crystals_Death: 100 } } },
       { id: 'mage_guild', label: 'Mage Guild', label_ru: 'Гильдия магов', category: 'hall_up', unit_id: null, tier: 1, upgrades: [],
         art: 'mage_guild',
-        desc: 'Opens one circle of spell research per level, and makes research cheaper: 10% off, then 20%.',
+        desc: 'Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.',
         desc_ru: 'Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.',
         cost: { gold: 150, Crystals_Death: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 }, 3: { gold: 800, Crystals_Death: 260 } } },
