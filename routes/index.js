@@ -2652,6 +2652,13 @@ async function ensureErrandOffer(chat_id, player) {
   });
   if (!offer) return { rows, active, offerRow: null, roster, structRows };
 
+  // Carried on the OFFER row for the same reason /errands/start carries them on
+  // the running row: the reminder edge function has to name the errand in the
+  // bot message, and it cannot import data/errands.js (CommonJS, and Deno would
+  // have to reimplement the lookup). An offer written before this existed simply
+  // has no title, and the reminder falls back to its generic line.
+  const offerDef = ERR.ERRANDS_BY_ID[offer.errand_id];
+
   const inserted = await supabase(ERRAND_TABLE, {
     method: 'POST',
     body: JSON.stringify({
@@ -2661,6 +2668,8 @@ async function ensureErrandOffer(chat_id, player) {
         offered:     true,
         tier:        offer.tier,
         requirement: offer.requirement,
+        title:       offerDef?.title ?? null,
+        desc:        offerDef?.desc  ?? null,
         offered_at:  new Date().toISOString(),
       },
       active: false,
@@ -6265,6 +6274,12 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
 
+    // This SELECT can answer from a replica that has not caught up with the
+    // INSERT and DELETEs just issued, so it is reconciled against what we KNOW
+    // happened rather than trusted outright. Without this the crafted item is
+    // missing from the list the client caches, so no other recipe counts it as
+    // an ingredient until a reload — and consumed ingredients can linger and be
+    // counted twice.
     const newRow    = Array.isArray(inserted) ? inserted[0] : inserted;
     const consumed  = new Set(ingredientRows.map(it => String(it.id)));
     const items     = (Array.isArray(readItems) ? readItems : [])
