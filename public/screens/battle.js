@@ -27,6 +27,8 @@ const SRC_TARGET_FX = new Set([
   'communion', 'shared_suffering', 'sacrifice', 'terror', 'pact',
   // A command travels from the caster to the ALLY it orders to strike.
   'infernal_mandate', 'blood_craze',
+  // A mourner spends its own HP on the ally with the least left.
+  'eternal_grief',
   ...Object.values(FORMATION_SYNERGIES).map(d => d.effect).filter(Boolean),
 ]);
 
@@ -44,7 +46,7 @@ const SRC_TARGET_FX = new Set([
 // per victim (a row, and the whole enemy side) for what is a single jet and a
 // single detonation. Left out, a two-unit row would breathe fire twice.
 // A spell cast is one entry for every victim, so it lists them as targetIds.
-const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn']);
+const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn', 'glacial_burst']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
@@ -52,6 +54,11 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
 // Prayer of Healing is here for the same reason: it logs one heal per ally by
 // NAME, skips anyone already at full HP, and carries no ids at all.
 const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing']);
+
+// The same idea aimed the other way: the cells are every living unit on the side
+// OPPOSITE the actor. Sorrow logs "all enemies" with no ids, and it is the only
+// effect that has to reach across the board like this.
+const FOE_WIDE_FX = new Set(['sorrow']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
@@ -92,7 +99,6 @@ const TRAIT_FX = new Set([
   'stoicism', 'pure_blood', 'clear_mind',
   'vow_of_the_grave', 'vow_of_silence', 'vow_of_ash',
   'divided_flame', 'vampires_vigil',
-  'eternal_hunger', 'essence_of_power',
 ]);
 
 function cellIndex(row, col) { return row * COLS + col; }
@@ -842,11 +848,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             const origin = actorCell || cells[0];
             if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells });
           }
-        } else if (SIDE_WIDE_FX.has(effectName)) {
+        } else if (SIDE_WIDE_FX.has(effectName) || FOE_WIDE_FX.has(effectName)) {
           if (actor && actorCell && !fxCovered.has(entryIdx)) {
             fxCovered.add(entryIdx);
+            const wantEnemies = FOE_WIDE_FX.has(effectName);
             const cells = state.combatants
-              .filter(u => u.side === actor.side && (u.alive || dyingHere.has(u.id)))
+              .filter(u => (wantEnemies ? u.side !== actor.side : u.side === actor.side) &&
+                           (u.alive || dyingHere.has(u.id)))
               .map(u => document.querySelector(`.battle-cell[data-id="${u.id}"]`))
               .filter(Boolean);
             await EFFECTS[effectName](actorCell, { targetCells: cells });

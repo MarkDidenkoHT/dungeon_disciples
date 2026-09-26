@@ -5710,10 +5710,275 @@ const vow_of_the_grave = traitFlash({ glow: 0x4a3b63, core: 0xe8e2d2 }, 'cross')
 const vow_of_ash       = traitFlash({ glow: 0x8a5a3c, core: 0xffd9a8 }, 'flame');
 const divided_flame    = traitFlash({ glow: 0xff5a12, core: 0xffd79a }, 'flame');
 const vampires_vigil   = traitFlash({ glow: 0x8a0c1e, core: 0xff9aa8 }, 'drop');
-const eternal_hunger   = traitFlash({ glow: 0x6d0f2b, core: 0xff8fb0 }, 'drop');
-const essence_of_power = traitFlash({ glow: 0x2f6fd0, core: 0xbfe0ff }, 'ring');
+
+// ── sorrow ────────────────────────────────────────────────────────────────────
+// The only effect that washes the OPPOSING line (see FOE_WIDE_FX in battle.js).
+// A pall wells up at the Spirit's feet and creeps low across the enemy board,
+// and every unit it reaches dims and bows. Slow and horizontal on purpose:
+// nothing is thrown, the mood simply arrives.
+export async function sorrow(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!originCellEl || !app || !window.PIXI) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const PALL = 0x6b6480;
+  const DIM  = 0x3a3550;
+  const PALE = 0xd8d2e6;
+
+  const originId = originCellEl.dataset.id;
+  const foes = targetCells.map((c, i) => ({
+    id: c.dataset?.id,
+    delay: 0.18 + i * 0.07,
+    mist: Array.from({ length: 6 }, () => ({
+      off: rand(-0.4, 0.4), d: rand(0, 0.4), size: rand(8, 18),
+    })),
+  })).filter(f => f.id);
+
+  const { layer, glow, solid } = riderLayer(7);
+
+  await animate(1150, t => {
+    const ob = cellBoundsFor(originId);
+    if (!ob) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const ox = ob.x + ob.width / 2;
+    const oy = ob.y + ob.height / 2;
+    const R  = Math.min(ob.width, ob.height);
+    const obase = oy + R * 0.4;
+
+    const well = clamp01(t / 0.25);
+    const out  = 1 - clamp01((t - 0.75) / 0.25);
+    softGlow(glow, ox, obase, R * 0.5 * well, PALL, 0.55 * well * out);
+    solid.lineStyle(Math.max(1, R * 0.02), PALE, 0.35 * well * out);
+    solid.drawEllipse(ox, obase, R * 0.4 * well, R * 0.12 * well);
+    solid.lineStyle(0);
+
+    for (const f of foes) {
+      const b = cellBoundsFor(f.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const r  = Math.min(b.width, b.height);
+      const base = cy + r * 0.4;
+
+      const creep = clamp01((t - f.delay) / 0.4);
+      if (creep <= 0) continue;
+
+      for (const m of f.mist) {
+        const p = clamp01((creep - m.d) / (1 - m.d));
+        if (p <= 0) continue;
+        const x = ox + (cx - ox) * p + m.off * r * 0.3 * p;
+        const y = obase + (base - obase) * p;
+        softGlow(glow, x, y, m.size * (0.6 + 0.4 * p), PALL, Math.sin(p * Math.PI) * 0.5 * out);
+      }
+
+      const settle = clamp01((t - f.delay - 0.32) / 0.5);
+      if (settle <= 0) continue;
+      softGlow(glow, cx, cy, r * (0.3 + 0.2 * settle), DIM, 0.5 * settle * out);
+      solid.lineStyle(Math.max(1, r * 0.025), PALE, 0.55 * settle * out);
+      const w = r * 0.3;
+      solid.moveTo(cx - w, cy - r * 0.12);
+      solid.quadraticCurveTo(cx, cy + r * 0.16 * settle, cx + w, cy - r * 0.12);
+      solid.lineStyle(0);
+      softGlow(glow, cx, base, r * 0.34 * settle, PALL, 0.4 * settle * out);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── eternal_grief ─────────────────────────────────────────────────────────────
+// An ally has just died. sacrifice() is the other effect that moves HP between
+// two units, and it is a red beam thrown across the board — this is the
+// opposite: a veil falls over the mourner and what it gives up runs LOW along
+// the ground to the wounded, arriving as something quiet and green.
+export async function eternal_grief(mournerCellEl, targetCellEl) {
+  if (!mournerCellEl?.dataset || !app || !window.PIXI) return;
+  const mournerId = mournerCellEl.dataset.id;
+  const targetId  = targetCellEl?.dataset?.id || null;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const GRIEF = 0x7a6f96;
+  const TEAR  = 0xcfd8ff;
+
+  const tears = Array.from({ length: 7 }, () => ({
+    d: rand(0, 0.35), off: rand(-0.12, 0.12), size: rand(2, 4),
+  }));
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(1200, t => {
+    const m = cellBoundsFor(mournerId);
+    if (!m) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const mx = m.x + m.width / 2, my = m.y + m.height / 2;
+    const R  = Math.min(m.width, m.height);
+    const mbase = my + R * 0.4;
+
+    const veil = clamp01(t / 0.3);
+    const out  = 1 - clamp01((t - 0.72) / 0.28);
+    softGlow(glow, mx, my, R * 0.45 * veil, GRIEF, 0.6 * veil * out);
+    for (let i = -1; i <= 1; i += 2) {
+      solid.lineStyle(Math.max(1.5, R * 0.03), GRIEF, 0.8 * veil * out);
+      solid.moveTo(mx + i * R * 0.05, my - R * 0.5);
+      solid.quadraticCurveTo(mx + i * R * 0.36, my - R * 0.05, mx + i * R * 0.22, mbase);
+      solid.lineStyle(0);
+    }
+
+    const d = targetId ? cellBoundsFor(targetId) : null;
+    if (!d) return;
+    const dx = d.x + d.width / 2, dy = d.y + d.height / 2;
+    const dbase = dy + Math.min(d.width, d.height) * 0.4;
+
+    for (const tr of tears) {
+      const fall = clamp01((t - 0.2 - tr.d * 0.3) / 0.22);
+      if (fall <= 0) continue;
+      const run = clamp01((t - 0.4 - tr.d * 0.4) / 0.35);
+      let x, y;
+      if (run <= 0) {
+        x = mx + tr.off * R * 2;
+        y = my + (mbase - my) * fall;
+      } else {
+        x = mx + (dx - mx) * run;
+        y = mbase + (dbase - mbase) * run + Math.sin(run * Math.PI) * -R * 0.08;
+      }
+      const alpha = run > 0 ? 1 - run * 0.4 : fall;
+      softGlow(glow, x, y, tr.size * 2, TEAR, alpha * 0.8 * out);
+      solid.beginFill(TEAR, alpha * 0.9 * out);
+      solid.drawCircle(x, y, tr.size * 0.55);
+      solid.endFill();
+    }
+
+    const bloom = clamp01((t - 0.62) / 0.38);
+    if (bloom <= 0) return;
+    const pop = Math.sin(bloom * Math.PI);
+    softGlow(glow, dx, dy, Math.min(d.width, d.height) * (0.2 + 0.25 * bloom), VITAL_GREEN.mid, 0.6 * pop);
+    softGlow(glow, dx, dy, Math.min(d.width, d.height) * 0.12, VITAL_GREEN.core, 0.85 * pop);
+    solid.lineStyle(Math.max(1, Math.min(d.width, d.height) * 0.022), VITAL_GREEN.mote, pop * 0.7);
+    solid.drawCircle(dx, dy, Math.min(d.width, d.height) * (0.16 + 0.35 * bloom));
+    solid.lineStyle(0);
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── glacial_burst ─────────────────────────────────────────────────────────────
+// The frost effects in this file are all soft (bolts, claws, washes). This one
+// is built out of straight edges: rime spreads on the ground, spears erupt from
+// it, and they SHATTER into angular shards rather than fading out.
+export async function glacial_burst(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const ICE  = 0x8fd4ff;
+  const PALE = 0xeaf8ff;
+  const DEEP = 0x2b6da8;
+
+  const fields = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.12),
+    spears: Array.from({ length: 4 }, (_, i) => ({
+      x:    -0.3 + i * 0.2 + rand(-0.05, 0.05),
+      h:    rand(0.55, 0.95),
+      w:    rand(0.07, 0.12),
+      lean: rand(-0.16, 0.16),
+      d:    rand(0, 0.14),
+    })),
+    shards: Array.from({ length: 10 }, () => ({
+      ang: rand(Math.PI * 0.9, TAU * 1.05), dist: rand(0.3, 0.8), size: rand(2.5, 5), spin: rand(0, TAU),
+    })),
+  })).filter(f => f.id);
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(1000, t => {
+    glow.clear(); solid.clear();
+
+    for (const f of fields) {
+      const b = cellBoundsFor(f.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+      const base = cy + R * 0.4;
+
+      const rime = clamp01((t - f.delay) / 0.2);
+      if (rime <= 0) continue;
+      const out = 1 - clamp01((t - 0.72) / 0.28);
+
+      solid.lineStyle(Math.max(1, R * 0.022), ICE, 0.7 * rime * out);
+      const pts = 7;
+      for (let i = 0; i <= pts; i++) {
+        const a  = Math.PI + Math.PI * (i / pts);
+        const rr = R * (0.42 + (i % 2 ? -0.07 : 0.05)) * rime;
+        const x  = cx + Math.cos(a) * rr;
+        const y  = base + Math.sin(a) * rr * 0.3;
+        if (i === 0) solid.moveTo(x, y); else solid.lineTo(x, y);
+      }
+      solid.lineStyle(0);
+      softGlow(glow, cx, base, R * 0.4 * rime, DEEP, 0.45 * rime * out);
+
+      const shatter = clamp01((t - 0.52 - f.delay) / 0.2);
+      for (const s of f.spears) {
+        const g = clamp01((t - 0.16 - f.delay - s.d) / 0.26);
+        if (g <= 0) continue;
+        const grow = shatter > 0 ? 1 : g;
+        const h    = R * s.h * grow;
+        const bx   = cx + s.x * R;
+        const tipX = bx + s.lean * R * grow;
+        const hw   = R * s.w * (shatter > 0 ? 1 - shatter : 1);
+        const a    = (shatter > 0 ? 1 - shatter : 1) * out;
+        solid.lineStyle(Math.max(1, R * 0.016), PALE, 0.95 * a);
+        solid.beginFill(ICE, 0.35 * a);
+        solid.moveTo(bx - hw, base);
+        solid.lineTo(tipX, base - h);
+        solid.lineTo(bx + hw, base);
+        solid.closePath();
+        solid.endFill();
+        solid.lineStyle(0);
+        softGlow(glow, tipX, base - h, R * 0.1, PALE, 0.7 * a);
+      }
+
+      if (shatter <= 0) continue;
+      for (const s of f.shards) {
+        const p = clamp01(shatter / 0.9);
+        if (p >= 1) continue;
+        const d  = R * s.dist * p;
+        const sx = cx + Math.cos(s.ang) * d;
+        const sy = base + Math.sin(s.ang) * d - R * 0.3 * p;
+        const sz = s.size * (1 - p * 0.4);
+        const rot = s.spin + p * 3;
+        solid.lineStyle(Math.max(1, R * 0.012), PALE, (1 - p) * 0.9);
+        solid.beginFill(ICE, (1 - p) * 0.4);
+        solid.moveTo(sx + Math.cos(rot) * sz, sy + Math.sin(rot) * sz);
+        solid.lineTo(sx + Math.cos(rot + 2.2) * sz * 0.8, sy + Math.sin(rot + 2.2) * sz * 0.8);
+        solid.lineTo(sx + Math.cos(rot + 4.2) * sz * 0.6, sy + Math.sin(rot + 4.2) * sz * 0.6);
+        solid.closePath();
+        solid.endFill();
+        solid.lineStyle(0);
+      }
+      const ring = clamp01(shatter / 0.7);
+      if (ring < 1) {
+        solid.lineStyle(Math.max(1, R * 0.03 * (1 - ring)), PALE, (1 - ring) * 0.8);
+        solid.drawEllipse(cx, base, R * (0.3 + ring * 0.5), R * (0.1 + ring * 0.16));
+        solid.lineStyle(0);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
 
 export const EFFECTS = {
+  sorrow,
+  eternal_grief,
+  glacial_burst,
   stoicism,
   pure_blood,
   clear_mind,
@@ -5722,8 +5987,6 @@ export const EFFECTS = {
   vow_of_ash,
   divided_flame,
   vampires_vigil,
-  eternal_hunger,
-  essence_of_power,
   burn,
   poison,
   chill,

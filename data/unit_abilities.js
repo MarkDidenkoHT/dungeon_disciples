@@ -1985,6 +1985,7 @@ const UNIT_ABILITIES = {
   },
   'sorrow 1': {
     id: 'sorrow 1',
+    effect_name: 'sorrow',
     name: 'Sorrow',
     name_ru: "Скорбь",
     rank: 1,
@@ -2212,6 +2213,7 @@ const UNIT_ABILITIES = {
   },
   'eternal_grief 1': {
     id: 'eternal_grief 1',
+    effect_name: 'eternal_grief',
     name: 'Eternal Grief',
     name_ru: "Вечная Скорбь",
     rank: 1,
