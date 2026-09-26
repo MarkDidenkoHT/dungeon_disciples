@@ -5805,9 +5805,24 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
           // drops cannot be farmed. See FIRST_CLEAR_TOKENS in data/embark.js.
           const tokenDrops = getFirstClearTokens(level);
           if (tokenDrops) {
-            await grantResources(chat_id, Object.entries(tokenDrops).map(([item, amount]) => ({
-              item, amount, item_type: 'token',
-            })));
+            // `supplies` is not a token. It is paid into the supply pool, whose
+            // row name is per faction (SUPPLY_ITEMS), so the key in the drop
+            // table is a placeholder the faction resolves here. Everything else
+            // is a token and keeps its key as its row name.
+            //
+            // A drop can push the pool ABOVE its ceiling, and is allowed to:
+            // it is three supplies across a whole account, once, and the refill
+            // simply idles until the overflow is spent (see supply-tick).
+            const supplyItem = supplyItemName(playerRows[0].faction);
+            const grants = [];
+            for (const [item, amount] of Object.entries(tokenDrops)) {
+              if (item === 'supplies') {
+                if (supplyItem) grants.push({ item: supplyItem, amount, item_type: SUPPLY_ITEM_TYPE });
+              } else {
+                grants.push({ item, amount, item_type: 'token' });
+              }
+            }
+            if (grants.length) await grantResources(chat_id, grants);
             result.tokens_gained = tokenDrops;   // { crossroad_sigil: 1 }
           }
         }
@@ -6250,12 +6265,6 @@ router.post('/items/craft', requireAuth, async (req, res) => {
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
 
-    // This SELECT can answer from a replica that has not caught up with the
-    // INSERT and DELETEs just issued, so it is reconciled against what we KNOW
-    // happened rather than trusted outright. Without this the crafted item is
-    // missing from the list the client caches, so no other recipe counts it as
-    // an ingredient until a reload — and consumed ingredients can linger and be
-    // counted twice.
     const newRow    = Array.isArray(inserted) ? inserted[0] : inserted;
     const consumed  = new Set(ingredientRows.map(it => String(it.id)));
     const items     = (Array.isArray(readItems) ? readItems : [])

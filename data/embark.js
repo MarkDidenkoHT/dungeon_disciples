@@ -540,18 +540,24 @@ const FACTION_CRYSTAL_FOR_REGION = {
 // Tokens, awarded on the FIRST clear of a level only - in every region, so the
 // table is keyed by level rather than repeated per region.
 //
-// First clear only is the whole design. These are the two things in the game a
+// First clear only is the whole design. These are the things in the game a
 // player cannot grind for, and that is what makes spending one a decision. The
 // award site keys off progress advancing (see /battle/complete), which is
 // already the game's definition of "you had not done this before".
 //
+// `supplies` is the exception to "token": it is paid into the supply pool
+// instead, under the faction's own row name and item_type (see SUPPLY_ITEMS in
+// data/buildings.js). The payout site translates it — the key here cannot name
+// the row, because the row's name depends on who is claiming it.
+//
 // Supply, at three regions of ten levels:
-//   Crossroad Sigil   3  (level 3 of each region) + 1 granted at registration
-//   Tome of Knowledge 6  (levels 6 and 9 of each region)
-//   Health Potion     9  (levels 1, 2 and 5 of each region)
+//   Crossroad Sigil   6  (levels 3 and 7 of each region) + 1 at registration
+//   Tome of Knowledge 9  (levels 4, 6 and 9 of each region)
+//   Health Potion     6  (levels 1 and 5 of each region)
+//   Supplies          3  (level 2 of each region)
 const FIRST_CLEAR_TOKENS = {
   1: { health_potion:     1 },
-  2: { health_potion:     1 },
+  2: { supplies:          1 },
   3: { crossroad_sigil:   1 },
   5: { health_potion:     1 },
   4: { tome_of_knowledge: 1 },
@@ -593,7 +599,7 @@ const TOKEN_DEFS = {
     icon: '🧪',
     art:  'assets/icons/ui/health_potion.png',
     desc: 'Heals a single unit to full health.',
-    where:'First clear of levels 1, 2 and 5 in any region.',
+    where:'First clear of levels 1 and 5 in any region.',
   },
 };
 
