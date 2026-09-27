@@ -226,6 +226,14 @@ which is why the Blessed Soul line (`e7...`, `action: 'none'`), the Grail Acolyt
 The tome shows a player only the litanies their own faction can LEAD, so each faction
 sees six cards.
 
+**Each faction calls the rite by its own name.** A litany is the Empire's word; the
+Grail of Sorrow sings **dirges** (Панихиды) and the Choir of the Cursed **chants**
+(Распевы). This is wording only — `litany` stays the name in the data, the engine and
+the log entry type. `RITE_TERMS` in [public/screens/spell_tome.js](../public/screens/spell_tome.js)
+holds the term per faction, in both languages and in the Russian forms the sentences
+need, and the Proving Grounds' own description says the faction's word too
+([data/buildings.js](../data/buildings.js), one copy per faction pool).
+
 **A chorus id must be a `size: 'tile'` unit.** A chorus cell holds one unit, and a
 `column` unit fills rows 0, 1 and 2 as a single body — it can never man row 0 and row 2
 as two separate speakers. This is why `taken_breath` is sung by the Choir Servant and

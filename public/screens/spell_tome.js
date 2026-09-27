@@ -20,6 +20,30 @@ const LITANY_BUILDING_LEVEL = 3;
 // draw a wrong board, never fight a wrong battle.
 const GRID_ROWS = 3;
 
+// What this faction CALLS the thing. One mechanic, three liturgies: a litany is
+// the Empire's word for it, the Grail sings dirges over its dead and the Choir
+// chants. Nothing in the engine or in data/litanies.js changes — `litany` stays
+// the name in the code, and this is only what the page says out loud.
+//
+// The Russian carries the forms the sentences below need, because a Russian noun
+// does not sit unchanged in every slot the way an English one does: `one` opens a
+// sentence, `many` titles the page, `manyLower` sits mid-sentence, and `dative`
+// is what a host is drilled IN ("обучить войско панихидам").
+const RITE_TERMS = {
+  empire: {
+    en: { one: 'litany', many: 'Litanies', manyLower: 'litanies' },
+    ru: { one: 'Литания', many: 'Литании', manyLower: 'литании', dative: 'литаниям' },
+  },
+  grail_of_sorrow: {
+    en: { one: 'dirge', many: 'Dirges', manyLower: 'dirges' },
+    ru: { one: 'Панихида', many: 'Панихиды', manyLower: 'панихиды', dative: 'панихидам' },
+  },
+  choir_of_the_cursed: {
+    en: { one: 'chant', many: 'Chants', manyLower: 'chants' },
+    ru: { one: 'Распев', many: 'Распевы', manyLower: 'распевы', dative: 'распевам' },
+  },
+};
+
 // Mirrors buildingLevel in data/buildings.js: a building's level anywhere in
 // the castle, 0 when unbuilt.
 function buildingLevelOf(buildingsData, buildingId) {
@@ -180,19 +204,21 @@ const TOME_TEXT = {
     debuff:    { en: 'Debuff',    ru: 'Ослабление' },
     resurrect: { en: 'Resurrect', ru: 'Воскрешение' },
   },
-  litaniesAria:  { en: 'Litanies',             ru: 'Литании' },
-  litaniesTitle: { en: 'Litanies',             ru: 'Литании' },
+  // These five take the faction's own word for the rite (RITE_TERMS above); `t`
+  // hands it to them. Everything else on the page is the same in every faction.
+  litaniesAria:  { en: w => w.many, ru: w => w.many },
+  litaniesTitle: { en: w => w.many, ru: w => w.many },
   litaniesBlurb: {
-    en: 'A litany is a staged execution. Stand the exact formation below and the chorus speaks before the lead strikes — the killing blow is held back for the last verse.',
-    ru: 'Литания — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и Свита выступит раньше, чем Инициатор нанесёт удар: смертельный удар придержан до последнего стиха.',
+    en: w => `A ${w.one} is a staged execution. Stand the exact formation below and the chorus speaks before the lead strikes — the killing blow is held back for the last verse.`,
+    ru: w => `${w.one} — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и Свита выступит раньше, чем Инициатор нанесёт удар: смертельный удар придержан до последнего стиха.`,
   },
   litanyLocked: {
     en: `🔒 Requires Proving Grounds level ${LITANY_BUILDING_LEVEL}`,
     ru: `🔒 Требуется Ристалище ${LITANY_BUILDING_LEVEL} уровня`,
   },
   litanyLockedHint: {
-    en: 'Raise the Proving Grounds in your castle to drill your host in the litanies.',
-    ru: 'Возведите Ристалище в замке, чтобы обучить войско литаниям.',
+    en: w => `Raise the Proving Grounds in your castle to drill your host in the ${w.manyLower}.`,
+    ru: w => `Возведите Ристалище в замке, чтобы обучить войско ${w.dative}.`,
   },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
   litanyTarget:    { en: 'Target',      ru: 'Цель' },
@@ -243,8 +269,8 @@ const TOME_TEXT = {
     lead:   { en: 'Lead',   ru: 'Инициатор' },
   },
   litanyNone: {
-    en: 'Your host knows no litanies.',
-    ru: 'Вашему войску литании неведомы.',
+    en: w => `Your host knows no ${w.manyLower}.`,
+    ru: w => `Вашему войску ${w.manyLower} неведомы.`,
   },
 };
 
@@ -254,12 +280,22 @@ export function renderSpellTome(root, { player }) {
   const isRu = player?.settings?.language === 'ru';
   const lang = isRu ? 'ru' : 'en';
 
+  // What this host calls its rites (RITE_TERMS). A faction with no table of its
+  // own falls back to the Empire's word rather than printing nothing — the page
+  // has to be readable before it is flavourful.
+  const rite = (RITE_TERMS[player?.faction] || RITE_TERMS.empire)[lang];
+  // Most entries are plain strings; the handful that name the rite are functions.
+  const tomeText = key => {
+    const entry = TOME_TEXT[key]?.[lang];
+    return typeof entry === 'function' ? entry(rite) : entry;
+  };
+
   root.innerHTML = `
     <div class="screen screen-spelltome">
       <main class="spelltome-main">
         <div class="tome-layers">
           <button class="tome-layer-arrow tome-layer-arrow--prev" id="tome-layer-prev"
-                  type="button" aria-label="${TOME_TEXT.litaniesAria[lang]}"><span>&lsaquo;</span></button>
+                  type="button" aria-label="${tomeText('litaniesAria')}"><span>&lsaquo;</span></button>
 
           <div class="tome-layer-viewport">
             <div class="tome-layer-track" id="tome-layer-track">
@@ -312,7 +348,7 @@ export function renderSpellTome(root, { player }) {
     [LAYER_LIBRARY]:  'libraryAria',
   };
   // An arrow is named for where it LEADS, not where it sits.
-  const labelForLayer = n => TOME_TEXT[LAYER_LABELS[n] || 'tomeAria'][lang];
+  const labelForLayer = n => tomeText(LAYER_LABELS[n] || 'tomeAria');
 
   let currentLayer = LAYER_SPELLS;
 
@@ -712,7 +748,7 @@ export function renderSpellTome(root, { player }) {
 
   function renderLitanies(container) {
     if (!container) return;
-    const t = key => TOME_TEXT[key][lang];
+    const t = tomeText;
 
     // Role ids are matched against unit DEFINITION ids, and a litany spans two
     // sides — profane_chorus is spoken by Empire units over a Choir hero — so
