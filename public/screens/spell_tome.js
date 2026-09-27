@@ -235,8 +235,11 @@ const TOME_TEXT = {
     ru: (key, col, row) => `${key}: ${col === 'Фронт' ? 'передняя' : col === 'Тыл' ? 'задняя' : 'обе'} колонна, ряд ${row}`,
   },
   litanyRoles: {
-    chorus: { en: 'Chorus', ru: 'Хор' },
-    lead:   { en: 'Lead',   ru: 'Вождь' },
+    // The Russian is NOT a translation of the English here. "Хор" is the faction
+    // and the ability of that name, and "Вождь" is a chieftain — both read as
+    // something else on this page. These name the ROLE in the formation instead.
+    chorus: { en: 'Chorus', ru: 'Поддержка' },
+    lead:   { en: 'Lead',   ru: 'Инициатор' },
   },
   litanyNone: {
     en: 'Your host knows no litanies.',
