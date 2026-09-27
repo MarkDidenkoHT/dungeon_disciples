@@ -217,13 +217,27 @@ const SUPPLY_BUILDING   = 'supply_depot';
 // separately — the same reasoning that keeps tokens out of the bar.
 const SUPPLY_ITEM_TYPE  = 'supplies';
 
-// The row name is per faction and is what lands in resources.item. It is the EN
-// string in both languages: `ru` is a display label only, so renaming it later
-// cannot orphan a player's balance.
+// The row name is per faction and is what lands in resources.item. `item` is
+// that key and NOTHING may rename it — a player's balance is found by it. `en`
+// and `ru` are display labels only, which is why the EN one is free to differ
+// from the key (casing), and `art` is the icon every surface that names a
+// supply draws: the embark gate, the daily reward, the quest chip.
 const SUPPLY_ITEMS = {
-  empire:              { item: 'Camping Supplies',     ru: 'Походные припасы' },
-  choir_of_the_cursed: { item: 'Liquid Sin',           ru: 'Жидкий грех' },
-  grail_of_sorrow:     { item: 'Chalice Of Sustenance', ru: 'Чаша насыщения' },
+  empire: {
+    item: 'Camping Supplies',
+    en:   'Camping Supplies',   ru: 'Походные припасы',
+    art:  'assets/icons/recources/supply_e.png',
+  },
+  choir_of_the_cursed: {
+    item: 'Liquid Sin',
+    en:   'Liquid Sin',         ru: 'Жидкий грех',
+    art:  'assets/icons/recources/supply_c.png',
+  },
+  grail_of_sorrow: {
+    item: 'Chalice Of Sustenance',
+    en:   'Chalice of Sustenance', ru: 'Чаша насыщения',
+    art:  'assets/icons/recources/supply_g.png',
+  },
 };
 
 // Cap per building level. The building is granted at level 1 to every player
@@ -253,7 +267,7 @@ function supplyItemName(faction) {
 function supplyLabel(faction, lang) {
   const entry = SUPPLY_ITEMS[faction];
   if (!entry) return '';
-  return lang === 'ru' ? entry.ru : entry.item;
+  return (lang === 'ru' ? entry.ru : entry.en) || entry.item;
 }
 
 // ── Unit tier ceiling ───────────────────────────────────────────────────────

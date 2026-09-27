@@ -212,12 +212,21 @@ export function renderEmbark(root, params = {}) {
 
   const L = lang(player);
 
-  // The embark gate, as /bootstrap resolved it: { item, label_ru, amount, max,
-  // tick_minutes, embark_cost }, or null before a faction is picked. Refreshed
-  // by every loadRegions, which is what a return from battle goes through.
+  // The embark gate, as /bootstrap resolved it: { item, label_en, label_ru, art,
+  // amount, max, tick_minutes, embark_cost }, or null before a faction is
+  // picked. Refreshed by every loadRegions, which is what a return from battle
+  // goes through.
   let supplies = null;
 
-  const supplyName = () => (L === 'ru' && supplies?.label_ru) || supplies?.item || '';
+  const supplyName = () => (L === 'ru' ? supplies?.label_ru : supplies?.label_en) || supplies?.item || '';
+
+  // Per-faction art, named by the server for the same reason the label is: the
+  // table lives in data/buildings.js, which the client cannot read. No art means
+  // no icon rather than a placeholder — the name alone already reads correctly.
+  const supplyIcon = () => (supplies?.art
+    ? `<img class="embark-supply-icon" src="${assetUrl('/' + String(supplies.art).replace(/^\//, ''))}" alt=""
+            onerror="this.remove()">`
+    : '');
 
   // The refill is a Supabase cron on a fixed minute step, so the next tick is
   // the next wall-clock minute divisible by it — the same instant for everyone
@@ -244,6 +253,7 @@ export function renderEmbark(root, params = {}) {
       : `${UI_TEXT.supplyNextIn[L]} ${minutesToNextTick()} ${UI_TEXT.supplyMin[L]}`;
     return `
       <div class="embark-supply-pill${canEmbark() ? '' : ' embark-supply-pill--empty'}">
+        ${supplyIcon()}
         <span class="embark-supply-name">${supplyName()}</span>
         <span class="embark-supply-count">${supplies.amount} / ${supplies.max}</span>
         <span class="embark-supply-note">${note}</span>

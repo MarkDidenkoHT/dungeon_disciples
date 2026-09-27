@@ -1656,7 +1656,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
     const supplyItem = supplyItemName(player?.faction);
     const supplies = supplyItem ? {
       item:          supplyItem,
+      label_en:      SUPPLY_ITEMS[player.faction]?.en || supplyItem,
       label_ru:      SUPPLY_ITEMS[player.faction]?.ru || supplyItem,
+      art:           SUPPLY_ITEMS[player.faction]?.art || null,
       amount:        Number(supplyRows.find(r => r.item === supplyItem)?.amount ?? 0),
       max:           maxSupplies(structRows[0]?.buildings_data),
       tick_minutes:  SUPPLY_TICK_MINUTES,

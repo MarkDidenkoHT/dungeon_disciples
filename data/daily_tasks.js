@@ -102,12 +102,16 @@ const DAILY_REWARDS = [
   {
     id:    'supplies',
     icon:  '\u{1F9FA}',
+    // Fallback only. The strip draws this reward with the player's OWN faction
+    // supply — its name and its art, both from SUPPLY_ITEMS in data/buildings.js
+    // by way of /bootstrap (see rewardLabel and supplyIconHtml in public/daily.js)
+    // — so this generic pair shows only before a faction is picked.
     label: { en: '5 Supplies', ru: '5 припасов' },
-    // The embark gate's currency. The row is named per faction (SUPPLY_ITEMS in
-    // data/buildings.js) and carries its own item_type, so only the amount is
-    // stated here and /daily/claim resolves the rest. Deliberately uncapped: 5
-    // on top of 13/15 leaves 18/15, and the refill cron only ever adds while a
-    // pool is under its ceiling, so the overflow sits there until it is spent.
+    // The embark gate's currency. The row is named per faction and carries its
+    // own item_type, so only the amount is stated here and /daily/claim resolves
+    // the rest. Deliberately uncapped: 5 on top of 13/15 leaves 18/15, and the
+    // refill cron only ever adds while a pool is under its ceiling, so the
+    // overflow sits there until it is spent.
     supplies: 5,
   },
 ];

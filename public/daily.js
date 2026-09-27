@@ -48,6 +48,24 @@ function taskHtml(task) {
     </div>`;
 }
 
+// A supply's name and art are per faction and live in data/buildings.js, which
+// is CommonJS and cannot be imported here — so both ride the bootstrap payload
+// the embark gate already reads. The emoji is only what shows before a faction
+// is picked or if the art 404s.
+const SUPPLY_FALLBACK_ICON = '\u{1F9FA}';
+
+function supplyNameText() {
+  const supply = bootstrapCache.data?.supplies;
+  return (lang === 'ru' ? supply?.label_ru : supply?.label_en) || supply?.item || T('Supplies', 'Припасы');
+}
+
+function supplyIconHtml() {
+  const art = bootstrapCache.data?.supplies?.art;
+  if (!art) return SUPPLY_FALLBACK_ICON;
+  return `<img class="res-icon-img" src="${assetUrl('/' + art.replace(/^\//, ''))}" alt=""
+               onerror="this.replaceWith(document.createTextNode('${SUPPLY_FALLBACK_ICON}'))">`;
+}
+
 // The reward's art. Gold and crystals have real icons and use them; the crystal
 // one is drawn in the player's OWN element, which the server names (see /daily)
 // because the faction map is CommonJS and cannot be imported here. The tome has
@@ -55,6 +73,7 @@ function taskHtml(task) {
 function rewardIconHtml(reward, factionCrystal) {
   if (reward.resources?.Gold) return GOLD_ICON;
   if (reward.id === 'crystals') return CRYSTAL_ICONS[factionCrystal] || CRYSTAL_ICONS.Crystals_Life;
+  if (reward.supplies) return supplyIconHtml();
   // A reward with art draws it; the emoji stays as the fallback if it 404s.
   if (reward.art) {
     return `<img class="daily-reward-img" src="${assetUrl('/' + reward.art.replace(/^\//, ''))}" alt=""
@@ -63,11 +82,19 @@ function rewardIconHtml(reward, factionCrystal) {
   return reward.icon;
 }
 
+// The supplies reward names the player's own faction supply rather than the
+// generic label in data/daily_tasks.js, which is only the fallback for a player
+// who has not picked a faction yet.
+function rewardLabel(reward) {
+  if (reward.supplies) return `${reward.supplies} ${supplyNameText()}`;
+  return reward.label[lang];
+}
+
 function rewardHtml(reward, locked, factionCrystal) {
   return `
     <button class="daily-reward" data-reward="${reward.id}" ${locked ? 'disabled' : ''}>
       <span class="daily-reward-icon">${rewardIconHtml(reward, factionCrystal)}</span>
-      <span class="daily-reward-label">${reward.label[lang]}</span>
+      <span class="daily-reward-label">${rewardLabel(reward)}</span>
     </button>`;
 }
 
@@ -82,7 +109,7 @@ function dailyBodyHtml(state) {
       <div class="daily-tasks">${tasks}</div>
       <div class="daily-claimed">
         <span class="daily-reward-icon">${taken ? rewardIconHtml(taken, state.faction_crystal) : '✓'}</span>
-        <span>${T('Claimed', 'Получено')}${taken ? ` — ${taken.label[lang]}` : ''}</span>
+        <span>${T('Claimed', 'Получено')}${taken ? ` — ${rewardLabel(taken)}` : ''}</span>
         <span class="daily-claimed-note">${T('Come back tomorrow.', 'Возвращайтесь завтра.')}</span>
       </div>`;
   }
@@ -107,10 +134,6 @@ const TOKEN_NAMES = {
 
 const questIcon = html => `<span class="quest-reward-icon">${html}</span>`;
 
-// Supplies have no art anywhere in the game yet; the embark gate draws them as
-// text. This is the one glyph, shared with the daily reward's own icon.
-const SUPPLY_ICON = '\u{1F9FA}';
-
 // One chip per thing a milestone pays: gold, the faction crystal, tokens.
 function questRewardHtml(reward, factionCrystal) {
   const chips = [];
@@ -126,13 +149,7 @@ function questRewardHtml(reward, factionCrystal) {
     const name = TOKEN_NAMES[id] ? T(...TOKEN_NAMES[id]) : (def?.name || id);
     chips.push([questIcon(art), amount, name]);
   }
-  // Supplies are named per faction and the name only exists server-side, so the
-  // chip borrows it from the bootstrap payload the embark gate already reads.
-  if (reward?.supplies) {
-    const supply = bootstrapCache.data?.supplies;
-    const name = (lang === 'ru' && supply?.label_ru) || supply?.item || T('Supplies', 'Припасы');
-    chips.push([questIcon(SUPPLY_ICON), reward.supplies, name]);
-  }
+  if (reward?.supplies) chips.push([questIcon(supplyIconHtml()), reward.supplies, supplyNameText()]);
   return chips.map(([icon, amount, name]) =>
     `<span class="quest-reward" title="${name}">${icon}<span>×${amount}</span></span>`).join('');
 }
@@ -340,7 +357,7 @@ export function openDailyTasks(player, { tab } = {}) {
       await api('/daily/claim', { chat_id: player.chat_id, reward: rewardId });
       const def = DAILY_REWARDS.find(r => r.id === rewardId);
       if (def) {
-        celebrateClaim(btn, `<span class="quest-reward">${questIcon(rewardIconHtml(def, bootstrapCache.data?.faction_crystal))}<span>${def.label[lang]}</span></span>`);
+        celebrateClaim(btn, `<span class="quest-reward">${questIcon(rewardIconHtml(def, bootstrapCache.data?.faction_crystal))}<span>${rewardLabel(def)}</span></span>`);
       }
       await afterClaim();
     } catch (err) {

@@ -2665,6 +2665,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-shrink: 0;
 }
 
+.embark-supply-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  align-self: center;
+  flex-shrink: 0;
+}
+
 .embark-supply-pill {
   display: flex;
   align-items: baseline;
