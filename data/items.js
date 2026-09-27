@@ -49,7 +49,7 @@ const ITEM_DEFS = {
     name:         'Broken Sigil',
     name_ru:      'Расколотая Печать',
     faction:      null,
-    tag_required: null,
+    tag_required: 'Engineer',
     adds_tag:     null,
     removes_tag:  'Construct',
     stat_mods:    { hp: 4, armor: 2 },
@@ -57,7 +57,8 @@ const ITEM_DEFS = {
     icon:         'broken_sigil',
     rarity:       'shattered',
     unique:       true,
-    cost:         { Gold: 200, Crystals_Air: 30, Crystals_Nature: 30  },
+    cost:         { Gold: 200, Crystals_Air: 30, Crystals_Nature: 30, vial_of_pure_blood: 2,grave_dust: 2  },
+    requires:     { region: 'any', level: 3 },
   },
   desecrated_plate: {
     key:          'desecrated_plate',
@@ -72,7 +73,8 @@ const ITEM_DEFS = {
     icon:         'desecrated_plate',
     rarity:       'shattered',
     unique:       true,
-    cost:         { Gold: 200, Crystals_Death: 30, Crystals_Nature: 30  },
+    cost:         { Gold: 200, Crystals_Death: 30, Crystals_Nature: 30, vial_of_pure_blood: 2,grave_dust: 2  },
+    requires:     { region: 'any', level: 3 },
   },
   blood_of_a_saint: {
     key:          'blood_of_a_saint',
@@ -87,7 +89,8 @@ const ITEM_DEFS = {
     icon:         'blood_of_a_saint',
     rarity:       'shattered',
     unique:       true,
-    cost:         { Gold: 200, Crystals_Life: 30, Crystals_Death: 30 },
+    cost:         { Gold: 200, Crystals_Life: 30, Crystals_Death: 30, vial_of_pure_blood: 2,grave_dust: 2 },
+    requires:     { region: 'any', level: 3 },
   },
   bloodless: {
     key:          'bloodless',
@@ -102,10 +105,8 @@ const ITEM_DEFS = {
     icon:         'bloodless',
     rarity:       'shattered',
     unique:       true,
-    cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30 },
-    requires:     [
-      { region: 'glittering_abyss',  level: 4 }
-    ],
+    cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30, vial_of_pure_blood: 2,grave_dust: 2 },
+    requires:     { region: 'any', level: 3 },
   },
   crystal_exoskeleton: {
     key:          'crystal_exoskeleton',
@@ -891,7 +892,7 @@ const ITEM_DEFS = {
     rarity:       'epic',
     unique:       true,
     cost:         { shard_of_might: 2, aggrails_signet:1, Gold: 40, Crystals_Death: 15, Crystals_Fire: 15 },
-    item_cost:    {shard_of_hate: 1, seal_of_power: 1},
+    item_cost:    { shard_of_hate: 1, seal_of_power: 1},
   },
   seal_of_power: {
     key:          'seal_of_power',
