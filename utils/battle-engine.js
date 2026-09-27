@@ -3626,19 +3626,85 @@ class BattleEngine {
     return null;
   }
 
-  // Paid once the kill has been logged, so "every enemy still alive" means
-  // alive AFTER the body has dropped. Flat, floored at 1, never reverted — it
-  // lasts the battle, and `initiative` is carried through getBattleData, so a
-  // reload keeps it without any duration bookkeeping.
+  // Paid once the kill has been logged, so "every enemy still alive" means alive
+  // AFTER the body has dropped.
+  //
+  // A reward is any mix of the fields below, each a flat number in the litany's
+  // own object (data/litanies.js). Every one of them is PERMANENT for the
+  // battle: no rounds, no expiry, no dispel. That is the whole reason they are
+  // flat and small — the stats they move (initiative, armor, resistances,
+  // battle_hp) all ride through getBattleData, so a reload keeps the reward
+  // without a single line of duration bookkeeping.
+  //
+  //   enemy_initiative_flat  every living enemy loses this much initiative (min 1)
+  //   enemy_armor_flat       every living enemy loses this much armor (min 0)
+  //   enemy_damage_flat      every living enemy takes this much damage
+  //   ally_heal_flat         every living ally heals this much
+  //   ally_initiative_flat   every living ally gains this much initiative
+  //   ally_armor_flat        every living ally gains this much armor
+  //   ally_resist_flat       { school: amount } added to every living ally
+  //   ally_all_resist_flat   the same amount added to every school
+  //
+  // The damage is scripted, not an attack: it ignores armor and resistances and
+  // fires no on-hit triggers. A litany is a miracle, and the field it prints
+  // ("5 to every enemy") is the number a player should see happen. It CAN kill,
+  // so a death is closed out properly here.
   applyLitanyReward(def, actor) {
-    const amount = def?.reward?.initiative_flat_reduction;
-    if (!(amount > 0)) return;
-    const foes = this.combatants.filter(c => c.side !== actor.side && c.alive);
-    if (!foes.length) return;
-    for (const c of foes) c.initiative = Math.max(1, (c.initiative || 40) - amount);
+    const r = def?.reward;
+    if (!r) return;
+    const foes   = this.combatants.filter(c => c.side !== actor.side && c.alive);
+    const allies = this.combatants.filter(c => c.side === actor.side && c.alive);
+
+    if (r.enemy_initiative_flat > 0) {
+      for (const c of foes) c.initiative = Math.max(1, (c.initiative || 40) - r.enemy_initiative_flat);
+    }
+    if (r.enemy_armor_flat > 0) {
+      for (const c of foes) addArmor(c, -r.enemy_armor_flat);
+    }
+    if (r.ally_initiative_flat > 0) {
+      for (const c of allies) c.initiative = (c.initiative || 40) + r.ally_initiative_flat;
+    }
+    if (r.ally_armor_flat > 0) {
+      for (const c of allies) addArmor(c, r.ally_armor_flat);
+    }
+    if (r.ally_all_resist_flat > 0) {
+      for (const c of allies) for (const school of RESIST_SCHOOLS) addResist(c, school, r.ally_all_resist_flat);
+    }
+    for (const [school, amount] of Object.entries(r.ally_resist_flat || {})) {
+      if (!(amount > 0)) continue;
+      for (const c of allies) addResist(c, school, amount);
+    }
+    if (r.ally_heal_flat > 0) {
+      for (const c of allies) {
+        const healed = Math.min(r.ally_heal_flat, Math.max(0, c.max_hp - c.battle_hp));
+        if (healed <= 0) continue;
+        c.battle_hp += healed;
+        this.pushLog({
+          type: 'passive', litany: def.id,
+          actorName: actor.unit_name, actorCell: actor.cellIndex,
+          targetName: c.unit_name, targetCell: c.cellIndex,
+          message: `${def.name} — ${c.unit_name} heals ${healed}`,
+        });
+      }
+    }
+    if (r.enemy_damage_flat > 0) {
+      for (const c of foes) {
+        const dealt = Math.min(r.enemy_damage_flat, c.battle_hp);
+        c.battle_hp = Math.max(0, c.battle_hp - r.enemy_damage_flat);
+        const dead = c.battle_hp <= 0;
+        if (dead) { c.alive = false; this.applyOnDeathPassives(c); }
+        this.pushLog({
+          type: 'passive', litany: def.id,
+          actorName: actor.unit_name, actorCell: actor.cellIndex,
+          targetName: c.unit_name, targetCell: c.cellIndex,
+          message: `${def.name} — ${c.unit_name} takes ${dealt}${dead ? ' 💀' : ''}`,
+        });
+      }
+    }
+
     this.pushLog({
       type: 'notice', litany: def.id,
-      message: def.reward.message, message_ru: def.reward.message_ru,
+      message: r.message, message_ru: r.message_ru,
     });
   }
 
