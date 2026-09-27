@@ -56,7 +56,16 @@ const SRC_TARGET_FX = new Set([
 // syncFormationSynergies off the combatants, in prep as well as in battle.
 // Adding them here would play the same grant twice on the same cells.
 const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn', 'glacial_burst',
-  'bone_armor']);
+  'bone_armor',
+  // The new spell pictures. A cast logs ONE entry that names every unit it
+  // reached (`targetIds`, see doCast in utils/battle-engine.js), so even the
+  // whole-line buffs come off the log rather than being read off the board the
+  // way a Ward is — exact victims, and a dead ally is not lit.
+  // purgation is here despite hitting a SINGLE enemy: this is the only path that
+  // hands an effect both the caster and the victim AND the `value` off the
+  // entry, which is the power the cast paid — Purgation draws one torn-off
+  // blessing per point. The list simply has one entry.
+  'chorus_of_wrath', 'last_rites', 'purgation', 'grave_rot', 'rime_ward']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
@@ -908,7 +917,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               }
             }
             const origin = actorCell || cells[0];
-            if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells });
+            // `value` is what the entry counted — for a cast, the power spent.
+            // The effects that predate it ignore the extra key.
+            if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells, value: entry.value });
           }
         } else if (SIDE_WIDE_FX.has(effectName) || FOE_WIDE_FX.has(effectName)) {
           if (actor && actorCell && !fxCovered.has(entryIdx)) {

@@ -192,7 +192,7 @@ const SPELLS = {
       effect_type: 'dispel',
       class: 'enemy',
       target_scope: 'single_enemy',
-      effect_name: 'dispel',
+      effect_name: 'purgation',
       params: { dispel_polarity: 'positive', dispel_count: 1 },
     },
   ],
@@ -230,6 +230,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_3',
+      effect_name: 'song_of_frenzy',
       name: 'Song of Frenzy',
       name_ru: 'Песнь исступления',
       category: 'buff',
@@ -249,6 +250,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_9',
+      effect_name: 'chorus_of_wrath',
       name: 'Chorus of Wrath',
       name_ru: 'Хор ярости',
       category: 'buff',
@@ -378,6 +380,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_3',
+      effect_name: 'sorrows_haste',
       name: "Sorrow's Haste",
       name_ru: 'Скорая скорбь',
       category: 'buff',
@@ -396,6 +399,7 @@ const SPELLS = {
     },
     {
       id: 'g_spell_10',
+      effect_name: 'last_rites',
       name: 'Last Rites',
       name_ru: 'Последние обряды',
       category: 'buff',
@@ -543,6 +547,7 @@ const SPELLS = {
     // line, then execute whatever the rot has left standing.
     {
       id: 'boss_grave_rot',
+      effect_name: 'grave_rot',
       name: 'Grave Rot',
       name_ru: 'Могильная гниль',
       category: 'debuff',
@@ -582,6 +587,7 @@ const SPELLS = {
     // fight is a race against a wall that keeps getting thicker.
     {
       id: 'boss_rime_ward',
+      effect_name: 'rime_ward',
       name: 'Rime Ward',
       name_ru: 'Иней-оберег',
       category: 'buff',

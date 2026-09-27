@@ -1039,6 +1039,7 @@ export async function aegis(cellEl) {
 
   const EDGE = 0x9ac4ff;
   const PALE = 0xd0e8ff;
+  const GOLD = 0xffd98a;
 
   const layer     = new PIXI.Container();
   const glowLayer = new PIXI.Container();
@@ -1049,24 +1050,29 @@ export async function aegis(cellEl) {
   glowLayer.addChild(glowG);
   app.stage.addChild(layer);
 
-  await animate(460, t => {
+  await animate(820, t => {
     const b = cellBoundsFor(dataId);
     if (!b) { layer.visible = false; return; }
     layer.visible = true;
 
     const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
     const R  = Math.min(b.width, b.height);
-    const a  = 1 - t;
+    // The shell seals over the first 45%, HOLDS while the glyph stamps, then
+    // both leave together — the two beats the old single fade had no room for.
+    const seal = clamp01(t / 0.45);
+    const a    = 1 - clamp01((t - 0.62) / 0.38);
 
     glowG.clear(); ringG.clear();
 
     // Expands OUTWARD from the unit's own outline, so it reads as the unit's
-    // armour hardening rather than something arriving from elsewhere.
-    const grow = 1 + t * 0.30;
+    // armour hardening rather than something arriving from elsewhere. Keyed to
+    // `seal` rather than `t`: it settles at its full size and stays there while
+    // the glyph goes on, instead of creeping outward for the whole animation.
+    const grow = 1 + seal * 0.30;
     const w = b.width * grow, h = b.height * grow;
     const rad = Math.min(w, h) * 0.14;
 
-    ringG.lineStyle(Math.max(1, R * 0.045 * (1 - t * 0.6)), EDGE, 0.9 * a);
+    ringG.lineStyle(Math.max(1, R * 0.045 * (1 - seal * 0.6)), EDGE, 0.9 * a);
     ringG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
     ringG.lineStyle(Math.max(1, R * 0.015), PALE, 0.7 * a);
     ringG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
@@ -1076,7 +1082,30 @@ export async function aegis(cellEl) {
     glowG.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, rad);
     glowG.lineStyle(0);
     // A short inward flash on the unit at the moment it hardens.
-    if (t < 0.35) softGlow(glowG, cx, cy, R * 0.4 * (1 - t / 0.35), PALE, 0.35 * (1 - t / 0.35));
+    if (seal < 0.8) softGlow(glowG, cx, cy, R * 0.4 * (1 - seal / 0.8), PALE, 0.35 * (1 - seal / 0.8));
+
+    // Second beat: the blessing is SIGNED. A gold cross stamps down over the
+    // sealed shell — arms driven out from the centre, a beat of white at the
+    // crossing — and holds until the shell fades out from under it. Without this
+    // Holy Aegis was one expanding rectangle, the thinnest picture in the file
+    // and indistinguishable from a generic shield at a glance.
+    const stamp = clamp01((t - 0.42) / 0.2);
+    if (stamp > 0) {
+      const arm  = R * 0.34 * stamp;
+      const lw   = Math.max(1.5, R * 0.045);
+      const ga   = 0.95 * a;
+      // Slightly high on the cell so it sits over the chest, not the feet.
+      const gy   = cy - b.height * 0.06;
+      ringG.lineStyle(lw, GOLD, ga);
+      ringG.moveTo(cx, gy - arm);       ringG.lineTo(cx, gy + arm * 0.75);
+      ringG.moveTo(cx - arm * 0.6, gy - arm * 0.25);
+      ringG.lineTo(cx + arm * 0.6, gy - arm * 0.25);
+      ringG.lineStyle(Math.max(1, R * 0.016), PALE, 0.8 * ga);
+      ringG.moveTo(cx, gy - arm);       ringG.lineTo(cx, gy + arm * 0.75);
+      ringG.lineStyle(0);
+      softGlow(glowG, cx, gy - arm * 0.25, R * 0.14 * stamp, GOLD, 0.5 * a);
+      if (stamp < 1) softGlow(glowG, cx, gy - arm * 0.25, R * 0.3 * (1 - stamp), PALE, 0.7 * (1 - stamp));
+    }
   });
 
   layer.destroy({ children: true });
@@ -6330,6 +6359,651 @@ export async function glacial_burst(originCellEl, opts = {}) {
   layer.destroy({ children: true });
 }
 
+// ── Spell pictures, one pair per faction ──────────────────────────────────────
+//
+// Every spell in data/spells.js that carries an `effect_name` is drawn here. The
+// four below filled the last silences on the player side; grave_rot and rime_ward
+// do the same for the two bosses. Each pair is deliberately built from ONE shape
+// at two scales — a ring for the Choir, a shed ghost for the Grail — so a single
+// ally and the whole line read as the same spell rather than two unrelated ones.
+
+const SORROW_PAL = { bone: 0xe6e0d2, pale: 0xb8a9c9, deep: 0x4a3f5c };
+const ROT_PAL    = { deep: 0x2e3a14, mid: 0x6b7a2a, pale: 0xb9c76a };
+const PURGE_PAL  = { core: 0xfffdf2, gold: 0xffd98a, char: 0x3a2a08 };
+const RIME_PAL   = { ice: 0x8fd4ff, pale: 0xeaf8ff, deep: 0x2b6da8 };
+
+// ── song_of_frenzy ────────────────────────────────────────────────────────────
+//
+// Sound made visible. Three rings snap OUTWARD off the singer on the beat — hard
+// attack, fast decay, the shape a struck drum skin makes — each shedding ember
+// flecks that are then drawn back INTO the unit as it takes breath. It closes on
+// a thin trembling rim, so the buff leaves something on the portrait instead of
+// simply stopping.
+//
+// Deliberately not a flame: `burn` already owns standing fire in this palette, so
+// frenzy is rings and an inward pull.
+export async function song_of_frenzy(cellEl) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const dataId = cellEl.dataset?.id;
+  if (!dataId) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  const BEATS  = [0, 0.16, 0.32];
+  const flecks = Array.from({ length: 18 }, () => ({
+    ang: rand(0, TAU), beat: Math.floor(rand(0, BEATS.length)), size: rand(1.8, 3.6), wob: rand(0, TAU),
+  }));
+
+  const { layer, glow, solid } = riderLayer(4);
+
+  await animate(760, t => {
+    glow.clear(); solid.clear();
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height);
+    const FLAT = 0.62;
+
+    for (const d of BEATS) {
+      const p = clamp01((t - d) / 0.42);
+      if (p <= 0 || p >= 1) continue;
+      const r = R * (0.18 + 0.62 * Math.sqrt(p));
+      const a = (1 - p) * (1 - p);
+      solid.lineStyle(Math.max(1, R * 0.05 * (1 - p)), EMBER.core, 0.85 * a);
+      solid.drawEllipse(cx, cy, r, r * FLAT);
+      solid.lineStyle(Math.max(1, R * 0.018), EMBER.edge, 0.6 * a);
+      solid.drawEllipse(cx, cy, r * 0.86, r * 0.86 * FLAT);
+      solid.lineStyle(0);
+      softGlow(glow, cx, cy, r * 0.5, EMBER.core, 0.2 * a);
+    }
+
+    // The breath: everything thrown out is pulled back over the last half.
+    const inhale = clamp01((t - 0.5) / 0.5);
+    for (const f of flecks) {
+      const p = clamp01((t - BEATS[f.beat]) / 0.42);
+      if (p <= 0) continue;
+      const r   = R * (0.18 + 0.62 * Math.sqrt(p)) * (1 - inhale * 0.95);
+      const a   = (1 - inhale) * (p < 0.3 ? p / 0.3 : 1) * 0.95;
+      const ang = f.ang + Math.sin(f.wob + t * 6) * 0.1;
+      softGlow(glow, cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * FLAT,
+               f.size * (1 + inhale), EMBER.edge, 0.7 * a);
+    }
+
+    if (inhale > 0) {
+      const out = 1 - clamp01((t - 0.86) / 0.14);
+      const tremble = 1 + Math.sin(t * 40) * 0.006;
+      const w = b.width * tremble, h = b.height * tremble;
+      solid.lineStyle(Math.max(1, R * 0.022), EMBER.core, 0.85 * inhale * out);
+      solid.drawRoundedRect(cx - w / 2, cy - h / 2, w, h, Math.min(w, h) * 0.12);
+      solid.lineStyle(0);
+      softGlow(glow, cx, cy, R * 0.32 * inhale, EMBER.core, 0.28 * inhale * out);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── chorus_of_wrath ───────────────────────────────────────────────────────────
+//
+// The same ring at 60%, but the point is the ORDER: the caster strikes one note,
+// a bar of sound sweeps across the friendly line, and each ally answers as the
+// bar reaches it — the verse being taken up one voice at a time. They only sing
+// together at the end, in a single shared pulse.
+//
+// Fan-out (see FAN_OUT_FX in screens/battle.js): a cast logs one entry naming
+// every unit it reached, so the cells come off the log rather than off the board.
+export async function chorus_of_wrath(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+
+  const voiceIds = targetCells.map(c => c.dataset?.id).filter(Boolean);
+  if (!voiceIds.length) return;
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(1200, t => {
+    glow.clear(); solid.clear();
+
+    const voices = voiceIds.map(id => ({ id, b: cellBoundsFor(id) })).filter(v => v.b);
+    if (!voices.length) return;
+
+    const minX = Math.min(...voices.map(v => v.b.x));
+    const maxX = Math.max(...voices.map(v => v.b.x + v.b.width));
+    const minY = Math.min(...voices.map(v => v.b.y));
+    const maxY = Math.max(...voices.map(v => v.b.y + v.b.height));
+    const span = Math.max(1, maxX - minX);
+
+    if (originId) {
+      const ob = cellBoundsFor(originId);
+      if (ob) {
+        const f = Math.sin(clamp01(t / 0.22) * Math.PI);
+        softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2,
+                 Math.min(ob.width, ob.height) * 0.3, EMBER.core, 0.65 * f);
+      }
+    }
+
+    const sweep = clamp01((t - 0.1) / 0.55);
+    if (sweep > 0 && sweep < 1) {
+      const bx = minX + span * sweep;
+      const a  = Math.sin(sweep * Math.PI);
+      solid.lineStyle(Math.max(1.5, span * 0.012), EMBER.core, 0.8 * a);
+      solid.moveTo(bx, minY);
+      solid.lineTo(bx, maxY);
+      solid.lineStyle(0);
+      softGlow(glow, bx, (minY + maxY) / 2, (maxY - minY) * 0.16, EMBER.edge, 0.4 * a);
+    }
+
+    const finale = clamp01((t - 0.8) / 0.2);
+    for (const v of voices) {
+      const b  = v.b;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+      const FLAT = 0.62;
+
+      const p = clamp01((sweep - (cx - minX) / span) / 0.3);
+      if (p > 0 && p < 1) {
+        const r = R * 0.6 * (0.2 + 0.62 * Math.sqrt(p));
+        const a = (1 - p) * (1 - p);
+        solid.lineStyle(Math.max(1, R * 0.04 * (1 - p)), EMBER.core, 0.85 * a);
+        solid.drawEllipse(cx, cy, r, r * FLAT);
+        solid.lineStyle(0);
+        softGlow(glow, cx, cy, r * 0.55, EMBER.edge, 0.3 * a);
+      }
+
+      if (finale > 0) {
+        const f = Math.sin(finale * Math.PI);
+        const r = R * (0.3 + 0.35 * finale);
+        solid.lineStyle(Math.max(1, R * 0.05 * (1 - finale)), EMBER.edge, 0.9 * f);
+        solid.drawEllipse(cx, cy, r, r * FLAT);
+        solid.lineStyle(0);
+        softGlow(glow, cx, cy, R * 0.35, EMBER.core, 0.35 * f);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── sorrows_haste ─────────────────────────────────────────────────────────────
+//
+// "One ally moves ahead of its grief" drawn literally: a pale duplicate of the
+// unit's own outline sheds downward and dissolves while the unit lifts free of
+// it, bone wisps rising off the feet.
+//
+// The shedding is VERTICAL rather than to one side on purpose — a single-cell
+// effect is handed no facing, and a ghost that peels the wrong way on the enemy
+// half of the board reads as a mistake.
+export async function sorrows_haste(cellEl) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const dataId = cellEl.dataset?.id;
+  if (!dataId) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const WISPS = 6;
+  const wisps = Array.from({ length: WISPS }, (_, i) => ({
+    x:     (i / (WISPS - 1)) - 0.5 + rand(-0.06, 0.06),
+    delay: rand(0, 0.3),
+    rise:  rand(0.7, 1.15),
+    size:  rand(1.6, 3.2),
+    sway:  rand(-0.4, 0.4),
+  }));
+
+  const { layer, glow, solid } = riderLayer(4);
+
+  await animate(760, t => {
+    glow.clear(); solid.clear();
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    const R   = Math.min(b.width, b.height);
+    const rad = Math.min(b.width, b.height) * 0.12;
+
+    // The grief: the unit's own outline, sinking and widening as it lets go.
+    const shed = clamp01(t / 0.7);
+    if (shed < 1) {
+      const sag  = R * 0.34 * shed;
+      const grow = 1 + shed * 0.12;
+      const w = b.width * grow, h = b.height * grow;
+      const a = (1 - shed) * 0.85;
+      solid.lineStyle(Math.max(1, R * 0.026), SORROW_PAL.pale, a);
+      solid.drawRoundedRect(cx - w / 2, cy - h / 2 + sag, w, h, rad);
+      solid.lineStyle(0);
+      softGlow(glow, cx, cy + sag + h * 0.2, R * 0.3, SORROW_PAL.deep, 0.35 * a);
+    }
+
+    // The unit: two crisp copies offset UP, converging back onto it.
+    const lift = clamp01((t - 0.08) / 0.5);
+    if (lift > 0) {
+      const out = 1 - clamp01((t - 0.72) / 0.28);
+      for (let i = 1; i <= 2; i++) {
+        const off = R * 0.16 * (1 - lift) * i;
+        if (off < 0.5) continue;
+        const a = (1 - lift) * out * (0.7 / i);
+        solid.lineStyle(Math.max(1, R * 0.02), SORROW_PAL.bone, a);
+        solid.drawRoundedRect(cx - b.width / 2, cy - b.height / 2 - off, b.width, b.height, rad);
+        solid.lineStyle(0);
+      }
+      softGlow(glow, cx, cy - R * 0.1, R * 0.28 * lift, SORROW_PAL.bone, 0.3 * lift * out);
+    }
+
+    for (const w of wisps) {
+      const p = clamp01((t - w.delay) / (1 - w.delay));
+      if (p <= 0) continue;
+      const wx = cx + b.width * w.x + Math.sin(p * Math.PI * 2) * R * w.sway * 0.2;
+      const wy = cy + R * 0.42 - R * w.rise * p;
+      const a  = (p < 0.25 ? p / 0.25 : 1 - (p - 0.25) / 0.75) * 0.85;
+      softGlow(glow, wx, wy, w.size, SORROW_PAL.bone, a);
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── last_rites ────────────────────────────────────────────────────────────────
+//
+// Sorrow's Haste for the whole line, built out of the same two parts so it reads
+// as the same magic: a censer arc of pale smoke swings out of the caster, and as
+// it reaches each ally that ally sheds its own small ghost and lights a candle
+// above the portrait.
+//
+// Fan-out, same reason as chorus_of_wrath.
+export async function last_rites(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+
+  const rites = targetCells
+    .map(c => ({ id: c.dataset?.id, jitter: rand(-0.04, 0.04) }))
+    .filter(r => r.id);
+  if (!rites.length) return;
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(1300, t => {
+    glow.clear(); solid.clear();
+
+    const cells = rites.map(r => ({ r, b: cellBoundsFor(r.id) })).filter(x => x.b);
+    if (!cells.length) return;
+
+    const minX = Math.min(...cells.map(x => x.b.x));
+    const maxX = Math.max(...cells.map(x => x.b.x + x.b.width));
+    const minY = Math.min(...cells.map(x => x.b.y));
+    const maxY = Math.max(...cells.map(x => x.b.y + x.b.height));
+    const span = Math.max(1, maxX - minX);
+    const midY = (minY + maxY) / 2;
+
+    const swing = clamp01((t - 0.05) / 0.6);
+
+    if (originId) {
+      const ob = cellBoundsFor(originId);
+      if (ob) {
+        const f = Math.sin(clamp01(t / 0.2) * Math.PI);
+        softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2,
+                 Math.min(ob.width, ob.height) * 0.26, SORROW_PAL.pale, 0.6 * f);
+      }
+    }
+
+    // The censer arc: a shallow trail of smoke drawn across the line, fading
+    // behind the head of the swing.
+    if (swing > 0 && swing < 1) {
+      const TRAIL = 9;
+      for (let i = 0; i < TRAIL; i++) {
+        const p = swing - i * 0.045;
+        if (p <= 0) continue;
+        const x = minX + span * p;
+        const y = midY - Math.sin(p * Math.PI) * (maxY - minY) * 0.22;
+        const a = (1 - i / TRAIL) * Math.sin(swing * Math.PI) * 0.7;
+        softGlow(glow, x, y, span * 0.035 * (1 + i * 0.12), SORROW_PAL.bone, a);
+      }
+    }
+
+    for (const { r, b } of cells) {
+      const cx  = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R   = Math.min(b.width, b.height);
+      const rad = Math.min(b.width, b.height) * 0.12;
+
+      const p = clamp01((swing - ((cx - minX) / span + r.jitter)) / 0.28);
+      if (p <= 0) continue;
+      const out = 1 - clamp01((t - 0.8) / 0.2);
+
+      // Its own small shed ghost — the single-target spell, at two thirds.
+      if (p < 1) {
+        const sag  = R * 0.22 * p;
+        const grow = 1 + p * 0.08;
+        const w = b.width * grow * 0.96, h = b.height * grow * 0.96;
+        solid.lineStyle(Math.max(1, R * 0.02), SORROW_PAL.pale, (1 - p) * 0.8);
+        solid.drawRoundedRect(cx - w / 2, cy - h / 2 + sag, w, h, rad);
+        solid.lineStyle(0);
+      }
+
+      // The candle, lit above the portrait and held.
+      const flame = clamp01(p / 0.4);
+      const fy    = cy - b.height * 0.42 - R * 0.06 * flame;
+      const flick = 1 + Math.sin(t * 26 + cx) * 0.12;
+      softGlow(glow, cx, fy, R * 0.07 * flame * flick, PURGE_PAL.gold, 0.85 * flame * out);
+      solid.beginFill(SORROW_PAL.bone, 0.9 * flame * out);
+      solid.drawEllipse(cx, fy, R * 0.016, R * 0.034 * flick);
+      solid.endFill();
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── purgation ─────────────────────────────────────────────────────────────────
+//
+// Purgation used to borrow the generic violet `dispel`, which is the right idea
+// in the wrong faction's colours. This is the Empire version: a censer-white
+// shaft pins the enemy from above and its blessings physically tear off — one
+// glyph shard per power spent, peeling off the portrait rim and charring out in
+// the light.
+//
+// Fan-out rather than single-cell so it is always handed (caster, { targetCells,
+// value }) and can read the power the cast paid off the log. A single-enemy cast
+// names exactly one victim, so the list has one entry.
+export async function purgation(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+
+  const shardCount = Math.max(1, Math.min(5, Number(opts.value) || 3));
+  const marks = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.08),
+    shards: Array.from({ length: shardCount }, (_, i) => ({
+      ang:  -Math.PI / 2 + (i / shardCount) * TAU + rand(-0.2, 0.2),
+      spin: rand(0, TAU),
+      size: rand(0.05, 0.08),
+      d:    i * 0.07,
+    })),
+  })).filter(m => m.id);
+  if (!marks.length) return;
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(950, t => {
+    glow.clear(); solid.clear();
+
+    if (originId) {
+      const ob = cellBoundsFor(originId);
+      if (ob) {
+        const f = Math.sin(clamp01(t / 0.24) * Math.PI);
+        softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2,
+                 Math.min(ob.width, ob.height) * 0.28, PURGE_PAL.gold, 0.6 * f);
+      }
+    }
+
+    for (const m of marks) {
+      const b = cellBoundsFor(m.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+
+      const drop = clamp01((t - 0.1 - m.delay) / 0.22);
+      if (drop <= 0) continue;
+      const out = 1 - clamp01((t - 0.74) / 0.26);
+
+      // The shaft: falls from above the cell, narrowing as it bites.
+      const top   = b.y - b.height * 0.9;
+      const bot   = cy + b.height * 0.42;
+      const reach = top + (bot - top) * drop;
+      const halfW = b.width * (0.3 - 0.12 * drop);
+      solid.beginFill(PURGE_PAL.core, 0.2 * out);
+      solid.moveTo(cx - halfW, top);
+      solid.lineTo(cx + halfW, top);
+      solid.lineTo(cx + halfW * 0.55, reach);
+      solid.lineTo(cx - halfW * 0.55, reach);
+      solid.closePath();
+      solid.endFill();
+      solid.lineStyle(Math.max(1, R * 0.018), PURGE_PAL.gold, 0.7 * out);
+      solid.moveTo(cx - halfW, top); solid.lineTo(cx - halfW * 0.55, reach);
+      solid.moveTo(cx + halfW, top); solid.lineTo(cx + halfW * 0.55, reach);
+      solid.lineStyle(0);
+      softGlow(glow, cx, (top + reach) / 2, halfW * 0.8, PURGE_PAL.core, 0.35 * drop * out);
+
+      if (drop < 1) continue;
+      softGlow(glow, cx, cy, R * 0.34, PURGE_PAL.core, 0.3 * out);
+
+      // The blessings coming off: each shard peels outward off the rim, tumbling,
+      // and chars to nothing in the light.
+      for (const s of m.shards) {
+        const p = clamp01((t - 0.34 - m.delay - s.d) / 0.42);
+        if (p <= 0) continue;
+        const dist = R * (0.34 + 0.4 * p);
+        const sx   = cx + Math.cos(s.ang) * dist;
+        const sy   = cy + Math.sin(s.ang) * dist * 0.75;
+        const sz   = R * s.size * (1 - p * 0.5);
+        const rot  = s.spin + p * 4;
+        const a    = p < 0.2 ? p / 0.2 : 1 - (p - 0.2) / 0.8;
+        solid.lineStyle(Math.max(1, R * 0.012), p < 0.6 ? PURGE_PAL.gold : PURGE_PAL.char, 0.95 * a * out);
+        solid.beginFill(PURGE_PAL.core, 0.25 * a * out);
+        for (let i = 0; i <= 4; i++) {
+          const ta = rot + (i / 4) * TAU;
+          const rr = sz * (i % 2 ? 0.45 : 1);
+          const px = sx + Math.cos(ta) * rr, py = sy + Math.sin(ta) * rr;
+          if (i === 0) solid.moveTo(px, py); else solid.lineTo(px, py);
+        }
+        solid.closePath();
+        solid.endFill();
+        solid.lineStyle(0);
+        if (p < 0.5) softGlow(glow, sx, sy, sz * 0.9, PURGE_PAL.gold, 0.5 * a * out);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── grave_rot ─────────────────────────────────────────────────────────────────
+//
+// Malgrath's opener: not a hit, a CONDITION. A low tide of spores creeps out of
+// the boss, and where it settles the ground blooms a ring of rot, veins climb the
+// portrait, and spores lift off and scatter. Nothing flashes and nothing shatters
+// — the read is that something has started and will not stop, which is what the
+// decay it applies actually does.
+export async function grave_rot(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+
+  const fields = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.16),
+    veins: Array.from({ length: 4 }, () => ({
+      x:    rand(-0.34, 0.34),
+      h:    rand(0.45, 0.8),
+      segs: Array.from({ length: 3 }, () => rand(-0.1, 0.1)),
+      d:    rand(0, 0.12),
+    })),
+    spores: Array.from({ length: 9 }, () => ({
+      x: rand(-0.4, 0.4), delay: rand(0, 0.5), rise: rand(0.5, 1.0),
+      size: rand(1.4, 3.0), sway: rand(-0.5, 0.5),
+    })),
+  })).filter(f => f.id);
+  if (!fields.length) return;
+
+  const { layer, glow, solid } = riderLayer(5);
+
+  await animate(1150, t => {
+    glow.clear(); solid.clear();
+
+    if (originId) {
+      const ob = cellBoundsFor(originId);
+      if (ob) {
+        const f = Math.sin(clamp01(t / 0.26) * Math.PI);
+        softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height * 0.7,
+                 Math.min(ob.width, ob.height) * 0.32, ROT_PAL.mid, 0.6 * f);
+      }
+    }
+
+    for (const f of fields) {
+      const b = cellBoundsFor(f.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+      const base = cy + R * 0.4;
+
+      const bloom = clamp01((t - f.delay) / 0.3);
+      if (bloom <= 0) continue;
+      const out = 1 - clamp01((t - 0.8) / 0.2);
+
+      // The ring on the ground: lobed, uneven, never a clean circle.
+      const LOBES = 11;
+      solid.lineStyle(Math.max(1, R * 0.024), ROT_PAL.mid, 0.75 * bloom * out);
+      solid.beginFill(ROT_PAL.deep, 0.3 * bloom * out);
+      for (let i = 0; i <= LOBES; i++) {
+        const a  = (i / LOBES) * TAU;
+        const rr = R * (0.36 + Math.sin(a * 3) * 0.05) * bloom;
+        const x  = cx + Math.cos(a) * rr;
+        const y  = base + Math.sin(a) * rr * 0.32;
+        if (i === 0) solid.moveTo(x, y); else solid.lineTo(x, y);
+      }
+      solid.closePath();
+      solid.endFill();
+      solid.lineStyle(0);
+      softGlow(glow, cx, base, R * 0.34 * bloom, ROT_PAL.deep, 0.4 * bloom * out);
+
+      for (const v of f.veins) {
+        const p = clamp01((t - 0.18 - f.delay - v.d) / 0.4);
+        if (p <= 0) continue;
+        solid.lineStyle(Math.max(1, R * 0.02), ROT_PAL.deep, 0.8 * p * out);
+        let x = cx + v.x * R, y = base;
+        solid.moveTo(x, y);
+        let acc = 0;
+        for (const j of v.segs) {
+          acc += 1 / v.segs.length;
+          x += j * R;
+          y = base - R * v.h * p * acc;
+          solid.lineTo(x, y);
+        }
+        solid.lineStyle(0);
+        softGlow(glow, x, y, R * 0.05, ROT_PAL.mid, 0.5 * p * out);
+      }
+
+      for (const s of f.spores) {
+        const p = clamp01((t - 0.24 - s.delay) / 0.62);
+        if (p <= 0) continue;
+        const sx = cx + s.x * R + Math.sin(p * Math.PI * 2) * R * s.sway * 0.22;
+        const sy = base - R * s.rise * p;
+        const a  = (p < 0.25 ? p / 0.25 : 1 - (p - 0.25) / 0.75) * 0.85;
+        softGlow(glow, sx, sy, s.size * (1 + p), ROT_PAL.pale, a * out);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+// ── rime_ward ─────────────────────────────────────────────────────────────────
+//
+// Cryodrox hardening its own line. Deliberately built from a shape glacial_burst
+// does NOT use: hexagonal plates drifting in and locking around each ally's
+// outline, no spears out of the ground and nothing breaking. The two share a
+// palette because they are the same dragon; they must not share a silhouette, or
+// the wall and the attack become the same event.
+export async function rime_ward(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const originId = originCellEl?.dataset?.id || null;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const TAU      = Math.PI * 2;
+
+  const PLATES = 7;
+  const wards = targetCells.map(c => ({
+    id: c.dataset?.id,
+    delay: rand(0, 0.2),
+    plates: Array.from({ length: PLATES }, (_, i) => ({
+      ang:  -Math.PI / 2 + (i / PLATES) * TAU + rand(-0.12, 0.12),
+      r:    rand(0.42, 0.56),
+      size: rand(0.1, 0.16),
+      spin: rand(0, TAU),
+      d:    (i / PLATES) * 0.3 + rand(0, 0.05),
+    })),
+  })).filter(w => w.id);
+  if (!wards.length) return;
+
+  const { layer, glow, solid } = riderLayer(4);
+
+  const hex = (g, x, y, r, rot) => {
+    for (let i = 0; i <= 6; i++) {
+      const a  = rot + (i / 6) * TAU;
+      const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r * 0.8;
+      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+    }
+  };
+
+  await animate(1000, t => {
+    glow.clear(); solid.clear();
+
+    if (originId) {
+      const ob = cellBoundsFor(originId);
+      if (ob) {
+        const f = Math.sin(clamp01(t / 0.22) * Math.PI);
+        softGlow(glow, ob.x + ob.width / 2, ob.y + ob.height / 2,
+                 Math.min(ob.width, ob.height) * 0.3, RIME_PAL.ice, 0.6 * f);
+      }
+    }
+
+    for (const w of wards) {
+      const b = cellBoundsFor(w.id);
+      if (!b) continue;
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+      const out = 1 - clamp01((t - 0.8) / 0.2);
+
+      for (const p of w.plates) {
+        const g = clamp01((t - w.delay - p.d) / 0.26);
+        if (g <= 0) continue;
+        // Each plate drifts IN from outside and settles onto the outline.
+        const dist = R * p.r * (1.5 - 0.5 * g);
+        const px = cx + Math.cos(p.ang) * dist;
+        const py = cy + Math.sin(p.ang) * dist * 0.95;
+        const sz = R * p.size * g;
+        const a  = g * out;
+        solid.lineStyle(Math.max(1, R * 0.016), RIME_PAL.pale, 0.9 * a);
+        solid.beginFill(RIME_PAL.ice, 0.28 * a);
+        hex(solid, px, py, sz, p.spin);
+        solid.closePath();
+        solid.endFill();
+        solid.lineStyle(0);
+        // The moment it locks.
+        if (g > 0.75 && g < 1) softGlow(glow, px, py, sz * 1.4, RIME_PAL.pale, (1 - (g - 0.75) / 0.25) * 0.7);
+        else softGlow(glow, px, py, sz * 0.8, RIME_PAL.deep, 0.3 * a);
+      }
+
+      // The rim they add up to.
+      const seal = clamp01((t - 0.35 - w.delay) / 0.35);
+      if (seal > 0) {
+        const grow = 1 + (1 - seal) * 0.1;
+        const bw = b.width * grow, bh = b.height * grow;
+        solid.lineStyle(Math.max(1, R * 0.028 * seal), RIME_PAL.ice, 0.75 * seal * out);
+        solid.drawRoundedRect(cx - bw / 2, cy - bh / 2, bw, bh, Math.min(bw, bh) * 0.16);
+        solid.lineStyle(0);
+        softGlow(glow, cx, cy, R * 0.3 * seal, RIME_PAL.deep, 0.22 * seal * out);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
 export const EFFECTS = {
   sorrow,
   eternal_grief,
@@ -6420,6 +7094,16 @@ export const EFFECTS = {
   resist_aura_death,
   bone_armor,
   tag_muster,
+  // Spell pictures — the last silent spells in data/spells.js, two per player
+  // faction plus the two boss casts. purgation replaces the generic violet
+  // dispel Purgation used to borrow.
+  song_of_frenzy,
+  chorus_of_wrath,
+  sorrows_haste,
+  last_rites,
+  purgation,
+  grave_rot,
+  rime_ward,
 };
 // ── Formation bonds ───────────────────────────────────────────────────────────
 //
