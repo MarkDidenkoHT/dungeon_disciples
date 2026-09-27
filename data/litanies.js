@@ -19,21 +19,13 @@
 
 // ── Empire: profane_chorus ─────────────────────────────────────────────────
 
-// Templar and both Mithrail branches.
 const LITANY_CHORUS_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
 
-// Paladin, every tier of both paths. Note the Paladin predates the _a2/_b2 id
-// scheme the other heroes use and numbers its upgrades instead.
 const LITANY_LEAD_IDS = [
   'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
   'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
 ];
 
-// Every Choir hero: Black Castellan, Choir Regent, Infernal Ascendant — plus
-// Sister Aldra, every tier. She is a Demon who wears Holy, which is exactly the
-// heresy the chorus is sung over, and she is the only such target outside a PvP
-// match: without her the litany is a drill the player can only ever perform
-// against another player, and most hosts would never see it fire.
 const LITANY_TARGET_IDS = [
   'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
            'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
@@ -41,25 +33,18 @@ const LITANY_TARGET_IDS = [
            'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
   'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
            'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
-  // Sister Aldra, the Crimson Basilica's boss (data/units.js, enemies).
   'opb_e5', 'opb_e51', 'opb_e511',
 ];
 
 // ── Grail of Sorrow: clean_passage ─────────────────────────────────────────
 
-// Pale Maiden and the Mourner branch. The Maiden is the root all three Pale
-// branches grow from, so a young host can stage this before it has specialised.
-const CLEAN_PASSAGE_CHORUS_IDS = ['gs7', 'gs73', 'gs731', 'gs7311'];
+const CLEAN_PASSAGE_CHORUS_IDS = ['gs1', 'gs11', 'gs111', 'gs1111','gs4','gs41','gs411','gs4111'];
 
-// Mourning Prophet, every tier of both paths.
 const CLEAN_PASSAGE_LEAD_IDS = [
-  'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-           'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
+  'h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42',
+           'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
 ];
 
-// Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra, who
-// carries the PvE half the way she does for profane_chorus: without a boss on
-// the list this is a drill that only ever fires against another player.
 const CLEAN_PASSAGE_TARGET_IDS = [
   'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
   'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
@@ -92,7 +77,6 @@ const TAKEN_BREATH_TARGET_IDS = [
            'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
   'h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42',
            'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
-  // Malgrath the Undying, the Chamber of Unrest's boss.
   'dm_e4', 'dm_e41', 'dm_e411',
 ];
 
