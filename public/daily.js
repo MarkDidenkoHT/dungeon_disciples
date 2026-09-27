@@ -107,6 +107,10 @@ const TOKEN_NAMES = {
 
 const questIcon = html => `<span class="quest-reward-icon">${html}</span>`;
 
+// Supplies have no art anywhere in the game yet; the embark gate draws them as
+// text. This is the one glyph, shared with the daily reward's own icon.
+const SUPPLY_ICON = '\u{1F9FA}';
+
 // One chip per thing a milestone pays: gold, the faction crystal, tokens.
 function questRewardHtml(reward, factionCrystal) {
   const chips = [];
@@ -121,6 +125,13 @@ function questRewardHtml(reward, factionCrystal) {
       : (def?.icon || '✦');
     const name = TOKEN_NAMES[id] ? T(...TOKEN_NAMES[id]) : (def?.name || id);
     chips.push([questIcon(art), amount, name]);
+  }
+  // Supplies are named per faction and the name only exists server-side, so the
+  // chip borrows it from the bootstrap payload the embark gate already reads.
+  if (reward?.supplies) {
+    const supply = bootstrapCache.data?.supplies;
+    const name = (lang === 'ru' && supply?.label_ru) || supply?.item || T('Supplies', 'Припасы');
+    chips.push([questIcon(SUPPLY_ICON), reward.supplies, name]);
   }
   return chips.map(([icon, amount, name]) =>
     `<span class="quest-reward" title="${name}">${icon}<span>×${amount}</span></span>`).join('');

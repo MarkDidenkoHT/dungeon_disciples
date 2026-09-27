@@ -99,6 +99,17 @@ const DAILY_REWARDS = [
     // has never fought the Colossus has no row, and skipping would pay nothing.
     upsert: true,
   },
+  {
+    id:    'supplies',
+    icon:  '\u{1F9FA}',
+    label: { en: '5 Supplies', ru: '5 припасов' },
+    // The embark gate's currency. The row is named per faction (SUPPLY_ITEMS in
+    // data/buildings.js) and carries its own item_type, so only the amount is
+    // stated here and /daily/claim resolves the rest. Deliberately uncapped: 5
+    // on top of 13/15 leaves 18/15, and the refill cron only ever adds while a
+    // pool is under its ceiling, so the overflow sits there until it is spent.
+    supplies: 5,
+  },
 ];
 
 const DAILY_TASKS_BY_ID   = Object.fromEntries(DAILY_TASKS.map(t => [t.id, t]));

@@ -35,8 +35,8 @@ const PATH_AB = 'M15,63 Q50,76 85,63';
 
 const TX = {
   title:     { en: 'Transmutation',            ru: 'Трансмутация' },
-  hint:      { en: 'Two different crystals become one of your choice. One of each per crystal made.',
-               ru: 'Два разных кристалла превращаются в третий. По одному каждого за кристалл.' },
+  hint:      { en: 'Two different crystals become one of your choice. One of each per crystal made. Tap − or + to change the batch by one, or hold to run by five.',
+               ru: 'Два разных кристалла превращаются в третий. По одному каждого за кристалл. Нажмите − или +, чтобы изменить количество на один, или удерживайте — пойдёт по пять.' },
   pick:      { en: 'Choose a crystal',         ru: 'Выберите кристалл' },
   want:      { en: 'Get',                      ru: 'Получить' },
   pay:       { en: 'Pay',                      ru: 'Отдать' },

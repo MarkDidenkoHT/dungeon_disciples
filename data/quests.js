@@ -28,7 +28,9 @@
 //   embark | colossus | arena | spells | errands
 //
 // Rewards: `resources` (Gold), `crystals` (a count of the player's OWN faction
-// crystal, resolved server-side), `tokens` (tome_of_knowledge, health_potion).
+// crystal, resolved server-side), `tokens` (tome_of_knowledge, health_potion),
+// `supplies` (a count of the player's own faction supply row, also resolved
+// server-side, and paid without regard to the pool's ceiling).
 
 // The milestone ladder every standard quest climbs, as multiples of its `base`.
 const TIER_STEPS = [1, 3, 5, 7.5, 10];
@@ -123,6 +125,29 @@ const QUESTS = [
       { tokens:    { health_potion: 5 } },
       { crystals:  50 },
       { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 400 } },
+    ],
+  },
+  // The three region bosses — Sister Aldra, Cryodrox and Malgrath the Undying,
+  // every tier of each — carry a `Boss` tag in data/units.js, so this rides the
+  // same kills:<Tag> counter the tag quests use and accumulates across all
+  // three regions. Twelve boss encounters exist and every one of them is
+  // replayable, so the chain repeats.
+  {
+    id:      'slay_bosses',
+    counter: 'kills:Boss',
+    base:    3,
+    go:      'embark',
+    title:   { en: 'Crownbreaker',     ru: 'Сокрушитель венцов' },
+    desc:    { en: 'Slay {n} region bosses — Sister Aldra, Cryodrox or Malgrath the Undying.',
+               ru: 'Победите {n} боссов регионов — Сестру Алдру, Криодрокса или Малграта Неумирающего.' },
+    // Supplies, the embark gate's own currency: the reward for clearing bosses
+    // is more chances to go clear bosses. Paid uncapped (see /quests/claim).
+    rewards: [
+      { supplies:  3 },
+      { supplies:  5 },
+      { supplies:  8 },
+      { supplies: 12 },
+      { supplies: 20 },
     ],
   },
   {

@@ -2984,7 +2984,7 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
   const rewardDef = DAILY_REWARDS_BY_ID[reward];
   if (!rewardDef) return res.status(400).json({ error: 'Unknown reward', code: 'daily_bad_reward' });
   try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=timezone,daily_tasks&limit=1`);
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction,timezone,daily_tasks&limit=1`);
     if (!rows.length) return res.status(404).json({ error: 'Player not found' });
 
     const record = dailyRecordFor(rows[0]);
@@ -3012,7 +3012,7 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
     }
 
     const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-    const granted = { resources: {}, tokens: {} };
+    const granted = { resources: {}, tokens: {}, supplies: 0 };
     const payouts = [];
 
     // Resources (gold, crystals) always have a row — they are seeded at
@@ -3030,6 +3030,15 @@ router.post('/daily/claim', requireAuth, async (req, res) => {
     for (const [item, amount] of Object.entries(rewardDef.tokens || {})) {
       granted.tokens[item] = amount;
       payouts.push({ item, amount, item_type: 'token' });
+    }
+
+    // Supplies name their row per faction, so the amount is all the reward def
+    // can state. No ceiling is applied: the pool is allowed to sit above its max
+    // until it is spent down (see the supplies reward in data/daily_tasks.js).
+    const supplyItem = supplyItemName(rows[0].faction);
+    if (rewardDef.supplies && supplyItem) {
+      granted.supplies = rewardDef.supplies;
+      payouts.push({ item: supplyItem, amount: rewardDef.supplies, item_type: SUPPLY_ITEM_TYPE });
     }
 
     await grantResources(chat_id, payouts);
@@ -3096,6 +3105,12 @@ router.post('/quests/claim', requireAuth, async (req, res) => {
     for (const [item, amount] of Object.entries(reward.resources || {})) payouts.push({ item, amount, item_type: 'resource' });
     if (reward.crystals) payouts.push({ item: crystal, amount: reward.crystals, item_type: 'resource' });
     for (const [item, amount] of Object.entries(reward.tokens || {})) payouts.push({ item, amount, item_type: 'token' });
+    // Per-faction row name, and no ceiling: a milestone may leave the pool above
+    // its max, where it stays until spent.
+    const supplyItem = supplyItemName(rows[0].faction);
+    if (reward.supplies && supplyItem) {
+      payouts.push({ item: supplyItem, amount: reward.supplies, item_type: SUPPLY_ITEM_TYPE });
+    }
     await grantResources(chat_id, payouts);
 
     res.json({ success: true, granted: payouts });
