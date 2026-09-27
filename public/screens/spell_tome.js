@@ -811,6 +811,27 @@ export function renderSpellTome(root, { player }) {
       // lays it out for the player's side (frontColFor in data/formation_synergies.js).
       // The back column is drawn and left empty because a litany that cared only
       // about the front column still has to say which column that is.
+      //
+      // ONE CELL IS ONE BLOCK. A two-cell unit is a single square of the diagram
+      // spanning two places, with ONE letter on it — drawing its letter twice said
+      // "two units of this line", which is the opposite of what a Golden Lion is.
+      // Every element is placed explicitly (`grid-area`) rather than flowed,
+      // because a spanning block makes auto-placement shuffle everything after it.
+      // Row 1 of the grid is the column labels, so a board row `r` is grid row
+      // `r + 2`.
+      const gridArea = c => {
+        const col = c.col === 'back' ? 1 : 2;
+        const row = (c.row ?? 0) + 2;
+        if (c.size === 'row')    return `grid-area: ${row} / 1 / span 1 / span 2`;
+        if (c.size === 'column') return `grid-area: ${row} / ${col} / span 2 / span 1`;
+        return `grid-area: ${row} / ${col}`;
+      };
+
+      // The squares no cell covers, drawn empty so the two columns read as a board.
+      const empties = [];
+      for (let r = 0; r < GRID_ROWS; r++) for (const col of ['back', 'front']) {
+        if (!keyOfCell.has(`${r}:${col}`)) empties.push({ row: r, col, size: 'tile' });
+      }
       const gridHtml = `
         <div class="litany-grid" role="img"
              aria-label="${escapeHtml(TOME_TEXT.litanyGridAria[lang](
@@ -819,14 +840,17 @@ export function renderSpellTome(root, { player }) {
                  t(c.size === 'row' ? 'litanyColBoth'
                    : c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
                  c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
-          <span class="litany-grid-col-label">${escapeHtml(t('litanyColBack'))}</span>
-          <span class="litany-grid-col-label">${escapeHtml(t('litanyColFront'))}</span>
-          ${Array.from({ length: GRID_ROWS }, (_, r) => ['back', 'front'].map(col => {
-            const key  = keyOfCell.get(`${r}:${col}`) || '';
-            const role = roleOfCell.get(`${r}:${col}`) || '';
+          <span class="litany-grid-col-label" style="grid-area: 1 / 1">${escapeHtml(t('litanyColBack'))}</span>
+          <span class="litany-grid-col-label" style="grid-area: 1 / 2">${escapeHtml(t('litanyColFront'))}</span>
+          ${cells.map(c => {
+            const span = c.size === 'row'    ? ' litany-grid-cell--wide'
+                       : c.size === 'column' ? ' litany-grid-cell--tall' : '';
             return `
-              <span class="litany-grid-cell${key ? ` litany-grid-cell--filled litany-grid-cell--${role}` : ''}">${escapeHtml(key)}</span>`;
-          }).join('')).join('')}
+              <span class="litany-grid-cell litany-grid-cell--filled litany-grid-cell--${c.role}${span}"
+                    style="${gridArea(c)}">${escapeHtml(c.key)}</span>`;
+          }).join('')}
+          ${empties.map(sq => `
+              <span class="litany-grid-cell" style="${gridArea(sq)}"></span>`).join('')}
         </div>`;
 
       // Whose death the litany is staged around. An enemy, so it sits in its own

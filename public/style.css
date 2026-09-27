@@ -10243,6 +10243,14 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   color: var(--muted);
 }
 
+.litany-grid-cell--wide {
+  width: 72px;
+}
+
+.litany-grid-cell--tall {
+  height: 72px;
+}
+
 .litany-grid-cell--filled {
   border-style: solid;
   border-color: rgba(var(--accent-rgb), 0.5);
