@@ -121,7 +121,7 @@ const ITEM_DEFS = {
     icon:         'crystal_exoskeleton',
     rarity:       'mythic',
     unique:       true,
-    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 100, Crystals_Frost: 50 },
+    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 300, Crystals_Frost: 50 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
     requires:     [
       { region: 'glittering_abyss',  level: 4 },
@@ -139,7 +139,7 @@ const ITEM_DEFS = {
     passive:      'protector 2',
     icon:         'crystal_shield',
     rarity:       'epic',
-    cost:         { crystal_shard: 1, Gold: 50, Crystals_Frost: 25 },
+    cost:         { crystal_shard: 1, Gold: 150, Crystals_Frost: 25 },
     item_cost:    { iron_shield: 1, cold_resistance_potion: 1 },
   },
   aegis_of_the_first_ward: {
@@ -154,7 +154,7 @@ const ITEM_DEFS = {
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,
-    cost:         { vial_of_pure_blood: 3, crystal_shard: 3, Crystals_Life: 40 },
+    cost:         { Gold: 200, vial_of_pure_blood: 3, crystal_shard: 3, Crystals_Life: 40 },
     item_cost:    { iron_shield: 1, death_resistance_potion: 1, fire_resistance_potion: 1, veterans_medal: 1 },
   },
   clockwork_plate: {
@@ -169,7 +169,7 @@ const ITEM_DEFS = {
     icon:         'clockwork_plate',
     rarity:       'mythic',
     unique:       true,
-    cost:         { vial_of_pure_blood: 5, crystal_shard: 5, Crystals_Life: 50 },
+    cost:         { Gold: 200, vial_of_pure_blood: 5, crystal_shard: 5, Crystals_Life: 50 },
     item_cost:    { iron_armor: 2, veterans_medal: 1 },
   },
   might_of_the_pure: {
@@ -184,7 +184,7 @@ const ITEM_DEFS = {
     icon:         'might_of_the_pure',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 150, Crystals_Life: 25, Crystals_Death: 25 },
+    cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25, Crystals_Death: 25 },
     item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
   },
   sanctified_bulwark: {
@@ -199,7 +199,7 @@ const ITEM_DEFS = {
     icon:         'sanctified_bulwark',
     rarity:       'epic',
     unique:       true,
-    cost:         { aggrails_signet: 2, Gold: 50, Crystals_Nature: 10  },
+    cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
     item_cost:    { iron_armor: 1, orb_of_light: 1 },
   },
   divine_circlet: {
@@ -215,7 +215,7 @@ const ITEM_DEFS = {
     icon:         'divine_circlet',
     rarity:       'epic',
     unique:       true,
-    cost:         { aggrails_signet: 2  },
+    cost:         { Gold: 100, aggrails_signet: 2  },
     item_cost:    { orb_of_pure_blood: 1, orb_of_light: 1 },
   },
   sanctified_guardian: {
@@ -231,7 +231,7 @@ const ITEM_DEFS = {
     icon:         'sanctified_guardian',
     rarity:       'epic',
     unique:       true,
-    cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25, Crystals_Air: 10 },
+    cost:         { aggrails_signet: 2, Gold: 190, Crystals_Life: 25, Crystals_Air: 10 },
     item_cost:    { iron_shield: 1 },
   },
   knights_oath: {
@@ -246,7 +246,7 @@ const ITEM_DEFS = {
     icon:         'knights_oath',
     rarity:       'epic',
     unique:       true,
-    cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
+    cost:         { aggrails_signet: 2, Gold: 190, Crystals_Life: 25 },
     item_cost:    { codex_aeternum: 1 },
   },
   iron_shield: {
@@ -288,7 +288,7 @@ const ITEM_DEFS = {
     icon:         'gift_of_eternity',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 50, Crystals_Life: 10, Crystals_Frost: 10 },
+    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10 },
     item_cost:    { codex_aeternum: 1, vampirics_dagger: 1 },
   },
   codex_militarum: {
@@ -330,7 +330,7 @@ const ITEM_DEFS = {
     icon:         'dragon_skin',
     rarity:       'mythic',
     unique:       true,
-    cost:         { crystal_dust: 3, Gold: 75, Crystals_Fire: 25 },
+    cost:         { crystal_dust: 3, Gold: 275, Crystals_Fire: 25 },
     item_cost:    { iron_armor: 1, fire_resistance_potion: 1, dragon_scale: 3 },
   },
   aldras_devotion: {
@@ -345,7 +345,7 @@ const ITEM_DEFS = {
     icon:         'aldras_devotion',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Life: 40, Crystals_Death: 35 },
+    cost:         { shard_of_devotion: 10, Gold: 275, Crystals_Life: 40, Crystals_Death: 35 },
     item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
   },
   aldras_patience: {
@@ -360,7 +360,7 @@ const ITEM_DEFS = {
     icon:         'aldras_patience',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_devotion: 10, Gold: 75, Crystals_Fire: 40, Crystals_Death: 35 },
+    cost:         { shard_of_devotion: 10, Gold: 275, Crystals_Fire: 40, Crystals_Death: 35 },
     item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
   },
   shroud_of_the_fallen: {
@@ -375,7 +375,7 @@ const ITEM_DEFS = {
     icon:         'shroud_of_the_fallen',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 50, Crystals_Death: 20 },
+    cost:         { grave_dust: 2, Gold: 150, Crystals_Death: 20 },
     item_cost:    { iron_armor: 1, mothers_gift: 1 },
   },
   mothers_gift: {
@@ -404,7 +404,7 @@ const ITEM_DEFS = {
     icon:         'shadow_robe',
     unique:       true,
     rarity:       'epic',
-    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Nature: 20 },
+    cost:         { Gold: 150, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Nature: 20 },
     item_cost:    { mothers_gift: 1},
     requires:     { region: 'any', level: 1 },
   },
@@ -496,7 +496,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Spirit', 'Caster'],
     icon:         'rimeheart',
     rarity:       'epic',
-    cost:         { Gold: 50, Crystals_Frost: 25 },
+    cost:         { Gold: 150, Crystals_Frost: 25 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 1 },
   },
   everliving_stalk: {
@@ -511,7 +511,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Demon', 'Zombie'],
     icon:         'everliving_stalk',
     rarity:       'epic',
-    cost:         { Gold: 100, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 20, Crystals_Air: 20, Crystals_Fire: 20 },
+    cost:         { Gold: 200, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 20, Crystals_Air: 20, Crystals_Fire: 20 },
   },
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
@@ -557,7 +557,7 @@ const ITEM_DEFS = {
     icon:         'fire_staff',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 50, Crystals_Fire: 25, aggrails_signet: 1 },
+    cost:         { Gold: 150, Crystals_Fire: 25, aggrails_signet: 1 },
     item_cost:    { fire_resistance_potion: 1, orb_of_fire: 1 },
   },
   burning_tyrant: {
@@ -573,7 +573,7 @@ const ITEM_DEFS = {
     icon:         'burning_tyrant',
     rarity:       'mythic',
     unique:       true,
-    cost:         { aggrails_signet: 2, grave_dust: 2 },
+    cost:         { Gold: 200, aggrails_signet: 2, grave_dust: 2 },
     item_cost:    { fire_staff: 1, orb_of_fire: 1, dragon_scale: 1 },
   },
   dragon_scale: {
@@ -666,7 +666,7 @@ const ITEM_DEFS = {
     icon:         'arcane_staff',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 50, Crystals_Frost: 10, Crystals_Air: 10, Crystals_Nature: 10, Crystals_Fire: 10, Crystals_Life: 10, Crystals_Death: 10  },
+    cost:         { Gold: 150, Crystals_Frost: 10, Crystals_Air: 10, Crystals_Nature: 10, Crystals_Fire: 10, Crystals_Life: 10, Crystals_Death: 10  },
     requires:     { region: 'any', level: 2 },
     item_cost:    { caster_hat: 1 }
   },
@@ -781,7 +781,7 @@ const ITEM_DEFS = {
     icon:         'crystal_sword',
     rarity:       'epic',
     unique:       true,
-    cost:         { crystal_shard: 1, Gold: 75, Crystals_Air: 20, Crystals_Frost: 20 },
+    cost:         { crystal_shard: 1, Gold: 175, Crystals_Air: 20, Crystals_Frost: 20 },
     item_cost:    { iron_sword: 1 },
   },
   lightbringer: {
@@ -797,7 +797,7 @@ const ITEM_DEFS = {
     icon:         'lightbringer',
     rarity:       'epic',
     unique:       true,
-    cost:         { crystal_shard: 1, Gold: 25 },
+    cost:         { crystal_shard: 1, Gold: 125 },
     item_cost:    { iron_sword: 1, orb_of_light: 1 },
   },
   forbidden_vow: {
@@ -813,7 +813,7 @@ const ITEM_DEFS = {
     icon:         'forbidden_vow',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 50, Crystals_Air: 15, Crystals_Frost: 15 },
+    cost:         { grave_dust: 2, Gold: 150, Crystals_Air: 15, Crystals_Frost: 15 },
     item_cost:    { iron_sword: 1, poisonous_dagger: 1 },
   },
   burning_fury: {
@@ -828,7 +828,7 @@ const ITEM_DEFS = {
     icon:         'burning_fury',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 90, Crystals_Air: 15, Crystals_Frost: 15 },
+    cost:         { Gold: 190, Crystals_Air: 15, Crystals_Frost: 15 },
     item_cost:    { iron_sword: 1 },
   },
   mace: {
@@ -891,7 +891,7 @@ const ITEM_DEFS = {
     icon:         'hatemace',
     rarity:       'epic',
     unique:       true,
-    cost:         { shard_of_might: 2, aggrails_signet:1, Gold: 40, Crystals_Death: 15, Crystals_Fire: 15 },
+    cost:         { shard_of_might: 2, aggrails_signet:1, Gold: 140, Crystals_Death: 15, Crystals_Fire: 15 },
     item_cost:    { shard_of_hate: 1, seal_of_power: 1},
   },
   seal_of_power: {
@@ -963,7 +963,7 @@ const ITEM_DEFS = {
     icon:         'staff_of_thaumaturgy',
     rarity:       'mythic',
     unique:       true,
-    cost:         { vial_of_pure_blood: 4, Gold: 125 },
+    cost:         { vial_of_pure_blood: 4, Gold: 325 },
     item_cost:    { seal_of_power: 1, orb_of_pure_blood: 2 },
   },
   grovekeeper_staff: {
@@ -1021,7 +1021,7 @@ const ITEM_DEFS = {
     icon:         'bone_barrier',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, shard_of_might: 1, shard_of_devotion: 1, Gold: 125 },
+    cost:         { grave_dust: 2, shard_of_might: 1, shard_of_devotion: 1, Gold: 225 },
     item_cost:    { iron_armor: 1 },
   },
   veil_of_discord: {
@@ -1036,7 +1036,7 @@ const ITEM_DEFS = {
     icon:         'veil_of_discord',
     rarity:       'epic',
     unique:       true,
-    cost:         { grave_dust: 2, Gold: 90 },
+    cost:         { grave_dust: 2, Gold: 190 },
     item_cost:    { cold_resistance_potion: 1, air_resistance_potion: 1, life_resistance_potion: 2 },
   },
   reliquary_of_dawn: {
@@ -1051,7 +1051,7 @@ const ITEM_DEFS = {
     icon:         'reliquary_of_dawn',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 110, Crystals_Life: 25, Crystals_Death: 10 },
+    cost:         { Gold: 210, Crystals_Life: 25, Crystals_Death: 10 },
     item_cost:    { life_resistance_potion: 3 },
   },
   cloak_of_evasion: {
@@ -1176,7 +1176,7 @@ const ITEM_DEFS = {
     icon:         'dragon_step',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15 },
+    cost:         { Gold: 200, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15 },
     item_cost:    { ranger_boots: 1, dragon_scale: 1}
   },
   glimmering_steps: {
@@ -1191,7 +1191,7 @@ const ITEM_DEFS = {
     icon:         'glimmering_steps',
     rarity:       'mythic',
     unique:       true,
-    cost:         { Gold: 25, Crystals_Nature: 10, Crystals_Fire: 10 },
+    cost:         { Gold: 225, Crystals_Nature: 10, Crystals_Fire: 10 },
     item_cost:    { dragon_step: 1, dragon_scale: 1}
   },
   stormglass_diadem: {
@@ -1206,7 +1206,7 @@ const ITEM_DEFS = {
     icon:         'stormglass_diadem',
     rarity:       'mythic',
     unique:       true,
-    cost:         { Gold: 125, Crystals_Air: 30 },
+    cost:         { Gold: 325, Crystals_Air: 30 },
     item_cost:    { air_resistance_potion: 2, seal_of_power: 1 },
   },
   iron_greaves: {
