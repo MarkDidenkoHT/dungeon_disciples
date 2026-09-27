@@ -3586,19 +3586,45 @@ class BattleEngine {
   // three cells is what used to put one there. `col` is 'front' or 'back'
   // RELATIVE TO THE ACTING SIDE, which is why it is a word here and a column
   // index only at the last moment (frontColFor in data/formation_synergies.js).
+  //
+  // A cell is as big as the unit that stands in it. `size` says which:
+  //
+  //   'tile'    one cell, at (row, col).
+  //   'row'     both columns of `row` — `col` is 'both' and is not read.
+  //   'column'  (row, col) and the row BELOW it, so `row` is the TOP of the two.
+  //
+  // The footprint the cell describes is matched against the occupant's OWN
+  // footprint, whole: a Golden Lion fills two cells and a litany that wants one
+  // has to say so. Matching an anchor index instead would have let a two-cell
+  // unit answer for a one-cell cell and left the other half of it unexamined.
+  litanyCellFootprint(cell, front) {
+    const col = cell.col === 'back' ? 1 - front : front;
+    const size = cell.size ?? 'tile';
+    if (size === 'row')    return [cellIndex(cell.row, 0), cellIndex(cell.row, 1)];
+    if (size === 'column') return [cellIndex(cell.row, col), cellIndex(cell.row + 1, col)];
+    return [cellIndex(cell.row, col)];
+  }
+
   litanySpeakers(def, actor) {
     const front = actor.side === 'enemy' ? 0 : 1;
     const speakers = {};
+    const taken = new Set();
     for (const cell of def.formation.cells) {
-      const col = cell.col === 'back' ? 1 - front : front;
+      const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');
       const occ = this.combatants.find(c =>
-        c.side === actor.side && c.alive && c.cellIndex === cellIndex(cell.row, col));
+        c.side === actor.side && c.alive &&
+        this.getFootprint(c).slice().sort((a, b) => a - b).join(',') === want);
       if (!occ) return null;
+      // One unit cannot answer for two cells. Cells that overlap on the board are
+      // an authoring mistake rather than a state the engine can reach, so this is
+      // a guard, not a rule.
+      if (taken.has(occ.id)) return null;
       if (cell.role === 'lead') {
         if (occ !== actor) return null;
       } else if (!cell.ids.includes(this.litanyUnitId(occ))) {
         return null;
       }
+      taken.add(occ.id);
       speakers[cell.key] = occ;
     }
     return speakers;
@@ -3608,6 +3634,12 @@ class BattleEngine {
   // the chorus has to speak ahead of it. Returns the litany that fired (so the
   // caller can pay the reward and suppress the ordinary kill/death barks), or
   // null.
+  //
+  // The lead is whoever LANDS THE BLOW, which is not always the litany's hero: a
+  // healer cannot kill, so the Artificer and the Choir Regent sing from a chorus
+  // cell and one of their own constructs or choristers leads. A lead list whose
+  // units do not attack is a litany that can never fire — see the lead check in
+  // data/litanies.js.
   fireLitany(actor, target) {
     // Not yet drilled. The blow still lands — it is simply an ordinary kill,
     // with the ordinary kill and death barks the litany would have replaced.
@@ -3647,6 +3679,8 @@ class BattleEngine {
   //   enemy_initiative_flat  every living enemy loses this much initiative (min 1)
   //   enemy_armor_flat       every living enemy loses this much armor (min 0)
   //   enemy_damage_flat      every living enemy takes this much damage
+  //   enemy_decay_flat       every living enemy gains a decay pool this big, so
+  //                          healing is eaten before it reaches their HP
   //   ally_heal_flat         every living ally heals this much
   //   ally_shield_flat       every living ally gains a shield pool this big
   //   ally_initiative_flat   every living ally gains this much initiative
@@ -3660,10 +3694,12 @@ class BattleEngine {
   // so a death is closed out properly here.
   //
   // The reward is what the chorus SANG, so the fields on a litany follow the
-  // units its formation names: a priest cell pays ally_heal_flat, a Standart
-  // Bearer cell pays ally_shield_flat, a Flame Spawn cell pays enemy_damage_flat.
-  // Nothing here enforces that - it is an authoring rule in data/litanies.js -
-  // but a reward that does not match its singers is a bug in the data.
+  // units its formation names: a heal action (a priest, a mender, an ash singer)
+  // pays ally_heal_flat, a shield action pays ally_shield_flat, a decay action
+  // pays enemy_decay_flat, and an attacker pays enemy_damage_flat or the stagger
+  // fields. Nothing here enforces that - it is an authoring rule in
+  // data/litanies.js - but a reward that does not match its singers is a bug in
+  // the data.
   //
   // What the reward does NOT do is respect the singers' own targeting rules: a
   // litany heals every living ally, Construct and Zombie alike, where the
@@ -3706,6 +3742,11 @@ class BattleEngine {
           message: `${def.name} — ${c.unit_name} heals ${healed}`,
         });
       }
+    }
+    if (r.enemy_decay_flat > 0) {
+      // Through applyDecay, so the pool caps and logs itself exactly as a Pale
+      // Mourner's own touch does.
+      for (const c of foes) this.applyDecay(c, r.enemy_decay_flat, { name: def.name, dispellable: false }, actor);
     }
     if (r.ally_shield_flat > 0) {
       // Through grantShield, so the pool caps, registers its effect icon and

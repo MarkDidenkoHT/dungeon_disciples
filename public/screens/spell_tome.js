@@ -218,6 +218,9 @@ const TOME_TEXT = {
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
+  // A `row`-sized unit stands in both columns at once, so the cell it fills has
+  // no single column to name.
+  litanyColBoth:   { en: 'both',  ru: 'обе' },
   // A litany places each cell itself, front column or back, so the label has to
   // read the placement out rather than assert one. Cells arrive already in key
   // order ("A: back column, row 1").
@@ -225,9 +228,11 @@ const TOME_TEXT = {
     en: cells => `Cells to man — ${cells}.`,
     ru: cells => `Занять клетки — ${cells}.`,
   },
+  // `col` arrives already localized, and `row` may be a span ("1-2") for a cell
+  // held by a two-cell unit.
   litanyGridCellAria: {
     en: (key, col, row) => `${key}: ${col} column, row ${row}`,
-    ru: (key, col, row) => `${key}: ${col === 'Front' ? 'передняя' : 'задняя'} колонна, ряд ${row}`,
+    ru: (key, col, row) => `${key}: ${col === 'Фронт' ? 'передняя' : col === 'Тыл' ? 'задняя' : 'обе'} колонна, ряд ${row}`,
   },
   litanyRoles: {
     chorus: { en: 'Chorus', ru: 'Хор' },
@@ -773,10 +778,25 @@ export function renderSpellTome(root, { player }) {
       // of them can share a row across the two columns (see data/litanies.js).
       // The letters are authored rather than derived: the data says A, and the
       // band, the board and the verse that names its speaker all say A.
+      // A cell is as big as the unit that stands in it, so it can cover two
+      // squares of the board: 'row' spans both columns of its row, 'column' its
+      // row and the one below. Both squares carry the same letter — a Golden Lion
+      // is one speaker standing in two places, and drawing only its anchor made
+      // the other half of it look free to fill.
       const cells = [...(def.formation?.cells || [])]
         .sort((a, b) => String(a.key).localeCompare(String(b.key)));
-      const keyOfCell = new Map(cells.map(c => [`${c.row}:${c.col}`, c.key]));
-      const roleOfCell = new Map(cells.map(c => [`${c.row}:${c.col}`, c.role]));
+      const squaresOf = c => {
+        const size = c.size || 'tile';
+        if (size === 'row')    return [`${c.row}:back`, `${c.row}:front`];
+        if (size === 'column') return [`${c.row}:${c.col}`, `${c.row + 1}:${c.col}`];
+        return [`${c.row}:${c.col}`];
+      };
+      const keyOfCell  = new Map();
+      const roleOfCell = new Map();
+      for (const c of cells) for (const sq of squaresOf(c)) {
+        keyOfCell.set(sq, c.key);
+        roleOfCell.set(sq, c.role);
+      }
 
       const rows = cells.map(cell => {
         const roleLabel = TOME_TEXT.litanyRoles[cell.role]?.[lang] || cap(cell.role || '');
@@ -796,8 +816,9 @@ export function renderSpellTome(root, { player }) {
              aria-label="${escapeHtml(TOME_TEXT.litanyGridAria[lang](
                cells.map(c => TOME_TEXT.litanyGridCellAria[lang](
                  c.key,
-                 t(c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
-                 (c.row ?? 0) + 1)).join('; ')))}">
+                 t(c.size === 'row' ? 'litanyColBoth'
+                   : c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
+                 c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
           <span class="litany-grid-col-label">${escapeHtml(t('litanyColBack'))}</span>
           <span class="litany-grid-col-label">${escapeHtml(t('litanyColFront'))}</span>
           ${Array.from({ length: GRID_ROWS }, (_, r) => ['back', 'front'].map(col => {
