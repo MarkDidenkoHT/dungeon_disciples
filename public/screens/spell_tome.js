@@ -184,7 +184,7 @@ const TOME_TEXT = {
   litaniesTitle: { en: 'Litanies',             ru: 'Литании' },
   litaniesBlurb: {
     en: 'A litany is a staged execution. Stand the exact formation below and the chorus speaks before the lead strikes — the killing blow is held back for the last verse.',
-    ru: 'Литания — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и хор заговорит раньше, чем вождь нанесёт удар: смертельный удар придержан до последнего стиха.',
+    ru: 'Литания — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и Свита выступит раньше, чем Инициатор нанесёт удар: смертельный удар придержан до последнего стиха.',
   },
   litanyLocked: {
     en: `🔒 Requires Proving Grounds level ${LITANY_BUILDING_LEVEL}`,
@@ -205,7 +205,7 @@ const TOME_TEXT = {
   },
   litanyTargetNote: {
     en: 'Fires as the lead is about to kill one of these',
-    ru: 'Срабатывает, когда вождь готов убить одного из них',
+    ru: 'Срабатывает, когда Инициатор готов добить одного из них',
   },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   // The formation is a PLACE on the board, not a list, so the card draws the
@@ -237,8 +237,9 @@ const TOME_TEXT = {
   litanyRoles: {
     // The Russian is NOT a translation of the English here. "Хор" is the faction
     // and the ability of that name, and "Вождь" is a chieftain — both read as
-    // something else on this page. These name the ROLE in the formation instead.
-    chorus: { en: 'Chorus', ru: 'Поддержка' },
+    // something else on this page. "Свита" also covers the cells that fight:
+    // eight of the eighteen litanies have a chorus that swings rather than sings.
+    chorus: { en: 'Chorus', ru: 'Свита' },
     lead:   { en: 'Lead',   ru: 'Инициатор' },
   },
   litanyNone: {
