@@ -91,6 +91,9 @@ const DAILY_REWARDS = [
   {
     id:    'valor',
     icon:  '⚔',
+    // The same art the Engraving page's Valor chip draws; the glyph stays as the
+    // fallback if it 404s.
+    art:   'assets/icons/recources/valor.png',
     label: { en: '25 Valor', ru: '25 Доблести' },
     // The engraving currency, otherwise earned only from the Colossus.
     resources: { Valor: 25 },
