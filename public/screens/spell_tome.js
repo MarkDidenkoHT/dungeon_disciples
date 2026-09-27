@@ -229,10 +229,6 @@ const TOME_TEXT = {
     en: n => `any 1 of ${n}`,
     ru: n => `любой 1 из ${n}`,
   },
-  litanyTargetNote: {
-    en: 'Fires as the lead is about to kill one of these',
-    ru: 'Срабатывает, когда Инициатор готов добить одного из них',
-  },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   // The formation is a PLACE on the board, not a list, so the card draws the
   // player's half of the battle grid and keys each marked cell to the band that
@@ -935,7 +931,6 @@ export function renderSpellTome(root, { player }) {
           ${targetHtml ? `
             <section class="litany-section">
               <h4 class="litany-section-title">${escapeHtml(t('litanyTarget'))}</h4>
-              <p class="litany-section-note">${escapeHtml(t('litanyTargetNote'))}</p>
               <div class="litany-formation">${targetHtml}</div>
             </section>` : ''}
 

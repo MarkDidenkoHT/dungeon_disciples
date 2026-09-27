@@ -472,8 +472,11 @@ respect the singers' own targeting rules: a litany heals every living ally, Cons
 and Zombie alike, where a priest's own Heal can touch neither. The miracle is the
 litany's, not the unit's.
 
-`message` / `message_ru` is what the log and the Litanies page print, and it is written
-by hand to describe the fields beside it - not derived from them.
+`message` / `message_ru` is what the log and the Litanies page print, and it is composed
+FROM the fields beside it - at most two clauses, one per side, each naming what its
+number is ("Allies are healed for 5 HP and enemies take 5 damage."). It carries no
+flavour: the litany's name is already the heading above it, and a sentence written apart
+from the fields is a second place to get them wrong.
 
 Rulings:
 

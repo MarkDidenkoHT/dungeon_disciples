@@ -103,8 +103,10 @@
 // pool at POOL_CAP_PCT of max HP, so a unit already at the ceiling gains nothing
 // from those - the same as any other buff.
 //
-// `message` / `message_ru` is what the battle log and the Litanies page print,
-// so it has to describe the fields above it. It is not derived from them.
+// `message` / `message_ru` is what the battle log and the Litanies page print. It
+// is written FROM the fields above it - one clause per side, naming what each
+// number is - so the sentence and the mechanics cannot disagree. Edit it by hand
+// and it is yours; just keep it saying what the fields do.
 //
 // ── Which one fires ──────────────────────────────────────────────────────────
 //
@@ -165,8 +167,8 @@ const LITANIES = [
     ],
     reward: {
       enemy_initiative_flat: 10,
-      message:    'Profane Chorus - the Light breaks them: every enemy loses 10 initiative.',
-      message_ru: 'Нечестивый Хор — Свет ломает их: все враги теряют 10 инициативы.',
+      message:    'Enemies lose 10 initiative.',
+      message_ru: 'Враги теряют 10 инициативы.',
     },
     once_per: 'battle',
   },
@@ -219,8 +221,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       ally_shield_flat: 5,
-      message:    'The Unbroken Banner - the priest mends and the banner wards: every ally heals 5 HP and gains a 5 shield.',
-      message_ru: 'Несломленное знамя — жрец исцеляет, знамя защищает: все союзники лечатся на 5 HP и получают щит 5.',
+      message:    'Allies are healed for 5 HP and gain a 5 shield.',
+      message_ru: 'Союзники лечатся на 5 HP и получают щит 5.',
     },
     once_per: 'battle',
   },
@@ -275,8 +277,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       enemy_initiative_flat: 5,
-      message:    'The Cinder Verdict - the claws close on them: every enemy takes 5 damage and loses 5 initiative.',
-      message_ru: 'Приговор угля — когти смыкаются: все враги получают 5 урона и теряют 5 инициативы.',
+      message:    'Enemies take 5 damage and lose 5 initiative.',
+      message_ru: 'Враги получают 5 урона и теряют 5 инициативы.',
     },
     once_per: 'battle',
   },
@@ -328,8 +330,8 @@ const LITANIES = [
     reward: {
       ally_shield_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Winter Sermon - the ward holds and the lion strikes: every ally gains a 5 shield, every enemy takes 5 damage.',
-      message_ru: 'Зимняя проповедь — щит держит, лев бьёт: все союзники получают щит 5, все враги получают 5 урона.',
+      message:    'Allies gain a 5 shield and enemies take 5 damage.',
+      message_ru: 'Союзники получают щит 5, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -384,8 +386,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Iron Sentence - the crew works: every ally is mended for 5 HP, every enemy takes 5 damage.',
-      message_ru: 'Железный приговор — расчёт работает: все союзники восстанавливают 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -439,8 +441,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       ally_shield_flat: 5,
-      message:    'The Last Volley - the engine is kept and the ward is raised: every ally is mended for 5 HP and gains a 5 shield.',
-      message_ru: 'Последний залп — машину держат, щит поднят: все союзники восстанавливают 5 HP и получают щит 5.',
+      message:    'Allies are healed for 5 HP and gain a 5 shield.',
+      message_ru: 'Союзники лечатся на 5 HP и получают щит 5.',
     },
     once_per: 'battle',
   },
@@ -492,8 +494,8 @@ const LITANIES = [
     ],
     reward: {
       enemy_initiative_flat: 10,
-      message:    'The Clean Passage - every enemy loses 10 initiative.',
-      message_ru: 'Чистый переход — все враги теряют 10 инициативы.',
+      message:    'Enemies lose 10 initiative.',
+      message_ru: 'Враги теряют 10 инициативы.',
     },
     once_per: 'battle',
   },
@@ -544,8 +546,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Carried Cup - the flesh is sewn and the blades fall: every ally heals 5 HP, every enemy takes 5 damage.',
-      message_ru: 'Несомая чаша — плоть сшита, клинки падают: все союзники лечатся на 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -599,8 +601,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       enemy_armor_flat: 5,
-      message:    'The First Sorrow - every enemy takes 5 damage and loses 5 armor.',
-      message_ru: 'Первая скорбь — все враги получают 5 урона и теряют 5 брони.',
+      message:    'Enemies take 5 damage and lose 5 armor.',
+      message_ru: 'Враги получают 5 урона и теряют 5 брони.',
     },
     once_per: 'battle',
   },
@@ -653,8 +655,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Pale Procession - the embrace covers and the angel falls on them: every ally heals 5 HP, every enemy takes 5 damage.',
-      message_ru: 'Бледная процессия — объятие укрывает, ангел падает на них: все союзники лечатся на 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -708,8 +710,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       enemy_decay_flat: 5,
-      message:    'The Long Wailing - the wail and the rot: every enemy takes 5 damage and carries 5 decay.',
-      message_ru: 'Долгий плач — плач и тлен: все враги получают 5 урона и 5 Тлена.',
+      message:    'Enemies take 5 damage and gain 5 decay.',
+      message_ru: 'Враги получают 5 урона и 5 Тлена.',
     },
     once_per: 'battle',
   },
@@ -761,8 +763,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    "Mother's Answer - every ally heals 5 HP, every enemy takes 5 damage.",
-      message_ru: 'Ответ Матери — все союзники лечатся на 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -819,8 +821,8 @@ const LITANIES = [
     reward: {
       enemy_initiative_flat: 10,
       ally_heal_flat: 5,
-      message:    'The Taken Breath - every enemy loses 10 initiative, every ally heals 5 HP.',
-      message_ru: 'Отнятое дыхание — все враги теряют 10 инициативы, все союзники восстанавливают 5 HP.',
+      message:    'Allies are healed for 5 HP and enemies lose 10 initiative.',
+      message_ru: 'Союзники лечатся на 5 HP, враги теряют 10 инициативы.',
     },
     once_per: 'battle',
   },
@@ -872,8 +874,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Ash Antiphon - the song mends and the fire answers: every ally heals 5 HP, every enemy takes 5 damage.',
-      message_ru: 'Пепельный антифон — песнь исцеляет, огонь отвечает: все союзники лечатся на 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -929,8 +931,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       ally_heal_flat: 5,
-      message:    'The Iron Homily - the mace answers the song: every enemy takes 5 damage, every ally heals 5 HP.',
-      message_ru: 'Железная проповедь — булава отвечает песне: все враги получают 5 урона, все союзники восстанавливают 5 HP.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -984,8 +986,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       enemy_initiative_flat: 5,
-      message:    'The Shut Gate - stone and fire close the way: every enemy takes 5 damage and loses 5 initiative.',
-      message_ru: 'Затворённые врата — камень и огонь закрывают путь: все враги получают 5 урона и теряют 5 инициативы.',
+      message:    'Enemies take 5 damage and lose 5 initiative.',
+      message_ru: 'Враги получают 5 урона и теряют 5 инициативы.',
     },
     once_per: 'battle',
   },
@@ -1038,8 +1040,8 @@ const LITANIES = [
     reward: {
       enemy_damage_flat: 5,
       enemy_armor_flat: 5,
-      message:    'The Kindling Creed - every enemy takes 5 damage and loses 5 armor.',
-      message_ru: 'Символ разжигания — все враги получают 5 урона и теряют 5 брони.',
+      message:    'Enemies take 5 damage and lose 5 armor.',
+      message_ru: 'Враги получают 5 урона и теряют 5 брони.',
     },
     once_per: 'battle',
   },
@@ -1094,8 +1096,8 @@ const LITANIES = [
     reward: {
       ally_heal_flat: 5,
       enemy_damage_flat: 5,
-      message:    'The Seventh Ember - the song mends and the stone flies: every ally heals 5 HP, every enemy takes 5 damage.',
-      message_ru: 'Седьмой уголь — песнь исцеляет, камень летит: все союзники лечатся на 5 HP, все враги получают 5 урона.',
+      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
+      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
