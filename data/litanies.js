@@ -42,6 +42,22 @@
 // belong in the front column, and `pref_position` in data/units.js is what says
 // which is which.
 //
+// ── The target ────────────────────────────────────────────────────────────────
+//
+// FIVE SLOTS, and a slot is a whole unit LINE, every tier of it:
+//
+//   1-3  the three hero lines of the faction this litany is staged against
+//   4    the PvE boss of the same quarrel - Sister Aldra for the living, Malgrath
+//        the Undying for the Grail
+//   5    another region's boss, or left empty for one
+//
+// Slot 5 carries Cryodrox (the Glittering Abyss) on nine of the eighteen - one of
+// each hero's two - and is RESERVED on the other nine: the next embark region's
+// boss goes in those, and nothing else about the litany changes.
+//
+// Slot 4 exists because a list of enemy heroes alone makes a litany a drill that
+// can only fire in a PvP match, which most hosts never see.
+//
 // ── The lead ──────────────────────────────────────────────────────────────────
 //
 // The lead is whoever LANDS THE BLOW, and that is not always the hero. A unit
@@ -144,8 +160,11 @@ const LITANIES = [
         'e21', 'e211', 'e2111', 'e212', 'e2121',
       ] },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -200,8 +219,10 @@ const LITANIES = [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -209,6 +230,7 @@ const LITANIES = [
       'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
       'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
       'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -256,8 +278,10 @@ const LITANIES = [
         'e412', 'e4121',
       ] },
     ] },
-    // Target: Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice — plus
-    // Malgrath the Undying, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
+    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
@@ -265,6 +289,7 @@ const LITANIES = [
       'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
       'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
       'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -309,8 +334,11 @@ const LITANIES = [
         'e3', 'e31', 'e311', 'e3111',
       ] },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -365,8 +393,11 @@ const LITANIES = [
         'e62', 'e621', 'e6211',
       ] },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -420,8 +451,10 @@ const LITANIES = [
         'e432', 'e4321',
       ] },
     ] },
-    // Target: Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice — plus
-    // Malgrath the Undying, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
+    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
@@ -429,6 +462,7 @@ const LITANIES = [
       'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
       'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
       'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -474,8 +508,11 @@ const LITANIES = [
         'gs1', 'gs11', 'gs111', 'gs1111',
       ] },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -525,8 +562,10 @@ const LITANIES = [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -534,6 +573,7 @@ const LITANIES = [
       'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
       'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
       'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -580,8 +620,11 @@ const LITANIES = [
         'gs31', 'gs312', 'gs3121',
       ] },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -634,8 +677,10 @@ const LITANIES = [
         'gs4', 'gs41', 'gs411', 'gs4111',
       ] },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -643,6 +688,7 @@ const LITANIES = [
       'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
       'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
       'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -689,8 +735,11 @@ const LITANIES = [
         'gs73', 'gs731', 'gs7311',
       ] },
     ] },
-    // Target: Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant —
-    // plus Sister Aldra, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
@@ -742,8 +791,10 @@ const LITANIES = [
         'gs2', 'gs21', 'gs211', 'gs2111',
       ] },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -751,6 +802,7 @@ const LITANIES = [
       'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
       'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
       'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -800,8 +852,10 @@ const LITANIES = [
         'd4', 'd41', 'd411', 'd4111',
       ] },
     ] },
-    // Target: Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice — plus
-    // Malgrath the Undying, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
+    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
@@ -809,6 +863,7 @@ const LITANIES = [
       'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
       'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
       'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -853,8 +908,11 @@ const LITANIES = [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -910,8 +968,11 @@ const LITANIES = [
         'd52', 'd521', 'd5211',
       ] },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -965,8 +1026,10 @@ const LITANIES = [
         'd7', 'd71', 'd711', 'd7111',
       ] },
     ] },
-    // Target: Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice — plus
-    // Malgrath the Undying, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
+    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
@@ -974,6 +1037,7 @@ const LITANIES = [
       'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
       'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
       'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -1019,8 +1083,10 @@ const LITANIES = [
         'd7', 'd71', 'd711', 'd7111',
       ] },
     ] },
-    // Target: Every Empire hero — Paladin, Inquisitor, Artificer — plus Sister Aldra,
-    // every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
+    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
+    //   5    Cryodrox, the Glittering Abyss.
     target: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
@@ -1028,6 +1094,7 @@ const LITANIES = [
       'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
       'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
       'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
+      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -1075,8 +1142,11 @@ const LITANIES = [
         'd321', 'd3211',
       ] },
     ] },
-    // Target: Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice — plus
-    // Malgrath the Undying, every tier, as the PvE half (data/units.js, enemies).
+    // Target - five slots:
+    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
+    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
+    //   5    RESERVED - empty until the next embark region brings a boss worth
+    //        staging this over. Add that line's ids here and nothing else changes.
     target: { ids: [
       'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
