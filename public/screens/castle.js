@@ -820,11 +820,6 @@ export function renderCastle(root, params = {}) {
       // Build sits to the LEFT of the portraits, deconstruct to the RIGHT, so
       // the whole bottom strip is one thumb-height row: act, choose, remove.
       const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
-      // The button used to be a bare ⚒ with its words in `title` — which a touch
-      // device never shows, so the control that spends the resources was an
-      // unlabelled glyph. `confirmLabel` is the long form (action · building ·
-      // cost) and stays on title/aria; this short one is printed IN the button.
-      const actionLabel  = s.actionLabel || opts.actionLabel || CASTLE_TEXT.confirm[castleLang];
       const pickName     = unitName(s.unit) || s.buildingLabel || '';
       const cards = slides.map((slide, i) => {
         // Layer 2 holds halls, not soldiers, so a branch card there had nothing
@@ -883,7 +878,6 @@ export function renderCastle(root, params = {}) {
             <button class="frame-action frame-action--confirm" id="slider-confirm"
                     title="${confirmLabel}" aria-label="${confirmLabel}">
               <span class="frame-action-glyph" aria-hidden="true">⚒</span>
-              <span class="frame-action-label">${actionLabel}</span>
             </button>
           </div>
           <div class="prep-track-wrap branch-track-wrap">

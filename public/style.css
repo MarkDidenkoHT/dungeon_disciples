@@ -10258,13 +10258,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 }
 
 /* The band's letter, tying it back to a cell in the diagram above. */
-html[lang="ru"] .litany-section-title,
-html[lang="ru"] .litany-grid-col-label,
-html[lang="ru"] .litany-row-role {
-  text-transform: none;
-  letter-spacing: 0.02em;
-}
-
 .litany-row-key {
   display: inline-flex;
   align-items: center;
@@ -10398,4 +10391,53 @@ html[lang="ru"] .litany-row-role {
   border-radius: 7px;
   border: 1px solid rgba(var(--accent-rgb), 0.28);
   background: rgba(var(--accent-rgb), 0.07);
+}
+
+html[lang="ru"] .ability-modal-type,
+html[lang="ru"] .action-slot-label,
+html[lang="ru"] .battle-half-label,
+html[lang="ru"] .binfo-head,
+html[lang="ru"] .castle-node-hint,
+html[lang="ru"] .core-stat-label,
+html[lang="ru"] .daily-section-label,
+html[lang="ru"] .detail-action-label,
+html[lang="ru"] .detail-unit-badge,
+html[lang="ru"] .embark-event-section-label,
+html[lang="ru"] .embark-title,
+html[lang="ru"] .errand-reroll-ad,
+html[lang="ru"] .errand-section-label,
+html[lang="ru"] .event-section-label,
+html[lang="ru"] .favor-btn-ad,
+html[lang="ru"] .favor-modal-adbadge,
+html[lang="ru"] .frame-action-label,
+html[lang="ru"] .item-card-rarity,
+html[lang="ru"] .item-card-unique,
+html[lang="ru"] .items-tab,
+html[lang="ru"] .library-line-label,
+html[lang="ru"] .library-section-label,
+html[lang="ru"] .library-tagchip-role,
+html[lang="ru"] .litany-grid-col-label,
+html[lang="ru"] .litany-row-role,
+html[lang="ru"] .litany-section-title,
+html[lang="ru"] .loading-title,
+html[lang="ru"] .modal-header-pill,
+html[lang="ru"] .prep-side-label,
+html[lang="ru"] .promo-box-input,
+html[lang="ru"] .pvp-placeholder-soon,
+html[lang="ru"] .result-outcome,
+html[lang="ru"] .reward-xp-head,
+html[lang="ru"] .settings-danger-title,
+html[lang="ru"] .settings-header,
+html[lang="ru"] .settings-section-title,
+html[lang="ru"] .spell-modal-type,
+html[lang="ru"] .tier-tab,
+html[lang="ru"] .tourney-board-title,
+html[lang="ru"] .trait-label,
+html[lang="ru"] .turn-timer-label,
+html[lang="ru"] .unit-progress-key,
+html[lang="ru"] .unit-slide-badge,
+html[lang="ru"] .unit-tag,
+html[lang="ru"] .upgrade-unit-label {
+  text-transform: none;
+  letter-spacing: 0.02em;
 }

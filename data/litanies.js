@@ -709,7 +709,7 @@ const LITANIES = [
       enemy_damage_flat: 5,
       enemy_decay_flat: 5,
       message:    'The Long Wailing - the wail and the rot: every enemy takes 5 damage and carries 5 decay.',
-      message_ru: 'Долгий плач — плач и гниение: все враги получают 5 урона и несут 5 гнили.',
+      message_ru: 'Долгий плач — плач и тлен: все враги получают 5 урона и 5 Тлена.',
     },
     once_per: 'battle',
   },
