@@ -648,23 +648,48 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   // Entry types that mean "this unit has taken its turn".
-  // One verse of a litany: the speaker's toast, and for a chorus verse the
-  // speaker's own attack animation played at the victim. The strike is COSMETIC
-  // — no damage, no triggers, no turn spent (the engine never rolled one) — so
-  // range is not checked either: a mace swing plays on a back-column target just
-  // the same. See docs/combat-barks-design.md §5.3.
+  // One verse of a litany: the speaker's toast, and the speaker DOING what it
+  // does. Cosmetic either way — no damage, no heal, no triggers, no turn spent
+  // (the engine never rolled one), and the litany's own reward is what actually
+  // pays out. See docs/combat-barks-design.md §5.3.
+  //
+  //   'visual'   a fighter's blow, played at the victim. Range is not checked:
+  //              a mace swing plays on a back-column target just the same.
+  //   'support'  a healer's, shielder's or singer's own action, played over
+  //              ITSELF rather than at the corpse. A priest in a litany raises
+  //              holy_heal where a fighter swings — playing its heal animation
+  //              at the victim read as blessing the body, and a chorus of
+  //              priests is exactly what the Unbroken Banner is.
+  //   'lethal'   the lead's verse. No animation of its own: the killing blow it
+  //              belongs to follows immediately after it in the log.
   async function playLitanyVerse(entry) {
     const t0 = Date.now();
     showBarkToast(entry.actorId, barkText(entry), { litany: true });
-    if (entry.strike === 'visual') {
-      const speaker = state.combatants.find(u => u.id === entry.actorId);
+    if (entry.strike === 'visual' || entry.strike === 'support') {
+      const support    = entry.strike === 'support';
+      const speaker    = state.combatants.find(u => u.id === entry.actorId);
       const effectName = speaker?.unit_data?.action_animation;
       const actorCell  = root.querySelector(`.battle-cell[data-id="${entry.actorId}"]`);
-      const targetCell = targetCellFor(entry);
+      // A support animation belongs on the HOST, not on the corpse: aiming a
+      // heal at the victim read as blessing the body. The self-centred effects
+      // (holy_heal, shield_ward, repair, mend_flesh) ignore a target and draw on
+      // the cell they are given; a fan-out one (pale_embrace) needs the cells
+      // spelled out, so the singer's own side is handed to it — which is also
+      // who the litany's reward reaches.
+      const sideCells = support
+        ? state.combatants
+            .filter(u => u.side === speaker?.side && u.alive)
+            .map(u => root.querySelector(`.battle-cell[data-id="${u.id}"]`))
+            .filter(Boolean)
+        : [];
+      const targetCell = support ? actorCell : targetCellFor(entry);
       const sfx = speaker?.unit_data?.action_sfx;
       if (sfx) playAbilitySound(String(sfx).replace(/\.mp3$/i, ''));
       if (effectName && EFFECTS[effectName] && actorCell) {
-        await EFFECTS[effectName](actorCell, { isEnemy: speaker?.side === 'enemy', targetCell, isHeal: false });
+        await EFFECTS[effectName](actorCell, {
+          isEnemy: speaker?.side === 'enemy', targetCell, isHeal: support,
+          ...(support ? { targetCells: sideCells } : {}),
+        });
       }
       const rest = LITANY_VERSE_MS - (Date.now() - t0);
       if (rest > 0) await new Promise(r => setTimeout(r, rest));

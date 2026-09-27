@@ -3576,22 +3576,30 @@ class BattleEngine {
     return c?.unit_data?.unit_id ?? c?.unit_data?.id ?? null;
   }
 
-  // The speakers a litany's formation demands, as { row0, row1, ... }, or null
-  // if a single cell of it is wrong. All-or-nothing: no substitutes, no shorter
-  // version. The column is the ACTING side's own front column.
+  // The speakers a litany's formation demands, keyed by the cell's own letter
+  // ({ A, B, C }), or null if a single cell of it is wrong. All-or-nothing: no
+  // substitutes, no shorter version.
+  //
+  // A formation is a list of CELLS, each naming its row AND its column, so a
+  // litany can put its lead on the line and its singers behind it — a priest
+  // does not belong in the front rank, and saying "the front column" for all
+  // three cells is what used to put one there. `col` is 'front' or 'back'
+  // RELATIVE TO THE ACTING SIDE, which is why it is a word here and a column
+  // index only at the last moment (frontColFor in data/formation_synergies.js).
   litanySpeakers(def, actor) {
-    const col = actor.side === 'enemy' ? 0 : 1;
+    const front = actor.side === 'enemy' ? 0 : 1;
     const speakers = {};
-    for (const row of def.formation.rows) {
+    for (const cell of def.formation.cells) {
+      const col = cell.col === 'back' ? 1 - front : front;
       const occ = this.combatants.find(c =>
-        c.side === actor.side && c.alive && c.cellIndex === cellIndex(row.row, col));
+        c.side === actor.side && c.alive && c.cellIndex === cellIndex(cell.row, col));
       if (!occ) return null;
-      if (row.role === 'lead') {
+      if (cell.role === 'lead') {
         if (occ !== actor) return null;
-      } else if (!row.ids.includes(this.litanyUnitId(occ))) {
+      } else if (!cell.ids.includes(this.litanyUnitId(occ))) {
         return null;
       }
-      speakers[`row${row.row}`] = occ;
+      speakers[cell.key] = occ;
     }
     return speakers;
   }
@@ -3640,6 +3648,7 @@ class BattleEngine {
   //   enemy_armor_flat       every living enemy loses this much armor (min 0)
   //   enemy_damage_flat      every living enemy takes this much damage
   //   ally_heal_flat         every living ally heals this much
+  //   ally_shield_flat       every living ally gains a shield pool this big
   //   ally_initiative_flat   every living ally gains this much initiative
   //   ally_armor_flat        every living ally gains this much armor
   //   ally_resist_flat       { school: amount } added to every living ally
@@ -3649,6 +3658,17 @@ class BattleEngine {
   // fires no on-hit triggers. A litany is a miracle, and the field it prints
   // ("5 to every enemy") is the number a player should see happen. It CAN kill,
   // so a death is closed out properly here.
+  //
+  // The reward is what the chorus SANG, so the fields on a litany follow the
+  // units its formation names: a priest cell pays ally_heal_flat, a Standart
+  // Bearer cell pays ally_shield_flat, a Flame Spawn cell pays enemy_damage_flat.
+  // Nothing here enforces that - it is an authoring rule in data/litanies.js -
+  // but a reward that does not match its singers is a bug in the data.
+  //
+  // What the reward does NOT do is respect the singers' own targeting rules: a
+  // litany heals every living ally, Construct and Zombie alike, where the
+  // priest's own Heal cannot touch either (TARGET_TAG_RULES). The miracle is the
+  // litany's, not the unit's.
   applyLitanyReward(def, actor) {
     const r = def?.reward;
     if (!r) return;
@@ -3686,6 +3706,11 @@ class BattleEngine {
           message: `${def.name} — ${c.unit_name} heals ${healed}`,
         });
       }
+    }
+    if (r.ally_shield_flat > 0) {
+      // Through grantShield, so the pool caps, registers its effect icon and
+      // logs itself the same way a Standart Bearer's own ward does.
+      for (const c of allies) this.grantShield(c, r.ally_shield_flat, { name: def.name, dispellable: false }, actor);
     }
     if (r.enemy_damage_flat > 0) {
       for (const c of foes) {

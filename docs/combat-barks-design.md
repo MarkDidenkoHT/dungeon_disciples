@@ -175,7 +175,7 @@ Added:
 
 ## 5. Litanies
 
-Revised 2026-09-23. **`profane_chorus`, `clean_passage` and `taken_breath` are built** — [data/litanies.js](../data/litanies.js),
+Revised 2026-09-27. **21 litanies are built - two or three per hero, for all nine heroes** — [data/litanies.js](../data/litanies.js),
 `fireLitany` / `applyLitanyReward` in [utils/battle-engine.js](../utils/battle-engine.js),
 playback in [public/screens/battle.js](../public/screens/battle.js). The rest of this
 document is still design. A litany is **not** a reaction to a kill. It is a **staged
@@ -184,15 +184,33 @@ and the lead lands the real blow on the last verse. It fires only when the forma
 the litany describes is actually standing on the board, and it pays out a mechanical
 reward — so it teaches positioning instead of only decorating it.
 
-One litany per faction: `profane_chorus` (Empire), `clean_passage` (Grail of Sorrow),
-`taken_breath` (Choir of the Cursed). All three are pure data in
-[data/litanies.js](../data/litanies.js) — same three-row front-column formation, same
-`initiative_flat_reduction` reward — so the engine and the tome page carry no
-per-litany code. The two new sets ship with placeholder verses (`1` / `2` / `3`); the
-lines are written separately.
+Each of the nine heroes leads two or three, seven per faction, all of them pure data in
+[data/litanies.js](../data/litanies.js) — the engine and the tome page carry no
+per-litany code. **One litany is one whole object**: its lead ids, every cell, its
+target ids, its verses and its reward are written out inside it and shared with nothing,
+so editing one cannot affect another. Everything but the original `profane_chorus`
+carries placeholder verses; the lines are written separately.
+
+Three things the first three litanies got wrong, fixed by the shape below:
+
+- **A formation is a list of cells, not a column.** Each cell names its own row AND
+  column (`front` / `back`, relative to the acting side), so a litany can stand its
+  lead on the line and its singers behind it. One front column for all three cells is
+  what put a back-rank priest in the melee rank.
+- **A verse is what its speaker actually does.** `strike: 'visual'` is a fighter's blow
+  at the victim; `strike: 'support'` is a healer's, shielder's or singer's own rite,
+  performed over its own side. Playing a priest's `holy_heal` at the corpse read as
+  blessing the body.
+- **The reward is what the chorus sang.** A priest cell pays a heal, a Standart Bearer
+  cell pays a shield, a Flame Spawn cell pays damage. The single
+  `initiative_flat_reduction` is now the vocabulary in 5.4.
+
+A unit with no `action_animation` cannot perform - its verse would be a silent beat -
+which is why the Blessed Soul line (`e7...`, `action: 'none'`), the Grail Acolytes
+(`gs5...`) and the Mother's Chalice line (`gs83...`) appear in no litany.
 
 The tome shows a player only the litanies their own faction can LEAD, so each faction
-sees exactly one card.
+sees seven cards.
 
 **A chorus id must be a `size: 'tile'` unit.** A chorus cell holds one unit, and a
 `column` unit fills rows 0, 1 and 2 as a single body — it can never man row 0 and row 2
@@ -248,30 +266,41 @@ const LITANY_TARGET_IDS = [
   trigger: 'lethal',                 // the lead's attack is ABOUT to kill (§5.2)
   lead:    { ids: LITANY_LEAD_IDS },
   target:  { ids: LITANY_TARGET_IDS },
-  // The formation IS the condition: the lead's own front column, all three rows
-  // manned, chorus above and below. Hardcoded rows, not a count.
+  // The formation IS the condition: named CELLS, each with its own letter, row and
+  // column. Hardcoded cells, not a count. A verse names its speaker by letter.
   formation: {
-    column: 'front',                 // col 1 for a player side, col 0 for an enemy side
-    rows: [
-      { row: 0, role: 'chorus', ids: LITANY_CHORUS_IDS },
-      { row: 1, role: 'lead' },      // must be the acting unit itself
-      { row: 2, role: 'chorus', ids: LITANY_CHORUS_IDS },
+    cells: [                         // col: front is col 1 for a player, col 0 for an enemy
+      { key: 'A', row: 0, col: 'front', role: 'chorus', ids: LITANY_CHORUS_IDS },
+      { key: 'B', row: 1, col: 'front', role: 'lead' },   // the acting unit itself
+      { key: 'C', row: 2, col: 'front', role: 'chorus', ids: LITANY_CHORUS_IDS },
     ],
   },
   verses: [
-    { speaker: 'row0', strike: 'visual',
+    { speaker: 'A', strike: 'visual',
       line: ['I am His shield against the talons in the night!',
              'Я Его щит от когтей в ночи!'] },
-    { speaker: 'row2', strike: 'visual',
+    { speaker: 'C', strike: 'visual',
       line: ['I am His light that burns the unclean!',
              'Я Его свет испепеляющий нечистых!'] },
-    { speaker: 'row1', strike: 'lethal',
+    { speaker: 'B', strike: 'lethal',
       line: ['I am His hammer and your end!',
              'Я его Молот и твоя смерть!'] },
   ],
-  reward: { initiative_flat_reduction: 5, scope: 'enemies_alive', duration: 'battle' },
+  reward: { enemy_initiative_flat: 10, message: '...', message_ru: '...' },
   once_per: 'battle',
 }
+```
+
+A litany that mixes ranks and roles looks like this instead - the Unbroken Banner, whose
+singers are a priest behind the line and a banner on it, and whose reward is the two of
+them doing their own work at once:
+
+```
+  A C        A  back  row 0  chorus  Priest line      strike: 'support'  (holy_heal)
+  . B        C  front row 0  chorus  Standart Bearer  strike: 'support'  (shield_ward)
+  . .        B  front row 1  lead    Paladin          strike: 'lethal'
+
+  reward: { ally_heal_flat: 5, ally_shield_flat: 5 }
 ```
 
 Adding a unit to a role is editing one of these arrays. Nothing about the unit's tags,
@@ -287,7 +316,19 @@ Notes on the shape:
 - **The two chorus cells may hold different Templar tiers**, including two of the same
   unit. Any ids from `LITANY_CHORUS_IDS`.
 - The lead is `size: 'tile'` and so is every Templar, so footprints never complicate
-  the check. A litany whose lead or chorus is a `row`/`column` unit is out of scope.
+  the check. A litany whose lead or chorus is a `row`/`column` unit is out of scope -
+  which is why the Grail Angels (`gs4...`, `size: 'row'`) are no longer in the Clean
+  Passage's chorus.
+- **A cell must suit the units standing in it.** `pref_position` in
+  [data/units.js](../data/units.js) says which rank a unit belongs in, and every chorus
+  line is placed to match it. The one deliberate exception is the Standart Bearer line,
+  placed in the front column because a banner stands on the line.
+- **Two litanies under one lead are kept apart by their formations**: a cell they share
+  cannot hold two different units, so the board decides which is spoken. Where their
+  cells do not overlap at all, a rich enough board can satisfy both, and `fireLitany`
+  takes the earlier one in the array. That is true today of the First Sorrow and the
+  Pale Procession, but only on a Sister Aldra kill - she is the one target both lists
+  carry.
 
 ### 5.2 Firing — the lethal pre-empt
 
@@ -304,9 +345,10 @@ if (lethal && litanyApplies(actor, target)) → emit litany (§5.3)
 
 1. `once_per: 'battle'` not yet spent for this litany on this side.
 2. Actor's unit id ∈ `lead.ids`; target's unit id ∈ `target.ids`.
-3. Actor stands in its own front column, row 1.
-4. Rows 0 and 2 of that same column, same side, hold **alive** units whose ids ∈
-   `LITANY_CHORUS_IDS`.
+3. Actor stands in the cell the litany marks `role: 'lead'` - that cell's own row and
+   column, read against the acting side.
+4. Every other cell the litany names holds an **alive** unit of its own side whose id
+   is in that cell's list.
 
 Any failure → nothing happens and the kill resolves normally, with the ordinary
 `on_kill` / `on_death` barks. There is no partial litany and no log entry saying one
@@ -334,8 +376,8 @@ the reward. The engine pushes, in order:
 
 | # | Entry | Notes |
 |---|---|---|
-| 1 | `{ type: 'litany', id, i: 0, n: 3, actorId, actorCell, targetCell, strike: 'visual', text, text_ru }` | chorus, row 0 |
-| 2 | same, `i: 1`, row 2 | chorus |
+| 1 | `{ type: 'litany', id, i: 0, n: 3, actorId, actorCell, targetCell, strike: 'visual' \| 'support', text, text_ru }` | first chorus cell, in verse order |
+| 2 | same, `i: 1` | second chorus cell |
 | 3 | same, `i: 2`, `strike: 'lethal'` | the lead's verse only — the blow is entry 4 |
 | 4 | the ordinary `action` entry for the kill (`killed: true`) | unchanged |
 | 5 | `{ type: 'notice', litany: id, message, message_ru }` | the reward line (§5.4) |
@@ -344,15 +386,49 @@ the reward. The engine pushes, in order:
 A `strike: 'visual'` entry means: play that speaker's `action_animation` and
 `action_sfx` at the target's cell, and **nothing else**. **Range is not checked** — a
 Templar's mace swing plays on a back-column target just the same. The strikes are
-cosmetic flavour; reach is not part of the fiction here. No damage, no `on_hit`, no
-passives, no triggers, no fatigue, no `acted_this_round`. The chorus units have not
-acted; they still take their own turns this round.
+cosmetic flavour; reach is not part of the fiction here.
+
+A `strike: 'support'` entry plays the same animation over the speaker's **own side**
+instead: the self-centred effects (`holy_heal`, `shield_ward`, `repair`, `mend_flesh`)
+are drawn on the singer's cell, and a fan-out one (`pale_embrace`) is handed its own
+side's living cells. A priest, a Standart Bearer or an ash singer performs its rite;
+it does not mime a blow it has no animation for.
+
+Either way: no damage, no heal, no `on_hit`, no passives, no triggers, no fatigue, no
+`acted_this_round`. The chorus units have not acted; they still take their own turns
+this round, and the litany's reward is the only thing that pays out.
 
 ### 5.4 The reward
 
-Every enemy **alive after the kill** loses **5 initiative for the rest of the battle**
-(floor 1), through the existing `initiative_flat_reduction` path used by passives,
-applied once and never reverted. Units summoned after the litany are unaffected.
+A reward is any mix of the flat fields below, applied once the kill has landed - so
+"every enemy" means every enemy **alive after the kill** - and **permanent for the
+battle**: no rounds, no expiry, no dispel, never reverted. Units summoned after the
+litany are unaffected. `applyLitanyReward` is the whole of what reads them.
+
+| Field | Effect |
+|---|---|
+| `enemy_initiative_flat` | every living enemy loses this much initiative (floor 1) |
+| `enemy_armor_flat` | every living enemy loses this much armor (floor 0) |
+| `enemy_damage_flat` | every living enemy takes this much damage, ignoring armor and resistances - it can kill |
+| `ally_heal_flat` | every living ally heals this much, capped at max HP |
+| `ally_shield_flat` | every living ally gains a shield pool this big, through `grantShield` |
+| `ally_initiative_flat` | every living ally gains this much initiative |
+| `ally_armor_flat` | every living ally gains this much armor |
+| `ally_resist_flat` | `{ school: amount }`, added to every living ally |
+| `ally_all_resist_flat` | the same amount added to every school |
+
+**The reward must match the singers** - a heal for a priest cell, a shield for a banner
+cell, damage for a Flame Spawn cell. Nothing in the engine enforces it; a reward that
+does not match its formation is a bug in the data.
+
+Armor and resistances cap at `MITIGATION_CAP_PCT`, a shield pool at `POOL_CAP_PCT` of
+max HP, so a unit at the ceiling gains nothing from those. The reward does **not**
+respect the singers' own targeting rules: a litany heals every living ally, Construct
+and Zombie alike, where a priest's own Heal can touch neither. The miracle is the
+litany's, not the unit's.
+
+`message` / `message_ru` is what the log and the Litanies page print, and it is written
+by hand to describe the fields beside it - not derived from them.
 
 Rulings:
 
@@ -370,9 +446,9 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
 
 | t | What |
 |---|---|
-| 0 ms | verse 1 toast on row 0 + that unit's attack animation on the target |
-| ~1200 ms | verse 2 toast on row 2 + its attack animation |
-| ~2400 ms | verse 3 toast on the lead + the real killing blow, damage number, death |
+| 0 ms | first verse toast on its cell + that unit's own animation: at the victim for a fighter, over its own side for a supporter |
+| ~1200 ms | second verse toast + the same for that cell |
+| ~2400 ms | last verse toast on the lead + the real killing blow, damage number, death |
 | ~3600 ms | toasts clear; the reward line appears in the log |
 
 - Verse toasts use `bark-toast--litany` and do **not** dismiss on tap mid-sequence;
@@ -384,15 +460,19 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
 
 `scripts/validate-barks.js`, run in CI and before a content commit. Errors:
 
-- An id in `ids`, or in a litany's `lead`, `target` or `formation` rows, that does not
+- An id in `ids`, or in a litany's `lead`, `target` or `formation` cells, that does not
   exist in units.js.
 - A key that does not parse against §1.2 — unknown trigger, tag or faction.
 - A pair that is not exactly `[en, ru]` with both non-empty.
 - Two sets with the same id count both defining one key for one unit.
 - A key holding more than 2 pairs.
 - A line over the length limits in the style guide.
-- A litany whose `verses` count does not equal its `formation` speaker count, or whose
-  `speaker` names a row the formation does not define.
+- A litany whose `verses` count does not equal its `formation` cell count, or whose
+  `speaker` names a cell letter the formation does not define.
+- A litany verse whose `strike` disagrees with what its unit does: `'support'` for an
+  enemy-targeted attacker, `'visual'` for an ally-targeted healer or shielder.
+- A chorus id with no `action_animation` - its verse would be a silent beat.
+- A chorus cell whose `col` contradicts its units' `pref_position`.
 - A litany with no verse marked `strike: 'lethal'`, or with more than one.
 - A litany `lead` or `formation` id whose unit is not `size: 'tile'` (§5.1).
 - An id listed in two roles of the same litany.

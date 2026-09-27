@@ -20,11 +20,6 @@ const LITANY_BUILDING_LEVEL = 3;
 // draw a wrong board, never fight a wrong battle.
 const GRID_ROWS = 3;
 
-// Cell keys, front column top to bottom. Letters rather than 1/2/3: the rows
-// already carry numbers in the data and a second set of numbers on the page
-// would read as the same thing.
-const KEY_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
-
 // Mirrors buildingLevel in data/buildings.js: a building's level anywhere in
 // the castle, 0 when unbuilt.
 function buildingLevelOf(buildingsData, buildingId) {
@@ -223,9 +218,16 @@ const TOME_TEXT = {
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
+  // A litany places each cell itself, front column or back, so the label has to
+  // read the placement out rather than assert one. Cells arrive already in key
+  // order ("A: back column, row 1").
   litanyGridAria:  {
-    en: keys => `Front column, top to bottom: ${keys}. Back column empty.`,
-    ru: keys => `Передняя колонна, сверху вниз: ${keys}. Задняя колонна пуста.`,
+    en: cells => `Cells to man — ${cells}.`,
+    ru: cells => `Занять клетки — ${cells}.`,
+  },
+  litanyGridCellAria: {
+    en: (key, col, row) => `${key}: ${col} column, row ${row}`,
+    ru: (key, col, row) => `${key}: ${col === 'Front' ? 'передняя' : 'задняя'} колонна, ряд ${row}`,
   },
   litanyRoles: {
     chorus: { en: 'Chorus', ru: 'Хор' },
@@ -766,21 +768,22 @@ export function renderSpellTome(root, { player }) {
     };
 
     const cards = performable.map((def, i) => {
-      // The board's cells are keyed A, B, C down the front column in the order
-      // the litany names them, and every band below carries its own letter. The
-      // formation's `row` is the grid row it stands in — NOT its position in the
-      // list — so the keys are assigned against that number and a litany that
-      // skips a row leaves that cell blank instead of sliding the rest up.
-      const formationRows = [...(def.formation?.rows || [])]
-        .sort((a, b) => (a.row ?? 0) - (b.row ?? 0));
-      const keyOfRow = new Map(formationRows.map((row, n) => [row.row ?? n, KEY_LETTERS[n] || '']));
+      // A formation is a list of CELLS, each carrying its own letter, its grid
+      // row and its column — the litany decides where its singers stand, and two
+      // of them can share a row across the two columns (see data/litanies.js).
+      // The letters are authored rather than derived: the data says A, and the
+      // band, the board and the verse that names its speaker all say A.
+      const cells = [...(def.formation?.cells || [])]
+        .sort((a, b) => String(a.key).localeCompare(String(b.key)));
+      const keyOfCell = new Map(cells.map(c => [`${c.row}:${c.col}`, c.key]));
+      const roleOfCell = new Map(cells.map(c => [`${c.row}:${c.col}`, c.role]));
 
-      const rows = formationRows.map((row, n) => {
-        const roleLabel = TOME_TEXT.litanyRoles[row.role]?.[lang] || cap(row.role || '');
-        // A 'lead' row names no ids of its own — the litany's own lead list is
+      const rows = cells.map(cell => {
+        const roleLabel = TOME_TEXT.litanyRoles[cell.role]?.[lang] || cap(cell.role || '');
+        // A 'lead' cell names no ids of its own — the litany's own lead list is
         // what may stand there, and it must be the unit landing the blow.
-        const ids = row.role === 'lead' ? (def.lead?.ids || []) : (row.ids || []);
-        return bandHtml(row.role, roleLabel, ids, KEY_LETTERS[n] || '');
+        const ids = cell.role === 'lead' ? (def.lead?.ids || []) : (cell.ids || []);
+        return bandHtml(cell.role, roleLabel, ids, cell.key || '');
       }).join('');
 
       // The player's own half of the board, drawn at the size of a diagram: two
@@ -791,16 +794,18 @@ export function renderSpellTome(root, { player }) {
       const gridHtml = `
         <div class="litany-grid" role="img"
              aria-label="${escapeHtml(TOME_TEXT.litanyGridAria[lang](
-               formationRows.map((r, n) => KEY_LETTERS[n] || '').filter(Boolean).join(', ')))}">
+               cells.map(c => TOME_TEXT.litanyGridCellAria[lang](
+                 c.key,
+                 t(c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
+                 (c.row ?? 0) + 1)).join('; ')))}">
           <span class="litany-grid-col-label">${escapeHtml(t('litanyColBack'))}</span>
           <span class="litany-grid-col-label">${escapeHtml(t('litanyColFront'))}</span>
-          ${Array.from({ length: GRID_ROWS }, (_, r) => {
-            const key  = keyOfRow.get(r) || '';
-            const role = formationRows.find(row => (row.row ?? -1) === r)?.role || '';
+          ${Array.from({ length: GRID_ROWS }, (_, r) => ['back', 'front'].map(col => {
+            const key  = keyOfCell.get(`${r}:${col}`) || '';
+            const role = roleOfCell.get(`${r}:${col}`) || '';
             return `
-              <span class="litany-grid-cell"></span>
               <span class="litany-grid-cell${key ? ` litany-grid-cell--filled litany-grid-cell--${role}` : ''}">${escapeHtml(key)}</span>`;
-          }).join('')}
+          }).join('')).join('')}
         </div>`;
 
       // Whose death the litany is staged around. An enemy, so it sits in its own
