@@ -589,7 +589,7 @@ const TOKEN_DEFS = {
     id:   'tome_of_knowledge',
     name: 'Tome of Knowledge',
     icon: '📖',
-    art:  'assets/icons/items/tome_of_knowledge.png',
+    art:  'assets/icons/ui/tome_of_experience.png',
     desc: 'Grants 100 XP to a single unit.',
     where:'First clear of levels 6 and 9 in any region.',
   },
