@@ -75,6 +75,11 @@ export function withEquippedItem(liveUnit, item) {
 let _uiLang = 'en';
 export function setUiLanguage(language) {
   _uiLang = language === 'ru' ? 'ru' : 'en';
+  // Also told to the DOCUMENT, because some of this is a typographic rule rather
+  // than a string: SMALL CAPS is a Latin convention, and a Cyrillic label set in
+  // it (ТЫЛ, ФРОНТ, СВИТА) reads as shouting. The `html[lang="ru"]` blocks in
+  // style.css turn those transforms off, and the Russian stays as it is written.
+  if (typeof document !== 'undefined') document.documentElement.lang = _uiLang;
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 

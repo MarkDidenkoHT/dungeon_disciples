@@ -10207,7 +10207,8 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
    the letters the bands below are keyed to. */
 .litany-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(34px, 1fr));
+  grid-template-rows: auto repeat(3, 34px);
   gap: 4px;
   width: max-content;
   max-width: 100%;
@@ -10234,21 +10235,12 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  min-width: 34px;
   border: 1px dashed var(--border);
   border-radius: 5px;
   font-size: 0.78rem;
   font-weight: 800;
   color: var(--muted);
-}
-
-.litany-grid-cell--wide {
-  width: 72px;
-}
-
-.litany-grid-cell--tall {
-  height: 72px;
 }
 
 .litany-grid-cell--filled {
@@ -10266,6 +10258,13 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 }
 
 /* The band's letter, tying it back to a cell in the diagram above. */
+html[lang="ru"] .litany-section-title,
+html[lang="ru"] .litany-grid-col-label,
+html[lang="ru"] .litany-row-role {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
 .litany-row-key {
   display: inline-flex;
   align-items: center;

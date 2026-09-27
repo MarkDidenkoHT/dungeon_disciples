@@ -823,6 +823,11 @@ export function renderSpellTome(root, { player }) {
       // because a spanning block makes auto-placement shuffle everything after it.
       // Row 1 of the grid is the column labels, so a board row `r` is grid row
       // `r + 2`.
+      //
+      // A block carries no size of its own: the GRID's tracks size it (see
+      // .litany-grid in style.css), so a span always covers its squares and the
+      // gap between them exactly. A hardcoded width could not — the column labels
+      // are wider than a square, and wider again once translated.
       const gridArea = c => {
         const col = c.col === 'back' ? 1 : 2;
         const row = (c.row ?? 0) + 2;
@@ -846,13 +851,9 @@ export function renderSpellTome(root, { player }) {
                  c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
           <span class="litany-grid-col-label" style="grid-area: 1 / 1">${escapeHtml(t('litanyColBack'))}</span>
           <span class="litany-grid-col-label" style="grid-area: 1 / 2">${escapeHtml(t('litanyColFront'))}</span>
-          ${cells.map(c => {
-            const span = c.size === 'row'    ? ' litany-grid-cell--wide'
-                       : c.size === 'column' ? ' litany-grid-cell--tall' : '';
-            return `
-              <span class="litany-grid-cell litany-grid-cell--filled litany-grid-cell--${c.role}${span}"
-                    style="${gridArea(c)}">${escapeHtml(c.key)}</span>`;
-          }).join('')}
+          ${cells.map(c => `
+              <span class="litany-grid-cell litany-grid-cell--filled litany-grid-cell--${c.role}"
+                    style="${gridArea(c)}">${escapeHtml(c.key)}</span>`).join('')}
           ${empties.map(sq => `
               <span class="litany-grid-cell" style="${gridArea(sq)}"></span>`).join('')}
         </div>`;
