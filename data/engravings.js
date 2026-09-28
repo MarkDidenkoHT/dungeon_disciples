@@ -53,22 +53,22 @@ const ENGRAVING_STATS = {
   armor:         { key: 'armor',         name: 'Armor',      name_ru: 'Броня',         step: 2 },
   initiative:    { key: 'initiative',    name: 'Initiative', name_ru: 'Инициатива',    step: 1 },
   action_power:  { key: 'action_power',  name: 'Power',      name_ru: 'Сила',          step: 1 },
-  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. жизни',    step: 2 },
-  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. смерти',   step: 2 },
-  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. огня',     step: 2 },
-  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. холода',   step: 2 },
-  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. воздуха',  step: 2 },
-  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. природы',  step: 2 },
+  life_resist:   { key: 'life_resist',   name: 'Life res.',  name_ru: 'Защ. от жизни',    step: 2 },
+  death_resist:  { key: 'death_resist',  name: 'Death res.', name_ru: 'Защ. от смерти',   step: 2 },
+  fire_resist:   { key: 'fire_resist',   name: 'Fire res.',  name_ru: 'Защ. от огня',     step: 2 },
+  cold_resist:   { key: 'cold_resist',   name: 'Cold res.',  name_ru: 'Защ. от холода',   step: 2 },
+  air_resist:    { key: 'air_resist',    name: 'Air res.',   name_ru: 'Защ. от воздуха',  step: 2 },
+  nature_resist: { key: 'nature_resist', name: 'Nature res.',name_ru: 'Защ. от природы',  step: 2 },
 };
 
 const ENGRAVING_COMBOS = [
-  { id: 'bulwark',     name: 'Bulwark',      name_ru: 'Оплот',        stats: ['life_resist', 'armor', 'action_power'] }, //1
-  { id: 'duelist',     name: 'Duelist',      name_ru: 'Дуэлянт',      stats: ['action_power', 'initiative', 'hp'] },     //1
-  { id: 'gravewatch',    name: 'Gravewatch',     name_ru: 'Могильный Дозор', stats: ['death_resist', 'armor', 'hp'] },   //1
-  { id: 'emberward',   name: 'Emberward',    name_ru: 'Страж Углей', stats: ['fire_resist', 'armor', 'initiative'] },    //1
-  { id: 'rimeward',    name: 'Rimeward',     name_ru: 'Страж Инея',  stats: ['cold_resist', 'hp', 'action_power'] },     //1
+  { id: 'bulwark',     name: 'Bulwark',      name_ru: 'Оплот',        stats: ['life_resist', 'armor', 'action_power'] }, 
+  { id: 'duelist',     name: 'Duelist',      name_ru: 'Дуэлянт',      stats: ['action_power', 'initiative', 'hp'] },     
+  { id: 'gravewatch',    name: 'Gravewatch',     name_ru: 'Могильный Дозор', stats: ['death_resist', 'armor', 'hp'] },   
+  { id: 'emberward',   name: 'Emberward',    name_ru: 'Страж Углей', stats: ['fire_resist', 'armor', 'initiative'] },    
+  { id: 'rimeward',    name: 'Rimeward',     name_ru: 'Страж Инея',  stats: ['cold_resist', 'hp', 'action_power'] },     
   { id: 'windrunner',  name: 'Windrunner',   name_ru: 'Бег Ветра',    stats: ['air_resist', 'initiative', 'armor'] },
-  { id: 'grovebound',  name: 'Grovebound',   name_ru: 'Узы Рощи',     stats: ['nature_resist', 'hp', 'initiative'] },    //1
+  { id: 'grovebound',  name: 'Grovebound',   name_ru: 'Узы Рощи',     stats: ['nature_resist', 'hp', 'initiative'] },    
 ];
 
 function getEngravingCombo(id) {
