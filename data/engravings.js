@@ -62,13 +62,13 @@ const ENGRAVING_STATS = {
 };
 
 const ENGRAVING_COMBOS = [
-  { id: 'bulwark',     name: 'Bulwark',      name_ru: 'Оплот',        stats: ['life_resist', 'armor', 'action_power'] },
-  { id: 'duelist',     name: 'Duelist',      name_ru: 'Дуэлянт',      stats: ['action_power', 'initiative', 'hp'] },
-  { id: 'gravewatch',    name: 'Gravewatch',     name_ru: 'Могильный Дозор', stats: ['death_resist', 'armor', 'hp'] },
-  { id: 'emberward',   name: 'Emberward',    name_ru: 'Страж Углей', stats: ['fire_resist', 'armor', 'initiative'] },
-  { id: 'rimeward',    name: 'Rimeward',     name_ru: 'Страж Инея',  stats: ['cold_resist', 'hp', 'action_power'] },
+  { id: 'bulwark',     name: 'Bulwark',      name_ru: 'Оплот',        stats: ['life_resist', 'armor', 'action_power'] }, //1
+  { id: 'duelist',     name: 'Duelist',      name_ru: 'Дуэлянт',      stats: ['action_power', 'initiative', 'hp'] },     //1
+  { id: 'gravewatch',    name: 'Gravewatch',     name_ru: 'Могильный Дозор', stats: ['death_resist', 'armor', 'hp'] },   //1
+  { id: 'emberward',   name: 'Emberward',    name_ru: 'Страж Углей', stats: ['fire_resist', 'armor', 'initiative'] },    //1
+  { id: 'rimeward',    name: 'Rimeward',     name_ru: 'Страж Инея',  stats: ['cold_resist', 'hp', 'action_power'] },     //1
   { id: 'windrunner',  name: 'Windrunner',   name_ru: 'Бег Ветра',    stats: ['air_resist', 'initiative', 'armor'] },
-  { id: 'grovebound',  name: 'Grovebound',   name_ru: 'Узы Рощи',     stats: ['nature_resist', 'hp', 'initiative'] },
+  { id: 'grovebound',  name: 'Grovebound',   name_ru: 'Узы Рощи',     stats: ['nature_resist', 'hp', 'initiative'] },    //1
 ];
 
 function getEngravingCombo(id) {
