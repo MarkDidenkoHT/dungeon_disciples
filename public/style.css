@@ -4337,6 +4337,36 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-shadow: 0 0 2px #000;
 }
 
+/* Buff/debuff columns on the INSPECT portrait (see portraitStatesHtml in
+   public/screens/battle.js). Same tiles as the grid, bigger and uncapped, on
+   the same sides they occupy out on the board: debuffs left, buffs right.
+   They start below the tag row so they never sit on top of a unit's tags.
+
+   `column wrap` folds a long list into a second column INWARD rather than
+   letting it run off the bottom of the art: the left column wraps rightwards,
+   the right column wraps leftwards (wrap-reverse), so both grow toward the
+   middle of the portrait. */
+.up-states {
+  position: absolute;
+  top: 34px;
+  bottom: 8px;
+  display: flex;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  gap: 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+.up-states--debuff { left: 6px; }
+.up-states--buff   { right: 6px; flex-flow: column wrap-reverse; align-content: flex-end; }
+
+.up-states .bc-state { width: 26px; height: 26px; }
+.up-states .bc-state-img { border-radius: 5px; }
+.up-states .bc-state-num { font-size: 10px; line-height: 12px; min-width: 12px; }
+
+.up-states--buff   .bc-state-img { outline: 1px solid rgba(120, 220, 150, 0.85); }
+.up-states--debuff .bc-state-img { outline: 1px solid rgba(235, 95, 85, 0.85); }
+
 .bc-status-flash {
   position: absolute;
   inset: 0;

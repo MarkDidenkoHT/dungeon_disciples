@@ -280,16 +280,10 @@ const BT = {
   statInit:      { en: 'Initiative', ru: 'инициативы' },
   statResist:    { en: 'Resist',     ru: 'сопр.' },
 
-  // Live status chips on the inspected unit.
+  // The only status chip left on the inspected unit: every other state is drawn
+  // as an icon tile beside the portrait now (see portraitStatesHtml), and death
+  // is the one that has no tile because it is not a dispellable effect.
   chipDead:      { en: 'Dead',       ru: 'Погиб' },
-  chipStunned:   { en: 'Stunned',    ru: 'Оглушён' },
-  chipDot:       { en: 'DoT',        ru: 'Урон/ход' },
-  chipRegen:     { en: 'Regen',      ru: 'Реген' },
-  chipPerRound:  { en: '/round',     ru: '/ход' },
-  chipShield:    { en: 'Shield',     ru: 'Щит' },
-  chipDecay:     { en: 'Decay',      ru: 'Тлен' },
-  chipInvuln:    { en: 'Invulnerable', ru: 'Неуязвим' },
-  chipDamage:    { en: 'Damage',     ru: 'Урон' },
 };
 
 export function renderBattle(root, { player, battle_id, region_id, level, snapshot, reconnect, selectedSpells, logs, mode = null, turnMeta = null }) {
@@ -1282,41 +1276,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const badge = c.side === 'player' ? 'Ally' : 'Enemy';
 
-    // Everything the engine registers as a dispellable effect already carries a
-    // display name and a polarity, so the chip row is generated from that list
-    // rather than from a hand-maintained set of known buff names.
+    // Standing effects are drawn as the SAME icon tiles the grid uses, running
+    // down the two sides of the portrait - debuffs left, buffs right, the sides
+    // they already sit on out on the board. They used to be a row of text chips
+    // under the card, which said nothing the portrait tiles do not and, on a
+    // unit carrying a dozen states, wrapped far enough to push the abilities row
+    // off the bottom of the sheet. Uncapped here, unlike the grid: this IS the
+    // place to read the full list.
+    //
+    // Death is the one status with no tile of its own - it is not an effect that
+    // can be dispelled - so it stays a chip.
     const chip = (cls, text) => `<span class="stat-diff-chip stat-diff--${cls}">${text}</span>`;
-    const effectChips = (c._effects || []).map(e =>
-      chip(e.polarity === 'positive' ? 'up' : 'down', logPassive(e.name || e.key)));
-
-    // Damage-over-time and stack counters live outside the effect registry (they
-    // tick and expire on their own), so they are listed explicitly.
-    const dot = (c.dot_dmg || 0) + (c._poison_dmg || 0);
-    // Rage/Aegis/Fanaticism are ability names, so they translate through the
-    // ability table like every other one rather than being spelled out here.
-    // The ability table is keyed by tier ("rage 1", "rage 2"), so these resolve
-    // by display NAME the same way the log's passive names do.
-    const stackChip = (n, ability, icon) => n > 0
-      ? chip('up', `${icon} ${logPassive(ability)} x${n}`)
-      : '';
-    const perRound = BTx('chipPerRound');
-    const extraChips = [
-      !c.alive                 ? chip('down', `💀 ${BTx('chipDead')}`) : '',
-      c._stun_rounds > 0       ? chip('down', `💫 ${BTx('chipStunned')} ${c._stun_rounds}`) : '',
-      dot > 0                  ? chip('down', `🩸 ${BTx('chipDot')} ${dot}${perRound}`) : '',
-      c._hot > 0               ? chip('up',   `💚 ${BTx('chipRegen')} ${c._hot}${perRound}`) : '',
-      stackChip(c._rage_stacks,       'Rage',       '😡'),
-      stackChip(c._aegis_stacks,      'Aegis',      '🛡'),
-      stackChip(c._fanaticism_stacks, 'Fanaticism', '🔥'),
-      (c._shield ?? 0) > 0     ? chip('up',   `🛡 ${BTx('chipShield')} ${c._shield}`) : '',
-      (c._decay  ?? 0) > 0     ? chip('down', `🥀 ${BTx('chipDecay')} ${c._decay}`) : '',
-      c._invulnerable          ? chip('up',   `✨ ${BTx('chipInvuln')}`) : '',
-      (c._dmg_mult ?? 1) !== 1 ? chip((c._dmg_mult > 1) ? 'up' : 'down',
-                                      `⚔ ${BTx('chipDamage')} ${Math.round(((c._dmg_mult ?? 1) - 1) * 100)}%`) : '',
-    ].filter(Boolean);
-
-    const statusChips = [...effectChips, ...extraChips].join('');
-    const statusHtml = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
+    const statusChips = !c.alive ? chip('down', `&#128128; ${BTx('chipDead')}`) : '';
+    const statusHtml  = statusChips ? `<div class="unit-stat-diffs">${statusChips}</div>` : '';
 
     // Drawn for ANY combatant carrying an item. The player's units resolve
     // through the owned-items table; enemies carry an item_id blueprint key from
@@ -1326,7 +1298,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
       : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');
 
-    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit })}${statusHtml}</div>`;
+    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit, portraitOverlayHtml: portraitStatesHtml(c) })}${statusHtml}</div>`;
   }
 
   // ── Combat log rendering ────────────────────────────────────────────────────
@@ -2085,6 +2057,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return every - (num(occ, '_dodge_count') % every);
   }
 
+  // How far _dmg_mult has moved this unit's damage, as a percentage, in the
+  // direction asked for — 0 in the other direction so only one of the two
+  // icons is ever active.
+  function dmgMultPct(occ, dir) {
+    const m = Number(st(occ, '_dmg_mult') ?? 1) || 1;
+    if (dir === 'up')   return m > 1 ? Math.round((m - 1) * 100) : 0;
+    return m < 1 ? Math.round((1 - m) * 100) : 0;
+  }
+
   const BUFF_DEFS = [
     { key: 'rage',        icon: 'rage.jpg',             en: 'Rage',            ru: 'Ярость',         n: c => num(c, '_rage_stacks') },
     { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
@@ -2120,6 +2101,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // has art of its own yet.
     { key: 'fortify',     icon: 'reforge.jpg', en: 'Fortify',       ru: 'Укрепление', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
     { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор Войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
+    // _dmg_mult is a multiplier, not a stack, so it is printed as the percentage
+    // it actually moves damage by and split across the two tables by direction:
+    // above 1 it is a buff, below 1 a debuff. It used to exist only as a text
+    // chip on the inspect card and never showed on a portrait at all.
+    { key: 'empowered',   icon: 'blood_frenzy.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
   ];
 
   const DEBUFF_DEFS = [
@@ -2140,6 +2126,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // Borrowed art: dissipate for the silence, purge for the disarm.
     { key: 'silenced', icon: 'dissipate.jpg', en: 'Passives disabled', ru: 'Пассивные отключены', n: c => num(c, '_passives_locked_rounds'), unit: 'rounds' },
     { key: 'disarmed', icon: 'purge.jpg',     en: 'Ability disabled',  ru: 'Способность отключена', n: c => num(c, '_actives_locked_rounds'),  unit: 'rounds' },
+    // See the note on `empowered` in BUFF_DEFS — same field, other direction.
+    { key: 'weakened', icon: 'find_weakness.jpg', en: 'Weakened', ru: 'Ослабление', n: c => dmgMultPct(c, 'down'), unit: 'pct' },
   ];
 
   const UNIT_SUFFIX = {
@@ -2157,53 +2145,49 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   };
 
   // A tile is 110px tall and an icon row is 18px, so six is the most that fits
-  // before the column runs off the bottom of the portrait. Show five and roll
-  // the rest into a "+N" tile whose tooltip names them, rather than letting the
-  // column overflow into the row below.
-  const MAX_STATE_ICONS = 5;
+  // before the column runs off the bottom of the portrait. Cases with five or
+  // more standing effects on one side are common (a Rage stack, an Aegis, two
+  // DoTs and a spell effect is an ordinary mid-fight enemy), so the grid shows
+  // FOUR and rolls the rest into an overflow tile — "+N" on the buff column,
+  // "−N" on the debuff column — rather than letting the column spill into the
+  // row below. The full list is on the inspect sheet, beside the portrait.
+  const MAX_STATE_ICONS = 4;
 
-  function stateIconsHtml(occ, defs) {
-    if (!occ || !occ.alive) return '';
+  // One entry per standing effect, in the order it should be drawn. Both
+  // sources are folded in here — the fixed combatant fields in BUFF_DEFS /
+  // DEBUFF_DEFS and the `_effects` records a spell leaves behind — so the grid
+  // tile and the inspect sheet count and cap the SAME list. They used to cap
+  // separately, which let a unit carrying five states plus five spell effects
+  // draw ten icons down a tile that fits six.
+  function stateEntries(occ, defs, polarity) {
+    if (!occ) return [];
     const L = player?.settings?.language === 'ru' ? 'ru' : 'en';
-    const active = defs.map(d => ({ d, n: d.n(occ) })).filter(x => x.n > 0);
-    const shown  = active.slice(0, MAX_STATE_ICONS);
-    const hidden = active.slice(MAX_STATE_ICONS);
+    const entries = [];
 
-    const more = hidden.length
-      ? `<span class="bc-state bc-state--more" title="${hidden.map(x => x.d[L]).join(', ')}">
-           <span class="bc-state-more">+${hidden.length}</span>
-         </span>`
-      : '';
+    for (const d of defs) {
+      const n = d.n(occ);
+      if (!(n > 0)) continue;
+      const suffix = d.unit ? ` ${UNIT_SUFFIX[d.unit][L]}` : '';
+      entries.push({
+        key:   d.key,
+        icon:  assetUrl(`/assets/icons/abilities/${d.icon}`),
+        name:  d[L],
+        title: d.unit || n > 1 ? `${d[L]}: ${n}${suffix}` : d[L],
+        badge: n > 1 || d.alwaysNum ? n : null,
+      });
+    }
 
-    return shown
-      .map(({ d, n }) => {
-        const suffix = d.unit ? ` ${UNIT_SUFFIX[d.unit][L]}` : '';
-        const title  = d.unit || n > 1 ? `${d[L]}: ${n}${suffix}` : d[L];
-        return `
-        <span class="bc-state bc-state--${d.key}" title="${title}">
-          <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${d.icon}`)}" alt="${d[L]}"
-               onerror="this.style.display='none'">
-          ${n > 1 || d.alwaysNum ? `<span class="bc-state-num">${n}</span>` : ''}
-        </span>`;
-      })
-      .join('') + more;
-  }
-
-  // Spell effects are not in BUFF_DEFS/DEBUFF_DEFS — they are not fixed fields
-  // on the combatant but records in `_effects`, one per spell that landed. They
-  // carry their own icon and polarity, so they are rendered from the record
-  // rather than from a hand-maintained table, and a new spell shows up on the
-  // portrait without anything here changing.
-  function spellEffectIconsHtml(occ, polarity) {
-    const effects = (occ?._effects ?? occ?.buffs?._effects ?? [])
-      .filter(e => e?.icon && e.polarity === polarity);
-    if (!effects.length) return '';
-    // From the ABILITIES set, not the spell art: this tile sits beside the
-    // passive-driven statuses and has to read as one of them.
+    // Spell effects are not in BUFF_DEFS/DEBUFF_DEFS — they are not fixed fields
+    // on the combatant but records in `_effects`, one per spell that landed. They
+    // carry their own icon and polarity, so they are read off the record rather
+    // than from a hand-maintained table, and a new spell shows up on the
+    // portrait without anything here changing.
+    //
     // `amount` is how big the effect is (a resistance shred); `rounds` is how
     // long it lasts. An effect carrying an amount and no rounds is permanent for
     // the battle, so the badge prints the magnitude instead of a countdown.
-    return effects.slice(0, MAX_STATE_ICONS).map(e => {
+    for (const e of (occ._effects ?? occ.buffs?._effects ?? [])) {
+      if (!e?.icon || e.polarity !== polarity) continue;
       // `detail` is the effect's own sentence ("+4 HP, +8 armor") and beats any
       // number this could invent. Failing that, an `amount` was signed −N for
       // everything, which is right for a shred and wrong for every buff — the
@@ -2212,18 +2196,58 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const detail = e.detail ? ` · ${e.detail}`
                    : e.rounds ? ` · ${e.rounds}`
                    : (e.amount ? ` · ${sign}${e.amount}` : '');
-      const badge  = e.rounds > 1 ? e.rounds : (e.rounds ? null : (e.amount || null));
-      return `
-      <span class="bc-state bc-state--spell" title="${e.name}${detail}">
-        <img class="bc-state-img" src="${assetUrl(`/assets/icons/abilities/${e.icon}.jpg`)}"
-             alt="${e.name}" onerror="this.style.display='none'">
-        ${badge ? `<span class="bc-state-num">${badge}</span>` : ''}
-      </span>`;
-    }).join('');
+      entries.push({
+        key:   'spell',
+        icon:  assetUrl(`/assets/icons/abilities/${e.icon}.jpg`),
+        name:  e.name,
+        title: `${e.name}${detail}`,
+        badge: e.rounds > 1 ? e.rounds : (e.rounds ? null : (e.amount || null)),
+      });
+    }
+
+    return entries;
   }
 
-  const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS)   + spellEffectIconsHtml(occ, 'positive');
-  const debuffIconsHtml = occ => stateIconsHtml(occ, DEBUFF_DEFS) + spellEffectIconsHtml(occ, 'negative');
+  const stateTileHtml = en => `
+    <span class="bc-state bc-state--${en.key}" title="${en.title}">
+      <img class="bc-state-img" src="${en.icon}" alt="${en.name}"
+           onerror="this.style.display='none'">
+      ${en.badge ? `<span class="bc-state-num">${en.badge}</span>` : ''}
+    </span>`;
+
+  // The grid tile: at most MAX_STATE_ICONS, then one overflow tile carrying the
+  // count and naming the rest in its tooltip.
+  function stateIconsHtml(occ, defs, polarity) {
+    if (!occ || !occ.alive) return '';
+    const all    = stateEntries(occ, defs, polarity);
+    const hidden = all.slice(MAX_STATE_ICONS);
+    const sign   = polarity === 'negative' ? '−' : '+';
+
+    const more = hidden.length
+      ? `<span class="bc-state bc-state--more" title="${hidden.map(en => en.name).join(', ')}">
+           <span class="bc-state-more">${sign}${hidden.length}</span>
+         </span>`
+      : '';
+
+    return all.slice(0, MAX_STATE_ICONS).map(stateTileHtml).join('') + more;
+  }
+
+  const buffIconsHtml   = occ => stateIconsHtml(occ, BUFF_DEFS,   'positive');
+  const debuffIconsHtml = occ => stateIconsHtml(occ, DEBUFF_DEFS, 'negative');
+
+  // The inspect sheet: the SAME tiles, bigger and uncapped, running down the two
+  // sides of the portrait — debuffs left, buffs right, matching which side they
+  // sit on in the grid. This replaces the text dump of status chips that used to
+  // hang under the card, where a unit with a dozen states pushed the abilities
+  // row off the bottom of the sheet. The columns wrap inward if a unit really
+  // does carry more than the portrait is tall.
+  function portraitStatesHtml(c) {
+    const col = (entries, side) => entries.length
+      ? `<div class="up-states up-states--${side}">${entries.map(stateTileHtml).join('')}</div>`
+      : '';
+    return col(stateEntries(c, DEBUFF_DEFS, 'negative'), 'debuff')
+         + col(stateEntries(c, BUFF_DEFS,   'positive'), 'buff');
+  }
 
   // A one-shot coloured pulse over a portrait when its DoT ticks. Purely visual;
   // sits above the portrait but below the name/HP so text stays readable.

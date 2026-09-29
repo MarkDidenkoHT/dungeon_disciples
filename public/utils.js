@@ -422,7 +422,10 @@ export function renderHeroSpellSlot(opts = {}) {
 }
 
 export function renderUnitPortrait(unit, opts = {}) {
-  const { badge = '' } = opts;
+  // `overlayHtml` is drawn INSIDE the portrait, above the art and below the tag
+  // row: the battle screen uses it for the buff/debuff columns down the two
+  // sides. Empty everywhere else, so no other card changes shape.
+  const { badge = '', overlayHtml = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
   const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
@@ -445,6 +448,7 @@ export function renderUnitPortrait(unit, opts = {}) {
         <div class="unit-identity-tags">${tagsHtml}</div>
         ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
       </div>` : ''}
+      ${overlayHtml}
     </div>`;
 }
 
@@ -826,7 +830,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null, artUrl = '', desc = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null, artUrl = '', desc = '', portraitOverlayHtml = '' } = opts;
 
   if (!unit) {
     return `
@@ -847,7 +851,7 @@ export function buildUnitCard(unit, opts = {}) {
     <div class="unit-card">
       <div class="unit-main-row">
         ${renderUnitCoreStatsColumn(unit, { compareUnit })}
-        ${renderUnitPortrait(unit, { badge })}
+        ${renderUnitPortrait(unit, { badge, overlayHtml: portraitOverlayHtml })}
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">
