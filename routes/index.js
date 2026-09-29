@@ -672,7 +672,8 @@ function withTurnDeadline(battle_data, record, engine) {
 async function persistPvpTurn(record, engine, { causedBy = null } = {}) {
   // Everything this request caused, and nothing else — see freshLog.
   const newEntries  = engine.log;
-  const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+  const battle_data = await withTourneyResult(
+    record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
 
   await updateBattleState(record.battle_id, battle_data);
 
@@ -812,6 +813,15 @@ function buildBattleData(engine, bd) {
     ...(bd.bot ? { bot: bd.bot } : {}),
     // A Colossus attempt: which weekly boss, and the HP and unit it started with.
     ...(bd.colossus ? { colossus: bd.colossus, kind: 'colossus' } : {}),
+    // Which tourney this battle counts toward, and whose result has already been
+    // written to it. Carried on every write for the same reason the bot army is:
+    // updateBattleState REPLACES battle_data, so a field this function does not
+    // name is gone after the first turn. It used to be set only in the creation
+    // literals, which meant the settle at the end of the battle could no longer
+    // tell it was a tourney battle — every entry scored 0 wins and 0 points
+    // however the evening actually went.
+    ...(bd.tourney_id ? { tourney_id: bd.tourney_id } : {}),
+    ...(bd.tourney_settled ? { tourney_settled: bd.tourney_settled } : {}),
   };
 }
 
@@ -4235,7 +4245,8 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     // turns nobody can take are spent rather than waited on.
     answerTurns(record, engine);
 
-    const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+    const battle_data = await withTourneyResult(
+      record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
     const newEntries  = engine.log;   // see freshLog
 
     await updateBattleState(battle_id, battle_data);
@@ -4352,7 +4363,8 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       }
     }
 
-    const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+    const battle_data = await withTourneyResult(
+      record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
 
     const newEntries = engine.log;   // see freshLog
 
@@ -4971,12 +4983,12 @@ async function countTourneyBattle(tourney_id, chat_id) {
   return null;
 }
 
-// The result, once the player claims it. Points, how many of their units fell,
-// and when they finished — the three the standings sort on.
-async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost }) {
+// The result of one tourney battle. Points, how many of their units fell, and
+// when they finished — the three the standings sort on.
+async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost, forfeited = false }) {
   const entry = await tourneyEntry(tourney_id, chat_id);
   if (!entry) return null;
-  const points = won ? TOURNEY_POINTS.win : TOURNEY_POINTS.loss;
+  const points = forfeited ? TOURNEY_POINTS.forfeit : (won ? TOURNEY_POINTS.win : TOURNEY_POINTS.loss);
   await supabase(
     `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
@@ -4996,19 +5008,63 @@ function unitsLostFor(battle_data, side) {
     .length;
 }
 
-// Called when a tourney battle's reward is claimed, from every kind of duel.
-async function settleTourneyBattle(record, chat_id, side) {
-  const tourney_id = record?.battle_data?.tourney_id;
-  if (!tourney_id) return null;
-  try {
-    return await recordTourneyResult(tourney_id, chat_id, {
-      won: record.battle_data?.winner === side,
-      unitsLost: unitsLostFor(record.battle_data, side),
-    });
-  } catch (err) {
-    console.error('Tourney result failed:', err.message);
-    return null;
+// Called the moment a tourney battle FINISHES, from whichever write saw it
+// finish — not when the reward is claimed.
+//
+// The claim was the wrong moment for it. A battle is counted at the start and
+// scored at the end, and between those two points sits everything that can stop
+// a player reaching the result screen: closing the app on the victory banner,
+// a dropped connection, the second player in a duel never coming back. Every one
+// of those left a battle on the board with no result against it. Scoring where
+// the battle ends needs nothing from the player at all.
+//
+// `battle_data` is the state about to be written, so the dead are counted from
+// the same snapshot the players are looking at. Returns the chat_ids settled by
+// this call, for `tourney_settled`: the caller stamps them onto the row so a
+// second write of a finished battle cannot score it twice.
+async function settleTourneyBattle(record, battle_data) {
+  const tourney_id = battle_data?.tourney_id;
+  if (!tourney_id || !battle_data.done) return [];
+
+  // Both players in a duel, scored from one request: the loser is not asked to
+  // come and collect their point. A bot duel has one owner.
+  const sides = [[record.chat_id, 'player']];
+  if (record.opponent_chat_id) sides.push([record.opponent_chat_id, 'enemy']);
+
+  const already = battle_data.tourney_settled || [];
+  const settled = [];
+  for (const [chat_id, side] of sides) {
+    if (!chat_id || already.includes(String(chat_id))) continue;
+    try {
+      // A concession is neither a win nor a played-out loss: TOURNEY_POINTS
+      // scores a forfeit 0, so walking out cannot pay the same as staying in a
+      // fight that is going badly.
+      const forfeited = String(battle_data.abandoned_by || '') === String(chat_id);
+      await recordTourneyResult(tourney_id, chat_id, {
+        won:       !forfeited && battle_data.winner === side,
+        forfeited,
+        unitsLost: unitsLostFor(battle_data, side),
+      });
+      settled.push(String(chat_id));
+    } catch (err) {
+      console.error(`Tourney result failed for ${chat_id}:`, err.message);
+    }
   }
+  return settled;
+}
+
+// Score a finished tourney battle onto `battle_data` before it is written, so
+// the result and the mark that says it was scored land in the same row. Every
+// path that persists a battle calls this; on the overwhelming majority of writes
+// (a battle still running, or no tourney) it does nothing and returns its input.
+async function withTourneyResult(record, battle_data) {
+  if (!battle_data?.tourney_id || !battle_data.done) return battle_data;
+  const settled = await settleTourneyBattle(record, battle_data);
+  if (!settled.length) return battle_data;
+  return {
+    ...battle_data,
+    tourney_settled: [...(battle_data.tourney_settled || []), ...settled],
+  };
 }
 
 // Tonight's board: the top ten in tiebreaker order, which is the order the
@@ -5462,15 +5518,27 @@ router.post('/battle/end', requireAuth, async (req, res) => {
       // hold both players, the row would stay battle_active forever, and BOTH
       // of them would be blocked from queueing again by the active-battle guard.
       const claims = { ...(record.battle_data?.rewards_claimed || {}), [String(chat_id)]: true };
-      const battle_data = {
+      const battle_data = await withTourneyResult(record, {
         ...record.battle_data,
         done: true, winner, abandoned_by: String(chat_id),
         turn_deadline: null, rewards_claimed: claims,
-      };
+      });
       await updateBattleState(battle_id, battle_data);
       armyCacheDrop(battle_id);
       battleBus.publish(battle_id, { done: true, last_log_id: null }, { exceptChatId: chat_id });
       return res.json({ success: true, abandoned, conceded_to: winner });
+    }
+
+    // Walking out of a tourney battle against a BOT is the same concession as
+    // walking out of a duel: the battle was counted when it started, so it is
+    // scored now (a forfeit, worth nothing) rather than left on the board with
+    // no result against it. A duel returns above; this is the one-owner case.
+    if (abandoned && record.battle_data?.tourney_id) {
+      const battle_data = await withTourneyResult(record, {
+        ...record.battle_data,
+        done: true, winner: 'enemy', abandoned_by: String(chat_id), turn_deadline: null,
+      });
+      await updateBattleState(battle_id, battle_data);
     }
 
     await closeBattleState(battle_id);
@@ -5567,9 +5635,11 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === 'player';
-      const tourney = await settleTourneyBattle(record, chat_id, 'player');
+      // The tourney result is NOT written here: it was written when the battle
+      // finished (withTourneyResult), so a player who never opens the result
+      // screen still scores the battle they fought.
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, tourney, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, quest_progress };
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
       return res.json(result);
     }
@@ -5601,9 +5671,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === mySide;
-      const tourney = await settleTourneyBattle(record, chat_id, mySide);
+      // Written at the end of the battle, not here — see the bot payout above.
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, tourney, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, quest_progress };
 
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
 
