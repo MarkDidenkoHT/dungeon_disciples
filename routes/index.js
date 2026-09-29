@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -504,9 +504,11 @@ function viewFor(record, chat_id, { state, logs, winner }) {
 // serves both sides of a PvP battle and the player side of a PvE one, so an
 // item or a level applies identically whichever grid a unit is standing on.
 async function buildArmyFor(chat_id, playerUnitIds) {
-  const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-  );
+  const [rawRoster, hpBonus] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+    unitHpBonusFor(chat_id),
+  ]);
+  const rosterRows = withTempleHp(rawRoster, hpBonus);
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
   const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
@@ -544,9 +546,14 @@ function checkSquad(units) {
 // A queued squad rebuilt from the roster, checked, and its ⚔ counted here.
 // The client's power number is never used: bands and bots are picked from this one.
 async function loadSquad(chat_id, playerUnitIds) {
-  const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-  );
+  const [rawRoster, hpBonus] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+    unitHpBonusFor(chat_id),
+  ]);
+  // Before rosterUnitPower below reads max_hp, so the ⚔ this squad is matched and
+  // banded on counts the Temple too — otherwise the client's number (which comes
+  // from the decorated /bootstrap roster) and this one would disagree.
+  const rosterRows = withTempleHp(rawRoster, hpBonus);
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
   const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
@@ -672,7 +679,8 @@ function withTurnDeadline(battle_data, record, engine) {
 async function persistPvpTurn(record, engine, { causedBy = null } = {}) {
   // Everything this request caused, and nothing else — see freshLog.
   const newEntries  = engine.log;
-  const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+  const battle_data = await withTourneyResult(
+    record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
 
   await updateBattleState(record.battle_id, battle_data);
 
@@ -812,6 +820,15 @@ function buildBattleData(engine, bd) {
     ...(bd.bot ? { bot: bd.bot } : {}),
     // A Colossus attempt: which weekly boss, and the HP and unit it started with.
     ...(bd.colossus ? { colossus: bd.colossus, kind: 'colossus' } : {}),
+    // Which tourney this battle counts toward, and whose result has already been
+    // written to it. Carried on every write for the same reason the bot army is:
+    // updateBattleState REPLACES battle_data, so a field this function does not
+    // name is gone after the first turn. It used to be set only in the creation
+    // literals, which meant the settle at the end of the battle could no longer
+    // tell it was a tourney battle — every entry scored 0 wins and 0 points
+    // however the evening actually went.
+    ...(bd.tourney_id ? { tourney_id: bd.tourney_id } : {}),
+    ...(bd.tourney_settled ? { tourney_settled: bd.tourney_settled } : {}),
   };
 }
 
@@ -1669,6 +1686,14 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       embark_cost:   EMBARK_SUPPLY_COST,
     } : null;
 
+    // The Temple's HP is folded in HERE rather than left for each screen to add:
+    // every client card, and the ⚔ the client prints, derive from these rows, and
+    // the server folds the same bonus in again when it builds the battle army
+    // (withTempleHp). Decorating the response only — the stored roster is
+    // untouched, and the client never sends unit_data back, so nothing can
+    // persist or stack it.
+    const rosterWithTemple = withTempleHp(roster, getUnitHpBonus(structRows[0]?.buildings_data));
+
     res.json({
       resources,
       trophies,
@@ -1676,7 +1701,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       supplies,
       items,
       structures: structRows[0] || null,
-      roster,
+      roster: rosterWithTemple,
       // Embark progress rides along so the roster's craft catalog can gate
       // blueprints (data/items.js `requires`) without a second round-trip.
       progress: player?.progress || {},
@@ -2494,6 +2519,42 @@ async function litaniesUnlockedFor(chat_id) {
     // someone who has earned it; the formation still has to be exact.
     return true;
   }
+}
+
+// The Temple's flat max HP (data/buildings.js), +1 a level to +5. A castle we
+// cannot read gives nothing rather than guessing upward: a battle fought without
+// the bonus is a smaller wrong than one fought with a bonus the player has not
+// built.
+async function unitHpBonusFor(chat_id) {
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    return getUnitHpBonus(rows[0]?.buildings_data);
+  } catch (err) {
+    console.error('Temple HP read failed (fielding without it):', err.message);
+    return 0;
+  }
+}
+
+// Fold that bonus into roster rows as they are read, before anything derives from
+// them. Applied at EVERY read of a roster row a unit is built or priced from —
+// the three army builds and /bootstrap — so the HP on the card, the ⚔ both sides
+// compute, and the unit that walks onto the board are one number.
+//
+// Never written back. The roster keeps the unit's own HP and the bonus is
+// re-derived from the castle every time, so razing the Temple cannot leave a
+// stale total behind, and re-reading cannot stack it.
+//
+// current_hp rises with the maximum for the same reason an item's does: a unit at
+// full health must not enter its next battle already wounded.
+function withTempleHp(rosterRows, hpBonus) {
+  if (!hpBonus) return rosterRows;
+  return (rosterRows || []).map(r => {
+    const unit_data = r?.unit_data;
+    const maxHp = Number(unit_data?.max_hp);
+    if (!Number.isFinite(maxHp)) return r;
+    const curHp = Number.isFinite(Number(unit_data.current_hp)) ? Number(unit_data.current_hp) : maxHp;
+    return { ...r, unit_data: { ...unit_data, max_hp: maxHp + hpBonus, current_hp: Math.min(curHp + hpBonus, maxHp + hpBonus) } };
+  });
 }
 
 // Unit defs live in data/units.js keyed by faction; a roster row only carries
@@ -4076,9 +4137,11 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That level is not unlocked yet', code: 'level_locked' });
     }
 
-    const rosterRows = await supabase(
-      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-    );
+    const [rawRoster, hpBonus] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+      unitHpBonusFor(chat_id),
+    ]);
+    const rosterRows = withTempleHp(rawRoster, hpBonus);
     const rosterById = {};
     for (const r of rosterRows) rosterById[String(r.id)] = r;
 
@@ -4235,7 +4298,8 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     // turns nobody can take are spent rather than waited on.
     answerTurns(record, engine);
 
-    const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+    const battle_data = await withTourneyResult(
+      record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
     const newEntries  = engine.log;   // see freshLog
 
     await updateBattleState(battle_id, battle_data);
@@ -4352,7 +4416,8 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       }
     }
 
-    const battle_data = withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine);
+    const battle_data = await withTourneyResult(
+      record, withTurnDeadline(buildBattleData(engine, record.battle_data), record, engine));
 
     const newEntries = engine.log;   // see freshLog
 
@@ -4668,6 +4733,81 @@ router.get('/colossus', requireAuth, async (req, res) => {
   }
 });
 
+// POST /colossus/rest/refresh — send resting units back in today, for a price.
+//
+// A follower rests for the rest of the player's local day after an attempt, which
+// is what stops one strong squad farming the boss. This does not lift that: it
+// buys it off one unit at a time, at COLOSSUS_REST_REFRESH each, so a second
+// attempt costs real resources rather than nothing.
+//
+// Order matters here. The DELETE is filtered on the rows still existing and
+// returns what it actually removed, which makes it the claim: two taps on the
+// same unit delete it once, and the second is charged for nothing. Balances are
+// therefore checked BEFORE it, so the common case cannot charge for a refresh it
+// did not deliver — the reverse order would wake the units and then discover the
+// player was short.
+router.post('/colossus/rest/refresh', requireAuth, async (req, res) => {
+  const { chat_id, roster_ids } = req.body;
+  if (!chat_id || !Array.isArray(roster_ids) || !roster_ids.length) {
+    return res.status(400).json({ error: 'chat_id and roster_ids required' });
+  }
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const today   = playerLocalDate(player.timezone);
+    const resting = await colossusRestingIds(chat_id, today);
+    // Only units that are actually resting today are billable. Anything else in
+    // the list is silently dropped rather than paid for.
+    const wanted = [...new Set(roster_ids.map(String))].filter(id => resting.has(id));
+    if (!wanted.length) {
+      return res.status(400).json({ error: 'No resting units in that list', code: 'colossus_not_resting' });
+    }
+
+    const bill = COL.colossusRefreshBill(wanted.length);
+    const held = await supabase(
+      `/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item=in.(${encodeURIComponent(Object.keys(bill).map(i => `"${i}"`).join(','))})&select=item,amount`
+    );
+    const have = item => Number(held.find(r => r.item === item)?.amount) || 0;
+    const short = Object.entries(bill).find(([item, amount]) => have(item) < amount);
+    if (short) {
+      return res.status(400).json({
+        error: `Not enough ${short[0]}`, code: 'colossus_refresh_short', item: short[0],
+        needed: short[1], held: have(short[0]),
+      });
+    }
+
+    const removed = await supabase(
+      `/colossus_exhaustion?chat_id=eq.${encodeURIComponent(chat_id)}&day=eq.${today}`
+      + `&roster_id=in.(${encodeURIComponent(wanted.map(id => `"${id}"`).join(','))})`,
+      { method: 'DELETE' }   // supabase() already asks for return=representation
+    );
+    const refreshed = (removed || []).map(r => String(r.roster_id));
+    if (!refreshed.length) {
+      return res.status(400).json({ error: 'Those units are no longer resting', code: 'colossus_not_resting' });
+    }
+
+    // Charged for what was actually woken, never for the whole list.
+    try {
+      await spendResources(chat_id, COL.colossusRefreshBill(refreshed.length));
+    } catch (err) {
+      // The units are already awake. Losing the charge is the lesser of the two
+      // failures, but it must be visible rather than silent.
+      console.error(`Colossus refresh charge FAILED after waking ${refreshed.join(', ')} for ${chat_id}:`, err.message);
+      if (!shortfallItem(err)) throw err;
+    }
+
+    res.json({
+      success: true,
+      refreshed,
+      paid: COL.colossusRefreshBill(refreshed.length),
+      resting_roster_ids: [...await colossusRestingIds(chat_id, today)],
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 // POST /colossus/attack — start an attempt with the formation from battle prep.
 router.post('/colossus/attack', requireAuth, async (req, res) => {
   const { chat_id, playerUnitIds, placement } = req.body;
@@ -4792,10 +4932,13 @@ function botOpponentCard(template) {
   return { name: template.name || template.id, faction: template.faction, bot: true };
 }
 
-async function createBotBattle(entry, { template, bandId }) {
+async function createBotBattle(entry, { template, bandId, rules = null }) {
   const battle_id = `pvpbot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  const army = buildBotArmy(template, bandId);
+  // Under the same rules the player queued under: the army the rule check passed
+  // is the army that takes the field, so the bot cannot field gear or a Loyalty
+  // bill the player was forbidden to bring.
+  const army = buildBotArmy(template, bandId, rules);
   if (!army.length) throw new Error(`Bot template ${template.id} has no units for ${bandId}`);
 
   const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);
@@ -4861,26 +5004,39 @@ async function assignBots() {
     // The read above is a window: the player may have left, re-queued or been paired.
     if (pvpQueue.get(entry.chat_id) !== entry) continue;
 
-    // In a tourney the bot fights under the same rules as the player: a
-    // template whose army breaks them is not offered as an opponent.
+    // In a tourney the bot fights under the same rules as the player. The army is
+    // ADAPTED to them first (adaptSlotsToRules) and only then checked, so a rule
+    // about gear or Loyalty costs the bot what it costs the player instead of
+    // striking the template off the list. What survives the check is what fights.
     let allow = null;
+    let rules = null;
     if (entry.tourney_id) {
-      const rules = await tourneyRulesFor(entry.tourney_id);
+      rules = await tourneyRulesFor(entry.tourney_id);
       if (rules?.length) {
         allow = (template, bandId) => {
-          const squad = botArmyAsSquad(template, bandId);
-          return checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
+          const squad = botArmyAsSquad(template, bandId, rules);
+          return squad.units.length > 0
+            && checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
         };
+      } else {
+        rules = null;
       }
     }
 
     const picked = pickBotTemplate({ power: entry.power, recent, allow });
-    if (!picked) continue;   // no templates at all: keep waiting for a person
+    if (!picked) {
+      // Nothing in any band can field a legal army. That is a content hole, not a
+      // quiet no-op: without this the player sits in the queue for the rest of the
+      // evening waiting for an opponent that is never offered.
+      console.error(`[pvp] no legal bot for ${entry.chat_id} (⚔ ${entry.power})`
+        + `${rules ? ` under ${rules.join(', ')}` : ''}: keeping them queued for a person`);
+      continue;
+    }
 
     pvpQueue.leave(entry.chat_id);
     markPairing(entry.chat_id);
     try {
-      const created = await createBotBattle(entry, picked);
+      const created = await createBotBattle(entry, { ...picked, rules });
       await clearQueueRows([entry.chat_id]);
       const card = botOpponentCard(picked.template);
       noteMatch(entry.chat_id, created.battle_id, card);
@@ -4971,12 +5127,12 @@ async function countTourneyBattle(tourney_id, chat_id) {
   return null;
 }
 
-// The result, once the player claims it. Points, how many of their units fell,
-// and when they finished — the three the standings sort on.
-async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost }) {
+// The result of one tourney battle. Points, how many of their units fell, and
+// when they finished — the three the standings sort on.
+async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost, forfeited = false }) {
   const entry = await tourneyEntry(tourney_id, chat_id);
   if (!entry) return null;
-  const points = won ? TOURNEY_POINTS.win : TOURNEY_POINTS.loss;
+  const points = forfeited ? TOURNEY_POINTS.forfeit : (won ? TOURNEY_POINTS.win : TOURNEY_POINTS.loss);
   await supabase(
     `/tourney_entries?tourney_id=eq.${tourney_id}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
@@ -4996,19 +5152,63 @@ function unitsLostFor(battle_data, side) {
     .length;
 }
 
-// Called when a tourney battle's reward is claimed, from every kind of duel.
-async function settleTourneyBattle(record, chat_id, side) {
-  const tourney_id = record?.battle_data?.tourney_id;
-  if (!tourney_id) return null;
-  try {
-    return await recordTourneyResult(tourney_id, chat_id, {
-      won: record.battle_data?.winner === side,
-      unitsLost: unitsLostFor(record.battle_data, side),
-    });
-  } catch (err) {
-    console.error('Tourney result failed:', err.message);
-    return null;
+// Called the moment a tourney battle FINISHES, from whichever write saw it
+// finish — not when the reward is claimed.
+//
+// The claim was the wrong moment for it. A battle is counted at the start and
+// scored at the end, and between those two points sits everything that can stop
+// a player reaching the result screen: closing the app on the victory banner,
+// a dropped connection, the second player in a duel never coming back. Every one
+// of those left a battle on the board with no result against it. Scoring where
+// the battle ends needs nothing from the player at all.
+//
+// `battle_data` is the state about to be written, so the dead are counted from
+// the same snapshot the players are looking at. Returns the chat_ids settled by
+// this call, for `tourney_settled`: the caller stamps them onto the row so a
+// second write of a finished battle cannot score it twice.
+async function settleTourneyBattle(record, battle_data) {
+  const tourney_id = battle_data?.tourney_id;
+  if (!tourney_id || !battle_data.done) return [];
+
+  // Both players in a duel, scored from one request: the loser is not asked to
+  // come and collect their point. A bot duel has one owner.
+  const sides = [[record.chat_id, 'player']];
+  if (record.opponent_chat_id) sides.push([record.opponent_chat_id, 'enemy']);
+
+  const already = battle_data.tourney_settled || [];
+  const settled = [];
+  for (const [chat_id, side] of sides) {
+    if (!chat_id || already.includes(String(chat_id))) continue;
+    try {
+      // A concession is neither a win nor a played-out loss: TOURNEY_POINTS
+      // scores a forfeit 0, so walking out cannot pay the same as staying in a
+      // fight that is going badly.
+      const forfeited = String(battle_data.abandoned_by || '') === String(chat_id);
+      await recordTourneyResult(tourney_id, chat_id, {
+        won:       !forfeited && battle_data.winner === side,
+        forfeited,
+        unitsLost: unitsLostFor(battle_data, side),
+      });
+      settled.push(String(chat_id));
+    } catch (err) {
+      console.error(`Tourney result failed for ${chat_id}:`, err.message);
+    }
   }
+  return settled;
+}
+
+// Score a finished tourney battle onto `battle_data` before it is written, so
+// the result and the mark that says it was scored land in the same row. Every
+// path that persists a battle calls this; on the overwhelming majority of writes
+// (a battle still running, or no tourney) it does nothing and returns its input.
+async function withTourneyResult(record, battle_data) {
+  if (!battle_data?.tourney_id || !battle_data.done) return battle_data;
+  const settled = await settleTourneyBattle(record, battle_data);
+  if (!settled.length) return battle_data;
+  return {
+    ...battle_data,
+    tourney_settled: [...(battle_data.tourney_settled || []), ...settled],
+  };
 }
 
 // Tonight's board: the top ten in tiebreaker order, which is the order the
@@ -5462,15 +5662,27 @@ router.post('/battle/end', requireAuth, async (req, res) => {
       // hold both players, the row would stay battle_active forever, and BOTH
       // of them would be blocked from queueing again by the active-battle guard.
       const claims = { ...(record.battle_data?.rewards_claimed || {}), [String(chat_id)]: true };
-      const battle_data = {
+      const battle_data = await withTourneyResult(record, {
         ...record.battle_data,
         done: true, winner, abandoned_by: String(chat_id),
         turn_deadline: null, rewards_claimed: claims,
-      };
+      });
       await updateBattleState(battle_id, battle_data);
       armyCacheDrop(battle_id);
       battleBus.publish(battle_id, { done: true, last_log_id: null }, { exceptChatId: chat_id });
       return res.json({ success: true, abandoned, conceded_to: winner });
+    }
+
+    // Walking out of a tourney battle against a BOT is the same concession as
+    // walking out of a duel: the battle was counted when it started, so it is
+    // scored now (a forfeit, worth nothing) rather than left on the board with
+    // no result against it. A duel returns above; this is the one-owner case.
+    if (abandoned && record.battle_data?.tourney_id) {
+      const battle_data = await withTourneyResult(record, {
+        ...record.battle_data,
+        done: true, winner: 'enemy', abandoned_by: String(chat_id), turn_deadline: null,
+      });
+      await updateBattleState(battle_id, battle_data);
     }
 
     await closeBattleState(battle_id);
@@ -5567,9 +5779,11 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === 'player';
-      const tourney = await settleTourneyBattle(record, chat_id, 'player');
+      // The tourney result is NOT written here: it was written when the battle
+      // finished (withTourneyResult), so a player who never opens the result
+      // screen still scores the battle they fought.
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, tourney, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, bot: true, won, quest_progress };
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, 'player'));
       return res.json(result);
     }
@@ -5601,9 +5815,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       forgetMatch(chat_id);
 
       const won = record.battle_data?.winner === mySide;
-      const tourney = await settleTourneyBattle(record, chat_id, mySide);
+      // Written at the end of the battle, not here — see the bot payout above.
       const quest_progress = await bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, mySide, { pvp_matches: 1, battles_won: won ? 1 : 0 }));
-      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, tourney, quest_progress };
+      const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false, pvp: true, won, quest_progress };
 
       if (won) Object.assign(result, await grantPvpWinXp(chat_id, record.battle_data, mySide));
 

@@ -1,6 +1,7 @@
 import { UNITS } from './units.js';
 import { ITEM_DEFS, applyItemModifiers } from './items.js';
 import { SPELLS } from './spells.js';
+import { TOURNEY_RULES_BY_ID, RARITY_ORDER } from './tourney.js';
 
 // Hand-made PvP bot armies: one faction's build, with a version per power band.
 // Slots follow embark encounters. Cells:
@@ -318,6 +319,11 @@ function botBandFor(power) {
 // Any 5 bot battles in a row hold every faction at least once.
 const BOT_ROTATION_WINDOW = 5;
 
+// How many of the templates just fought are kept out of the next pick. Two, not
+// one: excluding only the last still allowed A, B, A, B all evening, which over a
+// five-battle tourney is two opponents, not five.
+const BOT_REPEAT_AVOID = 2;
+
 // The template for the next bot battle.
 // `recent` is this player's last bot template ids, newest first.
 //
@@ -343,8 +349,16 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
   }
   if (!bandId) return null;
 
-  const last = recent[0];
-  if (pool.length > 1) pool = pool.filter(t => t.id !== last);
+  // Relaxed a step at a time rather than applied once: excluding the last two
+  // must never empty the pool, because an empty pool is a player left without an
+  // opponent. Two if two can be spared, else one, else whatever there is —
+  // and a pool of one template still repeats, which is a content problem
+  // (checkBotTemplates) and not something to solve by handing back nothing.
+  for (let avoid = BOT_REPEAT_AVOID; avoid >= 1; avoid--) {
+    const recently = recent.slice(0, avoid);
+    const rest = pool.filter(t => !recently.includes(t.id));
+    if (rest.length) { pool = rest; break; }
+  }
 
   // Picks left (this one included) before each faction must appear. Seen at recent[i]
   // leaves 5 - i; a faction missing from the last 5 is overdue and must go now.
@@ -365,10 +379,81 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
   return { template, bandId };
 }
 
-// Flat units, the same shape getEncounter returns.
-function buildBotArmy(template, bandId) {
-  const slots = template?.bands?.[bandId];
+// A template's slots, bent to obey a tourney's squad rules rather than being
+// turned away by them.
+//
+// Filtering whole templates out was the first attempt and it collapsed the pool.
+// Every slot in every template carries gear, and most of that gear is Epic or
+// better, so `plain_gear` left exactly ONE legal template in each band — the same
+// bot every battle of the evening — while `lean_squad` and `bare_steel` left
+// bands with NONE, and a player waited out their tourney against an opponent that
+// was never going to be offered.
+//
+// So the two rule kinds that are about what a squad brings are applied to the bot
+// instead: gear it may not wear comes off, and units are dropped until it is
+// inside the Loyalty cap. That is the same thing the rule does to the player, and
+// it keeps every template eligible, which is what lets the rotation below work.
+//
+// The rules that are about WHICH units may fight at all — a banned tag, a size
+// limit — are deliberately not adapted: dropping every Demon from a Choir army
+// leaves something that is no longer that army's build. Those still reject a
+// template, and there are enough legal ones in each band for them to.
+function adaptSlotsToRules(slots, rules) {
+  const list = (rules || []).map(r => (typeof r === 'string' ? TOURNEY_RULES_BY_ID[r] : r)).filter(Boolean);
+  if (!list.length) return slots;
+
+  let out = slots;
+  for (const rule of list) {
+    // Gear the rule forbids is simply not worn. It must come off HERE, at the
+    // slot, rather than after the army is built: buildBotArmy folds an item's
+    // modifiers into the unit's stats, so a unit built with the item and stripped
+    // afterwards would keep the stats and lose only the label.
+    if (rule.kind === 'no_items') {
+      out = out.map(slot => (slot.item_id ? { ...slot, item_id: null } : slot));
+    }
+
+    if (rule.kind === 'item_rarity_max') {
+      const cap = RARITY_ORDER.indexOf(rule.rarity);
+      if (cap >= 0) out = out.map(slot => {
+        if (!slot.item_id) return slot;
+        const rank = RARITY_ORDER.indexOf(ITEM_DEFS[slot.item_id]?.rarity ?? 'common');
+        return rank > cap ? { ...slot, item_id: null } : slot;
+      });
+    }
+
+    // The hero is free and always stays — an army without one is not a build the
+    // AI knows how to play. Everything else is dropped dearest first (a row or
+    // column unit frees 2, a tile 1, exactly as loyaltyOf counts them), and the
+    // last slot listed first among equals, so the front of the build survives.
+    if (rule.kind === 'loyalty_max') {
+      const cost = slot => {
+        const size = findBotUnit(slot.unit)?.size ?? 'tile';
+        return (size === 'row' || size === 'column') ? 2 : 1;
+      };
+      const paying = out.filter(slot => !slot.hero);
+      let used = paying.reduce((n, slot) => n + cost(slot), 0);
+      if (used > rule.max) {
+        const order = [...paying].reverse().sort((a, b) => cost(b) - cost(a));
+        const dropped = new Set();
+        for (const slot of order) {
+          if (used <= rule.max) break;
+          dropped.add(slot);
+          used -= cost(slot);
+        }
+        out = out.filter(slot => !dropped.has(slot));
+      }
+    }
+  }
+  return out;
+}
+
+// Flat units, the same shape getEncounter returns. `rules` is a tourney's rule
+// list when the battle is one of its own, so the bot is built under the same
+// restrictions the player queued under.
+function buildBotArmy(template, bandId, rules = null) {
+  let slots = template?.bands?.[bandId];
   if (!Array.isArray(slots)) return [];
+  if (rules?.length) slots = adaptSlotsToRules(slots, rules);
   return slots
     .map(slot => {
       let unit = findBotUnit(slot.unit);
@@ -383,8 +468,8 @@ function buildBotArmy(template, bandId) {
 // A bot army in the shape the squad checks expect: unit_data per unit, the hero
 // flagged, and the worn items keyed the way a roster's are. Lets the tourney run
 // its own rule check over a template before offering it as an opponent.
-function botArmyAsSquad(template, bandId) {
-  const army = buildBotArmy(template, bandId);
+function botArmyAsSquad(template, bandId, rules = null) {
+  const army = buildBotArmy(template, bandId, rules);
   const units = army.map((u, i) => ({ id: String(i), _rosterId: String(i), is_hero: !!u.is_hero, unit_data: u }));
   const itemsByRosterId = {};
   army.forEach((u, i) => {

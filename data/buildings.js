@@ -73,6 +73,7 @@ const SLOT_FIXED_BUILDING = {
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
   slot_22: 'training_grounds',
+  slot_23: 'temple',
 };
 
 // How many times a building can be raised. Absent = 1 (build it and it is done).
@@ -88,6 +89,10 @@ const BUILDING_MAX_LEVELS = {
   garrison_annex:   3,
   proving_grounds:  3,
   training_grounds: 2,
+  // The longest ladder in the castle, and deliberately so: one point of HP a
+  // level is not worth hurrying, and five levels of an all-crystal bill is what
+  // the endgame has to spend on.
+  temple:           5,
 };
 
 function buildingMaxLevel(buildingId) {
@@ -153,13 +158,21 @@ function litaniesUnlocked(buildingsData) {
 //   embark_gold_pct / embark_xp_pct / embark_crystal_pct
 //                            routes /battle/reward, same pipeline as the
 //                            expedition passives and timed events
+//   unit_bonus_hp            flat max HP on EVERY unit the player fields, folded
+//                            into the roster row wherever it is read (see
+//                            withTempleHp in routes/index.js). The first effect
+//                            here that touches a stat rather than a payout.
 const BUILDING_EFFECTS = {
   crystal_mine:     { 1: { daily_crystal_bonus_pct: 15 }, 2: { daily_crystal_bonus_pct: 25 } },
   // Level 3 deliberately adds no further discount: what it buys is the third
   // tier of spell research (see SPELL_TIERS in data/spells.js). The fallback
   // below keeps it at 20% rather than dropping it to zero.
   mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
-  training_grounds: { 1: { embark_xp_pct: 5 },  2: { embark_xp_pct: 10 } },
+  training_grounds: { 1: { embark_xp_pct: 3 },  2: { embark_xp_pct: 5 } },
+  // One HP a level. Small on purpose: it is on every unit, for ever, and it is
+  // the only building effect a player cannot choose to leave at home, so +5 at
+  // the top of the ladder has to be a nudge rather than a tier.
+  temple:           { 1: { unit_bonus_hp: 1 }, 2: { unit_bonus_hp: 2 }, 3: { unit_bonus_hp: 3 }, 4: { unit_bonus_hp: 4 }, 5: { unit_bonus_hp: 5 } },
 };
 
 // Every effect the castle currently produces, summed. A building above its
@@ -173,6 +186,7 @@ function buildingEffects(buildingsData) {
     embark_gold_pct: 0,
     embark_xp_pct: 0,
     embark_crystal_pct: 0,
+    unit_bonus_hp: 0,
   };
   for (const [id, byLevel] of Object.entries(BUILDING_EFFECTS)) {
     const level = buildingLevel(buildingsData, id);
@@ -193,6 +207,13 @@ function getSpellCostReductionPct(buildingsData) {
 
 function getDailyCrystalBonusPct(buildingsData) {
   return buildingEffects(buildingsData).daily_crystal_bonus_pct;
+}
+
+// The Temple's flat HP on every unit the player fields. Read by the server at
+// every point a roster row is loaded, so the number on the card and the number in
+// the battle are the same number.
+function getUnitHpBonus(buildingsData) {
+  return buildingEffects(buildingsData).unit_bonus_hp;
 }
 
 // Shaped like the old getThronePerkEmbarkBonuses so the reward pipeline takes it
@@ -478,10 +499,26 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Life: 160 }, 3: { gold: 900, Crystals_Life: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +5%, then +10%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        desc: 'Every embark pays more XP: +3%, then +5%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
         cost: { gold: 150, Crystals_Life: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
+      { id: 'temple', label: 'Temple of the Lion', label_ru: 'Храм Льва', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'temple',
+        desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
+        desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
+        upgrade_costs: {
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
+        } },
     ],
   },
 
@@ -630,10 +667,26 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Fire: 160 }, 3: { gold: 900, Crystals_Fire: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +5%, then +10%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        desc: 'Every embark pays more XP: +3%, then +5%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
         cost: { gold: 150, Crystals_Fire: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
+      { id: 'temple', label: 'Temple of Embers', label_ru: 'Храм Угольев', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'temple',
+        desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
+        desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
+        upgrade_costs: {
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
+        } },
     ],
   },
 
@@ -808,10 +861,26 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Death: 160 }, 3: { gold: 900, Crystals_Death: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +5%, then +10%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +5%, затем +10%.',
+        desc: 'Every embark pays more XP: +3%, then +5%.',
+        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
         cost: { gold: 150, Crystals_Death: 50 },
         upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
+      { id: 'temple', label: 'Temple of Sorrow', label_ru: 'Храм Скорби', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'temple',
+        desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
+        desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
+        upgrade_costs: {
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
+        } },
     ],
   },
 };
@@ -1804,6 +1873,7 @@ module.exports = {
   buildingEffects,
   getSpellCostReductionPct,
   getDailyCrystalBonusPct,
+  getUnitHpBonus,
   getEmbarkBuildingBonuses,
   slotLockedBy,
   isSlotUnlocked,

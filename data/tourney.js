@@ -159,10 +159,10 @@ function battleRulesOf(rules) {
 export {
   TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
   TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
-  ruleName, checkTourneyRules, battleRulesOf, loyaltyOf,
+  ruleName, checkTourneyRules, battleRulesOf, loyaltyOf, RARITY_ORDER,
 };
 if (typeof module !== 'undefined') module.exports = {
   TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
   TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
-  ruleName, checkTourneyRules, battleRulesOf, loyaltyOf,
+  ruleName, checkTourneyRules, battleRulesOf, loyaltyOf, RARITY_ORDER,
 };
