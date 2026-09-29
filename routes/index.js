@@ -4804,10 +4804,13 @@ function botOpponentCard(template) {
   return { name: template.name || template.id, faction: template.faction, bot: true };
 }
 
-async function createBotBattle(entry, { template, bandId }) {
+async function createBotBattle(entry, { template, bandId, rules = null }) {
   const battle_id = `pvpbot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  const army = buildBotArmy(template, bandId);
+  // Under the same rules the player queued under: the army the rule check passed
+  // is the army that takes the field, so the bot cannot field gear or a Loyalty
+  // bill the player was forbidden to bring.
+  const army = buildBotArmy(template, bandId, rules);
   if (!army.length) throw new Error(`Bot template ${template.id} has no units for ${bandId}`);
 
   const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);
@@ -4873,26 +4876,39 @@ async function assignBots() {
     // The read above is a window: the player may have left, re-queued or been paired.
     if (pvpQueue.get(entry.chat_id) !== entry) continue;
 
-    // In a tourney the bot fights under the same rules as the player: a
-    // template whose army breaks them is not offered as an opponent.
+    // In a tourney the bot fights under the same rules as the player. The army is
+    // ADAPTED to them first (adaptSlotsToRules) and only then checked, so a rule
+    // about gear or Loyalty costs the bot what it costs the player instead of
+    // striking the template off the list. What survives the check is what fights.
     let allow = null;
+    let rules = null;
     if (entry.tourney_id) {
-      const rules = await tourneyRulesFor(entry.tourney_id);
+      rules = await tourneyRulesFor(entry.tourney_id);
       if (rules?.length) {
         allow = (template, bandId) => {
-          const squad = botArmyAsSquad(template, bandId);
-          return checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
+          const squad = botArmyAsSquad(template, bandId, rules);
+          return squad.units.length > 0
+            && checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
         };
+      } else {
+        rules = null;
       }
     }
 
     const picked = pickBotTemplate({ power: entry.power, recent, allow });
-    if (!picked) continue;   // no templates at all: keep waiting for a person
+    if (!picked) {
+      // Nothing in any band can field a legal army. That is a content hole, not a
+      // quiet no-op: without this the player sits in the queue for the rest of the
+      // evening waiting for an opponent that is never offered.
+      console.error(`[pvp] no legal bot for ${entry.chat_id} (⚔ ${entry.power})`
+        + `${rules ? ` under ${rules.join(', ')}` : ''}: keeping them queued for a person`);
+      continue;
+    }
 
     pvpQueue.leave(entry.chat_id);
     markPairing(entry.chat_id);
     try {
-      const created = await createBotBattle(entry, picked);
+      const created = await createBotBattle(entry, { ...picked, rules });
       await clearQueueRows([entry.chat_id]);
       const card = botOpponentCard(picked.template);
       noteMatch(entry.chat_id, created.battle_id, card);
