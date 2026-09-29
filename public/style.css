@@ -9810,10 +9810,12 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .eg-chip--pos { color: #6ec87e; border-color: rgba(110, 200, 126, 0.45); }
 .eg-chip--neg { color: #e0715f; border-color: rgba(224, 113, 95, 0.45); }
 .eg-chip--none { color: var(--muted); }
+/* Four across, two rows. Eight in a single wrapping row left an odd 7 + 1
+   break on narrow phones and pushed the panel wider than the stat columns it
+   sits above; a fixed grid keeps the block square whatever the width. */
 .eg-combos {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
   justify-content: center;
   gap: 4px;
 }
