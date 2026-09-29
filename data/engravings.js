@@ -37,12 +37,27 @@ function engravingTokenCost(tierId) {
   return getEngravingTier(tierId)?.tokens ?? 0;
 }
 
+// The third of the price, and the reason gold exists after the castle is built.
+// Every other gold sink in the game is one-time — the barracks, the hall
+// upgrades, a craft gated by trophies — so gold died exactly when its income
+// peaked. Engraving is the one thing a player is never finished with.
+//
+// Derived from the Valor price rather than written per tier, so retuning a tier
+// retunes both halves together and they cannot drift.
+const ENGRAVING_GOLD_RATIO = 0.5;
+
+function engravingGoldCost(tierId) {
+  return Math.round(engravingCost(tierId) * ENGRAVING_GOLD_RATIO);
+}
+
 // The whole bill, shaped for spendResources.
 function engravingBill(tierId) {
   const bill = {};
   const valor = engravingCost(tierId);
+  const gold = engravingGoldCost(tierId);
   const tokens = engravingTokenCost(tierId);
   if (valor)  bill[ENGRAVING_CURRENCY] = valor;
+  if (gold)   bill.Gold = gold;
   if (tokens) bill[ENGRAVING_TOKEN] = tokens;
   return bill;
 }
@@ -348,13 +363,13 @@ function applyEngraving(unitData, engraving) {
 
 export {
   ENGRAVING_CURRENCY, ENGRAVING_TOKEN, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, comboKind, comboTiers, getEngravingTier, engravingCost, engravingTokenCost, engravingBill, engravingStep, engravingPoints,
+  getEngravingCombo, comboKind, comboTiers, getEngravingTier, engravingCost, engravingTokenCost, engravingGoldCost, engravingBill, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
   passiveFamily, passiveRank, maxPassiveRank, nativePassiveKeys, harmonyOptions, currentPassiveKey, harmonyChanges,
 };
 if (typeof module !== 'undefined') module.exports = {
   ENGRAVING_CURRENCY, ENGRAVING_TOKEN, ENGRAVING_TIERS, ENGRAVING_STATS, ENGRAVING_COMBOS,
-  getEngravingCombo, comboKind, comboTiers, getEngravingTier, engravingCost, engravingTokenCost, engravingBill, engravingStep, engravingPoints,
+  getEngravingCombo, comboKind, comboTiers, getEngravingTier, engravingCost, engravingTokenCost, engravingGoldCost, engravingBill, engravingStep, engravingPoints,
   checkEngraving, checkEngravingForUnit, engravingValues, engravingStatMods, applyEngraving,
   passiveFamily, passiveRank, maxPassiveRank, nativePassiveKeys, harmonyOptions, currentPassiveKey, harmonyChanges,
 };

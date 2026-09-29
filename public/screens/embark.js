@@ -825,6 +825,9 @@ export function renderEmbark(root, params = {}) {
         return renderColossusPage(host, state, {
           player, L,
           onAttack: () => navigate('battle-prep', { player, mode: 'colossus' }),
+          // Waking a resting unit changes who may enter, so the page is re-read
+          // rather than patched: the same load draws the new resting list.
+          onRefresh: loadColossusPage,
         });
       })
       .catch(err => {

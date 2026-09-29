@@ -80,6 +80,22 @@ const COLOSSUS_MILESTONES = [
 // Paid to everyone who dealt any damage to a boss that was killed.
 const COLOSSUS_KILL_REWARD = { [COLOSSUS_CURRENCY]: 100, Gold: 300, faction_crystal: 30 };
 
+// What it costs to send ONE resting unit back in on the same day, charged per
+// unit. A follower rests after an attempt, which caps the week at one squad a
+// day; this buys that cap off a unit at a time rather than lifting it.
+//
+// Gold is the point of it — the game had no recurring gold sink past the castle —
+// and the potions stop it being a pure gold tap: they are earned, so a player
+// cannot simply out-grind the rest by hoarding coin.
+const COLOSSUS_REST_REFRESH = { Gold: 50, health_potion: 2 };
+
+// The bill for n units, shaped for spendResources.
+function colossusRefreshBill(units) {
+  const n = Math.max(0, Math.floor(Number(units) || 0));
+  if (!n) return {};
+  return Object.fromEntries(Object.entries(COLOSSUS_REST_REFRESH).map(([item, each]) => [item, each * n]));
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // The week `now` falls in: the date of its reset (the row key) and when it ends.
@@ -144,11 +160,13 @@ function colossusGrants(rewards, factionCrystal) {
 
 export {
   COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
-  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD,
+  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
   colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
+  colossusRefreshBill,
 };
 if (typeof module !== 'undefined') module.exports = {
   COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
-  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD,
+  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
   colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
+  colossusRefreshBill,
 };

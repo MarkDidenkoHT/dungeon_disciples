@@ -6,7 +6,7 @@ import {
 } from './utils.js';
 import {
   ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_TIERS, ENGRAVING_CURRENCY, ENGRAVING_TOKEN,
-  getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingStep, engravingPoints,
+  getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingGoldCost, engravingStep, engravingPoints,
   checkEngravingForUnit, engravingValues,
   comboKind, comboTiers, harmonyOptions, harmonyChanges, passiveFamily, passiveRank,
 } from '../data/engravings.js';
@@ -46,6 +46,7 @@ const EG = {
   replace:   { en: 'Replace',          ru: 'Заменить' },
   working:   { en: 'Engraving…',       ru: 'Гравировка…' },
   short:     { en: 'Not enough Valor', ru: 'Недостаточно Доблести' },
+  shortGold: { en: 'Not enough gold',   ru: 'Недостаточно золота' },
   shortToken:{ en: 'Not enough engraving tokens', ru: 'Недостаточно жетонов гравировки' },
   same:      { en: 'Already engraved this way', ru: 'Эта гравировка уже стоит' },
   failed:    { en: 'Engraving failed', ru: 'Не удалось выгравировать' },
@@ -94,6 +95,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return row ? Number(row.amount) || 0 : 0;
   };
   const valor  = () => owned(ENGRAVING_CURRENCY);
+  const gold   = () => owned('Gold');
   const tokens = () => owned(ENGRAVING_TOKEN);
 
   // The unit as it is worn: definition, its own max HP, then the equipped item.
@@ -170,6 +172,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     const now = row.engraving;
     if (now && JSON.stringify(now) === JSON.stringify(sel)) return t('same');
     if (valor() < engravingCost(tierId)) return t('short');
+    if (gold() < engravingGoldCost(tierId)) return t('shortGold');
     if (tokens() < engravingTokenCost(tierId)) return t('shortToken');
     return null;
   }
@@ -321,7 +324,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     return comboTiers(combo()).map(tr => `
       <button class="eg-tier ${tr.id === tierId ? 'eg-tier--on' : ''} eg-tier--${tr.id}" data-tier="${tr.id}" type="button">
         <span class="eg-tier-name">${tierName(tr)}</span>
-        <span class="eg-tier-cost">${tr.cost} ⚔ · ${tr.tokens} ✦</span>
+        <span class="eg-tier-cost">${tr.cost} ⚔ · ${engravingGoldCost(tr.id)} 🪙 · ${tr.tokens} ✦</span>
       </button>`).join('');
   }
 

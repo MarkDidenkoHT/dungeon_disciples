@@ -4680,6 +4680,81 @@ router.get('/colossus', requireAuth, async (req, res) => {
   }
 });
 
+// POST /colossus/rest/refresh — send resting units back in today, for a price.
+//
+// A follower rests for the rest of the player's local day after an attempt, which
+// is what stops one strong squad farming the boss. This does not lift that: it
+// buys it off one unit at a time, at COLOSSUS_REST_REFRESH each, so a second
+// attempt costs real resources rather than nothing.
+//
+// Order matters here. The DELETE is filtered on the rows still existing and
+// returns what it actually removed, which makes it the claim: two taps on the
+// same unit delete it once, and the second is charged for nothing. Balances are
+// therefore checked BEFORE it, so the common case cannot charge for a refresh it
+// did not deliver — the reverse order would wake the units and then discover the
+// player was short.
+router.post('/colossus/rest/refresh', requireAuth, async (req, res) => {
+  const { chat_id, roster_ids } = req.body;
+  if (!chat_id || !Array.isArray(roster_ids) || !roster_ids.length) {
+    return res.status(400).json({ error: 'chat_id and roster_ids required' });
+  }
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const today   = playerLocalDate(player.timezone);
+    const resting = await colossusRestingIds(chat_id, today);
+    // Only units that are actually resting today are billable. Anything else in
+    // the list is silently dropped rather than paid for.
+    const wanted = [...new Set(roster_ids.map(String))].filter(id => resting.has(id));
+    if (!wanted.length) {
+      return res.status(400).json({ error: 'No resting units in that list', code: 'colossus_not_resting' });
+    }
+
+    const bill = COL.colossusRefreshBill(wanted.length);
+    const held = await supabase(
+      `/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item=in.(${encodeURIComponent(Object.keys(bill).map(i => `"${i}"`).join(','))})&select=item,amount`
+    );
+    const have = item => Number(held.find(r => r.item === item)?.amount) || 0;
+    const short = Object.entries(bill).find(([item, amount]) => have(item) < amount);
+    if (short) {
+      return res.status(400).json({
+        error: `Not enough ${short[0]}`, code: 'colossus_refresh_short', item: short[0],
+        needed: short[1], held: have(short[0]),
+      });
+    }
+
+    const removed = await supabase(
+      `/colossus_exhaustion?chat_id=eq.${encodeURIComponent(chat_id)}&day=eq.${today}`
+      + `&roster_id=in.(${encodeURIComponent(wanted.map(id => `"${id}"`).join(','))})`,
+      { method: 'DELETE' }   // supabase() already asks for return=representation
+    );
+    const refreshed = (removed || []).map(r => String(r.roster_id));
+    if (!refreshed.length) {
+      return res.status(400).json({ error: 'Those units are no longer resting', code: 'colossus_not_resting' });
+    }
+
+    // Charged for what was actually woken, never for the whole list.
+    try {
+      await spendResources(chat_id, COL.colossusRefreshBill(refreshed.length));
+    } catch (err) {
+      // The units are already awake. Losing the charge is the lesser of the two
+      // failures, but it must be visible rather than silent.
+      console.error(`Colossus refresh charge FAILED after waking ${refreshed.join(', ')} for ${chat_id}:`, err.message);
+      if (!shortfallItem(err)) throw err;
+    }
+
+    res.json({
+      success: true,
+      refreshed,
+      paid: COL.colossusRefreshBill(refreshed.length),
+      resting_roster_ids: [...await colossusRestingIds(chat_id, today)],
+    });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 // POST /colossus/attack — start an attempt with the formation from battle prep.
 router.post('/colossus/attack', requireAuth, async (req, res) => {
   const { chat_id, playerUnitIds, placement } = req.body;
