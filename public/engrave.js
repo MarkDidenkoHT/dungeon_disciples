@@ -1,10 +1,14 @@
 import { api, refreshResourceBar, bootstrapCache, navigate } from './api.js';
 import { assetUrl } from './asset_base.js';
-import { resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe } from './utils.js';
+import {
+  resolveUnitDef, withEquippedItem, unitName, escapeHtml, enableTrackSwipe,
+  resolveAbility, abilityName,
+} from './utils.js';
 import {
   ENGRAVING_COMBOS, ENGRAVING_STATS, ENGRAVING_TIERS, ENGRAVING_CURRENCY, ENGRAVING_TOKEN,
   getEngravingCombo, getEngravingTier, engravingCost, engravingTokenCost, engravingStep, engravingPoints,
   checkEngravingForUnit, engravingValues,
+  comboKind, comboTiers, harmonyOptions, harmonyChanges, passiveFamily, passiveRank,
 } from '../data/engravings.js';
 
 // Engraving: the items screen's left page. One unit, one combo of three stats,
@@ -20,6 +24,12 @@ import {
 //
 // Replacing overwrites the whole triangle and costs the full price again. The
 // server re-checks everything in POST /roster/engrave.
+//
+// HARMONY is the eighth icon and draws a different body: no stats, no points —
+// two lists of the unit's own passives, one to raise a rank and one to lower a
+// rank, and the tier row locked to Epic. A passive already at its top rank
+// cannot be raised and a rank 1 passive cannot be lowered, so each list only
+// offers what is legal; a unit with no legal pair says so instead.
 
 const EG = {
   title:     { en: 'Engraving',        ru: 'Гравировка' },
@@ -43,6 +53,16 @@ const EG = {
   locked:    { en: 'Raise the Blacksmith to level 2 to open Engraving.',
                ru: 'Поднимите Кузницу до 2 уровня, чтобы открыть Гравировку.' },
   build:     { en: 'Upgrade the Blacksmith', ru: 'Улучшить Кузницу' },
+
+  hintHarm:  { en: 'One passive gains a rank, another loses one. Only the unit’s own passives, never an item’s.',
+               ru: 'Одна пассивка получает ранг, другая его теряет. Только собственные пассивки юнита, не от предмета.' },
+  raise:     { en: 'Raise a rank',     ru: 'Повысить ранг' },
+  lower:     { en: 'Lower a rank',     ru: 'Понизить ранг' },
+  pickPair:  { en: 'Choose one to raise and one to lower',
+               ru: 'Выберите одну для повышения и одну для понижения' },
+  noPair:    { en: 'This unit has no passives that can be traded this way.',
+               ru: 'У этого юнита нет пассивок, которыми можно так обменяться.' },
+  stale:     { en: 'no longer applies', ru: 'больше не действует' },
 };
 
 export function mountEngraving(host, { player, getUnits, getItems, getResources, onChanged, isUnlocked = () => true }) {
@@ -56,12 +76,18 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   let comboIdx = 0;
   let plus     = {};
   let minus    = {};
+  // Harmony's two picks, held as passive FAMILY names ('iron_will'), because
+  // that is what the row stores — a rank is read off the unit every time.
+  let upFamily   = null;
+  let downFamily = null;
   let tierId   = ENGRAVING_TIERS[0].id;
   let busy     = false;
 
   const units = () => getUnits() || [];
   const unitRow = () => units().find(u => String(u.id) === String(rosterId)) || null;
   const combo = () => ENGRAVING_COMBOS[comboIdx];
+  const isHarmony = () => comboKind(combo()) === 'passive';
+  const passiveLabel = key => abilityName(resolveAbility(key)) || passiveFamily(key);
 
   const owned = item => {
     const row = (getResources() || []).find(r => r.item === item);
@@ -95,6 +121,10 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   function selection() {
     const c = combo();
     if (!c) return null;
+    if (comboKind(c) === 'passive') {
+      if (!upFamily || !downFamily) return null;
+      return { combo: c.id, tier: tierId, up: upFamily, down: downFamily };
+    }
     return { combo: c.id, tier: tierId, plus: { ...plus }, minus: { ...minus } };
   }
 
@@ -114,15 +144,27 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     mine[statKey] = (mine[statKey] || 0) + 1;
   }
 
-  function clearPicks() { plus = {}; minus = {}; }
+  function clearPicks() { plus = {}; minus = {}; upFamily = null; downFamily = null; }
+
+  // The tier a combo is bought at. Harmony sells only as an Epic, so switching
+  // to it moves the tier there rather than leaving an illegal one selected.
+  function clampTier() {
+    const allowed = comboTiers(combo());
+    if (!allowed.some(t => t.id === tierId)) tierId = allowed[0].id;
+  }
 
   function problem() {
     const row = unitRow();
     if (!row) return t('pickUnit');
-    const sel = selection();
-    if (!sel) return t('pickUnit');
-    if (!spent() && !paid()) return t('pointsHint');
     const worn = wornUnit(row);
+    if (isHarmony()) {
+      const opts = worn ? harmonyOptions(worn) : { up: [], down: [] };
+      const pairable = opts.up.some(a => opts.down.some(b => passiveFamily(b) !== passiveFamily(a)));
+      if (!pairable) return t('noPair');
+    }
+    const sel = selection();
+    if (!sel) return isHarmony() ? t('pickPair') : t('pickUnit');
+    if (!isHarmony() && !spent() && !paid()) return t('pointsHint');
     const invalid = worn ? checkEngravingForUnit(worn, sel) : null;
     if (invalid) return invalid;
     const now = row.engraving;
@@ -170,11 +212,27 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   function currentHtml(row) {
     if (!row) return `<div class="eg-current"><span class="eg-current-label">${t('pickUnit')}</span></div>`;
     const def = resolveUnitDef(row);
-    const vals = row.engraving ? engravingValues(row.engraving) : [];
+    const carried = row.engraving ? getEngravingCombo(row.engraving.combo) : null;
     const tierDef = row.engraving ? getEngravingTier(row.engraving.tier) : null;
-    const chips = vals.map(v =>
-      `<span class="eg-chip ${v.value < 0 ? 'eg-chip--neg' : 'eg-chip--pos'}">${statName(v.stat)} ${v.value > 0 ? '+' : ''}${v.value}</span>`
-    ).join('');
+
+    let chips;
+    if (carried && comboKind(carried) === 'passive') {
+      // Read against the unit as it stands. An upgrade can have taken the
+      // passive away or pushed it to its last rank, in which case the engraving
+      // no longer does anything — it is shown greyed and labelled, not hidden,
+      // because the only way out is to engrave over it.
+      const moves = harmonyChanges(wornUnit(row) || {}, row.engraving);
+      chips = moves.length
+        ? moves.map(m =>
+            `<span class="eg-chip ${m.dir < 0 ? 'eg-chip--neg' : 'eg-chip--pos'}">${escapeHtml(L === 'ru' ? m.name_ru : m.name)} ${m.from}→${m.to}</span>`
+          ).join('')
+        : `<span class="eg-chip eg-chip--stale">${escapeHtml(comboName(carried))} — ${t('stale')}</span>`;
+    } else {
+      const vals = row.engraving ? engravingValues(row.engraving) : [];
+      chips = vals.map(v =>
+        `<span class="eg-chip ${v.value < 0 ? 'eg-chip--neg' : 'eg-chip--pos'}">${statName(v.stat)} ${v.value > 0 ? '+' : ''}${v.value}</span>`
+      ).join('');
+    }
     return `
       <div class="eg-current">
         <span class="eg-current-name">${escapeHtml(unitName(def || {}, player))}</span>
@@ -211,6 +269,42 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       </div>`;
   }
 
+  // Harmony's body: the unit's own passives twice over, once to raise and once
+  // to lower. Only the legal side of each is listed — a passive at its top rank
+  // never appears under Raise, a rank 1 passive never under Lower — so an
+  // illegal pair cannot be built by tapping. Picking a passive on one side
+  // clears it from the other, since the same one cannot do both.
+  function harmonyRowHtml(key, side, chosen) {
+    const family = passiveFamily(key);
+    const rank = passiveRank(key);
+    const to = side === 'up' ? rank + 1 : rank - 1;
+    return `
+      <button class="eg-pass ${chosen === family ? `eg-pass--on eg-pass--${side}` : ''}"
+              data-passive="${escapeHtml(family)}" data-side="${side}" type="button">
+        <img class="eg-pass-icon" src="${assetUrl(`/assets/icons/abilities/${escapeHtml(family)}.jpg`)}"
+             alt="" onerror="this.style.visibility='hidden'">
+        <span class="eg-pass-name">${escapeHtml(passiveLabel(key))}</span>
+        <span class="eg-pass-rank">${rank}→${to}</span>
+      </button>`;
+  }
+
+  function harmonyHtml(worn) {
+    if (!worn) return `<div class="eg-hint">${t('pickUnit')}</div>`;
+    const { up, down } = harmonyOptions(worn);
+    if (!up.length || !down.length) return `<div class="eg-hint">${t('noPair')}</div>`;
+    const side = (label, keys, chosen, key) => `
+      <div class="eg-pass-col">
+        <div class="eg-pass-head eg-pass-head--${key}">${label}</div>
+        ${keys.map(k => harmonyRowHtml(k, key, chosen)).join('')
+          || `<div class="eg-pass-none">—</div>`}
+      </div>`;
+    return `
+      <div class="eg-passives">
+        ${side(t('raise'), up,   upFamily,   'up')}
+        ${side(t('lower'), down, downFamily, 'down')}
+      </div>`;
+  }
+
   // Every combo as an icon in one row; the chosen one is lit.
   function combosHtml() {
     return ENGRAVING_COMBOS.map((cb, i) => {
@@ -224,7 +318,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
   }
 
   function tiersHtml() {
-    return ENGRAVING_TIERS.map(tr => `
+    return comboTiers(combo()).map(tr => `
       <button class="eg-tier ${tr.id === tierId ? 'eg-tier--on' : ''} eg-tier--${tr.id}" data-tier="${tr.id}" type="button">
         <span class="eg-tier-name">${tierName(tr)}</span>
         <span class="eg-tier-cost">${tr.cost} ⚔ · ${tr.tokens} ✦</span>
@@ -253,6 +347,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     const row = unitRow();
     const worn = row ? wornUnit(row) : null;
     const c = combo();
+    const harmony = comboKind(c) === 'passive';
     const steps = tier()?.steps ?? 1;
     const why = problem();
     const label = busy ? t('working') : (row?.engraving ? t('replace') : t('engrave'));
@@ -261,17 +356,19 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       <div class="eg-page">
         <div class="eg-panel">
           <div class="eg-title">${t('title')}</div>
-          <div class="eg-hint">${t('hint')}</div>
+          <div class="eg-hint">${harmony ? t('hintHarm') : t('hint')}</div>
           ${currentHtml(row)}
           <div class="eg-combos">${combosHtml()}</div>
           <div class="eg-tiers">${tiersHtml()}</div>
-          <div class="eg-cols">${c.stats.map(s => columnHtml(s, worn)).join('')}</div>
+          ${harmony
+            ? harmonyHtml(worn)
+            : `<div class="eg-cols">${c.stats.map(s => columnHtml(s, worn)).join('')}</div>
           <div class="eg-points">
             <span class="eg-points-count ${spent() === steps && paid() === steps ? 'eg-points-count--done' : ''}">
               ${t('points')} +${spent()}/${steps} · −${paid()}/${steps}
             </span>
             ${spent() || paid() ? `<button class="eg-reset" id="eg-reset" type="button">${t('reset')}</button>` : ''}
-          </div>
+          </div>`}
           <div class="eg-status">
             ${why ? `<span class="eg-why">${escapeHtml(why)}</span>` : ''}
           </div>
@@ -294,7 +391,8 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     try {
       await api('/roster/engrave', {
         chat_id: player.chat_id, roster_id: row.id,
-        combo: sel.combo, tier: sel.tier, plus: sel.plus, minus: sel.minus,
+        combo: sel.combo, tier: sel.tier,
+        ...(sel.up ? { up: sel.up, down: sel.down } : { plus: sel.plus, minus: sel.minus }),
       });
       bootstrapCache.invalidate();
       if (onChanged) await onChanged();
@@ -318,10 +416,16 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       comboIdx = carried ? ENGRAVING_COMBOS.findIndex(c => c.id === carried.id) : comboIdx;
       clearPicks();
       if (carried) {
-        plus  = { ...(row.engraving.plus  || {}) };
-        minus = { ...(row.engraving.minus || {}) };
+        if (comboKind(carried) === 'passive') {
+          upFamily   = row.engraving.up   || null;
+          downFamily = row.engraving.down || null;
+        } else {
+          plus  = { ...(row.engraving.plus  || {}) };
+          minus = { ...(row.engraving.minus || {}) };
+        }
         if (getEngravingTier(row.engraving.tier)) tierId = row.engraving.tier;
       }
+      clampTier();
       render();
       centreSelected();
       return;
@@ -331,6 +435,24 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     if (comboBtn) {
       comboIdx = Number(comboBtn.dataset.combo);
       clearPicks();
+      clampTier();
+      render();
+      return;
+    }
+
+    // Harmony's two lists. The same passive cannot be both halves of the trade,
+    // so choosing it on one side drops it from the other; tapping a chosen one
+    // again clears that side.
+    const pass = e.target.closest('[data-passive]');
+    if (pass) {
+      const family = pass.dataset.passive;
+      if (pass.dataset.side === 'up') {
+        upFamily = upFamily === family ? null : family;
+        if (downFamily === upFamily) downFamily = null;
+      } else {
+        downFamily = downFamily === family ? null : family;
+        if (upFamily === downFamily) upFamily = null;
+      }
       render();
       return;
     }

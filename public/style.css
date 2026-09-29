@@ -9965,6 +9965,56 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 }
 .eg-go:disabled { opacity: 0.45; cursor: default; }
 
+/* Harmony, the passive engraving: two columns of the unit's own passives, one
+   to raise a rank and one to lower one. Sits where .eg-cols sits and inherits
+   the same width, so the panel does not jump when the combo changes. */
+.eg-passives {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 330px;
+}
+.eg-pass-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.eg-pass-head {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.eg-pass-head--up { color: #6ec87e; }
+.eg-pass-head--down { color: #e0715f; }
+.eg-pass {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #cbbfa8;
+  text-align: left;
+  cursor: pointer;
+}
+.eg-pass-icon { width: 26px; height: 26px; border-radius: 4px; object-fit: cover; }
+.eg-pass-name {
+  font-size: 0.66rem;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eg-pass-rank { font-size: 0.64rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.eg-pass--on { color: #f0e6d2; }
+.eg-pass--on .eg-pass-rank { color: inherit; }
+.eg-pass--up.eg-pass--on { border-color: #6ec87e; background: rgba(110, 200, 126, 0.2); }
+.eg-pass--down.eg-pass--on { border-color: #e0715f; background: rgba(224, 113, 95, 0.22); }
+.eg-pass-none { font-size: 0.66rem; color: var(--muted); text-align: center; }
+/* A Harmony whose passives an upgrade moved out from under it. */
+.eg-chip--stale { color: var(--muted); opacity: 0.7; text-decoration: line-through; }
+
 .eg-panel--locked { justify-content: center; }
 .daily-reward-icon .daily-reward-img { width: 34px; height: 34px; object-fit: contain; }
 

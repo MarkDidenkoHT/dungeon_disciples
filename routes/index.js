@@ -31,7 +31,7 @@ const { rosterUnitPower } = require('../utils/army-power');
 const {
   TOURNEY_BATTLES, TOURNEY_POINTS, TOURNEY_MODE, checkTourneyRules, ruleName,
 } = require('../data/tourney');
-const { engravingBill, checkEngravingForUnit, applyEngraving } = require('../data/engravings');
+const { engravingBill, checkEngravingForUnit, applyEngraving, getEngravingCombo, comboKind, nativePassiveKeys } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
@@ -875,8 +875,12 @@ function collectEmbarkBonuses(rosterRows, itemsByRosterId) {
   const servitudeIds = new Set();
   for (const r of rosterRows) {
     const def = getUnitByDataId(r.unit_data?.unit_id);
-    const own = r.unit_data?.passive ?? def?.passive;
-    const keys = Array.isArray(own) ? [...own] : (own ? [own] : []);
+    // Through the engraving, because Harmony moves a passive's RANK and an
+    // expedition bonus is read off that rank. The item's own passive is added
+    // below, the way applyItemModifiers would have.
+    let base = { ...(def || {}), ...(r.unit_data || {}) };
+    if (r.engraving) base = applyEngraving(base, r.engraving);
+    const keys = nativePassiveKeys(base);
     const item = itemsByRosterId[String(r.id)];
     if (item?.item_stats?.passive) keys.push(item.item_stats.passive);
     for (const key of keys) {
@@ -1952,15 +1956,26 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 // down. Only the CHOICE is stored; the numbers are read from the data file every
 // time the unit's stats are derived, so retuning a stat retunes every engraving.
 //
+// Harmony is the exception: instead of stats it moves one of the unit's OWN
+// passives up a rank and another down one, and arrives as { up, down } family
+// names rather than point maps. It shares this slot — taking it replaces a
+// triangle, and a triangle replaces it.
+//
 // Replacing overwrites the whole triangle and costs the full price again — an
 // engraving can be changed, never removed, and never edited a corner at a time.
 //
 // The penalty is checked against the unit AS WORN. Stats floor at zero, so
 // -10 fire resist on a unit holding none of it would be two free bonuses.
 router.post('/roster/engrave', requireAuth, async (req, res) => {
-  const { chat_id, roster_id, combo, minus, plus, tier } = req.body;
-  if (!chat_id || !roster_id || !combo || !tier || !plus || !minus) {
-    return res.status(400).json({ error: 'chat_id, roster_id, combo, tier, plus and minus required' });
+  const { chat_id, roster_id, combo, minus, plus, tier, up, down } = req.body;
+  if (!chat_id || !roster_id || !combo || !tier) {
+    return res.status(400).json({ error: 'chat_id, roster_id, combo and tier required' });
+  }
+  const isHarmony = comboKind(getEngravingCombo(String(combo))) === 'passive';
+  if (isHarmony ? (!up || !down) : (!plus || !minus)) {
+    return res.status(400).json({
+      error: isHarmony ? 'up and down required' : 'plus and minus required',
+    });
   }
 
   try {
@@ -1994,12 +2009,14 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
     const asPoints = map => Object.fromEntries(
       Object.entries(map || {}).map(([stat, n]) => [String(stat), Number(n)])
     );
-    const engraving = {
-      combo: String(combo),
-      tier:  String(tier),
-      plus:  asPoints(plus),
-      minus: asPoints(minus),
-    };
+    const engraving = isHarmony
+      ? { combo: String(combo), tier: String(tier), up: String(up), down: String(down) }
+      : {
+          combo: String(combo),
+          tier:  String(tier),
+          plus:  asPoints(plus),
+          minus: asPoints(minus),
+        };
     const invalid = checkEngravingForUnit(unitData, engraving);
     if (invalid) return res.status(400).json({ error: invalid, code: 'engraving_invalid' });
 

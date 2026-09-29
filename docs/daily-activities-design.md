@@ -50,6 +50,24 @@ As built, which differs from the sketch below:
 - Stored as `{ combo, tier, plus, minus }`; the numbers are read from the data file
   every time, so retuning applies to every engraving already in the game.
 
+**Harmony** (2026-09-29) is the eighth combo and the only one that moves no stats.
+It trades a **rank**: one of the unit's own passives goes up one, another goes down
+one. Same slot as the triangles — taking it replaces one, and one replaces it.
+
+- **Epic only**, at the Epic price (2000 Valor + 10 tokens). A rank is a rank; there
+  is no half of one to sell cheaper.
+- A passive already at its **highest defined rank** cannot be raised (Clear Mind and
+  sixteen other families are rank 1 by design, so they never appear on that side), and
+  a **rank 1** passive cannot be lowered, because lowering it would delete it.
+- Only the unit's **own** passives count, never the one an item lends it. A unit with
+  `iron_will 1` natively and `iron_will 2` from an item can raise its own copy and
+  cannot lower it; swapping the item changes nothing about the engraving.
+- Stored as `{ combo: 'harmony', tier, up, down }` with **family names, no ranks**, so
+  the trade stays correct when an upgrade branch shifts a passive's rank.
+- An upgrade that drops the passive, or pushes it to its last rank, leaves the
+  engraving **inert** — kept on the row, shown struck through on the engraving page,
+  waiting to be engraved over. Reading the branch before spending is the player's job.
+
 Original sketch:
 
 - Values stay small: +2 / +1 / −2.
