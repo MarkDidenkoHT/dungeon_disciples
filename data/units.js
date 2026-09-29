@@ -138,7 +138,7 @@ const UNITS = {
       hp: 50, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: 'divided_flame 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -152,7 +152,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -166,7 +166,7 @@ const UNITS = {
       hp: 60, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 18, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -180,7 +180,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 22, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -194,7 +194,7 @@ const UNITS = {
       hp: 121, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 22, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 2', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -208,7 +208,7 @@ const UNITS = {
       hp: 60, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -222,7 +222,7 @@ const UNITS = {
       hp: 70, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 18, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -236,7 +236,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 22, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -250,7 +250,7 @@ const UNITS = {
       hp: 80, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 50, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 22, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -3193,7 +3193,7 @@ const UNITS = {
       hp: 50, armor: 15, initiative: 20,
       resistances: { air: 5, fire: 0, life: 0, death: 50, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 5, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 6, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
     pale_abbess: {
