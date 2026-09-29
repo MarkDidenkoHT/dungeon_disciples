@@ -507,15 +507,17 @@ const BUILDING_POOLS = {
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
         desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
-        cost: { gold: 800, Crystals_Life: 60, Crystals_Fire: 60, Crystals_Death: 60, Crystals_Frost: 60, Crystals_Nature: 60, Crystals_Air: 60 },
-        // Every crystal, the same amount of each: the one bill in the game that
-        // fills all seven slots of the resource bar (RESOURCE_BAR_SLOTS), which is
-        // the point — a Temple level cannot be paid for out of one faction's farm.
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
         upgrade_costs: {
-          2: { gold: 1600, Crystals_Life: 110, Crystals_Fire: 110, Crystals_Death: 110, Crystals_Frost: 110, Crystals_Nature: 110, Crystals_Air: 110 },
-          3: { gold: 2800, Crystals_Life: 180, Crystals_Fire: 180, Crystals_Death: 180, Crystals_Frost: 180, Crystals_Nature: 180, Crystals_Air: 180 },
-          4: { gold: 4500, Crystals_Life: 270, Crystals_Fire: 270, Crystals_Death: 270, Crystals_Frost: 270, Crystals_Nature: 270, Crystals_Air: 270 },
-          5: { gold: 7000, Crystals_Life: 400, Crystals_Fire: 400, Crystals_Death: 400, Crystals_Frost: 400, Crystals_Nature: 400, Crystals_Air: 400 },
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
         } },
     ],
   },
@@ -673,15 +675,17 @@ const BUILDING_POOLS = {
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
         desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
-        cost: { gold: 800, Crystals_Life: 60, Crystals_Fire: 60, Crystals_Death: 60, Crystals_Frost: 60, Crystals_Nature: 60, Crystals_Air: 60 },
-        // Every crystal, the same amount of each: the one bill in the game that
-        // fills all seven slots of the resource bar (RESOURCE_BAR_SLOTS), which is
-        // the point — a Temple level cannot be paid for out of one faction's farm.
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
         upgrade_costs: {
-          2: { gold: 1600, Crystals_Life: 110, Crystals_Fire: 110, Crystals_Death: 110, Crystals_Frost: 110, Crystals_Nature: 110, Crystals_Air: 110 },
-          3: { gold: 2800, Crystals_Life: 180, Crystals_Fire: 180, Crystals_Death: 180, Crystals_Frost: 180, Crystals_Nature: 180, Crystals_Air: 180 },
-          4: { gold: 4500, Crystals_Life: 270, Crystals_Fire: 270, Crystals_Death: 270, Crystals_Frost: 270, Crystals_Nature: 270, Crystals_Air: 270 },
-          5: { gold: 7000, Crystals_Life: 400, Crystals_Fire: 400, Crystals_Death: 400, Crystals_Frost: 400, Crystals_Nature: 400, Crystals_Air: 400 },
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
         } },
     ],
   },
@@ -865,15 +869,17 @@ const BUILDING_POOLS = {
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
         desc_ru: 'Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.',
-        cost: { gold: 800, Crystals_Life: 60, Crystals_Fire: 60, Crystals_Death: 60, Crystals_Frost: 60, Crystals_Nature: 60, Crystals_Air: 60 },
-        // Every crystal, the same amount of each: the one bill in the game that
-        // fills all seven slots of the resource bar (RESOURCE_BAR_SLOTS), which is
-        // the point — a Temple level cannot be paid for out of one faction's farm.
+        cost: { gold: 500, Crystals_Life: 25, Crystals_Fire: 25, Crystals_Death: 25, Crystals_Frost: 25, Crystals_Nature: 25, Crystals_Air: 25 },
+        // Flat per level: 500 gold and 25 of every crystal, times the level being
+        // raised to. Every crystal, the same amount of each, is the whole idea —
+        // this is the one bill in the game that fills all seven slots of the
+        // resource bar (RESOURCE_BAR_SLOTS), so a Temple level cannot be paid for
+        // out of one faction's farm.
         upgrade_costs: {
-          2: { gold: 1600, Crystals_Life: 110, Crystals_Fire: 110, Crystals_Death: 110, Crystals_Frost: 110, Crystals_Nature: 110, Crystals_Air: 110 },
-          3: { gold: 2800, Crystals_Life: 180, Crystals_Fire: 180, Crystals_Death: 180, Crystals_Frost: 180, Crystals_Nature: 180, Crystals_Air: 180 },
-          4: { gold: 4500, Crystals_Life: 270, Crystals_Fire: 270, Crystals_Death: 270, Crystals_Frost: 270, Crystals_Nature: 270, Crystals_Air: 270 },
-          5: { gold: 7000, Crystals_Life: 400, Crystals_Fire: 400, Crystals_Death: 400, Crystals_Frost: 400, Crystals_Nature: 400, Crystals_Air: 400 },
+          2: { gold: 1000, Crystals_Life:  50, Crystals_Fire:  50, Crystals_Death:  50, Crystals_Frost:  50, Crystals_Nature:  50, Crystals_Air:  50 },
+          3: { gold: 1500, Crystals_Life:  75, Crystals_Fire:  75, Crystals_Death:  75, Crystals_Frost:  75, Crystals_Nature:  75, Crystals_Air:  75 },
+          4: { gold: 2000, Crystals_Life: 100, Crystals_Fire: 100, Crystals_Death: 100, Crystals_Frost: 100, Crystals_Nature: 100, Crystals_Air: 100 },
+          5: { gold: 2500, Crystals_Life: 125, Crystals_Fire: 125, Crystals_Death: 125, Crystals_Frost: 125, Crystals_Nature: 125, Crystals_Air: 125 },
         } },
     ],
   },
