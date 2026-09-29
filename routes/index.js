@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -504,9 +504,11 @@ function viewFor(record, chat_id, { state, logs, winner }) {
 // serves both sides of a PvP battle and the player side of a PvE one, so an
 // item or a level applies identically whichever grid a unit is standing on.
 async function buildArmyFor(chat_id, playerUnitIds) {
-  const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-  );
+  const [rawRoster, hpBonus] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+    unitHpBonusFor(chat_id),
+  ]);
+  const rosterRows = withTempleHp(rawRoster, hpBonus);
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
   const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
@@ -544,9 +546,14 @@ function checkSquad(units) {
 // A queued squad rebuilt from the roster, checked, and its ⚔ counted here.
 // The client's power number is never used: bands and bots are picked from this one.
 async function loadSquad(chat_id, playerUnitIds) {
-  const rosterRows = await supabase(
-    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-  );
+  const [rawRoster, hpBonus] = await Promise.all([
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+    unitHpBonusFor(chat_id),
+  ]);
+  // Before rosterUnitPower below reads max_hp, so the ⚔ this squad is matched and
+  // banded on counts the Temple too — otherwise the client's number (which comes
+  // from the decorated /bootstrap roster) and this one would disagree.
+  const rosterRows = withTempleHp(rawRoster, hpBonus);
   const rosterById = {};
   for (const r of rosterRows) rosterById[String(r.id)] = r;
   const itemsByRosterId = await getItemsByRosterIds(rosterRows.map(r => r.id));
@@ -1679,6 +1686,14 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       embark_cost:   EMBARK_SUPPLY_COST,
     } : null;
 
+    // The Temple's HP is folded in HERE rather than left for each screen to add:
+    // every client card, and the ⚔ the client prints, derive from these rows, and
+    // the server folds the same bonus in again when it builds the battle army
+    // (withTempleHp). Decorating the response only — the stored roster is
+    // untouched, and the client never sends unit_data back, so nothing can
+    // persist or stack it.
+    const rosterWithTemple = withTempleHp(roster, getUnitHpBonus(structRows[0]?.buildings_data));
+
     res.json({
       resources,
       trophies,
@@ -1686,7 +1701,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       supplies,
       items,
       structures: structRows[0] || null,
-      roster,
+      roster: rosterWithTemple,
       // Embark progress rides along so the roster's craft catalog can gate
       // blueprints (data/items.js `requires`) without a second round-trip.
       progress: player?.progress || {},
@@ -2504,6 +2519,42 @@ async function litaniesUnlockedFor(chat_id) {
     // someone who has earned it; the formation still has to be exact.
     return true;
   }
+}
+
+// The Temple's flat max HP (data/buildings.js), +1 a level to +5. A castle we
+// cannot read gives nothing rather than guessing upward: a battle fought without
+// the bonus is a smaller wrong than one fought with a bonus the player has not
+// built.
+async function unitHpBonusFor(chat_id) {
+  try {
+    const rows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+    return getUnitHpBonus(rows[0]?.buildings_data);
+  } catch (err) {
+    console.error('Temple HP read failed (fielding without it):', err.message);
+    return 0;
+  }
+}
+
+// Fold that bonus into roster rows as they are read, before anything derives from
+// them. Applied at EVERY read of a roster row a unit is built or priced from —
+// the three army builds and /bootstrap — so the HP on the card, the ⚔ both sides
+// compute, and the unit that walks onto the board are one number.
+//
+// Never written back. The roster keeps the unit's own HP and the bonus is
+// re-derived from the castle every time, so razing the Temple cannot leave a
+// stale total behind, and re-reading cannot stack it.
+//
+// current_hp rises with the maximum for the same reason an item's does: a unit at
+// full health must not enter its next battle already wounded.
+function withTempleHp(rosterRows, hpBonus) {
+  if (!hpBonus) return rosterRows;
+  return (rosterRows || []).map(r => {
+    const unit_data = r?.unit_data;
+    const maxHp = Number(unit_data?.max_hp);
+    if (!Number.isFinite(maxHp)) return r;
+    const curHp = Number.isFinite(Number(unit_data.current_hp)) ? Number(unit_data.current_hp) : maxHp;
+    return { ...r, unit_data: { ...unit_data, max_hp: maxHp + hpBonus, current_hp: Math.min(curHp + hpBonus, maxHp + hpBonus) } };
+  });
 }
 
 // Unit defs live in data/units.js keyed by faction; a roster row only carries
@@ -4086,9 +4137,11 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That level is not unlocked yet', code: 'level_locked' });
     }
 
-    const rosterRows = await supabase(
-      `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`
-    );
+    const [rawRoster, hpBonus] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data,is_hero,engraving`),
+      unitHpBonusFor(chat_id),
+    ]);
+    const rosterRows = withTempleHp(rawRoster, hpBonus);
     const rosterById = {};
     for (const r of rosterRows) rosterById[String(r.id)] = r;
 

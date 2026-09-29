@@ -77,6 +77,7 @@ const SLOT_FIXED_BUILDING = {
   slot_20: 'garrison_annex',
   slot_21: 'proving_grounds',
   slot_22: 'training_grounds',
+  slot_23: 'temple',
 };
 
 // Mirrors BUILDING_MAX_LEVELS in data/buildings.js, which is CommonJS and
@@ -86,7 +87,7 @@ const SLOT_FIXED_BUILDING = {
 const BUILDING_MAX_LEVELS = {
   blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
   mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 2,
-  supply_depot: 3,
+  supply_depot: 3, temple: 5,
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
 
