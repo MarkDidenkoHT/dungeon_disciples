@@ -786,7 +786,7 @@ const UNITS = {
     veiled_peer: {
       id: 'd62', f: 'd', t: 2,
       name: 'Veiled Peer',
-      name_ru: 'Пэр под Вуалью',
+      name_ru: 'Пэр Завесы',
       tags: ['Court', 'Caster'],
       pref_position: 'back',
       size: 'tile',
@@ -799,7 +799,7 @@ const UNITS = {
     shrouded_peer: {
       id: 'd621', f: 'd', t: 3,
       name: 'Shrouded Peer',
-      name_ru: 'Пэр в Саване',
+      name_ru: 'Пэр Покрова',
       tags: ['Court', 'Caster'],
       pref_position: 'back',
       size: 'tile',
