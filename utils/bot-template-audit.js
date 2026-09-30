@@ -25,6 +25,7 @@ const {
   BOT_BANDS, BOT_TEMPLATES, buildBotArmy, botArmyAsSquad, findBotUnit, variantSlotsFor,
 } = require('../data/bot_templates.js');
 const { TOURNEY_RULES, checkTourneyRules } = require('../data/tourney.js');
+const { ITEM_DEFS, ITEM_DOWNGRADES } = require('../data/items.js');
 const { UNIT_ABILITIES } = require('../data/unit_abilities.js');
 const { resolveSynergies } = require('../data/formation_synergies.js');
 const { filterByTagRules, TAG_RULES } = require('./tag-rules.js');
@@ -296,7 +297,26 @@ function auditByRule(cases) {
   return out;
 }
 
+
+// Downgrade ladders that drop a granted tag, as readable lines.
+//
+// Advisory, not a defect: `aldras_patience` rides units that are already Demons,
+// so losing +Demon costs nothing, and a tag that fed only the departing item's
+// own passive leaves with it. It matters when a NATIVE passive reads the tag —
+// which the per-case ability check catches — so this list is here to be read
+// when a new item is added, before the audit has to find it the hard way.
+function checkDowngrades() {
+  const lines = [];
+  for (const [from, subs] of Object.entries(ITEM_DOWNGRADES)) {
+    const tag = ITEM_DEFS[from]?.adds_tag;
+    if (!tag) continue;
+    const keeps = subs.filter(id => ITEM_DEFS[id]?.adds_tag === tag);
+    if (!keeps.length) lines.push(`${from} grants ${tag}; no rung keeps it (${subs.join(' → ')})`);
+  }
+  return lines;
+}
+
 module.exports = {
-  auditBotTemplates, auditByRule, auditCase, ruleSets, squadRules,
+  auditBotTemplates, auditByRule, auditCase, ruleSets, squadRules, checkDowngrades,
   POWER_FLOOR_PCT, MIN_UNITS,
 };

@@ -1,7 +1,9 @@
 import { UNITS } from './units.js';
-import { ITEM_DEFS, applyItemModifiers } from './items.js';
+import { ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers } from './items.js';
 import { SPELLS } from './spells.js';
 import { TOURNEY_RULES_BY_ID, RARITY_ORDER } from './tourney.js';
+import { getEquipBlock } from './item_rules.js';
+import { UNIT_ABILITIES } from './unit_abilities.js';
 
 // Hand-made PvP bot armies: one faction's build, with a version per power band.
 // Slots follow embark encounters. Cells:
@@ -96,6 +98,18 @@ const BOT_TEMPLATES = [
           { unit: 'gs211',  cell: 0, item_id: 'dark_determination' },
           { unit: 'gs5211', cell: 1, item_id: 'shroud_of_the_fallen' },
           { unit: 'h_g_2_a3', cell: 4, item_id: 'gift_of_eternity', hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
+        ],
+      },
+      // Gearless AND Loyalty 3. The gearless lineup spends 4 Loyalty, and the
+      // cap then trims a tile off it at random among equals — 77% of what the
+      // cap allows. Spending the 3 deliberately keeps the Chosen's column and
+      // the one body that is natively BOTH Zombie and Vampire.
+      'bare_steel+lean_squad': {
+        band_300: [
+          { unit: 'gs211', cell: 0 },
+          { unit: 'gs811', cell: 1 },
+          { unit: 'h_g_2_a3', cell: 4, hero: true,
             spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
         ],
       },
@@ -306,6 +320,23 @@ const BOT_TEMPLATES = [
           { unit: 'e711',  cell: 3 },
           { unit: 'h_e_3_a3', cell: 5, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
+        ],
+      },
+      // Nothing above Rare. The downgrade ladder saves every other band, but no
+      // Rare in the game grants Holy — and in this band `sanctified_bulwark` on
+      // the Automaton is the ONLY Holy, so the Rifleman's `sanctified_ordnance`
+      // dies with the swap however cheap the stand-in.
+      //
+      // The Holy therefore has to be a BODY: Mithrails Light is natively
+      // Spirit/Holy. Its slot is paid for by trading the Automaton's column for
+      // the Armsmaster, who is Construct enough for the hero to `repair`.
+      plain_gear: {
+        band_200: [
+          { unit: 'e6112', cell: 0, item_id: 'iron_shield' },
+          { unit: 'e62',   cell: 1, item_id: 'lion_signet' },
+          { unit: 'e71',   cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a2', cell: 5, item_id: 'lion_signet', hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
         ],
       },
     },
@@ -566,6 +597,30 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
 // limit — are deliberately not adapted: dropping every Demon from a Choir army
 // leaves something that is no longer that army's build. Those still reject a
 // template, and there are enough legal ones in each band for them to.
+// The item a slot wears once a rarity cap applies, or null if nothing fits.
+//
+// `item_by_rarity` on the slot wins, read as "wear this when the cap is <key>".
+// Otherwise the item's own ladder is walked and the first rung that is both
+// under the cap and legal on this unit is taken — an item the unit could never
+// equip (data/item_rules.js: a blocked tag, a wrong action) is no substitute,
+// it is a bug the player would see as a bot wearing the impossible.
+function downgradeFor(slot, rarity) {
+  const cap = RARITY_ORDER.indexOf(rarity);
+  const legal = id => {
+    const def = ITEM_DEFS[id];
+    if (!def) return false;
+    if (RARITY_ORDER.indexOf(def.rarity ?? 'common') > cap) return false;
+    const unit = findBotUnit(slot.unit);
+    return unit ? !getEquipBlock(def, unit, UNIT_ABILITIES) : true;
+  };
+
+  const named = slot.item_by_rarity?.[rarity];
+  if (named) return legal(named) ? named : null;
+
+  for (const id of ITEM_DOWNGRADES[slot.item_id] ?? []) if (legal(id)) return id;
+  return null;
+}
+
 // A prepared lineup, for the rules that subtraction cannot survive.
 //
 // Stripping gear is not a stat cut. Items carry `adds_tag` (data/items.js), and
@@ -628,12 +683,22 @@ function adaptSlotsToRules(slots, rules) {
       out = out.map(slot => (slot.item_id ? { ...slot, item_id: null } : slot));
     }
 
+    // Gear over the cap is SWAPPED DOWN, not taken off. Nulling it was the
+    // bot paying `bare_steel` on a `plain_gear` night — a harsher rule than the
+    // one rolled, and harsher than the player pays, since the player simply
+    // wears a legal Rare.
+    //
+    // A slot may name its own ladder in `item_by_rarity` when the global map's
+    // pick is wrong for that build; otherwise ITEM_DOWNGRADES decides
+    // (data/items.js). Only when nothing legal is left does the item come off.
     if (rule.kind === 'item_rarity_max') {
       const cap = RARITY_ORDER.indexOf(rule.rarity);
       if (cap >= 0) out = out.map(slot => {
         if (!slot.item_id) return slot;
         const rank = RARITY_ORDER.indexOf(ITEM_DEFS[slot.item_id]?.rarity ?? 'common');
-        return rank > cap ? { ...slot, item_id: null } : slot;
+        if (rank <= cap) return slot;
+        const swap = downgradeFor(slot, rule.rarity);
+        return { ...slot, item_id: swap };
       });
     }
 

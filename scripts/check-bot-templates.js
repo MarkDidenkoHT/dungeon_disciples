@@ -13,7 +13,7 @@
 
 const { BOT_TEMPLATES, checkBotTemplates } = require('../data/bot_templates.js');
 const { TOURNEY_RULES_BY_ID } = require('../data/tourney.js');
-const { auditBotTemplates, auditByRule, POWER_FLOOR_PCT } = require('../utils/bot-template-audit.js');
+const { auditBotTemplates, auditByRule, checkDowngrades, POWER_FLOOR_PCT } = require('../utils/bot-template-audit.js');
 
 const argv   = process.argv.slice(2);
 const pairs  = argv.includes('--pairs') || argv.includes('--all');
@@ -33,6 +33,13 @@ if (dirty.length) {
     console.log(`  ${id}`);
     for (const p of problems) console.log(`    · ${p}`);
   }
+  console.log('');
+}
+
+const tagless = checkDowngrades();
+if (tagless.length) {
+  console.log('DOWNGRADES THAT DROP A TAG   (advisory)\n');
+  for (const line of tagless) console.log(`  · ${line}`);
   console.log('');
 }
 
