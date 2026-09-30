@@ -87,6 +87,18 @@ const BOT_TEMPLATES = [
             spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_3', power: 3 }] },
         ],
       },
+      // Loyalty 3. The Chosen's column costs 2 of the 3, and subtraction dropped
+      // it for being the dearest — leaving the Chalice and the Warden, the two
+      // cheapest bodies, at 75% of what the cap allows. The column IS the build,
+      // so it stays and the Chalice is what goes.
+      lean_squad: {
+        band_300: [
+          { unit: 'gs211',  cell: 0, item_id: 'dark_determination' },
+          { unit: 'gs5211', cell: 1, item_id: 'shroud_of_the_fallen' },
+          { unit: 'h_g_2_a3', cell: 4, item_id: 'gift_of_eternity', hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
+        ],
+      },
     },
   },
   {
@@ -151,6 +163,20 @@ const BOT_TEMPLATES = [
         { unit: 'd11',      cell: 0, item_id: 'crystal_shield' },
       ],
     },
+    variants: {
+      // Loyalty 3. The Tormentor's column costs 2, so subtraction dropped it as
+      // the dearest body and left two archers and the hero standing in the back
+      // column with NOTHING in front of them — archers with nobody to hide
+      // behind, at 69% of what the cap allows. One archer goes instead.
+      lean_squad: {
+        band_300: [
+          { unit: 'd11',     cell: 0, item_id: 'crystal_shield' },
+          { unit: 'opb_e41', cell: 3, item_id: 'aldras_patience' },
+          { unit: 'h_d_2_a3', cell: 5, item_id: 'veil_of_discord', hero: true,
+            spells: [{ spell_id: 'd_spell_3', power: 2 }, { spell_id: 'd_spell_10', power: 4 }] },
+        ],
+      },
+    },
   },
   {
     id: 'choir_dual_gargoyles',
@@ -170,6 +196,20 @@ const BOT_TEMPLATES = [
           spells: [{ spell_id: 'd_spell_5', power: 2 }, { spell_id: 'd_spell_9', power: 4 }] },
         { unit: 'd3111',    cell: 4 },
       ],
+    },
+    variants: {
+      // Loyalty 3. Two gargoyles at 2 Loyalty each is 4, and dropping either
+      // leaves a squad of TWO — the cap cannot field this build as written. One
+      // gargoyle plus a tile spends the same 3 and puts a third body on the
+      // grid, which is both legal and stronger than the half-squad was.
+      lean_squad: {
+        band_300: [
+          { unit: 'd3211', cell: 0 },
+          { unit: 'h_d_2_a3', cell: 3, hero: true,
+            spells: [{ spell_id: 'd_spell_5', power: 2 }, { spell_id: 'd_spell_9', power: 4 }] },
+          { unit: 'd711',  cell: 4 },
+        ],
+      },
     },
   },
   {
@@ -232,6 +272,40 @@ const BOT_TEMPLATES = [
           { unit: 'e71',   cell: 3 },
           { unit: 'h_e_3_a2', cell: 5, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
+        ],
+      },
+      // Loyalty 3. The Automaton's column costs 2 and subtraction dropped it as
+      // the dearest body, which left the whole squad in the back column with no
+      // front line — and took away the only Construct the Artificer hero can
+      // `repair`. It stays; the Devastator is what goes.
+      lean_squad: {
+        band_300: [
+          { unit: 'e311', cell: 0, item_id: 'sanctified_bulwark' },
+          { unit: 'e71',  cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
+        ],
+      },
+      // Gearless AND Loyalty 3 — the day both rules land. Neither single lineup
+      // survives the other's cut: the gearless one leans on the Golden Lion's
+      // column, which the cap then drops, and with it the last Construct the
+      // hero could `repair`. So the Construct here is a TILE, cheap enough to
+      // keep, and the Holy that `sanctified_ordnance` counts comes off the
+      // Mithrails line rather than an item.
+      'bare_steel+lean_squad': {
+        band_500: [
+          { unit: 'e6112', cell: 0 },
+          { unit: 'e621',  cell: 1 },
+          { unit: 'e7111', cell: 3 },
+          { unit: 'h_e_3_a41', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+        ],
+        band_300: [
+          { unit: 'e6112', cell: 0 },
+          { unit: 'e621',  cell: 1 },
+          { unit: 'e711',  cell: 3 },
+          { unit: 'h_e_3_a3', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
         ],
       },
     },
@@ -507,18 +581,37 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
 // slots, and the rules are then applied on top of it as usual — a day that rolls
 // two of them still gets both enforced.
 //
-// Order matters when a day rolls two rules that both have a lineup: the stricter
-// one's must hold, or the looser lineup would be stripped right back down.
+// A key may name ONE rule ('bare_steel') or several joined by '+'
+// ('bare_steel+lean_squad'), for the days where answering one rule at a time is
+// not enough: a gearless lineup trimmed to Loyalty 3 by plain subtraction can
+// lose the very unit the gearless build was rebuilt around, which is how the
+// Holy Construct's hero ended up with nothing it could `repair`.
+//
+// The most specific key whose rules are ALL in force wins, so a combined lineup
+// beats either of its halves. VARIANT_PRECEDENCE breaks a tie between keys of
+// equal specificity: the stricter rule's lineup must hold, or the looser one
+// would only be stripped back down.
 const VARIANT_PRECEDENCE = ['bare_steel', 'plain_gear', 'lean_squad', 'tiles_only'];
+
+const variantRules = key => String(key).split('+');
 
 function variantSlotsFor(template, bandId, rules) {
   const ids = new Set((rules || []).map(r => (typeof r === 'string' ? r : r?.id)).filter(Boolean));
-  for (const id of VARIANT_PRECEDENCE) {
-    if (!ids.has(id)) continue;
-    const slots = template?.variants?.[id]?.[bandId];
-    if (Array.isArray(slots) && slots.length) return { rule: id, slots };
-  }
-  return null;
+  const rank = key => Math.min(...variantRules(key).map(r => {
+    const i = VARIANT_PRECEDENCE.indexOf(r);
+    return i < 0 ? VARIANT_PRECEDENCE.length : i;
+  }));
+
+  const candidates = Object.keys(template?.variants || {})
+    .filter(key => variantRules(key).every(r => ids.has(r)))
+    .filter(key => {
+      const slots = template.variants[key]?.[bandId];
+      return Array.isArray(slots) && slots.length;
+    })
+    .sort((a, b) => variantRules(b).length - variantRules(a).length || rank(a) - rank(b));
+
+  const key = candidates[0];
+  return key ? { rule: key, slots: template.variants[key][bandId] } : null;
 }
 
 function adaptSlotsToRules(slots, rules) {
@@ -626,7 +719,9 @@ function checkBotTemplate(template) {
   // cell or a missing hero in one is invisible until the night it is fielded.
   const variants = [];
   for (const [ruleId, byBand] of Object.entries(template?.variants || {})) {
-    if (!VARIANT_PRECEDENCE.includes(ruleId)) problems.push(`Variant for unknown rule "${ruleId}"`);
+    for (const r of variantRules(ruleId)) {
+      if (!VARIANT_PRECEDENCE.includes(r)) problems.push(`Variant "${ruleId}" names unknown rule "${r}"`);
+    }
     for (const [bandId, slots] of Object.entries(byBand || {})) {
       if (!template?.bands?.[bandId]) problems.push(`${ruleId}/${bandId}: variant for a band the template does not field`);
       variants.push([`${ruleId}/${bandId}`, slots]);

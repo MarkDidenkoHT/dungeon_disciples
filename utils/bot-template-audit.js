@@ -58,6 +58,28 @@ function ruleSets(rules = squadRules()) {
 
 const armyPower = army => army.reduce((n, u) => n + calcUnitPower(u), 0);
 
+const loyaltyCost = unit => ((unit.size === 'row' || unit.size === 'column') ? 2 : 1);
+
+// The strongest squad this build could field under a Loyalty cap, by picking
+// from its OWN units — a small knapsack over cost 1 and 2 bodies, with the hero
+// free because the rule does not charge for it.
+//
+// This is the reference a Loyalty rule has to be judged against. A cap of 3
+// buys three tiles where the authored squad had five bodies, so NO squad can
+// match the uncapped one and measuring against it condemns every lineup,
+// the player's included. The question worth asking is whether the cut took the
+// best three the build had.
+function bestPowerUnderLoyalty(army, cap) {
+  const hero = army.find(u => u.is_hero);
+  const rest = army.filter(u => !u.is_hero).map(u => ({ cost: loyaltyCost(u), val: calcUnitPower(u) }));
+  const best = new Array(cap + 1).fill(0);
+  for (const { cost, val } of rest) {
+    // Backwards, so each unit is taken at most once.
+    for (let c = cap; c >= cost; c--) best[c] = Math.max(best[c], best[c - cost] + val);
+  }
+  return best[cap] + (hero ? calcUnitPower(hero) : 0);
+}
+
 // A unit's ability keys, the shape matchesSpec wants. `passive` is the unit's
 // own list; an item's passive is already folded into `passive` by
 // applyItemModifiers, so nothing extra is needed here.
@@ -174,13 +196,27 @@ function auditCase(template, bandId, rules) {
 
   const basePower = armyPower(baseline);
   const power     = armyPower(adapted);
-  const pct       = basePower ? Math.round((power / basePower) * 100) : 100;
+
+  // A Loyalty cap is judged against the best squad the cap allows, not against
+  // the uncapped one (see bestPowerUnderLoyalty). Every other rule is judged
+  // against the band, because a bot that cannot match the band is not an
+  // opponent whatever took it there.
+  const loyaltyRule = rules.find(r => r.kind === 'loyalty_max');
+  const refPower = loyaltyRule ? bestPowerUnderLoyalty(baseline, loyaltyRule.max) : basePower;
+  const pct      = refPower ? Math.round((power / refPower) * 100) : 100;
+
+  // Which authored bodies came with gear, by unit and cell — the key survives
+  // adaptation, since the adapter nulls items and drops slots but never moves one.
+  const woreAnItem = new Set(baseline.filter(u => u.item_id).map(u => `${u.id}@${u.cell}`));
 
   const result = {
     template: template.id, band: bandId, rules: ruleIds,
     units: adapted.length, baselineUnits: baseline.length,
-    power, basePower, pct,
-    itemsLost: baseline.filter(u => u.item_id).length - adapted.filter(u => u.item_id).length,
+    power, basePower, refPower, pct,
+    // Gear taken off a unit that is STILL STANDING. Counting the baseline's
+    // items against the adapted army's instead made every dropped unit look
+    // like a stripped item too, double-charging one cut.
+    itemsLost: adapted.filter(u => !u.item_id && woreAnItem.has(`${u.id}@${u.cell}`)).length,
     notes: [],
   };
 
@@ -212,7 +248,11 @@ function auditCase(template, bandId, rules) {
   // is a defect only when the rule merely CAPPED rarity and the adapter took
   // the item away instead of finding a legal one.
   if (!forbidsItems && result.itemsLost > 0) soft.push(`${result.itemsLost} items removed outright`);
-  if (pct < POWER_FLOOR_PCT) soft.push(`⚔ ${power} vs ${basePower} (${pct}% of the band)`);
+  if (pct < POWER_FLOOR_PCT) {
+    soft.push(loyaltyRule
+      ? `⚔ ${power} vs ${refPower} best under Loyalty ${loyaltyRule.max} (${pct}%)`
+      : `⚔ ${power} vs ${basePower} (${pct}% of the band)`);
+  }
   const lostSynergies = [...synergyIds(stripped)].filter(id => !synergyIds(adapted).has(id));
   if (lostSynergies.length) soft.push(`synergies lost: ${lostSynergies.join(', ')}`);
 
