@@ -49,6 +49,45 @@ const BOT_TEMPLATES = [
           spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_3', power: 3 }] },
       ],
     },
+    variants: {
+      // Gearless. The authored squad is a hybrid only because its items GRANT
+      // the other half's tag: `dark_determination` makes Vampires Zombies and
+      // `gift_of_eternity` makes the Zombie hero a Vampire, which is what
+      // `horde` and `banquet` count. Stripped, it is a Vampire squad with one
+      // Zombie and a `banquet` that sees almost nobody — 5 Zombies down to 2.
+      //
+      // So this lineup buys both tags NATIVELY, off the Mother's line
+      // (Zombie/Vampire on one body) with the Chalice kept for `blood_bond`.
+      // The Chalice shares a ROW with a Vampire in every band, because that is
+      // what the bond's `front` relation asks for.
+      bare_steel: {
+        band_500: [
+          { unit: 'gs2111', cell: 0 },
+          { unit: 'gs8111', cell: 1 },
+          { unit: 'gs8311', cell: 3 },
+          { unit: 'h_g_2_a41', cell: 4, hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+          { unit: 'gs8',    cell: 5 },
+        ],
+        band_300: [
+          { unit: 'gs211', cell: 0 },
+          { unit: 'gs811', cell: 1 },
+          { unit: 'gs83',  cell: 3 },
+          { unit: 'h_g_2_a3', cell: 4, hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
+        ],
+        // The Communicant's column costs 2 Loyalty; spent on tiles instead it
+        // buys a native Vampire/Zombie body AND the Chalice, so the smallest
+        // band is still a hybrid rather than a lone hero.
+        band_200: [
+          { unit: 'gs121', cell: 0 },
+          { unit: 'gs83',  cell: 1 },
+          { unit: 'gs8',   cell: 3 },
+          { unit: 'h_g_2_a2', cell: 4, hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_3', power: 3 }] },
+        ],
+      },
+    },
   },
   {
     id: 'grail_plague',
@@ -64,6 +103,25 @@ const BOT_TEMPLATES = [
         { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
         { unit: 'gs1111',     cell: 0, item_id: 'might_of_the_pure' },
       ],
+    },
+    variants: {
+      // Gearless. Two of the authored items grant Zombie to bodies that are not
+      // one (a Spirit Wraith, a Vampire Vessel), so stripping them takes the
+      // Zombie count 6 to 4 and weakens `horde` and `aura_of_decay` on four
+      // separate units at once. This lineup is Zombie down to the last slot,
+      // which also keeps the Death Lord's `mend flesh` — Zombie-only — spoilt
+      // for choice.
+      bare_steel: {
+        band_500: [
+          { unit: 'gs1111', cell: 0 },
+          { unit: 'gs321',  cell: 1 },
+          { unit: 'h_g_2_a41', cell: 2, hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+          { unit: 'gs8211', cell: 3 },
+          { unit: 'gs1111', cell: 4 },
+          { unit: 'gs3311', cell: 5 },
+        ],
+      },
     },
   },
   {
@@ -140,6 +198,42 @@ const BOT_TEMPLATES = [
         { unit: 'h_e_3_a2', cell: 3, item_id: 'lion_signet', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
       ],
+    },
+    variants: {
+      // Gearless. `sanctified_bulwark` is the ONLY Holy in the authored squad,
+      // and Holy is what the Engineers' `sanctified_ordnance` counts — in
+      // band_200 stripping it left the Rifleman's passive dead outright, the one
+      // genuinely broken army the audit found.
+      //
+      // So Holy comes off the Mithrails line, which is natively Spirit/Holy, and
+      // a Construct stays on the field for the Artificer hero to `repair`
+      // (Construct-only). band_300 and band_200 spend the big Automaton's 2
+      // Loyalty on two tiles instead, which is what makes room for the Holy.
+      bare_steel: {
+        band_500: [
+          { unit: 'e3111', cell: 0 },
+          { unit: 'e621',  cell: 1 },
+          { unit: 'e7111', cell: 3 },
+          { unit: 'e212',  cell: 4 },
+          { unit: 'h_e_3_a41', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+        ],
+        band_300: [
+          { unit: 'e6112', cell: 0 },
+          { unit: 'e621',  cell: 1 },
+          { unit: 'e212',  cell: 2 },
+          { unit: 'e711',  cell: 3 },
+          { unit: 'h_e_3_a3', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
+        ],
+        band_200: [
+          { unit: 'e6112', cell: 0 },
+          { unit: 'e62',   cell: 1 },
+          { unit: 'e71',   cell: 3 },
+          { unit: 'h_e_3_a2', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
+        ],
+      },
     },
   },
   {
@@ -398,6 +492,35 @@ function pickBotTemplate({ power, recent = [], templates = BOT_TEMPLATES, rng = 
 // limit — are deliberately not adapted: dropping every Demon from a Choir army
 // leaves something that is no longer that army's build. Those still reject a
 // template, and there are enough legal ones in each band for them to.
+// A prepared lineup, for the rules that subtraction cannot survive.
+//
+// Stripping gear is not a stat cut. Items carry `adds_tag` (data/items.js), and
+// almost every template leans on one: grail_zombie_vamp is a Zombie-Vamp build
+// only because `dark_determination` and `mothers_gift` GRANT Zombie, which is
+// what `horde` and `banquet` count. Take the items off and it is no longer that
+// build — and a mender whose clause reads Zombie may have nobody left to mend
+// (utils/tag-rules.js).
+//
+// So a template may publish `variants: { <rule id>: { <band id>: [ slots ] } }`:
+// a squad hand-built to be legal under that rule with NATIVE tags, rather than
+// the authored squad with pieces taken away. The variant replaces the band's
+// slots, and the rules are then applied on top of it as usual — a day that rolls
+// two of them still gets both enforced.
+//
+// Order matters when a day rolls two rules that both have a lineup: the stricter
+// one's must hold, or the looser lineup would be stripped right back down.
+const VARIANT_PRECEDENCE = ['bare_steel', 'plain_gear', 'lean_squad', 'tiles_only'];
+
+function variantSlotsFor(template, bandId, rules) {
+  const ids = new Set((rules || []).map(r => (typeof r === 'string' ? r : r?.id)).filter(Boolean));
+  for (const id of VARIANT_PRECEDENCE) {
+    if (!ids.has(id)) continue;
+    const slots = template?.variants?.[id]?.[bandId];
+    if (Array.isArray(slots) && slots.length) return { rule: id, slots };
+  }
+  return null;
+}
+
 function adaptSlotsToRules(slots, rules) {
   const list = (rules || []).map(r => (typeof r === 'string' ? TOURNEY_RULES_BY_ID[r] : r)).filter(Boolean);
   if (!list.length) return slots;
@@ -453,7 +576,14 @@ function adaptSlotsToRules(slots, rules) {
 function buildBotArmy(template, bandId, rules = null) {
   let slots = template?.bands?.[bandId];
   if (!Array.isArray(slots)) return [];
-  if (rules?.length) slots = adaptSlotsToRules(slots, rules);
+  if (rules?.length) {
+    // A prepared lineup first, then the rules on top of it. The adaptation still
+    // runs: a variant answers ONE of the day's rules, and the other must still
+    // be enforced against it.
+    const variant = variantSlotsFor(template, bandId, rules);
+    if (variant) slots = variant.slots;
+    slots = adaptSlotsToRules(slots, rules);
+  }
   return slots
     .map(slot => {
       let unit = findBotUnit(slot.unit);
@@ -492,9 +622,20 @@ function checkBotTemplate(template) {
   const bands = Object.entries(template?.bands || {});
   if (!bands.length) problems.push('No bands');
 
-  for (const [bandId, slots] of bands) {
+  // A variant is a squad like any other and is held to the same rules — a bad
+  // cell or a missing hero in one is invisible until the night it is fielded.
+  const variants = [];
+  for (const [ruleId, byBand] of Object.entries(template?.variants || {})) {
+    if (!VARIANT_PRECEDENCE.includes(ruleId)) problems.push(`Variant for unknown rule "${ruleId}"`);
+    for (const [bandId, slots] of Object.entries(byBand || {})) {
+      if (!template?.bands?.[bandId]) problems.push(`${ruleId}/${bandId}: variant for a band the template does not field`);
+      variants.push([`${ruleId}/${bandId}`, slots]);
+    }
+  }
+
+  for (const [bandId, slots] of [...bands, ...variants]) {
     const at = msg => problems.push(`${bandId}: ${msg}`);
-    if (!BOT_BANDS.some(b => b.id === bandId)) { at('unknown band'); continue; }
+    if (!BOT_BANDS.some(b => b.id === bandId) && !bandId.includes('/')) { at('unknown band'); continue; }
     if (!Array.isArray(slots) || !slots.length) { at('no slots'); continue; }
 
     const taken = new Map();
@@ -548,5 +689,5 @@ function checkBotTemplates(templates = BOT_TEMPLATES) {
   return out;
 }
 
-export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
-if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
+export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
+if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };

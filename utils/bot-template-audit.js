@@ -22,7 +22,7 @@
 //   3. Is it still a MATCH? Adapted ⚔ against the unadapted band's ⚔.
 
 const {
-  BOT_BANDS, BOT_TEMPLATES, buildBotArmy, botArmyAsSquad, findBotUnit,
+  BOT_BANDS, BOT_TEMPLATES, buildBotArmy, botArmyAsSquad, findBotUnit, variantSlotsFor,
 } = require('../data/bot_templates.js');
 const { TOURNEY_RULES, checkTourneyRules } = require('../data/tourney.js');
 const { UNIT_ABILITIES } = require('../data/unit_abilities.js');
@@ -161,6 +161,17 @@ function auditCase(template, bandId, rules) {
   const baseline = buildBotArmy(template, bandId, null);
   const adapted  = buildBotArmy(template, bandId, rules);
 
+  // What plain subtraction would have produced: the authored squad under these
+  // rules with no variant. It is the alternative a variant replaces, and the
+  // honest yardstick for one — comparing a GEARLESS lineup against the GEARED
+  // squad counts the rule itself as damage and reports a defect where there is
+  // none.
+  const variant  = variantSlotsFor(template, bandId, rules);
+  const stripped = variant
+    ? buildBotArmy({ ...template, variants: null }, bandId, rules)
+    : adapted;
+  const forbidsItems = rules.some(r => r.kind === 'no_items');
+
   const basePower = armyPower(baseline);
   const power     = armyPower(adapted);
   const pct       = basePower ? Math.round((power / basePower) * 100) : 100;
@@ -191,14 +202,25 @@ function auditCase(template, bandId, rules) {
   if (adapted.length && !holdsFrontLine(adapted)) fatal.push('nothing in the front line');
   fatal.push(...unreachableActions(adapted), ...unmetAbilityGates(adapted));
 
-  // Degradations.
+  // Degradations, measured against what these rules ALLOW rather than against
+  // the geared squad. Power stays measured against the band, because that is
+  // the question the player's opponent has to answer.
   const soft = [];
-  const dropped = result.baselineUnits - result.units;
-  if (dropped > 0) soft.push(`${dropped} of ${result.baselineUnits} units dropped`);
-  if (result.itemsLost > 0) soft.push(`${result.itemsLost} items removed outright`);
+  const dropped = stripped.length - result.units;
+  if (dropped > 0) soft.push(`${dropped} of ${stripped.length} units dropped`);
+  // Gear coming off is the rule doing its job when the rule is `no_items`; it
+  // is a defect only when the rule merely CAPPED rarity and the adapter took
+  // the item away instead of finding a legal one.
+  if (!forbidsItems && result.itemsLost > 0) soft.push(`${result.itemsLost} items removed outright`);
   if (pct < POWER_FLOOR_PCT) soft.push(`⚔ ${power} vs ${basePower} (${pct}% of the band)`);
-  const lostSynergies = [...synergyIds(baseline)].filter(id => !synergyIds(adapted).has(id));
+  const lostSynergies = [...synergyIds(stripped)].filter(id => !synergyIds(adapted).has(id));
   if (lostSynergies.length) soft.push(`synergies lost: ${lostSynergies.join(', ')}`);
+
+  if (variant) {
+    result.variant = variant.rule;
+    const gained = [...synergyIds(adapted)].filter(id => !synergyIds(stripped).has(id));
+    if (gained.length) result.gained = gained;
+  }
 
   result.notes  = [...fatal, ...soft];
   result.status = fatal.length ? 'broken' : (soft.length ? 'gutted' : 'ok');
