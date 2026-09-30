@@ -1454,13 +1454,68 @@ function applyItemModifiers(unitData, itemStats) {
   return out;
 }
 
+// Cheaper stand-ins, for a tourney that caps item rarity.
+//
+// A bot under `plain_gear` used to have its Epic and Mythic gear simply NULLED,
+// which is a different rule — `bare_steel` — and a much harsher one than the
+// player pays. The player wears a legal Rare; the bot wore nothing.
+//
+// Each entry lists substitutes cheapest-last, and the adapter takes the FIRST
+// one that fits under the cap and is legal on that unit
+// (data/item_rules.js). Chosen to preserve, in this order of priority:
+//
+//   1. `adds_tag` — a granted tag is not a stat. Tags gate ability targeting
+//      (utils/tag-rules.js) and count for `horde`, `banquet` and every other
+//      per-tag passive, so losing one can leave a unit's passive dead rather
+//      than merely weaker. Where a same-tag Rare exists it is always the pick:
+//      `shroud_of_the_fallen` → `dark_determination` keeps +Zombie and `horde`.
+//   2. the passive's FAMILY, at a lower rank — `crystal_shield`'s
+//      `protector 2` → `iron_shield`'s `protector 1`, `fire_staff`'s `burn 2` →
+//      `orb_of_fire`'s `burn 1`.
+//   3. failing both, the nearest stat line, so the slot is still worn.
+//
+// No Rare in the game grants Vampire, Holy or Knight, so those three cannot be
+// carried down. Where a native passive reads the lost tag the template needs a
+// prepared lineup instead, and the audit (utils/bot-template-audit.js) says
+// which: `empire_holy_construct` is the one that does.
+const ITEM_DOWNGRADES = {
+  // Tag AND passive preserved — the ideal case.
+  shroud_of_the_fallen:    ['dark_determination'],
+  everliving_stalk:        ['grovekeeper_staff'],
+
+  // Passive family preserved at a lower rank; no tag to keep.
+  crystal_shield:          ['iron_shield'],
+  fire_staff:              ['orb_of_fire'],
+  burning_tyrant:          ['orb_of_fire', 'fire_resistance_potion'],
+  aegis_of_the_first_ward: ['ember_mantle', 'fire_resistance_potion'],
+
+  // Passive family preserved; the granted tag is lost because no Rare carries
+  // it. Sound only where the tag is redundant — `aldras_patience` rides Demons
+  // that are already Demons — or where the tag fed nothing but the item's own
+  // passive, which leaves with it.
+  aldras_patience:         ['shard_of_hate'],
+  crystal_exoskeleton:     ['attuned_focus'],
+  staff_of_thaumaturgy:    ['orb_of_pure_blood', 'lion_signet'],
+
+  // Neither tag nor passive has a cheaper rung, so the nearest stat line.
+  veil_of_discord:         ['frost_cloak'],
+  burning_fury:            ['lion_signet', 'seal_of_power'],
+  forbidden_vow:           ['iron_sword', 'crude_sword'],
+  lightbringer:            ['iron_sword', 'crude_sword'],
+  dragon_skin:             ['life_charm', 'padded_armor'],
+  gift_of_eternity:        ['codex_aeternum', 'life_charm'],
+  knights_oath:            ['iron_shield', 'padded_armor'],
+  might_of_the_pure:       ['lion_signet', 'seal_of_power'],
+  sanctified_bulwark:      ['iron_shield', 'padded_armor'],
+};
+
 export {
-  ITEM_DEFS, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
-  ITEM_DEFS, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
