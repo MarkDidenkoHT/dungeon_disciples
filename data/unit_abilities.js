@@ -1778,7 +1778,6 @@ const UNIT_ABILITIES = {
     description: "A precise shot: deals 50% of this unit's power and disables the target's passives for 2 rounds.",
     description_ru: "Точный выстрел: наносит 50% силы этого юнита и отключает пассивные способности цели на 2 раунда.",
     params: { power_pct_damage: 50, lock_passives_rounds: 2 },
-    effect_name: 'arrow_shot',
   },
   'headshot 2': {
     id: 'headshot 2',
@@ -1791,7 +1790,6 @@ const UNIT_ABILITIES = {
     description: "A precise shot: deals 75% of this unit's power and disables the target's passives for 2 rounds.",
     description_ru: "Точный выстрел: наносит 75% силы этого юнита и отключает пассивные способности цели на 2 раунда.",
     params: { power_pct_damage: 75, lock_passives_rounds: 2 },
-    effect_name: 'arrow_shot',
   },
   'skullcrack 1': {
     id: 'skullcrack 1',
