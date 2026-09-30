@@ -165,6 +165,22 @@ function refreshCostText(units, L) {
     .join(' · ');
 }
 
+// The wake cost as icons, for anywhere that takes HTML. The text version above
+// stays for the confirm dialog and the tooltips, which are plain text only.
+const POTION_ICON = `<img src="${assetUrl('/assets/icons/ui/health_potion.png')}" class="res-icon-img" alt="">`;
+
+function costIcon(item) {
+  if (item === 'health_potion') return POTION_ICON;
+  return grantIcon(item);
+}
+
+function refreshCostHtml(units) {
+  const bill = colossusRefreshBill(units);
+  return Object.entries(bill)
+    .map(([item, amount]) => `<span class="colossus-cost" title="${esc(item)}">${costIcon(item)}${amount}</span>`)
+    .join('');
+}
+
 function portraitUrl(unitId) {
   const id = String(unitId || '').match(/^(h_[a-z]_\d)/)?.[1] ?? unitId;
   return assetUrl(`/assets/character_portraits/p_${id}.png`);
@@ -247,13 +263,14 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
                 <img src="${portraitUrl(u.unit_data?.unit_id)}" alt="${name}" title="${name}" onerror="this.style.visibility='hidden'">
                 <button class="colossus-wake" type="button" data-roster="${esc(String(u.id))}"
                         ${canWakeOne ? '' : 'disabled'}
-                        title="${esc(refreshCostText(1, L))}">${CT.wake[L]}</button>
+                        aria-label="${esc(`${CT.wake[L]} · ${refreshCostText(1, L)}`)}"
+                        title="${esc(`${CT.wake[L]} · ${refreshCostText(1, L)}`)}">${refreshCostHtml(1)}</button>
               </div>`;
           }).join('')}</div>
-          <div class="colossus-wake-cost">${esc(refreshCostText(1, L))} ${CT.each[L]}</div>
+          <div class="colossus-wake-cost">${refreshCostHtml(1)} ${CT.each[L]}</div>
           ${restingRows.length > 1 ? `
             <button class="colossus-wake-all" type="button" ${canWakeAll ? '' : 'disabled'}>
-              ${CT.wakeAll[L](restingRows.length)} · ${esc(refreshCostText(restingRows.length, L))}
+              ${CT.wakeAll[L](restingRows.length)} · ${refreshCostHtml(restingRows.length)}
             </button>` : ''}
           ${canWakeOne ? '' : `<div class="colossus-muted colossus-wake-short">${CT.wakeShort[L]}</div>`}` : ''}
       </div>
@@ -279,7 +296,9 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
   const wake = async (btn, rosterIds, message) => {
     if (!rosterIds.length || btn.disabled) return;
     if (!await gameConfirm(message)) return;
-    const label = btn.textContent;
+    // The buttons hold icon markup, so the busy state has to save and restore
+    // innerHTML — textContent would flatten the icons away.
+    const label = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = CT.working[L];
     try {
@@ -292,7 +311,7 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
     } catch (err) {
       console.error('Colossus wake failed:', err);
       btn.disabled = false;
-      btn.textContent = label;
+      btn.innerHTML = label;
       await gameAlert(err?.code === 'colossus_refresh_short' ? CT.wakeShort[L] : CT.wakeFailed[L]);
     }
   };

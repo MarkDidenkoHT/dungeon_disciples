@@ -458,6 +458,7 @@ const BUILDING_POOLS = {
     ],
     merc_up: [
       { id: 'supply_depot', label: "Quartermaster's Yard", label_ru: 'Двор квартирмейстера', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'supply_depot',
         desc: 'Holds your Camping Supplies. Every embark spends one, and they come back on their own over time. Holds 10, then 15, then 20.',
         desc_ru: 'Хранит Походные припасы. Каждый поход тратит один, и они восполняются сами со временем. Вмещает 10, затем 15, затем 20.',
         // Granted at level 1, never bought — `cost` is unreachable and only the
@@ -626,6 +627,7 @@ const BUILDING_POOLS = {
     ],
     merc_up: [
       { id: 'supply_depot', label: 'Sin Distillery', label_ru: 'Винокурня греха', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'supply_depot',
         desc: 'Holds your Liquid Sin. Every embark spends one to open the way, and the vats refill on their own over time. Holds 10, then 15, then 20.',
         desc_ru: 'Хранит Жидкий грех. Каждый поход тратит один, чтобы открыть путь, а чаны наполняются сами со временем. Вмещает 10, затем 15, затем 20.',
         // Granted at level 1, never bought — `cost` is unreachable and only the
@@ -820,6 +822,7 @@ const BUILDING_POOLS = {
     ],
     merc_up: [
       { id: 'supply_depot', label: 'Reliquary of the Chalice', label_ru: 'Реликварий чаши', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
+        art: 'supply_depot',
         desc: 'Holds your Chalice Of Sustenance. Every embark spends one, and the chalices fill again on their own over time. Holds 10, then 15, then 20.',
         desc_ru: 'Хранит Чашу насыщения. Каждый поход тратит одну, и чаши наполняются сами со временем. Вмещает 10, затем 15, затем 20.',
         // Granted at level 1, never bought — `cost` is unreachable and only the

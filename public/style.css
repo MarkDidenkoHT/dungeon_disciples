@@ -9757,7 +9757,13 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   border: 0; border-radius: 5px; padding: 2px 7px; cursor: pointer; line-height: 1.4;
 }
 .colossus-wake[disabled], .colossus-wake-all[disabled] { opacity: 0.4; cursor: default; }
-.colossus-wake-cost { font-size: 0.68rem; color: var(--muted); }
+/* The wake cost, drawn as icon + amount instead of spelled out. */
+.colossus-cost { display: inline-flex; align-items: center; gap: 2px; }
+.colossus-cost + .colossus-cost { margin-left: 5px; }
+.colossus-cost .res-icon-img { width: 13px; height: 13px; object-fit: contain; }
+.colossus-wake-all .colossus-cost .res-icon-img { width: 15px; height: 15px; }
+.colossus-wake-cost { font-size: 0.68rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.colossus-wake-cost .colossus-cost .res-icon-img { width: 14px; height: 14px; }
 .colossus-wake-all {
   font-size: 0.78rem; font-weight: bold; color: var(--bg); background: var(--accent);
   border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; margin-top: 2px;
