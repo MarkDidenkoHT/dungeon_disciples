@@ -1060,9 +1060,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 HP and +2 power for each Demon ally on the field.',
-    description_ru: "В начале боя получает +2 HP и +2 к силе за каждого союзного демона на поле.",
-    params: { tag_required: 'Demon', hp_per_tagged_unit: 2, power_per_tagged_unit: 2 },
+    description: 'At battle start, gain +3 HP and +1 power for each Demon ally on the field.',
+    description_ru: "В начале боя получает +3 HP и +1 к силе за каждого союзного демона на поле.",
+    params: { tag_required: 'Demon', hp_per_tagged_unit: 3, power_per_tagged_unit: 1 },
   },
   'concentration 1': {
     id: 'concentration 1',
