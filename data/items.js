@@ -108,15 +108,6 @@ const ITEM_DEFS = {
     cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30, vial_of_pure_blood: 2,grave_dust: 2 },
     requires:     { region: 'any', level: 3 },
   },
-  // Reaches a passive no unit in the game carries. `vow_of_ash` taxes the
-  // initiative of every Holy and every Demon on the field — both sides, the
-  // carrier included — per Demon standing on its own side, so the Demon this
-  // grants is also the first point of its own scaling.
-  //
-  // The carrier KEEPS its Holy tag (nothing is removed), which is the cost: a
-  // saint who swings a censer of ash slows itself along with everyone else. The
-  // item is structural rather than numeric — it rewrites turn order for the
-  // whole board — so it is budgeted as shattered rather than ranked as an epic.
   ashen_censer: {
     key:          'ashen_censer',
     name:         'Ashen Censer',
@@ -1248,19 +1239,6 @@ const ITEM_DEFS = {
     cost:         { Gold: 50, Crystals_Nature: 15, Crystals_Life: 15 },
     item_cost:    { striders: 1}
   },
-
-  // ── Passives the catalog never reached ──────────────────────────────────────
-  // Four passives sat in data/unit_abilities.js with almost no way to field
-  // them: `leech` needs a bleeding target but both bleed items are Caster-only,
-  // so the bleeder and the leecher could never be built around each other, and
-  // `heartpiercer` / `mithrails_light` scale per ALLY tag, which no item granted
-  // to a unit that could trigger them. These four open that door.
-
-  // `dispel 2` fires on heal as readily as on hit, so nothing stops it landing
-  // on an attacker — `requires_action: 'heal'` is what makes this a healer's
-  // item rather than a sidegrade for a sword. `max_targets: 1` keeps it on the
-  // single-target medic: a mass-heal would otherwise strip a curse off the whole
-  // line every round off one epic.
   surgeons_lantern: {
     key:             'surgeons_lantern',
     name:            "Surgeon's Lantern",
@@ -1276,13 +1254,8 @@ const ITEM_DEFS = {
     rarity:          'epic',
     unique:          true,
     cost:            { Gold: 200, Crystals_Life: 25, Crystals_Air: 15 },
-    item_cost:       { codex_militarum: 1, orb_of_light: 1 },
+    item_cost:       { orb_of_pure_blood: 1, orb_of_light: 1 },
   },
-
-  // The other half of a bleed build, and the first grant of `leech` outside the
-  // two units that carry it natively. Deliberately NOT Caster-locked: the bleed
-  // comes from the Caster holding `orb_of_pure_blood`, and this is what the
-  // bruiser beside them wears to eat the stack.
   butchers_fang: {
     key:             'butchers_fang',
     name:            "Butcher's Fang",
@@ -1290,6 +1263,7 @@ const ITEM_DEFS = {
     faction:         null,
     tag_required:    null,
     requires_action: 'damage',
+    max_targets:     1,
     adds_tag:        null,
     stat_mods:       { action_power: 3, hp: 4 },
     passive:         'leech 1',
@@ -1297,12 +1271,8 @@ const ITEM_DEFS = {
     rarity:          'epic',
     unique:          true,
     cost:            { grave_dust: 2, Gold: 190, Crystals_Death: 20, Crystals_Nature: 15 },
-    item_cost:       { iron_sword: 1, poisonous_dagger: 1 },
+    item_cost:       { iron_sword: 1, vampirics_dagger: 1 },
   },
-
-  // Anti-Vampire tech. `heartpiercer` pays per KNIGHT ally, and the item is
-  // Knight-locked, so the carrier is itself one of the allies it counts — the
-  // passive can never sit at zero stacks the way it does on a lone carrier.
   ardent_spear: {
     key:             'ardent_spear',
     name:            'Ardent Spear',
@@ -1319,13 +1289,6 @@ const ITEM_DEFS = {
     cost:            { aggrails_signet: 2, Gold: 190, Crystals_Life: 20, Crystals_Fire: 15 },
     item_cost:       { morning_star: 1, seal_of_power: 1 },
   },
-
-  // Turns a single-target attacker into the line's second healer: every hit
-  // mends the lowest ally for a cut of the damage, scaled per Holy on the field,
-  // and the Holy lock means the carrier counts toward its own scaling.
-  //
-  // `max_targets: 1` is load-bearing, not flavour. The heal is `on_hit`, so a
-  // six-target caster would trigger it six times a round off one mythic.
   mithrails_sconce: {
     key:             'mithrails_sconce',
     name:            "Mithrail's Sconce",
