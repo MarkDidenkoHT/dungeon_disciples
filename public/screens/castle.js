@@ -1213,7 +1213,7 @@ export function renderCastle(root, params = {}) {
     const resSpell  = known(factionSpells.find(s => s.usage === 'roster' && s.target_scope === 'single_ally'));
     const healSpell = known(factionSpells.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally'));
 
-    const modes = restorePlan({ roster: rosterCache, resSpell, healSpell, amountOf });
+    const modes = restorePlan({ roster: rosterCache, resSpell, healSpell, amountOf, potions: tokenCount('health_potion') });
     if (!modes) return;
     const host = root.querySelector('.castle-grounds');
     if (!host) return;
@@ -1221,7 +1221,28 @@ export function renderCastle(root, params = {}) {
   }
 
   async function runRestore(mode) {
+    // Potions are quest tokens, not a mined resource — spending several at once
+    // is asked about, the same way the per-unit potion button asks.
+    if (mode === 'heal_potions') {
+      const n = (rosterCache || []).filter(r => {
+        const d = r.unit_data || {};
+        if (d.alive === false) return false;
+        const max = Number(d.max_hp ?? 0);
+        return max > 0 && Number(d.current_hp ?? max) < max;
+      }).length;
+      const q = castleLang === 'ru'
+        ? `Использовать ${n} зел. здоровья и вылечить всех полностью?`
+        : `Use ${n} Health Potions to heal everyone to full?`;
+      if (!await gameConfirm(q)) { renderRestoreControls(); return; }
+    }
     try {
+      // Potions live in the token inventory, which patchFromWrite does not
+      // carry — a patched reload would leave the spent potions on the button.
+      if (mode === 'heal_potions') {
+        await api('/roster/restore', { chat_id: player.chat_id, mode });
+        await reloadFromBootstrap();
+        return;
+      }
       const res = await api('/roster/restore', { chat_id: player.chat_id, mode });
       await reloadFromBootstrap(null, patchFromWrite(res));
     } catch (err) {

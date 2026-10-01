@@ -1,4 +1,7 @@
 import { CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
+import { assetUrl } from './asset_base.js';
+
+const POTION_ICON = `<img src="${assetUrl('/assets/icons/ui/health_potion.png')}" class="res-icon-img" alt="Health Potion">`;
 
 // Bulk Resurrect / Heal, floated over the foot of the castle grid.
 //
@@ -23,6 +26,7 @@ const TEXT = {
   resurrectAll: { en: 'Resurrect all',    ru: 'Воскресить всех' },
   restoreAll:   { en: 'Resurrect + heal', ru: 'Воскресить и лечить' },
   healAll:      { en: 'Heal all',         ru: 'Вылечить всех' },
+  healAllFull:  { en: 'Heal all — full',  ru: 'Вылечить всех — полностью' },
   working:      { en: 'Working…',         ru: 'Выполняется…' },
   costOf:       {
     en: (n, cost) => `${n} units — ${cost}`,
@@ -42,7 +46,7 @@ export function hideRestoreControls() {
 // sheets are still there to show the price of a single fix, and the shop is one
 // tap away. So a mode whose full bill exceeds the purse is simply not shown, and
 // /roster/restore stays all-or-nothing behind it.
-export function restorePlan({ roster, resSpell, healSpell, amountOf }) {
+export function restorePlan({ roster, resSpell, healSpell, amountOf, potions = 0 }) {
   const dead = [], wounded = [];
   for (const r of roster || []) {
     const d = r.unit_data || {};
@@ -84,9 +88,26 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf }) {
   }
   // Only when nobody is down. With dead units present this would be the third
   // button in a row that has space for two, and it is the least useful of them.
-  if (!dead.length && wounded.length && healSpell) {
-    const cost = bill(healSpell, wounded.length);
-    if (affordable(cost)) modes.push({ mode: 'heal', label: 'healAll', count: wounded.length, cost });
+  //
+  // POTIONS BEFORE CRYSTALS, and only when there are enough for everyone hurt.
+  // A potion heals to FULL where the spell heals heal_pct, so it is both the
+  // cheaper and the better fix — crystals are a mined resource the player can
+  // come back for, a potion is not spent on anything else, and partial coverage
+  // would mean paying crystals for a worse result on some units than the potions
+  // bought for others. One potion short and this is the ordinary crystal Heal.
+  // No spell required: the per-unit potion button does not ask for one either.
+  if (!dead.length && wounded.length) {
+    if (potions >= wounded.length) {
+      modes.push({
+        mode:  'heal_potions',
+        label: 'healAllFull',
+        count: wounded.length,
+        cost:  { health_potion: wounded.length },
+      });
+    } else if (healSpell) {
+      const cost = bill(healSpell, wounded.length);
+      if (affordable(cost)) modes.push({ mode: 'heal', label: 'healAll', count: wounded.length, cost });
+    }
   }
 
   return modes.length ? modes : null;
@@ -98,7 +119,9 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf }) {
 // the player translate between two vocabularies mid-decision.
 function costHtml(cost) {
   return Object.entries(cost).map(([type, amt]) => {
-    const icon = type === 'Gold' ? GOLD_ICON : CRYSTAL_ICONS[type];
+    const icon = type === 'Gold' ? GOLD_ICON
+               : type === 'health_potion' ? POTION_ICON
+               : CRYSTAL_ICONS[type];
     // Named as well as drawn: the icon carries no text, so the accessible name
     // below is where a screen reader gets the price.
     return `<span class="restore-btn-cost-item">${icon || ''}<span>${amt}</span></span>`;
@@ -108,7 +131,9 @@ function costHtml(cost) {
 // Text, for the tooltip and the accessible name only.
 function costLabel(cost) {
   return Object.entries(cost)
-    .map(([type, amt]) => `${type.replace('Crystals_', '')} ${amt}`)
+    .map(([type, amt]) => type === 'health_potion'
+      ? `Health Potion ${amt}`
+      : `${type.replace('Crystals_', '')} ${amt}`)
     .join(', ');
 }
 
