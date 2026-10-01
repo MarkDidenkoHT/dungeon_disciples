@@ -1267,7 +1267,7 @@ const ITEM_DEFS = {
     adds_tag:        null,
     stat_mods:       { action_power: 3, hp: 5 },
     passive:         'leech 1',
-    icon:            'butchers_fang',
+    icon:            'hunger',
     rarity:          'epic',
     unique:          true,
     cost:            { grave_dust: 2, Gold: 190, Crystals_Death: 20, Crystals_Nature: 15 },
