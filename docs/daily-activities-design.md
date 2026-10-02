@@ -205,7 +205,10 @@ the band), then faction rotation, then random.
    **Done** for every ally/self ability that used to fire on sight: Stone Form, Ember Shroud,
    Prayer of Healing, Mother's Blessing, Shared Suffering, Verse of Cataclysm (a self-kill),
    Blessing of Protection. Lion's Roar, Blood Craze and Infernal Mandate still fire early,
-   which is when they are worth most.
+   which is when they are worth most. Libation and Verse of Cataclysm were revisited after:
+   both pay HP (Libation a slice of max HP, Cataclysm the unit's life), so both are now spent
+   to finish an enemy off, and otherwise held — Libation also grows with the Sacrament stack
+   it is paired with, so waiting makes the blow bigger.
 
 ---
 

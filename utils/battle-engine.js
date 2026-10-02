@@ -2473,9 +2473,44 @@ class BattleEngine {
     // Purge — only if an enemy actually carries a buff.
     if (p.dispel_positive != null) return targets.find(hasPositive) || null;
     // Drain from an ally — only from a healthy-ish donor (never the near-dead).
-    if (p.ally_drain_pct != null || p.libation_sacrifice_pct != null) {
+    if (p.ally_drain_pct != null) {
       return targets.filter(c => c.id !== actor.id && c.battle_hp / c.max_hp > 0.5)
         .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
+    }
+
+    // Libation — the unit pays a slice of its own MAX HP to hit one enemy for
+    // that much. It used to share the ally-drain branch above, which picked the
+    // healthiest enemy on the board on turn one: the worst possible cast. The
+    // Libation line carries Sacrament, so every heal it takes raises its max HP
+    // and therefore the size of this blow; holding the one cast while that pool
+    // grows is the whole combo. So it is spent to FINISH something — a healer,
+    // a backline caster, whatever the blow can actually kill — and otherwise
+    // held, except when the caster is about to die and the banked HP would be
+    // lost with it.
+    if (p.libation_sacrifice_pct != null && def.target === 'enemy') {
+      const cost = Math.floor(actor.max_hp * p.libation_sacrifice_pct / 100);
+      // executeActiveAbility refuses the cast at or below this: paying for it
+      // must never be what kills the caster.
+      if (cost <= 0 || actor.battle_hp <= cost + 1) return null;
+      // Same arithmetic the executor uses, so "lethal" here means lethal there.
+      const dmgTo = c => Math.max(1, Math.floor(cost * (1 - effectiveArmor(c) / 100)));
+      const foes  = targets.filter(c => c.alive && c.side !== actor.side);
+      if (!foes.length) return null;
+      const lethal = foes.filter(c => dmgTo(c) >= c.battle_hp);
+      if (lethal.length) {
+        // Of the kills available, take the one that costs the enemy most: a
+        // healer first (it is the reason the fight drags), then the biggest
+        // unit it can drop.
+        return lethal.slice().sort((a, b) =>
+          (this.aiIsHealer(b) ? 1 : 0) - (this.aiIsHealer(a) ? 1 : 0) ||
+          (this.aiBestHitOf(b).dmg - this.aiBestHitOf(a).dmg) ||
+          (b.max_hp - a.max_hp))[0];
+      }
+      // Nothing dies to it. Holding is right — unless the caster will not be
+      // alive to hold it, in which case spend it on whoever is closest to dead.
+      const doomed = this.aiIncomingThreat(actor).total >= actor.battle_hp;
+      if (!doomed) return null;
+      return foes.slice().sort((a, b) => a.battle_hp - b.battle_hp)[0];
     }
     // Radiant Surge reads its target's side, so the AI picks by need: mend the
     // worst-hurt ally when one is meaningfully wounded, otherwise strike.
@@ -2643,19 +2678,32 @@ class BattleEngine {
         .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
     }
 
-    // Verse of Cataclysm — the unit dies to hit every enemy. Only when it is
-    // dying anyway (what can reach it this round would finish it), or when the
-    // blast itself kills someone.
+    // Verse of Cataclysm — the unit kills itself to hit every enemy. The blast is
+    // small (5-15), so trading a living body for it is almost always a loss: the
+    // cast has to BUY something. Two cases do.
+    //
+    //   1. It finishes an enemy. That is the point of the ability, and it also
+    //      runs the unit's on-death passives (Last Verse and friends) on top.
+    //   2. The unit is dying this round regardless, and is already worn down
+    //      enough for that to be real. A full-HP unit on round one looks
+    //      "doomed" to aiIncomingThreat whenever the whole enemy board could
+    //      theoretically reach it, which is how this ended up opening fights by
+    //      suicide; the HP gate is what keeps that estimate honest.
     if (p.self_kill) {
       if (!targets.includes(actor)) return null;
-      const doomed = this.aiIncomingThreat(actor).total >= actor.battle_hp;
-      const kills = this.combatants.some(e => {
-        if (!e.alive || e.side === actor.side) return false;
+      const blastOn = e => {
         const res = p.damage_type ? ((e.unit_data?.resistances ?? e.resistances ?? {})[p.damage_type] ?? 0) : 0;
-        const dmg = Math.floor((p.cataclysm_damage ?? 0) * (1 - Math.min(MITIGATION_CAP_PCT, res) / 100));
-        return dmg >= e.battle_hp;
-      });
-      return (doomed || kills) ? actor : null;
+        return Math.floor((p.cataclysm_damage ?? 0) * (1 - Math.min(MITIGATION_CAP_PCT, res) / 100));
+      };
+      const foes  = this.combatants.filter(e => e.alive && e.side !== actor.side);
+      const kills = foes.some(e => blastOn(e) >= e.battle_hp);
+      if (kills) return actor;
+      const doomed = this.aiIncomingThreat(actor).total >= actor.battle_hp
+        && actor.battle_hp <= actor.max_hp / 2;
+      // Dying anyway makes the blast free, but only if there is a blast: a
+      // wholly resisted one is just a unit throwing itself away a turn early.
+      const lands = foes.reduce((sum, e) => sum + blastOn(e), 0);
+      return (doomed && lands > 0) ? actor : null;
     }
 
     // Blessing of Protection — the target intercepts every attack aimed past it
