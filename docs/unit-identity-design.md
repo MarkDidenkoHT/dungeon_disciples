@@ -115,8 +115,28 @@ Bot templates carry a `calling` per slot, so the enemy side stages litanies the 
 way; a slot that names none gets one derived from its unit id, stably, so a template
 fields the same army every time it is drawn.
 
-Changing a calling costs 500 gold and **resets every rung**. The reset is what makes the
-first choice a choice.
+**Where a calling is picked is the TEMPLE, not the Chronicle.** The two systems read the
+same `roster.calling` field and share nothing else: the Training Grounds teaches a squad
+to sing (litanies, rungs, epithets, everything else in this doc), the Temple decides what
+a unit *is*. The Temple is the castle's **left page** — a grid of one row per unit and one
+column per Temple level, every column drawn from the first visit and the ones the Temple
+has not reached yet disabled.
+
+| Temple level | Opens |
+|---|---|
+| **1** | changing a calling. No stats — what it buys is the choice |
+| **2–5** | one tier a level, stats, not built |
+
+A unit is **born with a calling**, assigned at random from its faction's two at each of the
+three roster insert sites (`newCallingFor`, [data/callings.js](../data/callings.js)), so no
+row is ever without one and a litany cell always has something to match. The Temple sells
+the *correction*.
+
+Changing a calling costs **100 gold**. Not the 500 this doc first asked for: the first
+change a player ever wants is to a calling they did not pick, and a wall in front of that
+is a wall in front of the system. Once the rungs below exist a change **resets every rung**
+— that reset is what makes the choice a choice, and it lands with them rather than before
+them.
 
 ### The five rungs
 

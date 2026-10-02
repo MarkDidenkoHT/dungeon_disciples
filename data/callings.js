@@ -4,13 +4,15 @@
 // Each faction has exactly TWO, and every unit in that faction is offered the
 // same pair, so there is no profile detection and no unit left with a track it
 // cannot fill. A calling is stored on the roster row (`roster.calling` jsonb,
-// `{"id":"vigil"}`), costs 500 gold to change, and resets the unit's rungs when
-// it does - that reset is what makes the first pick a choice.
+// `{"id":"vigil"}`), assigned at random when the unit is created, and changed
+// on the castle's left page for CALLING_CHANGE_COST once the Temple is built.
 //
 // TWO SYSTEMS READ THIS FILE:
 //
 //   The Chronicle   which deeds rungs 1/3/5 ask for, which stats the unit may
 //                   raise, which passive the capstone can hand it. Not built.
+//                   The Training Grounds' system, not the Temple's - the
+//                   Temple owns the calling, the Chronicle owns the track.
 //   Litanies        a chorus cell names a CALLING instead of a list of unit ids
 //                   (data/litanies.js). Built - this is the calling's first
 //                   visible payoff, and the reason it is a tactical choice and
@@ -62,6 +64,27 @@ for (const [faction, list] of Object.entries(CALLINGS)) {
 
 const CALLING_IDS = Object.keys(CALLING_BY_ID);
 
+// What a change costs. The design doc said 500, which is a wall in front of the
+// first correction a player ever wants to make to a unit they did not choose
+// the calling for - it was assigned at creation. 100 is a sink they can afford
+// to use, which is the point of a sink.
+const CALLING_CHANGE_COST = { gold: 100 };
+
+// Assigned when the unit is created, so no roster row is ever without one and
+// a litany cell always has something to match. Random between the faction's two
+// on purpose: the player's decision is the CHANGE, and the Temple sells it.
+function randomCallingFor(faction) {
+  const pair = callingsForFaction(faction);
+  if (!pair.length) return null;
+  return pair[Math.floor(Math.random() * pair.length)].id;
+}
+
+// The jsonb the roster column holds, ready to go into an insert.
+function newCallingFor(faction) {
+  const id = randomCallingFor(faction);
+  return id ? { id } : null;
+}
+
 function getCalling(id) {
   return CALLING_BY_ID[id] || null;
 }
@@ -95,12 +118,14 @@ function callingName(id, lang = 'en') {
 }
 
 export {
-  CALLINGS, CALLING_BY_ID, CALLING_IDS,
+  CALLINGS, CALLING_BY_ID, CALLING_IDS, CALLING_CHANGE_COST,
   getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
+  randomCallingFor, newCallingFor,
 };
 if (typeof module !== 'undefined') {
   module.exports = {
-    CALLINGS, CALLING_BY_ID, CALLING_IDS,
+    CALLINGS, CALLING_BY_ID, CALLING_IDS, CALLING_CHANGE_COST,
     getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
+    randomCallingFor, newCallingFor,
   };
 }

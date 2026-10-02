@@ -145,6 +145,28 @@ function litaniesUnlocked(buildingsData) {
   return buildingLevel(buildingsData, LITANY_BUILDING) >= LITANY_BUILDING_LEVEL;
 }
 
+// Callings are the TEMPLE's ladder, and nothing to do with the litanies above.
+// The two systems read the same field (`roster.calling`, data/callings.js) and
+// that is the whole of their overlap: the Proving Grounds teaches a squad to
+// sing, the Temple decides what a unit IS.
+//
+// One column of the calling screen per Temple level. Level 1 opens the change
+// and grants no stats - it is the choice itself that is bought there; levels
+// 2-5 are the tiers that will carry stats, drawn disabled until the Temple
+// reaches them.
+const CALLING_BUILDING = 'temple';
+const CALLING_BUILDING_LEVEL = 1;
+const CALLING_TIERS = BUILDING_MAX_LEVELS.temple;
+
+function callingChangeUnlocked(buildingsData) {
+  return buildingLevel(buildingsData, CALLING_BUILDING) >= CALLING_BUILDING_LEVEL;
+}
+
+// How many of the five columns are open. Zero until the Temple is built.
+function callingTiersOpen(buildingsData) {
+  return Math.min(CALLING_TIERS, buildingLevel(buildingsData, CALLING_BUILDING));
+}
+
 // ── Building effects ────────────────────────────────────────────────────────
 // What a building DOES, per level. Values are absolute for that level, not
 // increments: level 2 of the Mage Guild is 20% off, not 10% on top of 10%.
@@ -1872,6 +1894,11 @@ module.exports = {
   litaniesUnlocked,
   LITANY_BUILDING,
   LITANY_BUILDING_LEVEL,
+  CALLING_BUILDING,
+  CALLING_BUILDING_LEVEL,
+  CALLING_TIERS,
+  callingChangeUnlocked,
+  callingTiersOpen,
   BUILDING_EFFECTS,
   buildingEffects,
   getSpellCostReductionPct,

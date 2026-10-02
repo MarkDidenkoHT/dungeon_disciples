@@ -9,6 +9,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, 
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { SPELLS }            from '../../data/spells.js';
+import { callingsForFaction, callingName } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
@@ -20,7 +21,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName, buildingLabel, enableTrackSwipe,
+  handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
   tagListLabel, renderHeroSpellSlot,
 } from '../utils.js';
@@ -60,7 +61,12 @@ const SLOT_CATEGORIES = {
 };
 const SLOT_IDS = Object.keys(SLOT_CATEGORIES);
 
-const LAYER_COUNT = 2;
+// Page indices on the sliding track, not building layers. Page 0 is the
+// Callings page - the castle's left page, the Temple's ladder - and it owns no
+// building slots, so `layerOf` below still answers 1 or 2 and every slot rule
+// that reads it is unchanged.
+const LAYER_FIRST = 0;
+const LAYER_LAST  = 2;
 const layerOf = slot => (Number(String(slot).slice(5)) >= 12 ? 2 : 1);
 
 // Mirrors SLOT_FIXED_BUILDING in data/buildings.js: layer 2 is a fixed ladder,
@@ -243,6 +249,22 @@ const CASTLE_TEXT = {
   levelWord:   { en: 'Level',                                 ru: 'Уровень' },
   layerCastle: { en: 'Castle',                                ru: 'Замок' },
   layerUpgrades:{ en: 'Upgrades',                             ru: 'Улучшения' },
+  layerCallings:{ en: 'Callings',                             ru: 'Призвания' },
+  callingsNoTemple:{ en: n => `Build the ${n} to change a calling`,
+                     ru: n => `Постройте ${n}, чтобы менять призвание` },
+  callingsEmpty:{ en: 'No units yet',                         ru: 'Пока нет юнитов' },
+  callingColLock:{ en: l => `Opens at level ${l}`,            ru: l => `Откроется на уровне ${l}` },
+  callingColOpen:{ en: l => `Level ${l}`,                     ru: l => `Уровень ${l}` },
+  callingSoon:  { en: 'Nothing here yet',                     ru: 'Здесь пока ничего нет' },
+  callingSheet: { en: 'Calling',                              ru: 'Призвание' },
+  callingNoStats:{ en: 'Level 1 grants no stats. What it buys is the choice.',
+                   ru: 'Уровень 1 не даёт характеристик. Он покупает сам выбор.' },
+  callingCurrent:{ en: 'Current',                             ru: 'Сейчас' },
+  callingTake:  { en: 'Take this calling',                    ru: 'Принять призвание' },
+  callingWorking:{ en: 'Changing…',                           ru: 'Меняем…' },
+  callingPays:  { en: s => s === 'ally' ? 'Pays the ally side in a litany' : 'Pays the enemy side in a litany',
+                  ru: s => s === 'ally' ? 'В литании платит союзной стороне' : 'В литании платит стороне врага' },
+  callingNoGold:{ en: 'Not enough gold',                      ru: 'Недостаточно золота' },
   slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
                  ru: (n, l) => l > 1 ? `Заперто — ${n}, уровень ${l}` : `Заперто — сначала постройте: ${n}` },
   maxLevel:    { en: 'Max level',                             ru: 'Макс. уровень' },
@@ -283,6 +305,10 @@ export function renderCastle(root, params = {}) {
           <div class="castle-layer-viewport" id="castle-layer-viewport">
             <div class="castle-layer-track" id="castle-layer-track">
 
+              <div class="castle-layer" data-layer="0">
+                <div class="calling-page" id="calling-page"></div>
+              </div>
+
               <div class="castle-layer" data-layer="1">
                 <div class="castle-grid-wrap">
                   <div class="outer-ring" id="outer-ring"></div>
@@ -322,6 +348,13 @@ export function renderCastle(root, params = {}) {
   let tokenInventory     = [];
   let resourceInventory  = [];
   let respecCostPct      = 25;   // overwritten from /bootstrap
+  // The Temple's ladder, from /bootstrap. The client draws all five columns
+  // whatever the Temple's level is - a locked column is a promise, the same way
+  // a locked castle slot is - so it needs the count and the price, not just the
+  // gate.
+  let callingTiers       = 5;
+  let callingGateLevel   = 1;
+  let callingChangeCost  = { gold: 100 };
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
   // Whether the player is actually looking at the castle. Hidden screens keep
   // every node they ever had (see the screen stack in main.js), so no question
@@ -408,6 +441,9 @@ export function renderCastle(root, params = {}) {
     throneMaxLevel     = buildingsResp.throne_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
+    callingTiers        = buildingsResp.calling_tiers ?? callingTiers;
+    callingGateLevel    = buildingsResp.calling_building_level ?? callingGateLevel;
+    callingChangeCost   = buildingsResp.calling_change_cost || callingChangeCost;
     trophyInventory     = trophies || [];
     tokenInventory      = boot.tokens || [];
     resourceInventory   = inventory || [];
@@ -1149,7 +1185,7 @@ export function renderCastle(root, params = {}) {
   let currentLayer = 1;
 
   function setLayer(next) {
-    const clamped = Math.min(LAYER_COUNT, Math.max(1, next));
+    const clamped = Math.min(LAYER_LAST, Math.max(LAYER_FIRST, next));
     if (clamped === currentLayer) return;
     currentLayer = clamped;
     applyLayer();
@@ -1160,7 +1196,7 @@ export function renderCastle(root, params = {}) {
 
   function applyLayer() {
     const track = root.querySelector('#castle-layer-track');
-    if (track) track.style.transform = `translateX(-${(currentLayer - 1) * 100}%)`;
+    if (track) track.style.transform = `translateX(-${currentLayer * 100}%)`;
     // The layer being left is hidden from assistive tech and from tab order —
     // it is still in the DOM, one screen to the side.
     root.querySelectorAll('.castle-layer').forEach(el => {
@@ -1177,12 +1213,12 @@ export function renderCastle(root, params = {}) {
     const prev = root.querySelector('#layer-prev');
     const next = root.querySelector('#layer-next');
     if (prev) {
-      const can = currentLayer > 1;
+      const can = currentLayer > LAYER_FIRST;
       prev.disabled = !can;
       prev.classList.toggle('castle-layer-arrow--live', can);
     }
     if (next) {
-      const can = currentLayer < LAYER_COUNT;
+      const can = currentLayer < LAYER_LAST;
       next.disabled = !can;
       next.classList.toggle('castle-layer-arrow--live', can);
     }
@@ -1371,8 +1407,177 @@ export function renderCastle(root, params = {}) {
     });
 
     refreshLayerControls();
+    renderCallings();
 
     runOnboarding();
+  }
+
+  // -- Callings, the castle's left page --------------------------------------
+  // The Temple's ladder, drawn as a grid: one row per unit, one column per
+  // Temple level, every column visible from the first visit and the ones the
+  // Temple has not reached yet disabled. Column 1 is the calling itself and
+  // grants no stats - what the Temple's first level sells is the right to
+  // change it. Columns 2-5 are the tiers that will carry stats and hold
+  // nothing yet.
+  //
+  // Not the Chronicle. That is the Training Grounds' system (litanies, rungs,
+  // epithets) and shares only the `calling` field with this one.
+
+  function templeLevel() {
+    const data = structuresRecord?.buildings_data || {};
+    let best = 0;
+    for (const [key, state] of Object.entries(data)) {
+      if (!/^slot_\d+$/.test(key)) continue;
+      if (state?.building_id === 'temple') best = Math.max(best, state.level ?? 0);
+    }
+    return best;
+  }
+
+  function templeLabel() {
+    return buildingLabel(getBuildingDef(player.faction, 'temple'), player) || 'Temple';
+  }
+
+  // The hero first, then the order the roster already arrives in, so the grid
+  // reads the same way twice running.
+  function callingRows() {
+    const rows = rosterCache.filter(u => u && u.unit_data);
+    return [...rows.filter(u => u.is_hero === true), ...rows.filter(u => u.is_hero !== true)];
+  }
+
+  function callingOf(row) {
+    const raw = row?.calling;
+    const id  = typeof raw === 'string' ? raw : raw?.id;
+    return id || null;
+  }
+
+  function renderCallings() {
+    const host = root.querySelector('#calling-page');
+    if (!host) return;
+
+    const level = templeLevel();
+    const rows  = callingRows();
+    const tiers = Array.from({ length: callingTiers }, (_, i) => i + 1);
+    const label = escapeHtml(templeLabel());
+
+    const head = `
+      <div class="calling-row calling-row--head">
+        <div class="calling-gutter calling-gutter--head">
+          <span class="calling-head-name">${label}</span>
+          <span class="calling-head-sub">${level
+            ? CASTLE_TEXT.callingColOpen[castleLang](level)
+            : CASTLE_TEXT.callingsNoTemple[castleLang](label)}</span>
+        </div>
+        ${tiers.map(t => `
+          <div class="calling-col-head ${level >= t ? 'calling-col-head--open' : ''}"
+               title="${level >= t ? CASTLE_TEXT.callingColOpen[castleLang](t) : CASTLE_TEXT.callingColLock[castleLang](t)}">
+            <span>${t}</span>
+          </div>`).join('')}
+      </div>`;
+
+    const body = rows.length ? rows.map(row => {
+      const def      = resolveUnitDef(row);
+      const art      = def ? branchPortraitUrl(def) : '';
+      const name     = unitName(def || row, player);
+      const callId   = callingOf(row);
+      const callText = callId ? callingName(callId, castleLang) : '-';
+      const cells = tiers.map(t => {
+        const open = level >= t;
+        const lockTitle = CASTLE_TEXT.callingColLock[castleLang](t);
+        if (t === 1) {
+          return `
+            <div class="calling-cell calling-cell--calling ${open ? 'calling-cell--live' : 'calling-cell--locked'}"
+                 ${open ? `data-calling-for="${row.id}"` : ''}
+                 title="${open ? CASTLE_TEXT.callingSheet[castleLang] : lockTitle}">
+              <span class="calling-chip">${open ? escapeHtml(callText) : '\u{1F512}'}</span>
+            </div>`;
+        }
+        return `
+          <div class="calling-cell ${open ? 'calling-cell--empty' : 'calling-cell--locked'}"
+               title="${open ? CASTLE_TEXT.callingSoon[castleLang] : lockTitle}">
+            <span class="calling-chip">${open ? '-' : '\u{1F512}'}</span>
+          </div>`;
+      }).join('');
+      return `
+        <div class="calling-row" data-roster-id="${row.id}">
+          <div class="calling-gutter">
+            <div class="calling-portrait"${art ? ` style="background-image:url('${art}')"` : ''}></div>
+            <span class="calling-unit-name">${escapeHtml(name)}</span>
+          </div>
+          ${cells}
+        </div>`;
+    }).join('') : `<div class="calling-empty">${CASTLE_TEXT.callingsEmpty[castleLang]}</div>`;
+
+    host.innerHTML = `
+      <div class="calling-grid">
+        ${head}
+        <div class="calling-body">${body}</div>
+      </div>`;
+
+    host.querySelectorAll('[data-calling-for]').forEach(cell => {
+      cell.addEventListener('click', () => openCallingSheet(cell.dataset.callingFor));
+    });
+  }
+
+  // The picker. Both of the faction's callings, the one the unit has marked as
+  // its own, and a priced button on the other - there are only ever two, so the
+  // list is the whole screen rather than a step into one.
+  function openCallingSheet(rosterId) {
+    const row = rosterCache.find(u => String(u.id) === String(rosterId));
+    if (!row) return;
+    const def     = resolveUnitDef(row);
+    const current = callingOf(row);
+    const pair    = callingsForFaction(player.faction);
+    const price   = Number(callingChangeCost?.gold ?? 0);
+    const canPay  = amountOf('gold') >= price;
+
+    const options = pair.map(c => {
+      const mine = c.id === current;
+      const buy = `
+        <button type="button" class="calling-opt-btn" data-take="${c.id}" ${canPay ? '' : 'disabled'}>
+          ${CASTLE_TEXT.callingTake[castleLang]} · ${price} ${GOLD_ICON}
+        </button>
+        ${canPay ? '' : `<p class="calling-opt-warn">${CASTLE_TEXT.callingNoGold[castleLang]}</p>`}`;
+      return `
+        <div class="calling-opt ${mine ? 'calling-opt--mine' : ''}">
+          <div class="calling-opt-head">
+            <span class="calling-opt-name">${escapeHtml(callingName(c.id, castleLang))}</span>
+            ${mine ? `<span class="calling-opt-tag">${CASTLE_TEXT.callingCurrent[castleLang]}</span>` : ''}
+          </div>
+          <p class="calling-opt-desc">${CASTLE_TEXT.callingPays[castleLang](c.pays)}</p>
+          ${mine ? '' : buy}
+        </div>`;
+    }).join('');
+
+    openModal(`${unitName(def || row, player)} — ${CASTLE_TEXT.callingSheet[castleLang]}`, `
+      <div class="calling-sheet">
+        <p class="ability-modal-desc">${CASTLE_TEXT.callingNoStats[castleLang]}</p>
+        ${options}
+      </div>`);
+
+    getSheetBody()?.querySelectorAll('[data-take]').forEach(btn => {
+      btn.addEventListener('click', () => takeCalling(rosterId, btn.dataset.take, btn));
+    });
+  }
+
+  async function takeCalling(rosterId, callingId, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = CASTLE_TEXT.callingWorking[castleLang]; }
+    try {
+      const res = await api('/roster/calling', {
+        chat_id: player.chat_id, roster_id: rosterId, calling: callingId,
+      });
+      // The write returns the whole roster and the resources, so the grid and
+      // the resource bar are correct without a second round-trip.
+      patchFromWrite(res);
+      if (res.roster)    { rosterCache = res.roster; rosterCount = rosterCache.length; }
+      if (res.resources) resourceInventory = res.resources;
+      closeModal();
+      renderCallings();
+      refreshResourceBar(player).catch(() => {});
+    } catch (err) {
+      if (btn) { btn.disabled = false; btn.textContent = CASTLE_TEXT.callingTake[castleLang]; }
+      openAbilityModal(CASTLE_TEXT.callingSheet[castleLang],
+        `<p class="ability-modal-desc">${escapeHtml(err?.message || 'Failed')}</p>`);
+    }
   }
 
   // ── Onboarding, after the second building ─────────────────────────────────

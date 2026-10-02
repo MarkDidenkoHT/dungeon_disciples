@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } =
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus, callingChangeUnlocked, callingTiersOpen, CALLING_BUILDING, CALLING_BUILDING_LEVEL, CALLING_TIERS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -33,6 +33,7 @@ const {
 } = require('../data/tourney');
 const { engravingBill, checkEngravingForUnit, applyEngraving, getEngravingCombo, comboKind, nativePassiveKeys } = require('../data/engravings');
 const { SPELLS } = require('../data/spells');
+const { CALLINGS, CALLING_CHANGE_COST, callingsForFaction, newCallingFor } = require('../data/callings');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
@@ -1724,6 +1725,15 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         base_max_unit_tier:   maxUnitTier({}),
         mercenary_buildings:  MERCENARY_BUILDINGS,
         respec_cost_pct:      RESPEC_COST_PCT,
+        // The calling screen is the castle's left page, and the Temple is its
+        // ladder. The client draws five columns whatever happens and needs the
+        // gate and the price to label them.
+        calling_building:       CALLING_BUILDING,
+        calling_building_level: CALLING_BUILDING_LEVEL,
+        calling_tiers:          CALLING_TIERS,
+        calling_tiers_open:     callingTiersOpen(structRows[0]?.buildings_data),
+        calling_change_cost:    CALLING_CHANGE_COST,
+        callings:               CALLINGS,
       },
       // How many divine favors (rewarded ads) are left today, so the roster can
       // label the button without its own round-trip. Read-only — spending still
@@ -1811,9 +1821,12 @@ router.post('/player/faction', requireAuth, async (req, res) => {
     ? { ...makeUnitData(unitDef.id, startingUnit.slot),
         ...(DEATH_ENABLED ? { alive: false, current_hp: 0 } : { alive: true, current_hp: 1 }) }
     : null;
+  // Every unit is born with a calling (data/callings.js). The hero included -
+  // it is a roster row with no branch left, and a litany cell has to be able to
+  // match it.
   const rosterEntries = [
-    { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true },
-    ...(startingUnitData ? [{ chat_id, unit_data: startingUnitData, is_hero: false }] : []),
+    { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true, calling: newCallingFor(faction) },
+    ...(startingUnitData ? [{ chat_id, unit_data: startingUnitData, is_hero: false, calling: newCallingFor(faction) }] : []),
   ];
   const startingItems = STARTING_ITEM_KEYS.map(k => makeItemRow(player_id, k)).filter(Boolean);
   try {
@@ -2071,6 +2084,73 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
     ]);
     res.json({ success: true, roster: updated[0], resources });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// ── Callings ───────────────────────────────────────────────────────────────
+// The Temple's first level sells one thing: the right to change what a unit IS.
+// Every roster row is born with a calling already on it (newCallingFor, at each
+// of the three insert sites), so this is never the first assignment - it is a
+// correction, and that is what the gold pays for.
+//
+// Nothing is reset here. The rungs the design doc has a change wiping do not
+// exist yet, and a reset that clears nothing is a line of code that will be
+// wrong the day they land - it belongs with them.
+router.post('/roster/calling', requireAuth, async (req, res) => {
+  const { chat_id, roster_id, calling } = req.body;
+  if (!chat_id || !roster_id || !calling) {
+    return res.status(400).json({ error: 'chat_id, roster_id and calling required' });
+  }
+
+  try {
+    const [structRows, playerRows, rosterRows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`),
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
+      supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving,calling`),
+    ]);
+
+    if (!callingChangeUnlocked(structRows[0]?.buildings_data)) {
+      return res.status(400).json({ error: 'Build the Temple first', code: 'calling_locked' });
+    }
+    const faction = playerRows[0]?.faction;
+    if (!faction) return res.status(400).json({ error: 'Player has no faction' });
+    if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
+
+    // Only the player's own faction's two. A calling from another faction would
+    // sit in the row for ever and never match a litany cell.
+    const next = String(calling);
+    if (!callingsForFaction(faction).some(c => c.id === next)) {
+      return res.status(400).json({ error: 'That calling does not belong to your faction', code: 'calling_invalid' });
+    }
+    // Paying to pick the one it already has is a mis-tap, not a purchase.
+    if (rosterRows[0].calling?.id === next) {
+      return res.status(400).json({ error: 'That unit already has this calling', code: 'calling_unchanged' });
+    }
+
+    const bill = {};
+    for (const [item, amount] of Object.entries(CALLING_CHANGE_COST)) {
+      bill[item === 'gold' ? 'Gold' : item] = amount;
+    }
+    try {
+      await spendResources(chat_id, bill);
+    } catch (err) {
+      const short = shortfallItem(err);
+      if (short) return res.status(400).json({ error: `Not enough ${short}`, code: 'insufficient', item: short });
+      throw err;
+    }
+
+    await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ calling: { id: next } }),
+    });
+
+    const [updated, resources] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving,calling`),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
+    res.json({ success: true, roster: withTempleHp(updated, getUnitHpBonus(structRows[0]?.buildings_data)), resources });
   } catch (err) {
     serverError(res, err);
   }
@@ -3962,7 +4042,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     if (isNew && def.unit_id && slotCategory !== 'throne') {
       const unitDef = getUnitByDataId(def.unit_id);
       if (unitDef) {
-        await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot), is_hero: false }]) });
+        await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot), is_hero: false, calling: newCallingFor(faction) }]) });
       }
     }
 
@@ -6205,9 +6285,13 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     const slotCategory = SLOT_CATEGORIES[slot];
     if (slotCategory !== 'special') return res.status(400).json({ error: 'Mercenaries can only be placed in special slots' });
 
-    const [structRows, inventoryRows] = await Promise.all([
+    // The faction is read for the calling the new row is born with: a mercenary
+    // is a foreign unit but a row in the PLAYER's roster, and it stands in the
+    // player's litanies.
+    const [structRows, inventoryRows, mercPlayerRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+      supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
     ]);
     if (!structRows.length) return res.status(404).json({ error: 'Structures not found' });
 
@@ -6248,6 +6332,7 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
       supabase('/roster', { method: 'POST', body: JSON.stringify({
         chat_id:   String(chat_id),
         is_hero:   false,
+        calling:   newCallingFor(mercPlayerRows[0]?.faction),
         unit_data: {
           ...makeUnitData(unitTemplate.id, slot),
           mercenary:        true,
